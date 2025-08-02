@@ -1,0 +1,22 @@
+{
+  "name": "roastr-ai",
+  "version": "1.0.0",
+  "description": "Detección de toxicidad en comentarios para filtrado y moderación automática en la herramienta Roastr",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eibon7/roastr-ai.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Eibon7/roastr-ai/issues"
+  },
+  "homepage": "https://github.com/Eibon7/roastr-ai#readme"
+}
