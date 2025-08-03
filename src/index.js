@@ -39,6 +39,12 @@ app.post('/roast', async (req, res) => {
   }
 });
 
+// 🔍 DEBUG: Comprobar si la API key existe en el entorno
+console.log("🔍 OPENAI_API_KEY exists?", !!process.env.OPENAI_API_KEY);
+if (process.env.OPENAI_API_KEY) {
+  console.log("🔍 OPENAI_API_KEY starts with:", process.env.OPENAI_API_KEY.slice(0, 10) + "...");
+}
+
 // Iniciar servidor
 app.listen(port, () => {
   console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
