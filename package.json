@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "roast": "node src/cli.js",
+    "start:api": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,5 +20,12 @@
   "bugs": {
     "url": "https://github.com/Eibon7/roastr-ai/issues"
   },
-  "homepage": "https://github.com/Eibon7/roastr-ai#readme"
+  "homepage": "https://github.com/Eibon7/roastr-ai#readme",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "openai": "^5.11.0"
+  }
 }
