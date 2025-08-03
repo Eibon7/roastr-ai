@@ -2,25 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>🔥 Roastr.ai</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roastr.ai</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="glass-card">
-    <h1>🔥 Roastr.ai</h1>
-    <p class="subtitle">Escribe un comentario y recibe un roast afilado con IA</p>
+  <div class="container">
+    <h1>🔥 Roastr.ai 🔥</h1>
+    <p>Escribe un mensaje y deja que la IA lo ponga en su sitio 😏</p>
     
-    <textarea id="comment" placeholder="Ejemplo: Tu código es peor que un GIF en PowerPoint..."></textarea>
+    <textarea id="message" placeholder="Escribe aquí el mensaje del troll..."></textarea>
+    <button id="sendBtn">Generar Roast</button>
     
-    <button id="roastBtn">💥 Lanzar Roast</button>
-    
-    <div id="result" class="result-box"></div>
+    <div id="loading" style="display:none;">⏳ Generando roast...</div>
+    <div id="result"></div>
   </div>
-
-  <footer>
-    <p>💻 Creado con <span class="love">❤</span> por Roastr.ai</p>
-  </footer>
 
   <script src="script.js"></script>
 </body>
