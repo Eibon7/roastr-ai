@@ -3,6 +3,18 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+// === DEBUG: Diagnóstico de API Keys ===
+const isKeyPresent = !!process.env.OPENAI_API_KEY;
+console.log("🔍 Diagnóstico API Keys:");
+console.log("   - OPENAI_API_KEY presente?", isKeyPresent);
+
+if (isKeyPresent) {
+  console.log("   - OPENAI_API_KEY empieza por:", process.env.OPENAI_API_KEY.slice(0, 10) + "...");
+} else {
+  console.warn("⚠️  No se encontró OPENAI_API_KEY en el entorno. Revisa tu .env o variables en Vercel.");
+}
+console.log("======================================");
+
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
 
 const app = express();
@@ -28,7 +40,7 @@ app.post('/roast', async (req, res) => {
     const { message } = req.body;
 
     if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Debes enviar un campo "message" válido.' });
+      return res.status(400).json({ error: 'Debes enviar un campo "message" en el body' });
     }
 
     const roast = await roastGenerator.generateRoast(message, null);
@@ -38,12 +50,6 @@ app.post('/roast', async (req, res) => {
     res.status(500).json({ error: 'Error interno generando el roast.' });
   }
 });
-
-// 🔍 DEBUG: Comprobar si la API key existe en el entorno
-console.log("🔍 OPENAI_API_KEY exists?", !!process.env.OPENAI_API_KEY);
-if (process.env.OPENAI_API_KEY) {
-  console.log("🔍 OPENAI_API_KEY starts with:", process.env.OPENAI_API_KEY.slice(0, 10) + "...");
-}
 
 // Iniciar servidor
 app.listen(port, () => {
