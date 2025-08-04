@@ -3,53 +3,51 @@ require('dotenv').config();
 
 class RoastGeneratorReal {
   constructor() {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is required');
+    // === DEBUG: Diagnóstico API Key ===
+    const apiKey = process.env.OPENAI_API_KEY;
+    console.log("🔍 [RoastGeneratorReal] Diagnóstico de API Key:");
+    console.log("   - Presente?:", !!apiKey);
+    if (apiKey) {
+      console.log("   - Empieza por:", apiKey.slice(0, 10));
+      console.log("   - Longitud:", apiKey.length, "caracteres");
+    } else {
+      console.warn("⚠️  No se encontró OPENAI_API_KEY en el entorno.");
+    }
+    console.log("=============================================");
+
+    if (!apiKey) {
+      throw new Error('❌ OPENAI_API_KEY environment variable is required');
     }
 
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    this.openai = new OpenAI({ apiKey });
   }
 
   async generateRoast(text, toxicityScore) {
+    console.log("📝 [RoastGeneratorReal] Generando roast para texto:", text);
+    console.log("📊 [RoastGeneratorReal] Puntuación de toxicidad (si disponible):", toxicityScore);
+
     try {
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `Eres Roastr.ai, un asistente especializado en crear roasts sarcásticos, ingeniosos y divertidos.
+            content: `Eres Roastr.ai, un asistente especializado en crear roasts humorísticos y creativos.
 
 Reglas de idioma:
 - Detecta automáticamente el idioma del comentario recibido.
 - Si el comentario está en español, responde en español.
 - Si el comentario está en inglés, responde en inglés.
 - Si el comentario está en otro idioma, responde en español (por ahora).
-- Mantén el idioma coherente con el tono y las expresiones naturales para ese idioma.
-- Más adelante se añadirán más idiomas; mantén la estructura de instrucciones preparada para expansión.
 
 Reglas de estilo:
 - Sarcasmo agudo pero sin insultos explícitos fuertes.
 - Humor inteligente, picante y creativo; evita lo vulgar.
 - Frases cortas y con gancho (máximo 1-2 frases).
 - Puedes usar referencias culturales, tecnológicas o absurdas si aportan gracia.
-- Adapta el roast al contexto del comentario, exagerando ligeramente para que sea divertido.
+- Adapta el roast al contexto del comentario.
 - No repitas fórmulas simples como “Vaya…” o “Wow…” en exceso.
-- Si el comentario no es tóxico o no da pie a roast, responde con un comentario irónico sutil.
-
-Ejemplos:
-Entrada: "Llegaste tarde otra vez"
-Salida: "¿Otra vez en modo buffering humano?"
-
-Entrada: "Este diseño es feo"
-Salida: "Innovador: has reinventado el PowerPoint de 1998."
-
-Entrada: "You are so slow"
-Salida: "Sorry, I thought we were racing snails."
-
-Entrada: "Your code is terrible"
-Salida: "Don't worry, GitHub Copilot needs a break too."`
+- Si el comentario no es tóxico o no da pie a roast, responde con un comentario ingenioso amable.`
           },
           {
             role: "user",
@@ -60,9 +58,13 @@ Salida: "Don't worry, GitHub Copilot needs a break too."`
         temperature: 0.8,
       });
 
-      return completion.choices[0].message.content.trim();
+      console.log("✅ [RoastGeneratorReal] Respuesta recibida de OpenAI");
+      console.log("🗣 [RoastGeneratorReal] Roast generado:", completion.choices[0].message.content);
+
+      return completion.choices[0].message.content;
     } catch (error) {
-      console.error('Error calling OpenAI API:', error.message);
+      console.error("❌ [RoastGeneratorReal] Error generando roast:");
+      console.error(error.response?.data || error.message || error);
       throw error;
     }
   }
