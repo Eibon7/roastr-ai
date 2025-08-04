@@ -3,6 +3,12 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 const path = require("path");
 
+// 🔍 DEBUG: Comprobar si la API key existe en el entorno
+console.log("🔍 OPENAI_API_KEY existe?", !!process.env.OPENAI_API_KEY);
+if (process.env.OPENAI_API_KEY) {
+  console.log("🔍 OPENAI_API_KEY empieza por:", process.env.OPENAI_API_KEY.slice(0, 10));
+}
+
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
 
 const app = express();
@@ -28,10 +34,10 @@ app.post('/roast', async (req, res) => {
     const { message } = req.body;
 
     if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Debes enviar un campo "message" con texto válido.' });
+      return res.status(400).json({ error: 'Debes enviar un campo "message"' });
     }
 
-    // Por ahora ignoramos el toxicityScore porque no tenemos Perspective API aún
+    // Por ahora ignoramos el toxicityScore porque no tenemos Perspective API
     const roast = await roastGenerator.generateRoast(message, null);
 
     res.json({ roast });
