@@ -240,19 +240,52 @@ El CLI se conecta automáticamente a la URL de producción configurada.
 ### Ejecutar el bot:
 
 ```bash
-# Ejecutar una vez
-npm run twitter
+# Modo streaming (permanente, recomendado)
+npm run twitter:stream
 
-# El bot procesará menciones recientes y responderá con roasts
+# Modo batch (una sola vez)
+npm run twitter:batch
+
+# Modo por defecto (streaming)
+npm run twitter
 ```
 
 ### Características del bot:
 
+- **Modo streaming:** Escucha menciones en tiempo real (recomendado para producción)
+- **Modo batch:** Procesa menciones recientes una sola vez (útil para testing)
 - **Detección de toxicidad:** Actualmente usa un stub que siempre permite roasts (preparado para Perspective API)
 - **Prevención de duplicados:** No responde dos veces al mismo tweet
-- **Rate limiting:** Añade delays entre respuestas para evitar límites de API
-- **Manejo de errores:** Continúa procesando aunque falle un tweet individual
-- **Logging detallado:** Muestra todo el proceso paso a paso
+- **Prevención de auto-respuestas:** No responde a sus propios tweets
+- **Rate limiting configurable:** Controla tweets por hora y delays entre tweets
+- **Manejo de errores robusto:** Exponential backoff y reintentos automáticos
+- **Logging avanzado:** Logs estructurados con timestamps y contexto detallado
+
+### Configuración avanzada del bot:
+
+Añade estas variables a tu archivo `.env` para personalizar el comportamiento:
+
+```env
+# Bot configuration (opcional)
+MAX_TWEETS_PER_HOUR=10          # Máximo tweets por hora (default: 10)
+MIN_DELAY_BETWEEN_TWEETS=5000   # Delay mínimo entre tweets en ms (default: 5000)
+MAX_DELAY_BETWEEN_TWEETS=30000  # Delay máximo entre tweets en ms (default: 30000)
+DEBUG=true                      # Activa logs detallados (default: false)
+```
+
+### Logs del bot:
+
+**Logs normales:**
+- ✅ Operaciones exitosas
+- ⚠️ Advertencias y rate limits
+- ❌ Errores y fallos
+- ℹ️ Información general
+
+**Logs de debug (DEBUG=true):**
+- `[TWITTER-DEBUG]` - Información técnica detallada
+- JSON estructurado con contexto completo
+- Timestamps ISO precisos
+- Datos de performance y métricas
 
 ### Archivos generados:
 
@@ -274,7 +307,9 @@ npm run start:api
 npm run roast "mensaje de prueba"
 
 # Ejecutar bot de Twitter
-npm run twitter
+npm run twitter:stream  # Modo permanente (recomendado)
+npm run twitter:batch   # Una sola ejecución
+npm run twitter         # Modo por defecto (streaming)
 ```
 
 ## Resumen Técnico para IA
@@ -292,6 +327,8 @@ npm run twitter
   "commands": {
     "api": "npm start",
     "cli": "npm run roast",
+    "twitter_stream": "npm run twitter:stream",
+    "twitter_batch": "npm run twitter:batch",
     "twitter": "npm run twitter"
   }
 }

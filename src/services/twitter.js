@@ -115,7 +115,21 @@ class TwitterRoastBot {
    */
   debugLog(message, ...args) {
     if (this.debug) {
-      console.log(`[DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
+      console.log(`[TWITTER-DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
+    }
+  }
+
+  /**
+   * Enhanced logging for important events
+   */
+  logEvent(level, message, data = {}) {
+    const timestamp = new Date().toISOString();
+    const prefix = level === 'error' ? '❌' : level === 'warn' ? '⚠️' : level === 'success' ? '✅' : 'ℹ️';
+    
+    console.log(`${prefix} [${timestamp}] ${message}`);
+    
+    if (this.debug && Object.keys(data).length > 0) {
+      console.log(`[TWITTER-DEBUG] Event data:`, JSON.stringify(data, null, 2));
     }
   }
 
@@ -133,14 +147,23 @@ class TwitterRoastBot {
     
     // Check hourly limit
     if (this.rateLimits.tweetsTimestamps.length >= this.rateLimits.tweetsPerHour) {
-      this.debugLog(`⚠️ Rate limit reached: ${this.rateLimits.tweetsTimestamps.length}/${this.rateLimits.tweetsPerHour} tweets in the last hour`);
+      this.logEvent('warn', 'Rate limit reached', {
+        currentCount: this.rateLimits.tweetsTimestamps.length,
+        maxPerHour: this.rateLimits.tweetsPerHour,
+        oldestTweetTime: new Date(this.rateLimits.tweetsTimestamps[0]).toISOString(),
+        timeUntilReset: Math.ceil((this.rateLimits.tweetsTimestamps[0] + (60 * 60 * 1000) - now) / 1000 / 60) + ' minutes'
+      });
       return false;
     }
     
     // Check minimum delay between tweets
     const lastTweetTime = this.rateLimits.tweetsTimestamps[this.rateLimits.tweetsTimestamps.length - 1];
     if (lastTweetTime && (now - lastTweetTime) < this.rateLimits.minDelayBetweenTweets) {
-      this.debugLog(`⚠️ Too soon since last tweet: ${now - lastTweetTime}ms < ${this.rateLimits.minDelayBetweenTweets}ms`);
+      this.debugLog(`⚠️ Too soon since last tweet: ${now - lastTweetTime}ms < ${this.rateLimits.minDelayBetweenTweets}ms`, {
+        timeSinceLastTweet: now - lastTweetTime,
+        minDelay: this.rateLimits.minDelayBetweenTweets,
+        timeUntilNextAllowed: Math.ceil((this.rateLimits.minDelayBetweenTweets - (now - lastTweetTime)) / 1000) + 's'
+      });
       return false;
     }
     
@@ -423,6 +446,8 @@ class TwitterRoastBot {
    */
   async processSingleTweet(tweet) {
     try {
+      this.processingStartTime = Date.now();
+      
       // Check rate limits before processing
       if (!this.canSendTweet()) {
         console.log(`⏸️ Rate limit reached for tweet ${tweet.id}, skipping for now`);
@@ -441,10 +466,14 @@ class TwitterRoastBot {
 
       // Generate roast
       const roast = await this.generateRoast(tweet.text);
-      console.log(`🎯 Generated roast: "${roast}"`);
+      this.logEvent('info', `Generated roast for tweet ${tweet.id}`, {
+        tweetId: tweet.id,
+        originalText: tweet.text.substring(0, 100) + (tweet.text.length > 100 ? '...' : ''),
+        roastText: roast.substring(0, 100) + (roast.length > 100 ? '...' : '')
+      });
 
       // Reply to tweet
-      await this.replyToTweet(tweet.id, roast);
+      const reply = await this.replyToTweet(tweet.id, roast);
       
       // Record successful tweet send for rate limiting
       this.recordTweetSent();
@@ -455,16 +484,29 @@ class TwitterRoastBot {
       // Reset error tracking after successful processing
       this.resetErrorTracking();
 
-      console.log(`✅ Successfully processed tweet ${tweet.id}`);
+      this.logEvent('success', `Successfully processed tweet ${tweet.id}`, {
+        replyId: reply?.data?.id,
+        processingTime: Date.now() - (this.processingStartTime || 0)
+      });
 
     } catch (error) {
-      console.error(`❌ Error processing tweet ${tweet.id}:`, error);
+      this.logEvent('error', `Error processing tweet ${tweet.id}`, {
+        tweetId: tweet.id,
+        errorMessage: error.message,
+        errorCode: error.code,
+        errorType: error.type,
+        processingTime: Date.now() - (this.processingStartTime || 0),
+        consecutiveErrors: this.errorStats.consecutiveErrors + 1
+      });
       
       // Track error and get backoff time if needed
       const backoffTime = this.trackError(error);
       
       if (backoffTime > 0) {
-        console.log(`⏳ Backing off for ${backoffTime}ms due to consecutive errors`);
+        this.logEvent('warn', `Backing off for ${backoffTime}ms due to consecutive errors`, {
+          consecutiveErrors: this.errorStats.consecutiveErrors,
+          backoffTime
+        });
         await this.sleep(backoffTime);
       }
       
@@ -508,6 +550,7 @@ class TwitterRoastBot {
       });
 
       this.debugLog(`📬 Found ${mentions.data?.length || 0} recent mentions`);
+      this.debugLog('Raw mentions response:', JSON.stringify(mentions, null, 2));
       return mentions;
     } catch (error) {
       console.error('❌ Error fetching mentions:', error);
@@ -549,7 +592,7 @@ class TwitterRoastBot {
 
       console.log(`🔍 Processing ${mentions.data?.length || 0} mentions...`);
 
-      for (const tweet of mentions.data || []) {
+      for (const tweet of (mentions.data || [])) {
         try {
           // Skip if already processed
           if (processedIds.includes(tweet.id)) {
