@@ -1,7 +1,7 @@
 {
   "name": "roastr-ai",
   "version": "1.0.0",
-  "description": "Detección de toxicidad en comentarios para filtrado y moderación automática en la herramienta Roastr",
+  "description": "Detección de toxicidad en comentarios para filtrado y moderación automática con generación de roasts por IA",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -12,7 +12,8 @@
     "twitter:batch": "node src/services/twitter.js batch",
     "twitter:stream": "node src/services/twitter.js stream",
     "twitter:server": "node src/twitterServer.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --verbose",
+    "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'"
   },
   "repository": {
     "type": "git",
@@ -34,5 +35,8 @@
     "openai": "^5.11.0",
     "papaparse": "^5.5.3",
     "twitter-api-v2": "^1.24.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
