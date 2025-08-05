@@ -8,6 +8,10 @@
     "dev": "node --watch src/index.js",
     "roast": "node src/cli.js",
     "start:api": "node src/server.js",
+    "twitter": "node src/services/twitter.js",
+    "twitter:batch": "node src/services/twitter.js batch",
+    "twitter:stream": "node src/services/twitter.js stream",
+    "twitter:server": "node src/twitterServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -26,6 +30,9 @@
     "body-parser": "^2.2.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "openai": "^5.11.0"
+    "fs-extra": "^11.3.0",
+    "openai": "^5.11.0",
+    "papaparse": "^5.5.3",
+    "twitter-api-v2": "^1.24.0"
   }
 }

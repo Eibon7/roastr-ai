@@ -1,0 +1,50 @@
+{
+  "name": "roastr-ai-twitter-bot",
+  "version": "1.0.0",
+  "description": "Twitter bot for Roastr.ai that automatically responds to mentions with AI-generated roasts",
+  "main": "index.js",
+  "bin": {
+    "roastr-bot": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "NODE_ENV=development DEBUG=true node index.js",
+    "dry-run": "DRY_RUN=true DEBUG=true node index.js",
+    "test": "npm run dry-run",
+    "debug": "DEBUG=true node index.js",
+    "install-global": "npm install -g .",
+    "lint": "echo 'Linting not configured yet'",
+    "validate-env": "node -e \"require('dotenv').config(); console.log('Environment variables loaded successfully')\""
+  },
+  "keywords": [
+    "twitter",
+    "bot",
+    "roast",
+    "ai",
+    "automation",
+    "social-media",
+    "nodejs"
+  ],
+  "author": "Roastr.ai Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0",
+    "twitter-api-v2": "^1.15.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/roastr-ai-twitter-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/roastr-ai-twitter-bot/issues"
+  },
+  "homepage": "https://github.com/your-org/roastr-ai-twitter-bot#readme"
+}
