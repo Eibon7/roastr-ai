@@ -269,11 +269,38 @@ Añade estas variables a tu archivo `.env` para personalizar el comportamiento:
 
 ```env
 # Bot configuration (opcional)
+RUN_MODE=loop                   # Modo de ejecución: 'loop' (continuo) o 'single' (una vez)
 MAX_TWEETS_PER_HOUR=10          # Máximo tweets por hora (default: 10)
 MIN_DELAY_BETWEEN_TWEETS=5000   # Delay mínimo entre tweets en ms (default: 5000)
 MAX_DELAY_BETWEEN_TWEETS=30000  # Delay máximo entre tweets en ms (default: 30000)
-BATCH_INTERVAL_MINUTES=5        # Intervalo de polling en minutos (default: 5)
+BATCH_INTERVAL_MINUTES=5        # Intervalo de polling en minutos (default: 5, solo para loop)
 DEBUG=true                      # Activa logs detallados (default: false)
+```
+
+### Modos de ejecución:
+
+**🔄 Loop Mode (por defecto):**
+```bash
+npm run twitter:batch           # Ejecuta continuamente
+RUN_MODE=loop npm run twitter   # Explícitamente en modo loop
+```
+
+**⚡ Single Mode (ideal para cron jobs):**
+```bash
+RUN_MODE=single npm run twitter:batch    # Una sola ejecución y termina
+```
+
+### Ejemplos de cron jobs:
+
+```bash
+# Cada 5 minutos
+*/5 * * * * cd /path/to/roastr-ai && RUN_MODE=single npm run twitter:batch
+
+# Cada 15 minutos con debug
+*/15 * * * * cd /path/to/roastr-ai && RUN_MODE=single DEBUG=true npm run twitter:batch
+
+# Cada hora
+0 * * * * cd /path/to/roastr-ai && RUN_MODE=single npm run twitter:batch
 ```
 
 ### Logs del bot:

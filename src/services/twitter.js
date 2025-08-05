@@ -43,7 +43,8 @@ class TwitterRoastBot {
     // Batch polling configuration
     this.batchConfig = {
       intervalMinutes: parseInt(process.env.BATCH_INTERVAL_MINUTES) || 5,
-      pollingActive: false
+      pollingActive: false,
+      runMode: process.env.RUN_MODE || 'loop' // 'loop' or 'single'
     };
     
     // API endpoint for roast generation
@@ -709,7 +710,7 @@ class TwitterRoastBot {
 
       let processed = 0, skipped = 0, errors = 0;
 
-      for (const tweet of (mentions.data || [])) {
+      for (const tweet of (mentions.data && Array.isArray(mentions.data) ? mentions.data : [])) {
         try {
           // Skip if already processed
           if (processedMentionIds.includes(tweet.id)) {
@@ -833,11 +834,43 @@ class TwitterRoastBot {
   }
 
   /**
+   * Execute a single batch cycle (for cron jobs)
+   */
+  async runSingleCycle() {
+    try {
+      console.log('🤖 Roastr.ai batch started - Mode: single');
+      
+      // Initialize bot info
+      await this.initializeBotInfo();
+      
+      const cycleStart = Date.now();
+      this.debugLog(`🔃 [SINGLE] Starting batch cycle at ${new Date().toISOString()}`);
+      
+      // Process mentions once
+      const result = await this.processMentions();
+      
+      const cycleTime = Date.now() - cycleStart;
+      this.logEvent('success', `[SINGLE] Batch cycle completed`, {
+        ...result,
+        cycleTimeMs: cycleTime,
+        mode: 'single'
+      });
+      
+      console.log('✅ Roastr.ai batch completed successfully');
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Fatal error in single batch mode:', error);
+      process.exit(1);
+    }
+  }
+
+  /**
    * Run the bot in batch polling mode (continuous with intervals)
    */
   async runBatchPolling() {
     try {
-      console.log('🤖 Starting Roastr.ai Twitter Bot in BATCH POLLING mode...');
+      console.log('🤖 Roastr.ai batch started - Mode: loop');
       console.log(`⏰ Polling interval: ${this.batchConfig.intervalMinutes} minutes`);
       
       // Initialize bot info
@@ -897,13 +930,27 @@ class TwitterRoastBot {
    */
   async run(mode = 'batch') {
     if (mode === 'batch') {
-      await this.runBatch();
+      // Check RUN_MODE to determine single vs loop execution
+      if (this.batchConfig.runMode === 'single') {
+        await this.runSingleCycle();
+      } else {
+        await this.runBatch();
+      }
     } else if (mode === 'polling') {
-      await this.runBatchPolling();
+      // Check RUN_MODE for polling mode as well
+      if (this.batchConfig.runMode === 'single') {
+        await this.runSingleCycle();
+      } else {
+        await this.runBatchPolling();
+      }
     } else {
-      // Stream mode is disabled, fallback to polling
+      // Stream mode is disabled, fallback to polling with RUN_MODE support
       console.warn('⚠️ Stream mode not available with Essential API plan, using batch polling instead');
-      await this.runBatchPolling();
+      if (this.batchConfig.runMode === 'single') {
+        await this.runSingleCycle();
+      } else {
+        await this.runBatchPolling();
+      }
     }
   }
 }
@@ -921,9 +968,119 @@ if (require.main === module) {
     console.log('🔄 Converting stream mode to batch polling for Essential API compatibility');
   }
   
-  console.log(`🚀 Starting bot in ${mode.toUpperCase()} mode...`);
+  // Show current configuration
+  const runMode = bot.batchConfig.runMode;
+  console.log(`🚀 Starting bot in ${mode.toUpperCase()} mode with RUN_MODE=${runMode}...`);
+  
+  if (runMode === 'single') {
+    console.log('📋 Single cycle mode: will execute once and exit (ideal for cron jobs)');
+  } else {
+    console.log(`📋 Loop mode: will run continuously with ${bot.batchConfig.intervalMinutes} minute intervals`);
+  }
   
   bot.run(mode);
 }
 
 module.exports = TwitterRoastBot;
+
+/*
+=================================================================================================
+📚 ROASTR.AI TWITTER BOT - USAGE DOCUMENTATION
+=================================================================================================
+
+This Twitter bot supports two execution modes via the RUN_MODE environment variable:
+
+🔄 LOOP MODE (default):
+   - Runs continuously with configurable intervals
+   - Suitable for long-running processes
+   - Handles SIGINT gracefully for clean shutdown
+
+⚡ SINGLE MODE:
+   - Executes one batch cycle and exits
+   - Perfect for cron jobs and scheduled tasks
+   - Returns proper exit codes (0 = success, 1 = error)
+
+-------------------------------------------------------------------------------------------------
+🚀 EXECUTION EXAMPLES:
+-------------------------------------------------------------------------------------------------
+
+1. Default behavior (loop mode):
+   npm run twitter:batch
+   npm run twitter
+
+2. Single cycle execution (cron job mode):
+   RUN_MODE=single npm run twitter:batch
+   RUN_MODE=single npm run twitter
+
+3. Configure polling interval (loop mode only):
+   BATCH_INTERVAL_MINUTES=10 npm run twitter
+
+-------------------------------------------------------------------------------------------------
+⏰ CRON JOB EXAMPLES:
+-------------------------------------------------------------------------------------------------
+
+Every 5 minutes:
+0,5,10,15,20,25,30,35,40,45,50,55 * * * * cd /path/to/roastr-ai && RUN_MODE=single npm run twitter:batch >> /var/log/roastr-twitter.log 2>&1
+
+Every 15 minutes with debug:
+0,15,30,45 * * * * cd /path/to/roastr-ai && RUN_MODE=single DEBUG=true npm run twitter:batch >> /var/log/roastr-twitter-debug.log 2>&1
+
+Every hour:
+0 * * * * cd /path/to/roastr-ai && RUN_MODE=single npm run twitter:batch
+
+-------------------------------------------------------------------------------------------------
+🔧 ENVIRONMENT VARIABLES:
+-------------------------------------------------------------------------------------------------
+
+RUN_MODE=loop                    # Execution mode: 'loop' (continuous) or 'single' (one-time)
+BATCH_INTERVAL_MINUTES=5         # Polling interval in minutes (loop mode only)
+DEBUG=true                       # Enable detailed JSON logging
+MAX_TWEETS_PER_HOUR=10          # Rate limiting: max tweets per hour
+MIN_DELAY_BETWEEN_TWEETS=5000   # Rate limiting: minimum delay between tweets (ms)
+MAX_DELAY_BETWEEN_TWEETS=30000  # Rate limiting: maximum delay between tweets (ms)
+
+Required Twitter API credentials:
+TWITTER_BEARER_TOKEN=your_bearer_token
+TWITTER_APP_KEY=your_app_key
+TWITTER_APP_SECRET=your_app_secret
+TWITTER_ACCESS_TOKEN=your_access_token
+TWITTER_ACCESS_SECRET=your_access_secret
+
+-------------------------------------------------------------------------------------------------
+📊 LOG OUTPUT EXAMPLES:
+-------------------------------------------------------------------------------------------------
+
+Loop mode startup:
+🤖 Roastr.ai batch started - Mode: loop
+⏰ Polling interval: 5 minutes
+👤 Bot authenticated as: @YourBot (ID: 123456789)
+✅ Bot running in batch polling mode. Press Ctrl+C to stop.
+
+Single mode execution:
+🤖 Roastr.ai batch started - Mode: single
+👤 Bot authenticated as: @YourBot (ID: 123456789)
+🚀 [BATCH] Starting to process mentions...
+📭 [BATCH] No mentions found
+✅ [2025-08-05T18:00:00.000Z] [SINGLE] Batch cycle completed
+✅ Roastr.ai batch completed successfully
+
+-------------------------------------------------------------------------------------------------
+🛠️ TROUBLESHOOTING:
+-------------------------------------------------------------------------------------------------
+
+1. Bot doesn't exit in single mode:
+   - Check for unhandled promises or event listeners
+   - Ensure no infinite loops in error handling
+
+2. Cron job doesn't work:
+   - Use absolute paths: cd /full/path/to/roastr-ai
+   - Set proper environment variables in cron
+   - Check cron logs: tail -f /var/log/cron
+
+3. Rate limiting issues:
+   - Adjust MAX_TWEETS_PER_HOUR and delay settings
+   - Monitor Twitter API usage in developer portal
+   - Consider increasing BATCH_INTERVAL_MINUTES for less frequent checks
+
+=================================================================================================
+*/
