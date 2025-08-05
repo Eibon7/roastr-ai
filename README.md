@@ -214,7 +214,9 @@ El CLI se conecta automáticamente a la URL de producción configurada.
 
 ## Bot de Twitter/X
 
-**Funcionalidad:** El bot monitorea menciones a tu cuenta en Twitter/X y responde automáticamente con roasts generados por IA.
+**Funcionalidad:** El bot monitorea menciones a tu cuenta en Twitter/X y responde automáticamente con roasts generados por IA usando el plan Essential (gratuito) de Twitter API.
+
+⚠️ **IMPORTANTE:** El bot está optimizado para funcionar con el plan Essential de Twitter API, que **NO** soporta streaming en tiempo real. Usa polling por lotes para detectar menciones.
 
 ### Configuración de Twitter/X:
 
@@ -240,22 +242,22 @@ El CLI se conecta automáticamente a la URL de producción configurada.
 ### Ejecutar el bot:
 
 ```bash
-# Modo streaming (permanente, recomendado)
-npm run twitter:stream
-
-# Modo batch (una sola vez)
+# Modo batch (una sola ejecución, recomendado para testing)
 npm run twitter:batch
 
-# Modo por defecto (streaming)
+# Modo por defecto (polling continuo cada 5 minutos)
 npm run twitter
+
+# Nota: streaming mode está desactivado para compatibilidad con Essential API
 ```
 
 ### Características del bot:
 
-- **Modo streaming:** Escucha menciones en tiempo real (recomendado para producción)
-- **Modo batch:** Procesa menciones recientes una sola vez (útil para testing)
+- **Modo batch:** Una sola ejecución para procesar menciones recientes (ideal para cron jobs)
+- **Modo polling:** Ejecución continua con intervalos configurables (por defecto: 5 minutos)
+- **Compatible con Essential API:** Optimizado para el plan gratuito de Twitter API
 - **Detección de toxicidad:** Actualmente usa un stub que siempre permite roasts (preparado para Perspective API)
-- **Prevención de duplicados:** No responde dos veces al mismo tweet
+- **Prevención de duplicados:** Rastrea menciones procesadas en `data/processed_mentions.json`
 - **Prevención de auto-respuestas:** No responde a sus propios tweets
 - **Rate limiting configurable:** Controla tweets por hora y delays entre tweets
 - **Manejo de errores robusto:** Exponential backoff y reintentos automáticos
@@ -270,6 +272,7 @@ Añade estas variables a tu archivo `.env` para personalizar el comportamiento:
 MAX_TWEETS_PER_HOUR=10          # Máximo tweets por hora (default: 10)
 MIN_DELAY_BETWEEN_TWEETS=5000   # Delay mínimo entre tweets en ms (default: 5000)
 MAX_DELAY_BETWEEN_TWEETS=30000  # Delay máximo entre tweets en ms (default: 30000)
+BATCH_INTERVAL_MINUTES=5        # Intervalo de polling en minutos (default: 5)
 DEBUG=true                      # Activa logs detallados (default: false)
 ```
 
@@ -283,13 +286,16 @@ DEBUG=true                      # Activa logs detallados (default: false)
 
 **Logs de debug (DEBUG=true):**
 - `[TWITTER-DEBUG]` - Información técnica detallada
+- `[BATCH]` - Eventos específicos del modo batch
+- `[POLLING]` - Eventos del ciclo de polling continuo
 - JSON estructurado con contexto completo
 - Timestamps ISO precisos
 - Datos de performance y métricas
 
 ### Archivos generados:
 
-- `data/processed_tweets.json`: Lista de tweets ya procesados (evita duplicados)
+- `data/processed_mentions.json`: Lista de menciones ya procesadas (evita duplicados)
+- `data/processed_tweets.json`: Lista de tweets ya procesados (sistema legacy)
 
 ## Desarrollo Local
 
@@ -307,9 +313,8 @@ npm run start:api
 npm run roast "mensaje de prueba"
 
 # Ejecutar bot de Twitter
-npm run twitter:stream  # Modo permanente (recomendado)
-npm run twitter:batch   # Una sola ejecución
-npm run twitter         # Modo por defecto (streaming)
+npm run twitter:batch   # Una sola ejecución (recomendado para testing)
+npm run twitter         # Modo polling continuo (recomendado para producción)
 ```
 
 ## Resumen Técnico para IA

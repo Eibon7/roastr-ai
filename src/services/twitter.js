@@ -34,8 +34,17 @@ class TwitterRoastBot {
     // Stream reference
     this.stream = null;
 
-    // File to store processed tweet IDs
+    // File to store processed tweet IDs (deprecated - use processedMentionsFile)
     this.processedTweetsFile = path.join(__dirname, '../../data/processed_tweets.json');
+    
+    // File to store processed mention IDs (new approach for batch mode)
+    this.processedMentionsFile = path.join(__dirname, '../../data/processed_mentions.json');
+    
+    // Batch polling configuration
+    this.batchConfig = {
+      intervalMinutes: parseInt(process.env.BATCH_INTERVAL_MINUTES) || 5,
+      pollingActive: false
+    };
     
     // API endpoint for roast generation
     this.roastApiUrl = process.env.ROAST_API_URL || 'https://roastr-lhcp7seuh-eibon7s-projects.vercel.app';
@@ -57,12 +66,13 @@ class TwitterRoastBot {
       baseBackoffDelay: 5000 // 5 seconds
     };
     
-    // Initialize processed tweets tracking
+    // Initialize processed tweets and mentions tracking
     this.initializeProcessedTweets();
+    this.initializeProcessedMentions();
   }
 
   /**
-   * Initialize the processed tweets file if it doesn't exist
+   * Initialize the processed tweets file if it doesn't exist (legacy)
    */
   async initializeProcessedTweets() {
     try {
@@ -73,6 +83,26 @@ class TwitterRoastBot {
       }
     } catch (error) {
       console.error('❌ Error initializing processed tweets file:', error);
+    }
+  }
+
+  /**
+   * Initialize the processed mentions file for batch mode
+   */
+  async initializeProcessedMentions() {
+    try {
+      await fs.ensureFile(this.processedMentionsFile);
+      const exists = await fs.pathExists(this.processedMentionsFile);
+      if (!exists || (await fs.readFile(this.processedMentionsFile, 'utf8')).trim() === '') {
+        await fs.writeJson(this.processedMentionsFile, { 
+          processedMentionIds: [],
+          lastCheck: null,
+          totalProcessed: 0
+        }, { spaces: 2 });
+        this.debugLog('✅ Initialized processed mentions file for batch mode');
+      }
+    } catch (error) {
+      console.error('❌ Error initializing processed mentions file:', error);
     }
   }
 
@@ -90,7 +120,7 @@ class TwitterRoastBot {
   }
 
   /**
-   * Add tweet ID to processed list
+   * Add tweet ID to processed list (legacy)
    */
   async markTweetAsProcessed(tweetId) {
     try {
@@ -107,6 +137,58 @@ class TwitterRoastBot {
       }
     } catch (error) {
       console.error('❌ Error marking tweet as processed:', error);
+    }
+  }
+
+  /**
+   * Get list of already processed mention IDs
+   */
+  async getProcessedMentionIds() {
+    try {
+      const data = await fs.readJson(this.processedMentionsFile);
+      return data.processedMentionIds || [];
+    } catch (error) {
+      console.error('❌ Error reading processed mentions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Add mention ID to processed list for batch mode
+   */
+  async markMentionAsProcessed(mentionId) {
+    try {
+      const data = await fs.readJson(this.processedMentionsFile);
+      if (!data.processedMentionIds) data.processedMentionIds = [];
+      
+      if (!data.processedMentionIds.includes(mentionId)) {
+        data.processedMentionIds.push(mentionId);
+        data.totalProcessed = (data.totalProcessed || 0) + 1;
+        data.lastProcessed = new Date().toISOString();
+        
+        // Keep only last 1000 processed mentions to avoid file growing too large
+        if (data.processedMentionIds.length > 1000) {
+          data.processedMentionIds = data.processedMentionIds.slice(-1000);
+        }
+        
+        await fs.writeJson(this.processedMentionsFile, data, { spaces: 2 });
+        this.debugLog(`📝 Marked mention ${mentionId} as processed (total: ${data.totalProcessed})`);
+      }
+    } catch (error) {
+      console.error('❌ Error marking mention as processed:', error);
+    }
+  }
+
+  /**
+   * Update last check timestamp for batch polling
+   */
+  async updateLastCheckTime() {
+    try {
+      const data = await fs.readJson(this.processedMentionsFile);
+      data.lastCheck = new Date().toISOString();
+      await fs.writeJson(this.processedMentionsFile, data, { spaces: 2 });
+    } catch (error) {
+      console.error('❌ Error updating last check time:', error);
     }
   }
 
@@ -460,6 +542,7 @@ class TwitterRoastBot {
       if (!isAllowed) {
         console.log(`❌ Tweet ${tweet.id} not allowed to be roasted`);
         await this.markTweetAsProcessed(tweet.id);
+        await this.markMentionAsProcessed(tweet.id); // Also mark in new system
         this.resetErrorTracking(); // Reset errors for successful operation (even if no roast)
         return;
       }
@@ -478,8 +561,9 @@ class TwitterRoastBot {
       // Record successful tweet send for rate limiting
       this.recordTweetSent();
 
-      // Mark as processed
+      // Mark as processed (both systems)
       await this.markTweetAsProcessed(tweet.id);
+      await this.markMentionAsProcessed(tweet.id);
 
       // Reset error tracking after successful processing
       this.resetErrorTracking();
@@ -559,6 +643,35 @@ class TwitterRoastBot {
   }
 
   /**
+   * Get recent mentions for batch processing with better filtering
+   */
+  async getBatchMentions() {
+    try {
+      this.debugLog('📡 [BATCH] Fetching recent mentions...');
+
+      // Get mentions (tweets that mention the user)
+      const mentions = await this.bearerClient.v2.userMentionTimeline(this.botUserId, {
+        max_results: 20, // Increased for better coverage in batch mode
+        'tweet.fields': ['created_at', 'author_id', 'conversation_id', 'public_metrics'],
+        'user.fields': ['username', 'name'],
+        expansions: ['author_id']
+        // Note: 'exclude' parameter not supported in Essential API tier
+      });
+
+      this.debugLog(`📬 [BATCH] Found ${mentions.data?.length || 0} recent mentions`);
+      
+      if (this.debug) {
+        this.debugLog('[BATCH] Raw mentions response:', JSON.stringify(mentions, null, 2));
+      }
+      
+      return mentions;
+    } catch (error) {
+      console.error('❌ [BATCH] Error fetching mentions:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Reply to a tweet with the generated roast
    */
   async replyToTweet(tweetId, roastText) {
@@ -576,56 +689,81 @@ class TwitterRoastBot {
   }
 
   /**
-   * Process mentions and reply with roasts
+   * Process mentions and reply with roasts (batch mode)
    */
   async processMentions() {
     try {
-      console.log('🚀 Starting to process mentions...');
+      console.log('🚀 [BATCH] Starting to process mentions...');
       
-      const mentions = await this.getMentions();
-      const processedIds = await this.getProcessedTweetIds();
+      const mentions = await this.getBatchMentions();
+      const processedMentionIds = await this.getProcessedMentionIds();
 
       if (!mentions.data || mentions.data.length === 0) {
-        console.log('📭 No mentions found');
-        return;
+        console.log('📭 [BATCH] No mentions found');
+        await this.updateLastCheckTime();
+        return { processed: 0, skipped: 0, errors: 0 };
       }
 
-      console.log(`🔍 Processing ${mentions.data?.length || 0} mentions...`);
+      console.log(`🔍 [BATCH] Processing ${mentions.data?.length || 0} mentions...`);
+      this.debugLog(`[BATCH] Processed mention IDs in memory: ${processedMentionIds.length}`);
+
+      let processed = 0, skipped = 0, errors = 0;
 
       for (const tweet of (mentions.data || [])) {
         try {
           // Skip if already processed
-          if (processedIds.includes(tweet.id)) {
-            this.debugLog(`⏭️ Skipping already processed tweet: ${tweet.id}`);
+          if (processedMentionIds.includes(tweet.id)) {
+            this.debugLog(`⏭️ [BATCH] Skipping already processed mention: ${tweet.id}`);
+            skipped++;
             continue;
           }
 
           // Skip if it's from the bot itself
           if (this.isSelfTweet(tweet.author_id)) {
-            this.debugLog(`⏭️ Skipping self-tweet: ${tweet.id}`);
+            this.debugLog(`⏭️ [BATCH] Skipping self-tweet: ${tweet.id}`);
+            skipped++;
             continue;
           }
 
-          console.log(`\n🔍 Processing tweet ${tweet.id}: "${tweet.text}"`);
+          this.logEvent('info', `[BATCH] Processing mention ${tweet.id}`, {
+            text: tweet.text?.substring(0, 100) + (tweet.text?.length > 100 ? '...' : ''),
+            authorId: tweet.author_id,
+            createdAt: tweet.created_at
+          });
 
           // Use the extracted method for processing
           await this.processSingleTweet(tweet);
+          processed++;
 
           // Add dynamic delay between replies to avoid rate limiting
           const delay = this.getProcessingDelay();
-          this.debugLog(`⏳ Waiting ${delay}ms before processing next tweet`);
+          this.debugLog(`⏳ [BATCH] Waiting ${delay}ms before processing next mention`);
           await this.sleep(delay);
 
         } catch (error) {
-          console.error(`❌ Error processing tweet ${tweet.id}:`, error);
+          this.logEvent('error', `[BATCH] Error processing mention ${tweet.id}`, {
+            error: error.message,
+            tweetId: tweet.id
+          });
+          errors++;
           // Continue with next tweet even if this one fails
         }
       }
 
-      console.log('🏁 Finished processing mentions');
+      await this.updateLastCheckTime();
+      
+      this.logEvent('success', `[BATCH] Finished processing mentions`, {
+        processed,
+        skipped,
+        errors,
+        total: mentions.data?.length || 0
+      });
+
+      return { processed, skipped, errors };
 
     } catch (error) {
-      console.error('❌ Error in processMentions:', error);
+      console.error('❌ [BATCH] Error in processMentions:', error);
+      return { processed: 0, skipped: 0, errors: 1 };
     }
   }
 
@@ -661,34 +799,16 @@ class TwitterRoastBot {
   }
 
   /**
-   * Run the bot in streaming mode (persistent)
+   * Run the bot in streaming mode (DEPRECATED - requires higher Twitter API tier)
    */
   async runStream() {
-    try {
-      console.log('🤖 Starting Roastr.ai Twitter Bot in STREAMING mode...');
-      
-      // Initialize bot info
-      await this.initializeBotInfo();
-      
-      // Setup and start stream
-      await this.setupStream();
-      await this.startStream();
-      
-      console.log('✅ Bot running in streaming mode. Press Ctrl+C to stop.');
-      
-      // Keep the process alive
-      process.on('SIGINT', () => {
-        console.log('\n🛑 Shutting down gracefully...');
-        if (this.stream) {
-          this.stream.close();
-        }
-        process.exit(0);
-      });
-      
-    } catch (error) {
-      console.error('❌ Fatal error in streaming mode:', error);
-      process.exit(1);
-    }
+    console.error('⚠️ STREAMING MODE IS DISABLED');
+    console.error('📋 Streaming requires Twitter API v2 with elevated access (not available in Essential plan)');
+    console.error('💡 Use batch mode instead: npm run twitter:batch');
+    console.error('🔄 For continuous operation, set up a cron job or use the polling batch mode');
+    
+    console.log('\n🔄 Switching to batch polling mode...');
+    await this.runBatchPolling();
   }
 
   /**
@@ -702,9 +822,10 @@ class TwitterRoastBot {
       await this.initializeBotInfo();
       
       // Process recent mentions
-      await this.processMentions();
+      const result = await this.processMentions();
       
-      console.log('🎉 Batch execution completed');
+      this.logEvent('success', 'Batch execution completed', result);
+      return result;
     } catch (error) {
       console.error('❌ Fatal error in batch mode:', error);
       process.exit(1);
@@ -712,13 +833,77 @@ class TwitterRoastBot {
   }
 
   /**
-   * Run the bot (default to streaming mode)
+   * Run the bot in batch polling mode (continuous with intervals)
    */
-  async run(mode = 'stream') {
+  async runBatchPolling() {
+    try {
+      console.log('🤖 Starting Roastr.ai Twitter Bot in BATCH POLLING mode...');
+      console.log(`⏰ Polling interval: ${this.batchConfig.intervalMinutes} minutes`);
+      
+      // Initialize bot info
+      await this.initializeBotInfo();
+      
+      this.batchConfig.pollingActive = true;
+      
+      // Keep the process alive
+      process.on('SIGINT', () => {
+        console.log('\n🛑 Shutting down batch polling gracefully...');
+        this.batchConfig.pollingActive = false;
+        process.exit(0);
+      });
+      
+      console.log('✅ Bot running in batch polling mode. Press Ctrl+C to stop.');
+      
+      // Main polling loop
+      while (this.batchConfig.pollingActive) {
+        try {
+          const cycleStart = Date.now();
+          this.debugLog(`🔃 [POLLING] Starting new cycle at ${new Date().toISOString()}`);
+          
+          const result = await this.processMentions();
+          
+          const cycleTime = Date.now() - cycleStart;
+          this.logEvent('info', `[POLLING] Cycle completed`, {
+            ...result,
+            cycleTimeMs: cycleTime,
+            nextCycleIn: `${this.batchConfig.intervalMinutes} minutes`
+          });
+          
+          // Wait for next cycle
+          const waitTimeMs = this.batchConfig.intervalMinutes * 60 * 1000;
+          this.debugLog(`⏳ [POLLING] Waiting ${this.batchConfig.intervalMinutes} minutes until next cycle...`);
+          
+          await this.sleep(waitTimeMs);
+          
+        } catch (error) {
+          this.logEvent('error', '[POLLING] Error in polling cycle', {
+            error: error.message,
+            nextRetryIn: '1 minute'
+          });
+          
+          // Wait 1 minute before retry on error
+          await this.sleep(60000);
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Fatal error in batch polling mode:', error);
+      process.exit(1);
+    }
+  }
+
+  /**
+   * Run the bot (default to batch mode for Essential API compatibility)
+   */
+  async run(mode = 'batch') {
     if (mode === 'batch') {
       await this.runBatch();
+    } else if (mode === 'polling') {
+      await this.runBatchPolling();
     } else {
-      await this.runStream();
+      // Stream mode is disabled, fallback to polling
+      console.warn('⚠️ Stream mode not available with Essential API plan, using batch polling instead');
+      await this.runBatchPolling();
     }
   }
 }
@@ -728,7 +913,14 @@ if (require.main === module) {
   const bot = new TwitterRoastBot();
   
   // Check for command line argument to determine mode
-  const mode = process.argv[2] === 'batch' ? 'batch' : 'stream';
+  let mode = process.argv[2] || 'batch'; // Default to batch mode
+  
+  // Map legacy modes
+  if (mode === 'stream') {
+    mode = 'polling'; // Convert stream to polling for Essential API compatibility
+    console.log('🔄 Converting stream mode to batch polling for Essential API compatibility');
+  }
+  
   console.log(`🚀 Starting bot in ${mode.toUpperCase()} mode...`);
   
   bot.run(mode);
