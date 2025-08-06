@@ -10,6 +10,7 @@
     "start:api": "node src/server.js",
     "twitter": "node src/services/twitter.js",
     "twitter:batch": "node src/services/twitter.js batch",
+    "twitter:batch:single": "RUN_MODE=single npm run twitter:batch",
     "twitter:stream": "node src/services/twitter.js stream",
     "twitter:server": "node src/twitterServer.js",
     "test": "jest --verbose",

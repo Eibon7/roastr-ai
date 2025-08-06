@@ -1,0 +1,37 @@
+# =============================================================================
+# Roastr.ai Twitter Bot - Configuración de Crontab para macOS
+# =============================================================================
+# 
+# INSTRUCCIONES:
+# 1. Editar crontab: crontab -e
+# 2. Copiar una de las líneas siguientes según el intervalo deseado
+# 3. Guardar y salir del editor
+# 4. Verificar: crontab -l
+#
+# NOTA: Descomenta (elimina el #) solo UNA línea para activar el cron job
+# =============================================================================
+
+# Cada 5 minutos (respuesta muy rápida - usar solo con cuentas muy activas)
+# */5 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+
+# Cada 10 minutos (respuesta rápida)
+# */10 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+
+# Cada 15 minutos (RECOMENDADO - buen balance entre respuesta y límites API)
+# */15 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+
+# Cada 30 minutos (conservador)
+# */30 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+
+# Cada hora (muy conservador - para cuentas con pocas menciones)
+# 0 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+
+# =============================================================================
+# COMANDOS ÚTILES:
+# =============================================================================
+# Ver cron jobs activos:     crontab -l
+# Editar cron jobs:          crontab -e  
+# Eliminar todos los crons:  crontab -r
+# Ver logs del bot:          tail -f /Users/emiliopostigo/roastr-ai/logs/cron_twitter.log
+# Probar manualmente:        /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+# =============================================================================

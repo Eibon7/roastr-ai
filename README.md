@@ -344,6 +344,110 @@ npm run twitter:batch   # Una sola ejecución (recomendado para testing)
 npm run twitter         # Modo polling continuo (recomendado para producción)
 ```
 
+## ⏱️ Automatización con Cron Jobs
+
+Para ejecutar el bot automáticamente cada X minutos usando cron jobs de macOS:
+
+### 🚀 Configuración Rápida
+
+1. **Verificar script disponible:**
+   ```bash
+   npm run twitter:batch:single  # Debe ejecutar en modo single y terminar
+   ```
+
+2. **Dar permisos al script de cron:**
+   ```bash
+   chmod +x cron_twitter.sh
+   ```
+
+3. **Configurar crontab:**
+   ```bash
+   crontab -e
+   ```
+   
+   **💡 Tip:** Puedes copiar desde `crontab.example` una de estas líneas según el intervalo deseado:
+   ```bash
+   # Cada 5 minutos
+   */5 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   
+   # Cada 10 minutos
+   */10 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   
+   # Cada 15 minutos
+   */15 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   
+   # Cada 30 minutos
+   */30 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   
+   # Cada hora
+   0 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   ```
+
+### 📊 Monitoreo y Logs
+
+**Ver logs en tiempo real:**
+```bash
+tail -f /Users/emiliopostigo/roastr-ai/logs/cron_twitter.log
+```
+
+**Ver últimos logs:**
+```bash
+tail -n 50 /Users/emiliopostigo/roastr-ai/logs/cron_twitter.log
+```
+
+**Limpiar logs antiguos:**
+```bash
+> /Users/emiliopostigo/roastr-ai/logs/cron_twitter.log
+```
+
+### 🔧 Gestión del Cron Job
+
+**Ver cron jobs activos:**
+```bash
+crontab -l
+```
+
+**Pausar el bot (comentar línea en crontab):**
+```bash
+crontab -e
+# Añadir # al inicio de la línea para desactivarla
+# */5 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+```
+
+**Desactivar completamente:**
+```bash
+crontab -r  # ⚠️ Esto elimina TODOS los cron jobs
+```
+
+### 🛠️ Troubleshooting
+
+**El cron job no funciona:**
+1. Verificar permisos: `ls -la cron_twitter.sh` (debe mostrar `-rwxr-xr-x`)
+2. Probar manualmente: `./cron_twitter.sh`
+3. Verificar ruta de npm: `which npm` (debe ser `/usr/local/bin/npm`)
+4. Revisar logs del sistema: `tail -f /var/log/cron`
+
+**Logs vacíos o sin actualizar:**
+1. Verificar que el script tiene permisos de escritura en `logs/`
+2. Ejecutar manualmente: `npm run twitter:batch:single`
+3. Revisar variables de entorno en el servidor
+
+**Rate limiting de Twitter:**
+1. Aumentar intervalo en crontab (ej: de */5 a */15 minutos)
+2. Verificar límites en el dashboard de Twitter Developer
+3. Ajustar `MAX_TWEETS_PER_HOUR` en `.env`
+
+### 📱 Ejemplos de Intervalos Recomendados
+
+| Intervalo | Línea Crontab | Uso Recomendado |
+|-----------|---------------|-----------------|
+| 5 minutos | `*/5 * * * *` | Respuesta rápida, para cuentas activas |
+| 15 minutos | `*/15 * * * *` | Balance entre respuesta y límites API |
+| 30 minutos | `*/30 * * * *` | Conservador, ideal para empezar |
+| 1 hora | `0 * * * *` | Muy conservador, cuentas con pocas menciones |
+
+**💡 Recomendación:** Empezar con 15 minutos y ajustar según la actividad de menciones y límites de API.
+
 ## Resumen Técnico para IA
 
 ```json
