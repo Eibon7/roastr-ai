@@ -1,314 +1,324 @@
-const BaseIntegration = require('../base/BaseIntegration');
+const MultiTenantIntegration = require('../base/MultiTenantIntegration');
 
-class InstagramService extends BaseIntegration {
-  constructor(config) {
-    super(config);
+/**
+ * Instagram Integration Service
+ * 
+ * Handles comment fetching and response generation for Instagram posts.
+ * Uses Instagram Basic Display API and Instagram Graph API for business accounts.
+ */
+class InstagramService extends MultiTenantIntegration {
+  constructor(options = {}) {
+    super('instagram', {
+      rateLimit: 200, // Instagram allows 200 requests per hour
+      supportDirectPosting: false, // Instagram doesn't allow automated comments via API
+      supportModeration: true, // Limited moderation capabilities (hide/delete)
+      ...options
+    });
     
-    // Instagram-specific configuration validation
-    const requiredFields = ['appId', 'appSecret', 'accessToken', 'userId'];
-    this.validateConfig(requiredFields);
-    
-    // Instagram API client will be initialized here
-    this.graphAPI = null;
-    this.webhookVerifyToken = config.webhookVerifyToken;
-    this.monitoredPosts = config.monitoredPosts || [];
-    this.pollingInterval = config.pollingInterval || 600000; // 10 minutes (Instagram has strict rate limits)
+    // Instagram API configuration
+    this.accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
+    this.clientId = process.env.INSTAGRAM_CLIENT_ID;
+    this.clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
+    this.graphApiVersion = 'v18.0';
+    this.baseUrl = `https://graph.instagram.com/${this.graphApiVersion}`;
   }
-
+  
   /**
-   * Authenticate with Instagram Graph API
+   * Platform-specific setup
    */
-  async authenticate() {
+  async setupPlatformSpecific() {
+    this.log('info', 'Setting up Instagram integration');
+    
+    if (!this.accessToken) {
+      throw new Error('Instagram access token not configured');
+    }
+    
+    // Test API connection
+    await this.testConnection();
+  }
+  
+  /**
+   * Test Instagram API connection
+   */
+  async testConnection() {
     try {
-      this.debugLog('Authenticating with Instagram Graph API...');
+      const response = await this.makeApiRequest(`/me`, {
+        fields: 'id,username'
+      });
       
-      // TODO: Initialize Instagram Graph API client
-      // Verify access token validity
-      // const response = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${this.config.accessToken}`);
-      // const data = await response.json();
-      // 
-      // if (data.error) {
-      //   throw new Error(`Instagram API error: ${data.error.message}`);
-      // }
+      this.log('info', 'Instagram API connection successful', {
+        userId: response.id,
+        username: response.username
+      });
       
-      console.log(`✅ Instagram API authentication successful for user: ${this.config.userId}`);
-      return true;
-      
+      return response;
     } catch (error) {
-      console.error('❌ Instagram authentication failed:', error.message);
-      throw error;
+      throw new Error(`Instagram API connection failed: ${error.message}`);
     }
   }
-
+  
   /**
-   * Start listening for new comments via webhooks or polling
+   * Validate Instagram configuration
    */
-  async listenForMentions() {
-    try {
-      console.log('👂 Starting Instagram comment monitoring...');
-      
-      // TODO: Set up webhook subscriptions if available
-      // For now, implement polling as fallback
-      // this.commentPollingInterval = setInterval(async () => {
-      //   await this.pollForNewComments();
-      // }, this.pollingInterval);
-      
-      console.log(`📸 Monitoring Instagram posts for comments and mentions`);
-      
-    } catch (error) {
-      console.error('❌ Failed to start Instagram monitoring:', error.message);
-      throw error;
+  validateConfiguration() {
+    if (!this.enabled) {
+      return false;
     }
+    
+    if (!this.accessToken) {
+      this.log('error', 'Instagram access token not configured');
+      return false;
+    }
+    
+    return true;
   }
-
+  
   /**
-   * Poll for new comments on monitored posts
+   * Fetch comments from Instagram media
    */
-  async pollForNewComments() {
+  async fetchComments(params = {}) {
+    await this.checkRateLimit();
+    
+    const {
+      mediaId,
+      userId = 'me',
+      maxResults = 25,
+      since = null,
+      before = null
+    } = params;
+    
     try {
-      this.debugLog('Polling for new Instagram comments...');
+      let mediaList = [];
       
-      // Get recent media posts
-      const recentPosts = await this.getRecentPosts();
-      
-      for (const post of recentPosts) {
-        await this.checkPostComments(post.id);
-        
-        // Add significant delay between posts to respect Instagram's strict rate limits
-        await this.sleep(5000);
+      if (mediaId) {
+        // Fetch comments for specific media
+        mediaList = [{ id: mediaId }];
+      } else {
+        // Fetch recent media first
+        mediaList = await this.getRecentMedia(userId, maxResults);
       }
       
-    } catch (error) {
-      console.error('❌ Error polling for Instagram comments:', error.message);
-    }
-  }
-
-  /**
-   * Get recent posts from the authenticated user
-   */
-  async getRecentPosts(limit = 5) {
-    try {
-      // TODO: Implement Instagram API call to get recent posts
-      // const response = await fetch(
-      //   `https://graph.instagram.com/${this.config.userId}/media?fields=id,caption,timestamp&limit=${limit}&access_token=${this.config.accessToken}`
-      // );
-      // const data = await response.json();
-      // 
-      // return data.data || [];
+      const allComments = [];
       
-      return []; // Placeholder
-      
-    } catch (error) {
-      console.error('❌ Error fetching recent posts:', error.message);
-      return [];
-    }
-  }
-
-  /**
-   * Check comments for a specific post
-   */
-  async checkPostComments(postId) {
-    try {
-      this.debugLog(`Checking comments for Instagram post: ${postId}`);
-      
-      // TODO: Implement Instagram API call to get comments
-      // const response = await fetch(
-      //   `https://graph.instagram.com/${postId}/comments?fields=id,text,username,timestamp&access_token=${this.config.accessToken}`
-      // );
-      // const data = await response.json();
-      // 
-      // // Process each comment
-      // for (const comment of data.data || []) {
-      //   await this.processInstagramComment(comment, postId);
-      // }
-      
-    } catch (error) {
-      console.error(`❌ Error checking comments for post ${postId}:`, error.message);
-    }
-  }
-
-  /**
-   * Process an Instagram comment and generate response if needed
-   */
-  async processInstagramComment(comment, postId) {
-    try {
-      // Check if comment mentions trigger words or our username
-      const shouldRespond = this.shouldRespondToComment(comment.text);
-      
-      if (shouldRespond) {
-        // Process using base class method
-        await this.processComment({
-          id: comment.id,
-          text: comment.text,
-          author: comment.username,
-          postId: postId,
-          timestamp: comment.timestamp
-        });
-        
-        // TODO: Generate and post response (with manual approval for sensitive content)
-        // const roast = await this.generateRoast(comment.text);
-        // 
-        // // Instagram requires more careful moderation
-        // if (await this.requiresManualApproval(roast)) {
-        //   await this.queueForManualApproval(comment, roast);
-        // } else {
-        //   await this.postResponse(comment.id, roast);
-        // }
+      for (const media of mediaList) {
+        try {
+          const comments = await this.getMediaComments(media.id, {
+            maxResults,
+            since,
+            before
+          });
+          
+          allComments.push(...comments);
+          
+        } catch (error) {
+          this.log('warn', 'Failed to fetch comments for media', {
+            mediaId: media.id,
+            error: error.message
+          });
+        }
       }
       
-    } catch (error) {
-      console.error('❌ Error processing Instagram comment:', error.message);
-    }
-  }
-
-  /**
-   * Post a response to an Instagram comment
-   */
-  async postResponse(commentId, responseText) {
-    try {
-      this.debugLog(`Posting response to Instagram comment ${commentId}: ${responseText.substring(0, 50)}...`);
-      
-      // TODO: Implement Instagram API call to post comment reply
-      // Note: Instagram Graph API has limited reply capabilities
-      // const response = await fetch(`https://graph.instagram.com/${commentId}/replies`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     message: responseText,
-      //     access_token: this.config.accessToken,
-      //   }),
-      // });
-      
-      console.log(`✅ Posted Instagram reply to comment ${commentId}`);
-      this.metrics.responsesGenerated++;
-      
-      return true;
+      return {
+        comments: allComments,
+        hasMore: allComments.length >= maxResults,
+        nextToken: allComments.length > 0 ? allComments[allComments.length - 1].id : null
+      };
       
     } catch (error) {
-      console.error(`❌ Failed to post Instagram response:`, error.message);
+      this.log('error', 'Failed to fetch Instagram comments', {
+        error: error.message,
+        params
+      });
       throw error;
     }
   }
-
+  
   /**
-   * Handle Instagram webhook notification
+   * Get recent media posts
    */
-  async handleWebhook(notification) {
-    try {
-      this.debugLog('Received Instagram webhook notification:', notification);
+  async getRecentMedia(userId = 'me', limit = 10) {
+    const response = await this.makeApiRequest(`/${userId}/media`, {
+      fields: 'id,media_type,media_url,permalink,timestamp,caption',
+      limit
+    });
+    
+    return response.data || [];
+  }
+  
+  /**
+   * Get comments for specific media
+   */
+  async getMediaComments(mediaId, options = {}) {
+    const { maxResults = 25, since, before } = options;
+    
+    const params = {
+      fields: 'id,text,timestamp,username,like_count,replies,parent_id',
+      limit: maxResults
+    };
+    
+    if (since) {
+      params.since = since;
+    }
+    
+    if (before) {
+      params.until = before;
+    }
+    
+    const response = await this.makeApiRequest(`/${mediaId}/comments`, params);
+    
+    const comments = (response.data || []).map(comment => this.normalizeInstagramComment(comment, mediaId));
+    
+    return comments;
+  }
+  
+  /**
+   * Normalize Instagram comment to standard format
+   */
+  normalizeInstagramComment(comment, mediaId) {
+    return {
+      id: comment.id,
+      text: comment.text || '',
+      author_id: comment.from?.id || comment.username,
+      author_name: comment.from?.username || comment.username,
+      created_at: comment.timestamp || new Date().toISOString(),
+      platform_data: {
+        ...comment,
+        media_id: mediaId,
+        platform: 'instagram'
+      },
+      metrics: {
+        likes: comment.like_count || 0,
+        replies: comment.replies?.data?.length || 0
+      },
+      parent_comment_id: comment.parent_id,
+      thread_id: mediaId,
+      language: 'unknown' // Instagram API doesn't provide language detection
+    };
+  }
+  
+  /**
+   * Instagram doesn't support automated comment posting via API
+   */
+  async postResponse(commentId, responseText, options = {}) {
+    throw new Error('Instagram does not support automated comment posting via API. Response will be stored for manual review.');
+  }
+  
+  /**
+   * Instagram has limited moderation capabilities via API
+   */
+  async performModerationAction(action, targetId, options = {}) {
+    switch (action) {
+      case 'hide_comment':
+        return await this.hideComment(targetId);
       
-      // TODO: Process webhook data
-      // if (notification.object === 'instagram' && notification.entry) {
-      //   for (const entry of notification.entry) {
-      //     if (entry.changes) {
-      //       for (const change of entry.changes) {
-      //         if (change.field === 'comments') {
-      //           await this.handleCommentChange(change.value);
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
+      case 'delete_comment':
+        return await this.deleteComment(targetId);
+        
+      default:
+        throw new Error(`Instagram moderation action '${action}' not supported`);
+    }
+  }
+  
+  /**
+   * Hide a comment (Instagram Business accounts only)
+   */
+  async hideComment(commentId) {
+    try {
+      await this.checkRateLimit();
+      
+      const response = await this.makeApiRequest(`/${commentId}`, {
+        hide: true
+      }, 'POST');
+      
+      this.log('info', 'Comment hidden successfully', { commentId });
+      
+      return {
+        success: true,
+        action: 'hide_comment',
+        commentId,
+        result: response
+      };
       
     } catch (error) {
-      console.error('❌ Error handling Instagram webhook:', error.message);
+      this.log('error', 'Failed to hide comment', {
+        commentId,
+        error: error.message
+      });
+      throw error;
     }
   }
-
+  
   /**
-   * Verify Instagram webhook
+   * Delete a comment (only if posted by authenticated user)
    */
-  verifyWebhook(mode, token, challenge) {
-    if (mode === 'subscribe' && token === this.webhookVerifyToken) {
-      console.log('✅ Instagram webhook verified');
-      return challenge;
-    } else {
-      console.error('❌ Instagram webhook verification failed');
-      return null;
-    }
-  }
-
-  /**
-   * Check if we should respond to a comment
-   */
-  shouldRespondToComment(commentText) {
-    const triggerWords = this.config.triggerWords || ['roast', 'burn', 'savage', 'comeback'];
-    const lowerText = commentText.toLowerCase();
-    
-    // Also check for mentions of our username
-    const username = this.config.username || '';
-    const hasMention = username && lowerText.includes(`@${username.toLowerCase()}`);
-    
-    return hasMention || triggerWords.some(word => lowerText.includes(word));
-  }
-
-  /**
-   * Check if response requires manual approval (Instagram is more sensitive)
-   */
-  async requiresManualApproval(responseText) {
-    // TODO: Implement more sophisticated content analysis
-    // Instagram has stricter community guidelines
-    
-    const sensitiveWords = ['stupid', 'idiot', 'hate', 'kill', 'die', 'ugly'];
-    const lowerText = responseText.toLowerCase();
-    
-    return sensitiveWords.some(word => lowerText.includes(word));
-  }
-
-  /**
-   * Queue response for manual approval
-   */
-  async queueForManualApproval(comment, roast) {
+  async deleteComment(commentId) {
     try {
-      // TODO: Implement manual approval queue
-      // This could be a database table or external service
+      await this.checkRateLimit();
       
-      console.log(`⏳ Queued Instagram response for manual approval: Comment ${comment.id}`);
+      await this.makeApiRequest(`/${commentId}`, {}, 'DELETE');
+      
+      this.log('info', 'Comment deleted successfully', { commentId });
+      
+      return {
+        success: true,
+        action: 'delete_comment',
+        commentId
+      };
       
     } catch (error) {
-      console.error('❌ Error queuing for manual approval:', error.message);
+      this.log('error', 'Failed to delete comment', {
+        commentId,
+        error: error.message
+      });
+      throw error;
     }
   }
-
+  
   /**
-   * Get Instagram account insights
+   * Make Instagram API request
    */
-  async getAccountInsights() {
-    try {
-      // TODO: Implement insights fetching
-      // const response = await fetch(
-      //   `https://graph.instagram.com/${this.config.userId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${this.config.accessToken}`
-      // );
-      // const data = await response.json();
-      // 
-      // return data.data;
-      
-      return {}; // Placeholder
-      
-    } catch (error) {
-      console.error('❌ Error fetching Instagram insights:', error.message);
-      return {};
-    }
-  }
-
-  /**
-   * Sleep utility
-   */
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Cleanup on shutdown
-   */
-  async shutdown() {
-    if (this.commentPollingInterval) {
-      clearInterval(this.commentPollingInterval);
+  async makeApiRequest(endpoint, params = {}, method = 'GET') {
+    const url = new URL(`${this.baseUrl}${endpoint}`);
+    
+    // Add access token to all requests
+    params.access_token = this.accessToken;
+    
+    // Add parameters to URL for GET requests
+    if (method === 'GET') {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          url.searchParams.append(key, params[key]);
+        }
+      });
     }
     
-    await super.shutdown();
+    const options = {
+      method,
+      headers: {
+        'User-Agent': 'Roastr-AI/1.0',
+        'Content-Type': 'application/json'
+      }
+    };
+    
+    // Add body for POST/PUT requests
+    if (method !== 'GET' && method !== 'DELETE') {
+      options.body = JSON.stringify(params);
+    }
+    
+    this.log('debug', 'Making Instagram API request', {
+      method,
+      endpoint,
+      url: url.toString().replace(this.accessToken || '', 'HIDDEN')
+    });
+    
+    const response = await fetch(url.toString(), options);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(`Instagram API error: ${data.error?.message || response.statusText}`);
+    }
+    
+    return data;
   }
 }
 

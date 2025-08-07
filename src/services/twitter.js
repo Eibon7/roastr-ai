@@ -6,8 +6,30 @@ const fs = require('fs-extra');
 const path = require('path');
 require('dotenv').config();
 
-class TwitterRoastBot {
-  constructor() {
+// Import BaseIntegration for unified integration management
+const BaseIntegration = require('../integrations/base/BaseIntegration');
+
+class TwitterRoastBot extends BaseIntegration {
+  constructor(config) {
+    // Get Twitter config from integrations or use defaults
+    let twitterConfig;
+    
+    try {
+      twitterConfig = config || require('../config/integrations').twitter;
+    } catch (error) {
+      // Fallback config if integrations config is not available
+      twitterConfig = {
+        enabled: true,
+        tone: 'sarcastic',
+        humorType: 'witty',
+        responseFrequency: 1.0,
+        triggerWords: ['roast', 'burn', 'insult']
+      };
+    }
+    
+    // Call parent constructor
+    super(twitterConfig);
+    
     // Validate config first
     if (!this.validateConfig()) {
       throw new Error('Invalid Twitter configuration');
@@ -401,6 +423,87 @@ class TwitterRoastBot {
     } catch (error) {
       console.error('❌ Error initializing bot info:', error);
       console.error('💡 Make sure your Twitter app has "Read and Write" permissions');
+      throw error;
+    }
+  }
+
+  /**
+   * Authenticate method for BaseIntegration compatibility
+   * This method is called by the IntegrationManager
+   */
+  async authenticate() {
+    try {
+      console.log('🔐 Authenticating with Twitter API...');
+      
+      // Initialize bot user info (this also validates authentication)
+      await this.initializeBotInfo();
+      
+      console.log('✅ Twitter authentication successful');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Twitter authentication failed:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Initialize method for BaseIntegration compatibility
+   * This method is called by the IntegrationManager
+   */
+  async initialize() {
+    try {
+      console.log('🚀 Initializing Twitter integration...');
+      
+      // Call parent initialize method
+      await super.initialize();
+      
+      console.log('✅ Twitter integration initialized successfully');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize Twitter integration:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Listen for mentions method for BaseIntegration compatibility
+   * This method is called by the IntegrationManager for batch processing
+   */
+  async listenForMentions() {
+    try {
+      console.log('👂 [TWITTER] Starting to listen for mentions in batch mode...');
+      
+      // Process recent mentions using existing batch logic
+      const result = await this.processMentions();
+      
+      console.log(`✅ [TWITTER] Batch processing completed`);
+      return result;
+      
+    } catch (error) {
+      console.error('❌ [TWITTER] Error in batch mention processing:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Post response method for BaseIntegration compatibility
+   * This method is called by the IntegrationManager to post responses
+   */
+  async postResponse(parentId, response) {
+    try {
+      // Use existing replyToTweet method
+      const result = await this.replyToTweet(parentId, response);
+      
+      // Update metrics
+      this.metrics.responsesGenerated++;
+      
+      return result;
+      
+    } catch (error) {
+      console.error('❌ [TWITTER] Error posting response:', error.message);
+      this.metrics.errorsEncountered++;
       throw error;
     }
   }

@@ -1,30 +1,140 @@
 const BaseIntegration = require('../base/BaseIntegration');
+const axios = require('axios');
+const fs = require('fs-extra');
+const path = require('path');
 
 class YouTubeService extends BaseIntegration {
   constructor(config) {
     super(config);
     
-    // YouTube-specific configuration validation
-    const requiredFields = ['clientId', 'clientSecret', 'refreshToken', 'channelId'];
-    this.validateConfig(requiredFields);
+    // YouTube API configuration (using API Key for simplicity)
+    this.apiKey = process.env.YOUTUBE_API_KEY;
+    this.channelId = process.env.YOUTUBE_CHANNEL_ID;
+    this.monitoredVideos = process.env.YOUTUBE_MONITORED_VIDEOS?.split(',') || [];
+    this.triggerWords = process.env.YOUTUBE_TRIGGER_WORDS?.split(',') || ['roast', 'burn', 'insult', 'comeback'];
+    this.maxResponsesPerHour = parseInt(process.env.YOUTUBE_MAX_RESPONSES_PER_HOUR) || 5;
     
-    // YouTube API client will be initialized here
-    this.youtube = null;
-    this.monitoredVideos = config.monitoredVideos || [];
-    this.pollingInterval = config.pollingInterval || 300000; // 5 minutes
+    // API endpoint for roast generation
+    this.roastApiUrl = process.env.ROAST_API_URL || 'https://roastr-lhcp7seuh-eibon7s-projects.vercel.app';
+    
+    // File tracking processed comments
+    this.processedCommentsFile = path.join(__dirname, '../../../data/processed_youtube.json');
+    
+    // Rate limiting
+    this.rateLimits = {
+      responsesPerHour: this.maxResponsesPerHour,
+      minDelayBetweenResponses: 10000, // 10 seconds between responses
+      responsesTimestamps: []
+    };
+    
+    // Error tracking
+    this.errorStats = {
+      consecutiveErrors: 0,
+      lastErrorTime: null,
+      maxConsecutiveErrors: 5
+    };
+    
+    // Initialize tracking
+    this.initializeProcessedComments();
   }
 
   /**
-   * Authenticate with YouTube API using OAuth 2.0
+   * Initialize processed comments tracking
+   */
+  async initializeProcessedComments() {
+    try {
+      await fs.ensureFile(this.processedCommentsFile);
+      const exists = await fs.pathExists(this.processedCommentsFile);
+      if (!exists || (await fs.readFile(this.processedCommentsFile, 'utf8')).trim() === '') {
+        await fs.writeJson(this.processedCommentsFile, { 
+          processedCommentIds: [],
+          lastCheck: null,
+          totalProcessed: 0,
+          platform: 'youtube'
+        }, { spaces: 2 });
+      }
+    } catch (error) {
+      console.error('❌ Error initializing processed comments file:', error);
+    }
+  }
+
+  /**
+   * Get processed comment IDs
+   */
+  async getProcessedCommentIds() {
+    try {
+      const data = await fs.readJson(this.processedCommentsFile);
+      return data.processedCommentIds || [];
+    } catch (error) {
+      console.error('❌ Error reading processed comments:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Mark comment as processed
+   */
+  async markCommentAsProcessed(commentId) {
+    try {
+      const data = await fs.readJson(this.processedCommentsFile);
+      if (!data.processedCommentIds) data.processedCommentIds = [];
+      
+      if (!data.processedCommentIds.includes(commentId)) {
+        data.processedCommentIds.push(commentId);
+        data.totalProcessed = (data.totalProcessed || 0) + 1;
+        data.lastProcessed = new Date().toISOString();
+        
+        // Keep only last 1000 processed comments
+        if (data.processedCommentIds.length > 1000) {
+          data.processedCommentIds = data.processedCommentIds.slice(-1000);
+        }
+        
+        await fs.writeJson(this.processedCommentsFile, data, { spaces: 2 });
+        this.debugLog(`📝 Marked comment ${commentId} as processed (total: ${data.totalProcessed})`);
+      }
+    } catch (error) {
+      console.error('❌ Error marking comment as processed:', error);
+    }
+  }
+
+  /**
+   * Update last check timestamp
+   */
+  async updateLastCheckTime() {
+    try {
+      const data = await fs.readJson(this.processedCommentsFile);
+      data.lastCheck = new Date().toISOString();
+      await fs.writeJson(this.processedCommentsFile, data, { spaces: 2 });
+    } catch (error) {
+      console.error('❌ Error updating last check time:', error);
+    }
+  }
+
+  /**
+   * Authenticate with YouTube API using API Key
    */
   async authenticate() {
     try {
       this.debugLog('Authenticating with YouTube API...');
       
-      // TODO: Initialize YouTube API client
-      // const { google } = require('googleapis');
-      // this.youtube = google.youtube('v3');
-      // Set up OAuth 2.0 authentication
+      if (!this.apiKey) {
+        throw new Error('YouTube API Key is required');
+      }
+      
+      // Initialize YouTube API client
+      const { google } = require('googleapis');
+      this.youtube = google.youtube({
+        version: 'v3',
+        auth: this.apiKey
+      });
+      
+      // Test authentication with a simple API call
+      await this.youtube.search.list({
+        part: 'snippet',
+        type: 'video',
+        maxResults: 1,
+        q: 'test'
+      });
       
       console.log('✅ YouTube API authentication successful');
       return true;
@@ -36,19 +146,21 @@ class YouTubeService extends BaseIntegration {
   }
 
   /**
-   * Start listening for new comments on monitored videos
+   * Start listening for new comments on monitored videos (batch mode)
    */
   async listenForMentions() {
     try {
-      console.log('👂 Starting YouTube comment monitoring...');
+      console.log('👂 Starting YouTube comment monitoring in batch mode...');
       
-      // TODO: Implement polling mechanism
-      // Set up interval to check for new comments
-      // this.commentPollingInterval = setInterval(async () => {
-      //   await this.pollForNewComments();
-      // }, this.pollingInterval);
+      if (this.monitoredVideos.length === 0) {
+        console.log('⚠️ No monitored videos configured');
+        return;
+      }
       
-      console.log(`📺 Monitoring ${this.monitoredVideos.length} YouTube videos for comments`);
+      // Process all monitored videos once
+      await this.runBatch();
+      
+      console.log(`✅ Batch processing completed for ${this.monitoredVideos.length} YouTube videos`);
       
     } catch (error) {
       console.error('❌ Failed to start YouTube monitoring:', error.message);
@@ -57,85 +169,147 @@ class YouTubeService extends BaseIntegration {
   }
 
   /**
-   * Poll for new comments on all monitored videos
+   * Run batch processing for all monitored videos
    */
-  async pollForNewComments() {
+  async runBatch() {
     try {
-      this.debugLog('Polling for new YouTube comments...');
+      this.debugLog('Running YouTube batch processing...');
+      
+      const processedCommentIds = await this.getProcessedCommentIds();
+      let totalNewComments = 0;
+      let totalResponses = 0;
       
       for (const videoId of this.monitoredVideos) {
-        await this.checkVideoComments(videoId);
-        
-        // Add delay between video checks to respect rate limits
-        await this.sleep(1000);
+        try {
+          this.debugLog(`Processing video: ${videoId}`);
+          
+          const comments = await this.getRecentComments(videoId);
+          const newComments = comments.filter(comment => !processedCommentIds.includes(comment.id));
+          
+          this.debugLog(`Found ${newComments.length} new comments for video ${videoId}`);
+          totalNewComments += newComments.length;
+          
+          for (const comment of newComments) {
+            if (await this.shouldProcessComment(comment)) {
+              await this.processComment(comment);
+              totalResponses++;
+              
+              // Respect rate limits
+              await this.sleep(this.rateLimits.minDelayBetweenResponses);
+              
+              // Check hourly rate limit
+              if (totalResponses >= this.rateLimits.responsesPerHour) {
+                console.log('⚠️ Hourly rate limit reached, stopping batch');
+                break;
+              }
+            }
+            
+            // Mark as processed even if not responded to
+            await this.markCommentAsProcessed(comment.id);
+          }
+          
+          // Add delay between video checks
+          await this.sleep(2000);
+          
+        } catch (videoError) {
+          console.error(`❌ Error processing video ${videoId}:`, videoError.message);
+          this.errorStats.consecutiveErrors++;
+        }
       }
       
+      await this.updateLastCheckTime();
+      
+      console.log(`✅ Batch completed: ${totalNewComments} new comments, ${totalResponses} responses generated`);
+      
     } catch (error) {
-      console.error('❌ Error polling for comments:', error.message);
+      console.error('❌ Error in batch processing:', error.message);
+      throw error;
     }
   }
 
   /**
-   * Check comments for a specific video
+   * Get recent comments for a specific video
    */
-  async checkVideoComments(videoId) {
+  async getRecentComments(videoId) {
     try {
-      this.debugLog(`Checking comments for video: ${videoId}`);
+      this.debugLog(`Getting recent comments for video: ${videoId}`);
       
-      // TODO: Implement YouTube API call to get comments
-      // const response = await this.youtube.commentThreads.list({
-      //   part: 'snippet',
-      //   videoId: videoId,
-      //   maxResults: 100,
-      //   order: 'time'
-      // });
+      const response = await this.youtube.commentThreads.list({
+        part: 'snippet',
+        videoId: videoId,
+        maxResults: 100,
+        order: 'time'
+      });
       
-      // Process each comment
-      // for (const thread of response.data.items) {
-      //   const comment = thread.snippet.topLevelComment.snippet;
-      //   await this.processYouTubeComment(comment, videoId);
-      // }
+      const comments = [];
+      
+      if (response.data.items) {
+        for (const thread of response.data.items) {
+          const snippet = thread.snippet.topLevelComment.snippet;
+          
+          comments.push({
+            id: thread.snippet.topLevelComment.id,
+            text: snippet.textDisplay || snippet.textOriginal,
+            author: snippet.authorDisplayName,
+            videoId: videoId,
+            publishedAt: snippet.publishedAt,
+            parentId: thread.id,
+            raw: thread
+          });
+        }
+      }
+      
+      this.debugLog(`Retrieved ${comments.length} comments for video ${videoId}`);
+      return comments;
       
     } catch (error) {
-      console.error(`❌ Error checking comments for video ${videoId}:`, error.message);
+      console.error(`❌ Error getting comments for video ${videoId}:`, error.message);
+      
+      // Handle quota exceeded or other API errors
+      if (error.message.includes('quota')) {
+        throw new Error('YouTube API quota exceeded');
+      }
+      
+      return [];
     }
   }
 
   /**
    * Process a YouTube comment and generate response if needed
    */
-  async processYouTubeComment(comment, videoId) {
+  async processComment(comment) {
     try {
-      // Check if comment mentions trigger words or phrases
-      const shouldRespond = this.shouldRespondToComment(comment.textDisplay);
+      this.debugLog(`Processing comment from ${comment.author}: ${comment.text.substring(0, 50)}...`);
       
-      if (shouldRespond) {
-        // Process using base class method
-        await this.processComment({
-          id: comment.id,
-          text: comment.textDisplay,
-          author: comment.authorDisplayName,
-          videoId: videoId
-        });
+      // Call base class method first
+      await super.processComment(comment);
+      
+      // Generate roast
+      const roast = await this.generateRoast(comment.text);
+      
+      if (roast) {
+        // Post response (currently dummy implementation)
+        await this.postResponse(comment.id, roast);
         
-        // TODO: Generate and post response
-        // const roast = await this.generateRoast(comment.textDisplay);
-        // await this.postResponse(comment.id, roast);
+        console.log(`✅ [YOUTUBE] Generated response for comment from ${comment.author}`);
+        this.metrics.responsesGenerated++;
       }
       
     } catch (error) {
       console.error('❌ Error processing YouTube comment:', error.message);
+      this.metrics.errorsEncountered++;
+      throw error;
     }
   }
 
   /**
-   * Post a response to a YouTube comment
+   * Post a response to a YouTube comment (dummy implementation for now)
    */
   async postResponse(commentId, responseText) {
     try {
-      this.debugLog(`Posting response to comment ${commentId}: ${responseText.substring(0, 50)}...`);
+      this.debugLog(`[DUMMY] Posting response to comment ${commentId}: ${responseText.substring(0, 50)}...`);
       
-      // TODO: Implement YouTube API call to post comment reply
+      // Dummy implementation - in real scenario would post to YouTube
       // const response = await this.youtube.comments.insert({
       //   part: 'snippet',
       //   requestBody: {
@@ -146,8 +320,8 @@ class YouTubeService extends BaseIntegration {
       //   }
       // });
       
-      console.log(`✅ Posted YouTube reply to comment ${commentId}`);
-      this.metrics.responsesGenerated++;
+      console.log(`✅ [DUMMY] Posted YouTube reply to comment ${commentId}:`);
+      console.log(`   📝 Response: "${responseText}"`);
       
       return true;
       
@@ -158,13 +332,114 @@ class YouTubeService extends BaseIntegration {
   }
 
   /**
+   * Check if we should process/respond to a comment
+   */
+  async shouldProcessComment(comment) {
+    try {
+      // Check if comment contains trigger words
+      const hasTriggerWords = this.shouldRespondToComment(comment.text);
+      if (!hasTriggerWords) {
+        this.debugLog(`Comment from ${comment.author} has no trigger words`);
+        return false;
+      }
+      
+      // Check rate limits
+      if (!this.canPostResponse()) {
+        this.debugLog('Rate limit reached, skipping comment');
+        return false;
+      }
+      
+      // Check global filters (length, banned words, etc.)
+      if (!this.passesGlobalFilters(comment.text)) {
+        this.debugLog(`Comment from ${comment.author} failed global filters`);
+        return false;
+      }
+      
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Error checking if should process comment:', error.message);
+      return false;
+    }
+  }
+
+  /**
    * Check if we should respond to a comment based on trigger words
    */
   shouldRespondToComment(commentText) {
-    const triggerWords = this.config.triggerWords || ['roast', 'burn', 'insult', 'comeback'];
+    const triggerWords = this.triggerWords || ['roast', 'burn', 'insult', 'comeback'];
     const lowerText = commentText.toLowerCase();
     
     return triggerWords.some(word => lowerText.includes(word));
+  }
+
+  /**
+   * Check if we can post a response (rate limiting)
+   */
+  canPostResponse() {
+    const now = Date.now();
+    const oneHourAgo = now - (60 * 60 * 1000);
+    
+    // Clean old timestamps
+    this.rateLimits.responsesTimestamps = this.rateLimits.responsesTimestamps.filter(
+      timestamp => timestamp > oneHourAgo
+    );
+    
+    // Check if under hourly limit
+    return this.rateLimits.responsesTimestamps.length < this.rateLimits.responsesPerHour;
+  }
+
+  /**
+   * Check global filters
+   */
+  passesGlobalFilters(text) {
+    // Length checks
+    const minLength = 5;
+    const maxLength = 2000;
+    
+    if (text.length < minLength || text.length > maxLength) {
+      return false;
+    }
+    
+    // Check for banned words
+    const bannedWords = ['spam', 'bot', 'fake'];
+    const lowerText = text.toLowerCase();
+    
+    return !bannedWords.some(word => lowerText.includes(word));
+  }
+
+  /**
+   * Generate roast using Roastr API
+   */
+  async generateRoast(commentText) {
+    try {
+      this.debugLog(`Generating roast for: ${commentText.substring(0, 50)}...`);
+      
+      const axios = require('axios');
+      
+      const response = await axios.post(`${this.roastApiUrl}/roast`, {
+        message: commentText
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ROASTR_API_KEY || 'default-key'
+        },
+        timeout: 15000
+      });
+      
+      if (response.data && response.data.roast) {
+        this.debugLog(`Generated roast: ${response.data.roast.substring(0, 50)}...`);
+        return response.data.roast;
+      }
+      
+      throw new Error('No roast in API response');
+      
+    } catch (error) {
+      console.error('❌ Error generating roast:', error.message);
+      
+      // Fallback roast
+      return `¡Vaya comentario más original! Seguro que tardaste horas en pensarlo. 🔥`;
+    }
   }
 
   /**

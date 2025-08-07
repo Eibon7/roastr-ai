@@ -4,7 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a toxicity detection system for comment filtering and automatic moderation in the Roastr tool. The project is built with Node.js and integrates with OpenAI and Google's Perspective API for toxicity analysis.
+This is a comprehensive multi-tenant toxicity detection and roast generation system for social media platforms. The project features a scalable architecture built with Node.js, supporting multiple organizations with dedicated workers, cost control, and automated moderation through the Shield system.
+
+### Multi-Tenant Architecture
+
+The system is designed as a multi-tenant SaaS platform with:
+
+- **Row Level Security (RLS)** for complete data isolation between organizations
+- **Usage-based billing** with plan limits and cost tracking
+- **Dedicated worker system** for scalable background processing  
+- **Unified queue management** supporting Redis/Upstash and database fallback
+- **Shield automated moderation** with priority-based action system
+- **9 platform integrations** (Twitter, YouTube, Instagram, Facebook, etc.)
 
 ## Development Commands
 
@@ -27,56 +38,112 @@ npm run twitter
 # Install dependencies
 npm install
 
-# Run tests (when implemented)
-npm test
+# Multi-tenant worker system
+npm run workers:start           # Start all workers
+npm run workers:status          # Check worker status
+npm run workers:status:watch    # Monitor workers in real-time
+
+# Queue management
+npm run queue:status            # Check queue status
+npm run queue:manage            # Interactive queue management
+npm run queue:monitor           # Real-time queue monitoring
+npm run queue:clear-all         # Clear all queues
+npm run queue:retry             # Retry failed jobs
+
+# Testing
+npm test                        # Run all tests
+npm run test:coverage           # Run tests with coverage
 ```
 
-## Project Structure
+## Multi-Tenant Project Structure
 
 ```
 src/
-├── index.js           # Main entry point (Express server)
-├── cli.js             # CLI tool for testing roasts
-├── server.js          # Alternative server entry point
+├── index.js                          # Main API server
+├── cli.js                            # CLI tool for testing
+├── server.js                         # Alternative server entry point
 ├── config/
-│   └── index.js       # Configuration management
+│   └── index.js                      # Configuration management
 ├── services/
-│   ├── openai.js      # OpenAI API integration
-│   ├── perspective.js # Perspective API integration
-│   ├── perspectiveMock.js     # Mock toxicity detection
-│   ├── roastGeneratorMock.js  # Mock roast generator
-│   ├── roastGeneratorReal.js  # Real OpenAI roast generator
-│   └── twitter.js     # Twitter/X bot integration
+│   ├── costControl.js                # Usage tracking & billing
+│   ├── queueService.js               # Unified Redis/DB queue system
+│   ├── shieldService.js              # Automated moderation
+│   ├── openai.js                     # OpenAI integration
+│   ├── perspective.js                # Perspective API
+│   └── twitter.js                    # Legacy Twitter bot
+├── workers/
+│   ├── BaseWorker.js                 # Base worker class
+│   ├── FetchCommentsWorker.js        # Comment fetching
+│   ├── AnalyzeToxicityWorker.js      # Toxicity analysis
+│   ├── GenerateReplyWorker.js        # Roast generation
+│   ├── ShieldActionWorker.js         # Moderation actions
+│   └── cli/
+│       ├── start-workers.js          # Worker management
+│       ├── worker-status.js          # Status monitoring  
+│       └── queue-manager.js          # Queue management
+├── integrations/
+│   ├── twitter/twitterService.js     # Twitter API v2
+│   ├── youtube/youtubeService.js     # YouTube Data API
+│   ├── instagram/instagramService.js # Instagram Basic API
+│   ├── facebook/facebookService.js   # Facebook Graph API
+│   ├── discord/discordService.js     # Discord Bot API
+│   ├── twitch/twitchService.js       # Twitch API
+│   ├── reddit/redditService.js       # Reddit API
+│   ├── tiktok/tiktokService.js       # TikTok Business API
+│   └── bluesky/blueskyService.js     # Bluesky AT Protocol
 └── utils/
-    └── logger.js      # Logging utility
+    └── logger.js                     # Logging utility
 
-public/
-├── index.html         # Frontend web interface
-├── script.js          # Frontend JavaScript
-└── style.css          # Frontend styles
+database/
+└── schema.sql                        # Multi-tenant PostgreSQL schema
 
-data/
-└── processed_tweets.json  # Twitter bot state (auto-generated)
+tests/
+├── unit/
+│   ├── services/                     # Service unit tests
+│   └── workers/                      # Worker unit tests
+├── integration/
+│   └── multiTenantWorkflow.test.js   # E2E workflow tests
+└── helpers/
+    └── testUtils.js                  # Test utilities
 ```
 
 ## Environment Variables
 
 Set these environment variables for API integrations:
 
-**Core API:**
-- `OPENAI_API_KEY` - OpenAI API key for roast generation (required for Phase 1.5)
-- `ROASTR_API_KEY` - Custom API key for /roast endpoint authentication
-- `PERSPECTIVE_API_KEY` - Google Perspective API key (for future real toxicity detection)
+**Core Database & Queue:**
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_KEY` - Supabase service key (for server operations)
+- `SUPABASE_ANON_KEY` - Supabase anonymous key (for client operations)
+- `UPSTASH_REDIS_REST_URL` - Upstash Redis REST URL for serverless queues
+- `UPSTASH_REDIS_REST_TOKEN` - Upstash Redis REST token
+- `REDIS_URL` - Standard Redis URL (fallback)
+
+**AI & Moderation APIs:**
+- `OPENAI_API_KEY` - OpenAI API key for roast generation and content moderation
+- `PERSPECTIVE_API_KEY` - Google Perspective API key for toxicity detection
 - `NODE_ENV` - Set to 'production' to disable debug logging
 - `DEBUG` - Set to 'true' to enable detailed logging
 
-**Twitter Integration:**
-- `TWITTER_BEARER_TOKEN` - Twitter Bearer Token for reading mentions (OAuth 2.0)
+**Platform Integrations:**
+- `TWITTER_BEARER_TOKEN` - Twitter Bearer Token for reading
 - `TWITTER_APP_KEY` - Twitter Consumer Key
 - `TWITTER_APP_SECRET` - Twitter Consumer Secret  
 - `TWITTER_ACCESS_TOKEN` - Twitter Access Token for posting
 - `TWITTER_ACCESS_SECRET` - Twitter Access Token Secret
+- `YOUTUBE_API_KEY` - YouTube Data API v3 key
+- `INSTAGRAM_ACCESS_TOKEN` - Instagram Basic Display API token
+- `FACEBOOK_ACCESS_TOKEN` - Facebook Graph API token
+- `DISCORD_BOT_TOKEN` - Discord bot token
+- `TWITCH_CLIENT_ID` - Twitch API client ID
+- `TWITCH_CLIENT_SECRET` - Twitch API client secret
+- `REDDIT_CLIENT_ID` - Reddit API client ID
+- `REDDIT_CLIENT_SECRET` - Reddit API client secret
+
+**Optional Configuration:**
+- `ROASTR_API_KEY` - Custom API key for /roast endpoint authentication
 - `ROAST_API_URL` - URL of roast API (optional, defaults to production)
+- `SHIELD_ENABLED` - Enable Shield automated moderation (default: true for Pro+ plans)
 
 ### Setting up OpenAI API for real roast generation:
 
@@ -98,15 +165,49 @@ If the OpenAI API fails, the CLI automatically falls back to the mock generator.
 5. Add all credentials to `.env` file
 6. Run `npm run twitter` to start the bot
 
-## Architecture
+## Multi-Tenant Architecture
 
-- **API Layer**: Express server (`src/index.js`) with REST endpoints
-- **Services Layer**: Handles external API communications (OpenAI, Perspective, Twitter)
-- **Bot Layer**: Twitter integration (`src/services/twitter.js`) for automated responses
-- **CLI Layer**: Command-line tool (`src/cli.js`) for testing
-- **Frontend**: Simple web interface (`public/`) for manual testing
-- **Config Layer**: Environment-based configuration management
-- **Utils Layer**: Shared utilities like logging
+The system is built on a comprehensive multi-tenant architecture designed for scale:
+
+### Core Components
+
+- **API Layer**: Express server with multi-tenant authentication and organization-scoped endpoints
+- **Database Layer**: PostgreSQL with Row Level Security (RLS) for complete tenant isolation
+- **Queue System**: Unified Redis/Upstash + Database queue management with priority support
+- **Worker System**: Dedicated background workers for scalable comment processing
+- **Cost Control**: Usage tracking, billing integration, and automatic limit enforcement
+- **Shield System**: Automated content moderation with escalating actions
+
+### Worker Architecture
+
+1. **FetchCommentsWorker**: Fetches comments from 9 social media platforms
+2. **AnalyzeToxicityWorker**: Analyzes content toxicity using Perspective API + OpenAI fallback
+3. **GenerateReplyWorker**: Generates AI roast responses with cost control
+4. **ShieldActionWorker**: Executes automated moderation actions (mute, block, report)
+
+### Data Flow
+
+```
+Comment Detection → Queue (fetch_comments)
+    ↓
+Comment Fetching → Store in Database → Queue (analyze_toxicity)
+    ↓
+Toxicity Analysis → Update Database → Queue (generate_reply) + Shield Analysis
+    ↓
+Response Generation → Store Roast → Queue (post_response)
+    ↓
+Shield Actions (if needed) → Queue (shield_action) [Priority 1]
+    ↓
+Platform Actions → Moderation Complete
+```
+
+### Scaling Features
+
+- **Horizontal scaling** via multiple worker instances
+- **Priority-based job processing** (Shield actions get priority 1)
+- **Automatic failover** from Redis to Database queues
+- **Cost-based throttling** to prevent overages
+- **Real-time monitoring** and alerting
 
 ## Twitter Bot Features
 

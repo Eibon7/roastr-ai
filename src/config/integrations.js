@@ -6,6 +6,22 @@ module.exports = {
   maxConcurrent: parseInt(process.env.MAX_CONCURRENT_INTEGRATIONS) || 3,
   debugMode: process.env.INTEGRATION_DEBUG_MODE === 'true',
 
+  // Configuración global de Roastr modes
+  roastrMode: process.env.ROASTR_MODE || 'normal', // 'normal' or 'shield'
+  
+  // Shield mode configuration
+  shield: {
+    enabled: process.env.ROASTR_SHIELD_ENABLED === 'true',
+    autoActions: process.env.SHIELD_AUTO_ACTIONS === 'true',
+    reincidenceThreshold: parseInt(process.env.SHIELD_REINCIDENCE_THRESHOLD) || 3,
+    severityLevels: {
+      low: { action: 'warn', threshold: 1 },
+      medium: { action: 'mute', threshold: 2 },
+      high: { action: 'block', threshold: 3 },
+      critical: { action: 'report', threshold: 1 }
+    }
+  },
+
   // Configuración de Twitter (existente)
   twitter: {
     enabled: process.env.TWITTER_ENABLED === 'true',
@@ -16,11 +32,26 @@ module.exports = {
     accessSecret: process.env.TWITTER_ACCESS_SECRET,
     maxTweetsPerHour: parseInt(process.env.MAX_TWEETS_PER_HOUR) || 10,
     minDelayBetweenTweets: parseInt(process.env.MIN_DELAY_BETWEEN_TWEETS) || 5000,
+    
+    // Configuración personalizada por integración
+    tone: process.env.TWITTER_TONE || 'sarcastic', // sarcastic, ironic, absurd
+    humorType: process.env.TWITTER_HUMOR_TYPE || 'witty',
+    responseFrequency: parseFloat(process.env.TWITTER_RESPONSE_FREQUENCY) || 1.0, // 0.33 = 1 de cada 3
+    triggerWords: process.env.TWITTER_TRIGGER_WORDS?.split(',') || ['roast', 'burn', 'insult'],
+    
+    // Shield mode específico
+    shieldActions: {
+      enabled: process.env.TWITTER_SHIELD_ENABLED === 'true',
+      muteEnabled: process.env.TWITTER_SHIELD_MUTE === 'true',
+      blockEnabled: process.env.TWITTER_SHIELD_BLOCK === 'true',
+      reportEnabled: process.env.TWITTER_SHIELD_REPORT === 'true',
+    }
   },
 
   // Configuración de YouTube
   youtube: {
     enabled: process.env.YOUTUBE_ENABLED === 'true',
+    apiKey: process.env.YOUTUBE_API_KEY,
     clientId: process.env.YOUTUBE_CLIENT_ID,
     clientSecret: process.env.YOUTUBE_CLIENT_SECRET,
     refreshToken: process.env.YOUTUBE_REFRESH_TOKEN,
@@ -29,6 +60,19 @@ module.exports = {
     pollingInterval: parseInt(process.env.YOUTUBE_POLLING_INTERVAL) || 300000, // 5 minutes
     triggerWords: process.env.YOUTUBE_TRIGGER_WORDS?.split(',') || ['roast', 'burn', 'insult', 'comeback'],
     maxResponsesPerHour: parseInt(process.env.YOUTUBE_MAX_RESPONSES_PER_HOUR) || 5,
+    
+    // Configuración personalizada por integración
+    tone: process.env.YOUTUBE_TONE || 'ironic', // sarcastic, ironic, absurd
+    humorType: process.env.YOUTUBE_HUMOR_TYPE || 'clever',
+    responseFrequency: parseFloat(process.env.YOUTUBE_RESPONSE_FREQUENCY) || 0.5, // 50% chance
+    
+    // Shield mode específico
+    shieldActions: {
+      enabled: process.env.YOUTUBE_SHIELD_ENABLED === 'true',
+      removeComments: process.env.YOUTUBE_SHIELD_REMOVE === 'true',
+      reportUsers: process.env.YOUTUBE_SHIELD_REPORT === 'true',
+      blockUsers: process.env.YOUTUBE_SHIELD_BLOCK === 'true',
+    }
   },
 
   // Configuración de Bluesky

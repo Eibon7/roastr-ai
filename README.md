@@ -344,128 +344,402 @@ npm run twitter:batch   # Una sola ejecución (recomendado para testing)
 npm run twitter         # Modo polling continuo (recomendado para producción)
 ```
 
-## ⏱️ Automatización con Cron Jobs
+## ⏱️ Sistema de Integración Unificado con Cron Jobs
 
-Para ejecutar el bot automáticamente cada X minutos usando cron jobs de macOS:
+Roastr.ai ahora soporta múltiples plataformas (Twitter, YouTube, Bluesky, Instagram) a través de un sistema de cron unificado que reemplaza el anterior sistema específico de Twitter.
 
-### 🚀 Configuración Rápida
+### 🚀 Configuración Rápida (Sistema Nuevo)
 
-1. **Verificar script disponible:**
+1. **Configurar variables de entorno:**
    ```bash
-   npm run twitter:batch:single  # Debe ejecutar en modo single y terminar
+   # Copiar y configurar variables de entorno
+   cp .env.example .env
+   # Editar .env con tus claves de API
    ```
 
-2. **Dar permisos al script de cron:**
+2. **Probar el sistema unificado:**
    ```bash
-   chmod +x cron_twitter.sh
+   # Probar con debug activado
+   npm run integrations:test
+   
+   # Ejecutar batch una vez
+   npm run integrations:batch
    ```
 
-3. **Configurar crontab:**
+3. **Configurar cron unificado:**
    ```bash
+   # Dar permisos al script
+   chmod +x cron_integrations.sh
+   
+   # Configurar crontab
    crontab -e
    ```
    
-   **💡 Tip:** Puedes copiar desde `crontab.example` una de estas líneas según el intervalo deseado:
+   **💡 Líneas recomendadas para crontab:**
    ```bash
-   # Cada 5 minutos
-   */5 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   # Cada 5 minutos (activo)
+   */5 * * * * /Users/emiliopostigo/roastr-ai/cron_integrations.sh
    
-   # Cada 10 minutos
-   */10 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   # Cada 10 minutos (equilibrado)
+   */10 * * * * /Users/emiliopostigo/roastr-ai/cron_integrations.sh
    
-   # Cada 15 minutos
-   */15 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
-   
-   # Cada 30 minutos
-   */30 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
-   
-   # Cada hora
-   0 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   # Cada 15 minutos (conservador)
+   */15 * * * * /Users/emiliopostigo/roastr-ai/cron_integrations.sh
    ```
 
-### 📊 Monitoreo y Logs
+### 📈 Configuración de Integraciones
 
-**Ver logs en tiempo real:**
+**Habilitar/deshabilitar integraciones:**
 ```bash
-tail -f /Users/emiliopostigo/roastr-ai/logs/cron_twitter.log
+# En tu archivo .env
+
+# Solo Twitter (compatible con sistema legacy)
+INTEGRATIONS_ENABLED=twitter
+TWITTER_ENABLED=true
+
+# Twitter + YouTube (sistema multiplatforma)
+INTEGRATIONS_ENABLED=twitter,youtube
+TWITTER_ENABLED=true
+YOUTUBE_ENABLED=true
+
+# Todas las plataformas disponibles
+INTEGRATIONS_ENABLED=twitter,youtube,bluesky,instagram
+
+# Solo YouTube (desactivar Twitter)
+INTEGRATIONS_ENABLED=youtube
+TWITTER_ENABLED=false
+YOUTUBE_ENABLED=true
+
+# Desactivar todas las integraciones
+INTEGRATIONS_ENABLED=
+# o vacío para ninguna integración activa
+```
+
+**Variables requeridas por plataforma:**
+- **Twitter**: `TWITTER_BEARER_TOKEN`, `TWITTER_ACCESS_TOKEN`, `TWITTER_APP_KEY`, `TWITTER_APP_SECRET`, `TWITTER_ACCESS_SECRET`
+- **YouTube**: `YOUTUBE_API_KEY`, `YOUTUBE_CHANNEL_ID`, `YOUTUBE_MONITORED_VIDEOS`
+- **Bluesky**: `BLUESKY_HANDLE`, `BLUESKY_PASSWORD`
+- **Instagram**: `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_APP_ID`
+
+### 📊 Monitoreo y Logs (Sistema Nuevo)
+
+**Ver logs del sistema unificado:**
+```bash
+tail -f /Users/emiliopostigo/roastr-ai/logs/cron_integrations.log
+```
+
+**Ver métricas en tiempo real:**
+```bash
+# Los logs incluyen métricas por plataforma
+tail -f /Users/emiliopostigo/roastr-ai/logs/cron_integrations.log | grep "SUMMARY"
 ```
 
 **Ver últimos logs:**
 ```bash
-tail -n 50 /Users/emiliopostigo/roastr-ai/logs/cron_twitter.log
+tail -n 100 /Users/emiliopostigo/roastr-ai/logs/cron_integrations.log
 ```
 
-**Limpiar logs antiguos:**
+### 🔄 Migración desde Sistema Twitter-Only
+
+**Si tienes el cron anterior configurado:**
+
+1. **Desactivar cron anterior:**
+   ```bash
+   crontab -e
+   # Comentar líneas del cron_twitter.sh:
+   # */5 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+   ```
+
+2. **Activar sistema unificado:**
+   ```bash
+   # Configurar integraciones habilitadas
+   echo "INTEGRATIONS_ENABLED=twitter,youtube" >> .env
+   
+   # Configurar nuevo cron
+   crontab -e
+   # Añadir nueva línea:
+   */5 * * * * /Users/emiliopostigo/roastr-ai/cron_integrations.sh
+   ```
+
+3. **Verificar migración:**
+   ```bash
+   # Probar manualmente
+   ./cron_integrations.sh
+   
+   # Verificar logs
+   tail -n 50 /Users/emiliopostigo/roastr-ai/logs/cron_integrations.log
+   ```
+
+### ✅ **Compatibilidad Twitter Garantizada**
+
+El bot de Twitter mantiene **100% de compatibilidad** con el sistema anterior:
+
+**Ejecución Manual (sigue funcionando):**
 ```bash
-> /Users/emiliopostigo/roastr-ai/logs/cron_twitter.log
+npm run twitter:batch        # Modo batch tradicional
+npm run twitter             # Modo polling continuo
+RUN_MODE=single npm run twitter:batch  # Una ejecución para cron
 ```
 
-### 🔧 Gestión del Cron Job
+**Ejecución Unificada (nueva funcionalidad):**
+```bash
+npm run integrations:batch  # Ejecuta todas las integraciones activas
+npm run integrations:test   # Prueba todas las integraciones
+npm run integrations:cron   # Script de cron unificado
+```
+
+**Verificación de Twitter en sistema unificado:**
+```bash
+# Probar solo Twitter
+INTEGRATIONS_ENABLED=twitter npm run integrations:test
+
+# Ver estado de Twitter
+curl http://localhost:3000/api/integrations/metrics
+```
+
+⚠️ **Nota importante**: Si ya tienes Twitter funcionando con el sistema anterior, no necesitas cambiar nada. Ambos sistemas coexisten perfectamente.
+
+### 🔧 Gestión del Sistema Unificado
+
+**Ver estado de todas las integraciones:**
+```bash
+npm run integrations:test
+```
+
+**Comandos disponibles:**
+```bash
+npm run integrations:batch    # Ejecutar batch una vez
+npm run integrations:cron     # Ejecutar script de cron manualmente
+npm run integrations:test     # Ejecutar con debug activado
+```
 
 **Ver cron jobs activos:**
 ```bash
 crontab -l
 ```
 
-**Pausar el bot (comentar línea en crontab):**
+### 🛠️ Troubleshooting Sistema Unificado
+
+**El sistema unificado no funciona:**
+1. **Verificar configuración:**
+   ```bash
+   # Probar configuración
+   DEBUG=true npm run integrations:batch
+   ```
+
+2. **Verificar permisos:**
+   ```bash
+   ls -la cron_integrations.sh  # Debe mostrar -rwxr-xr-x
+   ```
+
+3. **Verificar integraciones habilitadas:**
+   ```bash
+   grep "INTEGRATIONS_ENABLED" .env
+   ```
+
+**Problemas específicos por plataforma:**
+- **YouTube**: Verificar `YOUTUBE_API_KEY` y quotas de API
+- **Twitter**: Verificar tokens OAuth no hayan expirado
+- **Bluesky**: Verificar credenciales de usuario
+- **Instagram**: Verificar tokens de aplicación
+
+### 📱 Intervalos Recomendados por Plataforma
+
+| Plataforma | Intervalo Mínimo | Intervalo Recomendado | Rate Limits |
+|------------|------------------|----------------------|-------------|
+| Twitter | 5 minutos | 10 minutos | 100 req/15min |
+| YouTube | 10 minutos | 15 minutos | 10,000 units/day |
+| Bluesky | 1 minuto | 5 minutos | Sin límites oficiales |
+| Instagram | 30 minutos | 60 minutos | 600 req/hour |
+
+**💡 Recomendación Sistema Multi-Plataforma:** Usar intervalos de 10-15 minutos para balance óptimo entre respuesta y límites de API.
+
+### 📋 Comparación: Sistema Anterior vs Nuevo
+
+| Característica | Sistema Anterior | Sistema Nuevo |
+|----------------|------------------|---------------|
+| Plataformas | Solo Twitter | Twitter, YouTube, Bluesky, Instagram |
+| Scripts | `cron_twitter.sh` | `cron_integrations.sh` |
+| Configuración | Variables Twitter | Sistema unificado `.env` |
+| Logs | `logs/cron_twitter.log` | `logs/cron_integrations.log` |
+| Comandos | `npm run twitter:batch` | `npm run integrations:batch` |
+| Métricas | Por ejecución | Por plataforma + global |
+
+### 🔄 Proceso de Migración Completo
+
+1. **Backup configuración anterior:**
+   ```bash
+   cp .env .env.backup
+   crontab -l > crontab.backup
+   ```
+
+2. **Configurar sistema nuevo:**
+   ```bash
+   # Actualizar .env con nuevas variables
+   cp .env.example .env.new
+   # Migrar valores de .env.backup a .env.new
+   mv .env.new .env
+   ```
+
+3. **Actualizar crontab:**
+   ```bash
+   crontab -e
+   # Comentar líneas antiguas, añadir línea nueva del sistema unificado
+   ```
+
+4. **Verificar funcionamiento:**
+   ```bash
+   ./cron_integrations.sh
+   tail -f /Users/emiliopostigo/roastr-ai/logs/cron_integrations.log
+   ```
+
+## 🎯 Roastr Normal vs 🛡️ Roastr Shield
+
+Roastr.ai ahora opera en dos modos distintos:
+
+### 🎯 **Roastr Normal**
+- **Propósito**: Humor y entretenimiento
+- **Respuestas**: Roasts ingenioso y sarcásticos
+- **Configuración**: Tono personalizable por plataforma
+- **Logs**: Contenido normal, sin restricciones de visualización
+
+### 🛡️ **Roastr Shield** 
+- **Propósito**: Moderación defensiva y protección
+- **Funcionalidades avanzadas**:
+  - Detección de usuarios reincidentes
+  - Acciones automáticas (silenciar, bloquear, reportar)
+  - Análisis de severidad de comentarios
+  - Tracking de patrones de comportamiento tóxico
+- **Logs**: Contenido sensible con advertencias
+- **Acceso**: Panel de configuración con advertencias de contenido
+
+### 📊 **Panel de Configuración**
+
+Accede al panel web de configuración en: `http://localhost:3000/integrations.html`
+
+**Funcionalidades del Panel**:
+- Configuración individual por plataforma
+- Sliders de frecuencia de respuesta
+- Preview de roasts con diferentes tonos
+- Vista de logs separados (Normal/Shield/Integración)
+- Métricas en tiempo real
+- Estadísticas de reincidencia
+
+### 🔧 **Configuración Personalizada por Integración**
+
+Cada plataforma puede configurarse independientemente:
+
 ```bash
-crontab -e
-# Añadir # al inicio de la línea para desactivarla
-# */5 * * * * /Users/emiliopostigo/roastr-ai/cron_twitter.sh
+# Configuración de Twitter
+TWITTER_TONE=sarcastic           # sarcastic, ironic, absurd
+TWITTER_HUMOR_TYPE=witty         # witty, clever, playful
+TWITTER_RESPONSE_FREQUENCY=1.0   # 1.0 = siempre, 0.33 = 1 de cada 3
+
+# Configuración de YouTube  
+YOUTUBE_TONE=ironic
+YOUTUBE_RESPONSE_FREQUENCY=0.5   # 50% de probabilidad de responder
+
+# Shield Mode (solo si ROASTR_MODE=shield)
+TWITTER_SHIELD_MUTE=true         # Silenciar usuarios reincidentes
+YOUTUBE_SHIELD_REMOVE=true       # Eliminar comentarios ofensivos
 ```
-
-**Desactivar completamente:**
-```bash
-crontab -r  # ⚠️ Esto elimina TODOS los cron jobs
-```
-
-### 🛠️ Troubleshooting
-
-**El cron job no funciona:**
-1. Verificar permisos: `ls -la cron_twitter.sh` (debe mostrar `-rwxr-xr-x`)
-2. Probar manualmente: `./cron_twitter.sh`
-3. Verificar ruta de npm: `which npm` (debe ser `/usr/local/bin/npm`)
-4. Revisar logs del sistema: `tail -f /var/log/cron`
-
-**Logs vacíos o sin actualizar:**
-1. Verificar que el script tiene permisos de escritura en `logs/`
-2. Ejecutar manualmente: `npm run twitter:batch:single`
-3. Revisar variables de entorno en el servidor
-
-**Rate limiting de Twitter:**
-1. Aumentar intervalo en crontab (ej: de */5 a */15 minutos)
-2. Verificar límites en el dashboard de Twitter Developer
-3. Ajustar `MAX_TWEETS_PER_HOUR` en `.env`
-
-### 📱 Ejemplos de Intervalos Recomendados
-
-| Intervalo | Línea Crontab | Uso Recomendado |
-|-----------|---------------|-----------------|
-| 5 minutos | `*/5 * * * *` | Respuesta rápida, para cuentas activas |
-| 15 minutos | `*/15 * * * *` | Balance entre respuesta y límites API |
-| 30 minutos | `*/30 * * * *` | Conservador, ideal para empezar |
-| 1 hora | `0 * * * *` | Muy conservador, cuentas con pocas menciones |
-
-**💡 Recomendación:** Empezar con 15 minutos y ajustar según la actividad de menciones y límites de API.
 
 ## Resumen Técnico para IA
 
 ```json
 {
   "name": "Roastr.ai",
-  "stack": ["Node.js", "Express", "Vercel", "Twitter API"],
-  "endpoints": ["/", "/roast", "/csv-roast"],
-  "env_vars": ["OPENAI_API_KEY", "ROASTR_API_KEY", "DEBUG", "TWITTER_BEARER_TOKEN", "TWITTER_APP_KEY", "TWITTER_APP_SECRET", "TWITTER_ACCESS_TOKEN", "TWITTER_ACCESS_SECRET"],
+  "version": "3.0.0",
+  "modes": ["normal", "shield"],
+  "stack": ["Node.js", "Express", "Vercel", "Multiple Social APIs"],
+  "platforms": ["Twitter/X", "YouTube", "Bluesky", "Instagram"],
+  "architecture": {
+    "frontend": "public/index.html + public/integrations.html",
+    "backend": "src/index.js",
+    "integrations": "src/integrations/",
+    "batch_runner": "src/batchRunner.js",
+    "unified_cron": "cron_integrations.sh",
+    "advanced_logging": "src/utils/advancedLogger.js",
+    "reincidence_detection": "src/services/reincidenceDetector.js"
+  },
+  "endpoints": ["/", "/roast", "/csv-roast", "/api/integrations/*", "/api/shield/*", "/api/logs/*"],
+  "integration_system": {
+    "manager": "src/integrations/integrationManager.js",
+    "base_class": "src/integrations/base/BaseIntegration.js",
+    "services": {
+      "youtube": "src/integrations/youtube/youtubeService.js",
+      "twitter": "src/services/twitter.js",
+      "bluesky": "src/integrations/bluesky/blueskyService.js",
+      "instagram": "src/integrations/instagram/instagramService.js"
+    }
+  },
+  "key_env_vars": {
+    "core": ["OPENAI_API_KEY", "ROASTR_API_KEY"],
+    "modes": ["ROASTR_MODE", "ROASTR_SHIELD_ENABLED"],
+    "integration_control": ["INTEGRATIONS_ENABLED", "MAX_CONCURRENT_INTEGRATIONS"],
+    "personalization": ["PLATFORM_TONE", "PLATFORM_HUMOR_TYPE", "PLATFORM_RESPONSE_FREQUENCY"],
+    "shield_config": ["SHIELD_AUTO_ACTIONS", "PLATFORM_SHIELD_*"],
+    "platforms": {
+      "youtube": ["YOUTUBE_API_KEY", "YOUTUBE_CHANNEL_ID", "YOUTUBE_MONITORED_VIDEOS"],
+      "twitter": ["TWITTER_BEARER_TOKEN", "TWITTER_ACCESS_TOKEN"],
+      "bluesky": ["BLUESKY_HANDLE", "BLUESKY_PASSWORD"],
+      "instagram": ["INSTAGRAM_ACCESS_TOKEN", "INSTAGRAM_APP_ID"]
+    }
+  },
   "deployment": "vercel --prod",
-  "frontend": "public/index.html",
-  "backend": "src/index.js",
-  "twitter_bot": "src/services/twitter.js",
   "commands": {
     "api": "npm start",
     "cli": "npm run roast",
-    "twitter_stream": "npm run twitter:stream",
-    "twitter_batch": "npm run twitter:batch",
-    "twitter": "npm run twitter"
+    "integrations_batch": "npm run integrations:batch",
+    "integrations_test": "npm run integrations:test",
+    "integrations_cron": "npm run integrations:cron",
+    "legacy_twitter": "npm run twitter:batch"
+  },
+  "logging_system": {
+    "types": ["normal", "integration", "shield", "security"],
+    "locations": {
+      "normal": "logs/[platform]_normal.log",
+      "integration": "logs/integrations/[platform]_integration.log", 
+      "shield": "logs/shield/[platform]_shield.log",
+      "security": "logs/security/security.log"
+    },
+    "rotation": "automatic",
+    "sensitive_content_warnings": true
+  },
+  "shield_features": {
+    "reincidence_detection": true,
+    "auto_actions": ["mute", "block", "report", "remove"],
+    "severity_analysis": ["low", "medium", "high", "critical"],
+    "user_tracking": "file_based_json",
+    "action_logging": true
+  },
+  "personalization": {
+    "tones": ["sarcastic", "ironic", "absurd"],
+    "humor_types": ["witty", "clever", "playful"],
+    "response_frequency": "0.0_to_1.0_configurable",
+    "per_platform_config": true,
+    "preview_generation": true
+  },
+  "cron_migration": {
+    "old_script": "cron_twitter.sh",
+    "new_script": "cron_integrations.sh",
+    "old_logs": "logs/cron_twitter.log",
+    "new_logs": "logs/cron_integrations.log"
+  },
+  "features": {
+    "multi_platform": true,
+    "dual_mode_operation": true,
+    "batch_processing": true,
+    "rate_limiting": true,
+    "unified_monitoring": true,
+    "graceful_shutdown": true,
+    "concurrent_processing": true,
+    "web_configuration_panel": true,
+    "advanced_logging": true,
+    "reincidence_tracking": true,
+    "automatic_moderation": true,
+    "tone_personalization": true,
+    "frequency_control": true
   }
 }
 ```

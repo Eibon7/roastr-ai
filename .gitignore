@@ -1,11 +1,13 @@
-∑# Node modules and logs
+# Node modules and logs
 node_modules/
+frontend/node_modules/
 npm-debug.log
 logs/
 
 # Environment files
 .env
 .env.test
+frontend/.env
 
 # Build and cache
 dist/

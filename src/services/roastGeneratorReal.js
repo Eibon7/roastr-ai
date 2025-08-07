@@ -13,6 +13,10 @@ class RoastGeneratorReal {
   }
 
   async generateRoast(text, toxicityScore, tone = 'sarcastic') {
+    return this.generateRoastWithTone(text, toxicityScore, tone);
+  }
+
+  async generateRoastWithTone(text, toxicityScore, tone = 'sarcastic') {
     try {
       const systemPrompts = {
         sarcastic: `Eres Roastr.ai, un asistente especializado en crear roasts humorísticos y creativos.
@@ -86,6 +90,34 @@ Reglas de estilo DIRECTO/CORTANTE:
       return completion.choices[0].message.content;
     } catch (error) {
       console.error("❌ [RoastGeneratorReal] Error generando roast:");
+      console.error(error.response?.data || error.message || error);
+      throw error;
+    }
+  }
+
+  async generateRoastWithPrompt(text, customPrompt) {
+    try {
+      console.log("🎯 [RoastGeneratorReal] Generando roast con prompt personalizado...");
+      
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: customPrompt
+          },
+          {
+            role: "user", 
+            content: text
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 150
+      });
+
+      return completion.choices[0].message.content;
+    } catch (error) {
+      console.error("❌ [RoastGeneratorReal] Error generando roast con prompt personalizado:");
       console.error(error.response?.data || error.message || error);
       throw error;
     }

@@ -13,8 +13,36 @@
     "twitter:batch:single": "RUN_MODE=single npm run twitter:batch",
     "twitter:stream": "node src/services/twitter.js stream",
     "twitter:server": "node src/twitterServer.js",
+    "integrations:batch": "node src/batchRunner.js",
+    "integrations:cron": "./cron_integrations.sh",
+    "integrations:test": "node src/integrations/cli/integration-test.js",
+    "workers:start": "node src/workers/cli/start-workers.js",
+    "workers:start:dev": "node src/workers/cli/start-workers.js --debug",
+    "workers:start:prod": "node src/workers/cli/start-workers.js --env=production",
+    "workers:status": "node src/workers/cli/worker-status.js",
+    "workers:status:watch": "node src/workers/cli/worker-status.js --watch",
+    "workers:status:json": "node src/workers/cli/worker-status.js --json",
+    "queue:manage": "node src/workers/cli/queue-manager.js",
+    "queue:status": "node src/workers/cli/queue-manager.js status",
+    "queue:monitor": "node src/workers/cli/queue-manager.js monitor",
+    "queue:clear-all": "node src/workers/cli/queue-manager.js clear-all",
+    "queue:retry": "node src/workers/cli/queue-manager.js retry-failed",
+    "integrations:health": "node src/integrations/cli/integration-health.js",
+    "integrations:status": "node src/integrations/cli/integration-status.js",
+    "users:list": "node src/cli/user-manager.js list",
+    "users:create": "node src/cli/user-manager.js create",
+    "users:delete": "node src/cli/user-manager.js delete",
+    "users:search": "node src/cli/user-manager.js search",
+    "users:stats": "node src/cli/user-manager.js stats",
+    "users:health": "node src/cli/user-manager.js health",
+    
+    "frontend:start": "cd frontend && npm start",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:install": "cd frontend && npm install",
+    
     "test": "jest --verbose",
-    "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'"
+    "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'",
+    "test:integrations": "jest tests/unit/integrations/ --verbose"
   },
   "repository": {
     "type": "git",
@@ -28,16 +56,34 @@
   },
   "homepage": "https://github.com/Eibon7/roastr-ai#readme",
   "dependencies": {
+    "@atproto/api": "^0.12.29",
+    "@supabase/supabase-js": "^2.53.0",
+    "@twurple/api": "^7.1.0",
+    "@twurple/auth": "^7.1.0",
+    "@twurple/chat": "^7.1.0",
+    "autoprefixer": "^10.4.21",
     "axios": "^1.11.0",
     "body-parser": "^2.2.0",
+    "commander": "^14.0.0",
+    "discord.js": "^14.15.3",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "fs-extra": "^11.3.0",
+    "googleapis": "^155.0.0",
+    "ioredis": "^5.4.1",
     "openai": "^5.11.0",
     "papaparse": "^5.5.3",
+    "postcss": "^8.5.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.7.1",
+    "react-scripts": "^5.0.1",
+    "snoowrap": "^1.23.0",
+    "tailwindcss": "^4.1.11",
     "twitter-api-v2": "^1.24.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "supertest": "^7.1.4"
   }
 }

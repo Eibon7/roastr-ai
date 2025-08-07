@@ -1,22 +1,29 @@
-const BaseIntegration = require('../base/BaseIntegration');
-// const WebSocket = require('ws'); // Will be needed for firehose connection
+const MultiTenantIntegration = require('../base/MultiTenantIntegration');
 
-class BlueskyService extends BaseIntegration {
-  constructor(config) {
-    super(config);
+/**
+ * Bluesky Integration Service
+ * 
+ * Handles Bluesky integration using AT Protocol for:
+ * - Mention monitoring
+ * - Post replies
+ * - Direct messaging
+ * - Real-time firehose integration
+ */
+class BlueskyService extends MultiTenantIntegration {
+  constructor(options = {}) {
+    super('bluesky', {
+      rateLimit: 300, // Bluesky is more lenient
+      supportDirectPosting: true,
+      supportModeration: true,
+      ...options
+    });
     
-    // Bluesky-specific configuration validation
-    const requiredFields = ['handle', 'password', 'serviceUrl'];
-    this.validateConfig(requiredFields);
+    this.identifier = process.env.BLUESKY_IDENTIFIER;
+    this.password = process.env.BLUESKY_PASSWORD;
+    this.serviceUrl = process.env.BLUESKY_SERVICE_URL || 'https://bsky.social';
     
-    // AT Protocol client will be initialized here
-    this.atClient = null;
-    this.firehoseWs = null;
     this.session = null;
-    
-    // Bluesky configuration
-    this.serviceUrl = config.serviceUrl || 'https://bsky.social';
-    this.firehoseUrl = config.firehoseUrl || 'wss://bsky.social/xrpc/com.atproto.sync.subscribeRepos';
+    this.agent = null;
   }
 
   /**
