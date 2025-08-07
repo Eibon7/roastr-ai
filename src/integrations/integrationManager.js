@@ -12,10 +12,11 @@ const RedditService = require('./reddit/redditService');
 const TikTokService = require('./tiktok/tiktokService');
 
 class IntegrationManager {
-  constructor() {
+  constructor(options = {}) {
     this.activeIntegrations = new Map();
     this.config = config;
     this.debug = config.debugMode;
+    this.testMode = options.testMode || false; // New test mode flag
     
     // Global metrics
     this.globalMetrics = {
@@ -26,8 +27,8 @@ class IntegrationManager {
       uptime: 0
     };
     
-    // Start metrics collection
-    if (config.logging.enableMetrics) {
+    // Start metrics collection only if not in test mode
+    if (config.logging.enableMetrics && !this.testMode) {
       this.startMetricsCollection();
     }
   }
@@ -51,49 +52,84 @@ class IntegrationManager {
       
       const integrationPromises = [];
       
-      // Initialize Twitter (existing)
-      if (this.config.enabled.includes('twitter') && this.config.twitter.enabled) {
-        integrationPromises.push(this.initializeTwitter());
-      }
-      
-      // Initialize YouTube
-      if (this.config.enabled.includes('youtube') && this.config.youtube.enabled) {
-        integrationPromises.push(this.initializeYouTube());
-      }
-      
-      // Initialize Bluesky
-      if (this.config.enabled.includes('bluesky') && this.config.bluesky.enabled) {
-        integrationPromises.push(this.initializeBluesky());
-      }
-      
-      // Initialize Instagram
-      if (this.config.enabled.includes('instagram') && this.config.instagram.enabled) {
-        integrationPromises.push(this.initializeInstagram());
-      }
-      
-      // Initialize Facebook
-      if (this.config.enabled.includes('facebook') && this.config.facebook?.enabled) {
-        integrationPromises.push(this.initializeFacebook());
-      }
-      
-      // Initialize Discord
-      if (this.config.enabled.includes('discord') && this.config.discord?.enabled) {
-        integrationPromises.push(this.initializeDiscord());
-      }
-      
-      // Initialize Twitch
-      if (this.config.enabled.includes('twitch') && this.config.twitch?.enabled) {
-        integrationPromises.push(this.initializeTwitch());
-      }
-      
-      // Initialize Reddit
-      if (this.config.enabled.includes('reddit') && this.config.reddit?.enabled) {
-        integrationPromises.push(this.initializeReddit());
-      }
-      
-      // Initialize TikTok
-      if (this.config.enabled.includes('tiktok') && this.config.tiktok?.enabled) {
-        integrationPromises.push(this.initializeTikTok());
+      // In test mode, initialize based on INTEGRATIONS_ENABLED regardless of individual platform config
+      if (this.testMode) {
+        const testPlatforms = process.env.INTEGRATIONS_ENABLED?.split(',').map(p => p.trim()) || [];
+        console.log(`🧪 Test mode: Initializing platforms: ${testPlatforms.join(', ')}`);
+        
+        if (testPlatforms.includes('twitter')) {
+          integrationPromises.push(this.initializeTwitter());
+        }
+        if (testPlatforms.includes('youtube')) {
+          integrationPromises.push(this.initializeYouTube());
+        }
+        if (testPlatforms.includes('bluesky')) {
+          integrationPromises.push(this.initializeBluesky());
+        }
+        if (testPlatforms.includes('instagram')) {
+          integrationPromises.push(this.initializeInstagram());
+        }
+        if (testPlatforms.includes('facebook')) {
+          integrationPromises.push(this.initializeFacebook());
+        }
+        if (testPlatforms.includes('discord')) {
+          integrationPromises.push(this.initializeDiscord());
+        }
+        if (testPlatforms.includes('twitch')) {
+          integrationPromises.push(this.initializeTwitch());
+        }
+        if (testPlatforms.includes('reddit')) {
+          integrationPromises.push(this.initializeReddit());
+        }
+        if (testPlatforms.includes('tiktok')) {
+          integrationPromises.push(this.initializeTikTok());
+        }
+      } else {
+        // Normal mode: check both enabled list and platform config
+        // Initialize Twitter (existing)
+        if (this.config.enabled.includes('twitter') && this.config.twitter.enabled) {
+          integrationPromises.push(this.initializeTwitter());
+        }
+        
+        // Initialize YouTube
+        if (this.config.enabled.includes('youtube') && this.config.youtube.enabled) {
+          integrationPromises.push(this.initializeYouTube());
+        }
+        
+        // Initialize Bluesky
+        if (this.config.enabled.includes('bluesky') && this.config.bluesky.enabled) {
+          integrationPromises.push(this.initializeBluesky());
+        }
+        
+        // Initialize Instagram
+        if (this.config.enabled.includes('instagram') && this.config.instagram.enabled) {
+          integrationPromises.push(this.initializeInstagram());
+        }
+        
+        // Initialize Facebook
+        if (this.config.enabled.includes('facebook') && this.config.facebook?.enabled) {
+          integrationPromises.push(this.initializeFacebook());
+        }
+        
+        // Initialize Discord
+        if (this.config.enabled.includes('discord') && this.config.discord?.enabled) {
+          integrationPromises.push(this.initializeDiscord());
+        }
+        
+        // Initialize Twitch
+        if (this.config.enabled.includes('twitch') && this.config.twitch?.enabled) {
+          integrationPromises.push(this.initializeTwitch());
+        }
+        
+        // Initialize Reddit
+        if (this.config.enabled.includes('reddit') && this.config.reddit?.enabled) {
+          integrationPromises.push(this.initializeReddit());
+        }
+        
+        // Initialize TikTok
+        if (this.config.enabled.includes('tiktok') && this.config.tiktok?.enabled) {
+          integrationPromises.push(this.initializeTikTok());
+        }
       }
       
       // Wait for all integrations to initialize (up to maxConcurrent)
@@ -130,6 +166,28 @@ class IntegrationManager {
     try {
       this.debugLog('Initializing Twitter integration...');
       
+      if (this.testMode) {
+        // Create mock Twitter integration for testing
+        const mockTwitter = {
+          platform: 'twitter',
+          runOnce: async () => {
+            console.log('🧪 Twitter mock: Fetching mentions...');
+            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+            console.log('🧪 Twitter mock: Found 3 mentions, 1 toxic comment');
+            console.log('🧪 Twitter mock: Generated witty response');
+            return { mentions: 3, responses: 1 };
+          },
+          testConnection: async () => {
+            console.log('🧪 Twitter mock: Connection test passed');
+            return true;
+          },
+          getMetrics: () => ({ commentsProcessed: 3, responsesGenerated: 1 })
+        };
+        this.activeIntegrations.set('twitter', mockTwitter);
+        console.log('✅ Twitter integration initialized (test mode)');
+        return;
+      }
+      
       const twitterBot = new TwitterRoastBot();
       await twitterBot.initialize();
       
@@ -148,6 +206,28 @@ class IntegrationManager {
   async initializeYouTube() {
     try {
       this.debugLog('Initializing YouTube integration...');
+      
+      if (this.testMode) {
+        // Create mock YouTube integration for testing
+        const mockYouTube = {
+          platform: 'youtube',
+          runOnce: async () => {
+            console.log('🧪 YouTube mock: Fetching video comments...');
+            await new Promise(resolve => setTimeout(resolve, 700)); // Simulate API call
+            console.log('🧪 YouTube mock: Found 8 comments on 2 videos, 2 toxic comments');
+            console.log('🧪 YouTube mock: Generated clever responses');
+            return { videos: 2, comments: 8, responses: 2 };
+          },
+          testConnection: async () => {
+            console.log('🧪 YouTube mock: API connection test passed');
+            return true;
+          },
+          getMetrics: () => ({ commentsProcessed: 8, responsesGenerated: 2 })
+        };
+        this.activeIntegrations.set('youtube', mockYouTube);
+        console.log('✅ YouTube integration initialized (test mode)');
+        return;
+      }
       
       const youtubeService = new YouTubeService(this.config.youtube);
       await youtubeService.initialize();
@@ -168,6 +248,28 @@ class IntegrationManager {
     try {
       this.debugLog('Initializing Bluesky integration...');
       
+      if (this.testMode) {
+        // Create mock Bluesky integration for testing
+        const mockBluesky = {
+          platform: 'bluesky',
+          runOnce: async () => {
+            console.log('🧪 Bluesky mock: Monitoring firehose...');
+            await new Promise(resolve => setTimeout(resolve, 600)); // Simulate firehose connection
+            console.log('🧪 Bluesky mock: Found 5 mentions, 1 roast-worthy post');
+            console.log('🧪 Bluesky mock: Generated sarcastic reply');
+            return { mentions: 5, posts: 1, responses: 1 };
+          },
+          testConnection: async () => {
+            console.log('🧪 Bluesky mock: AT Protocol connection test passed');
+            return true;
+          },
+          getMetrics: () => ({ commentsProcessed: 5, responsesGenerated: 1 })
+        };
+        this.activeIntegrations.set('bluesky', mockBluesky);
+        console.log('✅ Bluesky integration initialized (test mode)');
+        return;
+      }
+      
       const blueskyService = new BlueskyService(this.config.bluesky);
       await blueskyService.initialize();
       
@@ -186,6 +288,28 @@ class IntegrationManager {
   async initializeInstagram() {
     try {
       this.debugLog('Initializing Instagram integration...');
+      
+      if (this.testMode) {
+        // Create mock Instagram integration for testing
+        const mockInstagram = {
+          platform: 'instagram',
+          runOnce: async () => {
+            console.log('🧪 Instagram mock: Fetching story mentions and comments...');
+            await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API call
+            console.log('🧪 Instagram mock: Found 4 mentions, 1 story reaction');
+            console.log('🧪 Instagram mock: Generated stylish response');
+            return { mentions: 4, stories: 2, responses: 1 };
+          },
+          testConnection: async () => {
+            console.log('🧪 Instagram mock: Graph API connection test passed');
+            return true;
+          },
+          getMetrics: () => ({ commentsProcessed: 4, responsesGenerated: 1 })
+        };
+        this.activeIntegrations.set('instagram', mockInstagram);
+        console.log('✅ Instagram integration initialized (test mode)');
+        return;
+      }
       
       const instagramService = new InstagramService(this.config.instagram);
       await instagramService.initialize();
@@ -619,20 +743,104 @@ class IntegrationManager {
         default:
           throw new Error(`Unknown integration platform: ${platform}`);
       }
-      
+
       // Start listening again
       const newIntegration = this.activeIntegrations.get(platform);
       if (newIntegration) {
         await newIntegration.listenForMentions();
       }
-      
+
       console.log(`✅ ${platform} integration restarted successfully`);
-      
+
     } catch (error) {
       console.error(`❌ Error restarting ${platform} integration:`, error.message);
+      throw error;
+    }
+  }
+
+  async runAllIntegrationsOnce() {
+    try {
+      console.log('🧪 Running all integrations in test mode (dry-run)...');
+      
+      // Get enabled platforms from environment variable
+      const enabledPlatforms = process.env.INTEGRATIONS_ENABLED
+        ? process.env.INTEGRATIONS_ENABLED.split(',').map((p) => p.trim())
+        : [];
+
+      if (enabledPlatforms.length === 0) {
+        console.log('⚠️ No integrations enabled in INTEGRATIONS_ENABLED environment variable');
+        return;
+      }
+
+      console.log(`🎯 Testing platforms: ${enabledPlatforms.join(', ')}`);
+
+      // Initialize integrations first
+      await this.initializeIntegrations();
+
+      let successCount = 0;
+      let failureCount = 0;
+
+      // Run each enabled integration once
+      for (const platform of enabledPlatforms) {
+        try {
+          const integration = this.activeIntegrations.get(platform);
+          
+          if (!integration) {
+            console.warn(`⚠️ No active integration found for: ${platform}`);
+            failureCount++;
+            continue;
+          }
+
+          console.log(`🖋️ Running ${platform} integration test...`);
+          
+          // Check if integration has runOnce method
+          if (typeof integration.runOnce === 'function') {
+            await integration.runOnce();
+            console.log(`✅ ${platform} test completed successfully`);
+            successCount++;
+          } else {
+            // Fallback: try to run a single batch or fetch operation
+            console.log(`🔄 ${platform} doesn't have runOnce(), trying alternative test...`);
+            
+            if (typeof integration.testConnection === 'function') {
+              await integration.testConnection();
+              console.log(`✅ ${platform} connection test completed`);
+              successCount++;
+            } else if (typeof integration.fetchComments === 'function') {
+              // Try to fetch comments in dry-run mode
+              const comments = await integration.fetchComments({ limit: 1, dryRun: true });
+              console.log(`✅ ${platform} fetch test completed (${comments?.length || 0} comments would be processed)`);
+              successCount++;
+            } else {
+              console.warn(`⚠️ ${platform} doesn't implement runOnce() or testConnection() - test skipped`);
+              failureCount++;
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Error testing ${platform}: ${error.message}`);
+          failureCount++;
+        }
+      }
+
+      // Print summary
+      console.log('\n📊 Integration Test Summary:');
+      console.log('============================');
+      console.log(`✅ Successful: ${successCount}`);
+      console.log(`❌ Failed: ${failureCount}`);
+      console.log(`📋 Total: ${enabledPlatforms.length}`);
+      console.log('============================\n');
+
+      if (failureCount > 0) {
+        throw new Error(`${failureCount} integration test(s) failed`);
+      }
+
+    } catch (error) {
+      console.error('❌ Integration test error:', error.message);
       throw error;
     }
   }
 }
 
 module.exports = IntegrationManager;
+
+      
