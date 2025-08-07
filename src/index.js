@@ -13,6 +13,7 @@ const advancedLogger = require('./utils/advancedLogger');
 const authRoutes = require('./routes/auth');
 const integrationsRoutes = require('./routes/integrations');
 const adminRoutes = require('./routes/admin');
+const userRoutes = require('./routes/user');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -26,6 +27,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// User routes (authenticated)
+app.use('/api/user', userRoutes);
 
 // User integrations routes (authenticated)
 app.use('/api/integrations', integrationsRoutes);

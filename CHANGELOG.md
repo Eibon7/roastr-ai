@@ -1,5 +1,140 @@
 # 📦 Changelog
 
+## v0.5.0 – 2025-08-07
+
+**Descripción:** Sistema completo de onboarding de usuarios y configuración de plataformas sociales con flujo de 4 pasos, integración de endpoints personalizados y gestión avanzada de preferencias.
+
+---
+
+### 🎯 Sistema de Onboarding Completo (4 Pasos)
+
+#### 🚀 Flujo de Configuración Inicial
+- **Paso 1 - Bienvenida**: `/onboarding/step1.html` con introducción y beneficios del sistema
+- **Paso 2 - Selección de Plataformas**: Checklist interactivo de las 9 plataformas sociales disponibles
+- **Paso 3 - Configuración de Humor**: Selección de tono (sarcástico, sutil, directo, juguetón, ingenioso) y estilo (ingenioso, astuto, humor seco, salvaje, amigable)
+- **Paso 4 - Confirmación Final**: Resumen completo de configuración con guardado de preferencias
+- **Navegación fluida**: Indicadores de progreso y botones anterior/siguiente
+- **Validación inteligente**: Manejo de errores y recuperación de sesión
+
+#### 🔗 Gestión de Plataformas Sociales  
+- **Vista principal**: `/platforms.html` con grid de las 9 plataformas integradas
+- **Estados dinámicos**: Conectado, Desconectado, Pendiente, Error con indicadores visuales
+- **Conexión simulada**: Flujo OAuth mock para todas las plataformas
+- **Gestión individual**: Conectar/desconectar plataformas con feedback inmediato
+- **Configuración avanzada**: Botón de settings por plataforma (próximamente)
+- **Design responsive**: Optimizado para todos los dispositivos
+
+### 🛠️ Backend API Extendido
+
+#### 🔌 Nuevos Endpoints de Usuario (`/api/user`)
+- `GET /api/user/integrations` - Lista todas las integraciones del usuario con estados
+- `POST /api/user/integrations/connect` - Conecta plataforma con configuración mock OAuth
+- `POST /api/user/integrations/disconnect` - Desconecta plataforma manteniendo configuración
+- `POST /api/user/preferences` - Guarda preferencias de onboarding y marca como completado
+- `GET /api/user/profile` - Perfil completo del usuario con organización y preferencias
+- **Integración multi-tenant**: Todos los endpoints respetan RLS y organizaciones
+- **Manejo robusto de errores**: Logging detallado y respuestas estandarizadas
+
+#### 🗄️ Integración Supabase Completa
+- **Tabla `integration_configs`**: Configuración por organización y plataforma
+- **Campo `onboarding_complete`**: Control de flujo de nuevos usuarios  
+- **Tabla `users.preferences`**: Almacenamiento JSON de configuración personalizada
+- **Row Level Security**: Aislamiento completo entre organizaciones
+- **Configuración automática**: Creación de integration_configs basada en plataformas preferidas
+
+### 🎨 Experiencia de Usuario Mejorada
+
+#### 📱 Design System Expandido
+- **Componentes reutilizables**: Tarjetas de plataforma, indicadores de estado, botones de acción
+- **Paleta de colores**: Colores específicos por plataforma (Twitter azul, Instagram gradiente, etc.)
+- **Estados interactivos**: Hover effects, loading states, transiciones suaves
+- **Tipografía consistente**: Roboto como fuente principal con jerarquía clara
+- **Grid responsive**: Layout adaptativo para móviles, tablets y desktop
+
+#### 🔄 Flujos de Usuario Inteligentes
+- **Redirección automática**: Usuarios sin onboarding van directo al paso 1
+- **Persistencia de sesión**: Configuración guardada entre pasos con sessionStorage
+- **Recovery de configuración**: Usuarios pueden reconfigurar desde dashboard
+- **Integración dashboard**: Enlaces directos a gestión de plataformas
+- **Feedback visual**: Mensajes de éxito/error con auto-dismissal
+
+### 🧪 Testing y Calidad
+
+#### ✅ Tests Unitarios Implementados
+- **User routes testing**: Suite completa para todos los endpoints `/api/user`
+- **Mock integration**: Supabase, middleware auth y dependencias externas
+- **Casos edge**: Validación de errores, datos faltantes, usuarios sin organización
+- **Cobertura endpoints**: GET/POST para integrations, preferences y profile
+- **Manejo de autenticación**: Tests de middleware y permisos
+- **Error scenarios**: Testing de fallos de base de datos y timeouts
+
+#### 🔍 Configuración Jest Avanzada
+- **Proyectos separados**: node-tests para backend, dom-tests para frontend
+- **Setup específico**: Variables de entorno mockeadas para tests
+- **Mocking strategy**: Supabase client completamente simulado
+- **Coverage tracking**: Seguimiento de cobertura por tipo de test
+
+### 💻 Dashboard y Navegación
+
+#### 🏠 Dashboard Actualizado
+- **Verificación onboarding**: Redirección automática si no está completo
+- **Enlaces rápidos**: Acceso directo a plataformas y reconfiguración
+- **Estados del usuario**: Visualización de plan, estado y configuración
+- **Navegación mejorada**: Breadcrumbs y enlaces contextuales
+- **Plan management**: Integración con selección y upgrade de planes
+
+### 📂 Arquitectura de Archivos
+
+#### Frontend Onboarding
+- `public/onboarding/step1.html` - Página de bienvenida con features destacadas
+- `public/onboarding/step2.html` - Selección de plataformas con grid interactivo  
+- `public/onboarding/step3.html` - Configuración de humor con ejemplos en vivo
+- `public/onboarding/step4.html` - Confirmación y resumen con guardado automático
+- `public/platforms.html` - Gestión completa de conexiones de plataformas
+
+#### Backend Services
+- `src/routes/user.js` - Rutas completas para gestión de usuario (529 líneas)
+- `src/index.js` - Integración de rutas user en servidor principal
+- `tests/unit/routes/user.test.js` - Suite de tests para endpoints de usuario
+
+#### Configuración y Setup
+- `jest.config.js` - Configuración avanzada con proyectos separados
+- `tests/setupEnvOnly.js` - Setup específico para tests de backend
+- `tests/setup.js` - Setup existente actualizado con variables de entorno
+
+### 🔧 Variables de Configuración
+
+#### Plataformas Soportadas (9 total)
+- **Twitter/X**: API v2 con bearer token y OAuth
+- **Instagram**: Basic Display API con refresh tokens  
+- **Facebook**: Graph API con permisos de páginas
+- **YouTube**: Data API v3 con comentarios y videos
+- **Discord**: Bot API con webhooks y slash commands
+- **Twitch**: API con chat y stream events
+- **Reddit**: API con subreddits y posts
+- **TikTok**: Business API (en revisión)
+- **Bluesky**: AT Protocol con handles personalizados
+
+### 🎯 Flujo Completo de Usuario
+
+1. **Registro**: Usuario se registra con email/password o Google OAuth
+2. **Onboarding automático**: Redirección a `/onboarding/step1.html`
+3. **Configuración**: 4 pasos de personalización con guardado progresivo
+4. **Dashboard**: Acceso completo con enlaces a gestión de plataformas
+5. **Conexión de cuentas**: Flujo OAuth simulado para cada plataforma
+6. **Uso del sistema**: Bot funcional con configuración personalizada
+
+### 📊 Métricas y Validación
+
+- ✅ **9 plataformas** configurables con estados independientes
+- ✅ **4 pasos de onboarding** con navegación fluida y persistencia
+- ✅ **5 endpoints nuevos** completamente funcionales y testeados
+- ✅ **100% responsive** design verificado en móviles y desktop  
+- ✅ **Multi-tenant** architecture con RLS y aislamiento completo
+- ✅ **Error handling** robusto con logging y recovery automático
+
+---
+
 ## v0.4.0 – 2025-08-07
 
 **Descripción:** Sistema de autenticación completo con frontend HTML, JavaScript vanilla, Google OAuth, Magic Links, recuperación de contraseñas y tests unitarios integrados.
