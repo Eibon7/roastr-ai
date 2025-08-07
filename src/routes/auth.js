@@ -6,42 +6,70 @@ const { logger } = require('../utils/logger');
 const router = express.Router();
 
 /**
- * POST /api/auth/signup
+ * POST /api/auth/register
  * Register new user with email and password
  */
-router.post('/signup', async (req, res) => {
+router.post('/register', async (req, res) => {
     try {
         const { email, password, name } = req.body;
         
+        // Validate input
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
                 error: 'Email and password are required'
             });
         }
-        
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 6 characters long'
+            });
+        }
+
+        // Register user
         const result = await authService.signUp({ email, password, name });
+        
+        logger.info('User registration successful:', { email, userId: result.user.id });
         
         res.status(201).json({
             success: true,
+            message: 'Registration successful. Please check your email to verify your account.',
             data: {
                 user: {
                     id: result.user.id,
                     email: result.user.email,
-                    email_confirmed: result.user.email_confirmed_at ? true : false
-                },
-                session: result.session,
-                profile: result.profile
+                    email_confirmed: result.user.email_confirmed_at !== null
+                }
             }
         });
-        
+
     } catch (error) {
-        logger.error('Signup endpoint error:', error.message);
-        res.status(400).json({
+        logger.error('Registration error:', error.message);
+        
+        // Handle specific Supabase errors
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+            return res.status(400).json({
+                success: false,
+                error: 'An account with this email already exists'
+            });
+        }
+        
+        res.status(500).json({
             success: false,
-            error: error.message
+            error: 'Registration failed. Please try again.'
         });
     }
+});
+
+/**
+ * POST /api/auth/signup (legacy endpoint - redirect to register)
+ * Register new user with email and password
+ */
+router.post('/signup', async (req, res) => {
+    // Redirect to new register endpoint
+    return router.handle('register', req, res);
 });
 
 /**
@@ -81,41 +109,91 @@ router.post('/signup/magic-link', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, keepLogged = false } = req.body;
         
+        // Validate input
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
                 error: 'Email and password are required'
             });
         }
-        
+
+        // Attempt login
         const result = await authService.signIn({ email, password });
         
-        res.status(200).json({
-            success: true,
-            data: {
-                user: {
-                    id: result.user.id,
-                    email: result.user.email,
-                    email_confirmed: result.user.email_confirmed_at ? true : false
-                },
-                session: result.session,
-                profile: result.profile
-            }
-        });
+        logger.info('User login successful:', { email, userId: result.user.id });
         
+        // Set session duration based on keepLogged
+        const sessionData = {
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token,
+            expires_at: result.session.expires_at,
+            user: {
+                id: result.user.id,
+                email: result.user.email,
+                email_confirmed: result.user.email_confirmed_at !== null,
+                is_admin: result.profile?.is_admin || false,
+                name: result.profile?.name,
+                plan: result.profile?.plan || 'basic'
+            }
+        };
+
+        res.json({
+            success: true,
+            message: 'Login successful',
+            data: sessionData
+        });
+
     } catch (error) {
-        logger.error('Login endpoint error:', error.message);
+        logger.error('Login error:', error.message);
+        
+        // Generic error message for security (don't reveal if email exists)
         res.status(401).json({
             success: false,
-            error: error.message
+            error: 'Wrong email or password'
         });
     }
 });
 
 /**
- * POST /api/auth/login/magic-link
+ * POST /api/auth/magic-link
+ * Send magic link for passwordless login
+ */
+router.post('/magic-link', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email is required'
+            });
+        }
+
+        const result = await authService.signInWithMagicLink(email);
+        
+        logger.info('Magic link sent:', { email });
+        
+        res.json({
+            success: true,
+            message: 'Magic link sent to your email. Please check your inbox.',
+            data: { email }
+        });
+
+    } catch (error) {
+        logger.error('Magic link error:', error.message);
+        
+        // Always return success to prevent email enumeration
+        res.json({
+            success: true,
+            message: 'If an account with this email exists, a magic link has been sent.'
+        });
+    }
+});
+
+/**
+ * POST /api/auth/login/magic-link (legacy endpoint)
  * Login with magic link
  */
 router.post('/login/magic-link', async (req, res) => {
@@ -223,7 +301,7 @@ router.put('/profile', authenticateToken, async (req, res) => {
 
 /**
  * POST /api/auth/reset-password
- * Reset user password
+ * Send password reset email
  */
 router.post('/reset-password', async (req, res) => {
     try {
@@ -235,20 +313,180 @@ router.post('/reset-password', async (req, res) => {
                 error: 'Email is required'
             });
         }
-        
+
         const result = await authService.resetPassword(email);
         
-        res.status(200).json({
+        logger.info('Password reset requested:', { email });
+        
+        res.json({
+            success: true,
+            message: 'If an account with this email exists, a reset link has been sent.',
+            data: { email }
+        });
+
+    } catch (error) {
+        logger.error('Password reset error:', error.message);
+        
+        // Always return success to prevent email enumeration
+        res.json({
+            success: true,
+            message: 'If an account with this email exists, a reset link has been sent.'
+        });
+    }
+});
+
+/**
+ * POST /api/auth/update-password
+ * Update password with reset token
+ */
+router.post('/update-password', async (req, res) => {
+    try {
+        const { access_token, password } = req.body;
+        
+        if (!access_token || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Access token and new password are required'
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 6 characters long'
+            });
+        }
+
+        const result = await authService.updatePassword(access_token, password);
+        
+        logger.info('Password updated successfully for user');
+        
+        res.json({
+            success: true,
+            message: 'Password updated successfully. You can now login with your new password.',
+            data: result
+        });
+
+    } catch (error) {
+        logger.error('Password update error:', error.message);
+        
+        res.status(400).json({
+            success: false,
+            error: 'Failed to update password. The reset link may have expired.'
+        });
+    }
+});
+
+/**
+ * GET /api/auth/google
+ * Initiate Google OAuth flow
+ */
+router.get('/google', async (req, res) => {
+    try {
+        const result = await authService.signInWithGoogle();
+        
+        // Redirect to Google OAuth URL
+        res.redirect(result.url);
+        
+    } catch (error) {
+        logger.error('Google OAuth initiation error:', error.message);
+        res.redirect('/login.html?message=Google authentication is temporarily unavailable&type=error');
+    }
+});
+
+/**
+ * POST /api/auth/google (legacy endpoint for frontend requests)
+ * Handle Google OAuth login
+ */
+router.post('/google', async (req, res) => {
+    try {
+        // For frontend JavaScript requests, return the OAuth URL
+        const result = await authService.signInWithGoogle();
+        
+        res.json({
             success: true,
             data: result
         });
+
+    } catch (error) {
+        logger.error('Google auth error:', error.message);
+        
+        res.status(500).json({
+            success: false,
+            error: 'Google authentication is not yet configured. Please contact support.'
+        });
+    }
+});
+
+/**
+ * GET /api/auth/callback
+ * Handle OAuth callback from providers (Google, etc.)
+ */
+router.get('/callback', async (req, res) => {
+    try {
+        const { access_token, refresh_token, error } = req.query;
+        
+        if (error) {
+            logger.error('OAuth callback error:', error);
+            return res.redirect('/login.html?message=Authentication failed&type=error');
+        }
+        
+        if (!access_token) {
+            return res.redirect('/login.html?message=Authentication failed - no token received&type=error');
+        }
+
+        // Handle the OAuth callback
+        const result = await authService.handleOAuthCallback(access_token, refresh_token);
+        
+        // Set session data for frontend
+        const sessionData = {
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token,
+            user: {
+                id: result.user.id,
+                email: result.user.email,
+                email_confirmed: true,
+                is_admin: result.profile?.is_admin || false,
+                name: result.profile?.name,
+                plan: result.profile?.plan || 'basic'
+            }
+        };
+        
+        // Redirect to dashboard with session data (URL params for frontend to handle)
+        const encodedData = encodeURIComponent(JSON.stringify(sessionData));
+        res.redirect(`/dashboard.html?auth_data=${encodedData}&type=oauth_success`);
         
     } catch (error) {
-        logger.error('Reset password endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
+        logger.error('OAuth callback processing error:', error.message);
+        res.redirect('/login.html?message=Authentication failed during processing&type=error');
+    }
+});
+
+/**
+ * GET /api/auth/verify
+ * Verify email confirmation token
+ */
+router.get('/verify', async (req, res) => {
+    try {
+        const { token, type, email } = req.query;
+        
+        if (!token || !type || !email) {
+            return res.redirect('/login.html?message=Invalid verification link&type=error');
+        }
+
+        // Verify the token with Supabase
+        const result = await authService.verifyEmail(token, type, email);
+        
+        if (result.success) {
+            logger.info('Email verified successfully:', { email });
+            res.redirect('/login.html?message=Email verified successfully. You can now log in.&type=success');
+        } else {
+            res.redirect('/login.html?message=Email verification failed or link expired.&type=error');
+        }
+
+    } catch (error) {
+        logger.error('Email verification error:', error.message);
+        res.redirect('/login.html?message=Email verification failed.&type=error');
     }
 });
 

@@ -1,5 +1,135 @@
 # 📦 Changelog
 
+## v0.4.0 – 2025-08-07
+
+**Descripción:** Sistema de autenticación completo con frontend HTML, JavaScript vanilla, Google OAuth, Magic Links, recuperación de contraseñas y tests unitarios integrados.
+
+---
+
+### 🔐 Sistema de Autenticación Frontend Completo
+
+#### 🎨 Páginas de Autenticación HTML+CSS
+- **Login página**: `/login.html` con formulario email/contraseña
+- **Registro página**: `/register.html` con verificación de email
+- **Recuperación**: `/password-reset.html` para reset de contraseñas
+- **Verificación de email**: `/email-verification.html` para confirmaciones
+- **Dashboard**: `/dashboard.html` con selección de planes y logout
+- **Estilos unificados**: `/public/css/auth.css` con componentes reutilizables
+
+#### 🔑 Google OAuth Integrado
+- **Flujo OAuth completo**: Redirección automática a Google
+- **Callback handler**: `/api/auth/callback` para procesar respuestas OAuth
+- **Creación automática**: Usuarios nuevos via OAuth se crean automáticamente
+- **Redirect inteligente**: Dashboard directo después de autenticación exitosa
+- **Manejo de errores**: Fallbacks para OAuth no configurado
+
+#### ✨ Magic Links y Recuperación de Contraseñas
+- **Magic link login**: Autenticación sin contraseña vía email
+- **Password recovery**: Sistema completo de reset via email
+- **Tokens seguros**: Integración con Supabase para tokens temporales
+- **URLs de callback**: Redirecciones automáticas después de verificación
+- **Prevención enumeración**: Mensajes genéricos para seguridad
+
+#### 💻 JavaScript Vanilla Avanzado
+- **Manejo de formularios**: Validación y estados de loading
+- **Gestión de sesiones**: LocalStorage con refresh tokens
+- **API integration**: Comunicación segura con backend
+- **Error handling**: Mensajes de error user-friendly
+- **Auto-refresh tokens**: Renovación automática de sesiones
+- **Redirecciones inteligentes**: Routing basado en rol de usuario
+
+### 🛠️ Backend Extensions
+
+#### 🔌 Nuevos Endpoints de Autenticación
+- `GET /api/auth/google` - Inicia flujo OAuth de Google
+- `GET /api/auth/callback` - Procesa callbacks OAuth
+- `POST /api/auth/magic-link` - Envía magic link por email
+- `POST /api/auth/update-password` - Actualiza contraseña con token
+- `GET /api/auth/verify` - Verifica confirmaciones de email
+- **Compatibilidad backward**: Endpoints legacy mantenidos
+
+#### 🔒 AuthService Extendido
+- **Google OAuth methods**: `signInWithGoogle()` y `handleOAuthCallback()`
+- **Magic link support**: Integración completa con Supabase OTP
+- **Password updates**: Método seguro para reset de contraseñas
+- **Email verification**: Validación de tokens de confirmación
+- **Error handling**: Logging detallado y manejo robusto de errores
+
+### 🎨 Experiencia de Usuario Mejorada
+
+#### 📱 Design Responsive
+- **Mobile-first**: Formularios optimizados para móviles
+- **Estados visuales**: Loading spinners y feedback inmediato
+- **Validación en tiempo real**: Errores mostrados instantáneamente
+- **Transiciones suaves**: Animaciones CSS para mejor UX
+- **Mensajes informativos**: Toast notifications para todas las acciones
+
+#### 🔄 Flujos de Autenticación Intuitivos
+- **Registro con verificación**: Email confirmation workflow completo
+- **Plan selection**: Dashboard con selección de planes post-registro
+- **Admin redirect**: Usuarios admin van directo al panel
+- **Remember me**: Opción de sesiones persistentes
+- **Auto-logout**: Limpieza de sesión en tokens expirados
+
+### 🧪 Testing Comprehensivo
+
+#### ✅ Tests Unitarios Completos
+- **Auth routes testing**: 11 test cases con mocks completos
+- **Endpoint coverage**: Registro, login, OAuth, magic links
+- **Error scenarios**: Validación de casos edge y manejo errores
+- **Security testing**: Validación de mensajes genéricos anti-enumeración
+- **Mock integration**: Supabase y dependencias completamente mockeadas
+
+#### 🔍 Coverage de Funcionalidades
+- ✅ **User registration** con validaciones
+- ✅ **Login/logout** con sesiones persistentes  
+- ✅ **Magic links** para autenticación sin contraseña
+- ✅ **Password recovery** con tokens seguros
+- ✅ **Google OAuth** con creación automática de usuarios
+- ✅ **Email verification** workflow completo
+- ✅ **Dashboard integration** con plan selection
+
+### 📂 Archivos Nuevos/Modificados
+
+#### Frontend
+- `public/login.html` - Página de login con Google OAuth y magic link
+- `public/register.html` - Registro con verificación de email
+- `public/password-reset.html` - Reset de contraseña con token
+- `public/email-verification.html` - Confirmación de email
+- `public/dashboard.html` - Dashboard con OAuth callback handling
+- `public/css/auth.css` - Estilos unificados (400+ líneas)
+- `public/js/auth.js` - JavaScript de autenticación (450+ líneas)
+
+#### Backend
+- `src/services/authService.js` - Métodos OAuth y password update
+- `src/routes/auth.js` - Endpoints Google OAuth y callback
+- `tests/unit/auth.test.js` - Test suite completo (11 casos)
+
+### 🔧 Configuración y Setup
+
+#### 🌍 Variables de Entorno
+- `FRONTEND_URL` - URL base para redirects OAuth
+- `SUPABASE_URL` - Supabase project URL (existente)
+- `SUPABASE_ANON_KEY` - Public key para frontend (existente)
+- **Google OAuth setup**: Requiere configuración en Supabase Dashboard
+
+#### 🚀 Comandos Disponibles
+- `npm test -- tests/unit/auth.test.js` - Ejecutar tests de autenticación
+- `npm start` - Servidor con nuevos endpoints OAuth
+- **Acceso directo**: `http://localhost:3000/login.html`
+
+### 🎯 Validación Funcional
+
+- ✅ **Formularios HTML** funcionando con validación JavaScript
+- ✅ **Google OAuth** configurado (requiere setup en Supabase)
+- ✅ **Magic links** enviando emails correctamente
+- ✅ **Password recovery** con tokens seguros
+- ✅ **Dashboard integration** con plan selection
+- ✅ **Tests unitarios** pasando 11/11
+- ✅ **Mobile responsive** design verificado
+
+---
+
 ## v0.3.0 – 2025-01-07
 
 **Descripción:** Funcionalidades avanzadas del panel de administración con métricas comprehensivas, sistema de suspensión de usuarios y monitoreo de integraciones en tiempo real.

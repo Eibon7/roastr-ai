@@ -45,8 +45,13 @@ try {
 // Instancia del servicio de CSV roasts
 const csvRoastService = new CsvRoastService();
 
-// Ruta principal: mostrar index.html
+// Ruta principal: redirigir a auth.html
 app.get('/', (req, res) => {
+  res.redirect('/auth.html');
+});
+
+// Mantener acceso directo a index.html si es necesario
+app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
