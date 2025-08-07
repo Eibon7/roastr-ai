@@ -12,6 +12,7 @@ const advancedLogger = require('./utils/advancedLogger');
 // Import auth routes and middleware
 const authRoutes = require('./routes/auth');
 const integrationsRoutes = require('./routes/integrations');
+const adminRoutes = require('./routes/admin');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -28,6 +29,9 @@ app.use('/api/auth', authRoutes);
 
 // User integrations routes (authenticated)
 app.use('/api/integrations', integrationsRoutes);
+
+// Admin routes (admin only)
+app.use('/api/admin', adminRoutes);
 
 // Instancia del generador de roasts
 let roastGenerator;

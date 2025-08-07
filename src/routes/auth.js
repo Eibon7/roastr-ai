@@ -255,17 +255,37 @@ router.post('/reset-password', async (req, res) => {
 // Admin routes
 /**
  * GET /api/auth/admin/users
- * List all users (admin only)
+ * List all users with search and filters (admin only)
  */
 router.get('/admin/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const { limit = 50, offset = 0 } = req.query;
+        const {
+            limit = 20,
+            offset = 0,
+            search = '',
+            plan = null,
+            active = null,
+            suspended = null,
+            sortBy = 'created_at',
+            sortOrder = 'desc'
+        } = req.query;
+
+        const options = {
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            search: search,
+            plan: plan,
+            active: active === 'true' ? true : active === 'false' ? false : null,
+            suspended: suspended === 'true' ? true : suspended === 'false' ? false : null,
+            sortBy: sortBy,
+            sortOrder: sortOrder
+        };
         
-        const users = await authService.listUsers(parseInt(limit), parseInt(offset));
+        const result = await authService.listUsers(options);
         
         res.status(200).json({
             success: true,
-            data: users
+            data: result
         });
         
     } catch (error) {
@@ -405,6 +425,202 @@ router.post('/admin/users/reset-password', authenticateToken, requireAdmin, asyn
         
     } catch (error) {
         logger.error('Admin reset password endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/auth/admin/users/:id
+ * Get user details (admin only)
+ */
+router.get('/admin/users/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+        
+        const result = await authService.getUserStats(id);
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Get user details endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/admin/users/:id/toggle-active
+ * Toggle user active status (admin only)
+ */
+router.post('/admin/users/:id/toggle-active', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+        
+        const result = await authService.toggleUserActive(id, req.user.id);
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Toggle user active endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/admin/users/:id/suspend
+ * Suspend user account (admin only)
+ */
+router.post('/admin/users/:id/suspend', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+        
+        const result = await authService.suspendUser(id, req.user.id, reason);
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Suspend user endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/admin/users/:id/unsuspend
+ * Unsuspend user account (admin only)
+ */
+router.post('/admin/users/:id/unsuspend', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+        
+        const result = await authService.unsuspendUser(id, req.user.id);
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Unsuspend user endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/admin/users/:id/plan
+ * Change user plan (admin only)
+ */
+router.post('/admin/users/:id/plan', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newPlan } = req.body;
+        
+        if (!id || !newPlan) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID and new plan are required'
+            });
+        }
+        
+        // Use the existing updateUserPlan method
+        const result = await authService.updateUserPlan(id, newPlan);
+        
+        // Log the plan change activity
+        await authService.logUserActivity(id, 'plan_changed', {
+            performed_by: req.user.id,
+            old_plan: result.user?.plan,
+            new_plan: newPlan
+        });
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Change user plan endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/auth/admin/users/:id/stats
+ * Get user usage statistics (admin only)
+ */
+router.get('/admin/users/:id/stats', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+        
+        const result = await authService.getUserStats(id);
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Get user stats endpoint error:', error.message);
         res.status(400).json({
             success: false,
             error: error.message

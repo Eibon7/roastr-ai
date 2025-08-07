@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Roastr.ai</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-content">
+                <h1><i class="fas fa-shield-alt"></i> Panel de Administración - Roastr.ai</h1>
+                <div class="header-actions">
+                    <span class="admin-info">Admin: <span id="admin-name">Cargando...</span></span>
+                    <button id="logout-btn" class="btn btn-secondary">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="admin-nav">
+            <div class="nav-content">
+                <button class="nav-btn active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </button>
+                <button class="nav-btn" data-section="users">
+                    <i class="fas fa-users"></i> Usuarios
+                </button>
+                <button class="nav-btn" data-section="integrations">
+                    <i class="fas fa-plug"></i> Integraciones
+                </button>
+                <button class="nav-btn" data-section="config">
+                    <i class="fas fa-cog"></i> Configuración
+                </button>
+                <button class="nav-btn" data-section="logs">
+                    <i class="fas fa-file-alt"></i> Logs
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="admin-section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Dashboard General</h2>
+                    <button id="refresh-dashboard" class="btn btn-primary">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-users">-</h3>
+                            <p>Total Usuarios</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="active-users">-</h3>
+                            <p>Usuarios Activos</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="admin-users">-</h3>
+                            <p>Administradores</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="new-users">-</h3>
+                            <p>Nuevos este mes</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-content">
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-plug"></i> Integraciones Activas</h3>
+                        <div id="active-integrations" class="integration-list">
+                            <p class="loading">Cargando...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-activity"></i> Actividad Reciente</h3>
+                        <div id="recent-activity" class="activity-list">
+                            <p class="loading">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> Gestión de Usuarios</h2>
+                    <div class="section-controls">
+                        <input type="text" id="user-search" placeholder="Buscar usuarios...">
+                        <select id="user-filter">
+                            <option value="">Todos</option>
+                            <option value="admin">Solo Admins</option>
+                            <option value="active">Solo Activos</option>
+                        </select>
+                        <button id="refresh-users" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Nombre</th>
+                                <th>Plan</th>
+                                <th>Admin</th>
+                                <th>Activo</th>
+                                <th>Creado</th>
+                                <th>Última Actividad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8" class="loading">Cargando usuarios...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Integrations Section -->
+            <section id="integrations-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-plug"></i> Integraciones y Testing</h2>
+                </div>
+
+                <div class="integration-controls">
+                    <div class="control-group">
+                        <label for="test-platforms">Plataformas a probar:</label>
+                        <input type="text" id="test-platforms" placeholder="twitter,youtube,bluesky" value="twitter,youtube,bluesky">
+                        <button id="run-integration-test" class="btn btn-success">
+                            <i class="fas fa-play"></i> Ejecutar Test
+                        </button>
+                    </div>
+                </div>
+
+                <div class="integration-results">
+                    <div class="result-card">
+                        <h3><i class="fas fa-terminal"></i> Resultado del Test</h3>
+                        <div id="test-output" class="code-output">
+                            <p class="placeholder">Ejecuta un test para ver los resultados aquí...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Config Section -->
+            <section id="config-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cog"></i> Configuración del Sistema</h2>
+                    <button id="refresh-config" class="btn btn-primary">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+
+                <div class="config-content">
+                    <div class="config-card">
+                        <h3><i class="fas fa-plug"></i> Integraciones</h3>
+                        <div id="integration-config" class="config-list">
+                            <p class="loading">Cargando configuración...</p>
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <h3><i class="fas fa-shield-alt"></i> Features</h3>
+                        <div id="feature-config" class="config-list">
+                            <p class="loading">Cargando configuración...</p>
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <h3><i class="fas fa-sliders-h"></i> Límites</h3>
+                        <div id="limits-config" class="config-list">
+                            <p class="loading">Cargando configuración...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logs Section -->
+            <section id="logs-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-alt"></i> Logs del Sistema</h2>
+                    <div class="section-controls">
+                        <select id="log-filter">
+                            <option value="all">Todos los logs</option>
+                            <option value="info">Solo Info</option>
+                            <option value="warn">Solo Warnings</option>
+                            <option value="error">Solo Errores</option>
+                            <option value="integration">Integraciones</option>
+                            <option value="shield">Shield</option>
+                        </select>
+                        <button id="refresh-logs" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                        <button id="download-logs" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Descargar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="logs-container">
+                    <div id="logs-content" class="code-output">
+                        <p class="loading">Cargando logs...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p id="loading-text">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>

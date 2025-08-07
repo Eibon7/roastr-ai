@@ -41,7 +41,9 @@
     "test": "jest --verbose",
     "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
-    "changelog:add": "node scripts/add-changelog.js"
+    "changelog:add": "node scripts/add-changelog.js",
+    "admin:setup": "node scripts/setup-admin.js",
+    "admin:list": "node scripts/setup-admin.js --list"
   },
   "repository": {
     "type": "git",

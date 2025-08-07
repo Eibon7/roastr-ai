@@ -13,18 +13,31 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(255),
-    plan VARCHAR(50) NOT NULL DEFAULT 'free',
+    plan VARCHAR(50) NOT NULL DEFAULT 'basic',
     is_admin BOOLEAN DEFAULT FALSE,
+    active BOOLEAN DEFAULT TRUE,
+    suspended BOOLEAN DEFAULT FALSE,
+    suspended_reason TEXT,
+    suspended_at TIMESTAMPTZ,
+    suspended_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
+    last_login_at TIMESTAMPTZ,
     stripe_customer_id VARCHAR(255),
     
     -- Profile settings
     timezone VARCHAR(50) DEFAULT 'UTC',
     language VARCHAR(10) DEFAULT 'en',
     
+    -- Usage tracking
+    total_messages_sent INTEGER DEFAULT 0,
+    total_tokens_consumed INTEGER DEFAULT 0,
+    monthly_messages_sent INTEGER DEFAULT 0,
+    monthly_tokens_consumed INTEGER DEFAULT 0,
+    last_activity_at TIMESTAMPTZ DEFAULT NOW(),
+    
     CONSTRAINT users_email_check CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT users_plan_check CHECK (plan IN ('free', 'pro', 'creator_plus', 'custom'))
+    CONSTRAINT users_plan_check CHECK (plan IN ('basic', 'pro', 'creator_plus'))
 );
 
 -- Organizations/Tenants table
@@ -98,6 +111,27 @@ INSERT INTO plans (id, name, description, monthly_price_cents, yearly_price_cent
 ('pro', 'Pro', 'Professional plan for creators', 2900, 29000, 1000, 5, TRUE, '["all_integrations", "shield_mode", "priority_support", "analytics"]'),
 ('creator_plus', 'Creator Plus', 'Advanced plan for power users', 9900, 99000, 5000, 999, TRUE, '["unlimited_integrations", "shield_mode", "custom_tones", "api_access", "dedicated_support"]'),
 ('custom', 'Custom', 'Enterprise plan', 0, 0, 999999, 999, TRUE, '["everything", "custom_integrations", "sla", "dedicated_manager"]');
+
+-- User activity log table for admin panel
+CREATE TABLE user_activities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    activity_type VARCHAR(50) NOT NULL, -- 'message_sent', 'response_generated', 'login', etc.
+    platform VARCHAR(50), -- 'twitter', 'youtube', 'bluesky', etc.
+    tokens_used INTEGER DEFAULT 0,
+    metadata JSONB DEFAULT '{}', -- Additional activity data
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    CONSTRAINT user_activities_type_check CHECK (activity_type IN (
+        'message_sent', 'response_generated', 'login', 'logout', 
+        'plan_changed', 'account_suspended', 'account_activated'
+    ))
+);
+
+-- Index for efficient queries
+CREATE INDEX idx_user_activities_user_id_created_at ON user_activities(user_id, created_at DESC);
+CREATE INDEX idx_user_activities_organization_id ON user_activities(organization_id);
 
 -- ============================================================================
 -- INTEGRATIONS

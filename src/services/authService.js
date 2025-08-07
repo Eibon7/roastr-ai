@@ -300,24 +300,109 @@ class AuthService {
     }
 
     /**
-     * Admin: List all users (service client)
+     * Admin: List all users with enhanced filtering and search (service client)
      */
-    async listUsers(limit = 50, offset = 0) {
+    async listUsers(options = {}) {
         try {
-            const { data, error } = await supabaseServiceClient
+            const {
+                limit = 50,
+                offset = 0,
+                search = '',
+                plan = null,
+                active = null,
+                suspended = null,
+                sortBy = 'created_at',
+                sortOrder = 'desc'
+            } = options;
+
+            let query = supabaseServiceClient
                 .from('users')
                 .select(`
-                    id, email, name, plan, is_admin, created_at,
+                    id, email, name, plan, is_admin, active, suspended, 
+                    total_messages_sent, total_tokens_consumed,
+                    monthly_messages_sent, monthly_tokens_consumed,
+                    last_activity_at, created_at, suspended_reason,
                     organizations!owner_id (id, name, plan_id, monthly_responses_used)
-                `)
-                .order('created_at', { ascending: false })
-                .range(offset, offset + limit - 1);
+                `);
+
+            // Apply search filter
+            if (search && search.trim()) {
+                query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
+            }
+
+            // Apply plan filter
+            if (plan) {
+                query = query.eq('plan', plan);
+            }
+
+            // Apply active status filter
+            if (active !== null) {
+                query = query.eq('active', active);
+            }
+
+            // Apply suspended status filter
+            if (suspended !== null) {
+                query = query.eq('suspended', suspended);
+            }
+
+            // Apply sorting
+            const ascending = sortOrder === 'asc';
+            query = query.order(sortBy, { ascending });
+
+            // Apply pagination
+            query = query.range(offset, offset + limit - 1);
+
+            const { data: users, error } = await query;
 
             if (error) {
                 throw new Error(`Failed to list users: ${error.message}`);
             }
 
-            return data;
+            // Get total count for pagination
+            let countQuery = supabaseServiceClient
+                .from('users')
+                .select('id', { count: 'exact', head: true });
+
+            // Apply same filters for count
+            if (search && search.trim()) {
+                countQuery = countQuery.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
+            }
+            if (plan) {
+                countQuery = countQuery.eq('plan', plan);
+            }
+            if (active !== null) {
+                countQuery = countQuery.eq('active', active);
+            }
+            if (suspended !== null) {
+                countQuery = countQuery.eq('suspended', suspended);
+            }
+
+            const { count, error: countError } = await countQuery;
+
+            if (countError) {
+                logger.warn('Failed to get user count:', countError.message);
+            }
+
+            // Add usage alerts for each user
+            const usersWithAlerts = users.map(user => {
+                const planLimits = this.getPlanLimits(user.plan);
+                const alerts = this.checkUsageAlerts(user, planLimits);
+                return {
+                    ...user,
+                    usage_alerts: alerts,
+                    is_over_limit: alerts.length > 0
+                };
+            });
+
+            return {
+                users: usersWithAlerts,
+                pagination: {
+                    total: count || 0,
+                    limit,
+                    offset,
+                    has_more: (count || 0) > offset + limit
+                }
+            };
 
         } catch (error) {
             logger.error('List users error:', error.message);
@@ -497,6 +582,332 @@ class AuthService {
             logger.error('Admin reset password error:', error.message);
             throw error;
         }
+    }
+
+    /**
+     * Admin: Toggle user active status
+     */
+    async toggleUserActive(userId, adminUserId) {
+        try {
+            // Get current user status
+            const { data: currentUser, error: fetchError } = await supabaseServiceClient
+                .from('users')
+                .select('active, email')
+                .eq('id', userId)
+                .single();
+
+            if (fetchError || !currentUser) {
+                throw new Error('User not found');
+            }
+
+            const newActiveStatus = !currentUser.active;
+
+            // Update user status
+            const { data: userData, error: userError } = await supabaseServiceClient
+                .from('users')
+                .update({ 
+                    active: newActiveStatus,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId)
+                .select()
+                .single();
+
+            if (userError) {
+                throw new Error(`Failed to update user status: ${userError.message}`);
+            }
+
+            // Log activity
+            await this.logUserActivity(userId, newActiveStatus ? 'account_activated' : 'account_deactivated', {
+                performed_by: adminUserId,
+                previous_status: currentUser.active
+            });
+
+            logger.info('User active status toggled:', { 
+                userId, 
+                email: currentUser.email,
+                newStatus: newActiveStatus,
+                adminUserId 
+            });
+            
+            return {
+                message: `User account ${newActiveStatus ? 'activated' : 'deactivated'} successfully`,
+                user: userData
+            };
+
+        } catch (error) {
+            logger.error('Toggle user active error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Admin: Suspend user account
+     */
+    async suspendUser(userId, adminUserId, reason = null) {
+        try {
+            // Update user suspension status
+            const { data: userData, error: userError } = await supabaseServiceClient
+                .from('users')
+                .update({ 
+                    suspended: true,
+                    suspended_reason: reason,
+                    suspended_at: new Date().toISOString(),
+                    suspended_by: adminUserId,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId)
+                .select('email')
+                .single();
+
+            if (userError) {
+                throw new Error(`Failed to suspend user: ${userError.message}`);
+            }
+
+            // Log activity
+            await this.logUserActivity(userId, 'account_suspended', {
+                performed_by: adminUserId,
+                reason: reason
+            });
+
+            logger.info('User suspended:', { userId, reason, adminUserId });
+            
+            return {
+                message: 'User account suspended successfully',
+                reason: reason
+            };
+
+        } catch (error) {
+            logger.error('Suspend user error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Admin: Unsuspend user account
+     */
+    async unsuspendUser(userId, adminUserId) {
+        try {
+            // Update user suspension status
+            const { data: userData, error: userError } = await supabaseServiceClient
+                .from('users')
+                .update({ 
+                    suspended: false,
+                    suspended_reason: null,
+                    suspended_at: null,
+                    suspended_by: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId)
+                .select('email')
+                .single();
+
+            if (userError) {
+                throw new Error(`Failed to unsuspend user: ${userError.message}`);
+            }
+
+            // Log activity
+            await this.logUserActivity(userId, 'account_unsuspended', {
+                performed_by: adminUserId
+            });
+
+            logger.info('User unsuspended:', { userId, adminUserId });
+            
+            return {
+                message: 'User account unsuspended successfully'
+            };
+
+        } catch (error) {
+            logger.error('Unsuspend user error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Admin: Get user statistics
+     */
+    async getUserStats(userId) {
+        try {
+            // Get user with basic stats
+            const { data: user, error: userError } = await supabaseServiceClient
+                .from('users')
+                .select(`
+                    id, email, name, plan, active, suspended, 
+                    total_messages_sent, total_tokens_consumed,
+                    monthly_messages_sent, monthly_tokens_consumed,
+                    last_activity_at, created_at
+                `)
+                .eq('id', userId)
+                .single();
+
+            if (userError) {
+                throw new Error(`User not found: ${userError.message}`);
+            }
+
+            // Get recent activities (last 30 days)
+            const { data: activities, error: activitiesError } = await supabaseServiceClient
+                .from('user_activities')
+                .select('activity_type, platform, tokens_used, created_at, metadata')
+                .eq('user_id', userId)
+                .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (activitiesError) {
+                logger.warn('Failed to fetch user activities:', activitiesError.message);
+            }
+
+            // Calculate usage patterns
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const monthlyStats = {
+                messages_sent: user.monthly_messages_sent || 0,
+                tokens_consumed: user.monthly_tokens_consumed || 0,
+                activities_count: activities?.length || 0
+            };
+
+            // Calculate limits based on plan
+            const planLimits = this.getPlanLimits(user.plan);
+            
+            // Check for usage alerts
+            const alerts = this.checkUsageAlerts(user, planLimits);
+
+            return {
+                user: user,
+                monthly_stats: monthlyStats,
+                recent_activities: activities || [],
+                plan_limits: planLimits,
+                usage_alerts: alerts,
+                is_over_limit: alerts.length > 0
+            };
+
+        } catch (error) {
+            logger.error('Get user stats error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Log user activity
+     */
+    async logUserActivity(userId, activityType, metadata = {}) {
+        try {
+            // Get user's organization
+            const { data: user, error: userError } = await supabaseServiceClient
+                .from('users')
+                .select('id')
+                .eq('id', userId)
+                .single();
+
+            if (userError) {
+                logger.warn('Failed to find user for activity log:', userError.message);
+                return;
+            }
+
+            // Get user's organization (assuming first one)
+            const { data: orgs, error: orgError } = await supabaseServiceClient
+                .from('organizations')
+                .select('id')
+                .eq('owner_id', userId)
+                .limit(1);
+
+            const organizationId = orgs?.[0]?.id || null;
+
+            // Insert activity log
+            const { error: logError } = await supabaseServiceClient
+                .from('user_activities')
+                .insert({
+                    user_id: userId,
+                    organization_id: organizationId,
+                    activity_type: activityType,
+                    platform: metadata.platform || null,
+                    tokens_used: metadata.tokens_used || 0,
+                    metadata: metadata
+                });
+
+            if (logError) {
+                logger.warn('Failed to log user activity:', logError.message);
+            }
+
+        } catch (error) {
+            logger.warn('Log user activity error:', error.message);
+        }
+    }
+
+    /**
+     * Get plan limits
+     */
+    getPlanLimits(plan) {
+        const limits = {
+            basic: {
+                monthly_messages: 100,
+                monthly_tokens: 10000,
+                integrations: 1
+            },
+            pro: {
+                monthly_messages: 1000,
+                monthly_tokens: 100000,
+                integrations: 5
+            },
+            creator_plus: {
+                monthly_messages: 5000,
+                monthly_tokens: 500000,
+                integrations: 999
+            }
+        };
+
+        return limits[plan] || limits.basic;
+    }
+
+    /**
+     * Check usage alerts
+     */
+    checkUsageAlerts(user, planLimits) {
+        const alerts = [];
+
+        // Check message limit (80% threshold)
+        if (user.monthly_messages_sent > planLimits.monthly_messages * 0.8) {
+            alerts.push({
+                type: 'warning',
+                category: 'messages',
+                message: `Usuario ha enviado ${user.monthly_messages_sent} de ${planLimits.monthly_messages} mensajes mensuales (${Math.round(user.monthly_messages_sent / planLimits.monthly_messages * 100)}%)`,
+                severity: user.monthly_messages_sent >= planLimits.monthly_messages ? 'high' : 'medium'
+            });
+        }
+
+        // Check token limit (80% threshold)
+        if (user.monthly_tokens_consumed > planLimits.monthly_tokens * 0.8) {
+            alerts.push({
+                type: 'warning',
+                category: 'tokens',
+                message: `Usuario ha consumido ${user.monthly_tokens_consumed} de ${planLimits.monthly_tokens} tokens mensuales (${Math.round(user.monthly_tokens_consumed / planLimits.monthly_tokens * 100)}%)`,
+                severity: user.monthly_tokens_consumed >= planLimits.monthly_tokens ? 'high' : 'medium'
+            });
+        }
+
+        // Check if account is suspended
+        if (user.suspended) {
+            alerts.push({
+                type: 'error',
+                category: 'account',
+                message: 'Cuenta suspendida',
+                severity: 'high'
+            });
+        }
+
+        // Check if account is inactive
+        if (!user.active) {
+            alerts.push({
+                type: 'warning',
+                category: 'account',
+                message: 'Cuenta desactivada',
+                severity: 'medium'
+            });
+        }
+
+        return alerts;
     }
 }
 

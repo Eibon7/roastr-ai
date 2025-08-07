@@ -5,6 +5,8 @@ import RegisterPage from './pages/register';
 import ResetPasswordPage from './pages/reset-password';
 import DashboardPage from './pages/dashboard';
 import AuthCallback from './pages/auth-callback';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserDetail from './pages/admin/UserDetail';
 import AdminUsersPage from './pages/admin/users';
 import './App.css';
 
@@ -23,7 +25,9 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           
           {/* Admin routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/user/:userId" element={<UserDetail />} />
           
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
