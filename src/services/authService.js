@@ -707,19 +707,43 @@ class AuthService {
             }
 
             // Log activity
-            await this.logUserActivity(userId, 'account_unsuspended', {
+            await this.logUserActivity(userId, 'account_reactivated', {
                 performed_by: adminUserId
             });
 
             logger.info('User unsuspended:', { userId, adminUserId });
             
             return {
-                message: 'User account unsuspended successfully'
+                message: 'User account reactivated successfully'
             };
 
         } catch (error) {
             logger.error('Unsuspend user error:', error.message);
             throw error;
+        }
+    }
+
+    /**
+     * Check if user can generate roasts (not suspended)
+     */
+    async canUserGenerateRoasts(userId) {
+        try {
+            const { data: user, error } = await supabaseServiceClient
+                .from('users')
+                .select('active, suspended')
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                logger.error('Error checking user roast permissions:', error.message);
+                return false;
+            }
+
+            return user.active && !user.suspended;
+
+        } catch (error) {
+            logger.error('Error in canUserGenerateRoasts:', error.message);
+            return false;
         }
     }
 

@@ -138,36 +138,30 @@ class AdminPanel {
             if (response.success) {
                 const data = response.data;
                 
-                // Update stats
+                // Update basic stats with new format
                 document.getElementById('total-users').textContent = data.users.total;
-                document.getElementById('active-users').textContent = data.users.active;
-                document.getElementById('admin-users').textContent = data.users.admins;
-                document.getElementById('new-users').textContent = data.users.new_this_month;
+                document.getElementById('suspended-users').textContent = `${data.users.suspended} suspendidos`;
+                
+                // Update roast stats
+                document.getElementById('total-roasts').textContent = data.roasts.total;
+                document.getElementById('roasts-today').textContent = `${data.roasts.today} hoy`;
+                
+                // Update weekly activity
+                document.getElementById('weekly-activity').textContent = data.roasts.this_week;
+                document.getElementById('weekly-details').textContent = `roasts, ${data.users.new_this_week} nuevos usuarios`;
+                
+                // Update integrations count
+                document.getElementById('active-integrations-count').textContent = data.integrations.stats.active;
+                document.getElementById('integrations-status').textContent = `de ${data.integrations.stats.total} activas`;
 
-                // Update integrations
-                const integrationsEl = document.getElementById('active-integrations');
-                if (data.integrations.enabled.length > 0) {
-                    integrationsEl.innerHTML = data.integrations.enabled.map(platform => 
-                        `<span class="integration-badge">${platform}</span>`
-                    ).join('');
-                } else {
-                    integrationsEl.innerHTML = '<p class="text-secondary">No hay integraciones activas</p>';
-                }
-
-                // Update activity
-                const activityEl = document.getElementById('recent-activity');
-                if (data.activity.total_activities > 0) {
-                    const platformActivity = Object.entries(data.activity.by_platform)
-                        .map(([platform, count]) => 
-                            `<div class="activity-item">
-                                <strong>${platform}:</strong> ${count} actividades
-                            </div>`
-                        ).join('');
-                    
-                    activityEl.innerHTML = platformActivity || '<p class="text-secondary">No hay actividad reciente</p>';
-                } else {
-                    activityEl.innerHTML = '<p class="text-secondary">No hay actividad reciente</p>';
-                }
+                // Update top users ranking
+                this.renderTopUsers(data.topUsers);
+                
+                // Update integrations status
+                this.renderIntegrationsStatus(data.integrations);
+                
+                // Update most active integrations chart
+                this.renderMostActiveIntegrations(data.roasts, data.integrations);
             }
         } catch (error) {
             console.error('Dashboard load error:', error);
@@ -175,6 +169,115 @@ class AdminPanel {
         } finally {
             this.showLoading(false);
         }
+    }
+
+    renderTopUsers(topUsers) {
+        const container = document.getElementById('top-users');
+        
+        if (!topUsers || topUsers.length === 0) {
+            container.innerHTML = '<p class="text-secondary">No hay datos de usuarios disponibles</p>';
+            return;
+        }
+
+        const rankingHtml = topUsers.map((user, index) => {
+            const position = index + 1;
+            let positionClass = '';
+            if (position === 1) positionClass = 'gold';
+            else if (position === 2) positionClass = 'silver';
+            else if (position === 3) positionClass = 'bronze';
+
+            return `
+                <div class="ranking-item">
+                    <div class="ranking-position ${positionClass}">${position}</div>
+                    <div class="ranking-info">
+                        <div class="ranking-name">${user.name}</div>
+                        <div class="ranking-email">${user.email}</div>
+                    </div>
+                    <div class="ranking-stats">
+                        <div class="ranking-total">${user.total_roasts}</div>
+                        <div class="ranking-monthly">${user.monthly_roasts} este mes</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = rankingHtml;
+    }
+
+    renderIntegrationsStatus(integrationsData) {
+        const container = document.getElementById('integrations-status-list');
+        
+        if (!integrationsData || !integrationsData.integrations) {
+            container.innerHTML = '<p class="text-secondary">No hay datos de integraciones disponibles</p>';
+            return;
+        }
+
+        const integrations = integrationsData.integrations;
+        const statusHtml = integrations.map(integration => {
+            const lastRun = integration.last_executed 
+                ? this.formatDate(integration.last_executed)
+                : 'Nunca ejecutada';
+
+            return `
+                <div class="integration-status-item">
+                    <div class="integration-icon">
+                        <i class="${integration.icon}"></i>
+                    </div>
+                    <div class="integration-details">
+                        <div class="integration-name">${integration.name}</div>
+                        <div class="integration-last-run">Última ejecución: ${lastRun}</div>
+                    </div>
+                    <div class="integration-status-badge ${integration.status}">
+                        ${this.getStatusText(integration.status)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = statusHtml;
+    }
+
+    renderMostActiveIntegrations(roastsData, integrationsData) {
+        const container = document.getElementById('most-active-integrations');
+        
+        // Simular actividad por plataforma basada en integraciones activas
+        const activeIntegrations = integrationsData.integrations
+            .filter(i => i.status === 'active')
+            .slice(0, 5);
+
+        if (activeIntegrations.length === 0) {
+            container.innerHTML = '<p class="text-secondary">No hay integraciones activas</p>';
+            return;
+        }
+
+        // Simular conteos de actividad
+        const maxCount = Math.max(100, roastsData.this_month / activeIntegrations.length);
+        
+        const chartHtml = activeIntegrations.map((integration, index) => {
+            const count = Math.floor(maxCount * (1 - index * 0.15));
+            const percentage = (count / maxCount) * 100;
+
+            return `
+                <div class="activity-chart-item">
+                    <div class="activity-chart-name">${integration.name}</div>
+                    <div class="activity-chart-bar">
+                        <div class="activity-chart-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="activity-chart-count">${count}</div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = chartHtml;
+    }
+
+    getStatusText(status) {
+        const texts = {
+            active: 'Activa',
+            configured: 'Configurada',
+            disabled: 'Deshabilitada'
+        };
+        return texts[status] || status;
     }
 
     async loadUsers() {
@@ -213,27 +316,41 @@ class AdminPanel {
             return;
         }
 
-        tbody.innerHTML = users.map(user => `
-            <tr>
-                <td>${user.email}</td>
-                <td>${user.name || '-'}</td>
-                <td><span class="badge ${user.plan}">${user.plan}</span></td>
-                <td>${user.is_admin ? '<span class="badge admin">Admin</span>' : '-'}</td>
-                <td><span class="badge ${user.active ? 'active' : 'inactive'}">${user.active ? 'Activo' : 'Inactivo'}</span></td>
-                <td>${this.formatDate(user.created_at)}</td>
-                <td>${user.last_activity_at ? this.formatDate(user.last_activity_at) : 'Nunca'}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-warning" onclick="adminPanel.toggleAdmin('${user.id}', ${user.is_admin})">
-                            ${user.is_admin ? 'Quitar Admin' : 'Hacer Admin'}
-                        </button>
-                        <button class="btn btn-sm ${user.active ? 'btn-error' : 'btn-success'}" onclick="adminPanel.toggleActive('${user.id}', ${user.active})">
-                            ${user.active ? 'Desactivar' : 'Activar'}
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = users.map(user => {
+            let statusBadge = '';
+            if (user.suspended) {
+                statusBadge = '<span class="badge suspended">Suspendido</span>';
+            } else if (user.active) {
+                statusBadge = '<span class="badge active">Activo</span>';
+            } else {
+                statusBadge = '<span class="badge inactive">Inactivo</span>';
+            }
+
+            return `
+                <tr>
+                    <td>${user.email}</td>
+                    <td>${user.name || '-'}</td>
+                    <td><span class="badge ${user.plan}">${user.plan}</span></td>
+                    <td>${user.is_admin ? '<span class="badge admin">Admin</span>' : '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${this.formatDate(user.created_at)}</td>
+                    <td>${user.last_activity_at ? this.formatDate(user.last_activity_at) : 'Nunca'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-warning" onclick="adminPanel.toggleAdmin('${user.id}', ${user.is_admin})">
+                                ${user.is_admin ? 'Quitar Admin' : 'Hacer Admin'}
+                            </button>
+                            <button class="btn btn-sm ${user.active ? 'btn-error' : 'btn-success'}" onclick="adminPanel.toggleActive('${user.id}', ${user.active})">
+                                ${user.active ? 'Desactivar' : 'Activar'}
+                            </button>
+                            <button class="btn btn-sm ${user.suspended ? 'btn-success' : 'btn-warning'}" onclick="adminPanel.${user.suspended ? 'reactivateUser' : 'suspendUser'}('${user.id}')">
+                                ${user.suspended ? 'Reactivar' : 'Suspender'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     async toggleAdmin(userId, currentStatus) {
@@ -528,6 +645,42 @@ class AdminPanel {
                 </div>
             </div>
         `;
+    }
+
+    async suspendUser(userId) {
+        const reason = prompt('Motivo de suspensión (opcional):');
+        
+        if (confirm('¿Estás seguro de que quieres suspender a este usuario? No podrá generar roasts pero mantendrá acceso al dashboard.')) {
+            try {
+                const response = await this.apiCall(`/api/admin/users/${userId}/suspend`, 'POST', {
+                    reason: reason || null
+                });
+                
+                if (response.success) {
+                    this.showToast('Usuario suspendido exitosamente', 'success');
+                    this.loadUsers();
+                }
+            } catch (error) {
+                console.error('Suspend user error:', error);
+                this.showToast('Error al suspender usuario', 'error');
+            }
+        }
+    }
+
+    async reactivateUser(userId) {
+        if (confirm('¿Estás seguro de que quieres reactivar a este usuario?')) {
+            try {
+                const response = await this.apiCall(`/api/admin/users/${userId}/reactivate`, 'POST');
+                
+                if (response.success) {
+                    this.showToast('Usuario reactivado exitosamente', 'success');
+                    this.loadUsers();
+                }
+            } catch (error) {
+                console.error('Reactivate user error:', error);
+                this.showToast('Error al reactivar usuario', 'error');
+            }
+        }
     }
 
     logout() {

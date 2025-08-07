@@ -295,6 +295,17 @@ textarea:focus {
     font-size: 1.5rem;
 }
 
+.stat-icon.users { background: #3b82f6; }
+.stat-icon.roasts { background: #f59e0b; }
+.stat-icon.weekly { background: #10b981; }
+.stat-icon.integrations { background: #8b5cf6; }
+
+.stat-extra {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
 .stat-content h3 {
     font-size: 2rem;
     font-weight: 700;
@@ -376,6 +387,182 @@ textarea:focus {
     color: var(--text-secondary);
 }
 
+/* Ranking List */
+.ranking-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ranking-item:last-child {
+    border-bottom: none;
+}
+
+.ranking-position {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-right: 12px;
+}
+
+.ranking-position.gold { background: #f59e0b; }
+.ranking-position.silver { background: #6b7280; }
+.ranking-position.bronze { background: #d97706; }
+
+.ranking-info {
+    flex: 1;
+}
+
+.ranking-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.ranking-email {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.ranking-stats {
+    text-align: right;
+}
+
+.ranking-total {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.ranking-monthly {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Integration Status List */
+.integration-status-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.integration-status-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.integration-status-item:last-child {
+    border-bottom: none;
+}
+
+.integration-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: var(--background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 1.2rem;
+}
+
+.integration-details {
+    flex: 1;
+}
+
+.integration-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.integration-last-run {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.integration-status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.integration-status-badge.active {
+    background: var(--success-color);
+    color: white;
+}
+
+.integration-status-badge.configured {
+    background: var(--warning-color);
+    color: white;
+}
+
+.integration-status-badge.disabled {
+    background: var(--secondary-color);
+    color: white;
+}
+
+/* Activity Chart */
+.activity-chart {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.activity-chart-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.activity-chart-item:last-child {
+    border-bottom: none;
+}
+
+.activity-chart-name {
+    width: 100px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.activity-chart-bar {
+    flex: 1;
+    height: 20px;
+    background: var(--background-color);
+    border-radius: 10px;
+    position: relative;
+    margin: 0 10px;
+}
+
+.activity-chart-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.activity-chart-count {
+    font-weight: bold;
+    color: var(--primary-color);
+    min-width: 40px;
+    text-align: right;
+}
+
 /* Table */
 .table-container {
     background: var(--card-background);
@@ -447,6 +634,11 @@ tr:hover td {
 
 .badge.creator_plus {
     background: var(--primary-color);
+    color: white;
+}
+
+.badge.suspended {
+    background: var(--warning-color);
     color: white;
 }
 

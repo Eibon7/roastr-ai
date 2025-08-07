@@ -2,6 +2,8 @@ const express = require('express');
 const { supabaseServiceClient } = require('../config/supabase');
 const { isAdminMiddleware } = require('../middleware/isAdmin');
 const { logger } = require('../utils/logger');
+const metricsService = require('../services/metricsService');
+const authService = require('../services/authService');
 const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
@@ -13,84 +15,16 @@ router.use(isAdminMiddleware);
 
 /**
  * GET /api/admin/dashboard
- * Obtener estadísticas generales del dashboard
+ * Obtener estadísticas generales del dashboard con métricas avanzadas
  */
 router.get('/dashboard', async (req, res) => {
     try {
-        // Obtener estadísticas de usuarios
-        const { data: usersStats, error: usersError } = await supabaseServiceClient
-            .from('users')
-            .select('id, created_at, is_admin, active')
-            .order('created_at', { ascending: false });
-
-        if (usersError) {
-            throw new Error(`Error fetching users: ${usersError.message}`);
-        }
-
-        // Obtener estadísticas de actividades recientes
-        const { data: activities, error: activitiesError } = await supabaseServiceClient
-            .from('user_activities')
-            .select('id, activity_type, platform, created_at')
-            .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Últimos 30 días
-            .order('created_at', { ascending: false })
-            .limit(1000);
-
-        if (activitiesError) {
-            logger.warn('Error fetching activities:', activitiesError.message);
-        }
-
-        // Calcular estadísticas
-        const totalUsers = usersStats.length;
-        const adminUsers = usersStats.filter(u => u.is_admin).length;
-        const activeUsers = usersStats.filter(u => u.active).length;
-        const newUsersThisMonth = usersStats.filter(u => {
-            const userDate = new Date(u.created_at);
-            const now = new Date();
-            return userDate.getMonth() === now.getMonth() && userDate.getFullYear() === now.getFullYear();
-        }).length;
-
-        // Actividad por plataforma
-        const platformActivity = {};
-        const activityByDay = {};
-
-        if (activities) {
-            activities.forEach(activity => {
-                // Contar por plataforma
-                if (activity.platform) {
-                    platformActivity[activity.platform] = (platformActivity[activity.platform] || 0) + 1;
-                }
-
-                // Contar por día
-                const day = new Date(activity.created_at).toISOString().split('T')[0];
-                activityByDay[day] = (activityByDay[day] || 0) + 1;
-            });
-        }
-
-        // Obtener integraciones activas desde variables de entorno
-        const enabledIntegrations = process.env.INTEGRATIONS_ENABLED 
-            ? process.env.INTEGRATIONS_ENABLED.split(',')
-            : ['twitter', 'youtube', 'bluesky'];
-
-        const dashboardData = {
-            users: {
-                total: totalUsers,
-                active: activeUsers,
-                admins: adminUsers,
-                new_this_month: newUsersThisMonth
-            },
-            activity: {
-                total_activities: activities?.length || 0,
-                by_platform: platformActivity,
-                by_day: activityByDay,
-                last_activity: activities?.[0]?.created_at || null
-            },
-            integrations: {
-                enabled: enabledIntegrations,
-                total_enabled: enabledIntegrations.length
-            },
-            system: {
-                last_updated: new Date().toISOString()
-            }
+        // Usar el nuevo servicio de métricas
+        const dashboardData = await metricsService.getDashboardMetrics();
+        
+        // Agregar timestamp
+        dashboardData.system = {
+            last_updated: new Date().toISOString()
         };
 
         res.json({
@@ -296,6 +230,57 @@ router.post('/users/:userId/toggle-active', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to toggle active status',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/admin/users/:userId/suspend
+ * Suspender usuario (no puede generar roasts pero sí acceder al dashboard)
+ */
+router.post('/users/:userId/suspend', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { reason } = req.body;
+        
+        const result = await authService.suspendUser(userId, req.user.id, reason);
+        
+        res.json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+        logger.error('Suspend user endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to suspend user',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/admin/users/:userId/reactivate
+ * Reactivar usuario suspendido
+ */
+router.post('/users/:userId/reactivate', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        const result = await authService.unsuspendUser(userId, req.user.id);
+        
+        res.json({
+            success: true,
+            data: result
+        });
+
+    } catch (error) {
+        logger.error('Reactivate user endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reactivate user',
             message: error.message
         });
     }

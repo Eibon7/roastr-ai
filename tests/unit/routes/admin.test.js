@@ -38,12 +38,28 @@ jest.mock('../../../src/utils/logger', () => ({
     }
 }));
 
+jest.mock('../../../src/services/metricsService', () => ({
+    getDashboardMetrics: jest.fn(() => Promise.resolve({
+        users: { total: 3, suspended: 1, new_this_week: 2 },
+        roasts: { total: 150, today: 5, this_week: 25, this_month: 100 },
+        topUsers: [],
+        integrations: { integrations: [], stats: { total: 9, active: 3, configured: 2, disabled: 4 } }
+    }))
+}));
+
+jest.mock('../../../src/services/authService', () => ({
+    suspendUser: jest.fn(),
+    unsuspendUser: jest.fn()
+}));
+
 jest.mock('child_process', () => ({
     exec: jest.fn()
 }));
 
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const { exec } = require('child_process');
+const metricsService = require('../../../src/services/metricsService');
+const authService = require('../../../src/services/authService');
 
 describe('Admin Routes', () => {
     let app;
@@ -65,68 +81,26 @@ describe('Admin Routes', () => {
     });
 
     describe('GET /api/admin/dashboard', () => {
-        test('should return dashboard data successfully', async () => {
-            // Mock users query
-            const mockUsersQuery = {
-                select: jest.fn(() => ({
-                    order: jest.fn(() => Promise.resolve({
-                        data: [
-                            { id: '1', is_admin: false, active: true, created_at: '2024-01-01' },
-                            { id: '2', is_admin: true, active: true, created_at: '2024-01-15' },
-                            { id: '3', is_admin: false, active: false, created_at: '2024-02-01' }
-                        ],
-                        error: null
-                    }))
-                }))
-            };
-
-            // Mock activities query
-            const mockActivitiesQuery = {
-                select: jest.fn(() => ({
-                    gte: jest.fn(() => ({
-                        order: jest.fn(() => ({
-                            limit: jest.fn(() => Promise.resolve({
-                                data: [
-                                    { id: '1', platform: 'twitter', created_at: '2024-01-01' },
-                                    { id: '2', platform: 'youtube', created_at: '2024-01-02' }
-                                ],
-                                error: null
-                            }))
-                        }))
-                    }))
-                }))
-            };
-
-            supabaseServiceClient.from
-                .mockReturnValueOnce(mockUsersQuery)
-                .mockReturnValueOnce(mockActivitiesQuery);
-
+        test('should return dashboard data successfully using metricsService', async () => {
             const response = await request(app)
                 .get('/api/admin/dashboard')
                 .expect(200);
 
             expect(response.body.success).toBe(true);
             expect(response.body.data).toHaveProperty('users');
-            expect(response.body.data).toHaveProperty('activity');
+            expect(response.body.data).toHaveProperty('roasts');
+            expect(response.body.data).toHaveProperty('topUsers');
             expect(response.body.data).toHaveProperty('integrations');
             expect(response.body.data).toHaveProperty('system');
 
             expect(response.body.data.users.total).toBe(3);
-            expect(response.body.data.users.active).toBe(2);
-            expect(response.body.data.users.admins).toBe(1);
+            expect(response.body.data.users.suspended).toBe(1);
+            expect(response.body.data.roasts.total).toBe(150);
+            expect(metricsService.getDashboardMetrics).toHaveBeenCalled();
         });
 
-        test('should handle database errors gracefully', async () => {
-            const mockQuery = {
-                select: jest.fn(() => ({
-                    order: jest.fn(() => Promise.resolve({
-                        data: null,
-                        error: { message: 'Database error' }
-                    }))
-                }))
-            };
-
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+        test('should handle metricsService errors gracefully', async () => {
+            metricsService.getDashboardMetrics.mockRejectedValueOnce(new Error('Database error'));
 
             const response = await request(app)
                 .get('/api/admin/dashboard')
@@ -485,6 +459,72 @@ describe('Admin Routes', () => {
             expect(response.header['content-disposition']).toMatch(/attachment; filename="roastr-logs-/);
             expect(response.text).toContain('Roastr.ai Admin Panel - Logs Export');
             expect(response.text).toContain('Test log entry');
+        });
+    });
+
+    describe('POST /api/admin/users/:userId/suspend', () => {
+        test('should suspend user successfully', async () => {
+            const userId = 'user-123';
+            const reason = 'Violation of terms';
+
+            authService.suspendUser.mockResolvedValueOnce({
+                message: 'User account suspended successfully',
+                reason: reason
+            });
+
+            const response = await request(app)
+                .post(`/api/admin/users/${userId}/suspend`)
+                .send({ reason })
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.message).toBe('User account suspended successfully');
+            expect(authService.suspendUser).toHaveBeenCalledWith(userId, 'admin-123', reason);
+        });
+
+        test('should handle suspend user error', async () => {
+            const userId = 'user-123';
+            
+            authService.suspendUser.mockRejectedValueOnce(new Error('User not found'));
+
+            const response = await request(app)
+                .post(`/api/admin/users/${userId}/suspend`)
+                .send({ reason: 'Test reason' })
+                .expect(500);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('Failed to suspend user');
+        });
+    });
+
+    describe('POST /api/admin/users/:userId/reactivate', () => {
+        test('should reactivate user successfully', async () => {
+            const userId = 'user-123';
+
+            authService.unsuspendUser.mockResolvedValueOnce({
+                message: 'User account reactivated successfully'
+            });
+
+            const response = await request(app)
+                .post(`/api/admin/users/${userId}/reactivate`)
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.message).toBe('User account reactivated successfully');
+            expect(authService.unsuspendUser).toHaveBeenCalledWith(userId, 'admin-123');
+        });
+
+        test('should handle reactivate user error', async () => {
+            const userId = 'nonexistent-user';
+            
+            authService.unsuspendUser.mockRejectedValueOnce(new Error('User not found'));
+
+            const response = await request(app)
+                .post(`/api/admin/users/${userId}/reactivate`)
+                .expect(500);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('Failed to reactivate user');
         });
     });
 });

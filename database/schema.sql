@@ -125,7 +125,8 @@ CREATE TABLE user_activities (
     
     CONSTRAINT user_activities_type_check CHECK (activity_type IN (
         'message_sent', 'response_generated', 'login', 'logout', 
-        'plan_changed', 'account_suspended', 'account_activated'
+        'plan_changed', 'account_suspended', 'account_activated',
+        'account_reactivated'
     ))
 );
 

@@ -55,55 +55,76 @@
                 </div>
 
                 <div class="stats-grid">
+                    <!-- Estadísticas de usuarios -->
                     <div class="stat-card">
-                        <div class="stat-icon">
+                        <div class="stat-icon users">
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="stat-content">
                             <h3 id="total-users">-</h3>
                             <p>Total Usuarios</p>
+                            <small id="suspended-users" class="stat-extra">0 suspendidos</small>
                         </div>
                     </div>
+                    
+                    <!-- Estadísticas de roasts -->
                     <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-user-check"></i>
+                        <div class="stat-icon roasts">
+                            <i class="fas fa-fire"></i>
                         </div>
                         <div class="stat-content">
-                            <h3 id="active-users">-</h3>
-                            <p>Usuarios Activos</p>
+                            <h3 id="total-roasts">-</h3>
+                            <p>Total Roasts</p>
+                            <small id="roasts-today" class="stat-extra">0 hoy</small>
                         </div>
                     </div>
+                    
+                    <!-- Estadísticas semanales -->
                     <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-user-shield"></i>
+                        <div class="stat-icon weekly">
+                            <i class="fas fa-chart-line"></i>
                         </div>
                         <div class="stat-content">
-                            <h3 id="admin-users">-</h3>
-                            <p>Administradores</p>
+                            <h3 id="weekly-activity">-</h3>
+                            <p>Esta Semana</p>
+                            <small id="weekly-details" class="stat-extra">roasts y usuarios</small>
                         </div>
                     </div>
+                    
+                    <!-- Integraciones activas -->
                     <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-user-plus"></i>
+                        <div class="stat-icon integrations">
+                            <i class="fas fa-plug"></i>
                         </div>
                         <div class="stat-content">
-                            <h3 id="new-users">-</h3>
-                            <p>Nuevos este mes</p>
+                            <h3 id="active-integrations-count">-</h3>
+                            <p>Integraciones</p>
+                            <small id="integrations-status" class="stat-extra">activas</small>
                         </div>
                     </div>
                 </div>
 
                 <div class="dashboard-content">
+                    <!-- Top 5 Usuarios -->
                     <div class="dashboard-card">
-                        <h3><i class="fas fa-plug"></i> Integraciones Activas</h3>
-                        <div id="active-integrations" class="integration-list">
+                        <h3><i class="fas fa-trophy"></i> Top 5 Usuarios por Volumen</h3>
+                        <div id="top-users" class="ranking-list">
                             <p class="loading">Cargando...</p>
                         </div>
                     </div>
                     
+                    <!-- Estado de Integraciones -->
                     <div class="dashboard-card">
-                        <h3><i class="fas fa-activity"></i> Actividad Reciente</h3>
-                        <div id="recent-activity" class="activity-list">
+                        <h3><i class="fas fa-heartbeat"></i> Estado de Integraciones</h3>
+                        <div id="integrations-status-list" class="integration-status-list">
+                            <p class="loading">Cargando...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Integraciones más activas -->
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-chart-bar"></i> Integraciones más Activas</h3>
+                        <div id="most-active-integrations" class="activity-chart">
                             <p class="loading">Cargando...</p>
                         </div>
                     </div>
@@ -135,7 +156,7 @@
                                 <th>Nombre</th>
                                 <th>Plan</th>
                                 <th>Admin</th>
-                                <th>Activo</th>
+                                <th>Estado</th>
                                 <th>Creado</th>
                                 <th>Última Actividad</th>
                                 <th>Acciones</th>

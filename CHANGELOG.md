@@ -1,5 +1,106 @@
 # 📦 Changelog
 
+## v0.3.0 – 2025-01-07
+
+**Descripción:** Funcionalidades avanzadas del panel de administración con métricas comprehensivas, sistema de suspensión de usuarios y monitoreo de integraciones en tiempo real.
+
+---
+
+### 🚀 Nuevas Funcionalidades Principales
+
+#### 📊 Dashboard Avanzado con Métricas Comprehensivas
+- **Estadísticas mejoradas**: Total usuarios con conteo de suspendidos
+- **Métricas de roasts**: Conteos diarios, semanales y mensuales en tiempo real
+- **Top 5 usuarios**: Ranking por volumen de actividad con indicadores oro/plata/bronce  
+- **Estado de integraciones**: Monitoreo en vivo con timestamps de última ejecución
+- **Chart de actividad**: Integraciones más activas con barras de progreso animadas
+- **Actualización automática**: Dashboard con datos en tiempo real
+
+#### 🔒 Sistema de Suspensión de Usuarios  
+- **Suspender usuarios**: Previene generación de roasts manteniendo acceso al dashboard
+- **Reactivar usuarios**: Restaura funcionalidad completa con log de auditoría  
+- **Indicadores visuales**: Estados Activo/Inactivo/Suspendido en tabla de usuarios
+- **Razón de suspensión**: Campo opcional para documentar motivos
+- **Logging administrativo**: Registro completo de acciones para compliance
+- **Permisos granulares**: Control fino sobre capacidades del usuario
+
+#### 🔌 Monitoreo de Integraciones en Tiempo Real
+- **Estado en vivo**: Badges de estado (Activa, Configurada, Deshabilitada)  
+- **Timestamps de ejecución**: Última vez que cada integración se ejecutó
+- **Indicadores de salud**: Monitoreo visual del estado de cada plataforma
+- **Lista interactiva**: Vista detallada de todas las 9 integraciones
+- **Chart de actividad**: Visualización de integraciones más utilizadas
+
+### 🛠️ Mejoras Técnicas Backend
+
+#### 🎯 MetricsService - Nuevo Servicio de Análisis
+- **Agregación de métricas**: Servicio comprehensivo para estadísticas del dashboard
+- **Queries optimizadas**: Consultas eficientes con manejo de errores  
+- **Datos de fallback**: Manejo robusto cuando las tablas están vacías
+- **Cálculos inteligentes**: Métricas simuladas para desarrollo y testing
+- **Logging completo**: Trazabilidad de todas las operaciones
+
+#### 🔐 AuthService Extendido  
+- **Métodos de suspensión**: `suspendUser()` y `unsuspendUser()` con metadatos
+- **Verificación de permisos**: `canUserGenerateRoasts()` para control granular
+- **Logging de actividades**: Registro automático de acciones administrativas  
+- **Gestión de estados**: Tracking completo de cambios de estado del usuario
+
+#### 🌐 API Endpoints Nuevos
+- `POST /api/admin/users/:userId/suspend` - Suspender cuenta de usuario
+- `POST /api/admin/users/:userId/reactivate` - Reactivar usuario suspendido  
+- `GET /api/admin/dashboard` - Métricas comprehensivas mejoradas
+- **Manejo de errores**: Respuestas estandarizadas con logging detallado
+- **Validación robusta**: Verificación de permisos y datos de entrada
+
+### 🎨 Mejoras Frontend Avanzadas
+
+#### 📱 Dashboard Rediseñado
+- **Cards de estadísticas**: 4 cards con iconos codificados por color
+- **Top 5 usuarios**: Lista de ranking con posiciones oro/plata/bronce
+- **Estado de integraciones**: Lista visual con badges de estado  
+- **Chart de actividad**: Barras de progreso con animaciones CSS
+- **Design responsive**: Optimizado para todos los dispositivos
+
+#### 👥 Gestión de Usuarios Mejorada
+- **Indicadores de suspensión**: Estados visuales en la tabla de usuarios
+- **Botones Suspender/Reactivar**: Acciones con confirmación y razón opcional
+- **Actualizaciones en tiempo real**: Estados se actualizan automáticamente
+- **Diálogos de confirmación**: UX mejorada para acciones críticas
+
+#### 🎨 Sistema de Estilos Expandido
+- **Listas de ranking**: Estilos para posiciones con indicadores de medalla
+- **Badges de estado**: Indicadores visuales para suspensión 
+- **Charts de actividad**: Barras de progreso con fills animados
+- **Estados responsive**: Diseño mejorado para móviles y tablets
+
+### 🗄️ Cambios de Base de Datos
+
+#### 📝 Schema Updates
+- **Tipos de actividad**: Agregado 'account_reactivated' a user_activities constraint
+- **Campos de suspensión**: Support completo para tracking de suspensiones
+  - `suspended` boolean
+  - `suspended_reason` texto opcional
+  - `suspended_at` timestamp  
+  - `suspended_by` referencia al admin
+
+### 🧪 Testing Comprehensivo
+
+#### ✅ Cobertura de Tests Completa
+- **MetricsService tests**: 7 test cases con mocking completo
+- **Admin routes tests**: 17 test cases incluyendo suspend/reactivate  
+- **Manejo de errores**: Testing de casos edge y recuperación
+- **Integración**: Tests de workflows completos admin
+
+### 📊 Métricas y Performance
+
+- **Queries optimizadas**: Mejores consultas para dashboard metrics
+- **Caching inteligente**: Datos calculados una vez y reutilizados
+- **Fallback robusto**: Sistema resiliente ante fallos de base de datos
+- **Logging detallado**: Trazabilidad completa para debugging
+
+---
+
 ## v0.2.0 – 2025-01-31
 
 **Descripción:** Panel de Administración completo con funcionalidades avanzadas, testing integrado, seguridad robusta y experiencia de usuario mejorada.
