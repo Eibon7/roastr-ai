@@ -1,7 +1,7 @@
 {
   "name": "roastr-ai",
   "version": "1.0.0",
-  "description": "Detección de toxicidad en comentarios para filtrado y moderación automática con generación de roasts por IA",
+  "description": "Detección de toxicidad en comentarios para filtrado y moderación automática",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -35,14 +35,13 @@
     "users:search": "node src/cli/user-manager.js search",
     "users:stats": "node src/cli/user-manager.js stats",
     "users:health": "node src/cli/user-manager.js health",
-    
     "frontend:start": "cd frontend && npm start",
     "frontend:build": "cd frontend && npm run build",
     "frontend:install": "cd frontend && npm install",
-    
     "test": "jest --verbose",
     "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'",
-    "test:integrations": "jest tests/unit/integrations/ --verbose"
+    "test:integrations": "jest tests/unit/integrations/ --verbose",
+    "changelog:add": "node scripts/add-changelog.js"
   },
   "repository": {
     "type": "git",
