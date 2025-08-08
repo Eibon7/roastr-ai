@@ -1,5 +1,69 @@
 # 📦 Changelog
 
+## v0.7.0 – 2025-08-08
+
+**Descripción:** Sistema RQC (Roast Quality Control) multi-plan con moderación básica integrada para Free/Pro y sistema avanzado de 3 revisores paralelos para Creator+. Optimizado para costes con fallback inteligente y testing completo (37 casos).
+
+---
+
+### 🎯 RQC (Roast Quality Control) System
+
+#### 🔬 Multi-Plan Architecture
+- **Free & Pro Plans**: Moderación básica integrada en el prompt de generación (sin llamadas extra a GPT)
+- **Creator+ Plans**: Sistema RQC avanzado con 3 revisores ejecutándose en paralelo:
+  - **🛡️ Moderator**: Verifica cumplimiento de normas de plataforma y nivel de intensidad
+  - **😄 Comedian**: Evalúa calidad del humor, creatividad y "punch"
+  - **🎨 Style Reviewer**: Comprueba adherencia al estilo y tono configurado
+- **💰 Cost Optimization**: Free/Pro usan 1 llamada GPT, Creator+ usa sistema multi-revisor
+
+#### 🤖 Decision Logic Inteligente
+- **3 verdes** → Aprobado y publicado inmediatamente
+- **2 verdes (Moderador pasa)** → Aprobado en modo Creator+ Pro
+- **Moderador falla** → Regenerar siempre (non-negotiable para seguridad)
+- **< 2 verdes** → Regenerar con feedback específico
+- **Max intentos** → Fallback a roast seguro garantizado
+
+#### 🗄️ Database Schema RQC
+- **Tabla `rqc_reviews`**: Historial completo de revisiones con métricas de performance
+- **Extensión `user_subscriptions`**: Campos RQC (enabled, intensity_level, custom_style_prompt)
+- **Tabla `rqc_plan_configs`**: Configuración específica por plan
+- **Funciones PostgreSQL**: `get_user_rqc_config()` y `log_rqc_review()` para eficiencia
+
+#### ⚙️ Configuration System
+- **Intensity Levels**: 1-5 (suave a brutal, siempre dentro de reglas)
+- **RQC Enable Flag**: Configurable por usuario Creator+ y administradores
+- **Custom Style Prompts**: Solo editables por admin para usuarios avanzados
+- **Max Regenerations**: Límite configurable por plan (0 Free/Pro, 3 Creator+)
+
+#### 🚀 Performance Features
+- **Parallel Processing**: 3 revisores se ejecutan simultáneamente para velocidad
+- **Token Tracking**: Seguimiento detallado de uso y costes por plan
+- **Smart Fallback**: Sistema que siempre publica algo, nunca falla completamente
+- **Database Logging**: Métricas completas para análisis y optimización
+
+#### 🧪 Comprehensive Testing (37 test cases)
+- **Plan-based Behavior**: Verificación Free/Pro vs Creator+ flows
+- **Cost Control**: Validación de no-extra-calls para planes básicos
+- **RQC Decision Logic**: Testing exhaustivo de reglas de aprobación/rechazo
+- **Error Handling**: Fallbacks y recovery en todos los puntos de falla
+- **Performance**: Tests de ejecución paralela y eficiencia
+
+### 🔧 Technical Implementation
+- **`RoastGeneratorEnhanced`**: Servicio principal que reemplaza generator legacy
+- **`RQCService`**: Microservicio independiente para sistema de revisión
+- **Database Migration**: `004_rqc_system.sql` con schema completo
+- **Backward Compatibility**: API existente funciona sin cambios
+
+### 📊 Key Benefits
+- **Cost Efficient**: Free/Pro mantienen eficiencia con 1 llamada API
+- **Quality Assured**: Creator+ obtiene control de calidad profesional
+- **Platform Safe**: Todo contenido cumple guidelines de plataformas
+- **User Customizable**: Configuración de intensidad y estilo personalizable
+- **Admin Controllable**: Prompts de estilo configurables por administrador
+- **Always Publishes**: Sistema de fallback garantiza que siempre se responde
+
+---
+
 ## v0.6.0 – 2025-08-07
 
 **Descripción:** Sistema completo de facturación con Stripe Checkout, Customer Portal, webhooks y gating de funcionalidades por plan. Incluye 3 planes (Free, Pro €20, Creator+ €50) con restricciones automáticas y testing comprehensivo.
