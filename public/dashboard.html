@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Roastr.AI</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        .dashboard-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+        }
+        
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        
+        .plan-selector {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .plan-option {
+            display: block;
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .plan-option:hover {
+            border-color: #d92727;
+            background: #fff5f5;
+        }
+        
+        .plan-option.selected {
+            border-color: #d92727;
+            background: #d92727;
+            color: white;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome to Roastr.AI</h1>
+            <div class="user-info">
+                <div>
+                    <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
+                    <p><strong>Plan:</strong> <span id="user-plan">Loading...</span></p>
+                    <p><strong>Status:</strong> <span id="user-status">Loading...</span></p>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <!-- Plan Selection (for new users) -->
+        <div id="plan-selection" class="plan-selector hidden">
+            <h3>Choose Your Plan</h3>
+            <p>Select a plan to get started with Roastr.AI</p>
+            
+            <div class="plan-option" onclick="selectPlan('basic')">
+                <h4>Basic - Free</h4>
+                <p>Perfect for getting started</p>
+                <ul>
+                    <li>100 roasts per month</li>
+                    <li>1 integration</li>
+                    <li>Basic support</li>
+                </ul>
+            </div>
+            
+            <div class="plan-option" onclick="selectPlan('pro')">
+                <h4>Pro - $9.99/month</h4>
+                <p>Best for regular users</p>
+                <ul>
+                    <li>1,000 roasts per month</li>
+                    <li>5 integrations</li>
+                    <li>Priority support</li>
+                    <li>Advanced analytics</li>
+                </ul>
+            </div>
+            
+            <div class="plan-option" onclick="selectPlan('creator_plus')">
+                <h4>Creator Plus - $19.99/month</h4>
+                <p>For power users and creators</p>
+                <ul>
+                    <li>Unlimited roasts</li>
+                    <li>All integrations</li>
+                    <li>24/7 support</li>
+                    <li>Custom tones</li>
+                    <li>API access</li>
+                </ul>
+            </div>
+            
+            <button id="confirm-plan" class="btn" onclick="confirmPlan()" style="margin-top: 20px;">
+                Confirm Selection
+            </button>
+        </div>
+        
+        <!-- Main Dashboard Content -->
+        <div id="main-dashboard">
+            <h3>Dashboard</h3>
+            <p>Welcome to your Roastr.AI dashboard! Manage your social media integrations and monitor your bot's activity.</p>
+            
+            <div class="dashboard-actions" style="margin: 30px 0;">
+                <a href="/platforms.html" class="btn" style="margin-right: 10px; text-decoration: none; display: inline-block; padding: 10px 20px; background: #007bff; color: white; border-radius: 5px;">
+                    🔗 Manage Platforms
+                </a>
+                <a href="/billing.html" class="btn" style="margin-right: 10px; text-decoration: none; display: inline-block; padding: 10px 20px; background: #28a745; color: white; border-radius: 5px;">
+                    💳 Billing & Plans
+                </a>
+                <a href="/onboarding/step1.html" class="btn" style="margin-right: 10px; text-decoration: none; display: inline-block; padding: 10px 20px; background: #6c757d; color: white; border-radius: 5px;">
+                    ⚙️ Reconfigure Settings  
+                </a>
+            </div>
+            
+            <div class="alt-links" style="margin-top: 30px;">
+                <a href="/admin.html" id="admin-link" class="hidden">Admin Panel</a>
+            </div>
+        </div>
+        
+        <!-- Success/Error Messages -->
+        <div class="success-message hidden" id="success-message"></div>
+        <div class="error-message hidden" id="error-message"></div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let selectedPlan = null;
+        let userData = null;
+        
+        // Load user data and initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check for OAuth callback data first
+            const urlParams = new URLSearchParams(window.location.search);
+            const authData = urlParams.get('auth_data');
+            const type = urlParams.get('type');
+            
+            if (authData && type === 'oauth_success') {
+                try {
+                    const sessionData = JSON.parse(decodeURIComponent(authData));
+                    // Save auth data to localStorage
+                    localStorage.setItem('auth_token', sessionData.access_token);
+                    localStorage.setItem('refresh_token', sessionData.refresh_token);
+                    localStorage.setItem('user_data', JSON.stringify(sessionData.user));
+                    
+                    showMessage('Login successful! Welcome to Roastr.AI', 'success');
+                    
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } catch (error) {
+                    console.error('Error processing OAuth data:', error);
+                    showMessage('Authentication successful, but there was an error processing the data', 'error');
+                }
+            }
+            
+            // Check authentication
+            if (!isAuthenticated()) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                // Get user data from API
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    userData = result.data;
+                    
+                    // Check if user has completed onboarding
+                    if (!userData.onboarding_complete) {
+                        // Redirect to onboarding flow
+                        window.location.href = '/onboarding/step1.html';
+                        return;
+                    }
+                    
+                    // Update UI with user data
+                    document.getElementById('user-email').textContent = userData.email;
+                    document.getElementById('user-plan').textContent = userData.plan || 'Not selected';
+                    document.getElementById('user-status').textContent = userData.active ? 'Active' : 'Inactive';
+                    
+                    // Show admin link if user is admin
+                    if (userData.is_admin) {
+                        document.getElementById('admin-link').classList.remove('hidden');
+                    }
+                    
+                    // Show plan selection if no plan selected
+                    if (!userData.plan || userData.plan === 'basic') {
+                        document.getElementById('plan-selection').classList.remove('hidden');
+                        document.getElementById('main-dashboard').classList.add('hidden');
+                    }
+                } else {
+                    throw new Error('Failed to load user data');
+                }
+                
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showMessage('Error loading user data', 'error');
+                
+                // If token is invalid, redirect to login
+                if (error.message.includes('token')) {
+                    setTimeout(() => {
+                        logout();
+                    }, 2000);
+                }
+            }
+        });
+        
+        function selectPlan(plan) {
+            // Remove previous selections
+            document.querySelectorAll('.plan-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select current plan
+            event.target.closest('.plan-option').classList.add('selected');
+            selectedPlan = plan;
+        }
+        
+        async function confirmPlan() {
+            if (!selectedPlan) {
+                showMessage('Please select a plan first', 'error');
+                return;
+            }
+            
+            // For now, just simulate plan selection
+            // In a real app, this would integrate with a payment processor
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        plan: selectedPlan
+                    })
+                });
+                
+                if (response.ok) {
+                    showMessage(`Successfully selected ${selectedPlan} plan!`, 'success');
+                    
+                    // Update user data and hide plan selection
+                    userData.plan = selectedPlan;
+                    document.getElementById('user-plan').textContent = selectedPlan;
+                    document.getElementById('plan-selection').classList.add('hidden');
+                    document.getElementById('main-dashboard').classList.remove('hidden');
+                } else {
+                    throw new Error('Failed to update plan');
+                }
+                
+            } catch (error) {
+                console.error('Error updating plan:', error);
+                showMessage('Error updating plan. Please try again.', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

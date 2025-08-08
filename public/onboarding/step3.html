@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Personaliza tu Estilo - Paso 3</title>
+    <link rel="stylesheet" href="../css/style.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        .onboarding-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: var(--color-blue);
+            color: white;
+        }
+
+        .step.completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .step.pending {
+            background: var(--color-gray);
+            color: #666;
+        }
+
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: var(--color-gray);
+            margin: 0 10px;
+        }
+
+        .step-line.completed {
+            background: #28a745;
+        }
+
+        .step-content {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .step-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-black);
+            margin-bottom: 12px;
+        }
+
+        .step-description {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .config-section {
+            margin: 32px 0;
+            text-align: left;
+        }
+
+        .config-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-black);
+            margin-bottom: 16px;
+        }
+
+        .config-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .config-option {
+            background: var(--color-white);
+            border: 2px solid var(--color-gray);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .config-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .config-option.selected {
+            border-color: var(--color-blue);
+            background: rgba(0, 145, 255, 0.05);
+        }
+
+        .config-option.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 20px;
+            height: 20px;
+            background: var(--color-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .option-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--color-black);
+            margin-bottom: 8px;
+        }
+
+        .option-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .option-example {
+            background: #f8f9fa;
+            border-left: 3px solid var(--color-blue);
+            padding: 12px;
+            font-size: 13px;
+            font-style: italic;
+            color: #555;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .frequency-section {
+            margin: 32px 0;
+        }
+
+        .frequency-slider {
+            margin: 20px 0;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-gray);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-blue);
+            cursor: pointer;
+        }
+
+        .slider-value {
+            font-weight: 500;
+            color: var(--color-blue);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .onboarding-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: #666;
+            border: 1px solid var(--color-gray);
+        }
+
+        .btn-back:hover {
+            background: var(--color-gray);
+        }
+
+        @media (max-width: 768px) {
+            .onboarding-container {
+                padding: 20px;
+                margin: 20px auto;
+            }
+
+            .config-options {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .config-option {
+                padding: 16px;
+            }
+
+            .onboarding-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="auth-bg">
+    <div class="onboarding-container">
+        <!-- Indicador de progreso -->
+        <div class="step-indicator">
+            <div class="step completed">1</div>
+            <div class="step-line completed"></div>
+            <div class="step completed">2</div>
+            <div class="step-line completed"></div>
+            <div class="step active">3</div>
+            <div class="step-line"></div>
+            <div class="step pending">4</div>
+        </div>
+
+        <!-- Contenido del paso -->
+        <div class="step-content">
+            <h1 class="step-title">Personaliza tu estilo de humor</h1>
+            <p class="step-description">
+                Configura cómo quieres que Roastr.ai responda. Puedes cambiar estos ajustes en cualquier momento desde tu dashboard.
+            </p>
+        </div>
+
+        <!-- Selección de tono -->
+        <div class="config-section">
+            <h3 class="config-title">Tono de humor</h3>
+            <div class="config-options" id="tone-options">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Selección de estilo -->
+        <div class="config-section">
+            <h3 class="config-title">Estilo de respuesta</h3>
+            <div class="config-options" id="style-options">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Frecuencia de respuesta -->
+        <div class="config-section frequency-section">
+            <h3 class="config-title">Frecuencia de respuesta</h3>
+            <p style="color: #666; margin-bottom: 16px;">¿Qué tan frecuentemente quieres que responda automáticamente?</p>
+            <div class="frequency-slider">
+                <div class="slider-container">
+                    <span style="font-size: 14px; color: #666;">Menos</span>
+                    <input type="range" id="frequency-slider" class="slider" min="0.1" max="1.0" step="0.1" value="0.7">
+                    <span style="font-size: 14px; color: #666;">Más</span>
+                </div>
+                <div style="text-align: center; margin-top: 12px;">
+                    <span class="slider-value" id="frequency-value">70%</span>
+                    <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                        Responderá aproximadamente 7 de cada 10 comentarios detectados
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes de estado -->
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <!-- Botones de navegación -->
+        <div class="onboarding-actions">
+            <button class="btn-secondary btn-back" onclick="previousStep()">← Anterior</button>
+            <button class="btn-primary" onclick="nextStep()">Continuar →</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuraciones de tono y estilo
+        const toneOptions = {
+            sarcastic: {
+                title: 'Sarcástico',
+                description: 'Respuestas con sarcasmo inteligente y humor mordaz',
+                example: '"Wow, que comentario tan original y constructivo 👏"'
+            },
+            subtle: {
+                title: 'Sutil',
+                description: 'Humor refinado y elegante, sin ser demasiado directo',
+                example: '"Interesante perspectiva... si viviéramos en el siglo pasado"'
+            },
+            direct: {
+                title: 'Directo',
+                description: 'Sin rodeos, va directo al grano con humor',
+                example: '"Claramente no has pensado esto muy bien ¿verdad?"'
+            },
+            playful: {
+                title: 'Juguetón',
+                description: 'Diversión ligera y broma amigable',
+                example: '"Jajaja ¿en serio? Me hiciste el día con ese comentario 😂"'
+            },
+            witty: {
+                title: 'Ingenioso',
+                description: 'Respuestas inteligentes y creativas',
+                example: '"Tu lógica es tan sólida como un castillo de arena en marea alta"'
+            }
+        };
+
+        const styleOptions = {
+            witty: {
+                title: 'Ingenioso',
+                description: 'Respuestas elaboradas con referencias inteligentes',
+                example: '"Como diría Shakespeare: \'El sabio no dice todo lo que piensa, pero siempre piensa todo lo que dice\'"'
+            },
+            clever: {
+                title: 'Astuto',
+                description: 'Respuestas que demuestran superioridad intelectual',
+                example: '"Me encanta cuando alguien demuestra tan claramente por qué la educación es importante"'
+            },
+            dry: {
+                title: 'Humor seco',
+                description: 'Sin emociones aparentes, máxima efectividad',
+                example: '"Fascinante. Realmente fascinante."'
+            },
+            savage: {
+                title: 'Salvaje',
+                description: 'Sin piedad, respuestas contundentes',
+                example: '"Tu comentario acaba de reducir el nivel intelectual de todo internet"'
+            },
+            friendly: {
+                title: 'Amigable',
+                description: 'Mantiene el humor pero de forma más cordial',
+                example: '"Hey amigo, tal vez podríamos pensar eso un poquito más ¿no? 😊"'
+            }
+        };
+
+        let selectedTone = 'sarcastic';
+        let selectedStyle = 'witty';
+        let responseFrequency = 0.7;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('auth_token');
+            
+            if (!token) {
+                window.location.href = '/auth.html';
+                return;
+            }
+
+            renderOptions();
+            updateFrequencyDisplay();
+            
+            // Event listener para el slider
+            document.getElementById('frequency-slider').addEventListener('input', function(e) {
+                responseFrequency = parseFloat(e.target.value);
+                updateFrequencyDisplay();
+            });
+        });
+
+        function renderOptions() {
+            // Renderizar opciones de tono
+            const toneContainer = document.getElementById('tone-options');
+            const toneHTML = Object.entries(toneOptions).map(([key, option]) => {
+                return `
+                    <div class="config-option ${key === selectedTone ? 'selected' : ''}" 
+                         data-tone="${key}" onclick="selectTone('${key}')">
+                        <div class="option-title">${option.title}</div>
+                        <div class="option-description">${option.description}</div>
+                        <div class="option-example">${option.example}</div>
+                    </div>
+                `;
+            }).join('');
+            toneContainer.innerHTML = toneHTML;
+
+            // Renderizar opciones de estilo
+            const styleContainer = document.getElementById('style-options');
+            const styleHTML = Object.entries(styleOptions).map(([key, option]) => {
+                return `
+                    <div class="config-option ${key === selectedStyle ? 'selected' : ''}" 
+                         data-style="${key}" onclick="selectStyle('${key}')">
+                        <div class="option-title">${option.title}</div>
+                        <div class="option-description">${option.description}</div>
+                        <div class="option-example">${option.example}</div>
+                    </div>
+                `;
+            }).join('');
+            styleContainer.innerHTML = styleHTML;
+        }
+
+        function selectTone(tone) {
+            selectedTone = tone;
+            document.querySelectorAll('[data-tone]').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`[data-tone="${tone}"]`).classList.add('selected');
+        }
+
+        function selectStyle(style) {
+            selectedStyle = style;
+            document.querySelectorAll('[data-style]').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`[data-style="${style}"]`).classList.add('selected');
+        }
+
+        function updateFrequencyDisplay() {
+            const value = Math.round(responseFrequency * 100);
+            document.getElementById('frequency-value').textContent = value + '%';
+            
+            const description = document.querySelector('.frequency-slider .slider-value + div');
+            description.textContent = `Responderá aproximadamente ${Math.round(responseFrequency * 10)} de cada 10 comentarios detectados`;
+        }
+
+        function previousStep() {
+            window.location.href = '/onboarding/step2.html';
+        }
+
+        function nextStep() {
+            // Guardar configuración en sessionStorage
+            const config = {
+                tone: selectedTone,
+                style: selectedStyle,
+                frequency: responseFrequency
+            };
+            
+            sessionStorage.setItem('onboarding_config', JSON.stringify(config));
+            window.location.href = '/onboarding/step4.html';
+        }
+
+        function showMessage(message, type = 'error') {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+            
+            if (type === 'error') {
+                errorDiv.textContent = message;
+                errorDiv.classList.add('show');
+            } else {
+                successDiv.textContent = message;
+                successDiv.classList.add('show');
+            }
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+                successDiv.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

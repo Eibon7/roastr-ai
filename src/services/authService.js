@@ -300,6 +300,59 @@ class AuthService {
     }
 
     /**
+     * Update password with access token
+     */
+    async updatePassword(accessToken, newPassword) {
+        try {
+            const userClient = createUserClient(accessToken);
+            
+            // Update password
+            const { data, error } = await userClient.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) {
+                throw new Error(`Password update failed: ${error.message}`);
+            }
+
+            logger.info('Password updated successfully');
+            
+            return { message: 'Password updated successfully' };
+
+        } catch (error) {
+            logger.error('Update password error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Verify email confirmation token
+     */
+    async verifyEmail(token, type, email) {
+        try {
+            // Use Supabase to verify the email token
+            const { data, error } = await supabaseAnonClient.auth.verifyOtp({
+                token_hash: token,
+                type: type,
+                email: email
+            });
+
+            if (error) {
+                logger.error('Email verification failed:', error.message);
+                return { success: false, error: error.message };
+            }
+
+            logger.info('Email verified successfully:', { email });
+            
+            return { success: true, data };
+
+        } catch (error) {
+            logger.error('Email verification error:', error.message);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
      * Admin: List all users with enhanced filtering and search (service client)
      */
     async listUsers(options = {}) {
@@ -883,6 +936,97 @@ class AuthService {
         };
 
         return limits[plan] || limits.basic;
+    }
+
+    /**
+     * Sign in with Google OAuth
+     */
+    async signInWithGoogle() {
+        try {
+            const { data, error } = await supabaseAnonClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard.html`
+                }
+            });
+
+            if (error) {
+                throw new Error(`Google OAuth failed: ${error.message}`);
+            }
+
+            logger.info('Google OAuth initiated successfully');
+            
+            return { 
+                url: data.url,
+                message: 'Redirecting to Google authentication...'
+            };
+
+        } catch (error) {
+            logger.error('Google OAuth error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Handle OAuth callback (for Google and other providers)
+     */
+    async handleOAuthCallback(accessToken, refreshToken) {
+        try {
+            // Get user from the session
+            const userClient = createUserClient(accessToken);
+            const { data: { user }, error: userError } = await userClient.auth.getUser();
+            
+            if (userError || !user) {
+                throw new Error('Failed to get user from OAuth session');
+            }
+
+            // Check if user exists in our database
+            let { data: profile, error: profileError } = await supabaseServiceClient
+                .from('users')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            // If user doesn't exist, create them
+            if (profileError && profileError.code === 'PGRST116') {
+                const { data: newProfile, error: createError } = await supabaseServiceClient
+                    .from('users')
+                    .insert({
+                        id: user.id,
+                        email: user.email,
+                        name: user.user_metadata.full_name || user.user_metadata.name,
+                        plan: 'basic',
+                        is_admin: false,
+                        email_confirmed: true // OAuth emails are considered confirmed
+                    })
+                    .select()
+                    .single();
+
+                if (createError) {
+                    throw new Error(`Failed to create user profile: ${createError.message}`);
+                }
+
+                profile = newProfile;
+                logger.info('New user created via OAuth:', { userId: user.id, email: user.email });
+            } else if (profileError) {
+                throw new Error(`Failed to fetch user profile: ${profileError.message}`);
+            }
+
+            logger.info('OAuth login successful:', { userId: user.id, email: user.email });
+
+            return {
+                user,
+                profile,
+                session: {
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                }
+            };
+
+        } catch (error) {
+            logger.error('OAuth callback error:', error.message);
+            throw error;
+        }
     }
 
     /**

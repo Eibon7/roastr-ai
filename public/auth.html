@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Roastr.ai - Acceso</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body class="auth-bg">
+    <div class="card">
+        <h1>Iniciar sesión</h1>
+
+        <!-- Mensajes de error/éxito -->
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="login-form">
+            <input 
+                class="input-text" 
+                type="email" 
+                name="email"
+                id="email"
+                placeholder="Email"
+                required
+            />
+
+            <div class="password-field">
+                <input 
+                    class="input-text" 
+                    type="password" 
+                    name="password"
+                    placeholder="Contraseña" 
+                    id="password"
+                    required
+                />
+                <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+            </div>
+
+            <label class="checkbox">
+                <input type="checkbox" name="keepLogged" />
+                Mantenerme conectado
+            </label>
+
+            <button type="submit" class="btn-primary" id="login-btn">Entrar</button>
+        </form>
+
+        <div class="divider"></div>
+
+        <button type="button" class="btn-secondary" id="google-btn">Entrar con Google</button>
+        <button type="button" class="btn-secondary" id="magic-link-btn">Entrar con Magic Link</button>
+
+        <a class="link" href="recover.html">¿Olvidaste tu contraseña?</a>
+        <br>
+        <a class="link" href="register.html">¿No tienes cuenta? Regístrate</a>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById("password");
+            const button = document.querySelector(".toggle-password");
+            
+            if (input.type === "password") {
+                input.type = "text";
+                button.textContent = "🙈";
+            } else {
+                input.type = "password";
+                button.textContent = "👁️";
+            }
+        }
+
+        function showMessage(message, type = 'error') {
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            // Hide both messages first
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+            
+            if (type === 'error') {
+                errorDiv.textContent = message;
+                errorDiv.classList.add('show');
+            } else {
+                successDiv.textContent = message;
+                successDiv.classList.add('show');
+            }
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+                successDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        function setLoading(buttonId, isLoading = true) {
+            const button = document.getElementById(buttonId);
+            if (isLoading) {
+                button.disabled = true;
+                button.classList.add('loading');
+            } else {
+                button.disabled = false;
+                button.classList.remove('loading');
+            }
+        }
+
+        // Handle login form
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+            const keepLogged = formData.get('keepLogged') === 'on';
+
+            setLoading('login-btn', true);
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password, keepLogged })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Save auth data
+                    localStorage.setItem('auth_token', result.data.access_token);
+                    localStorage.setItem('refresh_token', result.data.refresh_token);
+                    localStorage.setItem('user_data', JSON.stringify(result.data.user));
+                    
+                    showMessage('Login exitoso, redirigiendo...', 'success');
+                    
+                    // Redirect based on user role
+                    setTimeout(() => {
+                        if (result.data.user.is_admin) {
+                            window.location.href = '/admin.html';
+                        } else {
+                            window.location.href = '/dashboard.html';
+                        }
+                    }, 1000);
+                } else {
+                    showMessage('Usuario o contraseña incorrectos.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error de conexión. Inténtalo de nuevo.');
+            } finally {
+                setLoading('login-btn', false);
+            }
+        });
+
+        // Handle Google login
+        document.getElementById('google-btn').addEventListener('click', function() {
+            setLoading('google-btn', true);
+            window.location.href = '/api/auth/google';
+        });
+
+        // Handle Magic Link
+        document.getElementById('magic-link-btn').addEventListener('click', async function() {
+            const email = document.getElementById('email').value;
+            
+            if (!email) {
+                showMessage('Por favor ingresa tu email primero.');
+                return;
+            }
+
+            setLoading('magic-link-btn', true);
+
+            try {
+                const response = await fetch('/api/auth/magic-link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/magic-link-success.html';
+                } else {
+                    showMessage('Error al enviar el enlace mágico.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error de conexión. Inténtalo de nuevo.');
+            } finally {
+                setLoading('magic-link-btn', false);
+            }
+        });
+
+        // Check if user is already logged in
+        if (localStorage.getItem('auth_token')) {
+            const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+            if (userData.is_admin) {
+                window.location.href = '/admin.html';
+            } else {
+                window.location.href = '/dashboard.html';
+            }
+        }
+
+        // Show success message if coming from registration
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get('message');
+        const type = urlParams.get('type');
+        if (message) {
+            showMessage(message, type || 'success');
+        }
+    </script>
+</body>
+</html>
