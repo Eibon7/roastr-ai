@@ -28,7 +28,7 @@ module.exports = {
     {
       displayName: 'node-tests',
       testEnvironment: 'node',
-      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js'],
+      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
     },
     {
