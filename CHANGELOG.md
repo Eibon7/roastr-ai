@@ -1,5 +1,181 @@
 # 📦 Changelog
 
+## v0.6.0 – 2025-08-07
+
+**Descripción:** Sistema completo de facturación con Stripe Checkout, Customer Portal, webhooks y gating de funcionalidades por plan. Incluye 3 planes (Free, Pro €20, Creator+ €50) con restricciones automáticas y testing comprehensivo.
+
+---
+
+### 💳 Sistema de Facturación Stripe Completo
+
+#### 🎯 Planes de Suscripción Implementados
+- **Free Plan**: Gratis con 100 roasts/mes, 1 plataforma, soporte básico
+- **Pro Plan**: €20/mes con 1,000 roasts/mes, 5 plataformas, analíticas avanzadas
+- **Creator+ Plan**: €50/mes con roasts ilimitados, todas las plataformas, API access
+- **Plan gating**: Middleware automático que bloquea funcionalidades según plan
+- **Lookup keys**: Configuración flexible de precios via variables de entorno
+
+#### 🔄 Stripe Checkout y Portal Integration
+- **Checkout Sessions**: Creación automática con metadata de usuario y plan
+- **Customer Portal**: Gestión completa de suscripciones (upgrade/downgrade/cancel)
+- **OAuth-style flow**: Redirección a Stripe → Success/Cancel pages
+- **Customer management**: Creación y reutilización de customers de Stripe
+- **Secure redirects**: URLs configurables para success/cancel/return
+
+#### 🎣 Webhooks y Sincronización Automática
+- **Webhook endpoint**: `/webhooks/stripe` con verificación de firma
+- **Eventos soportados**:
+  - `checkout.session.completed` → Activación de suscripción
+  - `customer.subscription.updated` → Cambios de plan/estado
+  - `customer.subscription.deleted` → Cancelación y reset a Free
+  - `invoice.payment_succeeded/failed` → Estados de pago
+- **Sincronización DB**: Actualización automática en `user_subscriptions`
+- **Metadata tracking**: Lookup keys y user IDs en todos los eventos
+
+### 🛡️ Plan Gating y Control de Acceso
+
+#### 🔐 Middleware requirePlan
+- **Plan hierarchy**: Sistema de niveles (Free=0, Pro=1, Creator+=2)
+- **Flexible matching**: Nivel mínimo o lista exacta de planes permitidos
+- **Feature gating**: Control granular por características específicas
+- **Trial support**: Soporte completo para períodos de prueba
+- **Grace period**: Acceso durante `past_due` dentro del período activo
+- **Rich error responses**: Códigos específicos y URLs de upgrade
+
+#### 📊 Límites Automatizados por Plan
+- **Platform limits**: 1/5/ilimitadas plataformas según plan
+- **Roast usage**: Tracking mensual automático con límites (100/1000/∞)
+- **Feature flags**: Control de acceso a tones avanzados, API, etc.
+- **Usage checking**: Función `checkRoastLimit()` para validación pre-generación
+- **Quota monitoring**: Seguimiento en tiempo real del uso
+
+### 🎨 Frontend de Facturación Completo
+
+#### 💰 Página de Planes (`/billing.html`)
+- **Grid responsive**: 3 planes con diseño adaptativo mobile-first
+- **Plan comparison**: Features, precios y beneficios claramente mostrados
+- **Current plan badge**: Indicador visual del plan activo
+- **Dynamic pricing**: Carga de precios desde API con fallbacks
+- **Portal access**: Botón de gestión para usuarios con suscripción activa
+- **Loading states**: Spinners y feedback durante operaciones Stripe
+
+#### ✅ Páginas de Confirmación
+- **Success page**: `/billing-success.html` con detalles de suscripción
+- **Cancellation page**: `/billing-cancelled.html` con opciones de recuperación
+- **Session tracking**: Extracción y display de session_id
+- **Auto-refresh**: Carga diferida para permitir webhook processing
+- **User guidance**: Next steps y enlaces a configuración
+
+### 🗄️ Base de Datos Multi-tenant
+
+#### 📋 Tabla user_subscriptions
+- **Schema completo**: user_id, stripe IDs, plan, status, períodos
+- **RLS policies**: Aislamiento completo entre usuarios y organizaciones
+- **Indexes optimizados**: Búsqueda eficiente por customer_id y subscription_id
+- **Triggers automáticos**: updated_at timestamp y validaciones
+- **Migration script**: Setup completo con datos default para usuarios existentes
+
+#### 🔄 Integración Supabase
+- **Service client**: Operaciones webhook con permisos elevados
+- **User client**: Operaciones frontend con RLS
+- **Error handling**: Logging detallado y recovery automático
+- **Audit trail**: Tracking completo de cambios de suscripción
+
+### 🧪 Testing Comprehensivo
+
+#### ✅ Backend Testing (Jest)
+- **Billing routes**: 15+ test cases cubriendo todos los endpoints
+- **Webhook testing**: Verificación de firma y manejo de eventos
+- **Plan middleware**: 20+ tests para gating y límites
+- **Error scenarios**: Database failures, Stripe errors, invalid data
+- **Mock strategy**: Stripe SDK completamente simulado
+- **Coverage completa**: Todos los flujos críticos testeados
+
+#### 🖥️ Frontend Testing 
+- **DOM manipulation**: Tests de renderizado y estados UI
+- **API integration**: Mocking de fetch y localStorage
+- **User interactions**: Checkout flow y portal access
+- **Error handling**: Network failures y invalid responses
+- **Loading states**: Spinners y message display
+- **URL parsing**: Session ID extraction en success page
+
+### 🔧 Configuración y Variables de Entorno
+
+#### 🎛️ Variables Stripe (.env.example)
+```bash
+STRIPE_SECRET_KEY=sk_test_xxx           # Test mode secret
+STRIPE_WEBHOOK_SECRET=whsec_xxx         # Webhook signature verification
+STRIPE_PRICE_LOOKUP_PRO=pro_monthly     # Lookup key Pro plan
+STRIPE_PRICE_LOOKUP_CREATOR=creator_plus_monthly
+STRIPE_SUCCESS_URL=.../billing-success.html?session_id={CHECKOUT_SESSION_ID}
+STRIPE_CANCEL_URL=.../billing-cancelled.html
+STRIPE_PORTAL_RETURN_URL=.../billing.html
+```
+
+#### 🔒 Security Best Practices
+- **No secrets in logs**: Nunca se loggean claves o tokens
+- **Webhook verification**: Verificación criptográfica de firmas
+- **Environment isolation**: Test keys claramente diferenciadas
+- **RLS enforcement**: Base de datos con seguridad a nivel de fila
+- **JWT validation**: Autenticación requerida para todos los endpoints
+
+### 📂 Arquitectura de Archivos
+
+#### Backend Implementation
+- `src/routes/billing.js` - 5 endpoints principales + webhook handler (450+ líneas)
+- `src/middleware/requirePlan.js` - Plan gating completo con límites (200+ líneas)
+- `database/migrations/003_user_subscriptions.sql` - Schema y RLS policies
+
+#### Frontend Pages
+- `public/billing.html` - Selector de planes con Stripe integration
+- `public/billing-success.html` - Confirmación post-checkout
+- `public/billing-cancelled.html` - Manejo de cancelaciones
+
+#### Testing Suite
+- `tests/unit/routes/billing.test.js` - Backend endpoints (450+ líneas)
+- `tests/unit/middleware/requirePlan.test.js` - Plan gating (350+ líneas) 
+- `tests/unit/frontend/billing.test.js` - Frontend functionality (400+ líneas)
+
+### 🚀 API Endpoints Implementados
+
+```javascript
+// Billing Management
+GET    /api/billing/plans                    // Lista de planes disponibles
+POST   /api/billing/create-checkout-session  // Crear sesión Stripe Checkout
+POST   /api/billing/create-portal-session    // Abrir Customer Portal
+GET    /api/billing/subscription             // Datos de suscripción actual
+
+// Webhook Integration  
+POST   /webhooks/stripe                      // Procesar eventos Stripe
+
+// Plan Gating Middleware (examples)
+app.use('/api/advanced-features', requirePlan('pro'))
+app.use('/api/unlimited-roasts', requirePlan('creator_plus'))
+app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
+```
+
+### 🎯 Flujo Completo de Suscripción
+
+1. **Selección de plan**: Usuario ve planes en `/billing.html`
+2. **Stripe Checkout**: Clic en suscribirse → redirección a Stripe
+3. **Payment processing**: Stripe maneja pago de forma segura
+4. **Webhook sync**: `checkout.session.completed` → actualiza DB
+5. **Success redirect**: Usuario regresa a `/billing-success.html`
+6. **Plan activation**: Funcionalidades desbloqueadas automáticamente
+7. **Portal access**: Gestión completa via Stripe Customer Portal
+
+### 📊 Métricas y Validación
+
+- ✅ **3 planes configurados** con precios EUR y límites específicos
+- ✅ **Webhook handling** para 5 eventos críticos de Stripe
+- ✅ **Plan gating** protegiendo endpoints según suscripción
+- ✅ **85+ test cases** cubriendo todos los flujos
+- ✅ **Mobile responsive** design en todas las páginas
+- ✅ **Error recovery** robusto en todos los puntos de falla
+- ✅ **Test mode ready** con claves claramente diferenciadas
+
+---
+
 ## v0.5.0 – 2025-08-07
 
 **Descripción:** Sistema completo de onboarding de usuarios y configuración de plataformas sociales con flujo de 4 pasos, integración de endpoints personalizados y gestión avanzada de preferencias.

@@ -14,12 +14,16 @@ const authRoutes = require('./routes/auth');
 const integrationsRoutes = require('./routes/integrations');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
+const billingRoutes = require('./routes/billing');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware para parsear JSON
+// Stripe webhook endpoint (needs raw body)
+app.use('/webhooks/stripe', billingRoutes);
+
+// Middleware para parsear JSON (after webhook to preserve raw body)
 app.use(bodyParser.json());
 
 // Servir archivos estáticos de la carpeta public
@@ -30,6 +34,9 @@ app.use('/api/auth', authRoutes);
 
 // User routes (authenticated)
 app.use('/api/user', userRoutes);
+
+// Billing routes (Stripe integration)
+app.use('/api/billing', billingRoutes);
 
 // User integrations routes (authenticated)
 app.use('/api/integrations', integrationsRoutes);

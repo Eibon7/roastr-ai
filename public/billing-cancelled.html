@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Suscripción Cancelada - Roastr.ai</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        .cancelled-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .cancelled-icon {
+            font-size: 64px;
+            color: #ffc107;
+            margin-bottom: 24px;
+        }
+
+        .cancelled-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-black);
+            margin-bottom: 16px;
+        }
+
+        .cancelled-message {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+
+        .info-box h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 16px;
+        }
+
+        .info-box p {
+            color: #856404;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .cancelled-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--color-blue);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #0074CC;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-blue);
+            border: 2px solid var(--color-blue);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-blue);
+            color: white;
+        }
+
+        .support-section {
+            margin-top: 40px;
+            padding: 24px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .support-section h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-black);
+            margin-bottom: 16px;
+        }
+
+        .support-section p {
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .support-links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .support-link {
+            color: var(--color-blue);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .support-link:hover {
+            background: var(--color-blue);
+            color: white;
+            border-color: var(--color-blue);
+        }
+
+        @media (max-width: 768px) {
+            .cancelled-container {
+                margin: 50px auto;
+                padding: 20px;
+            }
+
+            .cancelled-title {
+                font-size: 28px;
+            }
+
+            .cancelled-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                max-width: 200px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body class="auth-bg">
+    <div class="cancelled-container">
+        <div class="cancelled-icon">⚠️</div>
+        <h1 class="cancelled-title">Suscripción Cancelada</h1>
+        <p class="cancelled-message">
+            Tu proceso de suscripción fue cancelado. No se ha realizado ningún cargo a tu tarjeta.
+        </p>
+
+        <div class="info-box">
+            <h3>¿Qué pasó?</h3>
+            <p>
+                El proceso de pago fue interrumpido antes de completarse. Esto puede haber ocurrido por:
+            </p>
+            <ul style="text-align: left; color: #856404; margin-left: 20px;">
+                <li>Cerraste la ventana de pago</li>
+                <li>Decidiste no continuar con la suscripción</li>
+                <li>Hubo un problema temporal con el pago</li>
+            </ul>
+        </div>
+
+        <div class="cancelled-actions">
+            <a href="/billing.html" class="btn-primary">
+                Intentar de Nuevo
+            </a>
+            <a href="/dashboard.html" class="btn-secondary">
+                Volver al Dashboard
+            </a>
+        </div>
+
+        <div class="support-section">
+            <h3>¿Necesitas ayuda?</h3>
+            <p>
+                Si experimentaste algún problema durante el proceso de pago o tienes dudas sobre nuestros planes, 
+                nuestro equipo está aquí para ayudarte.
+            </p>
+            <div class="support-links">
+                <a href="mailto:soporte@roastr.ai" class="support-link">
+                    📧 Contactar Soporte
+                </a>
+                <a href="/billing.html" class="support-link">
+                    📄 Ver Planes
+                </a>
+            </div>
+        </div>
+
+        <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e9ecef;">
+            <p style="color: #666; font-size: 14px; margin-bottom: 16px;">
+                Recuerda que puedes continuar usando Roastr.ai con el plan Free, 
+                que incluye 100 roasts por mes y 1 integración de plataforma.
+            </p>
+            <a href="/onboarding/step1.html" style="color: var(--color-blue); text-decoration: none; font-size: 14px;">
+                Configurar plan Free →
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Log the cancellation for analytics
+            console.log('Checkout cancelled at:', new Date().toISOString());
+            
+            // Optional: Track cancellation event
+            // Analytics or tracking code could go here
+        });
+    </script>
+</body>
+</html>
