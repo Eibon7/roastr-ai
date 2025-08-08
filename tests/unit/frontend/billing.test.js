@@ -289,8 +289,9 @@ describe('Billing Frontend Tests', () => {
             });
 
             // Mock window.location.href
+            const mockLocation = { href: '' };
             delete global.window.location;
-            global.window.location = { href: '' };
+            global.window.location = mockLocation;
 
             const subscribeToPlan = async (lookupKey) => {
                 const token = localStorage.getItem('auth_token');
@@ -305,7 +306,7 @@ describe('Billing Frontend Tests', () => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    window.location.href = result.data.url;
+                    mockLocation.href = result.data.url;
                     return result;
                 } else {
                     throw new Error('Failed to create checkout session');
@@ -315,7 +316,7 @@ describe('Billing Frontend Tests', () => {
             const result = await subscribeToPlan('pro_monthly');
             
             expect(result.success).toBe(true);
-            expect(global.window.location.href).toBe('https://checkout.stripe.com/pay/cs_test123');
+            expect(mockLocation.href).toBe('https://checkout.stripe.com/pay/cs_test123');
             expect(global.fetch).toHaveBeenCalledWith('/api/billing/create-checkout-session', {
                 method: 'POST',
                 headers: {
@@ -378,8 +379,9 @@ describe('Billing Frontend Tests', () => {
                 json: () => Promise.resolve(mockPortalResponse)
             });
 
+            const mockPortalLocation = { href: '' };
             delete global.window.location;
-            global.window.location = { href: '' };
+            global.window.location = mockPortalLocation;
 
             const openCustomerPortal = async () => {
                 const token = localStorage.getItem('auth_token');
@@ -393,7 +395,7 @@ describe('Billing Frontend Tests', () => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    window.location.href = result.data.url;
+                    mockPortalLocation.href = result.data.url;
                     return result;
                 }
                 throw new Error('Failed to open portal');
@@ -402,7 +404,7 @@ describe('Billing Frontend Tests', () => {
             const result = await openCustomerPortal();
             
             expect(result.success).toBe(true);
-            expect(global.window.location.href).toBe('https://billing.stripe.com/session/bps_test123');
+            expect(mockPortalLocation.href).toBe('https://billing.stripe.com/session/bps_test123');
         });
     });
 
@@ -579,7 +581,10 @@ describe('Billing Success Page Tests', () => {
             }
         };
 
-        global.localStorage.getItem.mockReturnValueOnce('{"id":"user-123","email":"test@example.com"}');
+        // Mock localStorage.getItem para las dos llamadas
+        global.localStorage.getItem
+            .mockReturnValueOnce('mock-token') // primera llamada para auth_token
+            .mockReturnValueOnce('{"id":"user-123","email":"test@example.com"}'); // segunda llamada para user_data
 
         await loadSubscriptionData();
         

@@ -1,9 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
 const { logger } = require('../utils/logger');
+const { database } = require('./env');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = database.SUPABASE_URL;
+const supabaseServiceKey = database.SUPABASE_SERVICE_KEY;
+const supabaseAnonKey = database.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
     throw new Error('Supabase environment variables are not set. Please check SUPABASE_URL, SUPABASE_SERVICE_KEY, and SUPABASE_ANON_KEY.');

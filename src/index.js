@@ -1,7 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-require('dotenv').config();
+
+// Use new environment system instead of dotenv directly
+const { ENV_CONFIG, IS_DEVELOPMENT } = require('./config/env');
 
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
 const CsvRoastService = require('./services/csvRoastService');
@@ -15,10 +17,11 @@ const integrationsRoutes = require('./routes/integrations');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const billingRoutes = require('./routes/billing');
+const diagnosticsRoutes = require('./routes/diagnostics');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = ENV_CONFIG.environment.PORT;
 
 // Stripe webhook endpoint (needs raw body)
 app.use('/webhooks/stripe', billingRoutes);
@@ -43,6 +46,9 @@ app.use('/api/integrations', integrationsRoutes);
 
 // Admin routes (admin only)
 app.use('/api/admin', adminRoutes);
+
+// Diagnostics routes (development only)
+app.use('/api/diagnostics', diagnosticsRoutes);
 
 // Instancia del generador de roasts
 let roastGenerator;
@@ -111,13 +117,13 @@ app.post('/csv-roast', async (req, res) => {
     console.error('❌ Error generando roast desde CSV:', error.message);
     
     // Log additional details if debug mode is enabled
-    if (process.env.DEBUG === 'true') {
+    if (ENV_CONFIG.logging.DEBUG) {
       console.error('📡 CSV Error details:', error.stack);
     }
     
     res.status(500).json({ 
       error: 'No se pudo generar el roast desde CSV.',
-      details: process.env.DEBUG === 'true' ? error.message : undefined
+      details: ENV_CONFIG.logging.DEBUG ? error.message : undefined
     });
   }
 });

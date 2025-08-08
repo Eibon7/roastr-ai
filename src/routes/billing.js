@@ -8,11 +8,12 @@ const Stripe = require('stripe');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
+const { stripe: stripeConfig, IS_DEVELOPMENT } = require('../config/env');
 
 const router = express.Router();
 
-// Initialize Stripe
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe with environment-aware configuration
+const stripe = Stripe(stripeConfig.STRIPE_SECRET_KEY);
 
 // Plan configuration
 const PLAN_CONFIG = {
@@ -33,7 +34,7 @@ const PLAN_CONFIG = {
         features: ['1,000 roasts per month', '5 platform integrations', 'Priority support', 'Advanced analytics'],
         maxPlatforms: 5,
         maxRoasts: 1000,
-        lookupKey: process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly'
+        lookupKey: stripeConfig.STRIPE_PRICE_LOOKUP_PRO
     },
     creator_plus: {
         name: 'Creator+',
@@ -43,7 +44,7 @@ const PLAN_CONFIG = {
         features: ['Unlimited roasts', 'All platform integrations', '24/7 support', 'Custom tones', 'API access'],
         maxPlatforms: -1,
         maxRoasts: -1,
-        lookupKey: process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly'
+        lookupKey: stripeConfig.STRIPE_PRICE_LOOKUP_CREATOR
     }
 };
 
@@ -88,8 +89,8 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
 
         // Validate lookup key
         const validLookupKeys = [
-            process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly',
-            process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly'
+            stripeConfig.STRIPE_PRICE_LOOKUP_PRO,
+            stripeConfig.STRIPE_PRICE_LOOKUP_CREATOR
         ];
 
         if (!validLookupKeys.includes(lookupKey)) {
@@ -163,8 +164,8 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
                 price: price.id,
                 quantity: 1
             }],
-            success_url: process.env.STRIPE_SUCCESS_URL,
-            cancel_url: process.env.STRIPE_CANCEL_URL,
+            success_url: stripeConfig.STRIPE_SUCCESS_URL,
+            cancel_url: stripeConfig.STRIPE_CANCEL_URL,
             metadata: {
                 user_id: userId,
                 lookup_key: lookupKey
@@ -226,7 +227,7 @@ router.post('/create-portal-session', authenticateToken, async (req, res) => {
         // Create portal session
         const portalSession = await stripe.billingPortal.sessions.create({
             customer: subscription.stripe_customer_id,
-            return_url: process.env.STRIPE_PORTAL_RETURN_URL
+            return_url: stripeConfig.STRIPE_PORTAL_RETURN_URL
         });
 
         logger.info('Stripe portal session created:', {
@@ -312,7 +313,7 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
         event = stripe.webhooks.constructEvent(
             req.body,
             sig,
-            process.env.STRIPE_WEBHOOK_SECRET
+            stripeConfig.STRIPE_WEBHOOK_SECRET
         );
     } catch (err) {
         logger.error('Webhook signature verification failed:', err.message);
@@ -347,6 +348,14 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
                 await handlePaymentFailed(event.data.object);
                 break;
 
+            case 'customer.subscription.trial_will_end':
+                await handleTrialWillEnd(event.data.object);
+                break;
+
+            case 'invoice.upcoming':
+                await handleInvoiceUpcoming(event.data.object);
+                break;
+
             default:
                 logger.info('Unhandled webhook event type:', event.type);
         }
@@ -377,9 +386,9 @@ async function handleCheckoutCompleted(session) {
     let plan = 'free';
     const lookupKey = session.metadata?.lookup_key;
     
-    if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
+    if (lookupKey === stripeConfig.STRIPE_PRICE_LOOKUP_PRO) {
         plan = 'pro';
-    } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
+    } else if (lookupKey === stripeConfig.STRIPE_PRICE_LOOKUP_CREATOR) {
         plan = 'creator_plus';
     }
 
@@ -435,9 +444,9 @@ async function handleSubscriptionUpdated(subscription) {
         const prices = await stripe.prices.list({ limit: 100 });
         const priceData = prices.data.find(p => p.id === price.id);
         
-        if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
+        if (priceData?.lookup_key === stripeConfig.STRIPE_PRICE_LOOKUP_PRO) {
             plan = 'pro';
-        } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
+        } else if (priceData?.lookup_key === stripeConfig.STRIPE_PRICE_LOOKUP_CREATOR) {
             plan = 'creator_plus';
         }
     }
@@ -550,6 +559,55 @@ async function handlePaymentFailed(invoice) {
             .eq('user_id', userSub.user_id);
 
         logger.warn('Payment failed for user:', userSub.user_id);
+    }
+}
+
+/**
+ * Handle trial will end event
+ */
+async function handleTrialWillEnd(subscription) {
+    const customerId = subscription.customer;
+    
+    const { data: userSub, error } = await supabaseServiceClient
+        .from('user_subscriptions')
+        .select('user_id')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+    if (!error && userSub) {
+        logger.info('Trial ending soon for user:', userSub.user_id);
+        
+        // Here you could add logic to:
+        // - Send notification email
+        // - Update UI state
+        // - Create a task for follow-up
+    }
+}
+
+/**
+ * Handle upcoming invoice event
+ */
+async function handleInvoiceUpcoming(invoice) {
+    const customerId = invoice.customer;
+    
+    const { data: userSub, error } = await supabaseServiceClient
+        .from('user_subscriptions')
+        .select('user_id')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+    if (!error && userSub) {
+        logger.info('Invoice upcoming for user:', {
+            userId: userSub.user_id,
+            amount: invoice.amount_due,
+            currency: invoice.currency,
+            periodEnd: new Date(invoice.period_end * 1000).toISOString()
+        });
+        
+        // Here you could add logic to:
+        // - Send pre-billing notification
+        // - Check for payment method issues
+        // - Update billing reminders
     }
 }
 

@@ -5,14 +5,19 @@
 const request = require('supertest');
 const express = require('express');
 
-// Mock environment variables first
-process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
-process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
-process.env.STRIPE_PRICE_LOOKUP_PRO = 'plan_pro';
-process.env.STRIPE_PRICE_LOOKUP_CREATOR = 'plan_creator_plus';
-process.env.STRIPE_SUCCESS_URL = 'http://localhost:3000/success';
-process.env.STRIPE_CANCEL_URL = 'http://localhost:3000/cancel';
-process.env.STRIPE_PORTAL_RETURN_URL = 'http://localhost:3000/billing';
+// Mock environment system before requiring anything
+jest.mock('../../../src/config/env', () => ({
+    stripe: {
+        STRIPE_SECRET_KEY: 'sk_test_mock',
+        STRIPE_WEBHOOK_SECRET: 'whsec_mock',
+        STRIPE_PRICE_LOOKUP_PRO: 'plan_pro',
+        STRIPE_PRICE_LOOKUP_CREATOR: 'plan_creator_plus',
+        STRIPE_SUCCESS_URL: 'http://localhost:3000/success',
+        STRIPE_CANCEL_URL: 'http://localhost:3000/cancel',
+        STRIPE_PORTAL_RETURN_URL: 'http://localhost:3000/billing'
+    },
+    IS_DEVELOPMENT: true
+}));
 
 // Mock Stripe before requiring anything
 const mockStripe = {
@@ -256,7 +261,7 @@ describe('Billing Routes Tests', () => {
             expect(response.body.data.url).toBe('https://billing.stripe.com/portal/bps_test123');
             expect(mockStripe.billingPortal.sessions.create).toHaveBeenCalledWith({
                 customer: 'cus_test123',
-                return_url: process.env.STRIPE_PORTAL_RETURN_URL
+                return_url: 'http://localhost:3000/billing'
             });
         });
 

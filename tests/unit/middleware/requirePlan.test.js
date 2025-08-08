@@ -6,7 +6,14 @@ const { requirePlan, requirePlatformLimit, checkRoastLimit, PLAN_LIMITS, PLAN_HI
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase');
-jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/utils/logger', () => ({
+    logger: {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn()
+    }
+}));
 
 describe('requirePlan Middleware Tests', () => {
     let mockReq, mockRes, mockNext;
