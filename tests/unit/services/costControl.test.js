@@ -6,108 +6,92 @@
 
 const CostControlService = require('../../../src/services/costControl');
 
-// Mock Supabase
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn()
-        })),
-        gte: jest.fn(() => ({
-          order: jest.fn(() => ({
-            order: jest.fn()
-          }))
-        }))
-      })),
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn()
-        }))
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn()
-          }))
-        }))
-      })),
-      upsert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn()
-        }))
-      })),
-      rpc: jest.fn()
+// Create comprehensive mocks for Supabase query builder pattern
+const mockSelectSingle = jest.fn();
+const mockSelectOrder = jest.fn();
+const mockSelect = jest.fn(() => ({
+  eq: jest.fn(() => ({
+    single: mockSelectSingle,
+    eq: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        single: mockSelectSingle
+      }))
+    })),
+    gte: jest.fn(() => ({
+      lt: mockSelectOrder,
+      order: jest.fn(() => ({
+        order: mockSelectOrder
+      }))
     }))
   }))
 }));
 
+const mockInsertSelect = jest.fn();
+const mockInsert = jest.fn(() => ({
+  select: jest.fn(() => ({
+    single: mockInsertSelect
+  }))
+}));
+
+const mockUpdateSelect = jest.fn();
+const mockUpdate = jest.fn(() => ({
+  eq: jest.fn(() => ({
+    select: jest.fn(() => ({
+      single: mockUpdateSelect
+    }))
+  }))
+}));
+
+const mockFrom = jest.fn(() => ({
+  select: mockSelect,
+  insert: mockInsert,
+  update: mockUpdate
+}));
+
+const mockRpc = jest.fn();
+
+const mockSupabaseClient = {
+  from: mockFrom,
+  rpc: mockRpc
+};
+
+// Mock Supabase
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => mockSupabaseClient)
+}));
+
 describe('CostControlService', () => {
   let costControl;
-  let mockSupabase;
 
   beforeEach(() => {
     // Mock environment variables
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_ANON_KEY = 'test-key';
     
-    costControl = new CostControlService();
-    mockSupabase = costControl.supabase;
-  });
-
-  afterEach(() => {
+    // Clear all mocks
     jest.clearAllMocks();
+    
+    costControl = new CostControlService();
   });
 
   describe('canPerformOperation', () => {
     test('should allow operation when under limit', async () => {
-      // Mock organization data
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                plan_id: 'free',
-                monthly_responses_limit: 100,
-                monthly_responses_used: 50
-              },
-              error: null
-            })
-          })
+      // Mock organization data (first call)
+      mockSelectSingle
+        .mockResolvedValueOnce({
+          data: {
+            plan_id: 'free',
+            monthly_responses_limit: 100,
+            monthly_responses_used: 50
+          },
+          error: null
         })
-      });
-
-      // Mock usage data
-      mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: {
-                  plan_id: 'free',
-                  monthly_responses_limit: 100,
-                  monthly_responses_used: 50
-                },
-                error: null
-              })
-            })
-          })
-        })
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: {
-                      total_responses: 50
-                    },
-                    error: null
-                  })
-                })
-              })
-            })
-          })
+        // Mock monthly usage data (second call)
+        .mockResolvedValueOnce({
+          data: {
+            total_responses: 50
+          },
+          error: null
         });
 
       const result = await costControl.canPerformOperation('test-org-123');
@@ -119,53 +103,21 @@ describe('CostControlService', () => {
     });
 
     test('should deny operation when over limit', async () => {
-      // Mock organization data
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                plan_id: 'free',
-                monthly_responses_limit: 100,
-                monthly_responses_used: 105
-              },
-              error: null
-            })
-          })
+      // Mock organization data (first call) and monthly usage data (second call)
+      mockSelectSingle
+        .mockResolvedValueOnce({
+          data: {
+            plan_id: 'free',
+            monthly_responses_limit: 100,
+            monthly_responses_used: 105
+          },
+          error: null
         })
-      });
-
-      // Mock usage data showing over limit
-      mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: {
-                  plan_id: 'free',
-                  monthly_responses_limit: 100,
-                  monthly_responses_used: 105
-                },
-                error: null
-              })
-            })
-          })
-        })
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: {
-                      total_responses: 105
-                    },
-                    error: null
-                  })
-                })
-              })
-            })
-          })
+        .mockResolvedValueOnce({
+          data: {
+            total_responses: 105
+          },
+          error: null
         });
 
       const result = await costControl.canPerformOperation('test-org-123');
@@ -188,19 +140,29 @@ describe('CostControlService', () => {
         cost_cents: 5
       };
 
-      mockSupabase.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: mockUsageRecord,
-              error: null
-            })
-          })
-        })
+      // Mock the insert operation
+      mockInsertSelect.mockResolvedValue({
+        data: mockUsageRecord,
+        error: null
       });
 
       // Mock RPC call for incrementing counters
-      mockSupabase.rpc.mockResolvedValue({ error: null });
+      mockRpc.mockResolvedValue({ error: null });
+
+      // Mock checkUsageLimit call (called by incrementUsageCounters)
+      mockSelectSingle
+        .mockResolvedValueOnce({
+          data: {
+            plan_id: 'pro',
+            monthly_responses_limit: 1000,
+            monthly_responses_used: 25
+          },
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: { total_responses: 25 },
+          error: null
+        });
 
       const result = await costControl.recordUsage(
         'test-org-123',
@@ -211,8 +173,8 @@ describe('CostControlService', () => {
 
       expect(result.recorded).toBe(true);
       expect(result.cost).toBe(5); // 5 cents for generate_reply
-      expect(mockSupabase.from).toHaveBeenCalledWith('usage_records');
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('increment_usage', {
+      expect(mockFrom).toHaveBeenCalledWith('usage_records');
+      expect(mockRpc).toHaveBeenCalledWith('increment_usage', {
         org_id: 'test-org-123',
         platform_name: 'twitter',
         cost: 5
@@ -229,15 +191,10 @@ describe('CostControlService', () => {
         cost_cents: 0
       };
 
-      mockSupabase.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: mockUsageRecord,
-              error: null
-            })
-          })
-        })
+      // Mock the insert operation
+      mockInsertSelect.mockResolvedValue({
+        data: mockUsageRecord,
+        error: null
       });
 
       const result = await costControl.recordUsage(
@@ -248,23 +205,17 @@ describe('CostControlService', () => {
 
       expect(result.recorded).toBe(true);
       expect(result.cost).toBe(0); // Free operation
-      expect(mockSupabase.rpc).not.toHaveBeenCalled(); // No counter increment for free ops
+      expect(mockRpc).not.toHaveBeenCalled(); // No counter increment for free ops
     });
   });
 
   describe('canUseShield', () => {
     test('should allow Shield for pro plan', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                plan_id: 'pro'
-              },
-              error: null
-            })
-          })
-        })
+      mockSelectSingle.mockResolvedValue({
+        data: {
+          plan_id: 'pro'
+        },
+        error: null
       });
 
       const result = await costControl.canUseShield('test-org-123');
@@ -275,17 +226,11 @@ describe('CostControlService', () => {
     });
 
     test('should deny Shield for free plan', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                plan_id: 'free'
-              },
-              error: null
-            })
-          })
-        })
+      mockSelectSingle.mockResolvedValue({
+        data: {
+          plan_id: 'free'
+        },
+        error: null
       });
 
       const result = await costControl.canUseShield('test-org-123');
@@ -306,36 +251,14 @@ describe('CostControlService', () => {
         subscription_status: 'active'
       };
 
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockOrg,
-                error: null
-              })
-            })
-          })
-        })
+      // Mock the update operation for organizations table
+      mockUpdateSelect.mockResolvedValueOnce({
+        data: mockOrg,
+        error: null
       });
 
-      // Mock app_logs insertion
-      mockSupabase.from
-        .mockReturnValueOnce({
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: mockOrg,
-                  error: null
-                })
-              })
-            })
-          })
-        })
-        .mockReturnValueOnce({
-          insert: jest.fn().mockResolvedValue({ error: null })
-        });
+      // Mock the insert operation for app_logs table
+      mockInsertSelect.mockResolvedValueOnce({ error: null });
 
       const result = await costControl.upgradePlan('test-org-123', 'pro', 'sub_123');
 
@@ -382,58 +305,34 @@ describe('CostControlService', () => {
         }
       ];
 
-      // Mock the chain of database calls
-      mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              gte: jest.fn().mockReturnValue({
-                order: jest.fn().mockReturnValue({
-                  order: jest.fn().mockResolvedValue({
-                    data: mockMonthlyStats,
-                    error: null
-                  })
-                })
-              })
-            })
-          })
+      // Mock monthly stats query (first call to mockSelectOrder)
+      mockSelectOrder.mockResolvedValueOnce({
+        data: mockMonthlyStats,
+        error: null
+      });
+
+      // Mock organization query (call to mockSelectSingle)
+      mockSelectSingle
+        .mockResolvedValueOnce({
+          data: mockOrg,
+          error: null
         })
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: mockOrg,
-                error: null
-              })
-            })
-          })
+        // Mock usage limit check (called by getUsageStats -> checkUsageLimit)
+        .mockResolvedValueOnce({
+          data: mockOrg,
+          error: null
         })
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              gte: jest.fn().mockReturnValue({
-                lt: jest.fn().mockResolvedValue({
-                  data: mockUsageRecords,
-                  error: null
-                })
-              })
-            })
-          })
-        })
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                eq: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: { total_responses: 50 },
-                    error: null
-                  })
-                })
-              })
-            })
-          })
+        // Mock monthly usage for checkUsageLimit
+        .mockResolvedValueOnce({
+          data: { total_responses: 50 },
+          error: null
         });
+
+      // Mock platform stats query (second call to mockSelectOrder)
+      mockSelectOrder.mockResolvedValueOnce({
+        data: mockUsageRecords,
+        error: null
+      });
 
       const stats = await costControl.getUsageStats('test-org-123', 3);
 
@@ -471,15 +370,11 @@ describe('CostControlService', () => {
 
   describe('Error handling', () => {
     test('should handle database errors gracefully', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database error' }
-            })
-          })
-        })
+      // Mock error from first database call
+      const dbError = new Error('Database error');
+      mockSelectSingle.mockResolvedValue({
+        data: null,
+        error: dbError
       });
 
       await expect(
