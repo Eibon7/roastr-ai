@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10.56% </span>
+                <span class="strong">3.25% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/123</span>
+                <span class='fraction'>4/123</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">12.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/16</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10.74% </span>
+                <span class="strong">3.3% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/121</span>
+                <span class='fraction'>4/121</span>
             </div>
         
             
@@ -415,32 +415,32 @@
 <a name='L350'></a><a href='#L350'>350</a>
 <a name='L351'></a><a href='#L351'>351</a>
 <a name='L352'></a><a href='#L352'>352</a>
-<a name='L353'></a><a href='#L353'>353</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<a name='L353'></a><a href='#L353'>353</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -767,32 +767,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span></td><td class="text"><pre class="prettyprint lang-js">const fs = require('fs-extra');
+<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">const fs = require('fs-extra');
 const path = require('path');
 const advancedLogger = require('../utils/advancedLogger');
 &nbsp;
 class ReincidenceDetector {
-  constructor() {
-    this.dataDir = path.join(process.cwd(), 'data');
-    this.reincidenceFile = path.join(this.dataDir, 'user_reincidence.json');
-    this.actionsFile = path.join(this.dataDir, 'auto_actions.json');
+<span class="fstat-no" title="function not covered" >  co</span>nstructor() {
+<span class="cstat-no" title="statement not covered" >    this.dataDir = path.join(process.cwd(), 'data');</span>
+<span class="cstat-no" title="statement not covered" >    this.reincidenceFile = path.join(this.dataDir, 'user_reincidence.json');</span>
+<span class="cstat-no" title="statement not covered" >    this.actionsFile = path.join(this.dataDir, 'auto_actions.json');</span>
     
     // Initialize data structures
-    this.userHistory = new Map();
-    this.actionHistory = new Map();
+<span class="cstat-no" title="statement not covered" >    this.userHistory = new Map();</span>
+<span class="cstat-no" title="statement not covered" >    this.actionHistory = new Map();</span>
     
-    this.init();
+<span class="cstat-no" title="statement not covered" >    this.init();</span>
   }
 &nbsp;
   /**
    * Initialize detector
    */
-  async init() {
-    try {
-      await fs.ensureDir(this.dataDir);
+<span class="fstat-no" title="function not covered" >  as</span>ync init() {
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      await fs.ensureDir(this.dataDir);</span>
 <span class="cstat-no" title="statement not covered" >      await this.loadData();</span>
     } catch (error) {
-      console.error('Error initializing ReincidenceDetector:', error);
+<span class="cstat-no" title="statement not covered" >      console.error('Error initializing ReincidenceDetector:', error);</span>
     }
   }
 &nbsp;
@@ -1126,7 +1126,7 @@ module.exports = ReincidenceDetector;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-06T18:22:07.423Z
+                at 2025-08-08T21:27:55.367Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

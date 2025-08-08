@@ -109,6 +109,56 @@ Max intentos → 🛡️ Fallback seguro
 
 Ver comandos disponibles con detalles completos en [CLAUDE.md](./CLAUDE.md).
 
+## 🧪 Tests en Entorno Sin Claves
+
+Roastr.ai está diseñado para funcionar sin claves externas usando mocks por defecto. Ideal para desarrollo y testing local:
+
+### Configuración de Tests
+
+Los tests están configurados para pasar sin necesidad de claves de servicios externos:
+
+```bash
+# Ejecutar todos los tests (funciona sin claves)
+npm test
+
+# Tests específicos
+npm test -- tests/unit/
+npm test -- tests/integration/
+
+# Tests con cobertura
+npm run test:coverage
+```
+
+### Características del Entorno Mock
+
+- **RQC desactivado**: `ENABLE_RQC=false` por defecto en tests
+- **Servicios externos**: Auto-fallback a mocks cuando faltan claves
+- **OpenAI**: Usa mock generator si `OPENAI_API_KEY` no está presente  
+- **Supabase**: Mock database para todos los tests
+- **Stripe**: Mock billing sin claves reales
+- **Redes sociales**: Mock integrations para Twitter, YouTube, etc.
+
+### Variables de Entorno Opcionales
+
+```bash
+# Solo necesarias para funcionalidad real (no para tests)
+OPENAI_API_KEY=your_key_here          # Si quieres IA real
+SUPABASE_URL=your_supabase_url        # Para BD real
+STRIPE_SECRET_KEY=sk_...              # Para billing real
+ENABLE_RQC=true                       # Para habilitar RQC avanzado
+```
+
+### Fallback Automático
+
+Cuando faltan claves, los servicios automáticamente usan mocks:
+
+- **OpenAI faltante** → Mock roast generator
+- **Supabase faltante** → Mock database responses  
+- **Stripe faltante** → Mock billing endpoints
+- **API keys sociales** → Mock platform integrations
+
+Esto permite desarrollo y testing completo sin configuración compleja.
+
 ## Contribución
 
 Para desarrolladores, ver la documentación técnica completa y changelog en [CHANGELOG.md](./CHANGELOG.md).Tu roast generado por IA"

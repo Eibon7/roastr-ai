@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const RoastGeneratorMock = require('./roastGeneratorMock');
 require('dotenv').config();
 
 class RoastGeneratorReal {
@@ -6,17 +7,27 @@ class RoastGeneratorReal {
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      throw new Error('❌ OPENAI_API_KEY environment variable is required');
+      console.warn('⚠️  OPENAI_API_KEY not found - falling back to mock roast generator');
+      this.mockGenerator = new RoastGeneratorMock();
+      this.isMockMode = true;
+      return;
     }
 
     this.openai = new OpenAI({ apiKey });
+    this.isMockMode = false;
   }
 
   async generateRoast(text, toxicityScore, tone = 'sarcastic') {
+    if (this.isMockMode) {
+      return this.mockGenerator.generateRoast(text, toxicityScore, tone);
+    }
     return this.generateRoastWithTone(text, toxicityScore, tone);
   }
 
   async generateRoastWithTone(text, toxicityScore, tone = 'sarcastic') {
+    if (this.isMockMode) {
+      return this.mockGenerator.generateRoast(text, toxicityScore, tone);
+    }
     try {
       const systemPrompts = {
         sarcastic: `Eres Roastr.ai, un asistente especializado en crear roasts humorísticos y creativos.

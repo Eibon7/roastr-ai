@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.73% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/116</span>
+                <span class='fraction'>2/115</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/52</span>
+                <span class='fraction'>0/45</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.73% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/116</span>
+                <span class='fraction'>2/115</span>
             </div>
         
             
@@ -472,13 +472,7 @@
 <a name='L407'></a><a href='#L407'>407</a>
 <a name='L408'></a><a href='#L408'>408</a>
 <a name='L409'></a><a href='#L409'>409</a>
-<a name='L410'></a><a href='#L410'>410</a>
-<a name='L411'></a><a href='#L411'>411</a>
-<a name='L412'></a><a href='#L412'>412</a>
-<a name='L413'></a><a href='#L413'>413</a>
-<a name='L414'></a><a href='#L414'>414</a>
-<a name='L415'></a><a href='#L415'>415</a>
-<a name='L416'></a><a href='#L416'>416</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L410'></a><a href='#L410'>410</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -488,9 +482,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -499,9 +490,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -893,34 +881,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const BaseIntegration = <span class="cstat-no" title="statement not covered" >require('../base/BaseIntegration');</span>
+<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">const MultiTenantIntegration = require('../base/MultiTenantIntegration');
 &nbsp;
 /**
  * Facebook Integration Service
  * 
- * Handles Facebook/Meta Platform integration for:
- * - Page comments monitoring
- * - Post comments analysis
- * - Automated responses via Graph API
- * - Facebook Messenger integration (future)
+ * Handles comment fetching and response generation for Facebook posts.
+ * Uses Facebook Graph API for managing page content and comments.
  */
-class FacebookService extends BaseIntegration {
-<span class="fstat-no" title="function not covered" >  co</span>nstructor(config) {
-<span class="cstat-no" title="statement not covered" >    super({</span>
-      platform: 'facebook',
-      enabled: process.env.FACEBOOK_ENABLED === 'true',
-      tone: process.env.FACEBOOK_TONE || 'playful',
-      humorType: process.env.FACEBOOK_HUMOR_TYPE || 'witty',
-      responseFrequency: parseFloat(process.env.FACEBOOK_RESPONSE_FREQUENCY) || 0.3,
-      maxResponsesPerHour: parseInt(process.env.FACEBOOK_MAX_RESPONSES_PER_HOUR) || 5,
-      ...config
+class FacebookService extends MultiTenantIntegration {
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(options = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+<span class="cstat-no" title="statement not covered" >    super('facebook', {</span>
+      rateLimit: 600, // Facebook allows 600 requests per hour for most endpoints
+      supportDirectPosting: true, // Facebook supports automated comment posting
+      supportModeration: true, // Full moderation capabilities
+      ...options
     });
     
+    // Facebook API configuration
 <span class="cstat-no" title="statement not covered" >    this.accessToken = process.env.FACEBOOK_ACCESS_TOKEN;</span>
-<span class="cstat-no" title="statement not covered" >    this.pageId = process.env.FACEBOOK_PAGE_ID;</span>
+<span class="cstat-no" title="statement not covered" >    this.pageAccessToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;</span>
 <span class="cstat-no" title="statement not covered" >    this.appId = process.env.FACEBOOK_APP_ID;</span>
 <span class="cstat-no" title="statement not covered" >    this.appSecret = process.env.FACEBOOK_APP_SECRET;</span>
-<span class="cstat-no" title="statement not covered" >    this.webhookVerifyToken = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;</span>
     
     // Facebook-specific settings
 <span class="cstat-no" title="statement not covered" >    this.apiVersion = 'v18.0';</span>
@@ -1308,14 +1290,14 @@ class FacebookService extends BaseIntegration {
   }
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >module.exports = FacebookService;</span></pre></td></tr></table></pre>
+module.exports = FacebookService;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-06T18:22:07.423Z
+                at 2025-08-08T21:27:55.367Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

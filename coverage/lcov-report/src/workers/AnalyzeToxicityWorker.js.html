@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">5.71% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/140</span>
+                <span class='fraction'>8/140</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.42% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/70</span>
+                <span class='fraction'>1/70</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">6.25% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/16</span>
+                <span class='fraction'>1/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">6.06% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/132</span>
+                <span class='fraction'>8/132</span>
             </div>
         
             
@@ -540,9 +540,9 @@
 <a name='L475'></a><a href='#L475'>475</a>
 <a name='L476'></a><a href='#L476'>476</a>
 <a name='L477'></a><a href='#L477'>477</a>
-<a name='L478'></a><a href='#L478'>478</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L478'></a><a href='#L478'>478</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -557,18 +557,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1017,9 +1017,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const BaseWorker = <span class="cstat-no" title="statement not covered" >require('./BaseWorker');</span>
-const CostControlService = <span class="cstat-no" title="statement not covered" >require('../services/costControl');</span>
-const ShieldService = <span class="cstat-no" title="statement not covered" >require('../services/shieldService');</span>
+<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">const BaseWorker = require('./BaseWorker');
+const CostControlService = require('../services/costControl');
+const ShieldService = require('../services/shieldService');
 &nbsp;
 /**
  * Analyze Toxicity Worker
@@ -1033,19 +1033,19 @@ const ShieldService = <span class="cstat-no" title="statement not covered" >requ
  * and calculates severity levels for Shield mode operations.
  */
 class AnalyzeToxicityWorker extends BaseWorker {
-<span class="fstat-no" title="function not covered" >  co</span>nstructor(options = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
-<span class="cstat-no" title="statement not covered" >    super('analyze_toxicity', {</span>
+  constructor(options = {}) {
+    super('analyze_toxicity', {
       maxConcurrency: 3, // Moderate concurrency for API calls
       pollInterval: 1500,
       maxRetries: 3,
       ...options
     });
     
-<span class="cstat-no" title="statement not covered" >    this.costControl = new CostControlService();</span>
-<span class="cstat-no" title="statement not covered" >    this.shieldService = new ShieldService();</span>
+    this.costControl = new CostControlService();
+    this.shieldService = new ShieldService();
     
     // Initialize toxicity detection services
-<span class="cstat-no" title="statement not covered" >    this.initializeToxicityServices();</span>
+    this.initializeToxicityServices();
     
     // Toxicity thresholds
 <span class="cstat-no" title="statement not covered" >    this.thresholds = {</span>
@@ -1494,14 +1494,14 @@ class AnalyzeToxicityWorker extends BaseWorker {
   }
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >module.exports = AnalyzeToxicityWorker;</span></pre></td></tr></table></pre>
+module.exports = AnalyzeToxicityWorker;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-06T18:22:07.423Z
+                at 2025-08-08T21:27:55.367Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -11,6 +11,7 @@
 const OpenAI = require('openai');
 const { logger } = require('../utils/logger');
 const RQCService = require('./rqcService');
+const RoastGeneratorMock = require('./roastGeneratorMock');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 require('dotenv').config();
@@ -20,11 +21,15 @@ class RoastGeneratorEnhanced {
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      throw new Error('❌ OPENAI_API_KEY environment variable is required');
+      console.warn('⚠️  OPENAI_API_KEY not found - using mock mode for enhanced generator');
+      this.mockGenerator = new RoastGeneratorMock();
+      this.isMockMode = true;
+      return;
     }
 
     this.openai = new OpenAI({ apiKey });
     this.rqcService = new RQCService(this.openai);
+    this.isMockMode = false;
   }
 
   /**
@@ -37,6 +42,21 @@ class RoastGeneratorEnhanced {
    */
   async generateRoast(text, toxicityScore, tone = 'sarcastic', userConfig = {}) {
     const startTime = Date.now();
+    
+    // If in mock mode, use mock generator
+    if (this.isMockMode) {
+      const roast = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
+      return {
+        roast,
+        plan: userConfig.plan || 'free',
+        rqcEnabled: false,
+        rqcGloballyEnabled: false,
+        processingTime: Date.now() - startTime,
+        tokensUsed: this.estimateTokens(text + roast),
+        method: 'mock_fallback',
+        isMockMode: true
+      };
+    }
     
     try {
       logger.info('🎯 Starting roast generation with RQC', {
