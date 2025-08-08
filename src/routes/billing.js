@@ -8,11 +8,29 @@ const Stripe = require('stripe');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
+const { flags } = require('../config/flags');
 
 const router = express.Router();
 
-// Initialize Stripe
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe with feature flag check
+let stripe = null;
+if (flags.isEnabled('ENABLE_BILLING')) {
+  stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+} else {
+  console.log('⚠️ Stripe billing disabled - missing configuration keys');
+}
+
+// Middleware to check billing availability
+const requireBilling = (req, res, next) => {
+  if (!flags.isEnabled('ENABLE_BILLING')) {
+    return res.status(503).json({
+      success: false,
+      error: 'Billing temporarily unavailable',
+      code: 'BILLING_UNAVAILABLE'
+    });
+  }
+  next();
+};
 
 // Plan configuration
 const PLAN_CONFIG = {
@@ -73,29 +91,52 @@ router.get('/plans', (req, res) => {
  * POST /api/billing/create-checkout-session
  * Create Stripe Checkout session for subscription
  */
-router.post('/create-checkout-session', authenticateToken, async (req, res) => {
+router.post('/create-checkout-session', authenticateToken, requireBilling, async (req, res) => {
     try {
-        const { lookupKey } = req.body;
+        const { plan, lookupKey } = req.body;
         const userId = req.user.id;
         const userEmail = req.user.email;
 
-        if (!lookupKey) {
+        // Support both plan and lookupKey formats
+        let targetLookupKey = lookupKey;
+        
+        if (plan && !lookupKey) {
+            // Map plan to lookup key
+            const planLookupMap = {
+                'pro': process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
+                'creator_plus': process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plan_creator_plus'
+            };
+            targetLookupKey = planLookupMap[plan];
+        }
+
+        if (!targetLookupKey) {
             return res.status(400).json({
                 success: false,
-                error: 'lookupKey is required'
+                error: 'plan is required (free|pro|creator_plus)'
+            });
+        }
+
+        // Free plan doesn't require Stripe
+        if (plan === 'free') {
+            return res.json({
+                success: true,
+                data: {
+                    message: 'Free plan activated',
+                    plan: 'free'
+                }
             });
         }
 
         // Validate lookup key
         const validLookupKeys = [
-            process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly',
-            process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly'
+            process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
+            process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plan_creator_plus'
         ];
 
-        if (!validLookupKeys.includes(lookupKey)) {
+        if (!validLookupKeys.includes(targetLookupKey)) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid lookup key'
+                error: 'Invalid plan specified'
             });
         }
 
@@ -141,14 +182,14 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
 
         // Get price by lookup key
         const prices = await stripe.prices.list({
-            lookup_keys: [lookupKey],
+            lookup_keys: [targetLookupKey],
             expand: ['data.product']
         });
 
         if (prices.data.length === 0) {
             return res.status(400).json({
                 success: false,
-                error: 'Price not found for lookup key: ' + lookupKey
+                error: 'Price not found for lookup key: ' + targetLookupKey
             });
         }
 
@@ -167,12 +208,14 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
             cancel_url: process.env.STRIPE_CANCEL_URL,
             metadata: {
                 user_id: userId,
-                lookup_key: lookupKey
+                lookup_key: targetLookupKey,
+                plan: plan || 'unknown'
             },
             subscription_data: {
                 metadata: {
                     user_id: userId,
-                    lookup_key: lookupKey
+                    lookup_key: targetLookupKey,
+                    plan: plan || 'unknown'
                 }
             }
         });
@@ -187,8 +230,8 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
         res.json({
             success: true,
             data: {
-                url: session.url,
-                sessionId: session.id
+                id: session.id,
+                url: session.url
             }
         });
 
@@ -205,7 +248,7 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
  * POST /api/billing/create-portal-session
  * Create Stripe Customer Portal session
  */
-router.post('/create-portal-session', authenticateToken, async (req, res) => {
+router.post('/create-portal-session', authenticateToken, requireBilling, async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -304,6 +347,12 @@ router.get('/subscription', authenticateToken, async (req, res) => {
  * Handle Stripe webhooks for subscription events
  */
 router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    // Early return if billing is disabled
+    if (!flags.isEnabled('ENABLE_BILLING')) {
+        logger.warn('Webhook received but billing is disabled');
+        return res.status(503).json({ error: 'Billing temporarily unavailable' });
+    }
+
     const sig = req.headers['stripe-signature'];
     let event;
 

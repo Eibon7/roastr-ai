@@ -1,5 +1,109 @@
 # 📦 Changelog
 
+## v0.8.0 – 2025-08-08
+
+**Descripción:** V1 Pilot Hardening - Sistema completo backend/infra listo con billing Stripe, integraciones mock, seguridad hardening, CI/CD, y feature flags. Todo backend operativo para launch del piloto.
+
+---
+
+### 🏗️ Pilot Infrastructure Ready
+
+#### 🎛️ Feature Flags System Centralizado
+- **Central Configuration**: Sistema unificado en `src/config/flags.js` con 15+ flags
+- **Graceful Degradation**: Detección automática de claves faltantes → modo mock seguro
+- **Service Status**: API endpoints muestran estado de servicios (disponible/mock/unavailable)
+- **Runtime Switching**: Flags permiten activar/desactivar funcionalidades sin redeploy
+
+#### 💳 Stripe Billing System (Production Ready)
+- **Multi-Plan Support**: Free, Pro ($20/mo), Creator+ ($50/mo) con feature gating
+- **Webhook Processing**: Manejo completo de eventos Stripe con verificación de firmas
+- **Customer Portal**: Integración completa para gestión de subscriptions
+- **Plan Gating**: Middleware `requirePlan()` aplicado en rutas sensibles
+- **Degradación Segura**: Modo "billing unavailable" cuando faltan claves
+
+#### 🔌 Mock-Ready Integrations con Persistencia
+- **9 Platform Support**: Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky
+- **Persistent Mocking**: Storage cifrado local + database fallback para integraciones
+- **OAuth Simulation**: Flujo completo mock para testing UX sin claves reales
+- **API Consistency**: Interfaz idéntica para servicios reales vs mock
+
+#### 🛡️ Security Hardening Completo
+- **Helmet Integration**: CSP, HSTS, security headers configurados
+- **CORS Strict**: Whitelist de orígenes permitidos con logging de rechazos
+- **Rate Limiting**: 3 niveles (general 100/15min, auth 10/15min, billing 20/15min)
+- **Input Sanitization**: XSS protection en todos los inputs
+- **Request Logging**: Audit trail completo con duración y metadata
+
+#### 📊 Audit Trail y Logging
+- **Event Types**: 15+ tipos de eventos críticos (auth, billing, integrations, system)
+- **Dual Storage**: Database + file fallback para máxima confiabilidad
+- **Security Events**: Rate limits, failed auth, webhook failures, etc.
+- **Admin Dashboard Ready**: APIs para mostrar logs filtrados por tipo/fecha
+
+#### 🏁 RQC Feature Flags y Orquestación
+- **Global Toggle**: `ENABLE_RQC` flag para activar/desactivar sistema completo
+- **Cost Control**: Con flag disabled = 0 coste extra, bypass automático
+- **Orchestration Ready**: Plumbing completo para 3-reviewer system
+- **Admin Overrides**: Endpoints para togglear RQC por usuario
+
+#### ⚡ CI/CD Pipeline (GitHub Actions)
+- **Multi-Node Testing**: Node 18.x y 20.x en paralelo
+- **Security Audit**: npm audit + dependency review automático
+- **Smoke Tests**: Endpoints críticos verificados en cada build
+- **Coverage Reports**: Codecov integration para métricas de testing
+- **Slack Notifications**: Alerts automáticos en main/develop branches
+
+#### 🧪 Smoke Tests y Health Checks
+- **API Health**: Endpoints `/health` y `/api/health` con service status
+- **Feature Flag Tests**: Verificación de inicialización y consistency
+- **Security Headers**: Tests automáticos de CORS, rate limits, security
+- **Error Handling**: 404/405/500 responses verificados
+
+#### 📚 Documentación Completa
+- **Billing Guide**: Configuración Stripe step-by-step con troubleshooting
+- **Feature Flags**: Referencia completa de flags disponibles y uso
+- **API Documentation**: Endpoints, request/response formats, error codes
+- **Local Development**: Setup guides para Stripe webhooks y testing
+
+---
+
+### 📈 Performance y Reliability
+
+#### 🔄 Graceful Degradation
+- **Database Fallback**: Todas las features funcionan sin Supabase (modo mock)
+- **Service Isolation**: Fallo de un servicio no afecta el resto del sistema  
+- **Progressive Enhancement**: Core functionality siempre disponible
+
+#### 🚨 Error Handling Mejorado
+- **Consistent Response Format**: Códigos de error uniformes con detalles
+- **Rate Limit Feedback**: Mensajes específicos por tipo de límite
+- **Webhook Error Recovery**: Reintentos automáticos y logging detallado
+- **Feature Flag Safe Defaults**: Flags ausentes = false, nunca undefined
+
+#### 📊 Monitoring Ready
+- **Health Endpoints**: Status detallado de servicios y configuración
+- **Metrics Collection**: Duración requests, rate limit hits, feature usage
+- **Log Aggregation**: Formato estructurado para herramientas de monitoring
+- **Version Tracking**: Endpoint health incluye version y environment
+
+---
+
+### 🔧 Developer Experience
+
+#### 🎯 Testing Strategy
+- **Unit Tests**: 37+ RQC tests + servicios core
+- **Integration Tests**: API endpoints con mocks
+- **Smoke Tests**: Health checks automáticos en CI
+- **Coverage Goals**: >80% en servicios críticos
+
+#### 🚀 Easy Deployment
+- **Environment Detection**: Auto-configure según NODE_ENV
+- **Feature Toggle**: Flags permiten deploys graduales
+- **Docker Ready**: Configuración lista para containerización
+- **Health Monitoring**: Endpoints para load balancer health checks
+
+---
+
 ## v0.7.0 – 2025-08-08
 
 **Descripción:** Sistema RQC (Roast Quality Control) multi-plan con moderación básica integrada para Free/Pro y sistema avanzado de 3 revisores paralelos para Creator+. Optimizado para costes con fallback inteligente y testing completo (37 casos).

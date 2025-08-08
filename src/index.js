@@ -3,6 +3,19 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+// Security and monitoring middleware
+const { 
+  helmetConfig, 
+  corsConfig, 
+  generalRateLimit,
+  authRateLimit,
+  billingRateLimit,
+  validateInput,
+  requestLogger,
+  errorHandler
+} = require('./middleware/security');
+const { flags } = require('./config/flags');
+
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
 const CsvRoastService = require('./services/csvRoastService');
 const IntegrationManager = require('./integrations/integrationManager');
@@ -20,11 +33,55 @@ const { authenticateToken, optionalAuth } = require('./middleware/auth');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Stripe webhook endpoint (needs raw body)
+// Apply security middleware
+app.use(helmetConfig);
+app.use(corsConfig);
+app.use(requestLogger);
+app.use(validateInput);
+
+// Health check endpoint (before rate limiting)
+app.get('/health', (req, res) => {
+  const uptime = process.uptime();
+  const serviceStatus = flags.getServiceStatus();
+  
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(uptime)}s`,
+    version: require('../package.json').version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    services: serviceStatus
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  const serviceStatus = flags.getServiceStatus();
+  
+  res.json({
+    success: true,
+    data: {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: serviceStatus,
+      features: flags.getAllFlags()
+    }
+  });
+});
+
+// Apply general rate limiting
+app.use(generalRateLimit);
+
+// Stripe webhook endpoint (needs raw body, before JSON parsing)
 app.use('/webhooks/stripe', billingRoutes);
 
 // Middleware para parsear JSON (after webhook to preserve raw body)
 app.use(bodyParser.json());
+
+// Apply auth-specific rate limiting
+app.use('/api/auth', authRateLimit);
+
+// Apply billing-specific rate limiting  
+app.use('/api/billing', billingRateLimit);
 
 // Servir archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, '../public')));
@@ -373,7 +430,30 @@ app.post('/api/roast/preview', async (req, res) => {
   }
 });
 
-// Iniciar servidor
-app.listen(port, () => {
-  console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+// Add error handling middleware (must be last)
+app.use(errorHandler);
+
+// 404 handler for unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Not Found',
+    code: 'ROUTE_NOT_FOUND'
+  });
 });
+
+// Export app for testing
+module.exports = app;
+
+// Only start server if this file is run directly (not imported by tests)
+if (require.main === module) {
+  const server = app.listen(port, () => {
+    console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+    console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
+    
+    const serviceStatus = flags.getServiceStatus();
+    console.log(`💾 Database:`, serviceStatus.database);
+    console.log(`💳 Billing:`, serviceStatus.billing);
+    console.log(`🤖 OpenAI:`, serviceStatus.ai.openai);
+  });
+}

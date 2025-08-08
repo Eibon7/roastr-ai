@@ -12,6 +12,7 @@ const OpenAI = require('openai');
 const { logger } = require('../utils/logger');
 const RQCService = require('./rqcService');
 const { supabaseServiceClient } = require('../config/supabase');
+const { flags } = require('../config/flags');
 require('dotenv').config();
 
 class RoastGeneratorEnhanced {
@@ -48,8 +49,11 @@ class RoastGeneratorEnhanced {
       // Get user RQC configuration from database
       const rqcConfig = await this.getUserRQCConfig(userConfig.userId);
       
-      // For Free and Pro plans: use integrated basic moderation
-      if (!rqcConfig.advanced_review_enabled) {
+      // Check if RQC is globally enabled
+      const rqcGloballyEnabled = flags.isEnabled('ENABLE_RQC');
+      
+      // For Free and Pro plans OR if RQC is disabled globally: use integrated basic moderation
+      if (!rqcConfig.advanced_review_enabled || !rqcGloballyEnabled) {
         logger.info('📝 Using basic moderation for plan:', rqcConfig.plan);
         
         const roast = await this.generateWithBasicModeration(
@@ -62,10 +66,11 @@ class RoastGeneratorEnhanced {
         return {
           roast,
           plan: rqcConfig.plan,
-          rqcEnabled: false,
+          rqcEnabled: rqcGloballyEnabled && rqcConfig.rqc_enabled,
+          rqcGloballyEnabled,
           processingTime: Date.now() - startTime,
           tokensUsed: this.estimateTokens(text + roast),
-          method: 'basic_moderation'
+          method: rqcGloballyEnabled ? 'rqc_bypass' : 'basic_moderation'
         };
       }
 
