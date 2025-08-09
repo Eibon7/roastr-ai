@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
+import MockModeIndicator from '../ui/MockModeIndicator';
 import { Activity, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function HealthFlagsCard() {
@@ -71,9 +72,12 @@ export default function HealthFlagsCard() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center space-x-2">
-          <Activity className="h-5 w-5" />
-          <span>System Health</span>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Activity className="h-5 w-5" />
+            <span>System Health</span>
+          </div>
+          <MockModeIndicator size="xs" />
         </CardTitle>
       </CardHeader>
       <CardContent>

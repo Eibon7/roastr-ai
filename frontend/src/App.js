@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import LoginPage from './pages/login';
 import RegisterPage from './pages/register';
 import ResetPasswordPage from './pages/reset-password';
@@ -19,34 +20,36 @@ import './App.css';
 function App() {
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          
-          {/* Protected routes with AppShell */}
-          <Route path="/" element={<AppShell />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="compose" element={<Compose />} />
-            <Route path="integrations" element={<Integrations />} />
-            <Route path="billing" element={<Billing />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="logs" element={<Logs />} />
-          </Route>
-          
-          {/* Admin routes (separate from AppShell) */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/user/:userId" element={<UserDetail />} />
-          
-          {/* 404 fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </div>
+      <AuthProvider>
+        <div className="App">
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            
+            {/* Protected routes with AppShell */}
+            <Route path="/" element={<AppShell />}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="compose" element={<Compose />} />
+              <Route path="integrations" element={<Integrations />} />
+              <Route path="billing" element={<Billing />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="logs" element={<Logs />} />
+            </Route>
+            
+            {/* Admin routes (separate from AppShell) */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/user/:userId" element={<UserDetail />} />
+            
+            {/* 404 fallback */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </div>
+      </AuthProvider>
     </Router>
   );
 }

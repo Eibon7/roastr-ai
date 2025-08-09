@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
+import MockModeIndicator from '../ui/MockModeIndicator';
 import { Crown, Zap, Shield } from 'lucide-react';
 
 export default function PlanStatusCard() {
@@ -74,7 +75,10 @@ export default function PlanStatusCard() {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
-          Plan Status
+          <div className="flex items-center gap-2">
+            Plan Status
+            <MockModeIndicator size="xs" />
+          </div>
           <Badge variant={currentPlan.color}>
             {currentPlan.name}
           </Badge>
