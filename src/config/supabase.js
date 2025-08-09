@@ -1,27 +1,48 @@
 const { createClient } = require('@supabase/supabase-js');
-const { logger } = require('../utils/logger');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
-    throw new Error('Supabase environment variables are not set. Please check SUPABASE_URL, SUPABASE_SERVICE_KEY, and SUPABASE_ANON_KEY.');
+// Check if we're in mock mode - if variables are missing, create mock clients
+const isSupabaseConfigured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
+
+if (!isSupabaseConfigured) {
+    console.warn('🔄 Supabase environment variables not set - running in mock mode');
 }
 
-// Service client for admin operations (bypasses RLS)
-const supabaseServiceClient = createClient(supabaseUrl, supabaseServiceKey, {
+// Create mock client for when Supabase is not configured
+const createMockClient = () => ({
     auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
+        getUser: async () => ({ data: { user: null }, error: new Error('Mock mode - no user') })
+    },
+    from: () => ({
+        select: () => ({
+            limit: () => Promise.resolve({ data: [], error: new Error('Mock mode - no database') })
+        })
+    })
 });
 
+// Service client for admin operations (bypasses RLS)
+const supabaseServiceClient = isSupabaseConfigured 
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    })
+    : createMockClient();
+
 // Anonymous client for auth operations
-const supabaseAnonClient = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseAnonClient = isSupabaseConfigured 
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : createMockClient();
 
 // Function to create authenticated client for specific user
 const createUserClient = (accessToken) => {
+    if (!isSupabaseConfigured) {
+        return createMockClient();
+    }
     return createClient(supabaseUrl, supabaseAnonKey, {
         global: {
             headers: {
@@ -37,19 +58,23 @@ const getUserFromToken = async (token) => {
         const { data: { user }, error } = await supabaseAnonClient.auth.getUser(token);
         
         if (error) {
-            logger.warn('Failed to get user from token:', error.message);
+            console.warn('Failed to get user from token:', error.message);
             return null;
         }
         
         return user;
     } catch (error) {
-        logger.error('Error getting user from token:', error.message);
+        console.error('Error getting user from token:', error.message);
         return null;
     }
 };
 
 // Health check function
 const checkConnection = async () => {
+    if (!isSupabaseConfigured) {
+        return { connected: false, error: 'Mock mode - Supabase not configured' };
+    }
+    
     try {
         const { data, error } = await supabaseServiceClient
             .from('users')
@@ -62,7 +87,7 @@ const checkConnection = async () => {
         
         return { connected: true };
     } catch (error) {
-        logger.error('Supabase connection check failed:', error.message);
+        console.error('Supabase connection check failed:', error.message);
         return { connected: false, error: error.message };
     }
 };

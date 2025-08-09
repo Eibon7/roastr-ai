@@ -38,6 +38,8 @@ class FeatureFlags {
       
       // Development Features
       ENABLE_DEBUG_LOGS: process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development',
+      VERBOSE_LOGS: process.env.VERBOSE_LOGS === 'true',
+      MOCK_MODE: process.env.MOCK_MODE === 'true' || this.shouldUseMockMode(),
       ENABLE_MOCK_PERSISTENCE: process.env.ENABLE_MOCK_PERSISTENCE === 'true' || true
     };
   }
@@ -96,6 +98,15 @@ class FeatureFlags {
   checkSupabaseKeys() {
     const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
     return required.every(key => !!process.env[key]);
+  }
+
+  shouldUseMockMode() {
+    // Auto-detect mock mode if critical services are missing
+    return process.env.MOCK_MODE === 'auto' && (
+      !process.env.OPENAI_API_KEY || 
+      !process.env.SUPABASE_URL || 
+      !process.env.STRIPE_SECRET_KEY
+    );
   }
 
   logFlagsStatus() {

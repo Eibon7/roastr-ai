@@ -1,20 +1,53 @@
-Roastr.ai
+# Roastr.ai
 
-Roastr.ai es un MVP (Producto Mínimo Viable) que genera “roasts” o respuestas sarcásticas e ingeniosas a comentarios en redes sociales.
+Sistema multi-tenant de detección de toxicidad y generación de roasts automáticos para redes sociales.
 
-Introducción
+## 🚀 Quick Start (Mock Mode)
 
-Roastr.ai es una herramienta que analiza comentarios y genera respuestas humorísticas y personalizadas mediante IA.
+```bash
+# Clonar y configurar
+git clone https://github.com/Eibon7/roastr-ai.git
+cd roastr-ai
+npm install
 
-Características principales:
-	•	Generación de roasts usando OpenAI GPT-4o mini
-	•	Sistema RQC (Roast Quality Control) multi-plan con moderación inteligente
-	•	Detección automática de idioma (español/inglés)
-	•	Arquitectura multi-tenant con planes de suscripción (Free, Pro, Creator+)
-	•	9 integraciones de plataformas sociales (Twitter, YouTube, Instagram, etc.)
-	•	API REST desplegada en Vercel
-	•	Frontend web minimalista
-	•	CLI para uso local
+# Frontend
+cd frontend && npm install
+npm start  # Abre http://localhost:3001
+
+# Backend (nueva terminal)
+npm run start:api  # API en http://localhost:3000
+```
+
+**¡No necesitas APIs externas!** El sistema funciona en **Mock Mode** por defecto.
+
+## 📊 Dashboard Frontend
+
+**Nuevo sistema de dashboard con:**
+- ✅ 7 widgets interactivos reordenables  
+- ✅ Mock-first design (funciona sin APIs externas)
+- ✅ 6 páginas completas (Dashboard, Compose, Integrations, Billing, Settings, Logs)
+- ✅ Diseño responsivo con shadcn/ui + Tailwind CSS
+- ✅ Sistema de feature flags centralizado
+- ✅ Tests completos (Jest + React Testing Library)
+
+## 🎯 Características Principales
+
+### Core Features
+- **Generación de roasts** usando OpenAI GPT-4o mini
+- **Sistema RQC** (Roast Quality Control) multi-plan con moderación inteligente
+- **Detección automática** de idioma (español/inglés) 
+- **Arquitectura multi-tenant** con planes de suscripción (Free, Pro, Creator+)
+- **9 integraciones** de plataformas sociales (Twitter, YouTube, Instagram, etc.)
+- **Shield Protection** - Moderación automática con acciones escalonadas
+- **Worker system** dedicado para procesamiento en background
+
+### Nuevo Dashboard Features
+- **Mock Mode** automático cuando faltan API keys
+- **Widget system** modular y extensible
+- **Real-time updates** en widgets seleccionados
+- **Responsive design** para mobile y desktop
+- **Filtros avanzados** en logs y data tables
+- **Estados de loading** y error handling completo
 
 Arquitectura
 

@@ -28,6 +28,7 @@ const integrationsRoutes = require('./routes/integrations');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const billingRoutes = require('./routes/billing');
+const dashboardRoutes = require('./routes/dashboard');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -94,6 +95,9 @@ app.use('/api/user', userRoutes);
 
 // Billing routes (Stripe integration)
 app.use('/api/billing', billingRoutes);
+
+// Dashboard routes (public/authenticated)
+app.use('/api', dashboardRoutes);
 
 // User integrations routes (authenticated)
 app.use('/api/integrations', integrationsRoutes);
