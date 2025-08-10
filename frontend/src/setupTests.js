@@ -3,95 +3,68 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+import { setupGlobalMocks, createMockFetch } from './lib/mockMode';
 
-// Mock environment variables for frontend tests
-if (process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
-  process.env.REACT_APP_ENABLE_MOCK_MODE = 'true';
-  process.env.REACT_APP_SUPABASE_URL = 'http://localhost/dummy';
-  process.env.REACT_APP_SUPABASE_ANON_KEY = 'dummy';
-}
+// Force mock environment variables for all tests
+process.env.NODE_ENV = 'test';
+process.env.REACT_APP_ENABLE_MOCK_MODE = 'true';
+process.env.REACT_APP_SUPABASE_URL = 'http://localhost/mock';
+process.env.REACT_APP_SUPABASE_ANON_KEY = 'mock-anon-key';
 
-// Mock fetch for all frontend tests
-global.fetch = jest.fn((url) => {
-  // Mock health endpoint
-  if (url && url.includes('/api/health')) {
-    return Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({
-        timestamp: new Date().toISOString(),
-        services: {
-          database: 'ok',
-          queue: 'ok',
-          openai: 'ok'
-        },
-        flags: {
-          rqc: false,
-          shield: false,
-          mockMode: true
-        }
-      })
-    });
-  }
-  
-  // Mock logs endpoint
-  if (url && url.includes('/api/logs')) {
-    return Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({
-        logs: [
-          {
-            id: '1',
-            timestamp: new Date().toISOString(),
-            level: 'info',
-            message: 'Test log entry',
-            source: 'test'
-          }
-        ],
-        total: 1
-      })
-    });
-  }
-  
-  // Mock user endpoint
-  if (url && url.includes('/api/user')) {
-    return Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({
-        id: 'mock-user-id',
-        name: 'Mock User',
-        email: 'mock@example.com',
-        plan: 'pro'
-      })
-    });
-  }
-  
-  // Mock usage endpoint
-  if (url && url.includes('/api/usage')) {
-    return Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({
-        aiCalls: 150,
-        limits: { aiCallsLimit: 1000 }
-      })
-    });
-  }
-  
-  // Default mock response
-  return Promise.resolve({
-    ok: true,
-    status: 200,
-    json: () => Promise.resolve({})
-  });
+// Setup global mocks
+setupGlobalMocks();
+
+// Override global fetch with Jest mock
+global.fetch = jest.fn(createMockFetch());
+
+// Mock timers and other global functions that may cause issues
+global.ResizeObserver = jest.fn(() => ({
+  observe: jest.fn(),
+  disconnect: jest.fn(),
+  unobserve: jest.fn()
+}));
+
+// Mock window.matchMedia for responsive components
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn()
+  }))
 });
+
+// Mock IntersectionObserver
+global.IntersectionObserver = jest.fn(() => ({
+  observe: jest.fn(),
+  disconnect: jest.fn(),
+  unobserve: jest.fn()
+}));
 
 // Setup for each test
 beforeEach(() => {
-  // Clear all fetch mocks
-  fetch.mockClear();
+  // Clear all mocks before each test
+  jest.clearAllMocks();
+  if (global.fetch && global.fetch.mockClear) {
+    global.fetch.mockClear();
+  }
 });
 
-console.log('🤖 Frontend Tests: Mock mode enabled, external APIs mocked');
+// Suppress console warnings in tests unless explicitly needed
+const originalWarn = console.warn;
+console.warn = (...args) => {
+  if (args[0] && typeof args[0] === 'string') {
+    // Suppress known React warnings that are not critical
+    if (args[0].includes('act(')) return;
+    if (args[0].includes('Warning: An update to')) return;
+    if (args[0].includes('Warning: Cannot update a component')) return;
+  }
+  originalWarn.apply(console, args);
+};
+
+console.log('🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked');

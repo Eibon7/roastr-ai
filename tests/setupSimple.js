@@ -1,32 +1,28 @@
 /**
- * Simple CI Test Setup
- * Minimal setup for stable smoke tests only
+ * Complete CI Test Setup
+ * Ensures 100% mock mode for all external APIs and services
  */
 
-// Set test environment flags
+// Force mock mode globally
+process.env.ENABLE_MOCK_MODE = 'true';
 process.env.NODE_ENV = 'test';
-process.env.ENABLE_RQC = 'false';
 process.env.SKIP_E2E = 'true';
 
-// Mock environment variables for CI
-const requiredEnvFlags = [
-  'OPENAI_API_KEY',
-  'STRIPE_SECRET_KEY', 
-  'SUPABASE_URL',
-  'SUPABASE_SERVICE_KEY',
-  'SUPABASE_ANON_KEY',
-  'PERSPECTIVE_API_KEY'
-];
+// Initialize mock mode system
+const { mockMode } = require('../src/config/mockMode');
 
-requiredEnvFlags.forEach(flag => {
-  if (!process.env[flag]) {
-    process.env[flag] = '';
-  }
+// Ensure all APIs use mock responses
+global.fetch = mockMode.generateMockFetch();
+
+// Mock process.exit to prevent tests from exiting
+const originalExit = process.exit;
+process.exit = (code) => {
+  console.warn(`⚠️ Process.exit(${code}) called during test - ignoring`);
+};
+
+// Cleanup after tests
+process.on('exit', () => {
+  process.exit = originalExit;
 });
 
-// Set dummy URLs
-process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost/dummy';
-process.env.SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'dummy';
-process.env.SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'dummy';
-
-console.log('🧪 Simple CI Setup: Running smoke tests only with mock environment');
+console.log('🧪 Complete CI Setup: 100% mock mode enabled, no external API calls allowed');

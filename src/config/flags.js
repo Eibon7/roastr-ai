@@ -5,6 +5,8 @@
  * and graceful degradation when required keys are missing
  */
 
+const { mockMode } = require('./mockMode');
+
 class FeatureFlags {
   constructor() {
     this.flags = this.loadFlags();
@@ -39,8 +41,8 @@ class FeatureFlags {
       // Development Features
       ENABLE_DEBUG_LOGS: process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development',
       VERBOSE_LOGS: process.env.VERBOSE_LOGS === 'true',
-      MOCK_MODE: process.env.MOCK_MODE === 'true' || this.shouldUseMockMode(),
-      ENABLE_MOCK_PERSISTENCE: process.env.ENABLE_MOCK_PERSISTENCE === 'true' || true
+      MOCK_MODE: mockMode.isMockMode,
+      ENABLE_MOCK_PERSISTENCE: process.env.ENABLE_MOCK_PERSISTENCE === 'true' || mockMode.isMockMode
     };
   }
 
@@ -96,17 +98,12 @@ class FeatureFlags {
   }
 
   checkSupabaseKeys() {
+    // In mock mode, always return false to use mock Supabase
+    if (mockMode.isMockMode) {
+      return false;
+    }
     const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
-    return required.every(key => !!process.env[key]);
-  }
-
-  shouldUseMockMode() {
-    // Auto-detect mock mode if critical services are missing
-    return process.env.MOCK_MODE === 'auto' && (
-      !process.env.OPENAI_API_KEY || 
-      !process.env.SUPABASE_URL || 
-      !process.env.STRIPE_SECRET_KEY
-    );
+    return required.every(key => !!process.env[key] && !process.env[key].includes('mock'));
   }
 
   logFlagsStatus() {

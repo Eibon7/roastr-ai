@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { isMockModeEnabled, logMockModeStatus } from './mockMode';
+import { isMockModeEnabled, logMockModeStatus, createMockSupabaseClient } from './mockMode';
 
 // Log mock mode status in development
 logMockModeStatus();
