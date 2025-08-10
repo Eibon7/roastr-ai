@@ -16,9 +16,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:ci": "react-scripts build",
+    "build:ci": "GENERATE_SOURCEMAP=false CI=false react-scripts build",
     "test": "react-scripts test",
-    "test:ci": "CI=true react-scripts test --watchAll=false --testTimeout=30000 --reporters=default --reporters=jest-junit",
+    "test:ci": "CI=true react-scripts test --watchAll=false --testTimeout=30000 --coverage=false --verbose=false",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
