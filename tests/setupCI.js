@@ -30,12 +30,54 @@ requiredEnvFlags.forEach(flag => {
 });
 
 // Mock external API endpoints to prevent network calls
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    json: () => Promise.resolve({}),
+global.fetch = jest.fn((url) => {
+  // Mock health endpoint
+  if (url.includes('/api/health')) {
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        timestamp: new Date().toISOString(),
+        services: {
+          database: 'ok',
+          queue: 'ok',
+          openai: 'ok'
+        },
+        flags: {
+          rqc: false,
+          shield: false,
+          mockMode: true
+        }
+      })
+    });
+  }
+  
+  // Mock logs endpoint
+  if (url.includes('/api/logs')) {
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        logs: [
+          {
+            id: '1',
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: 'Test log entry',
+            source: 'test'
+          }
+        ],
+        total: 1
+      })
+    });
+  }
+  
+  // Default mock response
+  return Promise.resolve({
     ok: true,
-    status: 200
-  })
-);
+    status: 200,
+    json: () => Promise.resolve({})
+  });
+});
 
 console.log('🤖 CI Test Setup: Mock mode enabled, external APIs mocked');

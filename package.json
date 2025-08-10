@@ -39,7 +39,7 @@
     "frontend:build": "cd frontend && npm run build",
     "frontend:install": "cd frontend && npm install",
     "test": "jest --verbose",
-    "test:ci": "jest --runInBand --ci --reporters=default --reporters=jest-junit --maxWorkers=50% --setupFilesAfterEnv='<rootDir>/tests/setupCI.js'",
+    "test:ci": "jest --config=jest.ci.config.js --runInBand --ci",
     "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'",
     "lint": "echo 'Linting backend code...' && echo 'Backend linting passed (placeholder)'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
