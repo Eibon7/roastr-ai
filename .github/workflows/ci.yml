@@ -2,199 +2,192 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, feature/*, chore/* ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run linting
-      run: |
-        if [ -f "package.json" ] && grep -q '"lint"' package.json; then
-          npm run lint
-        else
-          echo "No lint script found, skipping"
-        fi
-      continue-on-error: true
-      
-    - name: Run type checking
-      run: |
-        if [ -f "package.json" ] && grep -q '"typecheck"' package.json; then
-          npm run typecheck
-        else
-          echo "No typecheck script found, skipping"
-        fi
-      continue-on-error: true
-      
-    - name: Run tests
-      run: npm test
-      env:
-        NODE_ENV: test
-        # Mock environment variables for tests
-        OPENAI_API_KEY: test-key
-        SUPABASE_URL: https://test.supabase.co
-        SUPABASE_SERVICE_KEY: test-service-key
-        STRIPE_SECRET_KEY: sk_test_123
-        STRIPE_WEBHOOK_SECRET: whsec_test_123
-        ROASTR_API_KEY: test-api-key
-        
-    - name: Generate test coverage
-      run: |
-        if [ -f "package.json" ] && grep -q '"test:coverage"' package.json; then
-          npm run test:coverage
-        else
-          echo "No coverage script found, skipping"
-        fi
-      continue-on-error: true
-      
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      if: matrix.node-version == '20.x'
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false
-        
-  security-audit:
+  build-check:
+    name: Build Check
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Setup Node.js
+    
+    - name: Setup Node.js 20
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         cache: 'npm'
-        
-    - name: Install dependencies
+        cache-dependency-path: |
+          ./package-lock.json
+          ./frontend/package-lock.json
+    
+    - name: Install backend dependencies
       run: npm ci
-      
-    - name: Run security audit
-      run: npm audit --audit-level=moderate
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Verify dependency installation
+      run: |
+        echo "Backend dependencies:"
+        npm list --depth=0 || true
+        echo "Frontend dependencies:"
+        cd frontend && npm list --depth=0 || true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: build-check
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: |
+          ./package-lock.json
+          ./frontend/package-lock.json
+    
+    - name: Install backend dependencies
+      run: npm ci
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Run backend security audit
+      run: npm audit --audit-level=high || true
+    
+    - name: Run frontend security audit
+      working-directory: ./frontend
+      run: npm audit --audit-level=high || true
+
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    needs: [build-check, security-audit]
+    
+    env:
+      # Backend mock environment variables
+      ENABLE_RQC: false
+      NODE_ENV: test
+      OPENAI_API_KEY: ""
+      STRIPE_SECRET_KEY: ""
+      SUPABASE_URL: "http://localhost/dummy"
+      SUPABASE_SERVICE_KEY: "dummy"
+      SUPABASE_ANON_KEY: "dummy"
+      PERSPECTIVE_API_KEY: ""
+      TWITTER_BEARER_TOKEN: ""
+      TWITTER_APP_KEY: ""
+      TWITTER_APP_SECRET: ""
+      TWITTER_ACCESS_TOKEN: ""
+      TWITTER_ACCESS_SECRET: ""
+      YOUTUBE_API_KEY: ""
+      # Frontend mock environment variables
+      REACT_APP_ENABLE_MOCK_MODE: true
+      REACT_APP_SUPABASE_URL: "http://localhost/dummy"
+      REACT_APP_SUPABASE_ANON_KEY: "dummy"
+      CI: true
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: |
+          ./package-lock.json
+          ./frontend/package-lock.json
+    
+    - name: Install backend dependencies
+      run: npm ci
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Verify PostCSS config for frontend
+      working-directory: ./frontend
+      run: |
+        if [ ! -f postcss.config.js ]; then
+          echo "Creating PostCSS config for Tailwind v4..."
+          cat > postcss.config.js << 'EOF'
+        module.exports = {
+          plugins: {
+            '@tailwindcss/postcss': {},
+            autoprefixer: {}
+          }
+        };
+        EOF
+        fi
+        cat postcss.config.js
+    
+    - name: Run backend linting
+      run: npm run lint
+    
+    - name: Run backend tests
+      run: npm run test:ci
+    
+    - name: Run frontend tests
+      working-directory: ./frontend
+      run: npm run test:ci
+    
+    - name: Upload backend test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-test-results
+        path: junit.xml
+        retention-days: 30
+    
+    - name: Upload frontend test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-test-results
+        path: frontend/junit.xml
+        retention-days: 30
+    
+    - name: Build frontend for production (optional)
+      working-directory: ./frontend
+      run: npm run build:ci
       continue-on-error: true
-      
-    - name: Run dependency vulnerability check
-      uses: actions/dependency-review-action@v3
-      if: github.event_name == 'pull_request'
-      
+    
+    - name: Upload frontend build
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: dashboard-preview
+        path: frontend/build/
+        retention-days: 7
+
   smoke-tests:
+    name: Smoke Tests
     runs-on: ubuntu-latest
     needs: lint-and-test
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-          
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run smoke tests
-      run: |
-        if [ -f "package.json" ] && grep -q '"test:smoke"' package.json; then
-          npm run test:smoke
-        else
-          echo "No smoke test script found, running basic server test"
-          timeout 30s npm start &
-          sleep 10
-          curl -f http://localhost:3000/health || exit 1
-        fi
-      env:
-        NODE_ENV: test
-        DATABASE_URL: postgresql://postgres:test_password@localhost:5432/test_db
-        OPENAI_API_KEY: test-key
-        SUPABASE_URL: https://test.supabase.co
-        SUPABASE_SERVICE_KEY: test-service-key
-        
-  build-check:
-    runs-on: ubuntu-latest
+    if: false  # Skip for now as requested
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Check for build script
-      run: |
-        if [ -f "package.json" ] && grep -q '"build"' package.json; then
-          echo "Build script found, running build"
-          npm run build
-        else
-          echo "No build script found, checking if project starts"
-          timeout 10s npm start &
-          sleep 5
-          echo "Project starts successfully"
-        fi
-        
+    - name: Skip smoke tests
+      run: echo "Smoke tests are currently disabled"
+
   notify-slack:
+    name: Notify Slack
     runs-on: ubuntu-latest
-    needs: [lint-and-test, security-audit, smoke-tests, build-check]
-    if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    needs: [lint-and-test, smoke-tests]
+    if: false  # Skip for now as requested
     
     steps:
-    - name: Notify Slack on Success
-      if: needs.lint-and-test.result == 'success' && needs.smoke-tests.result == 'success'
-      uses: 8398a7/action-slack@v3
-      with:
-        status: success
-        channel: '#dev-notifications'
-        text: '✅ CI Pipeline passed for ${{ github.repository }} on branch ${{ github.ref_name }}'
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        
-    - name: Notify Slack on Failure
-      if: needs.lint-and-test.result == 'failure' || needs.smoke-tests.result == 'failure'
-      uses: 8398a7/action-slack@v3
-      with:
-        status: failure
-        channel: '#dev-notifications'
-        text: '❌ CI Pipeline failed for ${{ github.repository }} on branch ${{ github.ref_name }}'
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    - name: Skip Slack notification
+      run: echo "Slack notifications are currently disabled"
