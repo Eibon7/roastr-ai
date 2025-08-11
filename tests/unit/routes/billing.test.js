@@ -166,7 +166,7 @@ describe('Billing Routes Tests', () => {
 
             expect(response.body.success).toBe(true);
             expect(response.body.data.url).toBe('https://checkout.stripe.com/pay/cs_test123');
-            expect(response.body.data.sessionId).toBe('cs_test123');
+            expect(response.body.data.id).toBe('cs_test123');
             expect(mockStripe.customers.create).toHaveBeenCalledWith({
                 email: 'test@example.com',
                 metadata: {
@@ -182,7 +182,7 @@ describe('Billing Routes Tests', () => {
                 .expect(400);
 
             expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe('lookupKey is required');
+            expect(response.body.error).toBe('plan is required (free|pro|creator_plus)');
         });
 
         it('should return error for invalid lookupKey', async () => {
@@ -192,7 +192,7 @@ describe('Billing Routes Tests', () => {
                 .expect(400);
 
             expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe('Invalid lookup key');
+            expect(response.body.error).toBe('Invalid plan specified');
         });
 
         it('should use existing customer if available', async () => {

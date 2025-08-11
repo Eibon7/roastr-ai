@@ -1,0 +1,12 @@
+{
+  "test-user-id": {
+    "invalid-platform": {
+      "platform": "invalid-platform",
+      "status": "connected",
+      "connected_at": "2025-08-11T17:18:00.730Z",
+      "updated_at": "2025-08-11T17:18:00.730Z",
+      "platform_username": "user_test-use",
+      "has_token": true
+    }
+  }
+}

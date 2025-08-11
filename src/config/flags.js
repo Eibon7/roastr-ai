@@ -58,6 +58,11 @@ class FeatureFlags {
       'STRIPE_PORTAL_RETURN_URL'
     ];
     
+    // In mock mode, enable billing if mock Stripe keys are available
+    if (mockMode.isMockMode) {
+      return required.every(key => !!process.env[key]);
+    }
+    
     return required.every(key => !!process.env[key]);
   }
 
