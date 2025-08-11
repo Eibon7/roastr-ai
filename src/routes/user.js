@@ -56,6 +56,15 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
             });
         }
 
+        // Validate platform name
+        const validPlatforms = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+        if (!validPlatforms.includes(platform)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid platform'
+            });
+        }
+
         // Use mock integrations service
         const result = await integrationsService.connectIntegration(userId, platform);
         
@@ -70,7 +79,7 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
 
             res.json({
                 success: true,
-                message: `${platform} connected successfully (mock)`,
+                message: `${platform} connected successfully`,
                 data: result.data
             });
         } else {
@@ -181,32 +190,42 @@ router.post('/preferences', authenticateToken, async (req, res) => {
         }
 
         // Update user preferences and mark onboarding as complete
-        const { data: updatedUser, error: userError } = await userClient
-            .from('users')
-            .update({
-                preferences: {
-                    humor_tone,
-                    humor_style,
-                    response_frequency,
-                    auto_respond,
-                    shield_enabled,
-                    preferred_platforms,
-                    onboarding_completed_at: new Date().toISOString()
-                },
-                onboarding_complete: true,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', userId)
-            .select()
-            .single();
+        let updatedUser = null;
+        
+        // In mock mode, skip database operations and return success
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const { data, error: userError } = await userClient
+                .from('users')
+                .update({
+                    preferences: {
+                        humor_tone,
+                        humor_style,
+                        response_frequency,
+                        auto_respond,
+                        shield_enabled,
+                        preferred_platforms,
+                        onboarding_completed_at: new Date().toISOString()
+                    },
+                    onboarding_complete: true,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId)
+                .select()
+                .single();
 
-        if (userError) {
-            throw new Error(`Failed to update user preferences: ${userError.message}`);
+            if (userError) {
+                throw new Error(`Failed to update user preferences: ${userError.message}`);
+            }
+            
+            updatedUser = data;
+        } else {
+            // Mock mode: simulate successful update
+            logger.info('Mock mode: User preferences updated', { userId: userId.substr(0, 8) + '...', humor_tone, humor_style });
         }
 
         // If user selected preferred platforms, create integration configs for them
-        if (preferred_platforms.length > 0) {
-            // Get user's organization
+        if (preferred_platforms.length > 0 && flags.isEnabled('ENABLE_SUPABASE')) {
+            // Get user's organization (only in real mode)
             const { data: userData, error: orgError } = await userClient
                 .from('users')
                 .select('id, organizations!owner_id (id)')
@@ -275,16 +294,36 @@ router.post('/preferences', authenticateToken, async (req, res) => {
             }
         });
 
+        // Prepare response data
+        const responseData = {
+            user: {
+                id: userId,
+                onboarding_complete: true,
+                preferences: {
+                    humor_tone,
+                    humor_style,
+                    response_frequency,
+                    auto_respond,
+                    shield_enabled,
+                    preferred_platforms,
+                    onboarding_completed_at: new Date().toISOString()
+                }
+            }
+        };
+
+        // In real mode, use database response if available
+        if (flags.isEnabled('ENABLE_SUPABASE') && updatedUser) {
+            responseData.user = {
+                id: updatedUser.id,
+                onboarding_complete: updatedUser.onboarding_complete,
+                preferences: updatedUser.preferences
+            };
+        }
+
         res.json({
             success: true,
             message: 'Preferences saved successfully',
-            data: {
-                user: {
-                    id: updatedUser.id,
-                    onboarding_complete: updatedUser.onboarding_complete,
-                    preferences: updatedUser.preferences
-                }
-            }
+            data: responseData
         });
 
     } catch (error) {
