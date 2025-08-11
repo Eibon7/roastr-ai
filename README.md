@@ -1,20 +1,31 @@
-Roastr.ai
+# Roastr.ai
 
-Roastr.ai es un MVP (Producto Mínimo Viable) que genera “roasts” o respuestas sarcásticas e ingeniosas a comentarios en redes sociales.
+[![CI/CD Pipeline](https://github.com/Eibon7/roastr-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Eibon7/roastr-ai/actions/workflows/ci.yml)
+[![Style Profile](https://img.shields.io/badge/Style%20Profile-Ready-purple)](/)
+[![OAuth Integration](https://img.shields.io/badge/OAuth-7%20Platforms-blue)](/)
+[![Multi-Tenant](https://img.shields.io/badge/Multi--Tenant-Ready-green)](/)
 
-Introducción
+Roastr.ai is a comprehensive multi-tenant SaaS platform for AI-powered social media roast generation with advanced style profile analysis and seamless OAuth integrations.
 
-Roastr.ai es una herramienta que analiza comentarios y genera respuestas humorísticas y personalizadas mediante IA.
+## 🚀 Overview
 
-Características principales:
-	•	Generación de roasts usando OpenAI GPT-4o mini
-	•	Sistema RQC (Roast Quality Control) multi-plan con moderación inteligente
-	•	Detección automática de idioma (español/inglés)
-	•	Arquitectura multi-tenant con planes de suscripción (Free, Pro, Creator+)
-	•	9 integraciones de plataformas sociales (Twitter, YouTube, Instagram, etc.)
-	•	API REST desplegada en Vercel
-	•	Frontend web minimalista
-	•	CLI para uso local
+Roastr.ai is an enterprise-grade platform that analyzes social media content and generates personalized, witty responses using advanced AI. Built with a robust multi-tenant architecture supporting multiple subscription plans and sophisticated content moderation.
+
+### ✨ Key Features
+
+- 🤖 **AI-Powered Roast Generation** using OpenAI GPT-4o mini
+- 📊 **Style Profile Analysis** with multi-language support 
+- 🔐 **OAuth Integration** for 7 major social platforms
+- 🛡️ **RQC System** (Roast Quality Control) with intelligent moderation
+- 🌍 **Multi-Language Support** (Spanish/English detection)
+- 🏢 **Multi-Tenant Architecture** with subscription plans (Free, Pro, Creator+)
+- 🔌 **9 Platform Integrations** (Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky)
+- 🚀 **Serverless Deployment** on Vercel
+- 💻 **Modern React Frontend** with shadcn/ui
+- ⚡ **CLI Tools** for local development and testing
+- 🔄 **Automatic Session Refresh** with sliding expiration
+- 🛡️ **Rate Limiting** and security features
+- 🧪 **Mock Mode** for testing and development
 
 Arquitectura
 

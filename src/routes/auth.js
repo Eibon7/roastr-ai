@@ -2,8 +2,13 @@ const express = require('express');
 const authService = require('../services/authService');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
+const { handleSessionRefresh } = require('../middleware/sessionRefresh');
+const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
 
 const router = express.Router();
+
+// Apply rate limiting to authentication endpoints
+router.use(loginRateLimiter);
 
 /**
  * POST /api/auth/register
@@ -489,6 +494,24 @@ router.get('/verify', async (req, res) => {
         res.redirect('/login.html?message=Email verification failed.&type=error');
     }
 });
+
+/**
+ * POST /api/auth/session/refresh
+ * Refresh user session with new tokens
+ */
+router.post('/session/refresh', handleSessionRefresh);
+
+/**
+ * GET /api/auth/rate-limit/metrics
+ * Get rate limiting metrics (mock mode only)
+ */
+router.get('/rate-limit/metrics', getRateLimitMetrics);
+
+/**
+ * POST /api/auth/rate-limit/reset
+ * Reset rate limiting for IP/email (testing only)
+ */
+router.post('/rate-limit/reset', resetRateLimit);
 
 // Admin routes
 /**

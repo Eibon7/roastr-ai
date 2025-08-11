@@ -12,10 +12,12 @@ const advancedLogger = require('./utils/advancedLogger');
 // Import auth routes and middleware
 const authRoutes = require('./routes/auth');
 const integrationsRoutes = require('./routes/integrations');
+const oauthRoutes = require('./routes/oauth');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const billingRoutes = require('./routes/billing');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
+const { sessionRefreshMiddleware } = require('./middleware/sessionRefresh');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -25,6 +27,12 @@ app.use('/webhooks/stripe', billingRoutes);
 
 // Middleware para parsear JSON (after webhook to preserve raw body)
 app.use(bodyParser.json());
+
+// Enable trust proxy for rate limiting behind reverse proxies
+app.set('trust proxy', 1);
+
+// Session refresh middleware (before auth routes)
+app.use(sessionRefreshMiddleware);
 
 // Servir archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, '../public')));
@@ -40,6 +48,10 @@ app.use('/api/billing', billingRoutes);
 
 // User integrations routes (authenticated)
 app.use('/api/integrations', integrationsRoutes);
+
+// OAuth routes (for social media connections)
+app.use('/api/integrations', oauthRoutes);
+app.use('/api/auth', oauthRoutes);
 
 // Admin routes (admin only)
 app.use('/api/admin', adminRoutes);
