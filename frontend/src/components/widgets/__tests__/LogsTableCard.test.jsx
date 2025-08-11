@@ -76,11 +76,17 @@ describe('LogsTableCard', () => {
       expect(screen.getByText('3 entries')).toBeInTheDocument();
     });
 
-    // Click on the filter dropdown
-    const filterTrigger = screen.getByText('All Levels');
+    // Click on the filter dropdown by finding the button trigger
+    const filterTrigger = screen.getAllByRole('button').find(btn => 
+      btn.textContent.includes('All Levels') || btn.className.includes('SelectTrigger')
+    ) || screen.getAllByRole('button')[1]; // Fallback to second button if not found
     await user.click(filterTrigger);
 
-    // Select 'error' filter
+    // Wait for dropdown to open and select 'error' filter
+    await waitFor(() => {
+      expect(screen.getByText('Errors')).toBeInTheDocument();
+    });
+    
     const errorOption = screen.getByText('Errors');
     await user.click(errorOption);
 
@@ -133,9 +139,23 @@ describe('LogsTableCard', () => {
     const searchInput = screen.getByPlaceholderText('Search logs...');
     await user.type(searchInput, 'API');
 
+    // Wait for search to filter
+    await waitFor(() => {
+      expect(screen.getByText('2 entries')).toBeInTheDocument();
+    });
+
     // Set level filter to 'error'
-    const filterTrigger = screen.getByDisplayValue('All Levels');
-    fireEvent.change(filterTrigger, { target: { value: 'error' } });
+    const filterTrigger = screen.getAllByRole('button').find(btn => 
+      btn.textContent.includes('All Levels') || btn.className.includes('SelectTrigger')
+    ) || screen.getAllByRole('button')[1]; // Fallback to second button if not found
+    await user.click(filterTrigger);
+
+    await waitFor(() => {
+      expect(screen.getByText('Errors')).toBeInTheDocument();
+    });
+    
+    const errorOption = screen.getByText('Errors');
+    await user.click(errorOption);
 
     await waitFor(() => {
       expect(screen.getByText('1 entries')).toBeInTheDocument();

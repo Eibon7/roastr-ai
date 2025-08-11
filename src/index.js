@@ -29,6 +29,9 @@ const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const billingRoutes = require('./routes/billing');
 const dashboardRoutes = require('./routes/dashboard');
+const { router: planRoutes } = require('./routes/plan');
+const { router: newIntegrationsRoutes } = require('./routes/integrations-new');
+const styleProfileRoutes = require('./routes/style-profile');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -93,6 +96,9 @@ app.use('/api/auth', authRoutes);
 // User routes (authenticated)
 app.use('/api/user', userRoutes);
 
+// Plan routes (plan selection and features)
+app.use('/api/plan', planRoutes);
+
 // Billing routes (Stripe integration)
 app.use('/api/billing', billingRoutes);
 
@@ -101,6 +107,12 @@ app.use('/api', dashboardRoutes);
 
 // User integrations routes (authenticated)
 app.use('/api/integrations', integrationsRoutes);
+
+// New integrations routes for style profile flow
+app.use('/api/integrations', newIntegrationsRoutes);
+
+// Style profile routes (authenticated, Creator+ only)
+app.use('/api/style-profile', styleProfileRoutes);
 
 // Admin routes (admin only)
 app.use('/api/admin', adminRoutes);

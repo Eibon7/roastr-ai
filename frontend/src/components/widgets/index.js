@@ -6,10 +6,12 @@ import ActivityFeedCard from './ActivityFeedCard';
 import JobsQueueCard from './JobsQueueCard';
 import UsageCostCard from './UsageCostCard';
 import LogsTableCard from './LogsTableCard';
+import StyleProfileCard from './StyleProfileCard';
 
 export const WIDGETS = {
   planStatus: PlanStatusCard,
   integrations: IntegrationsCard,
+  styleProfile: StyleProfileCard,
   health: HealthFlagsCard,
   activity: ActivityFeedCard,
   queue: JobsQueueCard,
@@ -19,7 +21,8 @@ export const WIDGETS = {
 
 export const DEFAULT_LAYOUT = [
   'planStatus',
-  'integrations', 
+  'integrations',
+  'styleProfile',
   'health',
   'activity',
   'queue',
@@ -36,6 +39,11 @@ export const WIDGET_CONFIGS = {
   integrations: {
     title: 'Integrations',
     description: 'Platform connections',
+    gridCols: 'md:col-span-1'
+  },
+  styleProfile: {
+    title: 'Style Profile',
+    description: 'AI-generated roast style',
     gridCols: 'md:col-span-1'
   },
   health: {

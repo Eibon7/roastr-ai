@@ -42,7 +42,10 @@ class FeatureFlags {
       ENABLE_DEBUG_LOGS: process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development',
       VERBOSE_LOGS: process.env.VERBOSE_LOGS === 'true',
       MOCK_MODE: mockMode.isMockMode,
-      ENABLE_MOCK_PERSISTENCE: process.env.ENABLE_MOCK_PERSISTENCE === 'true' || mockMode.isMockMode
+      ENABLE_MOCK_PERSISTENCE: process.env.ENABLE_MOCK_PERSISTENCE === 'true' || mockMode.isMockMode,
+      
+      // Style Profile Feature
+      ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false' // Default enabled unless explicitly disabled
     };
   }
 
@@ -170,7 +173,8 @@ class FeatureFlags {
       },
       features: {
         rqc: this.flags.ENABLE_RQC ? 'enabled' : 'disabled',
-        shield: this.flags.ENABLE_SHIELD ? 'enabled' : 'disabled'
+        shield: this.flags.ENABLE_SHIELD ? 'enabled' : 'disabled',
+        styleProfile: this.flags.ENABLE_STYLE_PROFILE ? 'enabled' : 'disabled'
       }
     };
   }

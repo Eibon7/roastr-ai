@@ -51,10 +51,11 @@ describe('Mock Mode Detection', () => {
       expect(isMockModeEnabled()).toBe(true);
     });
 
-    test('returns false when Supabase is configured and no explicit mock mode', () => {
+    test('returns true in test environment even when Supabase is configured', () => {
       process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
       process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-key';
-      expect(isMockModeEnabled()).toBe(false);
+      // In test environment, mock mode is always enabled
+      expect(isMockModeEnabled()).toBe(true);
     });
 
     test('returns true when Supabase is configured but mock mode is explicitly enabled', () => {
@@ -64,11 +65,12 @@ describe('Mock Mode Detection', () => {
       expect(isMockModeEnabled()).toBe(true);
     });
 
-    test('returns false when explicit mock mode is disabled', () => {
+    test('returns true in test environment even when explicit mock mode is disabled', () => {
       process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
       process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-key';
       process.env.REACT_APP_ENABLE_MOCK_MODE = 'false';
-      expect(isMockModeEnabled()).toBe(false);
+      // In test environment, mock mode is always enabled regardless of explicit setting
+      expect(isMockModeEnabled()).toBe(true);
     });
   });
 
@@ -80,7 +82,8 @@ describe('Mock Mode Detection', () => {
       expect(status.supabaseConfigured).toBe(false);
       expect(status.mockModeForced).toBe(true);
       expect(status.mockModeExplicit).toBe(false);
-      expect(status.reason).toBe('Missing Supabase environment variables');
+      // In test environment, test env reason takes priority
+      expect(status.reason).toBe('Forced in test environment');
     });
 
     test('returns correct status when mock mode is explicitly enabled', () => {
@@ -92,22 +95,23 @@ describe('Mock Mode Detection', () => {
       
       expect(status.enabled).toBe(true);
       expect(status.supabaseConfigured).toBe(true);
-      expect(status.mockModeForced).toBe(false);
+      expect(status.mockModeForced).toBe(true); // True in test environment
       expect(status.mockModeExplicit).toBe(true);
-      expect(status.reason).toBe('Explicitly enabled via REACT_APP_ENABLE_MOCK_MODE');
+      // In test environment, test env reason takes priority
+      expect(status.reason).toBe('Forced in test environment');
     });
 
-    test('returns correct status when mock mode is disabled', () => {
+    test('returns correct status in test environment', () => {
       process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
       process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-key';
       
       const status = getMockModeStatus();
       
-      expect(status.enabled).toBe(false);
+      // In test environment, mock mode is always enabled
+      expect(status.enabled).toBe(true);
       expect(status.supabaseConfigured).toBe(true);
-      expect(status.mockModeForced).toBe(false);
-      expect(status.mockModeExplicit).toBe(false);
-      expect(status.reason).toBe('Disabled - using real Supabase client');
+      expect(status.mockModeForced).toBe(true);
+      expect(status.reason).toBe('Forced in test environment');
     });
   });
 

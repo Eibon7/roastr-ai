@@ -80,6 +80,7 @@ REACT_APP_ENABLE_MOCK_MODE=false
 - ✅ **Perspective API**: Mock toxicity analysis (always returns low toxicity)
 - ✅ **Social Media APIs**: Mock responses for all 9 platforms
   - Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky
+- ✅ **Style Profile Generation**: Mock AI style analysis and prompt generation
 
 ### Frontend APIs
 - ✅ **Supabase Client**: Mock auth flows and database operations
@@ -152,6 +153,46 @@ ENABLE_MOCK_MODE=false npm run test
       }
     }
   ]
+}
+```
+
+### Style Profile Generation (NEW)
+```json
+{
+  "success": true,
+  "data": {
+    "profiles": [
+      {
+        "lang": "es",
+        "prompt": "Eres un usuario amigable que usa un estilo equilibrado entre brevedad y detalle...",
+        "sources": { "twitter": 180, "instagram": 95 },
+        "metadata": {
+          "totalItems": 275,
+          "dominantTone": "friendly",
+          "styleType": "medium"
+        },
+        "examples": [
+          "No me parece correcto eso que dices, creo que deberías reconsiderarlo.",
+          "Excelente punto! Me parece muy acertada tu observación al respecto."
+        ]
+      }
+    ],
+    "totalItems": 275,
+    "createdAt": "2025-01-09T16:00:00Z"
+  }
+}
+```
+
+### Platform Integration Mock
+```json
+{
+  "success": true,
+  "data": {
+    "platform": "twitter",
+    "imported": 287,
+    "languageHints": ["es", "en"],
+    "status": "importing"
+  }
 }
 ```
 

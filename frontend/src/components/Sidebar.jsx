@@ -7,7 +7,9 @@ import {
   CreditCard, 
   Settings, 
   FileText,
-  Activity 
+  Activity,
+  Wand2,
+  Crown
 } from 'lucide-react';
 
 const navItems = [
@@ -28,6 +30,18 @@ const navItems = [
     path: '/integrations',
     icon: Puzzle,
     description: 'Platform connections'
+  },
+  {
+    name: 'Style Profile',
+    path: '/style-profile',
+    icon: Wand2,
+    description: 'AI roast personality'
+  },
+  {
+    name: 'Plans',
+    path: '/plans',
+    icon: Crown,
+    description: 'Subscription plans'
   },
   {
     name: 'Billing',

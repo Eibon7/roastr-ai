@@ -22,6 +22,16 @@ jobs:
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
         
+    - name: Cache node modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.npm
+          frontend/node_modules
+        key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-frontend-
+          
     - name: Install frontend deps
       working-directory: frontend
       run: npm ci
@@ -133,6 +143,17 @@ jobs:
           ./package-lock.json
           ./frontend/package-lock.json
     
+    - name: Cache node modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.npm
+          ./node_modules
+          ./frontend/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
     - name: Install backend dependencies
       run: npm ci
     
@@ -151,6 +172,12 @@ jobs:
         echo "SKIP_E2E: $SKIP_E2E"
         npm run test:ci
     
+    - name: Run frontend linting
+      working-directory: ./frontend
+      run: |
+        echo "🔍 Running frontend ESLint checks..."
+        npx eslint src/ --ext .js,.jsx,.ts,.tsx --max-warnings 0 || echo "⚠️ ESLint warnings found but not blocking CI"
+    
     - name: Run frontend tests
       working-directory: ./frontend
       run: |
@@ -158,7 +185,7 @@ jobs:
         echo "REACT_APP_ENABLE_MOCK_MODE: $REACT_APP_ENABLE_MOCK_MODE"
         echo "CI: $CI"
         echo "SKIP_E2E: $SKIP_E2E"
-        npm run test:ci || echo "⚠️ Frontend tests failed but continuing CI pipeline"
+        npm run test:ci
     
     - name: Upload backend test results
       uses: actions/upload-artifact@v4

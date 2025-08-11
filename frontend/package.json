@@ -18,7 +18,7 @@
     "build": "react-scripts build",
     "build:ci": "CI=false GENERATE_SOURCEMAP=false REACT_APP_SUPABASE_URL=http://localhost/mock REACT_APP_SUPABASE_ANON_KEY=mock react-scripts build",
     "test": "react-scripts test",
-    "test:ci": "CI=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true react-scripts test --watchAll=false --testTimeout=30000 --passWithNoTests --silent",
+    "test:ci": "CI=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true react-scripts test --watchAll=false --testTimeout=30000 --verbose",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

@@ -15,6 +15,9 @@ import Integrations from './pages/Integrations';
 import Billing from './pages/Billing';
 import Settings from './pages/Settings';
 import Logs from './pages/Logs';
+import PlanPicker from './pages/PlanPicker';
+import Connect from './pages/Connect';
+import StyleProfile from './pages/StyleProfile';
 import './App.css';
 
 function App() {
@@ -35,9 +38,13 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="compose" element={<Compose />} />
               <Route path="integrations" element={<Integrations />} />
+              <Route path="integrations/connect" element={<Connect />} />
               <Route path="billing" element={<Billing />} />
               <Route path="settings" element={<Settings />} />
               <Route path="logs" element={<Logs />} />
+              <Route path="plans" element={<PlanPicker />} />
+              <Route path="style-profile" element={<StyleProfile />} />
+              <Route path="style-profile/generate" element={<StyleProfile />} />
             </Route>
             
             {/* Admin routes (separate from AppShell) */}

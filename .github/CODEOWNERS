@@ -1,0 +1,28 @@
+# Global Code Owners
+* @emiliopostigo
+
+# Style Profile Feature
+/frontend/src/pages/StyleProfile.jsx @emiliopostigo
+/frontend/src/components/widgets/StyleProfileCard.jsx @emiliopostigo
+/src/routes/style-profile.js @emiliopostigo
+/src/routes/plan.js @emiliopostigo
+
+# Frontend Core
+/frontend/src/lib/ @emiliopostigo
+/frontend/src/components/ @emiliopostigo
+
+# Backend Core
+/src/config/ @emiliopostigo
+/src/services/ @emiliopostigo
+/src/routes/ @emiliopostigo
+
+# CI/CD and Configuration
+/.github/ @emiliopostigo
+/jest.*.config.js @emiliopostigo
+/package.json @emiliopostigo
+/frontend/package.json @emiliopostigo
+
+# Documentation
+/README.md @emiliopostigo
+/CLAUDE.md @emiliopostigo
+/API_CONTRACTS.md @emiliopostigo

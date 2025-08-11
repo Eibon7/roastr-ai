@@ -55,7 +55,8 @@ const isMockModeEnabled = () => {
  */
 const getMockModeStatus = () => {
   const supabaseConfigured = isSupabaseConfigured();
-  const mockModeForced = !supabaseConfigured;
+  const isTestEnv = process.env.NODE_ENV === 'test';
+  const mockModeForced = !supabaseConfigured || isTestEnv;
   const mockModeExplicit = process.env.REACT_APP_ENABLE_MOCK_MODE === 'true';
   const mockModeEnabled = isMockModeEnabled();
   
@@ -64,11 +65,13 @@ const getMockModeStatus = () => {
     supabaseConfigured,
     mockModeForced,
     mockModeExplicit,
-    reason: mockModeForced 
-      ? 'Missing Supabase environment variables'
-      : mockModeExplicit 
-        ? 'Explicitly enabled via REACT_APP_ENABLE_MOCK_MODE'
-        : 'Disabled - using real Supabase client'
+    reason: isTestEnv 
+      ? 'Forced in test environment'
+      : !supabaseConfigured
+        ? 'Missing Supabase environment variables'
+        : mockModeExplicit 
+          ? 'Explicitly enabled via REACT_APP_ENABLE_MOCK_MODE'
+          : 'Disabled - using real Supabase client'
   };
 };
 

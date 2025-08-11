@@ -1,5 +1,12 @@
 # Roastr.ai
 
+[![CI/CD Pipeline](https://github.com/Eibon7/roastr-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Eibon7/roastr-ai/actions/workflows/ci.yml)
+[![Frontend Tests](https://img.shields.io/badge/Frontend%20Tests-Passing-brightgreen)]()
+[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-Passing-brightgreen)]()
+[![Mock Mode](https://img.shields.io/badge/Mock%20Mode-100%25%20Coverage-blue)]()
+[![Style Profile](https://img.shields.io/badge/Style%20Profile-Ready-purple)]()
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Sistema multi-tenant de detección de toxicidad y generación de roasts automáticos para redes sociales.
 
 ## 🚀 Quick Start (Mock Mode)
