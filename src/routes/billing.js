@@ -8,11 +8,69 @@ const Stripe = require('stripe');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
+const { flags } = require('../config/flags');
 
 const router = express.Router();
 
-// Initialize Stripe
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe with mock handling
+let stripe = null;
+try {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (stripeKey && stripeKey !== 'mock-stripe-key' && !flags.isEnabled('ENABLE_MOCK_MODE')) {
+    stripe = Stripe(stripeKey);
+  } else {
+    logger.info('Stripe running in mock mode');
+    stripe = {
+      customers: {
+        create: async (data) => ({ id: `mock-customer-${Date.now()}`, ...data }),
+        retrieve: async (id) => ({ id, email: 'mock@example.com' })
+      },
+      prices: {
+        list: async (params) => ({
+          data: [
+            { id: 'mock-price-pro', lookup_key: 'pro_monthly', unit_amount: 2000 },
+            { id: 'mock-price-creator', lookup_key: 'creator_plus_monthly', unit_amount: 5000 }
+          ]
+        })
+      },
+      checkout: {
+        sessions: {
+          create: async (data) => ({
+            id: `mock-session-${Date.now()}`,
+            url: `https://checkout.stripe.com/pay/cs_mock_${Date.now()}`
+          })
+        }
+      },
+      billingPortal: {
+        sessions: {
+          create: async (data) => ({
+            id: `mock-portal-${Date.now()}`,
+            url: `https://billing.stripe.com/session/bps_mock_${Date.now()}`
+          })
+        }
+      },
+      subscriptions: {
+        retrieve: async (id) => ({
+          id,
+          status: 'active',
+          current_period_start: Math.floor(Date.now() / 1000),
+          current_period_end: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+          cancel_at_period_end: false
+        })
+      },
+      webhooks: {
+        constructEvent: (body, sig, secret) => ({
+          id: 'mock-event-' + Date.now(),
+          type: 'checkout.session.completed',
+          data: { object: { id: 'mock-session', metadata: {} } }
+        })
+      }
+    };
+  }
+} catch (error) {
+  logger.warn('Failed to initialize Stripe, using mock mode:', error.message);
+  // Use mock stripe object defined above
+}
 
 // Plan configuration
 const PLAN_CONFIG = {

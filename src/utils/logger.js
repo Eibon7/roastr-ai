@@ -20,4 +20,6 @@ class Logger {
   }
 }
 
+// Export both ways for compatibility
 module.exports = Logger;
+module.exports.logger = Logger;
