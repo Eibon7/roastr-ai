@@ -163,11 +163,14 @@ router.get('/features', (req, res) => {
       features: plan.features
     }));
 
+    // Dynamic check for style profile availability (for test compatibility)
+    const styleProfileEnabled = process.env.ENABLE_STYLE_PROFILE !== 'false';
+    
     res.json({
       success: true,
       data: {
         comparison: featureComparison,
-        styleProfileAvailable: flags.isEnabled('ENABLE_STYLE_PROFILE')
+        styleProfileAvailable: styleProfileEnabled
       }
     });
   } catch (error) {

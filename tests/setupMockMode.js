@@ -22,12 +22,19 @@ process.env.OPENAI_API_KEY = 'mock-openai-key-sk-test123456789';
 process.env.PERSPECTIVE_API_KEY = 'mock-perspective-key';
 process.env.STRIPE_SECRET_KEY = 'mock-stripe-key';
 
+// Enable style profile feature for tests
+process.env.ENABLE_STYLE_PROFILE = 'true';
+
 // Redis/Queue mocking
 process.env.UPSTASH_REDIS_REST_URL = 'http://localhost:6379/mock';
 process.env.UPSTASH_REDIS_REST_TOKEN = 'mock-redis-token';
 
 // Import and initialize mock mode
 const { mockMode } = require('../src/config/mockMode');
+
+// Force reload flags to pick up test environment variables
+delete require.cache[require.resolve('../src/config/flags')];
+const { flags } = require('../src/config/flags');
 
 // Global mock setup for common Node.js modules
 global.fetch = mockMode.generateMockFetch();
