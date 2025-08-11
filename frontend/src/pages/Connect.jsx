@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -25,12 +25,7 @@ export default function Connect() {
 
   const fetchApi = createMockFetch();
 
-  useEffect(() => {
-    fetchPlatforms();
-    fetchIntegrationStatus();
-  }, []);
-
-  const fetchPlatforms = async () => {
+  const fetchPlatforms = useCallback(async () => {
     try {
       const response = await fetchApi('/api/integrations/platforms');
       if (response.ok) {
@@ -40,9 +35,9 @@ export default function Connect() {
     } catch (error) {
       console.error('Failed to fetch platforms:', error);
     }
-  };
+  }, [fetchApi]);
 
-  const fetchIntegrationStatus = async () => {
+  const fetchIntegrationStatus = useCallback(async () => {
     try {
       const response = await fetchApi('/api/integrations/status');
       if (response.ok) {
@@ -58,7 +53,12 @@ export default function Connect() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchApi]);
+
+  useEffect(() => {
+    fetchPlatforms();
+    fetchIntegrationStatus();
+  }, [fetchPlatforms, fetchIntegrationStatus]);
 
   const handleConnect = async (platform) => {
     setConnecting(platform);

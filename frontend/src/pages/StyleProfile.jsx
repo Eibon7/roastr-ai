@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { createMockFetch } from '../lib/mockMode';
 import ErrorBoundary from '../components/ErrorBoundary';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 const LANGUAGE_FLAGS = {
   es: '🇪🇸',
@@ -49,18 +50,12 @@ export default function StyleProfile() {
   const [copiedPrompt, setCopiedPrompt] = useState(null);
   const [error, setError] = useState(null);
   const [retrying, setRetrying] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const navigate = useNavigate();
-  const location = useLocation();
   const fetchApi = createMockFetch();
 
-  useEffect(() => {
-    checkAccess();
-    fetchProfileData();
-    fetchIntegrationStatus();
-  }, []);
-
-  const checkAccess = async () => {
+  const checkAccess = useCallback(async () => {
     try {
       const response = await fetchApi('/api/style-profile/status');
       if (response.ok) {
@@ -75,9 +70,9 @@ export default function StyleProfile() {
     } catch (error) {
       console.error('Failed to check access:', error);
     }
-  };
+  }, [fetchApi, navigate]);
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     try {
       const response = await fetchApi('/api/style-profile');
       if (response.ok) {
@@ -92,9 +87,9 @@ export default function StyleProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchApi]);
 
-  const fetchIntegrationStatus = async () => {
+  const fetchIntegrationStatus = useCallback(async () => {
     try {
       const response = await fetchApi('/api/integrations/status');
       if (response.ok) {
@@ -107,7 +102,13 @@ export default function StyleProfile() {
     } catch (error) {
       console.error('Failed to fetch integration status:', error);
     }
-  };
+  }, [fetchApi]);
+
+  useEffect(() => {
+    checkAccess();
+    fetchProfileData();
+    fetchIntegrationStatus();
+  }, [checkAccess, fetchProfileData, fetchIntegrationStatus]);
 
   const handleGenerateProfile = async () => {
     if (integrationStatus.length === 0) {
@@ -177,10 +178,6 @@ export default function StyleProfile() {
   };
 
   const handleDeleteProfile = async () => {
-    if (!window.confirm('Are you sure you want to delete your style profile? This action cannot be undone.')) {
-      return;
-    }
-
     try {
       const response = await fetchApi('/api/style-profile', {
         method: 'DELETE'
@@ -189,6 +186,7 @@ export default function StyleProfile() {
       if (response.ok) {
         setProfileData(null);
         setSelectedLanguage(null);
+        setShowDeleteConfirm(false);
         console.log('Profile deleted successfully');
       } else {
         const error = await response.json();
@@ -197,6 +195,14 @@ export default function StyleProfile() {
     } catch (error) {
       console.error('Error deleting profile:', error);
     }
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
   };
 
   const formatDate = (dateString) => {
@@ -418,7 +424,7 @@ export default function StyleProfile() {
                     Regenerate
                   </Button>
                   <Button 
-                    onClick={handleDeleteProfile}
+                    onClick={handleDeleteClick}
                     variant="outline"
                     size="sm"
                     className="text-red-600 hover:text-red-700"
@@ -597,6 +603,18 @@ export default function StyleProfile() {
           </Card>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onConfirm={handleDeleteProfile}
+        onCancel={handleDeleteCancel}
+        title="Delete Style Profile"
+        message="Are you sure you want to delete your style profile? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
       </div>
     </ErrorBoundary>
   );
