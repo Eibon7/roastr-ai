@@ -4,10 +4,13 @@ frontend/node_modules/
 npm-debug.log
 logs/
 
-# Environment files
+# Environment files - NEVER commit secrets
 .env
-.env.test
+.env.*
+!.env.example
 frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # Build and cache
 dist/

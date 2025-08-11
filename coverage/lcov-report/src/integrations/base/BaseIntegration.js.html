@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.43% </span>
+                <span class="strong">0.94% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/106</span>
+                <span class='fraction'>1/106</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">4.65% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/43</span>
+                <span class='fraction'>0/43</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/20</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">9.8% </span>
+                <span class="strong">0.98% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>10/102</span>
+                <span class='fraction'>1/102</span>
             </div>
         
             
@@ -393,23 +393,23 @@
 <a name='L328'></a><a href='#L328'>328</a>
 <a name='L329'></a><a href='#L329'>329</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -719,25 +719,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span></td><td class="text"><pre class="prettyprint lang-js">class BaseIntegration {
-  constructor(config) {
-    this.config = config;
-    this.platform = this.constructor.name.replace('Service', '').toLowerCase();
-    this.debug = process.env.DEBUG === 'true';
+<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">class BaseIntegration {
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(config) {
+<span class="cstat-no" title="statement not covered" >    this.config = config;</span>
+<span class="cstat-no" title="statement not covered" >    this.platform = this.constructor.name.replace('Service', '').toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >    this.debug = process.env.DEBUG === 'true';</span>
     
     // Initialize advanced logger and reincidence detector
-    this.advancedLogger = require('../../utils/advancedLogger');
-    this.ReincidenceDetector = require('../../services/reincidenceDetector');
-    this.reincidenceDetector = new this.ReincidenceDetector();
+<span class="cstat-no" title="statement not covered" >    this.advancedLogger = require('../../utils/advancedLogger');</span>
+<span class="cstat-no" title="statement not covered" >    this.ReincidenceDetector = require('../../services/reincidenceDetector');</span>
+<span class="cstat-no" title="statement not covered" >    this.reincidenceDetector = new this.ReincidenceDetector();</span>
     
     // Get current Roastr mode
-    this.roastrMode = process.env.ROASTR_MODE || <span class="branch-1 cbranch-no" title="branch not covered" >'normal';</span>
+<span class="cstat-no" title="statement not covered" >    this.roastrMode = process.env.ROASTR_MODE || 'normal';</span>
     
     // Response frequency (0.0 to 1.0)
-    this.responseFrequency = config.responseFrequency || <span class="branch-1 cbranch-no" title="branch not covered" >1.0;</span>
+<span class="cstat-no" title="statement not covered" >    this.responseFrequency = config.responseFrequency || 1.0;</span>
     
     // Common tracking
-    this.metrics = {
+<span class="cstat-no" title="statement not covered" >    this.metrics = {</span>
       commentsProcessed: 0,
       responsesGenerated: 0,
       responsesSkipped: 0,
@@ -1054,7 +1054,7 @@ module.exports = BaseIntegration;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-06T18:22:07.423Z
+                at 2025-08-10T20:51:53.323Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -1,6 +1,7 @@
 const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
 const ShieldService = require('../services/shieldService');
+const { mockMode } = require('../config/mockMode');
 
 /**
  * Analyze Toxicity Worker
@@ -49,23 +50,30 @@ class AnalyzeToxicityWorker extends BaseWorker {
    * Initialize toxicity detection services
    */
   initializeToxicityServices() {
-    // Google Perspective API
-    if (process.env.PERSPECTIVE_API_KEY) {
-      const { google } = require('googleapis');
-      this.perspectiveClient = google.commentanalyzer({
-        version: 'v1alpha1',
-        auth: process.env.PERSPECTIVE_API_KEY
-      });
-      this.log('info', 'Perspective API client initialized');
-    }
-    
-    // OpenAI Moderation API (fallback)
-    if (process.env.OPENAI_API_KEY) {
-      const { OpenAI } = require('openai');
-      this.openaiClient = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
-      });
-      this.log('info', 'OpenAI Moderation API client initialized');
+    if (mockMode.isMockMode) {
+      // Use mock services in mock mode
+      this.perspectiveClient = mockMode.generateMockPerspective();
+      this.openaiClient = mockMode.generateMockOpenAI();
+      this.log('info', 'Mock toxicity services initialized');
+    } else {
+      // Google Perspective API
+      if (process.env.PERSPECTIVE_API_KEY) {
+        const { google } = require('googleapis');
+        this.perspectiveClient = google.commentanalyzer({
+          version: 'v1alpha1',
+          auth: process.env.PERSPECTIVE_API_KEY
+        });
+        this.log('info', 'Perspective API client initialized');
+      }
+      
+      // OpenAI Moderation API (fallback)
+      if (process.env.OPENAI_API_KEY) {
+        const { OpenAI } = require('openai');
+        this.openaiClient = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY
+        });
+        this.log('info', 'OpenAI Moderation API client initialized');
+      }
     }
     
     if (!this.perspectiveClient && !this.openaiClient) {

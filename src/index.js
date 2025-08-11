@@ -3,6 +3,19 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+// Security and monitoring middleware
+const { 
+  helmetConfig, 
+  corsConfig, 
+  generalRateLimit,
+  authRateLimit,
+  billingRateLimit,
+  validateInput,
+  requestLogger,
+  errorHandler
+} = require('./middleware/security');
+const { flags } = require('./config/flags');
+
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
 const CsvRoastService = require('./services/csvRoastService');
 const IntegrationManager = require('./integrations/integrationManager');
@@ -12,27 +25,67 @@ const advancedLogger = require('./utils/advancedLogger');
 // Import auth routes and middleware
 const authRoutes = require('./routes/auth');
 const integrationsRoutes = require('./routes/integrations');
-const oauthRoutes = require('./routes/oauth');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const billingRoutes = require('./routes/billing');
+const dashboardRoutes = require('./routes/dashboard');
+const { router: planRoutes } = require('./routes/plan');
+const { router: newIntegrationsRoutes } = require('./routes/integrations-new');
+const styleProfileRoutes = require('./routes/style-profile');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
-const { sessionRefreshMiddleware } = require('./middleware/sessionRefresh');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Stripe webhook endpoint (needs raw body)
+// Apply security middleware
+app.use(helmetConfig);
+app.use(corsConfig);
+app.use(requestLogger);
+app.use(validateInput);
+
+// Health check endpoint (before rate limiting)
+app.get('/health', (req, res) => {
+  const uptime = process.uptime();
+  const serviceStatus = flags.getServiceStatus();
+  
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(uptime)}s`,
+    version: require('../package.json').version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    services: serviceStatus
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  const serviceStatus = flags.getServiceStatus();
+  
+  res.json({
+    success: true,
+    data: {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: serviceStatus,
+      features: flags.getAllFlags()
+    }
+  });
+});
+
+// Apply general rate limiting
+app.use(generalRateLimit);
+
+// Stripe webhook endpoint (needs raw body, before JSON parsing)
 app.use('/webhooks/stripe', billingRoutes);
 
 // Middleware para parsear JSON (after webhook to preserve raw body)
 app.use(bodyParser.json());
 
-// Enable trust proxy for rate limiting behind reverse proxies
-app.set('trust proxy', 1);
+// Apply auth-specific rate limiting
+app.use('/api/auth', authRateLimit);
 
-// Session refresh middleware (before auth routes)
-app.use(sessionRefreshMiddleware);
+// Apply billing-specific rate limiting  
+app.use('/api/billing', billingRateLimit);
 
 // Servir archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, '../public')));
@@ -43,15 +96,23 @@ app.use('/api/auth', authRoutes);
 // User routes (authenticated)
 app.use('/api/user', userRoutes);
 
+// Plan routes (plan selection and features)
+app.use('/api/plan', planRoutes);
+
 // Billing routes (Stripe integration)
 app.use('/api/billing', billingRoutes);
+
+// Dashboard routes (public/authenticated)
+app.use('/api', dashboardRoutes);
 
 // User integrations routes (authenticated)
 app.use('/api/integrations', integrationsRoutes);
 
-// OAuth routes (for social media connections)
-app.use('/api/integrations', oauthRoutes);
-app.use('/api/auth', oauthRoutes);
+// New integrations routes for style profile flow
+app.use('/api/integrations', newIntegrationsRoutes);
+
+// Style profile routes (authenticated, Creator+ only)
+app.use('/api/style-profile', styleProfileRoutes);
 
 // Admin routes (admin only)
 app.use('/api/admin', adminRoutes);
@@ -385,7 +446,30 @@ app.post('/api/roast/preview', async (req, res) => {
   }
 });
 
-// Iniciar servidor
-app.listen(port, () => {
-  console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+// Add error handling middleware (must be last)
+app.use(errorHandler);
+
+// 404 handler for unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Not Found',
+    code: 'ROUTE_NOT_FOUND'
+  });
 });
+
+// Export app for testing
+module.exports = app;
+
+// Only start server if this file is run directly (not imported by tests)
+if (require.main === module) {
+  const server = app.listen(port, () => {
+    console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+    console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
+    
+    const serviceStatus = flags.getServiceStatus();
+    console.log(`💾 Database:`, serviceStatus.database);
+    console.log(`💳 Billing:`, serviceStatus.billing);
+    console.log(`🤖 OpenAI:`, serviceStatus.ai.openai);
+  });
+}

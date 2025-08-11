@@ -533,15 +533,19 @@ describe('ShieldService', () => {
       const content = { comment_id: 'comment-456' };
 
       mockQueueService.addJob.mockRejectedValue(new Error('Queue error'));
+      
+      // Mock Supabase chain for this test
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: { id: 'action-123' },
+        error: null
+      });
+      const mockSelect = jest.fn().mockReturnValue({ single: mockSingle });
+      const mockUpsert = jest.fn().mockReturnValue({ select: mockSelect });
+      const mockInsert = jest.fn().mockReturnValue({ select: mockSelect });
+      
       mockSupabase.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: 'action-123' },
-              error: null
-            })
-          })
-        })
+        insert: mockInsert,
+        upsert: mockUpsert
       });
 
       const result = await shieldService.executeActions(analysis, user, content);

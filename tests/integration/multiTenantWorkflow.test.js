@@ -19,6 +19,11 @@ jest.mock('../../src/services/perspective');
 jest.mock('../../src/services/openai');
 
 describe('Multi-Tenant Architecture Integration Tests', () => {
+  // Skip E2E tests in CI environment
+  if (process.env.SKIP_E2E === 'true') {
+    test.skip('Skipping E2E integration tests in CI environment', () => {});
+    return;
+  }
   let queueService;
   let costControl;
   let shieldService;

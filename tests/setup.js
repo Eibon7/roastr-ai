@@ -1,5 +1,9 @@
 // Jest setup file for DOM testing environment
 
+// Polyfills for jsdom
+global.TextEncoder = require('util').TextEncoder;
+global.TextDecoder = require('util').TextDecoder;
+
 // Mock environment variables for tests
 process.env.SUPABASE_URL = 'https://test.supabase.co';
 process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
@@ -52,10 +56,19 @@ Object.defineProperty(window, 'localStorage', {
     writable: true
 });
 
-Object.defineProperty(window, 'location', {
-    value: mockLocation,
-    writable: true
-});
+// Skip location setup in global scope since JSDOM tests create their own window
+if (typeof window !== 'undefined' && window.location) {
+    try {
+        Object.defineProperty(window, 'location', {
+            value: mockLocation,
+            writable: true,
+            configurable: true
+        });
+    } catch (e) {
+        // Location cannot be redefined in newer JSDOM, skip
+        console.warn('Cannot redefine window.location in JSDOM setup');
+    }
+}
 
 // Mock setTimeout and setInterval
 global.setTimeout = jest.fn((callback, delay) => {
@@ -85,9 +98,15 @@ beforeEach(() => {
     const store = {};
     mockLocalStorage.clear();
     
-    // Reset location
-    mockLocation.href = 'http://localhost:3000/';
-    mockLocation.pathname = '/';
-    mockLocation.search = '';
-    mockLocation.hash = '';
+    // Reset location if it exists
+    if (typeof window !== 'undefined' && window.location) {
+        try {
+            mockLocation.href = 'http://localhost:3000/';
+            mockLocation.pathname = '/';
+            mockLocation.search = '';
+            mockLocation.hash = '';
+        } catch (e) {
+            // Skip if location cannot be modified
+        }
+    }
 });

@@ -1,5 +1,6 @@
 /**
  * Tests unitarios para interacciones de UI del sistema de autenticación
+ * @jest-environment jsdom
  */
 
 // Mock DOM

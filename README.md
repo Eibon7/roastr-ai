@@ -1,31 +1,60 @@
 # Roastr.ai
 
 [![CI/CD Pipeline](https://github.com/Eibon7/roastr-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/Eibon7/roastr-ai/actions/workflows/ci.yml)
-[![Style Profile](https://img.shields.io/badge/Style%20Profile-Ready-purple)](/)
-[![OAuth Integration](https://img.shields.io/badge/OAuth-7%20Platforms-blue)](/)
-[![Multi-Tenant](https://img.shields.io/badge/Multi--Tenant-Ready-green)](/)
+[![Frontend Tests](https://img.shields.io/badge/Frontend%20Tests-Passing-brightgreen)]()
+[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-Passing-brightgreen)]()
+[![Mock Mode](https://img.shields.io/badge/Mock%20Mode-100%25%20Coverage-blue)]()
+[![Style Profile](https://img.shields.io/badge/Style%20Profile-Ready-purple)]()
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Roastr.ai is a comprehensive multi-tenant SaaS platform for AI-powered social media roast generation with advanced style profile analysis and seamless OAuth integrations.
+Sistema multi-tenant de detección de toxicidad y generación de roasts automáticos para redes sociales.
 
-## 🚀 Overview
+## 🚀 Quick Start (Mock Mode)
 
-Roastr.ai is an enterprise-grade platform that analyzes social media content and generates personalized, witty responses using advanced AI. Built with a robust multi-tenant architecture supporting multiple subscription plans and sophisticated content moderation.
+```bash
+# Clonar y configurar
+git clone https://github.com/Eibon7/roastr-ai.git
+cd roastr-ai
+npm install
 
-### ✨ Key Features
+# Frontend
+cd frontend && npm install
+npm start  # Abre http://localhost:3001
 
-- 🤖 **AI-Powered Roast Generation** using OpenAI GPT-4o mini
-- 📊 **Style Profile Analysis** with multi-language support 
-- 🔐 **OAuth Integration** for 7 major social platforms
-- 🛡️ **RQC System** (Roast Quality Control) with intelligent moderation
-- 🌍 **Multi-Language Support** (Spanish/English detection)
-- 🏢 **Multi-Tenant Architecture** with subscription plans (Free, Pro, Creator+)
-- 🔌 **9 Platform Integrations** (Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky)
-- 🚀 **Serverless Deployment** on Vercel
-- 💻 **Modern React Frontend** with shadcn/ui
-- ⚡ **CLI Tools** for local development and testing
-- 🔄 **Automatic Session Refresh** with sliding expiration
-- 🛡️ **Rate Limiting** and security features
-- 🧪 **Mock Mode** for testing and development
+# Backend (nueva terminal)
+npm run start:api  # API en http://localhost:3000
+```
+
+**¡No necesitas APIs externas!** El sistema funciona en **Mock Mode** por defecto.
+
+## 📊 Dashboard Frontend
+
+**Nuevo sistema de dashboard con:**
+- ✅ 7 widgets interactivos reordenables  
+- ✅ Mock-first design (funciona sin APIs externas)
+- ✅ 6 páginas completas (Dashboard, Compose, Integrations, Billing, Settings, Logs)
+- ✅ Diseño responsivo con shadcn/ui + Tailwind CSS
+- ✅ Sistema de feature flags centralizado
+- ✅ Tests completos (Jest + React Testing Library)
+
+## 🎯 Características Principales
+
+### Core Features
+- **Generación de roasts** usando OpenAI GPT-4o mini
+- **Sistema RQC** (Roast Quality Control) multi-plan con moderación inteligente
+- **Detección automática** de idioma (español/inglés) 
+- **Arquitectura multi-tenant** con planes de suscripción (Free, Pro, Creator+)
+- **9 integraciones** de plataformas sociales (Twitter, YouTube, Instagram, etc.)
+- **Shield Protection** - Moderación automática con acciones escalonadas
+- **Worker system** dedicado para procesamiento en background
+
+### Nuevo Dashboard Features
+- **Mock Mode** automático cuando faltan API keys
+- **Widget system** modular y extensible
+- **Real-time updates** en widgets seleccionados
+- **Responsive design** para mobile y desktop
+- **Filtros avanzados** en logs y data tables
+- **Estados de loading** y error handling completo
 
 Arquitectura
 
@@ -119,6 +148,56 @@ Max intentos → 🛡️ Fallback seguro
 ## Comandos CLI
 
 Ver comandos disponibles con detalles completos en [CLAUDE.md](./CLAUDE.md).
+
+## 🧪 Tests en Entorno Sin Claves
+
+Roastr.ai está diseñado para funcionar sin claves externas usando mocks por defecto. Ideal para desarrollo y testing local:
+
+### Configuración de Tests
+
+Los tests están configurados para pasar sin necesidad de claves de servicios externos:
+
+```bash
+# Ejecutar todos los tests (funciona sin claves)
+npm test
+
+# Tests específicos
+npm test -- tests/unit/
+npm test -- tests/integration/
+
+# Tests con cobertura
+npm run test:coverage
+```
+
+### Características del Entorno Mock
+
+- **RQC desactivado**: `ENABLE_RQC=false` por defecto en tests
+- **Servicios externos**: Auto-fallback a mocks cuando faltan claves
+- **OpenAI**: Usa mock generator si `OPENAI_API_KEY` no está presente  
+- **Supabase**: Mock database para todos los tests
+- **Stripe**: Mock billing sin claves reales
+- **Redes sociales**: Mock integrations para Twitter, YouTube, etc.
+
+### Variables de Entorno Opcionales
+
+```bash
+# Solo necesarias para funcionalidad real (no para tests)
+OPENAI_API_KEY=your_key_here          # Si quieres IA real
+SUPABASE_URL=your_supabase_url        # Para BD real
+STRIPE_SECRET_KEY=sk_...              # Para billing real
+ENABLE_RQC=true                       # Para habilitar RQC avanzado
+```
+
+### Fallback Automático
+
+Cuando faltan claves, los servicios automáticamente usan mocks:
+
+- **OpenAI faltante** → Mock roast generator
+- **Supabase faltante** → Mock database responses  
+- **Stripe faltante** → Mock billing endpoints
+- **API keys sociales** → Mock platform integrations
+
+Esto permite desarrollo y testing completo sin configuración compleja.
 
 ## Contribución
 

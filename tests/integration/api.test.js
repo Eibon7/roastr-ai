@@ -33,6 +33,17 @@ describe('API Integration Tests', () => {
 
     // Crear instancia mock de la aplicación Express
     app = express();
+    
+    // Middleware para validar Content-Type antes del parsing
+    app.use((req, res, next) => {
+      if (req.method === 'POST' && req.headers['content-type']) {
+        if (!req.headers['content-type'].includes('application/json')) {
+          return res.status(400).json({ error: 'Content-Type must be application/json' });
+        }
+      }
+      next();
+    });
+    
     app.use(bodyParser.json());
 
     // Mock del RoastGeneratorReal
@@ -145,6 +156,17 @@ describe('API Integration Tests', () => {
       } catch (error) {
         res.status(500).json({ error: 'No se pudo añadir el roast al CSV.' });
       }
+    });
+
+    // Middleware para manejar errores de content-type
+    app.use((error, req, res, next) => {
+      if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
+        return res.status(400).json({ error: 'Invalid JSON' });
+      }
+      if (error.type === 'entity.parse.failed') {
+        return res.status(400).json({ error: 'Invalid Content-Type' });
+      }
+      next(error);
     });
   }
 
@@ -513,6 +535,7 @@ describe('API Integration Tests', () => {
     test('debe rechazar requests sin Content-Type JSON', async () => {
       const response = await request(app)
         .post('/roast')
+        .set('Content-Type', 'application/x-www-form-urlencoded')
         .send('message=test') // Form data instead of JSON
         .expect(400);
 
