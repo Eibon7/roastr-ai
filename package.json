@@ -87,7 +87,7 @@
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.7.1",
     "react-scripts": "^0.0.0",
-    "snoowrap": "^1.16.0",
+    "snoowrap": "^1.23.0",
     "stripe": "^18.4.0",
     "tailwindcss": "^4.1.11",
     "twitter-api-v2": "^1.24.0"
