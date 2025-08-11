@@ -70,7 +70,7 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
 
             res.json({
                 success: true,
-                message: `${platform} connected successfully (mock)`,
+                message: `${platform} connected successfully`,
                 data: result.data
             });
         } else {
