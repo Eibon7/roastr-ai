@@ -1,0 +1,3430 @@
+
+> roastr-ai-frontend@1.0.0 test
+> react-scripts test --watchAll=false --runInBand
+
+FAIL src/components/widgets/__tests__/LogsTableCard.test.jsx
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+    console.error
+      Failed to fetch logs: TypeError: Cannot read properties of undefined (reading 'ok')
+          at fetchData (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/LogsTableCard.jsx:19:17)
+
+    [0m [90m 21 |[39m         }
+     [90m 22 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 23 |[39m         console[33m.[39merror([32m'Failed to fetch logs:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 24 |[39m       } [36mfinally[39m {
+     [90m 25 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 26 |[39m       }[0m
+
+      at fetchData (src/components/widgets/LogsTableCard.jsx:23:17)
+
+    console.error
+      An update to LogsTableCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 23 |[39m         console[33m.[39merror([32m'Failed to fetch logs:'[39m[33m,[39m error)[33m;[39m
+     [90m 24 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 25 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 26 |[39m       }
+     [90m 27 |[39m     }
+     [90m 28 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/LogsTableCard.jsx:25:9)
+
+    console.error
+      An update to LogsTableCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 18 |[39m         [36mconst[39m res [33m=[39m [36mawait[39m fetch([32m'/api/logs?limit=50'[39m)[33m;[39m
+     [90m 19 |[39m         [36mif[39m (res[33m.[39mok) {
+    [31m[1m>[22m[39m[90m 20 |[39m           setLogs([36mawait[39m res[33m.[39mjson())[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 21 |[39m         }
+     [90m 22 |[39m       } [36mcatch[39m (error) {
+     [90m 23 |[39m         console[33m.[39merror([32m'Failed to fetch logs:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLogs (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/LogsTableCard.jsx:20:11)
+
+    console.error
+      An update to LogsTableCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 23 |[39m         console[33m.[39merror([32m'Failed to fetch logs:'[39m[33m,[39m error)[33m;[39m
+     [90m 24 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 25 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 26 |[39m       }
+     [90m 27 |[39m     }
+     [90m 28 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/LogsTableCard.jsx:25:9)
+
+    console.error
+      Failed to fetch logs: Error: API Error
+          at Object.<anonymous> (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/__tests__/LogsTableCard.test.jsx:271:33)
+          at Promise.then.completed (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:391:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:316:10)
+          at _callCircusTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:218:40)
+          at _runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:155:3)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:66:9)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:60:9)
+          at run (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:25:3)
+          at runAndTransformResultsToJestFormat (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+          at jestAdapter (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+          at runTestInternal (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:389:16)
+          at runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:475:34)
+
+    [0m [90m 21 |[39m         }
+     [90m 22 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 23 |[39m         console[33m.[39merror([32m'Failed to fetch logs:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 24 |[39m       } [36mfinally[39m {
+     [90m 25 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 26 |[39m       }[0m
+
+      at fetchData (src/components/widgets/LogsTableCard.jsx:23:17)
+
+  ● LogsTableCard › combines level filter and search term
+
+    Unable to find an element with the text: 2 entries. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm col-span-full"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center space-x-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-5 w-5"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mSystem Logs[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center space-x-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                [36m>[39m
+                  [0m3[0m
+                  [0m entries[0m
+                [36m</div>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"text-xs text-primary hover:underline flex items-center space-x-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-3 w-3"[39m
+                    [33mdata-testid[39m=[32m"mock-icon"[39m
+                  [36m/>[39m
+                  [36m<span>[39m
+                    [0mExport[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row gap-2 mb-4"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 relative"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-9"[39m
+                  [33mplaceholder[39m=[32m"Search logs..."[39m
+                  [33mvalue[39m=[32m"API"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"relative"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"flex h-9 items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-full sm:w-32"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center space-x-1"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"h-4 w-4"[39m
+                      [33mdata-testid[39m=[32m"mock-icon"[39m
+                    [36m/>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"truncate"[39m
+                    [36m/>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-4 w-4 opacity-50"[39m
+                    [33mdata-testid[39m=[32m"mock-icon"[39m
+                  [36m/>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"grid grid-cols-12 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wider pb-2 border-b"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"col-span-2"[39m
+                [36m>[39m
+                  [0mTime[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"col-span-1"[39m
+                [36m>[39m
+                  [0mLevel[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"col-span-2"[39m
+                [36m>[39m
+                  [0mService[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"col-span-7"[39m
+                [36m>[39m
+                  [0mMessage[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-1 max-h-96 overflow-y-auto"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"grid grid-cols-12 gap-4 text-sm py-2 px-2 hover:bg-muted/50 rounded"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-2 text-muted-foreground font-mono text-xs"[39m
+                  [36m>[39m
+                    [0m16:30:00[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-1"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs px-1.5 py-0.5"[39m
+                    [36m>[39m
+                      [0minfo[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-2 text-muted-foreground"[39m
+                  [36m>[39m
+                    [0mapi[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-7 text-foreground"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"truncate"[39m
+                      [33mtitle[39m=[32m"User logged in successfully"[39m
+                    [36m>[39m
+                      [0mUser logged in successfully[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"grid grid-cols-12 gap-4 text-sm py-2 px-2 hover:bg-muted/50 rounded"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-2 text-muted-foreground font-mono text-xs"[39m
+                  [36m>[39m
+                    [0m16:31:00[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-1"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-yellow-500 text-white hover:bg-yellow-600 text-xs px-1.5 py-0.5"[39m
+                    [36m>[39m
+                      [0mwarn[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-2 text-muted-foreground"[39m
+                  [36m>[39m
+                    [0mintegrations[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-7 text-foreground"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"truncate"[39m
+                      [33mtitle[39m=[32m"Twitter API rate limit approaching"[39m
+                    [36m>[39m
+                      [0mTwitter API rate limit approaching[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"grid grid-cols-12 gap-4 text-sm py-2 px-2 hover:bg-muted/50 rounded"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-2 text-muted-foreground font-mono text-xs"[39m
+                  [36m>[39m
+                    [0m16:32:00[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-1"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 text-xs px-1.5 py-0.5"[39m
+                    [36m>[39m
+                      [0merror[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-2 text-muted-foreground"[39m
+                  [36m>[39m
+                    [0mroast-generator[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"col-span-7 text-foreground"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"truncate"[39m
+                      [33mtitle[39m=[32m"OpenAI API call failed with timeout"[39m
+                    [36m>[39m
+                      [0mOpenAI API call failed with timeout[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 141 |[39m
+     [90m 142 |[39m     [90m// Wait for search to filter[39m
+    [31m[1m>[22m[39m[90m 143 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+     [90m     |[39m                  [31m[1m^[22m[39m
+     [90m 144 |[39m       expect(screen[33m.[39mgetByText([32m'2 entries'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 145 |[39m     })[33m;[39m
+     [90m 146 |[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/components/widgets/__tests__/LogsTableCard.test.jsx:143:18)
+
+PASS src/pages/__tests__/Compose.test.jsx
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+    console.log
+      Sending roast: Generated roast
+
+      at handleSend (src/pages/Compose.jsx:40:15)
+
+    console.error
+      Failed to generate preview: Error: API Error
+          at Object.<anonymous> (/Users/emiliopostigo/roastr-ai/frontend/src/pages/__tests__/Compose.test.jsx:216:33)
+          at Promise.then.completed (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:391:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:316:10)
+          at _callCircusTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:218:40)
+          at _runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:155:3)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:66:9)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:60:9)
+          at run (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:25:3)
+          at runAndTransformResultsToJestFormat (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+          at jestAdapter (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+          at runTestInternal (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:389:16)
+          at runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:475:34)
+
+    [0m [90m 26 |[39m       }
+     [90m 27 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 28 |[39m       console[33m.[39merror([32m'Failed to generate preview:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 29 |[39m     } [36mfinally[39m {
+     [90m 30 |[39m       setLoading([36mfalse[39m)[33m;[39m
+     [90m 31 |[39m     }[0m
+
+      at handlePreview (src/pages/Compose.jsx:28:15)
+
+FAIL src/contexts/__tests__/AuthContext.mock.test.js
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+    console.log
+      Auth state change: SIGNED_OUT no session
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.log
+      Auth state change: SIGNED_OUT no session
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.log
+      Auth state change: SIGNED_OUT no session
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.log
+      Auth state change: SIGNED_OUT no session
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 70 |[39m       } [36mfinally[39m {
+     [90m 71 |[39m         [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 72 |[39m           setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 73 |[39m         }
+     [90m 74 |[39m       }
+     [90m 75 |[39m     }[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:72:11)
+
+    console.log
+      Auth state change: SIGNED_OUT no session
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 83 |[39m       console[33m.[39mlog([32m'Auth state change:'[39m[33m,[39m event[33m,[39m session [33m?[39m [32m'session present'[39m [33m:[39m [32m'no session'[39m)[33m;[39m
+     [90m 84 |[39m       
+    [31m[1m>[22m[39m[90m 85 |[39m       setSession(session)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setSession (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:85:7)
+      at src/lib/supabaseClient.js:231:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 84 |[39m       
+     [90m 85 |[39m       setSession(session)[33m;[39m
+    [31m[1m>[22m[39m[90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {
+     [90m 89 |[39m         [36mtry[39m {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUser (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:86:7)
+      at src/lib/supabaseClient.js:231:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 110 |[39m       } [36melse[39m {
+     [90m 111 |[39m         [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 112 |[39m           setUserData([36mnull[39m)[33m;[39m
+     [90m     |[39m           [31m[1m^[22m[39m
+     [90m 113 |[39m         }
+     [90m 114 |[39m       }
+     [90m 115 |[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUserData (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:112:11)
+      at src/lib/supabaseClient.js:231:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 115 |[39m
+     [90m 116 |[39m       [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 117 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 118 |[39m       }
+     [90m 119 |[39m     })[33m;[39m
+     [90m 120 |[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:117:9)
+      at src/lib/supabaseClient.js:231:9
+
+    console.log
+      🎭 Mock SignIn: { email: 'test@example.com' }
+
+      at MockSupabaseClient.signInWithPassword [as mockSignInWithPassword] (src/lib/supabaseClient.js:118:13)
+
+    console.log
+      Auth state change: SIGNED_IN session present
+
+      at callback (src/contexts/AuthContext.js:83:15)
+          at Set.forEach (<anonymous>)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 31 |[39m         
+     [90m 32 |[39m         [36mif[39m (session) {
+    [31m[1m>[22m[39m[90m 33 |[39m           setSession(session)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 34 |[39m           setUser(session[33m.[39muser)[33m;[39m
+     [90m 35 |[39m           
+     [90m 36 |[39m           [90m// Get additional user data from API[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setSession (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:33:11)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 32 |[39m         [36mif[39m (session) {
+     [90m 33 |[39m           setSession(session)[33m;[39m
+    [31m[1m>[22m[39m[90m 34 |[39m           setUser(session[33m.[39muser)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 35 |[39m           
+     [90m 36 |[39m           [90m// Get additional user data from API[39m
+     [90m 37 |[39m           [36mtry[39m {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUser (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:34:11)
+
+    console.log
+      Auth state change: SIGNED_IN session present
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 83 |[39m       console[33m.[39mlog([32m'Auth state change:'[39m[33m,[39m event[33m,[39m session [33m?[39m [32m'session present'[39m [33m:[39m [32m'no session'[39m)[33m;[39m
+     [90m 84 |[39m       
+    [31m[1m>[22m[39m[90m 85 |[39m       setSession(session)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setSession (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:85:7)
+      at src/lib/supabaseClient.js:229:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 84 |[39m       
+     [90m 85 |[39m       setSession(session)[33m;[39m
+    [31m[1m>[22m[39m[90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {
+     [90m 89 |[39m         [36mtry[39m {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUser (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:86:7)
+      at src/lib/supabaseClient.js:229:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 38 |[39m             [36mconst[39m additionalUserData [33m=[39m [36mawait[39m authHelpers[33m.[39mgetUserFromAPI(session[33m.[39maccess_token)[33m;[39m
+     [90m 39 |[39m             [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 40 |[39m               setUserData(additionalUserData)[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 41 |[39m             }
+     [90m 42 |[39m           } [36mcatch[39m (error) {
+     [90m 43 |[39m             console[33m.[39merror([32m'Error fetching user data from API:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUserData (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:40:15)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 70 |[39m       } [36mfinally[39m {
+     [90m 71 |[39m         [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 72 |[39m           setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 73 |[39m         }
+     [90m 74 |[39m       }
+     [90m 75 |[39m     }[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:72:11)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 90 |[39m           [36mconst[39m additionalUserData [33m=[39m [36mawait[39m authHelpers[33m.[39mgetUserFromAPI(session[33m.[39maccess_token)[33m;[39m
+     [90m 91 |[39m           [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 92 |[39m             setUserData(additionalUserData)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 93 |[39m           }
+     [90m 94 |[39m         } [36mcatch[39m (error) {
+     [90m 95 |[39m           console[33m.[39merror([32m'Error fetching user data from API:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUserData (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at src/contexts/AuthContext.js:92:13
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 115 |[39m
+     [90m 116 |[39m       [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 117 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 118 |[39m       }
+     [90m 119 |[39m     })[33m;[39m
+     [90m 120 |[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at src/contexts/AuthContext.js:117:9
+
+    console.log
+      🎭 Mock SignUp: { email: 'newuser@example.com', options: { data: { name: null } } }
+
+      at MockSupabaseClient.signUp [as mockSignUp] (src/lib/supabaseClient.js:97:13)
+
+    console.log
+      Auth state change: SIGNED_IN session present
+
+      at callback (src/contexts/AuthContext.js:83:15)
+          at Set.forEach (<anonymous>)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 31 |[39m         
+     [90m 32 |[39m         [36mif[39m (session) {
+    [31m[1m>[22m[39m[90m 33 |[39m           setSession(session)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 34 |[39m           setUser(session[33m.[39muser)[33m;[39m
+     [90m 35 |[39m           
+     [90m 36 |[39m           [90m// Get additional user data from API[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setSession (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:33:11)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 32 |[39m         [36mif[39m (session) {
+     [90m 33 |[39m           setSession(session)[33m;[39m
+    [31m[1m>[22m[39m[90m 34 |[39m           setUser(session[33m.[39muser)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 35 |[39m           
+     [90m 36 |[39m           [90m// Get additional user data from API[39m
+     [90m 37 |[39m           [36mtry[39m {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUser (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:34:11)
+
+    console.log
+      Auth state change: SIGNED_IN session present
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 83 |[39m       console[33m.[39mlog([32m'Auth state change:'[39m[33m,[39m event[33m,[39m session [33m?[39m [32m'session present'[39m [33m:[39m [32m'no session'[39m)[33m;[39m
+     [90m 84 |[39m       
+    [31m[1m>[22m[39m[90m 85 |[39m       setSession(session)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setSession (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:85:7)
+      at src/lib/supabaseClient.js:229:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 84 |[39m       
+     [90m 85 |[39m       setSession(session)[33m;[39m
+    [31m[1m>[22m[39m[90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {
+     [90m 89 |[39m         [36mtry[39m {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUser (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:86:7)
+      at src/lib/supabaseClient.js:229:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 38 |[39m             [36mconst[39m additionalUserData [33m=[39m [36mawait[39m authHelpers[33m.[39mgetUserFromAPI(session[33m.[39maccess_token)[33m;[39m
+     [90m 39 |[39m             [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 40 |[39m               setUserData(additionalUserData)[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 41 |[39m             }
+     [90m 42 |[39m           } [36mcatch[39m (error) {
+     [90m 43 |[39m             console[33m.[39merror([32m'Error fetching user data from API:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUserData (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:40:15)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 70 |[39m       } [36mfinally[39m {
+     [90m 71 |[39m         [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 72 |[39m           setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 73 |[39m         }
+     [90m 74 |[39m       }
+     [90m 75 |[39m     }[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:72:11)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 90 |[39m           [36mconst[39m additionalUserData [33m=[39m [36mawait[39m authHelpers[33m.[39mgetUserFromAPI(session[33m.[39maccess_token)[33m;[39m
+     [90m 91 |[39m           [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 92 |[39m             setUserData(additionalUserData)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 93 |[39m           }
+     [90m 94 |[39m         } [36mcatch[39m (error) {
+     [90m 95 |[39m           console[33m.[39merror([32m'Error fetching user data from API:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUserData (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at src/contexts/AuthContext.js:92:13
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 115 |[39m
+     [90m 116 |[39m       [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 117 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 118 |[39m       }
+     [90m 119 |[39m     })[33m;[39m
+     [90m 120 |[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at src/contexts/AuthContext.js:117:9
+
+    console.log
+      🎭 Mock SignIn: { email: 'test@example.com' }
+
+      at MockSupabaseClient.signInWithPassword [as mockSignInWithPassword] (src/lib/supabaseClient.js:118:13)
+
+    console.log
+      🎭 Mock SignOut
+
+      at MockSupabaseClient.signOut [as mockSignOut] (src/lib/supabaseClient.js:161:13)
+
+    console.log
+      Auth state change: SIGNED_OUT no session
+
+      at callback (src/contexts/AuthContext.js:83:15)
+          at Set.forEach (<anonymous>)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 196 |[39m       [36mthrow[39m error[33m;[39m
+     [90m 197 |[39m     } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 198 |[39m       setLoading([36mfalse[39m)[33m;[39m
+     [90m     |[39m       [31m[1m^[22m[39m
+     [90m 199 |[39m     }
+     [90m 200 |[39m   }[33m;[39m
+     [90m 201 |[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at signOut (src/contexts/AuthContext.js:198:7)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 70 |[39m       } [36mfinally[39m {
+     [90m 71 |[39m         [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 72 |[39m           setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 73 |[39m         }
+     [90m 74 |[39m       }
+     [90m 75 |[39m     }[33m;[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at getInitialSession (src/contexts/AuthContext.js:72:11)
+
+    console.log
+      Auth state change: SIGNED_OUT no session
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 83 |[39m       console[33m.[39mlog([32m'Auth state change:'[39m[33m,[39m event[33m,[39m session [33m?[39m [32m'session present'[39m [33m:[39m [32m'no session'[39m)[33m;[39m
+     [90m 84 |[39m       
+    [31m[1m>[22m[39m[90m 85 |[39m       setSession(session)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setSession (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:85:7)
+      at src/lib/supabaseClient.js:231:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 84 |[39m       
+     [90m 85 |[39m       setSession(session)[33m;[39m
+    [31m[1m>[22m[39m[90m 86 |[39m       setUser(session[33m?[39m[33m.[39muser [33m?[39m[33m?[39m [36mnull[39m)[33m;[39m
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 87 |[39m
+     [90m 88 |[39m       [36mif[39m (session) {
+     [90m 89 |[39m         [36mtry[39m {[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUser (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:86:7)
+      at src/lib/supabaseClient.js:231:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 110 |[39m       } [36melse[39m {
+     [90m 111 |[39m         [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 112 |[39m           setUserData([36mnull[39m)[33m;[39m
+     [90m     |[39m           [31m[1m^[22m[39m
+     [90m 113 |[39m         }
+     [90m 114 |[39m       }
+     [90m 115 |[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUserData (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:112:11)
+      at src/lib/supabaseClient.js:231:9
+
+    console.error
+      The current testing environment is not configured to support act(...)
+
+    [0m [90m 115 |[39m
+     [90m 116 |[39m       [36mif[39m (mounted) {
+    [31m[1m>[22m[39m[90m 117 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 118 |[39m       }
+     [90m 119 |[39m     })[33m;[39m
+     [90m 120 |[39m[0m
+
+      at isConcurrentActEnvironment (node_modules/react-dom/cjs/react-dom-client.development.js:14318:17)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16020:7)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at callback (src/contexts/AuthContext.js:117:9)
+      at src/lib/supabaseClient.js:231:9
+
+    console.log
+      🎭 Mock SignIn: { email: 'test@example.com' }
+
+      at MockSupabaseClient.signInWithPassword [as mockSignInWithPassword] (src/lib/supabaseClient.js:118:13)
+
+    console.log
+      Auth state change: SIGNED_IN session present
+
+      at callback (src/contexts/AuthContext.js:83:15)
+          at Set.forEach (<anonymous>)
+
+    console.log
+      Auth state change: SIGNED_IN session present
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+    console.log
+      Auth state change: SIGNED_IN session present
+
+      at callback (src/contexts/AuthContext.js:83:15)
+
+  ● AuthContext - Mock Mode › restores session from localStorage on mount
+
+    expect(element).toHaveTextContent()
+
+    Expected element to have text content:
+      stored@example.com
+    Received:
+      no-user
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"mock-mode"[39m
+            [36m>[39m
+              [0mtrue[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"user-email"[39m
+            [36m>[39m
+              [0mno-user[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"session-status"[39m
+            [36m>[39m
+              [0munauthenticated[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mdata-testid[39m=[32m"user-data"[39m
+            [36m>[39m
+              [0mno-user-data[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"sign-in-btn"[39m
+            [36m>[39m
+              [0mSign In[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"sign-up-btn"[39m
+            [36m>[39m
+              [0mSign Up[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mdata-testid[39m=[32m"sign-out-btn"[39m
+            [36m>[39m
+              [0mSign Out[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</body>[39m
+    [36m</html>[39m
+
+    [0m [90m 130 |[39m     
+     [90m 131 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 132 |[39m       expect(screen[33m.[39mgetByTestId([32m'user-email'[39m))[33m.[39mtoHaveTextContent([32m'stored@example.com'[39m)[33m;[39m
+     [90m     |[39m                                                [31m[1m^[22m[39m
+     [90m 133 |[39m       expect(screen[33m.[39mgetByTestId([32m'session-status'[39m))[33m.[39mtoHaveTextContent([32m'authenticated'[39m)[33m;[39m
+     [90m 134 |[39m     })[33m;[39m
+     [90m 135 |[39m   })[33m;[39m[0m
+
+      at src/contexts/__tests__/AuthContext.mock.test.js:132:48
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:516:19)
+
+  ● AuthContext - Mock Mode › Authentication Actions › signIn creates mock session and user
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "mock_supabase_session", StringContaining "test@example.com"
+
+    Number of calls: 0
+
+    [0m [90m 172 |[39m       
+     [90m 173 |[39m       [90m// Verify localStorage was called to store session[39m
+    [31m[1m>[22m[39m[90m 174 |[39m       expect(localStorageMock[33m.[39msetItem)[33m.[39mtoHaveBeenCalledWith(
+     [90m     |[39m                                        [31m[1m^[22m[39m
+     [90m 175 |[39m         [32m'mock_supabase_session'[39m[33m,[39m 
+     [90m 176 |[39m         expect[33m.[39mstringContaining([32m'test@example.com'[39m)
+     [90m 177 |[39m       )[33m;[39m[0m
+
+      at Object.<anonymous> (src/contexts/__tests__/AuthContext.mock.test.js:174:40)
+
+  ● AuthContext - Mock Mode › Authentication Actions › signOut clears user and session
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "mock_supabase_session"
+
+    Number of calls: 0
+
+    [0m [90m 221 |[39m       
+     [90m 222 |[39m       [90m// Verify localStorage was cleared[39m
+    [31m[1m>[22m[39m[90m 223 |[39m       expect(localStorageMock[33m.[39mremoveItem)[33m.[39mtoHaveBeenCalledWith([32m'mock_supabase_session'[39m)[33m;[39m
+     [90m     |[39m                                           [31m[1m^[22m[39m
+     [90m 224 |[39m       expect(localStorageMock[33m.[39mremoveItem)[33m.[39mtoHaveBeenCalledWith([32m'mock_supabase_user'[39m)[33m;[39m
+     [90m 225 |[39m     })[33m;[39m
+     [90m 226 |[39m   })[33m;[39m[0m
+
+      at Object.<anonymous> (src/contexts/__tests__/AuthContext.mock.test.js:223:43)
+
+PASS src/lib/__tests__/mockMode.test.js
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+    console.log
+      🎭 Mock SignIn: { email: 'test@example.com' }
+
+      at MockSupabaseClient.signInWithPassword [as mockSignInWithPassword] (src/lib/supabaseClient.js:118:13)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+    console.log
+      🎭 Mock SignUp: { email: 'newuser@example.com', options: {} }
+
+      at MockSupabaseClient.signUp [as mockSignUp] (src/lib/supabaseClient.js:97:13)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+    console.log
+      🎭 Mock SignOut
+
+      at MockSupabaseClient.signOut [as mockSignOut] (src/lib/supabaseClient.js:161:13)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+    console.log
+      🎭 Creating Mock Supabase Client
+
+      at createSupabaseClient (src/lib/supabaseClient.js:263:13)
+
+PASS src/pages/__tests__/Dashboard.test.jsx
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+FAIL src/components/widgets/__tests__/HealthFlagsCard.test.jsx
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+    console.error
+      Failed to fetch health data: TypeError: Cannot read properties of undefined (reading 'ok')
+          at fetchData (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/HealthFlagsCard.jsx:16:17)
+
+    [0m [90m 18 |[39m         }
+     [90m 19 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 20 |[39m         console[33m.[39merror([32m'Failed to fetch health data:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 21 |[39m       } [36mfinally[39m {
+     [90m 22 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 23 |[39m       }[0m
+
+      at fetchData (src/components/widgets/HealthFlagsCard.jsx:20:17)
+
+    console.error
+      An update to HealthFlagsCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 20 |[39m         console[33m.[39merror([32m'Failed to fetch health data:'[39m[33m,[39m error)[33m;[39m
+     [90m 21 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 22 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 23 |[39m       }
+     [90m 24 |[39m     }
+     [90m 25 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/HealthFlagsCard.jsx:22:9)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 167 |[39m
+           [90m 168 |[39m     [90m// Fast forward 30 seconds[39m
+          [31m[1m>[22m[39m[90m 169 |[39m     jest[33m.[39madvanceTimersByTime([35m30000[39m)[33m;[39m
+           [90m     |[39m          [31m[1m^[22m[39m
+           [90m 170 |[39m
+           [90m 171 |[39m     [90m// Wait for the timer to trigger[39m
+           [90m 172 |[39m     [36mawait[39m waitFor(() [33m=>[39m {[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.advanceTimersByTime (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:265:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:169:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.advanceTimersByTime (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:265:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:169:10)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    console.error
+      An update to HealthFlagsCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 15 |[39m         [36mconst[39m res [33m=[39m [36mawait[39m fetch([32m'/api/health'[39m)[33m;[39m
+     [90m 16 |[39m         [36mif[39m (res[33m.[39mok) {
+    [31m[1m>[22m[39m[90m 17 |[39m           setHealth([36mawait[39m res[33m.[39mjson())[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 18 |[39m         }
+     [90m 19 |[39m       } [36mcatch[39m (error) {
+     [90m 20 |[39m         console[33m.[39merror([32m'Failed to fetch health data:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setHealth (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/HealthFlagsCard.jsx:17:11)
+
+    console.error
+      An update to HealthFlagsCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 20 |[39m         console[33m.[39merror([32m'Failed to fetch health data:'[39m[33m,[39m error)[33m;[39m
+     [90m 21 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 22 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 23 |[39m       }
+     [90m 24 |[39m     }
+     [90m 25 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/HealthFlagsCard.jsx:22:9)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    console.error
+      Failed to fetch health data: Error: API Error
+          at Object.<anonymous> (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/__tests__/HealthFlagsCard.test.jsx:189:33)
+          at Promise.then.completed (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:391:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:316:10)
+          at _callCircusTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:218:40)
+          at _runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:155:3)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:66:9)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:60:9)
+          at run (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:25:3)
+          at runAndTransformResultsToJestFormat (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+          at jestAdapter (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+          at runTestInternal (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:389:16)
+          at runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:475:34)
+
+    [0m [90m 18 |[39m         }
+     [90m 19 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 20 |[39m         console[33m.[39merror([32m'Failed to fetch health data:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 21 |[39m       } [36mfinally[39m {
+     [90m 22 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 23 |[39m       }[0m
+
+      at fetchData (src/components/widgets/HealthFlagsCard.jsx:20:17)
+
+    console.warn
+      A function to advance timers was called but the timers API is not mocked with fake timers. Call `jest.useFakeTimers()` in this test or enable fake timers globally by setting `"timers": "fake"` in the configuration file. This warning is likely a result of a default configuration change in Jest 15.
+      
+      Release Blog Post: https://jestjs.io/blog/2016/09/01/jest-15
+      Stack Trace:
+      
+          [0m [90m 19 |[39m
+           [90m 20 |[39m   afterEach(() [33m=>[39m {
+          [31m[1m>[22m[39m[90m 21 |[39m     jest[33m.[39mrunOnlyPendingTimers()[33m;[39m
+           [90m    |[39m          [31m[1m^[22m[39m
+           [90m 22 |[39m     jest[33m.[39museRealTimers()[33m;[39m
+           [90m 23 |[39m   })[33m;[39m
+           [90m 24 |[39m[0m
+      
+            Error: 
+            at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:486:13)
+            at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+            at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+    [0m [90m 65 |[39m     [36mif[39m (args[[35m0[39m][33m.[39mincludes([32m'Warning: Cannot update a component'[39m)) [36mreturn[39m[33m;[39m
+     [90m 66 |[39m   }
+    [31m[1m>[22m[39m[90m 67 |[39m   originalWarn[33m.[39mapply(console[33m,[39m args)[33m;[39m
+     [90m    |[39m                [31m[1m^[22m[39m
+     [90m 68 |[39m }[33m;[39m
+     [90m 69 |[39m
+     [90m 70 |[39m console[33m.[39mlog([32m'🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked'[39m)[33m;[39m[0m
+
+      at console.Object.<anonymous>.console.warn (src/setupTests.js:67:16)
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:476:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/fake-timers/build/legacyFakeTimers.js:236:10)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:21:10)
+
+  ● HealthFlagsCard › renders health data after successful API call
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 2
+    Received array:  [<div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs">ok</div>, <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs">ok</div>]
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-5 w-5"[39m
+                    [33mdata-testid[39m=[32m"mock-icon"[39m
+                  [36m/>[39m
+                  [36m<span>[39m
+                    [0mSystem Health[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m" hidden sm:block"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs px-1.5 py-0.5"[39m
+                    [33mtitle[39m=[32m"Using mock data - no external APIs required"[39m
+                  [36m>[39m
+                    [0mMock data[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</h3>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"p-6 pt-0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-4"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                  [36m>[39m
+                    [0mServices[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"space-y-2"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"h-4 w-4 text-green-500"[39m
+                          [33mdata-testid[39m=[32m"mock-icon"[39m
+                        [36m/>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm capitalize"[39m
+                        [36m>[39m
+                          [0mapi[0m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+                      [36m>[39m
+                        [0mok[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"h-4 w-4 text-yellow-500"[39m
+                          [33mdata-testid[39m=[32m"mock-icon"[39m
+                        [36m/>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm capitalize"[39m
+                        [36m>[39m
+                          [0mbilling[0m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-yellow-500 text-white hover:bg-yellow-600 text-xs"[39m
+                      [36m>[39m
+                        [0mdegraded[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"h-4 w-4 text-yellow-500"[39m
+                          [33mdata-testid[39m=[32m"mock-icon"[39m
+                        [36m/>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm capitalize"[39m
+                        [36m>[39m
+                          [0mai[0m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-yellow-500 text-white hover:bg-yellow-600 text-xs"[39m
+                      [36m>[39m
+                        [0mdegraded[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"h-4 w-4 text-green-500"[39m
+                          [33mdata-testid[39m=[32m"mock-icon"[39m
+                        [36m/>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm capitalize"[39m
+                        [36m>[39m
+                          [0mdb[0m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+                      [36m>[39m
+                        [0mok[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"pt-3 border-t"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                  [36m>[39m
+                    [0mFeatures[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"space-y-2"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm"[39m
+                      [36m>[39m
+                        [0mRQC System[0m
+                      [36m</span>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+                      [36m>[39m
+                        [0mEnabled[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm"[39m
+                      [36m>[39m
+                        [0mShield Protection[0m
+                      [36m</span>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                      [36m>[39m
+                        [0mInactive[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm"[39m
+                      [36m>[39m
+                        [0mMock Mode[0m
+                      [36m</span>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-yellow-500 text-white hover:bg-yellow-600 text-xs"[39m
+                      [36m>[39m
+                        [0mActive[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"pt-2 text-xs text-muted-foreground text-center"[39m
+                [36m>[39m
+                  [0mLast updated: [0m
+                  [0m13:00:00[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</body>[39m
+    [36m</html>[39m
+
+    [0m [90m 61 |[39m       expect(screen[33m.[39mgetByText([32m'db'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 62 |[39m       
+    [31m[1m>[22m[39m[90m 63 |[39m       expect(screen[33m.[39mgetAllByText([32m'ok'[39m))[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m    |[39m                                         [31m[1m^[22m[39m
+     [90m 64 |[39m       expect(screen[33m.[39mgetAllByText([32m'degraded'[39m))[33m.[39mtoHaveLength([35m2[39m)[33m;[39m
+     [90m 65 |[39m     })[33m;[39m
+     [90m 66 |[39m   })[33m;[39m[0m
+
+      at src/components/widgets/__tests__/HealthFlagsCard.test.jsx:63:41
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:516:19)
+
+  ● HealthFlagsCard › renders feature flags correctly
+
+    Unable to find an element with the text: rqc. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center space-x-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-5 w-5"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mSystem Health[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m" hidden sm:block"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs px-1.5 py-0.5"[39m
+                  [33mtitle[39m=[32m"Using mock data - no external APIs required"[39m
+                [36m>[39m
+                  [0mMock data[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                [36m>[39m
+                  [0mServices[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"space-y-2"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pt-3 border-t"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                [36m>[39m
+                  [0mFeatures[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"space-y-2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center justify-between"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-sm"[39m
+                    [36m>[39m
+                      [0mRQC System[0m
+                    [36m</span>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+                    [36m>[39m
+                      [0mEnabled[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center justify-between"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-sm"[39m
+                    [36m>[39m
+                      [0mShield Protection[0m
+                    [36m</span>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                    [36m>[39m
+                      [0mInactive[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center justify-between"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-sm"[39m
+                    [36m>[39m
+                      [0mMock Mode[0m
+                    [36m</span>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-yellow-500 text-white hover:bg-yellow-600 text-xs"[39m
+                    [36m>[39m
+                      [0mActive[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pt-2 text-xs text-muted-foreground text-center"[39m
+              [36m>[39m
+                [0mLast updated: [0m
+                [0mUnknown[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 84 |[39m     render([33m<[39m[33mHealthFlagsCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 85 |[39m
+    [31m[1m>[22m[39m[90m 86 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+     [90m    |[39m                  [31m[1m^[22m[39m
+     [90m 87 |[39m       expect(screen[33m.[39mgetByText([32m'Features'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 88 |[39m       expect(screen[33m.[39mgetByText([32m'rqc'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 89 |[39m       expect(screen[33m.[39mgetByText([32m'shield'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/components/widgets/__tests__/HealthFlagsCard.test.jsx:86:18)
+
+  ● HealthFlagsCard › refreshes data every 30 seconds
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 2
+    Received number of calls: 1
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-5 w-5"[39m
+                    [33mdata-testid[39m=[32m"mock-icon"[39m
+                  [36m/>[39m
+                  [36m<span>[39m
+                    [0mSystem Health[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m" hidden sm:block"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs px-1.5 py-0.5"[39m
+                    [33mtitle[39m=[32m"Using mock data - no external APIs required"[39m
+                  [36m>[39m
+                    [0mMock data[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</h3>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"p-6 pt-0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-4"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                  [36m>[39m
+                    [0mServices[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"space-y-2"[39m
+                  [36m/>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"pt-3 border-t"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                  [36m>[39m
+                    [0mFeatures[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"space-y-2"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm"[39m
+                      [36m>[39m
+                        [0mRQC System[0m
+                      [36m</span>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                      [36m>[39m
+                        [0mDisabled[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm"[39m
+                      [36m>[39m
+                        [0mShield Protection[0m
+                      [36m</span>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                      [36m>[39m
+                        [0mInactive[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm"[39m
+                      [36m>[39m
+                        [0mMock Mode[0m
+                      [36m</span>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                      [36m>[39m
+                        [0mInactive[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"pt-2 text-xs text-muted-foreground text-center"[39m
+                [36m>[39m
+                  [0mLast updated: [0m
+                  [0mUnknown[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</body>[39m
+    [36m</html>[39m
+
+    [0m [90m 171 |[39m     [90m// Wait for the timer to trigger[39m
+     [90m 172 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+    [31m[1m>[22m[39m[90m 173 |[39m       expect(fetch)[33m.[39mtoHaveBeenCalledTimes([35m2[39m)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 174 |[39m     })[33m;[39m
+     [90m 175 |[39m   })[33m;[39m
+     [90m 176 |[39m[0m
+
+      at src/components/widgets/__tests__/HealthFlagsCard.test.jsx:173:21
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:516:19)
+
+FAIL src/components/widgets/__tests__/IntegrationsCard.test.jsx
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+    console.error
+      Failed to fetch integrations: TypeError: Cannot read properties of undefined (reading 'ok')
+          at fetchData (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/IntegrationsCard.jsx:15:17)
+
+    [0m [90m 17 |[39m         }
+     [90m 18 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 19 |[39m         console[33m.[39merror([32m'Failed to fetch integrations:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 20 |[39m       } [36mfinally[39m {
+     [90m 21 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 22 |[39m       }[0m
+
+      at fetchData (src/components/widgets/IntegrationsCard.jsx:19:17)
+
+    console.error
+      An update to IntegrationsCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 19 |[39m         console[33m.[39merror([32m'Failed to fetch integrations:'[39m[33m,[39m error)[33m;[39m
+     [90m 20 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 21 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 22 |[39m       }
+     [90m 23 |[39m     }
+     [90m 24 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/IntegrationsCard.jsx:21:9)
+
+    console.error
+      Failed to fetch integrations: Error: API Error
+          at Object.<anonymous> (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/__tests__/IntegrationsCard.test.jsx:129:33)
+          at Promise.then.completed (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:391:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:316:10)
+          at _callCircusTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:218:40)
+          at _runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:155:3)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:66:9)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:60:9)
+          at run (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:25:3)
+          at runAndTransformResultsToJestFormat (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+          at jestAdapter (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+          at runTestInternal (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:389:16)
+          at runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:475:34)
+
+    [0m [90m 17 |[39m         }
+     [90m 18 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 19 |[39m         console[33m.[39merror([32m'Failed to fetch integrations:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 20 |[39m       } [36mfinally[39m {
+     [90m 21 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 22 |[39m       }[0m
+
+      at fetchData (src/components/widgets/IntegrationsCard.jsx:19:17)
+
+    console.error
+      An update to IntegrationsCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 14 |[39m         [36mconst[39m res [33m=[39m [36mawait[39m fetch([32m'/api/integrations'[39m)[33m;[39m
+     [90m 15 |[39m         [36mif[39m (res[33m.[39mok) {
+    [31m[1m>[22m[39m[90m 16 |[39m           setIntegrations([36mawait[39m res[33m.[39mjson())[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 17 |[39m         }
+     [90m 18 |[39m       } [36mcatch[39m (error) {
+     [90m 19 |[39m         console[33m.[39merror([32m'Failed to fetch integrations:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setIntegrations (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/IntegrationsCard.jsx:16:11)
+
+    console.error
+      An update to IntegrationsCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 19 |[39m         console[33m.[39merror([32m'Failed to fetch integrations:'[39m[33m,[39m error)[33m;[39m
+     [90m 20 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 21 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 22 |[39m       }
+     [90m 23 |[39m     }
+     [90m 24 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/IntegrationsCard.jsx:21:9)
+
+  ● IntegrationsCard › renders loading state initially
+
+    TestingLibraryElementError: Unable to find an element by: [data-testid="skeleton"]
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight"[39m
+            [36m>[39m
+              [0mIntegrations[0m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0 space-y-3"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-4 w-16"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-5 w-20"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-4 w-16"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-5 w-20"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-4 w-16"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-5 w-20"[39m
+              [36m/>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-4 w-16"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-5 w-20"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 17 |[39m     render([33m<[39m[33mIntegrationsCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 18 |[39m     expect(screen[33m.[39mgetByText([32m'Integrations'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+    [31m[1m>[22m[39m[90m 19 |[39m     expect(screen[33m.[39mgetAllByTestId([32m'skeleton'[39m))[33m.[39mtoHaveLength([35m4[39m)[33m;[39m
+     [90m    |[39m                   [31m[1m^[22m[39m
+     [90m 20 |[39m   })[33m;[39m
+     [90m 21 |[39m
+     [90m 22 |[39m   test([32m'renders integrations data after successful API call'[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+      at getAllByTestId (node_modules/@testing-library/dom/dist/query-helpers.js:109:15)
+      at Object.<anonymous> (src/components/widgets/__tests__/IntegrationsCard.test.jsx:19:19)
+
+  ● IntegrationsCard › renders integrations data after successful API call
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 3
+    Received array:  [<div class="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Connected</div>, <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs">Connected</div>, <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs">Connected</div>]
+
+    Ignored nodes: comments, script, style
+    [36m<html>[39m
+      [36m<head />[39m
+      [36m<body>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+            [36m>[39m
+              [36m<h3[39m
+                [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-5 w-5"[39m
+                    [33mdata-testid[39m=[32m"mock-icon"[39m
+                  [36m/>[39m
+                  [36m<span>[39m
+                    [0mIntegrations[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground"[39m
+                [36m>[39m
+                  [0m2[0m
+                  [0m/[0m
+                  [0m3[0m
+                [36m</div>[39m
+              [36m</h3>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"p-6 pt-0"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"space-y-3"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                  [36m>[39m
+                    [0mConnected[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"space-y-2"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded-lg"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm"[39m
+                        [36m>[39m
+                          [0m🐦[0m
+                        [36m</span>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm font-medium"[39m
+                        [36m>[39m
+                          [0mTwitter[0m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+                      [36m>[39m
+                        [0mConnected[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded-lg"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm"[39m
+                        [36m>[39m
+                          [0m📺[0m
+                        [36m</span>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm font-medium"[39m
+                        [36m>[39m
+                          [0mYouTube[0m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+                      [36m>[39m
+                        [0mConnected[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                  [36m>[39m
+                    [0mAvailable[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"space-y-1"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center justify-between p-1.5 rounded"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm opacity-60"[39m
+                        [36m>[39m
+                          [0m📷[0m
+                        [36m</span>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+                        [36m>[39m
+                          [0mInstagram[0m
+                        [36m</span>[39m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                      [36m>[39m
+                        [0mAvailable[0m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"pt-3 border-t"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"flex items-center space-x-2 text-xs text-primary hover:underline"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"h-3 w-3"[39m
+                      [33mdata-testid[39m=[32m"mock-icon"[39m
+                    [36m/>[39m
+                    [36m<span>[39m
+                      [0mManage integrations[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</body>[39m
+    [36m</html>[39m
+
+    [0m [90m 57 |[39m       expect(screen[33m.[39mgetByText([32m'YouTube'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 58 |[39m       expect(screen[33m.[39mgetByText([32m'Instagram'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+    [31m[1m>[22m[39m[90m 59 |[39m       expect(screen[33m.[39mgetAllByText([32m'Connected'[39m))[33m.[39mtoHaveLength([35m2[39m)[33m;[39m
+     [90m    |[39m                                                [31m[1m^[22m[39m
+     [90m 60 |[39m       expect(screen[33m.[39mgetByText([32m'Available'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 61 |[39m     })[33m;[39m
+     [90m 62 |[39m   })[33m;[39m[0m
+
+      at src/components/widgets/__tests__/IntegrationsCard.test.jsx:59:48
+      at runWithExpensiveErrorDiagnosticsDisabled (node_modules/@testing-library/dom/dist/config.js:47:12)
+      at checkCallback (node_modules/@testing-library/dom/dist/wait-for.js:124:77)
+      at checkRealTimersCallback (node_modules/@testing-library/dom/dist/wait-for.js:118:16)
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:516:19)
+
+  ● IntegrationsCard › shows connected integrations section when there are connected platforms
+
+    Found multiple elements with the text: Connected
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    [36m<div[39m
+      [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+    [36m>[39m
+      [0mConnected[0m
+    [36m</div>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<div[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+    [36m>[39m
+      [0mConnected[0m
+    [36m</div>[39m
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center space-x-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-5 w-5"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mIntegrations[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m/[0m
+                [0m1[0m
+              [36m</div>[39m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-3"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                [36m>[39m
+                  [0mConnected[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"space-y-2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded-lg"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm"[39m
+                      [36m>[39m
+                        [0m🐦[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm font-medium"[39m
+                      [36m>[39m
+                        [0mTwitter[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-500 text-white hover:bg-green-600 text-xs"[39m
+                    [36m>[39m
+                      [0mConnected[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pt-3 border-t"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"flex items-center space-x-2 text-xs text-primary hover:underline"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-3 w-3"[39m
+                    [33mdata-testid[39m=[32m"mock-icon"[39m
+                  [36m/>[39m
+                  [36m<span>[39m
+                    [0mManage integrations[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 79 |[39m     render([33m<[39m[33mIntegrationsCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 80 |[39m
+    [31m[1m>[22m[39m[90m 81 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+     [90m    |[39m                  [31m[1m^[22m[39m
+     [90m 82 |[39m       expect(screen[33m.[39mgetByText([32m'Connected'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 83 |[39m     })[33m;[39m
+     [90m 84 |[39m   })[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/components/widgets/__tests__/IntegrationsCard.test.jsx:81:18)
+
+  ● IntegrationsCard › shows available integrations section when there are disconnected platforms
+
+    Found multiple elements with the text: Available
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    [36m<div[39m
+      [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+    [36m>[39m
+      [0mAvailable[0m
+    [36m</div>[39m
+
+    Ignored nodes: comments, script, style
+    [36m<div[39m
+      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+    [36m>[39m
+      [0mAvailable[0m
+    [36m</div>[39m
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center space-x-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-5 w-5"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+                [36m<span>[39m
+                  [0mIntegrations[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m1[0m
+              [36m</div>[39m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-3"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"[39m
+                [36m>[39m
+                  [0mAvailable[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"space-y-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center justify-between p-1.5 rounded"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex items-center space-x-2"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm opacity-60"[39m
+                      [36m>[39m
+                        [0m📘[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+                      [36m>[39m
+                        [0mFacebook[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground text-xs"[39m
+                    [36m>[39m
+                      [0mAvailable[0m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pt-3 border-t"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"flex items-center space-x-2 text-xs text-primary hover:underline"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"h-3 w-3"[39m
+                    [33mdata-testid[39m=[32m"mock-icon"[39m
+                  [36m/>[39m
+                  [36m<span>[39m
+                    [0mManage integrations[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 101 |[39m     render([33m<[39m[33mIntegrationsCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 102 |[39m
+    [31m[1m>[22m[39m[90m 103 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+     [90m     |[39m                  [31m[1m^[22m[39m
+     [90m 104 |[39m       expect(screen[33m.[39mgetByText([32m'Available'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 105 |[39m     })[33m;[39m
+     [90m 106 |[39m   })[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/components/widgets/__tests__/IntegrationsCard.test.jsx:103:18)
+
+FAIL src/components/widgets/__tests__/PlanStatusCard.test.jsx
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+    console.error
+      Failed to fetch plan data: TypeError: Cannot read properties of undefined (reading 'ok')
+          at fetchData (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/PlanStatusCard.jsx:21:21)
+
+    [0m [90m 22 |[39m         [36mif[39m (usageRes[33m.[39mok) setUsage([36mawait[39m usageRes[33m.[39mjson())[33m;[39m
+     [90m 23 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 25 |[39m       } [36mfinally[39m {
+     [90m 26 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 27 |[39m       }[0m
+
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:24:17)
+
+    console.error
+      An update to PlanStatusCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m
+     [90m 25 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 26 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 27 |[39m       }
+     [90m 28 |[39m     }
+     [90m 29 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:26:9)
+
+    console.error
+      Failed to fetch plan data: TypeError: Cannot read properties of undefined (reading 'ok')
+          at fetchData (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/PlanStatusCard.jsx:22:22)
+
+    [0m [90m 22 |[39m         [36mif[39m (usageRes[33m.[39mok) setUsage([36mawait[39m usageRes[33m.[39mjson())[33m;[39m
+     [90m 23 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 25 |[39m       } [36mfinally[39m {
+     [90m 26 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 27 |[39m       }[0m
+
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:24:17)
+
+    console.error
+      Failed to fetch plan data: Error: API Error
+          at Object.<anonymous> (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/__tests__/PlanStatusCard.test.jsx:53:33)
+          at Promise.then.completed (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:391:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/utils.js:316:10)
+          at _callCircusTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:218:40)
+          at _runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:155:3)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:66:9)
+          at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:60:9)
+          at run (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/run.js:25:3)
+          at runAndTransformResultsToJestFormat (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:170:21)
+          at jestAdapter (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:82:19)
+          at runTestInternal (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:389:16)
+          at runTest (/Users/emiliopostigo/roastr-ai/frontend/node_modules/jest-runner/build/runTest.js:475:34)
+
+    [0m [90m 22 |[39m         [36mif[39m (usageRes[33m.[39mok) setUsage([36mawait[39m usageRes[33m.[39mjson())[33m;[39m
+     [90m 23 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 25 |[39m       } [36mfinally[39m {
+     [90m 26 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 27 |[39m       }[0m
+
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:24:17)
+
+    console.error
+      Failed to fetch plan data: TypeError: Cannot read properties of undefined (reading 'ok')
+          at fetchData (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/PlanStatusCard.jsx:22:22)
+
+    [0m [90m 22 |[39m         [36mif[39m (usageRes[33m.[39mok) setUsage([36mawait[39m usageRes[33m.[39mjson())[33m;[39m
+     [90m 23 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 25 |[39m       } [36mfinally[39m {
+     [90m 26 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 27 |[39m       }[0m
+
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:24:17)
+
+    console.error
+      An update to PlanStatusCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 19 |[39m         ])[33m;[39m
+     [90m 20 |[39m
+    [31m[1m>[22m[39m[90m 21 |[39m         [36mif[39m (userRes[33m.[39mok) setUser([36mawait[39m userRes[33m.[39mjson())[33m;[39m
+     [90m    |[39m                         [31m[1m^[22m[39m
+     [90m 22 |[39m         [36mif[39m (usageRes[33m.[39mok) setUsage([36mawait[39m usageRes[33m.[39mjson())[33m;[39m
+     [90m 23 |[39m       } [36mcatch[39m (error) {
+     [90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setUser (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:21:25)
+
+    console.error
+      Failed to fetch plan data: TypeError: Cannot read properties of undefined (reading 'ok')
+          at fetchData (/Users/emiliopostigo/roastr-ai/frontend/src/components/widgets/PlanStatusCard.jsx:22:22)
+
+    [0m [90m 22 |[39m         [36mif[39m (usageRes[33m.[39mok) setUsage([36mawait[39m usageRes[33m.[39mjson())[33m;[39m
+     [90m 23 |[39m       } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 25 |[39m       } [36mfinally[39m {
+     [90m 26 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m 27 |[39m       }[0m
+
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:24:17)
+
+    console.error
+      An update to PlanStatusCard inside a test was not wrapped in act(...).
+      
+      When testing, code that causes React state updates should be wrapped into act(...):
+      
+      act(() => {
+        /* fire events that update state */
+      });
+      /* assert on the output */
+      
+      This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+    [0m [90m 24 |[39m         console[33m.[39merror([32m'Failed to fetch plan data:'[39m[33m,[39m error)[33m;[39m
+     [90m 25 |[39m       } [36mfinally[39m {
+    [31m[1m>[22m[39m[90m 26 |[39m         setLoading([36mfalse[39m)[33m;[39m
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 27 |[39m       }
+     [90m 28 |[39m     }
+     [90m 29 |[39m[0m
+
+      at node_modules/react-dom/cjs/react-dom-client.development.js:16023:19
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1522:13)
+      at warnIfUpdatesNotWrappedWithActDEV (node_modules/react-dom/cjs/react-dom-client.development.js:16022:9)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:14396:11)
+      at dispatchSetStateInternal (node_modules/react-dom/cjs/react-dom-client.development.js:6969:13)
+      at setLoading (node_modules/react-dom/cjs/react-dom-client.development.js:6927:7)
+      at fetchData (src/components/widgets/PlanStatusCard.jsx:26:9)
+
+  ● PlanStatusCard › renders loading state initially
+
+    TestingLibraryElementError: Unable to find an element by: [data-testid="skeleton"]
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight"[39m
+            [36m>[39m
+              [0mPlan Status[0m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0 space-y-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-8 w-24"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-4 w-full"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"animate-pulse rounded-md bg-muted h-4 w-3/4"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 17 |[39m     render([33m<[39m[33mPlanStatusCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 18 |[39m     expect(screen[33m.[39mgetByText([32m'Plan Status'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+    [31m[1m>[22m[39m[90m 19 |[39m     expect(screen[33m.[39mgetAllByTestId([32m'skeleton'[39m))[33m.[39mtoHaveLength([35m4[39m)[33m;[39m
+     [90m    |[39m                   [31m[1m^[22m[39m
+     [90m 20 |[39m   })[33m;[39m
+     [90m 21 |[39m
+     [90m 22 |[39m   test([32m'renders user data after successful API call'[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+      at getAllByTestId (node_modules/@testing-library/dom/dist/query-helpers.js:109:15)
+      at Object.<anonymous> (src/components/widgets/__tests__/PlanStatusCard.test.jsx:19:19)
+
+  ● PlanStatusCard › renders user data after successful API call
+
+    Unable to find an element with the text: 150. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [0mPlan Status[0m
+                [36m<div[39m
+                  [33mclass[39m=[32m" hidden sm:block"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs px-1.5 py-0.5"[39m
+                    [33mtitle[39m=[32m"Using mock data - no external APIs required"[39m
+                  [36m>[39m
+                    [0mMock data[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80"[39m
+              [36m>[39m
+                [0mPro[0m
+              [36m</div>[39m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center space-x-3 mb-4"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"p-2 bg-primary/10 rounded-lg"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-6 w-6 text-primary"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0mRoastr User[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex justify-between text-sm"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0mUsage this month[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m0[0m
+                  [0m / [0m
+                  [0m1000[0m
+                  [0m calls[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"w-full bg-muted rounded-full h-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"bg-primary h-2 rounded-full transition-all"[39m
+                  [33mstyle[39m=[32m"width: 0%;"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pt-2 border-t"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-muted-foreground mb-2"[39m
+                [36m>[39m
+                  [0mFeatures included:[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"space-y-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center text-xs"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"w-1 h-1 bg-primary rounded-full mr-2"[39m
+                    [36m/>[39m
+                    [0mAdvanced moderation[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center text-xs"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"w-1 h-1 bg-primary rounded-full mr-2"[39m
+                    [36m/>[39m
+                    [0mPriority support[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 42 |[39m     render([33m<[39m[33mPlanStatusCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 43 |[39m
+    [31m[1m>[22m[39m[90m 44 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+     [90m    |[39m                  [31m[1m^[22m[39m
+     [90m 45 |[39m       expect(screen[33m.[39mgetByText([32m'Pro'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 46 |[39m       expect(screen[33m.[39mgetByText([32m'150'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 47 |[39m       expect(screen[33m.[39mgetByText([32m'/ 2,000'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/components/widgets/__tests__/PlanStatusCard.test.jsx:44:18)
+
+  ● PlanStatusCard › renders empty state when API call fails
+
+    Unable to find an element with the text: 0. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [0mPlan Status[0m
+                [36m<div[39m
+                  [33mclass[39m=[32m" hidden sm:block"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs px-1.5 py-0.5"[39m
+                    [33mtitle[39m=[32m"Using mock data - no external APIs required"[39m
+                  [36m>[39m
+                    [0mMock data[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground"[39m
+              [36m>[39m
+                [0mFree[0m
+              [36m</div>[39m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center space-x-3 mb-4"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"p-2 bg-primary/10 rounded-lg"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-6 w-6 text-primary"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0mRoastr User[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex justify-between text-sm"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0mUsage this month[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m0[0m
+                  [0m / [0m
+                  [0m1000[0m
+                  [0m calls[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"w-full bg-muted rounded-full h-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"bg-primary h-2 rounded-full transition-all"[39m
+                  [33mstyle[39m=[32m"width: 0%;"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pt-2 border-t"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-muted-foreground mb-2"[39m
+                [36m>[39m
+                  [0mFeatures included:[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"space-y-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center text-xs"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"w-1 h-1 bg-primary rounded-full mr-2"[39m
+                    [36m/>[39m
+                    [0mBasic roasts[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center text-xs"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"w-1 h-1 bg-primary rounded-full mr-2"[39m
+                    [36m/>[39m
+                    [0mCSV export[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 55 |[39m     render([33m<[39m[33mPlanStatusCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 56 |[39m
+    [31m[1m>[22m[39m[90m 57 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+     [90m    |[39m                  [31m[1m^[22m[39m
+     [90m 58 |[39m       expect(screen[33m.[39mgetByText([32m'Free'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 59 |[39m       expect(screen[33m.[39mgetByText([32m'0'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 60 |[39m     })[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/components/widgets/__tests__/PlanStatusCard.test.jsx:57:18)
+
+  ● PlanStatusCard › displays correct features based on plan
+
+    Unable to find an element with the text: Enterprise. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-2xl border bg-card text-card-foreground shadow-sm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-col space-y-1.5 p-6 pb-3"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"text-2xl font-semibold leading-none tracking-tight flex items-center justify-between"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-2"[39m
+              [36m>[39m
+                [0mPlan Status[0m
+                [36m<div[39m
+                  [33mclass[39m=[32m" hidden sm:block"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 text-xs px-1.5 py-0.5"[39m
+                    [33mtitle[39m=[32m"Using mock data - no external APIs required"[39m
+                  [36m>[39m
+                    [0mMock data[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground"[39m
+              [36m>[39m
+                [0mFree[0m
+              [36m</div>[39m
+            [36m</h3>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"p-6 pt-0"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center space-x-3 mb-4"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"p-2 bg-primary/10 rounded-lg"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"h-6 w-6 text-primary"[39m
+                  [33mdata-testid[39m=[32m"mock-icon"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0mRoastr User[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+                [36m/>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"space-y-3"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex justify-between text-sm"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-muted-foreground"[39m
+                [36m>[39m
+                  [0mUsage this month[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"font-medium"[39m
+                [36m>[39m
+                  [0m0[0m
+                  [0m / [0m
+                  [0m1000[0m
+                  [0m calls[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"w-full bg-muted rounded-full h-2"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"bg-primary h-2 rounded-full transition-all"[39m
+                  [33mstyle[39m=[32m"width: 0%;"[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pt-2 border-t"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-xs text-muted-foreground mb-2"[39m
+                [36m>[39m
+                  [0mFeatures included:[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"space-y-1"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center text-xs"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"w-1 h-1 bg-primary rounded-full mr-2"[39m
+                    [36m/>[39m
+                    [0mBasic roasts[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"flex items-center text-xs"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"w-1 h-1 bg-primary rounded-full mr-2"[39m
+                    [36m/>[39m
+                    [0mCSV export[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+    [0m [90m 80 |[39m     render([33m<[39m[33mPlanStatusCard[39m [33m/[39m[33m>[39m)[33m;[39m
+     [90m 81 |[39m
+    [31m[1m>[22m[39m[90m 82 |[39m     [36mawait[39m waitFor(() [33m=>[39m {
+     [90m    |[39m                  [31m[1m^[22m[39m
+     [90m 83 |[39m       expect(screen[33m.[39mgetByText([32m'Enterprise'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 84 |[39m       expect(screen[33m.[39mgetByText([32m'Shield Active'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m
+     [90m 85 |[39m       expect(screen[33m.[39mgetByText([32m'RQC Enabled'[39m))[33m.[39mtoBeInTheDocument()[33m;[39m[0m
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/components/widgets/__tests__/PlanStatusCard.test.jsx:82:18)
+
+  ● PlanStatusCard › calls user API endpoint on mount
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 1
+    Received number of calls: 2
+
+    [0m [90m  97 |[39m
+     [90m  98 |[39m     expect(fetch)[33m.[39mtoHaveBeenCalledWith([32m'/api/user'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m  99 |[39m     expect(fetch)[33m.[39mtoHaveBeenCalledTimes([35m1[39m)[33m;[39m
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 100 |[39m   })[33m;[39m
+     [90m 101 |[39m })[33m;[39m[0m
+
+      at Object.<anonymous> (src/components/widgets/__tests__/PlanStatusCard.test.jsx:99:19)
+
+PASS src/__tests__/routes.mock.test.js
+  ● Console
+
+    console.log
+      🤖 Frontend Tests: Complete mock mode enabled, all external APIs mocked
+
+      at Object.<anonymous> (src/setupTests.js:70:9)
+
+
+Test Suites: 5 failed, 4 passed, 9 total
+Tests:       16 failed, 65 passed, 81 total
+Snapshots:   0 total
+Time:        16.782 s
+Ran all test suites.

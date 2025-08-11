@@ -177,7 +177,7 @@ export default function StyleProfile() {
   };
 
   const handleDeleteProfile = async () => {
-    if (!confirm('Are you sure you want to delete your style profile? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete your style profile? This action cannot be undone.')) {
       return;
     }
 
