@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const QueueService = require('../services/queueService');
+const { mockMode } = require('../config/mockMode');
 
 /**
  * Base Worker Class for Roastr.ai Multi-Tenant Architecture
@@ -40,18 +41,30 @@ class BaseWorker {
    * Initialize database and queue connections
    */
   initializeConnections() {
-    // Supabase connection
-    this.supabaseUrl = process.env.SUPABASE_URL;
-    this.supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-    
-    if (!this.supabaseUrl || !this.supabaseKey) {
-      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY are required');
+    if (mockMode.isMockMode) {
+      // Use mock clients in mock mode
+      this.supabase = mockMode.generateMockSupabaseClient();
+      this.queueService = {
+        initialize: async () => {},
+        getNextJob: async () => null,
+        completeJob: async () => {},
+        failJob: async () => {},
+        shutdown: async () => {}
+      };
+    } else {
+      // Supabase connection
+      this.supabaseUrl = process.env.SUPABASE_URL;
+      this.supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+      
+      if (!this.supabaseUrl || !this.supabaseKey) {
+        throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY are required');
+      }
+      
+      this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+      
+      // Initialize unified queue service
+      this.queueService = new QueueService();
     }
-    
-    this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
-    
-    // Initialize unified queue service
-    this.queueService = new QueueService();
   }
   
   /**
@@ -134,6 +147,12 @@ class BaseWorker {
    * Test database and queue connections
    */
   async testConnections() {
+    if (mockMode.isMockMode) {
+      // Skip connection tests in mock mode
+      this.log('info', 'Skipping connection tests in mock mode');
+      return;
+    }
+    
     // Test Supabase connection
     const { error: dbError } = await this.supabase
       .from('organizations')

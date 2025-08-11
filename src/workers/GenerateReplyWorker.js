@@ -1,5 +1,6 @@
 const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
+const { mockMode } = require('../config/mockMode');
 
 /**
  * Generate Reply Worker
@@ -47,7 +48,10 @@ class GenerateReplyWorker extends BaseWorker {
    * Initialize OpenAI client
    */
   initializeOpenAI() {
-    if (process.env.OPENAI_API_KEY) {
+    if (mockMode.isMockMode) {
+      this.openai = mockMode.generateMockOpenAI();
+      this.openaiClient = this.openai;
+    } else if (process.env.OPENAI_API_KEY) {
       const { OpenAI } = require('openai');
       this.openaiClient = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
@@ -84,6 +88,7 @@ class GenerateReplyWorker extends BaseWorker {
       ]
     };
   }
+  
   
   /**
    * Process reply generation job
