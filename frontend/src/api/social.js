@@ -5,61 +5,13 @@
  * Set REACT_APP_ENABLE_MOCK_MODE=false to use real API calls
  */
 
-import { MOCK_ROASTS, MOCK_ACCOUNTS, MOCK_INTERCEPTED } from '../mocks/social';
-
-// Types
-export interface Roast {
-  id: string;
-  original: string;
-  roast: string;
-  createdAt: string;
-  status: 'pending' | 'approved' | 'rejected';
-}
-
-export interface InterceptedItem {
-  id: string;
-  category: string;
-  action: string;
-  preview: string;
-  originalHidden: string;
-  createdAt: string;
-}
-
-export interface Account {
-  id: string;
-  network: string;
-  handle: string;
-  status: 'active' | 'inactive';
-  monthlyRoasts: number;
-  settings: {
-    autoApprove: boolean;
-    shieldEnabled: boolean;
-    shieldLevel: number;
-    defaultTone: string;
-  };
-}
-
-export interface PaginationParams {
-  limit?: number;
-  cursor?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    hasMore: boolean;
-    nextCursor?: string;
-  };
-}
+import { MOCK_ROASTS, MOCK_INTERCEPTED } from '../mocks/social';
 
 // Mock delay for realistic behavior
-const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Roasts API
-export const getRoasts = async (
-  accountId: string, 
-  params: PaginationParams = {}
-): Promise<PaginatedResponse<Roast>> => {
+export const getRoasts = async (accountId, params = {}) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(300);
@@ -105,10 +57,7 @@ export const getRoasts = async (
   throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
-export const approveRoast = async (
-  accountId: string, 
-  roastId: string
-): Promise<{ success: boolean }> => {
+export const approveRoast = async (accountId, roastId) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(200);
@@ -142,10 +91,7 @@ export const approveRoast = async (
   throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
-export const rejectRoast = async (
-  accountId: string, 
-  roastId: string
-): Promise<{ success: boolean }> => {
+export const rejectRoast = async (accountId, roastId) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(200);
@@ -180,10 +126,7 @@ export const rejectRoast = async (
 };
 
 // Shield API
-export const getShieldIntercepted = async (
-  accountId: string, 
-  params: PaginationParams = {}
-): Promise<PaginatedResponse<InterceptedItem>> => {
+export const getShieldIntercepted = async (accountId, params = {}) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(300);
@@ -229,10 +172,7 @@ export const getShieldIntercepted = async (
   throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
-export const updateShieldSettings = async (
-  accountId: string, 
-  settings: { enabled?: boolean; threshold?: number }
-): Promise<{ success: boolean }> => {
+export const updateShieldSettings = async (accountId, settings) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(200);
@@ -268,14 +208,7 @@ export const updateShieldSettings = async (
 };
 
 // Account Settings API
-export const updateAccountSettings = async (
-  accountId: string, 
-  settings: { 
-    active?: boolean; 
-    autoApprove?: boolean; 
-    defaultTone?: string 
-  }
-): Promise<{ success: boolean }> => {
+export const updateAccountSettings = async (accountId, settings) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(300);
@@ -311,10 +244,7 @@ export const updateAccountSettings = async (
 };
 
 // Connection API
-export const connectNetwork = async (network: string): Promise<{ 
-  success: boolean; 
-  redirectUrl?: string 
-}> => {
+export const connectNetwork = async (network) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(500);
@@ -347,7 +277,7 @@ export const connectNetwork = async (network: string): Promise<{
   throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
-export const disconnectAccount = async (accountId: string): Promise<{ success: boolean }> => {
+export const disconnectAccount = async (accountId) => {
   if (isMockMode()) {
     // MOCK IMPLEMENTATION
     await delay(300);
@@ -382,12 +312,12 @@ export const disconnectAccount = async (accountId: string): Promise<{ success: b
 };
 
 // Utility functions for real API integration
-export const buildApiUrl = (endpoint: string): string => {
+export const buildApiUrl = (endpoint) => {
   const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
   return `${baseUrl}/api${endpoint}`;
 };
 
-export const getAuthHeaders = (): Record<string, string> => {
+export const getAuthHeaders = () => {
   const token = localStorage.getItem('auth_token');
   return {
     'Content-Type': 'application/json',
@@ -396,7 +326,7 @@ export const getAuthHeaders = (): Record<string, string> => {
 };
 
 // Mock mode check
-export const isMockMode = (): boolean => {
+export const isMockMode = () => {
   return process.env.REACT_APP_ENABLE_MOCK_MODE === 'true' || 
          process.env.NODE_ENV === 'test';
 };

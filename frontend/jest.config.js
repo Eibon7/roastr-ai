@@ -58,7 +58,7 @@ module.exports = {
       lines: 90,
       statements: 90
     },
-    './src/api/social.ts': {
+    './src/api/social.js': {
       branches: 70,
       functions: 100,
       lines: 75,
