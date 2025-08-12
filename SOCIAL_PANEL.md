@@ -192,13 +192,38 @@ npm run test:ci -- --coverage
 
 ## Backend Integration Guide
 
-### 1. Replace API Mock Implementation
+### 1. Environment Configuration
 
-Cambiar implementación interna en `src/api/social.ts`:
+**Development Mode (Mock):**
+```bash
+# frontend/.env.development
+REACT_APP_ENABLE_MOCK_MODE=true
+REACT_APP_API_URL=http://localhost:3001
+```
+
+**Production Mode (Real API):**
+```bash
+# frontend/.env.production
+REACT_APP_ENABLE_MOCK_MODE=false
+REACT_APP_API_URL=https://api.roastr.ai
+```
+
+### 2. API Integration Switch
+
+El SDK ahora incluye un switch automático basado en `REACT_APP_ENABLE_MOCK_MODE`:
 
 ```typescript
-// Actual implementation
 export const approveRoast = async (accountId: string, roastId: string) => {
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION - Current behavior
+    await delay(200);
+    console.log('🔗 [MOCK] approveRoast called', { accountId, roastId });
+    // ... mock logic
+    return { success: true };
+  }
+  
+  // REAL API IMPLEMENTATION - Ready to uncomment
+  /*
   const response = await fetch(buildApiUrl(`/social/accounts/${accountId}/roasts/${roastId}/approve`), {
     method: 'POST',
     headers: getAuthHeaders()
@@ -209,10 +234,22 @@ export const approveRoast = async (accountId: string, roastId: string) => {
   }
   
   return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 ```
 
-### 2. API Endpoints Needed
+### 3. Deployment Process
+
+**Para habilitar API real:**
+1. Uncommenta las implementaciones reales en `social.ts`
+2. Comenta/elimina los `throw new Error` statements
+3. Set `REACT_APP_ENABLE_MOCK_MODE=false`
+4. Deploy backend endpoints
+5. Update `REACT_APP_API_URL` in production env
+
+### 4. API Endpoints Needed
 
 ```
 POST   /api/social/accounts/{accountId}/roasts/{roastId}/approve
@@ -225,7 +262,7 @@ POST   /api/social/networks/{network}/connect
 DELETE /api/social/accounts/{accountId}
 ```
 
-### 3. Expected Response Format
+### 5. Expected Response Format
 
 ```javascript
 // Paginated responses
@@ -258,18 +295,38 @@ DELETE /api/social/accounts/{accountId}
 
 ## Deployment
 
-### Mock Mode (Current)
+### Mock Mode (Development)
 ```bash
-# Frontend build with mocks
-REACT_APP_ENABLE_MOCK_MODE=true npm run build
+# Frontend with mock data
+cd frontend
+REACT_APP_ENABLE_MOCK_MODE=true npm start
+
+# Frontend build with mocks for testing
+REACT_APP_ENABLE_MOCK_MODE=true npm run build:ci
 ```
 
-### Production Mode (Future)
+### Production Mode (Backend Integration Ready)
 ```bash
-# Frontend build with real API
+# Frontend build with real API (once backend is deployed)
+cd frontend
 REACT_APP_ENABLE_MOCK_MODE=false \
 REACT_APP_API_URL=https://api.roastr.ai \
+REACT_APP_SUPABASE_URL=https://your-project.supabase.co \
+REACT_APP_SUPABASE_ANON_KEY=your-production-anon-key \
 npm run build
 ```
 
-El panel está completamente funcional en mock mode y listo para integración backend sin cambios en los componentes UI.
+### Coverage & Testing
+```bash
+# Run tests with coverage
+cd frontend
+npm run test:ci
+
+# Coverage thresholds configured:
+# - Global: 85% lines, functions, statements; 80% branches  
+# - AccountModal: 90% lines, functions; 85% branches
+# - useSocialAccounts: 80% lines, statements, 90% functions, 75% branches
+# - social.ts API: 75% lines, statements, 100% functions, 70% branches
+```
+
+El panel está **100% funcional en mock mode** y listo para integración backend. Solo requiere uncommentar las implementaciones reales en `social.ts` y configurar las variables de entorno de producción.

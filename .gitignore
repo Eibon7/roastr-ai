@@ -26,5 +26,11 @@ Thumbs.db
 # Coverage reports (comentado para permitir subirlo en esta ocasión)
 # coverage/
 
+# Integration test reports and temporary files
+tests/integration/backend/reports/
+tests/integration/backend/temp/
+tests/integration/backend/fixtures/validation-report.json
+tests/integration/backend/fixtures/update-summary.json
+
 # Local configs
 *.local
