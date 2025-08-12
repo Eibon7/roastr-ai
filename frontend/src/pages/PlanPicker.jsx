@@ -30,6 +30,7 @@ export default function PlanPicker() {
   useEffect(() => {
     fetchPlansData();
     fetchCurrentPlan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPlansData = async () => {
