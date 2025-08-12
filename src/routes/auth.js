@@ -4,11 +4,34 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { handleSessionRefresh } = require('../middleware/sessionRefresh');
 const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
+const { flags } = require('../config/flags');
 
 const router = express.Router();
 
 // Apply rate limiting to authentication endpoints
 router.use(loginRateLimiter);
+
+/**
+ * GET /api/auth/config
+ * Get auth configuration and available features
+ */
+router.get('/config', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            features: {
+                magicLink: flags.isEnabled('ENABLE_MAGIC_LINK'),
+                passwordAuth: true, // Always available
+                socialAuth: false, // TODO: Add when implemented
+                emailVerification: true // Always available
+            },
+            providers: {
+                email: true,
+                magicLink: flags.isEnabled('ENABLE_MAGIC_LINK')
+            }
+        }
+    });
+});
 
 /**
  * POST /api/auth/register
@@ -82,6 +105,14 @@ router.post('/signup', async (req, res) => {
  * Register new user with magic link
  */
 router.post('/signup/magic-link', async (req, res) => {
+    // Check if magic link is enabled
+    if (!flags.isEnabled('ENABLE_MAGIC_LINK')) {
+        return res.status(404).json({
+            success: false,
+            error: 'Magic link authentication is currently disabled'
+        });
+    }
+
     try {
         const { email, name } = req.body;
         
@@ -166,6 +197,14 @@ router.post('/login', async (req, res) => {
  * Send magic link for passwordless login
  */
 router.post('/magic-link', async (req, res) => {
+    // Check if magic link is enabled
+    if (!flags.isEnabled('ENABLE_MAGIC_LINK')) {
+        return res.status(404).json({
+            success: false,
+            error: 'Magic link authentication is currently disabled'
+        });
+    }
+
     try {
         const { email } = req.body;
         
