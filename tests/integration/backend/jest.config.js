@@ -7,7 +7,7 @@ module.exports = {
   rootDir: path.resolve(__dirname, '../../../'),
   
   // Test environment
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
   
   // Only run integration tests from this directory
   testMatch: [
@@ -28,8 +28,11 @@ module.exports = {
   
   // Transform configuration
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest'
+    '^.+\\.[jt]sx?$': 'babel-jest'
   },
+  
+  // Transform ignore patterns - empty to transform everything
+  transformIgnorePatterns: [],
   
   // Environment variables for integration tests
   setupFiles: ['<rootDir>/tests/integration/backend/setup/envSetup.js'],
