@@ -1,6 +1,11 @@
 // Backend Integration Tests Jest Configuration
 
+const path = require('path');
+
 module.exports = {
+  // Root directory for all paths
+  rootDir: path.resolve(__dirname, '../../../'),
+  
   // Test environment
   testEnvironment: 'jsdom',
   
@@ -17,25 +22,43 @@ module.exports = {
   // Module resolution
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/frontend/src/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '^src/(.*)$': '<rootDir>/src/$1'
   },
   
-  // Transform configuration
+  // Transform configuration with better ES6 support
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest'
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', {
+      presets: [
+        ['@babel/preset-env', {
+          targets: { node: 'current' },
+          modules: 'commonjs'
+        }],
+        ['@babel/preset-react', { runtime: 'automatic' }]
+      ],
+      plugins: ['@babel/plugin-transform-modules-commonjs']
+    }]
   },
+  
+  // Environment variables for integration tests
+  setupFiles: ['<rootDir>/tests/integration/backend/setup/envSetup.js'],
   
   // Global timeout for integration tests
-  testTimeout: 30000,
+  testTimeout: parseInt(process.env.TEST_TIMEOUT) || 30000,
   
   // Coverage configuration for integration tests
   collectCoverageFrom: [
     'frontend/src/components/**/*.{js,jsx}',
     'frontend/src/hooks/**/*.{js,jsx}',
     'frontend/src/api/**/*.{js,jsx,ts,tsx}',
+    'frontend/src/pages/**/*.{js,jsx}',
+    'src/routes/**/*.{js}',
+    'src/services/**/*.{js}',
     '!frontend/src/**/*.d.ts',
     '!frontend/src/index.js',
-    '!frontend/src/setupTests.js'
+    '!frontend/src/setupTests.js',
+    '!**/node_modules/**',
+    '!**/coverage/**'
   ],
   
   coverageThreshold: {
@@ -58,7 +81,7 @@ module.exports = {
   reporters: [
     'default',
     ['jest-junit', {
-      outputDirectory: 'tests/integration/backend/reports',
+      outputDirectory: './tests/integration/backend/reports',
       outputName: 'integration-test-results.xml',
       suiteName: 'Backend Integration Tests'
     }]
@@ -66,5 +89,26 @@ module.exports = {
   
   // Additional configuration for backend integration
   globalSetup: '<rootDir>/tests/integration/backend/setup/globalSetup.js',
-  globalTeardown: '<rootDir>/tests/integration/backend/setup/globalTeardown.js'
+  globalTeardown: '<rootDir>/tests/integration/backend/setup/globalTeardown.js',
+  
+  // Handle ES6 modules and transformations
+  extensionsToTreatAsEsm: ['.jsx', '.ts', '.tsx'],
+  
+  // Ignore patterns
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/frontend/build/',
+    '/coverage/'
+  ],
+  
+  // Module file extensions
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json'],
+  
+  // Resolve modules
+  resolver: undefined,
+  
+  // Test environment options
+  testEnvironmentOptions: {
+    url: 'http://localhost'
+  }
 };

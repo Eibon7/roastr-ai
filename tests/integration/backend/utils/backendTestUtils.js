@@ -4,9 +4,8 @@
  * Utilities for setting up and managing backend integration tests
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import socialAPI from '../../../../frontend/src/api/social';
+const fs = require('fs').promises;
+const path = require('path');
 
 const FIXTURES_DIR = path.resolve(__dirname, '../fixtures');
 
@@ -14,32 +13,100 @@ const FIXTURES_DIR = path.resolve(__dirname, '../fixtures');
  * Setup real backend test environment
  * @returns {Object} Test context with authentication and cleanup info
  */
-export const setupRealBackendTest = async () => {
-  const isFixtureMode = process.env.USE_FIXTURES === 'true';
-  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const setupRealBackendTest = async () => {
+  const useBackendFixtures = process.env.USE_BACKEND_FIXTURES === 'true';
+  const enableMockMode = process.env.ENABLE_MOCK_MODE === 'true';
+  const fallbackEnabled = process.env.FALLBACK_TO_FIXTURES_ON_ERROR !== 'false';
+  const fallbackTimeout = parseInt(process.env.FALLBACK_TIMEOUT) || 5000;
+  
+  let apiUrl = process.env.API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:3001';
+  if (!apiUrl.includes('/api')) {
+    apiUrl = apiUrl.endsWith('/') ? `${apiUrl}api` : `${apiUrl}/api`;
+  }
   
   console.log(`🔧 Setting up backend integration tests`);
   console.log(`📡 API URL: ${apiUrl}`);
-  console.log(`📁 Fixture mode: ${isFixtureMode}`);
+  console.log(`📁 Use Backend Fixtures: ${useBackendFixtures}`);
+  console.log(`🎭 Mock Mode: ${enableMockMode}`);
+  console.log(`🔄 Fallback Enabled: ${fallbackEnabled}`);
+  
+  let actualMode = useBackendFixtures ? 'fixtures' : 'real';
+  let backendAccessible = false;
+  let healthCheckError = null;
   
   // Verify backend is accessible if not in fixture mode
-  if (!isFixtureMode) {
+  if (!useBackendFixtures && !enableMockMode) {
     try {
-      const response = await fetch(`${apiUrl}/api/health`);
+      console.log(`🔍 Checking backend health at ${apiUrl}/health...`);
+      
+      // Use Promise.race for timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Health check timeout after ${fallbackTimeout}ms`)), fallbackTimeout)
+      );
+      
+      const healthPromise = fetch(`${apiUrl}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const response = await Promise.race([healthPromise, timeoutPromise]);
+      
       if (!response.ok) {
-        throw new Error(`Backend health check failed: ${response.status}`);
+        throw new Error(`Backend health check failed: ${response.status} ${response.statusText}`);
       }
-      console.log(`✅ Backend is accessible at ${apiUrl}`);
+      
+      const healthData = await response.json();
+      console.log(`✅ Backend is accessible at ${apiUrl}`, healthData);
+      backendAccessible = true;
+      
     } catch (error) {
+      healthCheckError = error;
       console.warn(`⚠️  Backend not accessible: ${error.message}`);
-      console.log(`🔄 Falling back to fixture mode`);
-      process.env.USE_FIXTURES = 'true';
+      
+      if (fallbackEnabled) {
+        console.log(`🔄 Fallback enabled - switching to fixture mode`);
+        actualMode = 'fixtures';
+        process.env.USE_BACKEND_FIXTURES = 'true';
+      } else {
+        console.error(`❌ Fallback disabled - test will use unreachable backend`);
+        throw error;
+      }
     }
+  }
+
+  // Additional setup based on mode
+  let testUser = null;
+  if (actualMode === 'fixtures') {
+    // Setup fixture mode defaults
+    testUser = {
+      id: 'fixture-user-123',
+      email: 'testuser@fixture.example.com',
+      token: 'fixture-auth-token-123'
+    };
+    
+    // Mock localStorage if not available
+    if (typeof localStorage === 'undefined') {
+      global.localStorage = {
+        getItem: jest.fn(() => testUser.token),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn()
+      };
+    }
+    
+    localStorage.setItem('auth_token', testUser.token);
   }
 
   return {
     apiUrl,
-    isFixtureMode: process.env.USE_FIXTURES === 'true',
+    actualMode,
+    isFixtureMode: actualMode === 'fixtures',
+    useBackendFixtures: actualMode === 'fixtures',
+    enableMockMode,
+    backendAccessible,
+    healthCheckError,
+    fallbackEnabled,
+    testUser,
     testStartTime: Date.now(),
     createdResources: []
   };
@@ -49,7 +116,7 @@ export const setupRealBackendTest = async () => {
  * Cleanup after backend integration tests
  * @param {Object} testContext - Context from setupRealBackendTest
  */
-export const teardownRealBackendTest = async (testContext) => {
+const teardownRealBackendTest = async (testContext) => {
   console.log(`🧹 Cleaning up backend integration tests`);
   
   // Cleanup any created resources
@@ -73,7 +140,7 @@ export const teardownRealBackendTest = async (testContext) => {
  * Authenticate test user for backend requests
  * @param {Object} testContext - Test context
  */
-export const authenticateTestUser = async (testContext) => {
+const authenticateTestUser = async (testContext) => {
   if (testContext.isFixtureMode) {
     // Mock authentication for fixture mode
     localStorage.setItem('auth_token', 'fixture-mock-token');
@@ -116,41 +183,98 @@ export const authenticateTestUser = async (testContext) => {
 };
 
 /**
- * Load fixture data or fetch from real API
+ * Load fixture data or fetch from real API with intelligent fallback
  * @param {string} fixtureName - Name of fixture file
  * @param {Function} apiFetcher - Function to fetch real data
+ * @param {Object} testContext - Test context for mode determination
  * @returns {Object} Fixture or real API data
  */
-export const loadFixtureIfNeeded = async (fixtureName, apiFetcher) => {
-  const useFixtures = process.env.USE_FIXTURES === 'true';
+const loadFixtureIfNeeded = async (fixtureName, apiFetcher, testContext = null) => {
+  const useBackendFixtures = process.env.USE_BACKEND_FIXTURES === 'true' || 
+    (testContext && testContext.useBackendFixtures);
+  const fallbackEnabled = process.env.FALLBACK_TO_FIXTURES_ON_ERROR !== 'false';
   
-  if (useFixtures) {
+  console.log(`[INTEGRATION TEST] Loading data for: ${fixtureName}`);
+  console.log(`[INTEGRATION TEST] Mode: ${useBackendFixtures ? 'fixtures' : 'real backend'}`);
+  
+  // Try to load fixture first if in fixture mode
+  if (useBackendFixtures) {
     try {
       const fixturePath = path.join(FIXTURES_DIR, fixtureName);
       const fixtureContent = await fs.readFile(fixturePath, 'utf-8');
       const fixtureData = JSON.parse(fixtureContent);
       
+      // Add metadata to fixture data
+      fixtureData._testMetadata = {
+        source: 'fixture',
+        fixtureName,
+        loadedAt: new Date().toISOString(),
+        mode: 'backend_fixtures'
+      };
+      
       console.log(`📁 Loaded fixture: ${fixtureName}`);
       return fixtureData;
     } catch (error) {
       console.warn(`⚠️  Failed to load fixture ${fixtureName}: ${error.message}`);
+      
+      if (!fallbackEnabled) {
+        throw new Error(`Fixture ${fixtureName} not found and fallback disabled`);
+      }
+      
       console.log(`🔄 Falling back to real API`);
     }
   }
 
-  // Fetch from real API
+  // Fetch from real API (or fallback to real API from fixture failure)
   try {
+    console.log(`📡 Fetching real data for: ${fixtureName}`);
     const realData = await apiFetcher();
-    console.log(`📡 Fetched real data for: ${fixtureName}`);
+    
+    // Add metadata to real data
+    if (realData && typeof realData === 'object') {
+      realData._testMetadata = {
+        source: 'real_api',
+        fetchedAt: new Date().toISOString(),
+        mode: 'backend_real',
+        fallback: useBackendFixtures // Indicates if this was a fallback from fixture failure
+      };
+    }
+    
+    console.log(`✅ Fetched real data for: ${fixtureName}`);
     
     // Optionally update fixture if AUTO_UPDATE_FIXTURES is enabled
     if (process.env.AUTO_UPDATE_FIXTURES === 'true') {
+      console.log(`💾 Auto-updating fixture: ${fixtureName}`);
       await updateFixture(fixtureName, realData);
     }
     
     return realData;
   } catch (error) {
     console.error(`❌ Failed to fetch real data for ${fixtureName}: ${error.message}`);
+    
+    // Last resort - try fixture if we haven't already
+    if (!useBackendFixtures && fallbackEnabled) {
+      console.log(`🆘 Last resort - attempting fixture fallback for ${fixtureName}`);
+      try {
+        const fixturePath = path.join(FIXTURES_DIR, fixtureName);
+        const fixtureContent = await fs.readFile(fixturePath, 'utf-8');
+        const fixtureData = JSON.parse(fixtureContent);
+        
+        fixtureData._testMetadata = {
+          source: 'fixture_fallback',
+          fixtureName,
+          loadedAt: new Date().toISOString(),
+          mode: 'emergency_fallback',
+          originalError: error.message
+        };
+        
+        console.log(`🆘 Emergency fixture fallback successful: ${fixtureName}`);
+        return fixtureData;
+      } catch (fixtureError) {
+        console.error(`❌ Emergency fixture fallback failed: ${fixtureError.message}`);
+      }
+    }
+    
     throw error;
   }
 };
@@ -161,7 +285,7 @@ export const loadFixtureIfNeeded = async (fixtureName, apiFetcher) => {
  * @param {string} network - Social network type
  * @returns {Object} Created account data
  */
-export const createTestAccount = async (testContext, network = 'twitter') => {
+const createTestAccount = async (testContext, network = 'twitter') => {
   if (testContext.isFixtureMode) {
     // Return mock account for fixture mode
     return {
@@ -220,7 +344,7 @@ export const createTestAccount = async (testContext, network = 'twitter') => {
  * @param {string} fixtureName - Name of fixture file
  * @param {Object} data - Data to save to fixture
  */
-export const updateFixture = async (fixtureName, data) => {
+const updateFixture = async (fixtureName, data) => {
   try {
     const fixturePath = path.join(FIXTURES_DIR, fixtureName);
     const formattedData = JSON.stringify(data, null, 2);
@@ -265,7 +389,7 @@ const cleanupResource = async (resource) => {
  * @param {Function} queryFn - Function that queries for element
  * @param {number} timeout - Timeout in ms
  */
-export const waitForElementWithTimeout = async (queryFn, timeout = 10000) => {
+const waitForElementWithTimeout = async (queryFn, timeout = 10000) => {
   const startTime = Date.now();
   
   while (Date.now() - startTime < timeout) {
@@ -284,7 +408,7 @@ export const waitForElementWithTimeout = async (queryFn, timeout = 10000) => {
  * @param {string} type - Type of test data to generate
  * @param {Object} options - Generation options
  */
-export const generateTestData = (type, options = {}) => {
+const generateTestData = (type, options = {}) => {
   switch (type) {
     case 'roast':
       return {
@@ -318,7 +442,7 @@ export const generateTestData = (type, options = {}) => {
  * @param {Object} response - API response to validate
  * @param {string} expectedType - Expected response type
  */
-export const validateResponseSchema = (response, expectedType) => {
+const validateResponseSchema = (response, expectedType) => {
   // Common validations
   expect(response).toHaveProperty('success');
   expect(response).toHaveProperty('timestamp');
@@ -358,7 +482,7 @@ export const validateResponseSchema = (response, expectedType) => {
   }
 };
 
-export default {
+module.exports = {
   setupRealBackendTest,
   teardownRealBackendTest,
   authenticateTestUser,

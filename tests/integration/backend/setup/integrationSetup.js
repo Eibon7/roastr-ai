@@ -4,7 +4,8 @@
  * Setup configuration for backend integration tests
  */
 
-import '@testing-library/jest-dom';
+// Use require for Node.js compatibility
+require('@testing-library/jest-dom');
 
 // Mock console methods to reduce noise in integration tests
 const originalConsole = { ...console };

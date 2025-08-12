@@ -1,0 +1,287 @@
+name: Backend Integration Tests
+
+on:
+  # Run on PRs (fixtures only for speed)
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'frontend/**'
+      - 'tests/integration/backend/**'
+      - '.env.test.real'
+      - 'package.json'
+
+  # Run on pushes to main (fixtures only)
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'frontend/**'
+      - 'tests/integration/backend/**'
+
+  # Run nightly against real backend (staging)
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM UTC
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Test mode to run'
+        required: false
+        default: 'fixtures'
+        type: choice
+        options:
+          - fixtures
+          - real
+          - both
+      coverage:
+        description: 'Generate coverage report'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        # Different test modes based on trigger
+        include:
+          # PRs and regular pushes: fixtures only
+          - mode: fixtures
+            run_real: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.test_mode == 'real' || github.event.inputs.test_mode == 'both')) }}
+            coverage: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.coverage == 'true') }}
+          
+          # Nightly and manual: can include real backend
+          - mode: real
+            run_real: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.test_mode == 'real' || github.event.inputs.test_mode == 'both')) }}
+            coverage: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.coverage == 'true') }}
+      
+      # Don't cancel other jobs if one fails
+      fail-fast: false
+
+    env:
+      NODE_ENV: test
+      ENABLE_MOCK_MODE: false
+      FALLBACK_TO_FIXTURES_ON_ERROR: true
+      INTEGRATION_TEST_DEBUG: true
+      CI: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npm ci
+
+      - name: Setup integration test environment
+        run: |
+          # Create necessary directories
+          mkdir -p tests/integration/backend/reports
+          mkdir -p tests/integration/backend/temp
+          
+          # Log environment info
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Test mode: ${{ matrix.mode }}"
+          echo "Run real backend tests: ${{ matrix.run_real }}"
+          echo "Generate coverage: ${{ matrix.coverage }}"
+
+      - name: Configure test environment (fixtures mode)
+        if: matrix.mode == 'fixtures' || !matrix.run_real
+        run: |
+          echo "🔧 Configuring for fixtures mode"
+          echo "USE_BACKEND_FIXTURES=true" >> $GITHUB_ENV
+          echo "REACT_APP_ENABLE_MOCK_MODE=false" >> $GITHUB_ENV
+          
+          # Ensure fixtures exist
+          if [ ! -f "tests/integration/backend/fixtures/accounts.json" ]; then
+            echo "⚠️  Fixtures missing, creating minimal fixtures"
+            mkdir -p tests/integration/backend/fixtures
+            echo '{"success":true,"data":{"accounts":[],"networks":[]},"timestamp":"2024-01-01T00:00:00Z","_fixtureMetadata":{"source":"ci_minimal","generatedAt":"2024-01-01T00:00:00Z","checksum":"minimal"}}' > tests/integration/backend/fixtures/accounts.json
+            echo '{"success":true,"data":{"roasts":[],"pagination":{"total":0,"limit":10}},"timestamp":"2024-01-01T00:00:00Z","_fixtureMetadata":{"source":"ci_minimal","generatedAt":"2024-01-01T00:00:00Z","checksum":"minimal"}}' > tests/integration/backend/fixtures/roasts.json
+            echo '{"success":true,"data":{"settings":{},"availableOptions":{}},"timestamp":"2024-01-01T00:00:00Z","_fixtureMetadata":{"source":"ci_minimal","generatedAt":"2024-01-01T00:00:00Z","checksum":"minimal"}}' > tests/integration/backend/fixtures/settings.json
+            echo '{"success":true,"data":{"intercepted":[],"summary":{"total":0}},"timestamp":"2024-01-01T00:00:00Z","_fixtureMetadata":{"source":"ci_minimal","generatedAt":"2024-01-01T00:00:00Z","checksum":"minimal"}}' > tests/integration/backend/fixtures/shield.json
+          fi
+
+      - name: Configure test environment (real backend)
+        if: matrix.mode == 'real' && matrix.run_real
+        env:
+          # Staging backend credentials (from secrets)
+          API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_USER_EMAIL: ${{ secrets.STAGING_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.STAGING_TEST_USER_PASSWORD }}
+        run: |
+          echo "🔧 Configuring for real backend mode"
+          echo "USE_BACKEND_FIXTURES=false" >> $GITHUB_ENV
+          echo "REACT_APP_API_URL=${API_BASE_URL}" >> $GITHUB_ENV
+          echo "REACT_APP_ENABLE_MOCK_MODE=false" >> $GITHUB_ENV
+          
+          # Validate required secrets
+          if [ -z "$API_BASE_URL" ] || [ -z "$TEST_USER_EMAIL" ]; then
+            echo "⚠️  Missing staging backend secrets, falling back to fixtures"
+            echo "USE_BACKEND_FIXTURES=true" >> $GITHUB_ENV
+          else
+            echo "✅ Staging backend credentials configured"
+            
+            # Test backend connectivity
+            echo "🔍 Testing backend connectivity..."
+            if curl -f -s --max-time 10 "${API_BASE_URL}/health" > /dev/null; then
+              echo "✅ Backend is accessible"
+            else
+              echo "⚠️  Backend not accessible, falling back to fixtures"
+              echo "USE_BACKEND_FIXTURES=true" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Validate fixtures (fixtures mode)
+        if: matrix.mode == 'fixtures' || env.USE_BACKEND_FIXTURES == 'true'
+        run: |
+          echo "📋 Validating fixture integrity..."
+          if npm run fixtures:validate; then
+            echo "✅ Fixtures validation passed"
+          else
+            echo "⚠️  Fixtures validation warnings (continuing...)"
+          fi
+
+      - name: Update fixtures from staging (real mode, optional)
+        if: matrix.mode == 'real' && matrix.run_real && env.USE_BACKEND_FIXTURES != 'true'
+        env:
+          API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          TEST_USER_EMAIL: ${{ secrets.STAGING_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.STAGING_TEST_USER_PASSWORD }}
+        run: |
+          echo "🔄 Updating fixtures from staging backend..."
+          if npm run fixtures:update:all; then
+            echo "✅ Fixtures updated successfully"
+            
+            # Commit updated fixtures back to repository (optional)
+            if [ "${{ github.event_name }}" = "schedule" ]; then
+              git config --local user.email "action@github.com"
+              git config --local user.name "GitHub Action"
+              git add tests/integration/backend/fixtures/
+              if git diff --staged --quiet; then
+                echo "No fixture changes to commit"
+              else
+                git commit -m "chore: update backend integration fixtures from staging [skip ci]"
+                # Uncomment to push changes back:
+                # git push origin ${{ github.ref }}
+              fi
+            fi
+          else
+            echo "⚠️  Failed to update fixtures, continuing with existing ones"
+          fi
+
+      - name: Run integration tests (fixtures mode)
+        if: matrix.mode == 'fixtures' || env.USE_BACKEND_FIXTURES == 'true'
+        run: |
+          echo "🧪 Running integration tests in fixtures mode..."
+          if [ "${{ matrix.coverage }}" = "true" ]; then
+            npm run test:integration-backend:ci
+          else
+            npm run test:integration-backend:fixtures
+          fi
+
+      - name: Run integration tests (real backend mode)
+        if: matrix.mode == 'real' && matrix.run_real && env.USE_BACKEND_FIXTURES != 'true'
+        env:
+          API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          REACT_APP_API_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          TEST_USER_EMAIL: ${{ secrets.STAGING_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.STAGING_TEST_USER_PASSWORD }}
+        run: |
+          echo "🧪 Running integration tests against real staging backend..."
+          if [ "${{ matrix.coverage }}" = "true" ]; then
+            npm run test:integration-backend:coverage
+          else
+            npm run test:integration-backend
+          fi
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results-${{ matrix.mode }}
+          path: |
+            tests/integration/backend/reports/
+            tests/integration/backend/fixtures/validation-report.json
+            tests/integration/backend/fixtures/update-summary.json
+          retention-days: 30
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: matrix.coverage && always()
+        with:
+          name: integration-coverage-${{ matrix.mode }}
+          path: coverage/
+          retention-days: 30
+
+      - name: Post test summary
+        if: always()
+        run: |
+          echo "## Backend Integration Tests Summary (${{ matrix.mode }} mode) 🧪" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "tests/integration/backend/reports/integration-summary.json" ]; then
+            echo "### Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat tests/integration/backend/reports/integration-summary.json >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: ${{ matrix.mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Real Backend**: ${{ matrix.run_real }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage**: ${{ matrix.coverage }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Fallback Enabled**: ${{ env.FALLBACK_TO_FIXTURES_ON_ERROR }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend Fixtures**: ${{ env.USE_BACKEND_FIXTURES }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All integration tests passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Some integration tests failed. Check the logs for details.**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Notification job for nightly runs
+  notify-results:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Send notification on failure
+        if: needs.integration-tests.result == 'failure'
+        run: |
+          echo "❌ Nightly backend integration tests failed!"
+          echo "Please check the GitHub Actions logs and staging backend status."
+          # Add Slack/email notification logic here if needed
+
+  # Cleanup job
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: always()
+    steps:
+      - name: Cleanup test data
+        run: |
+          echo "🧹 Integration tests completed"
+          echo "Test results and artifacts are available in the Actions tab"

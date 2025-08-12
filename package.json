@@ -45,6 +45,13 @@
     "lint": "eslint . --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "jest tests/smoke/ --verbose",
+    "test:integration-backend": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=false npx jest --config=tests/integration/backend/jest.config.js --runInBand",
+    "test:integration-backend:fixtures": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=true npx jest --config=tests/integration/backend/jest.config.js --runInBand",
+    "test:integration-backend:coverage": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=false npx jest --config=tests/integration/backend/jest.config.js --coverage --runInBand",
+    "test:integration-backend:watch": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=true npx jest --config=tests/integration/backend/jest.config.js --watch",
+    "fixtures:update:all": "node tests/integration/backend/utils/update-backend-fixtures.js",
+    "fixtures:validate": "node tests/integration/backend/utils/validate-fixtures.js",
+    "test:integration-backend:ci": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=true CI=true npx jest --config=tests/integration/backend/jest.config.js --runInBand --ci --coverage",
     "changelog:add": "node scripts/add-changelog.js",
     "admin:setup": "node scripts/setup-admin.js",
     "admin:list": "node scripts/setup-admin.js --list"
