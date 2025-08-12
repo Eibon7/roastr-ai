@@ -7,11 +7,16 @@ module.exports = {
   testMatch: [
     '<rootDir>/tests/smoke/**/*.test.js',
     '<rootDir>/tests/unit/routes/user.test.js',
-    '<rootDir>/tests/unit/routes/billing.test.js', 
+    '<rootDir>/tests/unit/routes/user-extended.test.js',
+    '<rootDir>/tests/unit/routes/billing.test.js',
+    '<rootDir>/tests/unit/routes/billing-simple.test.js',
     '<rootDir>/tests/unit/routes/plan.test.js',
+    '<rootDir>/tests/unit/routes/plan-extended.test.js',
     '<rootDir>/tests/unit/routes/dashboard.test.js',
+    '<rootDir>/tests/unit/routes/auth-edge-cases.test.js',
     '<rootDir>/tests/unit/middleware/requirePlan.test.js',
     '<rootDir>/tests/unit/middleware/isAdmin.test.js',
+    '<rootDir>/tests/unit/middleware/security.test.js',
     '<rootDir>/tests/unit/config/**/*.test.js',
     '<rootDir>/tests/unit/frontend/**/*.test.js'
   ],

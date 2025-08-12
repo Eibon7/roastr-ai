@@ -40,10 +40,29 @@ module.exports = {
   // Coverage thresholds
   coverageThreshold: {
     global: {
+      branches: 80,
+      functions: 85,
+      lines: 85,
+      statements: 85
+    },
+    // Specific thresholds for social networks components
+    './src/hooks/useSocialAccounts.js': {
       branches: 75,
-      functions: 80,
+      functions: 90,
       lines: 80,
       statements: 80
+    },
+    './src/components/AccountModal.js': {
+      branches: 85,
+      functions: 90,
+      lines: 90,
+      statements: 90
+    },
+    './src/api/social.ts': {
+      branches: 70,
+      functions: 100,
+      lines: 75,
+      statements: 75
     }
   },
   

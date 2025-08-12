@@ -1,8 +1,8 @@
 /**
  * Social Networks API SDK
  * 
- * Mock implementation ready for backend integration
- * Replace internal implementations with actual API calls when backend is ready
+ * Hybrid implementation with mock mode switch
+ * Set REACT_APP_ENABLE_MOCK_MODE=false to use real API calls
  */
 
 import { MOCK_ROASTS, MOCK_ACCOUNTS, MOCK_INTERCEPTED } from '../mocks/social';
@@ -60,61 +60,123 @@ export const getRoasts = async (
   accountId: string, 
   params: PaginationParams = {}
 ): Promise<PaginatedResponse<Roast>> => {
-  await delay(300);
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(300);
+    
+    console.log('🔗 [MOCK] getRoasts called', { accountId, params });
+    
+    const roasts = MOCK_ROASTS[accountId] || [];
+    const limit = params.limit || 10;
+    const startIndex = params.cursor ? parseInt(params.cursor) : 0;
+    const endIndex = startIndex + limit;
+    
+    const pageData = roasts.slice(startIndex, endIndex);
+    const hasMore = endIndex < roasts.length;
+    
+    return {
+      data: pageData,
+      pagination: {
+        hasMore,
+        nextCursor: hasMore ? endIndex.toString() : undefined
+      }
+    };
+  }
   
-  console.log('🔗 [MOCK] getRoasts called', { accountId, params });
+  // REAL API IMPLEMENTATION
+  /* 
+  const url = buildApiUrl(`/social/accounts/${accountId}/roasts`);
+  const queryParams = new URLSearchParams();
+  if (params.limit) queryParams.append('limit', params.limit.toString());
+  if (params.cursor) queryParams.append('cursor', params.cursor);
   
-  const roasts = MOCK_ROASTS[accountId] || [];
-  const limit = params.limit || 10;
-  const startIndex = params.cursor ? parseInt(params.cursor) : 0;
-  const endIndex = startIndex + limit;
+  const response = await fetch(`${url}?${queryParams}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
   
-  const pageData = roasts.slice(startIndex, endIndex);
-  const hasMore = endIndex < roasts.length;
+  if (!response.ok) {
+    throw new Error(`Failed to fetch roasts: ${response.statusText}`);
+  }
   
-  return {
-    data: pageData,
-    pagination: {
-      hasMore,
-      nextCursor: hasMore ? endIndex.toString() : undefined
-    }
-  };
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 export const approveRoast = async (
   accountId: string, 
   roastId: string
 ): Promise<{ success: boolean }> => {
-  await delay(200);
-  
-  console.log('🔗 [MOCK] approveRoast called', { accountId, roastId });
-  
-  // Simulate success/failure (95% success rate)
-  const success = Math.random() > 0.05;
-  
-  if (!success) {
-    throw new Error('Failed to approve roast - network error');
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(200);
+    
+    console.log('🔗 [MOCK] approveRoast called', { accountId, roastId });
+    
+    // Simulate success/failure (95% success rate)
+    const success = Math.random() > 0.05;
+    
+    if (!success) {
+      throw new Error('Failed to approve roast - network error');
+    }
+    
+    return { success: true };
   }
   
-  return { success: true };
+  // REAL API IMPLEMENTATION
+  /*
+  const response = await fetch(buildApiUrl(`/social/accounts/${accountId}/roasts/${roastId}/approve`), {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to approve roast: ${response.statusText}`);
+  }
+  
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 export const rejectRoast = async (
   accountId: string, 
   roastId: string
 ): Promise<{ success: boolean }> => {
-  await delay(200);
-  
-  console.log('🔗 [MOCK] rejectRoast called', { accountId, roastId });
-  
-  // Simulate success/failure (95% success rate)
-  const success = Math.random() > 0.05;
-  
-  if (!success) {
-    throw new Error('Failed to reject roast - network error');
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(200);
+    
+    console.log('🔗 [MOCK] rejectRoast called', { accountId, roastId });
+    
+    // Simulate success/failure (95% success rate)
+    const success = Math.random() > 0.05;
+    
+    if (!success) {
+      throw new Error('Failed to reject roast - network error');
+    }
+    
+    return { success: true };
   }
   
-  return { success: true };
+  // REAL API IMPLEMENTATION
+  /*
+  const response = await fetch(buildApiUrl(`/social/accounts/${accountId}/roasts/${roastId}/reject`), {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to reject roast: ${response.statusText}`);
+  }
+  
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 // Shield API
@@ -122,43 +184,87 @@ export const getShieldIntercepted = async (
   accountId: string, 
   params: PaginationParams = {}
 ): Promise<PaginatedResponse<InterceptedItem>> => {
-  await delay(300);
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(300);
+    
+    console.log('🔗 [MOCK] getShieldIntercepted called', { accountId, params });
+    
+    const intercepted = MOCK_INTERCEPTED[accountId] || [];
+    const limit = params.limit || 10;
+    const startIndex = params.cursor ? parseInt(params.cursor) : 0;
+    const endIndex = startIndex + limit;
+    
+    const pageData = intercepted.slice(startIndex, endIndex);
+    const hasMore = endIndex < intercepted.length;
+    
+    return {
+      data: pageData,
+      pagination: {
+        hasMore,
+        nextCursor: hasMore ? endIndex.toString() : undefined
+      }
+    };
+  }
   
-  console.log('🔗 [MOCK] getShieldIntercepted called', { accountId, params });
+  // REAL API IMPLEMENTATION
+  /*
+  const url = buildApiUrl(`/social/accounts/${accountId}/shield/intercepted`);
+  const queryParams = new URLSearchParams();
+  if (params.limit) queryParams.append('limit', params.limit.toString());
+  if (params.cursor) queryParams.append('cursor', params.cursor);
   
-  const intercepted = MOCK_INTERCEPTED[accountId] || [];
-  const limit = params.limit || 10;
-  const startIndex = params.cursor ? parseInt(params.cursor) : 0;
-  const endIndex = startIndex + limit;
+  const response = await fetch(`${url}?${queryParams}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
   
-  const pageData = intercepted.slice(startIndex, endIndex);
-  const hasMore = endIndex < intercepted.length;
+  if (!response.ok) {
+    throw new Error(`Failed to fetch intercepted items: ${response.statusText}`);
+  }
   
-  return {
-    data: pageData,
-    pagination: {
-      hasMore,
-      nextCursor: hasMore ? endIndex.toString() : undefined
-    }
-  };
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 export const updateShieldSettings = async (
   accountId: string, 
   settings: { enabled?: boolean; threshold?: number }
 ): Promise<{ success: boolean }> => {
-  await delay(200);
-  
-  console.log('🔗 [MOCK] updateShieldSettings called', { accountId, settings });
-  
-  // Simulate success/failure (98% success rate)
-  const success = Math.random() > 0.02;
-  
-  if (!success) {
-    throw new Error('Failed to update shield settings - server error');
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(200);
+    
+    console.log('🔗 [MOCK] updateShieldSettings called', { accountId, settings });
+    
+    // Simulate success/failure (98% success rate)
+    const success = Math.random() > 0.02;
+    
+    if (!success) {
+      throw new Error('Failed to update shield settings - server error');
+    }
+    
+    return { success: true };
   }
   
-  return { success: true };
+  // REAL API IMPLEMENTATION
+  /*
+  const response = await fetch(buildApiUrl(`/social/accounts/${accountId}/shield/settings`), {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(settings)
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to update shield settings: ${response.statusText}`);
+  }
+  
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 // Account Settings API
@@ -170,18 +276,38 @@ export const updateAccountSettings = async (
     defaultTone?: string 
   }
 ): Promise<{ success: boolean }> => {
-  await delay(300);
-  
-  console.log('🔗 [MOCK] updateAccountSettings called', { accountId, settings });
-  
-  // Simulate success/failure (98% success rate)  
-  const success = Math.random() > 0.02;
-  
-  if (!success) {
-    throw new Error('Failed to update account settings - server error');
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(300);
+    
+    console.log('🔗 [MOCK] updateAccountSettings called', { accountId, settings });
+    
+    // Simulate success/failure (98% success rate)  
+    const success = Math.random() > 0.02;
+    
+    if (!success) {
+      throw new Error('Failed to update account settings - server error');
+    }
+    
+    return { success: true };
   }
   
-  return { success: true };
+  // REAL API IMPLEMENTATION
+  /*
+  const response = await fetch(buildApiUrl(`/social/accounts/${accountId}/settings`), {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(settings)
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to update account settings: ${response.statusText}`);
+  }
+  
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 // Connection API
@@ -189,32 +315,70 @@ export const connectNetwork = async (network: string): Promise<{
   success: boolean; 
   redirectUrl?: string 
 }> => {
-  await delay(500);
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(500);
+    
+    console.log('🔗 [MOCK] connectNetwork called', { network });
+    
+    // Simulate OAuth redirect URL
+    const redirectUrl = `https://oauth.${network}.com/authorize?client_id=mock&redirect_uri=http://localhost:3000/auth/callback&state=${network}`;
+    
+    return { 
+      success: true, 
+      redirectUrl 
+    };
+  }
   
-  console.log('🔗 [MOCK] connectNetwork called', { network });
+  // REAL API IMPLEMENTATION
+  /*
+  const response = await fetch(buildApiUrl(`/social/networks/${network}/connect`), {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
   
-  // Simulate OAuth redirect URL
-  const redirectUrl = `https://oauth.${network}.com/authorize?client_id=mock&redirect_uri=http://localhost:3000/auth/callback&state=${network}`;
+  if (!response.ok) {
+    throw new Error(`Failed to connect ${network}: ${response.statusText}`);
+  }
   
-  return { 
-    success: true, 
-    redirectUrl 
-  };
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 export const disconnectAccount = async (accountId: string): Promise<{ success: boolean }> => {
-  await delay(300);
-  
-  console.log('🔗 [MOCK] disconnectAccount called', { accountId });
-  
-  // Simulate success/failure (99% success rate)
-  const success = Math.random() > 0.01;
-  
-  if (!success) {
-    throw new Error('Failed to disconnect account - server error');
+  if (isMockMode()) {
+    // MOCK IMPLEMENTATION
+    await delay(300);
+    
+    console.log('🔗 [MOCK] disconnectAccount called', { accountId });
+    
+    // Simulate success/failure (99% success rate)
+    const success = Math.random() > 0.01;
+    
+    if (!success) {
+      throw new Error('Failed to disconnect account - server error');
+    }
+    
+    return { success: true };
   }
   
-  return { success: true };
+  // REAL API IMPLEMENTATION
+  /*
+  const response = await fetch(buildApiUrl(`/social/accounts/${accountId}`), {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to disconnect account: ${response.statusText}`);
+  }
+  
+  return response.json();
+  */
+  
+  throw new Error('Real API not implemented yet - set REACT_APP_ENABLE_MOCK_MODE=true');
 };
 
 // Utility functions for real API integration
