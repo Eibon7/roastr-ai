@@ -28,7 +28,7 @@ module.exports = {
   
   // Transform configuration
   transform: {
-    '^.+\\.[jt]sx?$': 'babel-jest'
+    '^.+\\.[jt]sx?$': ['babel-jest', { rootMode: 'upward' }]
   },
   
   // Transform ignore patterns - empty to transform everything
