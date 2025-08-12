@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Case sensitivity guard - lint frontend for import issues
+echo "🔍 Checking frontend for case-sensitive import issues..."
+cd frontend && npm run lint:check
+
+# Quick frontend build check to catch case sensitivity and other issues
+echo "🏗️ Running quick frontend build check..."
+cd frontend && npm run build:ci --silent
+
+echo "✅ Pre-commit checks passed!"

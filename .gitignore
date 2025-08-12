@@ -11,6 +11,7 @@ logs/
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
+.env.test.real
 
 # Build and cache
 dist/

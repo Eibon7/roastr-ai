@@ -1,0 +1,115 @@
+name: Build Check & Case Sensitivity
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - 'src/**'
+      - 'package.json'
+      - 'frontend/package.json'
+  
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - 'src/**'
+      - 'package.json'
+      - 'frontend/package.json'
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies  
+        run: cd frontend && npm ci
+
+      - name: 🔍 File structure analysis (Linux case-sensitive view)
+        run: |
+          echo "📁 Frontend pages directory structure:"
+          ls -la frontend/src/pages/ || true
+          echo ""
+          echo "📁 Frontend components directory structure:"  
+          ls -la frontend/src/components/ || true
+          echo ""
+          echo "🔍 Git-tracked files in pages:"
+          git ls-files frontend/src/pages/ || true
+
+      - name: 🔍 Frontend lint check (case sensitivity validation)
+        run: |
+          echo "🔍 Running ESLint with case sensitivity checks..."
+          cd frontend && npm run lint:check
+
+      - name: 🏗️ Frontend build check
+        run: |
+          echo "🏗️ Running frontend build to catch case sensitivity issues..."
+          cd frontend && npm run build:ci
+          echo "✅ Frontend build completed successfully!"
+
+      - name: 🔍 Backend smoke test
+        run: |
+          echo "🧪 Running backend smoke tests..."
+          npm run test:smoke
+
+      - name: ✅ Build validation summary
+        if: always()
+        run: |
+          echo "## Build Check Results 🏗️" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ **All builds passed successfully!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Case sensitivity validation passed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Frontend lint checks passed" >> $GITHUB_STEP_SUMMARY  
+            echo "- ✅ Frontend build completed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Backend smoke tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Build checks failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Common fixes for case sensitivity issues:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Check that import paths match exact filenames" >> $GITHUB_STEP_SUMMARY
+            echo "2. Ensure directories are lowercase (pages, components)" >> $GITHUB_STEP_SUMMARY
+            echo "3. Verify component files use PascalCase (Component.jsx)" >> $GITHUB_STEP_SUMMARY
+            echo "4. See [NAMING_CONVENTIONS.md](./NAMING_CONVENTIONS.md) for details" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  lint-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: 🔍 Backend lint check
+        run: |
+          echo "🔍 Running backend ESLint..."
+          npm run lint
+
+      - name: 🔍 Frontend lint check
+        run: |
+          echo "🔍 Running frontend ESLint with case sensitivity..."
+          cd frontend && npm ci
+          cd frontend && npm run lint:check
