@@ -211,11 +211,11 @@ export const useSocialAccounts = () => {
     // Optimistic update - remove account and clean up associated data
     setAccounts(prev => prev.filter(account => account.id !== accountId));
     setRoastsData(prev => {
-      const { [accountId]: removed, ...rest } = prev;
+      const { [accountId]: _removed, ...rest } = prev;
       return rest;
     });
     setInterceptedData(prev => {
-      const { [accountId]: removed, ...rest } = prev;
+      const { [accountId]: _removed, ...rest } = prev;
       return rest;
     });
 
