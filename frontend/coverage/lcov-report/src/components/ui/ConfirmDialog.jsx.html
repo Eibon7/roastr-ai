@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>18/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">94.73% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>18/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>17/17</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -166,36 +166,36 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -244,46 +244,46 @@ import { X, AlertTriangle } from 'lucide-react';
 import { Button } from './button';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 &nbsp;
-export function <span class="fstat-no" title="function not covered" >ConfirmDialog(</span>{ 
+export function ConfirmDialog({ 
   open, 
   onConfirm, 
   onCancel, 
-  title = <span class="branch-0 cbranch-no" title="branch not covered" >"Confirm Action",</span>
-  message = <span class="branch-0 cbranch-no" title="branch not covered" >"Are you sure you want to proceed?",</span>
-  confirmText = <span class="branch-0 cbranch-no" title="branch not covered" >"Confirm",</span>
-  cancelText = <span class="branch-0 cbranch-no" title="branch not covered" >"Cancel",</span>
-  variant = <span class="branch-0 cbranch-no" title="branch not covered" >"default" </span>// default, danger
+  title = "Confirm Action",
+  message = "Are you sure you want to proceed?",
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  variant = "default" // default, danger
 }) {
-  const handleBackdropClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (e.target === e.currentTarget) {</span>
-<span class="cstat-no" title="statement not covered" >      onCancel();</span>
+  const handleBackdropClick = (e) =&gt; {
+    if (e.target === e.currentTarget) {
+      onCancel();
     }
   };
 &nbsp;
-  const handleKeyDown = <span class="cstat-no" title="statement not covered" >React.useCallback(<span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (e.key === 'Escape') {</span>
-<span class="cstat-no" title="statement not covered" >      onCancel();</span>
+  const handleKeyDown = React.useCallback((e) =&gt; {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (e.key === 'Escape') {
+      onCancel();
     }
   }, [onCancel]);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  React.useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (open) {</span>
-<span class="cstat-no" title="statement not covered" >      document.addEventListener('keydown', handleKeyDown);</span>
-<span class="cstat-no" title="statement not covered" >      document.body.style.overflow = 'hidden';</span>
-<span class="cstat-no" title="statement not covered" >      return <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        document.removeEventListener('keydown', handleKeyDown);</span>
-<span class="cstat-no" title="statement not covered" >        document.body.style.overflow = 'unset';</span>
+  React.useEffect(() =&gt; {
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      return () =&gt; {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'unset';
       };
     } else {
-<span class="cstat-no" title="statement not covered" >      document.body.style.overflow = 'unset';</span>
+      document.body.style.overflow = 'unset';
     }
   }, [open, handleKeyDown]);
 &nbsp;
-  const isDanger = <span class="cstat-no" title="statement not covered" >variant === 'danger';</span>
+  const isDanger = variant === 'danger';
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  if (!open) <span class="cstat-no" title="statement not covered" >return null;</span></span>
+  if (!open) return null;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       onClick={handleBackdropClick}
@@ -334,7 +334,7 @@ export default ConfirmDialog;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-12T11:53:51.997Z
+                at 2025-08-12T13:33:36.774Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

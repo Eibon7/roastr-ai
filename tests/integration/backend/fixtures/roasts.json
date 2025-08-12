@@ -1,0 +1,120 @@
+{
+  "success": true,
+  "data": {
+    "roasts": [
+      {
+        "id": "roast_staging_1",
+        "accountId": "acc_tw_staging_1",
+        "original": "Tu código es una basura completa, no sirve para nada",
+        "roast": "Mi código será basura, pero al menos compila. El tuyo tiene más bugs que un hotel de una estrella.",
+        "tone": "Comico",
+        "toxicityScore": 0.85,
+        "language": "es",
+        "createdAt": "2024-02-01T14:15:00Z",
+        "status": "approved",
+        "approvedAt": "2024-02-01T14:16:30Z",
+        "approvedBy": "auto",
+        "metrics": {
+          "likes": 45,
+          "retweets": 12,
+          "replies": 8,
+          "impressions": 1250
+        },
+        "source": {
+          "platform": "twitter",
+          "postId": "1750123456789",
+          "authorHandle": "@angry_dev_123",
+          "context": "Code review comment"
+        }
+      },
+      {
+        "id": "roast_staging_2",
+        "accountId": "acc_tw_staging_2",
+        "original": "This is the worst API design I've ever seen in my life",
+        "roast": "Thanks for the feedback! I designed it thinking of you - simple enough that even critics can understand it.",
+        "tone": "Sarcástico",
+        "toxicityScore": 0.72,
+        "language": "en",
+        "createdAt": "2024-02-01T13:45:00Z",
+        "status": "pending",
+        "approvedAt": null,
+        "approvedBy": null,
+        "metrics": null,
+        "source": {
+          "platform": "twitter",
+          "postId": "1750987654321",
+          "authorHandle": "@api_critic",
+          "context": "Documentation comment"
+        }
+      },
+      {
+        "id": "roast_staging_3", 
+        "accountId": "acc_tw_staging_2",
+        "original": "Your startup is going to fail miserably",
+        "roast": "Probably, but at least I'll fail with style. Your negativity suggests you're already succeeding at that.",
+        "tone": "Sarcástico",
+        "toxicityScore": 0.78,
+        "language": "en",
+        "createdAt": "2024-02-01T12:30:00Z",
+        "status": "rejected",
+        "rejectedAt": "2024-02-01T12:35:00Z",
+        "rejectedBy": "manual",
+        "rejectionReason": "Too harsh for brand voice",
+        "metrics": null,
+        "source": {
+          "platform": "twitter",
+          "postId": "1750555666777",
+          "authorHandle": "@pessimist_startup",
+          "context": "Product launch announcement"
+        }
+      },
+      {
+        "id": "roast_staging_4",
+        "accountId": "acc_ig_staging_1",
+        "original": "Esta foto está horrible, pareces un zombie",
+        "roast": "Gracias por el piropo. Al menos los zombies tienen más vida social que los trolls de Instagram.",
+        "tone": "Seco",
+        "toxicityScore": 0.68,
+        "language": "es",
+        "createdAt": "2024-01-30T16:20:00Z",
+        "status": "approved",
+        "approvedAt": "2024-01-30T16:45:00Z",
+        "approvedBy": "manual",
+        "metrics": {
+          "likes": 23,
+          "comments": 5,
+          "shares": 2,
+          "impressions": 890
+        },
+        "source": {
+          "platform": "instagram",
+          "postId": "ig_post_123456",
+          "authorHandle": "@photo_critic_es",
+          "context": "Profile photo comment"
+        }
+      }
+    ],
+    "pagination": {
+      "total": 4,
+      "limit": 10,
+      "offset": 0,
+      "hasMore": false,
+      "nextCursor": null
+    },
+    "filters": {
+      "applied": {
+        "status": null,
+        "tone": null,
+        "language": null,
+        "dateRange": "last_7_days"
+      },
+      "available": {
+        "statuses": ["pending", "approved", "rejected"],
+        "tones": ["Comico", "Sarcástico", "Seco", "Afilado"],
+        "languages": ["es", "en"],
+        "dateRanges": ["today", "last_7_days", "last_30_days", "all"]
+      }
+    }
+  },
+  "timestamp": "2024-02-01T15:30:00Z"
+}

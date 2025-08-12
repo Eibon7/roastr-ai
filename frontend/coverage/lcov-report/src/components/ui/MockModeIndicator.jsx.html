@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">58.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>7/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -98,17 +98,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -129,24 +129,24 @@
 import { Badge } from './badge';
 import { isMockModeEnabled } from '../../lib/mockMode';
 &nbsp;
-const MockModeIndicator = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({ </span></span>
+const MockModeIndicator = ({ 
   size = <span class="branch-0 cbranch-no" title="branch not covered" >'sm', </span>
-  className = <span class="branch-0 cbranch-no" title="branch not covered" >'', </span>
-  showOnMobile = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
-  tooltip = <span class="branch-0 cbranch-no" title="branch not covered" >'Using mock data - no external APIs required'</span>
+  className = '', 
+  showOnMobile = false,
+  tooltip = 'Using mock data - no external APIs required'
 }) =&gt; {
-<span class="cstat-no" title="statement not covered" >  if (!isMockModeEnabled()) {</span>
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!isMockModeEnabled()) {
 <span class="cstat-no" title="statement not covered" >    return null;</span>
   }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;div className={`${className} ${!showOnMobile ? 'hidden sm:block' : ''}`}&gt;
+  return (
+    &lt;div className={`${className} ${!showOnMobile ? 'hidden sm:block' : <span class="branch-1 cbranch-no" title="branch not covered" >''}</span>`}&gt;
       &lt;Badge 
         variant="outline" 
         className={`
           bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100
-          ${size === 'xs' ? 'text-xs px-1.5 py-0.5' : ''}
-          ${size === 'sm' ? 'text-xs px-2 py-1' : ''}
+          ${size === 'xs' ? 'text-xs px-1.5 py-0.5' : <span class="branch-1 cbranch-no" title="branch not covered" >''}</span>
+          ${size === 'sm' ? <span class="branch-0 cbranch-no" title="branch not covered" >'text-xs px-2 py-1' </span>: ''}
         `}
         title={tooltip}
       &gt;
@@ -163,7 +163,7 @@ export default MockModeIndicator;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-12T11:53:51.997Z
+                at 2025-08-12T13:33:36.774Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

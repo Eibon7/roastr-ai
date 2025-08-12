@@ -19,6 +19,11 @@
     "build:ci": "CI=false GENERATE_SOURCEMAP=false REACT_APP_SUPABASE_URL=http://localhost/mock REACT_APP_SUPABASE_ANON_KEY=mock react-scripts build",
     "test": "REACT_APP_ENABLE_MOCK_MODE=true react-scripts test",
     "test:ci": "REACT_APP_ENABLE_MOCK_MODE=true CI=true react-scripts test --watchAll=false --coverage --testTimeout=30000",
+    "test:integration-backend": "REACT_APP_ENABLE_MOCK_MODE=false USE_FIXTURES=false react-scripts test tests/integration/backend --watchAll=false --verbose --testTimeout=30000",
+    "test:integration-backend:fixtures": "REACT_APP_ENABLE_MOCK_MODE=false USE_FIXTURES=true react-scripts test tests/integration/backend --watchAll=false --verbose --testTimeout=15000",
+    "test:integration-backend:coverage": "REACT_APP_ENABLE_MOCK_MODE=false USE_FIXTURES=true react-scripts test tests/integration/backend --watchAll=false --coverage --testTimeout=30000",
+    "fixtures:update": "node ../scripts/update-backend-fixtures.js",
+    "fixtures:update:all": "node ../scripts/update-backend-fixtures.js --all",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

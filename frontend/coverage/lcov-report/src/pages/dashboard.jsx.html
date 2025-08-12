@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">71.42% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>5/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">71.42% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>5/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -103,30 +103,30 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">42x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -138,8 +138,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from 'react';
 import { WIDGETS, DEFAULT_LAYOUT, WIDGET_CONFIGS } from '../components/widgets';
 &nbsp;
-export default function <span class="fstat-no" title="function not covered" >Dashboard(</span>) {
-<span class="cstat-no" title="statement not covered" >  return (</span>
+export default function Dashboard() {
+  return (
     &lt;div className="space-y-6"&gt;
       {/* Dashboard Header */}
       &lt;div className="flex items-center justify-between"&gt;
@@ -153,17 +153,17 @@ export default function <span class="fstat-no" title="function not covered" >Das
 &nbsp;
       {/* Widgets Grid */}
       &lt;div className="grid grid-cols-1 md:grid-cols-3 gap-4"&gt;
-        {DEFAULT_LAYOUT.map(<span class="fstat-no" title="function not covered" >(w</span>idgetKey) =&gt; {
-          const WidgetComponent = <span class="cstat-no" title="statement not covered" >WIDGETS[widgetKey];</span>
-          const config = <span class="cstat-no" title="statement not covered" >WIDGET_CONFIGS[widgetKey];</span>
+        {DEFAULT_LAYOUT.map((widgetKey) =&gt; {
+          const WidgetComponent = WIDGETS[widgetKey];
+          const config = WIDGET_CONFIGS[widgetKey];
           
-<span class="cstat-no" title="statement not covered" >          if (!WidgetComponent) {</span>
+          <span class="missing-if-branch" title="if path not taken" >I</span>if (!WidgetComponent) {
 <span class="cstat-no" title="statement not covered" >            console.warn(`Widget '${widgetKey}' not found`);</span>
 <span class="cstat-no" title="statement not covered" >            return null;</span>
           }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >          return (</span>
-            &lt;div key={widgetKey} className={config?.gridCols || 'md:col-span-1'}&gt;
+          return (
+            &lt;div key={widgetKey} className={config?.gridCols || <span class="branch-1 cbranch-no" title="branch not covered" >'md:col-span-1'}</span>&gt;
               &lt;WidgetComponent /&gt;
             &lt;/div&gt;
           );
@@ -178,7 +178,7 @@ export default function <span class="fstat-no" title="function not covered" >Das
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-12T11:53:51.997Z
+                at 2025-08-12T13:33:36.774Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
