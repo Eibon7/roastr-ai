@@ -14,8 +14,14 @@ describe('API Health Smoke Tests', () => {
     server = app.listen(0, done); // Use random port
   });
 
-  afterAll((done) => {
-    server.close(done);
+  afterAll(async () => {
+    await new Promise((resolve) => {
+      server.close(resolve);
+    });
+    // Clear any timers
+    jest.clearAllTimers();
+    // Give a bit of time for cleanup
+    await new Promise(resolve => setTimeout(resolve, 100));
   });
 
   describe('Health Check Endpoints', () => {
