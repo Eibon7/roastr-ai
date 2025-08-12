@@ -44,7 +44,7 @@ console.error(`⏱️  Timeout: ${INTEGRATION_CONFIG.TEST_TIMEOUT}ms`);
 
 // Setup fetch polyfill for Node.js environment if needed
 if (typeof global.fetch === 'undefined') {
-  global.fetch = require('node-fetch');
+  require('whatwg-fetch');
 }
 
 // Mock localStorage for tests

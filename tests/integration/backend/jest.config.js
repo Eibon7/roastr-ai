@@ -26,18 +26,9 @@ module.exports = {
     '^src/(.*)$': '<rootDir>/src/$1'
   },
   
-  // Transform configuration with better ES6 support
+  // Transform configuration
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', {
-      presets: [
-        ['@babel/preset-env', {
-          targets: { node: 'current' },
-          modules: 'commonjs'
-        }],
-        ['@babel/preset-react', { runtime: 'automatic' }]
-      ],
-      plugins: ['@babel/plugin-transform-modules-commonjs']
-    }]
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest'
   },
   
   // Environment variables for integration tests
