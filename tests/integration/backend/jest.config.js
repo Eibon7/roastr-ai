@@ -7,7 +7,7 @@ module.exports = {
   rootDir: path.resolve(__dirname, '../../../'),
   
   // Test environment
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   
   // Only run integration tests from this directory
   testMatch: [
