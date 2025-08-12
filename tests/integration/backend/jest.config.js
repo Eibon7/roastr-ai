@@ -6,8 +6,11 @@ module.exports = {
   // Root directory for all paths
   rootDir: path.resolve(__dirname, '../../../'),
   
+  // Roots to search for test files
+  roots: ['<rootDir>/tests/integration/backend'],
+  
   // Test environment
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
   
   // Only run integration tests from this directory
   testMatch: [
@@ -35,7 +38,7 @@ module.exports = {
   transformIgnorePatterns: [],
   
   // Environment variables for integration tests
-  setupFiles: ['<rootDir>/tests/integration/backend/setup/envSetup.js'],
+  setupFiles: ['<rootDir>/tests/integration/backend/setup.env.cjs'],
   
   // Global timeout for integration tests
   testTimeout: parseInt(process.env.TEST_TIMEOUT) || 30000,
