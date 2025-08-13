@@ -1,0 +1,145 @@
+{
+  "success": true,
+  "data": {
+    "account": {
+      "id": "acc_tw_staging_1",
+      "network": "twitter",
+      "handle": "@roastr_test_1",
+      "displayName": "Roastr Test Account 1"
+    },
+    "settings": {
+      "general": {
+        "active": true,
+        "postingEnabled": true,
+        "autoApprove": true,
+        "defaultTone": "Comico",
+        "language": "auto",
+        "timezone": "UTC-5",
+        "notificationsEnabled": true
+      },
+      "shield": {
+        "enabled": true,
+        "level": 95,
+        "autoBlock": true,
+        "autoReport": true,
+        "categories": {
+          "insultosGraves": {
+            "enabled": true,
+            "threshold": 0.90,
+            "action": "block"
+          },
+          "amenazas": {
+            "enabled": true,
+            "threshold": 0.85,
+            "action": "report"
+          },
+          "spam": {
+            "enabled": true,
+            "threshold": 0.80,
+            "action": "hide"
+          },
+          "toxicidadModerada": {
+            "enabled": false,
+            "threshold": 0.70,
+            "action": "monitor"
+          }
+        },
+        "whitelist": [
+          "@trusted_friend_1",
+          "@business_partner"
+        ],
+        "customKeywords": [
+          "palabra_bloqueada_1",
+          "spam_keyword"
+        ]
+      },
+      "roasting": {
+        "maxDailyRoasts": 50,
+        "cooldownMinutes": 5,
+        "allowSelfRoasts": false,
+        "toneDistribution": {
+          "Comico": 0.40,
+          "Sarcástico": 0.30, 
+          "Seco": 0.20,
+          "Afilado": 0.10
+        },
+        "contentFilters": {
+          "profanityLevel": "medium",
+          "politicalContent": false,
+          "adultContent": false
+        }
+      },
+      "engagement": {
+        "autoLike": false,
+        "autoRetweet": false,
+        "autoFollow": false,
+        "engagementRate": 0.15,
+        "targetAudience": "tech_community",
+        "peakHours": ["09:00", "13:00", "18:00", "21:00"]
+      },
+      "privacy": {
+        "publicMetrics": true,
+        "shareAnalytics": false,
+        "dataRetention": "90_days",
+        "anonymizeData": true
+      }
+    },
+    "availableOptions": {
+      "tones": [
+        {
+          "id": "Comico",
+          "name": "Cómico",
+          "description": "Respuestas divertidas y ligeras",
+          "examples": ["Mi código será malo, pero al menos compila 😄"]
+        },
+        {
+          "id": "Sarcástico", 
+          "name": "Sarcástico",
+          "description": "Respuestas con sarcasmo inteligente",
+          "examples": ["Gracias por ese análisis tan... profundo"]
+        },
+        {
+          "id": "Seco",
+          "name": "Seco",
+          "description": "Respuestas directas y sin adornos",
+          "examples": ["Interesante perspectiva. Incorrecta, pero interesante."]
+        },
+        {
+          "id": "Afilado",
+          "name": "Afilado",
+          "description": "Respuestas más incisivas (usar con cuidado)",
+          "examples": ["Tu crítica constructiva necesita más construcción y menos crítica"]
+        }
+      ],
+      "languages": [
+        {"code": "auto", "name": "Detección automática"},
+        {"code": "es", "name": "Español"},
+        {"code": "en", "name": "English"}
+      ],
+      "timezones": [
+        {"id": "UTC-8", "name": "Pacific Time"},
+        {"id": "UTC-5", "name": "Eastern Time"},
+        {"id": "UTC+0", "name": "GMT"},
+        {"id": "UTC+1", "name": "Central European Time"}
+      ],
+      "shieldLevels": [
+        {"level": 85, "name": "Relajado", "description": "Permite más contenido"},
+        {"level": 90, "name": "Balanceado", "description": "Configuración recomendada"},
+        {"level": 95, "name": "Estricto", "description": "Máxima protección"},
+        {"level": 98, "name": "Paranoia", "description": "Solo para casos extremos"}
+      ]
+    },
+    "validation": {
+      "errors": [],
+      "warnings": [
+        "Shield level 95 might block some legitimate criticism",
+        "Auto-approve enabled - review roasts regularly"
+      ],
+      "recommendations": [
+        "Consider enabling toxicidadModerada monitoring",
+        "Review whitelist monthly for inactive accounts"
+      ]
+    }
+  },
+  "timestamp": "2024-02-01T15:30:00Z"
+}

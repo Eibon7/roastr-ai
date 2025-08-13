@@ -33,11 +33,11 @@ jobs:
           ${{ runner.os }}-frontend-
           
     - name: Install frontend deps
-      working-directory: frontend
+      working-directory: ./frontend
       run: npm ci
       
     - name: Build frontend (mock env, no CI)
-      working-directory: frontend
+      working-directory: ./frontend
       run: npm run build:ci
 
   security-audit:
@@ -82,6 +82,7 @@ jobs:
       ENABLE_MOCK_MODE: true
       NODE_ENV: test
       SKIP_E2E: true
+      IS_TEST: '1'
       
       # Core System Flags
       ENABLE_RQC: false

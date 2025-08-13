@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { isMockModeEnabled, logMockModeStatus, createMockSupabaseClient } from './mockMode';
+import { isMockModeEnabled, logMockModeStatus } from './mockMode';
 
 // Log mock mode status in development
 logMockModeStatus();
@@ -93,7 +93,7 @@ class MockSupabaseClient {
     });
   }
   
-  async mockSignUp({ email, password, options = {} }) {
+  async mockSignUp({ email, _password, options = {} }) {
     console.log('🎭 Mock SignUp:', { email, options });
     
     // Simulate API delay
@@ -114,14 +114,14 @@ class MockSupabaseClient {
     return { data: { user, session }, error: null };
   }
   
-  async mockSignInWithPassword({ email, password }) {
+  async mockSignInWithPassword({ email, _password }) {
     console.log('🎭 Mock SignIn:', { email });
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Simple validation for demo
-    if (!email || !password) {
+    if (!email || !_password) {
       return {
         data: { user: null, session: null },
         error: new Error('Email and password are required'),

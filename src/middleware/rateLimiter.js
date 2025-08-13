@@ -5,6 +5,12 @@
 
 const { flags } = require('../config/flags');
 
+// Check if running in test environment
+const isTestEnv =
+  process.env.NODE_ENV === 'test' ||
+  process.env.JEST_WORKER_ID !== undefined ||
+  process.env.CI_SMOKE === 'true';
+
 /**
  * In-memory storage for rate limiting
  * In production, this should be replaced with Redis
@@ -20,8 +26,11 @@ class RateLimitStore {
       recentBlocks: []
     };
     
-    // Cleanup old entries every 10 minutes
-    setInterval(() => this.cleanup(), 10 * 60 * 1000);
+    // Cleanup old entries every 10 minutes (skip in tests)
+    if (process.env.NODE_ENV !== 'test') {
+      this._cleanupTimer = setInterval(() => this.cleanup(), 10 * 60 * 1000);
+      this._cleanupTimer.unref?.();
+    }
   }
 
   /**
@@ -190,6 +199,16 @@ class RateLimitStore {
       currentlyBlocked: this.blocked.size,
       recentBlocksCount: this.metrics.recentBlocks.length
     };
+  }
+
+  /**
+   * Stop the cleanup timer
+   */
+  stop() {
+    if (this._cleanupTimer) {
+      clearInterval(this._cleanupTimer);
+      this._cleanupTimer = null;
+    }
   }
 }
 
@@ -365,11 +384,23 @@ function resetRateLimit(req, res) {
   });
 }
 
+/**
+ * Stop rate limiter timers for cleanup
+ */
+function stopRateLimiterTimers(instance) {
+  if (instance?._cleanupInterval) {
+    clearInterval(instance._cleanupInterval);
+    instance._cleanupInterval = null;
+  }
+}
+
 module.exports = {
   loginRateLimiter,
   getRateLimitMetrics,
   resetRateLimit,
   RateLimitStore,
   getClientIP,
-  store
+  store,
+  stopRateLimiterTimers,
+  rateLimiter: store
 };

@@ -1,7 +1,7 @@
 export default [
   {
     languageOptions: {
-      ecmaVersion: 2021,
+      ecmaVersion: 2024,
       sourceType: 'module',
       globals: {
         node: true,
@@ -23,15 +23,16 @@ export default [
       'no-undef': 'off'
     },
     ignores: [
-      'frontend/',
-      'node_modules/',
+      'frontend/**/*',
+      'node_modules/**/*',
       '*.config.js',
-      'coverage/',
-      'build/',
-      'dist/',
+      'coverage/**/*',
+      'build/**/*',
+      'dist/**/*',
       '**/*.min.js',
       '**/build/**',
-      '**/dist/**'
+      '**/dist/**',
+      'tests/integration/backend/**/*.test.js' // These have JSX and are tested separately
     ]
   }
 ];

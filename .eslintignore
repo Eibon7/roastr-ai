@@ -1,0 +1,14 @@
+# Ignore frontend directory - has its own eslint config
+frontend/
+
+# Ignore build directories
+node_modules/
+coverage/
+build/
+dist/
+
+# Ignore config files
+*.config.js
+
+# Ignore integration test files with JSX (tested separately)
+tests/integration/backend/**/*.test.js

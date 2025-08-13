@@ -29,7 +29,7 @@ const RegisterPage = () => {
     checkAuth();
   }, [navigate]);
 
-  const handleSuccess = (message, data) => {
+  const handleSuccess = (message, _data) => {
     setAlert({
       type: 'success',
       message,

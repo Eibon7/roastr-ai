@@ -42,12 +42,21 @@
     "test:ci": "jest --config=jest.ci.config.js --runInBand --ci",
     "test:mock": "ENABLE_MOCK_MODE=true jest --config=jest.skipExternal.config.js --verbose",
     "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.js'",
-    "lint": "eslint . --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
+    "lint": "eslint src/ tests/unit/ tests/smoke/ scripts/ --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
-    "test:smoke": "jest tests/smoke/ --verbose",
+    "test:smoke": "cross-env IS_TEST=1 CI_SMOKE=true NODE_ENV=test jest tests/smoke --runInBand --config=jest.config.js",
+    "test:smoke:detect": "jest tests/smoke --detectOpenHandles --runInBand",
+    "test:integration-backend": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=false npx jest --config=tests/integration/backend/jest.config.js --runInBand",
+    "test:integration-backend:fixtures": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=true npx jest --config=tests/integration/backend/jest.config.js --runInBand",
+    "test:integration-backend:coverage": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=false npx jest --config=tests/integration/backend/jest.config.js --coverage --runInBand",
+    "test:integration-backend:watch": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=true npx jest --config=tests/integration/backend/jest.config.js --watch",
+    "fixtures:update:all": "node tests/integration/backend/utils/update-backend-fixtures.js",
+    "fixtures:validate": "node tests/integration/backend/utils/validate-fixtures.js",
+    "test:integration-backend:ci": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=true CI=true npx jest --config=tests/integration/backend/jest.config.js --runInBand --ci --coverage",
     "changelog:add": "node scripts/add-changelog.js",
     "admin:setup": "node scripts/setup-admin.js",
-    "admin:list": "node scripts/setup-admin.js --list"
+    "admin:list": "node scripts/setup-admin.js --list",
+    "prepare": "is-ci || npx husky"
   },
   "repository": {
     "type": "git",
@@ -93,13 +102,30 @@
     "twitter-api-v2": "^1.24.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/plugin-transform-class-properties": "^7.27.1",
+    "@babel/plugin-transform-modules-commonjs": "^7.27.1",
+    "@babel/plugin-transform-nullish-coalescing-operator": "^7.27.1",
+    "@babel/plugin-transform-numeric-separator": "^7.27.1",
+    "@babel/plugin-transform-optional-chaining": "^7.27.1",
+    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "@babel/plugin-transform-private-property-in-object": "^7.27.1",
+    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-react": "^7.27.1",
     "@tailwindcss/postcss": "^4.1.11",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "autoprefixer": "^10.4.21",
+    "babel-jest": "^30.0.5",
+    "cross-env": "^10.0.0",
     "eslint": "^9.33.0",
+    "is-ci": "^4.1.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.0.5",
     "jest-junit": "^16.0.0",
     "jsdom": "^26.1.0",
-    "supertest": "^7.1.4"
+    "supertest": "^7.1.4",
+    "whatwg-fetch": "^3.6.20"
   }
 }

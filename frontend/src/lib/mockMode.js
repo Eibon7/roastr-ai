@@ -184,7 +184,7 @@ const createMockFetch = () => {
 const createMockSupabaseClient = () => {
   return {
     auth: {
-      signUp: async ({ email, password }) => ({
+      signUp: async ({ email, _password }) => ({
         data: {
           user: {
             id: 'mock-user-123',
@@ -199,7 +199,7 @@ const createMockSupabaseClient = () => {
         error: null
       }),
 
-      signInWithPassword: async ({ email, password }) => ({
+      signInWithPassword: async ({ email, _password }) => ({
         data: {
           user: {
             id: 'mock-user-123',
@@ -250,7 +250,7 @@ const createMockSupabaseClient = () => {
     },
 
     from: (table) => ({
-      select: (columns = '*') => ({
+      select: (_columns = '*') => ({
         eq: (column, value) => Promise.resolve({
           data: [{
             id: 1,

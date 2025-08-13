@@ -1,0 +1,110 @@
+{
+  "success": true,
+  "data": {
+    "accounts": [
+      {
+        "id": "acc_tw_staging_1",
+        "network": "twitter",
+        "handle": "@roastr_test_1",
+        "displayName": "Roastr Test Account 1",
+        "avatar": "https://pbs.twimg.com/profile_images/test1.jpg",
+        "status": "active",
+        "monthlyRoasts": 1250,
+        "connectedAt": "2024-01-15T10:30:00Z",
+        "lastActivity": "2024-02-01T14:22:00Z",
+        "settings": {
+          "autoApprove": true,
+          "shieldEnabled": true,
+          "shieldLevel": 95,
+          "defaultTone": "Comico",
+          "postingEnabled": true,
+          "notificationsEnabled": true
+        },
+        "metrics": {
+          "totalRoasts": 15420,
+          "approvalRate": 0.92,
+          "engagementRate": 0.15,
+          "shieldBlocks": 234
+        }
+      },
+      {
+        "id": "acc_tw_staging_2", 
+        "network": "twitter",
+        "handle": "@roastr_test_2",
+        "displayName": "Roastr Test Account 2",
+        "avatar": "https://pbs.twimg.com/profile_images/test2.jpg",
+        "status": "active",
+        "monthlyRoasts": 890,
+        "connectedAt": "2024-01-20T16:45:00Z",
+        "lastActivity": "2024-02-01T11:18:00Z",
+        "settings": {
+          "autoApprove": false,
+          "shieldEnabled": true,
+          "shieldLevel": 90,
+          "defaultTone": "Sarcástico",
+          "postingEnabled": true,
+          "notificationsEnabled": false
+        },
+        "metrics": {
+          "totalRoasts": 8950,
+          "approvalRate": 0.87,
+          "engagementRate": 0.22,
+          "shieldBlocks": 156
+        }
+      },
+      {
+        "id": "acc_ig_staging_1",
+        "network": "instagram", 
+        "handle": "@roastr.test.ig",
+        "displayName": "RoastrTestIG",
+        "avatar": "https://instagram.com/avatars/test.jpg",
+        "status": "inactive",
+        "monthlyRoasts": 45,
+        "connectedAt": "2024-01-25T09:15:00Z",
+        "lastActivity": "2024-01-30T08:30:00Z",
+        "settings": {
+          "autoApprove": false,
+          "shieldEnabled": false,
+          "shieldLevel": 85,
+          "defaultTone": "Seco",
+          "postingEnabled": false,
+          "notificationsEnabled": true
+        },
+        "metrics": {
+          "totalRoasts": 523,
+          "approvalRate": 0.94,
+          "engagementRate": 0.08,
+          "shieldBlocks": 12
+        }
+      }
+    ],
+    "pagination": {
+      "total": 3,
+      "hasMore": false,
+      "nextCursor": null
+    },
+    "networks": {
+      "connected": {
+        "twitter": 2,
+        "instagram": 1,
+        "facebook": 0,
+        "youtube": 0,
+        "tiktok": 0,
+        "discord": 0,
+        "twitch": 0,
+        "reddit": 0,
+        "bluesky": 0
+      },
+      "available": [
+        "facebook",
+        "youtube", 
+        "tiktok",
+        "discord",
+        "twitch",
+        "reddit",
+        "bluesky"
+      ]
+    }
+  },
+  "timestamp": "2024-02-01T15:30:00Z"
+}

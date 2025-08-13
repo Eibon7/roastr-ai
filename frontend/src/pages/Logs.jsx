@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { FileText, Search, Download, Filter, RefreshCw, Eye } from 'lucide-react';
+import { FileText, Search, Download, Filter, RefreshCw } from 'lucide-react';
 
 export default function Logs() {
   const [logs, setLogs] = useState([]);
@@ -28,6 +28,7 @@ export default function Logs() {
 
   useEffect(() => {
     filterLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logs, filter, searchTerm]);
 
   const fetchLogs = async () => {
@@ -96,18 +97,6 @@ export default function Logs() {
     }
   };
 
-  const getLevelColor = (level) => {
-    switch (level) {
-      case 'info':
-        return 'text-blue-600';
-      case 'warn':
-        return 'text-yellow-600';
-      case 'error':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
 
   if (loading) {
     return (

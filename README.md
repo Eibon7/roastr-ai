@@ -27,30 +27,38 @@ npm run start:api  # API en http://localhost:3000
 
 **¡No necesitas APIs externas!** El sistema funciona en **Mock Mode** por defecto.
 
-## 📊 Dashboard Frontend
+## 📊 Dashboard Frontend + Social Networks Panel
 
-**Nuevo sistema de dashboard con:**
+**Sistema completo de dashboard con:**
 - ✅ 7 widgets interactivos reordenables  
+- ✅ **Panel de Redes Sociales** con multi-account support
+- ✅ **Sistema de Auth** con edge cases y feature flags (magic link)
 - ✅ Mock-first design (funciona sin APIs externas)
-- ✅ 6 páginas completas (Dashboard, Compose, Integrations, Billing, Settings, Logs)
+- ✅ 7 páginas completas (Dashboard, Compose, Integrations, Billing, Settings, Logs, **Accounts**)
 - ✅ Diseño responsivo con shadcn/ui + Tailwind CSS
 - ✅ Sistema de feature flags centralizado
-- ✅ Tests completos (Jest + React Testing Library)
+- ✅ Tests completos (Jest + React Testing Library) - **>85% coverage**
 
 ## 🎯 Características Principales
 
 ### Core Features
 - **Generación de roasts** usando OpenAI GPT-4o mini
 - **Sistema RQC** (Roast Quality Control) multi-plan con moderación inteligente
+- **Social Networks Panel** - Gestión multi-cuenta con modals por red (roasts, shield, settings)
+- **Sistema de Auth completo** con magic link, edge cases, y feature flags
 - **Detección automática** de idioma (español/inglés) 
 - **Arquitectura multi-tenant** con planes de suscripción (Free, Pro, Creator+)
 - **9 integraciones** de plataformas sociales (Twitter, YouTube, Instagram, etc.)
 - **Shield Protection** - Moderación automática con acciones escalonadas
 - **Worker system** dedicado para procesamiento en background
 
-### Nuevo Dashboard Features
-- **Mock Mode** automático cuando faltan API keys
+### Frontend + Social Panel Features
+- **Mock Mode** automático cuando faltan API keys con switch para producción
 - **Widget system** modular y extensible
+- **Social Networks Panel** con multi-account support (múltiples cuentas por red)
+- **AccountModal** con 3 tabs (Roasts, Shield, Settings) y UI condicional
+- **Optimistic UI** con rollback automático en caso de errores de API
+- **Auth System** con 37 tests de edge cases y feature flags por entorno
 - **Real-time updates** en widgets seleccionados
 - **Responsive design** para mobile y desktop
 - **Filtros avanzados** en logs y data tables

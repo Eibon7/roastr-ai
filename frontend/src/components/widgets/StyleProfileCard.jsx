@@ -6,11 +6,9 @@ import { Badge } from '../ui/badge';
 import { 
   Wand2, 
   Crown, 
-  Globe, 
   Calendar,
   TrendingUp,
   ArrowRight,
-  AlertTriangle,
   Copy,
   CheckCircle,
   Loader2
@@ -47,6 +45,7 @@ export default function StyleProfileCard() {
   useEffect(() => {
     fetchProfileStatus();
     fetchProfileData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProfileStatus = async () => {

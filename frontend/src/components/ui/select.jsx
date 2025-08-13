@@ -33,7 +33,7 @@ const Select = React.forwardRef(({ value, onValueChange, children, className, ..
 });
 Select.displayName = "Select";
 
-const SelectTrigger = React.forwardRef(({ className, children, onClick, isOpen, ...props }, ref) => (
+const SelectTrigger = React.forwardRef(({ className, children, onClick, isOpen: _isOpen, ...props }, ref) => (
   <button
     ref={ref}
     className={cn(

@@ -1,0 +1,158 @@
+{
+  "success": true,
+  "data": {
+    "intercepted": [
+      {
+        "id": "shield_staging_1",
+        "accountId": "acc_tw_staging_1", 
+        "category": "Insultos graves",
+        "action": "Bloquear usuario",
+        "preview": "***censurado por contenido extremo***",
+        "originalHidden": "Eres una [CENSURADO] que no merece vivir",
+        "toxicityScore": 0.98,
+        "confidence": 0.95,
+        "language": "es",
+        "createdAt": "2024-02-01T11:45:00Z",
+        "processedAt": "2024-02-01T11:45:02Z",
+        "actionTaken": true,
+        "actionResult": "user_blocked",
+        "source": {
+          "platform": "twitter",
+          "postId": "1750111222333",
+          "authorHandle": "@toxic_user_123",
+          "authorId": "twitter_123456789",
+          "context": "Reply to product announcement",
+          "reportedBy": "automated_shield"
+        },
+        "metrics": {
+          "similarBlocked": 15,
+          "authorPreviousViolations": 3,
+          "communityReports": 2
+        }
+      },
+      {
+        "id": "shield_staging_2",
+        "accountId": "acc_tw_staging_1",
+        "category": "Amenazas",
+        "action": "Reportar a plataforma",
+        "preview": "I'm going to find you and ***",
+        "originalHidden": "I'm going to find you and make you pay",
+        "toxicityScore": 0.92,
+        "confidence": 0.88,
+        "language": "en",
+        "createdAt": "2024-02-01T10:20:00Z",
+        "processedAt": "2024-02-01T10:20:01Z",
+        "actionTaken": true,
+        "actionResult": "reported_to_platform",
+        "source": {
+          "platform": "twitter",
+          "postId": "1750444555666",
+          "authorHandle": "@threatening_user",
+          "authorId": "twitter_987654321",
+          "context": "Direct mention threat",
+          "reportedBy": "automated_shield"
+        },
+        "metrics": {
+          "similarBlocked": 8,
+          "authorPreviousViolations": 1,
+          "communityReports": 0
+        }
+      },
+      {
+        "id": "shield_staging_3",
+        "accountId": "acc_tw_staging_2",
+        "category": "Spam",
+        "action": "Ocultar comentario",
+        "preview": "🔥CLICK HERE FOR AMAZING DEALS🔥 Get rich quick...",
+        "originalHidden": "🔥CLICK HERE FOR AMAZING DEALS🔥 Get rich quick with crypto! Link: suspicious-crypto-site.com",
+        "toxicityScore": 0.45,
+        "confidence": 0.92,
+        "language": "en",
+        "createdAt": "2024-02-01T09:15:00Z",
+        "processedAt": "2024-02-01T09:15:00Z",
+        "actionTaken": true,
+        "actionResult": "comment_hidden",
+        "source": {
+          "platform": "twitter",
+          "postId": "1750777888999",
+          "authorHandle": "@crypto_spammer",
+          "authorId": "twitter_111222333",
+          "context": "Spam reply to tweet",
+          "reportedBy": "automated_shield"
+        },
+        "metrics": {
+          "similarBlocked": 45,
+          "authorPreviousViolations": 12,
+          "communityReports": 1
+        }
+      },
+      {
+        "id": "shield_staging_4",
+        "accountId": "acc_ig_staging_1",
+        "category": "Toxicidad moderada",
+        "action": "Monitorear",
+        "preview": "Tu contenido es bastante mediocre, la verdad",
+        "originalHidden": "Tu contenido es bastante mediocre, la verdad. Deberías dedicarte a otra cosa",
+        "toxicityScore": 0.71,
+        "confidence": 0.65,
+        "language": "es", 
+        "createdAt": "2024-01-30T14:30:00Z",
+        "processedAt": "2024-01-30T14:30:01Z",
+        "actionTaken": false,
+        "actionResult": "monitored_only",
+        "source": {
+          "platform": "instagram",
+          "postId": "ig_post_789123",
+          "authorHandle": "@critical_viewer",
+          "authorId": "instagram_456789012",
+          "context": "Comment on content post",
+          "reportedBy": "automated_shield"
+        },
+        "metrics": {
+          "similarBlocked": 3,
+          "authorPreviousViolations": 0,
+          "communityReports": 0
+        }
+      }
+    ],
+    "pagination": {
+      "total": 4,
+      "limit": 10,
+      "offset": 0,
+      "hasMore": false,
+      "nextCursor": null
+    },
+    "summary": {
+      "totalIntercepted": 156,
+      "last24Hours": 12,
+      "categoriesBreakdown": {
+        "Insultos graves": 45,
+        "Amenazas": 23,
+        "Spam": 67,
+        "Toxicidad moderada": 21
+      },
+      "actionsBreakdown": {
+        "Bloquear usuario": 34,
+        "Reportar a plataforma": 28,
+        "Ocultar comentario": 73,
+        "Monitorear": 21
+      },
+      "effectivenessRate": 0.94
+    },
+    "filters": {
+      "applied": {
+        "category": null,
+        "action": null,
+        "dateRange": "last_7_days",
+        "platform": null
+      },
+      "available": {
+        "categories": ["Insultos graves", "Amenazas", "Spam", "Toxicidad moderada"],
+        "actions": ["Bloquear usuario", "Reportar a plataforma", "Ocultar comentario", "Monitorear"],
+        "platforms": ["twitter", "instagram"],
+        "dateRanges": ["today", "last_7_days", "last_30_days", "all"]
+      }
+    }
+  },
+  "timestamp": "2024-02-01T15:30:00Z"
+}

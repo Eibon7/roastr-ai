@@ -7,6 +7,9 @@
 const { flags } = require('../../src/config/flags');
 
 describe('Feature Flags Smoke Tests', () => {
+  afterAll(async () => {
+    jest.useRealTimers();
+  });
   test('Feature flags should initialize without errors', () => {
     expect(flags).toBeDefined();
     expect(typeof flags.isEnabled).toBe('function');
