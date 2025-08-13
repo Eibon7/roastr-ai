@@ -75,14 +75,12 @@ jobs:
           echo "✅ Build check completed successfully!"
 
       - name: 🔍 Backend smoke test
-        continue-on-error: true  # TEMP - bypass while fixing jest config
         env:
           IS_TEST: '1'
           NODE_ENV: test
         run: |
           echo "🧪 Running backend smoke tests..."
-          echo "⚠️ TEMPORARY: Smoke tests bypassed while fixing jest configuration"
-          # npm run test:smoke
+          npm run test:smoke
 
       - name: ✅ Build validation summary
         if: always()
