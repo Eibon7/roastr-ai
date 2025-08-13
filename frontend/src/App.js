@@ -9,7 +9,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDetail from './pages/admin/UserDetail';
 import AdminUsersPage from './pages/admin/users';
 import AppShell from './components/AppShell';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/dashboard';
 import Compose from './pages/Compose';
 import Integrations from './pages/Integrations';
 import Billing from './pages/Billing';
