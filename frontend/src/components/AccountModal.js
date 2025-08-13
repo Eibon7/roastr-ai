@@ -59,12 +59,12 @@ const AccountModal = ({
     }
   };
 
-  const handleAsyncAction = useCallback(async (actionKey, asyncAction, successMessage) => {
+  const handleAsyncAction = useCallback(async (actionKey, asyncAction, _successMessage) => {
     setLoadingStates(prev => ({ ...prev, [actionKey]: true }));
     
     try {
       await asyncAction();
-      // TODO: Show success toast with successMessage
+      // TODO: Show success toast with _successMessage
     } catch (error) {
       // TODO: Show error toast
       console.error(`Action ${actionKey} failed:`, error);

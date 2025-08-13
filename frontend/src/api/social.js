@@ -331,7 +331,7 @@ export const isMockMode = () => {
          process.env.NODE_ENV === 'test';
 };
 
-export default {
+const socialAPI = {
   getRoasts,
   approveRoast,
   rejectRoast,
@@ -344,3 +344,5 @@ export default {
   buildApiUrl,
   getAuthHeaders
 };
+
+export default socialAPI;
