@@ -27,11 +27,9 @@ class RateLimitStore {
     };
     
     // Cleanup old entries every 10 minutes (skip in tests)
-    if (!process.env.IS_TEST) {
-      const t = setInterval(() => this.cleanup(), 10 * 60 * 1000);
-      // Por si acaso: que no bloquee el proceso aunque se quede vivo
-      if (t && typeof t.unref === 'function') t.unref();
-      this._cleanupInterval = t;
+    if (process.env.NODE_ENV !== 'test') {
+      this._cleanupTimer = setInterval(() => this.cleanup(), 10 * 60 * 1000);
+      this._cleanupTimer.unref?.();
     }
   }
 
@@ -201,6 +199,16 @@ class RateLimitStore {
       currentlyBlocked: this.blocked.size,
       recentBlocksCount: this.metrics.recentBlocks.length
     };
+  }
+
+  /**
+   * Stop the cleanup timer
+   */
+  stop() {
+    if (this._cleanupTimer) {
+      clearInterval(this._cleanupTimer);
+      this._cleanupTimer = null;
+    }
   }
 }
 
@@ -393,5 +401,6 @@ module.exports = {
   RateLimitStore,
   getClientIP,
   store,
-  stopRateLimiterTimers
+  stopRateLimiterTimers,
+  rateLimiter: store
 };

@@ -45,6 +45,7 @@
     "lint": "eslint src/ tests/unit/ tests/smoke/ scripts/ --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "cross-env IS_TEST=1 CI_SMOKE=true NODE_ENV=test jest tests/smoke --runInBand --config=jest.config.js",
+    "test:smoke:detect": "jest tests/smoke --detectOpenHandles --runInBand",
     "test:integration-backend": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=false npx jest --config=tests/integration/backend/jest.config.js --runInBand",
     "test:integration-backend:fixtures": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=true npx jest --config=tests/integration/backend/jest.config.js --runInBand",
     "test:integration-backend:coverage": "ENABLE_MOCK_MODE=false USE_BACKEND_FIXTURES=false npx jest --config=tests/integration/backend/jest.config.js --coverage --runInBand",
