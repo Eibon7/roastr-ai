@@ -75,6 +75,9 @@ jobs:
           echo "✅ Build check completed successfully!"
 
       - name: 🔍 Backend smoke test
+        env:
+          IS_TEST: '1'
+          NODE_ENV: test
         run: |
           echo "🧪 Running backend smoke tests..."
           npm run test:smoke

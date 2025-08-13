@@ -10,7 +10,7 @@ module.exports = {
   roots: ['<rootDir>/tests/integration/backend'],
   
   // Test environment
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   
   // Only run integration tests from this directory
   testMatch: [
@@ -31,11 +31,11 @@ module.exports = {
   
   // Transform configuration
   transform: {
-    '^.+\\.[jt]sx?$': ['babel-jest', { rootMode: 'upward' }]
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest'
   },
   
-  // Transform ignore patterns - empty to transform everything
-  transformIgnorePatterns: [],
+  // Transform ignore patterns
+  transformIgnorePatterns: ['/node_modules/'],
   
   // Environment variables for integration tests
   setupFiles: ['<rootDir>/tests/integration/backend/setup.env.cjs'],

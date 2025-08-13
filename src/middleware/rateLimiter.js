@@ -27,9 +27,11 @@ class RateLimitStore {
     };
     
     // Cleanup old entries every 10 minutes (skip in tests)
-    if (!isTestEnv) {
-      this._cleanupInterval = setInterval(() => this.cleanup(), 10 * 60 * 1000);
-      this._cleanupInterval.unref?.();
+    if (!process.env.IS_TEST) {
+      const t = setInterval(() => this.cleanup(), 10 * 60 * 1000);
+      // Por si acaso: que no bloquee el proceso aunque se quede vivo
+      if (t && typeof t.unref === 'function') t.unref();
+      this._cleanupInterval = t;
     }
   }
 

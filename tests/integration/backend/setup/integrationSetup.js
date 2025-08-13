@@ -6,6 +6,9 @@
 
 // Use require for Node.js compatibility
 require('@testing-library/jest-dom');
+if (typeof global.fetch === 'undefined') {
+  require('whatwg-fetch');
+}
 
 // Mock console methods to reduce noise in integration tests
 const originalConsole = { ...console };
@@ -42,10 +45,7 @@ console.error(`📁 Use Fixtures: ${INTEGRATION_CONFIG.USE_FIXTURES}`);
 console.error(`🎭 Mock Mode: ${INTEGRATION_CONFIG.MOCK_MODE}`);
 console.error(`⏱️  Timeout: ${INTEGRATION_CONFIG.TEST_TIMEOUT}ms`);
 
-// Setup fetch polyfill for Node.js environment if needed
-if (typeof global.fetch === 'undefined') {
-  require('whatwg-fetch');
-}
+// Fetch polyfill already loaded at the top
 
 // Mock localStorage for tests
 const localStorageMock = {
