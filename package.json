@@ -45,6 +45,7 @@
     "lint": "eslint . --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "jest tests/smoke/ --verbose",
+    "test:integration-backend": "jest --config=tests/integration/backend/jest.config.js --runInBand",
     "changelog:add": "node scripts/add-changelog.js",
     "admin:setup": "node scripts/setup-admin.js",
     "admin:list": "node scripts/setup-admin.js --list"
