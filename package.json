@@ -94,6 +94,7 @@
     "twitter-api-v2": "^1.24.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-optional-chaining": "^7.27.1",
     "@tailwindcss/postcss": "^4.1.11",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.33.0",
