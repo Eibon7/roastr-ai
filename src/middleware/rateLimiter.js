@@ -6,7 +6,10 @@
 const { flags } = require('../config/flags');
 
 // Check if running in test environment
-const IS_TEST = process.env.NODE_ENV === 'test' || process.env.CI === 'true';
+const isTestEnv =
+  process.env.NODE_ENV === 'test' ||
+  process.env.JEST_WORKER_ID !== undefined ||
+  process.env.CI_SMOKE === 'true';
 
 /**
  * In-memory storage for rate limiting
@@ -24,9 +27,9 @@ class RateLimitStore {
     };
     
     // Cleanup old entries every 10 minutes (skip in tests)
-    if (!IS_TEST) {
-      this._cleanupTimer = setInterval(() => this.cleanup(), 10 * 60 * 1000);
-      if (this._cleanupTimer.unref) this._cleanupTimer.unref();
+    if (!isTestEnv) {
+      this._cleanupInterval = setInterval(() => this.cleanup(), 10 * 60 * 1000);
+      this._cleanupInterval.unref?.();
     }
   }
 
@@ -375,9 +378,9 @@ function resetRateLimit(req, res) {
  * Stop rate limiter timers for cleanup
  */
 function stopRateLimiterTimers(instance) {
-  if (instance?._cleanupTimer) {
-    clearInterval(instance._cleanupTimer);
-    instance._cleanupTimer = null;
+  if (instance?._cleanupInterval) {
+    clearInterval(instance._cleanupInterval);
+    instance._cleanupInterval = null;
   }
 }
 
