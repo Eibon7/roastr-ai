@@ -76,7 +76,6 @@ jobs:
     name: Lint and Test
     runs-on: ubuntu-latest
     needs: [build-check, security-audit]
-    continue-on-error: true  # TEMP bypass - unit test failures
     
     env:
       # Global Mock Mode - Forces all services to use mock data
