@@ -459,11 +459,11 @@ app.use((req, res) => {
 });
 
 // Export app for testing
-module.exports = app;
+let server;
 
 // Only start server if this file is run directly (not imported by tests)
 if (require.main === module) {
-  const server = app.listen(port, () => {
+  server = app.listen(port, () => {
     console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
     console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
     
@@ -473,3 +473,6 @@ if (require.main === module) {
     console.log(`🤖 OpenAI:`, serviceStatus.ai.openai);
   });
 }
+
+// Export both app and server for testing
+module.exports = { app, server };

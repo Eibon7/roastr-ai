@@ -19,9 +19,17 @@ class RateLimitStore {
       uniqueIPs: new Set(),
       recentBlocks: []
     };
+    this.cleanupInterval = null;
     
     // Cleanup old entries every 10 minutes
-    setInterval(() => this.cleanup(), 10 * 60 * 1000);
+    // Skip interval in test environment to avoid open handles
+    if (process.env.NODE_ENV !== 'test') {
+      this.cleanupInterval = setInterval(() => this.cleanup(), 10 * 60 * 1000);
+      // Unref to allow process to exit if this is the only active handle
+      if (this.cleanupInterval.unref) {
+        this.cleanupInterval.unref();
+      }
+    }
   }
 
   /**
@@ -190,6 +198,16 @@ class RateLimitStore {
       currentlyBlocked: this.blocked.size,
       recentBlocksCount: this.metrics.recentBlocks.length
     };
+  }
+
+  /**
+   * Stop the cleanup interval (for testing)
+   */
+  stop() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
   }
 }
 

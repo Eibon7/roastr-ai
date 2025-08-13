@@ -5,22 +5,25 @@
  */
 
 const request = require('supertest');
-const app = require('../../src/index'); // Import the main app
+const { app, server } = require('../../src/index'); // Import the main app and server
+const { store } = require('../../src/middleware/rateLimiter');
 
 describe('API Health Smoke Tests', () => {
-  let server;
-
-  beforeAll((done) => {
-    server = app.listen(0, done); // Use random port
-  });
-
   afterAll((done) => {
-    server.close(done);
+    // Clean up rate limiter
+    store.stop();
+    
+    // Close server if it exists
+    if (server) {
+      server.close(done);
+    } else {
+      done();
+    }
   });
 
   describe('Health Check Endpoints', () => {
     test('GET /health should return 200', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/health')
         .expect(200);
 
@@ -30,7 +33,7 @@ describe('API Health Smoke Tests', () => {
     });
 
     test('GET /api/health should be accessible', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/health');
 
       // Should be 200 or 500, but not 404 (means endpoint exists)
@@ -40,7 +43,7 @@ describe('API Health Smoke Tests', () => {
 
   describe('Auth Endpoints Accessibility', () => {
     test('POST /api/auth/register should be accessible', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/register')
         .send({});
 
@@ -49,7 +52,7 @@ describe('API Health Smoke Tests', () => {
     });
 
     test('POST /api/auth/login should be accessible', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/login')
         .send({});
 
@@ -60,7 +63,7 @@ describe('API Health Smoke Tests', () => {
 
   describe('Billing Endpoints Accessibility', () => {
     test('GET /api/billing/plans should be accessible', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/billing/plans');
 
       // Should be 200 or 500, but not 404 (means endpoint exists)
@@ -68,7 +71,7 @@ describe('API Health Smoke Tests', () => {
     });
 
     test('POST /api/billing/create-checkout-session endpoint exists', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/billing/create-checkout-session')
         .send({ plan: 'pro' });
 
@@ -79,7 +82,7 @@ describe('API Health Smoke Tests', () => {
 
   describe('Integration Endpoints Accessibility', () => {
     test('GET /api/user/integrations endpoint exists', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/user/integrations');
       
       // Should be 401 (auth required) or 500 (server error), but not 404
@@ -87,7 +90,7 @@ describe('API Health Smoke Tests', () => {
     });
 
     test('POST /api/user/integrations/connect endpoint exists', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/user/integrations/connect')
         .send({ platform: 'twitter' });
       
@@ -98,7 +101,7 @@ describe('API Health Smoke Tests', () => {
 
   describe('Error Handling', () => {
     test('Non-existent endpoints should return proper error', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/nonexistent');
       
       // Should be 404 or 500, but endpoint should respond
@@ -106,7 +109,7 @@ describe('API Health Smoke Tests', () => {
     });
 
     test('Wrong HTTP method should return proper error', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .delete('/api/billing/plans');
       
       // Should be 404 (not found), 405 (method not allowed) or 500, but endpoint should respond
@@ -116,7 +119,7 @@ describe('API Health Smoke Tests', () => {
 
   describe('Security Headers', () => {
     test('Should include security headers', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/health')
         .expect(200);
 
