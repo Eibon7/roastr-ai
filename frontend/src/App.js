@@ -18,6 +18,7 @@ import Logs from './pages/Logs';
 import PlanPicker from './pages/PlanPicker';
 import Connect from './pages/Connect';
 import StyleProfile from './pages/StyleProfile';
+import AccountsPage from './pages/AccountsPage';
 import './App.css';
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
               <Route path="plans" element={<PlanPicker />} />
               <Route path="style-profile" element={<StyleProfile />} />
               <Route path="style-profile/generate" element={<StyleProfile />} />
+              <Route path="accounts" element={<AccountsPage />} />
             </Route>
             
             {/* Admin routes (separate from AppShell) */}
