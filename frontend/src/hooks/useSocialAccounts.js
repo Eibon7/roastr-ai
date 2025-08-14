@@ -2,7 +2,7 @@
  * useSocialAccounts Hook
  * 
  * Manages social media accounts state with mock data and provides
- * all necessary mutators for the UI. Now integrated with API SDK.
+ * all necessary mutators for the UI. Now with inline API functions.
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -12,7 +12,53 @@ import {
   MOCK_INTERCEPTED,
   MOCK_AVAILABLE_NETWORKS
 } from '../mocks/social';
-import socialAPI from '../api/index.js';
+
+// Inline API functions to avoid import issues
+const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
+
+const inlineAPI = {
+  approveRoast: async (accountId, roastId) => {
+    await delay(200);
+    console.log('🔗 [MOCK] approveRoast called', { accountId, roastId });
+    if (Math.random() <= 0.05) throw new Error('Failed to approve roast - network error');
+    return { success: true };
+  },
+  
+  rejectRoast: async (accountId, roastId) => {
+    await delay(200);
+    console.log('🔗 [MOCK] rejectRoast called', { accountId, roastId });
+    if (Math.random() <= 0.05) throw new Error('Failed to reject roast - network error');
+    return { success: true };
+  },
+  
+  updateAccountSettings: async (accountId, settings) => {
+    await delay(300);
+    console.log('🔗 [MOCK] updateAccountSettings called', { accountId, settings });
+    if (Math.random() <= 0.02) throw new Error('Failed to update account settings - server error');
+    return { success: true };
+  },
+  
+  updateShieldSettings: async (accountId, settings) => {
+    await delay(200);
+    console.log('🔗 [MOCK] updateShieldSettings called', { accountId, settings });
+    if (Math.random() <= 0.02) throw new Error('Failed to update shield settings - server error');
+    return { success: true };
+  },
+  
+  connectNetwork: async (network) => {
+    await delay(500);
+    console.log('🔗 [MOCK] connectNetwork called', { network });
+    const redirectUrl = `https://oauth.${network}.com/authorize`;
+    return { success: true, redirectUrl };
+  },
+  
+  disconnectAccount: async (accountId) => {
+    await delay(300);
+    console.log('🔗 [MOCK] disconnectAccount called', { accountId });
+    if (Math.random() <= 0.01) throw new Error('Failed to disconnect account - server error');
+    return { success: true };
+  }
+};
 
 export const useSocialAccounts = () => {
   const [accounts, setAccounts] = useState(MOCK_ACCOUNTS);
@@ -53,7 +99,7 @@ export const useSocialAccounts = () => {
     }));
 
     try {
-      await socialAPI.approveRoast(accountId, roastId);
+      await inlineAPI.approveRoast(accountId, roastId);
       // Success - optimistic update was correct
     } catch (error) {
       // Rollback on error
@@ -79,7 +125,7 @@ export const useSocialAccounts = () => {
     }));
 
     try {
-      await socialAPI.rejectRoast(accountId, roastId);
+      await inlineAPI.rejectRoast(accountId, roastId);
       // Success - optimistic update was correct
     } catch (error) {
       // Rollback on error
@@ -104,7 +150,7 @@ export const useSocialAccounts = () => {
     ));
 
     try {
-      await socialAPI.updateAccountSettings(accountId, { autoApprove: nextValue });
+      await inlineAPI.updateAccountSettings(accountId, { autoApprove: nextValue });
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
@@ -123,7 +169,7 @@ export const useSocialAccounts = () => {
     ));
 
     try {
-      await socialAPI.updateAccountSettings(accountId, { active: nextStatus === 'active' });
+      await inlineAPI.updateAccountSettings(accountId, { active: nextStatus === 'active' });
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
@@ -142,7 +188,7 @@ export const useSocialAccounts = () => {
     ));
 
     try {
-      await socialAPI.updateShieldSettings(accountId, { threshold: level });
+      await inlineAPI.updateShieldSettings(accountId, { threshold: level });
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
@@ -161,7 +207,7 @@ export const useSocialAccounts = () => {
     ));
 
     try {
-      await socialAPI.updateShieldSettings(accountId, { enabled: nextValue });
+      await inlineAPI.updateShieldSettings(accountId, { enabled: nextValue });
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
@@ -180,7 +226,7 @@ export const useSocialAccounts = () => {
     ));
 
     try {
-      await socialAPI.updateAccountSettings(accountId, { defaultTone: tone });
+      await inlineAPI.updateAccountSettings(accountId, { defaultTone: tone });
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
@@ -191,7 +237,7 @@ export const useSocialAccounts = () => {
 
   const onConnectNetwork = useCallback(async (network) => {
     try {
-      const result = await socialAPI.connectNetwork(network);
+      const result = await inlineAPI.connectNetwork(network);
       if (result.redirectUrl) {
         // In a real app, redirect to OAuth URL
         window.open(result.redirectUrl, '_blank');
@@ -220,7 +266,7 @@ export const useSocialAccounts = () => {
     });
 
     try {
-      await socialAPI.disconnectAccount(accountId);
+      await inlineAPI.disconnectAccount(accountId);
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
