@@ -1068,10 +1068,14 @@ class TwitterRoastBot extends BaseIntegration {
   async cleanup() {
     console.log('🧹 Cleaning up Twitter service...');
     
-    // Stop batch polling
-    if (this.batchConfig.pollingActive) {
-      this.batchConfig.pollingActive = false;
-      console.log('🛑 Stopped batch polling');
+    try {
+      // Stop batch polling
+      if (this.batchConfig && this.batchConfig.pollingActive) {
+        this.batchConfig.pollingActive = false;
+        console.log('🛑 Stopped batch polling');
+      }
+    } catch (error) {
+      console.warn('⚠️ Error stopping batch polling:', error.message);
     }
     
     // Close stream connection
@@ -1087,19 +1091,26 @@ class TwitterRoastBot extends BaseIntegration {
     }
     
     // Clear any pending timeouts/intervals
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-      console.log('⏰ Cleared reconnect timeout');
-    }
-    
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-      this.pollingInterval = null;
-      console.log('⏰ Cleared polling interval');
+    try {
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = null;
+        console.log('⏰ Cleared reconnect timeout');
+      }
+      
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+        console.log('⏰ Cleared polling interval');
+      }
+    } catch (error) {
+      console.warn('⚠️ Error clearing timeouts/intervals:', error.message);
     }
     
     console.log('✅ Twitter service cleanup completed');
+    
+    // TODO: Implement cleanup timeout to prevent hanging cleanup operations
+    // TODO: Add cleanup verification tests that check for resource leaks
   }
 }
 
