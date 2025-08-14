@@ -25,6 +25,6 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/setupSimple.js'],
   transform: {
-    '^.+\\.jsx?$': 'babel-jest'
+    '^.+\\.[jt]sx?$': 'babel-jest'
   }
-}
+};
