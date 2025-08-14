@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import LoginPage from './pages/login';
 import RegisterPage from './pages/register';
 import ResetPasswordPage from './pages/reset-password';
@@ -18,13 +19,15 @@ import Logs from './pages/Logs';
 import PlanPicker from './pages/PlanPicker';
 import Connect from './pages/Connect';
 import StyleProfile from './pages/StyleProfile';
+import AccountsPage from './pages/AccountsPage';
 import './App.css';
 
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <div className="App">
+      <ToastProvider>
+        <AuthProvider>
+          <div className="App">
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
@@ -45,6 +48,7 @@ function App() {
               <Route path="plans" element={<PlanPicker />} />
               <Route path="style-profile" element={<StyleProfile />} />
               <Route path="style-profile/generate" element={<StyleProfile />} />
+              <Route path="accounts" element={<AccountsPage />} />
             </Route>
             
             {/* Admin routes (separate from AppShell) */}
@@ -55,8 +59,9 @@ function App() {
             {/* 404 fallback */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </div>
-      </AuthProvider>
+          </div>
+        </AuthProvider>
+      </ToastProvider>
     </Router>
   );
 }
