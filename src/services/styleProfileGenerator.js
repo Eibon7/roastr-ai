@@ -104,6 +104,9 @@ class StyleProfileGenerator {
       }
 
       // Text analysis
+      if (!item.text || typeof item.text !== 'string') {
+        return; // Skip items without valid text
+      }
       const text = item.text.toLowerCase();
       totalLength += text.length;
 
@@ -326,7 +329,7 @@ class StyleProfileGenerator {
     });
 
     stats.totalSources = allSources.size;
-    stats.avgItemsPerLanguage = Math.round(totalItems / profiles.length);
+    stats.avgItemsPerLanguage = profiles.length > 0 ? Math.round(totalItems / profiles.length) : 0;
 
     return stats;
   }
