@@ -3,6 +3,7 @@
  * 
  * Manages social media accounts state with mock data and provides
  * all necessary mutators for the UI. Now with inline API functions.
+ * Cache invalidation marker: build-7
  */
 
 import { useState, useCallback, useMemo } from 'react';
