@@ -4,10 +4,10 @@
 
 import { renderHook, act } from '@testing-library/react';
 import { useSocialAccounts } from '../useSocialAccounts';
-import socialAPI from '../../api/social';
+import socialAPI from '../../api/social.js';
 
 // Mock the social API
-jest.mock('../../api/social', () => ({
+jest.mock('../../api/social.js', () => ({
   __esModule: true,
   default: {
     approveRoast: jest.fn(() => Promise.resolve({ success: true })),
