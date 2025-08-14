@@ -247,8 +247,18 @@ export const useSocialAccounts = () => {
     try {
       const result = await inlineAPI.connectNetwork(network);
       if (result.redirectUrl) {
-        // In a real app, redirect to OAuth URL
-        window.open(result.redirectUrl, '_blank');
+        // Validate URL to prevent XSS
+        try {
+          const url = new URL(result.redirectUrl);
+          if (url.protocol === 'https:' && url.hostname.includes('oauth')) {
+            window.open(result.redirectUrl, '_blank', 'noopener,noreferrer');
+          } else {
+            throw new Error('Invalid OAuth URL');
+          }
+        } catch (urlError) {
+          toast.error('URL de OAuth inválida');
+          console.error('Invalid OAuth URL:', result.redirectUrl);
+        }
       }
     } catch (error) {
       toast.error(`Error al conectar red social: ${error.message}`);
