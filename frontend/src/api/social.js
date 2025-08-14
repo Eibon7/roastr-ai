@@ -3,7 +3,7 @@
 // Mock implementation ready for backend integration
 // Replace internal implementations with actual API calls
 
-import { MOCK_ROASTS, MOCK_ACCOUNTS, MOCK_INTERCEPTED } from '../mocks/social';
+import { MOCK_ROASTS, MOCK_INTERCEPTED } from '../mocks/social';
 
 // Roasts API
 export const getRoasts = async (
@@ -131,7 +131,7 @@ export const isMockMode = () => {
 
 const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
-export default {
+const socialAPI = {
   getRoasts,
   approveRoast,
   rejectRoast,
@@ -144,3 +144,5 @@ export default {
   buildApiUrl,
   getAuthHeaders
 };
+
+export default socialAPI;
