@@ -36,7 +36,7 @@ module.exports = {
   ],
   
   // Mock setup for CI environment
-  setupFilesAfterEnv: ['<rootDir>/tests/setupSimple.js']
+  setupFilesAfterEnv: ['<rootDir>/tests/setupSimple.js'],
 
   // Enable Babel for .js/.jsx files
   transform: {
