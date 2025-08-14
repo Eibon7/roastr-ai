@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import LoginPage from './pages/login';
 import RegisterPage from './pages/register';
 import ResetPasswordPage from './pages/reset-password';
@@ -24,8 +25,9 @@ import './App.css';
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <div className="App">
+      <ToastProvider>
+        <AuthProvider>
+          <div className="App">
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
@@ -57,8 +59,9 @@ function App() {
             {/* 404 fallback */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </div>
-      </AuthProvider>
+          </div>
+        </AuthProvider>
+      </ToastProvider>
     </Router>
   );
 }

@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { useToast } from '../contexts/ToastContext';
 import {
   MOCK_ACCOUNTS,
   MOCK_ROASTS,
@@ -62,6 +63,7 @@ const inlineAPI = {
 };
 
 export const useSocialAccounts = () => {
+  const { toast } = useToast();
   const [accounts, setAccounts] = useState(MOCK_ACCOUNTS);
   const [roastsData, setRoastsData] = useState(MOCK_ROASTS);
   const [interceptedData, setInterceptedData] = useState(MOCK_INTERCEPTED);
@@ -109,11 +111,11 @@ export const useSocialAccounts = () => {
         [accountId]: previousState || []
       }));
       
-      // TODO: Show error toast
+      toast.error(`Error al aprobar roast: ${error.message}`);
       console.error('Failed to approve roast:', error);
       throw error;
     }
-  }, [roastsData]);
+  }, [roastsData, toast]);
 
   const onRejectRoast = useCallback(async (accountId, roastId) => {
     // Optimistic update
@@ -135,11 +137,11 @@ export const useSocialAccounts = () => {
         [accountId]: previousState || []
       }));
       
-      // TODO: Show error toast
+      toast.error(`Error al rechazar roast: ${error.message}`);
       console.error('Failed to reject roast:', error);
       throw error;
     }
-  }, [roastsData]);
+  }, [roastsData, toast]);
 
   const onToggleAutoApprove = useCallback(async (accountId, nextValue) => {
     // Optimistic update
@@ -155,10 +157,11 @@ export const useSocialAccounts = () => {
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
+      toast.error(`Error al cambiar aprobación automática: ${error.message}`);
       console.error('Failed to update auto-approve setting:', error);
       throw error;
     }
-  }, [accounts]);
+  }, [accounts, toast]);
 
   const onToggleAccount = useCallback(async (accountId, nextStatus) => {
     // Optimistic update
@@ -174,10 +177,11 @@ export const useSocialAccounts = () => {
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
+      toast.error(`Error al cambiar estado de cuenta: ${error.message}`);
       console.error('Failed to update account status:', error);
       throw error;
     }
-  }, [accounts]);
+  }, [accounts, toast]);
 
   const onChangeShieldLevel = useCallback(async (accountId, level) => {
     // Optimistic update
@@ -193,10 +197,11 @@ export const useSocialAccounts = () => {
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
+      toast.error(`Error al cambiar nivel de Shield: ${error.message}`);
       console.error('Failed to update shield level:', error);
       throw error;
     }
-  }, [accounts]);
+  }, [accounts, toast]);
 
   const onToggleShield = useCallback(async (accountId, nextValue) => {
     // Optimistic update
@@ -212,10 +217,11 @@ export const useSocialAccounts = () => {
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
+      toast.error(`Error al activar/desactivar Shield: ${error.message}`);
       console.error('Failed to toggle shield:', error);
       throw error;
     }
-  }, [accounts]);
+  }, [accounts, toast]);
 
   const onChangeTone = useCallback(async (accountId, tone) => {
     // Optimistic update
@@ -231,10 +237,11 @@ export const useSocialAccounts = () => {
     } catch (error) {
       // Rollback on error
       setAccounts(previousAccounts);
+      toast.error(`Error al cambiar tono predeterminado: ${error.message}`);
       console.error('Failed to update default tone:', error);
       throw error;
     }
-  }, [accounts]);
+  }, [accounts, toast]);
 
   const onConnectNetwork = useCallback(async (network) => {
     try {
@@ -244,10 +251,11 @@ export const useSocialAccounts = () => {
         window.open(result.redirectUrl, '_blank');
       }
     } catch (error) {
+      toast.error(`Error al conectar red social: ${error.message}`);
       console.error('Failed to initiate OAuth:', error);
       throw error;
     }
-  }, []);
+  }, [toast]);
 
   const onDisconnectAccount = useCallback(async (accountId) => {
     // Store previous state for rollback
@@ -273,10 +281,11 @@ export const useSocialAccounts = () => {
       setAccounts(previousAccounts);
       setRoastsData(previousRoastsData);
       setInterceptedData(previousInterceptedData);
+      toast.error(`Error al desconectar cuenta: ${error.message}`);
       console.error('Failed to disconnect account:', error);
       throw error;
     }
-  }, [accounts, roastsData, interceptedData]);
+  }, [accounts, roastsData, interceptedData, toast]);
 
   // Stats calculations
   const totalAccounts = accounts.length;
