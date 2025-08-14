@@ -55,6 +55,10 @@ class TwitterRoastBot extends BaseIntegration {
     
     // Stream reference
     this.stream = null;
+    
+    // Timeout/interval references for cleanup
+    this.reconnectTimeout = null;
+    this.pollingInterval = null;
 
     // File to store processed tweet IDs (deprecated - use processedMentionsFile)
     this.processedTweetsFile = path.join(__dirname, '../../data/processed_tweets.json');
@@ -576,7 +580,7 @@ class TwitterRoastBot extends BaseIntegration {
       this.stream.on(ETwitterStreamEvent.ConnectionError, (error) => {
         console.error('❌ Stream connection error:', error);
         this.debugLog('Attempting to reconnect in 5 seconds...');
-        setTimeout(() => this.reconnectStream(), 5000);
+        this.reconnectTimeout = setTimeout(() => this.reconnectStream(), 5000);
       });
 
       this.stream.on(ETwitterStreamEvent.ConnectionClosed, () => {
@@ -718,7 +722,7 @@ class TwitterRoastBot extends BaseIntegration {
       
     } catch (error) {
       console.error('❌ Error reconnecting stream:', error);
-      setTimeout(() => this.reconnectStream(), 10000); // Try again in 10 seconds
+      this.reconnectTimeout = setTimeout(() => this.reconnectStream(), 10000); // Try again in 10 seconds
     }
   }
 
@@ -1055,6 +1059,47 @@ class TwitterRoastBot extends BaseIntegration {
         await this.runBatchPolling();
       }
     }
+  }
+
+  /**
+   * Cleanup method to properly close all connections and timers
+   * This is essential for preventing open handles in tests
+   */
+  async cleanup() {
+    console.log('🧹 Cleaning up Twitter service...');
+    
+    // Stop batch polling
+    if (this.batchConfig.pollingActive) {
+      this.batchConfig.pollingActive = false;
+      console.log('🛑 Stopped batch polling');
+    }
+    
+    // Close stream connection
+    if (this.stream) {
+      try {
+        this.stream.close();
+        this.stream.removeAllListeners();
+        this.stream = null;
+        console.log('🔌 Closed Twitter stream');
+      } catch (error) {
+        console.warn('⚠️ Error closing stream:', error.message);
+      }
+    }
+    
+    // Clear any pending timeouts/intervals
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+      console.log('⏰ Cleared reconnect timeout');
+    }
+    
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+      console.log('⏰ Cleared polling interval');
+    }
+    
+    console.log('✅ Twitter service cleanup completed');
   }
 }
 

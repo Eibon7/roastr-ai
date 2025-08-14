@@ -27,6 +27,9 @@ class IntegrationManager {
       uptime: 0
     };
     
+    // Timer references for cleanup
+    this.metricsInterval = null;
+    
     // Start metrics collection only if not in test mode
     if (config.logging.enableMetrics && !this.testMode) {
       this.startMetricsCollection();
@@ -645,7 +648,7 @@ class IntegrationManager {
    * Start periodic metrics collection
    */
   startMetricsCollection() {
-    setInterval(() => {
+    this.metricsInterval = setInterval(() => {
       const metrics = this.getGlobalMetrics();
       this.debugLog('Periodic metrics:', metrics.global);
       
@@ -686,6 +689,13 @@ class IntegrationManager {
   async shutdown() {
     try {
       console.log('🛑 Shutting down Integration Manager...');
+      
+      // Clear metrics interval
+      if (this.metricsInterval) {
+        clearInterval(this.metricsInterval);
+        this.metricsInterval = null;
+        console.log('🧹 Cleared metrics collection interval');
+      }
       
       const shutdownPromises = [];
       

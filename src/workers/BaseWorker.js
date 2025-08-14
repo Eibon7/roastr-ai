@@ -114,11 +114,15 @@ class BaseWorker {
     this.log('info', 'Stopping worker gracefully');
     this.isRunning = false;
     
-    // Wait for current jobs to complete
+    // Wait for current jobs to complete with proper cleanup
+    let checkInterval;
+    let timeoutHandle;
+    
     const stopPromise = new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
+      checkInterval = setInterval(() => {
         if (this.currentJobs.size === 0) {
           clearInterval(checkInterval);
+          if (timeoutHandle) clearTimeout(timeoutHandle);
           resolve();
         }
       }, 100);
@@ -126,7 +130,10 @@ class BaseWorker {
     
     // Force stop after timeout
     const timeoutPromise = new Promise((resolve) => {
-      setTimeout(resolve, this.config.gracefulShutdownTimeout);
+      timeoutHandle = setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve();
+      }, this.config.gracefulShutdownTimeout);
     });
     
     await Promise.race([stopPromise, timeoutPromise]);

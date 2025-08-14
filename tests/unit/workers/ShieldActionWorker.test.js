@@ -84,6 +84,13 @@ describe('ShieldActionWorker', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    // Ensure worker is properly stopped to avoid open handles
+    if (worker && typeof worker.stop === 'function') {
+      await worker.stop();
+    }
+  });
+
   describe('constructor', () => {
     test('should initialize worker with correct type', () => {
       expect(worker.workerType).toBe('shield_action');
