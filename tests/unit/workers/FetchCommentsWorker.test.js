@@ -50,19 +50,32 @@ jest.mock('../../../src/workers/BaseWorker', () => {
   });
 });
 
-// Mock integration services
-const mockTwitterService = {
-  fetchComments: jest.fn(),
-  initialize: jest.fn()
+// Mock platform APIs
+const mockTwitterApi = jest.fn().mockImplementation(() => ({
+  v2: {
+    search: jest.fn(),
+    userByUsername: jest.fn()
+  }
+}));
+
+const mockYouTubeApi = {
+  youtube: jest.fn(() => ({
+    comments: {
+      list: jest.fn()
+    },
+    commentThreads: {
+      list: jest.fn()
+    }
+  }))
 };
 
-const mockYouTubeService = {
-  fetchComments: jest.fn(),
-  initialize: jest.fn()
-};
+jest.mock('twitter-api-v2', () => ({
+  TwitterApi: mockTwitterApi
+}));
 
-jest.mock('../../../src/integrations/twitter/twitterService', () => mockTwitterService);
-jest.mock('../../../src/integrations/youtube/youtubeService', () => mockYouTubeService);
+jest.mock('googleapis', () => ({
+  google: mockYouTubeApi
+}));
 
 describe('FetchCommentsWorker', () => {
   let worker;
