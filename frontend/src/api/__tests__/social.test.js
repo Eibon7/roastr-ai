@@ -4,7 +4,7 @@
  * Tests for the social networks API mock implementation
  */
 
-import socialAPI from '../social';
+import socialAPI from '..';
 
 // These tests verify the API SDK functions work correctly 
 // They use the real implementation but in mock mode

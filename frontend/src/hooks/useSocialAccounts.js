@@ -12,7 +12,7 @@ import {
   MOCK_INTERCEPTED,
   MOCK_AVAILABLE_NETWORKS
 } from '../mocks/social';
-import socialAPI from '../api/social.js';
+import socialAPI from '../api';
 
 export const useSocialAccounts = () => {
   const [accounts, setAccounts] = useState(MOCK_ACCOUNTS);
