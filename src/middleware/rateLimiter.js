@@ -221,9 +221,9 @@ const store = new RateLimitStore();
  */
 function getClientIP(req) {
   return req.ip || 
-         req.connection.remoteAddress ||
-         req.socket.remoteAddress ||
-         (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+         (req.connection && req.connection.remoteAddress) ||
+         (req.socket && req.socket.remoteAddress) ||
+         (req.connection && req.connection.socket && req.connection.socket.remoteAddress) ||
          '127.0.0.1';
 }
 
@@ -241,14 +241,14 @@ function loginRateLimiter(req, res, next) {
   // Only apply to login/auth endpoints
   const isAuthEndpoint = req.path.includes('/auth/') || 
                         req.path.includes('/login') || 
-                        req.method === 'POST' && req.body.email;
+                        req.method === 'POST' && req.body && req.body.email;
 
   if (!isAuthEndpoint) {
     return next();
   }
 
   const ip = getClientIP(req);
-  const email = req.body.email || req.body.username || 'unknown';
+  const email = (req.body && (req.body.email || req.body.username)) || 'unknown';
   
   if (!email || email === 'unknown') {
     return next();
