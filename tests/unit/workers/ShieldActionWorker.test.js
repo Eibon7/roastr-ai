@@ -8,12 +8,12 @@ const ShieldActionWorker = require('../../../src/workers/ShieldActionWorker');
 
 // Mock BaseWorker
 jest.mock('../../../src/workers/BaseWorker', () => {
-  return jest.fn().mockImplementation((workerType, options) => {
-    const mockBaseWorker = {
-      workerType,
-      workerName: `${workerType}-worker-test`,
-      config: { maxRetries: 3, ...options },
-      supabase: {
+  return class MockBaseWorker {
+    constructor(workerType, options = {}) {
+      this.workerType = workerType;
+      this.workerName = `${workerType}-worker-test`;
+      this.config = { maxRetries: 3, ...options };
+      this.supabase = {
         from: jest.fn(() => ({
           select: jest.fn(() => ({
             eq: jest.fn(() => ({
@@ -33,43 +33,75 @@ jest.mock('../../../src/workers/BaseWorker', () => {
             }))
           }))
         }))
-      },
-      queueService: {
+      };
+      this.queueService = {
         addJob: jest.fn(),
         initialize: jest.fn(),
         shutdown: jest.fn()
-      },
-      log: jest.fn(),
-      processJob: null, // Will be overridden by actual implementation
-      start: jest.fn(),
-      stop: jest.fn(),
-      initializeConnections: jest.fn(),
-      setupGracefulShutdown: jest.fn()
-    };
-    return mockBaseWorker;
-  });
+      };
+      this.redis = null;
+      this.log = jest.fn();
+      this.start = jest.fn();
+      this.stop = jest.fn();
+      this.initializeConnections = jest.fn();
+      this.setupGracefulShutdown = jest.fn();
+    }
+  };
 });
 
-// Mock platform integrations
-const mockTwitterService = {
-  muteUser: jest.fn(),
-  blockUser: jest.fn(),
-  reportUser: jest.fn(),
-  removeContent: jest.fn(),
-  sendDM: jest.fn(),
-  initialize: jest.fn()
+// Mock Shield Service
+const mockShieldService = {
+  analyzeForShield: jest.fn(),
+  executeActions: jest.fn(),
+  getShieldConfig: jest.fn(),
+  shutdown: jest.fn()
 };
 
-const mockYouTubeService = {
-  muteUser: jest.fn(),
-  blockUser: jest.fn(),
-  reportUser: jest.fn(),
-  removeContent: jest.fn(),
-  initialize: jest.fn()
-};
+jest.mock('../../../src/services/shieldService', () => {
+  return jest.fn().mockImplementation(() => mockShieldService);
+});
 
-jest.mock('../../../src/integrations/twitter/twitterService', () => mockTwitterService);
-jest.mock('../../../src/integrations/youtube/youtubeService', () => mockYouTubeService);
+// Mock external API libraries
+jest.mock('twitter-api-v2', () => ({
+  TwitterApi: jest.fn().mockImplementation(() => ({
+    v2: {
+      mutesAndBlocks: {
+        mute: jest.fn(),
+        block: jest.fn(),
+        unmute: jest.fn(),
+        unblock: jest.fn()
+      }
+    }
+  }))
+}));
+
+jest.mock('discord.js', () => ({
+  Client: jest.fn().mockImplementation(() => ({
+    login: jest.fn(),
+    destroy: jest.fn(),
+    guilds: {
+      cache: new Map()
+    }
+  })),
+  GatewayIntentBits: {
+    Guilds: 1,
+    GuildMessages: 2,
+    GuildModeration: 4
+  }
+}));
+
+jest.mock('@twurple/api', () => ({
+  ApiClient: jest.fn().mockImplementation(() => ({
+    moderation: {
+      banUser: jest.fn(),
+      timeoutUser: jest.fn()
+    }
+  }))
+}));
+
+jest.mock('@twurple/auth', () => ({
+  StaticAuthProvider: jest.fn()
+}));
 
 describe('ShieldActionWorker', () => {
   let worker;
@@ -94,9 +126,9 @@ describe('ShieldActionWorker', () => {
   describe('constructor', () => {
     test('should initialize worker with correct type', () => {
       expect(worker.workerType).toBe('shield_action');
-      expect(worker.integrations).toBeDefined();
-      expect(worker.integrations.twitter).toBe(mockTwitterService);
-      expect(worker.integrations.youtube).toBe(mockYouTubeService);
+      expect(worker.shieldService).toBeDefined();
+      expect(worker.platformClients).toBeDefined();
+      expect(worker.platformClients instanceof Map).toBe(true);
     });
   });
 

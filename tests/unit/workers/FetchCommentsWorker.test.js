@@ -8,12 +8,12 @@ const FetchCommentsWorker = require('../../../src/workers/FetchCommentsWorker');
 
 // Mock BaseWorker
 jest.mock('../../../src/workers/BaseWorker', () => {
-  return jest.fn().mockImplementation((workerType, options) => {
-    const mockBaseWorker = {
-      workerType,
-      workerName: `${workerType}-worker-test`,
-      config: { maxRetries: 3, ...options },
-      supabase: {
+  return class MockBaseWorker {
+    constructor(workerType, options = {}) {
+      this.workerType = workerType;
+      this.workerName = `${workerType}-worker-test`;
+      this.config = { maxRetries: 3, ...options };
+      this.supabase = {
         from: jest.fn(() => ({
           select: jest.fn(() => ({
             eq: jest.fn(() => ({
@@ -33,36 +33,52 @@ jest.mock('../../../src/workers/BaseWorker', () => {
             }))
           }))
         }))
-      },
-      queueService: {
+      };
+      this.queueService = {
         addJob: jest.fn(),
         initialize: jest.fn(),
         shutdown: jest.fn()
-      },
-      log: jest.fn(),
-      processJob: null, // Will be overridden by actual implementation
-      start: jest.fn(),
-      stop: jest.fn(),
-      initializeConnections: jest.fn(),
-      setupGracefulShutdown: jest.fn()
-    };
-    return mockBaseWorker;
-  });
+      };
+      this.redis = null;
+      this.log = jest.fn();
+      this.start = jest.fn();
+      this.stop = jest.fn();
+      this.initializeConnections = jest.fn();
+      this.setupGracefulShutdown = jest.fn();
+    }
+  };
 });
 
-// Mock integration services
-const mockTwitterService = {
-  fetchComments: jest.fn(),
+// Mock Cost Control service
+const mockCostControlService = {
+  canPerformOperation: jest.fn(),
+  recordUsage: jest.fn(),
   initialize: jest.fn()
 };
 
-const mockYouTubeService = {
-  fetchComments: jest.fn(),
-  initialize: jest.fn()
-};
+jest.mock('../../../src/services/costControl', () => {
+  return jest.fn().mockImplementation(() => mockCostControlService);
+});
 
-jest.mock('../../../src/integrations/twitter/twitterService', () => mockTwitterService);
-jest.mock('../../../src/integrations/youtube/youtubeService', () => mockYouTubeService);
+// Mock external API libraries
+jest.mock('twitter-api-v2', () => ({
+  TwitterApi: jest.fn().mockImplementation(() => ({
+    v2: {
+      search: jest.fn(),
+      userMentionTimeline: jest.fn()
+    }
+  }))
+}));
+
+jest.mock('googleapis', () => ({
+  google: {
+    youtube: jest.fn().mockImplementation(() => ({
+      comments: {
+        list: jest.fn()
+      }
+    }))
+  }
+}));
 
 describe('FetchCommentsWorker', () => {
   let worker;
@@ -89,9 +105,9 @@ describe('FetchCommentsWorker', () => {
   describe('constructor', () => {
     test('should initialize worker with correct type', () => {
       expect(worker.workerType).toBe('fetch_comments');
-      expect(worker.integrations).toBeDefined();
-      expect(worker.integrations.twitter).toBe(mockTwitterService);
-      expect(worker.integrations.youtube).toBe(mockYouTubeService);
+      expect(worker.costControl).toBeDefined();
+      expect(worker.platformClients).toBeDefined();
+      expect(worker.platformClients instanceof Map).toBe(true);
     });
   });
 
