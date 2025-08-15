@@ -27,6 +27,9 @@ class IntegrationManager {
       uptime: 0
     };
     
+    // Timer references for cleanup
+    this.metricsInterval = null;
+    
     // Start metrics collection only if not in test mode
     if (config.logging.enableMetrics && !this.testMode) {
       this.startMetricsCollection();
@@ -645,7 +648,7 @@ class IntegrationManager {
    * Start periodic metrics collection
    */
   startMetricsCollection() {
-    setInterval(() => {
+    this.metricsInterval = setInterval(() => {
       const metrics = this.getGlobalMetrics();
       this.debugLog('Periodic metrics:', metrics.global);
       
@@ -687,6 +690,17 @@ class IntegrationManager {
     try {
       console.log('🛑 Shutting down Integration Manager...');
       
+      // Clear metrics interval with error handling
+      try {
+        if (this.metricsInterval) {
+          clearInterval(this.metricsInterval);
+          this.metricsInterval = null;
+          console.log('🧹 Cleared metrics collection interval');
+        }
+      } catch (error) {
+        console.warn('⚠️ Error clearing metrics interval:', error.message);
+      }
+      
       const shutdownPromises = [];
       
       for (const [platform, integration] of this.activeIntegrations) {
@@ -705,6 +719,9 @@ class IntegrationManager {
       this.activeIntegrations.clear();
       
       console.log('✅ Integration Manager shut down successfully');
+      
+      // TODO: Implement shutdown timeout to prevent hanging shutdown operations
+      // TODO: Add cleanup verification tests that check for resource leaks
       
     } catch (error) {
       console.error('❌ Error during Integration Manager shutdown:', error.message);

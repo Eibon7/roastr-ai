@@ -114,11 +114,21 @@ class BaseWorker {
     this.log('info', 'Stopping worker gracefully');
     this.isRunning = false;
     
-    // Wait for current jobs to complete
+    // Wait for current jobs to complete with proper cleanup
+    let checkInterval;
+    let timeoutHandle;
+    
     const stopPromise = new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        if (this.currentJobs.size === 0) {
+      checkInterval = setInterval(() => {
+        // Safety check: ensure currentJobs is properly initialized
+        if (this.currentJobs && this.currentJobs.size === 0) {
           clearInterval(checkInterval);
+          if (timeoutHandle) clearTimeout(timeoutHandle);
+          resolve();
+        } else if (!this.currentJobs) {
+          // If currentJobs was never initialized (processingLoop never ran), resolve immediately
+          clearInterval(checkInterval);
+          if (timeoutHandle) clearTimeout(timeoutHandle);
           resolve();
         }
       }, 100);
@@ -126,7 +136,10 @@ class BaseWorker {
     
     // Force stop after timeout
     const timeoutPromise = new Promise((resolve) => {
-      setTimeout(resolve, this.config.gracefulShutdownTimeout);
+      timeoutHandle = setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve();
+      }, this.config.gracefulShutdownTimeout);
     });
     
     await Promise.race([stopPromise, timeoutPromise]);
@@ -141,6 +154,9 @@ class BaseWorker {
       failedJobs: this.failedJobs,
       uptime: Date.now() - this.startTime
     });
+    
+    // TODO: Implement cleanup timeout to prevent hanging cleanup operations
+    // TODO: Add cleanup verification tests that check for resource leaks
   }
   
   /**
