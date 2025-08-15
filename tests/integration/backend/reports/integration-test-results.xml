@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Backend Integration Tests" tests="3" failures="0" errors="0" time="0.184">
+  <testsuite name="Backend Integration Test Setup" errors="0" failures="0" skipped="0" timestamp="2025-08-13T23:17:46" time="0.161" tests="3">
+    <testcase classname="Backend Integration Test Setup should load environment configuration" name="Backend Integration Test Setup should load environment configuration" time="0.001">
+    </testcase>
+    <testcase classname="Backend Integration Test Setup should have proper Jest configuration" name="Backend Integration Test Setup should have proper Jest configuration" time="0.001">
+    </testcase>
+    <testcase classname="Backend Integration Test Setup should handle fixture mode configuration" name="Backend Integration Test Setup should handle fixture mode configuration" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>

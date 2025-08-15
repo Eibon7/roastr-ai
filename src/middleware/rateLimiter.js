@@ -332,7 +332,7 @@ function loginRateLimiter(req, res, next) {
  * @param {Object} res - Express response object
  */
 function getRateLimitMetrics(req, res) {
-  if (!flags.isEnabled('ENABLE_MOCK_MODE') && process.env.NODE_ENV !== 'test') {
+  if (!flags.isEnabled('MOCK_MODE') && process.env.NODE_ENV !== 'test') {
     return res.status(403).json({
       success: false,
       error: 'Metrics only available in mock mode'
@@ -357,7 +357,7 @@ function getRateLimitMetrics(req, res) {
  * @param {Object} res - Express response object
  */
 function resetRateLimit(req, res) {
-  if (!flags.isEnabled('ENABLE_MOCK_MODE') && process.env.NODE_ENV !== 'test') {
+  if (!flags.isEnabled('MOCK_MODE') && process.env.NODE_ENV !== 'test') {
     return res.status(403).json({
       success: false,
       error: 'Rate limit reset only available in mock mode'

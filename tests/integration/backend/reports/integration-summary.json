@@ -1,0 +1,16 @@
+{
+  "completedAt": "2025-08-13T23:17:46.182Z",
+  "duration": 194,
+  "durationFormatted": "0m 0s",
+  "environment": {
+    "nodeVersion": "v22.18.0",
+    "platform": "darwin",
+    "mockMode": false,
+    "useFixtures": false
+  },
+  "configuration": {
+    "testTimeout": "30000",
+    "retryCount": "3",
+    "concurrent": false
+  }
+}
