@@ -1,0 +1,85 @@
+{
+  "timestamp": "2025-08-12T14:42:24.478Z",
+  "summary": {
+    "total": 9,
+    "valid": 0,
+    "warnings": 0,
+    "errors": 0,
+    "warning": null,
+    "error": null
+  },
+  "results": [
+    {
+      "filename": "accounts.json",
+      "status": "warning",
+      "message": "Metadata issue: Missing _fixtureMetadata",
+      "details": null,
+      "timestamp": "2025-08-12T14:42:24.476Z"
+    },
+    {
+      "filename": "accounts.json",
+      "status": "error",
+      "message": "Checksum validation failed",
+      "details": "No checksum found",
+      "timestamp": "2025-08-12T14:42:24.477Z"
+    },
+    {
+      "filename": "roasts.json",
+      "status": "warning",
+      "message": "Metadata issue: Missing _fixtureMetadata",
+      "details": null,
+      "timestamp": "2025-08-12T14:42:24.477Z"
+    },
+    {
+      "filename": "roasts.json",
+      "status": "error",
+      "message": "Checksum validation failed",
+      "details": "No checksum found",
+      "timestamp": "2025-08-12T14:42:24.477Z"
+    },
+    {
+      "filename": "settings.json",
+      "status": "warning",
+      "message": "Metadata issue: Missing _fixtureMetadata",
+      "details": null,
+      "timestamp": "2025-08-12T14:42:24.477Z"
+    },
+    {
+      "filename": "settings.json",
+      "status": "error",
+      "message": "Checksum validation failed",
+      "details": "No checksum found",
+      "timestamp": "2025-08-12T14:42:24.477Z"
+    },
+    {
+      "filename": "shield.json",
+      "status": "warning",
+      "message": "Metadata issue: Missing _fixtureMetadata",
+      "details": null,
+      "timestamp": "2025-08-12T14:42:24.478Z"
+    },
+    {
+      "filename": "shield.json",
+      "status": "error",
+      "message": "Checksum validation failed",
+      "details": "No checksum found",
+      "timestamp": "2025-08-12T14:42:24.478Z"
+    },
+    {
+      "filename": "validation-report.json",
+      "status": "warning",
+      "message": "Unexpected fixture file found",
+      "details": null,
+      "timestamp": "2025-08-12T14:42:24.478Z"
+    }
+  ],
+  "configuration": {
+    "maxFixtureAgeDays": 30,
+    "validatedSchemas": [
+      "accounts.json",
+      "roasts.json",
+      "settings.json",
+      "shield.json"
+    ]
+  }
+}
