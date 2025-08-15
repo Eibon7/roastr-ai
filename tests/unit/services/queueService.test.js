@@ -30,22 +30,23 @@ jest.mock('@supabase/supabase-js', () => ({
       select: jest.fn(() => ({
         eq: jest.fn(() => ({
           order: jest.fn(() => ({
-            limit: jest.fn(),
-            single: jest.fn()
+            limit: jest.fn(() => Promise.resolve({ data: null, error: null })),
+            single: jest.fn(() => Promise.resolve({ data: null, error: null }))
           }))
         })),
         order: jest.fn(() => ({
-          limit: jest.fn()
+          limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
         })),
         in: jest.fn(() => ({
           order: jest.fn(() => ({
-            limit: jest.fn()
+            limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
           }))
-        }))
+        })),
+        limit: jest.fn(() => Promise.resolve({ data: null, error: null }))
       })),
       insert: jest.fn(() => ({
         select: jest.fn(() => ({
-          single: jest.fn()
+          single: jest.fn(() => Promise.resolve({ data: null, error: null }))
         }))
       })),
       update: jest.fn(() => ({

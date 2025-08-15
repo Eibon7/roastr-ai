@@ -120,7 +120,13 @@ class BaseWorker {
     
     const stopPromise = new Promise((resolve) => {
       checkInterval = setInterval(() => {
-        if (this.currentJobs.size === 0) {
+        // Safety check: ensure currentJobs is properly initialized
+        if (this.currentJobs && this.currentJobs.size === 0) {
+          clearInterval(checkInterval);
+          if (timeoutHandle) clearTimeout(timeoutHandle);
+          resolve();
+        } else if (!this.currentJobs) {
+          // If currentJobs was never initialized (processingLoop never ran), resolve immediately
           clearInterval(checkInterval);
           if (timeoutHandle) clearTimeout(timeoutHandle);
           resolve();
@@ -148,6 +154,9 @@ class BaseWorker {
       failedJobs: this.failedJobs,
       uptime: Date.now() - this.startTime
     });
+    
+    // TODO: Implement cleanup timeout to prevent hanging cleanup operations
+    // TODO: Add cleanup verification tests that check for resource leaks
   }
   
   /**

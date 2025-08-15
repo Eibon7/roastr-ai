@@ -28,3 +28,10 @@ Thumbs.db
 
 # Local configs
 *.local
+
+# Integration test reports
+tests/integration/backend/reports/
+tests/integration/backend/fixtures/validation-report.json
+
+# Test environment files (not committed)
+.env.test.real

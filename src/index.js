@@ -40,23 +40,53 @@ const port = process.env.PORT || 3000;
 // Apply security middleware
 app.use(helmetConfig);
 app.use(corsConfig);
-app.use(requestLogger);
-app.use(validateInput);
 
-// Health check endpoint (before rate limiting)
-app.get('/health', (req, res) => {
-  const uptime = process.uptime();
-  const serviceStatus = flags.getServiceStatus();
-  
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: `${Math.floor(uptime)}s`,
-    version: require('../package.json').version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    services: serviceStatus
-  });
+// Skip request logger and validateInput for health check
+app.use((req, res, next) => {
+  if (req.path === '/health') {
+    return next();
+  }
+  requestLogger(req, res, next);
 });
+
+app.use((req, res, next) => {
+  if (req.path === '/health') {
+    return next();
+  }
+  validateInput(req, res, next);
+});
+
+// Health check endpoint (after security headers but before rate limiting)
+app.get('/health', (req, res) => {
+  try {
+    const uptime = process.uptime();
+    const serviceStatus = flags.getServiceStatus();
+    
+    // Try to load version safely
+    let version = '1.0.0';
+    try {
+      version = require('../package.json').version || '1.0.0';
+    } catch (e) {
+      // Ignore version loading error
+    }
+    
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: `${Math.floor(uptime)}s`,
+      version,
+      environment: process.env.NODE_ENV || 'development',
+      services: serviceStatus
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
 
 app.get('/api/health', (req, res) => {
   const serviceStatus = flags.getServiceStatus();

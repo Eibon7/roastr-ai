@@ -322,6 +322,52 @@ router.post('/import', authenticateToken, (req, res) => {
     const platformConfig = SUPPORTED_PLATFORMS[platform];
     const actualLimit = Math.min(limit, platformConfig.maxImportLimit);
 
+    // In test mode, import synchronously
+    if (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
+      try {
+        // Generate mock content
+        const importedContent = generateMockContent(
+          platform, 
+          actualLimit, 
+          platformConfig.languages
+        );
+
+        // Store imported content
+        let userHistory = importHistory.get(userId) || {};
+        if (!userHistory[platform]) {
+          userHistory[platform] = [];
+        }
+        userHistory[platform] = [...userHistory[platform], ...importedContent];
+        importHistory.set(userId, userHistory);
+
+        // Update connection status
+        connection.importedCount = (connection.importedCount || 0) + importedContent.length;
+        connection.lastImport = new Date().toISOString();
+        userConnections[platform] = connection;
+        userIntegrations.set(userId, userConnections);
+
+        console.log(`📥 User ${userId} imported ${importedContent.length} items from ${platform} (sync mode)`);
+        
+        return res.json({
+          success: true,
+          data: {
+            platform,
+            imported: importedContent.length,
+            languageHints: platformConfig.languages,
+            status: 'completed',
+            totalItems: userHistory[platform].length,
+            message: `Successfully imported ${importedContent.length} items from ${platformConfig.displayName}`
+          }
+        });
+      } catch (error) {
+        console.error('❌ Error in sync import:', error.message);
+        return res.status(500).json({
+          success: false,
+          error: 'Import failed'
+        });
+      }
+    }
+
     // Simulate import process with delay
     setTimeout(() => {
       try {

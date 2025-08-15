@@ -57,8 +57,34 @@ const getUserFromToken = async (token) => {
     // In mock mode or testing, return a valid mock user for any token
     if (!isSupabaseConfigured || process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
         if (token && token !== '') {
-            return {
-                id: 'mock-user-123',
+            // Different tokens return different mock users for testing
+            const mockUsers = {
+                'mock-jwt-token': {
+                    id: 'mock-user-123',
+                    email: 'test@example.com',
+                    user_metadata: { full_name: 'Test User' },
+                    app_metadata: { role: 'user' },
+                    created_at: new Date().toISOString()
+                },
+                'mock-creator-jwt-token': {
+                    id: 'mock-creator-user-456',
+                    email: 'creator@example.com',
+                    user_metadata: { full_name: 'Creator User' },
+                    app_metadata: { role: 'user' },
+                    created_at: new Date().toISOString()
+                },
+                'mock-admin-token': {
+                    id: 'mock-admin-789',
+                    email: 'admin@example.com',
+                    user_metadata: { full_name: 'Admin User' },
+                    app_metadata: { role: 'admin' },
+                    created_at: new Date().toISOString()
+                }
+            };
+            
+            // Return specific user if known token, otherwise return default
+            return mockUsers[token] || {
+                id: 'mock-user-' + token.substring(0, 8),
                 email: 'test@example.com',
                 user_metadata: { full_name: 'Test User' },
                 app_metadata: { role: 'user' },

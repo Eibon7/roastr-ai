@@ -1,0 +1,3698 @@
+FAIL node-tests tests/unit/frontend/billing.test.js
+  Billing Frontend Tests
+    Plans Data Loading
+      ✕ should load subscription data successfully (31 ms)
+      ✕ should load plans data successfully (4 ms)
+      ✕ should handle API errors gracefully (4 ms)
+    UI Manipulation
+      ✕ should show current plan badge for non-free plans (4 ms)
+      ✕ should show portal button for subscribed users (4 ms)
+      ✕ should render plans grid correctly (3 ms)
+    Checkout Session Creation
+      ✕ should handle checkout creation errors (4 ms)
+      ○ skipped should create checkout session successfully (JSDOM location redirect limitation)
+    Customer Portal
+      ○ skipped should open customer portal successfully (JSDOM location redirect limitation)
+    Message Display
+      ✕ should show error messages (3 ms)
+      ✕ should show success messages (7 ms)
+    Loading States
+      ✕ should show and hide loading overlay (3 ms)
+  Billing Success Page Tests
+    ✓ should extract session ID from URL (5 ms)
+    ✓ should update subscription display after webhook processing (3 ms)
+
+  ● Billing Frontend Tests › Plans Data Loading › should load subscription data successfully
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › Plans Data Loading › should load plans data successfully
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › Plans Data Loading › should handle API errors gracefully
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › UI Manipulation › should show current plan badge for non-free plans
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › UI Manipulation › should show portal button for subscribed users
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › UI Manipulation › should render plans grid correctly
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › Checkout Session Creation › should handle checkout creation errors
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › Message Display › should show error messages
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › Message Display › should show success messages
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+  ● Billing Frontend Tests › Loading States › should show and hide loading overlay
+
+    TypeError: Cannot delete property 'location' of #<Window>
+
+      62 |         
+      63 |         // Delete the original location and set our mock
+    > 64 |         delete window.location;
+         |         ^
+      65 |         window.location = mockLocation;
+      66 |         global.window.location = mockLocation;
+      67 |         
+
+      at Object.<anonymous> (tests/unit/frontend/billing.test.js:64:9)
+
+FAIL node-tests tests/unit/middleware/rateLimiter.test.js
+  Rate Limiter Middleware
+    RateLimitStore
+      getKey
+        ✓ should generate consistent keys for same IP and email
+        ✓ should generate different keys for different IPs
+        ✓ should generate different keys for different emails
+        ✓ should be case insensitive for emails
+      isBlocked
+        ✓ should return false for non-blocked key
+        ✓ should return true for blocked key within time window
+        ✓ should clean up expired blocks
+      recordAttempt
+        ✓ should record first attempt correctly
+        ✓ should increment attempt count (1 ms)
+        ✓ should block after 5 attempts
+        ✓ should reset attempt window after 15 minutes
+        ✓ should track recent blocks
+        ✓ should limit recent blocks to 100 entries (1 ms)
+      recordSuccess
+        ✓ should clear attempts and blocks for successful login
+      cleanup
+        ✓ should remove old attempts
+        ✓ should remove expired blocks
+      getMetrics
+        ✓ should return correct metrics
+    getClientIP
+      ✓ should extract IP from req.ip
+      ✓ should fall back to connection.remoteAddress
+      ✕ should fall back to socket.remoteAddress
+      ✕ should fall back to connection.socket.remoteAddress
+      ✕ should default to localhost when no IP found
+    loginRateLimiter middleware
+      ✓ should pass through when rate limiting is disabled (1 ms)
+      ✓ should pass through for non-auth endpoints
+      ✓ should pass through when no email provided
+      ✓ should block requests when rate limit exceeded
+      ✓ should intercept failed login responses (1 ms)
+      ✓ should reset attempts on successful login
+      ✓ should handle auth endpoint variations
+      ✓ should detect POST requests with email in body
+      ✓ should handle username field as email fallback
+      ✓ should log debug information when enabled (1 ms)
+    getRateLimitMetrics endpoint
+      ✓ should return metrics in mock mode
+      ✕ should deny access outside mock mode (1 ms)
+      ✓ should work in test environment
+    resetRateLimit endpoint
+      ✓ should reset rate limit for specific IP/email
+      ✓ should require IP and email parameters
+      ✕ should deny access outside mock mode
+      ✓ should work in test environment
+    Error handling and edge cases
+      ✕ should handle missing request body
+      ✓ should handle malformed email addresses
+      ✓ should handle response end interception errors
+      ✓ should handle concurrent requests for same user (1 ms)
+      ✕ should handle store cleanup during operation
+
+  ● Rate Limiter Middleware › getClientIP › should fall back to socket.remoteAddress
+
+    TypeError: Cannot read properties of undefined (reading 'remoteAddress')
+
+      222 | function getClientIP(req) {
+      223 |   return req.ip || 
+    > 224 |          req.connection.remoteAddress ||
+          |                         ^
+      225 |          req.socket.remoteAddress ||
+      226 |          (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+      227 |          '127.0.0.1';
+
+      at remoteAddress (src/middleware/rateLimiter.js:224:25)
+      at Object.getClientIP (tests/unit/middleware/rateLimiter.test.js:297:14)
+
+  ● Rate Limiter Middleware › getClientIP › should fall back to connection.socket.remoteAddress
+
+    TypeError: Cannot read properties of undefined (reading 'remoteAddress')
+
+      223 |   return req.ip || 
+      224 |          req.connection.remoteAddress ||
+    > 225 |          req.socket.remoteAddress ||
+          |                     ^
+      226 |          (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+      227 |          '127.0.0.1';
+      228 | }
+
+      at remoteAddress (src/middleware/rateLimiter.js:225:21)
+      at Object.getClientIP (tests/unit/middleware/rateLimiter.test.js:306:14)
+
+  ● Rate Limiter Middleware › getClientIP › should default to localhost when no IP found
+
+    TypeError: Cannot read properties of undefined (reading 'remoteAddress')
+
+      222 | function getClientIP(req) {
+      223 |   return req.ip || 
+    > 224 |          req.connection.remoteAddress ||
+          |                         ^
+      225 |          req.socket.remoteAddress ||
+      226 |          (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+      227 |          '127.0.0.1';
+
+      at remoteAddress (src/middleware/rateLimiter.js:224:25)
+      at Object.getClientIP (tests/unit/middleware/rateLimiter.test.js:311:14)
+
+  ● Rate Limiter Middleware › getRateLimitMetrics endpoint › should deny access outside mock mode
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: 403
+
+    Number of calls: 0
+
+      514 |       await getRateLimitMetrics(mockReq, mockRes);
+      515 |
+    > 516 |       expect(mockRes.status).toHaveBeenCalledWith(403);
+          |                              ^
+      517 |       expect(mockRes.json).toHaveBeenCalledWith({
+      518 |         success: false,
+      519 |         error: 'Metrics only available in mock mode'
+
+      at Object.toHaveBeenCalledWith (tests/unit/middleware/rateLimiter.test.js:516:30)
+
+  ● Rate Limiter Middleware › resetRateLimit endpoint › should deny access outside mock mode
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: 403
+
+    Number of calls: 0
+
+      592 |       await resetRateLimit(mockReq, mockRes);
+      593 |
+    > 594 |       expect(mockRes.status).toHaveBeenCalledWith(403);
+          |                              ^
+      595 |       expect(mockRes.json).toHaveBeenCalledWith({
+      596 |         success: false,
+      597 |         error: 'Rate limit reset only available in mock mode'
+
+      at Object.toHaveBeenCalledWith (tests/unit/middleware/rateLimiter.test.js:594:30)
+
+  ● Rate Limiter Middleware › Error handling and edge cases › should handle missing request body
+
+    TypeError: Cannot read properties of null (reading 'email')
+
+      249 |
+      250 |   const ip = getClientIP(req);
+    > 251 |   const email = req.body.email || req.body.username || 'unknown';
+          |                          ^
+      252 |   
+      253 |   if (!email || email === 'unknown') {
+      254 |     return next();
+
+      at email (src/middleware/rateLimiter.js:251:26)
+      at Object.loginRateLimiter (tests/unit/middleware/rateLimiter.test.js:623:13)
+
+  ● Rate Limiter Middleware › Error handling and edge cases › should handle store cleanup during operation
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 3
+
+      718 |       // Should still work after cleanup
+      719 |       const result = store.recordAttempt(key, ip);
+    > 720 |       expect(result.attemptCount).toBe(1); // Fresh start due to cleanup or continuation
+          |                                   ^
+      721 |     });
+      722 |   });
+      723 | });
+
+      at Object.toBe (tests/unit/middleware/rateLimiter.test.js:720:35)
+
+FAIL node-tests tests/integration/authWorkflow.test.js
+  Authentication Workflow Integration Tests
+    User Registration and Login Flow
+      ✕ should complete full user signup and login workflow (21 ms)
+      ✕ should handle duplicate email registration (4 ms)
+      ✕ should handle invalid credentials (2 ms)
+    Integration Management Flow
+      ✕ should manage user integrations (3 ms)
+      ✕ should enforce free plan limits (1 ms)
+    Authentication Middleware
+      ✓ should protect authenticated endpoints (2 ms)
+      ✓ should reject invalid tokens (1 ms)
+    Password Reset Flow
+      ✕ should handle password reset request (2 ms)
+      ✓ should handle magic link requests (1 ms)
+
+  ● Authentication Workflow Integration Tests › User Registration and Login Flow › should complete full user signup and login workflow
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 500
+
+      332 |         console.log('Signup response error:', signupResponse.body);
+      333 |       }
+    > 334 |       expect(signupResponse.status).toBe(201);
+          |                                     ^
+      335 |       expect(signupResponse.body.success).toBe(true);
+      336 |       expect(signupResponse.body.data.user.email).toBe('testuser@example.com');
+      337 |       expect(signupResponse.body.data.session.access_token).toBeTruthy();
+
+      at Object.toBe (tests/integration/authWorkflow.test.js:334:37)
+
+  ● Authentication Workflow Integration Tests › User Registration and Login Flow › should handle duplicate email registration
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      404 |         });
+      405 |
+    > 406 |       expect(duplicateResponse.status).toBe(400);
+          |                                        ^
+      407 |       expect(duplicateResponse.body.success).toBe(false);
+      408 |     });
+      409 |
+
+      at Object.toBe (tests/integration/authWorkflow.test.js:406:40)
+
+  ● Authentication Workflow Integration Tests › User Registration and Login Flow › should handle invalid credentials
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Invalid login credentials"
+    Received string:    "Wrong email or password"
+
+      419 |       expect(loginResponse.status).toBe(401);
+      420 |       expect(loginResponse.body.success).toBe(false);
+    > 421 |       expect(loginResponse.body.error).toContain('Invalid login credentials');
+          |                                        ^
+      422 |     });
+      423 |   });
+      424 |
+
+      at Object.toContain (tests/integration/authWorkflow.test.js:421:40)
+
+  ● Authentication Workflow Integration Tests › Integration Management Flow › should manage user integrations
+
+    TypeError: Cannot read properties of undefined (reading 'session')
+
+      434 |         });
+      435 |       
+    > 436 |       authToken = signupResponse.body.data.session.access_token;
+          |                                            ^
+      437 |     });
+      438 |
+      439 |     it('should manage user integrations', async () => {
+
+      at Object.session (tests/integration/authWorkflow.test.js:436:44)
+
+  ● Authentication Workflow Integration Tests › Integration Management Flow › should enforce free plan limits
+
+    TypeError: Cannot read properties of undefined (reading 'session')
+
+      434 |         });
+      435 |       
+    > 436 |       authToken = signupResponse.body.data.session.access_token;
+          |                                            ^
+      437 |     });
+      438 |
+      439 |     it('should manage user integrations', async () => {
+
+      at Object.session (tests/integration/authWorkflow.test.js:436:44)
+
+  ● Authentication Workflow Integration Tests › Password Reset Flow › should handle password reset request
+
+    expect(received).toContain(expected) // indexOf
+
+    Matcher error: received value must not be null nor undefined
+
+    Received has value: undefined
+
+      550 |       expect(resetResponse.status).toBe(200);
+      551 |       expect(resetResponse.body.success).toBe(true);
+    > 552 |       expect(resetResponse.body.data.message).toContain('Password reset email sent');
+          |                                               ^
+      553 |     });
+      554 |
+      555 |     it('should handle magic link requests', async () => {
+
+      at Object.toContain (tests/integration/authWorkflow.test.js:552:47)
+
+PASS node-tests tests/unit/routes/admin.test.js
+  Admin Routes
+    GET /api/admin/dashboard
+      ✓ should return dashboard data successfully using metricsService (8 ms)
+      ✓ should handle metricsService errors gracefully (1 ms)
+    GET /api/admin/users
+      ✓ should return users list with filters (2 ms)
+      ✓ should handle empty results (1 ms)
+    POST /api/admin/users/:userId/toggle-admin
+      ✓ should toggle admin status successfully (1 ms)
+      ✓ should handle user not found (1 ms)
+    POST /api/admin/users/:userId/toggle-active
+      ✓ should toggle active status successfully (1 ms)
+    POST /api/admin/integrations/test
+      ✓ should execute integration test successfully (3 ms)
+      ✓ should handle integration test failure (1 ms)
+    GET /api/admin/config
+      ✓ should return system configuration (2 ms)
+    GET /api/admin/logs
+      ✓ should return logs successfully (1 ms)
+      ✓ should handle logs fetch error with fallback data (1 ms)
+    GET /api/admin/logs/download
+      ✓ should download logs as text file (3 ms)
+    POST /api/admin/users/:userId/suspend
+      ✓ should suspend user successfully (1 ms)
+      ✓ should handle suspend user error (1 ms)
+    POST /api/admin/users/:userId/reactivate
+      ✓ should reactivate user successfully (1 ms)
+      ✓ should handle reactivate user error (1 ms)
+
+FAIL node-tests tests/integration/oauth-mock.test.js
+  ● OAuth Mock Integration Tests › Platform Support › should return all supported platforms
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Platform Support › should have correct platform configurations
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Connection Status › should return empty connections initially
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Connection Status › should require authentication
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Connect Flow › should initiate connection successfully
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Connect Flow › should reject unsupported platform
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Connect Flow › should require authentication for connect
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Connect Flow › should sanitize platform parameter
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Callback Flow › should handle successful callback
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Callback Flow › should handle callback with error
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Callback Flow › should reject callback without required parameters
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Callback Flow › should reject callback with invalid state
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › OAuth Callback Flow › should reject expired state
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Complete OAuth Flow › twitter OAuth flow › should complete full connect -> callback -> status cycle
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Complete OAuth Flow › instagram OAuth flow › should complete full connect -> callback -> status cycle
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Complete OAuth Flow › youtube OAuth flow › should complete full connect -> callback -> status cycle
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Complete OAuth Flow › facebook OAuth flow › should complete full connect -> callback -> status cycle
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Complete OAuth Flow › bluesky OAuth flow › should complete full connect -> callback -> status cycle
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Token Management › should refresh tokens successfully
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Token Management › should disconnect successfully
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Token Management › should handle refresh for non-existent connection
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Token Management › should handle disconnect for non-existent connection
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Mock Reset Functionality › should reset specific platform connection
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Mock Reset Functionality › should reset all connections
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Mock Reset Functionality › should only be available in mock mode
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Error Handling & Edge Cases › should handle malformed state parameter
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Error Handling & Edge Cases › should handle platform mismatch in state
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Error Handling & Edge Cases › should handle already connected platform
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › Error Handling & Edge Cases › should validate platform parameter format
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+  ● OAuth Mock Integration Tests › User Info Validation › should provide valid user info for all platforms
+
+    TypeError: flags.reload is not a function
+
+      16 |     process.env.ENABLE_OAUTH_MOCK = 'true';
+      17 |     process.env.ENABLE_MOCK_MODE = 'true';
+    > 18 |     flags.reload();
+         |           ^
+      19 |
+      20 |     // Setup authenticated user
+      21 |     authToken = 'mock-jwt-token-oauth';
+
+      at Object.reload (tests/integration/oauth-mock.test.js:18:11)
+
+
+  ● Test suite failed to run
+
+    TypeError: flags.reload is not a function
+
+      27 |     delete process.env.ENABLE_OAUTH_MOCK;
+      28 |     delete process.env.ENABLE_MOCK_MODE;
+    > 29 |     flags.reload();
+         |           ^
+      30 |   });
+      31 |
+      32 |   describe('Platform Support', () => {
+
+      at Object.reload (tests/integration/oauth-mock.test.js:29:11)
+
+FAIL node-tests tests/unit/workers/GenerateReplyWorker.test.js
+  GenerateReplyWorker
+    constructor
+      ✕ should initialize worker with correct type
+    processJob
+      ✕ should generate roast reply for toxic comment
+      ✕ should handle cost limit exceeded
+      ✕ should handle low toxicity comments
+      ✕ should handle auto-posting for eligible platforms
+    generateRoast
+      ✕ should generate roast with custom parameters (1 ms)
+      ✕ should handle OpenAI generation errors
+    storeRoast
+      ✕ should store roast in database
+      ✕ should handle database storage errors
+    shouldGenerateRoast
+      ✕ should allow roast for high toxicity
+      ✕ should allow roast for medium toxicity with categories
+      ✕ should reject roast for low toxicity
+      ✕ should reject roast for medium toxicity without categories
+    validateRoastLength
+      ✕ should pass Twitter length validation
+      ✕ should fail Twitter length validation for long text
+      ✕ should pass YouTube length validation
+      ✕ should fail YouTube length validation for very long text
+    getOrganizationSettings
+      ✕ should fetch organization roast settings
+      ✕ should return default settings when organization not found
+    error handling
+      ✕ should handle malformed job data
+      ✕ should handle comment not found
+      ✕ should handle roast generation failures gracefully
+
+  ● GenerateReplyWorker › constructor › should initialize worker with correct type
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › processJob › should generate roast reply for toxic comment
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › processJob › should handle cost limit exceeded
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › processJob › should handle low toxicity comments
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › processJob › should handle auto-posting for eligible platforms
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › generateRoast › should generate roast with custom parameters
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › generateRoast › should handle OpenAI generation errors
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › storeRoast › should store roast in database
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › storeRoast › should handle database storage errors
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › shouldGenerateRoast › should allow roast for high toxicity
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › shouldGenerateRoast › should allow roast for medium toxicity with categories
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › shouldGenerateRoast › should reject roast for low toxicity
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › shouldGenerateRoast › should reject roast for medium toxicity without categories
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › validateRoastLength › should pass Twitter length validation
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › validateRoastLength › should fail Twitter length validation for long text
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › validateRoastLength › should pass YouTube length validation
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › validateRoastLength › should fail YouTube length validation for very long text
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › getOrganizationSettings › should fetch organization roast settings
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › getOrganizationSettings › should return default settings when organization not found
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › error handling › should handle malformed job data
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › error handling › should handle comment not found
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+  ● GenerateReplyWorker › error handling › should handle roast generation failures gracefully
+
+    TypeError: this.initializeOpenAI is not a function
+
+      26 |     
+      27 |     // Initialize OpenAI client
+    > 28 |     this.initializeOpenAI();
+         |          ^
+      29 |     
+      30 |     // Roast templates for fallback
+      31 |     this.initializeTemplates();
+
+      at new initializeOpenAI (src/workers/GenerateReplyWorker.js:28:10)
+      at Object.<anonymous> (tests/unit/workers/GenerateReplyWorker.test.js:78:14)
+
+PASS node-tests tests/unit/middleware/requirePlan.test.js
+  requirePlan Middleware Tests
+    Basic Plan Validation
+      ✓ should allow access for users with sufficient plan level (1 ms)
+      ✓ should deny access for users with insufficient plan level
+      ✓ should allow access for higher tier plans
+    Array Plan Validation
+      ✓ should allow access for exact plan matches
+      ✓ should deny access for non-matching plans (1 ms)
+    Subscription Status Validation
+      ✓ should allow access for active subscriptions
+      ✓ should deny access for inactive subscriptions
+      ✓ should allow access during trial period
+      ✓ should allow access for past_due subscriptions within grace period
+    Feature-based Access Control
+      ✓ should allow access to available features
+      ✓ should deny access to unavailable features
+    Authentication Validation
+      ✓ should require authentication
+    Database Error Handling
+      ✓ should handle database errors gracefully
+      ✓ should handle missing subscription data
+  requirePlatformLimit Middleware Tests
+    ✓ should allow within platform limits
+    ✓ should deny when exceeding platform limits (1 ms)
+    ✓ should allow unlimited platforms for creator_plus
+    ✓ should require subscription middleware to run first
+  checkRoastLimit Function Tests
+    ✓ should allow roasts within limits for free plan
+    ✓ should deny roasts when exceeding limits (1 ms)
+    ✓ should allow unlimited roasts for creator_plus plan
+    ✓ should handle database errors (9 ms)
+  Plan Configuration Tests
+    ✓ should have correct plan hierarchy (1 ms)
+    ✓ should have correct plan limits
+    ✓ should have correct feature access
+
+PASS node-tests tests/unit/routes/user.test.js
+  User Routes Tests
+    GET /api/user/integrations
+      ✓ should return user integrations successfully (11 ms)
+      ✓ should return error if user organization not found (2 ms)
+    POST /api/user/integrations/connect
+      ✓ should connect new platform successfully (6 ms)
+      ✓ should update existing platform successfully (3 ms)
+      ✓ should return error for invalid platform (2 ms)
+      ✓ should return error for missing platform (1 ms)
+    POST /api/user/integrations/disconnect
+      ✓ should disconnect platform successfully (10 ms)
+      ✓ should return error if integration not found (2 ms)
+      ✓ should return error for missing platform (2 ms)
+    POST /api/user/preferences
+      ✓ should save user preferences successfully (2 ms)
+      ✓ should return error for invalid humor tone (1 ms)
+      ✓ should return error for invalid humor style (1 ms)
+      ✓ should return error for invalid platforms (1 ms)
+      ✓ should handle empty preferences with defaults (2 ms)
+    GET /api/user/profile
+      ✓ should return user profile successfully (1 ms)
+      ✓ should return error if user not found (1 ms)
+    Authentication Middleware Integration
+      ✓ should require authentication for all user routes (1 ms)
+    Error Handling
+      ✓ should handle database errors gracefully (1 ms)
+      ✓ should handle unexpected errors in preferences endpoint (1 ms)
+
+FAIL node-tests tests/unit/workers/ShieldActionWorker.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../../src/integrations/twitter/twitterService' from 'tests/unit/workers/ShieldActionWorker.test.js'
+
+      69 | };
+      70 |
+    > 71 | jest.mock('../../../src/integrations/twitter/twitterService', () => mockTwitterService);
+         |      ^
+      72 | jest.mock('../../../src/integrations/youtube/youtubeService', () => mockYouTubeService);
+      73 |
+      74 | describe('ShieldActionWorker', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.mock (tests/unit/workers/ShieldActionWorker.test.js:71:6)
+
+FAIL node-tests tests/unit/routes/billing.test.js
+  Billing Routes Tests
+    GET /api/billing/plans
+      ✓ should return available subscription plans (9 ms)
+    POST /api/billing/create-checkout-session
+      ✕ should create checkout session successfully for Pro plan (2 ms)
+      ✕ should return error for missing lookupKey (2 ms)
+      ✕ should return error for invalid lookupKey (1 ms)
+      ✕ should use existing customer if available (1 ms)
+    POST /api/billing/create-portal-session
+      ✕ should create portal session successfully (1 ms)
+      ✕ should return error when no subscription found (2 ms)
+    GET /api/billing/subscription
+      ✕ should return user subscription details (3 ms)
+      ✕ should return error when database fails (1 ms)
+    POST /webhooks/stripe
+      ✕ should handle checkout.session.completed event (1 ms)
+      ✕ should return error for invalid webhook signature (1 ms)
+      ✕ should handle unrecognized webhook events (1 ms)
+      ○ skipped should handle customer.subscription.updated event
+      ○ skipped should handle customer.subscription.deleted event
+    Error Handling
+      ✕ should handle Stripe API errors gracefully (1 ms)
+      ✕ should handle database errors (1 ms)
+    Authentication
+      ✓ should require authentication for protected routes (1 ms)
+
+  ● Billing Routes Tests › POST /api/billing/create-checkout-session › should create checkout session successfully for Pro plan
+
+    expected 200 "OK", got 503 "Service Unavailable"
+
+      163 |                 .post('/api/billing/create-checkout-session')
+      164 |                 .send({ lookupKey: 'plan_pro' })
+    > 165 |                 .expect(200);
+          |                  ^
+      166 |
+      167 |             expect(response.body.success).toBe(true);
+      168 |             expect(response.body.data.url).toBe('https://checkout.stripe.com/pay/cs_test123');
+
+      at Object.expect (tests/unit/routes/billing.test.js:165:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /api/billing/create-checkout-session › should return error for missing lookupKey
+
+    expected 400 "Bad Request", got 503 "Service Unavailable"
+
+      180 |                 .post('/api/billing/create-checkout-session')
+      181 |                 .send({})
+    > 182 |                 .expect(400);
+          |                  ^
+      183 |
+      184 |             expect(response.body.success).toBe(false);
+      185 |             expect(response.body.error).toBe('plan is required (free|pro|creator_plus)');
+
+      at Object.expect (tests/unit/routes/billing.test.js:182:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /api/billing/create-checkout-session › should return error for invalid lookupKey
+
+    expected 400 "Bad Request", got 503 "Service Unavailable"
+
+      190 |                 .post('/api/billing/create-checkout-session')
+      191 |                 .send({ lookupKey: 'invalid_key' })
+    > 192 |                 .expect(400);
+          |                  ^
+      193 |
+      194 |             expect(response.body.success).toBe(false);
+      195 |             expect(response.body.error).toBe('Invalid plan specified');
+
+      at Object.expect (tests/unit/routes/billing.test.js:192:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /api/billing/create-checkout-session › should use existing customer if available
+
+    expected 200 "OK", got 503 "Service Unavailable"
+
+      227 |                 .post('/api/billing/create-checkout-session')
+      228 |                 .send({ lookupKey: 'plan_pro' })
+    > 229 |                 .expect(200);
+          |                  ^
+      230 |
+      231 |             expect(response.body.success).toBe(true);
+      232 |             expect(mockStripe.customers.create).not.toHaveBeenCalled();
+
+      at Object.expect (tests/unit/routes/billing.test.js:229:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /api/billing/create-portal-session › should create portal session successfully
+
+    expected 200 "OK", got 503 "Service Unavailable"
+
+      251 |             const response = await request(app)
+      252 |                 .post('/api/billing/create-portal-session')
+    > 253 |                 .expect(200);
+          |                  ^
+      254 |
+      255 |             expect(response.body.success).toBe(true);
+      256 |             expect(response.body.data.url).toBe('https://billing.stripe.com/portal/bps_test123');
+
+      at Object.expect (tests/unit/routes/billing.test.js:253:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /api/billing/create-portal-session › should return error when no subscription found
+
+    expected 400 "Bad Request", got 503 "Service Unavailable"
+
+      269 |             const response = await request(app)
+      270 |                 .post('/api/billing/create-portal-session')
+    > 271 |                 .expect(400);
+          |                  ^
+      272 |
+      273 |             expect(response.body.success).toBe(false);
+      274 |             expect(response.body.error).toBe('No active subscription found');
+
+      at Object.expect (tests/unit/routes/billing.test.js:271:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › GET /api/billing/subscription › should return user subscription details
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 3
+
+      Object {
+    -   "plan": "pro",
+    +   "plan": "free",
+        "status": "active",
+    -   "stripe_customer_id": "cus_test123",
+    -   "stripe_subscription_id": "sub_test123",
+    +   "stripe_customer_id": null,
+    +   "stripe_subscription_id": null,
+        "user_id": "test-user-id",
+      }
+
+      296 |
+      297 |             expect(response.body.success).toBe(true);
+    > 298 |             expect(response.body.data.subscription).toEqual(mockSubscription);
+          |                                                     ^
+      299 |             expect(response.body.data.planConfig).toBeDefined();
+      300 |             expect(response.body.data.planConfig.name).toBe('Pro');
+      301 |         });
+
+      at Object.toEqual (tests/unit/routes/billing.test.js:298:53)
+
+  ● Billing Routes Tests › GET /api/billing/subscription › should return error when database fails
+
+    expected 500 "Internal Server Error", got 200 "OK"
+
+      309 |             const response = await request(app)
+      310 |                 .get('/api/billing/subscription')
+    > 311 |                 .expect(500);
+          |                  ^
+      312 |
+      313 |             expect(response.body.success).toBe(false);
+      314 |             expect(response.body.error).toBe('Failed to fetch subscription');
+
+      at Object.expect (tests/unit/routes/billing.test.js:311:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /webhooks/stripe › should handle checkout.session.completed event
+
+    expected 200 "OK", got 503 "Service Unavailable"
+
+      363 |                 .set('stripe-signature', mockSignature)
+      364 |                 .send(Buffer.from(JSON.stringify(mockEvent)))
+    > 365 |                 .expect(200);
+          |                  ^
+      366 |
+      367 |             expect(response.body.received).toBe(true);
+      368 |             expect(mockSupabaseServiceClient.upsert).toHaveBeenCalledWith({
+
+      at Object.expect (tests/unit/routes/billing.test.js:365:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /webhooks/stripe › should return error for invalid webhook signature
+
+    expected 400 "Bad Request", got 503 "Service Unavailable"
+
+      399 |                 .set('stripe-signature', 'invalid-signature')
+      400 |                 .send(Buffer.from('{}'))
+    > 401 |                 .expect(400);
+          |                  ^
+      402 |
+      403 |             expect(response.text).toContain('Webhook Error: Invalid signature');
+      404 |         });
+
+      at Object.expect (tests/unit/routes/billing.test.js:401:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › POST /webhooks/stripe › should handle unrecognized webhook events
+
+    expected 200 "OK", got 503 "Service Unavailable"
+
+      418 |                 .set('stripe-signature', mockSignature)
+      419 |                 .send(Buffer.from(JSON.stringify(mockEvent)))
+    > 420 |                 .expect(200);
+          |                  ^
+      421 |
+      422 |             expect(response.body.received).toBe(true);
+      423 |         });
+
+      at Object.expect (tests/unit/routes/billing.test.js:420:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › Error Handling › should handle Stripe API errors gracefully
+
+    expected 500 "Internal Server Error", got 503 "Service Unavailable"
+
+      440 |                 .post('/api/billing/create-checkout-session')
+      441 |                 .send({ lookupKey: 'plan_pro' })
+    > 442 |                 .expect(500);
+          |                  ^
+      443 |
+      444 |             expect(response.body.success).toBe(false);
+      445 |             expect(response.body.error).toBe('Failed to create checkout session');
+
+      at Object.expect (tests/unit/routes/billing.test.js:442:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+  ● Billing Routes Tests › Error Handling › should handle database errors
+
+    expected 500 "Internal Server Error", got 200 "OK"
+
+      454 |             const response = await request(app)
+      455 |                 .get('/api/billing/subscription')
+    > 456 |                 .expect(500);
+          |                  ^
+      457 |
+      458 |             expect(response.body.success).toBe(false);
+      459 |             expect(response.body.error).toBe('Failed to fetch subscription details');
+
+      at Object.expect (tests/unit/routes/billing.test.js:456:18)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:309:14)
+      at node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (node_modules/supertest/lib/test.js:195:23)
+      at localAssert (node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (node_modules/supertest/lib/test.js:152:11)
+
+FAIL node-tests tests/unit/workers/AnalyzeToxicityWorker.test.js
+  AnalyzeToxicityWorker
+    constructor
+      ✕ should initialize worker with correct type
+    processJob
+      ✕ should analyze toxicity using Perspective API (1 ms)
+      ✕ should fallback to OpenAI when Perspective API fails
+      ✕ should use pattern-based fallback when both APIs fail
+      ✕ should handle non-toxic content (1 ms)
+    analyzeWithPerspective
+      ✕ should analyze text with Perspective API
+      ✕ should handle Perspective API errors
+    analyzeWithOpenAI
+      ✕ should analyze text with OpenAI moderation
+    analyzeWithPatterns
+      ✕ should detect profanity patterns
+      ✕ should detect threat patterns (1 ms)
+      ✕ should detect hate speech patterns
+      ✕ should handle clean content
+      ✕ should be case insensitive
+    updateCommentAnalysis
+      ✕ should update comment with analysis results
+      ✕ should handle database errors
+    processWithShield
+      ✕ should process content through Shield when enabled
+      ✕ should skip Shield processing when disabled
+    error handling
+      ✕ should handle malformed job data (1 ms)
+      ✕ should handle empty text content
+      ✕ should handle Shield service errors gracefully
+
+  ● AnalyzeToxicityWorker › constructor › should initialize worker with correct type
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › processJob › should analyze toxicity using Perspective API
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › processJob › should fallback to OpenAI when Perspective API fails
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › processJob › should use pattern-based fallback when both APIs fail
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › processJob › should handle non-toxic content
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithPerspective › should analyze text with Perspective API
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithPerspective › should handle Perspective API errors
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithOpenAI › should analyze text with OpenAI moderation
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithPatterns › should detect profanity patterns
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithPatterns › should detect threat patterns
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithPatterns › should detect hate speech patterns
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithPatterns › should handle clean content
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › analyzeWithPatterns › should be case insensitive
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › updateCommentAnalysis › should update comment with analysis results
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › updateCommentAnalysis › should handle database errors
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › processWithShield › should process content through Shield when enabled
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › processWithShield › should skip Shield processing when disabled
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › error handling › should handle malformed job data
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › error handling › should handle empty text content
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+  ● AnalyzeToxicityWorker › error handling › should handle Shield service errors gracefully
+
+    TypeError: this.initializeToxicityServices is not a function
+
+      28 |     
+      29 |     // Initialize toxicity detection services
+    > 30 |     this.initializeToxicityServices();
+         |          ^
+      31 |     
+      32 |     // Toxicity thresholds
+      33 |     this.thresholds = {
+
+      at new initializeToxicityServices (src/workers/AnalyzeToxicityWorker.js:30:10)
+      at Object.<anonymous> (tests/unit/workers/AnalyzeToxicityWorker.test.js:87:14)
+
+PASS node-tests tests/unit/services/shieldService.test.js
+  ShieldService
+    initialize
+      ✓ should initialize service and queue connections (1 ms)
+    analyzeContent
+      ✓ should analyze content and determine action level
+      ✓ should handle first-time offender with medium toxicity (1 ms)
+      ✓ should not take action for low toxicity content
+    executeActions
+      ✓ should execute Shield actions and record them
+      ✓ should skip execution when no actions recommended
+    trackUserBehavior
+      ✓ should update user behavior statistics
+    getUserRiskLevel
+      ✓ should calculate high risk for repeat offender (1 ms)
+      ✓ should calculate low risk for new user
+    getShieldStats
+      ✓ should return comprehensive Shield statistics
+      ✓ should handle organizations with no Shield activity (1 ms)
+    action level determination
+      ✓ should determine correct action level based on toxicity and history
+    recommended actions
+      ✓ should recommend appropriate actions for high severity
+      ✓ should recommend appropriate actions for medium severity
+      ✓ should recommend appropriate actions for low severity
+      ✓ should return empty actions for no severity
+    error handling
+      ✓ should handle database errors in content analysis (11 ms)
+      ✓ should handle queue service errors gracefully
+    shutdown
+      ✓ should shutdown queue service gracefully
+
+  console.warn
+    Cannot redefine window.location in JSDOM setup
+
+      67 |     } catch (e) {
+      68 |         // Location cannot be redefined in newer JSDOM, skip
+    > 69 |         console.warn('Cannot redefine window.location in JSDOM setup');
+         |                 ^
+      70 |     }
+      71 | }
+      72 |
+
+      at Object.warn (tests/setup.js:69:17)
+
+PASS dom-tests tests/unit/auth/ui-interactions.test.js
+  Auth UI Interactions
+    Message Display System
+      ✓ should display error message correctly (7 ms)
+      ✓ should display success message correctly (6 ms)
+      ✓ should hide previous message when showing new one (3 ms)
+      ✓ should default to error type when type is not specified (3 ms)
+    Loading State Management
+      ✓ should set loading state correctly (3 ms)
+      ✓ should remove loading state correctly (3 ms)
+      ✓ should handle non-existent button gracefully (2 ms)
+    Password Toggle Functionality
+      ✓ should toggle password visibility from hidden to visible (3 ms)
+      ✓ should toggle password visibility from visible to hidden (3 ms)
+    Form Validation UI
+      ✓ should validate valid form data (6 ms)
+      ✓ should detect invalid email (4 ms)
+      ✓ should detect short password (3 ms)
+      ✓ should detect missing terms acceptance (3 ms)
+    URL Parameter Handling
+      ✓ should parse success message from URL (3 ms)
+      ✓ should parse error message from URL (3 ms)
+      ✓ should parse email verification parameters (2 ms)
+      ✓ should handle empty URL parameters (3 ms)
+    CSS Class Management
+      ✓ should toggle class when no condition specified (4 ms)
+      ✓ should add class when condition is true (2 ms)
+      ✓ should remove class when condition is false (3 ms)
+      ✓ should handle non-existent element gracefully (2 ms)
+    Input Field Interactions
+      ✓ should set field error state (3 ms)
+      ✓ should remove field error state (3 ms)
+      ✓ should handle focus events (3 ms)
+
+  console.warn
+    Cannot redefine window.location in JSDOM setup
+
+      67 |     } catch (e) {
+      68 |         // Location cannot be redefined in newer JSDOM, skip
+    > 69 |         console.warn('Cannot redefine window.location in JSDOM setup');
+         |                 ^
+      70 |     }
+      71 | }
+      72 |
+
+      at Object.warn (tests/setup.js:69:17)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+  console.warn
+    A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+    Stack Trace:
+    
+          18 |
+          19 |     afterEach(() => {
+        > 20 |         jest.runOnlyPendingTimers();
+             |              ^
+          21 |         jest.useRealTimers();
+          22 |     });
+          23 |
+    
+          Error: 
+          at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:641:7)
+          at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+          at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+      18 |
+      19 |     afterEach(() => {
+    > 20 |         jest.runOnlyPendingTimers();
+         |              ^
+      21 |         jest.useRealTimers();
+      22 |     });
+      23 |
+
+      at FakeTimers._checkFakeTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:639:28)
+      at FakeTimers.runOnlyPendingTimers (node_modules/@jest/environment-jsdom-abstract/node_modules/@jest/fake-timers/build/index.js:541:14)
+      at Object.runOnlyPendingTimers (tests/unit/auth/flows.test.js:20:14)
+
+FAIL dom-tests tests/unit/auth/flows.test.js
+  Auth Flows
+    Login Flow
+      ✕ should handle successful login (9 ms)
+      ✕ should handle login failure (1 ms)
+      ✕ should handle network error during login (1 ms)
+    Registration Flow
+      ✕ should handle successful registration (3 ms)
+      ✕ should handle registration failure - duplicate email (1 ms)
+    Password Recovery Flow
+      ✕ should handle password recovery request (1 ms)
+      ✕ should handle password recovery with generic message for security (1 ms)
+    Magic Link Flow
+      ✕ should handle magic link request (1 ms)
+    User Redirection Logic
+      ✕ should redirect admin users to admin panel (1 ms)
+      ✕ should redirect regular users to dashboard (1 ms)
+      ✕ should not redirect if user is not authenticated
+      ✕ should handle missing user data gracefully
+    OAuth Callback Flow
+      ✕ should process OAuth callback successfully (1 ms)
+      ✕ should handle malformed OAuth data (1 ms)
+      ✕ should reject invalid OAuth callback type (1 ms)
+    Session Management
+      ✕ should clear all session data on logout (1 ms)
+      ✕ should validate active session (1 ms)
+      ✕ should invalidate expired session (1 ms)
+      ✕ should validate session without expiration time (1 ms)
+
+  ● Auth Flows › Login Flow › should handle successful login
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Login Flow › should handle login failure
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Login Flow › should handle network error during login
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Registration Flow › should handle successful registration
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Registration Flow › should handle registration failure - duplicate email
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Password Recovery Flow › should handle password recovery request
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Password Recovery Flow › should handle password recovery with generic message for security
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Magic Link Flow › should handle magic link request
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › User Redirection Logic › should redirect admin users to admin panel
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › User Redirection Logic › should redirect regular users to dashboard
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › User Redirection Logic › should not redirect if user is not authenticated
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › User Redirection Logic › should handle missing user data gracefully
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › OAuth Callback Flow › should process OAuth callback successfully
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › OAuth Callback Flow › should handle malformed OAuth data
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › OAuth Callback Flow › should reject invalid OAuth callback type
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Session Management › should clear all session data on logout
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Session Management › should validate active session
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Session Management › should invalidate expired session
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+  ● Auth Flows › Session Management › should validate session without expiration time
+
+    TypeError: window.location.assign.mockClear is not a function
+
+      11 |         window.location.search = '';
+      12 |         fetch.mockClear();
+    > 13 |         window.location.assign.mockClear();
+         |                                ^
+      14 |         window.location.replace.mockClear();
+      15 |         jest.clearAllTimers();
+      16 |         jest.useFakeTimers();
+
+      at Object.mockClear (tests/unit/auth/flows.test.js:13:32)
+
+PASS node-tests tests/integration/api.test.js
+  API Integration Tests
+    GET /
+      ✓ debe responder con mensaje de bienvenida (20 ms)
+    POST /roast
+      ✓ debe generar roast con tono sarcástico por defecto (9 ms)
+      ✓ debe generar roast con tono especificado (8 ms)
+      ✓ debe usar tono sarcástico si se proporciona tono inválido (7 ms)
+      ✓ debe devolver error 400 si falta message (9 ms)
+      ✓ debe devolver error 400 si message está vacío (8 ms)
+      ✓ debe devolver error 400 si message no es string (7 ms)
+      ✓ debe devolver error 500 si falla la generación (10 ms)
+      ✓ debe validar todos los tonos válidos (9 ms)
+    POST /csv-roast
+      ✓ debe devolver roast desde CSV correctamente (9 ms)
+      ✓ debe devolver error 400 si falta message (8 ms)
+      ✓ debe devolver error 400 si message está vacío (10 ms)
+      ✓ debe devolver error 400 si message es null (8 ms)
+      ✓ debe devolver error 500 si falla la búsqueda en CSV (8 ms)
+      ✓ debe incluir detalles de error si DEBUG está activo (11 ms)
+    GET /csv-stats
+      ✓ debe devolver estadísticas del CSV (8 ms)
+      ✓ debe manejar errores al obtener estadísticas (7 ms)
+    POST /csv-add
+      ✓ debe añadir roast al CSV correctamente (9 ms)
+      ✓ debe devolver error 400 si falta comment (10 ms)
+      ✓ debe devolver error 400 si falta roast (9 ms)
+      ✓ debe devolver error 400 si comment no es string (8 ms)
+      ✓ debe devolver error 400 si roast no es string (11 ms)
+      ✓ debe manejar errores al añadir al CSV (8 ms)
+    Content-Type and JSON validation
+      ✓ debe rechazar requests sin Content-Type JSON (8 ms)
+      ✓ debe manejar JSON malformado (8 ms)
+
+FAIL node-tests tests/unit/middleware/sessionRefresh.test.js
+  Session Refresh Middleware
+    extractToken
+      ✓ should extract token from Authorization header
+      ✓ should return null for missing Authorization header
+      ✓ should return null for non-Bearer token
+      ✓ should return null for malformed Authorization header
+    isTokenNearExpiry
+      ✓ should return true for tokens expiring within 5 minutes
+      ✓ should return false for tokens expiring after 5 minutes
+      ✓ should return true for already expired tokens
+      ✓ should return false for payload without exp
+    sessionRefreshMiddleware
+      ✓ should pass through when session refresh is disabled
+      ✓ should pass through when no token is present (1 ms)
+      ✓ should pass through when token is not near expiry (1 ms)
+      ✓ should pass through when no refresh token is provided (1 ms)
+      ✓ should refresh token when near expiry in mock mode
+      ✕ should handle refresh errors gracefully (1 ms)
+      ✓ should handle malformed JWT tokens
+      ✓ should log debug information when enabled (1 ms)
+    handleSessionRefresh endpoint
+      ✓ should return error when session refresh is disabled
+      ✓ should return error when refresh token is missing
+      ✓ should refresh session successfully in mock mode
+      ✕ should handle refresh failure (1 ms)
+      ✕ should include error details in debug mode
+    Integration with different environments
+      ✓ should work in test environment
+      ✓ should handle production environment
+    Edge cases and error handling
+      ✓ should handle empty JWT payload (1 ms)
+      ✓ should handle JWT without expiration
+      ✓ should handle middleware errors gracefully
+      ✕ should handle missing headers object
+      ✕ should validate refresh token format (1 ms)
+
+  ● Session Refresh Middleware › sessionRefreshMiddleware › should handle refresh errors gracefully
+
+    expect(jest.fn()).not.toHaveBeenCalled()
+
+    Expected number of calls: 0
+    Received number of calls: 1
+
+    1: {"x-expires-at": 1755168696869, "x-new-access-token": "mock-refreshed-access-token-1755165096869", "x-new-refresh-token": "invalid-refresh-token", "x-token-refreshed": "true"}
+
+      217 |       // Should not block request on refresh failure
+      218 |       expect(mockNext).toHaveBeenCalled();
+    > 219 |       expect(mockRes.set).not.toHaveBeenCalled();
+          |                               ^
+      220 |     });
+      221 |
+      222 |     it('should handle malformed JWT tokens', async () => {
+
+      at Object.toHaveBeenCalled (tests/unit/middleware/sessionRefresh.test.js:219:31)
+
+  ● Session Refresh Middleware › handleSessionRefresh endpoint › should handle refresh failure
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: 401
+
+    Number of calls: 0
+
+      324 |       await handleSessionRefresh(mockReq, mockRes);
+      325 |
+    > 326 |       expect(mockRes.status).toHaveBeenCalledWith(401);
+          |                              ^
+      327 |       expect(mockRes.json).toHaveBeenCalledWith({
+      328 |         success: false,
+      329 |         error: 'Failed to refresh session',
+
+      at Object.toHaveBeenCalledWith (tests/unit/middleware/sessionRefresh.test.js:326:30)
+
+  ● Session Refresh Middleware › handleSessionRefresh endpoint › should include error details in debug mode
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: 401
+
+    Number of calls: 0
+
+      350 |       await handleSessionRefresh(mockReq, mockRes);
+      351 |
+    > 352 |       expect(mockRes.status).toHaveBeenCalledWith(401);
+          |                              ^
+      353 |       expect(mockRes.json).toHaveBeenCalledWith({
+      354 |         success: false,
+      355 |         error: 'Failed to refresh session',
+
+      at Object.toHaveBeenCalledWith (tests/unit/middleware/sessionRefresh.test.js:352:30)
+
+  ● Session Refresh Middleware › Edge cases and error handling › should handle missing headers object
+
+    TypeError: Cannot read properties of undefined (reading 'authorization')
+
+      14 |  */
+      15 | function extractToken(req) {
+    > 16 |   const authHeader = req.headers.authorization;
+         |                                  ^
+      17 |   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      18 |     return null;
+      19 |   }
+
+      at authorization (src/middleware/sessionRefresh.js:16:34)
+      at extractToken (src/middleware/sessionRefresh.js:91:17)
+      at Object.sessionRefreshMiddleware (tests/unit/middleware/sessionRefresh.test.js:477:13)
+
+  ● Session Refresh Middleware › Edge cases and error handling › should validate refresh token format
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: 400
+
+    Number of calls: 0
+
+      497 |         await handleSessionRefresh(mockReq, mockRes);
+      498 |
+    > 499 |         expect(mockRes.status).toHaveBeenCalledWith(400);
+          |                                ^
+      500 |         expect(mockRes.json).toHaveBeenCalledWith({
+      501 |           success: false,
+      502 |           error: 'Refresh token is required',
+
+      at Object.toHaveBeenCalledWith (tests/unit/middleware/sessionRefresh.test.js:499:32)
+
+FAIL node-tests tests/unit/routes/style-profile.test.js
+  Style Profile Routes
+    GET /api/style-profile/status
+      ✕ should require authentication (2 ms)
+      ✕ should return no access for free user (2 ms)
+      ✕ should return access for Creator+ user (2 ms)
+    GET /api/style-profile
+      ✕ should require authentication (1 ms)
+      ✕ should deny access to free users (3 ms)
+      ✕ should return no profile for Creator+ user without generated profile (3 ms)
+    POST /api/style-profile/generate
+      ✕ should require authentication (1 ms)
+      ✕ should deny access to free users (2 ms)
+      ✕ should require platforms parameter (1 ms)
+      ✕ should require valid platforms array (1 ms)
+      ✕ should successfully generate style profile (1 ms)
+      ✕ should generate multiple language profiles (4 ms)
+    GET /api/style-profile (with generated profile)
+      ✕ should return generated profile data (1 ms)
+    GET /api/style-profile/preview/:lang
+      ✕ should require authentication
+      ✕ should deny access to free users
+      ✕ should return 404 for non-existent profile
+      ✕ should return language profile preview
+    GET /api/style-profile/stats
+      ✕ should require authentication (1 ms)
+      ✕ should deny access to free users (3 ms)
+      ✕ should return profile statistics (2 ms)
+    DELETE /api/style-profile
+      ✕ should require authentication (1 ms)
+      ✕ should deny access to free users (1 ms)
+      ✕ should successfully delete existing profile (1 ms)
+      ✕ should return 404 when deleting non-existent profile (1 ms)
+    Feature flag integration
+      ✕ should respect ENABLE_STYLE_PROFILE flag when disabled
+    Error handling and edge cases
+      ✕ should handle insufficient content for generation (2 ms)
+      ✕ should handle generation with minimal content (3 ms)
+
+  ● Style Profile Routes › GET /api/style-profile/status › should require authentication
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 500
+
+      33 |         .get('/api/style-profile/status');
+      34 |
+    > 35 |       expect(response.status).toBe(401);
+         |                               ^
+      36 |     });
+      37 |
+      38 |     it('should return no access for free user', async () => {
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:35:31)
+
+  ● Style Profile Routes › GET /api/style-profile/status › should return no access for free user
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      41 |         .set('Authorization', `Bearer ${authToken}`);
+      42 |
+    > 43 |       expect(response.status).toBe(200);
+         |                               ^
+      44 |       expect(response.body.success).toBe(true);
+      45 |       expect(response.body.data.hasAccess).toBe(false);
+      46 |       expect(response.body.data.available).toBe(false);
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:43:31)
+
+  ● Style Profile Routes › GET /api/style-profile/status › should return access for Creator+ user
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      52 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      53 |
+    > 54 |       expect(response.status).toBe(200);
+         |                               ^
+      55 |       expect(response.body.success).toBe(true);
+      56 |       expect(response.body.data.hasAccess).toBe(true);
+      57 |       expect(response.body.data.available).toBe(true);
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:54:31)
+
+  ● Style Profile Routes › GET /api/style-profile › should require authentication
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 500
+
+      65 |         .get('/api/style-profile');
+      66 |
+    > 67 |       expect(response.status).toBe(401);
+         |                               ^
+      68 |     });
+      69 |
+      70 |     it('should deny access to free users', async () => {
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:67:31)
+
+  ● Style Profile Routes › GET /api/style-profile › should deny access to free users
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 500
+
+      73 |         .set('Authorization', `Bearer ${authToken}`);
+      74 |
+    > 75 |       expect(response.status).toBe(403);
+         |                               ^
+      76 |       expect(response.body.error).toContain('Creator+ plan');
+      77 |       expect(response.body.upgrade).toBe(true);
+      78 |     });
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:75:31)
+
+  ● Style Profile Routes › GET /api/style-profile › should return no profile for Creator+ user without generated profile
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      83 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      84 |
+    > 85 |       expect(response.status).toBe(200);
+         |                               ^
+      86 |       expect(response.body.success).toBe(true);
+      87 |       expect(response.body.data.available).toBe(false);
+      88 |       expect(response.body.data.message).toContain('No style profile generated yet');
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:85:31)
+
+  ● Style Profile Routes › POST /api/style-profile/generate › should require authentication
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 500
+
+       96 |         .send({ platforms: ['twitter'] });
+       97 |
+    >  98 |       expect(response.status).toBe(401);
+          |                               ^
+       99 |     });
+      100 |
+      101 |     it('should deny access to free users', async () => {
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:98:31)
+
+  ● Style Profile Routes › POST /api/style-profile/generate › should deny access to free users
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 500
+
+      105 |         .send({ platforms: ['twitter'] });
+      106 |
+    > 107 |       expect(response.status).toBe(403);
+          |                               ^
+      108 |       expect(response.body.error).toContain('Creator+ plan');
+      109 |       expect(response.body.upgrade).toBe(true);
+      110 |     });
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:107:31)
+
+  ● Style Profile Routes › POST /api/style-profile/generate › should require platforms parameter
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      116 |         .send({});
+      117 |
+    > 118 |       expect(response.status).toBe(400);
+          |                               ^
+      119 |       expect(response.body.error).toContain('At least one platform is required');
+      120 |       expect(response.body.example).toHaveProperty('platforms');
+      121 |     });
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:118:31)
+
+  ● Style Profile Routes › POST /api/style-profile/generate › should require valid platforms array
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      127 |         .send({ platforms: 'twitter' });
+      128 |
+    > 129 |       expect(response.status).toBe(400);
+          |                               ^
+      130 |       expect(response.body.error).toContain('At least one platform is required');
+      131 |     });
+      132 |
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:129:31)
+
+  ● Style Profile Routes › POST /api/style-profile/generate › should successfully generate style profile
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      137 |         .send({ platforms: ['twitter'], maxItemsPerPlatform: 300 });
+      138 |
+    > 139 |       expect(response.status).toBe(200);
+          |                               ^
+      140 |       expect(response.body.success).toBe(true);
+      141 |       expect(response.body.data.message).toContain('successfully');
+      142 |       expect(response.body.data.profiles).toBeInstanceOf(Array);
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:139:31)
+
+  ● Style Profile Routes › POST /api/style-profile/generate › should generate multiple language profiles
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      177 |         .send({ platforms: ['twitter', 'instagram'] });
+      178 |
+    > 179 |       expect(response.status).toBe(200);
+          |                               ^
+      180 |       expect(response.body.data.profiles.length).toBeGreaterThanOrEqual(1);
+      181 |       expect(response.body.data.sources).toHaveProperty('twitter');
+      182 |       expect(response.body.data.sources).toHaveProperty('instagram');
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:179:31)
+
+  ● Style Profile Routes › GET /api/style-profile (with generated profile) › should return generated profile data
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      190 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      191 |
+    > 192 |       expect(response.status).toBe(200);
+          |                               ^
+      193 |       expect(response.body.success).toBe(true);
+      194 |       expect(response.body.data.available).toBe(true);
+      195 |       expect(response.body.data.profiles).toBeInstanceOf(Array);
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:192:31)
+
+  ● Style Profile Routes › GET /api/style-profile/preview/:lang › should require authentication
+
+    TypeError: Cannot read properties of undefined (reading 'profiles')
+
+      210 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      211 |       
+    > 212 |       availableLanguage = profileResponse.body.data.profiles[0].lang;
+          |                                                     ^
+      213 |     });
+      214 |
+      215 |     it('should require authentication', async () => {
+
+      at Object.profiles (tests/unit/routes/style-profile.test.js:212:53)
+
+  ● Style Profile Routes › GET /api/style-profile/preview/:lang › should deny access to free users
+
+    TypeError: Cannot read properties of undefined (reading 'profiles')
+
+      210 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      211 |       
+    > 212 |       availableLanguage = profileResponse.body.data.profiles[0].lang;
+          |                                                     ^
+      213 |     });
+      214 |
+      215 |     it('should require authentication', async () => {
+
+      at Object.profiles (tests/unit/routes/style-profile.test.js:212:53)
+
+  ● Style Profile Routes › GET /api/style-profile/preview/:lang › should return 404 for non-existent profile
+
+    TypeError: Cannot read properties of undefined (reading 'profiles')
+
+      210 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      211 |       
+    > 212 |       availableLanguage = profileResponse.body.data.profiles[0].lang;
+          |                                                     ^
+      213 |     });
+      214 |
+      215 |     it('should require authentication', async () => {
+
+      at Object.profiles (tests/unit/routes/style-profile.test.js:212:53)
+
+  ● Style Profile Routes › GET /api/style-profile/preview/:lang › should return language profile preview
+
+    TypeError: Cannot read properties of undefined (reading 'profiles')
+
+      210 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      211 |       
+    > 212 |       availableLanguage = profileResponse.body.data.profiles[0].lang;
+          |                                                     ^
+      213 |     });
+      214 |
+      215 |     it('should require authentication', async () => {
+
+      at Object.profiles (tests/unit/routes/style-profile.test.js:212:53)
+
+  ● Style Profile Routes › GET /api/style-profile/stats › should require authentication
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 500
+
+      261 |         .get('/api/style-profile/stats');
+      262 |
+    > 263 |       expect(response.status).toBe(401);
+          |                               ^
+      264 |     });
+      265 |
+      266 |     it('should deny access to free users', async () => {
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:263:31)
+
+  ● Style Profile Routes › GET /api/style-profile/stats › should deny access to free users
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 500
+
+      269 |         .set('Authorization', `Bearer ${authToken}`);
+      270 |
+    > 271 |       expect(response.status).toBe(403);
+          |                               ^
+      272 |       expect(response.body.error).toContain('Creator+ plan');
+      273 |     });
+      274 |
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:271:31)
+
+  ● Style Profile Routes › GET /api/style-profile/stats › should return profile statistics
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      278 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      279 |
+    > 280 |       expect(response.status).toBe(200);
+          |                               ^
+      281 |       expect(response.body.success).toBe(true);
+      282 |       expect(response.body.data.hasProfile).toBe(true);
+      283 |       expect(response.body.data.languageCount).toBeGreaterThan(0);
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:280:31)
+
+  ● Style Profile Routes › DELETE /api/style-profile › should require authentication
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 500
+
+      294 |         .delete('/api/style-profile');
+      295 |
+    > 296 |       expect(response.status).toBe(401);
+          |                               ^
+      297 |     });
+      298 |
+      299 |     it('should deny access to free users', async () => {
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:296:31)
+
+  ● Style Profile Routes › DELETE /api/style-profile › should deny access to free users
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 500
+
+      302 |         .set('Authorization', `Bearer ${authToken}`);
+      303 |
+    > 304 |       expect(response.status).toBe(403);
+          |                               ^
+      305 |       expect(response.body.error).toContain('Creator+ plan');
+      306 |     });
+      307 |
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:304:31)
+
+  ● Style Profile Routes › DELETE /api/style-profile › should successfully delete existing profile
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      311 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      312 |
+    > 313 |       expect(response.status).toBe(200);
+          |                               ^
+      314 |       expect(response.body.success).toBe(true);
+      315 |       expect(response.body.data.message).toContain('deleted successfully');
+      316 |
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:313:31)
+
+  ● Style Profile Routes › DELETE /api/style-profile › should return 404 when deleting non-existent profile
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 404
+    Received: 500
+
+      328 |         .set('Authorization', `Bearer ${creatorAuthToken}`);
+      329 |
+    > 330 |       expect(response.status).toBe(404);
+          |                               ^
+      331 |       expect(response.body.error).toContain('No style profile found to delete');
+      332 |     });
+      333 |   });
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:330:31)
+
+  ● Style Profile Routes › Feature flag integration › should respect ENABLE_STYLE_PROFILE flag when disabled
+
+    TypeError: flags.reload is not a function
+
+      341 |       // Reload flags
+      342 |       const { flags } = require('../../../src/config/flags');
+    > 343 |       flags.reload();
+          |             ^
+      344 |
+      345 |       const response = await request(app)
+      346 |         .post('/api/style-profile/generate')
+
+      at Object.reload (tests/unit/routes/style-profile.test.js:343:13)
+
+  ● Style Profile Routes › Error handling and edge cases › should handle insufficient content for generation
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      380 |         .send({ platforms: ['twitter'] });
+      381 |
+    > 382 |       expect(response.status).toBe(400);
+          |                               ^
+      383 |       expect(response.body.error).toContain('No imported content found');
+      384 |     });
+      385 |
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:382:31)
+
+  ● Style Profile Routes › Error handling and edge cases › should handle generation with minimal content
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      408 |         .send({ platforms: ['twitter'] });
+      409 |
+    > 410 |       expect(response.status).toBe(400);
+          |                               ^
+      411 |       expect(response.body.error).toContain('Insufficient content');
+      412 |       expect(response.body.details).toContain('50+ imported items');
+      413 |     });
+
+      at Object.toBe (tests/unit/routes/style-profile.test.js:410:31)
+
+FAIL node-tests tests/unit/workers/FetchCommentsWorker.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../../src/integrations/twitter/twitterService' from 'tests/unit/workers/FetchCommentsWorker.test.js'
+
+      62 | };
+      63 |
+    > 64 | jest.mock('../../../src/integrations/twitter/twitterService', () => mockTwitterService);
+         |      ^
+      65 | jest.mock('../../../src/integrations/youtube/youtubeService', () => mockYouTubeService);
+      66 |
+      67 | describe('FetchCommentsWorker', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.mock (tests/unit/workers/FetchCommentsWorker.test.js:64:6)
+
+FAIL node-tests tests/unit/services/styleProfileGenerator.test.js
+  StyleProfileGenerator
+    initialization
+      ✓ should initialize without errors (1 ms)
+      ✓ should handle multiple initialization calls
+    detectLanguages
+      ✓ should detect single dominant language
+      ✓ should detect multiple languages with sufficient threshold (1 ms)
+      ✓ should filter out languages below minimum threshold
+      ✓ should handle empty content
+      ✓ should return most common language when none meet criteria
+    analyzeLanguageContent
+      ✓ should analyze Spanish content correctly (1 ms)
+      ✓ should return null for non-existent language
+      ✓ should detect tone indicators
+      ✓ should count common words (1 ms)
+    generateLanguageProfile
+      ✓ should generate Spanish profile correctly (1 ms)
+      ✓ should generate English profile correctly
+      ✓ should handle Portuguese profile
+      ✓ should fallback to English for unknown language
+      ✓ should determine style types based on length
+    generateStyleProfile
+      ✓ should generate complete style profile (1 ms)
+      ✓ should respect maxItemsPerPlatform option (1 ms)
+      ✓ should throw error for empty content (9 ms)
+      ✓ should throw error for insufficient content
+      ✓ should handle multiple languages correctly (1 ms)
+    getProfileStats
+      ✓ should generate correct statistics
+      ✕ should handle empty profiles
+      ✓ should handle single profile (1 ms)
+    edge cases and error handling
+      ✕ should handle content with missing fields
+      ✓ should handle very long text content
+      ✓ should handle special characters and emojis
+      ✓ should handle null or undefined platform data
+
+  ● StyleProfileGenerator › getProfileStats › should handle empty profiles
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: NaN
+
+      366 |       expect(stats.languages).toEqual([]);
+      367 |       expect(stats.totalSources).toBe(0);
+    > 368 |       expect(stats.avgItemsPerLanguage).toBe(0);
+          |                                         ^
+      369 |       expect(stats.createdAt).toBeUndefined();
+      370 |     });
+      371 |
+
+      at Object.toBe (tests/unit/services/styleProfileGenerator.test.js:368:41)
+
+  ● StyleProfileGenerator › edge cases and error handling › should handle content with missing fields
+
+    TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+
+      105 |
+      106 |       // Text analysis
+    > 107 |       const text = item.text.toLowerCase();
+          |                              ^
+      108 |       totalLength += text.length;
+      109 |
+      110 |       // Count emojis
+
+      at toLowerCase (src/services/styleProfileGenerator.js:107:30)
+          at Array.forEach (<anonymous>)
+      at StyleProfileGenerator.forEach [as analyzeLanguageContent] (src/services/styleProfileGenerator.js:98:17)
+      at Object.analyzeLanguageContent (tests/unit/services/styleProfileGenerator.test.js:390:32)
+
+PASS node-tests tests/unit/services/roastGeneratorEnhanced.test.js
+  RoastGeneratorEnhanced
+    Plan-based Roast Generation
+      ✓ should use basic moderation for Free plan (1 ms)
+      ✓ should use basic moderation for Pro plan (1 ms)
+      ✓ should use basic moderation for Creator+ plan when RQC globally disabled
+    RQC Approval Logic (requires ENABLE_RQC=true)
+      ○ skipped should approve roast with 3 green reviewers
+      ○ skipped should approve roast with 2 green reviewers (no moderator fail)
+      ○ skipped should regenerate when moderator fails
+      ○ skipped should use fallback after max regeneration attempts
+    Cost Control and Optimization
+      ✓ should not make extra GPT calls for Free plan
+      ✓ should not make extra GPT calls for Pro plan
+      ○ skipped should track tokens and costs for Creator+ RQC (requires ENABLE_RQC=true)
+    Fallback and Error Handling
+      ✓ should fallback to safe roast on OpenAI error (1 ms)
+      ✓ should handle database errors gracefully (1 ms)
+    Basic Moderation Prompts
+      ✓ should include intensity level in basic moderation prompt (1 ms)
+      ✓ should customize prompt based on tone
+
+/Users/emiliopostigo/roastr-ai/src/services/queueService.js:144
+    } = await this.supabase.from('job_queue').select('id').limit(1);
+                                                           ^
+
+TypeError: this.supabase.from(...).select(...).limit is not a function
+    at QueueService.limit [as initializeDatabase] (/Users/emiliopostigo/roastr-ai/src/services/queueService.js:144:8)
+    at QueueService.initializeDatabase [as initialize] (/Users/emiliopostigo/roastr-ai/src/services/queueService.js:58:18)
+
+Node.js v22.18.0

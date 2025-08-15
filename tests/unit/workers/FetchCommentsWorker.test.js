@@ -60,24 +60,32 @@ jest.mock('../../../src/services/costControl', () => {
   return jest.fn().mockImplementation(() => mockCostControlService);
 });
 
-// Mock external API libraries
-jest.mock('twitter-api-v2', () => ({
-  TwitterApi: jest.fn().mockImplementation(() => ({
-    v2: {
-      search: jest.fn(),
-      userMentionTimeline: jest.fn()
+// Mock platform APIs with consolidated functionality
+const mockTwitterApi = jest.fn().mockImplementation(() => ({
+  v2: {
+    search: jest.fn(),
+    userMentionTimeline: jest.fn(),
+    userByUsername: jest.fn()
+  }
+}));
+
+const mockYouTubeApi = {
+  youtube: jest.fn(() => ({
+    comments: {
+      list: jest.fn()
+    },
+    commentThreads: {
+      list: jest.fn()
     }
   }))
+};
+
+jest.mock('twitter-api-v2', () => ({
+  TwitterApi: mockTwitterApi
 }));
 
 jest.mock('googleapis', () => ({
-  google: {
-    youtube: jest.fn().mockImplementation(() => ({
-      comments: {
-        list: jest.fn()
-      }
-    }))
-  }
+  google: mockYouTubeApi
 }));
 
 describe('FetchCommentsWorker', () => {
