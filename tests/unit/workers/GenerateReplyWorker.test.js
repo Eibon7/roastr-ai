@@ -8,12 +8,12 @@ const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
 
 // Mock BaseWorker
 jest.mock('../../../src/workers/BaseWorker', () => {
-  return jest.fn().mockImplementation((workerType, options) => {
-    const mockBaseWorker = {
-      workerType,
-      workerName: `${workerType}-worker-test`,
-      config: { maxRetries: 3, ...options },
-      supabase: {
+  return class MockBaseWorker {
+    constructor(workerType, options = {}) {
+      this.workerType = workerType;
+      this.workerName = `${workerType}-worker-test`;
+      this.config = { maxRetries: 3, ...options };
+      this.supabase = {
         from: jest.fn(() => ({
           select: jest.fn(() => ({
             eq: jest.fn(() => ({
@@ -33,30 +33,23 @@ jest.mock('../../../src/workers/BaseWorker', () => {
             }))
           }))
         }))
-      },
-      queueService: {
+      };
+      this.queueService = {
         addJob: jest.fn(),
         initialize: jest.fn(),
         shutdown: jest.fn()
-      },
-      log: jest.fn(),
-      processJob: null, // Will be overridden by actual implementation
-      start: jest.fn(),
-      stop: jest.fn(),
-      initializeConnections: jest.fn(),
-      setupGracefulShutdown: jest.fn()
-    };
-    return mockBaseWorker;
-  });
+      };
+      this.redis = null;
+      this.log = jest.fn();
+      this.start = jest.fn();
+      this.stop = jest.fn();
+      this.initializeConnections = jest.fn();
+      this.setupGracefulShutdown = jest.fn();
+    }
+  };
 });
 
-// Mock OpenAI service
-const mockOpenAIService = {
-  generateRoast: jest.fn(),
-  initialize: jest.fn()
-};
-
-jest.mock('../../../src/services/openai', () => mockOpenAIService);
+// Mock OpenAI - not needed as we mock it in mockMode
 
 // Mock Cost Control service
 const mockCostControlService = {
@@ -68,6 +61,23 @@ const mockCostControlService = {
 jest.mock('../../../src/services/costControl', () => {
   return jest.fn().mockImplementation(() => mockCostControlService);
 });
+
+// Mock OpenAI for use in tests
+const mockOpenAIClient = {
+  chat: {
+    completions: {
+      create: jest.fn()
+    }
+  }
+};
+
+// Mock mockMode
+jest.mock('../../../src/config/mockMode', () => ({
+  mockMode: {
+    isMockMode: true,
+    generateMockOpenAI: jest.fn(() => mockOpenAIClient)
+  }
+}));
 
 describe('GenerateReplyWorker', () => {
   let worker;
@@ -94,7 +104,9 @@ describe('GenerateReplyWorker', () => {
   describe('constructor', () => {
     test('should initialize worker with correct type', () => {
       expect(worker.workerType).toBe('generate_reply');
-      expect(worker.openaiService).toBe(mockOpenAIService);
+      expect(worker.openaiClient).toBeDefined();
+      expect(worker.templates).toBeDefined();
+      expect(worker.costControl).toBeDefined();
     });
   });
 
@@ -163,7 +175,7 @@ describe('GenerateReplyWorker', () => {
         cost_cents: 5
       };
 
-      mockOpenAIService.generateRoast.mockResolvedValue(mockRoast);
+      mockOpenAIClient.chat.completions.create.mockResolvedValue(mockRoast);
 
       // Mock roast storage
       mockSupabase.from.mockReturnValueOnce({
@@ -192,7 +204,7 @@ describe('GenerateReplyWorker', () => {
       expect(result.language).toBe('es');
       expect(result.auto_posted).toBe(false);
 
-      expect(mockOpenAIService.generateRoast).toHaveBeenCalledWith(
+      expect(mockOpenAIClient.chat.completions.create).toHaveBeenCalledWith(
         'This is a stupid post',
         {
           tone: 'sarcastic',
@@ -225,7 +237,7 @@ describe('GenerateReplyWorker', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('Cost limit exceeded: monthly_limit_exceeded');
       expect(result.skipped).toBe(true);
-      expect(mockOpenAIService.generateRoast).not.toHaveBeenCalled();
+      expect(mockOpenAIClient.chat.completions.create).not.toHaveBeenCalled();
     });
 
     test('should handle low toxicity comments', async () => {
@@ -262,7 +274,7 @@ describe('GenerateReplyWorker', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('Comment toxicity too low for roast generation');
       expect(result.skipped).toBe(true);
-      expect(mockOpenAIService.generateRoast).not.toHaveBeenCalled();
+      expect(mockOpenAIClient.chat.completions.create).not.toHaveBeenCalled();
     });
 
     test('should handle auto-posting for eligible platforms', async () => {
@@ -319,7 +331,7 @@ describe('GenerateReplyWorker', () => {
           })
         });
 
-      mockOpenAIService.generateRoast.mockResolvedValue({
+      mockOpenAIClient.chat.completions.create.mockResolvedValue({
         text: 'Generated roast',
         tokens_used: 20,
         cost_cents: 4
@@ -380,12 +392,12 @@ describe('GenerateReplyWorker', () => {
         cost_cents: 6
       };
 
-      mockOpenAIService.generateRoast.mockResolvedValue(mockRoast);
+      mockOpenAIClient.chat.completions.create.mockResolvedValue(mockRoast);
 
       const result = await worker.generateRoast(comment, settings);
 
       expect(result).toEqual(mockRoast);
-      expect(mockOpenAIService.generateRoast).toHaveBeenCalledWith(
+      expect(mockOpenAIClient.chat.completions.create).toHaveBeenCalledWith(
         comment.text,
         {
           ...settings,
@@ -399,7 +411,7 @@ describe('GenerateReplyWorker', () => {
       const comment = { text: 'Test', toxicity_score: 0.8 };
       const settings = { tone: 'sarcastic' };
 
-      mockOpenAIService.generateRoast.mockRejectedValue(
+      mockOpenAIClient.chat.completions.create.mockRejectedValue(
         new Error('OpenAI API error')
       );
 
@@ -628,7 +640,7 @@ describe('GenerateReplyWorker', () => {
           })
         });
 
-      mockOpenAIService.generateRoast.mockRejectedValue(
+      mockOpenAIClient.chat.completions.create.mockRejectedValue(
         new Error('Content policy violation')
       );
 
