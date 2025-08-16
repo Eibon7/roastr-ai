@@ -31,6 +31,43 @@ class FetchCommentsWorker extends BaseWorker {
   }
   
   /**
+   * Get worker-specific health details
+   */
+  async getSpecificHealthDetails() {
+    const details = {
+      platformClients: {},
+      rateLimits: {},
+      lastFetchCounts: {}
+    };
+    
+    // Check each platform client status
+    for (const [platform, client] of this.platformClients.entries()) {
+      details.platformClients[platform] = {
+        initialized: !!client,
+        status: client ? 'available' : 'not configured'
+      };
+      
+      // Add rate limit info if available
+      if (this.rateLimitInfo && this.rateLimitInfo[platform]) {
+        details.rateLimits[platform] = this.rateLimitInfo[platform];
+      }
+      
+      // Add last fetch counts if available
+      if (this.lastFetchCounts && this.lastFetchCounts[platform]) {
+        details.lastFetchCounts[platform] = this.lastFetchCounts[platform];
+      }
+    }
+    
+    // Add cost control status
+    details.costControl = {
+      enabled: !!this.costControl,
+      lastCheck: this.lastCostCheckTime || null
+    };
+    
+    return details;
+  }
+  
+  /**
    * Initialize clients for different platforms
    */
   initializePlatformClients() {

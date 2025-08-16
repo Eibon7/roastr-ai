@@ -47,6 +47,44 @@ class AnalyzeToxicityWorker extends BaseWorker {
   }
   
   /**
+   * Get worker-specific health details
+   */
+  async getSpecificHealthDetails() {
+    const details = {
+      apis: {
+        perspective: {
+          available: !!this.perspectiveAPI,
+          apiKey: process.env.PERSPECTIVE_API_KEY ? 'configured' : 'missing',
+          lastUsed: this.lastPerspectiveUse || null,
+          errorCount: this.perspectiveErrors || 0
+        },
+        openai: {
+          available: !!this.openaiClient,
+          apiKey: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+          lastUsed: this.lastOpenAIUse || null,
+          errorCount: this.openaiErrors || 0
+        }
+      },
+      toxicityStats: {
+        total: this.totalAnalyzed || 0,
+        toxic: this.toxicDetected || 0,
+        byLevel: this.toxicityByLevel || {},
+        avgAnalysisTime: this.avgAnalysisTime || 'N/A'
+      },
+      shieldService: {
+        enabled: !!this.shieldService,
+        actionsTriggered: this.shieldActionsTriggered || 0
+      },
+      costControl: {
+        enabled: !!this.costControl,
+        lastCheck: this.lastCostCheckTime || null
+      }
+    };
+    
+    return details;
+  }
+  
+  /**
    * Initialize toxicity detection services
    */
   initializeToxicityServices() {
