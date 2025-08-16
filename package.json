@@ -35,6 +35,8 @@
     "users:search": "node src/cli/user-manager.js search",
     "users:stats": "node src/cli/user-manager.js stats",
     "users:health": "node src/cli/user-manager.js health",
+    "docs:generate": "node scripts/generate-docs-from-tests.js",
+    "docs:update": "npm test && npm run docs:generate",
     "frontend:start": "cd frontend && npm start",
     "frontend:build": "cd frontend && npm run build",
     "frontend:install": "cd frontend && npm install",
