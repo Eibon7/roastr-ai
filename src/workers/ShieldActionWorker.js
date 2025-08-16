@@ -27,6 +27,51 @@ class ShieldActionWorker extends BaseWorker {
   }
   
   /**
+   * Get worker-specific health details
+   */
+  async getSpecificHealthDetails() {
+    const details = {
+      platformClients: {},
+      shieldStats: {
+        totalActions: this.totalActions || 0,
+        byType: this.actionsByType || {},
+        byPlatform: this.actionsByPlatform || {},
+        successRate: this.successRate || 'N/A',
+        lastAction: this.lastActionTime || null
+      },
+      escalations: {
+        total: this.totalEscalations || 0,
+        autoBlocks: this.autoBlocks || 0,
+        reportsFiled: this.reportsFiled || 0,
+        manualReviewQueue: this.manualReviewQueue || 0
+      },
+      performance: {
+        avgActionTime: this.avgActionTime || 'N/A',
+        queuedActions: this.queuedActions || 0,
+        failedActions: this.failedActions || 0
+      }
+    };
+    
+    // Check each platform client status
+    for (const [platform, client] of this.platformClients.entries()) {
+      details.platformClients[platform] = {
+        initialized: !!client,
+        status: client ? 'available' : 'not configured',
+        lastUsed: this[`last${platform}Use`] || null
+      };
+    }
+    
+    // Add Shield service status
+    details.shieldService = {
+      enabled: !!this.shieldService,
+      mode: this.shieldService?.mode || 'unknown',
+      ruleCount: this.shieldService?.ruleCount || 0
+    };
+    
+    return details;
+  }
+  
+  /**
    * Initialize clients for different platforms
    */
   initializePlatformClients() {

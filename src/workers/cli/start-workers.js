@@ -16,6 +16,8 @@
 
 require('dotenv').config();
 const WorkerManager = require('../WorkerManager');
+const express = require('express');
+const { setWorkerManager } = require('../../routes/workers');
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -134,6 +136,9 @@ ${JSON.stringify(config, null, 2)}
     const workerManager = new WorkerManager(config);
     await workerManager.start();
     
+    // Set the worker manager for the API routes
+    setWorkerManager(workerManager);
+    
     console.log('✅ All workers started successfully!');
     console.log('');
     console.log('Worker Status:');
@@ -146,6 +151,36 @@ ${JSON.stringify(config, null, 2)}
         console.log(JSON.stringify(workerManager.getSummary(), null, 2));
       }, 60000); // Every minute
     }
+    
+    // Start a simple HTTP server for health endpoints
+    const app = express();
+    app.use(express.json());
+    
+    // Add CORS for local development
+    app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+      next();
+    });
+    
+    // Mount worker routes
+    const { router: workersRoutes } = require('../../routes/workers');
+    app.use('/api/workers', workersRoutes);
+    
+    // Simple health check
+    app.get('/health', (req, res) => {
+      res.json({ 
+        status: 'ok', 
+        service: 'worker-manager',
+        uptime: process.uptime()
+      });
+    });
+    
+    const PORT = process.env.WORKER_STATUS_PORT || 3001;
+    app.listen(PORT, () => {
+      console.log(`\n📊 Worker status API available at http://localhost:${PORT}/api/workers/status`);
+      console.log(`🏥 Health check available at http://localhost:${PORT}/api/workers/health`);
+    });
     
     // Keep process alive
     console.log('\nPress Ctrl+C to stop workers gracefully...');

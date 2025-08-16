@@ -144,6 +144,10 @@ app.use('/api/integrations', newIntegrationsRoutes);
 // Style profile routes (authenticated, Creator+ only)
 app.use('/api/style-profile', styleProfileRoutes);
 
+// Worker status routes (authenticated)
+const { router: workersRoutes } = require('./routes/workers');
+app.use('/api/workers', workersRoutes);
+
 // Admin routes (admin only)
 app.use('/api/admin', adminRoutes);
 

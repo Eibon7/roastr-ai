@@ -45,6 +45,40 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
+   * Get worker-specific health details
+   */
+  async getSpecificHealthDetails() {
+    const details = {
+      openai: {
+        available: !!this.openaiClient,
+        apiKey: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+        lastUsed: this.lastOpenAIUse || null,
+        errorCount: this.openaiErrors || 0,
+        fallbackCount: this.fallbackUseCount || 0
+      },
+      generationStats: {
+        total: this.totalGenerated || 0,
+        byTone: this.generationsByTone || {},
+        byHumor: this.generationsByHumor || {},
+        avgGenerationTime: this.avgGenerationTime || 'N/A',
+        avgTokensUsed: this.avgTokensUsed || 'N/A'
+      },
+      costControl: {
+        enabled: !!this.costControl,
+        lastCheck: this.lastCostCheckTime || null,
+        costThisHour: this.costThisHour || 0,
+        remainingBudget: this.remainingBudget || 'N/A'
+      },
+      templateUsage: {
+        templatesAvailable: this.roastTemplates ? Object.keys(this.roastTemplates).length : 0,
+        fallbacksUsed: this.fallbackUseCount || 0
+      }
+    };
+    
+    return details;
+  }
+  
+  /**
    * Initialize OpenAI client
    */
   initializeOpenAI() {
