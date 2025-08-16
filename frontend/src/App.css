@@ -1,6 +1,31 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" with (content: "./src/**/*.{js,jsx,ts,tsx,html}, ./public/index.html");
+
+/* Custom color theme configuration for Tailwind v4 */
+@theme {
+  /* Primary color palette (Purple/Magenta theme) */
+  --color-primary-50: #fef7ff;
+  --color-primary-100: #fdeeff;
+  --color-primary-200: #fadcff;
+  --color-primary-300: #f5c2ff;
+  --color-primary-400: #ed9bff;
+  --color-primary-500: #e073ff;
+  --color-primary-600: #ca4bff;
+  --color-primary-700: #ac32dd;
+  --color-primary-800: #8f2fb3;
+  --color-primary-900: #762b92;
+
+  /* Custom gray scale */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+}
 
 /* Toast animations */
 .animate-fade-in {
