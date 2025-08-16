@@ -24,7 +24,6 @@ jobs:
       pull-requests: read
       issues: read
       id-token: write
-    allowed_bots: "claude"
     
     steps:
       - name: Checkout repository
@@ -37,12 +36,7 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          allowed_bots: "claude"
-
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-opus-4-20250514"
-          
-          # Direct prompt for automated review (no @claude mention needed)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: |
             Please review this pull request and provide feedback on:
             - Code quality and best practices
