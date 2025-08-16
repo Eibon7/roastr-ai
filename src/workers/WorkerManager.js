@@ -201,15 +201,15 @@ class WorkerManager {
    * Start health monitoring
    */
   startHealthMonitoring() {
-    this.healthCheckTimer = setInterval(() => {
-      this.performHealthCheck();
+    this.healthCheckTimer = setInterval(async () => {
+      await this.performHealthCheck();
     }, this.options.healthCheckInterval);
   }
   
   /**
    * Perform health check on all workers
    */
-  performHealthCheck() {
+  async performHealthCheck() {
     const healthReport = {
       timestamp: new Date().toISOString(),
       managerUptime: Date.now() - this.startTime,
@@ -218,33 +218,46 @@ class WorkerManager {
       workers: {}
     };
     
+    // Perform detailed health checks on each worker
     for (const [workerType, worker] of this.workers.entries()) {
-      const stats = worker.getStats();
-      const isHealthy = worker.isRunning && stats.processedJobs >= 0;
-      
-      if (isHealthy) {
-        healthReport.healthyWorkers++;
-      }
-      
-      healthReport.workers[workerType] = {
-        isHealthy,
-        isRunning: worker.isRunning,
-        processedJobs: stats.processedJobs,
-        failedJobs: stats.failedJobs,
-        currentJobs: stats.currentJobs,
-        uptime: stats.uptime,
-        workerName: stats.workerName
-      };
-      
-      // Log unhealthy workers
-      if (!isHealthy) {
-        this.log('warn', `Unhealthy worker detected`, {
-          workerType,
-          workerName: worker.workerName,
-          isRunning: worker.isRunning,
-          stats
+      try {
+        const workerHealth = await worker.healthcheck();
+        healthReport.workers[workerType] = workerHealth;
+        
+        if (workerHealth.status === 'healthy') {
+          healthReport.healthyWorkers++;
+        }
+        
+        // Log unhealthy workers
+        if (workerHealth.status === 'unhealthy' || workerHealth.status === 'error') {
+          this.log('warn', `Unhealthy worker detected`, {
+            workerType,
+            workerName: worker.workerName,
+            status: workerHealth.status,
+            checks: workerHealth.checks
+          });
+        }
+      } catch (error) {
+        this.log('error', `Failed to perform health check on ${workerType}`, {
+          error: error.message
         });
+        
+        healthReport.workers[workerType] = {
+          status: 'error',
+          error: error.message,
+          workerType,
+          timestamp: new Date().toISOString()
+        };
       }
+    }
+    
+    // Determine overall health status
+    if (healthReport.healthyWorkers === 0 && healthReport.totalWorkers > 0) {
+      healthReport.overallStatus = 'unhealthy';
+    } else if (healthReport.healthyWorkers < healthReport.totalWorkers) {
+      healthReport.overallStatus = 'warning';
+    } else {
+      healthReport.overallStatus = 'healthy';
     }
     
     // Log summary (debug level to avoid spam)
@@ -302,6 +315,14 @@ class WorkerManager {
       successRate: totalProcessed > 0 ? 
         ((totalProcessed - totalFailed) / totalProcessed * 100).toFixed(2) + '%' : 'N/A'
     };
+  }
+  
+  /**
+   * Get comprehensive health status
+   * This is a public method for external access to health checks
+   */
+  async getHealthStatus() {
+    return await this.performHealthCheck();
   }
   
   /**
