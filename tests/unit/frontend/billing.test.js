@@ -60,10 +60,17 @@ describe('Billing Frontend Tests', () => {
         mockLocation.search = '';
         mockLocation.pathname = '/';
         
-        // Delete the original location and set our mock
-        delete window.location;
-        window.location = mockLocation;
-        global.window.location = mockLocation;
+        // Mock window.location using Object.defineProperty (JSDOM compatible)
+        try {
+            Object.defineProperty(window, 'location', {
+                value: mockLocation,
+                writable: true,
+                configurable: true
+            });
+        } catch (e) {
+            // Property already exists, modify its properties instead
+            Object.assign(window.location, mockLocation);
+        }
         
         // Mock console methods
         global.console = {
