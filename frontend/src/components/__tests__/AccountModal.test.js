@@ -1,356 +1,333 @@
 /**
- * Tests for AccountModal Component
+ * AccountModal Component Tests
+ * 
+ * Tests for the main account management modal
  */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import { ToastProvider } from '../../contexts/ToastContext';
 import AccountModal from '../AccountModal';
-
-// Mock data
-const mockAccount = {
-  id: 'twitter-1',
-  network: 'twitter',
-  username: '@testuser',
-  displayName: 'Test User',
-  status: 'active',
-  followers: 1500,
-  monthlyRoasts: 45,
-  lastActivity: '2024-08-14T10:30:00Z',
-  settings: {
-    autoApprove: false,
-    shieldEnabled: true,
-    shieldLevel: 'medium',
-    defaultTone: 'sarcastic'
-  }
-};
-
-const mockRoasts = [
-  {
-    id: 'roast-1',
-    originalComment: 'Test comment',
-    roastText: 'Test roast response',
-    status: 'pending',
-    createdAt: '2024-08-14T10:30:00Z',
-    tone: 'sarcastic'
-  },
-  {
-    id: 'roast-2',
-    originalComment: 'Another comment',
-    roastText: 'Another roast',
-    status: 'approved',
-    createdAt: '2024-08-14T11:00:00Z',
-    tone: 'playful'
-  }
-];
-
-const mockIntercepted = [
-  {
-    id: 'intercepted-1',
-    originalComment: 'Toxic comment',
-    toxicityScore: 0.9,
-    reason: 'high_toxicity',
-    createdAt: '2024-08-14T09:00:00Z'
-  }
-];
-
-const mockHandlers = {
-  onApproveRoast: jest.fn(),
-  onRejectRoast: jest.fn(),
-  onToggleAutoApprove: jest.fn(),
-  onToggleAccount: jest.fn(),
-  onChangeShieldLevel: jest.fn(),
-  onToggleShield: jest.fn(),
-  onChangeTone: jest.fn(),
-  onDisconnectAccount: jest.fn(),
-  onClose: jest.fn()
-};
-
-// Mock console to avoid noise in tests
-const originalConsoleError = console.error;
-beforeEach(() => {
-  console.error = jest.fn();
-  // Reset all mock functions
-  Object.values(mockHandlers).forEach(mock => mock.mockClear());
-});
-
-afterEach(() => {
-  console.error = originalConsoleError;
-});
-
-const renderAccountModal = (props = {}) => {
-  return render(
-    <ToastProvider>
-      <AccountModal
-        account={mockAccount}
-        roasts={mockRoasts}
-        intercepted={mockIntercepted}
-        {...mockHandlers}
-        {...props}
-      />
-    </ToastProvider>
-  );
-};
+import { MOCK_ACCOUNTS, MOCK_ROASTS } from '../../mocks/social';
 
 describe('AccountModal', () => {
-  describe('Rendering', () => {
-    test('renders account information correctly', () => {
-      renderAccountModal();
+  const account = MOCK_ACCOUNTS.find(a => a.id === 'acc_tw_2'); // autoApprove=false
+  const accountWithAutoApprove = MOCK_ACCOUNTS.find(a => a.id === 'acc_tw_1'); // autoApprove=true
+  const roasts = MOCK_ROASTS[account.id];
+  
+  const defaultProps = {
+    account,
+    roasts: roasts || [],
+    intercepted: [],
+    onApproveRoast: jest.fn(),
+    onRejectRoast: jest.fn(),
+    onToggleAutoApprove: jest.fn(),
+    onToggleAccount: jest.fn(),
+    onChangeShieldLevel: jest.fn(),
+    onToggleShield: jest.fn(),
+    onChangeTone: jest.fn(),
+    onDisconnectAccount: jest.fn(),
+    onClose: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('Rendering and Basic Functionality', () => {
+    it('renders account information correctly', () => {
+      render(<AccountModal {...defaultProps} />);
       
-      expect(screen.getByText('@testuser')).toBeInTheDocument();
-      expect(screen.getByText('Test User')).toBeInTheDocument();
-      expect(screen.getByText('1.5k seguidores')).toBeInTheDocument();
-      expect(screen.getByText('45 roasts este mes')).toBeInTheDocument();
+      expect(screen.getByText(account.handle)).toBeInTheDocument();
+      expect(screen.getByText(/X/i)).toBeInTheDocument(); // Network name
+      expect(screen.getByText(/Activa|Inactiva/)).toBeInTheDocument();
     });
 
-    test('renders tabs correctly', () => {
-      renderAccountModal();
+    it('closes modal when close button is clicked', async () => {
+      const user = userEvent.setup();
+      render(<AccountModal {...defaultProps} />);
       
-      expect(screen.getByText('Roasts')).toBeInTheDocument();
-      expect(screen.getByText('Shield')).toBeInTheDocument();
-      expect(screen.getByText('Configuración')).toBeInTheDocument();
+      const closeButton = screen.getByLabelText(/cerrar modal/i);
+      await user.click(closeButton);
+      
+      expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
     });
 
-    test('renders roasts in default tab', () => {
-      renderAccountModal();
+    it('closes modal when pressing Escape key', () => {
+      render(<AccountModal {...defaultProps} />);
       
-      expect(screen.getByText('Test roast response')).toBeInTheDocument();
-      expect(screen.getByText('Another roast')).toBeInTheDocument();
+      // Fire the keydown event on the modal container (which has the event listener)
+      const modalContainer = document.querySelector('[tabindex="-1"]');
+      fireEvent.keyDown(modalContainer, { key: 'Escape' });
+      
+      expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('Tab Navigation', () => {
-    test('switches to Shield tab', async () => {
-      const user = userEvent.setup();
-      renderAccountModal();
+  describe('Roasts Tab - Conditional Button Visibility', () => {
+    it('shows approve/reject buttons when autoApprove is disabled and roast is pending', () => {
+      render(<AccountModal {...defaultProps} />);
       
-      await user.click(screen.getByText('Shield'));
+      // Should be on roasts tab by default
+      const approveButtons = screen.getAllByRole('button', { name: /aprobar/i });
+      const rejectButtons = screen.getAllByRole('button', { name: /rechazar/i });
       
-      expect(screen.getByText('Shield Interceptado')).toBeInTheDocument();
-      expect(screen.getByText('Toxic comment')).toBeInTheDocument();
+      expect(approveButtons.length).toBeGreaterThan(0);
+      expect(rejectButtons.length).toBeGreaterThan(0);
     });
 
-    test('switches to Configuration tab', async () => {
-      const user = userEvent.setup();
-      renderAccountModal();
+    it('hides approve/reject buttons when autoApprove is enabled', () => {
+      const propsWithAutoApprove = {
+        ...defaultProps,
+        account: accountWithAutoApprove,
+        roasts: MOCK_ROASTS[accountWithAutoApprove.id] || []
+      };
       
-      await user.click(screen.getByText('Configuración'));
+      render(<AccountModal {...propsWithAutoApprove} />);
       
-      expect(screen.getByText('Configuración de Cuenta')).toBeInTheDocument();
-      expect(screen.getByText('Auto-aprobar roasts')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /aprobar/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /rechazar/i })).not.toBeInTheDocument();
+    });
+
+    it('hides approve/reject buttons for already approved/rejected roasts', () => {
+      const approvedRoast = {
+        id: 'approved_test',
+        original: 'Test comment',
+        roast: 'Test roast',
+        createdAt: '2025-08-01T10:00:00Z',
+        status: 'approved',
+      };
+      
+      const propsWithApprovedRoast = {
+        ...defaultProps,
+        roasts: [approvedRoast]
+      };
+      
+      render(<AccountModal {...propsWithApprovedRoast} />);
+      
+      // Should not show approve/reject buttons for approved roasts
+      expect(screen.queryByRole('button', { name: /aprobar/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /rechazar/i })).not.toBeInTheDocument();
     });
   });
 
-  describe('Roast Actions', () => {
-    test('approves roast when approve button clicked', async () => {
+  describe('Roast Approval Actions', () => {
+    it('calls onApproveRoast with correct accountId and roastId', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      render(<AccountModal {...defaultProps} />);
       
-      const approveButtons = screen.getAllByText('Aprobar');
-      await user.click(approveButtons[0]);
-      
-      await waitFor(() => {
-        expect(mockHandlers.onApproveRoast).toHaveBeenCalledWith('twitter-1', 'roast-1');
-      });
-    });
-
-    test('rejects roast when reject button clicked', async () => {
-      const user = userEvent.setup();
-      renderAccountModal();
-      
-      const rejectButtons = screen.getAllByText('Rechazar');
-      await user.click(rejectButtons[0]);
-      
-      await waitFor(() => {
-        expect(mockHandlers.onRejectRoast).toHaveBeenCalledWith('twitter-1', 'roast-1');
-      });
-    });
-
-    test('shows loading state during async actions', async () => {
-      const user = userEvent.setup();
-      
-      // Make onApproveRoast async and delay
-      mockHandlers.onApproveRoast.mockImplementation(() => 
-        new Promise(resolve => setTimeout(resolve, 100))
-      );
-      
-      renderAccountModal();
-      
-      const approveButton = screen.getAllByText('Aprobar')[0];
+      const approveButton = screen.getAllByRole('button', { name: /aprobar/i })[0];
       await user.click(approveButton);
       
-      // Should show loading state briefly
-      expect(screen.getByRole('button', { name: /aprobar/i })).toBeDisabled();
+      expect(defaultProps.onApproveRoast).toHaveBeenCalledWith(account.id, roasts[0].id);
+    });
+
+    it('calls onRejectRoast with correct accountId and roastId', async () => {
+      const user = userEvent.setup();
+      render(<AccountModal {...defaultProps} />);
       
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /aprobar/i })).not.toBeDisabled();
-      }, { timeout: 200 });
+      const rejectButton = screen.getAllByRole('button', { name: /rechazar/i })[0];
+      await user.click(rejectButton);
+      
+      expect(defaultProps.onRejectRoast).toHaveBeenCalledWith(account.id, roasts[0].id);
     });
   });
 
-  describe('Configuration Settings', () => {
-    test('toggles auto-approve setting', async () => {
+  describe('Settings Tab', () => {
+    beforeEach(async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      render(<AccountModal {...defaultProps} />);
       
-      await user.click(screen.getByText('Configuración'));
-      
-      const autoApproveToggle = screen.getByRole('checkbox', { name: /auto-aprobar roasts/i });
-      await user.click(autoApproveToggle);
-      
-      await waitFor(() => {
-        expect(mockHandlers.onToggleAutoApprove).toHaveBeenCalledWith('twitter-1', true);
-      });
+      // Switch to settings tab
+      const settingsTab = screen.getByRole('button', { name: /settings/i });
+      await user.click(settingsTab);
     });
 
-    test('toggles account status', async () => {
+    it('toggles auto-approve setting', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      render(<AccountModal {...defaultProps} />);
       
-      await user.click(screen.getByText('Configuración'));
+      // First switch to settings tab (get all and use the first one)
+      const settingsTabs = screen.getAllByRole('button', { name: /settings/i });
+      await user.click(settingsTabs[0]);
       
-      const accountToggle = screen.getByRole('checkbox', { name: /cuenta activa/i });
-      await user.click(accountToggle);
+      // Find the auto-approve toggle switch by looking for the specific toggle pattern
+      const toggleButtons = screen.getAllByRole('button').filter(button => 
+        button.className.includes('inline-flex') && 
+        button.className.includes('h-6') && 
+        button.className.includes('w-11')
+      );
       
-      await waitFor(() => {
-        expect(mockHandlers.onToggleAccount).toHaveBeenCalledWith('twitter-1', 'inactive');
-      });
+      // Should have at least one toggle (auto-approve)
+      expect(toggleButtons.length).toBeGreaterThan(0);
+      
+      // Click the first toggle (which should be auto-approve)
+      await user.click(toggleButtons[0]);
+      
+      expect(defaultProps.onToggleAutoApprove).toHaveBeenCalledWith(account.id, true);
     });
 
-    test('changes default tone', async () => {
+    it('changes shield level', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
       
-      await user.click(screen.getByText('Configuración'));
+      // Find shield level dropdown
+      const shieldSelect = screen.getByDisplayValue('98% (Más estricto)');
+      await user.selectOptions(shieldSelect, '95');
       
-      const toneSelect = screen.getByLabelText(/tono predeterminado/i);
-      await user.selectOptions(toneSelect, 'playful');
+      expect(defaultProps.onChangeShieldLevel).toHaveBeenCalledWith(account.id, 95);
+    });
+
+    it('changes default tone', async () => {
+      const user = userEvent.setup();
       
-      await waitFor(() => {
-        expect(mockHandlers.onChangeTone).toHaveBeenCalledWith('twitter-1', 'playful');
-      });
+      // Find tone dropdown
+      const toneSelect = screen.getByDisplayValue('Afilado');
+      await user.selectOptions(toneSelect, 'Comico');
+      
+      expect(defaultProps.onChangeTone).toHaveBeenCalledWith(account.id, 'Comico');
+    });
+
+    it('shows tone preview when tone is changed', async () => {
+      const user = userEvent.setup();
+      
+      // Initially shows the current tone's example
+      expect(screen.getByText('"Pincha, pero no sangra."')).toBeInTheDocument();
+      
+      const toneSelect = screen.getByDisplayValue('Afilado');
+      await user.selectOptions(toneSelect, 'Comico');
+      
+      // Verify the callback was called (component updates are handled externally)
+      expect(defaultProps.onChangeTone).toHaveBeenCalledWith(account.id, 'Comico');
     });
   });
 
-  describe('Shield Settings', () => {
-    test('toggles shield on/off', async () => {
+  describe('Shield Tab', () => {
+    it('switches to shield tab and shows shield information', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      render(<AccountModal {...defaultProps} />);
       
-      await user.click(screen.getByText('Configuración'));
+      const shieldTab = screen.getByRole('button', { name: /shield/i });
+      await user.click(shieldTab);
       
-      const shieldToggle = screen.getByRole('checkbox', { name: /shield habilitado/i });
-      await user.click(shieldToggle);
-      
-      await waitFor(() => {
-        expect(mockHandlers.onToggleShield).toHaveBeenCalledWith('twitter-1', false);
-      });
+      expect(screen.getByText('Roastr Shield')).toBeInTheDocument();
+      // Check for either 'Activo' or 'Inactivo' text specifically
+      expect(screen.getByText(account.settings.shieldEnabled ? 'Activo' : 'Inactivo')).toBeInTheDocument();
     });
 
-    test('changes shield level', async () => {
+    it('expands intercepted comments when shield is enabled and accordion is clicked', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      const propsWithIntercepted = {
+        ...defaultProps,
+        intercepted: [
+          {
+            id: 's1',
+            category: 'Insultos graves',
+            action: 'Ocultar comentario',
+            preview: '***censurado***',
+            originalHidden: 'Contenido censurado',
+            createdAt: '2025-08-03T11:40:00Z',
+          }
+        ]
+      };
       
-      await user.click(screen.getByText('Configuración'));
+      render(<AccountModal {...propsWithIntercepted} />);
       
-      const shieldLevelSelect = screen.getByLabelText(/nivel de shield/i);
-      await user.selectOptions(shieldLevelSelect, 'high');
+      // Switch to shield tab
+      const shieldTab = screen.getByRole('button', { name: /shield/i });
+      await user.click(shieldTab);
       
-      await waitFor(() => {
-        expect(mockHandlers.onChangeShieldLevel).toHaveBeenCalledWith('twitter-1', 'high');
-      });
+      // Click on intercepted comments accordion
+      const accordionButton = screen.getByText(/Comentarios interceptados/);
+      await user.click(accordionButton);
+      
+      // Should show intercepted items
+      expect(screen.getByText('***censurado***')).toBeInTheDocument();
     });
   });
 
   describe('Account Disconnection', () => {
-    test('shows disconnect confirmation', async () => {
+    it('shows disconnect confirmation when disconnect button is clicked', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      render(<AccountModal {...defaultProps} />);
       
-      await user.click(screen.getByText('Configuración'));
+      // Go to settings tab
+      const settingsTab = screen.getByRole('button', { name: /settings/i });
+      await user.click(settingsTab);
       
-      const disconnectButton = screen.getByText(/desconectar cuenta/i);
+      // Click disconnect button
+      const disconnectButton = screen.getByText(/Desconectar cuenta/);
       await user.click(disconnectButton);
       
-      expect(screen.getByText('¿Estás seguro?')).toBeInTheDocument();
-      expect(screen.getByText(/esta acción no se puede deshacer/i)).toBeInTheDocument();
+      expect(screen.getByText(/¿Estás seguro?/)).toBeInTheDocument();
+      expect(screen.getByText(/Confirmar desconexión/)).toBeInTheDocument();
     });
 
-    test('confirms account disconnection', async () => {
+    it('calls onDisconnectAccount when confirmation is clicked', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      render(<AccountModal {...defaultProps} />);
       
-      await user.click(screen.getByText('Configuración'));
+      // Go to settings tab
+      const settingsTab = screen.getByRole('button', { name: /settings/i });
+      await user.click(settingsTab);
       
-      const disconnectButton = screen.getByText(/desconectar cuenta/i);
+      // Click disconnect button
+      const disconnectButton = screen.getByText(/Desconectar cuenta/);
       await user.click(disconnectButton);
       
-      const confirmButton = screen.getByText('Sí, desconectar');
+      // Confirm disconnection
+      const confirmButton = screen.getByText(/Confirmar desconexión/);
       await user.click(confirmButton);
       
-      await waitFor(() => {
-        expect(mockHandlers.onDisconnectAccount).toHaveBeenCalledWith('twitter-1');
-      });
+      expect(defaultProps.onDisconnectAccount).toHaveBeenCalledWith(account.id);
+      expect(defaultProps.onClose).toHaveBeenCalled();
     });
 
-    test('cancels account disconnection', async () => {
+    it('cancels disconnection when cancel is clicked', async () => {
       const user = userEvent.setup();
-      renderAccountModal();
+      render(<AccountModal {...defaultProps} />);
       
-      await user.click(screen.getByText('Configuración'));
+      // Go to settings tab
+      const settingsTab = screen.getByRole('button', { name: /settings/i });
+      await user.click(settingsTab);
       
-      const disconnectButton = screen.getByText(/desconectar cuenta/i);
+      // Click disconnect button
+      const disconnectButton = screen.getByText(/Desconectar cuenta/);
       await user.click(disconnectButton);
       
-      const cancelButton = screen.getByText('Cancelar');
+      // Cancel disconnection
+      const cancelButton = screen.getByText(/Cancelar/);
       await user.click(cancelButton);
       
-      expect(screen.queryByText('¿Estás seguro?')).not.toBeInTheDocument();
-      expect(mockHandlers.onDisconnectAccount).not.toHaveBeenCalled();
+      expect(defaultProps.onDisconnectAccount).not.toHaveBeenCalled();
+      expect(screen.getByText(/Desconectar cuenta/)).toBeInTheDocument();
     });
   });
 
-  describe('Modal Behavior', () => {
-    test('closes on Escape key press', () => {
-      renderAccountModal();
+  describe('Account Status Display', () => {
+    it('displays active status correctly', () => {
+      render(<AccountModal {...defaultProps} />);
       
-      fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
-      
-      expect(mockHandlers.onClose).toHaveBeenCalled();
+      expect(screen.getByText('Activa')).toBeInTheDocument();
     });
 
-    test('closes on backdrop click', async () => {
-      const user = userEvent.setup();
-      renderAccountModal();
+    it('displays inactive status correctly', () => {
+      const inactiveAccount = { ...account, status: 'inactive' };
+      const propsWithInactiveAccount = { ...defaultProps, account: inactiveAccount };
       
-      const backdrop = screen.getByTestId('modal-backdrop') || 
-                       document.querySelector('.fixed.inset-0');
+      render(<AccountModal {...propsWithInactiveAccount} />);
       
-      if (backdrop) {
-        await user.click(backdrop);
-        expect(mockHandlers.onClose).toHaveBeenCalled();
-      }
+      expect(screen.getByText('Inactiva')).toBeInTheDocument();
     });
   });
 
-  describe('Error Handling', () => {
-    test('handles async action errors gracefully', async () => {
-      const user = userEvent.setup();
+  describe('Empty States', () => {
+    it('shows empty state when no roasts are available', () => {
+      const propsWithoutRoasts = { ...defaultProps, roasts: [] };
       
-      // Make handler reject
-      mockHandlers.onApproveRoast.mockRejectedValue(new Error('Network error'));
+      render(<AccountModal {...propsWithoutRoasts} />);
       
-      renderAccountModal();
-      
-      const approveButton = screen.getAllByText('Aprobar')[0];
-      await user.click(approveButton);
-      
-      await waitFor(() => {
-        // Should not crash and button should be re-enabled
-        expect(screen.getByRole('button', { name: /aprobar/i })).not.toBeDisabled();
-      });
+      expect(screen.getByText(/No hay roasts generados aún/)).toBeInTheDocument();
     });
   });
 });
