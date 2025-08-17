@@ -9,8 +9,8 @@ module.exports = {
   // Roots to search for test files
   roots: ['<rootDir>/tests/integration/backend'],
   
-  // Test environment - use node by default, tests can override if needed
-  testEnvironment: 'node',
+  // Test environment
+  testEnvironment: 'jsdom',
   
   // Only run integration tests from this directory
   testMatch: [

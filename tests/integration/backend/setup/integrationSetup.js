@@ -47,25 +47,22 @@ console.error(`⏱️  Timeout: ${INTEGRATION_CONFIG.TEST_TIMEOUT}ms`);
 
 // Fetch polyfill already loaded at the top
 
-// Only mock browser APIs if we're in jsdom environment
-if (typeof window !== 'undefined') {
-  // Mock localStorage for tests
-  const localStorageMock = {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn(),
-  };
+// Mock localStorage for tests
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
 
-  Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock
-  });
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
 
-  // Mock window.open for OAuth tests
-  Object.defineProperty(window, 'open', {
-    value: jest.fn()
-  });
-}
+// Mock window.open for OAuth tests
+Object.defineProperty(window, 'open', {
+  value: jest.fn()
+});
 
 // Global error handler for integration tests
 const handleUnhandledRejection = (event) => {
@@ -86,24 +83,19 @@ if (typeof window !== 'undefined') {
 
 // Clean up after each test
 afterEach(() => {
-  // Only clear browser mocks if we're in jsdom environment
-  if (typeof window !== 'undefined') {
-    // Clear localStorage mocks
-    if (window.localStorage && window.localStorage.getItem) {
-      window.localStorage.getItem.mockClear && window.localStorage.getItem.mockClear();
-      window.localStorage.setItem.mockClear && window.localStorage.setItem.mockClear();
-      window.localStorage.removeItem.mockClear && window.localStorage.removeItem.mockClear();
-      window.localStorage.clear.mockClear && window.localStorage.clear.mockClear();
-    }
-    
-    // Clear window.open mocks
-    if (window.open && window.open.mockClear) {
-      window.open.mockClear();
-    }
-  }
+  // Clear localStorage mocks
+  localStorageMock.getItem.mockClear();
+  localStorageMock.setItem.mockClear();
+  localStorageMock.removeItem.mockClear();
+  localStorageMock.clear.mockClear();
   
   // Clear fetch mocks if any
   if (global.fetch && global.fetch.mockClear) {
     global.fetch.mockClear();
+  }
+  
+  // Clear window.open mocks
+  if (window.open && window.open.mockClear) {
+    window.open.mockClear();
   }
 });
