@@ -44,6 +44,9 @@ class FeatureFlags {
       MOCK_MODE: mockMode.isMockMode,
       ENABLE_MOCK_PERSISTENCE: process.env.ENABLE_MOCK_PERSISTENCE === 'true' || mockMode.isMockMode,
       
+      // Auth Features
+      ENABLE_MAGIC_LINK: process.env.ENABLE_MAGIC_LINK !== 'false', // Default enabled unless explicitly disabled
+      
       // Style Profile Feature
       ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false' // Default enabled unless explicitly disabled
     };
@@ -179,7 +182,8 @@ class FeatureFlags {
       features: {
         rqc: this.flags.ENABLE_RQC ? 'enabled' : 'disabled',
         shield: this.flags.ENABLE_SHIELD ? 'enabled' : 'disabled',
-        styleProfile: this.flags.ENABLE_STYLE_PROFILE ? 'enabled' : 'disabled'
+        styleProfile: this.flags.ENABLE_STYLE_PROFILE ? 'enabled' : 'disabled',
+        magicLink: this.flags.ENABLE_MAGIC_LINK ? 'enabled' : 'disabled'
       }
     };
   }
