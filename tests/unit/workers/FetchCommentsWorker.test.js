@@ -5,6 +5,11 @@
  */
 
 const FetchCommentsWorker = require('../../../src/workers/FetchCommentsWorker');
+const {
+  createMockComment,
+  createMockTwitterComment,
+  createMockFetchCommentsJob
+} = require('../../utils/mocks');
 
 // Mock BaseWorker
 jest.mock('../../../src/workers/BaseWorker', () => {
@@ -59,6 +64,17 @@ const mockCostControlService = {
 jest.mock('../../../src/services/costControl', () => {
   return jest.fn().mockImplementation(() => mockCostControlService);
 });
+
+// Mock platform service APIs explicitly
+const mockTwitterService = {
+  fetchComments: jest.fn(),
+  initialize: jest.fn()
+};
+
+const mockYouTubeService = {
+  fetchComments: jest.fn(),
+  initialize: jest.fn()
+};
 
 // Mock platform APIs with consolidated functionality
 const mockTwitterApi = jest.fn().mockImplementation(() => ({
