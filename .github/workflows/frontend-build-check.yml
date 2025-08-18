@@ -1,5 +1,5 @@
-# Fixed: Remove phantom lint:check step that doesn't exist
-name: Build Check & Case Sensitivity
+# Renamed to fix GitHub Actions cache issue
+name: Frontend Build Check & Case Sensitivity
 
 on:
   push:
