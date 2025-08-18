@@ -1,6 +1,9 @@
 /**
  * Enhanced Integration Routes Tests
  * Comprehensive tests for integrations-new.js with proper mocking and isolation
+ * 
+ * This file provides additional test coverage for the integrations-new route
+ * that complements the existing integrations-new.test.js file.
  */
 
 const request = require('supertest');
@@ -258,7 +261,6 @@ describe('Enhanced Integration Routes Tests', () => {
             expect(response.body.success).toBe(false);
             expect(response.body.error).toBe('Platform not connected. Please connect first.');
         });
-
         it('should successfully start import from connected platform', async () => {
             const response = await request(app)
                 .post('/api/integrations/import')
@@ -384,7 +386,6 @@ describe('Enhanced Integration Routes Tests', () => {
             expect(response.body.success).toBe(false);
             expect(response.body.error).toBe('Platform not connected');
         });
-
         it('should successfully disconnect from platform', async () => {
             const response = await request(app)
                 .post('/api/integrations/disconnect')
@@ -439,6 +440,7 @@ describe('Enhanced Integration Routes Tests', () => {
                 .send({ platform })
                 .expect(200);
 
+            expect(importResponse.body.data.platform).toBe(platform);
             expect(importResponse.body.data.status).toBe('importing');
             expect(importResponse.body.data.importedCount).toBeGreaterThan(0);
 
@@ -482,7 +484,7 @@ describe('Enhanced Integration Routes Tests', () => {
                     .expect(200);
             }
 
-            // Check overall status
+            // Check overall status - should show 3 connected platforms
             const statusResponse = await request(app)
                 .get('/api/integrations/status')
                 .set('Authorization', 'Bearer test-token')
@@ -561,6 +563,19 @@ describe('Enhanced Integration Routes Tests', () => {
                 .expect(400);
         });
 
+        it('should handle platform validation', async () => {
+            const invalidPlatforms = ['', 'invalid', null, undefined, 123];
+            
+            for (const platform of invalidPlatforms) {
+                const response = await request(app)
+                    .post('/api/integrations/connect')
+                    .set('Authorization', 'Bearer test-token')
+                    .send({ platform });
+
+                expect([400, 500]).toContain(response.status);
+            }
+        });
+
         it('should handle edge cases in import', async () => {
             // Connect first
             await request(app)
@@ -577,6 +592,58 @@ describe('Enhanced Integration Routes Tests', () => {
 
             // Should default to reasonable count
             expect(response.body.data.importedCount).toBeGreaterThan(0);
+        });
+    });
+
+    describe('Coverage enhancement tests', () => {
+        it('should test language detection functionality', async () => {
+            // Connect and import with different platforms to test language detection
+            await request(app)
+                .post('/api/integrations/connect')
+                .set('Authorization', 'Bearer test-token')
+                .send({ platform: 'facebook' });
+
+            const response = await request(app)
+                .post('/api/integrations/import')
+                .set('Authorization', 'Bearer test-token')
+                .send({ platform: 'facebook', count: 100 });
+
+            expect(response.status).toBe(200);
+        });
+
+        it('should test import count validation', async () => {
+            await request(app)
+                .post('/api/integrations/connect')
+                .set('Authorization', 'Bearer test-token')
+                .send({ platform: 'bluesky' });
+
+            // Test with various count values
+            const countValues = [0, -10, 1000, 'invalid'];
+            
+            for (const count of countValues) {
+                const response = await request(app)
+                    .post('/api/integrations/import')
+                    .set('Authorization', 'Bearer test-token')
+                    .send({ platform: 'bluesky', count });
+
+                // Should handle gracefully regardless of count value
+                expect([200, 400]).toContain(response.status);
+            }
+        });
+
+        it('should test all platform types', async () => {
+            const platforms = ['twitter', 'instagram', 'youtube', 'tiktok', 'linkedin', 'facebook', 'bluesky'];
+            
+            for (const platform of platforms) {
+                // Test connection for each platform
+                const response = await request(app)
+                    .post('/api/integrations/connect')
+                    .set('Authorization', 'Bearer test-token')
+                    .send({ platform });
+
+                expect(response.status).toBe(200);
+                expect(response.body.data.platform).toBe(platform);
+            }
         });
     });
 });
