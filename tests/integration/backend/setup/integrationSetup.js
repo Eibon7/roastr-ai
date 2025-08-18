@@ -4,11 +4,7 @@
  * Setup configuration for backend integration tests
  */
 
-// Use require for Node.js compatibility
-require('@testing-library/jest-dom');
-if (typeof global.fetch === 'undefined') {
-  require('whatwg-fetch');
-}
+// Node.js 18+ has built-in fetch, so no need for polyfill
 
 // Mock console methods to reduce noise in integration tests
 const originalConsole = { ...console };
