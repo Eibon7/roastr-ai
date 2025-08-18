@@ -1,3 +1,4 @@
+# Fixed: Remove phantom lint:check step that doesn't exist
 name: Build Check & Case Sensitivity
 
 on:
