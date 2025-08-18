@@ -1,0 +1,70 @@
+name: Build Check & Case Sensitivity
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - 'src/**'
+  
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - 'src/**'
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install frontend dependencies  
+        run: |
+          if [ -d frontend ]; then
+            cd frontend && npm ci
+          fi
+
+      - name: 🔍 File structure analysis (Linux case-sensitive view)
+        run: |
+          echo "📁 Frontend pages directory structure:"
+          ls -la frontend/src/pages/ || true
+          echo ""
+          echo "🔍 Git-tracked files in pages:"
+          git ls-files frontend/src/pages/ || true
+
+      - name: 🏗️ Frontend build check
+        run: |
+          echo "🏗️ Running frontend build to catch case sensitivity issues..."
+          if [ -d frontend ]; then
+            cd frontend && npm run build:ci
+          fi
+          echo "✅ Build check completed successfully!"
+
+      - name: ✅ Build validation summary
+        if: always()
+        run: |
+          echo "## Build Check Results 🏗️" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ **All builds passed successfully!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Case sensitivity validation passed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Frontend build completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Build checks failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Common fixes for case sensitivity issues:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Check that import paths match exact filenames" >> $GITHUB_STEP_SUMMARY
+            echo "2. Ensure directories are lowercase (pages, components)" >> $GITHUB_STEP_SUMMARY
+            echo "3. See [NAMING_CONVENTIONS.md](./NAMING_CONVENTIONS.md)" >> $GITHUB_STEP_SUMMARY
+          fi

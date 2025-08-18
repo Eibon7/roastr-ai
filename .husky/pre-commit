@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Case sensitivity guard - basic frontend build check
+echo "🔍 Checking for case-sensitive import issues..."
+cd frontend && npm run build:ci --if-present
+
+echo "✅ Pre-commit checks passed!"
