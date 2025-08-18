@@ -1,7 +1,8 @@
 // babel.config.cjs
 module.exports = (api) => {
   const isTest = api.env('test');
-  const isIntegrationTest = process.env.npm_lifecycle_event === 'test:integration';
+  const isIntegrationTest = process.env.npm_lifecycle_event?.includes('integration') || 
+                           process.env.npm_lifecycle_event?.includes('test:integration-backend');
 
   const presets = [
     ['@babel/preset-env', { targets: { node: 'current' } }]
