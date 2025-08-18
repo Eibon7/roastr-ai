@@ -20,6 +20,30 @@ module.exports = {
   // Verbose output
   verbose: true,
   
+  // Coverage thresholds (Phase 2: Workers + Billing)
+  coverageThreshold: {
+    global: {
+      branches: 35,
+      functions: 40,
+      lines: 40,
+      statements: 40
+    },
+    // Workers require higher coverage due to critical system role
+    "src/workers/**": {
+      branches: 60,
+      functions: 70,
+      lines: 70,
+      statements: 70
+    },
+    // Billing requires high coverage due to financial impact
+    "src/routes/billing.js": {
+      branches: 50,
+      functions: 60,
+      lines: 60,
+      statements: 60
+    }
+  },
+  
   // Setup files to run before tests
   setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js'],
   
