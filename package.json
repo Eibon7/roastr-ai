@@ -73,7 +73,7 @@
   },
   "homepage": "https://github.com/Eibon7/roastr-ai#readme",
   "dependencies": {
-    "@atproto/api": "^0.12.29",
+    "@atproto/api": "^0.16.2",
     "@supabase/supabase-js": "^2.53.0",
     "@twurple/api": "^7.1.0",
     "@twurple/auth": "^7.1.0",

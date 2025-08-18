@@ -14,6 +14,16 @@ module.exports = {
     '!src/**/node_modules/**'
   ],
   
+  // Coverage thresholds
+  coverageThreshold: {
+    global: {
+      branches: 30,
+      functions: 30,
+      lines: 30,
+      statements: 30
+    }
+  },
+  
   // Test timeout
   testTimeout: 10000,
   

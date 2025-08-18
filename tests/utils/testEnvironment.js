@@ -1,6 +1,8 @@
 /**
- * Test Environment Setup and Management
- * Provides centralized test environment configuration and utilities for consistent testing
+ * Test Environment Utilities
+ * 
+ * Comprehensive test environment management for multi-tenant, mockMode, and worker testing.
+ * Combines simple helpers with advanced configuration for consistent testing across the system.
  */
 
 const { createMockSupabaseResponse } = require('./mocks');
@@ -8,13 +10,14 @@ const { createMockSupabaseResponse } = require('./mocks');
 /**
  * Environment presets for different test scenarios
  */
-const ENVIRONMENT_PRESETS = {
+const ENV_PRESETS = {
   MOCK: {
-    NODE_ENV: 'test',
     ENABLE_MOCK_MODE: 'true',
+    NODE_ENV: 'test',
     ENABLE_RQC: 'false',
     ENABLE_SHIELD: 'false',
     ENABLE_BILLING: 'false',
+    OPENAI_API_KEY: 'mock-openai-key-sk-test123456789',
     SUPABASE_URL: 'http://localhost:54321/mock',
     SUPABASE_SERVICE_KEY: 'mock-service-key-for-testing',
     SUPABASE_ANON_KEY: 'mock-anon-key-for-testing'
@@ -50,6 +53,7 @@ const ENVIRONMENT_PRESETS = {
     ENABLE_SHIELD: 'true',
     ENABLE_BILLING: 'true',
     ENABLE_STYLE_PROFILE: 'true',
+    ENABLE_SUPABASE: 'true',
     SUPABASE_URL: 'http://localhost:54321/mock',
     SUPABASE_SERVICE_KEY: 'mock-service-key',
     SUPABASE_ANON_KEY: 'mock-anon-key',
@@ -109,25 +113,67 @@ const MOCK_CONFIGURATIONS = {
 };
 
 /**
+ * Mock database configurations for testing
+ */
+const mockDbConfigs = {
+  supabase: {
+    SUPABASE_URL: 'http://localhost:54321/mock',
+    SUPABASE_SERVICE_KEY: 'mock-service-key-for-testing',
+    SUPABASE_ANON_KEY: 'mock-anon-key-for-testing'
+  },
+  
+  redis: {
+    UPSTASH_REDIS_REST_URL: 'http://localhost:6379/mock',
+    UPSTASH_REDIS_REST_TOKEN: 'mock-redis-token',
+    REDIS_URL: 'redis://localhost:6379/mock'
+  }
+};
+
+/**
+ * Mock API configurations for testing
+ */
+const mockApiConfigs = {
+  openai: {
+    OPENAI_API_KEY: 'sk-mock-openai-key-for-testing'
+  },
+  
+  perspective: {
+    PERSPECTIVE_API_KEY: 'mock-perspective-api-key'
+  },
+  
+  stripe: {
+    STRIPE_SECRET_KEY: 'sk_test_mock123456789',
+    STRIPE_WEBHOOK_SECRET: 'whsec_mock123456789',
+    STRIPE_SUCCESS_URL: 'http://localhost:3000/success',
+    STRIPE_CANCEL_URL: 'http://localhost:3000/cancel'
+  }
+};
+
+/**
  * TestEnvironment class for managing test setup and teardown
+ * Supports both simple and advanced test environment configuration
  */
 class TestEnvironment {
   constructor(preset = 'MOCK') {
-    this.originalEnv = {};
+    this.originalEnv = process.env;
     this.preset = preset;
     this.mocks = new Map();
     this.cleanupTasks = [];
   }
 
   /**
-   * Setup test environment with specified preset
+   * Set up a clean environment for testing
+   * @param {Object} customEnv - Custom environment variables to apply
    */
   setup(customEnv = {}) {
     // Store original environment
     this.originalEnv = { ...process.env };
     
+    // Reset Jest modules for clean state
+    jest.resetModules();
+    
     // Apply preset environment variables
-    const envConfig = { ...ENVIRONMENT_PRESETS[this.preset], ...customEnv };
+    const envConfig = { ...ENV_PRESETS[this.preset], ...customEnv };
     Object.entries(envConfig).forEach(([key, value]) => {
       process.env[key] = value;
     });
@@ -142,7 +188,7 @@ class TestEnvironment {
   }
 
   /**
-   * Teardown test environment and restore original state
+   * Restore original environment
    */
   teardown() {
     // Restore original environment
@@ -165,6 +211,56 @@ class TestEnvironment {
     this.restoreConsole();
     
     return this;
+  }
+
+  /**
+   * Set multiple environment variables at once
+   * @param {Object} envVars - Key-value pairs of environment variables
+   */
+  setEnvVars(envVars) {
+    Object.entries(envVars).forEach(([key, value]) => {
+      process.env[key] = value;
+    });
+  }
+
+  /**
+   * Clear specific environment variables
+   * @param {string[]} keys - Array of environment variable keys to delete
+   */
+  clearEnvVars(keys) {
+    keys.forEach(key => {
+      delete process.env[key];
+    });
+  }
+
+  /**
+   * Get standard mock mode environment
+   */
+  getMockModeEnv() {
+    return ENV_PRESETS.MOCK;
+  }
+
+  /**
+   * Get standard production-like environment (but safe for testing)
+   */
+  getProdLikeEnv() {
+    return ENV_PRESETS.PRODUCTION_LIKE;
+  }
+
+  /**
+   * Get test environment with all features enabled
+   */
+  getFullFeaturesEnv() {
+    return ENV_PRESETS.TEST_FULL;
+  }
+
+  /**
+   * Get minimal test environment
+   */
+  getMinimalEnv() {
+    return {
+      NODE_ENV: 'test'
+    };
   }
 
   /**
@@ -348,7 +444,7 @@ class TestEnvironment {
    */
   static createTestEnv(customVars = {}) {
     return {
-      ...ENVIRONMENT_PRESETS.MOCK,
+      ...ENV_PRESETS.MOCK,
       ...customVars
     };
   }
@@ -402,6 +498,54 @@ class TestEnvironment {
 }
 
 /**
+ * Jest setup helpers for common patterns
+ */
+const setupHelpers = {
+  /**
+   * Standard beforeEach/afterEach for environment isolation
+   */
+  withCleanEnv: () => {
+    const testEnv = new TestEnvironment();
+    
+    beforeEach(() => {
+      testEnv.setup();
+    });
+    
+    afterEach(() => {
+      testEnv.teardown();
+    });
+    
+    return testEnv;
+  },
+
+  /**
+   * Set up mock mode for a test suite
+   */
+  withMockMode: () => {
+    const testEnv = setupHelpers.withCleanEnv();
+    
+    beforeEach(() => {
+      testEnv.setEnvVars(ENV_PRESETS.MOCK);
+    });
+    
+    return testEnv;
+  },
+
+  /**
+   * Set up production-like environment for testing
+   */
+  withProdLike: () => {
+    const testEnv = setupHelpers.withCleanEnv();
+    
+    beforeEach(() => {
+      testEnv.setEnvVars(ENV_PRESETS.PRODUCTION_LIKE);
+    });
+    
+    return testEnv;
+  }
+};
+
+/**
  * Helper function to quickly setup test environment
  */
 const setupTestEnv = (preset = 'MOCK', customEnv = {}) => {
@@ -430,8 +574,11 @@ const setupJestTestEnv = (preset = 'MOCK') => {
 
 module.exports = {
   TestEnvironment,
-  ENVIRONMENT_PRESETS,
+  ENV_PRESETS,
   MOCK_CONFIGURATIONS,
+  setupHelpers,
+  mockDbConfigs,
+  mockApiConfigs,
   setupTestEnv,
   setupJestTestEnv
 };
