@@ -1,3 +1,4 @@
+// Fixed case sensitivity issue with AccountsPage.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
