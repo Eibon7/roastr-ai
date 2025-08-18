@@ -23,8 +23,8 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Coverage reports (comentado para permitir subirlo en esta ocasión)
-# coverage/
+# Coverage reports
+coverage/
 
 # Local configs
 *.local

@@ -51,7 +51,12 @@
     "lint": "eslint . --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "jest tests/smoke/ --verbose",
-    "test:integration-backend": "jest --config=tests/integration/backend/jest.config.js --runInBand",
+    "test:integration-backend": "INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand",
+    "test:integration-backend:fixtures": "USE_FIXTURES=true USE_BACKEND_FIXTURES=true INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand",
+    "test:integration-backend:ci": "USE_FIXTURES=true USE_BACKEND_FIXTURES=true INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand --coverage",
+    "test:integration-backend:coverage": "INTEGRATION_TEST_MODE=real jest --config=tests/integration/backend/jest.config.js --runInBand --coverage",
+    "fixtures:validate": "node tests/integration/backend/utils/validate-fixtures.js",
+    "fixtures:update:all": "node tests/integration/backend/utils/update-backend-fixtures.js",
     "changelog:add": "node scripts/add-changelog.js",
     "admin:setup": "node scripts/setup-admin.js",
     "admin:list": "node scripts/setup-admin.js --list"
