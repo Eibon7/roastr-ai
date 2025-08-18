@@ -5,7 +5,6 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { useToast } from '../contexts/ToastContext';
 import ShieldInterceptedList from './ShieldInterceptedList';
 import { NETWORK_ICONS, NETWORK_COLORS, TONE_EXAMPLES, SHIELD_LEVELS, TONE_OPTIONS } from '../mocks/social';
 
@@ -23,7 +22,6 @@ const AccountModal = ({
   onDisconnectAccount,
   onClose
 }) => {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('roasts');
   const [shieldExpanded, setShieldExpanded] = useState(false);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
@@ -66,16 +64,14 @@ const AccountModal = ({
     
     try {
       await asyncAction();
-      if (successMessage) {
-        toast.success(successMessage);
-      }
+      // TODO: Show success toast with successMessage
     } catch (error) {
-      toast.error(`Error en acción: ${error.message}`);
+      // TODO: Show error toast
       console.error(`Action ${actionKey} failed:`, error);
     } finally {
       setLoadingStates(prev => ({ ...prev, [actionKey]: false }));
     }
-  }, [toast]);
+  }, []);
 
   const handleApproveRoast = useCallback((roastId) => {
     handleAsyncAction(

@@ -94,7 +94,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
           </button>
           <button
             onClick={handleConnect}
-            className={`flex-1 px-4 py-2 text-sm font-medium ${networkColor} hover:opacity-90 rounded-lg transition-opacity`}
+            className={`flex-1 px-4 py-2 text-sm font-medium text-white ${networkColor.includes('gradient') ? networkColor : networkColor.replace('text-white', '')} hover:opacity-90 rounded-lg transition-opacity`}
           >
             Conectar
           </button>
