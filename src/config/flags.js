@@ -35,6 +35,9 @@ class FeatureFlags {
       ENABLE_REAL_OPENAI: !!process.env.OPENAI_API_KEY,
       ENABLE_REAL_PERSPECTIVE: !!process.env.PERSPECTIVE_API_KEY,
       
+      // Email Features
+      ENABLE_EMAIL_NOTIFICATIONS: !!process.env.SENDGRID_API_KEY,
+      
       // Database Features
       ENABLE_SUPABASE: this.checkSupabaseKeys(),
       
@@ -198,7 +201,8 @@ class FeatureFlags {
         rqc: this.flags.ENABLE_RQC ? 'enabled' : 'disabled',
         shield: this.flags.ENABLE_SHIELD ? 'enabled' : 'disabled',
         styleProfile: this.flags.ENABLE_STYLE_PROFILE ? 'enabled' : 'disabled',
-        magicLink: this.flags.ENABLE_MAGIC_LINK ? 'enabled' : 'disabled'
+        magicLink: this.flags.ENABLE_MAGIC_LINK ? 'enabled' : 'disabled',
+        emailNotifications: this.flags.ENABLE_EMAIL_NOTIFICATIONS ? 'enabled' : 'disabled'
       }
     };
   }

@@ -4,6 +4,7 @@ const { isAdminMiddleware } = require('../middleware/isAdmin');
 const { logger } = require('../utils/logger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
+const revenueRoutes = require('./revenue');
 const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
@@ -12,6 +13,9 @@ const router = express.Router();
 
 // Aplicar middleware de admin a todas las rutas
 router.use(isAdminMiddleware);
+
+// Revenue dashboard routes (admin only)
+router.use('/revenue', revenueRoutes);
 
 /**
  * GET /api/admin/dashboard
