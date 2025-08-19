@@ -14,7 +14,7 @@ const AnalyzeToxicityWorker = require('../../src/workers/AnalyzeToxicityWorker')
 const GenerateReplyWorker = require('../../src/workers/GenerateReplyWorker');
 
 // Mock external services for integration testing
-jest.mock('../../src/integrations/twitter/twitterService');
+// Note: Twitter service doesn't exist, using twitter-api-v2 library directly
 jest.mock('../../src/services/perspective');
 jest.mock('../../src/services/openai');
 
