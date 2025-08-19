@@ -336,6 +336,11 @@ class BaseWorker {
    * Setup graceful shutdown handlers
    */
   setupGracefulShutdown() {
+    // Skip setup in test environment to prevent EventEmitter leaks
+    if (process.env.NODE_ENV === 'test' || process.env.IS_TEST === '1') {
+      return;
+    }
+    
     const signals = ['SIGTERM', 'SIGINT', 'SIGQUIT'];
     
     signals.forEach(signal => {

@@ -263,6 +263,34 @@ class EmailService {
     }
 
     /**
+     * Send plan change notification
+     * @param {string} userEmail - User email address
+     * @param {Object} changeData - Plan change details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendPlanChangeNotification(userEmail, changeData) {
+        const isUpgrade = changeData.newPlanName !== 'Free' && 
+                         ['Pro', 'Creator+'].includes(changeData.newPlanName);
+        
+        return await this.sendEmail({
+            to: userEmail,
+            subject: isUpgrade ? '🚀 Plan Upgraded Successfully!' : '📋 Plan Changed',
+            templateName: 'plan_change',
+            templateData: {
+                userName: changeData.userName || 'User',
+                oldPlanName: changeData.oldPlanName || 'Free',
+                newPlanName: changeData.newPlanName || 'Free',
+                newFeatures: changeData.newFeatures || [],
+                effectiveDate: changeData.effectiveDate || new Date().toLocaleDateString(),
+                isUpgrade: isUpgrade,
+                dashboardUrl: process.env.APP_URL || 'https://app.roastr.ai',
+                billingUrl: process.env.STRIPE_PORTAL_RETURN_URL || 'https://app.roastr.ai/billing',
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
      * Get service status
      * @returns {Object} Service configuration status
      */

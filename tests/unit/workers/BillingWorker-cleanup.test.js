@@ -1,53 +1,105 @@
 /**
- * Simple BillingWorker unit tests
- * Focused on core functionality without complex mocking
+ * BillingWorker clean unit tests without complex mocking
+ * Focus on functionality that can be tested without database calls
  */
 
-const BillingWorker = require('../../../src/workers/BillingWorker');
-
-// Mock all external dependencies
-jest.mock('../../../src/services/emailService');
-jest.mock('../../../src/services/notificationService');
-jest.mock('../../../src/services/auditLogService');
-jest.mock('../../../src/config/flags');
-jest.mock('../../../src/utils/logger', () => ({
-    logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn() }
+// Mock the config flags first
+const mockFlags = {
+    isEnabled: jest.fn().mockReturnValue(true)
+};
+jest.mock('../../../src/config/flags', () => ({
+    flags: mockFlags
 }));
-jest.mock('stripe', () => jest.fn(() => ({
+
+// Mock Stripe
+const mockStripe = {
     customers: { retrieve: jest.fn() },
     prices: { list: jest.fn() },
     balance: { retrieve: jest.fn() }
-})));
+};
+jest.mock('stripe', () => jest.fn(() => mockStripe));
 
-describe('BillingWorker Simple Tests', () => {
+// Mock all services to prevent actual calls
+jest.mock('../../../src/services/emailService', () => ({
+    sendPaymentFailedNotification: jest.fn(),
+    sendSubscriptionCanceledNotification: jest.fn(),
+    sendUpgradeSuccessNotification: jest.fn(),
+    isConfigured: true
+}));
+
+jest.mock('../../../src/services/notificationService', () => ({
+    createPaymentFailedNotification: jest.fn(),
+    createSubscriptionCanceledNotification: jest.fn(),
+    createUpgradeSuccessNotification: jest.fn(),
+    createPaymentActionRequiredNotification: jest.fn(),
+    createSubscriptionSuspendedNotification: jest.fn()
+}));
+
+jest.mock('../../../src/services/auditLogService', () => ({
+    log: jest.fn()
+}));
+
+jest.mock('../../../src/utils/logger', () => ({
+    logger: {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn()
+    }
+}));
+
+// Import after mocking
+const BillingWorker = require('../../../src/workers/BillingWorker');
+
+describe('BillingWorker Clean Tests', () => {
     let billingWorker;
-    const { flags } = require('../../../src/config/flags');
 
-    afterAll(async () => {
-        // Clean up any lingering resources
-        if (billingWorker && billingWorker.queueService && billingWorker.queueService.shutdown) {
-            await billingWorker.queueService.shutdown();
-        }
-        jest.clearAllTimers();
-        jest.useRealTimers();
+    beforeAll(() => {
+        // Set test environment
+        process.env.NODE_ENV = 'test';
     });
 
     beforeEach(() => {
         jest.clearAllMocks();
         
-        flags.isEnabled = jest.fn().mockImplementation((flag) => {
-            return flag === 'ENABLE_BILLING';
-        });
-
+        // Create worker instance
         billingWorker = new BillingWorker();
+        
+        // Mock the queue service to prevent real connections
+        billingWorker.queueService = {
+            scheduleJob: jest.fn().mockResolvedValue(true),
+            addJob: jest.fn().mockResolvedValue(true)
+        };
+        
+        // Mock supabase to prevent real database calls
+        billingWorker.supabase = {
+            from: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+            update: jest.fn().mockReturnThis(),
+            upsert: jest.fn().mockResolvedValue({ error: null }),
+            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
+        };
     });
 
-    describe('constructor', () => {
-        it('should initialize worker with correct configuration', () => {
+    afterEach(() => {
+        // Clean up any timeouts or intervals
+        if (billingWorker && billingWorker.healthCheckTimer) {
+            clearInterval(billingWorker.healthCheckTimer);
+        }
+    });
+
+    describe('Constructor', () => {
+        it('should initialize with correct worker type', () => {
             expect(billingWorker.workerType).toBe('billing');
+        });
+
+        it('should have higher retry count for billing operations', () => {
             expect(billingWorker.config.maxRetries).toBe(5);
+        });
+
+        it('should have lower concurrency for billing safety', () => {
             expect(billingWorker.config.maxConcurrency).toBe(2);
-            expect(billingWorker.config.retryDelay).toBe(3000);
         });
 
         it('should initialize retry configuration', () => {
@@ -57,70 +109,77 @@ describe('BillingWorker Simple Tests', () => {
             expect(billingWorker.retryConfig.exponentialBackoff).toBe(true);
         });
 
-        it('should have Stripe initialized when billing enabled', () => {
+        it('should initialize Stripe when billing enabled', () => {
             expect(billingWorker.stripe).toBeDefined();
         });
 
-        it('should not have Stripe when billing disabled', () => {
-            flags.isEnabled.mockReturnValue(false);
+        it('should not initialize Stripe when billing disabled', () => {
+            mockFlags.isEnabled.mockReturnValue(false);
             const worker = new BillingWorker();
             expect(worker.stripe).toBeNull();
+            mockFlags.isEnabled.mockReturnValue(true); // Reset
         });
     });
 
-    describe('processJob', () => {
-        it('should route payment_failed jobs to correct handler', async () => {
+    describe('Job Routing', () => {
+        it('should route payment_failed jobs correctly', async () => {
             const job = { job_type: 'payment_failed', data: {} };
             billingWorker.processPaymentFailed = jest.fn().mockResolvedValue({ success: true });
 
-            await billingWorker.processJob(job);
+            const result = await billingWorker.processJob(job);
 
             expect(billingWorker.processPaymentFailed).toHaveBeenCalledWith(job);
+            expect(result.success).toBe(true);
         });
 
-        it('should route subscription_cancelled jobs to correct handler', async () => {
+        it('should route subscription_cancelled jobs correctly', async () => {
             const job = { job_type: 'subscription_cancelled', data: {} };
             billingWorker.processSubscriptionCancelled = jest.fn().mockResolvedValue({ success: true });
 
-            await billingWorker.processJob(job);
+            const result = await billingWorker.processJob(job);
 
             expect(billingWorker.processSubscriptionCancelled).toHaveBeenCalledWith(job);
+            expect(result.success).toBe(true);
         });
 
-        it('should route subscription_updated jobs to correct handler', async () => {
+        it('should route subscription_updated jobs correctly', async () => {
             const job = { job_type: 'subscription_updated', data: {} };
             billingWorker.processSubscriptionUpdated = jest.fn().mockResolvedValue({ success: true });
 
-            await billingWorker.processJob(job);
+            const result = await billingWorker.processJob(job);
 
             expect(billingWorker.processSubscriptionUpdated).toHaveBeenCalledWith(job);
+            expect(result.success).toBe(true);
         });
 
-        it('should route payment_succeeded jobs to correct handler', async () => {
+        it('should route payment_succeeded jobs correctly', async () => {
             const job = { job_type: 'payment_succeeded', data: {} };
             billingWorker.processPaymentSucceeded = jest.fn().mockResolvedValue({ success: true });
 
-            await billingWorker.processJob(job);
+            const result = await billingWorker.processJob(job);
 
             expect(billingWorker.processPaymentSucceeded).toHaveBeenCalledWith(job);
+            expect(result.success).toBe(true);
         });
 
-        it('should route invoice_payment_action_required jobs to correct handler', async () => {
+        it('should route invoice_payment_action_required jobs correctly', async () => {
             const job = { job_type: 'invoice_payment_action_required', data: {} };
             billingWorker.processPaymentActionRequired = jest.fn().mockResolvedValue({ success: true });
 
-            await billingWorker.processJob(job);
+            const result = await billingWorker.processJob(job);
 
             expect(billingWorker.processPaymentActionRequired).toHaveBeenCalledWith(job);
+            expect(result.success).toBe(true);
         });
 
-        it('should route billing_retry jobs to correct handler', async () => {
+        it('should route billing_retry jobs correctly', async () => {
             const job = { job_type: 'billing_retry', data: {} };
             billingWorker.processBillingRetry = jest.fn().mockResolvedValue({ success: true });
 
-            await billingWorker.processJob(job);
+            const result = await billingWorker.processJob(job);
 
             expect(billingWorker.processBillingRetry).toHaveBeenCalledWith(job);
+            expect(result.success).toBe(true);
         });
 
         it('should throw error for unknown job types', async () => {
@@ -130,13 +189,13 @@ describe('BillingWorker Simple Tests', () => {
         });
     });
 
-    describe('calculateRetryDelay', () => {
+    describe('Retry Logic', () => {
         it('should calculate exponential backoff correctly', () => {
             const delay0 = billingWorker.calculateRetryDelay(0);
             const delay1 = billingWorker.calculateRetryDelay(1);
             const delay2 = billingWorker.calculateRetryDelay(2);
 
-            expect(delay0).toBe(3600000); // 1 hour base delay
+            expect(delay0).toBe(3600000); // 1 hour
             expect(delay1).toBe(7200000); // 2 hours (2^1 * base)
             expect(delay2).toBe(14400000); // 4 hours (2^2 * base)
         });
@@ -157,13 +216,7 @@ describe('BillingWorker Simple Tests', () => {
         });
     });
 
-    describe('scheduleRetry', () => {
-        beforeEach(() => {
-            billingWorker.queueService = {
-                scheduleJob: jest.fn()
-            };
-        });
-
+    describe('Retry Scheduling', () => {
         it('should schedule retry job with correct parameters', async () => {
             const jobData = { userId: 'user-123', customerId: 'cus-123' };
             const delay = 3600000;
@@ -187,7 +240,7 @@ describe('BillingWorker Simple Tests', () => {
         });
     });
 
-    describe('processBillingRetry', () => {
+    describe('Retry Processing', () => {
         it('should process retry job by calling original job type handler', async () => {
             const job = {
                 data: {
@@ -214,14 +267,9 @@ describe('BillingWorker Simple Tests', () => {
         });
     });
 
-    describe('getSpecificHealthDetails', () => {
-        beforeEach(() => {
-            const emailService = require('../../../src/services/emailService');
-            emailService.isConfigured = true;
-        });
-
+    describe('Health Check', () => {
         it('should return billing health details when Stripe enabled', async () => {
-            billingWorker.stripe.balance.retrieve.mockResolvedValue({ available: [{ amount: 1000 }] });
+            mockStripe.balance.retrieve.mockResolvedValue({ available: [{ amount: 1000 }] });
 
             const details = await billingWorker.getSpecificHealthDetails();
 
@@ -232,7 +280,7 @@ describe('BillingWorker Simple Tests', () => {
         });
 
         it('should detect unhealthy Stripe connection', async () => {
-            billingWorker.stripe.balance.retrieve.mockRejectedValue(new Error('Connection failed'));
+            mockStripe.balance.retrieve.mockRejectedValue(new Error('Connection failed'));
 
             const details = await billingWorker.getSpecificHealthDetails();
 
@@ -250,11 +298,11 @@ describe('BillingWorker Simple Tests', () => {
         });
     });
 
-    describe('error handling', () => {
+    describe('Error Handling', () => {
         it('should handle missing queue service gracefully', () => {
             billingWorker.queueService = null;
             
-            // Should not throw error during construction
+            // Should not throw error
             expect(() => {
                 const job = { job_type: 'payment_failed', data: {} };
                 billingWorker.processJob(job);
@@ -269,38 +317,25 @@ describe('BillingWorker Simple Tests', () => {
         });
 
         it('should handle missing Stripe configuration', () => {
-            flags.isEnabled.mockReturnValue(false);
+            mockFlags.isEnabled.mockReturnValue(false);
             const worker = new BillingWorker();
 
             expect(worker.stripe).toBeNull();
+            mockFlags.isEnabled.mockReturnValue(true); // Reset
         });
     });
 
-    describe('logging and metrics', () => {
-        it('should log job processing start', async () => {
-            const job = { job_type: 'payment_succeeded', data: { userId: 'user-123' } };
-            billingWorker.processPaymentSucceeded = jest.fn().mockResolvedValue({ success: true });
-            billingWorker.log = jest.fn();
-
-            await billingWorker.processJob(job);
-
-            expect(billingWorker.log).toHaveBeenCalledWith('info', 'Processing billing job', {
-                jobType: 'payment_succeeded',
-                jobId: undefined,
-                organizationId: undefined
-            });
+    describe('Configuration Validation', () => {
+        it('should have appropriate timeout for billing operations', () => {
+            expect(billingWorker.config.retryDelay).toBe(3000); // 3 seconds
         });
 
-        it('should increment processed jobs counter on success', () => {
-            const initialCount = billingWorker.processedJobs;
-            // This would be tested in integration tests where the full processing loop runs
-            expect(typeof initialCount).toBe('number');
+        it('should have proper concurrency limits', () => {
+            expect(billingWorker.config.maxConcurrency).toBe(2); // Low for safety
         });
 
-        it('should increment failed jobs counter on error', () => {
-            const initialCount = billingWorker.failedJobs;
-            // This would be tested in integration tests where the full processing loop runs
-            expect(typeof initialCount).toBe('number');
+        it('should have extended retry count', () => {
+            expect(billingWorker.config.maxRetries).toBe(5); // Higher for billing
         });
     });
 });

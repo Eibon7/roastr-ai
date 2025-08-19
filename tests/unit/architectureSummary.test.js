@@ -49,7 +49,7 @@ describe('Multi-Tenant Architecture Implementation Summary', () => {
     
     test('should have implemented all platform integrations', () => {
       const integrations = [
-        'integrations/twitter/twitterService.js',
+        'services/twitter.js',
         'integrations/youtube/youtubeService.js', 
         'integrations/bluesky/blueskyService.js',
         'integrations/instagram/instagramService.js',

@@ -1,5 +1,6 @@
 const Redis = require('ioredis');
 const { createClient } = require('@supabase/supabase-js');
+const { mockMode } = require('../config/mockMode');
 
 /**
  * Queue Service for Roastr.ai Multi-Tenant Architecture
@@ -49,6 +50,12 @@ class QueueService {
    */
   async initialize() {
     try {
+      // Skip real connections in mock mode
+      if (mockMode.isMockMode) {
+        this.log('info', 'Queue Service initialized in mock mode - skipping real connections');
+        return;
+      }
+      
       // Initialize Redis connection
       if (this.options.preferRedis && this.options.redisUrl) {
         await this.initializeRedis();
@@ -144,7 +151,8 @@ class QueueService {
       .limit(1);
     
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found, which is OK
-      throw new Error(`Database connection failed: ${error.message}`);
+      const errorMessage = error.message || error.toString() || 'Unknown database error';
+      throw new Error(`Database connection failed: ${errorMessage}`);
     }
   }
   
@@ -551,6 +559,21 @@ class QueueService {
    * Get queue statistics
    */
   async getQueueStats(jobType = null) {
+    // Return mock stats in mock mode
+    if (mockMode.isMockMode) {
+      return {
+        timestamp: new Date().toISOString(),
+        redis: false,
+        database: true,
+        pending: 0,
+        active: 0,
+        completed: 5,
+        failed: 0,
+        total: 5,
+        queues: jobType ? { [jobType]: { pending: 0, active: 0 } } : {}
+      };
+    }
+
     const stats = {
       timestamp: new Date().toISOString(),
       redis: this.isRedisAvailable,

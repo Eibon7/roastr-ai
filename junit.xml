@@ -1,94 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="17" failures="2" errors="0" time="1.173">
-  <testsuite name="Feature Flags Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-08-14T09:12:50" time="0.258" tests="6">
+<testsuites name="jest tests" tests="17" failures="2" errors="0" time="1.273">
+  <testsuite name="API Health Smoke Tests" errors="0" failures="2" skipped="0" timestamp="2025-08-19T19:51:43" time="1.207" tests="11">
+    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /health should return 200" time="0.017">
+      <failure>Error: Database connection failed: TypeError: res.text is not a function
+    at QueueService.initializeDatabase (/Users/emiliopostigo/roastr-ai/src/services/queueService.js:147:13)
+    at QueueService.initialize (/Users/emiliopostigo/roastr-ai/src/services/queueService.js:58:7)</failure>
+    </testcase>
+    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /api/health should be accessible" time="0.008">
+      <failure>Error: expect(received).toContain(expected) // indexOf
+
+Expected value: 503
+Received array: [200, 500]
+    at Object.toContain (/Users/emiliopostigo/roastr-ai/tests/smoke/api-health.test.js:40:26)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)</failure>
+    </testcase>
+    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/register should be accessible" time="0.019">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/login should be accessible" time="0.003">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="GET /api/billing/plans should be accessible" time="0.004">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="POST /api/billing/create-checkout-session endpoint exists" time="0.002">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="GET /api/user/integrations endpoint exists" time="0.002">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="POST /api/user/integrations/connect endpoint exists" time="0.002">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Error Handling" name="Non-existent endpoints should return proper error" time="0.003">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Error Handling" name="Wrong HTTP method should return proper error" time="0.003">
+    </testcase>
+    <testcase classname="API Health Smoke Tests Security Headers" name="Should include security headers" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="Feature Flags Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-08-19T19:51:44" time="0.019" tests="6">
     <testcase classname="Feature Flags Smoke Tests" name="Feature flags should initialize without errors" time="0.001">
     </testcase>
     <testcase classname="Feature Flags Smoke Tests" name="Should be able to check flag status" time="0">
     </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should return service status" time="0.001">
+    <testcase classname="Feature Flags Smoke Tests" name="Should return service status" time="0">
     </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should return all flags" time="0.001">
+    <testcase classname="Feature Flags Smoke Tests" name="Should return all flags" time="0.002">
     </testcase>
     <testcase classname="Feature Flags Smoke Tests" name="Should handle unknown flags gracefully" time="0">
     </testcase>
     <testcase classname="Feature Flags Smoke Tests" name="Feature flags should be consistent" time="0">
-    </testcase>
-  </testsuite>
-  <testsuite name="API Health Smoke Tests" errors="0" failures="2" skipped="0" timestamp="2025-08-14T09:12:50" time="0.833" tests="11">
-    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /health should return 200" time="0.014">
-      <failure>Error: expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;
-    at Object.expect (/Users/emiliopostigo/roastr-ai/tests/smoke/api-health.test.js:28:10)
-    at Promise.then.completed (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/utils.js:298:28)
-    at new Promise (&lt;anonymous&gt;)
-    at callAsyncCircusFn (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/utils.js:231:10)
-    at _callCircusTest (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:316:40)
-    at _runTest (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:252:3)
-    at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:126:9)
-    at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:121:9)
-    at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:121:9)
-    at run (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:71:3)
-    at runAndTransformResultsToJestFormat (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
-    at jestAdapter (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
-    at runTestInternal (/Users/emiliopostigo/roastr-ai/node_modules/jest-runner/build/runTest.js:367:16)
-    at runTest (/Users/emiliopostigo/roastr-ai/node_modules/jest-runner/build/runTest.js:444:34)
-----
-    at Test._assertStatus (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:309:14)
-    at /Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:365:13
-    at Test._assertFunction (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:342:13)
-    at Test.assert (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:195:23)
-    at localAssert (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:138:14)
-    at Server.&lt;anonymous&gt; (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:152:11)
-    at Object.onceWrapper (node:events:632:28)
-    at Server.emit (node:events:518:28)
-    at emitCloseNT (node:net:2419:8)
-    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
-    </testcase>
-    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /api/health should be accessible" time="0.012">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/register should be accessible" time="0.004">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/login should be accessible" time="0.003">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="GET /api/billing/plans should be accessible" time="0.003">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="POST /api/billing/create-checkout-session endpoint exists" time="0.003">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="GET /api/user/integrations endpoint exists" time="0.006">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="POST /api/user/integrations/connect endpoint exists" time="0.003">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Error Handling" name="Non-existent endpoints should return proper error" time="0.004">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Error Handling" name="Wrong HTTP method should return proper error" time="0.004">
-    </testcase>
-    <testcase classname="API Health Smoke Tests Security Headers" name="Should include security headers" time="0.002">
-      <failure>Error: expected 200 &quot;OK&quot;, got 500 &quot;Internal Server Error&quot;
-    at Object.expect (/Users/emiliopostigo/roastr-ai/tests/smoke/api-health.test.js:124:10)
-    at Promise.then.completed (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/utils.js:298:28)
-    at new Promise (&lt;anonymous&gt;)
-    at callAsyncCircusFn (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/utils.js:231:10)
-    at _callCircusTest (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:316:40)
-    at processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at _runTest (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:252:3)
-    at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:126:9)
-    at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:121:9)
-    at _runTestsForDescribeBlock (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:121:9)
-    at run (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/run.js:71:3)
-    at runAndTransformResultsToJestFormat (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
-    at jestAdapter (/Users/emiliopostigo/roastr-ai/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
-    at runTestInternal (/Users/emiliopostigo/roastr-ai/node_modules/jest-runner/build/runTest.js:367:16)
-    at runTest (/Users/emiliopostigo/roastr-ai/node_modules/jest-runner/build/runTest.js:444:34)
-----
-    at Test._assertStatus (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:309:14)
-    at /Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:365:13
-    at Test._assertFunction (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:342:13)
-    at Test.assert (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:195:23)
-    at localAssert (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:138:14)
-    at Server.&lt;anonymous&gt; (/Users/emiliopostigo/roastr-ai/node_modules/supertest/lib/test.js:152:11)
-    at Object.onceWrapper (node:events:632:28)
-    at Server.emit (node:events:518:28)
-    at emitCloseNT (node:net:2419:8)
-    at processTicksAndRejections (node:internal/process/task_queues:89:21)</failure>
     </testcase>
   </testsuite>
 </testsuites>

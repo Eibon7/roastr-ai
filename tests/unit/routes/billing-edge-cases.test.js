@@ -56,6 +56,18 @@ jest.mock('../../../src/utils/logger', () => ({ logger: { info: jest.fn(), error
 jest.mock('../../../src/config/flags');
 
 describe('Billing Webhook Edge Cases', () => {
+    afterAll(async () => {
+        // Clean up any lingering resources
+        if (mockQueueService && mockQueueService.shutdown) {
+            await mockQueueService.shutdown();
+        }
+        jest.clearAllTimers();
+        jest.useRealTimers();
+        // Clear environment variables
+        delete process.env.STRIPE_SECRET_KEY;
+        delete process.env.STRIPE_WEBHOOK_SECRET;
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
         

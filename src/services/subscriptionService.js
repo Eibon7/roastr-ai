@@ -1,7 +1,7 @@
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const { getPlanFeatures, getPlanByLookupKey } = require('./planService');
-const { isChangeAllowed } = require('./planValidation');
+const { isChangeAllowed, calculateProration } = require('./planValidation');
 const emailService = require('./emailService');
 const notificationService = require('./notificationService');
 const workerNotificationService = require('./workerNotificationService');
