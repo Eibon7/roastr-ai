@@ -1204,6 +1204,132 @@ class AuthService {
             throw error;
         }
     }
+
+    /**
+     * Export user data (GDPR compliance)
+     * @param {string} userId - User ID
+     */
+    async exportUserData(userId) {
+        try {
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
+
+            // Get user profile
+            const { data: user, error: userError } = await supabaseServiceClient
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (userError || !user) {
+                throw new Error('User not found');
+            }
+
+            // Get user organizations
+            const { data: organizations, error: orgError } = await supabaseServiceClient
+                .from('organizations')
+                .select('*')
+                .eq('owner_id', userId);
+
+            if (orgError) {
+                logger.warn('Failed to fetch user organizations:', orgError.message);
+            }
+
+            // Get user activities (last 90 days)
+            const { data: activities, error: activitiesError } = await supabaseServiceClient
+                .from('user_activities')
+                .select('*')
+                .eq('user_id', userId)
+                .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+                .order('created_at', { ascending: false })
+                .limit(1000);
+
+            if (activitiesError) {
+                logger.warn('Failed to fetch user activities:', activitiesError.message);
+            }
+
+            // Get integration configs
+            const orgIds = organizations?.map(org => org.id) || [];
+            let integrations = [];
+            
+            if (orgIds.length > 0) {
+                const { data: integrationsData, error: integrationsError } = await supabaseServiceClient
+                    .from('integration_configs')
+                    .select('platform, enabled, created_at, updated_at, organization_id')
+                    .in('organization_id', orgIds);
+
+                if (integrationsError) {
+                    logger.warn('Failed to fetch integrations:', integrationsError.message);
+                } else {
+                    integrations = integrationsData || [];
+                }
+            }
+
+            // Prepare export data
+            const exportData = {
+                export_info: {
+                    exported_at: new Date().toISOString(),
+                    export_version: '1.0',
+                    user_id: userId,
+                    note: 'This data export complies with GDPR Article 20 (Right to data portability)'
+                },
+                profile: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    plan: user.plan,
+                    created_at: user.created_at,
+                    updated_at: user.updated_at,
+                    last_activity_at: user.last_activity_at,
+                    email_confirmed: user.email_confirmed,
+                    is_admin: user.is_admin,
+                    active: user.active
+                },
+                organizations: (organizations || []).map(org => ({
+                    id: org.id,
+                    name: org.name,
+                    slug: org.slug,
+                    plan_id: org.plan_id,
+                    created_at: org.created_at,
+                    monthly_responses_limit: org.monthly_responses_limit,
+                    monthly_responses_used: org.monthly_responses_used,
+                    subscription_status: org.subscription_status
+                })),
+                integrations: integrations.map(integration => ({
+                    platform: integration.platform,
+                    enabled: integration.enabled,
+                    created_at: integration.created_at,
+                    updated_at: integration.updated_at
+                })),
+                activities: (activities || []).map(activity => ({
+                    activity_type: activity.activity_type,
+                    platform: activity.platform,
+                    tokens_used: activity.tokens_used,
+                    created_at: activity.created_at
+                })),
+                usage_statistics: {
+                    total_messages_sent: user.total_messages_sent || 0,
+                    total_tokens_consumed: user.total_tokens_consumed || 0,
+                    monthly_messages_sent: user.monthly_messages_sent || 0,
+                    monthly_tokens_consumed: user.monthly_tokens_consumed || 0
+                }
+            };
+
+            logger.info('User data exported successfully:', { 
+                userId, 
+                organizations_count: organizations?.length || 0,
+                integrations_count: integrations.length,
+                activities_count: activities?.length || 0
+            });
+
+            return exportData;
+
+        } catch (error) {
+            logger.error('Export user data error:', error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new AuthService();

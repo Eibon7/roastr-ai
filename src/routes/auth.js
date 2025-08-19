@@ -988,4 +988,30 @@ router.post('/confirm-email-change', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/auth/export-data
+ * Export user data (GDPR compliance)
+ */
+router.get('/export-data', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const result = await authService.exportUserData(userId);
+
+        logger.info('User data exported:', { userId });
+
+        res.json({
+            success: true,
+            message: 'User data exported successfully',
+            data: result
+        });
+
+    } catch (error) {
+        logger.error('Export user data endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

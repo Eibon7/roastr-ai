@@ -4,7 +4,9 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle } from 'lucide-react';
+import { apiClient } from '../lib/api';
+import { authHelpers } from '../lib/supabaseClient';
 
 export default function Settings() {
   const [settings, setSettings] = useState({
@@ -24,18 +26,36 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Account management state
+  const [emailForm, setEmailForm] = useState({
+    currentEmail: '',
+    newEmail: '',
+    isSubmitting: false,
+    showForm: false
+  });
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const userData = await response.json();
+        const session = await authHelpers.getCurrentSession();
+        if (session?.access_token) {
+          const userData = await authHelpers.getUserFromAPI(session.access_token);
           setUser(userData);
-          // In real implementation, load user settings
+          
+          setEmailForm(prev => ({
+            ...prev,
+            currentEmail: userData.email || ''
+          }));
+        } else {
+          throw new Error('No valid session found');
         }
+        
+        // In real implementation, load user settings from API
       } catch (error) {
         console.error('Failed to fetch user data:', error);
+        addNotification('Error al cargar datos del usuario', 'error');
       } finally {
         setLoading(false);
       }
@@ -72,6 +92,94 @@ export default function Settings() {
     });
   };
 
+  // Notification management
+  const addNotification = (message, type = 'info') => {
+    const id = Date.now();
+    const notification = { id, message, type };
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  // Email change handling
+  const handleEmailChange = async (e) => {
+    e.preventDefault();
+    
+    if (!emailForm.newEmail || emailForm.newEmail === emailForm.currentEmail) {
+      addNotification('Introduce un email diferente al actual', 'error');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailForm.newEmail)) {
+      addNotification('Formato de email inválido', 'error');
+      return;
+    }
+
+    try {
+      setEmailForm(prev => ({ ...prev, isSubmitting: true }));
+      
+      const result = await apiClient.post('/auth/change-email', {
+        currentEmail: emailForm.currentEmail,
+        newEmail: emailForm.newEmail
+      });
+
+      if (result.success) {
+        addNotification(result.message, 'success');
+        setEmailForm(prev => ({
+          ...prev,
+          showForm: false,
+          newEmail: ''
+        }));
+      } else {
+        addNotification(result.error || 'Error al cambiar email', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Email change error:', error);
+      addNotification(error.message || 'Error al cambiar email', 'error');
+    } finally {
+      setEmailForm(prev => ({ ...prev, isSubmitting: false }));
+    }
+  };
+
+  // Data export handling
+  const handleDataExport = async () => {
+    try {
+      addNotification('Preparando exportación de datos...', 'info');
+      
+      // This would call a data export endpoint
+      const result = await apiClient.get('/auth/export-data');
+      
+      if (result.success) {
+        // Create and download file
+        const dataStr = JSON.stringify(result.data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `roastr-data-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        addNotification('Datos exportados correctamente', 'success');
+      } else {
+        addNotification('Error al exportar datos', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Data export error:', error);
+      addNotification('La exportación de datos estará disponible próximamente', 'info');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -85,6 +193,32 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map(notification => (
+          <div
+            key={notification.id}
+            className={`p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 ${
+              notification.type === 'success' 
+                ? 'bg-green-100 text-green-800 border-green-200' 
+                : notification.type === 'error'
+                ? 'bg-red-100 text-red-800 border-red-200'
+                : 'bg-blue-100 text-blue-800 border-blue-200'
+            } border`}
+          >
+            <div className="flex justify-between items-start">
+              <p className="text-sm font-medium">{notification.message}</p>
+              <button
+                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                className="ml-2 text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -111,15 +245,81 @@ export default function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Email</label>
-              <Input 
-                type="email" 
-                value={user?.email || ''} 
-                disabled
-                className="bg-muted"
-              />
-              <div className="text-xs text-muted-foreground mt-1">
-                Email cannot be changed
-              </div>
+              {emailForm.showForm ? (
+                <form onSubmit={handleEmailChange} className="space-y-3">
+                  <Input 
+                    type="email" 
+                    value={emailForm.currentEmail} 
+                    disabled
+                    className="bg-muted"
+                  />
+                  <Input
+                    type="email"
+                    value={emailForm.newEmail}
+                    onChange={(e) => setEmailForm(prev => ({ ...prev, newEmail: e.target.value }))}
+                    placeholder="nuevo@email.com"
+                    required
+                  />
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex">
+                      <Mail className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
+                      <p className="text-xs text-blue-800">
+                        Recibirás un email de confirmación en tu nueva dirección para completar el cambio.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      type="submit" 
+                      size="sm" 
+                      disabled={emailForm.isSubmitting || !emailForm.newEmail}
+                    >
+                      {emailForm.isSubmitting ? 'Enviando...' : 'Cambiar email'}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setEmailForm(prev => ({ ...prev, showForm: false, newEmail: '' }));
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div>
+                  <Input 
+                    type="email" 
+                    value={user?.email || ''} 
+                    disabled
+                    className="bg-muted mb-2"
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      {user?.email_confirmed ? (
+                        <>
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                          <span className="text-xs text-green-600">Verificado</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2" />
+                          <span className="text-xs text-yellow-600">Pendiente de verificación</span>
+                        </>
+                      )}
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setEmailForm(prev => ({ ...prev, showForm: true }))}
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div>
@@ -353,10 +553,39 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      {/* Data Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Download className="h-5 w-5" />
+            <span>Data Management</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium text-blue-600 mb-2">Export Your Data</div>
+                <div className="text-sm text-muted-foreground">
+                  Download all your personal data in JSON format (GDPR compliance)
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleDataExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Danger Zone */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-red-600">Danger Zone</CardTitle>
+          <CardTitle className="flex items-center space-x-2 text-red-600">
+            <AlertTriangle className="h-5 w-5" />
+            <span>Danger Zone</span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -364,7 +593,17 @@ export default function Settings() {
             <div className="text-sm text-muted-foreground mb-3">
               Permanently delete your account and all associated data. This action cannot be undone.
             </div>
-            <Button variant="destructive" size="sm">
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={() => {
+                if (window.confirm('¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) {
+                  if (window.confirm('Esta acción eliminará permanentemente todos tus datos. ¿Continuar?')) {
+                    addNotification('La eliminación de cuenta estará disponible próximamente', 'info');
+                  }
+                }
+              }}
+            >
               Delete Account
             </Button>
           </div>
