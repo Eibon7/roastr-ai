@@ -1,12 +1,15 @@
+/**
+ * API Client with automatic token refresh and Account Management functionality
+ * Centralized API handling with auth token management and mock mode support
+ */
+
 import { supabase, authHelpers } from './supabaseClient';
 import { isMockModeEnabled } from './mockMode';
 
-/**
- * API Client for making authenticated requests to the backend
- */
 class ApiClient {
   constructor() {
-    this.baseURL = '/api';
+    this.baseURL = process.env.REACT_APP_API_URL || '/api';
+    this.refreshPromise = null;
   }
 
   /**
@@ -14,6 +17,7 @@ class ApiClient {
    */
   async getValidSession() {
     try {
+      // Use authHelpers for consistency with existing codebase
       const session = await authHelpers.getCurrentSession();
       
       if (!session) {
@@ -26,10 +30,16 @@ class ApiClient {
       const fiveMinutes = 5 * 60 * 1000;
 
       if (expiresAt - now < fiveMinutes) {
-        // Try to refresh the token
-        const { data, error } = await supabase.auth.refreshSession();
-        if (!error && data?.session) {
-          return data.session;
+        // Use refresh promise to avoid multiple simultaneous refreshes
+        if (!this.refreshPromise) {
+          this.refreshPromise = this.refreshSession();
+        }
+        
+        try {
+          const newSession = await this.refreshPromise;
+          return newSession;
+        } finally {
+          this.refreshPromise = null;
         }
       }
 
@@ -41,11 +51,72 @@ class ApiClient {
   }
 
   /**
-   * Make authenticated request
+   * Refresh the session token
+   */
+  async refreshSession() {
+    // In mock mode, extend the session
+    if (isMockModeEnabled()) {
+      const mockSession = JSON.parse(localStorage.getItem('mock_supabase_session') || '{}');
+      if (mockSession.access_token) {
+        // Extend mock session by 24 hours
+        mockSession.expires_at = Date.now() + (24 * 60 * 60 * 1000);
+        localStorage.setItem('mock_supabase_session', JSON.stringify(mockSession));
+        return mockSession;
+      }
+    }
+
+    // Try to refresh the token using Supabase
+    const { data, error } = await supabase.auth.refreshSession();
+    if (!error && data?.session) {
+      return data.session;
+    }
+
+    // Fallback: Call backend refresh endpoint
+    const currentSession = await supabase.auth.getSession();
+    if (!currentSession.data.session) {
+      throw new Error('No session to refresh');
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/auth/session/refresh`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentSession.data.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh session');
+      }
+
+      const data = await response.json();
+      
+      // Update Supabase session with new tokens
+      if (data.access_token && data.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+      }
+
+      // Get the updated session
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      // If refresh fails, sign out the user
+      await supabase.auth.signOut();
+      throw error;
+    }
+  }
+
+  /**
+   * Make authenticated request with automatic retry on 401
    */
   async request(method, endpoint, data = null) {
     try {
-      const url = `${this.baseURL}${endpoint}`;
+      const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
       
       const options = {
         method,
@@ -69,6 +140,37 @@ class ApiClient {
 
       const response = await fetch(url, options);
       
+      // Check if token expired during request - retry once with refresh
+      if (response.status === 401 && !endpoint.includes('/auth/login')) {
+        try {
+          const newSession = await this.refreshSession();
+          
+          // Retry with new token
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers: {
+              ...options.headers,
+              'Authorization': `Bearer ${newSession.access_token}`,
+            },
+          });
+
+          if (!retryResponse.ok) {
+            const errorData = await retryResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+          }
+
+          // Handle different response types for retry
+          const contentType = retryResponse.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return await retryResponse.json();
+          }
+          return await retryResponse.text();
+        } catch (refreshError) {
+          console.error('Token refresh and retry failed:', refreshError);
+          throw refreshError;
+        }
+      }
+
       // Handle different response types
       const contentType = response.headers.get('content-type');
       let responseData;
@@ -87,7 +189,7 @@ class ApiClient {
     } catch (error) {
       console.error(`API ${method} ${endpoint} error:`, error);
       
-      // Handle mock mode fallbacks
+      // Handle mock mode fallbacks for Account Management endpoints
       if (isMockModeEnabled()) {
         return this.handleMockRequest(method, endpoint, data, error);
       }
@@ -97,12 +199,12 @@ class ApiClient {
   }
 
   /**
-   * Handle mock requests with fallbacks
+   * Handle mock requests with fallbacks for Account Management features
    */
   async handleMockRequest(method, endpoint, data, originalError) {
     console.log('🎭 Mock API request:', { method, endpoint, data });
     
-    // Mock responses for common endpoints
+    // Mock responses for Account Management endpoints
     if (endpoint === '/auth/change-email') {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
       return {
@@ -197,3 +299,12 @@ class ApiClient {
 // Export singleton instance
 export const apiClient = new ApiClient();
 export default apiClient;
+
+// Export convenience functions for compatibility with main branch
+export const api = {
+  get: (url, options) => apiClient.get(url, options),
+  post: (url, data, options) => apiClient.post(url, data, options),
+  put: (url, data, options) => apiClient.put(url, data, options),
+  patch: (url, data, options) => apiClient.patch(url, data, options),
+  delete: (url, options) => apiClient.delete(url, options),
+};

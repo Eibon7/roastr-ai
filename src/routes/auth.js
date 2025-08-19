@@ -4,6 +4,7 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { handleSessionRefresh } = require('../middleware/sessionRefresh');
 const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
+const { validatePassword } = require('../utils/passwordValidator');
 
 const router = express.Router();
 
@@ -26,10 +27,12 @@ router.post('/register', async (req, res) => {
             });
         }
 
-        if (password.length < 6) {
+        // Validate password strength
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
             return res.status(400).json({
                 success: false,
-                error: 'Password must be at least 6 characters long'
+                error: passwordValidation.errors.join('. ')
             });
         }
 
@@ -355,10 +358,12 @@ router.post('/update-password', async (req, res) => {
             });
         }
 
-        if (password.length < 6) {
+        // Validate password strength
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
             return res.status(400).json({
                 success: false,
-                error: 'Password must be at least 6 characters long'
+                error: passwordValidation.errors.join('. ')
             });
         }
 
@@ -571,6 +576,17 @@ router.post('/admin/users', authenticateToken, requireAdmin, async (req, res) =>
                 success: false,
                 error: 'Email is required'
             });
+        }
+
+        // Validate password if provided
+        if (password) {
+            const passwordValidation = validatePassword(password);
+            if (!passwordValidation.isValid) {
+                return res.status(400).json({
+                    success: false,
+                    error: passwordValidation.errors.join('. ')
+                });
+            }
         }
         
         const result = await authService.createUserManually({

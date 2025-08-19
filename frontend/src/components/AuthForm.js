@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { authHelpers } from '../lib/supabaseClient';
+import PasswordInput from './PasswordInput';
+import { validatePassword } from '../utils/passwordValidator';
 
 const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
   const [formData, setFormData] = useState({
@@ -9,6 +11,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
 
   const isLogin = mode === 'login';
   const isRegister = mode === 'register';
@@ -26,6 +29,16 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
     setIsLoading(true);
 
     try {
+      // Validate password for registration
+      if (isRegister) {
+        const passwordValidation = validatePassword(formData.password);
+        if (!passwordValidation.isValid) {
+          onError?.(passwordValidation.errors.join('. '), null);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       let result;
       
       if (isLogin) {
@@ -42,8 +55,8 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
         errorMessage = 'Email o contraseña incorrectos';
       } else if (error.message.includes('User already registered')) {
         errorMessage = 'Este email ya está registrado. Intenta iniciar sesión.';
-      } else if (error.message.includes('Password should be at least 6 characters')) {
-        errorMessage = 'La contraseña debe tener al menos 6 caracteres';
+      } else if (error.message.includes('Password should be at least')) {
+        errorMessage = 'La contraseña no cumple con los requisitos de seguridad';
       } else if (error.message.includes('Invalid email')) {
         errorMessage = 'Email inválido';
       } else if (error.message) {
@@ -60,8 +73,15 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
     if (!emailRegex.test(formData.email)) return false;
-    if (formData.password.length < 6) return false;
     if (isRegister && formData.name.trim().length < 2) return false;
+    
+    // For registration, use robust password validation
+    if (isRegister) {
+      return isPasswordValid && formData.password.length >= 8;
+    }
+    
+    // For login, minimum length check
+    if (formData.password.length < 6) return false;
     
     return true;
   };
@@ -109,38 +129,45 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Contraseña
         </label>
-        <div className="relative">
-          <input
+        {isRegister ? (
+          <PasswordInput
             id="password"
             name="password"
-            type={showPassword ? 'text' : 'password'}
-            required
             value={formData.password}
             onChange={handleChange}
-            className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder={isRegister ? 'Mínimo 6 caracteres' : 'Tu contraseña'}
+            onValidationChange={setIsPasswordValid}
+            placeholder="Mínimo 8 caracteres"
+            required
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
-          >
-            {showPassword ? (
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-              </svg>
-            )}
-          </button>
-        </div>
-        {isRegister && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            La contraseña debe tener al menos 6 caracteres
-          </p>
+        ) : (
+          <div className="relative">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Tu contraseña"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPassword ? (
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+              )}
+            </button>
+          </div>
         )}
       </div>
 

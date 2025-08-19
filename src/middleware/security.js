@@ -177,9 +177,28 @@ const validateInput = (req, res, next) => {
     req.body = sanitizeObject(req.body);
   }
 
-  // Sanitize query parameters
+  // Sanitize query parameters (modify in place since req.query is read-only)
   if (req.query) {
-    req.query = sanitizeObject(req.query);
+    const sanitizedQuery = sanitizeObject({ ...req.query });
+    // Copy sanitized values back to original query object
+    Object.keys(req.query).forEach(key => {
+      if (sanitizedQuery.hasOwnProperty(key)) {
+        // Use Object.defineProperty to safely update the property
+        try {
+          if (req.query[key] !== sanitizedQuery[key]) {
+            Object.defineProperty(req.query, key, {
+              value: sanitizedQuery[key],
+              writable: true,
+              enumerable: true,
+              configurable: true
+            });
+          }
+        } catch (error) {
+          // If we can't modify the property, log warning but continue
+          logger.warn('Could not sanitize query parameter:', { key, error: error.message });
+        }
+      }
+    });
   }
 
   next();
