@@ -4,7 +4,7 @@
 
 const request = require('supertest');
 const express = require('express');
-const { describe, it, expect, beforeEach, afterEach, jest } = require('@jest/globals');
+const { describe, it, expect, beforeEach, afterEach } = require('@jest/globals');
 
 // Mock dependencies
 jest.mock('stripe');
