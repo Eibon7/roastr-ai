@@ -144,6 +144,30 @@ class ApiClient {
       };
     }
     
+    if (endpoint === '/auth/delete-account') {
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
+      const gracePeriodEnds = new Date();
+      gracePeriodEnds.setDate(gracePeriodEnds.getDate() + 30);
+      
+      return {
+        success: true,
+        message: `Eliminación de cuenta programada para ${gracePeriodEnds.toLocaleDateString('es-ES')}. Tienes 30 días para cancelar esta acción.`,
+        data: {
+          gracePeriodEnds: gracePeriodEnds.toISOString(),
+          canCancel: true
+        }
+      };
+    }
+    
+    if (endpoint === '/auth/cancel-account-deletion') {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      return {
+        success: true,
+        message: 'Eliminación de cuenta cancelada exitosamente. Tu cuenta seguirá activa.',
+        data: {}
+      };
+    }
+    
     // For other endpoints, throw the original error
     throw originalError;
   }

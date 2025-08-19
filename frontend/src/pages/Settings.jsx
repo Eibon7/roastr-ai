@@ -180,6 +180,175 @@ export default function Settings() {
     }
   };
 
+  // Account deletion component
+  const AccountDeletionButton = ({ user, onDeleteRequested, onError }) => {
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [confirmEmail, setConfirmEmail] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+    
+    const handleDeleteRequest = async () => {
+      if (!confirmEmail || confirmEmail !== user?.email) {
+        onError('Debes introducir tu email para confirmar la eliminación');
+        return;
+      }
+
+      try {
+        setIsDeleting(true);
+        
+        const result = await apiClient.post('/auth/delete-account', {
+          confirmEmail: confirmEmail
+        });
+
+        if (result.success) {
+          onDeleteRequested(result.message);
+          setShowConfirmDialog(false);
+          setConfirmEmail('');
+          
+          // Refresh user data to show deletion status
+          const session = await authHelpers.getCurrentSession();
+          if (session?.access_token) {
+            const userData = await authHelpers.getUserFromAPI(session.access_token);
+            setUser(userData);
+          }
+        } else {
+          onError(result.error || 'Error al programar eliminación de cuenta');
+        }
+      } catch (error) {
+        onError(error.message || 'Error al programar eliminación de cuenta');
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
+    const handleCancelDeletion = async () => {
+      try {
+        setIsDeleting(true);
+        
+        const result = await apiClient.post('/auth/cancel-account-deletion');
+
+        if (result.success) {
+          addNotification(result.message, 'success');
+          
+          // Refresh user data
+          const session = await authHelpers.getCurrentSession();
+          if (session?.access_token) {
+            const userData = await authHelpers.getUserFromAPI(session.access_token);
+            setUser(userData);
+          }
+        } else {
+          onError(result.error || 'Error al cancelar eliminación');
+        }
+      } catch (error) {
+        onError(error.message || 'Error al cancelar eliminación');
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
+    // Check if account deletion is already scheduled
+    const isDeletionScheduled = user?.deletion_scheduled_at;
+    const deletionDate = isDeletionScheduled ? new Date(user.deletion_scheduled_at) : null;
+    const isGracePeriodActive = deletionDate && deletionDate.getTime() > Date.now();
+
+    if (isDeletionScheduled && isGracePeriodActive) {
+      const daysRemaining = Math.ceil((deletionDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+      
+      return (
+        <div className="space-y-3">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex">
+              <AlertTriangle className="w-5 h-5 text-orange-400 mt-0.5 mr-3" />
+              <div>
+                <div className="font-medium text-orange-800">Eliminación programada</div>
+                <div className="text-sm text-orange-700 mt-1">
+                  Tu cuenta se eliminará automáticamente en <strong>{daysRemaining} días</strong> 
+                  ({deletionDate.toLocaleDateString('es-ES')}).
+                </div>
+              </div>
+            </div>
+          </div>
+          <Button 
+            variant="outline"
+            size="sm" 
+            onClick={handleCancelDeletion}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Cancelando...' : 'Cancelar eliminación'}
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <Button 
+          variant="destructive" 
+          size="sm"
+          onClick={() => setShowConfirmDialog(true)}
+        >
+          Delete Account
+        </Button>
+
+        {showConfirmDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Confirmar eliminación de cuenta
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex">
+                    <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 mr-3" />
+                    <div>
+                      <div className="text-sm text-red-800">
+                        Esta acción programará la eliminación de tu cuenta en 30 días. 
+                        Durante este período podrás cancelar la eliminación.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Para confirmar, escribe tu email: <strong>{user?.email}</strong>
+                  </label>
+                  <Input
+                    type="email"
+                    value={confirmEmail}
+                    onChange={(e) => setConfirmEmail(e.target.value)}
+                    placeholder={user?.email}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="flex space-x-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowConfirmDialog(false);
+                      setConfirmEmail('');
+                    }}
+                    disabled={isDeleting}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteRequest}
+                    disabled={isDeleting || confirmEmail !== user?.email}
+                  >
+                    {isDeleting ? 'Programando...' : 'Programar eliminación'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -593,19 +762,11 @@ export default function Settings() {
             <div className="text-sm text-muted-foreground mb-3">
               Permanently delete your account and all associated data. This action cannot be undone.
             </div>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={() => {
-                if (window.confirm('¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) {
-                  if (window.confirm('Esta acción eliminará permanentemente todos tus datos. ¿Continuar?')) {
-                    addNotification('La eliminación de cuenta estará disponible próximamente', 'info');
-                  }
-                }
-              }}
-            >
-              Delete Account
-            </Button>
+            <AccountDeletionButton 
+              user={user}
+              onDeleteRequested={() => addNotification('Eliminación de cuenta programada. Tienes 30 días para cancelar.', 'success')}
+              onError={(error) => addNotification(error, 'error')}
+            />
           </div>
         </CardContent>
       </Card>

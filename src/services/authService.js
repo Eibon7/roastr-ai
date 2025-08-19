@@ -1330,6 +1330,235 @@ class AuthService {
             throw error;
         }
     }
+
+    /**
+     * Request account deletion with grace period
+     * @param {string} userId - User ID
+     */
+    async requestAccountDeletion(userId) {
+        try {
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
+
+            // Check if user exists and isn't already scheduled for deletion
+            const { data: user, error: userError } = await supabaseServiceClient
+                .from('users')
+                .select('email, deletion_scheduled_at, deleted_at')
+                .eq('id', userId)
+                .single();
+
+            if (userError || !user) {
+                throw new Error('User not found');
+            }
+
+            if (user.deleted_at) {
+                throw new Error('Account is already deleted');
+            }
+
+            if (user.deletion_scheduled_at) {
+                const scheduledDate = new Date(user.deletion_scheduled_at);
+                const daysRemaining = Math.ceil((scheduledDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                throw new Error(`Account deletion is already scheduled in ${daysRemaining} days. You can cancel it from your settings.`);
+            }
+
+            // Set grace period: 30 days from now
+            const gracePeriodEnds = new Date();
+            gracePeriodEnds.setDate(gracePeriodEnds.getDate() + 30);
+
+            // Update user record with deletion schedule
+            const { error: updateError } = await supabaseServiceClient
+                .from('users')
+                .update({
+                    deletion_scheduled_at: gracePeriodEnds.toISOString(),
+                    deletion_requested_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (updateError) {
+                throw new Error(`Failed to schedule account deletion: ${updateError.message}`);
+            }
+
+            // Log the deletion request
+            await this.logUserActivity(userId, 'account_deletion_requested', {
+                grace_period_ends: gracePeriodEnds.toISOString(),
+                requested_at: new Date().toISOString()
+            });
+
+            logger.info('Account deletion scheduled:', { 
+                userId, 
+                email: user.email,
+                gracePeriodEnds: gracePeriodEnds.toISOString()
+            });
+
+            return {
+                message: `Eliminación de cuenta programada para ${gracePeriodEnds.toLocaleDateString('es-ES')}. Tienes 30 días para cancelar esta acción.`,
+                gracePeriodEnds: gracePeriodEnds.toISOString(),
+                canCancel: true
+            };
+
+        } catch (error) {
+            logger.error('Request account deletion error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Cancel pending account deletion
+     * @param {string} userId - User ID
+     */
+    async cancelAccountDeletion(userId) {
+        try {
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
+
+            // Check if user has a pending deletion
+            const { data: user, error: userError } = await supabaseServiceClient
+                .from('users')
+                .select('email, deletion_scheduled_at, deleted_at')
+                .eq('id', userId)
+                .single();
+
+            if (userError || !user) {
+                throw new Error('User not found');
+            }
+
+            if (user.deleted_at) {
+                throw new Error('Account is already deleted');
+            }
+
+            if (!user.deletion_scheduled_at) {
+                throw new Error('No pending account deletion found');
+            }
+
+            // Check if grace period has expired
+            const scheduledDate = new Date(user.deletion_scheduled_at);
+            if (Date.now() > scheduledDate.getTime()) {
+                throw new Error('Grace period has expired. Account deletion cannot be cancelled.');
+            }
+
+            // Cancel the deletion
+            const { error: updateError } = await supabaseServiceClient
+                .from('users')
+                .update({
+                    deletion_scheduled_at: null,
+                    deletion_requested_at: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (updateError) {
+                throw new Error(`Failed to cancel account deletion: ${updateError.message}`);
+            }
+
+            // Log the cancellation
+            await this.logUserActivity(userId, 'account_deletion_cancelled', {
+                cancelled_at: new Date().toISOString(),
+                original_schedule: user.deletion_scheduled_at
+            });
+
+            logger.info('Account deletion cancelled:', { 
+                userId, 
+                email: user.email,
+                originalSchedule: user.deletion_scheduled_at
+            });
+
+            return {
+                message: 'Eliminación de cuenta cancelada exitosamente. Tu cuenta seguirá activa.'
+            };
+
+        } catch (error) {
+            logger.error('Cancel account deletion error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Execute pending account deletions (called by scheduled job)
+     * This should be called periodically (e.g., daily) by a cron job
+     */
+    async processScheduledDeletions() {
+        try {
+            const now = new Date().toISOString();
+            
+            // Find users scheduled for deletion where grace period has expired
+            const { data: usersToDelete, error: queryError } = await supabaseServiceClient
+                .from('users')
+                .select('id, email, deletion_scheduled_at')
+                .not('deletion_scheduled_at', 'is', null)
+                .is('deleted_at', null)
+                .lte('deletion_scheduled_at', now);
+
+            if (queryError) {
+                throw new Error(`Failed to query scheduled deletions: ${queryError.message}`);
+            }
+
+            if (!usersToDelete || usersToDelete.length === 0) {
+                logger.info('No scheduled deletions to process');
+                return { processedCount: 0 };
+            }
+
+            let processedCount = 0;
+            const errors = [];
+
+            for (const user of usersToDelete) {
+                try {
+                    // Mark as deleted instead of actually deleting (soft delete)
+                    const { error: deleteError } = await supabaseServiceClient
+                        .from('users')
+                        .update({
+                            deleted_at: now,
+                            email: `deleted_${user.id}@deleted.roastr.ai`, // Anonymize email
+                            name: null, // Clear personal data
+                            active: false,
+                            updated_at: now
+                        })
+                        .eq('id', user.id);
+
+                    if (deleteError) {
+                        throw new Error(`Failed to delete user ${user.id}: ${deleteError.message}`);
+                    }
+
+                    // Log the final deletion
+                    await this.logUserActivity(user.id, 'account_deleted', {
+                        deleted_at: now,
+                        original_email: user.email,
+                        scheduled_at: user.deletion_scheduled_at
+                    });
+
+                    logger.info('User account deleted:', { 
+                        userId: user.id,
+                        originalEmail: user.email,
+                        scheduledAt: user.deletion_scheduled_at
+                    });
+
+                    processedCount++;
+
+                } catch (error) {
+                    logger.error(`Failed to process deletion for user ${user.id}:`, error.message);
+                    errors.push({ userId: user.id, error: error.message });
+                }
+            }
+
+            logger.info('Scheduled deletions processed:', { 
+                total: usersToDelete.length,
+                processed: processedCount,
+                errors: errors.length
+            });
+
+            return { 
+                processedCount,
+                totalScheduled: usersToDelete.length,
+                errors
+            };
+
+        } catch (error) {
+            logger.error('Process scheduled deletions error:', error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new AuthService();
