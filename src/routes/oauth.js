@@ -494,6 +494,97 @@ router.get('/platforms', async (req, res) => {
 });
 
 /**
+ * GET /api/integrations/:platform/config
+ * Get platform-specific configuration
+ */
+router.get('/:platform/config', authenticateToken, async (req, res) => {
+  try {
+    const platform = sanitizePlatform(req.params.platform);
+    const userId = req.user.id;
+
+    // TODO: In production, fetch from database
+    // For now, return default configuration
+    const defaultConfig = getDefaultPlatformConfig(platform);
+    
+    // Check if user is connected to this platform
+    const isConnected = mockStore.isConnected(userId, platform);
+    
+    res.json({
+      success: true,
+      data: {
+        platform,
+        connected: isConnected,
+        config: defaultConfig,
+        lastUpdated: null // TODO: Get from database
+      }
+    });
+
+  } catch (error) {
+    if (flags.isEnabled('DEBUG_OAUTH')) {
+      console.error('Get platform config error:', error);
+    }
+
+    res.status(400).json({
+      success: false,
+      error: error.message,
+      code: 'GET_CONFIG_ERROR'
+    });
+  }
+});
+
+/**
+ * PUT /api/integrations/:platform/config
+ * Update platform-specific configuration
+ */
+router.put('/:platform/config', authenticateToken, async (req, res) => {
+  try {
+    const platform = sanitizePlatform(req.params.platform);
+    const userId = req.user.id;
+    const { config } = req.body;
+
+    if (!config || typeof config !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'Configuration object is required',
+        code: 'INVALID_CONFIG'
+      });
+    }
+
+    // Validate configuration based on platform
+    const validatedConfig = validatePlatformConfig(platform, config);
+
+    // TODO: In production, save to database
+    // For now, store in memory (mockStore could be extended for this)
+    
+    if (flags.isEnabled('DEBUG_OAUTH')) {
+      console.log(`Updated config for ${userId}:${platform}:`, validatedConfig);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        platform,
+        config: validatedConfig,
+        message: `Configuration updated successfully for ${platform}`,
+        updated: true,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    if (flags.isEnabled('DEBUG_OAUTH')) {
+      console.error('Update platform config error:', error);
+    }
+
+    res.status(400).json({
+      success: false,
+      error: error.message,
+      code: 'UPDATE_CONFIG_ERROR'
+    });
+  }
+});
+
+/**
  * POST /api/integrations/mock/reset
  * Reset all mock connections (testing only)
  */
@@ -549,5 +640,213 @@ router.post('/mock/reset', authenticateToken, async (req, res) => {
     });
   }
 });
+
+/**
+ * Get default configuration for a platform
+ * @param {string} platform - Platform name
+ * @returns {Object} Default configuration
+ */
+function getDefaultPlatformConfig(platform) {
+  const configs = {
+    twitter: {
+      tone: 'witty',
+      humorType: 'clever',
+      responseFrequency: 0.6,
+      autoReply: true,
+      shieldActions: {
+        enabled: true,
+        muteEnabled: true,
+        blockEnabled: false,
+        reportEnabled: false
+      },
+      filtering: {
+        minFollowers: 0,
+        skipVerified: false,
+        allowMentionsOnly: true
+      },
+      timing: {
+        maxResponsesPerHour: 10,
+        cooldownMinutes: 15,
+        respectRateLimits: true
+      }
+    },
+    youtube: {
+      tone: 'friendly',
+      humorType: 'playful',
+      responseFrequency: 0.4,
+      autoReply: true,
+      shieldActions: {
+        enabled: true,
+        muteEnabled: true,
+        blockEnabled: false,
+        reportEnabled: true
+      },
+      filtering: {
+        minSubscribers: 0,
+        skipChannelOwners: false,
+        commentsOnly: true
+      },
+      timing: {
+        maxResponsesPerVideo: 5,
+        cooldownMinutes: 30,
+        respectRateLimits: true
+      }
+    },
+    instagram: {
+      tone: 'stylish',
+      humorType: 'visual',
+      responseFrequency: 0.3,
+      autoReply: false,
+      shieldActions: {
+        enabled: true,
+        muteEnabled: true,
+        blockEnabled: false,
+        reportEnabled: false
+      },
+      filtering: {
+        storiesOnly: false,
+        postsOnly: true,
+        followersOnly: false
+      },
+      timing: {
+        maxResponsesPerDay: 20,
+        cooldownMinutes: 60,
+        respectRateLimits: true
+      }
+    },
+    facebook: {
+      tone: 'professional',
+      humorType: 'subtle',
+      responseFrequency: 0.2,
+      autoReply: false,
+      shieldActions: {
+        enabled: false,
+        muteEnabled: false,
+        blockEnabled: false,
+        reportEnabled: false
+      },
+      filtering: {
+        pagesOnly: true,
+        friendsOnly: false,
+        publicOnly: true
+      },
+      timing: {
+        maxResponsesPerDay: 10,
+        cooldownMinutes: 120,
+        respectRateLimits: true
+      }
+    },
+    bluesky: {
+      tone: 'quirky',
+      humorType: 'nerdy',
+      responseFrequency: 0.7,
+      autoReply: true,
+      shieldActions: {
+        enabled: true,
+        muteEnabled: true,
+        blockEnabled: true,
+        reportEnabled: false
+      },
+      filtering: {
+        mentionsOnly: true,
+        skipBots: true,
+        requireFollow: false
+      },
+      timing: {
+        maxResponsesPerHour: 15,
+        cooldownMinutes: 10,
+        respectRateLimits: true
+      }
+    }
+  };
+
+  return configs[platform] || {
+    tone: 'neutral',
+    humorType: 'general',
+    responseFrequency: 0.5,
+    autoReply: false,
+    shieldActions: {
+      enabled: false,
+      muteEnabled: false,
+      blockEnabled: false,
+      reportEnabled: false
+    },
+    filtering: {},
+    timing: {
+      maxResponsesPerDay: 5,
+      cooldownMinutes: 60,
+      respectRateLimits: true
+    }
+  };
+}
+
+/**
+ * Validate and sanitize platform configuration
+ * @param {string} platform - Platform name
+ * @param {Object} config - Configuration to validate
+ * @returns {Object} Validated configuration
+ * @throws {Error} If configuration is invalid
+ */
+function validatePlatformConfig(platform, config) {
+  const defaultConfig = getDefaultPlatformConfig(platform);
+  const validatedConfig = { ...defaultConfig };
+
+  // Validate tone
+  const validTones = ['witty', 'friendly', 'stylish', 'professional', 'quirky', 'neutral', 'sarcastic', 'clever', 'subtle'];
+  if (config.tone && validTones.includes(config.tone)) {
+    validatedConfig.tone = config.tone;
+  }
+
+  // Validate humorType
+  const validHumorTypes = ['clever', 'playful', 'visual', 'subtle', 'nerdy', 'general', 'sarcastic', 'witty'];
+  if (config.humorType && validHumorTypes.includes(config.humorType)) {
+    validatedConfig.humorType = config.humorType;
+  }
+
+  // Validate responseFrequency
+  if (config.responseFrequency !== undefined) {
+    const freq = parseFloat(config.responseFrequency);
+    if (!isNaN(freq) && freq >= 0 && freq <= 1) {
+      validatedConfig.responseFrequency = freq;
+    }
+  }
+
+  // Validate autoReply
+  if (typeof config.autoReply === 'boolean') {
+    validatedConfig.autoReply = config.autoReply;
+  }
+
+  // Validate shieldActions
+  if (config.shieldActions && typeof config.shieldActions === 'object') {
+    Object.keys(defaultConfig.shieldActions).forEach(key => {
+      if (typeof config.shieldActions[key] === 'boolean') {
+        validatedConfig.shieldActions[key] = config.shieldActions[key];
+      }
+    });
+  }
+
+  // Validate timing settings
+  if (config.timing && typeof config.timing === 'object') {
+    Object.keys(defaultConfig.timing).forEach(key => {
+      if (key === 'respectRateLimits' && typeof config.timing[key] === 'boolean') {
+        validatedConfig.timing[key] = config.timing[key];
+      } else if (typeof config.timing[key] === 'number' && config.timing[key] >= 0) {
+        validatedConfig.timing[key] = config.timing[key];
+      }
+    });
+  }
+
+  // Validate filtering settings (platform-specific)
+  if (config.filtering && typeof config.filtering === 'object') {
+    Object.keys(defaultConfig.filtering).forEach(key => {
+      const value = config.filtering[key];
+      if (typeof value === 'boolean' || (typeof value === 'number' && value >= 0)) {
+        validatedConfig.filtering[key] = value;
+      }
+    });
+  }
+
+  return validatedConfig;
+}
 
 module.exports = router;

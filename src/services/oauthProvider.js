@@ -403,10 +403,51 @@ class OAuthProviderFactory {
     const key = `${platform}_${JSON.stringify(config)}`;
     
     if (!this.providers.has(key)) {
-      this.providers.set(key, new OAuthProvider(platform, config));
+      const provider = this.createProvider(platform, config);
+      this.providers.set(key, provider);
     }
 
     return this.providers.get(key);
+  }
+
+  /**
+   * Create appropriate provider instance based on platform and flags
+   * @param {string} platform - Platform name
+   * @param {Object} config - Platform-specific configuration
+   * @returns {OAuthProvider} Provider instance
+   */
+  static createProvider(platform, config) {
+    const { flags } = require('../config/flags');
+    
+    // If mock mode is enabled, use base provider for all platforms
+    if (flags.shouldUseMockOAuth()) {
+      return new OAuthProvider(platform, config);
+    }
+
+    // Try to use specialized providers for real OAuth
+    try {
+      switch (platform) {
+        case 'twitter': {
+          const TwitterOAuthProvider = require('./oauth/TwitterOAuthProvider');
+          return new TwitterOAuthProvider(config);
+        }
+        case 'youtube': {
+          const YouTubeOAuthProvider = require('./oauth/YouTubeOAuthProvider');
+          return new YouTubeOAuthProvider(config);
+        }
+        case 'instagram': {
+          const InstagramOAuthProvider = require('./oauth/InstagramOAuthProvider');
+          return new InstagramOAuthProvider(config);
+        }
+        default:
+          // Fallback to base provider for unsupported platforms
+          return new OAuthProvider(platform, config);
+      }
+    } catch (error) {
+      // If specialized provider fails to load, fallback to base provider
+      console.warn(`Failed to load specialized OAuth provider for ${platform}, using base provider:`, error.message);
+      return new OAuthProvider(platform, config);
+    }
   }
 
   /**
