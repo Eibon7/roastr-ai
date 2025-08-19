@@ -220,6 +220,68 @@ class NotificationService {
     }
 
     /**
+     * Create plan change notification
+     * @param {string} userId - User ID
+     * @param {Object} changeData - Plan change details
+     * @returns {Promise<Object>} Result
+     */
+    async createPlanChangeNotification(userId, changeData) {
+        const isUpgrade = changeData.changeType === 'upgrade';
+        const title = isUpgrade ? 'Plan Upgraded!' : 'Plan Changed';
+        const message = isUpgrade 
+            ? `You've successfully upgraded from ${changeData.oldPlanName} to ${changeData.newPlanName}. Enjoy your new features!`
+            : `Your plan has been changed from ${changeData.oldPlanName} to ${changeData.newPlanName}.`;
+
+        return await this.createNotification({
+            userId,
+            type: 'plan_change',
+            title,
+            message,
+            metadata: {
+                oldPlanName: changeData.oldPlanName,
+                newPlanName: changeData.newPlanName,
+                changeType: changeData.changeType,
+                effectiveDate: new Date().toLocaleDateString()
+            },
+            priority: 'normal',
+            showBanner: true,
+            bannerVariant: isUpgrade ? 'success' : 'info',
+            actionRequired: false,
+            actionUrl: '/dashboard',
+            actionText: 'View Dashboard',
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+        });
+    }
+
+    /**
+     * Create plan change blocked notification
+     * @param {string} userId - User ID
+     * @param {Object} blockData - Blocked change details
+     * @returns {Promise<Object>} Result
+     */
+    async createPlanChangeBlockedNotification(userId, blockData) {
+        return await this.createNotification({
+            userId,
+            type: 'plan_change_blocked',
+            title: 'Plan Change Blocked',
+            message: `Unable to change from ${blockData.oldPlan} to ${blockData.newPlan}. ${blockData.reason}`,
+            metadata: {
+                oldPlan: blockData.oldPlan,
+                newPlan: blockData.newPlan,
+                reason: blockData.reason,
+                warnings: blockData.warnings
+            },
+            priority: 'high',
+            showBanner: true,
+            bannerVariant: 'warning',
+            actionRequired: true,
+            actionUrl: '/usage',
+            actionText: 'View Usage',
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        });
+    }
+
+    /**
      * Get user notifications
      * @param {string} userId - User ID
      * @param {Object} options - Query options
