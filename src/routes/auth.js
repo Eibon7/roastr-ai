@@ -1,5 +1,6 @@
 const express = require('express');
 const authService = require('../services/authService');
+const emailService = require('../services/emailService');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { handleSessionRefresh } = require('../middleware/sessionRefresh');
@@ -40,6 +41,15 @@ router.post('/register', async (req, res) => {
         const result = await authService.signUp({ email, password, name });
         
         logger.info('User registration successful:', { email, userId: result.user.id });
+        
+        // Send welcome email (don't block registration if email fails)
+        emailService.sendWelcomeEmail(email, {
+            userName: name,
+            name: name,
+            language: 'es'
+        }).catch(error => {
+            logger.warn('Failed to send welcome email:', { email, error: error.message });
+        });
         
         res.status(201).json({
             success: true,

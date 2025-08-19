@@ -223,6 +223,46 @@ class EmailService {
     }
 
     /**
+     * Send welcome email to new user
+     * @param {string} userEmail - User email address
+     * @param {Object} userData - User details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendWelcomeEmail(userEmail, userData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '🎉 Welcome to Roastr.ai!',
+            templateName: 'welcome',
+            templateData: {
+                userName: userData.userName || userData.name || 'there',
+                dashboardUrl: process.env.APP_URL || 'https://app.roastr.ai',
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai',
+                language: userData.language || 'es'
+            }
+        });
+    }
+
+    /**
+     * Send password reset email
+     * @param {string} userEmail - User email address
+     * @param {Object} resetData - Password reset details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendPasswordResetEmail(userEmail, resetData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '🔐 Reset Your Password',
+            templateName: 'password_reset',
+            templateData: {
+                userName: resetData.userName || 'User',
+                resetLink: resetData.resetLink,
+                expiryTime: resetData.expiryTime || '24 hours',
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
      * Get service status
      * @returns {Object} Service configuration status
      */
