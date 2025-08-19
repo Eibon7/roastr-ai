@@ -37,6 +37,7 @@ const styleProfileRoutes = require('./routes/style-profile');
 const configRoutes = require('./routes/config');
 const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
+const notificationsRoutes = require('./routes/notifications');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -163,6 +164,9 @@ app.use('/api/approval', approvalRoutes);
 
 // Analytics routes (authenticated)
 app.use('/api/analytics', analyticsRoutes);
+
+// Notifications routes (authenticated)
+app.use('/api/notifications', notificationsRoutes);
 
 // Worker status routes (authenticated)
 const { router: workersRoutes } = require('./routes/workers');

@@ -9,6 +9,9 @@ const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
+const emailService = require('../services/emailService');
+const notificationService = require('../services/notificationService');
+const workerNotificationService = require('../services/workerNotificationService');
 
 const router = express.Router();
 
@@ -455,6 +458,41 @@ async function handleCheckoutCompleted(session) {
             plan,
             subscriptionId: subscription.id
         });
+
+        // Send upgrade success email notification
+        if (plan !== 'free') {
+            try {
+                // Get user email from customer
+                const userEmail = customer.email;
+                const planConfig = PLAN_CONFIG[plan] || {};
+                
+                await emailService.sendUpgradeSuccessNotification(userEmail, {
+                    userName: customer.name || userEmail.split('@')[0],
+                    oldPlanName: 'Free',
+                    newPlanName: planConfig.name || plan,
+                    newFeatures: planConfig.features || [],
+                    activationDate: new Date().toLocaleDateString(),
+                });
+
+                logger.info('📧 Upgrade success email sent:', { userId, plan, email: userEmail });
+            } catch (emailError) {
+                logger.error('📧 Failed to send upgrade success email:', emailError);
+            }
+
+            // Create in-app notification
+            try {
+                await notificationService.createUpgradeSuccessNotification(userId, {
+                    oldPlanName: 'Free',
+                    newPlanName: planConfig.name || plan,
+                    newFeatures: planConfig.features || [],
+                    activationDate: new Date().toLocaleDateString(),
+                });
+
+                logger.info('📝 Upgrade success notification created:', { userId, plan });
+            } catch (notificationError) {
+                logger.error('📝 Failed to create upgrade success notification:', notificationError);
+            }
+        }
     }
 }
 
@@ -512,6 +550,107 @@ async function handleSubscriptionUpdated(subscription) {
             plan,
             status: subscription.status
         });
+
+        // Send email notifications based on status changes
+        try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const userEmail = customer.email;
+            const planConfig = PLAN_CONFIG[plan] || {};
+
+            // Check if this is a plan upgrade/downgrade
+            if (subscription.status === 'active') {
+                // Get previous plan from database to compare
+                const { data: currentSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('plan')
+                    .eq('user_id', userSub.user_id)
+                    .single();
+
+                const oldPlan = currentSub?.plan || 'free';
+                
+                // Send upgrade notification if plan changed (and not initial activation)
+                if (oldPlan !== plan && oldPlan !== 'free') {
+                    const oldPlanConfig = PLAN_CONFIG[oldPlan] || {};
+                    
+                    await emailService.sendUpgradeSuccessNotification(userEmail, {
+                        userName: customer.name || userEmail.split('@')[0],
+                        oldPlanName: oldPlanConfig.name || oldPlan,
+                        newPlanName: planConfig.name || plan,
+                        newFeatures: planConfig.features || [],
+                        activationDate: new Date().toLocaleDateString(),
+                    });
+
+                    logger.info('📧 Plan change email sent:', { 
+                        userId: userSub.user_id, 
+                        oldPlan, 
+                        newPlan: plan,
+                        email: userEmail 
+                    });
+
+                    // Create in-app notification for plan upgrade
+                    try {
+                        await notificationService.createUpgradeSuccessNotification(userSub.user_id, {
+                            oldPlanName: oldPlanConfig.name || oldPlan,
+                            newPlanName: planConfig.name || plan,
+                            newFeatures: planConfig.features || [],
+                            activationDate: new Date().toLocaleDateString(),
+                        });
+
+                        logger.info('📝 Plan change notification created:', { 
+                            userId: userSub.user_id, 
+                            oldPlan, 
+                            newPlan: plan
+                        });
+                    } catch (notificationError) {
+                        logger.error('📝 Failed to create plan change notification:', notificationError);
+                    }
+                }
+            } else {
+                // Handle subscription status changes that require notifications
+                if (['past_due', 'unpaid', 'incomplete'].includes(subscription.status)) {
+                    try {
+                        await notificationService.createSubscriptionStatusNotification(userSub.user_id, {
+                            status: subscription.status,
+                            planName: planConfig.name || plan
+                        });
+
+                        logger.info('📝 Subscription status notification created:', { 
+                            userId: userSub.user_id, 
+                            status: subscription.status
+                        });
+                    } catch (notificationError) {
+                        logger.error('📝 Failed to create subscription status notification:', notificationError);
+                    }
+                }
+            }
+        } catch (emailError) {
+            logger.error('📧 Failed to send subscription update email:', emailError);
+        }
+
+        // Apply dynamic limits based on new plan
+        try {
+            await applyPlanLimits(userSub.user_id, plan, subscription.status);
+            
+            // Notify workers of plan changes
+            const { data: currentSub } = await supabaseServiceClient
+                .from('user_subscriptions')
+                .select('plan')
+                .eq('user_id', userSub.user_id)
+                .single();
+
+            const oldPlan = currentSub?.plan || 'free';
+            if (oldPlan !== plan) {
+                await workerNotificationService.notifyPlanChange(userSub.user_id, oldPlan, plan, subscription.status);
+            }
+
+            logger.info('🔄 Plan limits applied dynamically:', { 
+                userId: userSub.user_id, 
+                plan, 
+                status: subscription.status 
+            });
+        } catch (limitsError) {
+            logger.error('🔄 Failed to apply dynamic plan limits:', limitsError);
+        }
     }
 }
 
@@ -552,6 +691,54 @@ async function handleSubscriptionDeleted(subscription) {
         logger.info('Subscription reset to free:', {
             userId: userSub.user_id
         });
+
+        // Send subscription canceled email notification
+        try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const userEmail = customer.email;
+            
+            // Get the canceled plan info
+            const { data: canceledSub } = await supabaseServiceClient
+                .from('user_subscriptions')
+                .select('plan, current_period_end')
+                .eq('user_id', userSub.user_id)
+                .single();
+
+            const planConfig = PLAN_CONFIG[canceledSub?.plan] || {};
+            
+            await emailService.sendSubscriptionCanceledNotification(userEmail, {
+                userName: customer.name || userEmail.split('@')[0],
+                planName: planConfig.name || 'Pro',
+                cancellationDate: new Date().toLocaleDateString(),
+                accessUntilDate: canceledSub?.current_period_end ? 
+                    new Date(canceledSub.current_period_end).toLocaleDateString() : 
+                    new Date().toLocaleDateString(),
+            });
+
+            logger.info('📧 Cancellation email sent:', { 
+                userId: userSub.user_id, 
+                email: userEmail 
+            });
+        } catch (emailError) {
+            logger.error('📧 Failed to send cancellation email:', emailError);
+        }
+
+        // Create in-app notification
+        try {
+            await notificationService.createSubscriptionCanceledNotification(userSub.user_id, {
+                planName: planConfig.name || 'Pro',
+                cancellationDate: new Date().toLocaleDateString(),
+                accessUntilDate: canceledSub?.current_period_end ? 
+                    new Date(canceledSub.current_period_end).toLocaleDateString() : 
+                    new Date().toLocaleDateString(),
+            });
+
+            logger.info('📝 Cancellation notification created:', { 
+                userId: userSub.user_id 
+            });
+        } catch (notificationError) {
+            logger.error('📝 Failed to create cancellation notification:', notificationError);
+        }
     }
 }
 
@@ -599,6 +786,123 @@ async function handlePaymentFailed(invoice) {
             .eq('user_id', userSub.user_id);
 
         logger.warn('Payment failed for user:', userSub.user_id);
+
+        // Send payment failed email notification
+        try {
+            const customer = await stripe.customers.retrieve(customerId);
+            const userEmail = customer.email;
+            
+            // Get subscription details
+            const { data: currentSub } = await supabaseServiceClient
+                .from('user_subscriptions')
+                .select('plan, current_period_end')
+                .eq('user_id', userSub.user_id)
+                .single();
+
+            const planConfig = PLAN_CONFIG[currentSub?.plan] || {};
+            
+            // Calculate next attempt date (Stripe typically retries in 3 days)
+            const nextAttempt = new Date();
+            nextAttempt.setDate(nextAttempt.getDate() + 3);
+            
+            await emailService.sendPaymentFailedNotification(userEmail, {
+                userName: customer.name || userEmail.split('@')[0],
+                planName: planConfig.name || 'Pro',
+                failedAmount: invoice.amount_due ? `€${(invoice.amount_due / 100).toFixed(2)}` : 'N/A',
+                nextAttemptDate: nextAttempt.toLocaleDateString(),
+            });
+
+            logger.info('📧 Payment failed email sent:', { 
+                userId: userSub.user_id, 
+                email: userEmail,
+                amount: invoice.amount_due 
+            });
+        } catch (emailError) {
+            logger.error('📧 Failed to send payment failed email:', emailError);
+        }
+
+        // Create in-app notification
+        try {
+            await notificationService.createPaymentFailedNotification(userSub.user_id, {
+                planName: planConfig.name || 'Pro',
+                failedAmount: invoice.amount_due ? `€${(invoice.amount_due / 100).toFixed(2)}` : 'N/A',
+                nextAttemptDate: nextAttempt.toLocaleDateString(),
+            });
+
+            logger.info('📝 Payment failed notification created:', { 
+                userId: userSub.user_id,
+                amount: invoice.amount_due 
+            });
+        } catch (notificationError) {
+            logger.error('📝 Failed to create payment failed notification:', notificationError);
+        }
+    }
+}
+
+/**
+ * Apply plan limits dynamically when subscription changes
+ * @param {string} userId - User ID
+ * @param {string} plan - New plan (free, pro, creator_plus)
+ * @param {string} status - Subscription status
+ */
+async function applyPlanLimits(userId, plan, status) {
+    const planConfig = PLAN_CONFIG[plan] || PLAN_CONFIG.free;
+    
+    // If subscription is not active, apply limited access
+    const isActive = status === 'active';
+    const limits = isActive ? planConfig : PLAN_CONFIG.free;
+    
+    try {
+        // Update user limits in the database
+        const { error } = await supabaseServiceClient
+            .from('users')
+            .update({
+                plan: plan,
+                // Reset monthly usage if upgrading to higher plan
+                monthly_messages_sent: plan !== 'free' ? 0 : undefined,
+                monthly_tokens_consumed: plan !== 'free' ? 0 : undefined,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
+
+        if (error) {
+            throw error;
+        }
+
+        // Update organization limits if user is owner
+        const { data: orgData, error: orgError } = await supabaseServiceClient
+            .from('organizations')
+            .select('id')
+            .eq('owner_id', userId)
+            .maybeSingle();
+
+        if (!orgError && orgData) {
+            await supabaseServiceClient
+                .from('organizations')
+                .update({
+                    plan_id: plan,
+                    subscription_status: status,
+                    monthly_responses_limit: limits.maxRoasts === -1 ? 999999 : limits.maxRoasts,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', orgData.id);
+        }
+
+        // Notify worker system of limit changes
+        await workerNotificationService.notifyStatusChange(userId, plan, status);
+        logger.info('🔄 Plan limits updated, workers notified:', {
+            userId,
+            plan,
+            status,
+            limits: {
+                maxRoasts: limits.maxRoasts,
+                maxPlatforms: limits.maxPlatforms
+            }
+        });
+
+    } catch (error) {
+        logger.error('Failed to apply plan limits:', error);
+        throw error;
     }
 }
 
