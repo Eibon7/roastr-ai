@@ -41,7 +41,7 @@ describe('Multi-Tenant Architecture', () => {
     
     test('should have all required integration files', () => {
       const requiredIntegrations = [
-        'integrations/twitter/twitterService.js',
+        'services/twitter.js',
         'integrations/youtube/youtubeService.js',
         'integrations/bluesky/blueskyService.js',
         'integrations/instagram/instagramService.js',
@@ -167,7 +167,7 @@ describe('Multi-Tenant Architecture', () => {
   describe('Integration Structure', () => {
     test('All integration services should have required methods', () => {
       const integrationPaths = [
-        '../../src/integrations/twitter/twitterService',
+        '../../src/services/twitter',
         '../../src/integrations/youtube/youtubeService'
       ];
       

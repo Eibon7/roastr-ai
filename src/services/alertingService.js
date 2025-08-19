@@ -49,7 +49,7 @@ class AlertingService {
     };
     
     // Clean up old alert history every hour
-    setInterval(() => this.cleanupAlertHistory(), 3600000);
+    this.cleanupInterval = setInterval(() => this.cleanupAlertHistory(), 3600000);
     
     this.log('info', 'Alerting Service initialized', {
       enabled: this.config.enabled,
@@ -515,6 +515,17 @@ class AlertingService {
       { test: true, timestamp: new Date().toISOString() },
       { force: true, skipRateLimit: true }
     );
+  }
+  
+  /**
+   * Shutdown the alerting service and clean up resources
+   */
+  shutdown() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+      this.log('info', 'Alerting Service shutdown complete');
+    }
   }
   
   /**
