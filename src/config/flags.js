@@ -70,16 +70,31 @@ class FeatureFlags {
   }
 
   checkTwitterKeys() {
-    const required = ['TWITTER_BEARER_TOKEN', 'TWITTER_APP_KEY', 'TWITTER_APP_SECRET'];
-    return required.every(key => !!process.env[key]);
+    // Check for OAuth 2.0 credentials (new) OR OAuth 1.0a credentials (legacy)
+    const oauth2Required = ['TWITTER_CLIENT_ID', 'TWITTER_CLIENT_SECRET'];
+    const oauth1Required = ['TWITTER_BEARER_TOKEN', 'TWITTER_APP_KEY', 'TWITTER_APP_SECRET'];
+    
+    const hasOAuth2 = oauth2Required.every(key => !!process.env[key]);
+    const hasOAuth1 = oauth1Required.every(key => !!process.env[key]);
+    
+    return hasOAuth2 || hasOAuth1;
   }
 
   checkYouTubeKeys() {
-    return !!process.env.YOUTUBE_API_KEY;
+    // Check for OAuth credentials OR API key
+    const oauthRequired = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
+    const hasOAuth = oauthRequired.every(key => !!process.env[key]) || 
+                    ['YOUTUBE_CLIENT_ID', 'YOUTUBE_CLIENT_SECRET'].every(key => !!process.env[key]);
+    
+    return hasOAuth || !!process.env.YOUTUBE_API_KEY;
   }
 
   checkInstagramKeys() {
-    return !!process.env.INSTAGRAM_ACCESS_TOKEN;
+    // Check for OAuth credentials OR access token
+    const oauthRequired = ['INSTAGRAM_CLIENT_ID', 'INSTAGRAM_CLIENT_SECRET'];
+    const hasOAuth = oauthRequired.every(key => !!process.env[key]);
+    
+    return hasOAuth || !!process.env.INSTAGRAM_ACCESS_TOKEN;
   }
 
   checkFacebookKeys() {
@@ -186,6 +201,19 @@ class FeatureFlags {
         magicLink: this.flags.ENABLE_MAGIC_LINK ? 'enabled' : 'disabled'
       }
     };
+  }
+
+  /**
+   * Determine if OAuth should use mock mode
+   * OAuth uses mock mode if:
+   * - MOCK_MODE flag is enabled
+   * - NODE_ENV is test
+   * - FORCE_MOCK_OAUTH environment variable is set to 'true'
+   */
+  shouldUseMockOAuth() {
+    return this.flags.MOCK_MODE || 
+           process.env.NODE_ENV === 'test' || 
+           process.env.FORCE_MOCK_OAUTH === 'true';
   }
 
   /**

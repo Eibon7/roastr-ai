@@ -25,6 +25,8 @@ const advancedLogger = require('./utils/advancedLogger');
 // Import auth routes and middleware
 const authRoutes = require('./routes/auth');
 const integrationsRoutes = require('./routes/integrations');
+const oauthRoutes = require('./routes/oauth');
+const webhooksRoutes = require('./routes/webhooks');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const billingRoutes = require('./routes/billing');
@@ -122,6 +124,12 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// OAuth routes (for social media connections)
+app.use('/api/integrations', oauthRoutes);
+
+// Webhook routes (for platform event handling)
+app.use('/api/webhooks', webhooksRoutes);
 
 // User routes (authenticated)
 app.use('/api/user', userRoutes);
