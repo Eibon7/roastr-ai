@@ -34,6 +34,9 @@ const dashboardRoutes = require('./routes/dashboard');
 const { router: planRoutes } = require('./routes/plan');
 const { router: newIntegrationsRoutes } = require('./routes/integrations-new');
 const styleProfileRoutes = require('./routes/style-profile');
+const configRoutes = require('./routes/config');
+const approvalRoutes = require('./routes/approval');
+const analyticsRoutes = require('./routes/analytics');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -151,6 +154,15 @@ app.use('/api/integrations', newIntegrationsRoutes);
 
 // Style profile routes (authenticated, Creator+ only)
 app.use('/api/style-profile', styleProfileRoutes);
+
+// Configuration routes (authenticated)
+app.use('/api/config', configRoutes);
+
+// Approval routes (authenticated)
+app.use('/api/approval', approvalRoutes);
+
+// Analytics routes (authenticated)
+app.use('/api/analytics', analyticsRoutes);
 
 // Worker status routes (authenticated)
 const { router: workersRoutes } = require('./routes/workers');

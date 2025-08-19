@@ -19,6 +19,8 @@ import Logs from './pages/Logs';
 import PlanPicker from './pages/PlanPicker';
 import Connect from './pages/Connect';
 import StyleProfile from './pages/StyleProfile';
+import Configuration from './pages/Configuration';
+import Approval from './pages/Approval';
 import AccountsPage from './pages/AccountsPage';
 import './App.css';
 
@@ -41,6 +43,8 @@ function App() {
               <Route path="compose" element={<Compose />} />
               <Route path="integrations" element={<Integrations />} />
               <Route path="integrations/connect" element={<Connect />} />
+              <Route path="configuration" element={<Configuration />} />
+              <Route path="approval" element={<Approval />} />
               <Route path="billing" element={<Billing />} />
               <Route path="settings" element={<Settings />} />
               <Route path="logs" element={<Logs />} />

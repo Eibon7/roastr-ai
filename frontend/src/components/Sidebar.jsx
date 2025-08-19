@@ -9,7 +9,9 @@ import {
   FileText,
   Activity,
   Wand2,
-  Crown
+  Crown,
+  Cog,
+  Eye
 } from 'lucide-react';
 
 const navItems = [
@@ -30,6 +32,18 @@ const navItems = [
     path: '/integrations',
     icon: Puzzle,
     description: 'Platform connections'
+  },
+  {
+    name: 'Configuration',
+    path: '/configuration',
+    icon: Cog,
+    description: 'Platform settings'
+  },
+  {
+    name: 'Approval',
+    path: '/approval',
+    icon: Eye,
+    description: 'Review responses'
   },
   {
     name: 'Style Profile',
