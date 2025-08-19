@@ -7,6 +7,8 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext();
 
+export { ToastContext };
+
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
