@@ -70,3 +70,22 @@ jest.mock('../src/config/flags', () => ({
     getAllFlags() { return { ...this.flags }; }
   }
 }));
+
+// Global test teardown to prevent Jest from hanging
+afterAll(async () => {
+  try {
+    // Clean up AlertingService intervals
+    const alertingService = require('../src/services/alertingService');
+    if (alertingService && typeof alertingService.shutdown === 'function') {
+      alertingService.shutdown();
+    }
+    
+    // Clean up any other resources that might prevent Jest from exiting
+    if (global.gc) {
+      global.gc();
+    }
+  } catch (error) {
+    // Ignore cleanup errors in tests
+    console.log('Test cleanup error (ignored):', error.message);
+  }
+});

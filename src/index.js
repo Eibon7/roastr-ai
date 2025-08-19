@@ -21,6 +21,8 @@ const CsvRoastService = require('./services/csvRoastService');
 const IntegrationManager = require('./integrations/integrationManager');
 const ReincidenceDetector = require('./services/reincidenceDetector');
 const advancedLogger = require('./utils/advancedLogger');
+const monitoringService = require('./services/monitoringService');
+const alertingService = require('./services/alertingService');
 
 // Import auth routes and middleware
 const authRoutes = require('./routes/auth');
@@ -62,11 +64,10 @@ app.use((req, res, next) => {
   validateInput(req, res, next);
 });
 
-// Health check endpoint (after security headers but before rate limiting)
+// Simple health check endpoint (after security headers but before rate limiting)
 app.get('/health', (req, res) => {
   try {
     const uptime = process.uptime();
-    const serviceStatus = flags.getServiceStatus();
     
     // Try to load version safely
     let version = '1.0.0';
@@ -81,8 +82,7 @@ app.get('/health', (req, res) => {
       timestamp: new Date().toISOString(),
       uptime: `${Math.floor(uptime)}s`,
       version,
-      environment: process.env.NODE_ENV || 'development',
-      services: serviceStatus
+      environment: process.env.NODE_ENV || 'development'
     });
   } catch (error) {
     console.error('Health check error:', error);
@@ -93,19 +93,50 @@ app.get('/health', (req, res) => {
   }
 });
 
-
-app.get('/api/health', (req, res) => {
-  const serviceStatus = flags.getServiceStatus();
-  
-  res.json({
-    success: true,
-    data: {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      services: serviceStatus,
-      features: flags.getAllFlags()
+// Comprehensive health check endpoint with system monitoring
+app.get('/api/health', async (req, res) => {
+  try {
+    const startTime = Date.now();
+    const healthStatus = await monitoringService.getHealthStatus();
+    const responseTime = Date.now() - startTime;
+    
+    // Track response time for monitoring
+    monitoringService.trackResponseTime(responseTime);
+    monitoringService.trackRequest(healthStatus.status === 'error');
+    
+    // Set appropriate HTTP status code
+    let httpStatus = 200;
+    if (healthStatus.status === 'unhealthy') {
+      httpStatus = 503; // Service Unavailable
+    } else if (healthStatus.status === 'degraded') {
+      httpStatus = 200; // Still operational but degraded
+    } else if (healthStatus.status === 'error') {
+      httpStatus = 500; // Internal Server Error
     }
-  });
+    
+    res.status(httpStatus).json({
+      success: healthStatus.status !== 'error',
+      data: healthStatus
+    });
+    
+  } catch (error) {
+    console.error('Comprehensive health check error:', error);
+    
+    monitoringService.trackRequest(true);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Health check system error',
+        details: error.message
+      },
+      data: {
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: error.message
+      }
+    });
+  }
 });
 
 // Apply general rate limiting
@@ -171,6 +202,128 @@ app.use('/api/notifications', notificationsRoutes);
 // Worker status routes (authenticated)
 const { router: workersRoutes } = require('./routes/workers');
 app.use('/api/workers', workersRoutes);
+
+// ============================================================================
+// MONITORING & METRICS ENDPOINTS
+// ============================================================================
+
+// Comprehensive metrics endpoint
+app.get('/api/metrics', authenticateToken, async (req, res) => {
+  try {
+    const startTime = Date.now();
+    const metrics = await monitoringService.getMetrics();
+    const responseTime = Date.now() - startTime;
+    
+    // Track response time for monitoring
+    monitoringService.trackResponseTime(responseTime);
+    monitoringService.trackRequest(false);
+    
+    res.json({
+      success: true,
+      data: metrics,
+      meta: {
+        responseTime: `${responseTime}ms`,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('Metrics endpoint error:', error);
+    
+    monitoringService.trackRequest(true);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to retrieve metrics',
+        details: error.message
+      }
+    });
+  }
+});
+
+// Test monitoring system endpoint (authenticated)
+app.post('/api/monitoring/test', authenticateToken, async (req, res) => {
+  try {
+    const testResults = await monitoringService.runSystemTest();
+    
+    res.json({
+      success: testResults.overall.passed,
+      data: testResults
+    });
+    
+  } catch (error) {
+    console.error('Monitoring test error:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to run monitoring test',
+        details: error.message
+      }
+    });
+  }
+});
+
+// Send test alert endpoint (authenticated)
+app.post('/api/monitoring/alert/test', authenticateToken, async (req, res) => {
+  try {
+    const { severity = 'info', title = 'Test Alert', message = 'This is a test alert' } = req.body;
+    
+    const alertSent = await alertingService.sendAlert(
+      severity,
+      title,
+      message,
+      { test: true, timestamp: new Date().toISOString() },
+      { force: true, skipRateLimit: true }
+    );
+    
+    res.json({
+      success: alertSent,
+      data: {
+        alertSent,
+        severity,
+        title,
+        message,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('Test alert error:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to send test alert',
+        details: error.message
+      }
+    });
+  }
+});
+
+// Get alerting service stats (authenticated)
+app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
+  try {
+    const stats = alertingService.getStats();
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+    
+  } catch (error) {
+    console.error('Alert stats error:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to get alert stats',
+        details: error.message
+      }
+    });
+  }
+});
 
 // Admin routes (admin only)
 app.use('/api/admin', adminRoutes);
