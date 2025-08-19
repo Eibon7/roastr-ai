@@ -12,13 +12,19 @@ const { flags } = require('../config/flags');
 const emailService = require('../services/emailService');
 const notificationService = require('../services/notificationService');
 const workerNotificationService = require('../services/workerNotificationService');
+const QueueService = require('../services/queueService');
+const { createWebhookRetryHandler } = require('../utils/retry');
 
 const router = express.Router();
 
-// Initialize Stripe with feature flag check
+// Initialize Stripe and Queue Service
 let stripe = null;
+let queueService = null;
+
 if (flags.isEnabled('ENABLE_BILLING')) {
   stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+  queueService = new QueueService();
+  queueService.initialize();
 } else {
   console.log('⚠️ Stripe billing disabled - missing configuration keys');
 }
@@ -377,39 +383,214 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
     });
 
     try {
-        switch (event.type) {
-            case 'checkout.session.completed':
-                await handleCheckoutCompleted(event.data.object);
-                break;
+        // Create retry handlers for critical webhook events
+        const retryHandlers = {
+            'checkout.session.completed': createWebhookRetryHandler(
+                handleCheckoutCompleted, 
+                'checkout.session.completed'
+            ),
+            'customer.subscription.created': createWebhookRetryHandler(
+                (data) => queueBillingJob('subscription_updated', data),
+                'customer.subscription.created'
+            ),
+            'customer.subscription.updated': createWebhookRetryHandler(
+                (data) => queueBillingJob('subscription_updated', data),
+                'customer.subscription.updated'
+            ),
+            'customer.subscription.deleted': createWebhookRetryHandler(
+                (data) => queueBillingJob('subscription_cancelled', data),
+                'customer.subscription.deleted'
+            ),
+            'invoice.payment_succeeded': createWebhookRetryHandler(
+                (data) => queueBillingJob('payment_succeeded', data),
+                'invoice.payment_succeeded'
+            ),
+            'invoice.payment_failed': createWebhookRetryHandler(
+                (data) => queueBillingJob('payment_failed', data),
+                'invoice.payment_failed'
+            ),
+            'invoice.payment_action_required': createWebhookRetryHandler(
+                (data) => queueBillingJob('invoice_payment_action_required', data),
+                'invoice.payment_action_required'
+            )
+        };
 
-            case 'customer.subscription.created':
-            case 'customer.subscription.updated':
-                await handleSubscriptionUpdated(event.data.object);
-                break;
-
-            case 'customer.subscription.deleted':
-                await handleSubscriptionDeleted(event.data.object);
-                break;
-
-            case 'invoice.payment_succeeded':
-                await handlePaymentSucceeded(event.data.object);
-                break;
-
-            case 'invoice.payment_failed':
-                await handlePaymentFailed(event.data.object);
-                break;
-
-            default:
-                logger.info('Unhandled webhook event type:', event.type);
+        // Execute the appropriate handler with retry logic
+        const handler = retryHandlers[event.type];
+        if (handler) {
+            await handler(event.data.object);
+        } else {
+            logger.info('Unhandled webhook event type:', event.type);
         }
 
         res.json({ received: true });
 
     } catch (error) {
-        logger.error('Error processing webhook:', error);
-        res.status(500).json({ error: 'Webhook processing failed' });
+        logger.error('Error processing webhook after retries:', error);
+        // Still return 200 to prevent Stripe from retrying
+        res.json({ 
+            received: true, 
+            warning: 'Processing failed but acknowledged to prevent webhook retry loop' 
+        });
     }
 });
+
+/**
+ * Queue a billing job for processing by BillingWorker
+ * @param {string} jobType - Type of billing job
+ * @param {Object} webhookData - Webhook data from Stripe
+ */
+async function queueBillingJob(jobType, webhookData) {
+    if (!queueService) {
+        logger.error('Queue service not initialized, falling back to synchronous processing');
+        // Fallback to original handlers for critical functionality
+        switch (jobType) {
+            case 'subscription_cancelled':
+                return await handleSubscriptionDeleted(webhookData);
+            case 'payment_succeeded':
+                return await handlePaymentSucceeded(webhookData);
+            case 'payment_failed':
+                return await handlePaymentFailed(webhookData);
+            case 'subscription_updated':
+                return await handleSubscriptionUpdated(webhookData);
+            default:
+                logger.warn('Unknown fallback job type:', jobType);
+        }
+        return;
+    }
+
+    try {
+        // Extract common data from webhook
+        let jobData = {};
+
+        switch (jobType) {
+            case 'payment_failed':
+                const { data: failedUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: failedUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    invoiceId: webhookData.id,
+                    amount: webhookData.amount_due,
+                    attemptCount: 0
+                };
+                break;
+
+            case 'subscription_cancelled':
+                const { data: cancelledUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: cancelledUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    subscriptionId: webhookData.id,
+                    cancelReason: webhookData.cancellation_details?.reason || 'user_requested'
+                };
+                break;
+
+            case 'subscription_updated':
+                const { data: updatedUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id, plan')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                // Determine plan from subscription
+                let newPlan = 'free';
+                if (webhookData.items?.data?.length > 0) {
+                    const price = webhookData.items.data[0].price;
+                    const prices = await stripe.prices.list({ limit: 100 });
+                    const priceData = prices.data.find(p => p.id === price.id);
+                    
+                    if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
+                        newPlan = 'pro';
+                    } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
+                        newPlan = 'creator_plus';
+                    }
+                }
+
+                jobData = {
+                    userId: updatedUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    subscriptionId: webhookData.id,
+                    newPlan,
+                    newStatus: webhookData.status
+                };
+                break;
+
+            case 'payment_succeeded':
+                const { data: succeededUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: succeededUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    invoiceId: webhookData.id,
+                    amount: webhookData.amount_paid
+                };
+                break;
+
+            case 'invoice_payment_action_required':
+                const { data: actionUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: actionUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    invoiceId: webhookData.id,
+                    paymentIntentId: webhookData.payment_intent
+                };
+                break;
+        }
+
+        // Queue the job for BillingWorker
+        await queueService.addJob({
+            job_type: jobType,
+            data: jobData,
+            priority: 2, // High priority for billing jobs
+            organization_id: null // Billing jobs are system-wide
+        });
+
+        logger.info('Billing job queued successfully', {
+            jobType,
+            userId: jobData.userId,
+            customerId: jobData.customerId
+        });
+
+    } catch (error) {
+        logger.error('Failed to queue billing job, falling back to sync processing', {
+            jobType,
+            error: error.message
+        });
+
+        // Fallback to synchronous processing if queueing fails
+        switch (jobType) {
+            case 'subscription_cancelled':
+                return await handleSubscriptionDeleted(webhookData);
+            case 'payment_succeeded':
+                return await handlePaymentSucceeded(webhookData);
+            case 'payment_failed':
+                return await handlePaymentFailed(webhookData);
+            case 'subscription_updated':
+                return await handleSubscriptionUpdated(webhookData);
+            default:
+                logger.warn('Unknown fallback job type:', jobType);
+        }
+    }
+}
 
 /**
  * Handle checkout.session.completed event
@@ -500,157 +681,27 @@ async function handleCheckoutCompleted(session) {
  * Handle subscription updated event
  */
 async function handleSubscriptionUpdated(subscription) {
-    const customerId = subscription.customer;
+    const subscriptionService = require('../services/subscriptionService');
     
-    // Find user by customer ID
-    const { data: userSub, error: findError } = await supabaseServiceClient
-        .from('user_subscriptions')
-        .select('user_id')
-        .eq('stripe_customer_id', customerId)
-        .single();
-
-    if (findError || !userSub) {
-        logger.error('Could not find user for customer:', customerId);
-        return;
-    }
-
-    // Determine plan from subscription items
-    let plan = 'free';
-    if (subscription.items?.data?.length > 0) {
-        const price = subscription.items.data[0].price;
-        // Look up plan by price ID or lookup key
-        const prices = await stripe.prices.list({ limit: 100 });
-        const priceData = prices.data.find(p => p.id === price.id);
+    try {
+        const result = await subscriptionService.processSubscriptionUpdate(subscription);
         
-        if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
-            plan = 'pro';
-        } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
-            plan = 'creator_plus';
-        }
-    }
-
-    // Update subscription
-    const { error } = await supabaseServiceClient
-        .from('user_subscriptions')
-        .update({
-            plan: plan,
-            status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null
-        })
-        .eq('user_id', userSub.user_id);
-
-    if (error) {
-        logger.error('Failed to update subscription:', error);
-    } else {
-        logger.info('Subscription updated:', {
-            userId: userSub.user_id,
-            plan,
-            status: subscription.status
-        });
-
-        // Send email notifications based on status changes
-        try {
-            const customer = await stripe.customers.retrieve(customerId);
-            const userEmail = customer.email;
-            const planConfig = PLAN_CONFIG[plan] || {};
-
-            // Check if this is a plan upgrade/downgrade
-            if (subscription.status === 'active') {
-                // Get previous plan from database to compare
-                const { data: currentSub } = await supabaseServiceClient
-                    .from('user_subscriptions')
-                    .select('plan')
-                    .eq('user_id', userSub.user_id)
-                    .single();
-
-                const oldPlan = currentSub?.plan || 'free';
-                
-                // Send upgrade notification if plan changed (and not initial activation)
-                if (oldPlan !== plan && oldPlan !== 'free') {
-                    const oldPlanConfig = PLAN_CONFIG[oldPlan] || {};
-                    
-                    await emailService.sendUpgradeSuccessNotification(userEmail, {
-                        userName: customer.name || userEmail.split('@')[0],
-                        oldPlanName: oldPlanConfig.name || oldPlan,
-                        newPlanName: planConfig.name || plan,
-                        newFeatures: planConfig.features || [],
-                        activationDate: new Date().toLocaleDateString(),
-                    });
-
-                    logger.info('📧 Plan change email sent:', { 
-                        userId: userSub.user_id, 
-                        oldPlan, 
-                        newPlan: plan,
-                        email: userEmail 
-                    });
-
-                    // Create in-app notification for plan upgrade
-                    try {
-                        await notificationService.createUpgradeSuccessNotification(userSub.user_id, {
-                            oldPlanName: oldPlanConfig.name || oldPlan,
-                            newPlanName: planConfig.name || plan,
-                            newFeatures: planConfig.features || [],
-                            activationDate: new Date().toLocaleDateString(),
-                        });
-
-                        logger.info('📝 Plan change notification created:', { 
-                            userId: userSub.user_id, 
-                            oldPlan, 
-                            newPlan: plan
-                        });
-                    } catch (notificationError) {
-                        logger.error('📝 Failed to create plan change notification:', notificationError);
-                    }
-                }
-            } else {
-                // Handle subscription status changes that require notifications
-                if (['past_due', 'unpaid', 'incomplete'].includes(subscription.status)) {
-                    try {
-                        await notificationService.createSubscriptionStatusNotification(userSub.user_id, {
-                            status: subscription.status,
-                            planName: planConfig.name || plan
-                        });
-
-                        logger.info('📝 Subscription status notification created:', { 
-                            userId: userSub.user_id, 
-                            status: subscription.status
-                        });
-                    } catch (notificationError) {
-                        logger.error('📝 Failed to create subscription status notification:', notificationError);
-                    }
-                }
-            }
-        } catch (emailError) {
-            logger.error('📧 Failed to send subscription update email:', emailError);
-        }
-
-        // Apply dynamic limits based on new plan
-        try {
-            await applyPlanLimits(userSub.user_id, plan, subscription.status);
-            
-            // Notify workers of plan changes
-            const { data: currentSub } = await supabaseServiceClient
-                .from('user_subscriptions')
-                .select('plan')
-                .eq('user_id', userSub.user_id)
-                .single();
-
-            const oldPlan = currentSub?.plan || 'free';
-            if (oldPlan !== plan) {
-                await workerNotificationService.notifyPlanChange(userSub.user_id, oldPlan, plan, subscription.status);
-            }
-
-            logger.info('🔄 Plan limits applied dynamically:', { 
-                userId: userSub.user_id, 
-                plan, 
-                status: subscription.status 
+        if (!result.success) {
+            logger.warn('Subscription update blocked:', {
+                customerId: subscription.customer,
+                reason: result.reason
             });
-        } catch (limitsError) {
-            logger.error('🔄 Failed to apply dynamic plan limits:', limitsError);
+        } else {
+            logger.info('Subscription update processed successfully:', {
+                userId: result.userId,
+                oldPlan: result.oldPlan,
+                newPlan: result.newPlan,
+                status: result.status
+            });
         }
+    } catch (error) {
+        logger.error('Failed to process subscription update:', error);
+        // Don't throw - webhook should still return success
     }
 }
 
