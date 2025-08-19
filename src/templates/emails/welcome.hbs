@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Roastr.ai</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .email-wrapper {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #ff6b6b;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #ff5252;
+        }
+        .features {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .feature {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="header">
+                <a href="{{dashboardUrl}}" class="logo">🔥 Roastr.ai</a>
+            </div>
+            
+            <h1>Welcome to Roastr.ai, {{userName}}! 🎉</h1>
+            
+            <div class="content">
+                <p>We're thrilled to have you join our community of content creators and social media managers who are taking control of their online conversations.</p>
+                
+                <p>Roastr.ai helps you automatically detect toxic comments and generate witty, engaging responses that turn negativity into entertainment.</p>
+                
+                <div class="features">
+                    <h3>What you can do with Roastr.ai:</h3>
+                    <div class="feature">✅ Monitor comments across multiple social platforms</div>
+                    <div class="feature">✅ Detect toxicity levels automatically</div>
+                    <div class="feature">✅ Generate clever roasts and comebacks</div>
+                    <div class="feature">✅ Moderate content with Shield protection</div>
+                    <div class="feature">✅ Track your engagement metrics</div>
+                </div>
+                
+                <p style="text-align: center;">
+                    <a href="{{dashboardUrl}}" class="cta-button">Go to Dashboard</a>
+                </p>
+                
+                <p><strong>Getting Started:</strong></p>
+                <ol>
+                    <li>Connect your social media accounts</li>
+                    <li>Configure your moderation preferences</li>
+                    <li>Let Roastr.ai handle the rest!</li>
+                </ol>
+                
+                <p>If you have any questions or need assistance, our support team is here to help at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+            </div>
+            
+            <div class="footer">
+                <p>Happy roasting! 🔥</p>
+                <p>The Roastr.ai Team</p>
+                <p style="margin-top: 20px; font-size: 12px;">
+                    &copy; 2024 Roastr.ai. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
