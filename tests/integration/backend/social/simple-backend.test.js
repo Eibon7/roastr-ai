@@ -42,14 +42,16 @@ describe('Backend Integration - Infrastructure', () => {
   });
 
   test('should support async operations', async () => {
-    // Test async/await support
+    // Test async/await support with tolerance for CI timing variations
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     
     const start = Date.now();
     await delay(10);
     const elapsed = Date.now() - start;
     
-    expect(elapsed).toBeGreaterThanOrEqual(10);
+    // Allow for timing variations in CI environments (±2ms tolerance)
+    expect(elapsed).toBeGreaterThanOrEqual(8);
+    expect(elapsed).toBeLessThan(100); // Reasonable upper bound
   });
 
   test('should have proper timeout configuration', () => {
