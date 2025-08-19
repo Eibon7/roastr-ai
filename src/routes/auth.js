@@ -889,4 +889,103 @@ router.get('/admin/users/:id/stats', authenticateToken, requireAdmin, async (req
     }
 });
 
+/**
+ * POST /api/auth/change-email
+ * Change user email with verification
+ */
+router.post('/change-email', authenticateToken, async (req, res) => {
+    try {
+        const { currentEmail, newEmail } = req.body;
+        const userId = req.user.id;
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+
+        // Validate input
+        if (!currentEmail || !newEmail) {
+            return res.status(400).json({
+                success: false,
+                error: 'Current email and new email are required'
+            });
+        }
+
+        if (currentEmail === newEmail) {
+            return res.status(400).json({
+                success: false,
+                error: 'New email must be different from current email'
+            });
+        }
+
+        const result = await authService.changeEmail({
+            userId,
+            currentEmail,
+            newEmail,
+            accessToken
+        });
+
+        logger.info('Email change request processed:', { userId, currentEmail, newEmail });
+
+        res.json({
+            success: true,
+            message: result.message,
+            data: {
+                requiresConfirmation: result.requiresConfirmation
+            }
+        });
+
+    } catch (error) {
+        logger.error('Change email endpoint error:', error.message);
+        
+        // Return appropriate error messages
+        let statusCode = 400;
+        if (error.message.includes('not found')) {
+            statusCode = 404;
+        } else if (error.message.includes('already in use')) {
+            statusCode = 409;
+        }
+
+        res.status(statusCode).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/confirm-email-change
+ * Confirm email change with token from email
+ */
+router.post('/confirm-email-change', async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                error: 'Confirmation token is required'
+            });
+        }
+
+        const result = await authService.confirmEmailChange(token);
+
+        logger.info('Email change confirmed successfully');
+
+        res.json({
+            success: true,
+            message: result.message,
+            data: {
+                user: result.user ? {
+                    id: result.user.id,
+                    email: result.user.email
+                } : null
+            }
+        });
+
+    } catch (error) {
+        logger.error('Confirm email change endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

@@ -1077,6 +1077,133 @@ class AuthService {
 
         return alerts;
     }
+
+    /**
+     * Change user email with verification
+     * @param {string} userId - User ID
+     * @param {string} currentEmail - Current email for verification 
+     * @param {string} newEmail - New email to change to
+     * @param {string} accessToken - User's access token
+     */
+    async changeEmail({ userId, currentEmail, newEmail, accessToken }) {
+        try {
+            // Validate input
+            if (!userId || !currentEmail || !newEmail || !accessToken) {
+                throw new Error('User ID, current email, new email, and access token are required');
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(newEmail)) {
+                throw new Error('Invalid new email format');
+            }
+
+            // Get current user to verify
+            const { data: currentUser, error: userError } = await supabaseServiceClient
+                .from('users')
+                .select('email, active')
+                .eq('id', userId)
+                .single();
+
+            if (userError || !currentUser) {
+                throw new Error('User not found');
+            }
+
+            // Verify current email matches
+            if (currentUser.email !== currentEmail) {
+                throw new Error('Current email does not match');
+            }
+
+            // Check if new email is already in use
+            const { data: existingUser, error: checkError } = await supabaseServiceClient
+                .from('users')
+                .select('id')
+                .eq('email', newEmail)
+                .single();
+
+            if (existingUser) {
+                throw new Error('New email is already in use');
+            }
+
+            // Use Supabase auth to update email (this will send confirmation email)
+            const userClient = createUserClient(accessToken);
+            const { data: authData, error: authError } = await userClient.auth.updateUser({
+                email: newEmail
+            });
+
+            if (authError) {
+                throw new Error(`Failed to initiate email change: ${authError.message}`);
+            }
+
+            logger.info('Email change initiated:', { 
+                userId, 
+                currentEmail, 
+                newEmail 
+            });
+
+            return {
+                message: 'Email change verification sent. Please check your new email to confirm the change.',
+                user: authData.user,
+                requiresConfirmation: true
+            };
+
+        } catch (error) {
+            logger.error('Change email error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Confirm email change (called when user clicks confirmation link)
+     * @param {string} token - Confirmation token from email
+     */
+    async confirmEmailChange(token) {
+        try {
+            if (!token) {
+                throw new Error('Confirmation token is required');
+            }
+
+            // Supabase handles the token verification automatically
+            // We just need to verify the change was successful
+            const { data, error } = await supabaseAnonClient.auth.verifyOtp({
+                token_hash: token,
+                type: 'email_change'
+            });
+
+            if (error) {
+                throw new Error(`Email change confirmation failed: ${error.message}`);
+            }
+
+            if (data.user) {
+                // Update our users table with the new email
+                const { error: updateError } = await supabaseServiceClient
+                    .from('users')
+                    .update({ 
+                        email: data.user.email,
+                        email_updated_at: new Date().toISOString()
+                    })
+                    .eq('id', data.user.id);
+
+                if (updateError) {
+                    logger.error('Failed to update email in users table:', updateError.message);
+                }
+
+                logger.info('Email change confirmed successfully:', { 
+                    userId: data.user.id, 
+                    newEmail: data.user.email 
+                });
+            }
+
+            return {
+                message: 'Email successfully changed',
+                user: data.user
+            };
+
+        } catch (error) {
+            logger.error('Confirm email change error:', error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new AuthService();
