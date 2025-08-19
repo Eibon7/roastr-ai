@@ -12,13 +12,18 @@ const { flags } = require('../config/flags');
 const emailService = require('../services/emailService');
 const notificationService = require('../services/notificationService');
 const workerNotificationService = require('../services/workerNotificationService');
+const QueueService = require('../services/queueService');
 
 const router = express.Router();
 
-// Initialize Stripe with feature flag check
+// Initialize Stripe and Queue Service
 let stripe = null;
+let queueService = null;
+
 if (flags.isEnabled('ENABLE_BILLING')) {
   stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+  queueService = new QueueService();
+  queueService.initialize();
 } else {
   console.log('⚠️ Stripe billing disabled - missing configuration keys');
 }
@@ -384,19 +389,23 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
 
             case 'customer.subscription.created':
             case 'customer.subscription.updated':
-                await handleSubscriptionUpdated(event.data.object);
+                await queueBillingJob('subscription_updated', event.data.object);
                 break;
 
             case 'customer.subscription.deleted':
-                await handleSubscriptionDeleted(event.data.object);
+                await queueBillingJob('subscription_cancelled', event.data.object);
                 break;
 
             case 'invoice.payment_succeeded':
-                await handlePaymentSucceeded(event.data.object);
+                await queueBillingJob('payment_succeeded', event.data.object);
                 break;
 
             case 'invoice.payment_failed':
-                await handlePaymentFailed(event.data.object);
+                await queueBillingJob('payment_failed', event.data.object);
+                break;
+
+            case 'invoice.payment_action_required':
+                await queueBillingJob('invoice_payment_action_required', event.data.object);
                 break;
 
             default:
@@ -410,6 +419,163 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
         res.status(500).json({ error: 'Webhook processing failed' });
     }
 });
+
+/**
+ * Queue a billing job for processing by BillingWorker
+ * @param {string} jobType - Type of billing job
+ * @param {Object} webhookData - Webhook data from Stripe
+ */
+async function queueBillingJob(jobType, webhookData) {
+    if (!queueService) {
+        logger.error('Queue service not initialized, falling back to synchronous processing');
+        // Fallback to original handlers for critical functionality
+        switch (jobType) {
+            case 'subscription_cancelled':
+                return await handleSubscriptionDeleted(webhookData);
+            case 'payment_succeeded':
+                return await handlePaymentSucceeded(webhookData);
+            case 'payment_failed':
+                return await handlePaymentFailed(webhookData);
+            case 'subscription_updated':
+                return await handleSubscriptionUpdated(webhookData);
+            default:
+                logger.warn('Unknown fallback job type:', jobType);
+        }
+        return;
+    }
+
+    try {
+        // Extract common data from webhook
+        let jobData = {};
+
+        switch (jobType) {
+            case 'payment_failed':
+                const { data: failedUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: failedUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    invoiceId: webhookData.id,
+                    amount: webhookData.amount_due,
+                    attemptCount: 0
+                };
+                break;
+
+            case 'subscription_cancelled':
+                const { data: cancelledUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: cancelledUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    subscriptionId: webhookData.id,
+                    cancelReason: webhookData.cancellation_details?.reason || 'user_requested'
+                };
+                break;
+
+            case 'subscription_updated':
+                const { data: updatedUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id, plan')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                // Determine plan from subscription
+                let newPlan = 'free';
+                if (webhookData.items?.data?.length > 0) {
+                    const price = webhookData.items.data[0].price;
+                    const prices = await stripe.prices.list({ limit: 100 });
+                    const priceData = prices.data.find(p => p.id === price.id);
+                    
+                    if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
+                        newPlan = 'pro';
+                    } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
+                        newPlan = 'creator_plus';
+                    }
+                }
+
+                jobData = {
+                    userId: updatedUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    subscriptionId: webhookData.id,
+                    newPlan,
+                    newStatus: webhookData.status
+                };
+                break;
+
+            case 'payment_succeeded':
+                const { data: succeededUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: succeededUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    invoiceId: webhookData.id,
+                    amount: webhookData.amount_paid
+                };
+                break;
+
+            case 'invoice_payment_action_required':
+                const { data: actionUserSub } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .select('user_id')
+                    .eq('stripe_customer_id', webhookData.customer)
+                    .single();
+
+                jobData = {
+                    userId: actionUserSub?.user_id,
+                    customerId: webhookData.customer,
+                    invoiceId: webhookData.id,
+                    paymentIntentId: webhookData.payment_intent
+                };
+                break;
+        }
+
+        // Queue the job for BillingWorker
+        await queueService.addJob({
+            job_type: jobType,
+            data: jobData,
+            priority: 2, // High priority for billing jobs
+            organization_id: null // Billing jobs are system-wide
+        });
+
+        logger.info('Billing job queued successfully', {
+            jobType,
+            userId: jobData.userId,
+            customerId: jobData.customerId
+        });
+
+    } catch (error) {
+        logger.error('Failed to queue billing job, falling back to sync processing', {
+            jobType,
+            error: error.message
+        });
+
+        // Fallback to synchronous processing if queueing fails
+        switch (jobType) {
+            case 'subscription_cancelled':
+                return await handleSubscriptionDeleted(webhookData);
+            case 'payment_succeeded':
+                return await handlePaymentSucceeded(webhookData);
+            case 'payment_failed':
+                return await handlePaymentFailed(webhookData);
+            case 'subscription_updated':
+                return await handleSubscriptionUpdated(webhookData);
+            default:
+                logger.warn('Unknown fallback job type:', jobType);
+        }
+    }
+}
 
 /**
  * Handle checkout.session.completed event

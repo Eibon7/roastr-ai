@@ -2,6 +2,7 @@ const FetchCommentsWorker = require('./FetchCommentsWorker');
 const AnalyzeToxicityWorker = require('./AnalyzeToxicityWorker');
 const GenerateReplyWorker = require('./GenerateReplyWorker');
 const ShieldActionWorker = require('./ShieldActionWorker');
+const BillingWorker = require('./BillingWorker');
 
 /**
  * Worker Manager for Roastr.ai Multi-Tenant Architecture
@@ -11,6 +12,7 @@ const ShieldActionWorker = require('./ShieldActionWorker');
  * - AnalyzeToxicityWorker: Analyzes comment toxicity
  * - GenerateReplyWorker: Creates roast responses
  * - ShieldActionWorker: Executes Shield protection actions
+ * - BillingWorker: Processes billing events and notifications
  * 
  * Features:
  * - Graceful startup and shutdown
@@ -21,7 +23,7 @@ const ShieldActionWorker = require('./ShieldActionWorker');
 class WorkerManager {
   constructor(options = {}) {
     this.options = {
-      enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'],
+      enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action', 'billing'],
       workerConfig: {},
       healthCheckInterval: 30000, // 30 seconds
       ...options
@@ -37,7 +39,8 @@ class WorkerManager {
       'fetch_comments': FetchCommentsWorker,
       'analyze_toxicity': AnalyzeToxicityWorker,
       'generate_reply': GenerateReplyWorker,
-      'shield_action': ShieldActionWorker
+      'shield_action': ShieldActionWorker,
+      'billing': BillingWorker
     };
     
     this.log('info', 'Worker Manager initialized', {
