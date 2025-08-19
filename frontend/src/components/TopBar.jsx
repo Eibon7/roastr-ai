@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
+import { LogOut } from 'lucide-react';
+import { authHelpers } from '../lib/supabaseClient';
 
 export default function TopBar() {
   const [user, setUser] = useState(null);
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await authHelpers.signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -74,6 +87,17 @@ export default function TopBar() {
                 MOCK MODE
               </Badge>
             )}
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              data-testid="logout-button"
+              className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+              title="Cerrar sesión"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Salir</span>
+            </button>
           </>
         )}
       </div>
