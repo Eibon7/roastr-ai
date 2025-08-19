@@ -36,8 +36,8 @@ describe('API Health Smoke Tests', () => {
       const response = await request(app)
         .get('/api/health');
 
-      // Should be 200 or 500, but not 404 (means endpoint exists)
-      expect([200, 500]).toContain(response.status);
+      // Should be 200, 500, or 503, but not 404 (means endpoint exists)
+      expect([200, 500, 503]).toContain(response.status);
     });
   });
 
@@ -66,8 +66,8 @@ describe('API Health Smoke Tests', () => {
       const response = await request(app)
         .get('/api/billing/plans');
 
-      // Should be 200 or 500, but not 404 (means endpoint exists)
-      expect([200, 500]).toContain(response.status);
+      // Should be 200, 500, or 503, but not 404 (means endpoint exists)
+      expect([200, 500, 503]).toContain(response.status);
     });
 
     test('POST /api/billing/create-checkout-session endpoint exists', async () => {

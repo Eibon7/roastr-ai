@@ -23,6 +23,15 @@ describe('BillingWorker Simple Tests', () => {
     let billingWorker;
     const { flags } = require('../../../src/config/flags');
 
+    afterAll(async () => {
+        // Clean up any lingering resources
+        if (billingWorker && billingWorker.queueService && billingWorker.queueService.shutdown) {
+            await billingWorker.queueService.shutdown();
+        }
+        jest.clearAllTimers();
+        jest.useRealTimers();
+    });
+
     beforeEach(() => {
         jest.clearAllMocks();
         
