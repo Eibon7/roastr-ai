@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, authHelpers } from '../lib/supabaseClient';
 import { isMockModeEnabled } from '../lib/mockMode';
+import apiClient from '../lib/api';
 
 const AuthContext = createContext({});
 

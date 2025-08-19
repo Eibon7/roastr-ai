@@ -20,6 +20,9 @@
     "build:ci": "CI=false GENERATE_SOURCEMAP=false REACT_APP_SUPABASE_URL=http://localhost/mock REACT_APP_SUPABASE_ANON_KEY=mock react-scripts build",
     "test": "react-scripts test",
     "test:ci": "CI=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true react-scripts test --watchAll=false --testTimeout=30000 --verbose",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -51,6 +54,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@testing-library/jest-dom": "^6.7.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
