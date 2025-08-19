@@ -14,6 +14,8 @@ module.exports = {
   silent: false,
   collectCoverage: false,
   testTimeout: 30000,
+  forceExit: true,
+  detectOpenHandles: true,
   reporters: [
     'default',
     ['jest-junit', {
