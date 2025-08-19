@@ -905,4 +905,192 @@ router.get('/admin/users/:id/stats', authenticateToken, requireAdmin, async (req
     }
 });
 
+/**
+ * POST /api/auth/change-email
+ * Change user email with verification
+ */
+router.post('/change-email', authenticateToken, async (req, res) => {
+    try {
+        const { currentEmail, newEmail } = req.body;
+        const userId = req.user.id;
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+
+        // Validate input
+        if (!currentEmail || !newEmail) {
+            return res.status(400).json({
+                success: false,
+                error: 'Current email and new email are required'
+            });
+        }
+
+        if (currentEmail === newEmail) {
+            return res.status(400).json({
+                success: false,
+                error: 'New email must be different from current email'
+            });
+        }
+
+        const result = await authService.changeEmail({
+            userId,
+            currentEmail,
+            newEmail,
+            accessToken
+        });
+
+        logger.info('Email change request processed:', { userId, currentEmail, newEmail });
+
+        res.json({
+            success: true,
+            message: result.message,
+            data: {
+                requiresConfirmation: result.requiresConfirmation
+            }
+        });
+
+    } catch (error) {
+        logger.error('Change email endpoint error:', error.message);
+        
+        // Return appropriate error messages
+        let statusCode = 400;
+        if (error.message.includes('not found')) {
+            statusCode = 404;
+        } else if (error.message.includes('already in use')) {
+            statusCode = 409;
+        }
+
+        res.status(statusCode).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/confirm-email-change
+ * Confirm email change with token from email
+ */
+router.post('/confirm-email-change', async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                error: 'Confirmation token is required'
+            });
+        }
+
+        const result = await authService.confirmEmailChange(token);
+
+        logger.info('Email change confirmed successfully');
+
+        res.json({
+            success: true,
+            message: result.message,
+            data: {
+                user: result.user ? {
+                    id: result.user.id,
+                    email: result.user.email
+                } : null
+            }
+        });
+
+    } catch (error) {
+        logger.error('Confirm email change endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/auth/export-data
+ * Export user data (GDPR compliance)
+ */
+router.get('/export-data', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const result = await authService.exportUserData(userId);
+
+        logger.info('User data exported:', { userId });
+
+        res.json({
+            success: true,
+            message: 'User data exported successfully',
+            data: result
+        });
+
+    } catch (error) {
+        logger.error('Export user data endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/delete-account
+ * Request account deletion (with grace period)
+ */
+router.post('/delete-account', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { confirmEmail } = req.body;
+
+        if (!confirmEmail || confirmEmail !== req.user.email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email confirmation is required to delete account'
+            });
+        }
+
+        const result = await authService.requestAccountDeletion(userId);
+
+        logger.info('Account deletion requested:', { userId });
+
+        res.json({
+            success: true,
+            message: result.message,
+            data: {
+                gracePeriodEnds: result.gracePeriodEnds,
+                canCancel: true
+            }
+        });
+
+    } catch (error) {
+        logger.error('Delete account endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/cancel-account-deletion
+ * Cancel pending account deletion
+ */
+router.post('/cancel-account-deletion', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const result = await authService.cancelAccountDeletion(userId);
+
+        logger.info('Account deletion cancelled:', { userId });
+
+        res.json({
+            success: true,
+            message: result.message
+        });
+
+    } catch (error) {
+        logger.error('Cancel account deletion endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

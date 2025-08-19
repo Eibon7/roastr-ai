@@ -1,53 +1,53 @@
 /**
- * API Client with automatic token refresh
- * Centralized API handling with auth token management
+ * API Client with automatic token refresh and Account Management functionality
+ * Centralized API handling with auth token management and mock mode support
  */
 
-import { supabase } from './supabaseClient';
+import { supabase, authHelpers } from './supabaseClient';
 import { isMockModeEnabled } from './mockMode';
 
-class APIClient {
+class ApiClient {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || '';
+    this.baseURL = process.env.REACT_APP_API_URL || '/api';
     this.refreshPromise = null;
   }
 
   /**
-   * Get current session with automatic refresh if needed
+   * Get valid session with token refresh
    */
   async getValidSession() {
-    // Check current session
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      throw new Error('Failed to get session');
-    }
-
-    if (!session) {
-      throw new Error('No active session');
-    }
-
-    // Check if token is about to expire (within 5 minutes)
-    const expiresAt = session.expires_at * 1000; // Convert to milliseconds
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
-
-    if (expiresAt - now < fiveMinutes) {
-      // Token is about to expire, refresh it
-      if (!this.refreshPromise) {
-        // Avoid multiple simultaneous refresh requests
-        this.refreshPromise = this.refreshSession();
-      }
+    try {
+      // Use authHelpers for consistency with existing codebase
+      const session = await authHelpers.getCurrentSession();
       
-      try {
-        const newSession = await this.refreshPromise;
-        return newSession;
-      } finally {
-        this.refreshPromise = null;
+      if (!session) {
+        throw new Error('No active session');
       }
-    }
 
-    return session;
+      // Check if token is close to expiry (5 minutes buffer)
+      const expiresAt = new Date(session.expires_at * 1000).getTime();
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+
+      if (expiresAt - now < fiveMinutes) {
+        // Use refresh promise to avoid multiple simultaneous refreshes
+        if (!this.refreshPromise) {
+          this.refreshPromise = this.refreshSession();
+        }
+        
+        try {
+          const newSession = await this.refreshPromise;
+          return newSession;
+        } finally {
+          this.refreshPromise = null;
+        }
+      }
+
+      return session;
+    } catch (error) {
+      console.error('Session validation error:', error);
+      throw new Error('Failed to get valid session');
+    }
   }
 
   /**
@@ -65,14 +65,20 @@ class APIClient {
       }
     }
 
-    // Call backend refresh endpoint
+    // Try to refresh the token using Supabase
+    const { data, error } = await supabase.auth.refreshSession();
+    if (!error && data?.session) {
+      return data.session;
+    }
+
+    // Fallback: Call backend refresh endpoint
     const currentSession = await supabase.auth.getSession();
     if (!currentSession.data.session) {
       throw new Error('No session to refresh');
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/api/auth/session/refresh`, {
+      const response = await fetch(`${this.baseURL}/auth/session/refresh`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${currentSession.data.session.access_token}`,
@@ -88,7 +94,6 @@ class APIClient {
       
       // Update Supabase session with new tokens
       if (data.access_token && data.refresh_token) {
-        // Note: Supabase should handle this automatically, but we ensure it's updated
         await supabase.auth.setSession({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
@@ -107,113 +112,195 @@ class APIClient {
   }
 
   /**
-   * Make an authenticated API request with automatic token refresh
+   * Make authenticated request with automatic retry on 401
    */
-  async request(url, options = {}) {
+  async request(method, endpoint, data = null) {
     try {
-      // Get valid session (will refresh if needed)
-      const session = await this.getValidSession();
+      const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
       
-      // Prepare headers
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-        ...options.headers,
+      const options = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       };
 
-      // Make the request
-      const response = await fetch(`${this.baseURL}${url}`, {
-        ...options,
-        headers,
-      });
-
-      // Check if token expired during request
-      if (response.status === 401) {
-        // Try to refresh and retry once
-        const newSession = await this.refreshSession();
-        
-        // Retry with new token
-        const retryResponse = await fetch(`${this.baseURL}${url}`, {
-          ...options,
-          headers: {
-            ...headers,
-            'Authorization': `Bearer ${newSession.access_token}`,
-          },
-        });
-
-        if (!retryResponse.ok) {
-          const errorData = await retryResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+      // Add authorization header if not a public endpoint
+      if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+        const session = await this.getValidSession();
+        if (session?.access_token) {
+          options.headers.Authorization = `Bearer ${session.access_token}`;
         }
+      }
 
-        return retryResponse;
+      // Add body for POST, PUT, PATCH requests
+      if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
+        options.body = JSON.stringify(data);
+      }
+
+      const response = await fetch(url, options);
+      
+      // Check if token expired during request - retry once with refresh
+      if (response.status === 401 && !endpoint.includes('/auth/login')) {
+        try {
+          const newSession = await this.refreshSession();
+          
+          // Retry with new token
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers: {
+              ...options.headers,
+              'Authorization': `Bearer ${newSession.access_token}`,
+            },
+          });
+
+          if (!retryResponse.ok) {
+            const errorData = await retryResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+          }
+
+          // Handle different response types for retry
+          const contentType = retryResponse.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return await retryResponse.json();
+          }
+          return await retryResponse.text();
+        } catch (refreshError) {
+          console.error('Token refresh and retry failed:', refreshError);
+          throw refreshError;
+        }
+      }
+
+      // Handle different response types
+      const contentType = response.headers.get('content-type');
+      let responseData;
+      
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        responseData = await response.text();
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(responseData.error || `HTTP error! status: ${response.status}`);
       }
 
-      return response;
+      return responseData;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error(`API ${method} ${endpoint} error:`, error);
+      
+      // Handle mock mode fallbacks for Account Management endpoints
+      if (isMockModeEnabled()) {
+        return this.handleMockRequest(method, endpoint, data, error);
+      }
+      
       throw error;
     }
   }
 
   /**
-   * Convenience methods for common HTTP verbs
+   * Handle mock requests with fallbacks for Account Management features
    */
-  async get(url, options = {}) {
-    const response = await this.request(url, {
-      ...options,
-      method: 'GET',
-    });
-    return response.json();
+  async handleMockRequest(method, endpoint, data, originalError) {
+    console.log('🎭 Mock API request:', { method, endpoint, data });
+    
+    // Mock responses for Account Management endpoints
+    if (endpoint === '/auth/change-email') {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      return {
+        success: true,
+        message: 'Email de confirmación enviado. Revisa tu nueva dirección para confirmar el cambio.',
+        data: { requiresConfirmation: true }
+      };
+    }
+    
+    if (endpoint === '/auth/export-data') {
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
+      return {
+        success: true,
+        message: 'Datos exportados correctamente',
+        data: {
+          export_info: {
+            exported_at: new Date().toISOString(),
+            export_version: '1.0',
+            user_id: 'mock_user_123',
+            note: 'This is mock data for demonstration purposes'
+          },
+          profile: {
+            id: 'mock_user_123',
+            email: 'user@roastr.ai',
+            name: 'Demo User',
+            plan: 'pro',
+            created_at: '2024-01-15T10:00:00Z'
+          },
+          organizations: [],
+          integrations: [],
+          activities: [],
+          usage_statistics: {
+            total_messages_sent: 42,
+            total_tokens_consumed: 1337,
+            monthly_messages_sent: 15,
+            monthly_tokens_consumed: 456
+          }
+        }
+      };
+    }
+    
+    if (endpoint === '/auth/delete-account') {
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
+      const gracePeriodEnds = new Date();
+      gracePeriodEnds.setDate(gracePeriodEnds.getDate() + 30);
+      
+      return {
+        success: true,
+        message: `Eliminación de cuenta programada para ${gracePeriodEnds.toLocaleDateString('es-ES')}. Tienes 30 días para cancelar esta acción.`,
+        data: {
+          gracePeriodEnds: gracePeriodEnds.toISOString(),
+          canCancel: true
+        }
+      };
+    }
+    
+    if (endpoint === '/auth/cancel-account-deletion') {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      return {
+        success: true,
+        message: 'Eliminación de cuenta cancelada exitosamente. Tu cuenta seguirá activa.',
+        data: {}
+      };
+    }
+    
+    // For other endpoints, throw the original error
+    throw originalError;
   }
 
-  async post(url, data, options = {}) {
-    const response = await this.request(url, {
-      ...options,
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return response.json();
+  // Convenience methods
+  async get(endpoint) {
+    return this.request('GET', endpoint);
   }
 
-  async put(url, data, options = {}) {
-    const response = await this.request(url, {
-      ...options,
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-    return response.json();
+  async post(endpoint, data) {
+    return this.request('POST', endpoint, data);
   }
 
-  async patch(url, data, options = {}) {
-    const response = await this.request(url, {
-      ...options,
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
-    return response.json();
+  async put(endpoint, data) {
+    return this.request('PUT', endpoint, data);
   }
 
-  async delete(url, options = {}) {
-    const response = await this.request(url, {
-      ...options,
-      method: 'DELETE',
-    });
-    return response.json();
+  async patch(endpoint, data) {
+    return this.request('PATCH', endpoint, data);
+  }
+
+  async delete(endpoint) {
+    return this.request('DELETE', endpoint);
   }
 }
 
-// Create and export a singleton instance
-const apiClient = new APIClient();
-
+// Export singleton instance
+export const apiClient = new ApiClient();
 export default apiClient;
 
-// Export convenience functions
+// Export convenience functions for compatibility with main branch
 export const api = {
   get: (url, options) => apiClient.get(url, options),
   post: (url, data, options) => apiClient.post(url, data, options),
