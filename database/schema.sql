@@ -361,6 +361,83 @@ CREATE TABLE job_queue (
 );
 
 -- ============================================================================
+-- GDPR & ACCOUNT DELETION
+-- ============================================================================
+
+-- Account deletion requests table
+CREATE TABLE account_deletion_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- Request details
+    requested_at TIMESTAMPTZ DEFAULT NOW(),
+    scheduled_deletion_at TIMESTAMPTZ NOT NULL,
+    grace_period_days INTEGER DEFAULT 30,
+    
+    -- Status
+    status VARCHAR(20) DEFAULT 'pending', -- pending, cancelled, processing, completed
+    
+    -- User info at time of request (for audit trail)
+    user_email VARCHAR(255) NOT NULL,
+    user_name VARCHAR(255),
+    
+    -- Processing details
+    data_exported_at TIMESTAMPTZ,
+    data_export_url TEXT,
+    data_export_expires_at TIMESTAMPTZ,
+    
+    -- Completion
+    completed_at TIMESTAMPTZ,
+    cancelled_at TIMESTAMPTZ,
+    cancellation_reason TEXT,
+    
+    -- Metadata
+    ip_address INET,
+    user_agent TEXT,
+    metadata JSONB DEFAULT '{}',
+    
+    CONSTRAINT account_deletion_status_check CHECK (status IN ('pending', 'cancelled', 'processing', 'completed'))
+);
+
+-- Index for efficient queries
+CREATE INDEX idx_account_deletion_user_id ON account_deletion_requests(user_id);
+CREATE INDEX idx_account_deletion_status_scheduled ON account_deletion_requests(status, scheduled_deletion_at);
+
+-- Audit log for GDPR compliance
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    
+    -- Subject details
+    user_id UUID, -- Can be null after user deletion
+    organization_id UUID, -- Can be null after user deletion
+    
+    -- Action details
+    action VARCHAR(100) NOT NULL, -- account_deletion_requested, data_exported, account_deleted, etc.
+    actor_id UUID REFERENCES users(id), -- Who performed the action
+    actor_type VARCHAR(20) DEFAULT 'user', -- user, system, admin
+    
+    -- Context
+    resource_type VARCHAR(50), -- user, organization, data_export, etc.
+    resource_id UUID,
+    
+    -- Details
+    details JSONB DEFAULT '{}',
+    ip_address INET,
+    user_agent TEXT,
+    
+    -- Legal compliance
+    legal_basis VARCHAR(100), -- gdpr_article_17, user_request, etc.
+    retention_period_days INTEGER,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    INDEX (user_id, created_at),
+    INDEX (organization_id, created_at),
+    INDEX (action, created_at),
+    CONSTRAINT audit_logs_actor_type_check CHECK (actor_type IN ('user', 'system', 'admin'))
+);
+
+-- ============================================================================
 -- LOGS & MONITORING
 -- ============================================================================
 
@@ -429,6 +506,8 @@ ALTER TABLE user_behaviors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE job_queue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_deletion_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies (users can only access their organization's data)
 -- Users can only see their own user record
@@ -510,6 +589,19 @@ CREATE POLICY org_isolation ON app_logs FOR ALL USING (
 );
 
 CREATE POLICY org_isolation ON api_keys FOR ALL USING (
+    organization_id IN (
+        SELECT o.id FROM organizations o 
+        LEFT JOIN organization_members om ON o.id = om.organization_id 
+        WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
+    )
+);
+
+-- Account deletion requests - users can only see their own
+CREATE POLICY user_deletion_isolation ON account_deletion_requests FOR ALL USING (user_id = auth.uid());
+
+-- Audit logs - users can see their own and organization-level logs
+CREATE POLICY audit_logs_isolation ON audit_logs FOR ALL USING (
+    user_id = auth.uid() OR
     organization_id IN (
         SELECT o.id FROM organizations o 
         LEFT JOIN organization_members om ON o.id = om.organization_id 

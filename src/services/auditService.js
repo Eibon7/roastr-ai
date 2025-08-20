@@ -323,6 +323,186 @@ class AuditService {
   }
 
   /**
+   * Log GDPR-related action (account deletion, data export, etc.)
+   * @param {Object} actionData - GDPR action data
+   * @param {string} actionData.action - Action type
+   * @param {string} actionData.userId - User ID
+   * @param {string} actionData.resourceId - Resource ID
+   * @param {string} actionData.legalBasis - Legal basis for action
+   * @param {Object} actionData.details - Action details
+   * @param {Object} req - Request object for IP/UserAgent
+   * @returns {Promise<Object>} Result
+   */
+  async logGdprAction(actionData, req = null) {
+    try {
+      const result = await withRetry(
+        async () => {
+          const { data, error } = await supabaseServiceClient
+            .from('audit_logs')
+            .insert({
+              action: actionData.action,
+              user_id: actionData.userId,
+              actor_id: actionData.actorId || actionData.userId,
+              actor_type: actionData.actorType || 'user',
+              resource_type: actionData.resourceType || 'user_data',
+              resource_id: actionData.resourceId,
+              details: actionData.details || {},
+              ip_address: req?.ip || req?.connection?.remoteAddress,
+              user_agent: req?.get?.('User-Agent'),
+              legal_basis: actionData.legalBasis,
+              retention_period_days: actionData.retentionPeriodDays || 2557 // 7 years default
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        },
+        {
+          maxRetries: 3,
+          shouldRetry: isRetryableError,
+          context: 'GDPR audit log creation'
+        }
+      );
+
+      logger.info('📋 GDPR action logged:', {
+        action: actionData.action,
+        userId: actionData.userId?.substr(0, 8) + '...' || 'N/A',
+        legalBasis: actionData.legalBasis
+      });
+
+      return { success: true, data: result };
+
+    } catch (error) {
+      logger.error('📋 Failed to log GDPR action:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Log account deletion request
+   */
+  async logAccountDeletionRequest(userId, requestId, details = {}, req = null) {
+    return await this.logGdprAction({
+      action: 'account_deletion_requested',
+      userId,
+      actorId: userId,
+      actorType: 'user',
+      resourceType: 'account_deletion_request',
+      resourceId: requestId,
+      details: {
+        ...details,
+        grace_period_days: details.gracePeriodDays || 30,
+        scheduled_deletion_at: details.scheduledDeletionAt
+      },
+      legalBasis: 'gdpr_article_17_right_to_be_forgotten',
+      retentionPeriodDays: 2557
+    }, req);
+  }
+
+  /**
+   * Log data export generation
+   */
+  async logDataExport(userId, exportDetails = {}, actorId = null) {
+    return await this.logGdprAction({
+      action: 'gdpr_data_exported',
+      userId,
+      actorId: actorId || userId,
+      actorType: actorId && actorId !== userId ? 'system' : 'user',
+      resourceType: 'data_export',
+      resourceId: exportDetails.filename,
+      details: {
+        export_size_bytes: exportDetails.size,
+        export_filename: exportDetails.filename,
+        data_categories: exportDetails.dataCategories,
+        expires_at: exportDetails.expiresAt
+      },
+      legalBasis: 'gdpr_article_20_right_to_data_portability',
+      retentionPeriodDays: 2557
+    });
+  }
+
+  /**
+   * Log account deletion cancellation
+   */
+  async logAccountDeletionCancellation(userId, requestId, details = {}, req = null) {
+    return await this.logGdprAction({
+      action: 'account_deletion_cancelled',
+      userId,
+      actorId: userId,
+      actorType: 'user',
+      resourceType: 'account_deletion_request',
+      resourceId: requestId,
+      details: {
+        ...details,
+        cancellation_reason: details.reason || 'user_requested'
+      },
+      legalBasis: 'user_withdrawal_of_consent',
+      retentionPeriodDays: 2557
+    }, req);
+  }
+
+  /**
+   * Log completion of account deletion
+   */
+  async logAccountDeletionCompleted(originalUserId, requestId, details = {}) {
+    return await this.logGdprAction({
+      action: 'account_deletion_completed',
+      userId: null, // User no longer exists
+      actorId: 'system',
+      actorType: 'system',
+      resourceType: 'user_account',
+      resourceId: originalUserId,
+      details: {
+        ...details,
+        completion_time: new Date().toISOString(),
+        original_user_id: originalUserId,
+        deletion_request_id: requestId,
+        data_categories_deleted: details.dataCategoriesDeleted || [],
+        anonymized_records_count: details.anonymizedRecordsCount || 0
+      },
+      legalBasis: 'gdpr_article_17_right_to_be_forgotten',
+      retentionPeriodDays: 2557
+    });
+  }
+
+  /**
+   * Get GDPR audit trail for a user
+   */
+  async getGdprAuditTrail(userId, limit = 100, offset = 0) {
+    try {
+      const { data, error, count } = await supabaseServiceClient
+        .from('audit_logs')
+        .select('*', { count: 'exact' })
+        .or(`user_id.eq.${userId},resource_id.eq.${userId}`)
+        .in('action', [
+          'account_deletion_requested',
+          'gdpr_data_exported', 
+          'account_deletion_cancelled',
+          'account_deletion_completed',
+          'personal_data_anonymized'
+        ])
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: {
+          auditLogs: data || [],
+          totalCount: count,
+          hasMore: count > offset + limit
+        }
+      };
+
+    } catch (error) {
+      logger.error('📋 Failed to retrieve GDPR audit trail:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Clean up old audit logs
    * @param {number} retentionDays - Days to retain logs
    * @returns {Promise<Object>} Cleanup result
