@@ -127,7 +127,7 @@ class CostControlService {
         currentUsage,
         limit,
         percentage: Math.round(percentage),
-        isNearLimit: percentage >= 90,
+        isNearLimit: percentage >= 80,
         organizationId,
         planId: org.plan_id
       };
@@ -189,8 +189,8 @@ class CostControlService {
 
       if (trackingError) throw trackingError;
       
-      // Check for usage alerts if approaching limits
-      if (trackingResult.limit_exceeded || trackingResult.percentage_used >= 80) {
+      // Check for usage alerts if approaching limits (80% threshold as per Issue 72)
+      if (trackingResult && (trackingResult.limit_exceeded || trackingResult.percentage_used >= 80)) {
         await this.checkAndSendUsageAlerts(organizationId, resourceType, trackingResult);
       }
 
@@ -238,7 +238,7 @@ class CostControlService {
   }
 
   /**
-   * Send usage alert (90% threshold)
+   * Send usage alert (80% threshold as per Issue 72)
    */
   async sendUsageAlert(organizationId, usageData) {
     try {
@@ -258,19 +258,41 @@ class CostControlService {
 
       if (orgError) throw orgError;
 
-      // Log the alert
+      const resourceType = usageData.resourceType || 'roasts';
+      const thresholdPercentage = usageData.thresholdPercentage || 80;
+      
+      // Enhanced logging as per Issue 72 requirements
+      const alertMessage = `🚨 Usage Alert: ${Math.round(usageData.percentage || 0)}% of monthly ${resourceType} limit reached (threshold: ${thresholdPercentage}%)`;
+      
+      // Log to console (Issue 72 requirement)
+      console.log(alertMessage, {
+        organizationId,
+        organizationName: org.name,
+        resourceType,
+        currentUsage: usageData.currentUsage || usageData.current_usage,
+        limit: usageData.limit || usageData.monthly_limit,
+        percentage: Math.round(usageData.percentage || 0),
+        thresholdPercentage,
+        planId: usageData.planId || org.plan_id,
+        timestamp: new Date().toISOString()
+      });
+
+      // Log to database (Issue 72 requirement)
       await this.supabase
         .from('app_logs')
         .insert({
           organization_id: organizationId,
           level: 'warn',
-          category: 'billing',
-          message: `Usage alert: ${usageData.percentage}% of monthly limit reached`,
+          category: 'usage_alert',
+          message: alertMessage,
           metadata: {
-            currentUsage: usageData.currentUsage,
-            limit: usageData.limit,
-            percentage: usageData.percentage,
-            planId: usageData.planId
+            resourceType,
+            currentUsage: usageData.currentUsage || usageData.current_usage,
+            limit: usageData.limit || usageData.monthly_limit,
+            percentage: Math.round(usageData.percentage || 0),
+            thresholdPercentage,
+            planId: usageData.planId || org.plan_id,
+            alertType: usageData.alertType || 'soft_warning'
           }
         });
 
@@ -436,6 +458,58 @@ class CostControlService {
   }
 
   /**
+   * Create default usage alerts for an organization (80% threshold)
+   */
+  async createDefaultUsageAlerts(organizationId) {
+    try {
+      const resourceTypes = ['roasts', 'api_calls', 'comment_analysis', 'shield_actions'];
+      const defaultAlerts = [];
+
+      for (const resourceType of resourceTypes) {
+        // Check if alert already exists
+        const { data: existingAlert, error: checkError } = await this.supabase
+          .from('usage_alerts')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('resource_type', resourceType)
+          .eq('threshold_percentage', 80)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        if (!existingAlert) {
+          defaultAlerts.push({
+            organization_id: organizationId,
+            resource_type: resourceType,
+            threshold_percentage: 80,
+            alert_type: 'in_app',
+            is_active: true,
+            max_alerts_per_day: 3,
+            cooldown_hours: 4
+          });
+        }
+      }
+
+      if (defaultAlerts.length > 0) {
+        const { error: insertError } = await this.supabase
+          .from('usage_alerts')
+          .insert(defaultAlerts);
+
+        if (insertError) throw insertError;
+
+        console.log(`Created ${defaultAlerts.length} default usage alerts for org ${organizationId}`);
+      }
+
+      return defaultAlerts;
+
+    } catch (error) {
+      console.error('Error creating default usage alerts:', error);
+      // Don't throw - this is not critical for operation
+      return [];
+    }
+  }
+
+  /**
    * Check and send usage alerts when approaching limits
    */
   async checkAndSendUsageAlerts(organizationId, resourceType, usageData) {
@@ -454,7 +528,24 @@ class CostControlService {
       
       if (error) throw error;
       
-      for (const alert of alerts) {
+      // Create default alerts if none exist
+      if (!alerts || alerts.length === 0) {
+        await this.createDefaultUsageAlerts(organizationId);
+        // Retry getting alerts after creating defaults
+        const { data: newAlerts } = await this.supabase
+          .from('usage_alerts')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('resource_type', resourceType)
+          .eq('is_active', true)
+          .lte('threshold_percentage', Math.ceil(percentage));
+        
+        if (newAlerts && newAlerts.length > 0) {
+          alerts = newAlerts;
+        }
+      }
+      
+      for (const alert of alerts || []) {
         // Check if we should send alert (cooldown, frequency limits)
         const shouldSend = await this.shouldSendAlert(alert, percentage);
         if (shouldSend) {
@@ -865,6 +956,136 @@ class CostControlService {
       
     } catch (error) {
       console.error('Error resetting monthly usage:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get alert history for organization (Issue 72 requirement)
+   */
+  async getAlertHistory(organizationId, options = {}) {
+    try {
+      const {
+        limit = 50,
+        offset = 0,
+        resourceType = null,
+        dateFrom = null,
+        dateTo = null,
+        alertType = null
+      } = options;
+
+      let query = this.supabase
+        .from('app_logs')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('category', 'usage_alert')
+        .order('created_at', { ascending: false });
+
+      // Apply filters
+      if (resourceType) {
+        query = query.eq('metadata->>resourceType', resourceType);
+      }
+
+      if (alertType) {
+        query = query.eq('metadata->>alertType', alertType);
+      }
+
+      if (dateFrom) {
+        query = query.gte('created_at', dateFrom);
+      }
+
+      if (dateTo) {
+        query = query.lte('created_at', dateTo);
+      }
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1);
+
+      const { data: alerts, error, count } = await query;
+
+      if (error) throw error;
+
+      // Get total count for pagination
+      const { count: totalCount, error: countError } = await this.supabase
+        .from('app_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
+        .eq('category', 'usage_alert');
+
+      if (countError) throw countError;
+
+      return {
+        alerts: alerts || [],
+        pagination: {
+          limit,
+          offset,
+          total: totalCount || 0,
+          hasMore: (offset + limit) < (totalCount || 0)
+        },
+        filters: {
+          resourceType,
+          alertType,
+          dateFrom,
+          dateTo
+        }
+      };
+
+    } catch (error) {
+      console.error('Error getting alert history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get alert statistics for organization
+   */
+  async getAlertStats(organizationId, days = 30) {
+    try {
+      const dateFrom = new Date();
+      dateFrom.setDate(dateFrom.getDate() - days);
+
+      // Get alert counts by resource type
+      const { data: alerts, error } = await this.supabase
+        .from('app_logs')
+        .select('metadata')
+        .eq('organization_id', organizationId)
+        .eq('category', 'usage_alert')
+        .gte('created_at', dateFrom.toISOString());
+
+      if (error) throw error;
+
+      // Process statistics
+      const stats = {
+        total: alerts.length,
+        byResourceType: {},
+        byThreshold: {},
+        recentAlerts: 0
+      };
+
+      const last24Hours = new Date();
+      last24Hours.setHours(last24Hours.getHours() - 24);
+
+      alerts.forEach(alert => {
+        const metadata = alert.metadata || {};
+        const resourceType = metadata.resourceType || 'unknown';
+        const threshold = metadata.thresholdPercentage || 80;
+        
+        // Count by resource type
+        stats.byResourceType[resourceType] = (stats.byResourceType[resourceType] || 0) + 1;
+        
+        // Count by threshold
+        stats.byThreshold[threshold] = (stats.byThreshold[threshold] || 0) + 1;
+      });
+
+      return {
+        organizationId,
+        period: `${days} days`,
+        stats,
+        generatedAt: new Date().toISOString()
+      };
+
+    } catch (error) {
+      console.error('Error getting alert stats:', error);
       throw error;
     }
   }

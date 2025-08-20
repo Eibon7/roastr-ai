@@ -816,4 +816,176 @@ router.get('/logs/download', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/admin/alerts/history/:orgId
+ * Get usage alert history for a specific organization (Issue 72)
+ */
+router.get('/alerts/history/:orgId', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const {
+            limit = 50,
+            offset = 0,
+            resource_type: resourceType,
+            date_from: dateFrom,
+            date_to: dateTo,
+            alert_type: alertType
+        } = req.query;
+
+        const costControl = new CostControlService();
+        const alertHistory = await costControl.getAlertHistory(orgId, {
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            resourceType,
+            dateFrom,
+            dateTo,
+            alertType
+        });
+
+        res.json({
+            success: true,
+            data: alertHistory
+        });
+
+    } catch (error) {
+        logger.error('Get alert history endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch alert history',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/alerts/stats/:orgId
+ * Get usage alert statistics for a specific organization
+ */
+router.get('/alerts/stats/:orgId', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const { days = 30 } = req.query;
+
+        const costControl = new CostControlService();
+        const alertStats = await costControl.getAlertStats(orgId, parseInt(days));
+
+        res.json({
+            success: true,
+            data: alertStats
+        });
+
+    } catch (error) {
+        logger.error('Get alert stats endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch alert statistics',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/alerts/history
+ * Get usage alert history across all organizations
+ */
+router.get('/alerts/history', async (req, res) => {
+    try {
+        const {
+            limit = 100,
+            offset = 0,
+            organization_id: organizationId,
+            resource_type: resourceType,
+            date_from: dateFrom,
+            date_to: dateTo,
+            alert_type: alertType
+        } = req.query;
+
+        // Build query for all organizations
+        let query = supabaseServiceClient
+            .from('app_logs')
+            .select(`
+                id, organization_id, level, category, message, metadata, created_at,
+                organizations (
+                    name, plan_id
+                )
+            `)
+            .eq('category', 'usage_alert')
+            .order('created_at', { ascending: false });
+
+        // Apply filters
+        if (organizationId) {
+            query = query.eq('organization_id', organizationId);
+        }
+
+        if (resourceType) {
+            query = query.eq('metadata->>resourceType', resourceType);
+        }
+
+        if (alertType) {
+            query = query.eq('metadata->>alertType', alertType);
+        }
+
+        if (dateFrom) {
+            query = query.gte('created_at', dateFrom);
+        }
+
+        if (dateTo) {
+            query = query.lte('created_at', dateTo);
+        }
+
+        // Apply pagination
+        query = query.range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+        const { data: alerts, error, count } = await query;
+
+        if (error) {
+            throw new Error(`Error fetching alert history: ${error.message}`);
+        }
+
+        // Get total count
+        let countQuery = supabaseServiceClient
+            .from('app_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('category', 'usage_alert');
+
+        if (organizationId) {
+            countQuery = countQuery.eq('organization_id', organizationId);
+        }
+
+        const { count: totalCount, error: countError } = await countQuery;
+
+        if (countError) {
+            throw new Error(`Error getting alert count: ${countError.message}`);
+        }
+
+        res.json({
+            success: true,
+            data: {
+                alerts: alerts || [],
+                pagination: {
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    total: totalCount || 0,
+                    hasMore: (parseInt(offset) + parseInt(limit)) < (totalCount || 0)
+                },
+                filters: {
+                    organizationId,
+                    resourceType,
+                    alertType,
+                    dateFrom,
+                    dateTo
+                }
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get all alerts endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch alert history',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;
