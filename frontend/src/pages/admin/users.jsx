@@ -407,7 +407,10 @@ const AdminUsersPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         {user.suspended ? (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
+                          <span 
+                            className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
+                            title={user.suspended_at ? `Suspendido el ${formatDate(user.suspended_at)}` : 'Usuario suspendido'}
+                          >
                             🚫 Suspendido
                           </span>
                         ) : (
@@ -416,7 +419,10 @@ const AdminUsersPage = () => {
                           </span>
                         )}
                         {user.suspended && user.suspended_reason && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400" title={user.suspended_reason}>
+                          <span 
+                            className="text-xs text-gray-500 dark:text-gray-400 cursor-help" 
+                            title={`Razón: ${user.suspended_reason}`}
+                          >
                             ❓
                           </span>
                         )}

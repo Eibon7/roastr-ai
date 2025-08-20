@@ -375,6 +375,7 @@ class AuthService {
                     total_messages_sent, total_tokens_consumed,
                     monthly_messages_sent, monthly_tokens_consumed,
                     last_activity_at, created_at, suspended_reason,
+                    suspended_at, suspended_by,
                     organizations!owner_id (id, name, plan_id, monthly_responses_used)
                 `);
 
@@ -812,7 +813,8 @@ class AuthService {
                     id, email, name, plan, active, suspended, 
                     total_messages_sent, total_tokens_consumed,
                     monthly_messages_sent, monthly_tokens_consumed,
-                    last_activity_at, created_at
+                    last_activity_at, created_at, suspended_reason,
+                    suspended_at, suspended_by
                 `)
                 .eq('id', userId)
                 .single();

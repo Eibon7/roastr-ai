@@ -1,0 +1,229 @@
+
+> roastr-ai@1.0.0 start
+> node src/index.js
+
+[dotenv@17.2.1] injecting env (23) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+🎭 Mock Mode ENABLED - Using fake data for all external APIs
+[INFO] 2025-08-20T13:40:22.441Z: 🏁 Feature flags initialized {
+  enabled: [
+    'ENABLE_REAL_OPENAI',
+    'ENABLE_DEBUG_LOGS',
+    'MOCK_MODE',
+    'ENABLE_MOCK_PERSISTENCE',
+    'ENABLE_MAGIC_LINK',
+    'ENABLE_STYLE_PROFILE'
+  ],
+  disabled: [
+    'ENABLE_BILLING',
+    'ENABLE_RQC',
+    'ENABLE_SHIELD',
+    'ENABLE_REAL_TWITTER',
+    'ENABLE_REAL_YOUTUBE',
+    'ENABLE_REAL_INSTAGRAM',
+    'ENABLE_REAL_FACEBOOK',
+    'ENABLE_REAL_DISCORD',
+    'ENABLE_REAL_TWITCH',
+    'ENABLE_REAL_REDDIT',
+    'ENABLE_REAL_TIKTOK',
+    'ENABLE_REAL_BLUESKY',
+    'ENABLE_REAL_PERSPECTIVE',
+    'ENABLE_EMAIL_NOTIFICATIONS',
+    'ENABLE_SUPABASE',
+    'VERBOSE_LOGS'
+  ],
+  totalFlags: 22
+}
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[WARN] 2025-08-20T13:40:22.683Z: 📧 Email service disabled - missing SENDGRID_API_KEY or feature flag disabled
+[INFO] 2025-08-20T13:40:22.736Z: Alerting Service initialized {
+  enabled: false,
+  hasWebhookUrl: false,
+  thresholds: {
+    workerFailures: { warning: 10, critical: 25 },
+    queueDepth: { warning: 500, critical: 1000 },
+    responseTime: { warning: 3000, critical: 5000 },
+    costPercentage: { warning: 80, critical: 95 },
+    memoryUsage: { warning: 80, critical: 90 }
+  }
+}
+[INFO] {"timestamp":"2025-08-20T13:40:22.738Z","level":"info","service":"QueueService","message":"Queue Service initialized in mock mode - skipping real connections"}
+[INFO] 2025-08-20T13:40:22.738Z: Monitoring Service initialized {}
+[INFO] 2025-08-20T13:40:22.803Z: 🔄 Worker notification service initialized
+⚠️ Stripe billing disabled - missing configuration keys
+🔥 Roastr.ai API escuchando en http://localhost:3000
+🏁 Feature flags loaded: 22 flags
+💾 Database: mock
+💳 Billing: unavailable
+🤖 OpenAI: available
+[INFO] 2025-08-20T13:40:39.096Z: HTTP Request {
+  method: 'GET',
+  path: '/api/health',
+  ip: '::1',
+  userAgent: 'curl/8.7.1',
+  contentLength: undefined
+}
+[DEBUG] 2025-08-20T13:40:39.163Z: Alerting disabled, skipping alert {
+  severity: 'critical',
+  title: '🚨 Critical: High Worker Failure Rate'
+}
+[DEBUG] 2025-08-20T13:40:39.164Z: Alerting disabled, skipping alert { severity: 'critical', title: '🚨 Critical: High Memory Usage' }
+[INFO] 2025-08-20T13:40:39.164Z: HTTP Response {
+  method: 'GET',
+  path: '/api/health',
+  statusCode: 503,
+  duration: '68ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:41:02.796Z: HTTP Request {
+  method: 'GET',
+  path: '/api/health',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:41:02.803Z: HTTP Request {
+  method: 'GET',
+  path: '/api/user',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users. See https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ for more information.
+    at Object.xForwardedForHeader (/Users/emiliopostigo/roastr-ai/node_modules/express-rate-limit/dist/index.cjs:364:13)
+    at wrappedValidations.<computed> [as xForwardedForHeader] (/Users/emiliopostigo/roastr-ai/node_modules/express-rate-limit/dist/index.cjs:606:22)
+    at Object.keyGenerator (/Users/emiliopostigo/roastr-ai/node_modules/express-rate-limit/dist/index.cjs:708:20)
+    at /Users/emiliopostigo/roastr-ai/node_modules/express-rate-limit/dist/index.cjs:766:32
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async /Users/emiliopostigo/roastr-ai/node_modules/express-rate-limit/dist/index.cjs:747:5 {
+  code: 'ERR_ERL_UNEXPECTED_X_FORWARDED_FOR',
+  help: 'https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/'
+}
+[DEBUG] 2025-08-20T13:41:02.808Z: Alerting disabled, skipping alert {
+  severity: 'critical',
+  title: '🚨 Critical: High Worker Failure Rate'
+}
+[DEBUG] 2025-08-20T13:41:02.808Z: Alerting disabled, skipping alert { severity: 'critical', title: '🚨 Critical: High Memory Usage' }
+[INFO] 2025-08-20T13:41:02.809Z: HTTP Response {
+  method: 'GET',
+  path: '/api/health',
+  statusCode: 503,
+  duration: '13ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:41:02.810Z: HTTP Response {
+  method: 'GET',
+  path: '/user',
+  statusCode: 200,
+  duration: '7ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:41:02.814Z: HTTP Request {
+  method: 'GET',
+  path: '/api/health',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:41:02.815Z: HTTP Request {
+  method: 'GET',
+  path: '/api/user',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:41:02.816Z: HTTP Response {
+  method: 'GET',
+  path: '/user',
+  statusCode: 200,
+  duration: '1ms',
+  contentLength: undefined
+}
+[DEBUG] 2025-08-20T13:41:02.817Z: Alerting disabled, skipping alert {
+  severity: 'critical',
+  title: '🚨 Critical: High Worker Failure Rate'
+}
+[DEBUG] 2025-08-20T13:41:02.817Z: Alerting disabled, skipping alert { severity: 'critical', title: '🚨 Critical: High Memory Usage' }
+[INFO] 2025-08-20T13:41:02.818Z: HTTP Response {
+  method: 'GET',
+  path: '/api/health',
+  statusCode: 503,
+  duration: '4ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.711Z: HTTP Request {
+  method: 'GET',
+  path: '/api/user',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.712Z: HTTP Request {
+  method: 'GET',
+  path: '/api/usage',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.713Z: HTTP Response {
+  method: 'GET',
+  path: '/user',
+  statusCode: 200,
+  duration: '2ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.716Z: HTTP Response {
+  method: 'GET',
+  path: '/usage',
+  statusCode: 200,
+  duration: '3ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.725Z: HTTP Request {
+  method: 'GET',
+  path: '/api/user',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.729Z: HTTP Request {
+  method: 'GET',
+  path: '/api/usage',
+  ip: '::1',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.731Z: HTTP Response {
+  method: 'GET',
+  path: '/user',
+  statusCode: 200,
+  duration: '6ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T13:49:41.732Z: HTTP Response {
+  method: 'GET',
+  path: '/usage',
+  statusCode: 200,
+  duration: '3ms',
+  contentLength: undefined
+}
+[INFO] 2025-08-20T14:00:10.479Z: HTTP Request {
+  method: 'GET',
+  path: '/api/health',
+  ip: '::1',
+  userAgent: 'curl/8.7.1',
+  contentLength: undefined
+}
+[DEBUG] 2025-08-20T14:00:10.509Z: Alerting disabled, skipping alert {
+  severity: 'critical',
+  title: '🚨 Critical: High Worker Failure Rate'
+}
+[DEBUG] 2025-08-20T14:00:10.509Z: Alerting disabled, skipping alert { severity: 'critical', title: '🚨 Critical: High Memory Usage' }
+[INFO] 2025-08-20T14:00:10.509Z: HTTP Response {
+  method: 'GET',
+  path: '/api/health',
+  statusCode: 503,
+  duration: '30ms',
+  contentLength: undefined
+}

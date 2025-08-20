@@ -4,6 +4,7 @@ import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { LogOut } from 'lucide-react';
 import { authHelpers } from '../lib/supabaseClient';
+import ThemeToggle from './ThemeToggle';
 
 export default function TopBar() {
   const [user, setUser] = useState(null);
@@ -87,6 +88,9 @@ export default function TopBar() {
                 MOCK MODE
               </Badge>
             )}
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Logout Button */}
             <button
