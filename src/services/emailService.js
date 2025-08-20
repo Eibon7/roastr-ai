@@ -291,6 +291,95 @@ class EmailService {
     }
 
     /**
+     * Send account deletion requested notification
+     * @param {string} userEmail - User email address
+     * @param {Object} deletionData - Account deletion details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendAccountDeletionRequestedEmail(userEmail, deletionData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '⚠️ Account Deletion Request Received',
+            templateName: 'account_deletion_requested',
+            templateData: {
+                userName: deletionData.userName || 'User',
+                gracePeriodDays: deletionData.gracePeriodDays || 30,
+                scheduledDeletionDate: deletionData.scheduledDeletionDate,
+                dataExportUrl: deletionData.dataExportUrl,
+                dataExportExpiresAt: deletionData.dataExportExpiresAt,
+                cancellationUrl: `${process.env.APP_URL || 'https://app.roastr.ai'}/account/deletion/cancel`,
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
+     * Send account deletion reminder notification (sent a few days before deletion)
+     * @param {string} userEmail - User email address
+     * @param {Object} reminderData - Deletion reminder details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendAccountDeletionReminderEmail(userEmail, reminderData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '🔔 Account Deletion Reminder - Action Required',
+            templateName: 'account_deletion_reminder',
+            templateData: {
+                userName: reminderData.userName || 'User',
+                daysUntilDeletion: reminderData.daysUntilDeletion || 3,
+                scheduledDeletionDate: reminderData.scheduledDeletionDate,
+                dataExportUrl: reminderData.dataExportUrl,
+                cancellationUrl: `${process.env.APP_URL || 'https://app.roastr.ai'}/account/deletion/cancel`,
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
+     * Send account deletion completed notification
+     * @param {string} userEmail - User email address
+     * @param {Object} completionData - Deletion completion details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendAccountDeletionCompletedEmail(userEmail, completionData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '✅ Account Deletion Complete',
+            templateName: 'account_deletion_completed',
+            templateData: {
+                userName: completionData.userName || 'User',
+                deletionDate: completionData.deletionDate,
+                dataRetentionInfo: {
+                    anonymizedLogs: '2 years (for legal compliance)',
+                    auditTrail: '7 years (for security compliance)',
+                    personalData: 'Completely removed'
+                },
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
+     * Send account deletion cancelled notification
+     * @param {string} userEmail - User email address
+     * @param {Object} cancellationData - Cancellation details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendAccountDeletionCancelledEmail(userEmail, cancellationData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '🎉 Account Deletion Cancelled',
+            templateName: 'account_deletion_cancelled',
+            templateData: {
+                userName: cancellationData.userName || 'User',
+                cancellationDate: cancellationData.cancellationDate,
+                dashboardUrl: process.env.APP_URL || 'https://app.roastr.ai',
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
      * Get service status
      * @returns {Object} Service configuration status
      */
