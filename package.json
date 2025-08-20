@@ -66,7 +66,17 @@
     "fixtures:update:all": "node tests/integration/backend/utils/update-backend-fixtures.js",
     "changelog:add": "node scripts/add-changelog.js",
     "admin:setup": "node scripts/setup-admin.js",
-    "admin:list": "node scripts/setup-admin.js --list"
+    "admin:list": "node scripts/setup-admin.js --list",
+    "logs:stats": "node src/cli/logManager.js stats",
+    "logs:cleanup": "node src/cli/logManager.js cleanup",
+    "logs:cleanup:dry": "node src/cli/logManager.js cleanup --dry-run",
+    "logs:backup": "node src/cli/logManager.js backup upload",
+    "logs:backup:list": "node src/cli/logManager.js backup list",
+    "logs:backup:cleanup": "node src/cli/logManager.js backup cleanup",
+    "logs:maintenance:start": "node src/cli/logManager.js maintenance start",
+    "logs:maintenance:status": "node src/cli/logManager.js maintenance status",
+    "logs:maintenance:health": "node src/cli/logManager.js maintenance health",
+    "logs:test": "node src/cli/logManager.js test"
   },
   "repository": {
     "type": "git",
@@ -86,12 +96,14 @@
     "@twurple/api": "^7.1.0",
     "@twurple/auth": "^7.1.0",
     "@twurple/chat": "^7.1.0",
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "colors": "^1.4.0",
     "commander": "^14.0.0",
     "cors": "^2.8.5",
+    "cron": "^4.3.3",
     "discord.js": "^14.15.3",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
@@ -113,7 +125,9 @@
     "snoowrap": "^1.16.0",
     "stripe": "^18.4.0",
     "tailwindcss": "^4.1.12",
-    "twitter-api-v2": "^1.24.0"
+    "twitter-api-v2": "^1.24.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.18.6",
