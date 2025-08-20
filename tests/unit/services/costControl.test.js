@@ -174,10 +174,15 @@ describe('CostControlService', () => {
       expect(result.recorded).toBe(true);
       expect(result.cost).toBe(5); // 5 cents for generate_reply
       expect(mockFrom).toHaveBeenCalledWith('usage_records');
-      expect(mockRpc).toHaveBeenCalledWith('increment_usage', {
+      expect(mockRpc).toHaveBeenCalledWith('record_usage', {
         org_id: 'test-org-123',
-        platform_name: 'twitter',
-        cost: 5
+        resource_type_param: 'roasts',
+        platform_param: 'twitter',
+        user_id_param: null,
+        quantity_param: 1,
+        cost_param: 5,
+        tokens_param: 25,
+        metadata_param: { tokensUsed: 25 }
       });
     });
 
