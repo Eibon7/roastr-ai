@@ -4,6 +4,7 @@ const { isAdminMiddleware } = require('../middleware/isAdmin');
 const { logger } = require('../utils/logger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
+const CostControlService = require('../services/costControl');
 const revenueRoutes = require('./revenue');
 const { exec } = require('child_process');
 const fs = require('fs').promises;
@@ -456,6 +457,312 @@ router.get('/logs', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch logs',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/usage
+ * Get usage statistics across all organizations
+ */
+router.get('/usage', async (req, res) => {
+    try {
+        const { 
+            period = 'current_month',
+            limit = 50, 
+            offset = 0,
+            organization_id = null,
+            resource_type = null 
+        } = req.query;
+
+        const costControl = new CostControlService();
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+
+        // Base query for usage tracking
+        let query = supabaseServiceClient
+            .from('usage_tracking')
+            .select(`
+                id, organization_id, user_id, resource_type, platform,
+                quantity, year, month, day, cost_cents, tokens_used,
+                created_at, metadata,
+                organizations!inner(id, name, plan_id)
+            `);
+
+        // Apply filters
+        if (period === 'current_month') {
+            query = query.eq('year', currentYear).eq('month', currentMonth);
+        } else if (period === 'last_month') {
+            const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+            const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+            query = query.eq('year', lastMonthYear).eq('month', lastMonth);
+        }
+
+        if (organization_id) {
+            query = query.eq('organization_id', organization_id);
+        }
+
+        if (resource_type) {
+            query = query.eq('resource_type', resource_type);
+        }
+
+        // Order and paginate
+        query = query
+            .order('created_at', { ascending: false })
+            .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+        const { data: usageRecords, error, count } = await query;
+
+        if (error) {
+            throw new Error(`Error fetching usage data: ${error.message}`);
+        }
+
+        // Get summary statistics
+        const { data: summaryData, error: summaryError } = await supabaseServiceClient
+            .rpc('get_usage_summary', {
+                target_year: period === 'last_month' && currentMonth === 1 ? currentYear - 1 : currentYear,
+                target_month: period === 'last_month' ? (currentMonth === 1 ? 12 : currentMonth - 1) : currentMonth
+            });
+
+        res.json({
+            success: true,
+            data: {
+                usage_records: usageRecords || [],
+                summary: summaryData || [],
+                pagination: {
+                    total: count,
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    has_more: count > (parseInt(offset) + parseInt(limit))
+                },
+                filters: {
+                    period,
+                    organization_id,
+                    resource_type
+                }
+            }
+        });
+
+    } catch (error) {
+        logger.error('Usage statistics endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch usage statistics',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/usage/organizations/:orgId
+ * Get detailed usage statistics for a specific organization
+ */
+router.get('/usage/organizations/:orgId', async (req, res) => {
+    try {
+        const { orgId } = req.params;
+        const { months = 3 } = req.query;
+
+        const costControl = new CostControlService();
+        const usageStats = await costControl.getEnhancedUsageStats(orgId, parseInt(months));
+
+        res.json({
+            success: true,
+            data: usageStats
+        });
+
+    } catch (error) {
+        logger.error('Organization usage endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch organization usage statistics',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/admin/usage/limits
+ * Set or update usage limits for an organization
+ */
+router.post('/usage/limits', async (req, res) => {
+    try {
+        const { 
+            organization_id, 
+            resource_type, 
+            monthly_limit,
+            daily_limit = null,
+            allow_overage = false,
+            overage_rate_cents = 0,
+            hard_limit = true
+        } = req.body;
+
+        if (!organization_id || !resource_type || monthly_limit === undefined) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: organization_id, resource_type, monthly_limit'
+            });
+        }
+
+        const costControl = new CostControlService();
+        const result = await costControl.setUsageLimit(organization_id, resource_type, monthly_limit, {
+            dailyLimit: daily_limit,
+            allowOverage: allow_overage,
+            overageRateCents: overage_rate_cents,
+            hardLimit: hard_limit
+        });
+
+        logger.info('Usage limit updated by admin', {
+            organization_id,
+            resource_type,
+            monthly_limit,
+            performedBy: req.user.email
+        });
+
+        res.json({
+            success: true,
+            data: result,
+            message: `Usage limit for ${resource_type} updated successfully`
+        });
+
+    } catch (error) {
+        logger.error('Set usage limit endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to set usage limit',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/admin/usage/reset
+ * Manually reset monthly usage for all organizations (emergency use)
+ */
+router.post('/usage/reset', async (req, res) => {
+    try {
+        const { confirm = false } = req.body;
+
+        if (!confirm) {
+            return res.status(400).json({
+                success: false,
+                error: 'This action requires confirmation. Send { "confirm": true } to proceed.',
+                warning: 'This will reset monthly usage counters for ALL organizations'
+            });
+        }
+
+        const costControl = new CostControlService();
+        const result = await costControl.resetAllMonthlyUsage();
+
+        logger.warn('Manual usage reset performed by admin', {
+            organizationsReset: result.organizationsReset,
+            performedBy: req.user.email,
+            resetAt: result.resetAt
+        });
+
+        res.json({
+            success: true,
+            data: result,
+            message: `Monthly usage reset completed for ${result.organizationsReset} organizations`
+        });
+
+    } catch (error) {
+        logger.error('Manual usage reset endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to reset monthly usage',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/usage/export
+ * Export usage data as CSV
+ */
+router.get('/usage/export', async (req, res) => {
+    try {
+        const { 
+            period = 'current_month',
+            format = 'csv',
+            organization_id = null
+        } = req.query;
+
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+
+        // Query usage data
+        let query = supabaseServiceClient
+            .from('usage_tracking')
+            .select(`
+                organization_id, resource_type, platform,
+                quantity, year, month, day, cost_cents, tokens_used,
+                created_at,
+                organizations!inner(name, plan_id)
+            `);
+
+        // Apply period filter
+        if (period === 'current_month') {
+            query = query.eq('year', currentYear).eq('month', currentMonth);
+        } else if (period === 'last_month') {
+            const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+            const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+            query = query.eq('year', lastMonthYear).eq('month', lastMonth);
+        }
+
+        if (organization_id) {
+            query = query.eq('organization_id', organization_id);
+        }
+
+        query = query.order('created_at', { ascending: false }).limit(10000);
+
+        const { data: usageData, error } = await query;
+
+        if (error) {
+            throw new Error(`Error fetching usage data for export: ${error.message}`);
+        }
+
+        if (format === 'csv') {
+            // Generate CSV
+            let csv = 'Organization,Plan,Resource Type,Platform,Quantity,Cost (cents),Tokens Used,Date,Created At\n';
+            
+            usageData.forEach(record => {
+                csv += `"${record.organizations.name}",`;
+                csv += `"${record.organizations.plan_id}",`;
+                csv += `"${record.resource_type}",`;
+                csv += `"${record.platform || ''}",`;
+                csv += `${record.quantity},`;
+                csv += `${record.cost_cents},`;
+                csv += `${record.tokens_used},`;
+                csv += `"${record.year}-${String(record.month).padStart(2, '0')}-${String(record.day).padStart(2, '0')}",`;
+                csv += `"${record.created_at}"\n`;
+            });
+
+            const filename = `roastr-usage-${period}-${new Date().toISOString().split('T')[0]}.csv`;
+            
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.send(csv);
+        } else {
+            // Return JSON
+            res.json({
+                success: true,
+                data: {
+                    usage_records: usageData,
+                    exported_at: new Date().toISOString(),
+                    period,
+                    total_records: usageData.length
+                }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Usage export endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to export usage data',
             message: error.message
         });
     }

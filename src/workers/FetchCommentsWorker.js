@@ -113,10 +113,12 @@ class FetchCommentsWorker extends BaseWorker {
   async processJob(job) {
     const { organization_id, platform, integration_config_id, payload } = job.payload || job;
     
-    // Check cost control limits
+    // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
       organization_id, 
-      'fetch_comment'
+      'fetch_comment',
+      1, // quantity
+      platform
     );
     
     if (!canProcess.allowed) {
@@ -149,15 +151,20 @@ class FetchCommentsWorker extends BaseWorker {
       comments
     );
     
-    // Record usage (fetch_comment is free operation)
+    // Record usage with enhanced tracking
     await this.costControl.recordUsage(
       organization_id,
       platform,
       'fetch_comment',
       {
         commentsCount: storedComments.length,
-        jobId: job.id
-      }
+        jobId: job.id,
+        integrationConfigId: integration_config_id,
+        fetchTime: Date.now(),
+        rateLimitInfo: this.rateLimitInfo?.[platform] || {}
+      },
+      null, // userId - not applicable for comment fetching
+      storedComments.length // quantity - number of comments fetched
     );
     
     // Queue analysis jobs for new comments

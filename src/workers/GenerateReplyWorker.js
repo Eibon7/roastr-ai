@@ -138,10 +138,12 @@ class GenerateReplyWorker extends BaseWorker {
       categories 
     } = job.payload || job;
     
-    // Check cost control limits
+    // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
       organization_id, 
-      'generate_reply'
+      'generate_reply',
+      1, // quantity
+      platform
     );
     
     if (!canProcess.allowed) {
@@ -196,7 +198,8 @@ class GenerateReplyWorker extends BaseWorker {
       generationTime
     );
     
-    // Record usage and cost
+    // Record usage and cost with enhanced tracking
+    const tokensUsed = response.tokensUsed || this.estimateTokens(original_text + response.text);
     await this.costControl.recordUsage(
       organization_id,
       platform,
@@ -204,10 +207,16 @@ class GenerateReplyWorker extends BaseWorker {
       {
         commentId: comment_id,
         responseId: storedResponse.id,
-        tokensUsed: this.estimateTokens(original_text + response.text),
+        tokensUsed,
         generationTime,
-        service: response.service
-      }
+        service: response.service,
+        tone: integrationConfig.tone,
+        humorType: integrationConfig.humor_type,
+        originalTextLength: original_text.length,
+        responseLength: response.text.length
+      },
+      null, // userId - could be extracted from comment if needed
+      1 // quantity
     );
     
     // Queue posting job (if auto-posting is enabled)

@@ -54,27 +54,38 @@ class CostControlService {
   /**
    * Check if organization can perform an operation
    */
-  async canPerformOperation(organizationId, operationType = 'generate_reply') {
+  async canPerformOperation(organizationId, operationType = 'generate_reply', quantity = 1, platform = null) {
     try {
-      const usageCheck = await this.checkUsageLimit(organizationId);
-      
-      if (!usageCheck.canUse) {
-        return {
-          allowed: false,
-          reason: 'monthly_limit_exceeded',
-          message: `Monthly limit of ${usageCheck.limit} responses exceeded`,
-          currentUsage: usageCheck.currentUsage,
-          limit: usageCheck.limit
-        };
-      }
-
-      return {
-        allowed: true,
-        currentUsage: usageCheck.currentUsage,
-        limit: usageCheck.limit,
-        percentage: usageCheck.percentage
+      // Map operation types to resource types
+      const resourceTypeMap = {
+        'generate_reply': 'roasts',
+        'fetch_comment': 'api_calls',
+        'analyze_toxicity': 'comment_analysis',
+        'post_response': 'api_calls',
+        'shield_action': 'shield_actions',
+        'webhook_call': 'webhook_calls'
       };
-
+      
+      const resourceType = resourceTypeMap[operationType] || 'api_calls';
+      
+      // Use the enhanced database function
+      const { data: result, error } = await this.supabase
+        .rpc('can_perform_operation', {
+          org_id: organizationId,
+          resource_type_param: resourceType,
+          quantity_param: quantity
+        });
+      
+      if (error) throw error;
+      
+      // If operation not allowed, add contextual message
+      if (!result.allowed) {
+        const resourceName = this.getResourceDisplayName(resourceType);
+        result.message = this.buildLimitMessage(result, resourceName);
+      }
+      
+      return result;
+      
     } catch (error) {
       console.error('Error checking operation permission:', error);
       throw error;
@@ -128,37 +139,66 @@ class CostControlService {
   }
 
   /**
-   * Record usage and cost
+   * Record usage and cost with enhanced tracking
    */
-  async recordUsage(organizationId, platform, operationType, metadata = {}) {
+  async recordUsage(organizationId, platform, operationType, metadata = {}, userId = null, quantity = 1) {
     try {
       const cost = this.operationCosts[operationType] || 0;
+      const tokensUsed = metadata.tokensUsed || 0;
+      
+      // Map operation types to resource types
+      const resourceTypeMap = {
+        'generate_reply': 'roasts',
+        'fetch_comment': 'api_calls',
+        'analyze_toxicity': 'comment_analysis',
+        'post_response': 'api_calls',
+        'shield_action': 'shield_actions',
+        'webhook_call': 'webhook_calls'
+      };
+      
+      const resourceType = resourceTypeMap[operationType] || 'api_calls';
 
-      // Record in usage_records
+      // Record in usage_records (legacy table for detailed logs)
       const { data: usageRecord, error: usageError } = await this.supabase
         .from('usage_records')
         .insert({
           organization_id: organizationId,
           platform,
           action_type: operationType,
-          tokens_used: metadata.tokensUsed || 0,
-          cost_cents: cost,
-          metadata
+          tokens_used: tokensUsed,
+          cost_cents: cost * quantity,
+          metadata: { ...metadata, quantity, resourceType }
         })
         .select()
         .single();
 
       if (usageError) throw usageError;
 
-      // If it's a billable response generation, increment counters
-      if (operationType === 'generate_reply') {
-        await this.incrementUsageCounters(organizationId, platform, cost);
+      // Use enhanced usage recording function
+      const { data: trackingResult, error: trackingError } = await this.supabase
+        .rpc('record_usage', {
+          org_id: organizationId,
+          resource_type_param: resourceType,
+          platform_param: platform,
+          user_id_param: userId,
+          quantity_param: quantity,
+          cost_param: cost * quantity,
+          tokens_param: tokensUsed * quantity,
+          metadata_param: metadata
+        });
+
+      if (trackingError) throw trackingError;
+      
+      // Check for usage alerts if approaching limits
+      if (trackingResult.limit_exceeded || trackingResult.percentage_used >= 80) {
+        await this.checkAndSendUsageAlerts(organizationId, resourceType, trackingResult);
       }
 
       return {
         recorded: true,
-        cost,
-        usageRecordId: usageRecord.id
+        cost: cost * quantity,
+        usageRecordId: usageRecord.id,
+        tracking: trackingResult
       };
 
     } catch (error) {
@@ -365,6 +405,272 @@ class CostControlService {
   }
 
   /**
+   * Get resource display name for user-friendly messages
+   */
+  getResourceDisplayName(resourceType) {
+    const displayNames = {
+      'roasts': 'roast responses',
+      'api_calls': 'API calls',
+      'comment_analysis': 'comment analyses',
+      'shield_actions': 'shield actions',
+      'webhook_calls': 'webhook calls',
+      'integrations': 'active integrations'
+    };
+    return displayNames[resourceType] || resourceType;
+  }
+
+  /**
+   * Build contextual limit exceeded message
+   */
+  buildLimitMessage(result, resourceName) {
+    const { reason, current_usage, monthly_limit, remaining } = result;
+    
+    switch (reason) {
+      case 'monthly_limit_exceeded':
+        return `Monthly limit of ${monthly_limit} ${resourceName} exceeded. Current usage: ${current_usage}.`;
+      case 'overage_allowed':
+        return `Monthly limit exceeded but overage is allowed for your plan. Additional charges may apply.`;
+      default:
+        return `Operation not allowed: ${reason}`;
+    }
+  }
+
+  /**
+   * Check and send usage alerts when approaching limits
+   */
+  async checkAndSendUsageAlerts(organizationId, resourceType, usageData) {
+    try {
+      const percentage = usageData.percentage_used || 
+        (usageData.current_usage / usageData.monthly_limit) * 100;
+      
+      // Get alert configurations for this org and resource
+      const { data: alerts, error } = await this.supabase
+        .from('usage_alerts')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('resource_type', resourceType)
+        .eq('is_active', true)
+        .lte('threshold_percentage', Math.ceil(percentage));
+      
+      if (error) throw error;
+      
+      for (const alert of alerts) {
+        // Check if we should send alert (cooldown, frequency limits)
+        const shouldSend = await this.shouldSendAlert(alert, percentage);
+        if (shouldSend) {
+          await this.sendUsageAlert(organizationId, {
+            ...usageData,
+            resourceType,
+            alertType: alert.alert_type,
+            thresholdPercentage: alert.threshold_percentage
+          });
+          
+          // Update alert sent timestamp
+          await this.supabase
+            .from('usage_alerts')
+            .update({
+              last_sent_at: new Date().toISOString(),
+              sent_count: alert.sent_count + 1
+            })
+            .eq('id', alert.id);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error checking usage alerts:', error);
+      // Don't throw - alerts are not critical for operation
+    }
+  }
+
+  /**
+   * Determine if alert should be sent based on cooldown and frequency
+   */
+  async shouldSendAlert(alert, currentPercentage) {
+    // Check daily limit
+    if (alert.sent_count >= alert.max_alerts_per_day) {
+      // Reset if it's a new day
+      const lastSent = new Date(alert.last_sent_at);
+      const today = new Date();
+      if (lastSent.toDateString() !== today.toDateString()) {
+        await this.supabase
+          .from('usage_alerts')
+          .update({ sent_count: 0 })
+          .eq('id', alert.id);
+        return true;
+      }
+      return false;
+    }
+    
+    // Check cooldown period
+    if (alert.last_sent_at) {
+      const lastSent = new Date(alert.last_sent_at);
+      const cooldownEnd = new Date(lastSent.getTime() + (alert.cooldown_hours * 60 * 60 * 1000));
+      if (new Date() < cooldownEnd) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  /**
+   * Get comprehensive usage statistics with enhanced tracking
+   */
+  async getEnhancedUsageStats(organizationId, months = 3) {
+    try {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+      
+      // Get current month detailed usage by resource type
+      const { data: currentUsage, error: currentError } = await this.supabase
+        .from('usage_tracking')
+        .select('resource_type, platform, quantity, cost_cents, tokens_used')
+        .eq('organization_id', organizationId)
+        .eq('year', currentYear)
+        .eq('month', currentMonth);
+      
+      if (currentError) throw currentError;
+      
+      // Get usage limits
+      const { data: limits, error: limitsError } = await this.supabase
+        .from('usage_limits')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true);
+      
+      if (limitsError) throw limitsError;
+      
+      // Process current usage by resource type
+      const usageByResource = {};
+      const usageByPlatform = {};
+      let totalCostThisMonth = 0;
+      let totalTokensUsed = 0;
+      
+      currentUsage.forEach(record => {
+        // By resource type
+        if (!usageByResource[record.resource_type]) {
+          usageByResource[record.resource_type] = {
+            quantity: 0,
+            cost_cents: 0,
+            tokens_used: 0,
+            platforms: {}
+          };
+        }
+        
+        usageByResource[record.resource_type].quantity += record.quantity;
+        usageByResource[record.resource_type].cost_cents += record.cost_cents;
+        usageByResource[record.resource_type].tokens_used += record.tokens_used;
+        
+        // By platform within resource
+        if (record.platform) {
+          if (!usageByResource[record.resource_type].platforms[record.platform]) {
+            usageByResource[record.resource_type].platforms[record.platform] = 0;
+          }
+          usageByResource[record.resource_type].platforms[record.platform] += record.quantity;
+          
+          // Overall by platform
+          if (!usageByPlatform[record.platform]) {
+            usageByPlatform[record.platform] = 0;
+          }
+          usageByPlatform[record.platform] += record.quantity;
+        }
+        
+        totalCostThisMonth += record.cost_cents;
+        totalTokensUsed += record.tokens_used;
+      });
+      
+      // Add limit information to each resource
+      const limitsMap = {};
+      limits.forEach(limit => {
+        limitsMap[limit.resource_type] = limit;
+      });
+      
+      Object.keys(usageByResource).forEach(resourceType => {
+        const limit = limitsMap[resourceType];
+        const usage = usageByResource[resourceType];
+        
+        if (limit) {
+          usage.monthly_limit = limit.monthly_limit;
+          usage.percentage_used = (usage.quantity / limit.monthly_limit) * 100;
+          usage.remaining = Math.max(0, limit.monthly_limit - usage.quantity);
+          usage.limit_exceeded = usage.quantity >= limit.monthly_limit;
+          usage.overage_allowed = limit.allow_overage;
+        }
+      });
+      
+      // Get organization details
+      const { data: org, error: orgError } = await this.supabase
+        .from('organizations')
+        .select('plan_id, monthly_responses_limit')
+        .eq('id', organizationId)
+        .single();
+      
+      if (orgError) throw orgError;
+      
+      return {
+        organizationId,
+        planId: org.plan_id,
+        planInfo: this.plans[org.plan_id],
+        currentMonth: {
+          year: currentYear,
+          month: currentMonth,
+          usageByResource,
+          usageByPlatform,
+          totalCostCents: totalCostThisMonth,
+          totalTokensUsed,
+          limits: limitsMap
+        },
+        generatedAt: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      console.error('Error getting enhanced usage stats:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set usage limits for organization and resource type
+   */
+  async setUsageLimit(organizationId, resourceType, monthlyLimit, options = {}) {
+    try {
+      const {
+        dailyLimit = null,
+        allowOverage = false,
+        overageRateCents = 0,
+        hardLimit = true
+      } = options;
+      
+      const { data, error } = await this.supabase
+        .from('usage_limits')
+        .upsert({
+          organization_id: organizationId,
+          resource_type: resourceType,
+          monthly_limit: monthlyLimit,
+          daily_limit: dailyLimit,
+          allow_overage: allowOverage,
+          overage_rate_cents: overageRateCents,
+          hard_limit: hardLimit,
+          is_active: true,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'organization_id,resource_type'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return data;
+      
+    } catch (error) {
+      console.error('Error setting usage limit:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Upgrade organization plan
    */
   async upgradePlan(organizationId, newPlanId, stripeSubscriptionId = null) {
@@ -389,6 +695,9 @@ class CostControlService {
 
       if (error) throw error;
 
+      // Update usage limits for new plan
+      await this.updatePlanUsageLimits(organizationId, newPlanId);
+      
       // Log the upgrade
       await this.supabase
         .from('app_logs')
@@ -479,6 +788,83 @@ class CostControlService {
 
     } catch (error) {
       console.error('Error getting billing summary:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update usage limits when plan changes
+   */
+  async updatePlanUsageLimits(organizationId, planId) {
+    try {
+      const plan = this.plans[planId];
+      if (!plan) throw new Error(`Invalid plan: ${planId}`);
+      
+      // Define limits by plan and resource type
+      const planLimits = {
+        free: {
+          roasts: { monthly: 100, overage: false, hard: true },
+          integrations: { monthly: 2, overage: false, hard: true },
+          api_calls: { monthly: 200, overage: false, hard: true },
+          shield_actions: { monthly: 0, overage: false, hard: true }
+        },
+        pro: {
+          roasts: { monthly: 1000, overage: true, hard: false },
+          integrations: { monthly: 5, overage: false, hard: true },
+          api_calls: { monthly: 2000, overage: true, hard: false },
+          shield_actions: { monthly: 500, overage: true, hard: false }
+        },
+        creator_plus: {
+          roasts: { monthly: 5000, overage: true, hard: false },
+          integrations: { monthly: 999, overage: true, hard: false },
+          api_calls: { monthly: 10000, overage: true, hard: false },
+          shield_actions: { monthly: 2000, overage: true, hard: false }
+        },
+        custom: {
+          roasts: { monthly: 999999, overage: true, hard: false },
+          integrations: { monthly: 999, overage: true, hard: false },
+          api_calls: { monthly: 999999, overage: true, hard: false },
+          shield_actions: { monthly: 999999, overage: true, hard: false }
+        }
+      };
+      
+      const limits = planLimits[planId];
+      if (!limits) return;
+      
+      // Update or insert limits for each resource type
+      for (const [resourceType, config] of Object.entries(limits)) {
+        await this.setUsageLimit(organizationId, resourceType, config.monthly, {
+          allowOverage: config.overage,
+          hardLimit: config.hard
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error updating plan usage limits:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset monthly usage for all organizations (cron job)
+   */
+  async resetAllMonthlyUsage() {
+    try {
+      const { data: resetCount, error } = await this.supabase
+        .rpc('reset_monthly_usage');
+      
+      if (error) throw error;
+      
+      console.log(`Monthly usage reset completed for ${resetCount} organizations`);
+      
+      return {
+        success: true,
+        organizationsReset: resetCount,
+        resetAt: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      console.error('Error resetting monthly usage:', error);
       throw error;
     }
   }
