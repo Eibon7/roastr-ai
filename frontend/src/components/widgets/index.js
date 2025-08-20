@@ -54,7 +54,7 @@ export const WIDGET_CONFIGS = {
   activity: {
     title: 'Recent Activity',
     description: 'Latest system events',
-    gridCols: 'md:col-span-2'
+    gridCols: 'md:col-span-1'
   },
   queue: {
     title: 'Jobs Queue',
@@ -64,7 +64,7 @@ export const WIDGET_CONFIGS = {
   costs: {
     title: 'Usage & Costs',
     description: 'API calls & billing',
-    gridCols: 'md:col-span-2'
+    gridCols: 'md:col-span-1'
   },
   logs: {
     title: 'System Logs',

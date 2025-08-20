@@ -37,10 +37,13 @@ export default function PlanPicker() {
       const response = await fetchApi('/api/plan/available');
       if (response.ok) {
         const data = await response.json();
-        setPlans(data.data.plans);
+        setPlans(data.data?.plans || []);
+      } else {
+        setPlans([]);
       }
     } catch (error) {
       console.error('Failed to fetch plans:', error);
+      setPlans([]);
     }
   };
 
@@ -128,101 +131,107 @@ export default function PlanPicker() {
 
       {/* Plans Grid */}
       <div className="grid md:grid-cols-3 gap-6 mb-8">
-        {plans.map((plan) => {
-          const isCurrentPlan = plan.id === currentPlan;
-          const isCreatorPlus = plan.id === 'creator_plus';
-          
-          return (
-            <Card 
-              key={plan.id} 
-              className={`relative ${isCreatorPlus ? 'border-purple-200 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}
-            >
-              {isCreatorPlus && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-purple-600 text-white">Most Popular</Badge>
-                </div>
-              )}
-              
-              <CardHeader className="text-center pb-4">
-                <div className={`mx-auto mb-2 ${PLAN_COLORS[plan.id]}`}>
-                  {PLAN_ICONS[plan.id]}
-                </div>
-                <CardTitle className="text-xl">{plan.name}</CardTitle>
-                <div className="text-3xl font-bold mt-2">
-                  {formatPrice(plan.price)}
-                </div>
-                {getPlanBadge(plan.id)}
-              </CardHeader>
+        {plans && plans.length > 0 ? (
+          plans.map((plan) => {
+            const isCurrentPlan = plan.id === currentPlan;
+            const isCreatorPlus = plan.id === 'creator_plus';
+            
+            return (
+              <Card 
+                key={plan.id} 
+                className={`relative ${isCreatorPlus ? 'border-purple-200 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}
+              >
+                {isCreatorPlus && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-purple-600 text-white">Most Popular</Badge>
+                  </div>
+                )}
+                
+                <CardHeader className="text-center pb-4">
+                  <div className={`mx-auto mb-2 ${PLAN_COLORS[plan.id]}`}>
+                    {PLAN_ICONS[plan.id]}
+                  </div>
+                  <CardTitle className="text-xl">{plan.name}</CardTitle>
+                  <div className="text-3xl font-bold mt-2">
+                    {formatPrice(plan.price)}
+                  </div>
+                  {getPlanBadge(plan.id)}
+                </CardHeader>
 
-              <CardContent className="space-y-4">
-                {/* Features List */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">
-                      {plan.features.roastsPerMonth.toLocaleString()} roasts/month
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">
-                      {plan.features.platformConnections} platform connections
-                    </span>
-                  </div>
-                  
-                  {plan.features.styleProfile && (
+                <CardContent className="space-y-4">
+                  {/* Features List */}
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm font-medium text-purple-600">
-                        AI Style Profile Generation
+                      <span className="text-sm">
+                        {plan.features.roastsPerMonth.toLocaleString()} roasts/month
                       </span>
                     </div>
-                  )}
-                  
-                  {plan.features.customPrompts && (
+                    
                     <div className="flex items-center space-x-2">
                       <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">Custom roast prompts</span>
+                      <span className="text-sm">
+                        {plan.features.platformConnections} platform connections
+                      </span>
                     </div>
-                  )}
-                  
-                  {plan.features.prioritySupport && (
-                    <div className="flex items-center space-x-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">Priority support</span>
-                    </div>
-                  )}
-                  
-                  {plan.features.advancedAnalytics && (
-                    <div className="flex items-center space-x-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">Advanced analytics</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Button */}
-                <div className="pt-4">
-                  <Button
-                    onClick={() => handleSelectPlan(plan.id)}
-                    disabled={isCurrentPlan || selecting === plan.id}
-                    className={`w-full ${isCreatorPlus ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-                    variant={isCurrentPlan ? 'outline' : 'default'}
-                  >
-                    {selecting === plan.id ? (
-                      'Selecting...'
-                    ) : isCurrentPlan ? (
-                      'Current Plan'
-                    ) : (
-                      `Select ${plan.name}`
+                    
+                    {plan.features.styleProfile && (
+                      <div className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium text-purple-600">
+                          AI Style Profile Generation
+                        </span>
+                      </div>
                     )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                    
+                    {plan.features.customPrompts && (
+                      <div className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">Custom roast prompts</span>
+                      </div>
+                    )}
+                    
+                    {plan.features.prioritySupport && (
+                      <div className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">Priority support</span>
+                      </div>
+                    )}
+                    
+                    {plan.features.advancedAnalytics && (
+                      <div className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">Advanced analytics</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="pt-4">
+                    <Button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={isCurrentPlan || selecting === plan.id}
+                      className={`w-full ${isCreatorPlus ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                      variant={isCurrentPlan ? 'outline' : 'default'}
+                    >
+                      {selecting === plan.id ? (
+                        'Selecting...'
+                      ) : isCurrentPlan ? (
+                        'Current Plan'
+                      ) : (
+                        `Select ${plan.name}`
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        ) : (
+          <div className="col-span-3 text-center py-8">
+            <p className="text-muted-foreground">No plans available at the moment.</p>
+          </div>
+        )}
       </div>
 
       {/* Style Profile Feature Highlight */}
@@ -261,10 +270,10 @@ export default function PlanPicker() {
       </Card>
 
       {/* Next Steps */}
-      {currentPlan && (
+      {currentPlan && plans && plans.length > 0 && (
         <div className="text-center mt-8">
           <p className="text-muted-foreground mb-4">
-            Great! You've selected the <strong>{plans.find(p => p.id === currentPlan)?.name}</strong> plan.
+            Great! You've selected the <strong>{plans.find(p => p.id === currentPlan)?.name || currentPlan}</strong> plan.
           </p>
           <Button onClick={() => navigate('/integrations/connect')} size="lg">
             Continue to Platform Connections

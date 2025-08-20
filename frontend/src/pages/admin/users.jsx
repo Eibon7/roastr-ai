@@ -139,6 +139,88 @@ const AdminUsersPage = () => {
     }
   };
 
+  const suspendUser = async (userId, reason = null) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: true }));
+      
+      const session = await authHelpers.getCurrentSession();
+      const response = await fetch(`/api/auth/admin/users/${userId}/suspend`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setAlert({
+          type: 'success',
+          message: 'Usuario suspendido exitosamente'
+        });
+        // Refresh users list
+        await loadUsers(session.access_token);
+      } else {
+        throw new Error(data.error || 'Error al suspender usuario');
+      }
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: 'Error al suspender usuario: ' + error.message
+      });
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: false }));
+    }
+  };
+
+  const unsuspendUser = async (userId) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: true }));
+      
+      const session = await authHelpers.getCurrentSession();
+      const response = await fetch(`/api/auth/admin/users/${userId}/unsuspend`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setAlert({
+          type: 'success',
+          message: 'Usuario reactivado exitosamente'
+        });
+        // Refresh users list
+        await loadUsers(session.access_token);
+      } else {
+        throw new Error(data.error || 'Error al reactivar usuario');
+      }
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: 'Error al reactivar usuario: ' + error.message
+      });
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: false }));
+    }
+  };
+
+  const handleSuspendClick = (userId, isSuspended) => {
+    if (isSuspended) {
+      if (window.confirm('¿Estás seguro de que quieres reactivar este usuario?')) {
+        unsuspendUser(userId);
+      }
+    } else {
+      const reason = window.prompt('Razón de la suspensión (opcional):');
+      if (window.confirm('¿Estás seguro de que quieres suspender este usuario?')) {
+        suspendUser(userId, reason);
+      }
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await authHelpers.signOut();
@@ -281,6 +363,9 @@ const AdminUsersPage = () => {
                     Plan
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Admin
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -319,6 +404,30 @@ const AdminUsersPage = () => {
                         {user.plan}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        {user.suspended ? (
+                          <span 
+                            className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
+                            title={user.suspended_at ? `Suspendido el ${formatDate(user.suspended_at)}` : 'Usuario suspendido'}
+                          >
+                            🚫 Suspendido
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
+                            ✅ Activo
+                          </span>
+                        )}
+                        {user.suspended && user.suspended_reason && (
+                          <span 
+                            className="text-xs text-gray-500 dark:text-gray-400 cursor-help" 
+                            title={`Razón: ${user.suspended_reason}`}
+                          >
+                            ❓
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {user.is_admin ? (
                         <span className="text-green-600 dark:text-green-400">Sí</span>
@@ -333,7 +442,7 @@ const AdminUsersPage = () => {
                       {user.organizations?.[0]?.monthly_responses_used || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+                      <div className="flex flex-wrap gap-2">
                         {/* Change Plan Button */}
                         <select
                           onChange={(e) => {
@@ -352,6 +461,29 @@ const AdminUsersPage = () => {
                           <option value="creator_plus">Creator Plus</option>
                           <option value="custom">Custom</option>
                         </select>
+
+                        {/* Suspend/Unsuspend Button */}
+                        <button
+                          onClick={() => handleSuspendClick(user.id, user.suspended)}
+                          disabled={actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]}
+                          className={`inline-flex items-center px-3 py-1 border shadow-sm text-xs leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
+                            user.suspended 
+                              ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:ring-green-500'
+                              : 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:ring-red-500'
+                          }`}
+                        >
+                          {(actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]) ? (
+                            <svg className="animate-spin -ml-1 mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : user.suspended ? (
+                            '✅'
+                          ) : (
+                            '🚫'
+                          )}
+                          {user.suspended ? 'Reactivar' : 'Suspender'}
+                        </button>
 
                         {/* Reset Password Button */}
                         <button
