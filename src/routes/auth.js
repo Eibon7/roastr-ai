@@ -870,7 +870,8 @@ router.post('/admin/users/:id/plan', authenticateToken, requireAdmin, async (req
         }
         
         // Use the existing updateUserPlan method
-        const result = await authService.updateUserPlan(id, newPlan);
+        const adminId = req.user.id; // Get admin ID from authenticated user
+        const result = await authService.updateUserPlan(id, newPlan, adminId);
         
         // Log the plan change activity
         await authService.logUserActivity(id, 'plan_changed', {
