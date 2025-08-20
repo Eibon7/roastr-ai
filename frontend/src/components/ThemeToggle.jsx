@@ -1,27 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 const ThemeToggle = () => {
   const [theme, setTheme] = useState(() => {
-    // Check localStorage first, then system preference
+    // Check localStorage first, then default to light
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) return savedTheme;
-    
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return savedTheme || 'light';
   });
+
+  // Apply theme immediately on mount (before useEffect)
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    
+    // Remove existing theme classes
+    html.classList.remove('light', 'dark');
+    body.classList.remove('light', 'dark');
+    
+    const currentTheme = localStorage.getItem('theme') || 
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    
+    if (currentTheme === 'system') {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const finalTheme = isDark ? 'dark' : 'light';
+      html.setAttribute('data-theme', finalTheme);
+      html.classList.add(finalTheme);
+      body.classList.add(finalTheme);
+    } else {
+      html.setAttribute('data-theme', currentTheme);
+      html.classList.add(currentTheme);
+      body.classList.add(currentTheme);
+    }
+    
+    html.style.colorScheme = currentTheme === 'dark' || 
+      (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark' : 'light';
+  }, []);
 
   useEffect(() => {
     const applyTheme = (currentTheme) => {
       const html = document.documentElement;
+      const body = document.body;
+      
+      // Remove existing theme classes
+      html.classList.remove('light', 'dark');
+      body.classList.remove('light', 'dark');
       
       if (currentTheme === 'system') {
         const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        html.classList.toggle('dark', isDark);
+        const finalTheme = isDark ? 'dark' : 'light';
+        html.setAttribute('data-theme', finalTheme);
+        html.classList.add(finalTheme);
+        body.classList.add(finalTheme);
       } else {
         html.setAttribute('data-theme', currentTheme);
-        html.classList.toggle('dark', currentTheme === 'dark');
+        html.classList.add(currentTheme);
+        body.classList.add(currentTheme);
       }
+      
+      // Force a style recalculation
+      html.style.colorScheme = currentTheme === 'dark' || 
+        (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ? 'dark' : 'light';
     };
 
     // Apply theme immediately
@@ -47,15 +87,34 @@ const ThemeToggle = () => {
     };
   }, [theme]);
 
-  const toggleTheme = () => {
-    const themes = ['light', 'dark', 'system'];
-    const currentIndex = themes.indexOf(theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    setTheme(themes[nextIndex]);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const selectTheme = (selectedTheme) => {
+    console.log('Changing theme to:', selectedTheme);
+    setTheme(selectedTheme);
+    setIsOpen(false);
   };
 
-  const getIcon = () => {
-    switch (theme) {
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const dropdown = document.getElementById('theme-dropdown');
+      if (dropdown && !dropdown.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const getIcon = (themeName = theme) => {
+    switch (themeName) {
       case 'light':
         return <Sun className="h-4 w-4" />;
       case 'dark':
@@ -67,8 +126,8 @@ const ThemeToggle = () => {
     }
   };
 
-  const getLabel = () => {
-    switch (theme) {
+  const getLabel = (themeName = theme) => {
+    switch (themeName) {
       case 'light':
         return 'Light';
       case 'dark':
@@ -81,14 +140,36 @@ const ThemeToggle = () => {
   };
 
   return (
-    <button
-      onClick={toggleTheme}
-      className="flex items-center space-x-2 px-3 py-2 rounded-lg border border-border hover:bg-accent transition-colors"
-      title={`Current theme: ${getLabel()}. Click to cycle through themes.`}
-    >
-      {getIcon()}
-      <span className="text-sm font-medium">{getLabel()}</span>
-    </button>
+    <div id="theme-dropdown" className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center space-x-2 px-3 py-2 rounded-lg border border-border hover:bg-accent transition-colors bg-card"
+        title={`Current theme: ${getLabel()}. Click to change.`}
+      >
+        {getIcon()}
+        <span className="text-sm font-medium text-foreground">{getLabel()}</span>
+        <svg className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
+          {['light', 'dark', 'system'].map((themeName) => (
+            <button
+              key={themeName}
+              onClick={() => selectTheme(themeName)}
+              className={`w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-accent transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                theme === themeName ? 'bg-accent' : ''
+              }`}
+            >
+              {getIcon(themeName)}
+              <span className="text-sm text-foreground">{getLabel(themeName)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
