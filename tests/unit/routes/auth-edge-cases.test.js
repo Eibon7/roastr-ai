@@ -121,7 +121,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/update-password')
                 .send({
                     access_token: 'invalid-token',
-                    password: 'newpassword123'
+                    password: 'NewPassword123!'
                 });
 
             expect(response.status).toBe(400);
@@ -138,7 +138,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/update-password')
                 .send({
                     access_token: 'expired-token',
-                    password: 'newpassword123'
+                    password: 'NewPassword123!'
                 });
 
             expect(response.status).toBe(400);
@@ -150,7 +150,7 @@ describe('Auth Routes - Edge Cases', () => {
             const response = await request(app)
                 .post('/api/auth/update-password')
                 .send({
-                    password: 'newpassword123'
+                    password: 'NewPassword123!'
                     // missing access_token
                 });
 
@@ -187,7 +187,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/login')
                 .send({
                     email: 'valid@example.com',
-                    password: 'wrongpassword'
+                    password: 'WrongPassword123!'
                 });
 
             expect(response.status).toBe(401);
@@ -204,7 +204,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/login')
                 .send({
                     email: 'unverified@example.com',
-                    password: 'password123'
+                    password: 'Password123!'
                 });
 
             expect(response.status).toBe(401);
@@ -221,7 +221,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/login')
                 .send({
                     email: 'suspended@example.com',
-                    password: 'password123'
+                    password: 'Password123!'
                 });
 
             expect(response.status).toBe(401);
@@ -238,7 +238,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/login')
                 .send({
                     email: 'not-an-email',
-                    password: 'password123'
+                    password: 'Password123!'
                 });
 
             expect(response.status).toBe(401);
@@ -257,7 +257,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/register')
                 .send({
                     email: 'existing@example.com',
-                    password: 'password123',
+                    password: 'Password123!',
                     name: 'Test User'
                 });
 
@@ -275,7 +275,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/register')
                 .send({
                     email: 'test@blacklisted.com',
-                    password: 'password123',
+                    password: 'Password123!',
                     name: 'Test User'
                 });
 
@@ -297,7 +297,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/register')
                 .send({
                     email: 'test@example.com',
-                    password: 'password123',
+                    password: 'Password123!',
                     name: longName
                 });
 
@@ -305,7 +305,7 @@ describe('Auth Routes - Edge Cases', () => {
             expect(response.body.success).toBe(true);
             expect(authService.signUp).toHaveBeenCalledWith({
                 email: 'test@example.com',
-                password: 'password123',
+                password: 'Password123!',
                 name: longName
             });
         });
@@ -319,7 +319,7 @@ describe('Auth Routes - Edge Cases', () => {
                 .post('/api/auth/register')
                 .send({
                     email: 'test@example.com',
-                    password: 'password123',
+                    password: 'Password123!',
                     name: 'Test User'
                 });
 

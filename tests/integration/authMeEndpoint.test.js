@@ -178,7 +178,7 @@ describe('/api/auth/me Endpoint Integration Tests', () => {
         password: 'password123'
       });
     
-    authToken = loginResponse.body.data.session.access_token;
+    authToken = loginResponse.body.data.access_token;
   });
 
   describe('GET /api/auth/me', () => {
