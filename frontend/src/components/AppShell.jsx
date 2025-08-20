@@ -6,15 +6,17 @@ import TopBar from './TopBar';
 export default function AppShell() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Bar */}
-      <TopBar />
+      {/* Top Bar - Fixed position */}
+      <div className="fixed top-0 left-0 right-0 z-40">
+        <TopBar />
+      </div>
       
-      <div className="flex">
+      <div className="pt-16">
         {/* Sidebar */}
         <Sidebar />
         
         {/* Main Content */}
-        <main className="flex-1 p-6 ml-64">
+        <main className="ml-64 p-6">
           <Outlet />
         </main>
       </div>

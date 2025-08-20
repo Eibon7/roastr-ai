@@ -229,42 +229,110 @@ router.post('/roast/preview', (req, res) => {
     });
   }
 
-  // Mock roast responses based on intensity
-  const mockRoasts = {
-    1: [
-      "That's... an interesting perspective 🤔",
-      "Well, everyone's entitled to their opinion!",
-      "Bold take, friend!"
-    ],
-    2: [
-      "That comment aged like milk in the sun ☀️",
-      "Sir, this is a Wendy's... but make it more coherent",
-      "Did you think before typing, or was that just muscle memory?"
-    ],
-    3: [
-      "Your comment just called - it wants its logic back 📞",
-      "That take is so cold, penguins are using it for air conditioning ❄️", 
-      "Congratulations! You just won the 'Most Creative Way to Miss the Point' award 🏆"
-    ],
-    4: [
-      "Your comment has the same energy as a solar-powered flashlight during a blackout 🔦",
-      "That opinion just filed for witness protection from reality",
-      "If confidence was currency, you'd be Jeff Bezos with that take 💰"
-    ],
-    5: [
-      "Your comment just signed up for a masterclass in 'How to Be Spectacularly Wrong'",
-      "That take is so hot, it's causing global warming... of bad opinions 🔥",
-      "Legend says if you say your comment three times in a mirror, common sense appears behind you"
-    ]
+  // Detect language and generate appropriate roast
+  const detectLanguage = (text) => {
+    // Simple language detection based on common words/characters
+    const spanishWords = /\b(que|es|el|la|de|en|un|una|con|por|para|su|me|te|se|no|si|pero|como|más|muy|todo|todos|este|esta|año|día|vida|mundo|casa|tiempo|parte|mucho|otro|otra|bien|gran|cada|solo|también|donde|cuando|porque|hasta|hacer|ser|tener|estar|ir|ver|dar|saber|poder|decir|ahora|mismo|aquí|así|todo|nada|algo|alguien|nadie|siempre|nunca|antes|después|entonces|ahora)\b/gi;
+    const frenchWords = /\b(que|est|le|la|de|en|un|une|avec|par|pour|sur|dans|du|des|ce|cette|être|avoir|faire|aller|voir|savoir|pouvoir|dire|venir|devoir|vouloir|bien|tout|tous|toute|toutes|aussi|très|plus|moins|encore|déjà|maintenant|aujourd|hier|demain|toujours|jamais|parfois|souvent)\b/gi;
+    const portugueseWords = /\b(que|é|o|a|de|em|um|uma|com|por|para|se|não|mais|como|mas|todo|toda|todos|todas|este|esta|isso|aqui|ali|quando|onde|porque|então|já|ainda|sempre|nunca|ser|ter|estar|fazer|ir|ver|dar|saber|poder|dizer|vir|dever|querer|bem|muito|pouco|outro|outra)\b/gi;
+    
+    const spanishMatches = (text.match(spanishWords) || []).length;
+    const frenchMatches = (text.match(frenchWords) || []).length;
+    const portugueseMatches = (text.match(portugueseWords) || []).length;
+    
+    if (spanishMatches > frenchMatches && spanishMatches > portugueseMatches && spanishMatches > 0) {
+      return 'es';
+    } else if (frenchMatches > spanishMatches && frenchMatches > portugueseMatches && frenchMatches > 0) {
+      return 'fr';
+    } else if (portugueseMatches > spanishMatches && portugueseMatches > frenchMatches && portugueseMatches > 0) {
+      return 'pt';
+    }
+    return 'en';
   };
 
-  const roastOptions = mockRoasts[intensity] || mockRoasts[3];
+  const language = detectLanguage(text);
+
+  // Mock roast responses based on intensity and language
+  const mockRoasts = {
+    en: {
+      1: [
+        "That's... an interesting perspective 🤔",
+        "Well, everyone's entitled to their opinion!",
+        "Bold take, friend!"
+      ],
+      2: [
+        "That comment aged like milk in the sun ☀️",
+        "Sir, this is a Wendy's... but make it more coherent",
+        "Did you think before typing, or was that just muscle memory?"
+      ],
+      3: [
+        "Your comment just called - it wants its logic back 📞",
+        "That take is so cold, penguins are using it for air conditioning ❄️", 
+        "Congratulations! You just won the 'Most Creative Way to Miss the Point' award 🏆"
+      ]
+    },
+    es: {
+      1: [
+        "Esa es... una perspectiva interesante 🤔",
+        "Bueno, todos tienen derecho a su opinión!",
+        "¡Qué comentario tan audaz, amigo!"
+      ],
+      2: [
+        "Ese comentario envejeció como leche al sol ☀️",
+        "Señor, esto es un McDonald's... pero con más coherencia",
+        "¿Pensaste antes de escribir, o fue puro instinto?"
+      ],
+      3: [
+        "Tu comentario acaba de llamar - quiere recuperar su lógica 📞",
+        "Esa opinión está tan fría que los pingüinos la usan de aire acondicionado ❄️",
+        "¡Felicidades! Acabas de ganar el premio a 'La Forma Más Creativa de Errar el Punto' 🏆"
+      ]
+    },
+    fr: {
+      1: [
+        "C'est... une perspective intéressante 🤔",
+        "Eh bien, chacun a droit à son opinion!",
+        "Commentaire audacieux, mon ami!"
+      ],
+      2: [
+        "Ce commentaire a vieilli comme du lait au soleil ☀️",
+        "Monsieur, ici c'est un McDo... mais en plus cohérent",
+        "Tu as réfléchi avant d'écrire, ou c'était juste de l'instinct?"
+      ],
+      3: [
+        "Ton commentaire vient d'appeler - il veut récupérer sa logique 📞",
+        "Cette opinion est si froide que les pingouins l'utilisent comme climatisation ❄️",
+        "Félicitations! Tu viens de gagner le prix de 'La Façon la Plus Créative de Rater le Point' 🏆"
+      ]
+    },
+    pt: {
+      1: [
+        "Essa é... uma perspectiva interessante 🤔",
+        "Bem, todos têm direito à sua opinião!",
+        "Comentário ousado, amigo!"
+      ],
+      2: [
+        "Esse comentário envelheceu como leite no sol ☀️",
+        "Senhor, isto é um McDonald's... mas com mais coerência",
+        "Você pensou antes de escrever, ou foi puro instinto?"
+      ],
+      3: [
+        "Seu comentário acabou de ligar - quer a lógica de volta 📞",
+        "Essa opinião está tão fria que os pinguins a usam como ar condicionado ❄️",
+        "Parabéns! Você acabou de ganhar o prêmio 'Forma Mais Criativa de Errar o Ponto' 🏆"
+      ]
+    }
+  };
+
+  const languageRoasts = mockRoasts[language] || mockRoasts.en;
+  const roastOptions = languageRoasts[Math.min(intensity, 3)] || languageRoasts[3];
   const selectedRoast = roastOptions[Math.floor(Math.random() * roastOptions.length)];
 
   const response = {
     roast: selectedRoast,
     intensity,
     platform,
+    language,
     confidence: 0.85 + Math.random() * 0.1,
     processingTime: Math.floor(Math.random() * 2000) + 500,
     tokens: Math.floor(Math.random() * 100) + 50,
