@@ -16,6 +16,7 @@ The system is designed as a multi-tenant SaaS platform with:
 - **Unified queue management** supporting Redis/Upstash and database fallback
 - **Shield automated moderation** with priority-based action system
 - **9 platform integrations** (Twitter, YouTube, Instagram, Facebook, etc.)
+- **Master Prompt Template System** (v1-roast-prompt) for consistent, high-quality roast generation
 
 ## Development Commands
 
@@ -68,6 +69,9 @@ src/
 │   ├── costControl.js                # Usage tracking & billing
 │   ├── queueService.js               # Unified Redis/DB queue system
 │   ├── shieldService.js              # Automated moderation
+│   ├── roastPromptTemplate.js        # Master prompt template system (v1)
+│   ├── roastGeneratorEnhanced.js     # Enhanced roast generation with RQC
+│   ├── csvRoastService.js            # CSV-based reference roast system
 │   ├── openai.js                     # OpenAI integration
 │   ├── perspective.js                # Perspective API
 │   └── twitter.js                    # Legacy Twitter bot
@@ -208,6 +212,48 @@ Platform Actions → Moderation Complete
 - **Automatic failover** from Redis to Database queues
 - **Cost-based throttling** to prevent overages
 - **Real-time monitoring** and alerting
+
+## Master Prompt Template System (v1-roast-prompt)
+
+The roast generation system has been enhanced with a comprehensive master prompt template that ensures consistency, quality, and personalization across all roast generations.
+
+### Key Features
+
+- **Dynamic Field Replacement**: Supports placeholders for original comment, category, references, and user tone
+- **Comment Categorization**: Automatically categorizes comments (insults, body shaming, political, etc.)
+- **Reference Integration**: Includes similar roasts from CSV database as examples
+- **User Tone Mapping**: Personalizes responses based on user preferences and plan features
+- **Version Control**: Template versioning for future improvements and A/B testing
+
+### Template Structure
+
+```
+Tu tarea es generar una respuesta sarcástica e ingeniosa...
+
+💬 COMENTARIO ORIGINAL: {{original_comment}}
+🎭 CATEGORÍA DEL COMENTARIO: {{comment_category}}
+📚 EJEMPLOS DE ROASTS: {{reference_roasts_from_CSV}}
+👤 TONO PERSONAL: {{user_tone}}
+```
+
+### Integration Points
+
+- **RoastGeneratorEnhanced**: Used in both basic moderation and advanced RQC modes
+- **GenerateReplyWorker**: Integrated into the worker pipeline for queue processing
+- **Platform Constraints**: Automatically adds platform-specific character limits and style guides
+- **Plan Differentiation**: Free plans exclude references, Pro+ plans include full examples
+
+### Usage Example
+
+```javascript
+const promptTemplate = new RoastPromptTemplate();
+const prompt = await promptTemplate.buildPrompt({
+  originalComment: "Esta aplicación es horrible",
+  toxicityData: { score: 0.5, categories: ['TOXICITY'] },
+  userConfig: { tone: 'sarcastic', humor_type: 'witty', intensity_level: 3 },
+  includeReferences: true
+});
+```
 
 ## Twitter Bot Features
 

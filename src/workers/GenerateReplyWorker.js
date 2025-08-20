@@ -1,5 +1,6 @@
 const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
+const RoastPromptTemplate = require('../services/roastPromptTemplate');
 const { mockMode } = require('../config/mockMode');
 
 /**
@@ -23,6 +24,7 @@ class GenerateReplyWorker extends BaseWorker {
     });
     
     this.costControl = new CostControlService();
+    this.promptTemplate = new RoastPromptTemplate();
     
     // Initialize OpenAI client
     this.initializeOpenAI();
@@ -325,19 +327,33 @@ class GenerateReplyWorker extends BaseWorker {
    */
   async generateOpenAIResponse(originalText, config, context) {
     const { tone, humor_type } = config;
-    const { platform, severity_level, toxicity_score } = context;
+    const { platform, severity_level, toxicity_score, categories } = context;
     
-    // Build system prompt
-    const systemPrompt = this.buildSystemPrompt(tone, humor_type, platform);
+    // Build enhanced system prompt using master template
+    const systemPrompt = await this.promptTemplate.buildPrompt({
+      originalComment: originalText,
+      toxicityData: {
+        score: toxicity_score,
+        severity: severity_level,
+        categories: categories || []
+      },
+      userConfig: {
+        tone: tone,
+        humor_type: humor_type,
+        intensity_level: config.intensity_level || 3,
+        custom_style_prompt: config.custom_style_prompt
+      },
+      includeReferences: true // Include references by default in worker
+    });
     
-    // Build user prompt
-    const userPrompt = this.buildUserPrompt(originalText, context);
+    // Add platform constraints to the end of the prompt
+    const platformConstraint = this.getPlatformConstraint(platform);
+    const finalPrompt = systemPrompt + '\n\n' + platformConstraint;
     
     const completion = await this.openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+        { role: 'system', content: finalPrompt }
       ],
       max_tokens: 200, // Keep responses concise
       temperature: 0.8, // Creative but not too random
@@ -353,7 +369,8 @@ class GenerateReplyWorker extends BaseWorker {
     return {
       text: finalResponse,
       tokensUsed: completion.usage.total_tokens,
-      model: 'gpt-4o-mini'
+      model: 'gpt-4o-mini',
+      promptVersion: this.promptTemplate.getVersion()
     };
   }
   
@@ -413,7 +430,24 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Build user prompt for OpenAI
+   * Get platform-specific constraints
+   */
+  getPlatformConstraint(platform) {
+    const constraints = {
+      'twitter': 'RESTRICCIÓN DE PLATAFORMA: Respuesta máxima de 280 caracteres para Twitter.',
+      'youtube': 'RESTRICCIÓN DE PLATAFORMA: Estilo de comentario de YouTube, puede ser ligeramente más largo pero mantén la concisión.',
+      'instagram': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Instagram, amigable pero con sarcasmo.',
+      'facebook': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Facebook, considera audiencia más amplia.',
+      'tiktok': 'RESTRICCIÓN DE PLATAFORMA: Estilo TikTok, dinámico y juvenil.',
+      'reddit': 'RESTRICCIÓN DE PLATAFORMA: Estilo Reddit, más intelectual y con referencias.',
+      'discord': 'RESTRICCIÓN DE PLATAFORMA: Estilo Discord casual pero ingenioso.'
+    };
+
+    return constraints[platform] || 'RESTRICCIÓN DE PLATAFORMA: Mantén la respuesta concisa y apropiada para la plataforma.';
+  }
+
+  /**
+   * Build user prompt for OpenAI (legacy method, may be deprecated)
    */
   buildUserPrompt(originalText, context) {
     const { severity_level, toxicity_score, categories } = context;

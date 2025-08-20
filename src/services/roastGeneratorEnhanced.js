@@ -12,6 +12,7 @@ const OpenAI = require('openai');
 const { logger } = require('../utils/logger');
 const RQCService = require('./rqcService');
 const RoastGeneratorMock = require('./roastGeneratorMock');
+const RoastPromptTemplate = require('./roastPromptTemplate');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 require('dotenv').config();
@@ -29,6 +30,7 @@ class RoastGeneratorEnhanced {
 
     this.openai = new OpenAI({ apiKey });
     this.rqcService = new RQCService(this.openai);
+    this.promptTemplate = new RoastPromptTemplate();
     this.isMockMode = false;
   }
 
@@ -133,19 +135,28 @@ class RoastGeneratorEnhanced {
    * Generate roast with basic moderation integrated in prompt (Free/Pro)
    */
   async generateWithBasicModeration(text, toxicityScore, tone, rqcConfig) {
-    // Get basic moderation prompt template
-    const moderationPrompt = this.getBasicModerationPrompt(tone, rqcConfig);
+    // Build prompt using the master template
+    const systemPrompt = await this.promptTemplate.buildPrompt({
+      originalComment: text,
+      toxicityData: {
+        score: toxicityScore,
+        categories: [] // Could be enhanced with actual toxicity categories
+      },
+      userConfig: {
+        tone: tone,
+        humor_type: rqcConfig.humor_type || 'witty',
+        intensity_level: rqcConfig.intensity_level,
+        custom_style_prompt: rqcConfig.custom_style_prompt
+      },
+      includeReferences: rqcConfig.plan !== 'free' // Include references for Pro+ plans
+    });
     
     const completion = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: moderationPrompt
-        },
-        {
-          role: "user",
-          content: text
+          content: systemPrompt
         }
       ],
       max_tokens: 120,
@@ -157,7 +168,8 @@ class RoastGeneratorEnhanced {
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
       intensityLevel: rqcConfig.intensity_level,
-      roastLength: roast.length
+      roastLength: roast.length,
+      promptVersion: this.promptTemplate.getVersion()
     });
 
     return roast;
@@ -245,7 +257,20 @@ class RoastGeneratorEnhanced {
    * Generate initial roast without moderation constraints
    */
   async generateInitialRoast(text, tone, rqcConfig) {
-    const systemPrompt = this.getAdvancedRoastPrompt(tone, rqcConfig);
+    // Build prompt using the master template with advanced options
+    const systemPrompt = await this.promptTemplate.buildPrompt({
+      originalComment: text,
+      toxicityData: {
+        categories: [] // Could be enhanced with actual toxicity categories
+      },
+      userConfig: {
+        tone: tone,
+        humor_type: rqcConfig.humor_type || 'clever',
+        intensity_level: rqcConfig.intensity_level,
+        custom_style_prompt: rqcConfig.custom_style_prompt
+      },
+      includeReferences: true // Always include references for Creator+ plans
+    });
 
     const completion = await this.openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -253,10 +278,6 @@ class RoastGeneratorEnhanced {
         {
           role: "system",
           content: systemPrompt
-        },
-        {
-          role: "user",
-          content: text
         }
       ],
       max_tokens: 150,
