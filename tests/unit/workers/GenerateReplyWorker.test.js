@@ -49,8 +49,6 @@ jest.mock('../../../src/workers/BaseWorker', () => {
   };
 });
 
-// Mock OpenAI - not needed as we mock it in mockMode
-
 // Mock Cost Control service
 const mockCostControlService = {
   canPerformOperation: jest.fn(),
@@ -104,464 +102,433 @@ describe('GenerateReplyWorker', () => {
   describe('constructor', () => {
     test('should initialize worker with correct type', () => {
       expect(worker.workerType).toBe('generate_reply');
-      expect(worker.openaiClient).toBeDefined();
-      expect(worker.templates).toBeDefined();
       expect(worker.costControl).toBeDefined();
+      expect(worker.openaiClient).toBe(mockOpenAIClient);
+      expect(worker.templates).toBeDefined();
     });
   });
 
   describe('processJob', () => {
+    beforeEach(() => {
+      // Mock successful cost control check
+      mockCostControlService.canPerformOperation.mockResolvedValue({
+        allowed: true
+      });
+
+      // Mock successful comment retrieval
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === 'comments') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: 'comment-456',
+                    text: 'Your content is trash',
+                    integration_config_id: 'config-123'
+                  },
+                  error: null
+                })
+              })
+            })
+          };
+        }
+        if (table === 'integration_configs') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({
+                    data: {
+                      id: 'config-123',
+                      organization_id: 'org-123',
+                      platform: 'twitter',
+                      tone: 'sarcastic',
+                      humor_type: 'witty',
+                      response_frequency: 0.8,
+                      config: { auto_post: true }
+                    },
+                    error: null
+                  })
+                })
+              })
+            })
+          };
+        }
+        if (table === 'responses') {
+          return {
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: 'response-789',
+                    response_text: 'Generated response'
+                  },
+                  error: null
+                })
+              })
+            })
+          };
+        }
+      });
+
+      // Mock OpenAI response
+      mockOpenAIClient.chat.completions.create.mockResolvedValue({
+        choices: [{
+          message: {
+            content: 'Wow, what an absolutely groundbreaking observation!'
+          }
+        }],
+        usage: {
+          total_tokens: 25
+        }
+      });
+    });
+
     test('should generate roast reply for toxic comment', async () => {
       const job = {
-        id: 'job-123',
+        comment_id: 'comment-456',
         organization_id: 'org-123',
         platform: 'twitter',
-        comment_id: 'comment-456',
-        text: 'This is a stupid post',
-        author_id: 'user-789',
-        toxicity_score: 0.85,
-        toxicity_categories: ['TOXICITY', 'INSULT']
+        original_text: 'Your content is trash',
+        toxicity_score: 0.9,
+        severity_level: 'high',
+        categories: ['TOXICITY', 'INSULT']
       };
 
-      // Mock cost control allows operation
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(true);
+      expect(result.responseText).toBe('Wow, what an absolutely groundbreaking observation!');
+      expect(result.service).toBe('openai');
+      expect(mockCostControlService.canPerformOperation).toHaveBeenCalledWith('org-123', 'generate_reply');
+      expect(mockCostControlService.recordUsage).toHaveBeenCalled();
+    });
+
+    test('should handle cost limit exceeded', async () => {
       mockCostControlService.canPerformOperation.mockResolvedValue({
-        allowed: true,
-        currentUsage: 50,
-        limit: 100
+        allowed: false,
+        reason: 'monthly_limit_exceeded'
       });
 
-      // Mock comment lookup
-      mockSupabase.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'comment-456',
-                text: 'This is a stupid post',
-                toxicity_score: 0.85,
-                toxicity_categories: ['TOXICITY', 'INSULT'],
-                author_id: 'user-789'
-              },
-              error: null
-            })
-          })
-        })
-      });
-
-      // Mock organization settings lookup
-      mockSupabase.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                roast_tone: 'sarcastic',
-                roast_humor_type: 'witty',
-                language: 'es',
-                auto_post: false
-              },
-              error: null
-            })
-          })
-        })
-      });
-
-      // Mock OpenAI roast generation
-      const mockRoast = {
-        text: 'Innovador: has reinventado el arte de escribir comentarios tontos.',
-        tone: 'sarcastic',
-        humor_type: 'witty',
-        language: 'es',
-        tokens_used: 25,
-        cost_cents: 5
+      const job = {
+        comment_id: 'comment-456',
+        organization_id: 'org-limited',
+        platform: 'twitter'
       };
 
-      mockOpenAIClient.chat.completions.create.mockResolvedValue(mockRoast);
+      await expect(worker.processJob(job)).rejects.toThrow(
+        'Organization org-limited has reached limits: monthly_limit_exceeded'
+      );
+    });
 
-      // Mock roast storage
-      mockSupabase.from.mockReturnValueOnce({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: 'roast-123' },
-              error: null
+    test('should handle low toxicity comments', async () => {
+      // Mock Math.random to force frequency check to pass
+      const originalRandom = Math.random;
+      Math.random = jest.fn(() => 0.5);
+
+      const job = {
+        comment_id: 'comment-clean',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        original_text: 'Nice post!',
+        toxicity_score: 0.1,
+        severity_level: 'low',
+        categories: []
+      };
+
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === 'comments') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: 'comment-clean',
+                    text: 'Nice post!',
+                    integration_config_id: 'config-123'
+                  },
+                  error: null
+                })
+              })
             })
-          })
-        })
-      });
-
-      // Mock usage recording
-      mockCostControlService.recordUsage.mockResolvedValue({
-        recorded: true,
-        cost: 5
+          };
+        }
+        if (table === 'integration_configs') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({
+                    data: {
+                      id: 'config-123',
+                      organization_id: 'org-123',
+                      platform: 'twitter',
+                      tone: 'sarcastic',
+                      humor_type: 'witty',
+                      response_frequency: 0.8,
+                      config: { auto_post: true }
+                    },
+                    error: null
+                  })
+                })
+              })
+            })
+          };
+        }
+        if (table === 'responses') {
+          return {
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: 'response-clean',
+                    response_text: 'Generated response'
+                  },
+                  error: null
+                })
+              })
+            })
+          };
+        }
       });
 
       const result = await worker.processJob(job);
 
       expect(result.success).toBe(true);
-      expect(result.roast_text).toBe(mockRoast.text);
-      expect(result.tokens_used).toBe(25);
-      expect(result.cost_cents).toBe(5);
-      expect(result.language).toBe('es');
-      expect(result.auto_posted).toBe(false);
-
-      expect(mockOpenAIClient.chat.completions.create).toHaveBeenCalledWith(
-        'This is a stupid post',
-        {
-          tone: 'sarcastic',
-          humor_type: 'witty',
-          language: 'es',
-          platform: 'twitter',
-          toxicity_categories: ['TOXICITY', 'INSULT'],
-          toxicity_score: 0.85
-        }
-      );
-    });
-
-    test('should handle cost limit exceeded', async () => {
-      const job = {
-        id: 'job-limited',
-        organization_id: 'org-limited',
-        platform: 'twitter',
-        comment_id: 'comment-456'
-      };
-
-      mockCostControlService.canPerformOperation.mockResolvedValue({
-        allowed: false,
-        reason: 'monthly_limit_exceeded',
-        currentUsage: 100,
-        limit: 100
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Cost limit exceeded: monthly_limit_exceeded');
-      expect(result.skipped).toBe(true);
-      expect(mockOpenAIClient.chat.completions.create).not.toHaveBeenCalled();
-    });
-
-    test('should handle low toxicity comments', async () => {
-      const job = {
-        id: 'job-clean',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        comment_id: 'comment-clean'
-      };
-
-      mockCostControlService.canPerformOperation.mockResolvedValue({
-        allowed: true
-      });
-
-      // Mock comment with low toxicity
-      mockSupabase.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'comment-clean',
-                text: 'This is a nice comment',
-                toxicity_score: 0.15,
-                toxicity_categories: []
-              },
-              error: null
-            })
-          })
-        })
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Comment toxicity too low for roast generation');
-      expect(result.skipped).toBe(true);
-      expect(mockOpenAIClient.chat.completions.create).not.toHaveBeenCalled();
+      Math.random = originalRandom;
     });
 
     test('should handle auto-posting for eligible platforms', async () => {
       const job = {
-        id: 'job-auto-post',
+        comment_id: 'comment-456',
         organization_id: 'org-123',
         platform: 'twitter',
-        comment_id: 'comment-456'
+        original_text: 'Your content is trash',
+        toxicity_score: 0.9,
+        severity_level: 'high',
+        categories: ['TOXICITY']
       };
 
-      mockCostControlService.canPerformOperation.mockResolvedValue({
-        allowed: true
-      });
-
-      // Mock comment and organization with auto-post enabled
-      mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: {
-                  id: 'comment-456',
-                  text: 'Toxic comment',
-                  toxicity_score: 0.8,
-                  toxicity_categories: ['TOXICITY']
-                },
-                error: null
-              })
-            })
-          })
-        })
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: {
-                  auto_post: true,
-                  roast_tone: 'sarcastic',
-                  language: 'es'
-                },
-                error: null
-              })
-            })
-          })
-        })
-        .mockReturnValueOnce({
-          insert: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { id: 'roast-123' },
-                error: null
-              })
-            })
-          })
-        });
-
-      mockOpenAIClient.chat.completions.create.mockResolvedValue({
-        text: 'Generated roast',
-        tokens_used: 20,
-        cost_cents: 4
-      });
-
-      mockCostControlService.recordUsage.mockResolvedValue({
-        recorded: true,
-        cost: 4
-      });
-
-      // Mock posting job queue
-      mockQueueService.addJob.mockResolvedValue({
-        success: true,
-        jobId: 'post-job-123'
-      });
+      worker.queuePostingJob = jest.fn();
 
       const result = await worker.processJob(job);
 
       expect(result.success).toBe(true);
-      expect(result.auto_posted).toBe(true);
-      expect(result.post_job_id).toBe('post-job-123');
-      
-      expect(mockQueueService.addJob).toHaveBeenCalledWith(
-        'post_response',
-        {
-          organization_id: 'org-123',
-          platform: 'twitter',
-          roast_id: 'roast-123',
-          reply_to_comment_id: 'comment-456',
-          roast_text: 'Generated roast'
-        },
-        4 // Normal priority for posting
-      );
+      expect(worker.queuePostingJob).toHaveBeenCalled();
     });
   });
 
-  describe('generateRoast', () => {
-    test('should generate roast with custom parameters', async () => {
-      const comment = {
-        text: 'Your content is trash',
-        toxicity_score: 0.9,
-        toxicity_categories: ['TOXICITY', 'INSULT']
+  describe('generateResponse', () => {
+    test('should generate response with OpenAI', async () => {
+      const originalText = 'This is a terrible comment.';
+      const config = {
+        tone: 'sarcastic',
+        humor_type: 'witty'
+      };
+      const context = {
+        toxicity_score: 0.75,
+        severity_level: 'high',
+        categories: ['TOXICITY', 'INSULT'],
+        platform: 'twitter'
       };
 
-      const settings = {
-        tone: 'witty',
-        humor_type: 'clever',
-        language: 'en',
-        platform: 'youtube'
-      };
-
-      const mockRoast = {
-        text: 'Congratulations on reinventing the art of terrible comments.',
-        tone: 'witty',
-        humor_type: 'clever',
-        language: 'en',
-        tokens_used: 30,
-        cost_cents: 6
-      };
-
-      mockOpenAIClient.chat.completions.create.mockResolvedValue(mockRoast);
-
-      const result = await worker.generateRoast(comment, settings);
-
-      expect(result).toEqual(mockRoast);
-      expect(mockOpenAIClient.chat.completions.create).toHaveBeenCalledWith(
-        comment.text,
-        {
-          ...settings,
-          toxicity_categories: comment.toxicity_categories,
-          toxicity_score: comment.toxicity_score
+      const mockCompletion = {
+        choices: [{
+          message: {
+            content: 'Wow, what an absolutely groundbreaking observation!'
+          }
+        }],
+        usage: {
+          total_tokens: 25
         }
-      );
+      };
+
+      mockOpenAIClient.chat.completions.create.mockResolvedValue(mockCompletion);
+
+      const result = await worker.generateResponse(originalText, config, context);
+
+      expect(result.text).toBe('Wow, what an absolutely groundbreaking observation!');
+      expect(result.service).toBe('openai');
+      expect(result.tokensUsed).toBe(25);
+      expect(mockOpenAIClient.chat.completions.create).toHaveBeenCalled();
     });
 
-    test('should handle OpenAI generation errors', async () => {
-      const comment = { text: 'Test', toxicity_score: 0.8 };
-      const settings = { tone: 'sarcastic' };
+    test('should fallback to template when OpenAI fails', async () => {
+      const originalText = 'Test comment';
+      const config = { tone: 'sarcastic', humor_type: 'witty' };
+      const context = { platform: 'twitter' };
 
       mockOpenAIClient.chat.completions.create.mockRejectedValue(
         new Error('OpenAI API error')
       );
 
-      await expect(worker.generateRoast(comment, settings)).rejects.toThrow(
-        'OpenAI API error'
-      );
+      const result = await worker.generateResponse(originalText, config, context);
+
+      expect(result.service).toBe('template');
+      expect(result.text).toBeDefined();
+      expect(result.templated).toBe(true);
     });
   });
 
-  describe('storeRoast', () => {
-    test('should store roast in database', async () => {
-      const roastData = {
-        organization_id: 'org-123',
-        platform: 'twitter',
-        comment_id: 'comment-456',
-        roast_text: 'Generated roast',
-        tone: 'sarcastic',
-        humor_type: 'witty',
-        language: 'es',
-        tokens_used: 25,
-        cost_cents: 5
+  describe('storeResponse', () => {
+    test('should store response in database', async () => {
+      const commentId = 'comment-456';
+      const organizationId = 'org-123';
+      const response = {
+        text: 'Generated response',
+        tokensUsed: 25
       };
+      const config = {
+        tone: 'sarcastic',
+        humor_type: 'witty'
+      };
+      const generationTime = 1500;
 
       mockSupabase.from.mockReturnValue({
         insert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
-              data: { id: 'roast-123' },
+              data: { id: 'response-123', response_text: 'Generated response' },
               error: null
             })
           })
         })
       });
 
-      const result = await worker.storeRoast(roastData);
+      const result = await worker.storeResponse(commentId, organizationId, response, config, generationTime);
 
-      expect(result.success).toBe(true);
-      expect(result.roastId).toBe('roast-123');
-      expect(mockSupabase.from).toHaveBeenCalledWith('roasts');
+      expect(result.id).toBe('response-123');
+      expect(mockSupabase.from).toHaveBeenCalledWith('responses');
     });
 
     test('should handle database storage errors', async () => {
-      const roastData = {
-        organization_id: 'org-123',
-        roast_text: 'Test roast'
-      };
+      const commentId = 'comment-456';
+      const organizationId = 'org-123';
+      const response = { text: 'Test response' };
+      const config = { tone: 'sarcastic', humor_type: 'witty' };
+      const generationTime = 1000;
 
+      const mockError = new Error('Insert failed');
       mockSupabase.from.mockReturnValue({
         insert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
               data: null,
-              error: { message: 'Insert failed' }
+              error: mockError
             })
           })
         })
       });
 
-      await expect(worker.storeRoast(roastData)).rejects.toThrow('Insert failed');
+      await expect(
+        worker.storeResponse(commentId, organizationId, response, config, generationTime)
+      ).rejects.toThrow('Insert failed');
     });
   });
 
-  describe('shouldGenerateRoast', () => {
-    test('should allow roast for high toxicity', () => {
-      expect(worker.shouldGenerateRoast(0.8, ['TOXICITY'])).toBe(true);
+  describe('shouldRespondBasedOnFrequency', () => {
+    test('should always respond for frequency 1.0', () => {
+      expect(worker.shouldRespondBasedOnFrequency(1.0)).toBe(true);
     });
 
-    test('should allow roast for medium toxicity with categories', () => {
-      expect(worker.shouldGenerateRoast(0.6, ['INSULT'])).toBe(true);
+    test('should never respond for frequency 0.0', () => {
+      expect(worker.shouldRespondBasedOnFrequency(0.0)).toBe(false);
     });
 
-    test('should reject roast for low toxicity', () => {
-      expect(worker.shouldGenerateRoast(0.3, [])).toBe(false);
-    });
-
-    test('should reject roast for medium toxicity without categories', () => {
-      expect(worker.shouldGenerateRoast(0.6, [])).toBe(false);
-    });
-  });
-
-  describe('validateRoastLength', () => {
-    test('should pass Twitter length validation', () => {
-      const shortRoast = 'Short roast text';
-      expect(worker.validateRoastLength(shortRoast, 'twitter')).toBe(true);
-    });
-
-    test('should fail Twitter length validation for long text', () => {
-      const longRoast = 'X'.repeat(281); // Over 280 characters
-      expect(worker.validateRoastLength(longRoast, 'twitter')).toBe(false);
-    });
-
-    test('should pass YouTube length validation', () => {
-      const mediumRoast = 'X'.repeat(500);
-      expect(worker.validateRoastLength(mediumRoast, 'youtube')).toBe(true);
-    });
-
-    test('should fail YouTube length validation for very long text', () => {
-      const veryLongRoast = 'X'.repeat(10001); // Over 10000 characters
-      expect(worker.validateRoastLength(veryLongRoast, 'youtube')).toBe(false);
-    });
-  });
-
-  describe('getOrganizationSettings', () => {
-    test('should fetch organization roast settings', async () => {
-      const organizationId = 'org-123';
+    test('should sometimes respond for frequency 0.5', () => {
+      // Mock Math.random to control the outcome
+      const originalRandom = Math.random;
+      Math.random = jest.fn(() => 0.3); // Less than 0.5
+      expect(worker.shouldRespondBasedOnFrequency(0.5)).toBe(true);
       
-      const mockSettings = {
-        roast_tone: 'clever',
-        roast_humor_type: 'witty',
-        language: 'en',
-        auto_post: true
+      Math.random = jest.fn(() => 0.7); // Greater than 0.5
+      expect(worker.shouldRespondBasedOnFrequency(0.5)).toBe(false);
+      
+      Math.random = originalRandom;
+    });
+  });
+
+  describe('validateResponseLength', () => {
+    test('should return short text unchanged for Twitter', () => {
+      const shortResponse = 'Short response text';
+      const result = worker.validateResponseLength(shortResponse, 'twitter');
+      expect(result).toBe(shortResponse);
+    });
+
+    test('should truncate long text for Twitter', () => {
+      const longResponse = 'X'.repeat(300); // Over 270 characters
+      const result = worker.validateResponseLength(longResponse, 'twitter');
+      expect(result.length).toBeLessThanOrEqual(270);
+      expect(result).toMatch(/\.\.\.$|X+$/);
+    });
+
+    test('should return medium text unchanged for YouTube', () => {
+      const mediumResponse = 'X'.repeat(500);
+      const result = worker.validateResponseLength(mediumResponse, 'youtube');
+      expect(result).toBe(mediumResponse);
+    });
+
+    test('should truncate very long text for YouTube', () => {
+      const veryLongResponse = 'X'.repeat(1100); // Over 1000 characters
+      const result = worker.validateResponseLength(veryLongResponse, 'youtube');
+      expect(result.length).toBeLessThanOrEqual(1000);
+    });
+  });
+
+  describe('getIntegrationConfig', () => {
+    test('should fetch integration config successfully', async () => {
+      const organizationId = 'org-123';
+      const configId = 'config-456';
+      
+      const mockConfig = {
+        id: 'config-456',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        tone: 'sarcastic',
+        humor_type: 'witty',
+        response_frequency: 0.8
       };
 
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: mockSettings,
-              error: null
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: mockConfig,
+                error: null
+              })
             })
           })
         })
       });
 
-      const result = await worker.getOrganizationSettings(organizationId);
+      const result = await worker.getIntegrationConfig(organizationId, configId);
 
-      expect(result).toEqual(mockSettings);
-      expect(mockSupabase.from).toHaveBeenCalledWith('organizations');
+      expect(result).toEqual(mockConfig);
+      expect(mockSupabase.from).toHaveBeenCalledWith('integration_configs');
     });
 
-    test('should return default settings when organization not found', async () => {
-      const organizationId = 'org-missing';
+    test('should return null when config not found', async () => {
+      const organizationId = 'org-123';
+      const configId = 'missing-config';
 
       mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Not found' }
+              })
             })
           })
         })
       });
 
-      const result = await worker.getOrganizationSettings(organizationId);
+      const result = await worker.getIntegrationConfig(organizationId, configId);
 
-      expect(result.roast_tone).toBe('sarcastic');
-      expect(result.roast_humor_type).toBe('witty');
-      expect(result.language).toBe('es');
-      expect(result.auto_post).toBe(false);
+      expect(result).toBeNull();
     });
   });
 
@@ -591,63 +558,68 @@ describe('GenerateReplyWorker', () => {
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
               data: null,
-              error: null
+              error: { message: 'Comment not found' }
             })
           })
         })
       });
 
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Comment not found: missing-comment');
+      await expect(worker.processJob(job)).rejects.toThrow(
+        'Comment missing-comment not found'
+      );
     });
 
     test('should handle roast generation failures gracefully', async () => {
       const job = {
-        id: 'job-generation-fail',
+        comment_id: 'comment-456',
         organization_id: 'org-123',
-        comment_id: 'comment-456'
+        platform: 'twitter',
+        original_text: 'Test comment',
+        toxicity_score: 0.8,
+        severity_level: 'high',
+        categories: ['TOXICITY']
       };
 
       mockCostControlService.canPerformOperation.mockResolvedValue({
         allowed: true
       });
 
-      mockSupabase.from
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: {
-                  text: 'Toxic comment',
-                  toxicity_score: 0.8,
-                  toxicity_categories: ['TOXICITY']
-                },
-                error: null
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === 'comments') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: 'comment-456',
+                    text: 'Test comment',
+                    integration_config_id: 'config-missing'
+                  },
+                  error: null
+                })
               })
             })
-          })
-        })
-        .mockReturnValueOnce({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: { roast_tone: 'sarcastic' },
-                error: null
+          };
+        }
+        if (table === 'integration_configs') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({
+                    data: null,
+                    error: { message: 'Config not found' }
+                  })
+                })
               })
             })
-          })
-        });
+          };
+        }
+      });
 
-      mockOpenAIClient.chat.completions.create.mockRejectedValue(
-        new Error('Content policy violation')
+      await expect(worker.processJob(job)).rejects.toThrow(
+        'Integration config not found for comment comment-456'
       );
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Content policy violation');
     });
   });
 });

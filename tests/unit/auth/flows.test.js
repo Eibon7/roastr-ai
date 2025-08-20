@@ -7,17 +7,23 @@
 describe('Auth Flows', () => {
     beforeEach(() => {
         localStorage.clear();
-        window.location.href = '';
-        window.location.search = '';
+        if (window.location) {
+            window.location.href = '';
+            window.location.search = '';
+            if (window.location.assign && window.location.assign.mockClear) {
+                window.location.assign.mockClear();
+            }
+            if (window.location.replace && window.location.replace.mockClear) {
+                window.location.replace.mockClear();
+            }
+        }
         fetch.mockClear();
-        window.location.assign.mockClear();
-        window.location.replace.mockClear();
         jest.clearAllTimers();
         jest.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.runOnlyPendingTimers();
+        jest.clearAllTimers();
         jest.useRealTimers();
     });
 
