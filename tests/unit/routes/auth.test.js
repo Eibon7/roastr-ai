@@ -766,7 +766,7 @@ describe('Auth Routes', () => {
 
                 expect(response.status).toBe(200);
                 expect(response.body.success).toBe(true);
-                expect(authService.updateUserPlan).toHaveBeenCalledWith('user-123', 'pro');
+                expect(authService.updateUserPlan).toHaveBeenCalledWith('user-123', 'pro', 'mock-admin-id');
             });
 
             it('should validate required fields', async () => {
@@ -886,7 +886,7 @@ describe('Auth Routes', () => {
 
                 expect(response.status).toBe(200);
                 expect(response.body.success).toBe(true);
-                expect(authService.updateUserPlan).toHaveBeenCalledWith('user-123', 'pro');
+                expect(authService.updateUserPlan).toHaveBeenCalledWith('user-123', 'pro', 'mock-admin-id');
                 expect(authService.logUserActivity).toHaveBeenCalledWith('user-123', 'plan_changed', {
                     performed_by: 'mock-admin-id',
                     old_plan: 'pro', // The old plan is actually the current plan from the result
