@@ -672,7 +672,8 @@ router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (
             });
         }
         
-        const result = await authService.updateUserPlan(userId, newPlan);
+        const adminId = req.user.id; // Get admin ID from authenticated user
+        const result = await authService.updateUserPlan(userId, newPlan, adminId);
         
         res.status(200).json({
             success: true,
@@ -861,7 +862,8 @@ router.post('/admin/users/:id/plan', authenticateToken, requireAdmin, async (req
         }
         
         // Use the existing updateUserPlan method
-        const result = await authService.updateUserPlan(id, newPlan);
+        const adminId = req.user.id; // Get admin ID from authenticated user
+        const result = await authService.updateUserPlan(id, newPlan, adminId);
         
         // Log the plan change activity
         await authService.logUserActivity(id, 'plan_changed', {
