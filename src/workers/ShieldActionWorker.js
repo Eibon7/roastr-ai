@@ -1,5 +1,6 @@
 const BaseWorker = require('./BaseWorker');
 const ShieldService = require('../services/shieldService');
+const CostControlService = require('../services/costControl');
 
 /**
  * Shield Action Worker
@@ -20,6 +21,7 @@ class ShieldActionWorker extends BaseWorker {
     });
     
     this.shieldService = new ShieldService();
+    this.costControl = new CostControlService();
     this.platformClients = new Map();
     
     // Initialize platform clients for Shield actions
@@ -161,6 +163,24 @@ class ShieldActionWorker extends BaseWorker {
         platform_user_id,
         action,
         result
+      );
+      
+      // Record usage for Shield action
+      await this.costControl.recordUsage(
+        organization_id,
+        platform,
+        'shield_action',
+        {
+          commentId: comment_id,
+          actionType: action,
+          platformUserId: platform_user_id,
+          duration: duration,
+          success: result.success,
+          executionTime: result.executionTime || 0,
+          escalationLevel: result.escalationLevel || 'standard'
+        },
+        null, // userId - not applicable for shield actions
+        1 // quantity
       );
       
       // Update user behavior

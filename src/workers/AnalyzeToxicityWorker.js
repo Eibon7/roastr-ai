@@ -125,10 +125,12 @@ class AnalyzeToxicityWorker extends BaseWorker {
   async processJob(job) {
     const { comment_id, organization_id, platform, text } = job.payload || job;
     
-    // Check cost control limits
+    // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
       organization_id, 
-      'analyze_toxicity'
+      'analyze_toxicity',
+      1, // quantity
+      platform
     );
     
     if (!canProcess.allowed) {
@@ -148,17 +150,25 @@ class AnalyzeToxicityWorker extends BaseWorker {
     // Update comment with analysis results
     await this.updateCommentAnalysis(comment_id, analysisResult);
     
-    // Record usage and cost
+    // Record usage and cost with enhanced tracking
+    const textToAnalyze = text || comment.original_text;
+    const tokensUsed = this.estimateTokens(textToAnalyze);
     await this.costControl.recordUsage(
       organization_id,
       platform,
       'analyze_toxicity',
       {
         commentId: comment_id,
-        tokensUsed: this.estimateTokens(text),
+        tokensUsed,
         analysisService: analysisResult.service,
-        severity: analysisResult.severity_level
-      }
+        severity: analysisResult.severity_level,
+        toxicityScore: analysisResult.toxicity_score,
+        categories: analysisResult.categories,
+        textLength: textToAnalyze.length,
+        analysisTime: analysisResult.analysisTime || 0
+      },
+      null, // userId - not applicable for toxicity analysis
+      1 // quantity
     );
     
     // Queue response generation if comment meets criteria
