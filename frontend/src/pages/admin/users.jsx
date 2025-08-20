@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../components/ThemeToggle';
+import SuspensionModal from '../../components/admin/SuspensionModal';
+import ToastNotification from '../../components/admin/ToastNotification';
 import { authHelpers } from '../../lib/supabaseClient';
 
 const AdminUsersPage = () => {
@@ -9,7 +11,26 @@ const AdminUsersPage = () => {
   const [alert, setAlert] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
+  const [suspensionModal, setSuspensionModal] = useState({
+    isOpen: false,
+    user: null,
+    action: null // 'suspend' or 'unsuspend'
+  });
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success'
+  });
   const navigate = useNavigate();
+
+  // Helper to show toast notifications
+  const showToast = (message, type = 'success') => {
+    setToast({ isVisible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
   // Check admin access and load users
   useEffect(() => {
@@ -87,20 +108,14 @@ const AdminUsersPage = () => {
 
       const data = await response.json();
       if (data.success) {
-        setAlert({
-          type: 'success',
-          message: `Plan actualizado exitosamente a ${newPlan}`
-        });
+        showToast(`Plan actualizado exitosamente a ${newPlan}`, 'success');
         // Refresh users list
         await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al actualizar plan');
       }
     } catch (error) {
-      setAlert({
-        type: 'error',
-        message: 'Error al actualizar plan: ' + error.message
-      });
+      showToast('Error al actualizar plan: ' + error.message, 'error');
     } finally {
       setActionLoading(prev => ({ ...prev, [`plan_${userId}`]: false }));
     }
@@ -122,18 +137,12 @@ const AdminUsersPage = () => {
 
       const data = await response.json();
       if (data.success) {
-        setAlert({
-          type: 'success',
-          message: `Email de recuperación enviado a ${data.data.email}`
-        });
+        showToast(`Email de recuperación enviado a ${data.data.email}`, 'success');
       } else {
         throw new Error(data.error || 'Error al enviar email de recuperación');
       }
     } catch (error) {
-      setAlert({
-        type: 'error',
-        message: 'Error al resetear contraseña: ' + error.message
-      });
+      showToast('Error al resetear contraseña: ' + error.message, 'error');
     } finally {
       setActionLoading(prev => ({ ...prev, [`reset_${userId}`]: false }));
     }
@@ -155,20 +164,14 @@ const AdminUsersPage = () => {
 
       const data = await response.json();
       if (data.success) {
-        setAlert({
-          type: 'success',
-          message: 'Usuario suspendido exitosamente'
-        });
+        showToast('Usuario suspendido exitosamente', 'success');
         // Refresh users list
         await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al suspender usuario');
       }
     } catch (error) {
-      setAlert({
-        type: 'error',
-        message: 'Error al suspender usuario: ' + error.message
-      });
+      showToast('Error al suspender usuario: ' + error.message, 'error');
     } finally {
       setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: false }));
     }
@@ -189,36 +192,50 @@ const AdminUsersPage = () => {
 
       const data = await response.json();
       if (data.success) {
-        setAlert({
-          type: 'success',
-          message: 'Usuario reactivado exitosamente'
-        });
+        showToast('Usuario reactivado exitosamente', 'success');
         // Refresh users list
         await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al reactivar usuario');
       }
     } catch (error) {
-      setAlert({
-        type: 'error',
-        message: 'Error al reactivar usuario: ' + error.message
-      });
+      showToast('Error al reactivar usuario: ' + error.message, 'error');
     } finally {
       setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: false }));
     }
   };
 
-  const handleSuspendClick = (userId, isSuspended) => {
-    if (isSuspended) {
-      if (window.confirm('¿Estás seguro de que quieres reactivar este usuario?')) {
-        unsuspendUser(userId);
-      }
+  const handleSuspendClick = (user) => {
+    const action = user.suspended ? 'unsuspend' : 'suspend';
+    setSuspensionModal({
+      isOpen: true,
+      user: user,
+      action: action
+    });
+  };
+
+  const handleSuspensionConfirm = async (reason) => {
+    const { user, action } = suspensionModal;
+    
+    if (action === 'suspend') {
+      await suspendUser(user.id, reason);
     } else {
-      const reason = window.prompt('Razón de la suspensión (opcional):');
-      if (window.confirm('¿Estás seguro de que quieres suspender este usuario?')) {
-        suspendUser(userId, reason);
-      }
+      await unsuspendUser(user.id);
     }
+    
+    setSuspensionModal({
+      isOpen: false,
+      user: null,
+      action: null
+    });
+  };
+
+  const handleSuspensionCancel = () => {
+    setSuspensionModal({
+      isOpen: false,
+      user: null,
+      action: null
+    });
   };
 
   const handleSignOut = async () => {
@@ -308,41 +325,6 @@ const AdminUsersPage = () => {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Alert */}
-        {alert && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            alert.type === 'success' 
-              ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800' 
-              : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-          }`}>
-            <div className="flex">
-              <div className="flex-shrink-0">
-                {alert.type === 'success' ? (
-                  <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium">{alert.message}</p>
-              </div>
-              <div className="ml-auto pl-3">
-                <button
-                  onClick={() => setAlert(null)}
-                  className="inline-flex rounded-md p-1.5 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Users Table */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
@@ -463,29 +445,34 @@ const AdminUsersPage = () => {
                         </select>
 
                         {/* Suspend/Unsuspend Button */}
-                        <button
-                          onClick={() => handleSuspendClick(user.id, user.suspended)}
-                          disabled={actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]}
-                          className={`inline-flex items-center px-3 py-1 border shadow-sm text-xs leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
-                            user.suspended 
-                              ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:ring-green-500'
-                              : 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:ring-red-500'
-                          }`}
-                        >
-                          {(actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]) ? (
-                            <svg className="animate-spin -ml-1 mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          ) : user.suspended ? (
-                            '✅'
-                          ) : (
-                            '🚫'
-                          )}
-                          {user.suspended ? 'Reactivar' : 'Suspender'}
-                        </button>
+                        {currentUser?.id === user.id ? (
+                          <span className="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 text-xs leading-4 font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-not-allowed">
+                            👤 Tu cuenta
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSuspendClick(user)}
+                            disabled={actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]}
+                            className={`inline-flex items-center px-3 py-1 border shadow-sm text-xs leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
+                              user.suspended 
+                                ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:ring-green-500'
+                                : 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:ring-red-500'
+                            }`}
+                          >
+                            {(actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]) ? (
+                              <svg className="animate-spin -ml-1 mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : user.suspended ? (
+                              '✅'
+                            ) : (
+                              '🚫'
+                            )}
+                            {user.suspended ? 'Reactivar' : 'Suspender'}
+                          </button>
+                        )}
 
-                        {/* Reset Password Button */}
                         <button
                           onClick={() => resetUserPassword(user.id)}
                           disabled={actionLoading[`reset_${user.id}`]}
@@ -522,6 +509,24 @@ const AdminUsersPage = () => {
           )}
         </div>
       </main>
+
+      {/* Suspension Modal */}
+      <SuspensionModal
+        isOpen={suspensionModal.isOpen}
+        onClose={handleSuspensionCancel}
+        onConfirm={handleSuspensionConfirm}
+        user={suspensionModal.user}
+        action={suspensionModal.action}
+        isLoading={actionLoading[`suspend_${suspensionModal.user?.id}`] || actionLoading[`unsuspend_${suspensionModal.user?.id}`]}
+      />
+
+      {/* Toast Notifications */}
+      <ToastNotification
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
 
       <ThemeToggle />
     </div>
