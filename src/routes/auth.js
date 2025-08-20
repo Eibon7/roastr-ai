@@ -672,7 +672,8 @@ router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (
             });
         }
         
-        const result = await authService.updateUserPlan(userId, newPlan);
+        const adminId = req.user.id; // Get admin ID from authenticated user
+        const result = await authService.updateUserPlan(userId, newPlan, adminId);
         
         res.status(200).json({
             success: true,
@@ -794,6 +795,14 @@ router.post('/admin/users/:id/suspend', authenticateToken, requireAdmin, async (
             return res.status(400).json({
                 success: false,
                 error: 'User ID is required'
+            });
+        }
+
+        // Prevent self-suspension
+        if (id === req.user.id) {
+            return res.status(400).json({
+                success: false,
+                error: 'Administrators cannot suspend their own accounts'
             });
         }
         

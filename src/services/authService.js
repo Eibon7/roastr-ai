@@ -1,6 +1,10 @@
 const { supabaseServiceClient, supabaseAnonClient, createUserClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
 const crypto = require('crypto');
+const { getPlanFeatures } = require('./planService');
+const { isChangeAllowed } = require('./planValidation');
+const auditService = require('./auditService');
+const { applyPlanLimits } = require('./subscriptionService');
 
 class AuthService {
     
@@ -557,43 +561,133 @@ class AuthService {
 
     /**
      * Admin: Update user plan (service client)
+     * Updates user plan, subscription, organization limits and logs audit trail
      */
-    async updateUserPlan(userId, newPlan) {
+    async updateUserPlan(userId, newPlan, adminId = null) {
         try {
             // Validate plan
             const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
             if (!validPlans.includes(newPlan)) {
-                throw new Error('Invalid plan');
+                throw new Error('Invalid plan. Valid plans are: ' + validPlans.join(', '));
             }
 
-            // Update user plan in database
-            const { data: userData, error: userError } = await supabaseServiceClient
+            // Get current user data including current plan
+            const { data: currentUser, error: getCurrentError } = await supabaseServiceClient
                 .from('users')
-                .update({ plan: newPlan })
+                .select('id, email, plan, name')
                 .eq('id', userId)
-                .select()
                 .single();
 
-            if (userError) {
-                throw new Error(`Failed to update user plan: ${userError.message}`);
+            if (getCurrentError || !currentUser) {
+                throw new Error('User not found');
             }
 
-            // Update organization plan if exists
-            const { error: orgError } = await supabaseServiceClient
-                .from('organizations')
-                .update({ plan_id: newPlan })
-                .eq('owner_id', userId);
-
-            if (orgError) {
-                logger.warn('Failed to update organization plan:', orgError.message);
+            const oldPlan = currentUser.plan || 'free';
+            
+            // Check if plan is actually changing
+            if (oldPlan === newPlan) {
+                return {
+                    message: 'Plan is already set to ' + newPlan,
+                    user: currentUser,
+                    newPlan,
+                    unchanged: true
+                };
             }
 
-            logger.info('User plan updated:', { userId, newPlan });
+            // Validate plan change is allowed (check usage constraints)
+            const { getUserUsage } = require('./subscriptionService');
+            const currentUsage = await getUserUsage(userId);
+            const validation = await isChangeAllowed(oldPlan, newPlan, currentUsage);
+            
+            if (!validation.allowed) {
+                throw new Error(`Plan change not allowed: ${validation.reason}${validation.warnings?.length ? '. Warnings: ' + validation.warnings.join(', ') : ''}`);
+            }
+
+            // Start transaction-like updates
+            const updatePromises = [];
+
+            // 1. Update user plan in users table
+            updatePromises.push(
+                supabaseServiceClient
+                    .from('users')
+                    .update({ 
+                        plan: newPlan,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', userId)
+                    .select()
+                    .single()
+            );
+
+            // 2. Update or create user subscription record
+            updatePromises.push(
+                supabaseServiceClient
+                    .from('user_subscriptions')
+                    .upsert({
+                        user_id: userId,
+                        plan: newPlan,
+                        status: 'active',
+                        updated_at: new Date().toISOString(),
+                        // For admin changes, we don't have Stripe data
+                        stripe_customer_id: null,
+                        stripe_subscription_id: null,
+                        current_period_start: new Date().toISOString(),
+                        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+                    }, { 
+                        onConflict: 'user_id',
+                        ignoreDuplicates: false 
+                    })
+                    .select()
+            );
+
+            // Execute updates
+            const [userResult, subscriptionResult] = await Promise.all(updatePromises);
+
+            if (userResult.error) {
+                throw new Error(`Failed to update user plan: ${userResult.error.message}`);
+            }
+
+            if (subscriptionResult.error) {
+                logger.warn('Failed to update user subscription:', subscriptionResult.error.message);
+            }
+
+            // 3. Apply plan limits immediately (updates organization too)
+            await applyPlanLimits(userId, newPlan, 'active');
+
+            // 4. Log audit trail for admin action
+            await auditService.logPlanChange({
+                userId,
+                fromPlan: oldPlan,
+                toPlan: newPlan,
+                changeStatus: 'completed',
+                usageSnapshot: {
+                    ...currentUsage,
+                    timestamp: new Date().toISOString(),
+                    change_trigger: 'admin_panel'
+                },
+                initiatedBy: adminId || 'admin_system',
+                metadata: {
+                    admin_initiated: true,
+                    validation_passed: validation.allowed,
+                    validation_warnings: validation.warnings || []
+                }
+            });
+
+            logger.info('Admin plan change completed:', { 
+                userId, 
+                oldPlan, 
+                newPlan, 
+                adminId,
+                userEmail: currentUser.email
+            });
             
             return {
                 message: 'User plan updated successfully',
-                user: userData,
-                newPlan
+                user: userResult.data,
+                oldPlan,
+                newPlan,
+                limitsApplied: true,
+                auditLogged: true
             };
 
         } catch (error) {
