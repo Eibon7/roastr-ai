@@ -379,21 +379,46 @@ Generated on: ${new Date().toISOString()}
     }
 
     /**
-     * Validate and retrieve download token
+     * Validate and retrieve download token (timing-safe)
      */
     validateDownloadToken(token) {
-        if (!global.downloadTokens || !global.downloadTokens.has(token)) {
+        if (!global.downloadTokens || typeof token !== 'string') {
             return null;
         }
 
-        const downloadToken = global.downloadTokens.get(token);
+        // Convert token to Buffer for timing-safe comparison
+        const tokenBuffer = Buffer.from(token);
         
-        if (downloadToken.expiresAt < Date.now()) {
+        // Find matching token using timing-safe comparison
+        let matchedToken = null;
+        for (const [storedToken, downloadToken] of global.downloadTokens.entries()) {
+            const storedTokenBuffer = Buffer.from(storedToken);
+            
+            // Both buffers must be same length for timingSafeEqual
+            if (tokenBuffer.length === storedTokenBuffer.length) {
+                try {
+                    if (crypto.timingSafeEqual(tokenBuffer, storedTokenBuffer)) {
+                        matchedToken = downloadToken;
+                        break;
+                    }
+                } catch (e) {
+                    // timingSafeEqual throws if lengths don't match (shouldn't happen here)
+                    continue;
+                }
+            }
+        }
+        
+        if (!matchedToken) {
+            return null;
+        }
+        
+        // Check expiration
+        if (matchedToken.expiresAt < Date.now()) {
             global.downloadTokens.delete(token);
             return null;
         }
 
-        return downloadToken;
+        return matchedToken;
     }
 
     /**

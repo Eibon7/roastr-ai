@@ -186,6 +186,75 @@ describe('DataExportService', () => {
 
       expect(result).toBeNull();
     });
+
+    it('should use timing-safe comparison for token validation', () => {
+      const crypto = require('crypto');
+      const originalTimingSafeEqual = crypto.timingSafeEqual;
+      const timingSafeEqualSpy = jest.spyOn(crypto, 'timingSafeEqual');
+
+      const token = 'test-timing-safe-token';
+      const tokenData = {
+        token,
+        filepath: '/path/to/file.zip',
+        filename: 'export.zip',
+        expiresAt: Date.now() + 60000,
+        createdAt: Date.now()
+      };
+
+      global.downloadTokens = new Map();
+      global.downloadTokens.set(token, tokenData);
+
+      // Test valid token
+      const result = dataExportService.validateDownloadToken(token);
+      expect(result).toEqual(tokenData);
+      expect(timingSafeEqualSpy).toHaveBeenCalled();
+
+      // Test invalid token
+      const invalidResult = dataExportService.validateDownloadToken('wrong-token');
+      expect(invalidResult).toBeNull();
+
+      timingSafeEqualSpy.mockRestore();
+    });
+
+    it('should handle tokens of different lengths safely', () => {
+      const shortToken = 'short';
+      const longToken = 'this-is-a-very-long-token-that-should-not-match';
+      
+      const tokenData = {
+        token: longToken,
+        filepath: '/path/to/file.zip',
+        filename: 'export.zip',
+        expiresAt: Date.now() + 60000,
+        createdAt: Date.now()
+      };
+
+      global.downloadTokens = new Map();
+      global.downloadTokens.set(longToken, tokenData);
+
+      // Should return null without throwing an error
+      const result = dataExportService.validateDownloadToken(shortToken);
+      expect(result).toBeNull();
+    });
+
+    it('should return null for non-string tokens', () => {
+      const tokenData = {
+        token: 'valid-token',
+        filepath: '/path/to/file.zip',
+        filename: 'export.zip',
+        expiresAt: Date.now() + 60000,
+        createdAt: Date.now()
+      };
+
+      global.downloadTokens = new Map();
+      global.downloadTokens.set('valid-token', tokenData);
+
+      // Test with various non-string types
+      expect(dataExportService.validateDownloadToken(null)).toBeNull();
+      expect(dataExportService.validateDownloadToken(undefined)).toBeNull();
+      expect(dataExportService.validateDownloadToken(123)).toBeNull();
+      expect(dataExportService.validateDownloadToken({})).toBeNull();
+      expect(dataExportService.validateDownloadToken([])).toBeNull();
+    });
   });
 
   describe('generateReadmeText', () => {
