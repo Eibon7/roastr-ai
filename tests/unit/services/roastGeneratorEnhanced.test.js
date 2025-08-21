@@ -409,9 +409,11 @@ describe('RoastGeneratorEnhanced', () => {
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       const systemPrompt = callArgs.messages[0].content;
       
-      expect(systemPrompt).toContain('Nivel de intensidad: 4/5');
-      expect(systemPrompt).toContain('Plan: pro');
-      expect(systemPrompt).toContain('políticas de contenido');
+      // Check for new master template structure instead of old format
+      expect(systemPrompt).toContain('COMENTARIO ORIGINAL:');
+      expect(systemPrompt).toContain('Test comment');
+      expect(systemPrompt).toContain('directo y sin filtros'); // intensity level 4 maps to this
+      expect(systemPrompt).toContain('CARACTERÍSTICAS DE UN BUEN ROAST');
     });
 
     it('should customize prompt based on tone', async () => {
@@ -425,14 +427,18 @@ describe('RoastGeneratorEnhanced', () => {
         choices: [{ message: { content: 'Subtle roast' } }]
       });
 
-      await generator.generateRoast('Test', 0.3, 'subtle', {
-        userId: 'user-subtle'
+      await generator.generateRoast('Test', 0.3, 'ironic', {
+        userId: 'user-ironic'
       });
 
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       const systemPrompt = callArgs.messages[0].content;
       
-      expect(systemPrompt).toContain('Ironía sofisticada');
+      // Check for new master template structure and tone mapping
+      expect(systemPrompt).toContain('COMENTARIO ORIGINAL:');
+      expect(systemPrompt).toContain('Test');
+      expect(systemPrompt).toContain('irónico y sofisticado'); // ironic tone mapping
+      expect(systemPrompt).toContain('suave y amigable'); // intensity level 2 maps to this
     });
   });
 });
