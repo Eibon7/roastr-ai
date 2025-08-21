@@ -1,11 +1,21 @@
 import React from 'react';
 
-export function Switch({ checked, onCheckedChange, disabled, className = '', ...props }) {
+export function Switch({ 
+  checked, 
+  onCheckedChange, 
+  disabled, 
+  className = '', 
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  ...props 
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       onClick={() => onCheckedChange && onCheckedChange(!checked)}
       disabled={disabled}
       className={`
