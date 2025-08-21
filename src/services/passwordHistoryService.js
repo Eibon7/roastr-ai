@@ -1,226 +1,224 @@
 /**
- * Password History Service
- * Tracks password history to prevent reuse of recent passwords
+ * Password History Service (Issue #133)
+ * Manages password history to prevent reuse of recent passwords
  * This is an optional security feature that can be enabled/disabled
  */
 
 const bcrypt = require('bcrypt');
+const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const { logger } = require('../utils/logger');
 
-// In a real implementation, this would use a database table
-// For now, using in-memory storage with fallback to disabled functionality
-const passwordHistory = new Map(); // userId -> [{ hash, createdAt }]
-
-// Configuration getter function to read current env vars
-function getConfig() {
-  return {
-    // Number of previous passwords to remember (0 = disabled)
-    rememberCount: process.env.PASSWORD_HISTORY_COUNT ? parseInt(process.env.PASSWORD_HISTORY_COUNT) : 5,
-    // How long to keep password history (in days)
-    retentionDays: process.env.PASSWORD_HISTORY_RETENTION_DAYS ? parseInt(process.env.PASSWORD_HISTORY_RETENTION_DAYS) : 365,
-    // Enable/disable feature
-    enabled: process.env.ENABLE_PASSWORD_HISTORY === 'true'
-  };
-}
-
-/**
- * Check if password history is enabled
- * @returns {boolean}
- */
-function isPasswordHistoryEnabled() {
-  const config = getConfig();
-  return config.enabled && config.rememberCount > 0;
-}
-
-/**
- * Check if a password has been used recently
- * @param {string} userId - User ID
- * @param {string} plainPassword - Password to check
- * @returns {Promise<boolean>} - True if password was used recently
- */
-async function isPasswordReused(userId, plainPassword) {
-  if (!isPasswordHistoryEnabled()) {
-    return false; // Feature disabled, allow any password
+class PasswordHistoryService {
+  constructor() {
+    // Configuration
+    this.PASSWORD_HISTORY_LIMIT = 5; // Remember last 5 passwords
+    this.SALT_ROUNDS = 12; // bcrypt salt rounds for password history hashing
   }
 
-  try {
-    const userHistory = passwordHistory.get(userId) || [];
-    
-    // Check against each stored password hash
-    for (const historyEntry of userHistory) {
-      const isMatch = await bcrypt.compare(plainPassword, historyEntry.hash);
-      if (isMatch) {
-        logger.info('Password reuse detected:', { userId, historyEntryDate: historyEntry.createdAt });
-        return true;
+  /**
+   * Check if a password has been used recently by the user
+   * @param {string} userId - User ID from Supabase Auth
+   * @param {string} newPassword - Plain text password to check
+   * @returns {Promise<boolean>} - True if password was used recently
+   */
+  async isPasswordRecentlyUsed(userId, newPassword) {
+    if (!flags.isEnabled('ENABLE_PASSWORD_HISTORY')) {
+      return false; // Feature disabled
+    }
+
+    try {
+      // Get recent password history for user
+      const { data: passwordHistory, error } = await supabaseServiceClient
+        .from('password_history')
+        .select('password_hash')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(this.PASSWORD_HISTORY_LIMIT);
+
+      if (error) {
+        logger.error('Error checking password history:', error);
+        return false; // Fail open for user experience
       }
-    }
-    
-    return false;
-  } catch (error) {
-    logger.error('Error checking password history:', { userId, error: error.message });
-    // On error, default to allowing the password (fail open for availability)
-    return false;
-  }
-}
 
-/**
- * Add a password to the history
- * @param {string} userId - User ID
- * @param {string} plainPassword - Password to add to history
- * @returns {Promise<void>}
- */
-async function addPasswordToHistory(userId, plainPassword) {
-  if (!isPasswordHistoryEnabled()) {
-    return; // Feature disabled, do nothing
-  }
-
-  try {
-    const config = getConfig();
-    
-    // Hash the password before storing
-    const saltRounds = 10;
-    const hash = await bcrypt.hash(plainPassword, saltRounds);
-    
-    // Get current history
-    let userHistory = passwordHistory.get(userId) || [];
-    
-    // Add new password to beginning of array
-    userHistory.unshift({
-      hash: hash,
-      createdAt: new Date().toISOString()
-    });
-    
-    // Limit to configured count
-    if (userHistory.length > config.rememberCount) {
-      userHistory = userHistory.slice(0, config.rememberCount);
-    }
-    
-    // Clean old entries based on retention period
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - config.retentionDays);
-    
-    userHistory = userHistory.filter(entry => 
-      new Date(entry.createdAt) > cutoffDate
-    );
-    
-    // Store updated history
-    passwordHistory.set(userId, userHistory);
-    
-    logger.info('Password added to history:', { 
-      userId, 
-      historyCount: userHistory.length,
-      maxCount: config.rememberCount 
-    });
-    
-  } catch (error) {
-    logger.error('Error adding password to history:', { userId, error: error.message });
-    // Don't throw - password change should still succeed even if history fails
-  }
-}
-
-/**
- * Clear password history for a user (useful for account deletion)
- * @param {string} userId - User ID
- */
-function clearPasswordHistory(userId) {
-  passwordHistory.delete(userId);
-  logger.info('Password history cleared:', { userId });
-}
-
-/**
- * Get password history stats for a user (admin use)
- * @param {string} userId - User ID
- * @returns {Object} - History stats
- */
-function getPasswordHistoryStats(userId) {
-  if (!isPasswordHistoryEnabled()) {
-    return {
-      enabled: false,
-      count: 0,
-      maxCount: 0,
-      retentionDays: 0
-    };
-  }
-
-  const config = getConfig();
-  const userHistory = passwordHistory.get(userId) || [];
-  
-  return {
-    enabled: true,
-    count: userHistory.length,
-    maxCount: config.rememberCount,
-    retentionDays: config.retentionDays,
-    oldestEntry: userHistory.length > 0 ? userHistory[userHistory.length - 1].createdAt : null,
-    newestEntry: userHistory.length > 0 ? userHistory[0].createdAt : null
-  };
-}
-
-/**
- * Get system-wide password history configuration
- * @returns {Object} - Configuration object
- */
-function getPasswordHistoryConfig() {
-  return {
-    ...getConfig(),
-    totalUsers: passwordHistory.size,
-    totalEntries: Array.from(passwordHistory.values()).reduce((sum, history) => sum + history.length, 0)
-  };
-}
-
-/**
- * Cleanup old password history entries (maintenance function)
- */
-function cleanupPasswordHistory() {
-  if (!isPasswordHistoryEnabled()) {
-    return;
-  }
-
-  const config = getConfig();
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - config.retentionDays);
-  
-  let cleanedUsers = 0;
-  let cleanedEntries = 0;
-
-  for (const [userId, userHistory] of passwordHistory.entries()) {
-    const originalCount = userHistory.length;
-    const filteredHistory = userHistory.filter(entry => 
-      new Date(entry.createdAt) > cutoffDate
-    );
-    
-    if (filteredHistory.length !== originalCount) {
-      if (filteredHistory.length === 0) {
-        passwordHistory.delete(userId);
-      } else {
-        passwordHistory.set(userId, filteredHistory);
+      if (!passwordHistory || passwordHistory.length === 0) {
+        return false; // No history yet
       }
-      cleanedUsers++;
-      cleanedEntries += (originalCount - filteredHistory.length);
+
+      // Check if new password matches any recent password
+      for (const historyEntry of passwordHistory) {
+        const isMatch = await bcrypt.compare(newPassword, historyEntry.password_hash);
+        if (isMatch) {
+          logger.info('Password reuse detected', { userId, historyCount: passwordHistory.length });
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      logger.error('Error in isPasswordRecentlyUsed:', error);
+      return false; // Fail open
     }
   }
 
-  if (cleanedUsers > 0) {
-    logger.info('Password history cleanup completed:', {
-      cleanedUsers,
-      cleanedEntries,
-      remainingUsers: passwordHistory.size
-    });
+  /**
+   * Add a password to user's history
+   * @param {string} userId - User ID from Supabase Auth
+   * @param {string} password - Plain text password to add to history
+   * @returns {Promise<boolean>} - Success status
+   */
+  async addToPasswordHistory(userId, password) {
+    if (!flags.isEnabled('ENABLE_PASSWORD_HISTORY')) {
+      return true; // Feature disabled, pretend success
+    }
+
+    try {
+      // Hash the password for storage
+      const passwordHash = await bcrypt.hash(password, this.SALT_ROUNDS);
+
+      // Add to password history
+      const { error: insertError } = await supabaseServiceClient
+        .from('password_history')
+        .insert({
+          user_id: userId,
+          password_hash: passwordHash
+        });
+
+      if (insertError) {
+        logger.error('Error adding password to history:', insertError);
+        return false;
+      }
+
+      // Clean up old password history (keep only recent ones)
+      await this.cleanupOldPasswords(userId);
+
+      logger.info('Password added to history', { userId });
+      return true;
+    } catch (error) {
+      logger.error('Error in addToPasswordHistory:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Clean up old passwords beyond the limit
+   * @param {string} userId - User ID from Supabase Auth
+   * @returns {Promise<void>}
+   */
+  async cleanupOldPasswords(userId) {
+    try {
+      // Get all password history entries for user, ordered by creation date
+      const { data: allPasswords, error: fetchError } = await supabaseServiceClient
+        .from('password_history')
+        .select('id, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        logger.error('Error fetching passwords for cleanup:', fetchError);
+        return;
+      }
+
+      // If we have more than the limit, delete the oldest ones
+      if (allPasswords.length > this.PASSWORD_HISTORY_LIMIT) {
+        const passwordsToDelete = allPasswords.slice(this.PASSWORD_HISTORY_LIMIT);
+        const idsToDelete = passwordsToDelete.map(p => p.id);
+
+        const { error: deleteError } = await supabaseServiceClient
+          .from('password_history')
+          .delete()
+          .in('id', idsToDelete);
+
+        if (deleteError) {
+          logger.error('Error deleting old passwords:', deleteError);
+        } else {
+          logger.info('Cleaned up old password history', { 
+            userId, 
+            deletedCount: idsToDelete.length 
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Error in cleanupOldPasswords:', error);
+    }
+  }
+
+  /**
+   * Clear all password history for a user (for account deletion)
+   * @param {string} userId - User ID from Supabase Auth
+   * @returns {Promise<boolean>} - Success status
+   */
+  async clearPasswordHistory(userId) {
+    try {
+      const { error } = await supabaseServiceClient
+        .from('password_history')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) {
+        logger.error('Error clearing password history:', error);
+        return false;
+      }
+
+      logger.info('Cleared password history for user', { userId });
+      return true;
+    } catch (error) {
+      logger.error('Error in clearPasswordHistory:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get password history statistics for a user
+   * @param {string} userId - User ID from Supabase Auth
+   * @returns {Promise<Object>} - Statistics object
+   */
+  async getPasswordHistoryStats(userId) {
+    try {
+      const { data: passwordHistory, error } = await supabaseServiceClient
+        .from('password_history')
+        .select('id, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        logger.error('Error getting password history stats:', error);
+        return { count: 0, oldestPasswordDate: null, newestPasswordDate: null };
+      }
+
+      return {
+        count: passwordHistory.length,
+        oldestPasswordDate: passwordHistory.length > 0 ? passwordHistory[passwordHistory.length - 1].created_at : null,
+        newestPasswordDate: passwordHistory.length > 0 ? passwordHistory[0].created_at : null,
+        historyLimit: this.PASSWORD_HISTORY_LIMIT
+      };
+    } catch (error) {
+      logger.error('Error in getPasswordHistoryStats:', error);
+      return { count: 0, oldestPasswordDate: null, newestPasswordDate: null };
+    }
   }
 }
 
-// Run cleanup every 24 hours in production
-if (process.env.NODE_ENV === 'production') {
-  setInterval(cleanupPasswordHistory, 24 * 60 * 60 * 1000);
-}
+// Legacy compatibility functions for existing imports
+const service = new PasswordHistoryService();
 
+// Export with backwards-compatible API
 module.exports = {
-  isPasswordHistoryEnabled,
-  isPasswordReused,
-  addPasswordToHistory,
-  clearPasswordHistory,
-  getPasswordHistoryStats,
-  getPasswordHistoryConfig,
-  cleanupPasswordHistory,
-  getConfig
+  // New class-based methods (preferred)
+  isPasswordRecentlyUsed: (userId, password) => service.isPasswordRecentlyUsed(userId, password),
+  addToPasswordHistory: (userId, password) => service.addToPasswordHistory(userId, password),
+  clearPasswordHistory: (userId) => service.clearPasswordHistory(userId),
+  getPasswordHistoryStats: (userId) => service.getPasswordHistoryStats(userId),
+  cleanupOldPasswords: (userId) => service.cleanupOldPasswords(userId),
+  
+  // Legacy function names for compatibility
+  isPasswordReused: (userId, password) => service.isPasswordRecentlyUsed(userId, password),
+  addPasswordToHistory: (userId, password) => service.addToPasswordHistory(userId, password),
+  
+  // Configuration functions
+  isPasswordHistoryEnabled: () => flags.isEnabled('ENABLE_PASSWORD_HISTORY'),
+  getConfig: () => ({
+    historyLimit: service.PASSWORD_HISTORY_LIMIT,
+    enabled: flags.isEnabled('ENABLE_PASSWORD_HISTORY')
+  })
 };

@@ -1,4 +1,5 @@
 {
+  "_comment": "Locale en español para internacionalización de Roastr.ai",
   "auth": {
     "login": {
       "title": "Iniciar Sesión",

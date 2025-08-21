@@ -1,4 +1,5 @@
 {
+  "_comment": "English locale for Roastr.ai internationalization",
   "auth": {
     "login": {
       "title": "Sign In",

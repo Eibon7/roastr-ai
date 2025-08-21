@@ -402,6 +402,7 @@ router.post('/update-password', async (req, res) => {
 /**
  * POST /api/auth/change-password
  * Update password with current password verification (Issue #89 + #133)
+ * With rate limiting for security (Issue #133)
  */
 router.post('/change-password', authenticateToken, passwordChangeRateLimiter, async (req, res) => {
     try {

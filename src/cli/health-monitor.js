@@ -88,7 +88,7 @@ class HealthMonitorCLI {
    */
   async showMetrics() {
     try {
-      console.log(colors.cyan('📊 Fetching system metrics...'));
+      console.log(colors.cyan(t('cli.metrics.fetching')));
       
       // Note: This would require authentication in a real scenario
       const response = await axios.get(`${this.config.apiUrl}/api/metrics`, {
@@ -104,12 +104,12 @@ class HealthMonitorCLI {
       
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        console.log(colors.red('❌ Authentication required. Set ROAST_API_KEY environment variable.'));
+        console.log(colors.red(t('cli.metrics.auth_required')));
       } else if (error.response) {
-        console.log(colors.red('❌ Metrics fetch failed'));
-        console.log(colors.yellow('Response:'), JSON.stringify(error.response.data, null, 2));
+        console.log(colors.red(t('cli.metrics.fetch_failed')));
+        console.log(colors.yellow(t('cli.errors.response') + ':'), JSON.stringify(error.response.data, null, 2));
       } else {
-        console.log(colors.red('❌ Cannot connect to API:'), error.message);
+        console.log(colors.red(t('cli.metrics.cannot_connect')), error.message);
       }
       process.exit(1);
     }
@@ -119,14 +119,14 @@ class HealthMonitorCLI {
    * Start watch mode
    */
   async startWatch() {
-    console.log(colors.cyan('👁️  Starting health monitoring (press Ctrl+C to stop)...'));
-    console.log(colors.gray(`Refresh interval: ${this.config.refreshInterval}ms\n`));
+    console.log(colors.cyan(t('cli.monitoring.starting_watch')));
+    console.log(colors.gray(t('cli.monitoring.refresh_interval', { interval: this.config.refreshInterval }) + '\n'));
     
     this.isWatching = true;
     
     // Setup graceful shutdown
     process.on('SIGINT', () => {
-      console.log(colors.yellow('\n🛑 Stopping health monitor...'));
+      console.log(colors.yellow('\n' + t('cli.monitoring.stopping')));
       this.stopWatch();
       process.exit(0);
     });
@@ -159,7 +159,7 @@ class HealthMonitorCLI {
    */
   async runTest() {
     try {
-      console.log(colors.cyan('🧪 Running monitoring system test...'));
+      console.log(colors.cyan(t('cli.monitoring.running_test')));
       
       const response = await axios.post(`${this.config.apiUrl}/api/monitoring/test`, {}, {
         timeout: 30000,
@@ -177,12 +177,12 @@ class HealthMonitorCLI {
       
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        console.log(colors.red('❌ Authentication required. Set ROAST_API_KEY environment variable.'));
+        console.log(colors.red(t('cli.alerts.auth_required')));
       } else if (error.response) {
-        console.log(colors.red('❌ Test failed'));
-        console.log(colors.yellow('Response:'), JSON.stringify(error.response.data, null, 2));
+        console.log(colors.red(t('cli.alerts.test_failed')));
+        console.log(colors.yellow(t('cli.errors.response') + ':'), JSON.stringify(error.response.data, null, 2));
       } else {
-        console.log(colors.red('❌ Cannot connect to API:'), error.message);
+        console.log(colors.red(t('cli.alerts.cannot_connect')), error.message);
       }
       process.exit(1);
     }
@@ -375,43 +375,43 @@ class HealthMonitorCLI {
    * Display system metrics
    */
   displayMetrics(metrics) {
-    console.log(colors.cyan('📊 System Metrics'));
+    console.log(colors.cyan(t('cli.metrics.title')));
     console.log(colors.gray('═'.repeat(60)));
-    console.log(`Timestamp: ${colors.gray(metrics.timestamp)}`);
+    console.log(`${t('cli.metrics.timestamp')}: ${colors.gray(metrics.timestamp)}`);
     
     // System metrics
-    console.log(colors.cyan('\n💻 System'));
+    console.log(colors.cyan('\n' + t('cli.metrics.system')));
     console.log(colors.gray('─'.repeat(40)));
-    console.log(`Uptime: ${Math.floor(metrics.system.uptime / 1000)}s`);
-    console.log(`Memory Usage: ${this.getMemoryColor(metrics.system.memory.usage)}${metrics.system.memory.usage}%${colors.reset}`);
-    console.log(`Status: ${this.getStatusColor(metrics.system.status)(metrics.system.status)}`);
+    console.log(`${t('cli.metrics.uptime')}: ${Math.floor(metrics.system.uptime / 1000)}s`);
+    console.log(`${t('cli.metrics.memory_usage')}: ${this.getMemoryColor(metrics.system.memory.usage)}${metrics.system.memory.usage}%${colors.reset}`);
+    console.log(`${t('cli.metrics.status')}: ${this.getStatusColor(metrics.system.status)(metrics.system.status)}`);
     
     // Job metrics
-    console.log(colors.cyan('\n🔄 Jobs'));
+    console.log(colors.cyan('\n' + t('cli.metrics.jobs')));
     console.log(colors.gray('─'.repeat(40)));
-    console.log(`Processed: ${colors.green(metrics.jobs.processed)}`);
-    console.log(`Failed: ${colors.red(metrics.jobs.failed)}`);
-    console.log(`Token Usage: ${colors.cyan(metrics.jobs.tokenUsage)}`);
+    console.log(`${t('cli.metrics.processed')}: ${colors.green(metrics.jobs.processed)}`);
+    console.log(`${t('cli.metrics.failed')}: ${colors.red(metrics.jobs.failed)}`);
+    console.log(`${t('cli.metrics.token_usage')}: ${colors.cyan(metrics.jobs.tokenUsage)}`);
     
     // User metrics
-    console.log(colors.cyan('\n👥 Users'));
+    console.log(colors.cyan('\n' + t('cli.metrics.users')));
     console.log(colors.gray('─'.repeat(40)));
-    console.log(`Total: ${colors.cyan(metrics.users.total)}`);
-    console.log(`Active: ${colors.green(metrics.users.active)}`);
+    console.log(`${t('cli.metrics.total')}: ${colors.cyan(metrics.users.total)}`);
+    console.log(`${t('cli.metrics.active')}: ${colors.green(metrics.users.active)}`);
     
     // Performance metrics
-    console.log(colors.cyan('\n⚡ Performance'));
+    console.log(colors.cyan('\n' + t('cli.metrics.performance')));
     console.log(colors.gray('─'.repeat(40)));
-    console.log(`Avg Response Time: ${metrics.performance.averageResponseTime}ms`);
-    console.log(`Error Rate: ${metrics.performance.errorRate}`);
-    console.log(`Total Requests: ${metrics.performance.totalRequests}`);
+    console.log(`${t('cli.metrics.avg_response_time')}: ${metrics.performance.averageResponseTime}ms`);
+    console.log(`${t('cli.metrics.error_rate')}: ${metrics.performance.errorRate}`);
+    console.log(`${t('cli.metrics.total_requests')}: ${metrics.performance.totalRequests}`);
     
     // Cost metrics
     if (metrics.costs) {
-      console.log(colors.cyan('\n💰 Costs'));
+      console.log(colors.cyan('\n' + t('cli.metrics.costs')));
       console.log(colors.gray('─'.repeat(40)));
-      console.log(`Budget Usage: ${this.getCostColor(metrics.costs.budgetUsagePercentage)}${metrics.costs.budgetUsagePercentage}%${colors.reset}`);
-      console.log(`Monthly Spend: $${metrics.costs.monthlySpend}`);
+      console.log(`${t('cli.metrics.budget_usage')}: ${this.getCostColor(metrics.costs.budgetUsagePercentage)}${metrics.costs.budgetUsagePercentage}%${colors.reset}`);
+      console.log(`${t('cli.metrics.monthly_spend')}: $${metrics.costs.monthlySpend}`);
     }
     
     console.log(colors.gray('═'.repeat(60)));
@@ -421,16 +421,16 @@ class HealthMonitorCLI {
    * Display test results
    */
   displayTestResults(results) {
-    console.log(colors.cyan('🧪 Monitoring System Test Results'));
+    console.log(colors.cyan(t('cli.monitoring.test_results')));
     console.log(colors.gray('═'.repeat(60)));
     console.log(`Timestamp: ${colors.gray(results.timestamp)}`);
     
     const overallColor = results.overall.passed ? colors.green : colors.red;
-    const overallStatus = results.overall.passed ? 'PASSED' : 'FAILED';
-    console.log(`Overall: ${overallColor(overallStatus)}`);
+    const overallStatus = results.overall.passed ? t('cli.monitoring.passed') : t('cli.monitoring.failed');
+    console.log(`${t('cli.monitoring.overall')}: ${overallColor(overallStatus)}`);
     
     // Individual test results
-    console.log(colors.cyan('\n📋 Test Components'));
+    console.log(colors.cyan('\n' + t('cli.monitoring.test_components')));
     console.log(colors.gray('─'.repeat(40)));
     
     for (const [testName, testResult] of Object.entries(results)) {

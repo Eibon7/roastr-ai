@@ -489,6 +489,25 @@ CREATE TABLE api_keys (
     INDEX (organization_id, is_active)
 );
 
+-- Password history for security (Issue #133)
+-- Tracks password hashes to prevent reuse
+CREATE TABLE password_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL, -- Reference to auth.users table in Supabase
+    
+    -- Password details
+    password_hash VARCHAR(255) NOT NULL, -- bcrypt hash of the password
+    
+    -- Metadata
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    -- Indexes for efficient queries
+    INDEX (user_id, created_at DESC)
+);
+
+-- Add RLS to password history
+ALTER TABLE password_history ENABLE ROW LEVEL SECURITY;
+
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================================================
@@ -608,6 +627,11 @@ CREATE POLICY audit_logs_isolation ON audit_logs FOR ALL USING (
         WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
     )
 );
+
+-- Password history - users can only see their own, service role can manage all
+CREATE POLICY password_history_isolation ON password_history FOR ALL USING (user_id = auth.uid());
+CREATE POLICY password_history_service_access ON password_history FOR ALL 
+    USING (auth.role() = 'service_role');
 
 -- ============================================================================
 -- FUNCTIONS & TRIGGERS

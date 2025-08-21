@@ -4,12 +4,13 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
+import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
 
-// Password requirement component for visual feedback
+// Password requirement component for visual feedback (legacy support)
 const PasswordRequirement = ({ met, text }) => (
   <div className="flex items-center space-x-2">
     {met ? (
@@ -174,7 +175,35 @@ export default function Settings() {
     }
   };
 
-  // Validate password in real-time
+  // Enhanced password validation (Issue #133) - Combined approach
+  const validatePasswordStrength = (password) => {
+    const criteria = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      noSpaces: !/\s/.test(password)
+    };
+    
+    const requiredCriteria = [criteria.length, criteria.noSpaces];
+    const strongCriteria = [criteria.uppercase || criteria.special, criteria.lowercase, criteria.number];
+    
+    // Must have minimum length and no spaces
+    if (!requiredCriteria.every(Boolean)) {
+      return { valid: false, message: 'La contraseña debe tener al menos 8 caracteres y no contener espacios' };
+    }
+    
+    // Must have at least 2 of the strong criteria (uppercase OR special, lowercase, number)
+    const strongCriteriaPassed = strongCriteria.filter(Boolean).length;
+    if (strongCriteriaPassed < 2) {
+      return { valid: false, message: 'La contraseña debe contener al menos: minúsculas, números, y mayúsculas o caracteres especiales' };
+    }
+    
+    return { valid: true };
+  };
+
+  // Validate password in real-time (legacy support with new validation)
   const validateNewPassword = (password) => {
     const validation = validatePassword(password);
     const strength = getPasswordStrength(password);
@@ -191,7 +220,7 @@ export default function Settings() {
     return validation;
   };
 
-  // Password change handling (Issue #89 + Issue #133)
+  // Password change handling with enhanced validation (Issue #89 + #133)
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     
@@ -210,10 +239,10 @@ export default function Settings() {
       return;
     }
 
-    // Enhanced password validation
-    const validation = validatePassword(passwordForm.newPassword);
-    if (!validation.isValid) {
-      addNotification(validation.errors.join('. '), 'error');
+    // Enhanced password strength validation
+    const validation = validatePasswordStrength(passwordForm.newPassword);
+    if (!validation.valid) {
+      addNotification(validation.message, 'error');
       return;
     }
 
@@ -226,7 +255,7 @@ export default function Settings() {
       });
 
       if (result.success) {
-        addNotification(result.message, 'success');
+        addNotification('Contraseña cambiada exitosamente. Por favor usa tu nueva contraseña en futuros inicios de sesión.', 'success');
         setPasswordForm(prev => ({
           ...prev,
           showForm: false,
@@ -607,7 +636,7 @@ export default function Settings() {
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <label className="block text-sm font-medium mb-2">Contraseña</label>
             {passwordForm.showForm ? (
-              <form onSubmit={handlePasswordChange} className="space-y-3">
+              <form onSubmit={handlePasswordChange} className="space-y-4">
                 <Input
                   type="password"
                   value={passwordForm.currentPassword}
@@ -699,9 +728,10 @@ export default function Settings() {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="flex">
                     <Shield className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
-                    <div className="text-xs text-blue-800">
-                      <p>• Debes introducir tu contraseña actual para confirmar el cambio</p>
-                      <p>• La nueva contraseña será verificada automáticamente</p>
+                    <div className="text-xs text-blue-800 dark:text-blue-200">
+                      <p>• Ingresa tu contraseña actual para verificar tu identidad</p>
+                      <p>• La nueva contraseña debe ser diferente a la actual</p>
+                      <p>• Usa la guía de fortaleza arriba para crear una contraseña segura</p>
                     </div>
                   </div>
                 </div>

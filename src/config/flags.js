@@ -49,6 +49,8 @@ class FeatureFlags {
       
       // Auth Features
       ENABLE_MAGIC_LINK: process.env.ENABLE_MAGIC_LINK !== 'false', // Default enabled unless explicitly disabled
+      ENABLE_PASSWORD_HISTORY: process.env.ENABLE_PASSWORD_HISTORY !== 'false', // Default enabled unless explicitly disabled
+      ENABLE_RATE_LIMIT: process.env.ENABLE_RATE_LIMIT !== 'false', // Default enabled unless explicitly disabled
       
       // Style Profile Feature
       ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false' // Default enabled unless explicitly disabled
