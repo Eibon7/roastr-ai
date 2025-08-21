@@ -55,13 +55,26 @@ const mockUpdate = jest.fn(() => ({
   eq: jest.fn(() => Promise.resolve({ error: null }))
 }));
 
-const mockFrom = jest.fn((table) => {
-  return {
-    select: mockSelect,
-    insert: mockInsert,
-    update: mockUpdate,
+// Create a more robust mock that handles chaining properly
+const createMockChain = () => {
+  const chain = {
+    eq: jest.fn(() => chain),
+    select: jest.fn(() => chain),
+    single: mockSelectSingle,
+    maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    order: jest.fn(() => chain),
+    range: mockSelectRange,
+    gte: jest.fn(() => chain),
+    lte: jest.fn(() => chain),
+    insert: jest.fn(() => chain),
+    update: jest.fn(() => chain),
     upsert: jest.fn(() => Promise.resolve({ error: null, data: {} }))
   };
+  return chain;
+};
+
+const mockFrom = jest.fn((table) => {
+  return createMockChain();
 });
 
 const mockRpc = jest.fn(() => Promise.resolve({ data: {}, error: null }));
