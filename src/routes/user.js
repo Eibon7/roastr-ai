@@ -10,6 +10,7 @@ const auditService = require('../services/auditService');
 const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
+const encryptionService = require('../services/encryptionService');
 const {
   accountDeletionLimiter,
   dataExportLimiter,
@@ -967,6 +968,254 @@ router.get('/gdpr-audit', authenticateToken, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to retrieve audit trail'
+        });
+    }
+});
+
+/**
+ * GET /api/user/roastr-persona
+ * Get user's Roastr Persona configuration including "lo que me define"
+ */
+router.get('/roastr-persona', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userClient = createUserClient(req.accessToken);
+
+        const { data: userData, error } = await userClient
+            .from('users')
+            .select(`
+                id,
+                lo_que_me_define_encrypted,
+                lo_que_me_define_visible,
+                lo_que_me_define_created_at,
+                lo_que_me_define_updated_at
+            `)
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to fetch Roastr Persona: ${error.message}`);
+        }
+
+        // Decrypt the lo_que_me_define field if it exists
+        let loQueMeDefine = null;
+        if (userData.lo_que_me_define_encrypted) {
+            try {
+                loQueMeDefine = encryptionService.decrypt(userData.lo_que_me_define_encrypted);
+            } catch (decryptError) {
+                logger.error('Failed to decrypt lo_que_me_define:', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: decryptError.message
+                });
+                // Return empty if decryption fails
+                loQueMeDefine = null;
+            }
+        }
+
+        res.json({
+            success: true,
+            data: {
+                loQueMeDefine,
+                isVisible: userData.lo_que_me_define_visible || false,
+                createdAt: userData.lo_que_me_define_created_at,
+                updatedAt: userData.lo_que_me_define_updated_at,
+                hasContent: !!userData.lo_que_me_define_encrypted
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get Roastr Persona error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve Roastr Persona'
+        });
+    }
+});
+
+/**
+ * POST /api/user/roastr-persona
+ * Save or update user's "lo que me define" field in Roastr Persona
+ */
+router.post('/roastr-persona', authenticateToken, async (req, res) => {
+    try {
+        const { loQueMeDefine, isVisible = false } = req.body;
+        const userId = req.user.id;
+        const userClient = createUserClient(req.accessToken);
+
+        // Validate input
+        if (loQueMeDefine !== null && loQueMeDefine !== undefined) {
+            if (typeof loQueMeDefine !== 'string') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueMeDefine must be a string'
+                });
+            }
+
+            // Sanitize and validate length
+            const sanitized = encryptionService.sanitizeForEncryption(loQueMeDefine);
+            if (sanitized.length > 300) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueMeDefine cannot exceed 300 characters'
+                });
+            }
+
+            if (sanitized.length === 0 && loQueMeDefine.trim().length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueMeDefine contains invalid characters'
+                });
+            }
+        }
+
+        // Validate visibility setting
+        if (typeof isVisible !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                error: 'isVisible must be a boolean'
+            });
+        }
+
+        // Prepare update data
+        let updateData = {
+            lo_que_me_define_visible: isVisible,
+            lo_que_me_define_updated_at: new Date().toISOString()
+        };
+
+        // Handle the lo_que_me_define field
+        if (loQueMeDefine === null || loQueMeDefine === undefined || loQueMeDefine.trim() === '') {
+            // User wants to clear the field
+            updateData.lo_que_me_define_encrypted = null;
+        } else {
+            // Encrypt the sanitized content
+            const sanitized = encryptionService.sanitizeForEncryption(loQueMeDefine);
+            try {
+                updateData.lo_que_me_define_encrypted = encryptionService.encrypt(sanitized);
+                
+                // Set created_at if this is the first time setting the field
+                const { data: existingData } = await userClient
+                    .from('users')
+                    .select('lo_que_me_define_encrypted')
+                    .eq('id', userId)
+                    .single();
+
+                if (!existingData?.lo_que_me_define_encrypted) {
+                    updateData.lo_que_me_define_created_at = new Date().toISOString();
+                }
+            } catch (encryptError) {
+                logger.error('Failed to encrypt lo_que_me_define:', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: encryptError.message
+                });
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to secure personal data'
+                });
+            }
+        }
+
+        // Update the user record
+        const { data: updatedUser, error: updateError } = await userClient
+            .from('users')
+            .update(updateData)
+            .eq('id', userId)
+            .select(`
+                id,
+                lo_que_me_define_encrypted,
+                lo_que_me_define_visible,
+                lo_que_me_define_created_at,
+                lo_que_me_define_updated_at
+            `)
+            .single();
+
+        if (updateError) {
+            throw new Error(`Failed to update Roastr Persona: ${updateError.message}`);
+        }
+
+        // Log the update for audit trail (the trigger will handle detailed logging)
+        logger.info('Roastr Persona updated:', {
+            userId: userId.substr(0, 8) + '...',
+            hasContent: !!updatedUser.lo_que_me_define_encrypted,
+            isVisible: updatedUser.lo_que_me_define_visible,
+            action: !updatedUser.lo_que_me_define_encrypted ? 'cleared' : 
+                   !updateData.lo_que_me_define_created_at ? 'updated' : 'created'
+        });
+
+        // Prepare response (decrypt for immediate return)
+        let responseLoQueMeDefine = null;
+        if (updatedUser.lo_que_me_define_encrypted) {
+            try {
+                responseLoQueMeDefine = encryptionService.decrypt(updatedUser.lo_que_me_define_encrypted);
+            } catch (decryptError) {
+                logger.error('Failed to decrypt for response:', decryptError.message);
+                responseLoQueMeDefine = '[Encrypted]';
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Roastr Persona updated successfully',
+            data: {
+                loQueMeDefine: responseLoQueMeDefine,
+                isVisible: updatedUser.lo_que_me_define_visible,
+                createdAt: updatedUser.lo_que_me_define_created_at,
+                updatedAt: updatedUser.lo_que_me_define_updated_at,
+                hasContent: !!updatedUser.lo_que_me_define_encrypted
+            }
+        });
+
+    } catch (error) {
+        logger.error('Save Roastr Persona error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to save Roastr Persona'
+        });
+    }
+});
+
+/**
+ * DELETE /api/user/roastr-persona
+ * Delete user's "lo que me define" content (privacy feature)
+ */
+router.delete('/roastr-persona', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userClient = createUserClient(req.accessToken);
+
+        // Clear the encrypted field and reset timestamps
+        const { data: updatedUser, error: updateError } = await userClient
+            .from('users')
+            .update({
+                lo_que_me_define_encrypted: null,
+                lo_que_me_define_visible: false,
+                lo_que_me_define_updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+            .select('id, lo_que_me_define_updated_at')
+            .single();
+
+        if (updateError) {
+            throw new Error(`Failed to delete Roastr Persona: ${updateError.message}`);
+        }
+
+        logger.info('Roastr Persona deleted:', {
+            userId: userId.substr(0, 8) + '...',
+            deletedAt: updatedUser.lo_que_me_define_updated_at
+        });
+
+        res.json({
+            success: true,
+            message: 'Roastr Persona deleted successfully',
+            data: {
+                deletedAt: updatedUser.lo_que_me_define_updated_at
+            }
+        });
+
+    } catch (error) {
+        logger.error('Delete Roastr Persona error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete Roastr Persona'
         });
     }
 });
