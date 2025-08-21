@@ -1,0 +1,215 @@
+const { i18n } = require('../utils/i18n');
+const { logger } = require('../utils/logger');
+
+/**
+ * Middleware to detect and set user language from Accept-Language header
+ * 
+ * Supports:
+ * - Accept-Language header parsing
+ * - Quality value (q) parsing
+ * - Fallback to default language
+ * - User preference from database (if available)
+ */
+function detectLanguage(req, res, next) {
+  try {
+    // First check if user has a saved language preference
+    if (req.user && req.user.language && i18n.isLanguageSupported(req.user.language)) {
+      req.language = req.user.language;
+      i18n.setLanguage(req.language);
+      return next();
+    }
+
+    // Parse Accept-Language header
+    const acceptLanguage = req.headers['accept-language'];
+    
+    if (!acceptLanguage) {
+      req.language = i18n.getDefaultLanguage();
+      return next();
+    }
+
+    // Parse the header value
+    const languages = parseAcceptLanguage(acceptLanguage);
+    
+    // Find the first supported language
+    for (const lang of languages) {
+      const langCode = lang.code.toLowerCase().split('-')[0]; // Handle en-US -> en
+      
+      if (i18n.isLanguageSupported(langCode)) {
+        req.language = langCode;
+        i18n.setLanguage(langCode);
+        
+        logger.debug('Language detected from Accept-Language header', {
+          acceptLanguage,
+          detectedLanguage: langCode,
+          userId: req.user?.id
+        });
+        
+        return next();
+      }
+    }
+
+    // No supported language found, use default
+    req.language = i18n.getDefaultLanguage();
+    next();
+
+  } catch (error) {
+    logger.error('Error detecting language', { 
+      error: error.message,
+      acceptLanguage: req.headers['accept-language']
+    });
+    
+    // On error, use default language
+    req.language = i18n.getDefaultLanguage();
+    next();
+  }
+}
+
+/**
+ * Parse Accept-Language header
+ * 
+ * @param {string} acceptLanguage - Accept-Language header value
+ * @returns {Array} Array of language objects sorted by quality
+ */
+function parseAcceptLanguage(acceptLanguage) {
+  if (!acceptLanguage || typeof acceptLanguage !== 'string') {
+    return [];
+  }
+
+  // Split by comma and parse each language
+  const languages = acceptLanguage
+    .split(',')
+    .map(lang => {
+      const parts = lang.trim().split(';');
+      const code = parts[0];
+      
+      // Extract quality value (default to 1)
+      let quality = 1;
+      if (parts[1]) {
+        const qMatch = parts[1].match(/q=([0-9.]+)/);
+        if (qMatch) {
+          quality = parseFloat(qMatch[1]) || 0;
+        }
+      }
+      
+      return { code, quality };
+    })
+    .filter(lang => lang.code && lang.quality > 0)
+    .sort((a, b) => b.quality - a.quality);
+
+  return languages;
+}
+
+/**
+ * Express helper to get translated text in views
+ * 
+ * Usage in templates:
+ * <%= t('auth.login.title') %>
+ * <%= t('plan.validation.roasts_exceed_limit', { current: 100, limit: 50 }) %>
+ */
+function i18nHelpers(req, res, next) {
+  // Add translation function to response locals for use in templates
+  res.locals.t = (key, params) => {
+    const language = req.language || i18n.getCurrentLanguage();
+    return i18n.t(key, language, params);
+  };
+
+  res.locals.currentLanguage = req.language || i18n.getCurrentLanguage();
+  res.locals.supportedLanguages = i18n.getSupportedLanguages();
+
+  next();
+}
+
+/**
+ * API endpoint to get available translations
+ * Useful for frontend applications
+ */
+function getTranslations(req, res) {
+  const language = req.language || i18n.getCurrentLanguage();
+  const domain = req.query.domain;
+
+  try {
+    let translations;
+    
+    if (domain && i18n.hasDomain(domain)) {
+      // Return specific domain translations
+      translations = i18n.getDomainKeys(domain);
+    } else {
+      // Return all translations for the language
+      const locale = i18n.locales.get(language);
+      translations = locale || {};
+    }
+
+    res.json({
+      success: true,
+      language,
+      translations,
+      availableDomains: i18n.getAvailableDomains()
+    });
+
+  } catch (error) {
+    logger.error('Error getting translations', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve translations'
+    });
+  }
+}
+
+/**
+ * API endpoint to set user language preference
+ */
+function setLanguage(req, res) {
+  const { language } = req.body;
+
+  if (!language) {
+    return res.status(400).json({
+      success: false,
+      error: i18n.t('forms.validation.required')
+    });
+  }
+
+  if (!i18n.isLanguageSupported(language)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Unsupported language',
+      supportedLanguages: i18n.getSupportedLanguages()
+    });
+  }
+
+  try {
+    // Set language in i18n system
+    i18n.setLanguage(language);
+    
+    // Store in session if available
+    if (req.session) {
+      req.session.language = language;
+    }
+
+    // TODO: Save to user preferences in database if user is authenticated
+    if (req.user) {
+      // This would be implemented based on your user model
+      // await userService.updateLanguagePreference(req.user.id, language);
+    }
+
+    res.json({
+      success: true,
+      language,
+      message: i18n.t('ui.common.success', language)
+    });
+
+  } catch (error) {
+    logger.error('Error setting language', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to set language preference'
+    });
+  }
+}
+
+module.exports = {
+  detectLanguage,
+  i18nHelpers,
+  getTranslations,
+  setLanguage,
+  parseAcceptLanguage // Exported for testing
+};
