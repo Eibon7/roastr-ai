@@ -10,6 +10,16 @@ const notificationService = require('../services/notificationService');
 
 const router = express.Router();
 
+// Valid notification types
+const VALID_NOTIFICATION_TYPES = [
+    'payment_failed',
+    'subscription_canceled',
+    'upgrade_success',
+    'subscription_status',
+    'plan_change',
+    'plan_change_blocked'
+];
+
 /**
  * GET /api/notifications
  * Get user notifications with filtering and pagination
@@ -34,6 +44,13 @@ router.get('/', authenticateToken, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid status. Must be unread, read, or archived'
+            });
+        }
+
+        if (type && !VALID_NOTIFICATION_TYPES.includes(type)) {
+            return res.status(400).json({
+                success: false,
+                error: `Invalid notification type. Must be one of: ${VALID_NOTIFICATION_TYPES.join(', ')}`
             });
         }
 
