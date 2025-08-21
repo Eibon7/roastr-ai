@@ -364,4 +364,22 @@ describe('PasswordHistoryService', () => {
             expect(logger.error).toHaveBeenCalledWith('Error getting password history stats:', { message: 'Database error' });
         });
     });
+
+    describe('Legacy compatibility functions', () => {
+        it('should provide backward-compatible API', async () => {
+            flags.isEnabled.mockReturnValue(true);
+            
+            // Test legacy function names
+            expect(typeof passwordHistoryService.isPasswordReused).toBe('function');
+            expect(typeof passwordHistoryService.addPasswordToHistory).toBe('function');
+            expect(typeof passwordHistoryService.isPasswordHistoryEnabled).toBe('function');
+            
+            // Test that legacy functions work
+            expect(passwordHistoryService.isPasswordHistoryEnabled()).toBe(true);
+            
+            const config = passwordHistoryService.getConfig();
+            expect(config).toHaveProperty('historyLimit');
+            expect(config).toHaveProperty('enabled');
+        });
+    });
 });

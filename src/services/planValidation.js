@@ -1,5 +1,6 @@
 const { logger } = require('../utils/logger');
 const { getPlanFeatures } = require('./planService');
+const { t } = require('../utils/i18n');
 
 /**
  * Validates if a plan change is allowed based on current usage and restrictions
@@ -14,7 +15,7 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}) {
     const newPlan = await getPlanFeatures(newPlanId);
 
     if (!currentPlan || !newPlan) {
-      return { allowed: false, reason: 'Invalid plan specified' };
+      return { allowed: false, reason: t('plan.validation.invalid_plan') };
     }
 
     // Allow all upgrades
@@ -30,13 +31,19 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}) {
     // Check roasts limit
     if (currentUsage.roastsThisMonth > newPlan.limits.roastsPerMonth) {
       allowed = false;
-      reason = `Current monthly roasts (${currentUsage.roastsThisMonth}) exceeds new plan limit (${newPlan.limits.roastsPerMonth})`;
+      reason = t('plan.validation.roasts_exceed_limit', { 
+        current: currentUsage.roastsThisMonth, 
+        limit: newPlan.limits.roastsPerMonth 
+      });
     }
 
     // Check comments limit
     if (currentUsage.commentsThisMonth > newPlan.limits.commentsPerMonth) {
       allowed = false;
-      reason = `Current monthly comments (${currentUsage.commentsThisMonth}) exceeds new plan limit (${newPlan.limits.commentsPerMonth})`;
+      reason = t('plan.validation.comments_exceed_limit', { 
+        current: currentUsage.commentsThisMonth, 
+        limit: newPlan.limits.commentsPerMonth 
+      });
     }
 
     // Check active integrations
@@ -44,28 +51,31 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}) {
     const maxIntegrations = getMaxIntegrations(newPlanId);
     if (activeIntegrations > maxIntegrations) {
       allowed = false;
-      reason = `Active integrations (${activeIntegrations}) exceeds new plan limit (${maxIntegrations})`;
+      reason = t('plan.validation.integrations_exceed_limit', { 
+        current: activeIntegrations, 
+        limit: maxIntegrations 
+      });
     }
 
     // Add warnings for features that will be lost
     if (currentPlan.features.prioritySupport && !newPlan.features.prioritySupport) {
-      warnings.push('You will lose access to priority support');
+      warnings.push(t('plan.validation.lose_priority_support'));
     }
 
     if (currentPlan.features.advancedAnalytics && !newPlan.features.advancedAnalytics) {
-      warnings.push('You will lose access to advanced analytics');
+      warnings.push(t('plan.validation.lose_advanced_analytics'));
     }
 
     if (currentPlan.features.teamCollaboration && !newPlan.features.teamCollaboration) {
-      warnings.push('You will lose access to team collaboration features');
+      warnings.push(t('plan.validation.lose_team_collaboration'));
     }
 
     if (currentPlan.features.styleProfile && !newPlan.features.styleProfile) {
-      warnings.push('You will lose access to custom style profiles');
+      warnings.push(t('plan.validation.lose_style_profile'));
     }
 
     if (currentPlan.features.shield && !newPlan.features.shield) {
-      warnings.push('You will lose access to Shield automated moderation');
+      warnings.push(t('plan.validation.lose_shield'));
     }
 
     return {
@@ -75,7 +85,7 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}) {
     };
   } catch (error) {
     logger.error('Error validating plan change:', error);
-    return { allowed: false, reason: 'Error validating plan change' };
+    return { allowed: false, reason: t('plan.validation.error_validating') };
   }
 }
 
@@ -115,7 +125,7 @@ function getMaxIntegrations(planId) {
  */
 function calculateProration(currentSubscription, newPlan) {
   if (!currentSubscription || !currentSubscription.current_period_end) {
-    return { amount: 0, description: 'No proration needed' };
+    return { amount: 0, description: t('plan.validation.no_proration') };
   }
 
   const now = Date.now() / 1000;
@@ -123,7 +133,7 @@ function calculateProration(currentSubscription, newPlan) {
   const remainingDays = Math.max(0, Math.ceil((periodEnd - now) / 86400));
   
   if (remainingDays === 0) {
-    return { amount: 0, description: 'No proration needed' };
+    return { amount: 0, description: t('plan.validation.no_proration') };
   }
 
   // Calculate unused portion of current subscription
@@ -136,7 +146,7 @@ function calculateProration(currentSubscription, newPlan) {
 
   return {
     amount: Math.round(prorationAmount) / 100, // Convert from cents
-    description: `Prorated for ${remainingDays} days remaining in billing period`
+    description: t('plan.validation.proration_description', { days: remainingDays })
   };
 }
 

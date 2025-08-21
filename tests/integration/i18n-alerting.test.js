@@ -1,4 +1,4 @@
-const { t } = require('../../src/utils/alertingUtils');
+const { t } = require('../../src/utils/i18n');
 
 // Mock logger
 jest.mock('../../src/utils/logger', () => ({
@@ -13,6 +13,7 @@ jest.mock('../../src/utils/logger', () => ({
 describe('I18n Alerting Integration', () => {
   beforeEach(() => {
     // Reset environment for each test
+    delete process.env.APP_LANG;
     delete process.env.ALERT_LANG;
   });
   
@@ -213,22 +214,33 @@ describe('I18n Alerting Integration', () => {
   });
   
   describe('environment variable integration', () => {
-    it('should use Spanish translations when ALERT_LANG=es', () => {
+    it('should use Spanish translations when APP_LANG=es', () => {
+      process.env.APP_LANG = 'es';
+      
+      // Need to reload module to pick up env var
+      jest.resetModules();
+      const { t: tWithEnv } = require('../../src/utils/i18n');
+      
+      const result = tWithEnv('alert.severities.critical');
+      expect(result).toBe('CRÍTICO');
+    });
+
+    it('should maintain backward compatibility with ALERT_LANG', () => {
       process.env.ALERT_LANG = 'es';
       
       // Need to reload module to pick up env var
       jest.resetModules();
-      const { t: tWithEnv } = require('../../src/utils/alertingUtils');
+      const { t: tWithEnv } = require('../../src/utils/i18n');
       
       const result = tWithEnv('alert.severities.critical');
       expect(result).toBe('CRÍTICO');
     });
     
-    it('should fallback to English for invalid ALERT_LANG', () => {
-      process.env.ALERT_LANG = 'invalid';
+    it('should fallback to English for invalid APP_LANG', () => {
+      process.env.APP_LANG = 'invalid';
       
       jest.resetModules();
-      const { t: tWithEnv } = require('../../src/utils/alertingUtils');
+      const { t: tWithEnv } = require('../../src/utils/i18n');
       
       const result = tWithEnv('alert.severities.critical');
       expect(result).toBe('CRITICAL');

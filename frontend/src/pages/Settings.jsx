@@ -4,10 +4,25 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, Check, X } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
+import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
+
+// Password requirement component for visual feedback (legacy support)
+const PasswordRequirement = ({ met, text }) => (
+  <div className="flex items-center space-x-2">
+    {met ? (
+      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+    ) : (
+      <Circle className="w-3 h-3 text-gray-400 flex-shrink-0" />
+    )}
+    <span className={`text-xs ${met ? 'text-green-600' : 'text-gray-500'}`}>
+      {text}
+    </span>
+  </div>
+);
 
 export default function Settings() {
   const [settings, setSettings] = useState({
@@ -40,7 +55,12 @@ export default function Settings() {
     newPassword: '',
     confirmPassword: '',
     isSubmitting: false,
-    showForm: false
+    showForm: false,
+    validation: {
+      isValid: false,
+      errors: [],
+      strength: 0
+    }
   });
   const [notifications, setNotifications] = useState([]);
 
@@ -155,7 +175,7 @@ export default function Settings() {
     }
   };
 
-  // Enhanced password validation (Issue #133)
+  // Enhanced password validation (Issue #133) - Combined approach
   const validatePasswordStrength = (password) => {
     const criteria = {
       length: password.length >= 8,
@@ -166,7 +186,6 @@ export default function Settings() {
       noSpaces: !/\s/.test(password)
     };
     
-    const passedCriteria = Object.values(criteria).filter(Boolean).length;
     const requiredCriteria = [criteria.length, criteria.noSpaces];
     const strongCriteria = [criteria.uppercase || criteria.special, criteria.lowercase, criteria.number];
     
@@ -175,13 +194,30 @@ export default function Settings() {
       return { valid: false, message: 'La contraseña debe tener al menos 8 caracteres y no contener espacios' };
     }
     
-    // Must have at least 3 of the 4 strong criteria (uppercase OR special, lowercase, number)
+    // Must have at least 2 of the strong criteria (uppercase OR special, lowercase, number)
     const strongCriteriaPassed = strongCriteria.filter(Boolean).length;
     if (strongCriteriaPassed < 2) {
       return { valid: false, message: 'La contraseña debe contener al menos: minúsculas, números, y mayúsculas o caracteres especiales' };
     }
     
     return { valid: true };
+  };
+
+  // Validate password in real-time (legacy support with new validation)
+  const validateNewPassword = (password) => {
+    const validation = validatePassword(password);
+    const strength = getPasswordStrength(password);
+    
+    setPasswordForm(prev => ({
+      ...prev,
+      validation: {
+        isValid: validation.isValid,
+        errors: validation.errors,
+        strength: strength
+      }
+    }));
+    
+    return validation;
   };
 
   // Password change handling with enhanced validation (Issue #89 + #133)
@@ -601,69 +637,97 @@ export default function Settings() {
             <label className="block text-sm font-medium mb-2">Contraseña</label>
             {passwordForm.showForm ? (
               <form onSubmit={handlePasswordChange} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                    Contraseña actual
-                  </label>
+                <Input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  placeholder="Contraseña actual"
+                  required
+                />
+                <div className="space-y-2">
                   <Input
                     type="password"
-                    value={passwordForm.currentPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    placeholder="Ingresa tu contraseña actual"
-                    required
-                    autoComplete="current-password"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                    Nueva contraseña
-                  </label>
-                  <EnhancedPasswordInput
                     value={passwordForm.newPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                    placeholder="Ingresa tu nueva contraseña"
-                    showStrength={true}
-                    showCriteria={true}
+                    onChange={(e) => {
+                      const newPassword = e.target.value;
+                      setPasswordForm(prev => ({ ...prev, newPassword }));
+                      if (newPassword) {
+                        validateNewPassword(newPassword);
+                      } else {
+                        setPasswordForm(prev => ({
+                          ...prev,
+                          validation: { isValid: false, errors: [], strength: 0 }
+                        }));
+                      }
+                    }}
+                    placeholder="Nueva contraseña"
                     required
-                    autoComplete="new-password"
+                    minLength={8}
+                    className={passwordForm.newPassword && !passwordForm.validation.isValid ? 'border-red-300 focus:border-red-500' : ''}
                   />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                    Confirmar nueva contraseña
-                  </label>
-                  <Input
-                    type="password"
-                    value={passwordForm.confirmPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    placeholder="Confirma tu nueva contraseña"
-                    required
-                    autoComplete="new-password"
-                    className={`${
-                      passwordForm.confirmPassword && passwordForm.newPassword && 
-                      passwordForm.confirmPassword !== passwordForm.newPassword
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                        : passwordForm.confirmPassword && passwordForm.newPassword &&
-                          passwordForm.confirmPassword === passwordForm.newPassword
-                        ? 'border-green-300 focus:border-green-500 focus:ring-green-500'
-                        : ''
-                    }`}
-                  />
-                  {passwordForm.confirmPassword && passwordForm.newPassword && 
-                   passwordForm.confirmPassword !== passwordForm.newPassword && (
-                    <p className="text-red-600 text-sm mt-1">Las contraseñas no coinciden</p>
+                  
+                  {/* Password strength indicator */}
+                  {passwordForm.newPassword && (
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              passwordForm.validation.strength === 0 ? 'bg-red-500 w-1/5' :
+                              passwordForm.validation.strength === 1 ? 'bg-orange-500 w-2/5' :
+                              passwordForm.validation.strength === 2 ? 'bg-yellow-500 w-3/5' :
+                              passwordForm.validation.strength === 3 ? 'bg-green-500 w-4/5' :
+                              'bg-emerald-500 w-full'
+                            }`}
+                          />
+                        </div>
+                        <span className={`text-xs font-medium ${
+                          passwordForm.validation.strength === 0 ? 'text-red-600' :
+                          passwordForm.validation.strength === 1 ? 'text-orange-600' :
+                          passwordForm.validation.strength === 2 ? 'text-yellow-600' :
+                          passwordForm.validation.strength === 3 ? 'text-green-600' :
+                          'text-emerald-600'
+                        }`}>
+                          {getPasswordStrengthLabel(passwordForm.validation.strength)}
+                        </span>
+                      </div>
+                      
+                      {/* Password requirements checklist */}
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Requisitos de contraseña:</div>
+                        <div className="space-y-1">
+                          <PasswordRequirement 
+                            met={passwordForm.newPassword.length >= 8}
+                            text="Al menos 8 caracteres"
+                          />
+                          <PasswordRequirement 
+                            met={/\d/.test(passwordForm.newPassword)}
+                            text="Al menos un número"
+                          />
+                          <PasswordRequirement 
+                            met={/[A-Z]/.test(passwordForm.newPassword) || /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(passwordForm.newPassword)}
+                            text="Al menos una mayúscula o símbolo"
+                          />
+                          <PasswordRequirement 
+                            met={passwordForm.newPassword !== passwordForm.currentPassword && passwordForm.newPassword.length > 0}
+                            text="Diferente de la contraseña actual"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   )}
-                  {passwordForm.confirmPassword && passwordForm.newPassword && 
-                   passwordForm.confirmPassword === passwordForm.newPassword && (
-                    <p className="text-green-600 text-sm mt-1">✓ Las contraseñas coinciden</p>
-                  )}
                 </div>
-                
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <Input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  placeholder="Confirmar nueva contraseña"
+                  required
+                  minLength={8}
+                />
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="flex">
-                    <Shield className="w-4 h-4 text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
+                    <Shield className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
                     <div className="text-xs text-blue-800 dark:text-blue-200">
                       <p>• Ingresa tu contraseña actual para verificar tu identidad</p>
                       <p>• La nueva contraseña debe ser diferente a la actual</p>
@@ -675,7 +739,7 @@ export default function Settings() {
                   <Button 
                     type="submit" 
                     size="sm" 
-                    disabled={passwordForm.isSubmitting || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                    disabled={passwordForm.isSubmitting || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword || !passwordForm.validation.isValid}
                   >
                     {passwordForm.isSubmitting ? 'Cambiando...' : 'Cambiar contraseña'}
                   </Button>

@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 const colors = require('colors/safe');
-const { t } = require('../utils/alertingUtils');
+const { t } = require('../utils/i18n');
 
 /**
  * Health Monitor CLI Tool

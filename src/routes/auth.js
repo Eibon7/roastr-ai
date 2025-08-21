@@ -4,8 +4,10 @@ const emailService = require('../services/emailService');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { handleSessionRefresh } = require('../middleware/sessionRefresh');
-const { loginRateLimiter, passwordChangeRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
+const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
+const { passwordChangeRateLimiter } = require('../middleware/passwordChangeRateLimiter');
 const { validatePassword } = require('../utils/passwordValidator');
+const { isPasswordReused, addPasswordToHistory, isPasswordHistoryEnabled } = require('../services/passwordHistoryService');
 
 const router = express.Router();
 
@@ -399,7 +401,7 @@ router.post('/update-password', async (req, res) => {
 
 /**
  * POST /api/auth/change-password
- * Update password with current password verification (Issue #89)
+ * Update password with current password verification (Issue #89 + #133)
  * With rate limiting for security (Issue #133)
  */
 router.post('/change-password', authenticateToken, passwordChangeRateLimiter, async (req, res) => {
@@ -426,8 +428,28 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
         if (!passwordValidation.isValid) {
             return res.status(400).json({
                 success: false,
-                error: passwordValidation.errors.join('. ')
+                error: passwordValidation.errors.join('. '),
+                details: {
+                    validationErrors: passwordValidation.errors,
+                    requirements: {
+                        minLength: 8,
+                        requireNumber: true,
+                        requireUppercaseOrSymbol: true
+                    }
+                }
             });
+        }
+
+        // Check password history (if enabled)
+        if (isPasswordHistoryEnabled()) {
+            const isReused = await isPasswordReused(req.user.id, newPassword);
+            if (isReused) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Cannot reuse a recent password. Please choose a different password.',
+                    code: 'PASSWORD_RECENTLY_USED'
+                });
+            }
         }
 
         const result = await authService.updatePasswordWithVerification(
@@ -439,6 +461,11 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
         logger.info('Password changed successfully with verification:', { 
             userId: req.user.id 
         });
+
+        // Add password to history (if enabled)
+        if (isPasswordHistoryEnabled()) {
+            await addPasswordToHistory(req.user.id, newPassword);
+        }
         
         res.json({
             success: true,

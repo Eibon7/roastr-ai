@@ -1,6 +1,7 @@
 /**
  * Password History Service (Issue #133)
  * Manages password history to prevent reuse of recent passwords
+ * This is an optional security feature that can be enabled/disabled
  */
 
 const bcrypt = require('bcrypt');
@@ -198,4 +199,26 @@ class PasswordHistoryService {
   }
 }
 
-module.exports = new PasswordHistoryService();
+// Legacy compatibility functions for existing imports
+const service = new PasswordHistoryService();
+
+// Export with backwards-compatible API
+module.exports = {
+  // New class-based methods (preferred)
+  isPasswordRecentlyUsed: (userId, password) => service.isPasswordRecentlyUsed(userId, password),
+  addToPasswordHistory: (userId, password) => service.addToPasswordHistory(userId, password),
+  clearPasswordHistory: (userId) => service.clearPasswordHistory(userId),
+  getPasswordHistoryStats: (userId) => service.getPasswordHistoryStats(userId),
+  cleanupOldPasswords: (userId) => service.cleanupOldPasswords(userId),
+  
+  // Legacy function names for compatibility
+  isPasswordReused: (userId, password) => service.isPasswordRecentlyUsed(userId, password),
+  addPasswordToHistory: (userId, password) => service.addToPasswordHistory(userId, password),
+  
+  // Configuration functions
+  isPasswordHistoryEnabled: () => flags.isEnabled('ENABLE_PASSWORD_HISTORY'),
+  getConfig: () => ({
+    historyLimit: service.PASSWORD_HISTORY_LIMIT,
+    enabled: flags.isEnabled('ENABLE_PASSWORD_HISTORY')
+  })
+};
