@@ -633,8 +633,13 @@ class AuthService {
     /**
      * Admin: Update user plan (service client)
      * Updates user plan, subscription, organization limits and logs audit trail
+     * Implements rollback mechanism for failed limit application (Issue #125)
      */
     async updateUserPlan(userId, newPlan, adminId = null) {
+        let rollbackRequired = false;
+        let originalUserData = null;
+        let originalSubscriptionData = null;
+
         try {
             // Validate plan
             const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
@@ -654,6 +659,7 @@ class AuthService {
             }
 
             const oldPlan = currentUser.plan || 'free';
+            originalUserData = { ...currentUser };
             
             // Check if plan is actually changing
             if (oldPlan === newPlan) {
@@ -665,6 +671,17 @@ class AuthService {
                 };
             }
 
+            // Get original subscription data for rollback if needed
+            const { data: currentSubscription, error: getSubError } = await supabaseServiceClient
+                .from('user_subscriptions')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+            if (!getSubError && currentSubscription) {
+                originalSubscriptionData = { ...currentSubscription };
+            }
+
             // Validate plan change is allowed (check usage constraints)
             const { getUserUsage } = require('./subscriptionService');
             const currentUsage = await getUserUsage(userId);
@@ -673,6 +690,13 @@ class AuthService {
             if (!validation.allowed) {
                 throw new Error(`Plan change not allowed: ${validation.reason}${validation.warnings?.length ? '. Warnings: ' + validation.warnings.join(', ') : ''}`);
             }
+
+            // Get plan duration from plan configuration (Issue #125: configurable duration)
+            const { getPlanFeatures, calculatePlanEndDate } = require('./planService');
+            const planFeatures = getPlanFeatures(newPlan) || getPlanFeatures('free');
+            const planDurationDays = planFeatures?.duration?.days || 30; // Default to 30 if not configured
+            const currentPeriodStart = new Date();
+            const currentPeriodEnd = calculatePlanEndDate(newPlan, currentPeriodStart);
 
             // Start transaction-like updates
             const updatePromises = [];
@@ -702,8 +726,8 @@ class AuthService {
                         // For admin changes, we don't have Stripe data
                         stripe_customer_id: null,
                         stripe_subscription_id: null,
-                        current_period_start: new Date().toISOString(),
-                        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+                        current_period_start: currentPeriodStart.toISOString(),
+                        current_period_end: currentPeriodEnd.toISOString()
                     }, { 
                         onConflict: 'user_id',
                         ignoreDuplicates: false 
@@ -722,10 +746,52 @@ class AuthService {
                 logger.warn('Failed to update user subscription:', subscriptionResult.error.message);
             }
 
-            // 3. Apply plan limits immediately (updates organization too)
-            await applyPlanLimits(userId, newPlan, 'active');
+            // Mark rollback as required from this point on
+            rollbackRequired = true;
 
-            // 4. Log audit trail for admin action
+            // 3. Apply plan limits immediately (updates organization too)
+            // This is the critical point where rollback may be needed
+            try {
+                await applyPlanLimits(userId, newPlan, 'active');
+                logger.info('Plan limits applied successfully:', { userId, newPlan });
+            } catch (limitsError) {
+                logger.error('Failed to apply plan limits, initiating rollback:', {
+                    userId,
+                    oldPlan,
+                    newPlan,
+                    error: limitsError.message
+                });
+
+                // Execute rollback
+                await this.rollbackPlanChange(userId, originalUserData, originalSubscriptionData);
+                
+                // Log rollback in audit trail
+                await auditService.logPlanChange({
+                    userId,
+                    fromPlan: newPlan, // Rolling back from new to old
+                    toPlan: oldPlan,
+                    changeStatus: 'rolled_back',
+                    usageSnapshot: {
+                        ...currentUsage,
+                        timestamp: new Date().toISOString(),
+                        change_trigger: 'admin_panel_rollback'
+                    },
+                    initiatedBy: adminId || 'admin_system',
+                    metadata: {
+                        admin_initiated: true,
+                        rollback_reason: limitsError.message,
+                        original_change_attempt: {
+                            fromPlan: oldPlan,
+                            toPlan: newPlan
+                        }
+                    }
+                });
+
+                // Re-throw with clear rollback message
+                throw new Error(`Plan change failed during limits application and was rolled back: ${limitsError.message}`);
+            }
+
+            // 4. Log audit trail for admin action (only if everything succeeded)
             await auditService.logPlanChange({
                 userId,
                 fromPlan: oldPlan,
@@ -740,7 +806,8 @@ class AuthService {
                 metadata: {
                     admin_initiated: true,
                     validation_passed: validation.allowed,
-                    validation_warnings: validation.warnings || []
+                    validation_warnings: validation.warnings || [],
+                    plan_duration_days: planDurationDays
                 }
             });
 
@@ -749,7 +816,8 @@ class AuthService {
                 oldPlan, 
                 newPlan, 
                 adminId,
-                userEmail: currentUser.email
+                userEmail: currentUser.email,
+                planDurationDays
             });
             
             return {
@@ -758,11 +826,94 @@ class AuthService {
                 oldPlan,
                 newPlan,
                 limitsApplied: true,
-                auditLogged: true
+                auditLogged: true,
+                planDurationDays
             };
 
         } catch (error) {
             logger.error('Update user plan error:', error.message);
+            
+            // If rollback wasn't already handled and we had made changes, try to rollback
+            if (rollbackRequired && !error.message.includes('rolled back')) {
+                try {
+                    await this.rollbackPlanChange(userId, originalUserData, originalSubscriptionData);
+                    logger.info('Emergency rollback completed after unexpected error');
+                } catch (rollbackError) {
+                    logger.error('Emergency rollback failed:', rollbackError.message);
+                    // Continue to throw original error
+                }
+            }
+            
+            throw error;
+        }
+    }
+
+    /**
+     * Rollback plan change to restore original state (Issue #125)
+     * @private
+     */
+    async rollbackPlanChange(userId, originalUserData, originalSubscriptionData) {
+        try {
+            // Rollback user plan
+            if (originalUserData) {
+                const { error: userRollbackError } = await supabaseServiceClient
+                    .from('users')
+                    .update({
+                        plan: originalUserData.plan,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', userId);
+
+                if (userRollbackError) {
+                    logger.error('Failed to rollback user plan:', userRollbackError.message);
+                    throw new Error(`User plan rollback failed: ${userRollbackError.message}`);
+                }
+            }
+
+            // Rollback subscription
+            if (originalSubscriptionData) {
+                const { error: subRollbackError } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .upsert({
+                        ...originalSubscriptionData,
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'user_id',
+                        ignoreDuplicates: false
+                    });
+
+                if (subRollbackError) {
+                    logger.warn('Failed to rollback subscription:', subRollbackError.message);
+                }
+            } else {
+                // If no original subscription, remove the newly created one
+                const { error: deleteSubError } = await supabaseServiceClient
+                    .from('user_subscriptions')
+                    .delete()
+                    .eq('user_id', userId);
+
+                if (deleteSubError) {
+                    logger.warn('Failed to delete subscription during rollback:', deleteSubError.message);
+                }
+            }
+
+            // Restore original plan limits
+            if (originalUserData?.plan) {
+                try {
+                    await applyPlanLimits(userId, originalUserData.plan, 'active');
+                } catch (limitsRollbackError) {
+                    logger.error('Failed to restore original plan limits during rollback:', limitsRollbackError.message);
+                    // Don't throw here as we want to complete the rollback process
+                }
+            }
+
+            logger.info('Plan change rollback completed successfully:', {
+                userId,
+                restoredPlan: originalUserData?.plan
+            });
+
+        } catch (error) {
+            logger.error('Rollback plan change failed:', error.message);
             throw error;
         }
     }

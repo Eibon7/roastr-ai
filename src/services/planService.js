@@ -3,6 +3,7 @@
 
 /**
  * Plan feature definitions
+ * Enhanced with configurable duration (Issue #125)
  */
 const PLAN_FEATURES = {
   free: {
@@ -10,6 +11,11 @@ const PLAN_FEATURES = {
     name: 'Free',
     price: 0,
     currency: 'eur',
+    duration: {
+      days: 30,
+      type: 'rolling', // rolling, fixed
+      renewalType: 'automatic' // automatic, manual
+    },
     limits: {
       roastsPerMonth: 100,
       commentsPerMonth: 500,
@@ -31,6 +37,12 @@ const PLAN_FEATURES = {
     name: 'Pro',
     price: 2000, // €20.00 in cents
     currency: 'eur',
+    duration: {
+      days: 30,
+      type: 'rolling',
+      renewalType: 'automatic',
+      trialDays: 7 // Pro plan includes 7-day trial
+    },
     limits: {
       roastsPerMonth: 1000,
       commentsPerMonth: 5000,
@@ -52,6 +64,13 @@ const PLAN_FEATURES = {
     name: 'Creator+',
     price: 5000, // €50.00 in cents
     currency: 'eur',
+    duration: {
+      days: 30,
+      type: 'rolling',
+      renewalType: 'automatic',
+      trialDays: 14, // Creator+ plan includes 14-day trial
+      gracePeriod: 7 // Extra grace period for premium users
+    },
     limits: {
       roastsPerMonth: -1, // Unlimited
       commentsPerMonth: -1, // Unlimited
@@ -66,6 +85,35 @@ const PLAN_FEATURES = {
       apiAccess: true,
       shield: true,
       styleProfile: true
+    }
+  },
+  custom: {
+    id: 'custom',
+    name: 'Custom',
+    price: 0, // Negotiable
+    currency: 'eur',
+    duration: {
+      days: 90, // Quarterly billing for custom plans
+      type: 'fixed',
+      renewalType: 'manual',
+      customizable: true
+    },
+    limits: {
+      roastsPerMonth: -1, // Unlimited
+      commentsPerMonth: -1, // Unlimited
+      platformIntegrations: -1 // Unlimited
+    },
+    features: {
+      basicSupport: true,
+      prioritySupport: true,
+      advancedAnalytics: true,
+      teamCollaboration: true,
+      customTones: true,
+      apiAccess: true,
+      shield: true,
+      styleProfile: true,
+      customIntegrations: true,
+      dedicatedSupport: true
     }
   }
 };
@@ -159,11 +207,68 @@ function getPlanByLookupKey(lookupKey) {
   return lookupMap[lookupKey] || null;
 }
 
+/**
+ * Get plan duration configuration (Issue #125)
+ * @param {string} planId - Plan ID
+ * @returns {Object|null} Duration configuration or null
+ */
+function getPlanDuration(planId) {
+  const plan = getPlanFeatures(planId);
+  return plan?.duration || null;
+}
+
+/**
+ * Calculate plan end date based on duration configuration
+ * @param {string} planId - Plan ID
+ * @param {Date} startDate - Plan start date (default: now)
+ * @returns {Date} Plan end date
+ */
+function calculatePlanEndDate(planId, startDate = new Date()) {
+  const duration = getPlanDuration(planId);
+  if (!duration) {
+    // Default to 30 days if no duration configured
+    return new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+  }
+  
+  const endDate = new Date(startDate.getTime() + duration.days * 24 * 60 * 60 * 1000);
+  
+  // Add grace period if configured
+  if (duration.gracePeriod) {
+    endDate.setTime(endDate.getTime() + duration.gracePeriod * 24 * 60 * 60 * 1000);
+  }
+  
+  return endDate;
+}
+
+/**
+ * Check if plan supports custom duration
+ * @param {string} planId - Plan ID
+ * @returns {boolean} Whether plan supports custom duration
+ */
+function supportsCustomDuration(planId) {
+  const duration = getPlanDuration(planId);
+  return duration?.customizable === true;
+}
+
+/**
+ * Get plan trial duration
+ * @param {string} planId - Plan ID
+ * @returns {number|null} Trial duration in days or null if no trial
+ */
+function getPlanTrialDays(planId) {
+  const duration = getPlanDuration(planId);
+  return duration?.trialDays || null;
+}
+
 module.exports = {
   getPlanFeatures,
   getAllPlans,
   hasFeature,
   checkPlanLimits,
   getPlanByLookupKey,
+  getPlanDuration,
+  calculatePlanEndDate,
+  supportsCustomDuration,
+  getPlanTrialDays,
   PLAN_FEATURES
 };
