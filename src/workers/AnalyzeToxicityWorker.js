@@ -3,6 +3,7 @@ const CostControlService = require('../services/costControl');
 const ShieldService = require('../services/shieldService');
 const { mockMode } = require('../config/mockMode');
 const encryptionService = require('../services/encryptionService');
+const EmbeddingsService = require('../services/embeddingsService');
 
 /**
  * Analyze Toxicity Worker
@@ -26,6 +27,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     
     this.costControl = new CostControlService();
     this.shieldService = new ShieldService();
+    this.embeddingsService = new EmbeddingsService();
     
     // Initialize toxicity detection services
     this.initializeToxicityServices();
@@ -150,7 +152,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
     
     // FIRST: Check if comment should be auto-blocked based on user intolerance preferences (Issue #149)
     const intoleranceData = await this.getUserIntolerancePreferences(organization_id);
-    const autoBlockResult = await this.checkAutoBlock(text || comment.original_text, intoleranceData);
+    const autoBlockResult = await this.checkAutoBlock(
+      text || comment.original_text, 
+      intoleranceData?.text, 
+      intoleranceData?.embeddings
+    );
     
     if (autoBlockResult.shouldBlock) {
       // Auto-block: Set maximum toxicity and skip normal analysis
@@ -209,7 +215,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
     // SECOND: Check if comment matches user tolerance preferences (Issue #150)
     // This reduces false positives by allowing content the user considers harmless
     const toleranceData = await this.getUserTolerancePreferences(organization_id);
-    const toleranceResult = await this.checkTolerance(text || comment.original_text, toleranceData);
+    const toleranceResult = await this.checkTolerance(
+      text || comment.original_text, 
+      toleranceData?.text, 
+      toleranceData?.embeddings
+    );
     
     if (toleranceResult.shouldIgnore) {
       // Tolerance match: Set low toxicity and mark as ignored
@@ -400,6 +410,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
   
   /**
    * Get user's intolerance preferences for auto-blocking (Issue #149)
+   * Enhanced to include embeddings for semantic matching (Issue #151)
    */
   async getUserIntolerancePreferences(organizationId) {
     try {
@@ -418,10 +429,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
         return null;
       }
       
-      // Get user's encrypted intolerance preferences
+      // Get user's encrypted intolerance preferences and embeddings
       const { data: userData, error: userError } = await this.supabase
         .from('users')
-        .select('lo_que_no_tolero_encrypted')
+        .select('lo_que_no_tolero_encrypted, lo_que_no_tolero_embedding')
         .eq('id', orgData.owner_id)
         .single();
       
@@ -434,13 +445,32 @@ class AnalyzeToxicityWorker extends BaseWorker {
       try {
         const decryptedIntolerance = encryptionService.decrypt(userData.lo_que_no_tolero_encrypted);
         
+        // Parse embeddings if available
+        let embeddingData = null;
+        if (userData.lo_que_no_tolero_embedding) {
+          try {
+            embeddingData = JSON.parse(userData.lo_que_no_tolero_embedding);
+          } catch (embeddingError) {
+            this.log('warn', 'Failed to parse intolerance embeddings, using text-only matching', {
+              organizationId,
+              userId: orgData.owner_id.substr(0, 8) + '...',
+              error: embeddingError.message
+            });
+          }
+        }
+        
         this.log('debug', 'Retrieved user intolerance preferences for auto-blocking', {
           organizationId,
           userId: orgData.owner_id.substr(0, 8) + '...',
-          hasPreferences: !!decryptedIntolerance
+          hasPreferences: !!decryptedIntolerance,
+          hasEmbeddings: !!embeddingData,
+          embeddingTermsCount: embeddingData ? embeddingData.length : 0
         });
         
-        return decryptedIntolerance;
+        return {
+          text: decryptedIntolerance,
+          embeddings: embeddingData
+        };
         
       } catch (decryptError) {
         this.log('error', 'Failed to decrypt intolerance preferences', {
@@ -462,9 +492,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
   
   /**
    * Check if comment should be auto-blocked based on user intolerance preferences (Issue #149)
+   * Enhanced with semantic similarity matching (Issue #151)
    * This is the highest priority check that runs before any other analysis
    */
-  async checkAutoBlock(text, intoleranceData) {
+  async checkAutoBlock(text, intoleranceData, intoleranceEmbeddings = null) {
     const startTime = Date.now();
     
     if (!intoleranceData || typeof intoleranceData !== 'string') {
@@ -491,7 +522,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     const matchedCategories = [];
     let blockReason = '';
     
-    // Check for exact matches first (highest confidence)
+    // PHASE 1: Check for exact matches first (highest confidence)
     for (const term of intoleranceTerms) {
       if (commentText.includes(term)) {
         matchedTerms.push(term);
@@ -511,8 +542,42 @@ class AnalyzeToxicityWorker extends BaseWorker {
       }
     }
     
-    // Check for semantic matches (less strict, but still blocking)
-    if (matchedTerms.length === 0) {
+    // PHASE 2: If no exact matches, check semantic similarity with embeddings (Issue #151)
+    if (matchedTerms.length === 0 && intoleranceEmbeddings) {
+      try {
+        const semanticMatches = await this.embeddingsService.findSemanticMatches(
+          text, 
+          intoleranceEmbeddings, 
+          'intolerance'
+        );
+        
+        if (semanticMatches.matches && semanticMatches.matches.length > 0) {
+          // Use high threshold for auto-blocking (0.85 by default)
+          for (const match of semanticMatches.matches) {
+            matchedTerms.push(`${match.term} (semantic: ${match.similarity})`);
+            matchedCategories.push('semantic_intolerance_match');
+          }
+          
+          this.log('info', 'Semantic intolerance matches found', {
+            maxSimilarity: semanticMatches.maxSimilarity,
+            matchCount: semanticMatches.matches.length,
+            threshold: semanticMatches.threshold,
+            textLength: text.length
+          });
+        }
+      } catch (error) {
+        this.log('warn', 'Semantic intolerance matching failed, falling back to pattern matching', {
+          error: error.message,
+          textLength: text.length
+        });
+        
+        // PHASE 3: Fallback to basic semantic pattern matching
+        const patternMatches = this.checkSemanticMatches(commentText, intoleranceTerms);
+        matchedTerms.push(...patternMatches.terms);
+        matchedCategories.push(...patternMatches.categories);
+      }
+    } else if (matchedTerms.length === 0) {
+      // PHASE 3: Basic semantic pattern matching (fallback when no embeddings)
       const semanticMatches = this.checkSemanticMatches(commentText, intoleranceTerms);
       matchedTerms.push(...semanticMatches.terms);
       matchedCategories.push(...semanticMatches.categories);
@@ -526,6 +591,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       this.log('info', 'Comment auto-blocked due to user intolerance preferences', {
         matchedTerms: matchedTerms.slice(0, 5), // Log first 5 matches for debugging
         matchedCategories,
+        hasEmbeddings: !!intoleranceEmbeddings,
         textLength: text.length,
         analysisTime: Date.now() - startTime
       });
@@ -542,6 +608,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
   
   /**
    * Get user's tolerance preferences (Issue #150)
+   * Enhanced to include embeddings for semantic matching (Issue #151)
    * These are topics the user considers harmless to them, reducing false positives
    */
   async getUserTolerancePreferences(organizationId) {
@@ -561,10 +628,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
         return null;
       }
       
-      // Get user's encrypted tolerance preferences
+      // Get user's encrypted tolerance preferences and embeddings
       const { data: userData, error: userError } = await this.supabase
         .from('users')
-        .select('lo_que_me_da_igual_encrypted')
+        .select('lo_que_me_da_igual_encrypted, lo_que_me_da_igual_embedding')
         .eq('id', orgData.owner_id)
         .single();
       
@@ -577,13 +644,32 @@ class AnalyzeToxicityWorker extends BaseWorker {
       try {
         const decryptedTolerance = encryptionService.decrypt(userData.lo_que_me_da_igual_encrypted);
         
+        // Parse embeddings if available
+        let embeddingData = null;
+        if (userData.lo_que_me_da_igual_embedding) {
+          try {
+            embeddingData = JSON.parse(userData.lo_que_me_da_igual_embedding);
+          } catch (embeddingError) {
+            this.log('warn', 'Failed to parse tolerance embeddings, using text-only matching', {
+              organizationId,
+              userId: orgData.owner_id.substr(0, 8) + '...',
+              error: embeddingError.message
+            });
+          }
+        }
+        
         this.log('debug', 'Retrieved user tolerance preferences for false positive reduction', {
           organizationId,
           userId: orgData.owner_id.substr(0, 8) + '...',
-          hasPreferences: !!decryptedTolerance
+          hasPreferences: !!decryptedTolerance,
+          hasEmbeddings: !!embeddingData,
+          embeddingTermsCount: embeddingData ? embeddingData.length : 0
         });
         
-        return decryptedTolerance;
+        return {
+          text: decryptedTolerance,
+          embeddings: embeddingData
+        };
         
       } catch (decryptError) {
         this.log('error', 'Failed to decrypt tolerance preferences', {
@@ -605,10 +691,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
   
   /**
    * Check if comment should be ignored based on user tolerance preferences (Issue #150)
+   * Enhanced with semantic similarity matching (Issue #151)
    * This reduces false positives by allowing content the user considers harmless
    * IMPORTANT: This only runs if auto-block didn't trigger (intolerance has priority)
    */
-  async checkTolerance(text, toleranceData) {
+  async checkTolerance(text, toleranceData, toleranceEmbeddings = null) {
     const startTime = Date.now();
     
     if (!toleranceData || typeof toleranceData !== 'string') {
@@ -635,7 +722,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     let matchedCategories = [];
     let ignoreReason = '';
     
-    // Check for exact matches (most reliable)
+    // PHASE 1: Check for exact matches (most reliable)
     for (const term of toleranceTerms) {
       if (commentText.includes(term)) {
         matchedTerms.push(term);
@@ -651,8 +738,42 @@ class AnalyzeToxicityWorker extends BaseWorker {
       }
     }
     
-    // Check for semantic matches (more flexible matching)
-    if (matchedTerms.length === 0) {
+    // PHASE 2: If no exact matches, check semantic similarity with embeddings (Issue #151)
+    if (matchedTerms.length === 0 && toleranceEmbeddings) {
+      try {
+        const semanticMatches = await this.embeddingsService.findSemanticMatches(
+          text, 
+          toleranceEmbeddings, 
+          'tolerance'
+        );
+        
+        if (semanticMatches.matches && semanticMatches.matches.length > 0) {
+          // Use medium-high threshold for tolerance matching (0.80 by default)
+          for (const match of semanticMatches.matches) {
+            matchedTerms.push(`${match.term} (semantic: ${match.similarity})`);
+            matchedCategories.push('semantic_tolerance_match');
+          }
+          
+          this.log('info', 'Semantic tolerance matches found', {
+            maxSimilarity: semanticMatches.maxSimilarity,
+            matchCount: semanticMatches.matches.length,
+            threshold: semanticMatches.threshold,
+            textLength: text.length
+          });
+        }
+      } catch (error) {
+        this.log('warn', 'Semantic tolerance matching failed, falling back to pattern matching', {
+          error: error.message,
+          textLength: text.length
+        });
+        
+        // PHASE 3: Fallback to basic semantic pattern matching
+        const patternMatches = this.checkSemanticToleranceMatches(commentText, toleranceTerms);
+        matchedTerms.push(...patternMatches.terms);
+        matchedCategories.push(...patternMatches.categories);
+      }
+    } else if (matchedTerms.length === 0) {
+      // PHASE 3: Basic semantic pattern matching (fallback when no embeddings)
       const semanticMatches = this.checkSemanticToleranceMatches(commentText, toleranceTerms);
       matchedTerms.push(...semanticMatches.terms);
       matchedCategories.push(...semanticMatches.categories);
@@ -666,6 +787,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       this.log('info', 'Comment ignored due to user tolerance preferences (false positive reduction)', {
         matchedTerms: matchedTerms.slice(0, 5), // Log first 5 matches for debugging
         matchedCategories,
+        hasEmbeddings: !!toleranceEmbeddings,
         textLength: text.length,
         analysisTime: Date.now() - startTime
       });
