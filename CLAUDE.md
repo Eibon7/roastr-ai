@@ -234,6 +234,18 @@ The roast generation system has been enhanced with a comprehensive master prompt
 - **Length Limits**: 2000 character limit to prevent DoS attacks
 - **Fallback System**: Graceful degradation when validation fails or errors occur
 
+### GDPR Rate Limiting (Issue #115)
+
+The system implements strict rate limiting for GDPR-sensitive endpoints to prevent DoS and brute force attacks:
+
+- **Account Deletion**: 3 attempts per hour per IP/user (`DELETE /api/user/account`)
+- **Data Export**: 5 attempts per hour per IP/user (`GET /api/user/data-export`)  
+- **Data Download**: 10 attempts per hour per IP/token (`GET /api/user/data-export/download/:token`)
+- **Deletion Cancellation**: 5 attempts per hour per IP/user (`POST /api/user/account/deletion/cancel`)
+- **Global GDPR Limit**: 20 total GDPR requests per hour per IP across all endpoints
+
+Rate limiters are automatically disabled in test environment and can be configured via feature flags.
+
 ### Template Structure
 
 ```

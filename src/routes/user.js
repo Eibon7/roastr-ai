@@ -10,6 +10,13 @@ const auditService = require('../services/auditService');
 const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
+const {
+  accountDeletionLimiter,
+  dataExportLimiter,
+  dataDownloadLimiter,
+  deletionCancellationLimiter,
+  gdprGlobalLimiter
+} = require('../middleware/gdprRateLimiter');
 
 const router = express.Router();
 const integrationsService = new UserIntegrationsService();
@@ -381,8 +388,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
 /**
  * DELETE /api/user/account
  * Request account deletion with GDPR compliance
+ * Rate limited: 3 attempts per hour per IP/user (Issue #115)
  */
-router.delete('/account', authenticateToken, async (req, res) => {
+router.delete('/account', authenticateToken, gdprGlobalLimiter, accountDeletionLimiter, async (req, res) => {
     try {
         const { password, confirmation } = req.body;
         const userId = req.user.id;
@@ -630,8 +638,9 @@ router.delete('/account', authenticateToken, async (req, res) => {
 /**
  * POST /api/user/account/deletion/cancel
  * Cancel pending account deletion during grace period
+ * Rate limited: 5 attempts per hour per IP/user (Issue #115)
  */
-router.post('/account/deletion/cancel', authenticateToken, async (req, res) => {
+router.post('/account/deletion/cancel', authenticateToken, gdprGlobalLimiter, deletionCancellationLimiter, async (req, res) => {
     try {
         const { reason } = req.body;
         const userId = req.user.id;
@@ -792,8 +801,9 @@ router.get('/account/deletion/status', authenticateToken, async (req, res) => {
 /**
  * GET /api/user/data-export
  * Generate and download GDPR data export
+ * Rate limited: 5 attempts per hour per IP/user (Issue #115)
  */
-router.get('/data-export', authenticateToken, async (req, res) => {
+router.get('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimiter, async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -861,8 +871,9 @@ router.get('/data-export', authenticateToken, async (req, res) => {
 /**
  * GET /api/user/data-export/download/:token
  * Download exported data using secure token
+ * Rate limited: 10 attempts per hour per IP/token (Issue #115)
  */
-router.get('/data-export/download/:token', async (req, res) => {
+router.get('/data-export/download/:token', gdprGlobalLimiter, dataDownloadLimiter, async (req, res) => {
     try {
         const { token } = req.params;
 
