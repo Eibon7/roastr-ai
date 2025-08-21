@@ -1,3 +1,18 @@
+/**
+ * Locale en español para internacionalización de Roastr.ai
+ * 
+ * Estructura:
+ * - alert: Mensajes del sistema de alertas (títulos, mensajes, severidades, campos)
+ * - cli: Mensajes de interfaz de línea de comandos (salud, métricas, alertas, monitoreo, uso, errores)
+ * 
+ * Uso de Parámetros:
+ * - Usar {nombreParametro} para valores dinámicos (ej: {workerType}, {severity})
+ * - Los parámetros se interpolan en tiempo de ejecución vía la función t(clave, params)
+ * - Todos los parámetros deben ser idénticos a las traducciones en inglés para consistencia
+ * 
+ * @example t('alert.titles.worker_error', { workerType: 'FetchComments' })
+ * @example t('cli.health.status', { timestamp: '2024-01-01 12:00:00' })
+ */
 {
   "alert": {
     "titles": {
