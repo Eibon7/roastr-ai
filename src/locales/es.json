@@ -1,0 +1,169 @@
+/**
+ * Locale en español para internacionalización de Roastr.ai
+ * 
+ * Estructura:
+ * - alert: Mensajes del sistema de alertas (títulos, mensajes, severidades, campos)
+ * - cli: Mensajes de interfaz de línea de comandos (salud, métricas, alertas, monitoreo, uso, errores)
+ * 
+ * Uso de Parámetros:
+ * - Usar {nombreParametro} para valores dinámicos (ej: {workerType}, {severity})
+ * - Los parámetros se interpolan en tiempo de ejecución vía la función t(clave, params)
+ * - Todos los parámetros deben ser idénticos a las traducciones en inglés para consistencia
+ * 
+ * @example t('alert.titles.worker_error', { workerType: 'FetchComments' })
+ * @example t('cli.health.status', { timestamp: '2024-01-01 12:00:00' })
+ */
+{
+  "alert": {
+    "titles": {
+      "worker_failure_critical": "🚨 Crítico: Alta Tasa de Fallos de Trabajadores",
+      "worker_failure_warning": "⚠️ Advertencia: Problemas de Salud de Trabajadores",
+      "worker_error": "🔧 Error de Trabajador: {workerType}",
+      "queue_depth_critical": "🚨 Crítico: Alta Profundidad de Cola - {queueType}",
+      "queue_depth_warning": "⚠️ Advertencia: Profundidad de Cola Elevada - {queueType}",
+      "memory_usage_critical": "🚨 Crítico: Uso Alto de Memoria",
+      "memory_usage_warning": "⚠️ Advertencia: Uso Elevado de Memoria",
+      "response_time_critical": "🚨 Crítico: Tiempo de Respuesta Alto",
+      "response_time_warning": "⚠️ Advertencia: Tiempo de Respuesta Elevado",
+      "cost_critical": "💰 Crítico: Presupuesto Casi Excedido",
+      "cost_warning": "💰 Advertencia: Uso Alto del Presupuesto",
+      "health_check_error": "Error del Sistema de Verificación de Salud",
+      "test_alert": "Alerta de Prueba"
+    },
+    "messages": {
+      "worker_failure_rate": "{failureRate}% de los trabajadores están en mal estado ({unhealthyWorkers}/{totalWorkers})",
+      "worker_error_detail": "El trabajador {workerType} está en estado de error: {error}",
+      "queue_depth_critical": "La cola {queueType} tiene {depth} trabajos pendientes (umbral crítico: {threshold})",
+      "queue_depth_warning": "La cola {queueType} tiene {depth} trabajos pendientes (umbral de advertencia: {threshold})",
+      "memory_usage_critical": "El uso de memoria está al {memoryUsage}% (umbral crítico: {threshold}%)",
+      "memory_usage_warning": "El uso de memoria está al {memoryUsage}% (umbral de advertencia: {threshold}%)",
+      "response_time_critical": "El tiempo promedio de respuesta es {avgResponseTime}ms (umbral crítico: {threshold}ms)",
+      "response_time_warning": "El tiempo promedio de respuesta es {avgResponseTime}ms (umbral de advertencia: {threshold}ms)",
+      "cost_critical": "El uso del presupuesto mensual está al {usagePercentage}% (umbral crítico: {threshold}%)",
+      "cost_warning": "El uso del presupuesto mensual está al {usagePercentage}% (umbral de advertencia: {threshold}%)",
+      "health_check_error": "Error al realizar la verificación de salud de alertas: {error}",
+      "test_alert": "Esta es una alerta de prueba para verificar que el sistema de alertas funciona correctamente."
+    },
+    "severities": {
+      "critical": "CRÍTICO",
+      "warning": "ADVERTENCIA",
+      "info": "INFORMACIÓN"
+    },
+    "fields": {
+      "severity": "Severidad",
+      "timestamp": "Fecha y Hora"
+    },
+    "footer": "Monitoreo Roastr.ai"
+  },
+  "cli": {
+    "health": {
+      "fetching": "🏥 Obteniendo estado de salud del sistema...",
+      "failed": "❌ Verificación de Salud Falló",
+      "cannot_connect": "❌ No se puede conectar a la API:",
+      "status": "🏥 Estado de Salud - {timestamp}",
+      "overall": "General:",
+      "uptime": "Tiempo Activo:",
+      "memory": "Memoria:",
+      "services": "Servicios:",
+      "workers": "Trabajadores:",
+      "queues": "Colas:",
+      "jobs_pending": "trabajos pendientes",
+      "healthy": "saludable",
+      "system_health": "🏥 Estado de Salud del Sistema",
+      "check_duration": "Duración de Verificación:",
+      "system": "💻 Sistema",
+      "status": "Estado:",
+      "memory_usage": "Uso de Memoria:",
+      "memory_used_total": "Memoria: {used}MB usado / {total}MB total",
+      "node_version": "Versión de Node:",
+      "platform": "Plataforma:",
+      "services_section": "🔧 Servicios",
+      "response_time": "Tiempo de Respuesta:",
+      "error": "Error:",
+      "workers_section": "👷 Trabajadores",
+      "total": "Total:",
+      "healthy_count": "Saludables:",
+      "queues_section": "📋 Colas",
+      "total_depth": "Profundidad Total:",
+      "performance": "⚡ Rendimiento",
+      "avg_response_time": "Tiempo Promedio de Respuesta:",
+      "error_rate": "Tasa de Error:",
+      "total_requests": "Solicitudes Totales:",
+      "failed_checks": "❌ Verificaciones Fallidas",
+      "check_failed": "❌ Verificación de salud falló:"
+    },
+    "metrics": {
+      "fetching": "📊 Obteniendo métricas del sistema...",
+      "auth_required": "❌ Autenticación requerida. Configura la variable de entorno ROAST_API_KEY.",
+      "fetch_failed": "❌ Error al obtener métricas",
+      "cannot_connect": "❌ No se puede conectar a la API:",
+      "title": "📊 Métricas del Sistema",
+      "timestamp": "Fecha y Hora:",
+      "system": "💻 Sistema",
+      "uptime": "Tiempo Activo:",
+      "memory_usage": "Uso de Memoria:",
+      "status": "Estado:",
+      "jobs": "🔄 Trabajos",
+      "processed": "Procesados:",
+      "failed": "Fallidos:",
+      "token_usage": "Uso de Tokens:",
+      "users": "👥 Usuarios",
+      "total": "Total:",
+      "active": "Activos:",
+      "performance": "⚡ Rendimiento",
+      "avg_response_time": "Tiempo Promedio de Respuesta:",
+      "error_rate": "Tasa de Error:",
+      "total_requests": "Solicitudes Totales:",
+      "costs": "💰 Costos",
+      "budget_usage": "Uso del Presupuesto:",
+      "monthly_spend": "Gasto Mensual:"
+    },
+    "alerts": {
+      "sending": "📢 Enviando alerta de nivel {severity}...",
+      "sent_successfully": "✅ Alerta enviada exitosamente",
+      "severity": "Severidad:",
+      "title": "Título:",
+      "message": "Mensaje:",
+      "not_sent": "⚠️ Alerta no enviada (probablemente debido a configuración o limitación de velocidad)",
+      "auth_required": "❌ Autenticación requerida. Configura la variable de entorno ROAST_API_KEY.",
+      "test_failed": "❌ Prueba de alerta falló",
+      "cannot_connect": "❌ No se puede conectar a la API:"
+    },
+    "monitoring": {
+      "starting_watch": "👁️  Iniciando monitoreo de salud (presiona Ctrl+C para parar)...",
+      "refresh_interval": "Intervalo de actualización: {interval}ms",
+      "stopping": "🛑 Deteniendo monitor de salud...",
+      "running_test": "🧪 Ejecutando prueba del sistema de monitoreo...",
+      "test_results": "🧪 Resultados de Prueba del Sistema de Monitoreo",
+      "overall": "General:",
+      "passed": "APROBADO",
+      "failed": "FALLIDO",
+      "test_components": "📋 Componentes de Prueba",
+      "status": "Estado:"
+    },
+    "usage": {
+      "title": "🏥 CLI del Monitor de Salud",
+      "usage": "Uso: npm run monitor <comando>",
+      "commands": "Comandos:",
+      "health_cmd": "health                    Mostrar estado actual de salud",
+      "metrics_cmd": "metrics                   Mostrar métricas del sistema (requiere autenticación)",
+      "watch_cmd": "watch                     Observar estado de salud (tiempo real)",
+      "test_cmd": "test                      Ejecutar prueba del sistema de monitoreo",
+      "alert_cmd": "alert [severidad] [título] [mensaje]  Enviar alerta de prueba",
+      "env_vars": "Variables de Entorno:",
+      "api_url": "ROAST_API_URL            URL base de la API (predeterminado: http://localhost:3000)",
+      "api_key": "ROAST_API_KEY            Clave de API para endpoints autenticados",
+      "refresh_interval": "MONITOR_REFRESH_INTERVAL Intervalo de actualización en ms (predeterminado: 5000)",
+      "compact": "MONITOR_COMPACT          Usar vista compacta (predeterminado: false)",
+      "examples": "Ejemplos:",
+      "example_health": "npm run monitor health",
+      "example_watch": "npm run monitor watch",
+      "example_alert": "npm run monitor alert warning \"Memoria Alta\" \"El uso de memoria está al 85%\""
+    },
+    "errors": {
+      "error": "❌ Error:",
+      "fatal_error": "Error fatal:",
+      "response": "Respuesta:"
+    }
+  }
+}

@@ -1,0 +1,169 @@
+/**
+ * English locale for Roastr.ai internationalization
+ * 
+ * Structure:
+ * - alert: Alert system messages (titles, messages, severities, fields)
+ * - cli: Command-line interface messages (health, metrics, alerts, monitoring, usage, errors)
+ * 
+ * Parameter Usage:
+ * - Use {parameterName} for dynamic values (e.g., {workerType}, {severity})
+ * - Parameters are interpolated at runtime via the t(key, params) function
+ * - All parameters used in Spanish translations must be identical for consistency
+ * 
+ * @example t('alert.titles.worker_error', { workerType: 'FetchComments' })
+ * @example t('cli.health.status', { timestamp: '2024-01-01 12:00:00' })
+ */
+{
+  "alert": {
+    "titles": {
+      "worker_failure_critical": "🚨 Critical: High Worker Failure Rate",
+      "worker_failure_warning": "⚠️ Warning: Worker Health Issues",
+      "worker_error": "🔧 Worker Error: {workerType}",
+      "queue_depth_critical": "🚨 Critical: High Queue Depth - {queueType}",
+      "queue_depth_warning": "⚠️ Warning: Elevated Queue Depth - {queueType}",
+      "memory_usage_critical": "🚨 Critical: High Memory Usage",
+      "memory_usage_warning": "⚠️ Warning: Elevated Memory Usage",
+      "response_time_critical": "🚨 Critical: High Response Time",
+      "response_time_warning": "⚠️ Warning: Elevated Response Time",
+      "cost_critical": "💰 Critical: Budget Nearly Exceeded",
+      "cost_warning": "💰 Warning: High Budget Usage",
+      "health_check_error": "Health Check System Error",
+      "test_alert": "Test Alert"
+    },
+    "messages": {
+      "worker_failure_rate": "{failureRate}% of workers are unhealthy ({unhealthyWorkers}/{totalWorkers})",
+      "worker_error_detail": "Worker {workerType} is in error state: {error}",
+      "queue_depth_critical": "Queue {queueType} has {depth} pending jobs (critical threshold: {threshold})",
+      "queue_depth_warning": "Queue {queueType} has {depth} pending jobs (warning threshold: {threshold})",
+      "memory_usage_critical": "Memory usage is at {memoryUsage}% (critical threshold: {threshold}%)",
+      "memory_usage_warning": "Memory usage is at {memoryUsage}% (warning threshold: {threshold}%)",
+      "response_time_critical": "Average response time is {avgResponseTime}ms (critical threshold: {threshold}ms)",
+      "response_time_warning": "Average response time is {avgResponseTime}ms (warning threshold: {threshold}ms)",
+      "cost_critical": "Monthly budget usage is at {usagePercentage}% (critical threshold: {threshold}%)",
+      "cost_warning": "Monthly budget usage is at {usagePercentage}% (warning threshold: {threshold}%)",
+      "health_check_error": "Failed to perform health check alerting: {error}",
+      "test_alert": "This is a test alert to verify the alerting system is working properly."
+    },
+    "severities": {
+      "critical": "CRITICAL",
+      "warning": "WARNING", 
+      "info": "INFO"
+    },
+    "fields": {
+      "severity": "Severity",
+      "timestamp": "Timestamp"
+    },
+    "footer": "Roastr.ai Monitoring"
+  },
+  "cli": {
+    "health": {
+      "fetching": "🏥 Fetching system health...",
+      "failed": "❌ Health Check Failed",
+      "cannot_connect": "❌ Cannot connect to API:",
+      "status": "🏥 Health Status - {timestamp}",
+      "overall": "Overall:",
+      "uptime": "Uptime:",
+      "memory": "Memory:",
+      "services": "Services:",
+      "workers": "Workers:",
+      "queues": "Queues:",
+      "jobs_pending": "jobs pending",
+      "healthy": "healthy",
+      "system_health": "🏥 System Health Status",
+      "check_duration": "Check Duration:",
+      "system": "💻 System",
+      "status": "Status:",
+      "memory_usage": "Memory Usage:",
+      "memory_used_total": "Memory: {used}MB used / {total}MB total",
+      "node_version": "Node Version:",
+      "platform": "Platform:",
+      "services_section": "🔧 Services",
+      "response_time": "Response Time:",
+      "error": "Error:",
+      "workers_section": "👷 Workers",
+      "total": "Total:",
+      "healthy_count": "Healthy:",
+      "queues_section": "📋 Queues",
+      "total_depth": "Total Depth:",
+      "performance": "⚡ Performance",
+      "avg_response_time": "Avg Response Time:",
+      "error_rate": "Error Rate:",
+      "total_requests": "Total Requests:",
+      "failed_checks": "❌ Failed Checks",
+      "check_failed": "❌ Health check failed:"
+    },
+    "metrics": {
+      "fetching": "📊 Fetching system metrics...",
+      "auth_required": "❌ Authentication required. Set ROAST_API_KEY environment variable.",
+      "fetch_failed": "❌ Metrics fetch failed",
+      "cannot_connect": "❌ Cannot connect to API:",
+      "title": "📊 System Metrics",
+      "timestamp": "Timestamp:",
+      "system": "💻 System",
+      "uptime": "Uptime:",
+      "memory_usage": "Memory Usage:",
+      "status": "Status:",
+      "jobs": "🔄 Jobs",
+      "processed": "Processed:",
+      "failed": "Failed:",
+      "token_usage": "Token Usage:",
+      "users": "👥 Users",
+      "total": "Total:",
+      "active": "Active:",
+      "performance": "⚡ Performance",
+      "avg_response_time": "Avg Response Time:",
+      "error_rate": "Error Rate:",
+      "total_requests": "Total Requests:",
+      "costs": "💰 Costs",
+      "budget_usage": "Budget Usage:",
+      "monthly_spend": "Monthly Spend:"
+    },
+    "alerts": {
+      "sending": "📢 Sending {severity} alert...",
+      "sent_successfully": "✅ Alert sent successfully",
+      "severity": "Severity:",
+      "title": "Title:",
+      "message": "Message:",
+      "not_sent": "⚠️ Alert not sent (likely due to configuration or rate limiting)",
+      "auth_required": "❌ Authentication required. Set ROAST_API_KEY environment variable.",
+      "test_failed": "❌ Alert test failed",
+      "cannot_connect": "❌ Cannot connect to API:"
+    },
+    "monitoring": {
+      "starting_watch": "👁️  Starting health monitoring (press Ctrl+C to stop)...",
+      "refresh_interval": "Refresh interval: {interval}ms",
+      "stopping": "🛑 Stopping health monitor...",
+      "running_test": "🧪 Running monitoring system test...",
+      "test_results": "🧪 Monitoring System Test Results",
+      "overall": "Overall:",
+      "passed": "PASSED",
+      "failed": "FAILED",
+      "test_components": "📋 Test Components",
+      "status": "Status:"
+    },
+    "usage": {
+      "title": "🏥 Health Monitor CLI",
+      "usage": "Usage: npm run monitor <command>",
+      "commands": "Commands:",
+      "health_cmd": "health                    Show current health status",
+      "metrics_cmd": "metrics                   Show system metrics (requires auth)",
+      "watch_cmd": "watch                     Watch health status (real-time)",
+      "test_cmd": "test                      Run monitoring system test",
+      "alert_cmd": "alert [severity] [title] [message]  Send test alert",
+      "env_vars": "Environment Variables:",
+      "api_url": "ROAST_API_URL            API base URL (default: http://localhost:3000)",
+      "api_key": "ROAST_API_KEY            API key for authenticated endpoints",
+      "refresh_interval": "MONITOR_REFRESH_INTERVAL Refresh interval in ms (default: 5000)",
+      "compact": "MONITOR_COMPACT          Use compact display (default: false)",
+      "examples": "Examples:",
+      "example_health": "npm run monitor health",
+      "example_watch": "npm run monitor watch",
+      "example_alert": "npm run monitor alert warning \"High Memory\" \"Memory usage is at 85%\""
+    },
+    "errors": {
+      "error": "❌ Error:",
+      "fatal_error": "Fatal error:",
+      "response": "Response:"
+    }
+  }
+}
