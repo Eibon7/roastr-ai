@@ -1,6 +1,8 @@
 const fs = require('fs').promises;
 const path = require('path');
 const Papa = require('papaparse');
+const constants = require('../config/constants');
+const { logger } = require('../utils/logger');
 
 class CsvRoastService {
   constructor() {
@@ -8,12 +10,17 @@ class CsvRoastService {
     this.debug = process.env.DEBUG === 'true';
     this.roasts = [];
     this.lastLoadTime = null;
-    this.cacheExpiry = 5 * 60 * 1000; // 5 minutes cache
+    this.cacheExpiry = constants.CSV_CACHE_EXPIRY;
+    
+    // Chunked loading configuration
+    this.chunkSize = 1000; // Process 1000 rows at a time
+    this.maxMemoryRows = 5000; // Keep max 5000 rows in memory
+    this.isLargeFile = false;
   }
 
   debugLog(message, ...args) {
     if (this.debug) {
-      console.log(`[CSV-DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
+      logger.debug(`[CSV-SERVICE] ${message}`, ...args);
     }
   }
 
@@ -22,7 +29,7 @@ class CsvRoastService {
       await fs.access(this.csvFilePath);
       this.debugLog('✅ CSV file exists at:', this.csvFilePath);
     } catch (error) {
-      console.log('📝 CSV file not found, creating sample file...');
+      logger.info('📝 CSV file not found, creating sample file...');
       
       const sampleData = [
         ['comment', 'roast'],
@@ -47,7 +54,7 @@ class CsvRoastService {
       await fs.mkdir(path.dirname(this.csvFilePath), { recursive: true });
       await fs.writeFile(this.csvFilePath, csvContent, 'utf8');
       
-      console.log('✅ Sample CSV file created with 10 roasts');
+      logger.info('✅ Sample CSV file created with 10 roasts');
       this.debugLog('Sample CSV created at:', this.csvFilePath);
     }
   }
@@ -62,50 +69,119 @@ class CsvRoastService {
         return this.roasts;
       }
 
-      this.debugLog('🔄 Loading roasts from CSV...');
+      this.debugLog('🔄 Loading roasts from CSV with memory optimization...');
       
       // Ensure CSV file exists
       await this.ensureCsvExists();
       
-      // Read CSV file
-      const csvContent = await fs.readFile(this.csvFilePath, 'utf8');
+      // Check file size to determine loading strategy
+      const fileStats = await fs.stat(this.csvFilePath);
+      const fileSizeMB = fileStats.size / (1024 * 1024);
+      this.isLargeFile = fileSizeMB > 5; // Files larger than 5MB use chunked loading
       
-      // Parse CSV
-      const parsed = Papa.parse(csvContent, {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: ','
-      });
-
-      if (parsed.errors.length > 0) {
-        console.warn('⚠️ CSV parsing warnings:', parsed.errors);
+      if (this.isLargeFile) {
+        logger.info(`Large CSV detected (${fileSizeMB.toFixed(2)}MB), using chunked loading`);
+        this.roasts = await this.loadRoastsChunked();
+      } else {
+        this.roasts = await this.loadRoastsStandard();
       }
-
-      // Validate required columns
-      const requiredColumns = ['comment', 'roast'];
-      const columns = Object.keys(parsed.data[0] || {});
-      const missingColumns = requiredColumns.filter(col => !columns.includes(col));
-      
-      if (missingColumns.length > 0) {
-        throw new Error(`Missing required CSV columns: ${missingColumns.join(', ')}`);
-      }
-
-      // Filter out empty rows and validate data
-      this.roasts = parsed.data.filter(row => 
-        row.comment && row.comment.trim() && 
-        row.roast && row.roast.trim()
-      );
 
       this.lastLoadTime = now;
       
-      console.log(`✅ Loaded ${this.roasts.length} roasts from CSV`);
+      logger.info(`✅ Loaded ${this.roasts.length} roasts from CSV`);
       this.debugLog('Sample roasts loaded:', this.roasts.slice(0, 2));
       
       return this.roasts;
     } catch (error) {
-      console.error('❌ Error loading CSV roasts:', error.message);
+      logger.error('❌ Error loading CSV roasts:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Standard loading method for small to medium files
+   * @returns {Promise<Array>} Array of roast objects
+   * @private
+   */
+  async loadRoastsStandard() {
+    // Read CSV file
+    const csvContent = await fs.readFile(this.csvFilePath, 'utf8');
+    
+    // Parse CSV using centralized constants
+    const parsed = Papa.parse(csvContent, {
+      header: true,
+      skipEmptyLines: true,
+      delimiter: constants.DEFAULT_CSV_DELIMITER
+    });
+
+    if (parsed.errors.length > 0) {
+      logger.warn('⚠️ CSV parsing warnings:', parsed.errors);
+    }
+
+    // Validate required columns using centralized constants
+    const columns = Object.keys(parsed.data[0] || {});
+    const missingColumns = constants.CSV_REQUIRED_COLUMNS.filter(col => !columns.includes(col));
+    
+    if (missingColumns.length > 0) {
+      throw new Error(`Missing required CSV columns: ${missingColumns.join(', ')}`);
+    }
+
+    // Filter out empty rows and validate data
+    return parsed.data.filter(row => 
+      row.comment && row.comment.trim() && 
+      row.roast && row.roast.trim()
+    );
+  }
+
+  /**
+   * Chunked loading method for large files to optimize memory usage
+   * @returns {Promise<Array>} Array of roast objects (limited to maxMemoryRows)
+   * @private
+   */
+  async loadRoastsChunked() {
+    const csvContent = await fs.readFile(this.csvFilePath, 'utf8');
+    const lines = csvContent.split('\n');
+    const header = lines[0];
+    const dataLines = lines.slice(1);
+    
+    logger.info(`Processing ${dataLines.length} rows in chunks of ${this.chunkSize}`);
+    
+    const allRoasts = [];
+    let processedChunks = 0;
+    
+    // Process in chunks to avoid memory issues
+    for (let i = 0; i < dataLines.length; i += this.chunkSize) {
+      const chunk = dataLines.slice(i, i + this.chunkSize);
+      const chunkContent = header + '\n' + chunk.join('\n');
+      
+      const parsed = Papa.parse(chunkContent, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: constants.DEFAULT_CSV_DELIMITER
+      });
+
+      // Filter and validate chunk data
+      const validRows = parsed.data.filter(row => 
+        row.comment && row.comment.trim() && 
+        row.roast && row.roast.trim()
+      );
+      
+      allRoasts.push(...validRows);
+      processedChunks++;
+      
+      // Log progress for large files
+      if (processedChunks % 10 === 0) {
+        logger.info(`Processed ${processedChunks} chunks, ${allRoasts.length} valid roasts so far`);
+      }
+      
+      // Memory limit check - keep only the most recent entries if too large
+      if (allRoasts.length > this.maxMemoryRows) {
+        logger.warn(`Reached memory limit of ${this.maxMemoryRows} roasts, truncating older entries`);
+        allRoasts.splice(0, allRoasts.length - this.maxMemoryRows);
+      }
+    }
+    
+    return allRoasts;
   }
 
   async findBestRoast(inputComment) {
@@ -166,7 +242,7 @@ class CsvRoastService {
       
       return bestMatch.roast;
     } catch (error) {
-      console.error('❌ Error finding best roast:', error.message);
+      logger.error('❌ Error finding best roast:', error.message);
       throw error;
     }
   }
@@ -187,12 +263,12 @@ class CsvRoastService {
       
       await fs.appendFile(this.csvFilePath, '\n' + newRow, 'utf8');
       
-      console.log('✅ New roast added to CSV');
+      logger.info('✅ New roast added to CSV');
       this.debugLog('Added roast:', { comment: comment.substring(0, 30) + '...', roast: roast.substring(0, 30) + '...' });
       
       return true;
     } catch (error) {
-      console.error('❌ Error adding roast to CSV:', error.message);
+      logger.error('❌ Error adding roast to CSV:', error.message);
       throw error;
     }
   }
@@ -207,7 +283,7 @@ class CsvRoastService {
         csvPath: this.csvFilePath
       };
     } catch (error) {
-      console.error('❌ Error getting CSV stats:', error.message);
+      logger.error('❌ Error getting CSV stats:', error.message);
       return { error: error.message };
     }
   }
