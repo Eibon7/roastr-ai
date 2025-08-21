@@ -4,6 +4,7 @@ const { logger } = require('./logger');
 /**
  * Generic Internationalization utility for Roastr.ai
  * 
+ * Thread-safe implementation without global state management.
  * Provides comprehensive translation capabilities for the entire application.
  * Supports English (en) and Spanish (es) with fallback to English.
  * Uses JSON locale files organized by domain for translations.
@@ -13,7 +14,6 @@ class I18n {
     this.defaultLanguage = 'en';
     this.supportedLanguages = ['en', 'es'];
     this.locales = new Map();
-    this.currentLanguage = this.getConfiguredLanguage();
     
     // Load supported locales
     this.loadLocales();
@@ -63,27 +63,21 @@ class I18n {
   }
   
   /**
-   * Translate a key with optional interpolation
+   * Translate a key with explicit language parameter (thread-safe)
    * 
    * @param {string} key - Translation key (dot notation, e.g., 'auth.login.title')
-   * @param {string|object} langOrParams - Language code or interpolation parameters
-   * @param {object} params - Interpolation parameters (if langOrParams is language)
+   * @param {string} language - Language code
+   * @param {object} params - Interpolation parameters
    * @returns {string} Translated text or key if not found
    */
-  t(key, langOrParams = {}, params = {}) {
-    // Handle function overloading: t(key, params) vs t(key, lang, params)
-    let language = this.currentLanguage;
-    let interpolationParams = {};
-    
-    if (typeof langOrParams === 'string') {
-      language = langOrParams;
-      interpolationParams = params;
-    } else if (typeof langOrParams === 'object') {
-      interpolationParams = langOrParams;
+  t(key, language = this.defaultLanguage, params = {}) {
+    // Validate inputs
+    if (!key || typeof key !== 'string') {
+      return String(key);
     }
     
     // Validate language
-    if (!this.supportedLanguages.includes(language)) {
+    if (!language || !this.supportedLanguages.includes(language)) {
       language = this.defaultLanguage;
     }
     
@@ -108,7 +102,7 @@ class I18n {
     }
     
     // Interpolate parameters
-    return this.interpolate(translation, interpolationParams);
+    return this.interpolate(translation, params);
   }
   
   /**
@@ -165,38 +159,29 @@ class I18n {
   }
   
   /**
-   * Set the current language
-   * 
-   * @param {string} language - Language code
-   * @returns {boolean} True if language was set, false if not supported
+   * Get current language from environment (for backwards compatibility)
    */
-  setLanguage(language) {
-    if (!this.supportedLanguages.includes(language)) {
-      this.log('warn', 'Unsupported language requested', { 
-        language, 
-        supported: this.supportedLanguages 
-      });
-      return false;
+  getCurrentLanguage() {
+    const envLang = process.env.APP_LANG || process.env.ALERT_LANG;
+    
+    if (envLang && this.supportedLanguages.includes(envLang.toLowerCase())) {
+      return envLang.toLowerCase();
     }
     
-    const previousLanguage = this.currentLanguage;
-    this.currentLanguage = language;
-    
-    this.log('info', 'Language changed', { 
-      language,
-      previousLanguage
-    });
-    
-    return true;
+    return this.defaultLanguage;
   }
   
   /**
-   * Get current language
-   * 
-   * @returns {string} Current language code
+   * Set language (backwards compatibility - deprecated)
+   * WARNING: This method is deprecated to avoid race conditions in concurrent applications
+   * Use explicit language parameter in t() method instead
    */
-  getCurrentLanguage() {
-    return this.currentLanguage;
+  setLanguage(language) {
+    this.log('warn', 'setLanguage() is deprecated to avoid race conditions. Use t(key, language, params) instead.', { 
+      language,
+      calledFrom: new Error().stack.split('\n')[2]
+    });
+    return this.isLanguageSupported(language);
   }
   
   /**
@@ -234,7 +219,7 @@ class I18n {
    */
   getStats() {
     const stats = {
-      currentLanguage: this.currentLanguage,
+      currentLanguage: this.getCurrentLanguage(),
       defaultLanguage: this.defaultLanguage,
       supportedLanguages: this.supportedLanguages,
       loadedLocales: Array.from(this.locales.keys()),
@@ -285,33 +270,36 @@ class I18n {
   }
   
   /**
-   * Get available domains from current locale
+   * Get available domains from a specific locale
    * 
+   * @param {string} language - Language code (optional, defaults to default language)
    * @returns {string[]} Array of available domains
    */
-  getAvailableDomains() {
-    const locale = this.locales.get(this.currentLanguage) || this.locales.get(this.defaultLanguage);
-    return locale ? Object.keys(locale) : [];
+  getAvailableDomains(language = this.defaultLanguage) {
+    const locale = this.locales.get(language) || this.locales.get(this.defaultLanguage);
+    return locale ? Object.keys(locale).filter(key => key !== '_comment') : [];
   }
   
   /**
    * Check if a domain exists
    * 
    * @param {string} domain - Domain name to check
+   * @param {string} language - Language code (optional)
    * @returns {boolean} True if domain exists
    */
-  hasDomain(domain) {
-    return this.getAvailableDomains().includes(domain);
+  hasDomain(domain, language = this.defaultLanguage) {
+    return this.getAvailableDomains(language).includes(domain);
   }
   
   /**
    * Get all keys for a specific domain
    * 
    * @param {string} domain - Domain name
+   * @param {string} language - Language code (optional)
    * @returns {object} Object with all keys in the domain
    */
-  getDomainKeys(domain) {
-    const locale = this.locales.get(this.currentLanguage) || this.locales.get(this.defaultLanguage);
+  getDomainKeys(domain, language = this.defaultLanguage) {
+    const locale = this.locales.get(language) || this.locales.get(this.defaultLanguage);
     return locale && locale[domain] ? locale[domain] : {};
   }
   
@@ -331,15 +319,15 @@ class I18n {
 const i18n = new I18n();
 
 /**
- * Main translation function (shorthand)
+ * Main translation function with explicit language parameter (thread-safe)
  * 
  * @param {string} key - Translation key
- * @param {string|object} langOrParams - Language or parameters
- * @param {object} params - Parameters (if second argument is language)
+ * @param {string} language - Language code
+ * @param {object} params - Interpolation parameters
  * @returns {string} Translated text
  */
-function t(key, langOrParams, params) {
-  return i18n.t(key, langOrParams, params);
+function t(key, language = i18n.getDefaultLanguage(), params = {}) {
+  return i18n.t(key, language, params);
 }
 
 /**
@@ -359,11 +347,12 @@ function tl(key, language, params = {}) {
  * 
  * @param {string} domain - Domain name (e.g., 'auth', 'ui')
  * @param {string} key - Key within domain
+ * @param {string} language - Language code (optional)
  * @param {object} params - Interpolation parameters
  * @returns {string} Translated text
  */
-function td(domain, key, params = {}) {
-  return i18n.t(`${domain}.${key}`, params);
+function td(domain, key, language = i18n.getDefaultLanguage(), params = {}) {
+  return i18n.t(`${domain}.${key}`, language, params);
 }
 
 module.exports = {

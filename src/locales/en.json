@@ -142,7 +142,8 @@
       "file_too_large": "File size must be less than {maxSize}",
       "file_invalid_type": "Invalid file type. Allowed: {allowedTypes}",
       "max_length": "Maximum {max} characters allowed",
-      "min_length": "Minimum {min} characters required"
+      "min_length": "Minimum {min} characters required",
+      "unsupported_language": "Unsupported language"
     },
     "messages": {
       "unsaved_changes": "You have unsaved changes. Are you sure you want to leave?",
@@ -151,6 +152,22 @@
       "delete_confirm": "Are you sure you want to delete this item?",
       "delete_success": "Item deleted successfully",
       "delete_error": "Failed to delete item. Please try again."
+    }
+  },
+  "plan": {
+    "validation": {
+      "invalid_plan": "Invalid plan specified",
+      "roasts_exceed_limit": "Current monthly roasts ({current}) exceeds new plan limit ({limit})",
+      "comments_exceed_limit": "Current monthly comments ({current}) exceeds new plan limit ({limit})",
+      "integrations_exceed_limit": "Active integrations ({current}) exceeds new plan limit ({limit})",
+      "error_validating": "Error validating plan change",
+      "lose_priority_support": "You will lose access to priority support",
+      "lose_advanced_analytics": "You will lose access to advanced analytics",
+      "lose_team_collaboration": "You will lose access to team collaboration features",
+      "lose_style_profile": "You will lose access to custom style profiles",
+      "lose_shield": "You will lose access to Shield automated moderation",
+      "no_proration": "No proration needed",
+      "proration_description": "Prorated for {days} days remaining in billing period"
     }
   },
   "alert": {

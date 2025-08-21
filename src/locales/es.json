@@ -142,7 +142,8 @@
       "file_too_large": "El archivo debe ser menor a {maxSize}",
       "file_invalid_type": "Tipo de archivo inválido. Permitidos: {allowedTypes}",
       "max_length": "Máximo {max} caracteres permitidos",
-      "min_length": "Mínimo {min} caracteres requeridos"
+      "min_length": "Mínimo {min} caracteres requeridos",
+      "unsupported_language": "Idioma no soportado"
     },
     "messages": {
       "unsaved_changes": "Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?",
@@ -151,6 +152,22 @@
       "delete_confirm": "¿Estás seguro de que quieres eliminar este elemento?",
       "delete_success": "Elemento eliminado exitosamente",
       "delete_error": "Error al eliminar elemento. Por favor intenta nuevamente."
+    }
+  },
+  "plan": {
+    "validation": {
+      "invalid_plan": "Plan especificado inválido",
+      "roasts_exceed_limit": "Los roasts mensuales actuales ({current}) exceden el límite del nuevo plan ({limit})",
+      "comments_exceed_limit": "Los comentarios mensuales actuales ({current}) exceden el límite del nuevo plan ({limit})",
+      "integrations_exceed_limit": "Las integraciones activas ({current}) exceden el límite del nuevo plan ({limit})",
+      "error_validating": "Error al validar el cambio de plan",
+      "lose_priority_support": "Perderás acceso al soporte prioritario",
+      "lose_advanced_analytics": "Perderás acceso a las analíticas avanzadas",
+      "lose_team_collaboration": "Perderás acceso a las funciones de colaboración en equipo",
+      "lose_style_profile": "Perderás acceso a los perfiles de estilo personalizados",
+      "lose_shield": "Perderás acceso a la moderación automatizada Shield",
+      "no_proration": "No se necesita prorrateo",
+      "proration_description": "Prorrateado por {days} días restantes en el período de facturación"
     }
   },
   "alert": {

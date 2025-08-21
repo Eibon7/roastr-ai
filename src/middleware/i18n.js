@@ -15,7 +15,6 @@ function detectLanguage(req, res, next) {
     // First check if user has a saved language preference
     if (req.user && req.user.language && i18n.isLanguageSupported(req.user.language)) {
       req.language = req.user.language;
-      i18n.setLanguage(req.language);
       return next();
     }
 
@@ -34,9 +33,14 @@ function detectLanguage(req, res, next) {
     for (const lang of languages) {
       const langCode = lang.code.toLowerCase().split('-')[0]; // Handle en-US -> en
       
+      // Validate language code format (simple regex for safety)
+      if (!isValidLanguageCode(langCode)) {
+        logger.debug('Invalid language code format', { langCode });
+        continue;
+      }
+      
       if (i18n.isLanguageSupported(langCode)) {
         req.language = langCode;
-        i18n.setLanguage(langCode);
         
         logger.debug('Language detected from Accept-Language header', {
           acceptLanguage,
@@ -100,6 +104,17 @@ function parseAcceptLanguage(acceptLanguage) {
 }
 
 /**
+ * Validate language code format
+ * 
+ * @param {string} langCode - Language code to validate
+ * @returns {boolean} True if valid language code format
+ */
+function isValidLanguageCode(langCode) {
+  // Simple regex for ISO 639-1 language codes (2 lowercase letters)
+  return /^[a-z]{2}$/.test(langCode);
+}
+
+/**
  * Express helper to get translated text in views
  * 
  * Usage in templates:
@@ -109,11 +124,11 @@ function parseAcceptLanguage(acceptLanguage) {
 function i18nHelpers(req, res, next) {
   // Add translation function to response locals for use in templates
   res.locals.t = (key, params) => {
-    const language = req.language || i18n.getCurrentLanguage();
+    const language = req.language || i18n.getDefaultLanguage();
     return i18n.t(key, language, params);
   };
 
-  res.locals.currentLanguage = req.language || i18n.getCurrentLanguage();
+  res.locals.currentLanguage = req.language || i18n.getDefaultLanguage();
   res.locals.supportedLanguages = i18n.getSupportedLanguages();
 
   next();
@@ -124,15 +139,15 @@ function i18nHelpers(req, res, next) {
  * Useful for frontend applications
  */
 function getTranslations(req, res) {
-  const language = req.language || i18n.getCurrentLanguage();
+  const language = req.language || i18n.getDefaultLanguage();
   const domain = req.query.domain;
 
   try {
     let translations;
     
-    if (domain && i18n.hasDomain(domain)) {
+    if (domain && i18n.hasDomain(domain, language)) {
       // Return specific domain translations
-      translations = i18n.getDomainKeys(domain);
+      translations = i18n.getDomainKeys(domain, language);
     } else {
       // Return all translations for the language
       const locale = i18n.locales.get(language);
@@ -143,7 +158,7 @@ function getTranslations(req, res) {
       success: true,
       language,
       translations,
-      availableDomains: i18n.getAvailableDomains()
+      availableDomains: i18n.getAvailableDomains(language)
     });
 
   } catch (error) {
@@ -160,26 +175,33 @@ function getTranslations(req, res) {
  */
 function setLanguage(req, res) {
   const { language } = req.body;
+  const currentLanguage = req.language || i18n.getDefaultLanguage();
 
   if (!language) {
     return res.status(400).json({
       success: false,
-      error: i18n.t('forms.validation.required')
+      error: i18n.t('forms.validation.required', currentLanguage)
+    });
+  }
+
+  // Validate language code format
+  if (!isValidLanguageCode(language)) {
+    return res.status(400).json({
+      success: false,
+      error: i18n.t('forms.validation.unsupported_language', currentLanguage),
+      supportedLanguages: i18n.getSupportedLanguages()
     });
   }
 
   if (!i18n.isLanguageSupported(language)) {
     return res.status(400).json({
       success: false,
-      error: 'Unsupported language',
+      error: i18n.t('forms.validation.unsupported_language', currentLanguage),
       supportedLanguages: i18n.getSupportedLanguages()
     });
   }
 
   try {
-    // Set language in i18n system
-    i18n.setLanguage(language);
-    
     // Store in session if available
     if (req.session) {
       req.session.language = language;
@@ -211,5 +233,6 @@ module.exports = {
   i18nHelpers,
   getTranslations,
   setLanguage,
-  parseAcceptLanguage // Exported for testing
+  parseAcceptLanguage, // Exported for testing
+  isValidLanguageCode // Exported for testing
 };
