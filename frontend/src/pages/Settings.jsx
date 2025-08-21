@@ -34,6 +34,13 @@ export default function Settings() {
     isSubmitting: false,
     showForm: false
   });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    isSubmitting: false,
+    showForm: false
+  });
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -144,6 +151,60 @@ export default function Settings() {
       addNotification(error.message || 'Error al cambiar email', 'error');
     } finally {
       setEmailForm(prev => ({ ...prev, isSubmitting: false }));
+    }
+  };
+
+  // Password change handling (Issue #89)
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      addNotification('Todos los campos de contraseña son obligatorios', 'error');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      addNotification('Las nuevas contraseñas no coinciden', 'error');
+      return;
+    }
+
+    if (passwordForm.currentPassword === passwordForm.newPassword) {
+      addNotification('La nueva contraseña debe ser diferente a la actual', 'error');
+      return;
+    }
+
+    // Basic password validation
+    if (passwordForm.newPassword.length < 8) {
+      addNotification('La nueva contraseña debe tener al menos 8 caracteres', 'error');
+      return;
+    }
+
+    try {
+      setPasswordForm(prev => ({ ...prev, isSubmitting: true }));
+      
+      const result = await apiClient.post('/auth/change-password', {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+
+      if (result.success) {
+        addNotification(result.message, 'success');
+        setPasswordForm(prev => ({
+          ...prev,
+          showForm: false,
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        }));
+      } else {
+        addNotification(result.error || 'Error al cambiar contraseña', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Password change error:', error);
+      addNotification(error.message || 'Error al cambiar contraseña', 'error');
+    } finally {
+      setPasswordForm(prev => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -502,6 +563,88 @@ export default function Settings() {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Password Change Section */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <label className="block text-sm font-medium mb-2">Contraseña</label>
+            {passwordForm.showForm ? (
+              <form onSubmit={handlePasswordChange} className="space-y-3">
+                <Input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  placeholder="Contraseña actual"
+                  required
+                />
+                <Input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  placeholder="Nueva contraseña"
+                  required
+                  minLength={8}
+                />
+                <Input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  placeholder="Confirmar nueva contraseña"
+                  required
+                  minLength={8}
+                />
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex">
+                    <Shield className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
+                    <div className="text-xs text-blue-800">
+                      <p>• La contraseña debe tener al menos 8 caracteres</p>
+                      <p>• Debes introducir tu contraseña actual para confirmar el cambio</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    type="submit" 
+                    size="sm" 
+                    disabled={passwordForm.isSubmitting || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                  >
+                    {passwordForm.isSubmitting ? 'Cambiando...' : 'Cambiar contraseña'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setPasswordForm(prev => ({ 
+                        ...prev, 
+                        showForm: false, 
+                        currentPassword: '', 
+                        newPassword: '', 
+                        confirmPassword: '' 
+                      }));
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div>
+                <Input 
+                  type="password" 
+                  value="••••••••••••" 
+                  disabled
+                  className="bg-muted mb-2"
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setPasswordForm(prev => ({ ...prev, showForm: true }))}
+                >
+                  Cambiar contraseña
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

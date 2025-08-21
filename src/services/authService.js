@@ -330,6 +330,66 @@ class AuthService {
     }
 
     /**
+     * Update password with current password verification (Issue #89)
+     */
+    async updatePasswordWithVerification(accessToken, currentPassword, newPassword) {
+        try {
+            // First get the current user to verify their identity
+            const userClient = createUserClient(accessToken);
+            const { data: { user }, error: userError } = await userClient.auth.getUser();
+
+            if (userError) {
+                throw new Error(`Authentication failed: ${userError.message}`);
+            }
+
+            if (!user || !user.email) {
+                throw new Error('User not found');
+            }
+
+            // Verify current password by attempting to sign in
+            const { data: signInData, error: signInError } = await supabaseAnonClient.auth.signInWithPassword({
+                email: user.email,
+                password: currentPassword
+            });
+
+            if (signInError) {
+                logger.warn('Current password verification failed:', { 
+                    userId: user.id, 
+                    email: user.email,
+                    error: signInError.message 
+                });
+                throw new Error('Current password is incorrect');
+            }
+
+            // Current password verified, now update to new password
+            const { data, error } = await userClient.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) {
+                throw new Error(`Password update failed: ${error.message}`);
+            }
+
+            logger.info('Password updated successfully with verification:', { 
+                userId: user.id, 
+                email: user.email 
+            });
+            
+            return { 
+                message: 'Password updated successfully',
+                user: {
+                    id: user.id,
+                    email: user.email
+                }
+            };
+
+        } catch (error) {
+            logger.error('Update password with verification error:', error.message);
+            throw error;
+        }
+    }
+
+    /**
      * Verify email confirmation token
      */
     async verifyEmail(token, type, email) {

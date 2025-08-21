@@ -243,7 +243,7 @@ describe('Auth Routes', () => {
                 .post('/api/auth/update-password')
                 .send({
                     access_token: 'valid-token',
-                    password: 'newpassword123'
+                    password: 'NewPassword123!'
                 });
 
             expect(response.status).toBe(200);
@@ -261,7 +261,7 @@ describe('Auth Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe('Password must be at least 6 characters long');
+            expect(response.body.error).toContain('Password must be at least 8 characters long');
         });
     });
 
