@@ -417,6 +417,88 @@ router.delete('/account', authenticateToken, async (req, res) => {
             });
         }
 
+        // CRITICAL SECURITY FIX (Issue #113): Validate password against Supabase Auth
+        // This prevents unauthorized account deletion by validating the user's identity
+        const { supabaseAnonClient } = require('../config/supabase');
+        
+        // Check if running in mock mode or if Supabase is not configured
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            try {
+                const { data: signInData, error: passwordError } = await supabaseAnonClient.auth.signInWithPassword({
+                    email: userData.email,
+                    password: password
+                });
+
+                if (passwordError) {
+                    // Log failed password validation attempt for audit trail
+                    await auditService.logAccountDeletionAttempt(userId, {
+                        success: false,
+                        reason: 'invalid_password',
+                        ip_address: req.ip || req.connection?.remoteAddress,
+                        user_agent: req.get('User-Agent')
+                    }, req);
+
+                    logger.warn('Account deletion blocked - invalid password:', { 
+                        userId: userId.substr(0, 8) + '...',
+                        email: userData.email,
+                        error: passwordError.message 
+                    });
+
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Invalid password. Please verify your password to delete your account.'
+                    });
+                }
+
+                // Password validated successfully - log successful validation
+                await auditService.logAccountDeletionAttempt(userId, {
+                    success: true,
+                    reason: 'password_validated',
+                    ip_address: req.ip || req.connection?.remoteAddress,
+                    user_agent: req.get('User-Agent')
+                }, req);
+
+                logger.info('Account deletion - password verified:', { 
+                    userId: userId.substr(0, 8) + '...',
+                    email: userData.email
+                });
+
+            } catch (validationError) {
+                // Log validation error for audit trail
+                await auditService.logAccountDeletionAttempt(userId, {
+                    success: false,
+                    reason: 'validation_error',
+                    error: validationError.message,
+                    ip_address: req.ip || req.connection?.remoteAddress,
+                    user_agent: req.get('User-Agent')
+                }, req);
+
+                logger.error('Account deletion - password validation failed:', { 
+                    userId: userId.substr(0, 8) + '...',
+                    error: validationError.message 
+                });
+
+                return res.status(500).json({
+                    success: false,
+                    error: 'Password validation failed. Please try again.'
+                });
+            }
+        } else {
+            // Mock mode: Skip real password validation but still log for audit trail
+            logger.info('Mock mode: Skipping password validation for account deletion', { 
+                userId: userId.substr(0, 8) + '...',
+                email: userData.email 
+            });
+            
+            // Still log the attempt for consistency
+            await auditService.logAccountDeletionAttempt(userId, {
+                success: true,
+                reason: 'password_validated_mock_mode',
+                ip_address: req.ip || req.connection?.remoteAddress,
+                user_agent: req.get('User-Agent')
+            }, req);
+        }
+
         // Check if there's already a pending deletion request
         const { data: existingRequest } = await supabaseServiceClient
             .from('account_deletion_requests')

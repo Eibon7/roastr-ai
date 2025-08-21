@@ -401,6 +401,30 @@ class AuditService {
   }
 
   /**
+   * Log account deletion attempt (Issue #113)
+   * Records password validation attempts during account deletion flow
+   */
+  async logAccountDeletionAttempt(userId, details = {}, req = null) {
+    return await this.logGdprAction({
+      action: 'account_deletion_attempted',
+      userId,
+      actorId: userId,
+      actorType: 'user',
+      resourceType: 'account_deletion_attempt',
+      resourceId: `attempt_${Date.now()}`,
+      details: {
+        ...details,
+        timestamp: new Date().toISOString(),
+        validation_successful: details.success || false,
+        failure_reason: details.reason || null,
+        error_message: details.error || null
+      },
+      legalBasis: 'legitimate_interest_security',
+      retentionPeriodDays: 90 // Shorter retention for security logs
+    }, req);
+  }
+
+  /**
    * Log data export generation
    */
   async logDataExport(userId, exportDetails = {}, actorId = null) {

@@ -16,9 +16,81 @@ const createMockClient = () => ({
     auth: {
         getUser: async () => ({ data: { user: null }, error: new Error('Mock mode - no user') })
     },
-    from: () => ({
-        select: () => ({
-            limit: () => Promise.resolve({ data: [], error: new Error('Mock mode - no database') })
+    from: (table) => ({
+        select: (columns) => ({
+            eq: (col, val) => ({
+                eq: (col2, val2) => ({
+                    single: () => {
+                        // For queries with multiple eq() calls, like account_deletion_requests
+                        return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } });
+                    }
+                }),
+                single: () => {
+                    // Return mock user data for users table queries
+                    if (table === 'users') {
+                        return Promise.resolve({ 
+                            data: { 
+                                id: val, 
+                                email: 'test@example.com', 
+                                name: 'Test User',
+                                plan: 'free',
+                                is_admin: false,
+                                active: true,
+                                created_at: new Date().toISOString()
+                            }, 
+                            error: null 
+                        });
+                    }
+                    // For other tables, return null (like account_deletion_requests)
+                    return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } });
+                },
+                limit: (n) => Promise.resolve({ data: [], error: null })
+            }),
+            limit: (n) => Promise.resolve({ data: [], error: null }),
+            single: () => {
+                // Return mock user data for users table queries
+                if (table === 'users') {
+                    return Promise.resolve({ 
+                        data: { 
+                            id: 'test-user-id', 
+                            email: 'test@example.com', 
+                            name: 'Test User',
+                            plan: 'free',
+                            is_admin: false,
+                            active: true,
+                            created_at: new Date().toISOString()
+                        }, 
+                        error: null 
+                    });
+                }
+                return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } });
+            },
+            order: (col, opts) => ({
+                limit: (n) => ({
+                    single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } })
+                })
+            })
+        }),
+        insert: (data) => ({
+            select: () => ({
+                single: () => Promise.resolve({ 
+                    data: { id: 'mock-id', ...data, created_at: new Date().toISOString() }, 
+                    error: null 
+                })
+            })
+        }),
+        update: (data) => ({
+            eq: (col, val) => ({
+                select: () => ({
+                    single: () => Promise.resolve({ 
+                        data: { id: 'mock-id', ...data, updated_at: new Date().toISOString() }, 
+                        error: null 
+                    })
+                })
+            })
+        }),
+        delete: () => ({
+            eq: (col, val) => Promise.resolve({ data: null, error: null })
         })
     })
 });
