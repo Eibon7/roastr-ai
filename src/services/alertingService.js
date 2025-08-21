@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { logger } = require('../utils/logger');
-const { t } = require('../utils/alertingUtils');
+const { t } = require('../utils/i18n');
 
 /**
  * Alerting Service for Roastr.ai Monitoring System

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { authHelpers } from '../lib/supabaseClient';
 import PasswordInput from './PasswordInput';
 import { validatePassword } from '../utils/passwordValidator';
+import { useI18n } from '../hooks/useI18n';
 
 const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
+  const { t, td } = useI18n();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,22 +45,22 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
       
       if (isLogin) {
         result = await authHelpers.signIn(formData.email, formData.password);
-        onSuccess?.('Has iniciado sesión correctamente', result);
+        onSuccess?.(td('auth', 'login.success'), result);
       } else if (isRegister) {
         result = await authHelpers.signUp(formData.email, formData.password, formData.name);
-        onSuccess?.('Cuenta creada correctamente. Revisa tu email para confirmar tu cuenta.', result);
+        onSuccess?.(td('auth', 'register.success'), result);
       }
     } catch (error) {
-      let errorMessage = 'Ha ocurrido un error inesperado';
+      let errorMessage = td('auth', 'errors.unexpected');
       
       if (error.message.includes('Invalid login credentials')) {
-        errorMessage = 'Email o contraseña incorrectos';
+        errorMessage = td('auth', 'errors.invalid_credentials');
       } else if (error.message.includes('User already registered')) {
-        errorMessage = 'Este email ya está registrado. Intenta iniciar sesión.';
+        errorMessage = td('auth', 'errors.user_already_registered');
       } else if (error.message.includes('Password should be at least')) {
-        errorMessage = 'La contraseña no cumple con los requisitos de seguridad';
+        errorMessage = td('auth', 'errors.password_requirements');
       } else if (error.message.includes('Invalid email')) {
-        errorMessage = 'Email inválido';
+        errorMessage = td('auth', 'errors.invalid_email');
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -92,7 +94,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
       {isRegister && (
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Nombre completo
+            {td('auth', 'register.name_label')}
           </label>
           <input
             id="name"
@@ -102,7 +104,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
             value={formData.name}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="Tu nombre completo"
+            placeholder={td('auth', 'register.name_placeholder')}
           />
         </div>
       )}
@@ -110,7 +112,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
       {/* Email field */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Correo electrónico
+          {td('auth', isLogin ? 'login.email_label' : 'register.email_label')}
         </label>
         <input
           id="email"
@@ -120,14 +122,14 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
           value={formData.email}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          placeholder="tu@email.com"
+          placeholder={td('auth', isRegister ? 'register.email_placeholder' : 'ui.placeholders.email')}
         />
       </div>
 
       {/* Password field */}
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Contraseña
+          {td('auth', isLogin ? 'login.password_label' : 'register.password_label')}
         </label>
         {isRegister ? (
           <PasswordInput
@@ -136,7 +138,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
             value={formData.password}
             onChange={handleChange}
             onValidationChange={setIsPasswordValid}
-            placeholder="Mínimo 8 caracteres"
+            placeholder={td('forms', 'validation.password_min_length', { min: 8 })}
             required
           />
         ) : (
@@ -149,7 +151,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
               value={formData.password}
               onChange={handleChange}
               className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="Tu contraseña"
+              placeholder={td('ui', 'placeholders.password')}
             />
             <button
               type="button"
@@ -184,10 +186,10 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Procesando...
+              {td('auth', isLogin ? 'login.signing_in' : 'register.creating')}
             </div>
           ) : (
-            isLogin ? 'Iniciar sesión' : 'Crear cuenta'
+            td('auth', isLogin ? 'login.sign_in_button' : 'register.create_button')
           )}
         </button>
       </div>
@@ -199,7 +201,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
             href="/reset-password" 
             className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
           >
-            ¿Olvidaste tu contraseña?
+            {td('auth', 'login.forgot_password')}
           </a>
         </div>
       )}
@@ -212,7 +214,7 @@ const AuthForm = ({ mode = 'login', onSuccess, onError, onToggleMethod }) => {
             onClick={onToggleMethod}
             className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
           >
-            ¿Prefieres {isLogin ? 'iniciar sesión' : 'registrarte'} con un enlace mágico?
+            {td('auth', isLogin ? 'login.magic_link_toggle' : 'register.magic_link_toggle')}
           </button>
         </div>
       )}
