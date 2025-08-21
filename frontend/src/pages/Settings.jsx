@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X, Heart, Eye, EyeOff } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
@@ -63,6 +63,16 @@ export default function Settings() {
     }
   });
   const [notifications, setNotifications] = useState([]);
+  
+  // Roastr Persona state
+  const [roastrPersona, setRoastrPersona] = useState({
+    loQueMeDefine: '',
+    isVisible: false,
+    hasContent: false,
+    isLoading: true,
+    isSaving: false,
+    showForm: false
+  });
 
   useEffect(() => {
     async function fetchData() {
@@ -81,6 +91,23 @@ export default function Settings() {
         }
         
         // In real implementation, load user settings from API
+        
+        // Load Roastr Persona data
+        try {
+          const roastrPersonaResult = await apiClient.get('/user/roastr-persona');
+          if (roastrPersonaResult.success) {
+            setRoastrPersona(prev => ({
+              ...prev,
+              loQueMeDefine: roastrPersonaResult.data.loQueMeDefine || '',
+              isVisible: roastrPersonaResult.data.isVisible || false,
+              hasContent: roastrPersonaResult.data.hasContent || false,
+              isLoading: false
+            }));
+          }
+        } catch (roastrPersonaError) {
+          console.error('Failed to load Roastr Persona:', roastrPersonaError);
+          setRoastrPersona(prev => ({ ...prev, isLoading: false }));
+        }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
         addNotification('Error al cargar datos del usuario', 'error');
@@ -305,6 +332,71 @@ export default function Settings() {
     } catch (error) {
       console.error('Data export error:', error);
       addNotification('La exportación de datos estará disponible próximamente', 'info');
+    }
+  };
+
+  // Roastr Persona handlers
+  const handleSaveRoastrPersona = async () => {
+    if (roastrPersona.loQueMeDefine.length > 300) {
+      addNotification('El texto no puede exceder los 300 caracteres', 'error');
+      return;
+    }
+
+    try {
+      setRoastrPersona(prev => ({ ...prev, isSaving: true }));
+      
+      const result = await apiClient.post('/user/roastr-persona', {
+        loQueMeDefine: roastrPersona.loQueMeDefine.trim() || null,
+        isVisible: roastrPersona.isVisible
+      });
+
+      if (result.success) {
+        setRoastrPersona(prev => ({
+          ...prev,
+          hasContent: !!result.data.hasContent,
+          showForm: false
+        }));
+        addNotification('Roastr Persona actualizado correctamente', 'success');
+      } else {
+        addNotification(result.error || 'Error al guardar Roastr Persona', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Roastr Persona save error:', error);
+      addNotification(error.message || 'Error al guardar Roastr Persona', 'error');
+    } finally {
+      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
+    }
+  };
+
+  const handleDeleteRoastrPersona = async () => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar tu definición personal? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      setRoastrPersona(prev => ({ ...prev, isSaving: true }));
+      
+      const result = await apiClient.delete('/user/roastr-persona');
+
+      if (result.success) {
+        setRoastrPersona(prev => ({
+          ...prev,
+          loQueMeDefine: '',
+          isVisible: false,
+          hasContent: false,
+          showForm: false
+        }));
+        addNotification('Definición personal eliminada', 'success');
+      } else {
+        addNotification(result.error || 'Error al eliminar definición personal', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Roastr Persona delete error:', error);
+      addNotification(error.message || 'Error al eliminar definición personal', 'error');
+    } finally {
+      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
   };
 
@@ -779,6 +871,154 @@ export default function Settings() {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Roastr Persona */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Heart className="h-5 w-5" />
+            <span>Roastr Persona - Lo que me define</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="text-sm text-blue-800 mb-2">
+              <strong>¿Qué es esto?</strong>
+            </div>
+            <div className="text-sm text-blue-700">
+              Define aspectos esenciales de tu identidad (ej: "mujer trans", "vegano", "gamer", "político de izquierdas") 
+              para que Roastr pueda personalizar la detección de comentarios ofensivos dirigidos específicamente hacia ti.
+            </div>
+          </div>
+
+          {roastrPersona.isLoading ? (
+            <div className="text-center py-4">
+              <div className="text-muted-foreground">Cargando...</div>
+            </div>
+          ) : (
+            <>
+              {roastrPersona.showForm ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Lo que me define (máx. 300 caracteres)
+                    </label>
+                    <textarea
+                      value={roastrPersona.loQueMeDefine}
+                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueMeDefine: e.target.value }))}
+                      placeholder="Escribe temas o aspectos que forman parte de quién eres (ej: mujer trans, vegano, gamer, político de izquierdas)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      rows={4}
+                      maxLength={300}
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="text-xs text-muted-foreground">
+                        {roastrPersona.loQueMeDefine.length}/300 caracteres
+                      </div>
+                      <div className={`text-xs ${roastrPersona.loQueMeDefine.length > 300 ? 'text-red-500' : 'text-green-500'}`}>
+                        {roastrPersona.loQueMeDefine.length <= 300 ? '✓' : '⚠ Excede el límite'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <div className="flex items-center">
+                        <EyeOff className="w-4 h-4 text-orange-500 mr-2" />
+                      </div>
+                      <div className="text-sm text-orange-800">
+                        <div className="font-medium mb-1">Privacidad garantizada</div>
+                        <div>
+                          • Esta información nunca se muestra públicamente<br/>
+                          • Solo se usa para mejorar la detección de ataques personales<br/>
+                          • Se almacena de forma cifrada en nuestra base de datos<br/>
+                          • Puedes eliminarla en cualquier momento
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <Button 
+                      onClick={handleSaveRoastrPersona}
+                      disabled={roastrPersona.isSaving || roastrPersona.loQueMeDefine.length > 300}
+                      size="sm"
+                    >
+                      {roastrPersona.isSaving ? 'Guardando...' : 'Guardar'}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setRoastrPersona(prev => ({ ...prev, showForm: false }))}
+                      disabled={roastrPersona.isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                    {roastrPersona.hasContent && (
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleDeleteRoastrPersona}
+                        disabled={roastrPersona.isSaving}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {roastrPersona.hasContent ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                        <div>
+                          <div className="font-medium text-green-800">Definición personal configurada</div>
+                          <div className="text-sm text-green-700 mt-1">
+                            Has definido aspectos de tu identidad para una detección más personalizada.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <Circle className="w-5 h-5 text-gray-400 mr-3" />
+                        <div>
+                          <div className="font-medium text-gray-800">Sin definición personal</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            Configura tu identidad para mejorar la detección de ataques personales.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setRoastrPersona(prev => ({ ...prev, showForm: true }))}
+                    >
+                      {roastrPersona.hasContent ? 'Editar' : 'Configurar'}
+                    </Button>
+                    {roastrPersona.hasContent && (
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleDeleteRoastrPersona}
+                        disabled={roastrPersona.isSaving}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
 

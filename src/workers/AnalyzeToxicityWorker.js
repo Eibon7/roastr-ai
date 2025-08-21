@@ -2,6 +2,7 @@ const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
 const ShieldService = require('../services/shieldService');
 const { mockMode } = require('../config/mockMode');
+const encryptionService = require('../services/encryptionService');
 
 /**
  * Analyze Toxicity Worker
@@ -144,8 +145,14 @@ class AnalyzeToxicityWorker extends BaseWorker {
       throw new Error(`Comment ${comment_id} not found`);
     }
     
-    // Analyze toxicity using available services
-    const analysisResult = await this.analyzeToxicity(text || comment.original_text);
+    // Get user's Roastr Persona for enhanced analysis (Issue #148)
+    const roastrPersona = await this.getUserRoastrPersona(organization_id);
+    
+    // Analyze toxicity using available services with personalization
+    const analysisResult = await this.analyzeToxicity(
+      text || comment.original_text, 
+      roastrPersona
+    );
     
     // Update comment with analysis results
     await this.updateCommentAnalysis(comment_id, analysisResult);
@@ -216,9 +223,71 @@ class AnalyzeToxicityWorker extends BaseWorker {
   }
   
   /**
-   * Analyze toxicity using available services
+   * Get user's Roastr Persona for enhanced toxicity detection (Issue #148)
    */
-  async analyzeToxicity(text) {
+  async getUserRoastrPersona(organizationId) {
+    try {
+      // Get organization owner user ID
+      const { data: orgData, error: orgError } = await this.supabase
+        .from('organizations')
+        .select('owner_id')
+        .eq('id', organizationId)
+        .single();
+      
+      if (orgError || !orgData) {
+        this.log('warn', 'Could not get organization owner', {
+          organizationId,
+          error: orgError?.message
+        });
+        return null;
+      }
+      
+      // Get user's encrypted Roastr Persona
+      const { data: userData, error: userError } = await this.supabase
+        .from('users')
+        .select('lo_que_me_define_encrypted')
+        .eq('id', orgData.owner_id)
+        .single();
+      
+      if (userError || !userData || !userData.lo_que_me_define_encrypted) {
+        // User hasn't defined their Roastr Persona - this is normal
+        return null;
+      }
+      
+      // Decrypt the persona data
+      try {
+        const decryptedPersona = encryptionService.decrypt(userData.lo_que_me_define_encrypted);
+        
+        this.log('debug', 'Retrieved Roastr Persona for enhanced analysis', {
+          organizationId,
+          userId: orgData.owner_id.substr(0, 8) + '...',
+          hasPersona: !!decryptedPersona
+        });
+        
+        return decryptedPersona;
+        
+      } catch (decryptError) {
+        this.log('error', 'Failed to decrypt Roastr Persona', {
+          organizationId,
+          userId: orgData.owner_id.substr(0, 8) + '...',
+          error: decryptError.message
+        });
+        return null;
+      }
+      
+    } catch (error) {
+      this.log('error', 'Failed to get Roastr Persona', {
+        organizationId,
+        error: error.message
+      });
+      return null;
+    }
+  }
+  
+  /**
+   * Analyze toxicity using available services with Roastr Persona enhancement (Issue #148)
+   */
+  async analyzeToxicity(text, roastrPersona = null) {
     let result = null;
     
     // Try Perspective API first
@@ -251,7 +320,37 @@ class AnalyzeToxicityWorker extends BaseWorker {
       result.service = 'patterns';
     }
     
-    // Add severity level based on score
+    // Enhanced analysis with Roastr Persona (Issue #148)
+    if (roastrPersona) {
+      const personalAnalysis = this.analyzePersonalAttack(text, roastrPersona);
+      if (personalAnalysis.isPersonalAttack) {
+        // Increase toxicity score for personal attacks
+        const originalScore = result.toxicity_score;
+        result.toxicity_score = Math.min(1.0, originalScore + personalAnalysis.boostAmount);
+        
+        // Add personal attack category
+        if (!result.categories) result.categories = [];
+        result.categories.push('personal_attack');
+        
+        // Log the enhancement
+        this.log('info', 'Enhanced toxicity score due to personal attack', {
+          originalScore,
+          enhancedScore: result.toxicity_score,
+          boostAmount: personalAnalysis.boostAmount,
+          matchedTerms: personalAnalysis.matchedTerms
+        });
+        
+        // Store persona analysis metadata
+        result.persona_analysis = {
+          isPersonalAttack: true,
+          matchedTerms: personalAnalysis.matchedTerms,
+          boostAmount: personalAnalysis.boostAmount,
+          originalScore
+        };
+      }
+    }
+    
+    // Add severity level based on final score
     result.severity_level = this.calculateSeverityLevel(result.toxicity_score);
     
     return result;
@@ -353,6 +452,86 @@ class AnalyzeToxicityWorker extends BaseWorker {
       toxicity_score: Math.round((maxScore * lengthFactor) * 1000) / 1000,
       categories,
       matched_patterns: matchedPatterns
+    };
+  }
+  
+  /**
+   * Analyze for personal attacks based on user's Roastr Persona (Issue #148)
+   * This enhances toxicity detection by checking if comments attack aspects 
+   * that the user has defined as part of their identity
+   */
+  analyzePersonalAttack(text, roastrPersona) {
+    if (!roastrPersona || typeof roastrPersona !== 'string') {
+      return { isPersonalAttack: false, matchedTerms: [], boostAmount: 0 };
+    }
+    
+    // Clean and normalize the persona text
+    const personaTerms = roastrPersona
+      .toLowerCase()
+      .split(/[,;\.]+/) // Split by common separators
+      .map(term => term.trim())
+      .filter(term => term.length > 2); // Filter out very short terms
+    
+    // Clean and normalize the comment text
+    const commentText = text.toLowerCase();
+    
+    const matchedTerms = [];
+    let totalBoost = 0;
+    
+    // Check for direct mentions of persona terms
+    for (const term of personaTerms) {
+      if (commentText.includes(term)) {
+        matchedTerms.push(term);
+        
+        // Calculate boost based on context and term significance
+        let termBoost = 0.2; // Base boost for any match
+        
+        // Higher boost for longer, more specific terms
+        if (term.length > 8) termBoost += 0.1;
+        if (term.includes(' ')) termBoost += 0.1; // Multi-word terms are more specific
+        
+        // Check for negative context around the term
+        const termIndex = commentText.indexOf(term);
+        const contextStart = Math.max(0, termIndex - 20);
+        const contextEnd = Math.min(commentText.length, termIndex + term.length + 20);
+        const context = commentText.substring(contextStart, contextEnd);
+        
+        // Negative words that amplify personal attacks
+        const negativeWords = [
+          'hate', 'stupid', 'disgusting', 'wrong', 'sick', 'weird', 'gross',
+          'fake', 'pretend', 'wrong', 'bad', 'evil', 'crazy', 'mental',
+          'kill', 'die', 'destroy', 'eliminate', 'remove', 'ban'
+        ];
+        
+        const hasNegativeContext = negativeWords.some(word => context.includes(word));
+        if (hasNegativeContext) {
+          termBoost += 0.3; // Significant boost for negative context
+        }
+        
+        // Check for slurs or derogatory language patterns
+        const slurPatterns = [
+          /f[a@]g/i, /tr[a@]nny/i, /ret[a@]rd/i, /n[i1]gg[e3]r/i,
+          /sp[i1]c/i, /ch[i1]nk/i, /k[i1]k[e3]/i
+        ];
+        
+        const hasSlur = slurPatterns.some(pattern => context.match(pattern));
+        if (hasSlur) {
+          termBoost += 0.5; // Major boost for slurs
+        }
+        
+        totalBoost += termBoost;
+      }
+    }
+    
+    // Cap the total boost to prevent over-amplification
+    totalBoost = Math.min(totalBoost, 0.6);
+    
+    const isPersonalAttack = matchedTerms.length > 0 && totalBoost > 0.1;
+    
+    return {
+      isPersonalAttack,
+      matchedTerms,
+      boostAmount: Math.round(totalBoost * 1000) / 1000 // Round to 3 decimals
     };
   }
   
