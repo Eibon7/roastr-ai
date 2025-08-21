@@ -974,7 +974,7 @@ router.get('/gdpr-audit', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/user/roastr-persona
- * Get user's Roastr Persona configuration including "lo que me define"
+ * Get user's Roastr Persona configuration including "lo que me define" and "lo que no tolero"
  */
 router.get('/roastr-persona', authenticateToken, async (req, res) => {
     try {
@@ -988,7 +988,11 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
                 lo_que_me_define_encrypted,
                 lo_que_me_define_visible,
                 lo_que_me_define_created_at,
-                lo_que_me_define_updated_at
+                lo_que_me_define_updated_at,
+                lo_que_no_tolero_encrypted,
+                lo_que_no_tolero_visible,
+                lo_que_no_tolero_created_at,
+                lo_que_no_tolero_updated_at
             `)
             .eq('id', userId)
             .single();
@@ -1012,6 +1016,21 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
             }
         }
 
+        // Decrypt the lo_que_no_tolero field if it exists
+        let loQueNoTolero = null;
+        if (userData.lo_que_no_tolero_encrypted) {
+            try {
+                loQueNoTolero = encryptionService.decrypt(userData.lo_que_no_tolero_encrypted);
+            } catch (decryptError) {
+                logger.error('Failed to decrypt lo_que_no_tolero:', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: decryptError.message
+                });
+                // Return empty if decryption fails
+                loQueNoTolero = null;
+            }
+        }
+
         res.json({
             success: true,
             data: {
@@ -1019,7 +1038,13 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
                 isVisible: userData.lo_que_me_define_visible || false,
                 createdAt: userData.lo_que_me_define_created_at,
                 updatedAt: userData.lo_que_me_define_updated_at,
-                hasContent: !!userData.lo_que_me_define_encrypted
+                hasContent: !!userData.lo_que_me_define_encrypted,
+                // New intolerance fields
+                loQueNoTolero,
+                isIntoleranceVisible: userData.lo_que_no_tolero_visible || false,
+                intoleranceCreatedAt: userData.lo_que_no_tolero_created_at,
+                intoleranceUpdatedAt: userData.lo_que_no_tolero_updated_at,
+                hasIntoleranceContent: !!userData.lo_que_no_tolero_encrypted
             }
         });
 
@@ -1034,15 +1059,20 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
 
 /**
  * POST /api/user/roastr-persona
- * Save or update user's "lo que me define" field in Roastr Persona
+ * Save or update user's Roastr Persona including "lo que me define" and "lo que no tolero"
  */
 router.post('/roastr-persona', authenticateToken, async (req, res) => {
     try {
-        const { loQueMeDefine, isVisible = false } = req.body;
+        const { 
+            loQueMeDefine, 
+            isVisible = false,
+            loQueNoTolero,
+            isIntoleranceVisible = false 
+        } = req.body;
         const userId = req.user.id;
         const userClient = createUserClient(req.accessToken);
 
-        // Validate input
+        // Validate loQueMeDefine input
         if (loQueMeDefine !== null && loQueMeDefine !== undefined) {
             if (typeof loQueMeDefine !== 'string') {
                 return res.status(400).json({
@@ -1068,7 +1098,33 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             }
         }
 
-        // Validate visibility setting
+        // Validate loQueNoTolero input
+        if (loQueNoTolero !== null && loQueNoTolero !== undefined) {
+            if (typeof loQueNoTolero !== 'string') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueNoTolero must be a string'
+                });
+            }
+
+            // Sanitize and validate length
+            const sanitized = encryptionService.sanitizeForEncryption(loQueNoTolero);
+            if (sanitized.length > 300) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueNoTolero cannot exceed 300 characters'
+                });
+            }
+
+            if (sanitized.length === 0 && loQueNoTolero.trim().length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueNoTolero contains invalid characters'
+                });
+            }
+        }
+
+        // Validate visibility settings
         if (typeof isVisible !== 'boolean') {
             return res.status(400).json({
                 success: false,
@@ -1076,42 +1132,91 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             });
         }
 
+        if (typeof isIntoleranceVisible !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                error: 'isIntoleranceVisible must be a boolean'
+            });
+        }
+
+        // Get existing data to determine if we need to set created_at timestamps
+        const { data: existingData } = await userClient
+            .from('users')
+            .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted')
+            .eq('id', userId)
+            .single();
+
         // Prepare update data
-        let updateData = {
-            lo_que_me_define_visible: isVisible,
-            lo_que_me_define_updated_at: new Date().toISOString()
-        };
+        let updateData = {};
 
-        // Handle the lo_que_me_define field
-        if (loQueMeDefine === null || loQueMeDefine === undefined || loQueMeDefine.trim() === '') {
-            // User wants to clear the field
-            updateData.lo_que_me_define_encrypted = null;
-        } else {
-            // Encrypt the sanitized content
-            const sanitized = encryptionService.sanitizeForEncryption(loQueMeDefine);
-            try {
-                updateData.lo_que_me_define_encrypted = encryptionService.encrypt(sanitized);
-                
-                // Set created_at if this is the first time setting the field
-                const { data: existingData } = await userClient
-                    .from('users')
-                    .select('lo_que_me_define_encrypted')
-                    .eq('id', userId)
-                    .single();
+        // Handle the lo_que_me_define field if provided
+        if (loQueMeDefine !== undefined) {
+            updateData.lo_que_me_define_visible = isVisible;
+            updateData.lo_que_me_define_updated_at = new Date().toISOString();
 
-                if (!existingData?.lo_que_me_define_encrypted) {
-                    updateData.lo_que_me_define_created_at = new Date().toISOString();
+            if (loQueMeDefine === null || loQueMeDefine.trim() === '') {
+                // User wants to clear the field
+                updateData.lo_que_me_define_encrypted = null;
+            } else {
+                // Encrypt the sanitized content
+                const sanitized = encryptionService.sanitizeForEncryption(loQueMeDefine);
+                try {
+                    updateData.lo_que_me_define_encrypted = encryptionService.encrypt(sanitized);
+                    
+                    // Set created_at if this is the first time setting the field
+                    if (!existingData?.lo_que_me_define_encrypted) {
+                        updateData.lo_que_me_define_created_at = new Date().toISOString();
+                    }
+                } catch (encryptError) {
+                    logger.error('Failed to encrypt lo_que_me_define:', {
+                        userId: userId.substr(0, 8) + '...',
+                        error: encryptError.message
+                    });
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Failed to secure personal data'
+                    });
                 }
-            } catch (encryptError) {
-                logger.error('Failed to encrypt lo_que_me_define:', {
-                    userId: userId.substr(0, 8) + '...',
-                    error: encryptError.message
-                });
-                return res.status(500).json({
-                    success: false,
-                    error: 'Failed to secure personal data'
-                });
             }
+        }
+
+        // Handle the lo_que_no_tolero field if provided
+        if (loQueNoTolero !== undefined) {
+            updateData.lo_que_no_tolero_visible = isIntoleranceVisible;
+            updateData.lo_que_no_tolero_updated_at = new Date().toISOString();
+
+            if (loQueNoTolero === null || loQueNoTolero.trim() === '') {
+                // User wants to clear the field
+                updateData.lo_que_no_tolero_encrypted = null;
+            } else {
+                // Encrypt the sanitized content
+                const sanitized = encryptionService.sanitizeForEncryption(loQueNoTolero);
+                try {
+                    updateData.lo_que_no_tolero_encrypted = encryptionService.encrypt(sanitized);
+                    
+                    // Set created_at if this is the first time setting the field
+                    if (!existingData?.lo_que_no_tolero_encrypted) {
+                        updateData.lo_que_no_tolero_created_at = new Date().toISOString();
+                    }
+                } catch (encryptError) {
+                    logger.error('Failed to encrypt lo_que_no_tolero:', {
+                        userId: userId.substr(0, 8) + '...',
+                        error: encryptError.message
+                    });
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Failed to secure intolerance data'
+                    });
+                }
+            }
+        }
+
+        // Only proceed if there's something to update
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No valid fields provided for update'
+            });
         }
 
         // Update the user record
@@ -1124,7 +1229,11 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
                 lo_que_me_define_encrypted,
                 lo_que_me_define_visible,
                 lo_que_me_define_created_at,
-                lo_que_me_define_updated_at
+                lo_que_me_define_updated_at,
+                lo_que_no_tolero_encrypted,
+                lo_que_no_tolero_visible,
+                lo_que_no_tolero_created_at,
+                lo_que_no_tolero_updated_at
             `)
             .single();
 
@@ -1132,13 +1241,13 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             throw new Error(`Failed to update Roastr Persona: ${updateError.message}`);
         }
 
-        // Log the update for audit trail (the trigger will handle detailed logging)
+        // Log the update for audit trail (the triggers will handle detailed logging)
         logger.info('Roastr Persona updated:', {
             userId: userId.substr(0, 8) + '...',
-            hasContent: !!updatedUser.lo_que_me_define_encrypted,
-            isVisible: updatedUser.lo_que_me_define_visible,
-            action: !updatedUser.lo_que_me_define_encrypted ? 'cleared' : 
-                   !updateData.lo_que_me_define_created_at ? 'updated' : 'created'
+            hasIdentityContent: !!updatedUser.lo_que_me_define_encrypted,
+            hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted,
+            fieldsUpdated: Object.keys(updateData).filter(key => key.includes('encrypted')),
+            action: 'updated'
         });
 
         // Prepare response (decrypt for immediate return)
@@ -1147,8 +1256,18 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             try {
                 responseLoQueMeDefine = encryptionService.decrypt(updatedUser.lo_que_me_define_encrypted);
             } catch (decryptError) {
-                logger.error('Failed to decrypt for response:', decryptError.message);
+                logger.error('Failed to decrypt lo_que_me_define for response:', decryptError.message);
                 responseLoQueMeDefine = '[Encrypted]';
+            }
+        }
+
+        let responseLoQueNoTolero = null;
+        if (updatedUser.lo_que_no_tolero_encrypted) {
+            try {
+                responseLoQueNoTolero = encryptionService.decrypt(updatedUser.lo_que_no_tolero_encrypted);
+            } catch (decryptError) {
+                logger.error('Failed to decrypt lo_que_no_tolero for response:', decryptError.message);
+                responseLoQueNoTolero = '[Encrypted]';
             }
         }
 
@@ -1160,7 +1279,13 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
                 isVisible: updatedUser.lo_que_me_define_visible,
                 createdAt: updatedUser.lo_que_me_define_created_at,
                 updatedAt: updatedUser.lo_que_me_define_updated_at,
-                hasContent: !!updatedUser.lo_que_me_define_encrypted
+                hasContent: !!updatedUser.lo_que_me_define_encrypted,
+                // Intolerance fields
+                loQueNoTolero: responseLoQueNoTolero,
+                isIntoleranceVisible: updatedUser.lo_que_no_tolero_visible,
+                intoleranceCreatedAt: updatedUser.lo_que_no_tolero_created_at,
+                intoleranceUpdatedAt: updatedUser.lo_que_no_tolero_updated_at,
+                hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted
             }
         });
 
@@ -1175,23 +1300,49 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
 
 /**
  * DELETE /api/user/roastr-persona
- * Delete user's "lo que me define" content (privacy feature)
+ * Delete user's Roastr Persona content (privacy feature)
+ * Query params: ?field=identity|intolerance|all (default: all)
  */
 router.delete('/roastr-persona', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const userClient = createUserClient(req.accessToken);
+        const { field = 'all' } = req.query;
 
-        // Clear the encrypted field and reset timestamps
+        // Validate field parameter
+        if (!['identity', 'intolerance', 'all'].includes(field)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid field parameter. Must be "identity", "intolerance", or "all"'
+            });
+        }
+
+        let updateData = {};
+        const timestamp = new Date().toISOString();
+
+        // Determine what to delete based on field parameter
+        if (field === 'identity' || field === 'all') {
+            updateData.lo_que_me_define_encrypted = null;
+            updateData.lo_que_me_define_visible = false;
+            updateData.lo_que_me_define_updated_at = timestamp;
+        }
+
+        if (field === 'intolerance' || field === 'all') {
+            updateData.lo_que_no_tolero_encrypted = null;
+            updateData.lo_que_no_tolero_visible = false;
+            updateData.lo_que_no_tolero_updated_at = timestamp;
+        }
+
+        // Clear the encrypted fields and reset timestamps
         const { data: updatedUser, error: updateError } = await userClient
             .from('users')
-            .update({
-                lo_que_me_define_encrypted: null,
-                lo_que_me_define_visible: false,
-                lo_que_me_define_updated_at: new Date().toISOString()
-            })
+            .update(updateData)
             .eq('id', userId)
-            .select('id, lo_que_me_define_updated_at')
+            .select(`
+                id, 
+                lo_que_me_define_updated_at,
+                lo_que_no_tolero_updated_at
+            `)
             .single();
 
         if (updateError) {
@@ -1200,14 +1351,19 @@ router.delete('/roastr-persona', authenticateToken, async (req, res) => {
 
         logger.info('Roastr Persona deleted:', {
             userId: userId.substr(0, 8) + '...',
-            deletedAt: updatedUser.lo_que_me_define_updated_at
+            field: field,
+            deletedAt: timestamp,
+            fieldsCleared: Object.keys(updateData).filter(key => key.includes('encrypted'))
         });
 
         res.json({
             success: true,
-            message: 'Roastr Persona deleted successfully',
+            message: `Roastr Persona ${field === 'all' ? 'completely' : `(${field})`} deleted successfully`,
             data: {
-                deletedAt: updatedUser.lo_que_me_define_updated_at
+                field: field,
+                deletedAt: timestamp,
+                identityDeletedAt: field === 'identity' || field === 'all' ? updatedUser.lo_que_me_define_updated_at : null,
+                intoleranceDeletedAt: field === 'intolerance' || field === 'all' ? updatedUser.lo_que_no_tolero_updated_at : null
             }
         });
 

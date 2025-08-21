@@ -71,7 +71,12 @@ export default function Settings() {
     hasContent: false,
     isLoading: true,
     isSaving: false,
-    showForm: false
+    showForm: false,
+    // New intolerance fields
+    loQueNoTolero: '',
+    isIntoleranceVisible: false,
+    hasIntoleranceContent: false,
+    showIntoleranceForm: false
   });
 
   useEffect(() => {
@@ -101,6 +106,10 @@ export default function Settings() {
               loQueMeDefine: roastrPersonaResult.data.loQueMeDefine || '',
               isVisible: roastrPersonaResult.data.isVisible || false,
               hasContent: roastrPersonaResult.data.hasContent || false,
+              // New intolerance fields
+              loQueNoTolero: roastrPersonaResult.data.loQueNoTolero || '',
+              isIntoleranceVisible: roastrPersonaResult.data.isIntoleranceVisible || false,
+              hasIntoleranceContent: roastrPersonaResult.data.hasIntoleranceContent || false,
               isLoading: false
             }));
           }
@@ -336,8 +345,11 @@ export default function Settings() {
   };
 
   // Roastr Persona handlers
-  const handleSaveRoastrPersona = async () => {
-    if (roastrPersona.loQueMeDefine.length > 300) {
+  const handleSaveRoastrPersona = async (fieldType = 'identity') => {
+    const isIdentity = fieldType === 'identity';
+    const text = isIdentity ? roastrPersona.loQueMeDefine : roastrPersona.loQueNoTolero;
+    
+    if (text.length > 300) {
       addNotification('El texto no puede exceder los 300 caracteres', 'error');
       return;
     }
@@ -345,18 +357,29 @@ export default function Settings() {
     try {
       setRoastrPersona(prev => ({ ...prev, isSaving: true }));
       
-      const result = await apiClient.post('/user/roastr-persona', {
-        loQueMeDefine: roastrPersona.loQueMeDefine.trim() || null,
-        isVisible: roastrPersona.isVisible
-      });
+      const payload = {};
+      if (isIdentity) {
+        payload.loQueMeDefine = text.trim() || null;
+        payload.isVisible = roastrPersona.isVisible;
+      } else {
+        payload.loQueNoTolero = text.trim() || null;
+        payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
+      }
+      
+      const result = await apiClient.post('/user/roastr-persona', payload);
 
       if (result.success) {
         setRoastrPersona(prev => ({
           ...prev,
           hasContent: !!result.data.hasContent,
-          showForm: false
+          hasIntoleranceContent: !!result.data.hasIntoleranceContent,
+          showForm: isIdentity ? false : prev.showForm,
+          showIntoleranceForm: !isIdentity ? false : prev.showIntoleranceForm
         }));
-        addNotification('Roastr Persona actualizado correctamente', 'success');
+        addNotification(
+          `${isIdentity ? 'Definición personal' : 'Preferencias de contenido'} actualizada${isIdentity ? '' : 's'} correctamente`, 
+          'success'
+        );
       } else {
         addNotification(result.error || 'Error al guardar Roastr Persona', 'error');
       }
@@ -369,32 +392,57 @@ export default function Settings() {
     }
   };
 
-  const handleDeleteRoastrPersona = async () => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar tu definición personal? Esta acción no se puede deshacer.')) {
+  const handleDeleteRoastrPersona = async (fieldType = 'all') => {
+    const confirmMessages = {
+      'identity': '¿Estás seguro de que quieres eliminar tu definición personal? Esta acción no se puede deshacer.',
+      'intolerance': '¿Estás seguro de que quieres eliminar tus preferencias de contenido? Esta acción no se puede deshacer.',
+      'all': '¿Estás seguro de que quieres eliminar completamente tu Roastr Persona? Esta acción no se puede deshacer.'
+    };
+
+    if (!window.confirm(confirmMessages[fieldType])) {
       return;
     }
 
     try {
       setRoastrPersona(prev => ({ ...prev, isSaving: true }));
       
-      const result = await apiClient.delete('/user/roastr-persona');
+      const result = await apiClient.delete(`/user/roastr-persona?field=${fieldType}`);
 
       if (result.success) {
-        setRoastrPersona(prev => ({
-          ...prev,
-          loQueMeDefine: '',
-          isVisible: false,
-          hasContent: false,
-          showForm: false
-        }));
-        addNotification('Definición personal eliminada', 'success');
+        setRoastrPersona(prev => {
+          const updates = { ...prev };
+          
+          if (fieldType === 'identity' || fieldType === 'all') {
+            updates.loQueMeDefine = '';
+            updates.isVisible = false;
+            updates.hasContent = false;
+            updates.showForm = false;
+          }
+          
+          if (fieldType === 'intolerance' || fieldType === 'all') {
+            updates.loQueNoTolero = '';
+            updates.isIntoleranceVisible = false;
+            updates.hasIntoleranceContent = false;
+            updates.showIntoleranceForm = false;
+          }
+          
+          return updates;
+        });
+        
+        const successMessages = {
+          'identity': 'Definición personal eliminada',
+          'intolerance': 'Preferencias de contenido eliminadas',
+          'all': 'Roastr Persona eliminada completamente'
+        };
+        
+        addNotification(successMessages[fieldType], 'success');
       } else {
-        addNotification(result.error || 'Error al eliminar definición personal', 'error');
+        addNotification(result.error || 'Error al eliminar Roastr Persona', 'error');
       }
       
     } catch (error) {
       console.error('Roastr Persona delete error:', error);
-      addNotification(error.message || 'Error al eliminar definición personal', 'error');
+      addNotification(error.message || 'Error al eliminar Roastr Persona', 'error');
     } finally {
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
@@ -942,7 +990,7 @@ export default function Settings() {
 
                   <div className="flex space-x-3">
                     <Button 
-                      onClick={handleSaveRoastrPersona}
+                      onClick={() => handleSaveRoastrPersona('identity')}
                       disabled={roastrPersona.isSaving || roastrPersona.loQueMeDefine.length > 300}
                       size="sm"
                     >
@@ -960,7 +1008,7 @@ export default function Settings() {
                       <Button 
                         variant="destructive" 
                         size="sm"
-                        onClick={handleDeleteRoastrPersona}
+                        onClick={() => handleDeleteRoastrPersona('identity')}
                         disabled={roastrPersona.isSaving}
                       >
                         Eliminar
@@ -1008,7 +1056,177 @@ export default function Settings() {
                       <Button 
                         variant="destructive" 
                         size="sm"
-                        onClick={handleDeleteRoastrPersona}
+                        onClick={() => handleDeleteRoastrPersona('identity')}
+                        disabled={roastrPersona.isSaving}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Roastr Persona - Lo que no tolero */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Shield className="h-5 w-5 text-red-500" />
+            <span>Roastr Persona - Lo que no tolero</span>
+            <Badge variant="outline" className="text-red-600 border-red-200">Bloqueo Automático</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="text-sm text-red-800 mb-2">
+              <strong>🚫 Protección automática</strong>
+            </div>
+            <div className="text-sm text-red-700">
+              Define palabras, temas o ataques que nunca quieres ver en tus comentarios. 
+              Cualquier comentario que coincida con estos términos será <strong>bloqueado automáticamente</strong> 
+              sin pasar por el sistema de roasts.
+            </div>
+          </div>
+
+          {roastrPersona.isLoading ? (
+            <div className="text-center py-4">
+              <div className="text-muted-foreground">Cargando...</div>
+            </div>
+          ) : (
+            <>
+              {roastrPersona.showIntoleranceForm ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Lo que no tolero (máx. 300 caracteres)
+                    </label>
+                    <textarea
+                      value={roastrPersona.loQueNoTolero}
+                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueNoTolero: e.target.value }))}
+                      placeholder="Escribe palabras, temas o ataques que nunca quieres ver (ej: insultos raciales, comentarios sobre peso, odio hacia veganos)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                      rows={4}
+                      maxLength={300}
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="text-xs text-muted-foreground">
+                        {roastrPersona.loQueNoTolero.length}/300 caracteres
+                      </div>
+                      <div className={`text-xs ${roastrPersona.loQueNoTolero.length > 300 ? 'text-red-500' : 'text-green-500'}`}>
+                        {roastrPersona.loQueNoTolero.length <= 300 ? '✓' : '⚠ Excede el límite'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <div className="flex items-center">
+                        <EyeOff className="w-4 h-4 text-orange-500 mr-2" />
+                      </div>
+                      <div className="text-sm text-orange-800">
+                        <div className="font-medium mb-1">Máxima privacidad y seguridad</div>
+                        <div>
+                          • Esta información nunca se muestra públicamente<br/>
+                          • Se usa para bloqueo automático e inmediato de contenido<br/>
+                          • Se almacena de forma cifrada en nuestra base de datos<br/>
+                          • Los comentarios coincidentes nunca llegan a tu bandeja<br/>
+                          • Puedes eliminarla en cualquier momento
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <div className="flex items-center">
+                        <AlertTriangle className="w-4 h-4 text-red-500 mr-2" />
+                      </div>
+                      <div className="text-sm text-red-800">
+                        <div className="font-medium mb-1">🛡️ Funcionamiento del bloqueo automático</div>
+                        <div>
+                          • Los comentarios se analizan <strong>antes</strong> de cualquier procesamiento<br/>
+                          • Las coincidencias activan bloqueo inmediato (prioridad máxima)<br/>
+                          • No se generan roasts para contenido bloqueado<br/>
+                          • Sistema más potente que Shield (actúa primero)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <Button 
+                      onClick={() => handleSaveRoastrPersona('intolerance')}
+                      disabled={roastrPersona.isSaving || roastrPersona.loQueNoTolero.length > 300}
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      {roastrPersona.isSaving ? 'Guardando...' : 'Guardar Protección'}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setRoastrPersona(prev => ({ ...prev, showIntoleranceForm: false }))}
+                      disabled={roastrPersona.isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                    {roastrPersona.hasIntoleranceContent && (
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteRoastrPersona('intolerance')}
+                        disabled={roastrPersona.isSaving}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {roastrPersona.hasIntoleranceContent ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
+                        <div>
+                          <div className="font-medium text-green-800">Protección automática activada</div>
+                          <div className="text-sm text-green-700 mt-1">
+                            Has configurado contenido que será bloqueado automáticamente antes de llegar a tu bandeja.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center">
+                        <Circle className="w-5 h-5 text-gray-400 mr-3" />
+                        <div>
+                          <div className="font-medium text-gray-800">Sin protección automática</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            Configura contenido que nunca quieres ver para máxima protección.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setRoastrPersona(prev => ({ ...prev, showIntoleranceForm: true }))}
+                      className="border-red-200 text-red-700 hover:bg-red-50"
+                    >
+                      {roastrPersona.hasIntoleranceContent ? 'Editar Protección' : 'Configurar Protección'}
+                    </Button>
+                    {roastrPersona.hasIntoleranceContent && (
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteRoastrPersona('intolerance')}
                         disabled={roastrPersona.isSaving}
                       >
                         Eliminar

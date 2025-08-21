@@ -145,10 +145,68 @@ class AnalyzeToxicityWorker extends BaseWorker {
       throw new Error(`Comment ${comment_id} not found`);
     }
     
-    // Get user's Roastr Persona for enhanced analysis (Issue #148)
+    // Get user's Roastr Persona for enhanced analysis (Issue #148) and auto-blocking (Issue #149)
     const roastrPersona = await this.getUserRoastrPersona(organization_id);
     
-    // Analyze toxicity using available services with personalization
+    // FIRST: Check if comment should be auto-blocked based on user intolerance preferences (Issue #149)
+    const intoleranceData = await this.getUserIntolerancePreferences(organization_id);
+    const autoBlockResult = await this.checkAutoBlock(text || comment.original_text, intoleranceData);
+    
+    if (autoBlockResult.shouldBlock) {
+      // Auto-block: Set maximum toxicity and skip normal analysis
+      const blockedAnalysisResult = {
+        toxicity_score: 1.0,
+        severity_level: 'critical',
+        categories: ['auto_blocked', 'user_intolerance', ...autoBlockResult.matchedCategories],
+        service: 'auto_block',
+        auto_blocked: true,
+        auto_block_reason: autoBlockResult.reason,
+        matched_intolerance_terms: autoBlockResult.matchedTerms,
+        analysisTime: autoBlockResult.analysisTime
+      };
+      
+      // Update comment with auto-block analysis results
+      await this.updateCommentAnalysis(comment_id, blockedAnalysisResult);
+      
+      // Record usage for auto-blocking
+      const textToAnalyze = text || comment.original_text;
+      const tokensUsed = this.estimateTokens(textToAnalyze);
+      await this.costControl.recordUsage(
+        organization_id,
+        platform,
+        'auto_block_intolerance',
+        {
+          commentId: comment_id,
+          tokensUsed,
+          analysisService: 'auto_block',
+          severity: 'critical',
+          toxicityScore: 1.0,
+          categories: blockedAnalysisResult.categories,
+          textLength: textToAnalyze.length,
+          analysisTime: autoBlockResult.analysisTime,
+          matchedTerms: autoBlockResult.matchedTerms
+        },
+        null,
+        1
+      );
+      
+      // Immediately trigger Shield action for auto-blocked content (highest priority)
+      await this.handleAutoBlockShieldAction(organization_id, comment, blockedAnalysisResult);
+      
+      return {
+        success: true,
+        summary: `Comment auto-blocked due to user intolerance preferences: ${autoBlockResult.reason}`,
+        commentId: comment_id,
+        toxicityScore: 1.0,
+        severityLevel: 'critical',
+        categories: blockedAnalysisResult.categories,
+        service: 'auto_block',
+        autoBlocked: true,
+        matchedTerms: autoBlockResult.matchedTerms
+      };
+    }
+    
+    // If not auto-blocked, proceed with normal toxicity analysis
     const analysisResult = await this.analyzeToxicity(
       text || comment.original_text, 
       roastrPersona
@@ -281,6 +339,305 @@ class AnalyzeToxicityWorker extends BaseWorker {
         error: error.message
       });
       return null;
+    }
+  }
+  
+  /**
+   * Get user's intolerance preferences for auto-blocking (Issue #149)
+   */
+  async getUserIntolerancePreferences(organizationId) {
+    try {
+      // Get organization owner user ID
+      const { data: orgData, error: orgError } = await this.supabase
+        .from('organizations')
+        .select('owner_id')
+        .eq('id', organizationId)
+        .single();
+      
+      if (orgError || !orgData) {
+        this.log('warn', 'Could not get organization owner for intolerance check', {
+          organizationId,
+          error: orgError?.message
+        });
+        return null;
+      }
+      
+      // Get user's encrypted intolerance preferences
+      const { data: userData, error: userError } = await this.supabase
+        .from('users')
+        .select('lo_que_no_tolero_encrypted')
+        .eq('id', orgData.owner_id)
+        .single();
+      
+      if (userError || !userData || !userData.lo_que_no_tolero_encrypted) {
+        // User hasn't defined intolerance preferences - this is normal
+        return null;
+      }
+      
+      // Decrypt the intolerance data
+      try {
+        const decryptedIntolerance = encryptionService.decrypt(userData.lo_que_no_tolero_encrypted);
+        
+        this.log('debug', 'Retrieved user intolerance preferences for auto-blocking', {
+          organizationId,
+          userId: orgData.owner_id.substr(0, 8) + '...',
+          hasPreferences: !!decryptedIntolerance
+        });
+        
+        return decryptedIntolerance;
+        
+      } catch (decryptError) {
+        this.log('error', 'Failed to decrypt intolerance preferences', {
+          organizationId,
+          userId: orgData.owner_id.substr(0, 8) + '...',
+          error: decryptError.message
+        });
+        return null;
+      }
+      
+    } catch (error) {
+      this.log('error', 'Failed to get intolerance preferences', {
+        organizationId,
+        error: error.message
+      });
+      return null;
+    }
+  }
+  
+  /**
+   * Check if comment should be auto-blocked based on user intolerance preferences (Issue #149)
+   * This is the highest priority check that runs before any other analysis
+   */
+  async checkAutoBlock(text, intoleranceData) {
+    const startTime = Date.now();
+    
+    if (!intoleranceData || typeof intoleranceData !== 'string') {
+      return { 
+        shouldBlock: false, 
+        reason: 'No intolerance preferences defined',
+        matchedTerms: [],
+        matchedCategories: [],
+        analysisTime: Date.now() - startTime
+      };
+    }
+    
+    // Clean and normalize the intolerance terms
+    const intoleranceTerms = intoleranceData
+      .toLowerCase()
+      .split(/[,;\.]+/) // Split by common separators
+      .map(term => term.trim())
+      .filter(term => term.length > 2); // Filter out very short terms
+    
+    // Clean and normalize the comment text
+    const commentText = text.toLowerCase();
+    
+    const matchedTerms = [];
+    const matchedCategories = [];
+    let blockReason = '';
+    
+    // Check for exact matches first (highest confidence)
+    for (const term of intoleranceTerms) {
+      if (commentText.includes(term)) {
+        matchedTerms.push(term);
+        
+        // Categorize the type of intolerance match
+        if (this.isRacialTerm(term)) {
+          matchedCategories.push('racial_intolerance');
+        } else if (this.isBodyShamingTerm(term)) {
+          matchedCategories.push('body_shaming_intolerance');
+        } else if (this.isPoliticalTerm(term)) {
+          matchedCategories.push('political_intolerance');
+        } else if (this.isIdentityTerm(term)) {
+          matchedCategories.push('identity_intolerance');
+        } else {
+          matchedCategories.push('general_intolerance');
+        }
+      }
+    }
+    
+    // Check for semantic matches (less strict, but still blocking)
+    if (matchedTerms.length === 0) {
+      const semanticMatches = this.checkSemanticMatches(commentText, intoleranceTerms);
+      matchedTerms.push(...semanticMatches.terms);
+      matchedCategories.push(...semanticMatches.categories);
+    }
+    
+    const shouldBlock = matchedTerms.length > 0;
+    
+    if (shouldBlock) {
+      blockReason = `Matched user intolerance terms: ${matchedTerms.slice(0, 3).join(', ')}${matchedTerms.length > 3 ? ` (and ${matchedTerms.length - 3} more)` : ''}`;
+      
+      this.log('info', 'Comment auto-blocked due to user intolerance preferences', {
+        matchedTerms: matchedTerms.slice(0, 5), // Log first 5 matches for debugging
+        matchedCategories,
+        textLength: text.length,
+        analysisTime: Date.now() - startTime
+      });
+    }
+    
+    return {
+      shouldBlock,
+      reason: blockReason,
+      matchedTerms,
+      matchedCategories,
+      analysisTime: Date.now() - startTime
+    };
+  }
+  
+  /**
+   * Check if a term is related to racial topics
+   */
+  isRacialTerm(term) {
+    const racialKeywords = [
+      'racial', 'race', 'black', 'white', 'asian', 'latino', 'hispanic', 
+      'arab', 'muslim', 'jewish', 'racist', 'racism'
+    ];
+    return racialKeywords.some(keyword => term.includes(keyword));
+  }
+  
+  /**
+   * Check if a term is related to body shaming
+   */
+  isBodyShamingTerm(term) {
+    const bodyKeywords = [
+      'weight', 'fat', 'thin', 'ugly', 'appearance', 'body', 'looks',
+      'height', 'size', 'shape', 'beauty', 'attractive'
+    ];
+    return bodyKeywords.some(keyword => term.includes(keyword));
+  }
+  
+  /**
+   * Check if a term is related to political topics
+   */
+  isPoliticalTerm(term) {
+    const politicalKeywords = [
+      'liberal', 'conservative', 'left', 'right', 'democrat', 'republican',
+      'politics', 'political', 'trump', 'biden', 'socialist', 'capitalist'
+    ];
+    return politicalKeywords.some(keyword => term.includes(keyword));
+  }
+  
+  /**
+   * Check if a term is related to identity (LGBTQ+, gender, etc.)
+   */
+  isIdentityTerm(term) {
+    const identityKeywords = [
+      'gay', 'lesbian', 'trans', 'transgender', 'lgbtq', 'queer', 'bi',
+      'gender', 'sexuality', 'orientation', 'identity', 'pronoun'
+    ];
+    return identityKeywords.some(keyword => term.includes(keyword));
+  }
+  
+  /**
+   * Check for semantic matches using basic pattern matching
+   */
+  checkSemanticMatches(commentText, intoleranceTerms) {
+    const matchedTerms = [];
+    const matchedCategories = [];
+    
+    // This is a simplified semantic check - in production, you might use
+    // more sophisticated NLP libraries or embeddings for better matching
+    for (const term of intoleranceTerms) {
+      // Check for partial word matches and common variations
+      const termWords = term.split(/\s+/);
+      
+      if (termWords.length > 1) {
+        // Multi-word terms: check if most words are present
+        const foundWords = termWords.filter(word => 
+          commentText.includes(word) || this.checkWordVariations(commentText, word)
+        );
+        
+        if (foundWords.length >= Math.ceil(termWords.length * 0.7)) {
+          matchedTerms.push(term);
+          matchedCategories.push('semantic_match');
+        }
+      } else {
+        // Single word: check for variations and synonyms
+        if (this.checkWordVariations(commentText, term)) {
+          matchedTerms.push(term);
+          matchedCategories.push('variation_match');
+        }
+      }
+    }
+    
+    return { terms: matchedTerms, categories: matchedCategories };
+  }
+  
+  /**
+   * Check for word variations (plurals, common misspellings, etc.)
+   */
+  checkWordVariations(text, word) {
+    // Check for plurals
+    if (text.includes(word + 's') || text.includes(word + 'es')) {
+      return true;
+    }
+    
+    // Check for common substitutions (l33t speak, etc.)
+    const variations = word
+      .replace(/a/g, '@')
+      .replace(/e/g, '3')
+      .replace(/i/g, '1')
+      .replace(/o/g, '0')
+      .replace(/s/g, '5');
+    
+    if (text.includes(variations)) {
+      return true;
+    }
+    
+    // Check for word with common prefixes/suffixes removed
+    const stem = word.replace(/(ing|ed|er|est|ly|tion|sion)$/, '');
+    if (stem.length > 3 && text.includes(stem)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Handle Shield actions for auto-blocked content (Issue #149)
+   * Auto-blocked content gets the highest priority Shield treatment
+   */
+  async handleAutoBlockShieldAction(organizationId, comment, analysis) {
+    try {
+      this.log('info', 'Processing immediate Shield action for auto-blocked content', {
+        commentId: comment.id,
+        matchedTerms: analysis.matched_intolerance_terms?.slice(0, 3)
+      });
+      
+      // Create special Shield analysis for auto-blocked content
+      const autoBlockShieldAnalysis = {
+        ...analysis,
+        shield_priority: 0, // Highest possible priority
+        auto_block_shield: true,
+        immediate_action: true
+      };
+      
+      // Delegate to Shield service with maximum priority
+      const shieldResult = await this.shieldService.analyzeForShield(
+        organizationId,
+        comment,
+        autoBlockShieldAnalysis
+      );
+      
+      if (shieldResult.shieldActive) {
+        this.log('info', 'Shield activated for auto-blocked content', {
+          commentId: comment.id,
+          priority: shieldResult.priority,
+          actions: shieldResult.actions?.primary,
+          autoExecuted: shieldResult.autoExecuted
+        });
+      }
+      
+      return shieldResult;
+      
+    } catch (error) {
+      this.log('error', 'Failed to handle auto-block Shield action', {
+        commentId: comment.id,
+        error: error.message
+      });
+      
+      // Don't throw error to avoid breaking the auto-block flow
+      return { shieldActive: false, error: error.message };
     }
   }
   
