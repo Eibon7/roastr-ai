@@ -2,6 +2,7 @@
 
 const axios = require('axios');
 const colors = require('colors/safe');
+const { t } = require('../utils/alertingUtils');
 
 /**
  * Health Monitor CLI Tool
@@ -62,7 +63,7 @@ class HealthMonitorCLI {
    */
   async showHealth() {
     try {
-      console.log(colors.cyan('🏥 Fetching system health...'));
+      console.log(colors.cyan(t('cli.health.fetching')));
       
       const response = await axios.get(`${this.config.apiUrl}/api/health`, {
         timeout: 10000
@@ -73,10 +74,10 @@ class HealthMonitorCLI {
       
     } catch (error) {
       if (error.response) {
-        console.log(colors.red('❌ Health Check Failed'));
-        console.log(colors.yellow('Response:'), JSON.stringify(error.response.data, null, 2));
+        console.log(colors.red(t('cli.health.failed')));
+        console.log(colors.yellow(t('cli.errors.response') + ':'), JSON.stringify(error.response.data, null, 2));
       } else {
-        console.log(colors.red('❌ Cannot connect to API:'), error.message);
+        console.log(colors.red(t('cli.health.cannot_connect')), error.message);
       }
       process.exit(1);
     }
@@ -190,9 +191,9 @@ class HealthMonitorCLI {
   /**
    * Test alert system
    */
-  async testAlert(severity = 'info', title = 'CLI Test Alert', message = 'Test alert from CLI') {
+  async testAlert(severity = 'info', title = t('alert.titles.test_alert'), message = t('alert.messages.test_alert')) {
     try {
-      console.log(colors.cyan(`📢 Sending ${severity} alert...`));
+      console.log(colors.cyan(t('cli.alerts.sending', { severity })));
       
       const response = await axios.post(`${this.config.apiUrl}/api/monitoring/alert/test`, {
         severity,
@@ -208,22 +209,22 @@ class HealthMonitorCLI {
       const result = response.data.data;
       
       if (result.alertSent) {
-        console.log(colors.green('✅ Alert sent successfully'));
-        console.log(colors.gray(`Severity: ${result.severity}`));
-        console.log(colors.gray(`Title: ${result.title}`));
-        console.log(colors.gray(`Message: ${result.message}`));
+        console.log(colors.green(t('cli.alerts.sent_successfully')));
+        console.log(colors.gray(`${t('cli.alerts.severity')}: ${result.severity}`));
+        console.log(colors.gray(`${t('cli.alerts.title')}: ${result.title}`));
+        console.log(colors.gray(`${t('cli.alerts.message')}: ${result.message}`));
       } else {
-        console.log(colors.yellow('⚠️ Alert not sent (likely due to configuration or rate limiting)'));
+        console.log(colors.yellow(t('cli.alerts.not_sent')));
       }
       
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        console.log(colors.red('❌ Authentication required. Set ROAST_API_KEY environment variable.'));
+        console.log(colors.red(t('cli.alerts.auth_required')));
       } else if (error.response) {
-        console.log(colors.red('❌ Alert test failed'));
-        console.log(colors.yellow('Response:'), JSON.stringify(error.response.data, null, 2));
+        console.log(colors.red(t('cli.alerts.test_failed')));
+        console.log(colors.yellow(t('cli.errors.response') + ':'), JSON.stringify(error.response.data, null, 2));
       } else {
-        console.log(colors.red('❌ Cannot connect to API:'), error.message);
+        console.log(colors.red(t('cli.alerts.cannot_connect')), error.message);
       }
       process.exit(1);
     }
@@ -495,27 +496,27 @@ class HealthMonitorCLI {
    * Show usage information
    */
   showUsage() {
-    console.log(colors.cyan('🏥 Health Monitor CLI'));
+    console.log(colors.cyan(t('cli.usage.title')));
     console.log(colors.gray('═'.repeat(60)));
-    console.log('Usage: npm run monitor <command>');
+    console.log(t('cli.usage.usage'));
     console.log('');
-    console.log('Commands:');
-    console.log('  health                    Show current health status');
-    console.log('  metrics                   Show system metrics (requires auth)');
-    console.log('  watch                     Watch health status (real-time)');
-    console.log('  test                      Run monitoring system test');
-    console.log('  alert [severity] [title] [message]  Send test alert');
+    console.log(t('cli.usage.commands') + ':');
+    console.log('  ' + t('cli.usage.health_cmd'));
+    console.log('  ' + t('cli.usage.metrics_cmd'));
+    console.log('  ' + t('cli.usage.watch_cmd'));
+    console.log('  ' + t('cli.usage.test_cmd'));
+    console.log('  ' + t('cli.usage.alert_cmd'));
     console.log('');
-    console.log('Environment Variables:');
-    console.log('  ROAST_API_URL            API base URL (default: http://localhost:3000)');
-    console.log('  ROAST_API_KEY            API key for authenticated endpoints');
-    console.log('  MONITOR_REFRESH_INTERVAL Refresh interval in ms (default: 5000)');
-    console.log('  MONITOR_COMPACT          Use compact display (default: false)');
+    console.log(t('cli.usage.env_vars') + ':');
+    console.log('  ' + t('cli.usage.api_url'));
+    console.log('  ' + t('cli.usage.api_key'));
+    console.log('  ' + t('cli.usage.refresh_interval'));
+    console.log('  ' + t('cli.usage.compact'));
     console.log('');
-    console.log('Examples:');
-    console.log('  npm run monitor health');
-    console.log('  npm run monitor watch');
-    console.log('  npm run monitor alert warning "High Memory" "Memory usage is at 85%"');
+    console.log(t('cli.usage.examples') + ':');
+    console.log('  ' + t('cli.usage.example_health'));
+    console.log('  ' + t('cli.usage.example_watch'));
+    console.log('  ' + t('cli.usage.example_alert'));
     console.log(colors.gray('═'.repeat(60)));
   }
 }
@@ -524,7 +525,7 @@ class HealthMonitorCLI {
 if (require.main === module) {
   const cli = new HealthMonitorCLI();
   cli.run().catch(error => {
-    console.error(colors.red('Fatal error:'), error.message);
+    console.error(colors.red(t('cli.errors.fatal_error')), error.message);
     process.exit(1);
   });
 }
