@@ -387,55 +387,182 @@ function getPlanTier(planId) {
 
 /**
  * Apply plan limits when subscription changes
+ * Enhanced error handling and validation (Issue #125)
  * @param {string} userId - User ID
  * @param {string} plan - New plan
  * @param {string} status - Subscription status
+ * @param {Object} options - Options for error handling behavior
+ * @param {boolean} options.failSilently - If true, log errors but don't throw (default: false)
+ * @param {boolean} options.partialFailureAllowed - If true, allow partial updates (default: false)
  */
-async function applyPlanLimits(userId, plan, status) {
+async function applyPlanLimits(userId, plan, status, options = {}) {
+  const { 
+    failSilently = false, 
+    partialFailureAllowed = false 
+  } = options;
+
   const planFeatures = getPlanFeatures(plan) || getPlanFeatures('free');
   const isActive = status === 'active';
   const limits = isActive ? planFeatures.limits : getPlanFeatures('free').limits;
   
+  // Track what operations succeeded for rollback purposes
+  const operationsCompleted = {
+    userUpdate: false,
+    organizationUpdate: false
+  };
+  
   try {
-    // Update user limits
-    const { error: userError } = await supabaseServiceClient
-      .from('users')
-      .update({
-        plan: plan,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
-    if (userError) throw userError;
-
-    // Update organization limits if user is owner
-    const { data: orgData, error: orgError } = await supabaseServiceClient
-      .from('organizations')
-      .select('id')
-      .eq('owner_id', userId)
-      .maybeSingle();
-
-    if (!orgError && orgData) {
-      await supabaseServiceClient
-        .from('organizations')
-        .update({
-          plan_id: plan,
-          subscription_status: status,
-          monthly_responses_limit: limits.roastsPerMonth === -1 ? 999999 : limits.roastsPerMonth,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orgData.id);
+    // Validate inputs
+    if (!userId || !plan || !status) {
+      const error = new Error('Invalid parameters: userId, plan, and status are required');
+      error.code = 'INVALID_PARAMETERS';
+      throw error;
     }
 
-    logger.info('Plan limits applied:', {
+    if (!planFeatures) {
+      const error = new Error(`Invalid plan: ${plan}`);
+      error.code = 'INVALID_PLAN';
+      throw error;
+    }
+
+    logger.info('Applying plan limits:', { userId, plan, status, limits });
+
+    // 1. Update user limits
+    try {
+      const { error: userError } = await supabaseServiceClient
+        .from('users')
+        .update({
+          plan: plan,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (userError) {
+        const error = new Error(`Failed to update user plan limits: ${userError.message}`);
+        error.code = 'USER_UPDATE_FAILED';
+        error.originalError = userError;
+        throw error;
+      }
+
+      operationsCompleted.userUpdate = true;
+      logger.debug('User plan updated successfully:', { userId, plan });
+
+    } catch (userUpdateError) {
+      if (!partialFailureAllowed) {
+        throw userUpdateError;
+      }
+      
+      logger.error('User update failed but continuing due to partialFailureAllowed:', userUpdateError.message);
+    }
+
+    // 2. Update organization limits if user is owner
+    try {
+      const { data: orgData, error: orgError } = await supabaseServiceClient
+        .from('organizations')
+        .select('id, name')
+        .eq('owner_id', userId)
+        .maybeSingle();
+
+      if (orgError && !partialFailureAllowed) {
+        const error = new Error(`Failed to fetch organization data: ${orgError.message}`);
+        error.code = 'ORGANIZATION_FETCH_FAILED';
+        error.originalError = orgError;
+        throw error;
+      }
+
+      if (!orgError && orgData) {
+        const { error: orgUpdateError } = await supabaseServiceClient
+          .from('organizations')
+          .update({
+            plan_id: plan,
+            subscription_status: status,
+            monthly_responses_limit: limits.roastsPerMonth === -1 ? 999999 : limits.roastsPerMonth,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orgData.id);
+
+        if (orgUpdateError) {
+          const error = new Error(`Failed to update organization limits: ${orgUpdateError.message}`);
+          error.code = 'ORGANIZATION_UPDATE_FAILED';
+          error.originalError = orgUpdateError;
+          error.organizationId = orgData.id;
+          
+          if (!partialFailureAllowed) {
+            throw error;
+          }
+          
+          logger.error('Organization update failed but continuing due to partialFailureAllowed:', error.message);
+        } else {
+          operationsCompleted.organizationUpdate = true;
+          logger.debug('Organization limits updated successfully:', { 
+            organizationId: orgData.id, 
+            plan, 
+            monthlyLimit: limits.roastsPerMonth 
+          });
+        }
+      } else if (!orgData) {
+        logger.info('No organization found for user, skipping organization limit update:', { userId });
+      }
+
+    } catch (orgError) {
+      if (!partialFailureAllowed) {
+        // If user update succeeded but org update failed, we have an inconsistent state
+        if (operationsCompleted.userUpdate) {
+          logger.error('Inconsistent state detected: user updated but organization update failed', {
+            userId,
+            plan,
+            error: orgError.message
+          });
+          
+          // Add metadata to the error for better handling upstream
+          orgError.inconsistentState = true;
+          orgError.operationsCompleted = operationsCompleted;
+        }
+        throw orgError;
+      }
+      
+      logger.error('Organization update failed but continuing due to partialFailureAllowed:', orgError.message);
+    }
+
+    const successMessage = 'Plan limits applied successfully';
+    const result = {
       userId,
       plan,
       status,
-      limits
-    });
+      limits,
+      operationsCompleted,
+      success: true
+    };
+
+    logger.info(successMessage, result);
+    return result;
 
   } catch (error) {
-    logger.error('Failed to apply plan limits:', error);
+    const errorContext = {
+      userId,
+      plan,
+      status,
+      limits,
+      operationsCompleted,
+      errorCode: error.code,
+      errorMessage: error.message
+    };
+
+    logger.error('Failed to apply plan limits:', errorContext);
+    
+    // Enhanced error with context for better upstream handling
+    error.context = errorContext;
+    error.operationsCompleted = operationsCompleted;
+    
+    if (failSilently) {
+      logger.warn('Plan limits application failed but configured to fail silently:', errorContext);
+      return {
+        ...errorContext,
+        success: false,
+        error: error.message
+      };
+    }
+    
     throw error;
   }
 }

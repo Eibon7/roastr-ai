@@ -92,6 +92,7 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}, lang
 
 /**
  * Gets the tier number for a plan (higher = better)
+ * Enhanced with custom plan support (Issue #125)
  * @param {string} planId - Plan ID
  * @returns {number} Tier number
  */
@@ -99,21 +100,24 @@ function getPlanTier(planId) {
   const tiers = {
     free: 0,
     pro: 1,
-    creator_plus: 2
+    creator_plus: 2,
+    custom: 3 // Custom plans are highest tier
   };
   return tiers[planId] || 0;
 }
 
 /**
  * Gets the maximum number of integrations for a plan
+ * Enhanced with custom plan support (Issue #125)
  * @param {string} planId - Plan ID
- * @returns {number} Maximum integrations allowed
+ * @returns {number} Maximum integrations allowed (-1 means unlimited)
  */
 function getMaxIntegrations(planId) {
   const limits = {
     free: 1,
-    pro: 3,
-    creator_plus: 9
+    pro: 5, // Updated to match planService.js
+    creator_plus: 9,
+    custom: -1 // Unlimited for custom plans
   };
   return limits[planId] || 1;
 }
