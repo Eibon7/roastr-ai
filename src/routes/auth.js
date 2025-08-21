@@ -4,7 +4,7 @@ const emailService = require('../services/emailService');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { handleSessionRefresh } = require('../middleware/sessionRefresh');
-const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
+const { loginRateLimiter, passwordChangeRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
 const { validatePassword } = require('../utils/passwordValidator');
 
 const router = express.Router();
@@ -400,8 +400,9 @@ router.post('/update-password', async (req, res) => {
 /**
  * POST /api/auth/change-password
  * Update password with current password verification (Issue #89)
+ * With rate limiting for security (Issue #133)
  */
-router.post('/change-password', authenticateToken, async (req, res) => {
+router.post('/change-password', authenticateToken, passwordChangeRateLimiter, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
         const accessToken = req.headers.authorization?.replace('Bearer ', '');

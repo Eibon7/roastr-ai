@@ -383,8 +383,132 @@ function resetRateLimit(req, res) {
   });
 }
 
+/**
+ * Rate limiting middleware specifically for password change attempts (Issue #133)
+ * More restrictive than login attempts since these are sensitive operations
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object  
+ * @param {Function} next - Next middleware function
+ */
+function passwordChangeRateLimiter(req, res, next) {
+  if (!flags.isEnabled('ENABLE_RATE_LIMIT')) {
+    return next();
+  }
+
+  const ip = getClientIP(req);
+  const userId = req.user ? req.user.id : 'anonymous';
+  
+  // Create specific key for password changes (using user ID instead of email for authenticated users)
+  const crypto = require('crypto');
+  const userHash = crypto.createHash('sha256').update(userId).digest('hex').substring(0, 8);
+  const key = `pwd_change:${ip}:${userHash}`;
+  
+  // More restrictive limits for password changes
+  const windowMs = 60 * 60 * 1000; // 1 hour window
+  const maxAttempts = 3; // Only 3 attempts per hour
+  const blockDurationMs = 60 * 60 * 1000; // Block for 1 hour
+  
+  // Check if currently blocked
+  const blockStatus = store.isBlocked(key);
+  if (blockStatus.blocked) {
+    const remainingMinutes = Math.ceil(blockStatus.remainingMs / (60 * 1000));
+    
+    if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
+      console.log('Blocked password change attempt:', { ip, userId, key, remainingMs: blockStatus.remainingMs });
+    }
+
+    return res.status(429).json({
+      success: false,
+      error: 'Too many password change attempts. Please try again later.',
+      code: 'PASSWORD_CHANGE_RATE_LIMITED',
+      retryAfter: remainingMinutes,
+      message: `For security reasons, password changes are limited. Please wait ${remainingMinutes} minutes before trying again.`
+    });
+  }
+
+  // Store original end function to intercept response
+  const originalEnd = res.end;
+  let responseIntercepted = false;
+
+  res.end = function(chunk, encoding) {
+    if (!responseIntercepted) {
+      responseIntercepted = true;
+      
+      // Check if this was a failed password change attempt
+      const isFailure = res.statusCode >= 400;
+      
+      if (isFailure) {
+        // Get current attempts or create new entry
+        const now = Date.now();
+        let attemptInfo = store.attempts.get(key);
+        if (!attemptInfo || (now - attemptInfo.firstAttempt) > windowMs) {
+          attemptInfo = {
+            count: 0,
+            firstAttempt: now,
+            lastAttempt: now
+          };
+        }
+
+        // Increment attempt count
+        attemptInfo.count++;
+        attemptInfo.lastAttempt = now;
+        store.attempts.set(key, attemptInfo);
+
+        if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
+          console.log('Failed password change attempt recorded:', { 
+            ip, userId, key, 
+            count: attemptInfo.count, 
+            maxAttempts 
+          });
+        }
+        
+        // Check if should be blocked
+        if (attemptInfo.count >= maxAttempts) {
+          const blockExpiresAt = now + blockDurationMs;
+          store.blocked.set(key, {
+            blockedAt: now,
+            expiresAt: blockExpiresAt,
+            attemptCount: attemptInfo.count
+          });
+
+          // Update metrics
+          store.metrics.blockedAttempts++;
+          
+          // Override response for newly blocked attempts
+          res.statusCode = 429;
+          const remainingMinutes = Math.ceil(blockDurationMs / (60 * 1000));
+          
+          const blockResponse = JSON.stringify({
+            success: false,
+            error: 'Too many failed password change attempts. Account temporarily locked.',
+            code: 'PASSWORD_CHANGE_RATE_LIMITED',
+            retryAfter: remainingMinutes,
+            message: `For security reasons, password changes have been temporarily disabled for this account. Please wait ${remainingMinutes} minutes before trying again.`
+          });
+          
+          chunk = blockResponse;
+          encoding = 'utf8';
+        }
+      } else if (res.statusCode >= 200 && res.statusCode < 300) {
+        // Successful password change - reset attempts
+        store.attempts.delete(key);
+        store.blocked.delete(key);
+        
+        if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
+          console.log('Successful password change, reset attempts:', { ip, userId, key });
+        }
+      }
+    }
+    
+    originalEnd.call(this, chunk, encoding);
+  };
+
+  next();
+}
+
 module.exports = {
   loginRateLimiter,
+  passwordChangeRateLimiter,
   getRateLimitMetrics,
   resetRateLimit,
   RateLimitStore,
