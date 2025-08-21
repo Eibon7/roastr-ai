@@ -4,9 +4,10 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, Check, X } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
+import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
 
 export default function Settings() {
   const [settings, setSettings] = useState({
@@ -154,7 +155,36 @@ export default function Settings() {
     }
   };
 
-  // Password change handling (Issue #89)
+  // Enhanced password validation (Issue #133)
+  const validatePasswordStrength = (password) => {
+    const criteria = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      noSpaces: !/\s/.test(password)
+    };
+    
+    const passedCriteria = Object.values(criteria).filter(Boolean).length;
+    const requiredCriteria = [criteria.length, criteria.noSpaces];
+    const strongCriteria = [criteria.uppercase || criteria.special, criteria.lowercase, criteria.number];
+    
+    // Must have minimum length and no spaces
+    if (!requiredCriteria.every(Boolean)) {
+      return { valid: false, message: 'La contraseña debe tener al menos 8 caracteres y no contener espacios' };
+    }
+    
+    // Must have at least 3 of the 4 strong criteria (uppercase OR special, lowercase, number)
+    const strongCriteriaPassed = strongCriteria.filter(Boolean).length;
+    if (strongCriteriaPassed < 2) {
+      return { valid: false, message: 'La contraseña debe contener al menos: minúsculas, números, y mayúsculas o caracteres especiales' };
+    }
+    
+    return { valid: true };
+  };
+
+  // Password change handling with enhanced validation (Issue #89 + #133)
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     
@@ -173,9 +203,10 @@ export default function Settings() {
       return;
     }
 
-    // Basic password validation
-    if (passwordForm.newPassword.length < 8) {
-      addNotification('La nueva contraseña debe tener al menos 8 caracteres', 'error');
+    // Enhanced password strength validation
+    const validation = validatePasswordStrength(passwordForm.newPassword);
+    if (!validation.valid) {
+      addNotification(validation.message, 'error');
       return;
     }
 
@@ -188,7 +219,7 @@ export default function Settings() {
       });
 
       if (result.success) {
-        addNotification(result.message, 'success');
+        addNotification('Contraseña cambiada exitosamente. Por favor usa tu nueva contraseña en futuros inicios de sesión.', 'success');
         setPasswordForm(prev => ({
           ...prev,
           showForm: false,
@@ -569,36 +600,74 @@ export default function Settings() {
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <label className="block text-sm font-medium mb-2">Contraseña</label>
             {passwordForm.showForm ? (
-              <form onSubmit={handlePasswordChange} className="space-y-3">
-                <Input
-                  type="password"
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  placeholder="Contraseña actual"
-                  required
-                />
-                <Input
-                  type="password"
-                  value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                  placeholder="Nueva contraseña"
-                  required
-                  minLength={8}
-                />
-                <Input
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  placeholder="Confirmar nueva contraseña"
-                  required
-                  minLength={8}
-                />
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Contraseña actual
+                  </label>
+                  <Input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Ingresa tu contraseña actual"
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Nueva contraseña
+                  </label>
+                  <EnhancedPasswordInput
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Ingresa tu nueva contraseña"
+                    showStrength={true}
+                    showCriteria={true}
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Confirmar nueva contraseña
+                  </label>
+                  <Input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Confirma tu nueva contraseña"
+                    required
+                    autoComplete="new-password"
+                    className={`${
+                      passwordForm.confirmPassword && passwordForm.newPassword && 
+                      passwordForm.confirmPassword !== passwordForm.newPassword
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                        : passwordForm.confirmPassword && passwordForm.newPassword &&
+                          passwordForm.confirmPassword === passwordForm.newPassword
+                        ? 'border-green-300 focus:border-green-500 focus:ring-green-500'
+                        : ''
+                    }`}
+                  />
+                  {passwordForm.confirmPassword && passwordForm.newPassword && 
+                   passwordForm.confirmPassword !== passwordForm.newPassword && (
+                    <p className="text-red-600 text-sm mt-1">Las contraseñas no coinciden</p>
+                  )}
+                  {passwordForm.confirmPassword && passwordForm.newPassword && 
+                   passwordForm.confirmPassword === passwordForm.newPassword && (
+                    <p className="text-green-600 text-sm mt-1">✓ Las contraseñas coinciden</p>
+                  )}
+                </div>
+                
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                   <div className="flex">
-                    <Shield className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
-                    <div className="text-xs text-blue-800">
-                      <p>• La contraseña debe tener al menos 8 caracteres</p>
-                      <p>• Debes introducir tu contraseña actual para confirmar el cambio</p>
+                    <Shield className="w-4 h-4 text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
+                    <div className="text-xs text-blue-800 dark:text-blue-200">
+                      <p>• Ingresa tu contraseña actual para verificar tu identidad</p>
+                      <p>• La nueva contraseña debe ser diferente a la actual</p>
+                      <p>• Usa la guía de fortaleza arriba para crear una contraseña segura</p>
                     </div>
                   </div>
                 </div>

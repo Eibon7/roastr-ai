@@ -5,6 +5,7 @@ const { getPlanFeatures } = require('./planService');
 const { isChangeAllowed } = require('./planValidation');
 const auditService = require('./auditService');
 const { applyPlanLimits } = require('./subscriptionService');
+const passwordHistoryService = require('./passwordHistoryService');
 
 class AuthService {
     
@@ -346,6 +347,12 @@ class AuthService {
                 throw new Error('User not found');
             }
 
+            // Check if new password was recently used (Issue #133)
+            const isPasswordReused = await passwordHistoryService.isPasswordRecentlyUsed(user.id, newPassword);
+            if (isPasswordReused) {
+                throw new Error('This password was recently used. Please choose a different password.');
+            }
+
             // Verify current password by attempting to sign in
             const { data: signInData, error: signInError } = await supabaseAnonClient.auth.signInWithPassword({
                 email: user.email,
@@ -369,6 +376,10 @@ class AuthService {
             if (error) {
                 throw new Error(`Password update failed: ${error.message}`);
             }
+
+            // Password successfully updated - add current password to history
+            // Note: We add the OLD password to history, not the new one
+            await passwordHistoryService.addToPasswordHistory(user.id, currentPassword);
 
             logger.info('Password updated successfully with verification:', { 
                 userId: user.id, 
