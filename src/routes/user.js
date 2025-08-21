@@ -992,7 +992,11 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
                 lo_que_no_tolero_encrypted,
                 lo_que_no_tolero_visible,
                 lo_que_no_tolero_created_at,
-                lo_que_no_tolero_updated_at
+                lo_que_no_tolero_updated_at,
+                lo_que_me_da_igual_encrypted,
+                lo_que_me_da_igual_visible,
+                lo_que_me_da_igual_created_at,
+                lo_que_me_da_igual_updated_at
             `)
             .eq('id', userId)
             .single();
@@ -1031,6 +1035,21 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
             }
         }
 
+        // Decrypt the lo_que_me_da_igual field if it exists
+        let loQueMeDaIgual = null;
+        if (userData.lo_que_me_da_igual_encrypted) {
+            try {
+                loQueMeDaIgual = encryptionService.decrypt(userData.lo_que_me_da_igual_encrypted);
+            } catch (decryptError) {
+                logger.error('Failed to decrypt lo_que_me_da_igual:', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: decryptError.message
+                });
+                // Return empty if decryption fails
+                loQueMeDaIgual = null;
+            }
+        }
+
         res.json({
             success: true,
             data: {
@@ -1039,12 +1058,18 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
                 createdAt: userData.lo_que_me_define_created_at,
                 updatedAt: userData.lo_que_me_define_updated_at,
                 hasContent: !!userData.lo_que_me_define_encrypted,
-                // New intolerance fields
+                // Intolerance fields
                 loQueNoTolero,
                 isIntoleranceVisible: userData.lo_que_no_tolero_visible || false,
                 intoleranceCreatedAt: userData.lo_que_no_tolero_created_at,
                 intoleranceUpdatedAt: userData.lo_que_no_tolero_updated_at,
-                hasIntoleranceContent: !!userData.lo_que_no_tolero_encrypted
+                hasIntoleranceContent: !!userData.lo_que_no_tolero_encrypted,
+                // Tolerance fields (lo que me da igual)
+                loQueMeDaIgual,
+                isToleranceVisible: userData.lo_que_me_da_igual_visible || false,
+                toleranceCreatedAt: userData.lo_que_me_da_igual_created_at,
+                toleranceUpdatedAt: userData.lo_que_me_da_igual_updated_at,
+                hasToleranceContent: !!userData.lo_que_me_da_igual_encrypted
             }
         });
 
@@ -1067,7 +1092,9 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             loQueMeDefine, 
             isVisible = false,
             loQueNoTolero,
-            isIntoleranceVisible = false 
+            isIntoleranceVisible = false,
+            loQueMeDaIgual,
+            isToleranceVisible = false 
         } = req.body;
         const userId = req.user.id;
         const userClient = createUserClient(req.accessToken);
@@ -1124,6 +1151,32 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             }
         }
 
+        // Validate loQueMeDaIgual input
+        if (loQueMeDaIgual !== null && loQueMeDaIgual !== undefined) {
+            if (typeof loQueMeDaIgual !== 'string') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueMeDaIgual must be a string'
+                });
+            }
+
+            // Sanitize and validate length
+            const sanitized = encryptionService.sanitizeForEncryption(loQueMeDaIgual);
+            if (sanitized.length > 300) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueMeDaIgual cannot exceed 300 characters'
+                });
+            }
+
+            if (sanitized.length === 0 && loQueMeDaIgual.trim().length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'loQueMeDaIgual contains invalid characters'
+                });
+            }
+        }
+
         // Validate visibility settings
         if (typeof isVisible !== 'boolean') {
             return res.status(400).json({
@@ -1139,10 +1192,17 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             });
         }
 
+        if (typeof isToleranceVisible !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                error: 'isToleranceVisible must be a boolean'
+            });
+        }
+
         // Get existing data to determine if we need to set created_at timestamps
         const { data: existingData } = await userClient
             .from('users')
-            .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted')
+            .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted')
             .eq('id', userId)
             .single();
 
@@ -1211,6 +1271,37 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             }
         }
 
+        // Handle the lo_que_me_da_igual field if provided
+        if (loQueMeDaIgual !== undefined) {
+            updateData.lo_que_me_da_igual_visible = isToleranceVisible;
+            updateData.lo_que_me_da_igual_updated_at = new Date().toISOString();
+
+            if (loQueMeDaIgual === null || loQueMeDaIgual.trim() === '') {
+                // User wants to clear the field
+                updateData.lo_que_me_da_igual_encrypted = null;
+            } else {
+                // Encrypt the sanitized content
+                const sanitized = encryptionService.sanitizeForEncryption(loQueMeDaIgual);
+                try {
+                    updateData.lo_que_me_da_igual_encrypted = encryptionService.encrypt(sanitized);
+                    
+                    // Set created_at if this is the first time setting the field
+                    if (!existingData?.lo_que_me_da_igual_encrypted) {
+                        updateData.lo_que_me_da_igual_created_at = new Date().toISOString();
+                    }
+                } catch (encryptError) {
+                    logger.error('Failed to encrypt lo_que_me_da_igual:', {
+                        userId: userId.substr(0, 8) + '...',
+                        error: encryptError.message
+                    });
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Failed to secure tolerance data'
+                    });
+                }
+            }
+        }
+
         // Only proceed if there's something to update
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({
@@ -1233,7 +1324,11 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
                 lo_que_no_tolero_encrypted,
                 lo_que_no_tolero_visible,
                 lo_que_no_tolero_created_at,
-                lo_que_no_tolero_updated_at
+                lo_que_no_tolero_updated_at,
+                lo_que_me_da_igual_encrypted,
+                lo_que_me_da_igual_visible,
+                lo_que_me_da_igual_created_at,
+                lo_que_me_da_igual_updated_at
             `)
             .single();
 
@@ -1246,6 +1341,7 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             userId: userId.substr(0, 8) + '...',
             hasIdentityContent: !!updatedUser.lo_que_me_define_encrypted,
             hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted,
+            hasToleranceContent: !!updatedUser.lo_que_me_da_igual_encrypted,
             fieldsUpdated: Object.keys(updateData).filter(key => key.includes('encrypted')),
             action: 'updated'
         });
@@ -1271,6 +1367,16 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             }
         }
 
+        let responseLoQueMeDaIgual = null;
+        if (updatedUser.lo_que_me_da_igual_encrypted) {
+            try {
+                responseLoQueMeDaIgual = encryptionService.decrypt(updatedUser.lo_que_me_da_igual_encrypted);
+            } catch (decryptError) {
+                logger.error('Failed to decrypt lo_que_me_da_igual for response:', decryptError.message);
+                responseLoQueMeDaIgual = '[Encrypted]';
+            }
+        }
+
         res.json({
             success: true,
             message: 'Roastr Persona updated successfully',
@@ -1285,7 +1391,13 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
                 isIntoleranceVisible: updatedUser.lo_que_no_tolero_visible,
                 intoleranceCreatedAt: updatedUser.lo_que_no_tolero_created_at,
                 intoleranceUpdatedAt: updatedUser.lo_que_no_tolero_updated_at,
-                hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted
+                hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted,
+                // Tolerance fields (lo que me da igual)
+                loQueMeDaIgual: responseLoQueMeDaIgual,
+                isToleranceVisible: updatedUser.lo_que_me_da_igual_visible,
+                toleranceCreatedAt: updatedUser.lo_que_me_da_igual_created_at,
+                toleranceUpdatedAt: updatedUser.lo_que_me_da_igual_updated_at,
+                hasToleranceContent: !!updatedUser.lo_que_me_da_igual_encrypted
             }
         });
 
@@ -1301,7 +1413,7 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
 /**
  * DELETE /api/user/roastr-persona
  * Delete user's Roastr Persona content (privacy feature)
- * Query params: ?field=identity|intolerance|all (default: all)
+ * Query params: ?field=identity|intolerance|tolerance|all (default: all)
  */
 router.delete('/roastr-persona', authenticateToken, async (req, res) => {
     try {
@@ -1310,10 +1422,10 @@ router.delete('/roastr-persona', authenticateToken, async (req, res) => {
         const { field = 'all' } = req.query;
 
         // Validate field parameter
-        if (!['identity', 'intolerance', 'all'].includes(field)) {
+        if (!['identity', 'intolerance', 'tolerance', 'all'].includes(field)) {
             return res.status(400).json({
                 success: false,
-                error: 'Invalid field parameter. Must be "identity", "intolerance", or "all"'
+                error: 'Invalid field parameter. Must be "identity", "intolerance", "tolerance", or "all"'
             });
         }
 
@@ -1333,6 +1445,12 @@ router.delete('/roastr-persona', authenticateToken, async (req, res) => {
             updateData.lo_que_no_tolero_updated_at = timestamp;
         }
 
+        if (field === 'tolerance' || field === 'all') {
+            updateData.lo_que_me_da_igual_encrypted = null;
+            updateData.lo_que_me_da_igual_visible = false;
+            updateData.lo_que_me_da_igual_updated_at = timestamp;
+        }
+
         // Clear the encrypted fields and reset timestamps
         const { data: updatedUser, error: updateError } = await userClient
             .from('users')
@@ -1341,7 +1459,8 @@ router.delete('/roastr-persona', authenticateToken, async (req, res) => {
             .select(`
                 id, 
                 lo_que_me_define_updated_at,
-                lo_que_no_tolero_updated_at
+                lo_que_no_tolero_updated_at,
+                lo_que_me_da_igual_updated_at
             `)
             .single();
 
@@ -1363,7 +1482,8 @@ router.delete('/roastr-persona', authenticateToken, async (req, res) => {
                 field: field,
                 deletedAt: timestamp,
                 identityDeletedAt: field === 'identity' || field === 'all' ? updatedUser.lo_que_me_define_updated_at : null,
-                intoleranceDeletedAt: field === 'intolerance' || field === 'all' ? updatedUser.lo_que_no_tolero_updated_at : null
+                intoleranceDeletedAt: field === 'intolerance' || field === 'all' ? updatedUser.lo_que_no_tolero_updated_at : null,
+                toleranceDeletedAt: field === 'tolerance' || field === 'all' ? updatedUser.lo_que_me_da_igual_updated_at : null
             }
         });
 
