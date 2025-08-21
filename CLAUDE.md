@@ -224,6 +224,15 @@ The roast generation system has been enhanced with a comprehensive master prompt
 - **Reference Integration**: Includes similar roasts from CSV database as examples
 - **User Tone Mapping**: Personalizes responses based on user preferences and plan features
 - **Version Control**: Template versioning for future improvements and A/B testing
+- **🔒 Security Protection**: Robust input sanitization and prompt injection prevention
+
+### Security Features (Issue #127)
+
+- **Prompt Injection Protection**: Automatically sanitizes malicious template placeholders (`{{placeholder}}` patterns)
+- **Input Validation**: Strict validation for `originalComment` (type, length, content)
+- **Error Traceability**: Comprehensive logging with error context and version tracking
+- **Length Limits**: 2000 character limit to prevent DoS attacks
+- **Fallback System**: Graceful degradation when validation fails or errors occur
 
 ### Template Structure
 
@@ -242,6 +251,7 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 - **GenerateReplyWorker**: Integrated into the worker pipeline for queue processing
 - **Platform Constraints**: Automatically adds platform-specific character limits and style guides
 - **Plan Differentiation**: Free plans exclude references, Pro+ plans include full examples
+- **Security Layer**: All inputs sanitized before template processing
 
 ### Usage Example
 

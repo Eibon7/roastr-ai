@@ -223,64 +223,158 @@ class RoastPromptTemplate {
   }
 
   /**
+   * Sanitize input text to prevent prompt injection attacks
+   * @param {string} input - Input text to sanitize
+   * @returns {string} Sanitized text
+   * @private
+   */
+  sanitizeInput(input) {
+    if (typeof input !== 'string') {
+      return String(input);
+    }
+
+    // Escape potential template injection patterns
+    return input
+      // Replace double curly braces that could be used for injection
+      .replace(/\{\{/g, '(doble-llave-abierta)')
+      .replace(/\}\}/g, '(doble-llave-cerrada)')
+      // Replace single curly braces that could be problematic
+      .replace(/\{/g, '(llave-abierta)')
+      .replace(/\}/g, '(llave-cerrada)')
+      // Limit length to prevent extremely long inputs
+      .substring(0, 2000);
+  }
+
+  /**
+   * Validate input parameters for buildPrompt
+   * @param {Object} params - Parameters to validate
+   * @throws {Error} If validation fails
+   * @private
+   */
+  validateBuildPromptParams(params) {
+    if (!params || typeof params !== 'object') {
+      throw new Error('buildPrompt parameters must be an object');
+    }
+
+    const { originalComment } = params;
+
+    // Validate originalComment
+    if (originalComment === null || originalComment === undefined) {
+      throw new Error('originalComment is required');
+    }
+
+    if (typeof originalComment !== 'string') {
+      throw new Error('originalComment must be a string');
+    }
+
+    if (originalComment.trim().length === 0) {
+      throw new Error('originalComment must be a non-empty string');
+    }
+
+    if (originalComment.length > 2000) {
+      throw new Error('originalComment exceeds maximum length of 2000 characters');
+    }
+  }
+
+  /**
    * Build the complete prompt with all dynamic fields replaced
    * @param {Object} params - Parameters for prompt generation
    * @returns {Promise<string>} Complete prompt ready for AI
    */
   async buildPrompt(params) {
-    const {
-      originalComment,
-      toxicityData = {},
-      userConfig = {},
-      includeReferences = true
-    } = params;
-
     try {
+      // Validate input parameters
+      this.validateBuildPromptParams(params);
+
+      const {
+        originalComment,
+        toxicityData = {},
+        userConfig = {},
+        includeReferences = true
+      } = params;
+
+      // Sanitize inputs to prevent injection attacks
+      const sanitizedComment = this.sanitizeInput(originalComment);
+      
       // Get dynamic field values
-      const category = this.categorizeComment(originalComment, toxicityData);
+      const category = this.categorizeComment(sanitizedComment, toxicityData);
       const references = includeReferences 
-        ? await this.getReferenceRoasts(originalComment) 
+        ? await this.getReferenceRoasts(sanitizedComment) 
         : 'Referencias desactivadas para este modo.';
       const userTone = this.mapUserTone(userConfig);
 
+      // Sanitize all dynamic content
+      const sanitizedCategory = this.sanitizeInput(category);
+      const sanitizedReferences = this.sanitizeInput(references);
+      const sanitizedUserTone = this.sanitizeInput(userTone);
+
       // Replace placeholders in master prompt
       let prompt = this.masterPrompt
-        .replace('{{original_comment}}', originalComment)
-        .replace('{{comment_category}}', category)
-        .replace('{{reference_roasts_from_CSV}}', references)
-        .replace('{{user_tone}}', userTone);
+        .replace('{{original_comment}}', sanitizedComment)
+        .replace('{{comment_category}}', sanitizedCategory)
+        .replace('{{reference_roasts_from_CSV}}', sanitizedReferences)
+        .replace('{{user_tone}}', sanitizedUserTone);
 
       logger.info('Built roast prompt', {
         version: this.version,
-        category,
+        category: sanitizedCategory,
         hasReferences: includeReferences,
-        userTone: userConfig.tone
+        userTone: userConfig.tone,
+        sanitized: true
       });
 
       return prompt;
     } catch (error) {
-      logger.error('Error building prompt:', error);
-      // Return a fallback prompt
-      return this.getFallbackPrompt(originalComment, userConfig);
+      logger.error('Error building prompt:', {
+        error: error.message,
+        stack: error.stack,
+        version: this.version,
+        params: {
+          hasOriginalComment: !!params?.originalComment,
+          originalCommentType: typeof params?.originalComment,
+          originalCommentLength: params?.originalComment?.length || 0
+        }
+      });
+      
+      // Return a fallback prompt with error context
+      return this.getFallbackPrompt(params?.originalComment, params?.userConfig, error);
     }
   }
 
   /**
-   * Get a simplified fallback prompt
+   * Get a simplified fallback prompt with error context
+   * @param {string} originalComment - Original comment (if available)
+   * @param {Object} userConfig - User configuration (if available) 
+   * @param {Error} error - Error that triggered fallback (optional)
    * @private
    */
-  getFallbackPrompt(originalComment, userConfig) {
-    const tone = userConfig.tone || 'sarcastic';
+  getFallbackPrompt(originalComment, userConfig = {}, error = null) {
+    const tone = userConfig?.tone || 'sarcastic';
     const toneGuides = {
       sarcastic: 'sarcástico pero ingenioso',
       ironic: 'irónico y sutil',
       absurd: 'absurdo y creativo'
     };
 
+    // Sanitize the original comment for fallback use
+    let sanitizedComment = 'comentario no disponible';
+    if (originalComment && typeof originalComment === 'string') {
+      sanitizedComment = this.sanitizeInput(originalComment);
+    }
+
+    // Log fallback usage with context
+    logger.warn('Using fallback prompt', {
+      version: this.version,
+      tone,
+      hasOriginalComment: !!originalComment,
+      errorReason: error?.message || 'Unknown error',
+      fallbackTriggered: true
+    });
+
     return `Genera un roast ${toneGuides[tone] || 'ingenioso'} para este comentario. 
 Sé breve (máximo 25 palabras), inteligente y evita ser cruel o usar groserías.
 
-Comentario: "${originalComment}"
+Comentario: "${sanitizedComment}"
 
 Roast:`;
   }
