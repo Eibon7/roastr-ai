@@ -10,6 +10,11 @@ const auditService = require('../../../src/services/auditService');
 jest.mock('../../../src/config/supabase', () => ({
   supabaseServiceClient: {
     from: jest.fn()
+  },
+  supabaseAnonClient: {
+    auth: {
+      signInWithPassword: jest.fn()
+    }
   }
 }));
 
@@ -45,6 +50,7 @@ describe('Account Deletion API Routes', () => {
 
   describe('DELETE /api/user/account', () => {
     it('should successfully request account deletion', async () => {
+      const { supabaseAnonClient } = require('../../../src/config/supabase');
       const mockUserData = {
         id: 'test-user-id',
         email: 'test@example.com',
@@ -64,6 +70,12 @@ describe('Account Deletion API Routes', () => {
         size: 1024,
         expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000)
       };
+
+      // Mock password validation (Issue #113)
+      supabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
+        data: { user: { id: 'test-user-id' }, session: { access_token: 'token' } },
+        error: null
+      });
 
       // Mock Supabase calls
       const mockSelect = jest.fn().mockReturnThis();
@@ -97,6 +109,7 @@ describe('Account Deletion API Routes', () => {
       }));
 
       // Mock services
+      auditService.logAccountDeletionAttempt.mockResolvedValue({ success: true });
       auditService.logAccountDeletionRequest.mockResolvedValue({ success: true });
       auditService.logDataExport.mockResolvedValue({ success: true });
       emailService.sendAccountDeletionRequestedEmail.mockResolvedValue({ success: true });
@@ -166,6 +179,7 @@ describe('Account Deletion API Routes', () => {
     });
 
     it('should return conflict if deletion already requested', async () => {
+      const { supabaseAnonClient } = require('../../../src/config/supabase');
       const mockUserData = {
         id: 'test-user-id',
         email: 'test@example.com',
@@ -177,6 +191,15 @@ describe('Account Deletion API Routes', () => {
         scheduled_deletion_at: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
         grace_period_days: 30
       };
+
+      // Mock password validation (Issue #113)
+      supabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
+        data: { user: { id: 'test-user-id' }, session: { access_token: 'token' } },
+        error: null
+      });
+
+      // Mock audit service
+      auditService.logAccountDeletionAttempt.mockResolvedValue({ success: true });
 
       const mockSelect = jest.fn().mockReturnThis();
       const mockEq = jest.fn().mockReturnThis();
@@ -207,6 +230,207 @@ describe('Account Deletion API Routes', () => {
           requestId: 'existing-request-id'
         }
       });
+    });
+
+    // Issue #113: Password validation tests
+    it('should reject deletion request with invalid password', async () => {
+      const { supabaseAnonClient } = require('../../../src/config/supabase');
+      const mockUserData = {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockEq = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn();
+
+      supabaseServiceClient.from = jest.fn().mockReturnValue({
+        select: mockSelect,
+        eq: mockEq,
+        single: mockSingle
+      });
+
+      // Mock user data retrieval
+      mockSingle.mockResolvedValueOnce({ data: mockUserData, error: null });
+
+      // Mock invalid password validation
+      supabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
+        data: null,
+        error: { message: 'Invalid login credentials' }
+      });
+
+      // Mock audit service
+      auditService.logAccountDeletionAttempt.mockResolvedValue({ success: true });
+
+      const response = await request(app)
+        .delete('/api/user/account')
+        .send({
+          password: 'wrong-password',
+          confirmation: 'DELETE'
+        })
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: 'Invalid password. Please verify your password to delete your account.'
+      });
+
+      expect(supabaseAnonClient.auth.signInWithPassword).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'wrong-password'
+      });
+
+      expect(auditService.logAccountDeletionAttempt).toHaveBeenCalledWith(
+        'test-user-id',
+        expect.objectContaining({
+          success: false,
+          reason: 'invalid_password'
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should successfully validate password and proceed with deletion', async () => {
+      const { supabaseAnonClient } = require('../../../src/config/supabase');
+      const mockUserData = {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+
+      const mockDeletionRequest = {
+        id: 'deletion-request-id',
+        user_id: 'test-user-id',
+        scheduled_deletion_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      const mockExportResult = {
+        success: true,
+        downloadUrl: '/api/user/data-export/download/test-token',
+        filename: 'export.zip',
+        size: 1024,
+        expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000)
+      };
+
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockEq = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn();
+      const mockInsert = jest.fn().mockReturnThis();
+      const mockUpdate = jest.fn().mockReturnThis();
+
+      supabaseServiceClient.from = jest.fn().mockReturnValue({
+        select: mockSelect,
+        eq: mockEq,
+        single: mockSingle,
+        insert: mockInsert,
+        update: mockUpdate
+      });
+
+      // Mock successful password validation
+      supabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
+        data: { user: { id: 'test-user-id' }, session: { access_token: 'token' } },
+        error: null
+      });
+
+      // Mock database calls
+      mockSingle
+        .mockResolvedValueOnce({ data: mockUserData, error: null })
+        .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } });
+
+      mockInsert.mockResolvedValue({ data: mockDeletionRequest, error: null });
+      mockUpdate.mockResolvedValue({ data: mockDeletionRequest, error: null });
+
+      // Mock services
+      DataExportService.mockImplementation(() => ({
+        exportUserData: jest.fn().mockResolvedValue(mockExportResult)
+      }));
+
+      auditService.logAccountDeletionAttempt.mockResolvedValue({ success: true });
+      auditService.logAccountDeletionRequest.mockResolvedValue({ success: true });
+      auditService.logDataExport.mockResolvedValue({ success: true });
+      emailService.sendAccountDeletionRequestedEmail.mockResolvedValue();
+
+      const response = await request(app)
+        .delete('/api/user/account')
+        .send({
+          password: 'correct-password',
+          confirmation: 'DELETE'
+        })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        message: 'Account deletion requested successfully',
+        data: expect.objectContaining({
+          requestId: 'deletion-request-id',
+          gracePeriodDays: 30
+        })
+      });
+
+      expect(supabaseAnonClient.auth.signInWithPassword).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'correct-password'
+      });
+
+      expect(auditService.logAccountDeletionAttempt).toHaveBeenCalledWith(
+        'test-user-id',
+        expect.objectContaining({
+          success: true,
+          reason: 'password_validated'
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it('should handle password validation errors gracefully', async () => {
+      const { supabaseAnonClient } = require('../../../src/config/supabase');
+      const mockUserData = {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        name: 'Test User'
+      };
+
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockEq = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn();
+
+      supabaseServiceClient.from = jest.fn().mockReturnValue({
+        select: mockSelect,
+        eq: mockEq,
+        single: mockSingle
+      });
+
+      mockSingle.mockResolvedValueOnce({ data: mockUserData, error: null });
+
+      // Mock password validation throwing an error
+      supabaseAnonClient.auth.signInWithPassword.mockRejectedValue(new Error('Network error'));
+
+      // Mock audit service
+      auditService.logAccountDeletionAttempt.mockResolvedValue({ success: true });
+
+      const response = await request(app)
+        .delete('/api/user/account')
+        .send({
+          password: 'test-password',
+          confirmation: 'DELETE'
+        })
+        .expect(500);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: 'Password validation failed. Please try again.'
+      });
+
+      expect(auditService.logAccountDeletionAttempt).toHaveBeenCalledWith(
+        'test-user-id',
+        expect.objectContaining({
+          success: false,
+          reason: 'validation_error',
+          error: 'Network error'
+        }),
+        expect.any(Object)
+      );
     });
   });
 
