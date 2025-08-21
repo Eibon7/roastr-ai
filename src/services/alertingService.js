@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { logger } = require('../utils/logger');
+const { t } = require('../utils/i18n');
 
 /**
  * Alerting Service for Roastr.ai Monitoring System
@@ -142,8 +143,8 @@ class AlertingService {
       
       await this.sendAlert(
         'critical',
-        'Health Check System Error',
-        `Failed to perform health check alerting: ${error.message}`,
+        t('alert.titles.health_check_error'),
+        t('alert.messages.health_check_error', { error: error.message }),
         { error: error.stack },
         { force: true }
       );
@@ -180,8 +181,12 @@ class AlertingService {
     if (failureRate >= this.thresholds.workerFailures.critical) {
       await this.sendAlert(
         'critical',
-        '🚨 Critical: High Worker Failure Rate',
-        `${failureRate.toFixed(1)}% of workers are unhealthy (${totalWorkers - healthyWorkers}/${totalWorkers})`,
+        t('alert.titles.worker_failure_critical'),
+        t('alert.messages.worker_failure_rate', {
+          failureRate: failureRate.toFixed(1),
+          unhealthyWorkers: totalWorkers - healthyWorkers,
+          totalWorkers
+        }),
         {
           failureRate: failureRate.toFixed(1),
           totalWorkers,
@@ -192,8 +197,12 @@ class AlertingService {
     } else if (failureRate >= this.thresholds.workerFailures.warning) {
       await this.sendAlert(
         'warning',
-        '⚠️ Warning: Worker Health Issues',
-        `${failureRate.toFixed(1)}% of workers are unhealthy (${totalWorkers - healthyWorkers}/${totalWorkers})`,
+        t('alert.titles.worker_failure_warning'),
+        t('alert.messages.worker_failure_rate', {
+          failureRate: failureRate.toFixed(1),
+          unhealthyWorkers: totalWorkers - healthyWorkers,
+          totalWorkers
+        }),
         {
           failureRate: failureRate.toFixed(1),
           totalWorkers,
@@ -208,8 +217,11 @@ class AlertingService {
       if (failedWorker.status === 'error') {
         await this.sendAlert(
           'warning',
-          `🔧 Worker Error: ${failedWorker.type}`,
-          `Worker ${failedWorker.type} is in error state: ${failedWorker.error}`,
+          t('alert.titles.worker_error', { workerType: failedWorker.type }),
+          t('alert.messages.worker_error_detail', { 
+            workerType: failedWorker.type, 
+            error: failedWorker.error 
+          }),
           failedWorker
         );
       }
@@ -228,8 +240,12 @@ class AlertingService {
       if (depth >= this.thresholds.queueDepth.critical) {
         await this.sendAlert(
           'critical',
-          `🚨 Critical: High Queue Depth - ${queueType}`,
-          `Queue ${queueType} has ${depth} pending jobs (critical threshold: ${this.thresholds.queueDepth.critical})`,
+          t('alert.titles.queue_depth_critical', { queueType }),
+          t('alert.messages.queue_depth_critical', {
+            queueType,
+            depth,
+            threshold: this.thresholds.queueDepth.critical
+          }),
           {
             queueType,
             depth,
@@ -240,8 +256,12 @@ class AlertingService {
       } else if (depth >= this.thresholds.queueDepth.warning) {
         await this.sendAlert(
           'warning',
-          `⚠️ Warning: Elevated Queue Depth - ${queueType}`,
-          `Queue ${queueType} has ${depth} pending jobs (warning threshold: ${this.thresholds.queueDepth.warning})`,
+          t('alert.titles.queue_depth_warning', { queueType }),
+          t('alert.messages.queue_depth_warning', {
+            queueType,
+            depth,
+            threshold: this.thresholds.queueDepth.warning
+          }),
           {
             queueType,
             depth,
@@ -263,8 +283,11 @@ class AlertingService {
       if (memoryUsage >= this.thresholds.memoryUsage.critical) {
         await this.sendAlert(
           'critical',
-          '🚨 Critical: High Memory Usage',
-          `Memory usage is at ${memoryUsage}% (critical threshold: ${this.thresholds.memoryUsage.critical}%)`,
+          t('alert.titles.memory_usage_critical'),
+          t('alert.messages.memory_usage_critical', {
+            memoryUsage,
+            threshold: this.thresholds.memoryUsage.critical
+          }),
           {
             memoryUsage,
             threshold: this.thresholds.memoryUsage.critical,
@@ -274,8 +297,11 @@ class AlertingService {
       } else if (memoryUsage >= this.thresholds.memoryUsage.warning) {
         await this.sendAlert(
           'warning',
-          '⚠️ Warning: Elevated Memory Usage',
-          `Memory usage is at ${memoryUsage}% (warning threshold: ${this.thresholds.memoryUsage.warning}%)`,
+          t('alert.titles.memory_usage_warning'),
+          t('alert.messages.memory_usage_warning', {
+            memoryUsage,
+            threshold: this.thresholds.memoryUsage.warning
+          }),
           {
             memoryUsage,
             threshold: this.thresholds.memoryUsage.warning,
@@ -292,8 +318,11 @@ class AlertingService {
       if (avgResponseTime >= this.thresholds.responseTime.critical) {
         await this.sendAlert(
           'critical',
-          '🚨 Critical: High Response Time',
-          `Average response time is ${avgResponseTime}ms (critical threshold: ${this.thresholds.responseTime.critical}ms)`,
+          t('alert.titles.response_time_critical'),
+          t('alert.messages.response_time_critical', {
+            avgResponseTime,
+            threshold: this.thresholds.responseTime.critical
+          }),
           {
             avgResponseTime,
             threshold: this.thresholds.responseTime.critical,
@@ -303,8 +332,11 @@ class AlertingService {
       } else if (avgResponseTime >= this.thresholds.responseTime.warning) {
         await this.sendAlert(
           'warning',
-          '⚠️ Warning: Elevated Response Time',
-          `Average response time is ${avgResponseTime}ms (warning threshold: ${this.thresholds.responseTime.warning}ms)`,
+          t('alert.titles.response_time_warning'),
+          t('alert.messages.response_time_warning', {
+            avgResponseTime,
+            threshold: this.thresholds.responseTime.warning
+          }),
           {
             avgResponseTime,
             threshold: this.thresholds.responseTime.warning,
@@ -325,8 +357,11 @@ class AlertingService {
       if (usagePercentage >= this.thresholds.costPercentage.critical) {
         await this.sendAlert(
           'critical',
-          '💰 Critical: Budget Nearly Exceeded',
-          `Monthly budget usage is at ${usagePercentage}% (critical threshold: ${this.thresholds.costPercentage.critical}%)`,
+          t('alert.titles.cost_critical'),
+          t('alert.messages.cost_critical', {
+            usagePercentage,
+            threshold: this.thresholds.costPercentage.critical
+          }),
           {
             usagePercentage,
             threshold: this.thresholds.costPercentage.critical,
@@ -336,8 +371,11 @@ class AlertingService {
       } else if (usagePercentage >= this.thresholds.costPercentage.warning) {
         await this.sendAlert(
           'warning',
-          '💰 Warning: High Budget Usage',
-          `Monthly budget usage is at ${usagePercentage}% (warning threshold: ${this.thresholds.costPercentage.warning}%)`,
+          t('alert.titles.cost_warning'),
+          t('alert.messages.cost_warning', {
+            usagePercentage,
+            threshold: this.thresholds.costPercentage.warning
+          }),
           {
             usagePercentage,
             threshold: this.thresholds.costPercentage.warning,
@@ -371,17 +409,17 @@ class AlertingService {
         text: message,
         fields: [
           {
-            title: 'Severity',
-            value: severity.toUpperCase(),
+            title: t('alert.fields.severity'),
+            value: t(`alert.severities.${severity}`),
             short: true
           },
           {
-            title: 'Timestamp',
+            title: t('alert.fields.timestamp'),
             value: new Date().toISOString(),
             short: true
           }
         ],
-        footer: 'Roastr.ai Monitoring',
+        footer: t('alert.footer'),
         ts: Math.floor(Date.now() / 1000)
       }]
     };
@@ -510,8 +548,8 @@ class AlertingService {
   async testAlert() {
     return await this.sendAlert(
       'info',
-      'Test Alert',
-      'This is a test alert to verify the alerting system is working properly.',
+      t('alert.titles.test_alert'),
+      t('alert.messages.test_alert'),
       { test: true, timestamp: new Date().toISOString() },
       { force: true, skipRateLimit: true }
     );

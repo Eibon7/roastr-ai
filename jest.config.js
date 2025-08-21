@@ -14,15 +14,6 @@ module.exports = {
     '!src/**/node_modules/**'
   ],
   
-  // Coverage thresholds
-  coverageThreshold: {
-    global: {
-      branches: 30,
-      functions: 30,
-      lines: 30,
-      statements: 30
-    }
-  },
   
   // Test timeout
   testTimeout: 10000,
@@ -30,7 +21,7 @@ module.exports = {
   // Verbose output
   verbose: true,
   
-  // Coverage thresholds (Phase 2: Workers + Billing)
+  // Coverage thresholds
   coverageThreshold: {
     global: {
       branches: 35,
@@ -62,7 +53,7 @@ module.exports = {
     {
       displayName: 'node-tests',
       testEnvironment: 'node',
-      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js'],
+      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
     },
     {

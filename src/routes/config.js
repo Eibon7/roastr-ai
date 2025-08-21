@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
@@ -307,17 +307,9 @@ router.get('/', async (req, res) => {
  * POST /api/config/reload
  * Hot-reload configuration without restart
  */
-router.post('/reload', async (req, res) => {
+router.post('/reload', requireAdmin, async (req, res) => {
     try {
         const { user } = req;
-
-        // Check if user has admin privileges (optional security check)
-        if (!user.is_admin) {
-            return res.status(403).json({
-                success: false,
-                error: 'Admin privileges required for config reload'
-            });
-        }
 
         // Get user's organization
         const { data: orgData } = await supabaseServiceClient

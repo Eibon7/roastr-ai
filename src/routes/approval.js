@@ -87,10 +87,10 @@ router.get('/pending', async (req, res) => {
             }
         }));
 
-        // Get total count for pagination
+        // Get total count for pagination (must match main query conditions)
         let countQuery = supabaseServiceClient
             .from('responses')
-            .select('id', { count: 'exact', head: true })
+            .select('id, comments!inner(platform)', { count: 'exact', head: true })
             .eq('organization_id', orgData.id)
             .eq('post_status', 'pending')
             .is('posted_at', null);
@@ -147,10 +147,13 @@ router.post('/:id/approve', async (req, res) => {
             });
         }
 
-        // Get the response and verify ownership
+        // Get the response and verify ownership (include platform from comment)
         const { data: response, error: getError } = await supabaseServiceClient
             .from('responses')
-            .select('*')
+            .select(`
+                *,
+                comments(platform)
+            `)
             .eq('id', id)
             .eq('organization_id', orgData.id)
             .eq('post_status', 'pending')
@@ -186,8 +189,8 @@ router.post('/:id/approve', async (req, res) => {
             throw updateError;
         }
 
-        // TODO: Queue the response for actual posting to the platform
-        // This would involve adding a job to the job_queue table with type 'post_response'
+        // Queue the response for actual posting to the platform
+        // Include proper rollback logic for failed job queue inserts
         const { error: queueError } = await supabaseServiceClient
             .from('job_queue')
             .insert({
@@ -196,14 +199,32 @@ router.post('/:id/approve', async (req, res) => {
                 priority: 3,
                 payload: {
                     response_id: id,
-                    platform: response.platform,
+                    platform: response.comments.platform, // Get platform from joined comment
                     approved_by: user.id,
                     approved_at: new Date().toISOString()
                 }
             });
 
         if (queueError) {
-            logger.warn('Failed to queue approved response for posting:', queueError.message);
+            logger.error('Failed to queue approved response for posting:', queueError.message);
+            
+            // Rollback the approval - revert the response status to pending
+            const { error: rollbackError } = await supabaseServiceClient
+                .from('responses')
+                .update({
+                    post_status: 'pending',
+                    posted_at: null
+                })
+                .eq('id', id);
+
+            if (rollbackError) {
+                logger.error('Critical: Failed to rollback response approval after queue error:', rollbackError.message);
+            }
+
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to queue response for posting. Approval has been reverted.'
+            });
         }
 
         logger.info(`Response approved: ${id} by user ${user.id}`);

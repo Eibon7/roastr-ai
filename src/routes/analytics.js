@@ -18,7 +18,9 @@ router.get('/config-performance', async (req, res) => {
         const { 
             days = 30, 
             platform = null, 
-            group_by = 'day' // day, week, month
+            group_by = 'day', // day, week, month
+            limit = 1000, // Max records to fetch
+            offset = 0    // Pagination offset
         } = req.query;
 
         // Get user's organization
@@ -38,7 +40,12 @@ router.get('/config-performance', async (req, res) => {
         const dateThreshold = new Date();
         dateThreshold.setDate(dateThreshold.getDate() - parseInt(days));
 
-        // Get response data with engagement metrics
+        // Validate and constrain pagination parameters
+        const maxLimit = 5000; // Maximum allowed limit
+        const sanitizedLimit = Math.min(parseInt(limit) || 1000, maxLimit);
+        const sanitizedOffset = Math.max(parseInt(offset) || 0, 0);
+
+        // Get response data with engagement metrics (with pagination)
         let query = supabaseServiceClient
             .from('responses')
             .select(`
@@ -58,7 +65,9 @@ router.get('/config-performance', async (req, res) => {
                 )
             `)
             .eq('organization_id', orgData.id)
-            .gte('created_at', dateThreshold.toISOString());
+            .gte('created_at', dateThreshold.toISOString())
+            .order('created_at', { ascending: false })
+            .range(sanitizedOffset, sanitizedOffset + sanitizedLimit - 1);
 
         if (platform) {
             query = query.eq('comments.platform', platform);
@@ -258,7 +267,7 @@ router.get('/shield-effectiveness', async (req, res) => {
         const dateThreshold = new Date();
         dateThreshold.setDate(dateThreshold.getDate() - parseInt(days));
 
-        // Get Shield actions and user behaviors
+        // Get Shield actions and user behaviors (with limits to prevent performance issues)
         const [shieldActionsResult, userBehaviorsResult] = await Promise.all([
             // Get Shield responses (responses with shield actions)
             supabaseServiceClient
@@ -266,7 +275,9 @@ router.get('/shield-effectiveness', async (req, res) => {
                 .select('*')
                 .eq('organization_id', orgData.id)
                 .eq('is_shield_mode', true)
-                .gte('created_at', dateThreshold.toISOString()),
+                .gte('created_at', dateThreshold.toISOString())
+                .order('created_at', { ascending: false })
+                .limit(1000), // Limit to prevent large result sets
             
             // Get user behavior data
             supabaseServiceClient
@@ -274,6 +285,8 @@ router.get('/shield-effectiveness', async (req, res) => {
                 .select('*')
                 .eq('organization_id', orgData.id)
                 .gte('last_seen_at', dateThreshold.toISOString())
+                .order('last_seen_at', { ascending: false })
+                .limit(1000) // Limit to prevent large result sets
         ]);
 
         if (shieldActionsResult.error) throw shieldActionsResult.error;
@@ -373,6 +386,10 @@ router.get('/usage-trends', async (req, res) => {
         const { user } = req;
         const { months = 6 } = req.query;
 
+        // Validate and constrain months parameter
+        const maxMonths = 24; // Maximum 2 years of data
+        const sanitizedMonths = Math.min(Math.max(parseInt(months) || 6, 1), maxMonths);
+
         // Get user's organization
         const { data: orgData } = await supabaseServiceClient
             .from('organizations')
@@ -387,14 +404,14 @@ router.get('/usage-trends', async (req, res) => {
             });
         }
 
-        // Get monthly usage data
+        // Get monthly usage data (with validated limit)
         const { data: monthlyUsage, error } = await supabaseServiceClient
             .from('monthly_usage')
             .select('*')
             .eq('organization_id', orgData.id)
             .order('year', { ascending: false })
             .order('month', { ascending: false })
-            .limit(parseInt(months));
+            .limit(sanitizedMonths);
 
         if (error) {
             throw error;
