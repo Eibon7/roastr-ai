@@ -206,7 +206,63 @@ class AnalyzeToxicityWorker extends BaseWorker {
       };
     }
     
-    // If not auto-blocked, proceed with normal toxicity analysis
+    // SECOND: Check if comment matches user tolerance preferences (Issue #150)
+    // This reduces false positives by allowing content the user considers harmless
+    const toleranceData = await this.getUserTolerancePreferences(organization_id);
+    const toleranceResult = await this.checkTolerance(text || comment.original_text, toleranceData);
+    
+    if (toleranceResult.shouldIgnore) {
+      // Tolerance match: Set low toxicity and mark as ignored
+      const ignoredAnalysisResult = {
+        toxicity_score: 0.1, // Very low score to prevent roasting
+        severity_level: 'minimal',
+        categories: ['tolerance_match', 'user_preference', ...toleranceResult.matchedCategories],
+        service: 'tolerance_check',
+        tolerance_ignored: true,
+        tolerance_reason: toleranceResult.reason,
+        matched_tolerance_terms: toleranceResult.matchedTerms,
+        analysisTime: toleranceResult.analysisTime
+      };
+      
+      // Update comment with tolerance analysis results
+      await this.updateCommentAnalysis(comment_id, ignoredAnalysisResult);
+      
+      // Record usage for tolerance filtering
+      const textToAnalyze = text || comment.original_text;
+      const tokensUsed = this.estimateTokens(textToAnalyze);
+      await this.costControl.recordUsage(
+        organization_id,
+        platform,
+        'tolerance_filter',
+        {
+          commentId: comment_id,
+          tokensUsed,
+          analysisService: 'tolerance_check',
+          severity: 'minimal',
+          toxicityScore: 0.1,
+          categories: ignoredAnalysisResult.categories,
+          textLength: textToAnalyze.length,
+          analysisTime: toleranceResult.analysisTime,
+          matchedTerms: toleranceResult.matchedTerms
+        },
+        null,
+        1
+      );
+      
+      return {
+        success: true,
+        summary: `Comment ignored due to user tolerance preferences: ${toleranceResult.reason}`,
+        commentId: comment_id,
+        toxicityScore: 0.1,
+        severityLevel: 'minimal',
+        categories: ignoredAnalysisResult.categories,
+        service: 'tolerance_check',
+        toleranceIgnored: true,
+        matchedTerms: toleranceResult.matchedTerms
+      };
+    }
+    
+    // If not auto-blocked or tolerance-ignored, proceed with normal toxicity analysis
     const analysisResult = await this.analyzeToxicity(
       text || comment.original_text, 
       roastrPersona
@@ -482,6 +538,191 @@ class AnalyzeToxicityWorker extends BaseWorker {
       matchedCategories,
       analysisTime: Date.now() - startTime
     };
+  }
+  
+  /**
+   * Get user's tolerance preferences (Issue #150)
+   * These are topics the user considers harmless to them, reducing false positives
+   */
+  async getUserTolerancePreferences(organizationId) {
+    try {
+      // Get organization owner user ID
+      const { data: orgData, error: orgError } = await this.supabase
+        .from('organizations')
+        .select('owner_id')
+        .eq('id', organizationId)
+        .single();
+      
+      if (orgError || !orgData) {
+        this.log('warn', 'Could not get organization owner for tolerance check', {
+          organizationId,
+          error: orgError?.message
+        });
+        return null;
+      }
+      
+      // Get user's encrypted tolerance preferences
+      const { data: userData, error: userError } = await this.supabase
+        .from('users')
+        .select('lo_que_me_da_igual_encrypted')
+        .eq('id', orgData.owner_id)
+        .single();
+      
+      if (userError || !userData || !userData.lo_que_me_da_igual_encrypted) {
+        // User hasn't defined tolerance preferences - this is normal
+        return null;
+      }
+      
+      // Decrypt the tolerance data
+      try {
+        const decryptedTolerance = encryptionService.decrypt(userData.lo_que_me_da_igual_encrypted);
+        
+        this.log('debug', 'Retrieved user tolerance preferences for false positive reduction', {
+          organizationId,
+          userId: orgData.owner_id.substr(0, 8) + '...',
+          hasPreferences: !!decryptedTolerance
+        });
+        
+        return decryptedTolerance;
+        
+      } catch (decryptError) {
+        this.log('error', 'Failed to decrypt tolerance preferences', {
+          organizationId,
+          userId: orgData.owner_id.substr(0, 8) + '...',
+          error: decryptError.message
+        });
+        return null;
+      }
+      
+    } catch (error) {
+      this.log('error', 'Failed to get tolerance preferences', {
+        organizationId,
+        error: error.message
+      });
+      return null;
+    }
+  }
+  
+  /**
+   * Check if comment should be ignored based on user tolerance preferences (Issue #150)
+   * This reduces false positives by allowing content the user considers harmless
+   * IMPORTANT: This only runs if auto-block didn't trigger (intolerance has priority)
+   */
+  async checkTolerance(text, toleranceData) {
+    const startTime = Date.now();
+    
+    if (!toleranceData || typeof toleranceData !== 'string') {
+      return { 
+        shouldIgnore: false, 
+        reason: 'No tolerance preferences defined',
+        matchedTerms: [],
+        matchedCategories: [],
+        analysisTime: Date.now() - startTime
+      };
+    }
+    
+    // Normalize text for matching
+    const commentText = text.toLowerCase().trim();
+    
+    // Parse tolerance terms from user input
+    const toleranceTerms = toleranceData
+      .toLowerCase()
+      .split(/[,;]+/)
+      .map(term => term.trim())
+      .filter(term => term.length > 2); // Ignore very short terms
+    
+    let matchedTerms = [];
+    let matchedCategories = [];
+    let ignoreReason = '';
+    
+    // Check for exact matches (most reliable)
+    for (const term of toleranceTerms) {
+      if (commentText.includes(term)) {
+        matchedTerms.push(term);
+        
+        // Categorize the tolerance match
+        if (this.isAppearanceRelated(term)) {
+          matchedCategories.push('appearance_tolerance');
+        } else if (this.isGenericInsult(term)) {
+          matchedCategories.push('generic_insult_tolerance');
+        } else {
+          matchedCategories.push('custom_tolerance');
+        }
+      }
+    }
+    
+    // Check for semantic matches (more flexible matching)
+    if (matchedTerms.length === 0) {
+      const semanticMatches = this.checkSemanticToleranceMatches(commentText, toleranceTerms);
+      matchedTerms.push(...semanticMatches.terms);
+      matchedCategories.push(...semanticMatches.categories);
+    }
+    
+    const shouldIgnore = matchedTerms.length > 0;
+    
+    if (shouldIgnore) {
+      ignoreReason = `Matched user tolerance terms: ${matchedTerms.slice(0, 3).join(', ')}${matchedTerms.length > 3 ? ` (and ${matchedTerms.length - 3} more)` : ''}`;
+      
+      this.log('info', 'Comment ignored due to user tolerance preferences (false positive reduction)', {
+        matchedTerms: matchedTerms.slice(0, 5), // Log first 5 matches for debugging
+        matchedCategories,
+        textLength: text.length,
+        analysisTime: Date.now() - startTime
+      });
+    }
+    
+    return {
+      shouldIgnore,
+      reason: ignoreReason,
+      matchedTerms,
+      matchedCategories,
+      analysisTime: Date.now() - startTime
+    };
+  }
+  
+  /**
+   * Check if a term is related to appearance topics (common tolerance category)
+   */
+  isAppearanceRelated(term) {
+    const appearanceKeywords = [
+      'bald', 'calvo', 'hair', 'pelo', 'weight', 'peso', 'fat', 'gordo', 
+      'thin', 'flaco', 'height', 'alto', 'short', 'bajo', 'glasses', 'gafas'
+    ];
+    return appearanceKeywords.some(keyword => term.includes(keyword));
+  }
+  
+  /**
+   * Check if a term is a generic insult (common tolerance category)
+   */
+  isGenericInsult(term) {
+    const genericInsults = [
+      'stupid', 'tonto', 'idiot', 'idiota', 'dumb', 'fool', 'bobo',
+      'silly', 'crazy', 'loco', 'weird', 'raro'
+    ];
+    return genericInsults.some(keyword => term.includes(keyword));
+  }
+  
+  /**
+   * Check for semantic tolerance matches (less strict than intolerance matching)
+   */
+  checkSemanticToleranceMatches(text, toleranceTerms) {
+    const matchedTerms = [];
+    const matchedCategories = [];
+    
+    // Implement basic semantic matching for tolerance
+    // This is more lenient than intolerance matching since we want to catch more tolerance cases
+    for (const term of toleranceTerms) {
+      const words = term.split(' ');
+      const matchCount = words.filter(word => text.includes(word)).length;
+      
+      // If at least 60% of words match, consider it a semantic match
+      if (matchCount >= Math.max(1, Math.ceil(words.length * 0.6))) {
+        matchedTerms.push(term);
+        matchedCategories.push('semantic_tolerance_match');
+      }
+    }
+    
+    return { terms: matchedTerms, categories: matchedCategories };
   }
   
   /**

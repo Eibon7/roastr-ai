@@ -72,11 +72,16 @@ export default function Settings() {
     isLoading: true,
     isSaving: false,
     showForm: false,
-    // New intolerance fields
+    // Intolerance fields
     loQueNoTolero: '',
     isIntoleranceVisible: false,
     hasIntoleranceContent: false,
-    showIntoleranceForm: false
+    showIntoleranceForm: false,
+    // Tolerance fields (lo que me da igual)
+    loQueMeDaIgual: '',
+    isToleranceVisible: false,
+    hasToleranceContent: false,
+    showToleranceForm: false
   });
 
   useEffect(() => {
@@ -106,10 +111,14 @@ export default function Settings() {
               loQueMeDefine: roastrPersonaResult.data.loQueMeDefine || '',
               isVisible: roastrPersonaResult.data.isVisible || false,
               hasContent: roastrPersonaResult.data.hasContent || false,
-              // New intolerance fields
+              // Intolerance fields
               loQueNoTolero: roastrPersonaResult.data.loQueNoTolero || '',
               isIntoleranceVisible: roastrPersonaResult.data.isIntoleranceVisible || false,
               hasIntoleranceContent: roastrPersonaResult.data.hasIntoleranceContent || false,
+              // Tolerance fields (lo que me da igual)
+              loQueMeDaIgual: roastrPersonaResult.data.loQueMeDaIgual || '',
+              isToleranceVisible: roastrPersonaResult.data.isToleranceVisible || false,
+              hasToleranceContent: roastrPersonaResult.data.hasToleranceContent || false,
               isLoading: false
             }));
           }
@@ -347,7 +356,17 @@ export default function Settings() {
   // Roastr Persona handlers
   const handleSaveRoastrPersona = async (fieldType = 'identity') => {
     const isIdentity = fieldType === 'identity';
-    const text = isIdentity ? roastrPersona.loQueMeDefine : roastrPersona.loQueNoTolero;
+    const isIntolerance = fieldType === 'intolerance';
+    const isTolerance = fieldType === 'tolerance';
+    
+    let text;
+    if (isIdentity) {
+      text = roastrPersona.loQueMeDefine;
+    } else if (isIntolerance) {
+      text = roastrPersona.loQueNoTolero;
+    } else if (isTolerance) {
+      text = roastrPersona.loQueMeDaIgual;
+    }
     
     if (text.length > 300) {
       addNotification('El texto no puede exceder los 300 caracteres', 'error');
@@ -361,9 +380,12 @@ export default function Settings() {
       if (isIdentity) {
         payload.loQueMeDefine = text.trim() || null;
         payload.isVisible = roastrPersona.isVisible;
-      } else {
+      } else if (isIntolerance) {
         payload.loQueNoTolero = text.trim() || null;
         payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
+      } else if (isTolerance) {
+        payload.loQueMeDaIgual = text.trim() || null;
+        payload.isToleranceVisible = roastrPersona.isToleranceVisible;
       }
       
       const result = await apiClient.post('/user/roastr-persona', payload);
@@ -373,13 +395,22 @@ export default function Settings() {
           ...prev,
           hasContent: !!result.data.hasContent,
           hasIntoleranceContent: !!result.data.hasIntoleranceContent,
+          hasToleranceContent: !!result.data.hasToleranceContent,
           showForm: isIdentity ? false : prev.showForm,
-          showIntoleranceForm: !isIdentity ? false : prev.showIntoleranceForm
+          showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
+          showToleranceForm: isTolerance ? false : prev.showToleranceForm
         }));
-        addNotification(
-          `${isIdentity ? 'Definición personal' : 'Preferencias de contenido'} actualizada${isIdentity ? '' : 's'} correctamente`, 
-          'success'
-        );
+        
+        let successMessage;
+        if (isIdentity) {
+          successMessage = 'Definición personal actualizada correctamente';
+        } else if (isIntolerance) {
+          successMessage = 'Preferencias de contenido actualizadas correctamente';
+        } else if (isTolerance) {
+          successMessage = 'Tolerancias personales actualizadas correctamente';
+        }
+        
+        addNotification(successMessage, 'success');
       } else {
         addNotification(result.error || 'Error al guardar Roastr Persona', 'error');
       }
@@ -396,6 +427,7 @@ export default function Settings() {
     const confirmMessages = {
       'identity': '¿Estás seguro de que quieres eliminar tu definición personal? Esta acción no se puede deshacer.',
       'intolerance': '¿Estás seguro de que quieres eliminar tus preferencias de contenido? Esta acción no se puede deshacer.',
+      'tolerance': '¿Estás seguro de que quieres eliminar tus tolerancias personales? Esta acción no se puede deshacer.',
       'all': '¿Estás seguro de que quieres eliminar completamente tu Roastr Persona? Esta acción no se puede deshacer.'
     };
 
@@ -426,12 +458,20 @@ export default function Settings() {
             updates.showIntoleranceForm = false;
           }
           
+          if (fieldType === 'tolerance' || fieldType === 'all') {
+            updates.loQueMeDaIgual = '';
+            updates.isToleranceVisible = false;
+            updates.hasToleranceContent = false;
+            updates.showToleranceForm = false;
+          }
+          
           return updates;
         });
         
         const successMessages = {
           'identity': 'Definición personal eliminada',
           'intolerance': 'Preferencias de contenido eliminadas',
+          'tolerance': 'Tolerancias personales eliminadas',
           'all': 'Roastr Persona eliminada completamente'
         };
         
@@ -1233,6 +1273,156 @@ export default function Settings() {
                       </Button>
                     )}
                   </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Roastr Persona - Lo que me da igual */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Circle className="h-5 w-5 text-blue-500" />
+            <span>Roastr Persona - Lo que me da igual</span>
+            <Badge variant="outline" className="text-blue-600 border-blue-200">Reducir Falsos Positivos</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="text-sm text-blue-800 mb-2">
+              <strong>Personaliza tu experiencia</strong>
+            </div>
+            <div className="text-sm text-blue-700">
+              Especifica temas o comentarios que otros podrían considerar ofensivos, pero que para ti son inofensivos 
+              (ej: "bromas sobre calvos", "insultos genéricos como tonto"). Esto evita que se bloqueen o roasteen 
+              comentarios que realmente no te molestan.
+            </div>
+            <div className="text-xs text-blue-600 mt-2 font-medium">
+              ⚠️ Importante: Si algo aparece tanto en "Lo que no tolero" como aquí, siempre se priorizará el bloqueo por seguridad.
+            </div>
+          </div>
+
+          {roastrPersona.isLoading ? (
+            <div className="text-center py-4">
+              <div className="text-muted-foreground">Cargando...</div>
+            </div>
+          ) : (
+            <>
+              {roastrPersona.showToleranceForm ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Lo que me da igual (máx. 300 caracteres)
+                    </label>
+                    <textarea
+                      value={roastrPersona.loQueMeDaIgual}
+                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: e.target.value }))}
+                      placeholder="Escribe temas que otros considerarían ofensivos, pero que para ti no lo son (ej: bromas sobre calvos, insultos genéricos como tonto)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      rows={4}
+                      maxLength={300}
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="text-xs text-muted-foreground">
+                        {roastrPersona.loQueMeDaIgual.length}/300 caracteres
+                      </div>
+                      <div className={`text-xs ${roastrPersona.loQueMeDaIgual.length > 300 ? 'text-red-500' : 'text-green-500'}`}>
+                        {roastrPersona.loQueMeDaIgual.length <= 300 ? '✓' : '⚠ Excede el límite'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="toleranceVisible"
+                      checked={roastrPersona.isToleranceVisible}
+                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, isToleranceVisible: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <label htmlFor="toleranceVisible" className="text-sm text-muted-foreground">
+                      Hacer visible en mi perfil (recomendado: mantener privado)
+                    </label>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setRoastrPersona(prev => ({ 
+                        ...prev, 
+                        showToleranceForm: false,
+                        loQueMeDaIgual: prev.hasToleranceContent ? prev.loQueMeDaIgual : ''
+                      }))}
+                      disabled={roastrPersona.isSaving}
+                      size="sm"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={() => handleSaveRoastrPersona('tolerance')}
+                      disabled={roastrPersona.isSaving || roastrPersona.loQueMeDaIgual.length > 300}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {roastrPersona.isSaving ? 'Guardando...' : 'Guardar Tolerancias'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {roastrPersona.hasToleranceContent ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm font-medium text-green-800">
+                            ✅ Tolerancias personales definidas
+                          </div>
+                          <div className="text-sm text-green-700">
+                            Has configurado temas que consideras inofensivos para ti
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setRoastrPersona(prev => ({ ...prev, showToleranceForm: true }))}
+                            disabled={roastrPersona.isSaving}
+                            size="sm"
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleDeleteRoastrPersona('tolerance')}
+                            disabled={roastrPersona.isSaving}
+                            size="sm"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            Eliminar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Circle className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Define tus tolerancias personales
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                        Especifica qué comentarios o temas consideras inofensivos para ti, 
+                        aunque otros los consideren ofensivos. Esto reduce los falsos positivos.
+                      </p>
+                      <Button
+                        onClick={() => setRoastrPersona(prev => ({ ...prev, showToleranceForm: true }))}
+                        disabled={roastrPersona.isSaving}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Definir Tolerancias
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </>
