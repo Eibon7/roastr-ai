@@ -398,6 +398,79 @@ router.post('/update-password', async (req, res) => {
 });
 
 /**
+ * POST /api/auth/change-password
+ * Update password with current password verification (Issue #89)
+ */
+router.post('/change-password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Current password and new password are required'
+            });
+        }
+
+        if (currentPassword === newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'New password must be different from current password'
+            });
+        }
+
+        // Validate new password strength
+        const passwordValidation = validatePassword(newPassword);
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({
+                success: false,
+                error: passwordValidation.errors.join('. ')
+            });
+        }
+
+        const result = await authService.updatePasswordWithVerification(
+            accessToken, 
+            currentPassword, 
+            newPassword
+        );
+        
+        logger.info('Password changed successfully with verification:', { 
+            userId: req.user.id 
+        });
+        
+        res.json({
+            success: true,
+            message: 'Password changed successfully. Please use your new password for future logins.',
+            data: result
+        });
+
+    } catch (error) {
+        logger.error('Change password error:', error.message);
+        
+        // Provide specific error messages for better UX
+        let statusCode = 400;
+        let errorMessage = error.message;
+        
+        if (error.message.includes('Current password is incorrect')) {
+            statusCode = 401;
+            errorMessage = 'Current password is incorrect';
+        } else if (error.message.includes('Authentication failed')) {
+            statusCode = 401;
+            errorMessage = 'Authentication failed. Please log in again.';
+        } else if (error.message.includes('User not found')) {
+            statusCode = 404;
+            errorMessage = 'User not found';
+        }
+        
+        res.status(statusCode).json({
+            success: false,
+            error: errorMessage
+        });
+    }
+});
+
+/**
  * GET /api/auth/google
  * Initiate Google OAuth flow
  */
