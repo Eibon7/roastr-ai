@@ -2,15 +2,18 @@
  * Encryption Service for Sensitive Personal Data
  * Issue #148: Secure encryption/decryption for Roastr Persona fields
  * 
- * This service provides AES-256-GCM encryption for sensitive user data like
- * the "lo que me define" field in Roastr Persona feature.
+ * This service provides AES-256-CBC encryption with HMAC authentication 
+ * for sensitive user data like the "lo que me define" field in Roastr Persona feature.
  * 
  * Security Features:
- * - AES-256-GCM encryption (authenticated encryption)
+ * - AES-256-CBC encryption with HMAC-SHA256 authentication
  * - Unique IV per encryption operation
- * - HMAC verification for data integrity
+ * - HMAC verification for data integrity and authenticity
  * - Environment-based encryption key management
  * - Constant-time comparison to prevent timing attacks
+ * 
+ * Note: While GCM mode would provide authenticated encryption in a single operation,
+ * CBC + HMAC provides equivalent security when implemented correctly.
  */
 
 const crypto = require('crypto');
@@ -79,8 +82,8 @@ class EncryptionService {
             let encrypted = cipher.update(plaintext, 'utf8');
             encrypted = Buffer.concat([encrypted, cipher.final()]);
             
-            // For GCM, we would get auth tag, but createCipher doesn't support it
-            // So we'll use a simpler approach with HMAC for integrity
+            // Create HMAC for authentication (encrypt-then-MAC approach)
+            // This provides authenticity and integrity similar to GCM mode
             const hmac = crypto.createHmac('sha256', this.encryptionKey);
             hmac.update(Buffer.concat([iv, encrypted]));
             const tag = hmac.digest();
@@ -114,8 +117,15 @@ class EncryptionService {
             // Decode from base64
             const combined = Buffer.from(encryptedData, 'base64');
             
-            // Extract IV, encrypted data, and HMAC tag (32 bytes for SHA256)
+            // Validate minimum buffer length before slicing
             const tagLength = 32; // SHA256 HMAC is 32 bytes
+            const minLength = this.ivLength + tagLength + 1; // IV + tag + at least 1 byte of encrypted data
+            
+            if (combined.length < minLength) {
+                throw new Error('Invalid encrypted data format - insufficient length');
+            }
+            
+            // Extract IV, encrypted data, and HMAC tag (32 bytes for SHA256)
             const iv = combined.slice(0, this.ivLength);
             const tag = combined.slice(-tagLength);
             const encrypted = combined.slice(this.ivLength, -tagLength);

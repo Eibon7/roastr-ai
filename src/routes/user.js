@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
-const { logger } = require('../utils/logger');
+const { logger, SafeUtils } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
 const UserIntegrationsService = require('../services/mockIntegrationsService');
 const { flags } = require('../config/flags');
@@ -19,6 +19,11 @@ const {
   deletionCancellationLimiter,
   gdprGlobalLimiter
 } = require('../middleware/gdprRateLimiter');
+const {
+  roastrPersonaReadLimiter,
+  roastrPersonaWriteLimiter,
+  roastrPersonaDeleteLimiter
+} = require('../middleware/roastrPersonaRateLimiter');
 
 const router = express.Router();
 const integrationsService = new UserIntegrationsService();
@@ -88,7 +93,7 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
             // Simulate OAuth process with delay
             setTimeout(() => {
                 logger.info('Mock OAuth completed for platform:', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     platform
                 });
             }, 1000);
@@ -450,7 +455,7 @@ router.delete('/account', authenticateToken, gdprGlobalLimiter, accountDeletionL
                     }, req);
 
                     logger.warn('Account deletion blocked - invalid password:', { 
-                        userId: userId.substr(0, 8) + '...',
+                        userId: SafeUtils.safeUserIdPrefix(userId),
                         email: userData.email,
                         error: passwordError.message 
                     });
@@ -470,7 +475,7 @@ router.delete('/account', authenticateToken, gdprGlobalLimiter, accountDeletionL
                 }, req);
 
                 logger.info('Account deletion - password verified:', { 
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     email: userData.email
                 });
 
@@ -485,7 +490,7 @@ router.delete('/account', authenticateToken, gdprGlobalLimiter, accountDeletionL
                 }, req);
 
                 logger.error('Account deletion - password validation failed:', { 
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: validationError.message 
                 });
 
@@ -497,7 +502,7 @@ router.delete('/account', authenticateToken, gdprGlobalLimiter, accountDeletionL
         } else {
             // Mock mode: Skip real password validation but still log for audit trail
             logger.info('Mock mode: Skipping password validation for account deletion', { 
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 email: userData.email 
             });
             
@@ -601,13 +606,13 @@ router.delete('/account', authenticateToken, gdprGlobalLimiter, accountDeletionL
             });
         } catch (emailError) {
             logger.warn('Failed to send deletion confirmation email', {
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 error: emailError.message
             });
         }
 
         logger.info('Account deletion requested', {
-            userId: userId.substr(0, 8) + '...',
+            userId: SafeUtils.safeUserIdPrefix(userId),
             email: userData.email,
             requestId: deletionRequest.id,
             scheduledDeletionAt: scheduledDeletionAt.toISOString()
@@ -708,13 +713,13 @@ router.post('/account/deletion/cancel', authenticateToken, gdprGlobalLimiter, de
             });
         } catch (emailError) {
             logger.warn('Failed to send deletion cancellation email', {
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 error: emailError.message
             });
         }
 
         logger.info('Account deletion cancelled', {
-            userId: userId.substr(0, 8) + '...',
+            userId: SafeUtils.safeUserIdPrefix(userId),
             requestId: deletionRequest.id,
             reason: reason || 'User requested'
         });
@@ -843,7 +848,7 @@ router.get('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimit
         const downloadUrl = `${req.protocol}://${req.get('host')}${exportResult.downloadUrl}`;
 
         logger.info('GDPR data export generated', {
-            userId: userId.substr(0, 8) + '...',
+            userId: SafeUtils.safeUserIdPrefix(userId),
             filename: exportResult.filename,
             size: exportResult.size
         });
@@ -915,7 +920,7 @@ router.get('/data-export/download/:token', gdprGlobalLimiter, dataDownloadLimite
         fileStream.on('end', () => {
             logger.info('GDPR data export downloaded', {
                 filename,
-                token: token.substr(0, 8) + '...'
+                token: SafeUtils.safeUserIdPrefix(token, 8)
             });
         });
 
@@ -978,7 +983,7 @@ router.get('/gdpr-audit', authenticateToken, async (req, res) => {
  * GET /api/user/roastr-persona
  * Get user's Roastr Persona configuration including "lo que me define" and "lo que no tolero"
  */
-router.get('/roastr-persona', authenticateToken, async (req, res) => {
+router.get('/roastr-persona', authenticateToken, roastrPersonaReadLimiter, async (req, res) => {
     try {
         const userId = req.user.id;
         const userClient = createUserClient(req.accessToken);
@@ -1014,7 +1019,7 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
                 loQueMeDefine = encryptionService.decrypt(userData.lo_que_me_define_encrypted);
             } catch (decryptError) {
                 logger.error('Failed to decrypt lo_que_me_define:', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: decryptError.message
                 });
                 // Return empty if decryption fails
@@ -1029,7 +1034,7 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
                 loQueNoTolero = encryptionService.decrypt(userData.lo_que_no_tolero_encrypted);
             } catch (decryptError) {
                 logger.error('Failed to decrypt lo_que_no_tolero:', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: decryptError.message
                 });
                 // Return empty if decryption fails
@@ -1044,7 +1049,7 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
                 loQueMeDaIgual = encryptionService.decrypt(userData.lo_que_me_da_igual_encrypted);
             } catch (decryptError) {
                 logger.error('Failed to decrypt lo_que_me_da_igual:', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: decryptError.message
                 });
                 // Return empty if decryption fails
@@ -1088,7 +1093,7 @@ router.get('/roastr-persona', authenticateToken, async (req, res) => {
  * POST /api/user/roastr-persona
  * Save or update user's Roastr Persona including "lo que me define" and "lo que no tolero"
  */
-router.post('/roastr-persona', authenticateToken, async (req, res) => {
+router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, async (req, res) => {
     try {
         const { 
             loQueMeDefine, 
@@ -1231,7 +1236,7 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
                     }
                 } catch (encryptError) {
                     logger.error('Failed to encrypt lo_que_me_define:', {
-                        userId: userId.substr(0, 8) + '...',
+                        userId: SafeUtils.safeUserIdPrefix(userId),
                         error: encryptError.message
                     });
                     return res.status(500).json({
@@ -1262,7 +1267,7 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
                     }
                 } catch (encryptError) {
                     logger.error('Failed to encrypt lo_que_no_tolero:', {
-                        userId: userId.substr(0, 8) + '...',
+                        userId: SafeUtils.safeUserIdPrefix(userId),
                         error: encryptError.message
                     });
                     return res.status(500).json({
@@ -1293,7 +1298,7 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
                     }
                 } catch (encryptError) {
                     logger.error('Failed to encrypt lo_que_me_da_igual:', {
-                        userId: userId.substr(0, 8) + '...',
+                        userId: SafeUtils.safeUserIdPrefix(userId),
                         error: encryptError.message
                     });
                     return res.status(500).json({
@@ -1312,31 +1317,20 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             });
         }
 
-        // Update the user record
-        const { data: updatedUser, error: updateError } = await userClient
-            .from('users')
-            .update(updateData)
-            .eq('id', userId)
-            .select(`
-                id,
-                lo_que_me_define_encrypted,
-                lo_que_me_define_visible,
-                lo_que_me_define_created_at,
-                lo_que_me_define_updated_at,
-                lo_que_no_tolero_encrypted,
-                lo_que_no_tolero_visible,
-                lo_que_no_tolero_created_at,
-                lo_que_no_tolero_updated_at,
-                lo_que_me_da_igual_encrypted,
-                lo_que_me_da_igual_visible,
-                lo_que_me_da_igual_created_at,
-                lo_que_me_da_igual_updated_at
-            `)
-            .single();
+        // Use transactional update function for data consistency (Issue #154)
+        const { data: updateResult, error: updateError } = await userClient
+            .rpc('update_roastr_persona_transactional', {
+                p_user_id: userId,
+                p_update_data: updateData
+            });
 
-        if (updateError) {
-            throw new Error(`Failed to update Roastr Persona: ${updateError.message}`);
+        if (updateError || !updateResult?.success) {
+            const errorMessage = updateError?.message || updateResult?.error || 'Unknown error';
+            throw new Error(`Failed to update Roastr Persona: ${errorMessage}`);
         }
+
+        // Extract updated user data from the result
+        const updatedUser = updateResult.updated_fields;
 
         // Generate embeddings for updated fields (Issue #151)
         await generateEmbeddingsForPersona(userId, {
@@ -1347,7 +1341,7 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
 
         // Log the update for audit trail (the triggers will handle detailed logging)
         logger.info('Roastr Persona updated:', {
-            userId: userId.substr(0, 8) + '...',
+            userId: SafeUtils.safeUserIdPrefix(userId),
             hasIdentityContent: !!updatedUser.lo_que_me_define_encrypted,
             hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted,
             hasToleranceContent: !!updatedUser.lo_que_me_da_igual_encrypted,
@@ -1424,7 +1418,7 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
  * Delete user's Roastr Persona content (privacy feature)
  * Query params: ?field=identity|intolerance|tolerance|all (default: all)
  */
-router.delete('/roastr-persona', authenticateToken, async (req, res) => {
+router.delete('/roastr-persona', authenticateToken, roastrPersonaDeleteLimiter, async (req, res) => {
     try {
         const userId = req.user.id;
         const userClient = createUserClient(req.accessToken);
@@ -1460,25 +1454,27 @@ router.delete('/roastr-persona', authenticateToken, async (req, res) => {
             updateData.lo_que_me_da_igual_updated_at = timestamp;
         }
 
-        // Clear the encrypted fields and reset timestamps
-        const { data: updatedUser, error: updateError } = await userClient
-            .from('users')
-            .update(updateData)
-            .eq('id', userId)
-            .select(`
-                id, 
-                lo_que_me_define_updated_at,
-                lo_que_no_tolero_updated_at,
-                lo_que_me_da_igual_updated_at
-            `)
-            .single();
+        // Use transactional delete function for data consistency (Issue #154)
+        const { data: deleteResult, error: deleteError } = await userClient
+            .rpc('delete_roastr_persona_transactional', {
+                p_user_id: userId,
+                p_field_type: field
+            });
 
-        if (updateError) {
-            throw new Error(`Failed to delete Roastr Persona: ${updateError.message}`);
+        if (deleteError || !deleteResult?.success) {
+            const errorMessage = deleteError?.message || deleteResult?.error || 'Unknown error';
+            throw new Error(`Failed to delete Roastr Persona: ${errorMessage}`);
         }
+        
+        // Extract field-specific timestamps from the result
+        const updatedUser = {
+            lo_que_me_define_updated_at: field === 'identity' || field === 'all' ? timestamp : null,
+            lo_que_no_tolero_updated_at: field === 'intolerance' || field === 'all' ? timestamp : null,
+            lo_que_me_da_igual_updated_at: field === 'tolerance' || field === 'all' ? timestamp : null
+        };
 
         logger.info('Roastr Persona deleted:', {
-            userId: userId.substr(0, 8) + '...',
+            userId: SafeUtils.safeUserIdPrefix(userId),
             field: field,
             deletedAt: timestamp,
             fieldsCleared: Object.keys(updateData).filter(key => key.includes('encrypted'))
@@ -1537,14 +1533,14 @@ async function generateEmbeddingsForPersona(userId, personaData, userClient) {
                     updateData.lo_que_me_define_embedding = JSON.stringify(termsWithEmbeddings);
                     
                     logger.debug('Generated identity embeddings', {
-                        userId: userId.substr(0, 8) + '...',
+                        userId: SafeUtils.safeUserIdPrefix(userId),
                         termsCount: termsWithEmbeddings.length,
                         textLength: loQueMeDefine.length
                     });
                 }
             } catch (error) {
                 logger.error('Failed to generate identity embeddings', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: error.message,
                     textLength: loQueMeDefine.length
                 });
@@ -1564,14 +1560,14 @@ async function generateEmbeddingsForPersona(userId, personaData, userClient) {
                     updateData.lo_que_no_tolero_embedding = JSON.stringify(termsWithEmbeddings);
                     
                     logger.debug('Generated intolerance embeddings', {
-                        userId: userId.substr(0, 8) + '...',
+                        userId: SafeUtils.safeUserIdPrefix(userId),
                         termsCount: termsWithEmbeddings.length,
                         textLength: loQueNoTolero.length
                     });
                 }
             } catch (error) {
                 logger.error('Failed to generate intolerance embeddings', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: error.message,
                     textLength: loQueNoTolero.length
                 });
@@ -1591,14 +1587,14 @@ async function generateEmbeddingsForPersona(userId, personaData, userClient) {
                     updateData.lo_que_me_da_igual_embedding = JSON.stringify(termsWithEmbeddings);
                     
                     logger.debug('Generated tolerance embeddings', {
-                        userId: userId.substr(0, 8) + '...',
+                        userId: SafeUtils.safeUserIdPrefix(userId),
                         termsCount: termsWithEmbeddings.length,
                         textLength: loQueMeDaIgual.length
                     });
                 }
             } catch (error) {
                 logger.error('Failed to generate tolerance embeddings', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: error.message,
                     textLength: loQueMeDaIgual.length
                 });
@@ -1618,14 +1614,14 @@ async function generateEmbeddingsForPersona(userId, personaData, userClient) {
 
             if (embeddingUpdateError) {
                 logger.error('Failed to save embeddings to database', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     error: embeddingUpdateError.message,
                     updateFields: Object.keys(updateData)
                 });
                 // Don't fail the entire request for embedding storage errors
             } else {
                 logger.info('Successfully generated and stored persona embeddings', {
-                    userId: userId.substr(0, 8) + '...',
+                    userId: SafeUtils.safeUserIdPrefix(userId),
                     embeddingsGenerated: Object.keys(updateData).filter(key => key.includes('embedding') && updateData[key] !== null).length,
                     embeddingsCleared: Object.keys(updateData).filter(key => key.includes('embedding') && updateData[key] === null).length,
                     model: updateData.embeddings_model,
@@ -1636,7 +1632,7 @@ async function generateEmbeddingsForPersona(userId, personaData, userClient) {
 
     } catch (error) {
         logger.error('Unexpected error in embedding generation', {
-            userId: userId.substr(0, 8) + '...',
+            userId: SafeUtils.safeUserIdPrefix(userId),
             error: error.message,
             stack: error.stack
         });

@@ -2,7 +2,7 @@ const BaseWorker = require('./BaseWorker');
 const DataExportService = require('../services/dataExportService');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
-const { logger } = require('../utils/logger');
+const { logger, SafeUtils } = require('../utils/logger');
 
 /**
  * Account Deletion Worker for GDPR Compliance
@@ -156,7 +156,7 @@ class AccountDeletionWorker extends BaseWorker {
     logger.info('Processing account deletion', {
       workerName: this.workerName,
       requestId,
-      userId: userId.substr(0, 8) + '...',
+      userId: SafeUtils.safeUserIdPrefix(userId),
       userEmail: deletionRequest.user_email
     });
 
@@ -183,7 +183,7 @@ class AccountDeletionWorker extends BaseWorker {
       // Step 1: Export user data if not already done
       let dataExportResult = null;
       if (!deletionRequest.data_exported_at) {
-        logger.info('Generating final data export before deletion', { requestId, userId: userId.substr(0, 8) + '...' });
+        logger.info('Generating final data export before deletion', { requestId, userId: SafeUtils.safeUserIdPrefix(userId) });
         
         dataExportResult = await this.dataExportService.exportUserData(userId);
         
@@ -208,7 +208,7 @@ class AccountDeletionWorker extends BaseWorker {
       }
 
       // Step 2: Anonymize user data for compliance
-      logger.info('Anonymizing user data for retention compliance', { requestId, userId: userId.substr(0, 8) + '...' });
+      logger.info('Anonymizing user data for retention compliance', { requestId, userId: SafeUtils.safeUserIdPrefix(userId) });
       
       await this.dataExportService.anonymizeUserData(userId);
       
@@ -230,7 +230,7 @@ class AccountDeletionWorker extends BaseWorker {
       });
 
       // Step 3: Perform complete data deletion
-      logger.info('Performing complete data deletion', { requestId, userId: userId.substr(0, 8) + '...' });
+      logger.info('Performing complete data deletion', { requestId, userId: SafeUtils.safeUserIdPrefix(userId) });
       
       await this.dataExportService.deleteUserData(userId);
 
@@ -275,7 +275,7 @@ class AccountDeletionWorker extends BaseWorker {
       logger.info('Account deletion completed successfully', {
         workerName: this.workerName,
         requestId,
-        originalUserId: userId.substr(0, 8) + '...',
+        originalUserId: SafeUtils.safeUserIdPrefix(userId),
         processingTimeMs: processingTime,
         dataExportGenerated: !!dataExportResult?.success
       });
@@ -284,7 +284,7 @@ class AccountDeletionWorker extends BaseWorker {
       logger.error('Account deletion processing failed', {
         workerName: this.workerName,
         requestId,
-        userId: userId.substr(0, 8) + '...',
+        userId: SafeUtils.safeUserIdPrefix(userId),
         error: error.message,
         processingTimeMs: Date.now() - startTime
       });

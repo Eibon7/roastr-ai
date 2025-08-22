@@ -1,6 +1,6 @@
 const JSZip = require('jszip');
 const { supabaseServiceClient } = require('../config/supabase');
-const { logger } = require('../utils/logger');
+const { logger, SafeUtils } = require('../utils/logger');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs').promises;
@@ -16,7 +16,7 @@ class DataExportService {
      */
     async exportUserData(userId) {
         try {
-            logger.info('Starting GDPR data export', { userId: userId.substr(0, 8) + '...' });
+            logger.info('Starting GDPR data export', { userId: SafeUtils.safeUserIdPrefix(userId) });
 
             // Collect all user data
             const userData = await this.collectUserData(userId);
@@ -25,14 +25,14 @@ class DataExportService {
             const zipBuffer = await this.createZipFile(userData, userId);
             
             // Save to temp directory
-            const filename = `user-data-export-${userId.substr(0, 8)}-${Date.now()}.zip`;
+            const filename = `user-data-export-${SafeUtils.safeUserIdPrefix(userId, 8).replace('...', '')}-${Date.now()}.zip`;
             const filepath = await this.saveExportFile(zipBuffer, filename);
             
             // Generate signed URL for download
             const downloadUrl = await this.generateSignedDownloadUrl(filepath, filename);
             
             logger.info('GDPR data export completed', { 
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 filename,
                 size: zipBuffer.length
             });
@@ -47,7 +47,7 @@ class DataExportService {
 
         } catch (error) {
             logger.error('Data export failed', { 
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 error: error.message 
             });
             throw error;
@@ -177,7 +177,7 @@ class DataExportService {
 
         } catch (error) {
             logger.error('Error collecting user data', { 
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 error: error.message 
             });
             throw error;
@@ -477,7 +477,7 @@ Generated on: ${new Date().toISOString()}
 
         } catch (error) {
             logger.error('Error anonymizing user data', { 
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 error: error.message 
             });
             throw error;
@@ -532,7 +532,7 @@ Generated on: ${new Date().toISOString()}
 
         } catch (error) {
             logger.error('Error deleting user data', { 
-                userId: userId.substr(0, 8) + '...',
+                userId: SafeUtils.safeUserIdPrefix(userId),
                 error: error.message 
             });
             throw error;

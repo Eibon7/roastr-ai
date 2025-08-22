@@ -104,7 +104,7 @@ const dataDownloadLimiter = rateLimit({
     // For download endpoint, we use IP + token prefix for rate limiting
     const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
     const token = req.params.token || 'no-token';
-    const tokenPrefix = token.substr(0, 8);
+    const tokenPrefix = token && typeof token === 'string' && token.length >= 8 ? token.substr(0, 8) : 'no-token';
     return `gdpr_download:${ip}:${tokenPrefix}`;
   },
   handler: (req, res) => {
