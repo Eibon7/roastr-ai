@@ -3,10 +3,71 @@ const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 
+// Simple in-memory cache for analytics data (Issue #162)
+const analyticsCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes TTL
+
+// Cache helper functions
+const getCacheKey = (endpoint, userId, params) => {
+    return `${endpoint}:${userId}:${JSON.stringify(params)}`;
+};
+
+const getCachedData = (key) => {
+    const cached = analyticsCache.get(key);
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+        return cached.data;
+    }
+    analyticsCache.delete(key); // Remove expired entry
+    return null;
+};
+
+const setCachedData = (key, data) => {
+    // Prevent memory leaks by limiting cache size
+    if (analyticsCache.size > 1000) {
+        // Remove oldest entries
+        const entries = Array.from(analyticsCache.entries()).slice(0, 100);
+        entries.forEach(([oldKey]) => analyticsCache.delete(oldKey));
+    }
+    
+    analyticsCache.set(key, {
+        data,
+        timestamp: Date.now()
+    });
+};
+
 const router = express.Router();
+
+// Rate limiting for analytics endpoints to prevent abuse (Issue #162)
+const analyticsRateLimit = require('express-rate-limit')({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: (req) => {
+        // Plan-based rate limits
+        const userPlan = req.user?.plan || 'free';
+        switch (userPlan) {
+            case 'free': return 10; // 10 requests per hour
+            case 'pro': return 50; // 50 requests per hour  
+            case 'creator_plus': return 200; // 200 requests per hour
+            default: return 10;
+        }
+    },
+    message: {
+        success: false,
+        error: 'Too many analytics requests. Please try again later.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => `analytics:${req.ip}:${req.user?.id || 'anonymous'}`,
+    skip: (req) => {
+        // Skip rate limiting in test environment
+        return process.env.NODE_ENV === 'test';
+    }
+});
 
 // All routes require authentication
 router.use(authenticateToken);
+
+// Apply rate limiting to analytics endpoints
+router.use(analyticsRateLimit);
 
 /**
  * GET /api/analytics/config-performance
@@ -477,12 +538,46 @@ router.get('/usage-trends', async (req, res) => {
 router.get('/roastr-persona-insights', async (req, res) => {
     try {
         const { user } = req;
-        const { days = 30 } = req.query;
+        const { days = 30, limit = 1000, offset = 0 } = req.query;
 
-        // Get user's organization
+        // Issue #162: Critical input validation and security improvements
+        // Validate and sanitize the days parameter to prevent DoS attacks
+        const sanitizedDays = Math.min(Math.max(parseInt(days) || 30, 1), 365);
+        
+        // Validate and constrain pagination parameters
+        const maxLimit = 5000; // Maximum allowed limit to prevent memory exhaustion
+        const sanitizedLimit = Math.min(Math.max(parseInt(limit) || 1000, 10), maxLimit);
+        const sanitizedOffset = Math.max(parseInt(offset) || 0, 0);
+
+        // Issue #162: Check cache for frequently accessed data
+        const cacheKey = getCacheKey('roastr-persona-insights', user.id, {
+            days: sanitizedDays,
+            limit: sanitizedLimit,
+            offset: sanitizedOffset
+        });
+        
+        const cachedResult = getCachedData(cacheKey);
+        if (cachedResult) {
+            logger.info('Returning cached Roastr Persona analytics', {
+                userId: user.id,
+                cacheHit: true
+            });
+            return res.status(200).json(cachedResult);
+        }
+
+        // Log analytics request for monitoring (Issue #162: abuse detection)
+        logger.info('Roastr Persona analytics request', {
+            userId: user.id,
+            days: sanitizedDays,
+            limit: sanitizedLimit,
+            offset: sanitizedOffset,
+            timestamp: new Date().toISOString()
+        });
+
+        // Get user's organization with plan information for dynamic limits
         const { data: orgData } = await supabaseServiceClient
             .from('organizations')
-            .select('id')
+            .select('id, plan_id')
             .eq('owner_id', user.id)
             .single();
 
@@ -493,8 +588,17 @@ router.get('/roastr-persona-insights', async (req, res) => {
             });
         }
 
+        // Apply plan-based limits (Issue #162: prevent resource abuse)
+        let effectiveLimit = sanitizedLimit;
+        if (orgData.plan_id === 'free') {
+            effectiveLimit = Math.min(sanitizedLimit, 100); // Free plan: max 100 records
+        } else if (orgData.plan_id === 'pro') {
+            effectiveLimit = Math.min(sanitizedLimit, 1000); // Pro plan: max 1000 records
+        }
+        // creator_plus: no additional limit beyond maxLimit
+
         const dateThreshold = new Date();
-        dateThreshold.setDate(dateThreshold.getDate() - parseInt(days));
+        dateThreshold.setDate(dateThreshold.getDate() - sanitizedDays);
 
         // Get user's current Roastr Persona data
         const { data: personaData } = await supabaseServiceClient
@@ -519,7 +623,7 @@ router.get('/roastr-persona-insights', async (req, res) => {
             .eq('id', user.id)
             .single();
 
-        // Get responses generated using Roastr Persona data
+        // Get responses generated using Roastr Persona data (Issue #162: improved pagination)
         const { data: personaResponses, error } = await supabaseServiceClient
             .from('responses')
             .select(`
@@ -543,7 +647,7 @@ router.get('/roastr-persona-insights', async (req, res) => {
             .gte('created_at', dateThreshold.toISOString())
             .not('persona_fields_used', 'is', null)
             .order('created_at', { ascending: false })
-            .limit(1000);
+            .range(sanitizedOffset, sanitizedOffset + effectiveLimit - 1);
 
         if (error) {
             throw error;
@@ -700,15 +804,20 @@ router.get('/roastr-persona-insights', async (req, res) => {
                 });
             });
 
-        res.status(200).json({
+        const responseData = {
             success: true,
             data: {
-                period_days: parseInt(days),
+                period_days: sanitizedDays,
                 persona_status: personaStatus,
                 persona_analytics: personaAnalytics,
                 recommendations: generatePersonaRecommendations(personaStatus, personaAnalytics)
             }
-        });
+        };
+
+        // Issue #162: Cache the response for future requests
+        setCachedData(cacheKey, responseData);
+
+        res.status(200).json(responseData);
 
     } catch (error) {
         logger.error('Get Roastr Persona insights error:', error.message);
