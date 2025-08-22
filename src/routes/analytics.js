@@ -1,15 +1,29 @@
 const express = require('express');
+const crypto = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 
-// Simple in-memory cache for analytics data (Issue #162)
+// Enhanced secure in-memory cache for analytics data (Issue #164)
 const analyticsCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes TTL
+const MAX_CACHE_SIZE = 1000; // Maximum cache entries
 
-// Cache helper functions
+// Issue #164: Secure cache key generation using SHA-256 hashing
 const getCacheKey = (endpoint, userId, params) => {
-    return `${endpoint}:${userId}:${JSON.stringify(params)}`;
+    // Create a normalized string that includes all relevant cache parameters
+    const keyData = {
+        endpoint,
+        userId,
+        params: params || {}
+    };
+    
+    // Convert to JSON and create SHA-256 hash to prevent sensitive data exposure
+    const keyString = JSON.stringify(keyData, Object.keys(keyData).sort());
+    const hash = crypto.createHash('sha256').update(keyString).digest('hex');
+    
+    // Use first 32 characters for shorter keys while maintaining security
+    return `analytics_${hash.substring(0, 32)}`;
 };
 
 const getCachedData = (key) => {
@@ -21,34 +35,143 @@ const getCachedData = (key) => {
     return null;
 };
 
+// Issue #164: LRU cache eviction policy for better memory management
 const setCachedData = (key, data) => {
-    // Prevent memory leaks by limiting cache size
-    if (analyticsCache.size > 1000) {
-        // Remove oldest entries
-        const entries = Array.from(analyticsCache.entries()).slice(0, 100);
-        entries.forEach(([oldKey]) => analyticsCache.delete(oldKey));
+    // Implement LRU eviction when cache is full
+    if (analyticsCache.size >= MAX_CACHE_SIZE) {
+        // Find and remove the oldest entry (LRU eviction)
+        let oldestKey = null;
+        let oldestTime = Date.now();
+        
+        for (const [cacheKey, cacheValue] of analyticsCache.entries()) {
+            if (cacheValue.timestamp < oldestTime) {
+                oldestTime = cacheValue.timestamp;
+                oldestKey = cacheKey;
+            }
+        }
+        
+        if (oldestKey) {
+            analyticsCache.delete(oldestKey);
+            logger.debug('LRU cache eviction', {
+                evictedKey: oldestKey,
+                cacheSize: analyticsCache.size,
+                evictedAge: Date.now() - oldestTime
+            });
+        }
     }
     
+    // Set cache entry with current timestamp
     analyticsCache.set(key, {
         data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        accessCount: 1
     });
 };
 
 const router = express.Router();
 
+// Issue #164: Unified plan validation logic
+const PLAN_LIMITS = {
+    free: {
+        maxLimit: 100,
+        rateLimit: 10
+    },
+    pro: {
+        maxLimit: 1000,
+        rateLimit: 50
+    },
+    creator_plus: {
+        maxLimit: 5000,
+        rateLimit: 200
+    }
+};
+
+/**
+ * Validate and normalize plan ID
+ * @param {string} planId - Plan ID to validate
+ * @returns {string} Normalized plan ID or 'free' as default
+ */
+const validatePlanId = (planId) => {
+    if (!planId || typeof planId !== 'string') {
+        return 'free';
+    }
+    
+    const normalizedPlan = planId.toLowerCase().trim();
+    return PLAN_LIMITS.hasOwnProperty(normalizedPlan) ? normalizedPlan : 'free';
+};
+
+/**
+ * Get plan-based limits for a given plan
+ * @param {string} planId - Plan ID
+ * @returns {Object} Plan limits object
+ */
+const getPlanLimits = (planId) => {
+    const validatedPlan = validatePlanId(planId);
+    return PLAN_LIMITS[validatedPlan] || PLAN_LIMITS.free;
+};
+
+// Issue #164: Robust input type validation
+/**
+ * Validate and sanitize integer input
+ * @param {any} value - Input value to validate
+ * @param {number} defaultValue - Default value if invalid
+ * @param {number} min - Minimum allowed value
+ * @param {number} max - Maximum allowed value
+ * @returns {number} Validated integer
+ */
+const validateInteger = (value, defaultValue, min = Number.MIN_SAFE_INTEGER, max = Number.MAX_SAFE_INTEGER) => {
+    // Handle null, undefined, empty string
+    if (value === null || value === undefined || value === '') {
+        return defaultValue;
+    }
+    
+    // Try to parse as integer
+    const parsed = parseInt(value, 10);
+    
+    // Check if parsing was successful and value is a valid number
+    if (isNaN(parsed) || !isFinite(parsed)) {
+        logger.warn('Invalid integer input received', { 
+            value, 
+            type: typeof value, 
+            defaultUsed: defaultValue 
+        });
+        return defaultValue;
+    }
+    
+    // Apply min/max constraints
+    return Math.min(Math.max(parsed, min), max);
+};
+
+/**
+ * Validate string input with length constraints
+ * @param {any} value - Input value to validate
+ * @param {string} defaultValue - Default value if invalid
+ * @param {number} maxLength - Maximum allowed length
+ * @returns {string} Validated string
+ */
+const validateString = (value, defaultValue = '', maxLength = 1000) => {
+    if (typeof value !== 'string') {
+        logger.warn('Invalid string input received', { 
+            value, 
+            type: typeof value, 
+            defaultUsed: defaultValue 
+        });
+        return defaultValue;
+    }
+    
+    // Trim whitespace and apply length constraint
+    const trimmed = value.trim();
+    return trimmed.length > maxLength ? trimmed.substring(0, maxLength) : trimmed;
+};
+
 // Rate limiting for analytics endpoints to prevent abuse (Issue #162)
 const analyticsRateLimit = require('express-rate-limit')({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: (req) => {
-        // Plan-based rate limits
+        // Issue #164: Use unified plan validation for rate limits
         const userPlan = req.user?.plan || 'free';
-        switch (userPlan) {
-            case 'free': return 10; // 10 requests per hour
-            case 'pro': return 50; // 50 requests per hour  
-            case 'creator_plus': return 200; // 200 requests per hour
-            default: return 10;
-        }
+        const planLimits = getPlanLimits(userPlan);
+        return planLimits.rateLimit;
     },
     message: {
         success: false,
@@ -540,14 +663,10 @@ router.get('/roastr-persona-insights', async (req, res) => {
         const { user } = req;
         const { days = 30, limit = 1000, offset = 0 } = req.query;
 
-        // Issue #162: Critical input validation and security improvements
-        // Validate and sanitize the days parameter to prevent DoS attacks
-        const sanitizedDays = Math.min(Math.max(parseInt(days) || 30, 1), 365);
-        
-        // Validate and constrain pagination parameters
-        const maxLimit = 5000; // Maximum allowed limit to prevent memory exhaustion
-        const sanitizedLimit = Math.min(Math.max(parseInt(limit) || 1000, 10), maxLimit);
-        const sanitizedOffset = Math.max(parseInt(offset) || 0, 0);
+        // Issue #164: Use robust input type validation
+        const sanitizedDays = validateInteger(days, 30, 1, 365);
+        const sanitizedLimit = validateInteger(limit, 1000, 10, 5000);
+        const sanitizedOffset = validateInteger(offset, 0, 0, Number.MAX_SAFE_INTEGER);
 
         // Issue #162: Check cache for frequently accessed data
         const cacheKey = getCacheKey('roastr-persona-insights', user.id, {
@@ -588,14 +707,9 @@ router.get('/roastr-persona-insights', async (req, res) => {
             });
         }
 
-        // Apply plan-based limits (Issue #162: prevent resource abuse)
-        let effectiveLimit = sanitizedLimit;
-        if (orgData.plan_id === 'free') {
-            effectiveLimit = Math.min(sanitizedLimit, 100); // Free plan: max 100 records
-        } else if (orgData.plan_id === 'pro') {
-            effectiveLimit = Math.min(sanitizedLimit, 1000); // Pro plan: max 1000 records
-        }
-        // creator_plus: no additional limit beyond maxLimit
+        // Issue #164: Apply plan-based limits using unified validation
+        const planLimits = getPlanLimits(orgData.plan_id);
+        const effectiveLimit = Math.min(sanitizedLimit, planLimits.maxLimit);
 
         const dateThreshold = new Date();
         dateThreshold.setDate(dateThreshold.getDate() - sanitizedDays);
