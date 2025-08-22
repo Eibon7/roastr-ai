@@ -6,7 +6,7 @@
  */
 
 const { flags } = require('../config/flags');
-const { logger } = require('../utils/logger');
+const { logger, SafeUtils } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const crypto = require('crypto');
 const fs = require('fs').promises;
@@ -58,7 +58,7 @@ class UserIntegrationsService {
         updated_at: new Date().toISOString(),
         token_encrypted: this.encryptToken(mockToken || this.generateMockToken(platform)),
         platform_user_id: `mock_${platform}_${Date.now()}`,
-        platform_username: `user_${userId.substr(0, 8)}`
+        platform_username: `user_${SafeUtils.safeUserIdPrefix(userId, 8).replace('...', '')}`
       };
 
       if (flags.isEnabled('ENABLE_SUPABASE')) {
@@ -163,7 +163,7 @@ class UserIntegrationsService {
     });
 
     logger.info('Mock integrations loaded:', {
-      userId: userId.substr(0, 8) + '...',
+      userId: SafeUtils.safeUserIdPrefix(userId),
       connectedPlatforms: result.filter(r => r.status === 'connected').length,
       totalPlatforms: result.length
     });
@@ -253,7 +253,7 @@ class UserIntegrationsService {
     }
 
     logger.info('Integration disconnected from database:', {
-      userId: userId.substr(0, 8) + '...',
+      userId: SafeUtils.safeUserIdPrefix(userId),
       platform
     });
 
@@ -278,7 +278,7 @@ class UserIntegrationsService {
     }
 
     logger.info('Integration disconnected from mock storage:', {
-      userId: userId.substr(0, 8) + '...',
+      userId: SafeUtils.safeUserIdPrefix(userId),
       platform
     });
 
