@@ -17,10 +17,10 @@ const config = {
       webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
       // Stripe Price lookup keys for different plans
       priceLookupKeys: {
-        free: null, // Free plan has no Stripe price
-        starter: process.env.STRIPE_PRICE_STARTER_LOOKUP || 'price_starter_v1_eur_500',
-        pro: process.env.STRIPE_PRICE_PRO_LOOKUP || 'price_pro_v1_eur_1500',
-        plus: process.env.STRIPE_PRICE_PLUS_LOOKUP || 'price_plus_v1_eur_5000'
+        free: process.env.STRIPE_PRICE_FREE_LOOKUP || 'roastr-free-v1',
+        starter: process.env.STRIPE_PRICE_STARTER_LOOKUP || 'roastr-starter-v1',
+        pro: process.env.STRIPE_PRICE_PRO_LOOKUP || 'roastr-pro-v1',
+        plus: process.env.STRIPE_PRICE_PLUS_LOOKUP || 'roastr-plus-v1'
       },
       // URLs for checkout and portal
       successUrl: process.env.STRIPE_SUCCESS_URL || 'http://localhost:3000/billing?session_id={CHECKOUT_SESSION_ID}',

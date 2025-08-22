@@ -15,6 +15,14 @@ const { flags } = require('../src/config/flags');
 
 // Required metadata fields for each plan
 const REQUIRED_METADATA = {
+  free: [
+    'plan_name',
+    'analysis_limit_monthly',
+    'roast_limit_monthly',
+    'model',
+    'shield_enabled',
+    'rqc_mode'
+  ],
   starter: [
     'plan_name',
     'analysis_limit_monthly',
@@ -43,6 +51,14 @@ const REQUIRED_METADATA = {
 
 // Expected values for validation
 const EXPECTED_VALUES = {
+  free: {
+    plan_name: 'free',
+    analysis_limit_monthly: '100',
+    roast_limit_monthly: '100',
+    model: 'gpt-3.5-turbo',
+    shield_enabled: 'false',
+    rqc_mode: 'basic'
+  },
   starter: {
     plan_name: 'starter',
     analysis_limit_monthly: '500',
@@ -179,7 +195,7 @@ async function validateAllPrices() {
   });
 
   let allValid = true;
-  const plans = ['starter', 'pro', 'plus'];
+  const plans = ['free', 'starter', 'pro', 'plus'];
 
   for (const plan of plans) {
     const lookupKey = lookupKeys[plan];

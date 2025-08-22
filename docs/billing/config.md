@@ -14,9 +14,10 @@ The following environment variables control Stripe price lookup keys:
 
 ```bash
 # Stripe Price Lookup Keys
-STRIPE_PRICE_STARTER_LOOKUP=price_starter_v1_eur_500
-STRIPE_PRICE_PRO_LOOKUP=price_pro_v1_eur_1500
-STRIPE_PRICE_PLUS_LOOKUP=price_plus_v1_eur_5000
+STRIPE_PRICE_FREE_LOOKUP=roastr-free-v1
+STRIPE_PRICE_STARTER_LOOKUP=roastr-starter-v1
+STRIPE_PRICE_PRO_LOOKUP=roastr-pro-v1
+STRIPE_PRICE_PLUS_LOOKUP=roastr-plus-v1
 
 # Stripe API Keys
 STRIPE_SECRET_KEY=sk_test_...  # Test key
@@ -37,10 +38,10 @@ The lookup keys are centralized in `src/config/index.js`:
 billing: {
   stripe: {
     priceLookupKeys: {
-      free: null, // Free plan has no Stripe price
-      starter: process.env.STRIPE_PRICE_STARTER_LOOKUP || 'price_starter_v1_eur_500',
-      pro: process.env.STRIPE_PRICE_PRO_LOOKUP || 'price_pro_v1_eur_1500',
-      plus: process.env.STRIPE_PRICE_PLUS_LOOKUP || 'price_plus_v1_eur_5000'
+      free: process.env.STRIPE_PRICE_FREE_LOOKUP || 'roastr-free-v1',
+      starter: process.env.STRIPE_PRICE_STARTER_LOOKUP || 'roastr-starter-v1',
+      pro: process.env.STRIPE_PRICE_PRO_LOOKUP || 'roastr-pro-v1',
+      plus: process.env.STRIPE_PRICE_PLUS_LOOKUP || 'roastr-plus-v1'
     }
   }
 }
@@ -62,6 +63,18 @@ Each Stripe Price object must include the following metadata for the entitlement
 | `rqc_mode` | string | RQC system mode | `basic`, `advanced`, `premium` |
 
 ### Example Metadata
+
+#### Free Plan
+```json
+{
+  "plan_name": "free",
+  "analysis_limit_monthly": "100",
+  "roast_limit_monthly": "100",
+  "model": "gpt-3.5-turbo",
+  "shield_enabled": "false",
+  "rqc_mode": "basic"
+}
+```
 
 #### Starter Plan
 ```json
