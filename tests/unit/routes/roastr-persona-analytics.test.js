@@ -18,7 +18,7 @@ const mockSupabaseServiceClient = {
     gte: jest.fn().mockReturnThis(),
     not: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
+    range: jest.fn(),
     is: jest.fn().mockReturnThis()
 };
 
@@ -154,7 +154,7 @@ describe('Roastr Persona Analytics API', () => {
             ];
 
             // Mock responses query
-            mockSupabaseServiceClient.limit.mockResolvedValueOnce({
+            mockSupabaseServiceClient.range.mockResolvedValueOnce({
                 data: mockResponses,
                 error: null
             });
@@ -229,7 +229,7 @@ describe('Roastr Persona Analytics API', () => {
             });
 
             // Mock empty responses
-            mockSupabaseServiceClient.limit.mockResolvedValueOnce({
+            mockSupabaseServiceClient.range.mockResolvedValueOnce({
                 data: [],
                 error: null
             });
@@ -325,7 +325,7 @@ describe('Roastr Persona Analytics API', () => {
                 }
             ];
 
-            mockSupabaseServiceClient.limit.mockResolvedValueOnce({
+            mockSupabaseServiceClient.range.mockResolvedValueOnce({
                 data: mockResponses,
                 error: null
             });
@@ -375,7 +375,7 @@ describe('Roastr Persona Analytics API', () => {
                 .mockResolvedValueOnce({ data: { id: 'org-123' }, error: null })
                 .mockResolvedValueOnce({ data: {}, error: null });
             
-            mockSupabaseServiceClient.limit.mockResolvedValueOnce({
+            mockSupabaseServiceClient.range.mockResolvedValueOnce({
                 data: [],
                 error: null
             });
