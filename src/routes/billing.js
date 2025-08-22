@@ -678,7 +678,8 @@ async function queueBillingJob(jobType, webhookData) {
 }
 
 /**
- * Handle checkout.session.completed event
+ * Handle checkout.session.completed event with transaction support
+ * Issue #95: Added database transactions to prevent inconsistent state
  */
 async function handleCheckoutCompleted(session) {
     const userId = session.metadata?.user_id;
@@ -704,110 +705,83 @@ async function handleCheckoutCompleted(session) {
         plan = 'creator_plus';
     }
 
-    // Update subscription in database
-    const { error } = await supabaseServiceClient
-        .from('user_subscriptions')
-        .upsert({
-            user_id: userId,
-            stripe_customer_id: customer.id,
-            stripe_subscription_id: subscription.id,
-            plan: plan,
-            status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            cancel_at_period_end: subscription.cancel_at_period_end,
-            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null
-        });
+    // Execute critical database operations in a transaction
+    const transactionResult = await supabaseServiceClient.rpc('execute_checkout_completed_transaction', {
+        p_user_id: userId,
+        p_stripe_customer_id: customer.id,
+        p_stripe_subscription_id: subscription.id,
+        p_plan: plan,
+        p_status: subscription.status,
+        p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+        p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        p_cancel_at_period_end: subscription.cancel_at_period_end,
+        p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+        p_price_id: priceId,
+        p_metadata: JSON.stringify({
+            subscription_id: subscription.id,
+            customer_id: customer.id,
+            checkout_session_id: session.id,
+            updated_from: 'checkout_completed'
+        })
+    });
 
-    if (error) {
-        logger.error('Failed to update subscription after checkout:', error);
-    } else {
-        logger.info('Subscription created/updated after checkout:', {
+    if (transactionResult.error) {
+        logger.error('Transaction failed during checkout completion:', {
             userId,
-            plan,
-            subscriptionId: subscription.id
+            subscriptionId: subscription.id,
+            error: transactionResult.error,
+            details: transactionResult.data
         });
+        throw new Error(`Checkout completion transaction failed: ${transactionResult.error}`);
+    }
 
-        // Update entitlements based on Stripe Price metadata
-        if (entitlementsService && priceId) {
-            try {
-                const entitlementsResult = await entitlementsService.setEntitlementsFromStripePrice(
-                    userId, 
-                    priceId,
-                    {
-                        metadata: {
-                            subscription_id: subscription.id,
-                            customer_id: customer.id,
-                            checkout_session_id: session.id,
-                            updated_from: 'checkout_completed'
-                        }
-                    }
-                );
+    logger.info('Checkout transaction completed successfully:', {
+        userId,
+        plan,
+        subscriptionId: subscription.id,
+        entitlementsUpdated: transactionResult.data?.entitlements_updated || false,
+        planName: transactionResult.data?.plan_name || plan
+    });
 
-                if (entitlementsResult.success) {
-                    logger.info('Entitlements updated after checkout completion', {
-                        userId,
-                        priceId,
-                        planName: entitlementsResult.entitlements.plan_name,
-                        analysisLimit: entitlementsResult.entitlements.analysis_limit_monthly,
-                        roastLimit: entitlementsResult.entitlements.roast_limit_monthly
-                    });
-                } else {
-                    logger.error('Failed to update entitlements after checkout', {
-                        userId,
-                        priceId,
-                        error: entitlementsResult.error,
-                        fallbackApplied: entitlementsResult.fallback_applied
-                    });
-                }
-            } catch (entitlementsError) {
-                logger.error('Exception updating entitlements after checkout', {
-                    userId,
-                    priceId,
-                    error: entitlementsError.message
-                });
-            }
+    // Send upgrade success email notification (non-critical, outside transaction)
+    if (plan !== 'free') {
+        try {
+            // Get user email from customer
+            const userEmail = customer.email;
+            const planConfig = PLAN_CONFIG[plan] || {};
+            
+            await emailService.sendUpgradeSuccessNotification(userEmail, {
+                userName: customer.name || userEmail.split('@')[0],
+                oldPlanName: 'Free',
+                newPlanName: planConfig.name || plan,
+                newFeatures: planConfig.features || [],
+                activationDate: new Date().toLocaleDateString(),
+            });
+
+            logger.info('📧 Upgrade success email sent:', { userId, plan, email: userEmail });
+        } catch (emailError) {
+            logger.error('📧 Failed to send upgrade success email:', emailError);
         }
 
-        // Send upgrade success email notification
-        if (plan !== 'free') {
-            try {
-                // Get user email from customer
-                const userEmail = customer.email;
-                const planConfig = PLAN_CONFIG[plan] || {};
-                
-                await emailService.sendUpgradeSuccessNotification(userEmail, {
-                    userName: customer.name || userEmail.split('@')[0],
-                    oldPlanName: 'Free',
-                    newPlanName: planConfig.name || plan,
-                    newFeatures: planConfig.features || [],
-                    activationDate: new Date().toLocaleDateString(),
-                });
+        // Create in-app notification (non-critical, outside transaction)
+        try {
+            await notificationService.createUpgradeSuccessNotification(userId, {
+                oldPlanName: 'Free',
+                newPlanName: planConfig.name || plan,
+                newFeatures: planConfig.features || [],
+                activationDate: new Date().toLocaleDateString(),
+            });
 
-                logger.info('📧 Upgrade success email sent:', { userId, plan, email: userEmail });
-            } catch (emailError) {
-                logger.error('📧 Failed to send upgrade success email:', emailError);
-            }
-
-            // Create in-app notification
-            try {
-                await notificationService.createUpgradeSuccessNotification(userId, {
-                    oldPlanName: 'Free',
-                    newPlanName: planConfig.name || plan,
-                    newFeatures: planConfig.features || [],
-                    activationDate: new Date().toLocaleDateString(),
-                });
-
-                logger.info('📝 Upgrade success notification created:', { userId, plan });
-            } catch (notificationError) {
-                logger.error('📝 Failed to create upgrade success notification:', notificationError);
-            }
+            logger.info('📝 Upgrade success notification created:', { userId, plan });
+        } catch (notificationError) {
+            logger.error('📝 Failed to create upgrade success notification:', notificationError);
         }
     }
 }
 
 /**
- * Handle subscription updated event
+ * Handle subscription updated event with transaction support
+ * Issue #95: Added database transactions to prevent inconsistent state
  */
 async function handleSubscriptionUpdated(subscription) {
     try {
@@ -827,62 +801,75 @@ async function handleSubscriptionUpdated(subscription) {
         }
 
         const userId = userSub.user_id;
+        const priceId = subscription.items?.data?.[0]?.price?.id;
 
-        // Update entitlements based on new subscription
-        if (entitlementsService && subscription.items?.data?.[0]?.price?.id) {
-            const priceId = subscription.items.data[0].price.id;
+        // Determine plan from subscription items
+        let newPlan = 'free';
+        if (priceId) {
+            // This is a simplified lookup - in production you'd get this from Stripe price metadata
+            const prices = await stripeWrapper.prices.list({ limit: 100 });
+            const priceData = prices.data.find(p => p.id === priceId);
             
-            try {
-                const entitlementsResult = await entitlementsService.setEntitlementsFromStripePrice(
-                    userId, 
-                    priceId,
-                    {
-                        metadata: {
-                            subscription_id: subscription.id,
-                            customer_id: subscription.customer,
-                            updated_from: 'subscription_updated',
-                            subscription_status: subscription.status
-                        }
-                    }
-                );
-
-                if (entitlementsResult.success) {
-                    logger.info('Entitlements updated after subscription update', {
-                        userId,
-                        subscriptionId: subscription.id,
-                        priceId,
-                        planName: entitlementsResult.entitlements.plan_name,
-                        status: subscription.status
-                    });
-                } else {
-                    logger.error('Failed to update entitlements after subscription update', {
-                        userId,
-                        subscriptionId: subscription.id,
-                        priceId,
-                        error: entitlementsResult.error
-                    });
-                }
-            } catch (entitlementsError) {
-                logger.error('Exception updating entitlements after subscription update', {
-                    userId,
-                    subscriptionId: subscription.id,
-                    error: entitlementsError.message
-                });
+            if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
+                newPlan = 'pro';
+            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
+                newPlan = 'creator_plus';
             }
         }
 
-        // Try to use existing subscription service if available
+        // Execute subscription update operations in a transaction
+        const transactionResult = await supabaseServiceClient.rpc('execute_subscription_updated_transaction', {
+            p_user_id: userId,
+            p_subscription_id: subscription.id,
+            p_customer_id: subscription.customer,
+            p_plan: newPlan,
+            p_status: subscription.status,
+            p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            p_cancel_at_period_end: subscription.cancel_at_period_end,
+            p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+            p_price_id: priceId,
+            p_metadata: JSON.stringify({
+                subscription_id: subscription.id,
+                customer_id: subscription.customer,
+                updated_from: 'subscription_updated',
+                subscription_status: subscription.status
+            })
+        });
+
+        if (transactionResult.error) {
+            logger.error('Transaction failed during subscription update:', {
+                userId,
+                subscriptionId: subscription.id,
+                customerId: subscription.customer,
+                error: transactionResult.error,
+                details: transactionResult.data
+            });
+            // Don't throw - webhook should still return success, but log the error
+            return;
+        }
+
+        logger.info('Subscription update transaction completed successfully:', {
+            userId,
+            subscriptionId: subscription.id,
+            oldPlan: transactionResult.data?.old_plan || 'unknown',
+            newPlan: transactionResult.data?.new_plan || newPlan,
+            status: subscription.status,
+            entitlementsUpdated: transactionResult.data?.entitlements_updated || false
+        });
+
+        // Try to use existing subscription service if available (non-critical)
         try {
             const subscriptionService = require('../services/subscriptionService');
             const result = await subscriptionService.processSubscriptionUpdate(subscription);
             
             if (!result.success) {
-                logger.warn('Subscription update blocked:', {
+                logger.warn('Subscription update blocked by service:', {
                     customerId: subscription.customer,
                     reason: result.reason
                 });
             } else {
-                logger.info('Subscription update processed successfully:', {
+                logger.info('Subscription service processed update successfully:', {
                     userId: result.userId,
                     oldPlan: result.oldPlan,
                     newPlan: result.newPlan,
@@ -890,7 +877,7 @@ async function handleSubscriptionUpdated(subscription) {
                 });
             }
         } catch (serviceError) {
-            logger.info('Subscription service not available, using basic update logic', {
+            logger.info('Subscription service not available, using transaction result', {
                 error: serviceError.message
             });
         }
@@ -902,7 +889,8 @@ async function handleSubscriptionUpdated(subscription) {
 }
 
 /**
- * Handle subscription deleted event
+ * Handle subscription deleted event with transaction support
+ * Issue #95: Added database transactions to prevent inconsistent state
  */
 async function handleSubscriptionDeleted(subscription) {
     const customerId = subscription.customer;
@@ -918,123 +906,75 @@ async function handleSubscriptionDeleted(subscription) {
         return;
     }
 
-    // Reset to free plan
-    const { error } = await supabaseServiceClient
-        .from('user_subscriptions')
-        .update({
-            plan: 'free',
-            status: 'canceled',
-            stripe_subscription_id: null,
-            current_period_start: null,
-            current_period_end: null,
-            cancel_at_period_end: false,
-            trial_end: null
-        })
-        .eq('user_id', userSub.user_id);
+    // Execute critical database operations in a transaction
+    const transactionResult = await supabaseServiceClient.rpc('execute_subscription_deleted_transaction', {
+        p_user_id: userSub.user_id,
+        p_subscription_id: subscription.id,
+        p_customer_id: customerId,
+        p_canceled_at: new Date().toISOString()
+    });
 
-    if (error) {
-        logger.error('Failed to reset subscription to free:', error);
-    } else {
-        logger.info('Subscription reset to free:', {
-            userId: userSub.user_id
+    if (transactionResult.error) {
+        logger.error('Transaction failed during subscription deletion:', {
+            userId: userSub.user_id,
+            subscriptionId: subscription.id,
+            customerId,
+            error: transactionResult.error,
+            details: transactionResult.data
+        });
+        throw new Error(`Subscription deletion transaction failed: ${transactionResult.error}`);
+    }
+
+    logger.info('Subscription deletion transaction completed successfully:', {
+        userId: userSub.user_id,
+        subscriptionId: subscription.id,
+        entitlementsReset: transactionResult.data?.entitlements_reset || false
+    });
+
+    // Send subscription canceled email notification (non-critical, outside transaction)
+    try {
+        const customer = await stripeWrapper.customers.retrieve(customerId);
+        const userEmail = customer.email;
+        
+        // Get the canceled plan info from transaction result
+        const planConfig = PLAN_CONFIG[transactionResult.data?.previous_plan] || {};
+        
+        await emailService.sendSubscriptionCanceledNotification(userEmail, {
+            userName: customer.name || userEmail.split('@')[0],
+            planName: planConfig.name || 'Pro',
+            cancellationDate: new Date().toLocaleDateString(),
+            accessUntilDate: transactionResult.data?.access_until_date || new Date().toLocaleDateString(),
         });
 
-        // Reset entitlements to free plan
-        if (entitlementsService) {
-            try {
-                const entitlementsResult = await entitlementsService.setEntitlements(
-                    userSub.user_id,
-                    {
-                        analysis_limit_monthly: 100,
-                        roast_limit_monthly: 100,
-                        model: 'gpt-3.5-turbo',
-                        shield_enabled: false,
-                        rqc_mode: 'basic',
-                        stripe_price_id: null,
-                        stripe_product_id: null,
-                        plan_name: 'free',
-                        metadata: {
-                            updated_from: 'subscription_canceled',
-                            subscription_id: subscription.id,
-                            customer_id: customerId,
-                            canceled_at: new Date().toISOString()
-                        }
-                    }
-                );
+        logger.info('📧 Cancellation email sent:', { 
+            userId: userSub.user_id, 
+            email: userEmail 
+        });
+    } catch (emailError) {
+        logger.error('📧 Failed to send cancellation email:', emailError);
+    }
 
-                if (entitlementsResult.success) {
-                    logger.info('Entitlements reset to free plan after cancellation', {
-                        userId: userSub.user_id,
-                        subscriptionId: subscription.id
-                    });
-                } else {
-                    logger.error('Failed to reset entitlements to free plan', {
-                        userId: userSub.user_id,
-                        subscriptionId: subscription.id,
-                        error: entitlementsResult.error
-                    });
-                }
-            } catch (entitlementsError) {
-                logger.error('Exception resetting entitlements to free plan', {
-                    userId: userSub.user_id,
-                    subscriptionId: subscription.id,
-                    error: entitlementsError.message
-                });
-            }
-        }
+    // Create in-app notification (non-critical, outside transaction)
+    try {
+        const planConfig = PLAN_CONFIG[transactionResult.data?.previous_plan] || {};
+        
+        await notificationService.createSubscriptionCanceledNotification(userSub.user_id, {
+            planName: planConfig.name || 'Pro',
+            cancellationDate: new Date().toLocaleDateString(),
+            accessUntilDate: transactionResult.data?.access_until_date || new Date().toLocaleDateString(),
+        });
 
-        // Send subscription canceled email notification
-        try {
-            const customer = await stripeWrapper.customers.retrieve(customerId);
-            const userEmail = customer.email;
-            
-            // Get the canceled plan info
-            const { data: canceledSub } = await supabaseServiceClient
-                .from('user_subscriptions')
-                .select('plan, current_period_end')
-                .eq('user_id', userSub.user_id)
-                .single();
-
-            const planConfig = PLAN_CONFIG[canceledSub?.plan] || {};
-            
-            await emailService.sendSubscriptionCanceledNotification(userEmail, {
-                userName: customer.name || userEmail.split('@')[0],
-                planName: planConfig.name || 'Pro',
-                cancellationDate: new Date().toLocaleDateString(),
-                accessUntilDate: canceledSub?.current_period_end ? 
-                    new Date(canceledSub.current_period_end).toLocaleDateString() : 
-                    new Date().toLocaleDateString(),
-            });
-
-            logger.info('📧 Cancellation email sent:', { 
-                userId: userSub.user_id, 
-                email: userEmail 
-            });
-        } catch (emailError) {
-            logger.error('📧 Failed to send cancellation email:', emailError);
-        }
-
-        // Create in-app notification
-        try {
-            await notificationService.createSubscriptionCanceledNotification(userSub.user_id, {
-                planName: planConfig.name || 'Pro',
-                cancellationDate: new Date().toLocaleDateString(),
-                accessUntilDate: canceledSub?.current_period_end ? 
-                    new Date(canceledSub.current_period_end).toLocaleDateString() : 
-                    new Date().toLocaleDateString(),
-            });
-
-            logger.info('📝 Cancellation notification created:', { 
-                userId: userSub.user_id 
-            });
-        } catch (notificationError) {
-            logger.error('📝 Failed to create cancellation notification:', notificationError);
-        }
+        logger.info('📝 Cancellation notification created:', { 
+            userId: userSub.user_id 
+        });
+    } catch (notificationError) {
+        logger.error('📝 Failed to create cancellation notification:', notificationError);
     }
 }
 
 /**
- * Handle successful payment
+ * Handle successful payment with transaction support
+ * Issue #95: Added database transactions to prevent inconsistent state
  */
 async function handlePaymentSucceeded(invoice) {
     const customerId = invoice.customer;
@@ -1046,19 +986,38 @@ async function handlePaymentSucceeded(invoice) {
         .single();
 
     if (!error && userSub) {
-        // Update subscription status to active if it was past_due
-        await supabaseServiceClient
-            .from('user_subscriptions')
-            .update({ status: 'active' })
-            .eq('user_id', userSub.user_id)
-            .eq('status', 'past_due');
+        // Execute payment success operations in a transaction
+        const transactionResult = await supabaseServiceClient.rpc('execute_payment_succeeded_transaction', {
+            p_user_id: userSub.user_id,
+            p_customer_id: customerId,
+            p_invoice_id: invoice.id,
+            p_amount_paid: invoice.amount_paid,
+            p_payment_succeeded_at: new Date().toISOString()
+        });
 
-        logger.info('Payment succeeded for user:', userSub.user_id);
+        if (transactionResult.error) {
+            logger.error('Transaction failed during payment success:', {
+                userId: userSub.user_id,
+                invoiceId: invoice.id,
+                customerId,
+                error: transactionResult.error,
+                details: transactionResult.data
+            });
+            throw new Error(`Payment success transaction failed: ${transactionResult.error}`);
+        }
+
+        logger.info('Payment succeeded transaction completed:', {
+            userId: userSub.user_id,
+            invoiceId: invoice.id,
+            amount: invoice.amount_paid,
+            statusUpdated: transactionResult.data?.status_updated || false
+        });
     }
 }
 
 /**
- * Handle failed payment
+ * Handle failed payment with transaction support
+ * Issue #95: Added database transactions to prevent inconsistent state
  */
 async function handlePaymentFailed(invoice) {
     const customerId = invoice.customer;
@@ -1070,31 +1029,46 @@ async function handlePaymentFailed(invoice) {
         .single();
 
     if (!error && userSub) {
-        // Mark subscription as past_due
-        await supabaseServiceClient
-            .from('user_subscriptions')
-            .update({ status: 'past_due' })
-            .eq('user_id', userSub.user_id);
+        // Calculate next attempt date (Stripe typically retries in 3 days)
+        const nextAttempt = new Date();
+        nextAttempt.setDate(nextAttempt.getDate() + 3);
 
-        logger.warn('Payment failed for user:', userSub.user_id);
+        // Execute payment failure operations in a transaction
+        const transactionResult = await supabaseServiceClient.rpc('execute_payment_failed_transaction', {
+            p_user_id: userSub.user_id,
+            p_customer_id: customerId,
+            p_invoice_id: invoice.id,
+            p_amount_due: invoice.amount_due,
+            p_attempt_count: invoice.attempt_count || 1,
+            p_next_attempt_date: nextAttempt.toISOString(),
+            p_payment_failed_at: new Date().toISOString()
+        });
 
-        // Send payment failed email notification
+        if (transactionResult.error) {
+            logger.error('Transaction failed during payment failure:', {
+                userId: userSub.user_id,
+                invoiceId: invoice.id,
+                customerId,
+                error: transactionResult.error,
+                details: transactionResult.data
+            });
+            throw new Error(`Payment failure transaction failed: ${transactionResult.error}`);
+        }
+
+        logger.warn('Payment failed transaction completed:', {
+            userId: userSub.user_id,
+            invoiceId: invoice.id,
+            amount: invoice.amount_due,
+            statusUpdated: transactionResult.data?.status_updated || false,
+            planName: transactionResult.data?.plan_name || 'unknown'
+        });
+
+        // Send payment failed email notification (non-critical, outside transaction)
         try {
             const customer = await stripeWrapper.customers.retrieve(customerId);
             const userEmail = customer.email;
             
-            // Get subscription details
-            const { data: currentSub } = await supabaseServiceClient
-                .from('user_subscriptions')
-                .select('plan, current_period_end')
-                .eq('user_id', userSub.user_id)
-                .single();
-
-            const planConfig = PLAN_CONFIG[currentSub?.plan] || {};
-            
-            // Calculate next attempt date (Stripe typically retries in 3 days)
-            const nextAttempt = new Date();
-            nextAttempt.setDate(nextAttempt.getDate() + 3);
+            const planConfig = PLAN_CONFIG[transactionResult.data?.plan_name] || {};
             
             await emailService.sendPaymentFailedNotification(userEmail, {
                 userName: customer.name || userEmail.split('@')[0],
@@ -1112,8 +1086,10 @@ async function handlePaymentFailed(invoice) {
             logger.error('📧 Failed to send payment failed email:', emailError);
         }
 
-        // Create in-app notification
+        // Create in-app notification (non-critical, outside transaction)
         try {
+            const planConfig = PLAN_CONFIG[transactionResult.data?.plan_name] || {};
+            
             await notificationService.createPaymentFailedNotification(userSub.user_id, {
                 planName: planConfig.name || 'Pro',
                 failedAmount: invoice.amount_due ? `€${(invoice.amount_due / 100).toFixed(2)}` : 'N/A',

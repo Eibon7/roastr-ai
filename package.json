@@ -76,7 +76,9 @@
     "logs:maintenance:start": "node src/cli/logManager.js maintenance start",
     "logs:maintenance:status": "node src/cli/logManager.js maintenance status",
     "logs:maintenance:health": "node src/cli/logManager.js maintenance health",
-    "logs:test": "node src/cli/logManager.js test"
+    "logs:test": "node src/cli/logManager.js test",
+    "validate:prices": "node scripts/validate-prices.js",
+    "validate:prices:ci": "ENABLE_BILLING=true node scripts/validate-prices.js"
   },
   "repository": {
     "type": "git",

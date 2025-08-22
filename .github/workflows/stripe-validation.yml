@@ -1,0 +1,184 @@
+name: Stripe Price Validation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/config/**'
+      - 'scripts/validate-prices.js'
+      - 'src/services/entitlementsService.js'
+      - 'src/services/stripeWrapper.js'
+      - '.github/workflows/stripe-validation.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/config/**'
+      - 'scripts/validate-prices.js'
+      - 'src/services/entitlementsService.js'
+      - 'src/services/stripeWrapper.js'
+      - '.github/workflows/stripe-validation.yml'
+  schedule:
+    # Run daily at 6 AM UTC to catch any manual changes to Stripe prices
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to validate'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - production
+
+jobs:
+  validate-test-prices:
+    name: Validate Test Environment Prices
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment != 'production' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Validate Stripe test prices
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          ENABLE_BILLING: 'true'
+          NODE_ENV: 'test'
+        run: npm run validate:prices:ci
+        
+      - name: Comment on PR (if validation fails)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Stripe Price Validation Failed**\n\nThe Stripe price metadata validation failed. Please check the workflow logs and ensure all required metadata is properly configured.\n\n🔧 **To fix:**\n1. Check the `scripts/validate-prices.js` output\n2. Update your Stripe prices metadata\n3. Ensure lookup keys match the configuration\n\n📖 See `docs/billing/config.md` for detailed setup instructions.'
+            })
+            
+  validate-production-prices:
+    name: Validate Production Environment Prices
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'production' && github.ref == 'refs/heads/main' }}
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Validate Stripe production prices
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_LIVE_SECRET_KEY }}
+          ENABLE_BILLING: 'true'
+          NODE_ENV: 'production'
+        run: npm run validate:prices:ci
+        
+      - name: Notify on validation failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Stripe Price Validation Failed',
+              body: '❌ **Critical Issue**: Production Stripe price validation failed.\n\n**Environment**: Production\n**Workflow**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n**Branch**: ${{ github.ref_name }}\n**Commit**: ${{ github.sha }}\n\n🔧 **Immediate Action Required:**\n1. Check Stripe Dashboard for price configuration\n2. Verify all required metadata fields are present\n3. Ensure lookup keys match production configuration\n\n⚠️ **Impact**: Billing and entitlements system may not function correctly until this is resolved.\n\n📖 See `docs/billing/config.md` for configuration details.',
+              labels: ['bug', 'critical', 'billing', 'production']
+            })
+
+  # Additional job for config drift detection
+  detect-config-drift:
+    name: Detect Configuration Drift
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Check test environment
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          ENABLE_BILLING: 'true'
+          NODE_ENV: 'test'
+        run: npm run validate:prices:ci
+        continue-on-error: true
+        id: test-validation
+        
+      - name: Check production environment
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_LIVE_SECRET_KEY }}
+          ENABLE_BILLING: 'true'
+          NODE_ENV: 'production'
+        run: npm run validate:prices:ci
+        continue-on-error: true
+        id: prod-validation
+        
+      - name: Report drift if any validation failed
+        if: steps.test-validation.outcome == 'failure' || steps.prod-validation.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const testFailed = '${{ steps.test-validation.outcome }}' === 'failure';
+            const prodFailed = '${{ steps.prod-validation.outcome }}' === 'failure';
+            
+            let title = '🔍 Stripe Configuration Drift Detected';
+            let environments = [];
+            if (testFailed) environments.push('Test');
+            if (prodFailed) environments.push('Production');
+            
+            let body = `⚠️ **Configuration Drift Alert**\n\nDaily validation detected issues in: **${environments.join(', ')}**\n\n`;
+            
+            if (testFailed) {
+              body += '❌ **Test Environment**: Price metadata validation failed\n';
+            }
+            if (prodFailed) {
+              body += '❌ **Production Environment**: Price metadata validation failed\n';
+            }
+            
+            body += '\n🔧 **Recommended Actions:**\n';
+            body += '1. Review recent changes to Stripe price configurations\n';
+            body += '2. Run `npm run validate:prices` locally to debug\n';
+            body += '3. Update price metadata to match expected schema\n';
+            body += '4. Consider if lookup keys have changed\n\n';
+            body += `📊 **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n`;
+            body += '📖 **Documentation**: `docs/billing/config.md`';
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['configuration', 'billing', 'monitoring', 'drift-detection']
+            });
