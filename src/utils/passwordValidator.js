@@ -6,7 +6,9 @@
 const PASSWORD_REQUIREMENTS = {
   minLength: 8,
   requireNumber: true,
+  requireLowercase: true,
   requireUppercaseOrSymbol: true,
+  noSpaces: true,
 };
 
 /**
@@ -18,18 +20,28 @@ const validatePassword = (password) => {
   const errors = [];
   
   if (!password) {
-    errors.push('Password is required');
+    errors.push('La contraseña es requerida');
     return { isValid: false, errors };
   }
 
   // Check minimum length
   if (password.length < PASSWORD_REQUIREMENTS.minLength) {
-    errors.push(`Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters long`);
+    errors.push(`La contraseña debe tener al menos ${PASSWORD_REQUIREMENTS.minLength} caracteres`);
+  }
+
+  // Check for spaces
+  if (PASSWORD_REQUIREMENTS.noSpaces && /\s/.test(password)) {
+    errors.push('La contraseña no puede contener espacios');
   }
 
   // Check for at least one number
   if (PASSWORD_REQUIREMENTS.requireNumber && !/\d/.test(password)) {
-    errors.push('Password must contain at least one number');
+    errors.push('La contraseña debe contener al menos un número');
+  }
+
+  // Check for at least one lowercase letter
+  if (PASSWORD_REQUIREMENTS.requireLowercase && !/[a-z]/.test(password)) {
+    errors.push('La contraseña debe contener al menos una letra minúscula');
   }
 
   // Check for at least one uppercase letter OR one symbol
@@ -38,7 +50,7 @@ const validatePassword = (password) => {
     const hasSymbol = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
     
     if (!hasUppercase && !hasSymbol) {
-      errors.push('Password must contain at least one uppercase letter or symbol');
+      errors.push('La contraseña debe contener al menos una letra mayúscula o un símbolo');
     }
   }
 

@@ -220,32 +220,25 @@ export default function Settings() {
     }
   };
 
-  // Enhanced password validation (Issue #133) - Combined approach
+  // Enhanced password validation (Issue #133) - Using centralized validator
   const validatePasswordStrength = (password) => {
-    const criteria = {
+    const validation = validatePassword(password);
+    if (!validation.isValid) {
+      return { valid: false, message: validation.errors.join('. ') };
+    }
+    return { valid: true };
+  };
+
+  // Get password criteria status based on centralized validation
+  const getPasswordCriteria = (password) => {
+    return {
       length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
+      noSpaces: !/\s/.test(password) || password.length === 0,
       lowercase: /[a-z]/.test(password),
       number: /\d/.test(password),
-      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-      noSpaces: !/\s/.test(password)
+      uppercaseOrSpecial: /[A-Z]/.test(password) || /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
+      different: password !== passwordForm.currentPassword && password.length > 0
     };
-    
-    const requiredCriteria = [criteria.length, criteria.noSpaces];
-    const strongCriteria = [criteria.uppercase || criteria.special, criteria.lowercase, criteria.number];
-    
-    // Must have minimum length and no spaces
-    if (!requiredCriteria.every(Boolean)) {
-      return { valid: false, message: 'La contraseña debe tener al menos 8 caracteres y no contener espacios' };
-    }
-    
-    // Must have at least 2 of the strong criteria (uppercase OR special, lowercase, number)
-    const strongCriteriaPassed = strongCriteria.filter(Boolean).length;
-    if (strongCriteriaPassed < 2) {
-      return { valid: false, message: 'La contraseña debe contener al menos: minúsculas, números, y mayúsculas o caracteres especiales' };
-    }
-    
-    return { valid: true };
   };
 
   // Validate password in real-time (legacy support with new validation)
@@ -898,30 +891,37 @@ export default function Settings() {
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Requisitos de contraseña:</div>
                         <div className="space-y-1">
-                          <PasswordRequirement 
-                            met={passwordForm.newPassword.length >= 8}
-                            text="Al menos 8 caracteres"
-                          />
-                          <PasswordRequirement 
-                            met={!/\s/.test(passwordForm.newPassword) || passwordForm.newPassword.length === 0}
-                            text="Sin espacios en blanco"
-                          />
-                          <PasswordRequirement 
-                            met={/[a-z]/.test(passwordForm.newPassword)}
-                            text="Al menos una letra minúscula"
-                          />
-                          <PasswordRequirement 
-                            met={/\d/.test(passwordForm.newPassword)}
-                            text="Al menos un número"
-                          />
-                          <PasswordRequirement 
-                            met={/[A-Z]/.test(passwordForm.newPassword) || /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(passwordForm.newPassword)}
-                            text="Al menos una mayúscula o carácter especial (!@#$%^&*)"
-                          />
-                          <PasswordRequirement 
-                            met={passwordForm.newPassword !== passwordForm.currentPassword && passwordForm.newPassword.length > 0}
-                            text="Diferente de la contraseña actual"
-                          />
+                          {(() => {
+                            const criteria = getPasswordCriteria(passwordForm.newPassword);
+                            return (
+                              <>
+                                <PasswordRequirement 
+                                  met={criteria.length}
+                                  text="Al menos 8 caracteres"
+                                />
+                                <PasswordRequirement 
+                                  met={criteria.noSpaces}
+                                  text="Sin espacios en blanco"
+                                />
+                                <PasswordRequirement 
+                                  met={criteria.lowercase}
+                                  text="Al menos una letra minúscula"
+                                />
+                                <PasswordRequirement 
+                                  met={criteria.number}
+                                  text="Al menos un número"
+                                />
+                                <PasswordRequirement 
+                                  met={criteria.uppercaseOrSpecial}
+                                  text="Al menos una mayúscula o carácter especial (!@#$%^&*)"
+                                />
+                                <PasswordRequirement 
+                                  met={criteria.different}
+                                  text="Diferente de la contraseña actual"
+                                />
+                              </>
+                            );
+                          })()}
                         </div>
                         
                         {/* Additional feedback for Issue #133 */}
