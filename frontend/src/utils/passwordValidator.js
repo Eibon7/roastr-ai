@@ -6,7 +6,9 @@
 export const PASSWORD_REQUIREMENTS = {
   minLength: 8,
   requireNumber: true,
+  requireLowercase: true,
   requireUppercaseOrSymbol: true,
+  noSpaces: true,
 };
 
 /**
@@ -27,9 +29,19 @@ export const validatePassword = (password) => {
     errors.push(`La contraseña debe tener al menos ${PASSWORD_REQUIREMENTS.minLength} caracteres`);
   }
 
+  // Check for spaces
+  if (PASSWORD_REQUIREMENTS.noSpaces && /\s/.test(password)) {
+    errors.push('La contraseña no puede contener espacios');
+  }
+
   // Check for at least one number
   if (PASSWORD_REQUIREMENTS.requireNumber && !/\d/.test(password)) {
     errors.push('La contraseña debe contener al menos un número');
+  }
+
+  // Check for at least one lowercase letter
+  if (PASSWORD_REQUIREMENTS.requireLowercase && !/[a-z]/.test(password)) {
+    errors.push('La contraseña debe contener al menos una letra minúscula');
   }
 
   // Check for at least one uppercase letter OR one symbol
