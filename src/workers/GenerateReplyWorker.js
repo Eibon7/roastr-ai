@@ -177,6 +177,9 @@ class GenerateReplyWorker extends BaseWorker {
       };
     }
     
+    // Fetch user's Roastr Persona data for enhanced response generation (Issue #81)
+    const personaData = await this.fetchPersonaData(organization_id);
+    
     // Generate response
     const startTime = Date.now();
     const response = await this.generateResponse(
@@ -186,7 +189,8 @@ class GenerateReplyWorker extends BaseWorker {
         toxicity_score,
         severity_level,
         categories,
-        platform
+        platform,
+        personaData // Include persona data in context
       }
     );
     const generationTime = Date.now() - startTime;
@@ -284,6 +288,102 @@ class GenerateReplyWorker extends BaseWorker {
       return null;
     }
   }
+
+  /**
+   * Fetch user's Roastr Persona data for personalized response generation
+   * Issue #81: Enable persona-aware roast generation and analytics tracking
+   */
+  async fetchPersonaData(organizationId) {
+    try {
+      // Get the organization owner's persona data
+      const { data: orgData, error: orgError } = await this.supabase
+        .from('organizations')
+        .select('owner_id')
+        .eq('id', organizationId)
+        .single();
+
+      if (orgError || !orgData) {
+        this.log('warn', 'Could not find organization for persona lookup', {
+          organizationId,
+          error: orgError?.message
+        });
+        return null;
+      }
+
+      // Fetch persona data for the owner
+      const { data: userData, error: userError } = await this.supabase
+        .from('users')
+        .select(`
+          lo_que_me_define_encrypted,
+          lo_que_me_define_visible,
+          lo_que_no_tolero_encrypted,
+          lo_que_no_tolero_visible,
+          lo_que_me_da_igual_encrypted,
+          lo_que_me_da_igual_visible,
+          embeddings_generated_at,
+          embeddings_model
+        `)
+        .eq('id', orgData.owner_id)
+        .single();
+
+      if (userError || !userData) {
+        this.log('debug', 'No persona data found for organization owner', {
+          organizationId,
+          ownerId: orgData.owner_id
+        });
+        return null;
+      }
+
+      // Check if any persona fields are configured
+      const hasPersonaData = !!(
+        userData.lo_que_me_define_encrypted || 
+        userData.lo_que_no_tolero_encrypted || 
+        userData.lo_que_me_da_igual_encrypted
+      );
+
+      if (!hasPersonaData) {
+        return null; // No persona configured
+      }
+
+      // Decrypt persona fields (simplified version - in production you'd use the encryption service)
+      let personaData = {
+        hasPersona: true,
+        fieldsAvailable: [],
+        embeddings: {
+          available: !!userData.embeddings_generated_at,
+          model: userData.embeddings_model,
+          generated_at: userData.embeddings_generated_at
+        }
+      };
+
+      // Note: In a real implementation, you would decrypt these fields
+      // For now, we'll just track which fields are available
+      if (userData.lo_que_me_define_encrypted) {
+        personaData.fieldsAvailable.push('lo_que_me_define');
+      }
+      if (userData.lo_que_no_tolero_encrypted) {
+        personaData.fieldsAvailable.push('lo_que_no_tolero');
+      }
+      if (userData.lo_que_me_da_igual_encrypted) {
+        personaData.fieldsAvailable.push('lo_que_me_da_igual');
+      }
+
+      this.log('debug', 'Persona data fetched for response generation', {
+        organizationId,
+        fieldsAvailable: personaData.fieldsAvailable,
+        hasEmbeddings: personaData.embeddings.available
+      });
+
+      return personaData;
+
+    } catch (error) {
+      this.log('error', 'Failed to fetch persona data', {
+        organizationId,
+        error: error.message
+      });
+      return null;
+    }
+  }
   
   /**
    * Check if response should be generated based on frequency setting
@@ -327,8 +427,50 @@ class GenerateReplyWorker extends BaseWorker {
    */
   async generateOpenAIResponse(originalText, config, context) {
     const { tone, humor_type } = config;
-    const { platform, severity_level, toxicity_score, categories } = context;
+    const { platform, severity_level, toxicity_score, categories, personaData } = context;
     
+    // Track which persona fields will be used (Issue #81)
+    let personaFieldsUsed = {
+      loQueMeDefineUsed: false,
+      loQueNoToleroUsed: false,
+      loQueMeDaIgualUsed: false
+    };
+
+    // Build enhanced user config with persona data if available
+    let userConfig = {
+      tone: tone,
+      humor_type: humor_type,
+      intensity_level: config.intensity_level || 3,
+      custom_style_prompt: config.custom_style_prompt
+    };
+
+    // Enhance prompt with persona context if available
+    if (personaData && personaData.hasPersona) {
+      let personaEnhancements = [];
+      
+      if (personaData.fieldsAvailable.includes('lo_que_me_define')) {
+        personaEnhancements.push('Considera la personalidad definida del usuario');
+        personaFieldsUsed.loQueMeDefineUsed = true;
+      }
+      
+      if (personaData.fieldsAvailable.includes('lo_que_no_tolero')) {
+        personaEnhancements.push('Ten en cuenta lo que el usuario no tolera');
+        personaFieldsUsed.loQueNoToleroUsed = true;
+      }
+      
+      if (personaData.fieldsAvailable.includes('lo_que_me_da_igual')) {
+        personaEnhancements.push('Considera las cosas que le dan igual al usuario');
+        personaFieldsUsed.loQueMeDaIgualUsed = true;
+      }
+      
+      if (personaEnhancements.length > 0) {
+        userConfig.persona_context = personaEnhancements.join('. ');
+        this.log('debug', 'Enhanced response with persona context', {
+          fieldsUsed: Object.keys(personaFieldsUsed).filter(key => personaFieldsUsed[key])
+        });
+      }
+    }
+
     // Build enhanced system prompt using master template
     const systemPrompt = await this.promptTemplate.buildPrompt({
       originalComment: originalText,
@@ -337,12 +479,7 @@ class GenerateReplyWorker extends BaseWorker {
         severity: severity_level,
         categories: categories || []
       },
-      userConfig: {
-        tone: tone,
-        humor_type: humor_type,
-        intensity_level: config.intensity_level || 3,
-        custom_style_prompt: config.custom_style_prompt
-      },
+      userConfig,
       includeReferences: true // Include references by default in worker
     });
     
@@ -370,7 +507,8 @@ class GenerateReplyWorker extends BaseWorker {
       text: finalResponse,
       tokensUsed: completion.usage.total_tokens,
       model: 'gpt-4o-mini',
-      promptVersion: this.promptTemplate.getVersion()
+      promptVersion: this.promptTemplate.getVersion(),
+      personaData: personaFieldsUsed // Track which persona fields were used
     };
   }
   
@@ -502,10 +640,32 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Store response in database
+   * Store response in database with Roastr Persona tracking
+   * Issue #81: Track which persona fields were used in response generation
    */
   async storeResponse(commentId, organizationId, response, config, generationTime) {
     try {
+      // Determine which persona fields were used (if any)
+      let personaFieldsUsed = null;
+      
+      if (response.personaData) {
+        personaFieldsUsed = [];
+        if (response.personaData.loQueMeDefineUsed) {
+          personaFieldsUsed.push('lo_que_me_define');
+        }
+        if (response.personaData.loQueNoToleroUsed) {
+          personaFieldsUsed.push('lo_que_no_tolero');
+        }
+        if (response.personaData.loQueMeDaIgualUsed) {
+          personaFieldsUsed.push('lo_que_me_da_igual');
+        }
+        
+        // Only set if fields were actually used
+        if (personaFieldsUsed.length === 0) {
+          personaFieldsUsed = null;
+        }
+      }
+
       const { data: stored, error } = await this.supabase
         .from('responses')
         .insert({
@@ -517,12 +677,24 @@ class GenerateReplyWorker extends BaseWorker {
           generation_time_ms: generationTime,
           tokens_used: response.tokensUsed || this.estimateTokens(response.text),
           cost_cents: 5, // Base cost per generation
-          post_status: 'pending'
+          post_status: 'pending',
+          persona_fields_used: personaFieldsUsed
         })
         .select()
         .single();
       
       if (error) throw error;
+      
+      // Log persona usage for analytics
+      if (personaFieldsUsed && personaFieldsUsed.length > 0) {
+        this.log('info', 'Persona fields used in response generation', {
+          commentId,
+          responseId: stored.id,
+          personaFields: personaFieldsUsed,
+          fieldsCount: personaFieldsUsed.length
+        });
+      }
+      
       return stored;
       
     } catch (error) {
