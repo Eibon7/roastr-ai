@@ -309,12 +309,34 @@ export default function Settings() {
           confirmPassword: ''
         }));
       } else {
-        addNotification(result.error || 'Error al cambiar contraseña', 'error');
+        // Check if this is a rate limit error (Issue #133)
+        if (result.code === 'PASSWORD_CHANGE_RATE_LIMITED') {
+          addNotification(
+            `Por seguridad, los cambios de contraseña están temporalmente bloqueados. Por favor intenta nuevamente en ${result.retryAfter || 60} minutos.`,
+            'error'
+          );
+        } else if (result.code === 'PASSWORD_RECENTLY_USED') {
+          addNotification(
+            'No puedes reutilizar una contraseña reciente. Por favor elige una contraseña diferente.',
+            'error'
+          );
+        } else {
+          addNotification(result.error || 'Error al cambiar contraseña', 'error');
+        }
       }
       
     } catch (error) {
       console.error('Password change error:', error);
-      addNotification(error.message || 'Error al cambiar contraseña', 'error');
+      // Check for rate limit error in catch block
+      if (error.response?.status === 429) {
+        const retryAfter = error.response?.data?.retryAfter || 60;
+        addNotification(
+          `Has alcanzado el límite de intentos de cambio de contraseña. Por favor espera ${retryAfter} minutos antes de intentar nuevamente.`,
+          'error'
+        );
+      } else {
+        addNotification(error.message || 'Error al cambiar contraseña', 'error');
+      }
     } finally {
       setPasswordForm(prev => ({ ...prev, isSubmitting: false }));
     }
@@ -872,7 +894,7 @@ export default function Settings() {
                         </span>
                       </div>
                       
-                      {/* Password requirements checklist */}
+                      {/* Enhanced password requirements checklist (Issue #133) */}
                       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Requisitos de contraseña:</div>
                         <div className="space-y-1">
@@ -881,18 +903,49 @@ export default function Settings() {
                             text="Al menos 8 caracteres"
                           />
                           <PasswordRequirement 
+                            met={!/\s/.test(passwordForm.newPassword) || passwordForm.newPassword.length === 0}
+                            text="Sin espacios en blanco"
+                          />
+                          <PasswordRequirement 
+                            met={/[a-z]/.test(passwordForm.newPassword)}
+                            text="Al menos una letra minúscula"
+                          />
+                          <PasswordRequirement 
                             met={/\d/.test(passwordForm.newPassword)}
                             text="Al menos un número"
                           />
                           <PasswordRequirement 
                             met={/[A-Z]/.test(passwordForm.newPassword) || /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(passwordForm.newPassword)}
-                            text="Al menos una mayúscula o símbolo"
+                            text="Al menos una mayúscula o carácter especial (!@#$%^&*)"
                           />
                           <PasswordRequirement 
                             met={passwordForm.newPassword !== passwordForm.currentPassword && passwordForm.newPassword.length > 0}
                             text="Diferente de la contraseña actual"
                           />
                         </div>
+                        
+                        {/* Additional feedback for Issue #133 */}
+                        {passwordForm.newPassword.length > 0 && !passwordForm.validation.isValid && (
+                          <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
+                            <div className="flex items-start">
+                              <XCircle className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                              <div className="text-xs text-red-600 dark:text-red-400">
+                                {passwordForm.validation.errors.join('. ')}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {passwordForm.newPassword.length > 0 && passwordForm.validation.isValid && (
+                          <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
+                            <div className="flex items-center">
+                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                              <div className="text-xs text-green-600 dark:text-green-400">
+                                ¡Contraseña válida y segura!
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -912,6 +965,7 @@ export default function Settings() {
                       <p>• Ingresa tu contraseña actual para verificar tu identidad</p>
                       <p>• La nueva contraseña debe ser diferente a la actual</p>
                       <p>• Usa la guía de fortaleza arriba para crear una contraseña segura</p>
+                      <p className="mt-1 font-medium">• Los cambios de contraseña están limitados a 5 intentos por hora por seguridad</p>
                     </div>
                   </div>
                 </div>
