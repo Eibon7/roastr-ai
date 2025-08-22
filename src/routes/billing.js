@@ -5,6 +5,7 @@
 
 const express = require('express');
 const StripeWrapper = require('../services/stripeWrapper');
+const EntitlementsService = require('../services/entitlementsService');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
@@ -17,16 +18,19 @@ const { createWebhookRetryHandler } = require('../utils/retry');
 
 const router = express.Router();
 
-// Initialize Stripe Wrapper and Queue Service
+// Initialize Stripe Wrapper, Queue Service, and Entitlements Service
 let stripeWrapper = null;
 let queueService = null;
+let entitlementsService = null;
 
 if (flags.isEnabled('ENABLE_BILLING')) {
   stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
   queueService = new QueueService();
   queueService.initialize();
+  entitlementsService = new EntitlementsService();
 } else {
   console.log('⚠️ Stripe billing disabled - missing configuration keys');
+  entitlementsService = new EntitlementsService(); // Always available for free plans
 }
 
 // Middleware to check billing availability
@@ -606,6 +610,9 @@ async function handleCheckoutCompleted(session) {
     const subscription = await stripeWrapper.subscriptions.retrieve(session.subscription);
     const customer = await stripeWrapper.customers.retrieve(session.customer);
 
+    // Get the price ID from the subscription for entitlements update
+    const priceId = subscription.items?.data?.[0]?.price?.id;
+    
     // Determine plan from price lookup key or metadata
     let plan = 'free';
     const lookupKey = session.metadata?.lookup_key;
@@ -639,6 +646,47 @@ async function handleCheckoutCompleted(session) {
             plan,
             subscriptionId: subscription.id
         });
+
+        // Update entitlements based on Stripe Price metadata
+        if (entitlementsService && priceId) {
+            try {
+                const entitlementsResult = await entitlementsService.setEntitlementsFromStripePrice(
+                    userId, 
+                    priceId,
+                    {
+                        metadata: {
+                            subscription_id: subscription.id,
+                            customer_id: customer.id,
+                            checkout_session_id: session.id,
+                            updated_from: 'checkout_completed'
+                        }
+                    }
+                );
+
+                if (entitlementsResult.success) {
+                    logger.info('Entitlements updated after checkout completion', {
+                        userId,
+                        priceId,
+                        planName: entitlementsResult.entitlements.plan_name,
+                        analysisLimit: entitlementsResult.entitlements.analysis_limit_monthly,
+                        roastLimit: entitlementsResult.entitlements.roast_limit_monthly
+                    });
+                } else {
+                    logger.error('Failed to update entitlements after checkout', {
+                        userId,
+                        priceId,
+                        error: entitlementsResult.error,
+                        fallbackApplied: entitlementsResult.fallback_applied
+                    });
+                }
+            } catch (entitlementsError) {
+                logger.error('Exception updating entitlements after checkout', {
+                    userId,
+                    priceId,
+                    error: entitlementsError.message
+                });
+            }
+        }
 
         // Send upgrade success email notification
         if (plan !== 'free') {
@@ -681,24 +729,91 @@ async function handleCheckoutCompleted(session) {
  * Handle subscription updated event
  */
 async function handleSubscriptionUpdated(subscription) {
-    const subscriptionService = require('../services/subscriptionService');
-    
     try {
-        const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
-        if (!result.success) {
-            logger.warn('Subscription update blocked:', {
-                customerId: subscription.customer,
-                reason: result.reason
+        // Get user ID from subscription
+        const { data: userSub } = await supabaseServiceClient
+            .from('user_subscriptions')
+            .select('user_id')
+            .eq('stripe_subscription_id', subscription.id)
+            .single();
+
+        if (!userSub) {
+            logger.warn('No user found for subscription update', {
+                subscriptionId: subscription.id,
+                customerId: subscription.customer
             });
-        } else {
-            logger.info('Subscription update processed successfully:', {
-                userId: result.userId,
-                oldPlan: result.oldPlan,
-                newPlan: result.newPlan,
-                status: result.status
+            return;
+        }
+
+        const userId = userSub.user_id;
+
+        // Update entitlements based on new subscription
+        if (entitlementsService && subscription.items?.data?.[0]?.price?.id) {
+            const priceId = subscription.items.data[0].price.id;
+            
+            try {
+                const entitlementsResult = await entitlementsService.setEntitlementsFromStripePrice(
+                    userId, 
+                    priceId,
+                    {
+                        metadata: {
+                            subscription_id: subscription.id,
+                            customer_id: subscription.customer,
+                            updated_from: 'subscription_updated',
+                            subscription_status: subscription.status
+                        }
+                    }
+                );
+
+                if (entitlementsResult.success) {
+                    logger.info('Entitlements updated after subscription update', {
+                        userId,
+                        subscriptionId: subscription.id,
+                        priceId,
+                        planName: entitlementsResult.entitlements.plan_name,
+                        status: subscription.status
+                    });
+                } else {
+                    logger.error('Failed to update entitlements after subscription update', {
+                        userId,
+                        subscriptionId: subscription.id,
+                        priceId,
+                        error: entitlementsResult.error
+                    });
+                }
+            } catch (entitlementsError) {
+                logger.error('Exception updating entitlements after subscription update', {
+                    userId,
+                    subscriptionId: subscription.id,
+                    error: entitlementsError.message
+                });
+            }
+        }
+
+        // Try to use existing subscription service if available
+        try {
+            const subscriptionService = require('../services/subscriptionService');
+            const result = await subscriptionService.processSubscriptionUpdate(subscription);
+            
+            if (!result.success) {
+                logger.warn('Subscription update blocked:', {
+                    customerId: subscription.customer,
+                    reason: result.reason
+                });
+            } else {
+                logger.info('Subscription update processed successfully:', {
+                    userId: result.userId,
+                    oldPlan: result.oldPlan,
+                    newPlan: result.newPlan,
+                    status: result.status
+                });
+            }
+        } catch (serviceError) {
+            logger.info('Subscription service not available, using basic update logic', {
+                error: serviceError.message
             });
         }
+
     } catch (error) {
         logger.error('Failed to process subscription update:', error);
         // Don't throw - webhook should still return success
@@ -742,6 +857,50 @@ async function handleSubscriptionDeleted(subscription) {
         logger.info('Subscription reset to free:', {
             userId: userSub.user_id
         });
+
+        // Reset entitlements to free plan
+        if (entitlementsService) {
+            try {
+                const entitlementsResult = await entitlementsService.setEntitlements(
+                    userSub.user_id,
+                    {
+                        analysis_limit_monthly: 100,
+                        roast_limit_monthly: 100,
+                        model: 'gpt-3.5-turbo',
+                        shield_enabled: false,
+                        rqc_mode: 'basic',
+                        stripe_price_id: null,
+                        stripe_product_id: null,
+                        plan_name: 'free',
+                        metadata: {
+                            updated_from: 'subscription_canceled',
+                            subscription_id: subscription.id,
+                            customer_id: customerId,
+                            canceled_at: new Date().toISOString()
+                        }
+                    }
+                );
+
+                if (entitlementsResult.success) {
+                    logger.info('Entitlements reset to free plan after cancellation', {
+                        userId: userSub.user_id,
+                        subscriptionId: subscription.id
+                    });
+                } else {
+                    logger.error('Failed to reset entitlements to free plan', {
+                        userId: userSub.user_id,
+                        subscriptionId: subscription.id,
+                        error: entitlementsResult.error
+                    });
+                }
+            } catch (entitlementsError) {
+                logger.error('Exception resetting entitlements to free plan', {
+                    userId: userSub.user_id,
+                    subscriptionId: subscription.id,
+                    error: entitlementsError.message
+                });
+            }
+        }
 
         // Send subscription canceled email notification
         try {
