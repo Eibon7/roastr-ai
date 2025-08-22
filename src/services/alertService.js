@@ -25,8 +25,14 @@ class AlertService {
     try {
       // Check rate limiting
       if (this.isRateLimited(alertType)) {
-        advancedLogger.warn('Alert rate limited', { alertType, cooldownMinutes: this.alertCooldownMinutes });
-        return { sent: false, reason: 'rate_limited' };
+        const rateLimitInfo = this.getRateLimitInfo(alertType);
+        advancedLogger.warn('Alert rate limited', { 
+          alertType, 
+          cooldownMinutes: this.alertCooldownMinutes,
+          maxAlertsPerHour: this.maxAlertsPerHour,
+          ...rateLimitInfo
+        });
+        return { sent: false, reason: 'rate_limited', rateLimitInfo };
       }
 
       const alert = this.buildAlert(alertType, data, options);
@@ -312,6 +318,37 @@ class AlertService {
       success: '#28a745'
     };
     return colors[severity] || colors.info;
+  }
+
+  /**
+   * Get detailed rate limit information for an alert type
+   */
+  getRateLimitInfo(alertType) {
+    const now = Date.now();
+    const alertKey = `${alertType}`;
+    
+    if (!this.alertHistory.has(alertKey)) {
+      return {
+        alertsLastHour: 0,
+        lastAlertAgo: null,
+        isInCooldown: false,
+        cooldownRemainingMs: 0
+      };
+    }
+
+    const lastAlert = this.alertHistory.get(alertKey);
+    const timeSinceLastAlert = now - lastAlert.timestamp;
+    const cooldownMs = this.alertCooldownMinutes * 60 * 1000;
+    const oneHourAgo = now - (60 * 60 * 1000);
+    const recentAlerts = lastAlert.history.filter(timestamp => timestamp > oneHourAgo);
+    
+    return {
+      alertsLastHour: recentAlerts.length,
+      lastAlertAgo: `${Math.floor(timeSinceLastAlert / 1000)}s`,
+      isInCooldown: timeSinceLastAlert < cooldownMs,
+      cooldownRemainingMs: Math.max(0, cooldownMs - timeSinceLastAlert),
+      cooldownRemainingMinutes: Math.max(0, Math.ceil((cooldownMs - timeSinceLastAlert) / 60000))
+    };
   }
 
   /**
