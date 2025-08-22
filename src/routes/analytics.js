@@ -469,4 +469,366 @@ router.get('/usage-trends', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/analytics/roastr-persona-insights
+ * Get analytics on how Roastr Persona configurations impact roast generation
+ * Issue #81: Roastr Persona Analytics and Insights
+ */
+router.get('/roastr-persona-insights', async (req, res) => {
+    try {
+        const { user } = req;
+        const { days = 30 } = req.query;
+
+        // Get user's organization
+        const { data: orgData } = await supabaseServiceClient
+            .from('organizations')
+            .select('id')
+            .eq('owner_id', user.id)
+            .single();
+
+        if (!orgData) {
+            return res.status(404).json({
+                success: false,
+                error: 'Organization not found'
+            });
+        }
+
+        const dateThreshold = new Date();
+        dateThreshold.setDate(dateThreshold.getDate() - parseInt(days));
+
+        // Get user's current Roastr Persona data
+        const { data: personaData } = await supabaseServiceClient
+            .from('users')
+            .select(`
+                lo_que_me_define_encrypted,
+                lo_que_me_define_visible,
+                lo_que_me_define_created_at,
+                lo_que_me_define_updated_at,
+                lo_que_no_tolero_encrypted,
+                lo_que_no_tolero_visible,
+                lo_que_no_tolero_created_at,
+                lo_que_no_tolero_updated_at,
+                lo_que_me_da_igual_encrypted,
+                lo_que_me_da_igual_visible,
+                lo_que_me_da_igual_created_at,
+                lo_que_me_da_igual_updated_at,
+                embeddings_generated_at,
+                embeddings_model,
+                embeddings_version
+            `)
+            .eq('id', user.id)
+            .single();
+
+        // Get responses generated using Roastr Persona data
+        const { data: personaResponses, error } = await supabaseServiceClient
+            .from('responses')
+            .select(`
+                id,
+                tone,
+                humor_type,
+                created_at,
+                post_status,
+                platform_response_id,
+                tokens_used,
+                cost_cents,
+                persona_fields_used,
+                comments!inner (
+                    platform,
+                    toxicity_score,
+                    severity_level,
+                    created_at
+                )
+            `)
+            .eq('organization_id', orgData.id)
+            .gte('created_at', dateThreshold.toISOString())
+            .not('persona_fields_used', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(1000);
+
+        if (error) {
+            throw error;
+        }
+
+        // Calculate persona configuration status
+        const personaStatus = {
+            lo_que_me_define: {
+                configured: !!personaData?.lo_que_me_define_encrypted,
+                visible: personaData?.lo_que_me_define_visible || false,
+                created_at: personaData?.lo_que_me_define_created_at,
+                last_updated: personaData?.lo_que_me_define_updated_at
+            },
+            lo_que_no_tolero: {
+                configured: !!personaData?.lo_que_no_tolero_encrypted,
+                visible: personaData?.lo_que_no_tolero_visible || false,
+                created_at: personaData?.lo_que_no_tolero_created_at,
+                last_updated: personaData?.lo_que_no_tolero_updated_at
+            },
+            lo_que_me_da_igual: {
+                configured: !!personaData?.lo_que_me_da_igual_encrypted,
+                visible: personaData?.lo_que_me_da_igual_visible || false,
+                created_at: personaData?.lo_que_me_da_igual_created_at,
+                last_updated: personaData?.lo_que_me_da_igual_updated_at
+            },
+            embeddings: {
+                generated: !!personaData?.embeddings_generated_at,
+                generated_at: personaData?.embeddings_generated_at,
+                model: personaData?.embeddings_model,
+                version: personaData?.embeddings_version
+            }
+        };
+
+        // Calculate persona usage analytics
+        const personaAnalytics = {
+            summary: {
+                total_persona_responses: personaResponses.length,
+                successful_posts: personaResponses.filter(r => r.platform_response_id).length,
+                total_cost_cents: personaResponses.reduce((sum, r) => sum + (r.cost_cents || 0), 0),
+                total_tokens: personaResponses.reduce((sum, r) => sum + (r.tokens_used || 0), 0),
+                avg_toxicity_score: personaResponses.length > 0 
+                    ? (personaResponses.reduce((sum, r) => sum + (r.comments.toxicity_score || 0), 0) / personaResponses.length).toFixed(3)
+                    : 0
+            },
+            fields_usage: {
+                lo_que_me_define: 0,
+                lo_que_no_tolero: 0,
+                lo_que_me_da_igual: 0,
+                combined_fields: 0
+            },
+            persona_impact: {
+                by_tone: {},
+                by_platform: {},
+                success_rate_comparison: {
+                    with_persona: 0,
+                    without_persona: 0
+                }
+            },
+            timeline: []
+        };
+
+        // Analyze which persona fields are being used
+        personaResponses.forEach(response => {
+            const fieldsUsed = response.persona_fields_used || [];
+            if (fieldsUsed.includes('lo_que_me_define')) {
+                personaAnalytics.fields_usage.lo_que_me_define++;
+            }
+            if (fieldsUsed.includes('lo_que_no_tolero')) {
+                personaAnalytics.fields_usage.lo_que_no_tolero++;
+            }
+            if (fieldsUsed.includes('lo_que_me_da_igual')) {
+                personaAnalytics.fields_usage.lo_que_me_da_igual++;
+            }
+            if (fieldsUsed.length > 1) {
+                personaAnalytics.fields_usage.combined_fields++;
+            }
+        });
+
+        // Analyze persona impact by tone
+        const toneGroups = personaResponses.reduce((acc, r) => {
+            const tone = r.tone || 'unknown';
+            if (!acc[tone]) {
+                acc[tone] = [];
+            }
+            acc[tone].push(r);
+            return acc;
+        }, {});
+
+        Object.entries(toneGroups).forEach(([tone, toneResponses]) => {
+            personaAnalytics.persona_impact.by_tone[tone] = {
+                count: toneResponses.length,
+                success_rate: toneResponses.length > 0 
+                    ? ((toneResponses.filter(r => r.platform_response_id).length / toneResponses.length) * 100).toFixed(1)
+                    : 0,
+                avg_cost_cents: toneResponses.length > 0 
+                    ? (toneResponses.reduce((sum, r) => sum + (r.cost_cents || 0), 0) / toneResponses.length).toFixed(2)
+                    : 0,
+                most_used_persona_fields: getMostUsedPersonaFields(toneResponses)
+            };
+        });
+
+        // Analyze persona impact by platform
+        const platformGroups = personaResponses.reduce((acc, r) => {
+            const platform = r.comments.platform;
+            if (!acc[platform]) {
+                acc[platform] = [];
+            }
+            acc[platform].push(r);
+            return acc;
+        }, {});
+
+        Object.entries(platformGroups).forEach(([platform, platformResponses]) => {
+            personaAnalytics.persona_impact.by_platform[platform] = {
+                count: platformResponses.length,
+                success_rate: platformResponses.length > 0 
+                    ? ((platformResponses.filter(r => r.platform_response_id).length / platformResponses.length) * 100).toFixed(1)
+                    : 0,
+                avg_toxicity: platformResponses.length > 0 
+                    ? (platformResponses.reduce((sum, r) => sum + (r.comments.toxicity_score || 0), 0) / platformResponses.length).toFixed(3)
+                    : 0,
+                most_active_persona_field: getMostActivePersonaField(platformResponses)
+            };
+        });
+
+        // Compare success rates (would need additional query for non-persona responses)
+        // This is a simplified version for now
+        const successRate = personaResponses.length > 0 
+            ? ((personaResponses.filter(r => r.platform_response_id).length / personaResponses.length) * 100).toFixed(1)
+            : 0;
+        
+        personaAnalytics.persona_impact.success_rate_comparison.with_persona = successRate;
+
+        // Create timeline for persona usage
+        const timeGroups = personaResponses.reduce((acc, r) => {
+            const dateKey = new Date(r.created_at).toISOString().split('T')[0];
+            if (!acc[dateKey]) {
+                acc[dateKey] = [];
+            }
+            acc[dateKey].push(r);
+            return acc;
+        }, {});
+
+        Object.entries(timeGroups)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .forEach(([date, dayResponses]) => {
+                personaAnalytics.timeline.push({
+                    date,
+                    count: dayResponses.length,
+                    successful_posts: dayResponses.filter(r => r.platform_response_id).length,
+                    fields_usage: getFieldsUsageForDay(dayResponses),
+                    avg_toxicity: dayResponses.length > 0 
+                        ? (dayResponses.reduce((sum, r) => sum + (r.comments.toxicity_score || 0), 0) / dayResponses.length).toFixed(3)
+                        : 0
+                });
+            });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                period_days: parseInt(days),
+                persona_status: personaStatus,
+                persona_analytics: personaAnalytics,
+                recommendations: generatePersonaRecommendations(personaStatus, personaAnalytics)
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get Roastr Persona insights error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve Roastr Persona insights'
+        });
+    }
+});
+
+// Helper functions for persona analytics
+function getMostUsedPersonaFields(responses) {
+    const fieldCount = { lo_que_me_define: 0, lo_que_no_tolero: 0, lo_que_me_da_igual: 0 };
+    
+    responses.forEach(r => {
+        const fields = r.persona_fields_used || [];
+        fields.forEach(field => {
+            if (fieldCount.hasOwnProperty(field)) {
+                fieldCount[field]++;
+            }
+        });
+    });
+    
+    return Object.entries(fieldCount)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 2)
+        .map(([field]) => field);
+}
+
+function getMostActivePersonaField(responses) {
+    const fieldCount = { lo_que_me_define: 0, lo_que_no_tolero: 0, lo_que_me_da_igual: 0 };
+    
+    responses.forEach(r => {
+        const fields = r.persona_fields_used || [];
+        fields.forEach(field => {
+            if (fieldCount.hasOwnProperty(field)) {
+                fieldCount[field]++;
+            }
+        });
+    });
+    
+    return Object.entries(fieldCount)
+        .sort(([,a], [,b]) => b - a)[0]?.[0] || 'none';
+}
+
+function getFieldsUsageForDay(responses) {
+    const usage = { lo_que_me_define: 0, lo_que_no_tolero: 0, lo_que_me_da_igual: 0 };
+    
+    responses.forEach(r => {
+        const fields = r.persona_fields_used || [];
+        fields.forEach(field => {
+            if (usage.hasOwnProperty(field)) {
+                usage[field]++;
+            }
+        });
+    });
+    
+    return usage;
+}
+
+function generatePersonaRecommendations(personaStatus, analytics) {
+    const recommendations = [];
+    
+    // Check if user should configure more persona fields
+    const configuredFields = Object.values(personaStatus).filter(field => 
+        field.configured && field !== personaStatus.embeddings
+    ).length;
+    
+    if (configuredFields < 2) {
+        recommendations.push({
+            type: 'configuration',
+            priority: 'high',
+            title: 'Complete your Roastr Persona',
+            description: `You have ${configuredFields} of 3 persona fields configured. Complete your profile for more personalized roasts.`,
+            action: 'Configure missing persona fields'
+        });
+    }
+    
+    // Check if embeddings need to be generated
+    if (configuredFields > 0 && !personaStatus.embeddings.generated) {
+        recommendations.push({
+            type: 'optimization',
+            priority: 'medium', 
+            title: 'Generate semantic embeddings',
+            description: 'Enable advanced semantic matching for more contextually aware roasts.',
+            action: 'Generate embeddings for your persona fields'
+        });
+    }
+    
+    // Check usage patterns
+    if (analytics.summary.total_persona_responses > 0) {
+        const successRate = parseFloat(analytics.summary.successful_posts / analytics.summary.total_persona_responses * 100);
+        
+        if (successRate < 70) {
+            recommendations.push({
+                type: 'performance',
+                priority: 'medium',
+                title: 'Improve persona effectiveness',
+                description: `Your persona-enhanced roasts have a ${successRate.toFixed(1)}% success rate. Consider refining your persona fields.`,
+                action: 'Review and update your persona configuration'
+            });
+        }
+    }
+    
+    // Visibility recommendations
+    const visibleFields = Object.values(personaStatus).filter(field => 
+        field.visible && field !== personaStatus.embeddings
+    ).length;
+    
+    if (configuredFields > 0 && visibleFields === 0) {
+        recommendations.push({
+            type: 'privacy',
+            priority: 'low',
+            title: 'Consider making persona visible',
+            description: 'Making your persona visible can help others understand your roasting style.',
+            action: 'Enable visibility for some persona fields'
+        });
+    }
+    
+    return recommendations;
+}
+
 module.exports = router;
