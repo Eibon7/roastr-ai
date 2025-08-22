@@ -10,7 +10,7 @@ const emailService = require('../services/emailService');
 const notificationService = require('../services/notificationService');
 const auditLogService = require('../services/auditLogService');
 const { logger } = require('../utils/logger');
-const Stripe = require('stripe');
+const StripeWrapper = require('../services/stripeWrapper');
 const { flags } = require('../config/flags');
 
 // Plan configuration (imported from billing.js pattern)
@@ -53,10 +53,10 @@ class BillingWorker extends BaseWorker {
             ...options
         });
 
-        // Initialize Stripe if billing is enabled
-        this.stripe = null;
+        // Initialize Stripe wrapper if billing is enabled
+        this.stripeWrapper = null;
         if (flags.isEnabled('ENABLE_BILLING')) {
-            this.stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+            this.stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
         }
 
         // Retry configuration for billing operations
@@ -144,7 +144,7 @@ class BillingWorker extends BaseWorker {
             // Get customer details for notifications
             let customer = null;
             if (this.stripe) {
-                customer = await this.stripe.customers.retrieve(customerId);
+                customer = await this.stripeWrapper.customers.retrieve(customerId);
             }
 
             const planConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.free;
@@ -312,7 +312,7 @@ class BillingWorker extends BaseWorker {
             // Get customer details for notifications
             let customer = null;
             if (this.stripe) {
-                customer = await this.stripe.customers.retrieve(customerId);
+                customer = await this.stripeWrapper.customers.retrieve(customerId);
             }
 
             const userEmail = customer?.email || 'unknown@example.com';
@@ -426,7 +426,7 @@ class BillingWorker extends BaseWorker {
             if (planChanged && newStatus === 'active') {
                 let customer = null;
                 if (this.stripe) {
-                    customer = await this.stripe.customers.retrieve(customerId);
+                    customer = await this.stripeWrapper.customers.retrieve(customerId);
                 }
 
                 const userEmail = customer?.email || 'unknown@example.com';
@@ -571,7 +571,7 @@ class BillingWorker extends BaseWorker {
             // Get customer details
             let customer = null;
             if (this.stripe) {
-                customer = await this.stripe.customers.retrieve(customerId);
+                customer = await this.stripeWrapper.customers.retrieve(customerId);
             }
 
             const planConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.free;
@@ -672,7 +672,7 @@ class BillingWorker extends BaseWorker {
             // Get customer for notifications
             let customer = null;
             if (this.stripe) {
-                customer = await this.stripe.customers.retrieve(customerId);
+                customer = await this.stripeWrapper.customers.retrieve(customerId);
             }
 
             const userEmail = customer?.email || 'unknown@example.com';
@@ -769,9 +769,9 @@ class BillingWorker extends BaseWorker {
         };
 
         // Check if we can connect to Stripe
-        if (this.stripe) {
+        if (this.stripeWrapper) {
             try {
-                await this.stripe.balance.retrieve();
+                await this.stripeWrapper.raw.balance.retrieve();
                 details.billing.stripeConnection = 'healthy';
             } catch (error) {
                 details.billing.stripeConnection = 'unhealthy';
