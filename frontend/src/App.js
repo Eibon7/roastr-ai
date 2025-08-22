@@ -22,6 +22,7 @@ import StyleProfile from './pages/StyleProfile';
 import Configuration from './pages/Configuration';
 import Approval from './pages/Approval';
 import AccountsPage from './pages/AccountsPage';
+import Pricing from './pages/Pricing';
 import './App.css';
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="logs" element={<Logs />} />
               <Route path="plans" element={<PlanPicker />} />
+              <Route path="pricing" element={<Pricing />} />
               <Route path="style-profile" element={<StyleProfile />} />
               <Route path="style-profile/generate" element={<StyleProfile />} />
               <Route path="accounts" element={<AccountsPage />} />

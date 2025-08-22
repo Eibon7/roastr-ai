@@ -1640,4 +1640,178 @@ async function generateEmbeddingsForPersona(userId, personaData, userClient) {
     }
 }
 
+/**
+ * GET /api/user/entitlements
+ * Get user's current entitlements and plan limits
+ */
+router.get('/entitlements', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userClient = createUserClient(req.accessToken);
+
+        // Get user's entitlements from account_entitlements table
+        const { data: entitlements, error } = await userClient
+            .from('account_entitlements')
+            .select('*')
+            .eq('account_id', userId)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // No entitlements found, return default free plan
+                const defaultEntitlements = {
+                    analysis_limit_monthly: 100,
+                    roast_limit_monthly: 50,
+                    model: 'gpt-3.5-turbo',
+                    shield_enabled: false,
+                    rqc_mode: 'basic',
+                    plan_name: 'free',
+                    stripe_price_id: null,
+                    stripe_product_id: null
+                };
+
+                return res.json({
+                    success: true,
+                    data: defaultEntitlements
+                });
+            }
+            throw error;
+        }
+
+        res.json({
+            success: true,
+            data: entitlements
+        });
+
+    } catch (error) {
+        logger.error('Get user entitlements error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve entitlements'
+        });
+    }
+});
+
+/**
+ * GET /api/user/usage
+ * Get user's current monthly usage
+ */
+router.get('/usage', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userClient = createUserClient(req.accessToken);
+
+        // Get current month's usage from usage_counters table
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+
+        const { data: usage, error } = await userClient
+            .from('usage_counters')
+            .select('*')
+            .eq('account_id', userId)
+            .eq('month', currentMonth)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // No usage found for current month, return zero usage
+                const defaultUsage = {
+                    analysis_used: 0,
+                    roast_used: 0,
+                    month: currentMonth,
+                    costCents: 0
+                };
+
+                return res.json({
+                    success: true,
+                    data: defaultUsage
+                });
+            }
+            throw error;
+        }
+
+        res.json({
+            success: true,
+            data: {
+                analysis_used: usage.analysis_count || 0,
+                roast_used: usage.roast_count || 0,
+                month: usage.month,
+                costCents: usage.cost_cents || 0
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get user usage error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve usage data'
+        });
+    }
+});
+
+/**
+ * GET /api/user
+ * Get user profile with plan information (enhanced for billing page)
+ */
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userClient = createUserClient(req.accessToken);
+
+        // Get user information with entitlements
+        const { data: user, error } = await userClient
+            .from('users')
+            .select(`
+                id,
+                email,
+                full_name,
+                plan,
+                stripe_customer_id,
+                created_at,
+                updated_at
+            `)
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        // Get entitlements to include in user response
+        const { data: entitlements } = await userClient
+            .from('account_entitlements')
+            .select('plan_name, model, shield_enabled, rqc_mode')
+            .eq('account_id', userId)
+            .single();
+
+        const userResponse = {
+            ...user,
+            plan: entitlements?.plan_name || user.plan || 'free',
+            model: entitlements?.model || 'gpt-3.5-turbo',
+            shield_enabled: entitlements?.shield_enabled || false,
+            rqc_mode: entitlements?.rqc_mode || 'basic'
+        };
+
+        res.json({
+            success: true,
+            data: userResponse
+        });
+
+    } catch (error) {
+        logger.error('Get user profile error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve user profile'
+        });
+    }
+});
+
 module.exports = router;
