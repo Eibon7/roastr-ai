@@ -4,7 +4,7 @@
  */
 
 const express = require('express');
-const Stripe = require('stripe');
+const StripeWrapper = require('../services/stripeWrapper');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
@@ -17,12 +17,12 @@ const { createWebhookRetryHandler } = require('../utils/retry');
 
 const router = express.Router();
 
-// Initialize Stripe and Queue Service
-let stripe = null;
+// Initialize Stripe Wrapper and Queue Service
+let stripeWrapper = null;
 let queueService = null;
 
 if (flags.isEnabled('ENABLE_BILLING')) {
-  stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+  stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
   queueService = new QueueService();
   queueService.initialize();
 } else {
@@ -162,7 +162,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         if (existingSubscription?.stripe_customer_id) {
             // Retrieve existing customer
             try {
-                customer = await stripe.customers.retrieve(existingSubscription.stripe_customer_id);
+                customer = await stripeWrapper.customers.retrieve(existingSubscription.stripe_customer_id);
             } catch (stripeError) {
                 logger.warn('Failed to retrieve existing customer, creating new one:', stripeError.message);
                 customer = null;
@@ -171,7 +171,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
 
         // Create new customer if none exists or retrieval failed
         if (!customer) {
-            customer = await stripe.customers.create({
+            customer = await stripeWrapper.customers.create({
                 email: userEmail,
                 metadata: {
                     user_id: userId
@@ -190,7 +190,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         }
 
         // Get price by lookup key
-        const prices = await stripe.prices.list({
+        const prices = await stripeWrapper.prices.list({
             lookup_keys: [targetLookupKey],
             expand: ['data.product']
         });
@@ -205,7 +205,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         const price = prices.data[0];
 
         // Create checkout session
-        const session = await stripe.checkout.sessions.create({
+        const session = await stripeWrapper.checkout.sessions.create({
             customer: customer.id,
             payment_method_types: ['card'],
             mode: 'subscription',
@@ -276,7 +276,7 @@ router.post('/create-portal-session', authenticateToken, requireBilling, async (
         }
 
         // Create portal session
-        const portalSession = await stripe.billingPortal.sessions.create({
+        const portalSession = await stripeWrapper.billingPortal.sessions.create({
             customer: subscription.stripe_customer_id,
             return_url: process.env.STRIPE_PORTAL_RETURN_URL
         });
@@ -367,7 +367,7 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
 
     try {
         // Verify webhook signature
-        event = stripe.webhooks.constructEvent(
+        event = stripeWrapper.webhooks.constructEvent(
             req.body,
             sig,
             process.env.STRIPE_WEBHOOK_SECRET
@@ -506,7 +506,7 @@ async function queueBillingJob(jobType, webhookData) {
                 let newPlan = 'free';
                 if (webhookData.items?.data?.length > 0) {
                     const price = webhookData.items.data[0].price;
-                    const prices = await stripe.prices.list({ limit: 100 });
+                    const prices = await stripeWrapper.prices.list({ limit: 100 });
                     const priceData = prices.data.find(p => p.id === price.id);
                     
                     if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
@@ -603,8 +603,8 @@ async function handleCheckoutCompleted(session) {
         return;
     }
 
-    const subscription = await stripe.subscriptions.retrieve(session.subscription);
-    const customer = await stripe.customers.retrieve(session.customer);
+    const subscription = await stripeWrapper.subscriptions.retrieve(session.subscription);
+    const customer = await stripeWrapper.customers.retrieve(session.customer);
 
     // Determine plan from price lookup key or metadata
     let plan = 'free';
@@ -745,7 +745,7 @@ async function handleSubscriptionDeleted(subscription) {
 
         // Send subscription canceled email notification
         try {
-            const customer = await stripe.customers.retrieve(customerId);
+            const customer = await stripeWrapper.customers.retrieve(customerId);
             const userEmail = customer.email;
             
             // Get the canceled plan info
@@ -840,7 +840,7 @@ async function handlePaymentFailed(invoice) {
 
         // Send payment failed email notification
         try {
-            const customer = await stripe.customers.retrieve(customerId);
+            const customer = await stripeWrapper.customers.retrieve(customerId);
             const userEmail = customer.email;
             
             // Get subscription details

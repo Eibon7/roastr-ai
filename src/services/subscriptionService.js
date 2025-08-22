@@ -6,6 +6,7 @@ const emailService = require('./emailService');
 const notificationService = require('./notificationService');
 const workerNotificationService = require('./workerNotificationService');
 const auditService = require('./auditService');
+const StripeWrapper = require('./stripeWrapper');
 
 /**
  * Get user's current usage metrics
@@ -187,10 +188,10 @@ async function determinePlanFromSubscription(subscription) {
     if (plan) return plan;
   }
 
-  // Fallback: look up price in Stripe
+  // Fallback: look up price in Stripe with retry logic
   try {
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const prices = await stripe.prices.list({ limit: 100 });
+    const stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
+    const prices = await stripeWrapper.prices.list({ limit: 100 });
     const priceData = prices.data.find(p => p.id === price.id);
     
     if (priceData?.lookup_key) {
@@ -198,7 +199,7 @@ async function determinePlanFromSubscription(subscription) {
       if (plan) return plan;
     }
   } catch (error) {
-    logger.error('Error looking up price:', error);
+    logger.error('Error looking up price via Stripe wrapper:', error);
   }
 
   return 'free';
@@ -299,8 +300,8 @@ async function logSubscriptionChange(userId, changeData) {
  */
 async function handlePlanChangeNotifications(userId, oldPlan, newPlan, customerId) {
   try {
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const customer = await stripe.customers.retrieve(customerId);
+    const stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
+    const customer = await stripeWrapper.customers.retrieve(customerId);
     const userEmail = customer.email;
     
     const oldPlanFeatures = getPlanFeatures(oldPlan);
