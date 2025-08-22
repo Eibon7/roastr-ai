@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
 const encryptionService = require('../services/encryptionService');
+const EmbeddingsService = require('../services/embeddingsService');
 const {
   accountDeletionLimiter,
   dataExportLimiter,
@@ -21,6 +22,7 @@ const {
 
 const router = express.Router();
 const integrationsService = new UserIntegrationsService();
+const embeddingsService = new EmbeddingsService();
 
 /**
  * GET /api/user/integrations
@@ -1336,6 +1338,13 @@ router.post('/roastr-persona', authenticateToken, async (req, res) => {
             throw new Error(`Failed to update Roastr Persona: ${updateError.message}`);
         }
 
+        // Generate embeddings for updated fields (Issue #151)
+        await generateEmbeddingsForPersona(userId, {
+            loQueMeDefine: loQueMeDefine && loQueMeDefine.trim() !== '' ? loQueMeDefine : null,
+            loQueNoTolero: loQueNoTolero && loQueNoTolero.trim() !== '' ? loQueNoTolero : null,
+            loQueMeDaIgual: loQueMeDaIgual && loQueMeDaIgual.trim() !== '' ? loQueMeDaIgual : null
+        }, userClient);
+
         // Log the update for audit trail (the triggers will handle detailed logging)
         logger.info('Roastr Persona updated:', {
             userId: userId.substr(0, 8) + '...',
@@ -1495,5 +1504,144 @@ router.delete('/roastr-persona', authenticateToken, async (req, res) => {
         });
     }
 });
+
+/**
+ * Generate embeddings for Roastr Persona fields
+ * Issue #151: Semantic enrichment with embeddings
+ */
+async function generateEmbeddingsForPersona(userId, personaData, userClient) {
+    try {
+        const { loQueMeDefine, loQueNoTolero, loQueMeDaIgual } = personaData;
+        
+        // Only generate embeddings if at least one field has content
+        if (!loQueMeDefine && !loQueNoTolero && !loQueMeDaIgual) {
+            logger.debug('No persona content to generate embeddings for', {
+                userId: userId.substr(0, 8) + '...'
+            });
+            return;
+        }
+
+        const updateData = {
+            embeddings_generated_at: new Date().toISOString(),
+            embeddings_model: 'text-embedding-3-small',
+            embeddings_version: 1
+        };
+
+        // Generate embedding for "lo que me define" field
+        if (loQueMeDefine) {
+            try {
+                const termsWithEmbeddings = await embeddingsService.processPersonaText(loQueMeDefine);
+                
+                if (termsWithEmbeddings.length > 0) {
+                    // Store embeddings as JSON array of objects with terms and embeddings
+                    updateData.lo_que_me_define_embedding = JSON.stringify(termsWithEmbeddings);
+                    
+                    logger.debug('Generated identity embeddings', {
+                        userId: userId.substr(0, 8) + '...',
+                        termsCount: termsWithEmbeddings.length,
+                        textLength: loQueMeDefine.length
+                    });
+                }
+            } catch (error) {
+                logger.error('Failed to generate identity embeddings', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: error.message,
+                    textLength: loQueMeDefine.length
+                });
+                // Don't fail the entire request for embedding errors
+            }
+        } else {
+            // Clear embedding if field was cleared
+            updateData.lo_que_me_define_embedding = null;
+        }
+
+        // Generate embedding for "lo que no tolero" field
+        if (loQueNoTolero) {
+            try {
+                const termsWithEmbeddings = await embeddingsService.processPersonaText(loQueNoTolero);
+                
+                if (termsWithEmbeddings.length > 0) {
+                    updateData.lo_que_no_tolero_embedding = JSON.stringify(termsWithEmbeddings);
+                    
+                    logger.debug('Generated intolerance embeddings', {
+                        userId: userId.substr(0, 8) + '...',
+                        termsCount: termsWithEmbeddings.length,
+                        textLength: loQueNoTolero.length
+                    });
+                }
+            } catch (error) {
+                logger.error('Failed to generate intolerance embeddings', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: error.message,
+                    textLength: loQueNoTolero.length
+                });
+                // Don't fail the entire request for embedding errors
+            }
+        } else {
+            // Clear embedding if field was cleared
+            updateData.lo_que_no_tolero_embedding = null;
+        }
+
+        // Generate embedding for "lo que me da igual" field
+        if (loQueMeDaIgual) {
+            try {
+                const termsWithEmbeddings = await embeddingsService.processPersonaText(loQueMeDaIgual);
+                
+                if (termsWithEmbeddings.length > 0) {
+                    updateData.lo_que_me_da_igual_embedding = JSON.stringify(termsWithEmbeddings);
+                    
+                    logger.debug('Generated tolerance embeddings', {
+                        userId: userId.substr(0, 8) + '...',
+                        termsCount: termsWithEmbeddings.length,
+                        textLength: loQueMeDaIgual.length
+                    });
+                }
+            } catch (error) {
+                logger.error('Failed to generate tolerance embeddings', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: error.message,
+                    textLength: loQueMeDaIgual.length
+                });
+                // Don't fail the entire request for embedding errors
+            }
+        } else {
+            // Clear embedding if field was cleared
+            updateData.lo_que_me_da_igual_embedding = null;
+        }
+
+        // Update embeddings in database if any were generated or cleared
+        if (Object.keys(updateData).length > 3) { // More than just metadata fields
+            const { error: embeddingUpdateError } = await userClient
+                .from('users')
+                .update(updateData)
+                .eq('id', userId);
+
+            if (embeddingUpdateError) {
+                logger.error('Failed to save embeddings to database', {
+                    userId: userId.substr(0, 8) + '...',
+                    error: embeddingUpdateError.message,
+                    updateFields: Object.keys(updateData)
+                });
+                // Don't fail the entire request for embedding storage errors
+            } else {
+                logger.info('Successfully generated and stored persona embeddings', {
+                    userId: userId.substr(0, 8) + '...',
+                    embeddingsGenerated: Object.keys(updateData).filter(key => key.includes('embedding') && updateData[key] !== null).length,
+                    embeddingsCleared: Object.keys(updateData).filter(key => key.includes('embedding') && updateData[key] === null).length,
+                    model: updateData.embeddings_model,
+                    version: updateData.embeddings_version
+                });
+            }
+        }
+
+    } catch (error) {
+        logger.error('Unexpected error in embedding generation', {
+            userId: userId.substr(0, 8) + '...',
+            error: error.message,
+            stack: error.stack
+        });
+        // Don't throw - we don't want embedding errors to break persona updates
+    }
+}
 
 module.exports = router;
