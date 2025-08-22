@@ -110,6 +110,102 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================================
+-- SUBSCRIPTION UPDATED TRANSACTION
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION execute_subscription_updated_transaction(
+    p_user_id UUID,
+    p_subscription_id TEXT,
+    p_customer_id TEXT,
+    p_plan TEXT,
+    p_status TEXT,
+    p_current_period_start TIMESTAMPTZ,
+    p_current_period_end TIMESTAMPTZ,
+    p_cancel_at_period_end BOOLEAN,
+    p_trial_end TIMESTAMPTZ,
+    p_price_id TEXT,
+    p_metadata JSONB
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_result JSONB := '{}';
+    v_old_plan TEXT;
+    v_subscription_updated BOOLEAN := FALSE;
+    v_entitlements_updated BOOLEAN := FALSE;
+    v_entitlements_result JSONB;
+    v_rows_affected INTEGER;
+BEGIN
+    -- Start transaction (implicit in function)
+    
+    -- 1. Get current plan for comparison
+    SELECT plan INTO v_old_plan 
+    FROM user_subscriptions 
+    WHERE user_id = p_user_id;
+    
+    -- 2. Update subscription
+    UPDATE user_subscriptions 
+    SET 
+        stripe_subscription_id = p_subscription_id,
+        plan = p_plan,
+        status = p_status,
+        current_period_start = p_current_period_start,
+        current_period_end = p_current_period_end,
+        cancel_at_period_end = p_cancel_at_period_end,
+        trial_end = p_trial_end,
+        updated_at = NOW()
+    WHERE user_id = p_user_id;
+    
+    GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
+    v_subscription_updated := v_rows_affected > 0;
+    
+    -- 3. Update entitlements if price_id is provided
+    IF p_price_id IS NOT NULL THEN
+        BEGIN
+            SELECT set_entitlements_from_stripe_price(p_user_id, p_price_id, p_metadata) INTO v_entitlements_result;
+            v_entitlements_updated := (v_entitlements_result->>'success')::BOOLEAN;
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Log error but don't fail the transaction for entitlements
+                v_entitlements_result := jsonb_build_object(
+                    'success', false,
+                    'error', SQLERRM,
+                    'fallback_applied', true
+                );
+                v_entitlements_updated := FALSE;
+        END;
+    END IF;
+    
+    -- 4. Build result
+    v_result := jsonb_build_object(
+        'subscription_updated', v_subscription_updated,
+        'entitlements_updated', v_entitlements_updated,
+        'old_plan', COALESCE(v_old_plan, 'unknown'),
+        'new_plan', p_plan,
+        'user_id', p_user_id,
+        'subscription_id', p_subscription_id,
+        'status', p_status,
+        'rows_affected', v_rows_affected,
+        'entitlements_result', COALESCE(v_entitlements_result, '{}')
+    );
+    
+    RETURN v_result;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Return error information
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', SQLERRM,
+            'error_detail', SQLSTATE,
+            'subscription_updated', v_subscription_updated,
+            'entitlements_updated', v_entitlements_updated,
+            'old_plan', COALESCE(v_old_plan, 'unknown'),
+            'new_plan', p_plan
+        );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
 -- SUBSCRIPTION DELETED TRANSACTION
 -- ============================================================================
 
@@ -439,6 +535,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================================================
 
 COMMENT ON FUNCTION execute_checkout_completed_transaction IS 'Atomic transaction for checkout completion - Issue #95';
+COMMENT ON FUNCTION execute_subscription_updated_transaction IS 'Atomic transaction for subscription updates - Issue #95';
 COMMENT ON FUNCTION execute_subscription_deleted_transaction IS 'Atomic transaction for subscription deletion - Issue #95';
 COMMENT ON FUNCTION execute_payment_succeeded_transaction IS 'Atomic transaction for successful payment processing - Issue #95';
 COMMENT ON FUNCTION execute_payment_failed_transaction IS 'Atomic transaction for failed payment processing - Issue #95';
@@ -452,6 +549,7 @@ COMMENT ON FUNCTION set_entitlements IS 'Placeholder for entitlements service in
 
 -- Grant execute permissions to service role
 GRANT EXECUTE ON FUNCTION execute_checkout_completed_transaction TO service_role;
+GRANT EXECUTE ON FUNCTION execute_subscription_updated_transaction TO service_role;
 GRANT EXECUTE ON FUNCTION execute_subscription_deleted_transaction TO service_role;
 GRANT EXECUTE ON FUNCTION execute_payment_succeeded_transaction TO service_role;
 GRANT EXECUTE ON FUNCTION execute_payment_failed_transaction TO service_role;
