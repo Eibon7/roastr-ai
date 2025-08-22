@@ -6,6 +6,7 @@
 const express = require('express');
 const StripeWrapper = require('../services/stripeWrapper');
 const EntitlementsService = require('../services/entitlementsService');
+const StripeWebhookService = require('../services/stripeWebhookService');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
@@ -18,19 +19,22 @@ const { createWebhookRetryHandler } = require('../utils/retry');
 
 const router = express.Router();
 
-// Initialize Stripe Wrapper, Queue Service, and Entitlements Service
+// Initialize Stripe Wrapper, Queue Service, Entitlements Service, and Webhook Service
 let stripeWrapper = null;
 let queueService = null;
 let entitlementsService = null;
+let webhookService = null;
 
 if (flags.isEnabled('ENABLE_BILLING')) {
   stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
   queueService = new QueueService();
   queueService.initialize();
   entitlementsService = new EntitlementsService();
+  webhookService = new StripeWebhookService();
 } else {
   console.log('⚠️ Stripe billing disabled - missing configuration keys');
   entitlementsService = new EntitlementsService(); // Always available for free plans
+  webhookService = new StripeWebhookService(); // Always available for webhook processing
 }
 
 // Middleware to check billing availability
@@ -357,7 +361,7 @@ router.get('/subscription', authenticateToken, async (req, res) => {
 
 /**
  * POST /webhooks/stripe
- * Handle Stripe webhooks for subscription events
+ * Handle Stripe webhooks for subscription events with idempotency
  */
 router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
     // Early return if billing is disabled
@@ -383,58 +387,135 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
 
     logger.info('Stripe webhook received:', {
         type: event.type,
-        id: event.id
+        id: event.id,
+        created: event.created
     });
 
     try {
-        // Create retry handlers for critical webhook events
-        const retryHandlers = {
-            'checkout.session.completed': createWebhookRetryHandler(
-                handleCheckoutCompleted, 
-                'checkout.session.completed'
-            ),
-            'customer.subscription.created': createWebhookRetryHandler(
-                (data) => queueBillingJob('subscription_updated', data),
-                'customer.subscription.created'
-            ),
-            'customer.subscription.updated': createWebhookRetryHandler(
-                (data) => queueBillingJob('subscription_updated', data),
-                'customer.subscription.updated'
-            ),
-            'customer.subscription.deleted': createWebhookRetryHandler(
-                (data) => queueBillingJob('subscription_cancelled', data),
-                'customer.subscription.deleted'
-            ),
-            'invoice.payment_succeeded': createWebhookRetryHandler(
-                (data) => queueBillingJob('payment_succeeded', data),
-                'invoice.payment_succeeded'
-            ),
-            'invoice.payment_failed': createWebhookRetryHandler(
-                (data) => queueBillingJob('payment_failed', data),
-                'invoice.payment_failed'
-            ),
-            'invoice.payment_action_required': createWebhookRetryHandler(
-                (data) => queueBillingJob('invoice_payment_action_required', data),
-                'invoice.payment_action_required'
-            )
-        };
+        // Process event using the new webhook service with idempotency
+        const result = await webhookService.processWebhookEvent(event);
 
-        // Execute the appropriate handler with retry logic
-        const handler = retryHandlers[event.type];
-        if (handler) {
-            await handler(event.data.object);
+        if (result.success) {
+            logger.info('Webhook processed successfully:', {
+                eventId: event.id,
+                eventType: event.type,
+                idempotent: result.idempotent,
+                processingTime: result.processingTimeMs
+            });
         } else {
-            logger.info('Unhandled webhook event type:', event.type);
+            logger.error('Webhook processing failed:', {
+                eventId: event.id,
+                eventType: event.type,
+                error: result.error
+            });
         }
 
-        res.json({ received: true });
+        // Always return 200 to prevent Stripe from retrying
+        res.json({ 
+            received: true,
+            processed: result.success,
+            idempotent: result.idempotent || false,
+            message: result.message || 'Event processed'
+        });
 
     } catch (error) {
-        logger.error('Error processing webhook after retries:', error);
+        logger.error('Critical webhook processing error:', {
+            eventId: event.id,
+            eventType: event.type,
+            error: error.message,
+            stack: error.stack
+        });
+
         // Still return 200 to prevent Stripe from retrying
         res.json({ 
-            received: true, 
-            warning: 'Processing failed but acknowledged to prevent webhook retry loop' 
+            received: true,
+            processed: false,
+            error: 'Processing failed but acknowledged'
+        });
+    }
+});
+
+/**
+ * GET /api/billing/webhook-stats
+ * Get webhook processing statistics (admin only)
+ */
+router.get('/webhook-stats', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Check if user is admin
+        const { data: user, error: userError } = await supabaseServiceClient
+            .from('users')
+            .select('is_admin')
+            .eq('id', userId)
+            .single();
+
+        if (userError || !user?.is_admin) {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        const daysAgo = parseInt(req.query.days) || 7;
+        const stats = await webhookService.getWebhookStats(daysAgo);
+
+        res.json({
+            success: true,
+            data: {
+                period_days: daysAgo,
+                statistics: stats.data || []
+            }
+        });
+
+    } catch (error) {
+        logger.error('Error fetching webhook stats:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch webhook statistics'
+        });
+    }
+});
+
+/**
+ * POST /api/billing/webhook-cleanup
+ * Cleanup old webhook events (admin only)
+ */
+router.post('/webhook-cleanup', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Check if user is admin
+        const { data: user, error: userError } = await supabaseServiceClient
+            .from('users')
+            .select('is_admin')
+            .eq('id', userId)
+            .single();
+
+        if (userError || !user?.is_admin) {
+            return res.status(403).json({
+                success: false,
+                error: 'Admin access required'
+            });
+        }
+
+        const olderThanDays = parseInt(req.body.days) || 30;
+        const result = await webhookService.cleanupOldEvents(olderThanDays);
+
+        res.json({
+            success: result.success,
+            data: {
+                events_deleted: result.eventsDeleted || 0,
+                older_than_days: olderThanDays
+            },
+            error: result.error
+        });
+
+    } catch (error) {
+        logger.error('Error cleaning up webhook events:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to cleanup webhook events'
         });
     }
 });
