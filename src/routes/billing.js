@@ -262,6 +262,54 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
 });
 
 /**
+ * POST /api/billing/portal
+ * Create Stripe Customer Portal session (alias for frontend compatibility)
+ */
+router.post('/portal', authenticateToken, requireBilling, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Get user's Stripe customer ID
+        const { data: subscription, error } = await supabaseServiceClient
+            .from('user_subscriptions')
+            .select('stripe_customer_id')
+            .eq('user_id', userId)
+            .single();
+
+        if (error || !subscription?.stripe_customer_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'No active subscription found'
+            });
+        }
+
+        // Create portal session
+        const portalSession = await stripeWrapper.billingPortal.sessions.create({
+            customer: subscription.stripe_customer_id,
+            return_url: process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:3000/billing'
+        });
+
+        logger.info('Stripe portal session created:', {
+            userId,
+            customerId: subscription.stripe_customer_id,
+            sessionId: portalSession.id
+        });
+
+        res.json({
+            success: true,
+            url: portalSession.url
+        });
+
+    } catch (error) {
+        logger.error('Error creating portal session:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create portal session'
+        });
+    }
+});
+
+/**
  * POST /api/billing/create-portal-session
  * Create Stripe Customer Portal session
  */

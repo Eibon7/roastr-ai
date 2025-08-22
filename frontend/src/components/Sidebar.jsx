@@ -13,7 +13,8 @@ import {
   Cog,
   Eye,
   Menu,
-  X
+  X,
+  DollarSign
 } from 'lucide-react';
 
 const navItems = [
@@ -54,16 +55,16 @@ const navItems = [
     description: 'AI roast personality'
   },
   {
-    name: 'Plans',
-    path: '/plans',
-    icon: Crown,
-    description: 'Subscription plans'
+    name: 'Pricing',
+    path: '/pricing',
+    icon: DollarSign,
+    description: 'Plans & pricing'
   },
   {
     name: 'Billing',
     path: '/billing',
     icon: CreditCard,
-    description: 'Plans & usage'
+    description: 'Usage & billing'
   },
   {
     name: 'Settings',
