@@ -3,6 +3,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const { createReadStream } = require('fs');
 const advancedLogger = require('../utils/advancedLogger');
+const { formatFileSize } = require('../utils/formatUtils');
 
 class LogBackupService {
   constructor() {
@@ -11,6 +12,14 @@ class LogBackupService {
     this.bucketName = process.env.LOG_BACKUP_S3_BUCKET;
     this.backupPrefix = process.env.LOG_BACKUP_S3_PREFIX || 'roastr-ai-logs';
     this.region = process.env.AWS_REGION || 'us-east-1';
+    
+    // Retry configuration
+    this.retryConfig = {
+      maxRetries: 3,
+      baseDelayMs: 1000,
+      maxDelayMs: 10000,
+      backoffMultiplier: 2
+    };
     
     this.initializeS3();
   }
@@ -53,6 +62,109 @@ class LogBackupService {
   }
 
   /**
+   * Check if error is retryable
+   */
+  isRetryableError(error) {
+    const retryableErrors = [
+      'RequestTimeout',
+      'RequestTimeoutException',
+      'PriorRequestNotComplete',
+      'ConnectionError',
+      'HTTPSConnectionPool',
+      'NetworkingError',
+      'TimeoutError',
+      'InternalError',
+      'ServiceUnavailable',
+      'SlowDown',
+      'ProvisionedThroughputExceeded'
+    ];
+    
+    const retryableStatusCodes = [429, 500, 502, 503, 504];
+    
+    return retryableErrors.some(err => error.code === err || error.name === err) ||
+           retryableStatusCodes.includes(error.statusCode) ||
+           error.message?.includes('timeout') ||
+           error.message?.includes('connection') ||
+           error.message?.includes('network');
+  }
+
+  /**
+   * Calculate retry delay with exponential backoff
+   */
+  calculateRetryDelay(attempt) {
+    const delay = Math.min(
+      this.retryConfig.baseDelayMs * Math.pow(this.retryConfig.backoffMultiplier, attempt - 1),
+      this.retryConfig.maxDelayMs
+    );
+    
+    // Add jitter to prevent thundering herd
+    const jitter = delay * 0.1 * Math.random();
+    return Math.floor(delay + jitter);
+  }
+
+  /**
+   * Sleep for specified milliseconds
+   */
+  async sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Retry wrapper for S3 operations
+   */
+  async retryOperation(operation, operationName, context = {}) {
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= this.retryConfig.maxRetries; attempt++) {
+      try {
+        const result = await operation();
+        
+        if (attempt > 1) {
+          advancedLogger.info(`S3 operation succeeded after retry`, {
+            operation: operationName,
+            attempt,
+            ...context
+          });
+        }
+        
+        return result;
+        
+      } catch (error) {
+        lastError = error;
+        
+        if (attempt === this.retryConfig.maxRetries || !this.isRetryableError(error)) {
+          advancedLogger.error(`S3 operation failed after all retries`, {
+            operation: operationName,
+            attempts: attempt,
+            error: error.message,
+            code: error.code,
+            statusCode: error.statusCode,
+            retryable: this.isRetryableError(error),
+            ...context
+          });
+          break;
+        }
+        
+        const delay = this.calculateRetryDelay(attempt);
+        
+        advancedLogger.warn(`S3 operation failed, retrying`, {
+          operation: operationName,
+          attempt,
+          error: error.message,
+          code: error.code,
+          statusCode: error.statusCode,
+          retryDelayMs: delay,
+          ...context
+        });
+        
+        await this.sleep(delay);
+      }
+    }
+    
+    throw lastError;
+  }
+
+  /**
    * Upload a single file to S3
    */
   async uploadFileToS3(filePath, s3Key, metadata = {}) {
@@ -63,6 +175,16 @@ class LogBackupService {
     try {
       const fileStream = createReadStream(filePath);
       const stats = await fs.stat(filePath);
+
+      // Add error handler for file stream to prevent unhandled errors
+      fileStream.on('error', (error) => {
+        advancedLogger.error('File stream error during S3 upload', {
+          filePath: path.relative(this.logsDir, filePath),
+          s3Key,
+          error: error.message
+        });
+        throw error;
+      });
 
       const uploadParams = {
         Bucket: this.bucketName,
@@ -80,7 +202,11 @@ class LogBackupService {
         ServerSideEncryption: 'AES256'
       };
 
-      const result = await this.s3.upload(uploadParams).promise();
+      const result = await this.retryOperation(
+        () => this.s3.upload(uploadParams).promise(),
+        'upload',
+        { s3Key, filePath: path.relative(this.logsDir, filePath) }
+      );
       
       advancedLogger.info('File uploaded to S3', {
         localPath: path.relative(this.logsDir, filePath),
@@ -105,6 +231,32 @@ class LogBackupService {
    * Backup logs for a specific date
    */
   async backupLogsForDate(targetDate, options = {}) {
+    // Validate targetDate parameter
+    if (!targetDate) {
+      throw new Error('targetDate parameter is required');
+    }
+    
+    if (!(targetDate instanceof Date)) {
+      throw new Error('targetDate must be a Date object');
+    }
+    
+    if (isNaN(targetDate.getTime())) {
+      throw new Error('targetDate must be a valid Date object');
+    }
+    
+    // Check if date is not in the future (with some tolerance for timezone differences)
+    const now = new Date();
+    const maxFutureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // Allow up to 24 hours in future
+    if (targetDate > maxFutureDate) {
+      throw new Error('targetDate cannot be more than 24 hours in the future');
+    }
+    
+    // Check if date is not too far in the past (more than 10 years)
+    const minPastDate = new Date(now.getTime() - 10 * 365 * 24 * 60 * 60 * 1000);
+    if (targetDate < minPastDate) {
+      throw new Error('targetDate cannot be more than 10 years in the past');
+    }
+
     const {
       dryRun = false,
       skipExisting = true,
@@ -146,7 +298,11 @@ class LogBackupService {
           if (skipExisting && !dryRun) {
             // Check if file already exists in S3
             try {
-              await this.s3.headObject({ Bucket: this.bucketName, Key: s3Key }).promise();
+              await this.retryOperation(
+                () => this.s3.headObject({ Bucket: this.bucketName, Key: s3Key }).promise(),
+                'headObject',
+                { s3Key }
+              );
               results.skipped.push({ file: path.relative(this.logsDir, filePath), s3Key, reason: 'already_exists' });
               continue;
             } catch (error) {
@@ -195,7 +351,7 @@ class LogBackupService {
       uploaded: results.uploaded.length,
       skipped: results.skipped.length,
       errors: results.errors.length,
-      totalSize: this.formatFileSize(results.totalSize),
+      totalSize: formatFileSize(results.totalSize),
       dryRun
     });
 
@@ -263,13 +419,17 @@ class LogBackupService {
         MaxKeys: maxKeys
       };
 
-      const result = await this.s3.listObjectsV2(listParams).promise();
+      const result = await this.retryOperation(
+        () => this.s3.listObjectsV2(listParams).promise(),
+        'listObjectsV2',
+        { prefix, maxKeys }
+      );
       
       const backups = result.Contents.map(obj => ({
         key: obj.Key,
         size: obj.Size,
         lastModified: obj.LastModified,
-        sizeFormatted: this.formatFileSize(obj.Size)
+        sizeFormatted: formatFileSize(obj.Size)
       }));
 
       return {
@@ -304,7 +464,11 @@ class LogBackupService {
         Key: s3Key
       };
 
-      const result = await this.s3.getObject(downloadParams).promise();
+      const result = await this.retryOperation(
+        () => this.s3.getObject(downloadParams).promise(),
+        'getObject',
+        { s3Key }
+      );
       await fs.writeFile(downloadPath, result.Body);
 
       advancedLogger.info('Backup downloaded from S3', {
@@ -327,6 +491,19 @@ class LogBackupService {
   async cleanOldBackups(retentionDays = 90, options = {}) {
     if (!this.isBackupEnabled()) {
       throw new Error('S3 backup is not configured');
+    }
+
+    // Validate retentionDays parameter
+    if (typeof retentionDays !== 'number' || isNaN(retentionDays)) {
+      throw new Error('retentionDays must be a valid number');
+    }
+    
+    if (retentionDays < 0) {
+      throw new Error('retentionDays cannot be negative');
+    }
+    
+    if (retentionDays > 3650) { // More than 10 years seems unreasonable
+      throw new Error('retentionDays cannot exceed 3650 days (10 years)');
     }
 
     const { dryRun = false } = options;
@@ -357,10 +534,14 @@ class LogBackupService {
           results.totalSize += backup.size;
         } else {
           try {
-            await this.s3.deleteObject({
-              Bucket: this.bucketName,
-              Key: backup.key
-            }).promise();
+            await this.retryOperation(
+              () => this.s3.deleteObject({
+                Bucket: this.bucketName,
+                Key: backup.key
+              }).promise(),
+              'deleteObject',
+              { key: backup.key }
+            );
 
             results.deleted.push(backup);
             results.totalSize += backup.size;
@@ -380,7 +561,7 @@ class LogBackupService {
       advancedLogger.info('Backup cleanup completed', {
         deleted: results.deleted.length,
         errors: results.errors.length,
-        totalSizeFreed: this.formatFileSize(results.totalSize),
+        totalSizeFreed: formatFileSize(results.totalSize),
         retentionDays,
         dryRun
       });
@@ -417,27 +598,12 @@ class LogBackupService {
       }
     });
 
-    summary.totalSizeFormatted = this.formatFileSize(summary.totalSize);
+    summary.totalSizeFormatted = formatFileSize(summary.totalSize);
     summary.successRate = ((summary.totalDays - summary.errorDates.length) / summary.totalDays * 100).toFixed(1) + '%';
 
     return summary;
   }
 
-  /**
-   * Format file size in human readable format
-   */
-  formatFileSize(bytes) {
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let size = bytes;
-    let unitIndex = 0;
-    
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex++;
-    }
-    
-    return `${size.toFixed(1)}${units[unitIndex]}`;
-  }
 
   /**
    * Verify backup integrity
@@ -448,10 +614,14 @@ class LogBackupService {
     }
 
     try {
-      const headResult = await this.s3.headObject({
-        Bucket: this.bucketName,
-        Key: s3Key
-      }).promise();
+      const headResult = await this.retryOperation(
+        () => this.s3.headObject({
+          Bucket: this.bucketName,
+          Key: s3Key
+        }).promise(),
+        'headObject',
+        { s3Key }
+      );
 
       const verification = {
         exists: true,

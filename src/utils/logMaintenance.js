@@ -2,6 +2,7 @@ const advancedLogger = require('./advancedLogger');
 const LogBackupService = require('../services/logBackupService');
 const AlertService = require('../services/alertService');
 const { CronJob } = require('cron');
+const { formatFileSize } = require('./formatUtils');
 
 class LogMaintenanceService {
   constructor() {
@@ -51,6 +52,9 @@ class LogMaintenanceService {
       this.logger.warn('Log maintenance service is already running');
       return;
     }
+
+    // Validate configuration at startup
+    this.validateStartupConfiguration();
 
     this.logger.info('Starting log maintenance service', { config: this.config });
 
@@ -116,8 +120,14 @@ class LogMaintenanceService {
     const job = new CronJob(
       this.config.cleanup.schedule,
       async () => {
+        const jobContext = {
+          jobType: 'cleanup',
+          startTime: new Date(),
+          schedule: this.config.cleanup.schedule
+        };
+
         try {
-          this.logger.info('Starting scheduled log cleanup');
+          this.logger.info('Starting scheduled log cleanup', jobContext);
           
           const cleanupOptions = {
             applicationDays: this.config.cleanup.applicationDays,
@@ -131,19 +141,39 @@ class LogMaintenanceService {
 
           const result = await this.logger.cleanOldLogs(cleanupOptions);
           
+          const duration = Date.now() - jobContext.startTime.getTime();
           this.logger.info('Scheduled log cleanup completed', {
+            ...jobContext,
+            duration: `${duration}ms`,
             filesRemoved: result.filesRemoved,
             sizeFreed: this.logger.formatFileSize(result.sizeFreed)
           });
 
           // Alert if cleanup failed
           if (result.filesRemoved === 0) {
-            this.logger.warn('Log cleanup completed but no files were removed - check retention settings');
+            this.logger.warn('Log cleanup completed but no files were removed - check retention settings', jobContext);
           }
 
         } catch (error) {
-          this.logger.error('Scheduled log cleanup failed', { error: error.message });
-          await this.sendAlert('cleanup_failed', { error: error.message });
+          const duration = Date.now() - jobContext.startTime.getTime();
+          const errorDetails = {
+            ...jobContext,
+            duration: `${duration}ms`,
+            error: error.message,
+            stack: error.stack,
+            errorType: error.constructor.name
+          };
+
+          this.logger.error('Scheduled log cleanup failed', errorDetails);
+          
+          try {
+            await this.sendAlert('cleanup_failed', errorDetails);
+          } catch (alertError) {
+            this.logger.error('Failed to send cleanup failure alert', { 
+              originalError: error.message,
+              alertError: alertError.message 
+            });
+          }
         }
       },
       null, // onComplete
@@ -151,8 +181,19 @@ class LogMaintenanceService {
       'UTC' // timezone
     );
 
+    // Add error handler for the cron job itself
+    job.addCallback(() => {
+      this.logger.debug('Cleanup cron job callback executed', { 
+        schedule: this.config.cleanup.schedule,
+        nextRun: job.nextDates().toISOString()
+      });
+    });
+
     this.maintenanceJobs.set('cleanup', job);
-    this.logger.info('Log cleanup job scheduled', { schedule: this.config.cleanup.schedule });
+    this.logger.info('Log cleanup job scheduled', { 
+      schedule: this.config.cleanup.schedule,
+      nextRun: job.nextDates().toISOString()
+    });
   }
 
   /**
@@ -163,28 +204,64 @@ class LogMaintenanceService {
     const backupJob = new CronJob(
       this.config.backup.schedule,
       async () => {
+        const jobContext = {
+          jobType: 'backup',
+          startTime: new Date(),
+          schedule: this.config.backup.schedule
+        };
+
         try {
-          this.logger.info('Starting scheduled log backup');
+          this.logger.info('Starting scheduled log backup', jobContext);
           
           const result = await this.backupService.backupRecentLogs(
             this.config.backup.dailyBackupDays,
             { skipExisting: true }
           );
 
-          this.logger.info('Scheduled log backup completed', result.summary);
+          const duration = Date.now() - jobContext.startTime.getTime();
+          this.logger.info('Scheduled log backup completed', {
+            ...jobContext,
+            duration: `${duration}ms`,
+            ...result.summary
+          });
 
           // Alert if backup has high error rate
           const errorRate = (result.summary.errorDates.length / result.summary.totalDays) * 100;
           if (errorRate > 20) {
-            await this.sendAlert('backup_high_error_rate', {
-              errorRate: errorRate.toFixed(1) + '%',
-              errorDates: result.summary.errorDates
-            });
+            try {
+              await this.sendAlert('backup_high_error_rate', {
+                ...jobContext,
+                errorRate: errorRate.toFixed(1) + '%',
+                errorDates: result.summary.errorDates
+              });
+            } catch (alertError) {
+              this.logger.error('Failed to send backup high error rate alert', { 
+                errorRate,
+                alertError: alertError.message 
+              });
+            }
           }
 
         } catch (error) {
-          this.logger.error('Scheduled log backup failed', { error: error.message });
-          await this.sendAlert('backup_failed', { error: error.message });
+          const duration = Date.now() - jobContext.startTime.getTime();
+          const errorDetails = {
+            ...jobContext,
+            duration: `${duration}ms`,
+            error: error.message,
+            stack: error.stack,
+            errorType: error.constructor.name
+          };
+
+          this.logger.error('Scheduled log backup failed', errorDetails);
+          
+          try {
+            await this.sendAlert('backup_failed', errorDetails);
+          } catch (alertError) {
+            this.logger.error('Failed to send backup failure alert', { 
+              originalError: error.message,
+              alertError: alertError.message 
+            });
+          }
         }
       },
       null, // onComplete
@@ -206,7 +283,7 @@ class LogMaintenanceService {
 
           this.logger.info('Scheduled backup cleanup completed', {
             deleted: result.deleted.length,
-            totalSizeFreed: this.backupService.formatFileSize(result.totalSize),
+            totalSizeFreed: formatFileSize(result.totalSize),
             errors: result.errors.length
           });
 
@@ -301,7 +378,7 @@ class LogMaintenanceService {
           healthReport.backup = {
             enabled: true,
             recentBackups: backupList.totalObjects,
-            totalSize: this.backupService.formatFileSize(backupList.totalSize)
+            totalSize: formatFileSize(backupList.totalSize)
           };
 
           // Check if backups are recent
@@ -487,9 +564,191 @@ class LogMaintenanceService {
   }
 
   /**
+   * Validate startup configuration including cron expressions and S3 setup
+   */
+  validateStartupConfiguration() {
+    // Validate all cron expressions in the configuration
+    const cronFields = [
+      { field: 'cleanup.schedule', value: this.config.cleanup.schedule },
+      { field: 'backup.schedule', value: this.config.backup.schedule },
+      { field: 'backup.cleanupSchedule', value: this.config.backup.cleanupSchedule },
+      { field: 'monitoring.schedule', value: this.config.monitoring.schedule }
+    ];
+
+    cronFields.forEach(({ field, value }) => {
+      if (value && !this.isValidCronExpression(value)) {
+        throw new Error(`Invalid cron expression for ${field}: "${value}"`);
+      }
+    });
+
+    // Validate S3 configuration if backup is enabled
+    if (this.config.backup.enabled) {
+      const s3Status = this.backupService.getStatus();
+      
+      if (!s3Status.configured.bucket) {
+        throw new Error('S3 backup is enabled but LOG_BACKUP_S3_BUCKET environment variable is not set');
+      }
+      
+      if (!s3Status.configured.credentials) {
+        throw new Error('S3 backup is enabled but AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) are not configured');
+      }
+      
+      if (!s3Status.configured.s3) {
+        throw new Error('S3 backup is enabled but S3 client initialization failed');
+      }
+
+      this.logger.info('S3 backup configuration validated', {
+        bucket: s3Status.bucket,
+        region: s3Status.region,
+        prefix: s3Status.prefix
+      });
+    }
+
+    // Validate retention days are reasonable
+    const retentionFields = [
+      { field: 'cleanup.applicationDays', value: this.config.cleanup.applicationDays, max: 365 },
+      { field: 'cleanup.integrationDays', value: this.config.cleanup.integrationDays, max: 365 },
+      { field: 'cleanup.shieldDays', value: this.config.cleanup.shieldDays, max: 365 },
+      { field: 'cleanup.securityDays', value: this.config.cleanup.securityDays, max: 1095 }, // 3 years for security logs
+      { field: 'cleanup.workerDays', value: this.config.cleanup.workerDays, max: 365 },
+      { field: 'cleanup.auditDays', value: this.config.cleanup.auditDays, max: 2555 }, // 7 years for audit logs
+      { field: 'backup.retentionDays', value: this.config.backup.retentionDays, max: 3650 } // 10 years max
+    ];
+
+    retentionFields.forEach(({ field, value, max }) => {
+      if (value < 0) {
+        throw new Error(`${field} cannot be negative: ${value}`);
+      }
+      if (value > max) {
+        this.logger.warn(`${field} exceeds recommended maximum`, { value, max, field });
+      }
+    });
+
+    this.logger.info('Startup configuration validation completed successfully');
+  }
+
+  /**
+   * Validate configuration object
+   */
+  validateConfig(config) {
+    if (!config || typeof config !== 'object') {
+      throw new Error('Configuration must be a valid object');
+    }
+
+    // Validate cleanup configuration
+    if (config.cleanup) {
+      const { cleanup } = config;
+      
+      if (cleanup.applicationDays !== undefined) {
+        if (typeof cleanup.applicationDays !== 'number' || cleanup.applicationDays < 0) {
+          throw new Error('cleanup.applicationDays must be a non-negative number');
+        }
+      }
+      
+      if (cleanup.integrationDays !== undefined) {
+        if (typeof cleanup.integrationDays !== 'number' || cleanup.integrationDays < 0) {
+          throw new Error('cleanup.integrationDays must be a non-negative number');
+        }
+      }
+      
+      if (cleanup.shieldDays !== undefined) {
+        if (typeof cleanup.shieldDays !== 'number' || cleanup.shieldDays < 0) {
+          throw new Error('cleanup.shieldDays must be a non-negative number');
+        }
+      }
+      
+      if (cleanup.securityDays !== undefined) {
+        if (typeof cleanup.securityDays !== 'number' || cleanup.securityDays < 0) {
+          throw new Error('cleanup.securityDays must be a non-negative number');
+        }
+      }
+      
+      if (cleanup.workerDays !== undefined) {
+        if (typeof cleanup.workerDays !== 'number' || cleanup.workerDays < 0) {
+          throw new Error('cleanup.workerDays must be a non-negative number');
+        }
+      }
+      
+      if (cleanup.auditDays !== undefined) {
+        if (typeof cleanup.auditDays !== 'number' || cleanup.auditDays < 0) {
+          throw new Error('cleanup.auditDays must be a non-negative number');
+        }
+      }
+      
+      if (cleanup.schedule !== undefined) {
+        if (typeof cleanup.schedule !== 'string' || !this.isValidCronExpression(cleanup.schedule)) {
+          throw new Error('cleanup.schedule must be a valid cron expression');
+        }
+      }
+    }
+
+    // Validate backup configuration
+    if (config.backup) {
+      const { backup } = config;
+      
+      if (backup.dailyBackupDays !== undefined) {
+        if (typeof backup.dailyBackupDays !== 'number' || backup.dailyBackupDays < 0) {
+          throw new Error('backup.dailyBackupDays must be a non-negative number');
+        }
+      }
+      
+      if (backup.retentionDays !== undefined) {
+        if (typeof backup.retentionDays !== 'number' || backup.retentionDays < 0) {
+          throw new Error('backup.retentionDays must be a non-negative number');
+        }
+      }
+      
+      if (backup.schedule !== undefined) {
+        if (typeof backup.schedule !== 'string' || !this.isValidCronExpression(backup.schedule)) {
+          throw new Error('backup.schedule must be a valid cron expression');
+        }
+      }
+      
+      if (backup.cleanupSchedule !== undefined) {
+        if (typeof backup.cleanupSchedule !== 'string' || !this.isValidCronExpression(backup.cleanupSchedule)) {
+          throw new Error('backup.cleanupSchedule must be a valid cron expression');
+        }
+      }
+    }
+
+    // Validate monitoring configuration
+    if (config.monitoring) {
+      const { monitoring } = config;
+      
+      if (monitoring.schedule !== undefined) {
+        if (typeof monitoring.schedule !== 'string' || !this.isValidCronExpression(monitoring.schedule)) {
+          throw new Error('monitoring.schedule must be a valid cron expression');
+        }
+      }
+      
+      if (monitoring.alertThresholdGB !== undefined) {
+        if (typeof monitoring.alertThresholdGB !== 'number' || monitoring.alertThresholdGB < 0) {
+          throw new Error('monitoring.alertThresholdGB must be a non-negative number');
+        }
+      }
+    }
+  }
+
+  /**
+   * Basic cron expression validation
+   */
+  isValidCronExpression(cronExpression) {
+    if (typeof cronExpression !== 'string') {
+      return false;
+    }
+    
+    // Basic validation - check for 5 or 6 parts separated by spaces
+    const parts = cronExpression.trim().split(/\s+/);
+    return parts.length === 5 || parts.length === 6;
+  }
+
+  /**
    * Update configuration
    */
   updateConfig(newConfig) {
+    // Validate new configuration
+    this.validateConfig(newConfig);
+    
     const oldConfig = { ...this.config };
     this.config = { ...this.config, ...newConfig };
     
