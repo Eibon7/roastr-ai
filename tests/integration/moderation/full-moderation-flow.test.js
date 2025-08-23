@@ -213,9 +213,12 @@ describe('Full Moderation Flow Integration', () => {
       const shouldAutoBlock = 
         persona.toleranceSettings.auto_block_enabled &&
         toxicityResult.score >= persona.toleranceSettings.severity_threshold &&
-        toxicityResult.categories.some(cat => 
-          persona.toleranceSettings.no_tolero.includes(cat.toLowerCase())
-        );
+        toxicityResult.categories.some(cat => {
+          const catLower = cat.toLowerCase();
+          return persona.toleranceSettings.no_tolero.some(noTolero => 
+            catLower.includes(noTolero.toLowerCase()) || noTolero.toLowerCase().includes(catLower)
+          );
+        });
 
       expect(shouldAutoBlock).toBe(true);
 
