@@ -178,10 +178,7 @@ class StripeWebhookService {
                 throw new Error('No user_id in checkout session metadata');
             }
 
-            // Update user with Stripe customer ID
-            await this._updateUserStripeCustomerId(userId, customerId);
-
-            // Get subscription details to extract price
+            // Get subscription details to extract price and plan information
             const subscription = await this.stripeWrapper.subscriptions.retrieve(
                 session.subscription,
                 { expand: ['items.data.price'] }
@@ -193,34 +190,69 @@ class StripeWebhookService {
                 throw new Error('No price ID found in subscription');
             }
 
-            // Set entitlements from Stripe Price metadata
-            const entitlementsResult = await this.entitlementsService.setEntitlementsFromStripePrice(
-                userId,
-                priceId,
-                {
-                    metadata: {
+            // Determine plan from lookup key
+            const lookupKey = session.metadata?.lookup_key;
+            let plan = 'free';
+            
+            if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
+                plan = 'pro';
+            } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
+                plan = 'creator_plus';
+            }
+
+            // Execute atomic transaction for checkout completion
+            const { data: transactionResult, error: transactionError } = await supabaseServiceClient
+                .rpc('execute_checkout_completed_transaction', {
+                    p_user_id: userId,
+                    p_stripe_customer_id: customerId,
+                    p_stripe_subscription_id: subscription.id,
+                    p_plan: plan,
+                    p_status: subscription.status,
+                    p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                    p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                    p_cancel_at_period_end: subscription.cancel_at_period_end,
+                    p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+                    p_price_id: priceId,
+                    p_metadata: {
                         source: 'checkout_completed',
                         session_id: session.id,
-                        subscription_id: subscription.id,
-                        customer_id: customerId
+                        lookup_key: lookupKey
                     }
-                }
-            );
+                });
 
-            if (!entitlementsResult.success) {
-                logger.warn('Failed to set entitlements after checkout', {
+            if (transactionError) {
+                logger.error('Transaction failed during checkout completion:', {
                     userId,
-                    priceId,
-                    error: entitlementsResult.error
+                    subscriptionId: subscription.id,
+                    error: transactionError,
+                    details: transactionResult
+                });
+                
+                return {
+                    success: false,
+                    accountId: userId,
+                    message: 'Checkout completion transaction failed',
+                    error: transactionError
+                };
+            }
+
+            const success = transactionResult?.subscription_updated && transactionResult?.entitlements_updated;
+
+            if (!success) {
+                logger.warn('Checkout completion partially succeeded', {
+                    userId,
+                    subscriptionId: subscription.id,
+                    result: transactionResult
                 });
             }
 
             return {
                 success: true,
                 accountId: userId,
-                message: 'Checkout completed and entitlements updated',
-                entitlementsUpdated: entitlementsResult.success,
-                planName: entitlementsResult.entitlements?.plan_name || 'unknown'
+                message: 'Checkout completed with atomic transaction',
+                entitlementsUpdated: transactionResult?.entitlements_updated || false,
+                planName: transactionResult?.plan_name || plan,
+                transactionResult
             };
 
         } catch (error) {
@@ -267,27 +299,62 @@ class StripeWebhookService {
                 };
             }
 
-            // Set entitlements from Stripe Price metadata
-            const entitlementsResult = await this.entitlementsService.setEntitlementsFromStripePrice(
-                userId,
-                priceId,
-                {
-                    metadata: {
+            // Get price details to determine plan
+            const prices = await this.stripeWrapper.prices.list({ limit: 100 });
+            const priceData = prices.data.find(p => p.id === priceId);
+            
+            let plan = 'free';
+            if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
+                plan = 'pro';
+            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
+                plan = 'creator_plus';
+            }
+
+            // Execute atomic transaction for subscription update
+            const { data: transactionResult, error: transactionError } = await supabaseServiceClient
+                .rpc('execute_subscription_updated_transaction', {
+                    p_user_id: userId,
+                    p_subscription_id: subscriptionId,
+                    p_customer_id: customerId,
+                    p_plan: plan,
+                    p_status: subscription.status,
+                    p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                    p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                    p_cancel_at_period_end: subscription.cancel_at_period_end,
+                    p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+                    p_price_id: priceId,
+                    p_metadata: {
                         source: 'subscription_updated',
-                        subscription_id: subscriptionId,
-                        customer_id: customerId,
-                        subscription_status: subscription.status
+                        subscription_status: subscription.status,
+                        lookup_key: priceData?.lookup_key
                     }
-                }
-            );
+                });
+
+            if (transactionError) {
+                logger.error('Transaction failed during subscription update:', {
+                    userId,
+                    subscriptionId,
+                    error: transactionError,
+                    details: transactionResult
+                });
+                
+                return {
+                    success: false,
+                    accountId: userId,
+                    message: 'Subscription update transaction failed',
+                    error: transactionError
+                };
+            }
 
             return {
                 success: true,
                 accountId: userId,
-                message: 'Subscription updated and entitlements refreshed',
-                entitlementsUpdated: entitlementsResult.success,
-                planName: entitlementsResult.entitlements?.plan_name || 'unknown',
-                subscriptionStatus: subscription.status
+                message: 'Subscription updated with atomic transaction',
+                entitlementsUpdated: transactionResult?.entitlements_updated || false,
+                planName: transactionResult?.new_plan || plan,
+                oldPlan: transactionResult?.old_plan,
+                subscriptionStatus: subscription.status,
+                transactionResult
             };
 
         } catch (error) {
@@ -311,15 +378,40 @@ class StripeWebhookService {
                 throw new Error(`No user found for customer ID: ${customerId}`);
             }
 
-            // Reset to free plan entitlements
-            const result = await this._resetToFreePlan(userId, 'subscription_deleted');
+            // Execute atomic transaction for subscription deletion
+            const { data: transactionResult, error: transactionError } = await supabaseServiceClient
+                .rpc('execute_subscription_deleted_transaction', {
+                    p_user_id: userId,
+                    p_subscription_id: subscriptionId,
+                    p_customer_id: customerId,
+                    p_canceled_at: new Date().toISOString()
+                });
+
+            if (transactionError) {
+                logger.error('Transaction failed during subscription deletion:', {
+                    userId,
+                    subscriptionId,
+                    error: transactionError,
+                    details: transactionResult
+                });
+                
+                return {
+                    success: false,
+                    accountId: userId,
+                    message: 'Subscription deletion transaction failed',
+                    error: transactionError
+                };
+            }
 
             return {
                 success: true,
                 accountId: userId,
-                message: 'Subscription deleted and entitlements reset to free plan',
-                entitlementsUpdated: result.success,
-                planName: 'free'
+                message: 'Subscription deleted with atomic transaction',
+                entitlementsReset: transactionResult?.entitlements_reset || false,
+                previousPlan: transactionResult?.previous_plan || 'unknown',
+                accessUntilDate: transactionResult?.access_until_date,
+                planName: 'free',
+                transactionResult
             };
 
         } catch (error) {
@@ -352,21 +444,40 @@ class StripeWebhookService {
                 };
             }
 
-            // Update user billing status if needed
-            // This could be used for marking accounts as current on payment
-            logger.info('Payment succeeded', {
-                userId,
-                customerId,
-                invoiceId: invoice.id,
-                amount: invoice.amount_paid
-            });
+            // Execute atomic transaction for payment success
+            const { data: transactionResult, error: transactionError } = await supabaseServiceClient
+                .rpc('execute_payment_succeeded_transaction', {
+                    p_user_id: userId,
+                    p_customer_id: customerId,
+                    p_invoice_id: invoice.id,
+                    p_amount_paid: invoice.amount_paid,
+                    p_payment_succeeded_at: new Date().toISOString()
+                });
+
+            if (transactionError) {
+                logger.error('Transaction failed during payment success:', {
+                    userId,
+                    invoiceId: invoice.id,
+                    error: transactionError,
+                    details: transactionResult
+                });
+                
+                return {
+                    success: false,
+                    accountId: userId,
+                    message: 'Payment success transaction failed',
+                    error: transactionError
+                };
+            }
 
             return {
                 success: true,
                 accountId: userId,
-                message: 'Payment succeeded and logged',
+                message: 'Payment succeeded with atomic transaction',
+                statusUpdated: transactionResult?.status_updated || false,
                 invoiceId: invoice.id,
-                amount: invoice.amount_paid
+                amount: invoice.amount_paid,
+                transactionResult
             };
 
         } catch (error) {
@@ -398,22 +509,44 @@ class StripeWebhookService {
                 };
             }
 
-            // Log payment failure - could trigger notifications
-            logger.warn('Payment failed', {
-                userId,
-                customerId,
-                invoiceId: invoice.id,
-                amount: invoice.amount_due,
-                attemptCount: invoice.attempt_count
-            });
+            // Execute atomic transaction for payment failure
+            const { data: transactionResult, error: transactionError } = await supabaseServiceClient
+                .rpc('execute_payment_failed_transaction', {
+                    p_user_id: userId,
+                    p_customer_id: customerId,
+                    p_invoice_id: invoice.id,
+                    p_amount_due: invoice.amount_due,
+                    p_attempt_count: invoice.attempt_count || 0,
+                    p_next_attempt_date: invoice.next_payment_attempt ? new Date(invoice.next_payment_attempt * 1000).toISOString() : null,
+                    p_payment_failed_at: new Date().toISOString()
+                });
+
+            if (transactionError) {
+                logger.error('Transaction failed during payment failure:', {
+                    userId,
+                    invoiceId: invoice.id,
+                    error: transactionError,
+                    details: transactionResult
+                });
+                
+                return {
+                    success: false,
+                    accountId: userId,
+                    message: 'Payment failure transaction failed',
+                    error: transactionError
+                };
+            }
 
             return {
                 success: true,
                 accountId: userId,
-                message: 'Payment failed and logged',
+                message: 'Payment failed with atomic transaction',
+                statusUpdated: transactionResult?.status_updated || false,
+                planName: transactionResult?.plan_name || 'unknown',
                 invoiceId: invoice.id,
                 amount: invoice.amount_due,
-                attemptCount: invoice.attempt_count
+                attemptCount: invoice.attempt_count,
+                transactionResult
             };
 
         } catch (error) {

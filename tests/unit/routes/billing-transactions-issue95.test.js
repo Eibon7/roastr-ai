@@ -17,6 +17,9 @@ process.env.STRIPE_PORTAL_RETURN_URL = 'http://localhost:3000/billing';
 process.env.STRIPE_PRICE_LOOKUP_PRO = 'pro_monthly';
 process.env.STRIPE_PRICE_LOOKUP_CREATOR = 'creator_plus_monthly';
 
+// Also set NODE_ENV to test
+process.env.NODE_ENV = 'test';
+
 // Mock Stripe
 const mockStripe = {
     subscriptions: {
@@ -35,6 +38,11 @@ const mockStripe = {
 
 jest.mock('stripe', () => jest.fn(() => mockStripe));
 
+// Mock StripeWrapper to return our mockStripe
+jest.mock('../../../src/services/stripeWrapper', () => {
+    return jest.fn().mockImplementation(() => mockStripe);
+});
+
 // Mock Supabase
 const mockSupabaseServiceClient = {
     from: jest.fn().mockReturnThis(),
@@ -43,6 +51,11 @@ const mockSupabaseServiceClient = {
     single: jest.fn(),
     rpc: jest.fn(),
 };
+
+// Setup chained mock responses
+mockSupabaseServiceClient.from.mockReturnValue(mockSupabaseServiceClient);
+mockSupabaseServiceClient.select.mockReturnValue(mockSupabaseServiceClient);
+mockSupabaseServiceClient.eq.mockReturnValue(mockSupabaseServiceClient);
 
 jest.mock('../../../src/config/supabase', () => ({
     supabaseServiceClient: mockSupabaseServiceClient,
@@ -89,34 +102,66 @@ describe('Issue #95: Webhook Transaction Support', () => {
 
     beforeEach(() => {
         app = express();
-        app.use(express.json());
-        app.use(express.raw({ type: 'application/json' }));
+        // Don't use express.json() for the whole app, let the route handle it
         app.use('/api/billing', billingRoutes);
 
         // Reset all mocks
         jest.clearAllMocks();
 
         // Default mock responses
-        mockStripe.webhooks.constructEvent.mockReturnValue({
-            id: 'evt_test_123',
-            type: 'checkout.session.completed',
-            created: Date.now() / 1000,
-            data: {
-                object: {
-                    id: 'cs_test_123',
-                    customer: 'cus_test_123',
-                    subscription: 'sub_test_123',
-                    metadata: {
-                        user_id: 'user_test_123',
-                        lookup_key: 'pro_monthly'
+        mockStripe.webhooks.constructEvent.mockImplementation((body, sig, secret) => {
+            // Return the parsed event
+            return {
+                id: 'evt_test_123',
+                type: 'checkout.session.completed',
+                created: Date.now() / 1000,
+                data: {
+                    object: {
+                        id: 'cs_test_123',
+                        customer: 'cus_test_123',
+                        subscription: 'sub_test_123',
+                        metadata: {
+                            user_id: 'user_test_123',
+                            lookup_key: 'pro_monthly'
+                        }
                     }
                 }
+            };
+        });
+
+        // Default RPC responses
+        mockSupabaseServiceClient.rpc.mockImplementation((fnName, params) => {
+            console.log('RPC called:', fnName, params);
+            if (fnName === 'is_webhook_event_processed') {
+                return Promise.resolve({ data: false, error: null });
             }
+            if (fnName === 'start_webhook_event_processing') {
+                return Promise.resolve({ data: 'webhook_123', error: null });
+            }
+            if (fnName === 'complete_webhook_event_processing') {
+                return Promise.resolve({ data: true, error: null });
+            }
+            if (fnName === 'execute_checkout_completed_transaction') {
+                return Promise.resolve({ 
+                    data: {
+                        subscription_updated: true,
+                        entitlements_updated: true,
+                        plan_name: 'pro',
+                        user_id: 'user_test_123',
+                        subscription_id: 'sub_test_123'
+                    },
+                    error: null 
+                });
+            }
+            return Promise.resolve({ data: null, error: 'Unknown RPC function' });
         });
     });
 
     describe('Checkout Completed Transaction', () => {
         it('should execute checkout completion in an atomic transaction', async () => {
+            // Enable debug logging
+            console.log('Starting checkout completion test');
+            
             // Mock Stripe responses
             mockStripe.subscriptions.retrieve.mockResolvedValue({
                 id: 'sub_test_123',
@@ -151,7 +196,7 @@ describe('Issue #95: Webhook Transaction Support', () => {
                 }
             });
 
-            const webhookPayload = JSON.stringify({
+            const webhookPayload = {
                 id: 'evt_test_123',
                 type: 'checkout.session.completed',
                 data: {
@@ -165,27 +210,46 @@ describe('Issue #95: Webhook Transaction Support', () => {
                         }
                     }
                 }
-            });
+            };
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
                 .set('stripe-signature', 'test_signature')
-                .send(webhookPayload);
+                .set('content-type', 'application/json')
+                .send(Buffer.from(JSON.stringify(webhookPayload)));
+
+            console.log('Response status:', response.status);
+            console.log('Response body:', JSON.stringify(response.body, null, 2));
+            
+            if (response.status !== 200) {
+                console.log('Response error - status:', response.status);
+                console.log('Response body:', response.body);
+                console.log('Response text:', response.text);
+            }
 
             expect(response.status).toBe(200);
             expect(response.body.processed).toBe(true);
             
-            // Verify transaction function was called
-            expect(mockSupabaseServiceClient.rpc).toHaveBeenCalledWith(
-                'execute_checkout_completed_transaction',
-                expect.objectContaining({
+            // Log all RPC calls for debugging
+            console.log('All RPC calls:', mockSupabaseServiceClient.rpc.mock.calls);
+            
+            // First, let's just check the RPC was called at all
+            const rpcCalls = mockSupabaseServiceClient.rpc.mock.calls;
+            expect(rpcCalls.length).toBeGreaterThan(0);
+            
+            // Find the transaction call
+            const transactionCall = rpcCalls.find(call => call[0] === 'execute_checkout_completed_transaction');
+            expect(transactionCall).toBeDefined();
+            
+            if (transactionCall) {
+                expect(transactionCall[1]).toMatchObject({
                     p_user_id: 'user_test_123',
                     p_stripe_customer_id: 'cus_test_123',
                     p_stripe_subscription_id: 'sub_test_123',
                     p_plan: 'pro',
                     p_status: 'active'
-                })
-            );
+                });
+            }
         });
 
         it('should handle transaction failure gracefully', async () => {
@@ -215,7 +279,7 @@ describe('Issue #95: Webhook Transaction Support', () => {
                 }
             });
 
-            const webhookPayload = JSON.stringify({
+            const webhookPayload = {
                 id: 'evt_test_123',
                 type: 'checkout.session.completed',
                 data: {
@@ -229,12 +293,13 @@ describe('Issue #95: Webhook Transaction Support', () => {
                         }
                     }
                 }
-            });
+            };
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
                 .set('stripe-signature', 'test_signature')
-                .send(webhookPayload);
+                .set('content-type', 'application/json')
+                .send(Buffer.from(JSON.stringify(webhookPayload)));
 
             // Should still return 200 to prevent Stripe retries
             expect(response.status).toBe(200);
@@ -282,7 +347,7 @@ describe('Issue #95: Webhook Transaction Support', () => {
                 name: 'Test User'
             });
 
-            const webhookPayload = JSON.stringify({
+            const webhookPayload = {
                 id: 'evt_test_456',
                 type: 'customer.subscription.deleted',
                 data: {
@@ -292,12 +357,13 @@ describe('Issue #95: Webhook Transaction Support', () => {
                         status: 'canceled'
                     }
                 }
-            });
+            };
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
                 .set('stripe-signature', 'test_signature')
-                .send(webhookPayload);
+                .set('content-type', 'application/json')
+                .send(Buffer.from(JSON.stringify(webhookPayload)));
 
             expect(response.status).toBe(200);
             expect(response.body.processed).toBe(true);
@@ -348,7 +414,7 @@ describe('Issue #95: Webhook Transaction Support', () => {
                 }
             });
 
-            const webhookPayload = JSON.stringify({
+            const webhookPayload = {
                 id: 'evt_test_789',
                 type: 'invoice.payment_succeeded',
                 data: {
@@ -358,12 +424,13 @@ describe('Issue #95: Webhook Transaction Support', () => {
                         amount_paid: 2000
                     }
                 }
-            });
+            };
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
                 .set('stripe-signature', 'test_signature')
-                .send(webhookPayload);
+                .set('content-type', 'application/json')
+                .send(Buffer.from(JSON.stringify(webhookPayload)));
 
             expect(response.status).toBe(200);
             expect(response.body.processed).toBe(true);
@@ -422,7 +489,7 @@ describe('Issue #95: Webhook Transaction Support', () => {
                 name: 'Test User'
             });
 
-            const webhookPayload = JSON.stringify({
+            const webhookPayload = {
                 id: 'evt_test_101',
                 type: 'invoice.payment_failed',
                 data: {
@@ -433,12 +500,13 @@ describe('Issue #95: Webhook Transaction Support', () => {
                         attempt_count: 2
                     }
                 }
-            });
+            };
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
                 .set('stripe-signature', 'test_signature')
-                .send(webhookPayload);
+                .set('content-type', 'application/json')
+                .send(Buffer.from(JSON.stringify(webhookPayload)));
 
             expect(response.status).toBe(200);
             expect(response.body.processed).toBe(true);
@@ -503,7 +571,7 @@ describe('Issue #95: Webhook Transaction Support', () => {
                 }
             });
 
-            const webhookPayload = JSON.stringify({
+            const webhookPayload = {
                 id: 'evt_test_rollback',
                 type: 'customer.subscription.updated',
                 data: {
@@ -518,12 +586,13 @@ describe('Issue #95: Webhook Transaction Support', () => {
                         items: { data: [{ price: { id: 'price_test_123' } }] }
                     }
                 }
-            });
+            };
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
                 .set('stripe-signature', 'test_signature')
-                .send(webhookPayload);
+                .set('content-type', 'application/json')
+                .send(Buffer.from(JSON.stringify(webhookPayload)));
 
             expect(response.status).toBe(200);
             expect(response.body.processed).toBe(true); // Webhook should still be acknowledged
@@ -566,7 +635,7 @@ describe('Issue #95: Webhook Transaction Support', () => {
                 email: 'test@example.com'
             });
 
-            const webhookPayload = JSON.stringify({
+            const webhookPayload = {
                 id: 'evt_test_error',
                 type: 'checkout.session.completed',
                 data: {
@@ -580,12 +649,13 @@ describe('Issue #95: Webhook Transaction Support', () => {
                         }
                     }
                 }
-            });
+            };
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
                 .set('stripe-signature', 'test_signature')
-                .send(webhookPayload);
+                .set('content-type', 'application/json')
+                .send(Buffer.from(JSON.stringify(webhookPayload)));
 
             expect(response.status).toBe(200);
             expect(response.body.processed).toBe(false);
