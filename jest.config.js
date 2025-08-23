@@ -42,6 +42,27 @@ module.exports = {
       functions: 60,
       lines: 60,
       statements: 60
+    },
+    // Services require good coverage
+    "src/services/": {
+      branches: 65,
+      functions: 70,
+      lines: 70,
+      statements: 70
+    },
+    // Shield service requires higher coverage due to security role
+    "src/services/shieldService.js": {
+      branches: 70,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    },
+    // Analyze toxicity worker requires coverage
+    "src/workers/analyzeToxicity.js": {
+      branches: 60,
+      functions: 60,
+      lines: 60,
+      statements: 60
     }
   },
   
