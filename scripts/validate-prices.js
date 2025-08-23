@@ -19,6 +19,7 @@ const REQUIRED_METADATA = {
     'plan_name',
     'analysis_limit_monthly',
     'roast_limit_monthly',
+    'shield_limit_monthly',
     'model',
     'shield_enabled',
     'rqc_mode'
@@ -27,6 +28,7 @@ const REQUIRED_METADATA = {
     'plan_name',
     'analysis_limit_monthly',
     'roast_limit_monthly',
+    'shield_limit_monthly',
     'model',
     'shield_enabled',
     'rqc_mode'
@@ -35,6 +37,7 @@ const REQUIRED_METADATA = {
     'plan_name',
     'analysis_limit_monthly',
     'roast_limit_monthly',
+    'shield_limit_monthly',
     'model',
     'shield_enabled',
     'rqc_mode'
@@ -43,42 +46,47 @@ const REQUIRED_METADATA = {
     'plan_name',
     'analysis_limit_monthly',
     'roast_limit_monthly',
+    'shield_limit_monthly',
     'model',
     'shield_enabled',
     'rqc_mode'
   ]
 };
 
-// Expected values for validation
+// Expected values for validation - Based on user requirements from validation checklist
 const EXPECTED_VALUES = {
   free: {
     plan_name: 'free',
     analysis_limit_monthly: '100',
     roast_limit_monthly: '100',
+    shield_limit_monthly: '0',
     model: 'gpt-3.5-turbo',
     shield_enabled: 'false',
     rqc_mode: 'basic'
   },
   starter: {
     plan_name: 'starter',
-    analysis_limit_monthly: '500',
+    analysis_limit_monthly: '1000',
     roast_limit_monthly: '500',
+    shield_limit_monthly: '50',
     model: 'gpt-3.5-turbo',
-    shield_enabled: 'false',
+    shield_enabled: 'true',
     rqc_mode: 'basic'
   },
   pro: {
     plan_name: 'pro',
-    analysis_limit_monthly: '2000',
-    roast_limit_monthly: '2000',
+    analysis_limit_monthly: '10000',
+    roast_limit_monthly: '1000',
+    shield_limit_monthly: '100',
     model: 'gpt-4',
     shield_enabled: 'true',
     rqc_mode: 'advanced'
   },
   plus: {
     plan_name: 'plus',
-    analysis_limit_monthly: '10000',
-    roast_limit_monthly: '10000',
+    analysis_limit_monthly: '50000',
+    roast_limit_monthly: '5000',
+    shield_limit_monthly: '500',
     model: 'gpt-4',
     shield_enabled: 'true',
     rqc_mode: 'premium'
@@ -229,8 +237,9 @@ async function validateAllPrices() {
     console.log('\n💡 Example metadata for a pro plan:');
     console.log('   {');
     console.log('     "plan_name": "pro",');
-    console.log('     "analysis_limit_monthly": "2000",');
-    console.log('     "roast_limit_monthly": "2000",');
+    console.log('     "analysis_limit_monthly": "10000",');
+    console.log('     "roast_limit_monthly": "1000",');
+    console.log('     "shield_limit_monthly": "100",');
     console.log('     "model": "gpt-4",');
     console.log('     "shield_enabled": "true",');
     console.log('     "rqc_mode": "advanced"');
