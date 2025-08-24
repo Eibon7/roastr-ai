@@ -51,6 +51,7 @@ describe('PlanLimitsService', () => {
             plan_id: 'pro',
             max_roasts: 1000,
             monthly_responses_limit: 1000,
+            monthly_analysis_limit: 10000,
             max_platforms: 5,
             integrations_limit: 5,
             shield_enabled: true,
@@ -58,10 +59,10 @@ describe('PlanLimitsService', () => {
             priority_support: true,
             api_access: false,
             analytics_enabled: true,
-            custom_tones: false,
+            custom_tones: true,
             dedicated_support: false,
-            monthly_tokens_limit: 100000,
-            daily_api_calls_limit: 1000,
+            monthly_tokens_limit: 500000,
+            daily_api_calls_limit: 5000,
             settings: { extra: 'data' }
         };
 
@@ -76,6 +77,7 @@ describe('PlanLimitsService', () => {
             expect(limits).toEqual({
                 maxRoasts: 1000,
                 monthlyResponsesLimit: 1000,
+                monthlyAnalysisLimit: 10000,
                 maxPlatforms: 5,
                 integrationsLimit: 5,
                 shieldEnabled: true,
@@ -83,10 +85,10 @@ describe('PlanLimitsService', () => {
                 prioritySupport: true,
                 apiAccess: false,
                 analyticsEnabled: true,
-                customTones: false,
+                customTones: true,
                 dedicatedSupport: false,
-                monthlyTokensLimit: 100000,
-                dailyApiCallsLimit: 1000,
+                monthlyTokensLimit: 500000,
+                dailyApiCallsLimit: 5000,
                 extra: 'data'
             });
         });
@@ -114,6 +116,7 @@ describe('PlanLimitsService', () => {
             expect(limits).toEqual({
                 maxRoasts: 1000,
                 monthlyResponsesLimit: 1000,
+                monthlyAnalysisLimit: 10000,
                 maxPlatforms: 5,
                 integrationsLimit: 5,
                 shieldEnabled: true,
@@ -121,10 +124,11 @@ describe('PlanLimitsService', () => {
                 prioritySupport: true,
                 apiAccess: false,
                 analyticsEnabled: true,
-                customTones: false,
+                customTones: true,
                 dedicatedSupport: false,
-                monthlyTokensLimit: 100000,
-                dailyApiCallsLimit: 1000
+                monthlyTokensLimit: 500000,
+                dailyApiCallsLimit: 5000,
+                ai_model: 'gpt-4o'
             });
         });
 
@@ -133,7 +137,7 @@ describe('PlanLimitsService', () => {
 
             const limits = await planLimitsService.getPlanLimits('unknown_plan');
 
-            expect(limits.maxRoasts).toBe(100);
+            expect(limits.maxRoasts).toBe(10);
             expect(limits.shieldEnabled).toBe(false);
         });
     });
@@ -142,24 +146,67 @@ describe('PlanLimitsService', () => {
         const mockAllLimits = [
             {
                 plan_id: 'free',
-                max_roasts: 100,
-                monthly_responses_limit: 100,
-                max_platforms: 1,
+                max_roasts: 10,
+                monthly_responses_limit: 10,
+                monthly_analysis_limit: 1000,
+                max_platforms: 2,
                 integrations_limit: 2,
                 shield_enabled: false,
                 custom_prompts: false,
                 priority_support: false,
+                custom_tones: false,
+                settings: {}
+            },
+            {
+                plan_id: 'starter',
+                max_roasts: 10,
+                monthly_responses_limit: 10,
+                monthly_analysis_limit: 1000,
+                max_platforms: 2,
+                integrations_limit: 2,
+                shield_enabled: true,
+                custom_prompts: false,
+                priority_support: false,
+                custom_tones: false,
                 settings: {}
             },
             {
                 plan_id: 'pro',
                 max_roasts: 1000,
                 monthly_responses_limit: 1000,
+                monthly_analysis_limit: 10000,
                 max_platforms: 5,
                 integrations_limit: 5,
                 shield_enabled: true,
                 custom_prompts: false,
                 priority_support: true,
+                custom_tones: true,
+                settings: {}
+            },
+            {
+                plan_id: 'plus',
+                max_roasts: 5000,
+                monthly_responses_limit: 5000,
+                monthly_analysis_limit: 100000,
+                max_platforms: 10,
+                integrations_limit: 10,
+                shield_enabled: true,
+                custom_prompts: true,
+                priority_support: true,
+                custom_tones: true,
+                settings: {}
+            },
+            {
+                plan_id: 'custom',
+                max_roasts: -1,
+                monthly_responses_limit: -1,
+                monthly_analysis_limit: -1,
+                max_platforms: -1,
+                integrations_limit: -1,
+                shield_enabled: true,
+                custom_prompts: true,
+                priority_support: true,
+                custom_tones: true,
                 settings: {}
             }
         ];
@@ -176,9 +223,15 @@ describe('PlanLimitsService', () => {
             expect(supabaseServiceClient.from).toHaveBeenCalledWith('plan_limits');
             expect(mockSelect).toHaveBeenCalledWith('*');
             expect(allLimits).toHaveProperty('free');
+            expect(allLimits).toHaveProperty('starter');
             expect(allLimits).toHaveProperty('pro');
-            expect(allLimits.free.maxRoasts).toBe(100);
+            expect(allLimits).toHaveProperty('plus');
+            expect(allLimits).toHaveProperty('custom');
+            expect(allLimits.free.maxRoasts).toBe(10);
+            expect(allLimits.starter.maxRoasts).toBe(10);
             expect(allLimits.pro.maxRoasts).toBe(1000);
+            expect(allLimits.plus.maxRoasts).toBe(5000);
+            expect(allLimits.custom.maxRoasts).toBe(-1);
         });
     });
 
@@ -275,17 +328,27 @@ describe('PlanLimitsService', () => {
 
         it('should return false for unlimited (-1) limits', async () => {
             mockSingle.mockResolvedValue({
-                data: { plan_id: 'creator_plus', max_roasts: -1 },
+                data: { plan_id: 'custom', max_roasts: -1 },
                 error: null
             });
 
-            const result = await planLimitsService.checkLimit('creator_plus', 'roasts', 999999);
+            const result = await planLimitsService.checkLimit('custom', 'roasts', 999999);
             expect(result).toBe(false);
         });
 
         it('should handle unknown limit types', async () => {
             const result = await planLimitsService.checkLimit('pro', 'unknown_limit', 100);
             expect(result).toBe(false);
+        });
+
+        it('should check monthly analysis limits', async () => {
+            mockSingle.mockResolvedValue({
+                data: { plan_id: 'starter', monthly_analysis_limit: 1000 },
+                error: null
+            });
+
+            const result = await planLimitsService.checkLimit('starter', 'monthly_analysis', 1500);
+            expect(result).toBe(true);
         });
 
         it('should return false on error', async () => {
