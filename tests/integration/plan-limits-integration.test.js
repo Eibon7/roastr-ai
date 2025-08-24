@@ -9,44 +9,77 @@ const workerNotificationService = require('../../src/services/workerNotification
 const authService = require('../../src/services/authService');
 
 // Mock Supabase for integration testing
+const mockSupabaseData = {
+    pro: {
+        plan_id: 'pro',
+        max_roasts: 1000,
+        monthly_responses_limit: 1000,
+        max_platforms: 5,
+        integrations_limit: 5,
+        shield_enabled: true,
+        custom_prompts: false,
+        priority_support: true,
+        api_access: false,
+        analytics_enabled: true,
+        custom_tones: false,
+        dedicated_support: false,
+        monthly_tokens_limit: 100000,
+        daily_api_calls_limit: 1000,
+        settings: {}
+    },
+    free: {
+        plan_id: 'free',
+        max_roasts: 100,
+        monthly_responses_limit: 100,
+        max_platforms: 1,
+        integrations_limit: 2,
+        shield_enabled: false,
+        custom_prompts: false,
+        priority_support: false,
+        api_access: false,
+        analytics_enabled: false,
+        custom_tones: false,
+        dedicated_support: false,
+        monthly_tokens_limit: 10000,
+        daily_api_calls_limit: 100,
+        settings: {}
+    }
+};
+
+let mockDatabaseCalls = 0;
+let mockShouldFail = false;
+
 jest.mock('../../src/config/supabase', () => ({
     supabaseServiceClient: {
         from: jest.fn(() => ({
             select: jest.fn(() => ({
-                eq: jest.fn(() => ({
-                    single: jest.fn(() => Promise.resolve({
-                        data: {
-                            plan_id: 'pro',
-                            max_roasts: 1000,
-                            monthly_responses_limit: 1000,
-                            max_platforms: 5,
-                            integrations_limit: 5,
-                            shield_enabled: true,
-                            custom_prompts: false,
-                            priority_support: true,
-                            api_access: false,
-                            analytics_enabled: true,
-                            custom_tones: false,
-                            dedicated_support: false,
-                            monthly_tokens_limit: 100000,
-                            daily_api_calls_limit: 1000,
-                            settings: {}
-                        },
-                        error: null
-                    }))
+                eq: jest.fn((field, value) => ({
+                    single: jest.fn(() => {
+                        mockDatabaseCalls++;
+                        if (mockShouldFail) {
+                            return Promise.resolve({
+                                data: null,
+                                error: new Error('Database connection failed')
+                            });
+                        }
+                        const data = mockSupabaseData[value] || mockSupabaseData.free;
+                        return Promise.resolve({ data, error: null });
+                    })
+                })),
+                order: jest.fn(() => ({
+                    data: [mockSupabaseData.free, mockSupabaseData.pro],
+                    error: null
                 }))
             })),
-            update: jest.fn(() => ({
+            update: jest.fn((updateData) => ({
                 eq: jest.fn(() => ({
                     select: jest.fn(() => ({
-                        single: jest.fn(() => Promise.resolve({
-                            data: {
-                                plan_id: 'pro',
-                                max_roasts: 2000,
-                                monthly_responses_limit: 2000
-                            },
-                            error: null
-                        }))
+                        single: jest.fn(() => {
+                            mockDatabaseCalls++;
+                            // Simulate updating the data
+                            const updatedData = { ...mockSupabaseData.pro, ...updateData };
+                            return Promise.resolve({ data: updatedData, error: null });
+                        })
                     }))
                 }))
             }))
@@ -58,6 +91,10 @@ describe('Plan Limits Integration', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         planLimitsService.clearCache();
+        
+        // Reset mock state
+        mockDatabaseCalls = 0;
+        mockShouldFail = false;
     });
 
     describe('End-to-end plan limits flow', () => {
@@ -83,17 +120,8 @@ describe('Plan Limits Integration', () => {
         });
 
         it('should handle database failures gracefully', async () => {
-            // Mock database error
-            supabaseServiceClient.from.mockImplementation(() => ({
-                select: () => ({
-                    eq: () => ({
-                        single: () => Promise.resolve({
-                            data: null,
-                            error: new Error('Database connection failed')
-                        })
-                    })
-                })
-            }));
+            // Set mock to fail
+            mockShouldFail = true;
 
             // Services should fall back to default values
             const limits = await planLimitsService.getPlanLimits('pro');
@@ -109,26 +137,29 @@ describe('Plan Limits Integration', () => {
         it('should cache limits across service calls', async () => {
             // First call to planLimitsService
             await planLimitsService.getPlanLimits('pro');
+            expect(mockDatabaseCalls).toBe(1);
             
             // Second call should use cache
             await planLimitsService.getPlanLimits('pro');
             
-            // Should only call database once
-            expect(supabaseServiceClient.from).toHaveBeenCalledTimes(1);
+            // Should still be only 1 database call due to caching
+            expect(mockDatabaseCalls).toBe(1);
         });
 
         it('should refresh cache after update', async () => {
             // Initial fetch
             await planLimitsService.getPlanLimits('pro');
+            expect(mockDatabaseCalls).toBe(1);
             
-            // Update should clear cache
-            await planLimitsService.updatePlanLimits('pro', { maxRoasts: 2000 }, 'admin-123');
+            // Update should clear cache and internally call getPlanLimits
+            await planLimitsService.updatePlanLimits('pro', { max_roasts: 2000 }, 'admin-123');
+            expect(mockDatabaseCalls).toBe(3); // 1 initial + 1 update + 1 internal getPlanLimits
             
-            // Next fetch should hit database again
+            // Next fetch should use the cached result from updatePlanLimits
             await planLimitsService.getPlanLimits('pro');
             
-            // Should have called database 3 times: initial fetch, update, post-update fetch
-            expect(supabaseServiceClient.from).toHaveBeenCalledTimes(3);
+            // Should still be 3 calls since getPlanLimits was cached by updatePlanLimits
+            expect(mockDatabaseCalls).toBe(3);
         });
     });
 
@@ -168,25 +199,20 @@ describe('Plan Limits Integration', () => {
         });
 
         it('should handle unlimited limits', async () => {
-            // Mock creator_plus with unlimited roasts
-            supabaseServiceClient.from.mockImplementation(() => ({
-                select: () => ({
-                    eq: () => ({
-                        single: () => Promise.resolve({
-                            data: {
-                                plan_id: 'creator_plus',
-                                max_roasts: -1,
-                                monthly_responses_limit: 5000,
-                                shield_enabled: true
-                            },
-                            error: null
-                        })
-                    })
-                })
-            }));
+            // Add creator_plus data with unlimited roasts to mock data
+            const originalMockData = { ...mockSupabaseData };
+            mockSupabaseData.creator_plus = {
+                plan_id: 'creator_plus',
+                max_roasts: -1,
+                monthly_responses_limit: 5000,
+                shield_enabled: true
+            };
 
             const isOverLimit = await planLimitsService.checkLimit('creator_plus', 'roasts', 999999);
             expect(isOverLimit).toBe(false); // Should never be over unlimited limit
+            
+            // Restore original mock data
+            Object.assign(mockSupabaseData, originalMockData);
         });
     });
 
@@ -216,33 +242,16 @@ describe('Plan Limits Integration', () => {
 
     describe('Error handling integration', () => {
         it('should handle partial database failures', async () => {
-            // Mock intermittent failures
-            let callCount = 0;
-            supabaseServiceClient.from.mockImplementation(() => ({
-                select: () => ({
-                    eq: () => ({
-                        single: () => {
-                            callCount++;
-                            if (callCount === 1) {
-                                return Promise.resolve({ data: null, error: new Error('Temp failure') });
-                            }
-                            return Promise.resolve({
-                                data: { plan_id: 'pro', max_roasts: 1000, shield_enabled: true },
-                                error: null
-                            });
-                        }
-                    })
-                })
-            }));
-
-            // First call should use fallback
+            // First call - simulate failure
+            mockShouldFail = true;
             const limits1 = await planLimitsService.getPlanLimits('pro');
             expect(limits1.maxRoasts).toBe(1000); // Fallback value
 
             // Clear cache to force second database call
             planLimitsService.clearCache();
 
-            // Second call should succeed
+            // Second call - simulate success
+            mockShouldFail = false;
             const limits2 = await planLimitsService.getPlanLimits('pro');
             expect(limits2.maxRoasts).toBe(1000); // Database value
         });
@@ -252,16 +261,7 @@ describe('Plan Limits Integration', () => {
             jest.spyOn(logger, 'error');
 
             // Force database error
-            supabaseServiceClient.from.mockImplementation(() => ({
-                select: () => ({
-                    eq: () => ({
-                        single: () => Promise.resolve({
-                            data: null,
-                            error: new Error('Database down')
-                        })
-                    })
-                })
-            }));
+            mockShouldFail = true;
 
             await planLimitsService.getPlanLimits('pro');
             expect(logger.error).toHaveBeenCalledWith(

@@ -643,7 +643,7 @@ class AuthService {
 
         try {
             // Validate plan
-            const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
+            const validPlans = ['free', 'starter', 'pro', 'plus', 'custom'];
             if (!validPlans.includes(newPlan)) {
                 throw new Error('Invalid plan. Valid plans are: ' + validPlans.join(', '));
             }
@@ -1240,8 +1240,10 @@ class AuthService {
             // Map old plan names to new plan IDs if needed
             const planMap = {
                 'basic': 'free',
+                'starter': 'starter',
                 'pro': 'pro',
-                'creator_plus': 'creator_plus'
+                'creator_plus': 'plus', // Legacy mapping
+                'plus': 'plus'
             };
             
             const planId = planMap[plan] || plan || 'free';
@@ -1266,24 +1268,39 @@ class AuthService {
      */
     getFallbackPlanLimits(plan) {
         const limits = {
-            basic: {
-                monthly_messages: 100,
-                monthly_tokens: 10000,
-                integrations: 1
+            free: {
+                monthly_messages: 10,
+                monthly_tokens: 50000,
+                integrations: 2,
+                monthly_analysis: 1000
+            },
+            starter: {
+                monthly_messages: 10,
+                monthly_tokens: 100000,
+                integrations: 2,
+                monthly_analysis: 1000
             },
             pro: {
                 monthly_messages: 1000,
-                monthly_tokens: 100000,
-                integrations: 5
-            },
-            creator_plus: {
-                monthly_messages: 5000,
                 monthly_tokens: 500000,
-                integrations: 999
+                integrations: 5,
+                monthly_analysis: 10000
+            },
+            plus: {
+                monthly_messages: 5000,
+                monthly_tokens: 2000000,
+                integrations: 10,
+                monthly_analysis: 100000
+            },
+            custom: {
+                monthly_messages: -1,
+                monthly_tokens: -1,
+                integrations: -1,
+                monthly_analysis: -1
             }
         };
 
-        return limits[plan] || limits.basic;
+        return limits[plan] || limits.free;
     }
 
     /**

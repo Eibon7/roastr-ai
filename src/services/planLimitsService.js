@@ -18,7 +18,7 @@ class PlanLimitsService {
 
     /**
      * Get plan limits from database with caching
-     * @param {string} planId - Plan ID (free, pro, creator_plus, custom)
+     * @param {string} planId - Plan ID (free, starter, pro, plus, custom)
      * @returns {Object} Plan limits configuration
      */
     async getPlanLimits(planId) {
@@ -46,6 +46,7 @@ class PlanLimitsService {
             const limits = {
                 maxRoasts: data.max_roasts,
                 monthlyResponsesLimit: data.monthly_responses_limit,
+                monthlyAnalysisLimit: data.monthly_analysis_limit,
                 maxPlatforms: data.max_platforms,
                 integrationsLimit: data.integrations_limit,
                 shieldEnabled: data.shield_enabled,
@@ -93,6 +94,7 @@ class PlanLimitsService {
                 allLimits[planLimit.plan_id] = {
                     maxRoasts: planLimit.max_roasts,
                     monthlyResponsesLimit: planLimit.monthly_responses_limit,
+                    monthlyAnalysisLimit: planLimit.monthly_analysis_limit,
                     maxPlatforms: planLimit.max_platforms,
                     integrationsLimit: planLimit.integrations_limit,
                     shieldEnabled: planLimit.shield_enabled,
@@ -129,6 +131,7 @@ class PlanLimitsService {
             const dbUpdates = {};
             if (updates.maxRoasts !== undefined) dbUpdates.max_roasts = updates.maxRoasts;
             if (updates.monthlyResponsesLimit !== undefined) dbUpdates.monthly_responses_limit = updates.monthlyResponsesLimit;
+            if (updates.monthlyAnalysisLimit !== undefined) dbUpdates.monthly_analysis_limit = updates.monthlyAnalysisLimit;
             if (updates.maxPlatforms !== undefined) dbUpdates.max_platforms = updates.maxPlatforms;
             if (updates.integrationsLimit !== undefined) dbUpdates.integrations_limit = updates.integrationsLimit;
             if (updates.shieldEnabled !== undefined) dbUpdates.shield_enabled = updates.shieldEnabled;
@@ -195,6 +198,9 @@ class PlanLimitsService {
                 case 'monthly_responses':
                     limitValue = limits.monthlyResponsesLimit;
                     break;
+                case 'monthly_analysis':
+                    limitValue = limits.monthlyAnalysisLimit;
+                    break;
                 case 'integrations':
                     limitValue = limits.integrationsLimit;
                     break;
@@ -256,9 +262,10 @@ class PlanLimitsService {
     getDefaultLimits(planId) {
         const defaults = {
             free: {
-                maxRoasts: 100,
-                monthlyResponsesLimit: 100,
-                maxPlatforms: 1,
+                maxRoasts: 10,
+                monthlyResponsesLimit: 10,
+                monthlyAnalysisLimit: 1000,
+                maxPlatforms: 2,
                 integrationsLimit: 2,
                 shieldEnabled: false,
                 customPrompts: false,
@@ -267,12 +274,31 @@ class PlanLimitsService {
                 analyticsEnabled: false,
                 customTones: false,
                 dedicatedSupport: false,
-                monthlyTokensLimit: 10000,
-                dailyApiCallsLimit: 100
+                monthlyTokensLimit: 50000,
+                dailyApiCallsLimit: 100,
+                ai_model: 'gpt-3.5-turbo'
+            },
+            starter: {
+                maxRoasts: 10,
+                monthlyResponsesLimit: 10,
+                monthlyAnalysisLimit: 1000,
+                maxPlatforms: 2,
+                integrationsLimit: 2,
+                shieldEnabled: true,
+                customPrompts: false,
+                prioritySupport: false,
+                apiAccess: false,
+                analyticsEnabled: false,
+                customTones: false,
+                dedicatedSupport: false,
+                monthlyTokensLimit: 100000,
+                dailyApiCallsLimit: 500,
+                ai_model: 'gpt-4o'
             },
             pro: {
                 maxRoasts: 1000,
                 monthlyResponsesLimit: 1000,
+                monthlyAnalysisLimit: 10000,
                 maxPlatforms: 5,
                 integrationsLimit: 5,
                 shieldEnabled: true,
@@ -280,16 +306,18 @@ class PlanLimitsService {
                 prioritySupport: true,
                 apiAccess: false,
                 analyticsEnabled: true,
-                customTones: false,
+                customTones: true,
                 dedicatedSupport: false,
-                monthlyTokensLimit: 100000,
-                dailyApiCallsLimit: 1000
+                monthlyTokensLimit: 500000,
+                dailyApiCallsLimit: 5000,
+                ai_model: 'gpt-4o'
             },
-            creator_plus: {
-                maxRoasts: -1,
+            plus: {
+                maxRoasts: 5000,
                 monthlyResponsesLimit: 5000,
-                maxPlatforms: -1,
-                integrationsLimit: 999,
+                monthlyAnalysisLimit: 100000,
+                maxPlatforms: 10,
+                integrationsLimit: 10,
                 shieldEnabled: true,
                 customPrompts: true,
                 prioritySupport: true,
@@ -297,14 +325,17 @@ class PlanLimitsService {
                 analyticsEnabled: true,
                 customTones: true,
                 dedicatedSupport: true,
-                monthlyTokensLimit: 500000,
-                dailyApiCallsLimit: -1
+                monthlyTokensLimit: 2000000,
+                dailyApiCallsLimit: 20000,
+                ai_model: 'gpt-4o',
+                rqc_embedded: true
             },
             custom: {
                 maxRoasts: -1,
-                monthlyResponsesLimit: 999999,
+                monthlyResponsesLimit: -1,
+                monthlyAnalysisLimit: -1,
                 maxPlatforms: -1,
-                integrationsLimit: 999,
+                integrationsLimit: -1,
                 shieldEnabled: true,
                 customPrompts: true,
                 prioritySupport: true,
@@ -313,7 +344,9 @@ class PlanLimitsService {
                 customTones: true,
                 dedicatedSupport: true,
                 monthlyTokensLimit: -1,
-                dailyApiCallsLimit: -1
+                dailyApiCallsLimit: -1,
+                ai_model: 'gpt-4o',
+                enterprise: true
             }
         };
 
@@ -327,8 +360,9 @@ class PlanLimitsService {
     getDefaultAllLimits() {
         return {
             free: this.getDefaultLimits('free'),
+            starter: this.getDefaultLimits('starter'),
             pro: this.getDefaultLimits('pro'),
-            creator_plus: this.getDefaultLimits('creator_plus'),
+            plus: this.getDefaultLimits('plus'),
             custom: this.getDefaultLimits('custom')
         };
     }

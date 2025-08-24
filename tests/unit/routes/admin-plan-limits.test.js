@@ -48,13 +48,33 @@ describe('Admin Plan Limits Routes', () => {
         it('should return all plan limits', async () => {
             const mockAllLimits = {
                 free: {
-                    maxRoasts: 100,
-                    monthlyResponsesLimit: 100,
+                    maxRoasts: 10,
+                    monthlyResponsesLimit: 10,
+                    monthlyAnalysisLimit: 1000,
                     shieldEnabled: false
+                },
+                starter: {
+                    maxRoasts: 10,
+                    monthlyResponsesLimit: 10,
+                    monthlyAnalysisLimit: 1000,
+                    shieldEnabled: true
                 },
                 pro: {
                     maxRoasts: 1000,
                     monthlyResponsesLimit: 1000,
+                    monthlyAnalysisLimit: 10000,
+                    shieldEnabled: true
+                },
+                plus: {
+                    maxRoasts: 5000,
+                    monthlyResponsesLimit: 5000,
+                    monthlyAnalysisLimit: 100000,
+                    shieldEnabled: true
+                },
+                custom: {
+                    maxRoasts: -1,
+                    monthlyResponsesLimit: -1,
+                    monthlyAnalysisLimit: -1,
                     shieldEnabled: true
                 }
             };
@@ -87,9 +107,11 @@ describe('Admin Plan Limits Routes', () => {
             const mockLimits = {
                 maxRoasts: 1000,
                 monthlyResponsesLimit: 1000,
+                monthlyAnalysisLimit: 10000,
                 maxPlatforms: 5,
                 shieldEnabled: true,
-                customPrompts: false
+                customPrompts: false,
+                customTones: true
             };
 
             planLimitsService.getPlanLimits.mockResolvedValue(mockLimits);
