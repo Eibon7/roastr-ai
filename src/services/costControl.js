@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const planLimitsService = require('./planLimitsService');
 
 class CostControlService {
   constructor() {
@@ -6,38 +7,26 @@ class CostControlService {
     this.supabaseKey = process.env.SUPABASE_ANON_KEY;
     this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
     
-    // Plan configurations
+    // Keep basic plan metadata (not limits)
     this.plans = {
       free: {
         id: 'free',
         name: 'Free',
-        monthlyResponsesLimit: 100,
-        integrationsLimit: 2,
-        shieldEnabled: false,
         features: ['basic_integrations', 'community_support']
       },
       pro: {
         id: 'pro',
         name: 'Pro',
-        monthlyResponsesLimit: 1000,
-        integrationsLimit: 5,
-        shieldEnabled: true,
         features: ['all_integrations', 'shield_mode', 'priority_support', 'analytics']
       },
       creator_plus: {
         id: 'creator_plus',
         name: 'Creator Plus',
-        monthlyResponsesLimit: 5000,
-        integrationsLimit: 999,
-        shieldEnabled: true,
         features: ['unlimited_integrations', 'shield_mode', 'custom_tones', 'api_access', 'dedicated_support']
       },
       custom: {
         id: 'custom',
         name: 'Custom',
-        monthlyResponsesLimit: 999999,
-        integrationsLimit: 999,
-        shieldEnabled: true,
         features: ['everything', 'custom_integrations', 'sla', 'dedicated_manager']
       }
     };
@@ -771,11 +760,14 @@ class CostControlService {
         throw new Error(`Invalid plan ID: ${newPlanId}`);
       }
 
+      // Get plan limits from database
+      const planLimits = await planLimitsService.getPlanLimits(newPlanId);
+
       const { data: org, error } = await this.supabase
         .from('organizations')
         .update({
           plan_id: newPlanId,
-          monthly_responses_limit: newPlan.monthlyResponsesLimit,
+          monthly_responses_limit: planLimits.monthlyResponsesLimit,
           stripe_subscription_id: stripeSubscriptionId,
           subscription_status: 'active',
           updated_at: new Date().toISOString()
@@ -807,7 +799,10 @@ class CostControlService {
       return {
         success: true,
         organization: org,
-        newPlan
+        newPlan: {
+          ...newPlan,
+          ...planLimits
+        }
       };
 
     } catch (error) {
@@ -830,8 +825,10 @@ class CostControlService {
       if (error) throw error;
 
       const plan = this.plans[org.plan_id];
+      const planLimits = await planLimitsService.getPlanLimits(org.plan_id);
+      
       return {
-        allowed: plan.shieldEnabled,
+        allowed: planLimits.shieldEnabled,
         planId: org.plan_id,
         planName: plan.name
       };

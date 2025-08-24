@@ -9,6 +9,7 @@ const revenueRoutes = require('./revenue');
 const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
+const planLimitsService = require('../services/planLimitsService');
 
 const router = express.Router();
 
@@ -983,6 +984,154 @@ router.get('/alerts/history', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch alert history',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/plan-limits
+ * Get all plan limits configurations
+ * Issue #99: Database-based plan limit configuration
+ */
+router.get('/plan-limits', async (req, res) => {
+    try {
+        const allLimits = await planLimitsService.getAllPlanLimits();
+        
+        res.json({
+            success: true,
+            data: {
+                plans: allLimits,
+                last_updated: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        logger.error('Get plan limits error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch plan limits',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/plan-limits/:planId
+ * Get specific plan limits
+ * Issue #99: Database-based plan limit configuration
+ */
+router.get('/plan-limits/:planId', async (req, res) => {
+    try {
+        const { planId } = req.params;
+        const limits = await planLimitsService.getPlanLimits(planId);
+        
+        res.json({
+            success: true,
+            data: {
+                planId,
+                limits,
+                last_updated: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        logger.error('Get plan limits error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch plan limits',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * PUT /api/admin/plan-limits/:planId
+ * Update plan limits for a specific plan
+ * Issue #99: Database-based plan limit configuration
+ */
+router.put('/plan-limits/:planId', async (req, res) => {
+    try {
+        const { planId } = req.params;
+        const updates = req.body;
+        const adminId = req.user.id;
+        
+        // Validate plan ID
+        const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
+        if (!validPlans.includes(planId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid plan ID'
+            });
+        }
+        
+        // Validate updates
+        const allowedFields = [
+            'maxRoasts', 'monthlyResponsesLimit', 'maxPlatforms', 
+            'integrationsLimit', 'shieldEnabled', 'customPrompts',
+            'prioritySupport', 'apiAccess', 'analyticsEnabled',
+            'customTones', 'dedicatedSupport', 'monthlyTokensLimit',
+            'dailyApiCallsLimit'
+        ];
+        
+        const invalidFields = Object.keys(updates).filter(field => !allowedFields.includes(field));
+        if (invalidFields.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid fields in update request',
+                invalidFields
+            });
+        }
+        
+        // Update plan limits
+        const updatedLimits = await planLimitsService.updatePlanLimits(planId, updates, adminId);
+        
+        logger.info('Plan limits updated', {
+            planId,
+            updatedBy: adminId,
+            changes: Object.keys(updates)
+        });
+        
+        res.json({
+            success: true,
+            data: {
+                planId,
+                limits: updatedLimits,
+                updated_at: new Date().toISOString(),
+                updated_by: adminId
+            }
+        });
+    } catch (error) {
+        logger.error('Update plan limits error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update plan limits',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/admin/plan-limits/refresh-cache
+ * Force refresh the plan limits cache
+ * Issue #99: Database-based plan limit configuration
+ */
+router.post('/plan-limits/refresh-cache', async (req, res) => {
+    try {
+        planLimitsService.clearCache();
+        
+        logger.info('Plan limits cache cleared by admin', {
+            adminId: req.user.id
+        });
+        
+        res.json({
+            success: true,
+            message: 'Plan limits cache cleared successfully',
+            cleared_at: new Date().toISOString()
+        });
+    } catch (error) {
+        logger.error('Clear plan limits cache error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to clear plan limits cache',
             message: error.message
         });
     }
