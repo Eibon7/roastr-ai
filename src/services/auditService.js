@@ -572,6 +572,65 @@ class AuditService {
       return { success: false, error: error.message };
     }
   }
+
+  /**
+   * Log user setting changes (Issue #187)
+   * @param {string} userId - User ID
+   * @param {string} settingName - Name of the setting changed
+   * @param {Object} details - Change details (old_value, new_value)
+   * @param {Object} req - Request object for IP/user agent
+   * @returns {Promise<Object>} Result
+   */
+  async logUserSettingChange(userId, settingName, details, req = null) {
+    try {
+      const result = await withRetry(
+        async () => {
+          const { data, error } = await supabaseServiceClient
+            .from('audit_logs')
+            .insert({
+              user_id: userId,
+              action: `setting_changed_${settingName}`,
+              actor_id: userId,
+              actor_type: 'user',
+              resource_type: 'user_settings',
+              resource_id: userId,
+              details: {
+                setting_name: settingName,
+                ...details,
+                timestamp: new Date().toISOString()
+              },
+              ip_address: req?.ip || null,
+              user_agent: req?.get('User-Agent') || null,
+              legal_basis: 'user_consent_settings',
+              retention_period_days: 365  // 1 year retention for setting changes
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        },
+        {
+          maxRetries: 3,
+          shouldRetry: isRetryableError,
+          context: 'User setting change audit'
+        }
+      );
+
+      logger.info('⚙️ User setting change logged:', {
+        userId: userId.substring(0, 8) + '...',
+        settingName,
+        oldValue: details.old_value,
+        newValue: details.new_value
+      });
+
+      return { success: true, data: result };
+
+    } catch (error) {
+      logger.error('⚙️ Failed to log user setting change:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // Export singleton instance
