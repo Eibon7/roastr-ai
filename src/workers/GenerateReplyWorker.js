@@ -1,6 +1,7 @@
 const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
 const RoastPromptTemplate = require('../services/roastPromptTemplate');
+const transparencyService = require('../services/transparencyService');
 const { mockMode } = require('../config/mockMode');
 
 /**
@@ -666,12 +667,58 @@ class GenerateReplyWorker extends BaseWorker {
         }
       }
 
+      // Get organization owner ID for transparency settings (Issue #196)
+      const { data: orgData } = await this.supabase
+        .from('organizations')
+        .select('owner_id')
+        .eq('id', organizationId)
+        .single();
+      
+      const ownerId = orgData?.owner_id;
+      let finalResponseText = response.text;
+      
+      // Apply unified transparency disclaimer if we have owner ID (Issue #196)
+      if (ownerId) {
+        try {
+          const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
+            response.text,
+            ownerId,
+            config.language || 'es',
+            config.platformLimit || null
+          );
+          finalResponseText = transparencyResult.finalText;
+          
+          // Update disclaimer usage statistics
+          try {
+            await transparencyService.updateDisclaimerStats(
+              transparencyResult.disclaimer,
+              transparencyResult.disclaimerType,
+              config.language || 'es'
+            );
+          } catch (statsError) {
+            this.log('warn', 'Failed to update disclaimer stats in worker:', statsError.message);
+          }
+          
+          this.log('info', 'Applied unified transparency disclaimer', {
+            organizationId,
+            transparencyMode: transparencyResult.transparencyMode,
+            disclaimerType: transparencyResult.disclaimerType,
+            hasDisclaimer: finalResponseText !== response.text
+          });
+        } catch (transparencyError) {
+          this.log('warn', 'Failed to apply transparency disclaimer, using original text', {
+            organizationId,
+            error: transparencyError.message
+          });
+        }
+      }
+
       const { data: stored, error } = await this.supabase
         .from('responses')
         .insert({
           organization_id: organizationId,
           comment_id: commentId,
-          response_text: response.text,
+          response_text: finalResponseText,
           tone: config.tone,
           humor_type: config.humor_type,
           generation_time_ms: generationTime,

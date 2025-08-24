@@ -13,6 +13,7 @@ const { logger } = require('../utils/logger');
 const RQCService = require('./rqcService');
 const RoastGeneratorMock = require('./roastGeneratorMock');
 const RoastPromptTemplate = require('./roastPromptTemplate');
+const transparencyService = require('./transparencyService');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 require('dotenv').config();
@@ -47,16 +48,40 @@ class RoastGeneratorEnhanced {
     
     // If in mock mode, use mock generator
     if (this.isMockMode) {
-      const roast = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
+      const rawRoast = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
+      
+      // Apply unified transparency disclaimer (Issue #196)
+      const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
+        rawRoast, 
+        userConfig.userId, 
+        userConfig.language || 'es',
+        userConfig.platformLimit || null
+      );
+      
+      // Update disclaimer usage statistics
+      try {
+        await transparencyService.updateDisclaimerStats(
+          transparencyResult.disclaimer,
+          transparencyResult.disclaimerType,
+          userConfig.language || 'es'
+        );
+      } catch (error) {
+        // Non-critical error, just log
+        logger.warn('Failed to update disclaimer stats:', error.message);
+      }
+      
       return {
-        roast,
+        roast: transparencyResult.finalText,
         plan: userConfig.plan || 'free',
         rqcEnabled: false,
         rqcGloballyEnabled: false,
         processingTime: Date.now() - startTime,
-        tokensUsed: this.estimateTokens(text + roast),
+        tokensUsed: this.estimateTokens(text + transparencyResult.finalText),
         method: 'mock_fallback',
-        isMockMode: true
+        isMockMode: true,
+        transparencyMode: transparencyResult.transparencyMode,
+        disclaimerType: transparencyResult.disclaimerType,
+        bioText: transparencyResult.bioText
       };
     }
     
@@ -78,21 +103,43 @@ class RoastGeneratorEnhanced {
       if (!rqcConfig.advanced_review_enabled || !rqcGloballyEnabled) {
         logger.info('📝 Using basic moderation for plan:', rqcConfig.plan);
         
-        const roast = await this.generateWithBasicModeration(
+        const rawRoast = await this.generateWithBasicModeration(
           text, 
           toxicityScore, 
           tone, 
           rqcConfig
         );
         
+        // Apply unified transparency disclaimer (Issue #196)
+        const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
+          rawRoast, 
+          userConfig.userId, 
+          userConfig.language || 'es',
+          userConfig.platformLimit || null
+        );
+        
+        // Update disclaimer usage statistics
+        try {
+          await transparencyService.updateDisclaimerStats(
+            transparencyResult.disclaimer,
+            transparencyResult.disclaimerType,
+            userConfig.language || 'es'
+          );
+        } catch (error) {
+          logger.warn('Failed to update disclaimer stats:', error.message);
+        }
+        
         return {
-          roast,
+          roast: transparencyResult.finalText,
           plan: rqcConfig.plan,
           rqcEnabled: rqcGloballyEnabled && rqcConfig.rqc_enabled,
           rqcGloballyEnabled,
           processingTime: Date.now() - startTime,
-          tokensUsed: this.estimateTokens(text + roast),
-          method: rqcGloballyEnabled ? 'rqc_bypass' : 'basic_moderation'
+          tokensUsed: this.estimateTokens(text + transparencyResult.finalText),
+          method: rqcGloballyEnabled ? 'rqc_bypass' : 'basic_moderation',
+          transparencyMode: transparencyResult.transparencyMode,
+          disclaimerType: transparencyResult.disclaimerType,
+          bioText: transparencyResult.bioText
         };
       }
 
@@ -106,27 +153,72 @@ class RoastGeneratorEnhanced {
         rqcConfig
       );
 
+      // Apply unified transparency disclaimer to the final roast (Issue #196)
+      const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
+        result.roast, 
+        userConfig.userId, 
+        userConfig.language || 'es',
+        userConfig.platformLimit || null
+      );
+
+      // Update disclaimer usage statistics
+      try {
+        await transparencyService.updateDisclaimerStats(
+          transparencyResult.disclaimer,
+          transparencyResult.disclaimerType,
+          userConfig.language || 'es'
+        );
+      } catch (error) {
+        logger.warn('Failed to update disclaimer stats:', error.message);
+      }
+
       return {
         ...result,
+        roast: transparencyResult.finalText,
         plan: rqcConfig.plan,
         rqcEnabled: true,
-        processingTime: Date.now() - startTime
+        processingTime: Date.now() - startTime,
+        transparencyMode: transparencyResult.transparencyMode,
+        disclaimerType: transparencyResult.disclaimerType,
+        bioText: transparencyResult.bioText
       };
 
     } catch (error) {
       logger.error('❌ Error in enhanced roast generation:', error);
       
       // Fallback to safe roast
-      const fallbackRoast = await this.generateFallbackRoast(text, tone);
+      const rawFallbackRoast = await this.generateFallbackRoast(text, tone);
+      
+      // Apply unified transparency disclaimer even to fallback roasts (Issue #196)
+      const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
+        rawFallbackRoast, 
+        userConfig.userId, 
+        userConfig.language || 'es',
+        userConfig.platformLimit || null
+      );
+      
+      // Update disclaimer usage statistics for fallback
+      try {
+        await transparencyService.updateDisclaimerStats(
+          transparencyResult.disclaimer,
+          transparencyResult.disclaimerType,
+          userConfig.language || 'es'
+        );
+      } catch (statsError) {
+        logger.warn('Failed to update disclaimer stats for fallback:', statsError.message);
+      }
       
       return {
-        roast: fallbackRoast,
+        roast: transparencyResult.finalText,
         plan: userConfig.plan || 'free',
         rqcEnabled: false,
         processingTime: Date.now() - startTime,
-        tokensUsed: this.estimateTokens(text + fallbackRoast),
+        tokensUsed: this.estimateTokens(text + transparencyResult.finalText),
         method: 'fallback',
-        error: error.message
+        error: error.message,
+        transparencyMode: transparencyResult.transparencyMode,
+        disclaimerType: transparencyResult.disclaimerType,
+        bioText: transparencyResult.bioText
       };
     }
   }
