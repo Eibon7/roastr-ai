@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Copy, Check, Info } from 'lucide-react';
+import { Copy, Check, Info, Shield } from 'lucide-react';
 import { apiClient } from '../lib/api';
 
 const TransparencySettings = () => {
-  const [transparencyMode, setTransparencyMode] = useState('bio');
-  const [options, setOptions] = useState([]);
+  const [explanation, setExplanation] = useState(null);
   const [bioText, setBioText] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
+  const [stats, setStats] = useState(null);
 
   // Load transparency settings on component mount
   useEffect(() => {
@@ -21,45 +19,19 @@ const TransparencySettings = () => {
   const loadTransparencySettings = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/user/settings/transparency-mode');
+      const response = await apiClient.get('/user/settings/transparency-explanation');
       
       if (response.data.success) {
-        const { transparency_mode, bio_text, options: settingOptions } = response.data.data;
-        setTransparencyMode(transparency_mode);
-        setBioText(bio_text || '');
-        setOptions(settingOptions || []);
+        const { explanation: explanationData, bioText: bioTextData, stats: statsData } = response.data.data;
+        setExplanation(explanationData);
+        setBioText(bioTextData || '');
+        setStats(statsData || null);
       }
     } catch (err) {
       console.error('Failed to load transparency settings:', err);
-      setError('Error al cargar configuración de transparencia');
+      setError('Error al cargar información de transparencia');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateTransparencyMode = async (newMode) => {
-    try {
-      setSaving(true);
-      setError(null);
-      
-      const response = await apiClient.patch('/user/settings/transparency-mode', {
-        mode: newMode
-      });
-      
-      if (response.data.success) {
-        setTransparencyMode(newMode);
-        setBioText(response.data.data.bio_text || '');
-        
-        // Show success notification
-        if (window.showNotification) {
-          window.showNotification('Configuración actualizada exitosamente', 'success');
-        }
-      }
-    } catch (err) {
-      console.error('Failed to update transparency mode:', err);
-      setError('Error al actualizar configuración');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -81,80 +53,47 @@ const TransparencySettings = () => {
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-        <div className="space-y-3">
-          <div className="h-12 bg-gray-200 rounded"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
-        </div>
+        <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+        <div className="h-32 bg-gray-200 rounded"></div>
+        <div className="h-16 bg-gray-200 rounded"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <div className="text-sm text-red-800">{error}</div>
         </div>
       )}
 
-      {/* Transparency Mode Options */}
-      <div className="space-y-3">
-        {options.map((option) => (
-          <div
-            key={option.value}
-            className={`border rounded-lg p-4 cursor-pointer transition-all ${
-              transparencyMode === option.value
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
-            onClick={() => updateTransparencyMode(option.value)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="transparency_mode"
-                      value={option.value}
-                      checked={transparencyMode === option.value}
-                      onChange={() => updateTransparencyMode(option.value)}
-                      className="text-blue-600"
-                    />
-                    <span className="font-medium">{option.label}</span>
-                    {option.is_default && (
-                      <Badge variant="outline" className="text-xs">
-                        Por defecto
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="text-sm text-gray-600 mt-1 ml-6">
-                  {option.description}
-                </div>
-              </div>
-              
-              {saving && transparencyMode === option.value && (
-                <div className="text-sm text-blue-600">Guardando...</div>
-              )}
-            </div>
-          </div>
-        ))}
+      {/* Header */}
+      <div className="flex items-center space-x-2">
+        <Shield className="h-5 w-5 text-blue-600" />
+        <h3 className="text-lg font-medium text-gray-900">
+          {explanation?.title || 'Transparencia en las respuestas'}
+        </h3>
       </div>
 
-      {/* Bio Text Copy Section */}
-      {transparencyMode === 'bio' && bioText && (
-        <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-          <div className="flex items-start space-x-2 mb-3">
-            <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-blue-800">
-              <strong>Copia este texto a tu biografía:</strong>
-            </div>
+      {/* Unified System Explanation */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start space-x-2">
+          <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-800">
+            <p>{explanation?.description}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Bio Recommendation Section */}
+      {bioText && (
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="text-sm font-medium mb-3 text-gray-900">
+            💡 Recomendación adicional para tu biografía:
           </div>
           
-          <div className="bg-white border border-blue-300 rounded p-3 mb-3">
+          <div className="bg-gray-50 border border-gray-300 rounded p-3 mb-3">
             <div className="text-sm font-mono text-gray-800 break-words">
               {bioText}
             </div>
@@ -165,7 +104,6 @@ const TransparencySettings = () => {
             variant="outline"
             size="sm"
             className="w-full sm:w-auto"
-            disabled={saving}
           >
             {copied ? (
               <>
@@ -175,37 +113,75 @@ const TransparencySettings = () => {
             ) : (
               <>
                 <Copy className="h-4 w-4 mr-2" />
-                Copiar texto
+                {explanation?.buttonText || 'Copiar texto'}
               </>
             )}
           </Button>
         </div>
       )}
 
+      {/* Statistics Section */}
+      {stats && (
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="text-sm font-medium mb-3 text-gray-900">
+            📊 Estadísticas de disclaimers (últimas 24h):
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="bg-green-50 border border-green-200 rounded p-3">
+              <div className="text-green-800 font-medium">Firmas cortas</div>
+              <div className="text-2xl font-bold text-green-600">{stats.shortSignatureUsage}%</div>
+              <div className="text-xs text-green-600">Para ahorrar espacio</div>
+            </div>
+            
+            <div className="bg-purple-50 border border-purple-200 rounded p-3">
+              <div className="text-purple-800 font-medium">Disclaimers creativos</div>
+              <div className="text-2xl font-bold text-purple-600">{stats.creativeDisclaimerUsage}%</div>
+              <div className="text-xs text-purple-600">Para variedad y branding</div>
+            </div>
+          </div>
+          
+          <div className="mt-3 text-xs text-gray-500">
+            Total de respuestas: {stats.totalDisclaimers}
+          </div>
+        </div>
+      )}
+
       {/* Preview Section */}
       <div className="border border-gray-200 rounded-lg p-4">
-        <div className="text-sm font-medium mb-2">Vista previa:</div>
-        <div className="bg-gray-50 border rounded p-3">
-          <div className="text-sm text-gray-800">
-            "Tu comentario tiene menos creatividad que una calculadora rota."
-            {transparencyMode === 'signature' && (
+        <div className="text-sm font-medium mb-3 text-gray-900">Vista previa de respuestas:</div>
+        
+        <div className="space-y-3">
+          {/* Short signature example */}
+          <div className="bg-gray-50 border rounded p-3">
+            <div className="text-sm text-gray-800">
+              "Tu comentario tiene menos creatividad que una calculadora rota."
               <div className="mt-2 text-xs text-gray-600 border-t pt-2">
-                — Generado por Roastr.AI
+                — Roastr.AI
               </div>
-            )}
-            {transparencyMode === 'creative' && (
+            </div>
+            <div className="text-xs text-green-600 mt-1">
+              ✓ Firma corta (70% de las respuestas)
+            </div>
+          </div>
+          
+          {/* Creative disclaimer example */}
+          <div className="bg-gray-50 border rounded p-3">
+            <div className="text-sm text-gray-800">
+              "Tu comentario tiene menos creatividad que una calculadora rota."
               <div className="mt-2 text-xs text-gray-600 border-t pt-2">
                 0% humano, 100% devastador
               </div>
-            )}
+            </div>
+            <div className="text-xs text-purple-600 mt-1">
+              ✓ Disclaimer creativo (30% de las respuestas)
+            </div>
           </div>
         </div>
         
-        {transparencyMode === 'bio' && (
-          <div className="text-xs text-gray-500 mt-2">
-            💡 Con el modo "Aviso en Bio", tus roasts no incluyen disclaimer automático
-          </div>
-        )}
+        <div className="text-xs text-gray-500 mt-3">
+          ℹ️ Todas las respuestas automáticas incluyen ahora un aviso de IA. El sistema rota automáticamente entre firmas cortas y disclaimers creativos.
+        </div>
       </div>
     </div>
   );
