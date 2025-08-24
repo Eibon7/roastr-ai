@@ -50,25 +50,12 @@ class RoastGeneratorEnhanced {
     if (this.isMockMode) {
       const rawRoast = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
       
-      // Apply unified transparency disclaimer (Issue #196)
+      // Apply transparency disclaimer (Issue #187)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
         rawRoast, 
         userConfig.userId, 
-        userConfig.language || 'es',
-        userConfig.platformLimit || null
+        userConfig.language || 'es'
       );
-      
-      // Update disclaimer usage statistics
-      try {
-        await transparencyService.updateDisclaimerStats(
-          transparencyResult.disclaimer,
-          transparencyResult.disclaimerType,
-          userConfig.language || 'es'
-        );
-      } catch (error) {
-        // Non-critical error, just log
-        logger.warn('Failed to update disclaimer stats:', error.message);
-      }
       
       return {
         roast: transparencyResult.finalText,
@@ -80,7 +67,6 @@ class RoastGeneratorEnhanced {
         method: 'mock_fallback',
         isMockMode: true,
         transparencyMode: transparencyResult.transparencyMode,
-        disclaimerType: transparencyResult.disclaimerType,
         bioText: transparencyResult.bioText
       };
     }
@@ -110,24 +96,12 @@ class RoastGeneratorEnhanced {
           rqcConfig
         );
         
-        // Apply unified transparency disclaimer (Issue #196)
+        // Apply transparency disclaimer (Issue #187)
         const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
           rawRoast, 
           userConfig.userId, 
-          userConfig.language || 'es',
-          userConfig.platformLimit || null
+          userConfig.language || 'es'
         );
-        
-        // Update disclaimer usage statistics
-        try {
-          await transparencyService.updateDisclaimerStats(
-            transparencyResult.disclaimer,
-            transparencyResult.disclaimerType,
-            userConfig.language || 'es'
-          );
-        } catch (error) {
-          logger.warn('Failed to update disclaimer stats:', error.message);
-        }
         
         return {
           roast: transparencyResult.finalText,
@@ -138,7 +112,6 @@ class RoastGeneratorEnhanced {
           tokensUsed: this.estimateTokens(text + transparencyResult.finalText),
           method: rqcGloballyEnabled ? 'rqc_bypass' : 'basic_moderation',
           transparencyMode: transparencyResult.transparencyMode,
-          disclaimerType: transparencyResult.disclaimerType,
           bioText: transparencyResult.bioText
         };
       }
@@ -153,24 +126,13 @@ class RoastGeneratorEnhanced {
         rqcConfig
       );
 
-      // Apply unified transparency disclaimer to the final roast (Issue #196)
+      // Apply transparency disclaimer to the final roast (Issue #187)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
         result.roast, 
         userConfig.userId, 
-        userConfig.language || 'es',
-        userConfig.platformLimit || null
+        userConfig.language || 'es'
       );
 
-      // Update disclaimer usage statistics
-      try {
-        await transparencyService.updateDisclaimerStats(
-          transparencyResult.disclaimer,
-          transparencyResult.disclaimerType,
-          userConfig.language || 'es'
-        );
-      } catch (error) {
-        logger.warn('Failed to update disclaimer stats:', error.message);
-      }
       return {
         ...result,
         roast: transparencyResult.finalText,
@@ -178,7 +140,6 @@ class RoastGeneratorEnhanced {
         rqcEnabled: true,
         processingTime: Date.now() - startTime,
         transparencyMode: transparencyResult.transparencyMode,
-        disclaimerType: transparencyResult.disclaimerType,
         bioText: transparencyResult.bioText
       };
 
@@ -188,24 +149,12 @@ class RoastGeneratorEnhanced {
       // Fallback to safe roast
       const rawFallbackRoast = await this.generateFallbackRoast(text, tone);
       
-      // Apply unified transparency disclaimer even to fallback roasts (Issue #196)
+      // Apply transparency disclaimer even to fallback roasts (Issue #187)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
         rawFallbackRoast, 
         userConfig.userId, 
-        userConfig.language || 'es',
-        userConfig.platformLimit || null
+        userConfig.language || 'es'
       );
-      
-      // Update disclaimer usage statistics for fallback
-      try {
-        await transparencyService.updateDisclaimerStats(
-          transparencyResult.disclaimer,
-          transparencyResult.disclaimerType,
-          userConfig.language || 'es'
-        );
-      } catch (statsError) {
-        logger.warn('Failed to update disclaimer stats for fallback:', statsError.message);
-      }
       
       return {
         roast: transparencyResult.finalText,
@@ -216,7 +165,6 @@ class RoastGeneratorEnhanced {
         method: 'fallback',
         error: error.message,
         transparencyMode: transparencyResult.transparencyMode,
-        disclaimerType: transparencyResult.disclaimerType,
         bioText: transparencyResult.bioText
       };
     }
