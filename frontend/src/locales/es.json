@@ -130,6 +130,30 @@
       "empty_state": "Nada que mostrar aquí todavía"
     }
   },
+  "transparency": {
+    "title": "Transparencia en las respuestas",
+    "description": "Por políticas de transparencia, todas las respuestas automáticas incluyen un aviso de que son generadas por IA. Además, puedes añadir en tu bio el texto sugerido para dar mayor visibilidad y protección.",
+    "bio_recommendation": "💡 Recomendación adicional para tu biografía:",
+    "copy_button": "Copiar texto",
+    "copied_button": "¡Copiado!",
+    "statistics_title": "📊 Estadísticas de disclaimers (últimas 24h):",
+    "short_signatures": "Firmas cortas",
+    "short_signatures_description": "Para ahorrar espacio",
+    "creative_disclaimers": "Disclaimers creativos",
+    "creative_disclaimers_description": "Para variedad y branding",
+    "total_responses": "Total de respuestas: {count}",
+    "preview_title": "Vista previa de respuestas:",
+    "short_example_label": "✓ Firma corta (70% de las respuestas)",
+    "creative_example_label": "✓ Disclaimer creativo (30% de las respuestas)",
+    "system_info": "ℹ️ Todas las respuestas automáticas incluyen ahora un aviso de IA. El sistema rota automáticamente entre firmas cortas y disclaimers creativos.",
+    "errors": {
+      "load_failed": "Error al cargar información de transparencia",
+      "copy_failed": "Error al copiar texto"
+    },
+    "notifications": {
+      "copy_success": "Texto copiado al portapapeles"
+    }
+  },
   "forms": {
     "validation": {
       "required": "Este campo es obligatorio",

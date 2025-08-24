@@ -1987,41 +1987,19 @@ router.get('/settings/transparency-mode', authenticateToken, async (req, res) =>
 
 /**
  * GET /api/user/settings/transparency-explanation
- * Get unified transparency system explanation and bio recommendation (Issue #196)
+ * Get unified transparency system explanation and bio recommendation (Issue #196, Optimized #199)
  */
 router.get('/settings/transparency-explanation', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const language = req.user.language || 'es';
         
-        // Get transparency explanation and bio text
-        const explanation = transparencyService.getTransparencyExplanation(language);
-        const bioText = transparencyService.getBioText(language);
-        
-        // Get usage statistics (optional)
-        let stats = null;
-        try {
-            stats = await transparencyService.getUsageStats();
-        } catch (error) {
-            logger.warn('Failed to get transparency stats', { 
-                userId: userId.substring(0, 8) + '...',
-                error: error.message 
-            });
-        }
-
-        logger.info('Transparency explanation retrieved', {
-            userId: userId.substring(0, 8) + '...',
-            language,
-            hasStats: !!stats
-        });
+        // Use optimized unified method (Issue #199) - single call instead of multiple
+        const transparencyInfo = await transparencyService.getTransparencyInfo(language, userId);
 
         res.json({
             success: true,
-            data: {
-                explanation,
-                bioText,
-                stats
-            }
+            data: transparencyInfo
         });
 
     } catch (error) {

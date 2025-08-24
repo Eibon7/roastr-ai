@@ -688,15 +688,36 @@ class GenerateReplyWorker extends BaseWorker {
           );
           finalResponseText = transparencyResult.finalText;
           
-          // Update disclaimer usage statistics
-          try {
-            await transparencyService.updateDisclaimerStats(
-              transparencyResult.disclaimer,
-              transparencyResult.disclaimerType,
-              config.language || 'es'
-            );
-          } catch (statsError) {
-            this.log('warn', 'Failed to update disclaimer stats in worker:', statsError.message);
+          // Update disclaimer usage statistics with robust retry logic (Issue #199)
+          const statsResult = await transparencyService.updateDisclaimerStats(
+            transparencyResult.disclaimer,
+            transparencyResult.disclaimerType,
+            config.language || 'es',
+            {
+              maxRetries: 3,
+              retryDelay: 1000,
+              fallbackToLocal: true,
+              context: {
+                organizationId,
+                workerId: this.workerId || 'unknown',
+                responseId: response.id
+              }
+            }
+          );
+          
+          // Log the result for monitoring
+          if (statsResult.success) {
+            this.log('info', 'Disclaimer stats tracking successful', {
+              disclaimerType: transparencyResult.disclaimerType,
+              attempt: statsResult.attempt,
+              processingTime: statsResult.processingTimeMs
+            });
+          } else {
+            this.log('warn', 'Disclaimer stats tracking failed', {
+              reason: statsResult.reason,
+              error: statsResult.error,
+              processingTime: statsResult.processingTimeMs
+            });
           }
           
           this.log('info', 'Applied unified transparency disclaimer', {

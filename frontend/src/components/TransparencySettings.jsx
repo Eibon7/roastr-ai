@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Copy, Check, Info, Shield } from 'lucide-react';
 import { apiClient } from '../lib/api';
+import { useI18n } from '../hooks/useI18n';
 
 const TransparencySettings = () => {
+  const { t } = useI18n();
   const [explanation, setExplanation] = useState(null);
   const [bioText, setBioText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ const TransparencySettings = () => {
       }
     } catch (err) {
       console.error('Failed to load transparency settings:', err);
-      setError('Error al cargar información de transparencia');
+      setError(t('transparency.errors.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -42,11 +44,11 @@ const TransparencySettings = () => {
       setTimeout(() => setCopied(false), 2000);
       
       if (window.showNotification) {
-        window.showNotification('Texto copiado al portapapeles', 'success');
+        window.showNotification(t('transparency.notifications.copy_success'), 'success');
       }
     } catch (err) {
       console.error('Failed to copy bio text:', err);
-      setError('Error al copiar texto');
+      setError(t('transparency.errors.copy_failed'));
     }
   };
 
@@ -72,7 +74,7 @@ const TransparencySettings = () => {
       <div className="flex items-center space-x-2">
         <Shield className="h-5 w-5 text-blue-600" />
         <h3 className="text-lg font-medium text-gray-900">
-          {explanation?.title || 'Transparencia en las respuestas'}
+          {explanation?.title || t('transparency.title')}
         </h3>
       </div>
 
@@ -81,7 +83,7 @@ const TransparencySettings = () => {
         <div className="flex items-start space-x-2">
           <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800">
-            <p>{explanation?.description}</p>
+            <p>{explanation?.description || t('transparency.description')}</p>
           </div>
         </div>
       </div>
@@ -90,7 +92,7 @@ const TransparencySettings = () => {
       {bioText && (
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="text-sm font-medium mb-3 text-gray-900">
-            💡 Recomendación adicional para tu biografía:
+            {t('transparency.bio_recommendation')}
           </div>
           
           <div className="bg-gray-50 border border-gray-300 rounded p-3 mb-3">
@@ -108,12 +110,12 @@ const TransparencySettings = () => {
             {copied ? (
               <>
                 <Check className="h-4 w-4 mr-2" />
-                ¡Copiado!
+                {t('transparency.copied_button')}
               </>
             ) : (
               <>
                 <Copy className="h-4 w-4 mr-2" />
-                {explanation?.buttonText || 'Copiar texto'}
+                {explanation?.buttonText || t('transparency.copy_button')}
               </>
             )}
           </Button>
@@ -124,32 +126,32 @@ const TransparencySettings = () => {
       {stats && (
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="text-sm font-medium mb-3 text-gray-900">
-            📊 Estadísticas de disclaimers (últimas 24h):
+            {t('transparency.statistics_title')}
           </div>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-green-50 border border-green-200 rounded p-3">
-              <div className="text-green-800 font-medium">Firmas cortas</div>
+              <div className="text-green-800 font-medium">{t('transparency.short_signatures')}</div>
               <div className="text-2xl font-bold text-green-600">{stats.shortSignatureUsage}%</div>
-              <div className="text-xs text-green-600">Para ahorrar espacio</div>
+              <div className="text-xs text-green-600">{t('transparency.short_signatures_description')}</div>
             </div>
             
             <div className="bg-purple-50 border border-purple-200 rounded p-3">
-              <div className="text-purple-800 font-medium">Disclaimers creativos</div>
+              <div className="text-purple-800 font-medium">{t('transparency.creative_disclaimers')}</div>
               <div className="text-2xl font-bold text-purple-600">{stats.creativeDisclaimerUsage}%</div>
-              <div className="text-xs text-purple-600">Para variedad y branding</div>
+              <div className="text-xs text-purple-600">{t('transparency.creative_disclaimers_description')}</div>
             </div>
           </div>
           
           <div className="mt-3 text-xs text-gray-500">
-            Total de respuestas: {stats.totalDisclaimers}
+            {t('transparency.total_responses', { count: stats.totalDisclaimers })}
           </div>
         </div>
       )}
 
       {/* Preview Section */}
       <div className="border border-gray-200 rounded-lg p-4">
-        <div className="text-sm font-medium mb-3 text-gray-900">Vista previa de respuestas:</div>
+        <div className="text-sm font-medium mb-3 text-gray-900">{t('transparency.preview_title')}</div>
         
         <div className="space-y-3">
           {/* Short signature example */}
@@ -161,7 +163,7 @@ const TransparencySettings = () => {
               </div>
             </div>
             <div className="text-xs text-green-600 mt-1">
-              ✓ Firma corta (70% de las respuestas)
+              {t('transparency.short_example_label')}
             </div>
           </div>
           
@@ -174,13 +176,13 @@ const TransparencySettings = () => {
               </div>
             </div>
             <div className="text-xs text-purple-600 mt-1">
-              ✓ Disclaimer creativo (30% de las respuestas)
+              {t('transparency.creative_example_label')}
             </div>
           </div>
         </div>
         
         <div className="text-xs text-gray-500 mt-3">
-          ℹ️ Todas las respuestas automáticas incluyen ahora un aviso de IA. El sistema rota automáticamente entre firmas cortas y disclaimers creativos.
+          {t('transparency.system_info')}
         </div>
       </div>
     </div>

@@ -58,16 +58,27 @@ class RoastGeneratorEnhanced {
         userConfig.platformLimit || null
       );
       
-      // Update disclaimer usage statistics
-      try {
-        await transparencyService.updateDisclaimerStats(
-          transparencyResult.disclaimer,
-          transparencyResult.disclaimerType,
-          userConfig.language || 'es'
-        );
-      } catch (error) {
-        // Non-critical error, just log
-        logger.warn('Failed to update disclaimer stats:', error.message);
+      // Update disclaimer usage statistics with robust retry logic (Issue #199)
+      const statsResult = await transparencyService.updateDisclaimerStats(
+        transparencyResult.disclaimer,
+        transparencyResult.disclaimerType,
+        userConfig.language || 'es',
+        {
+          maxRetries: 2, // Fewer retries in roast generation to avoid delays
+          retryDelay: 500,
+          fallbackToLocal: true,
+          context: {
+            userId: userConfig.userId,
+            mode: 'mock_fallback'
+          }
+        }
+      );
+      
+      if (!statsResult.success) {
+        logger.warn('Mock mode disclaimer stats tracking failed', {
+          reason: statsResult.reason,
+          error: statsResult.error
+        });
       }
       
       return {
@@ -118,15 +129,27 @@ class RoastGeneratorEnhanced {
           userConfig.platformLimit || null
         );
         
-        // Update disclaimer usage statistics
-        try {
-          await transparencyService.updateDisclaimerStats(
-            transparencyResult.disclaimer,
-            transparencyResult.disclaimerType,
-            userConfig.language || 'es'
-          );
-        } catch (error) {
-          logger.warn('Failed to update disclaimer stats:', error.message);
+        // Update disclaimer usage statistics with robust retry logic (Issue #199)
+        const statsResult = await transparencyService.updateDisclaimerStats(
+          transparencyResult.disclaimer,
+          transparencyResult.disclaimerType,
+          userConfig.language || 'es',
+          {
+            maxRetries: 2,
+            retryDelay: 500,
+            fallbackToLocal: true,
+            context: {
+              userId: userConfig.userId,
+              mode: 'basic_moderation'
+            }
+          }
+        );
+        
+        if (!statsResult.success) {
+          logger.warn('Basic moderation disclaimer stats tracking failed', {
+            reason: statsResult.reason,
+            error: statsResult.error
+          });
         }
         
         return {
@@ -161,15 +184,27 @@ class RoastGeneratorEnhanced {
         userConfig.platformLimit || null
       );
 
-      // Update disclaimer usage statistics
-      try {
-        await transparencyService.updateDisclaimerStats(
-          transparencyResult.disclaimer,
-          transparencyResult.disclaimerType,
-          userConfig.language || 'es'
-        );
-      } catch (error) {
-        logger.warn('Failed to update disclaimer stats:', error.message);
+      // Update disclaimer usage statistics with robust retry logic (Issue #199)
+      const statsResult = await transparencyService.updateDisclaimerStats(
+        transparencyResult.disclaimer,
+        transparencyResult.disclaimerType,
+        userConfig.language || 'es',
+        {
+          maxRetries: 2,
+          retryDelay: 500,
+          fallbackToLocal: true,
+          context: {
+            userId: userConfig.userId,
+            mode: 'advanced_rqc'
+          }
+        }
+      );
+      
+      if (!statsResult.success) {
+        logger.warn('Advanced RQC disclaimer stats tracking failed', {
+          reason: statsResult.reason,
+          error: statsResult.error
+        });
       }
       return {
         ...result,
@@ -196,15 +231,28 @@ class RoastGeneratorEnhanced {
         userConfig.platformLimit || null
       );
       
-      // Update disclaimer usage statistics for fallback
-      try {
-        await transparencyService.updateDisclaimerStats(
-          transparencyResult.disclaimer,
-          transparencyResult.disclaimerType,
-          userConfig.language || 'es'
-        );
-      } catch (statsError) {
-        logger.warn('Failed to update disclaimer stats for fallback:', statsError.message);
+      // Update disclaimer usage statistics for fallback with robust retry logic (Issue #199)
+      const statsResult = await transparencyService.updateDisclaimerStats(
+        transparencyResult.disclaimer,
+        transparencyResult.disclaimerType,
+        userConfig.language || 'es',
+        {
+          maxRetries: 1, // Minimal retries for fallback scenario to avoid delays
+          retryDelay: 500,
+          fallbackToLocal: true,
+          context: {
+            userId: userConfig.userId,
+            mode: 'fallback_roast',
+            originalError: error.message
+          }
+        }
+      );
+      
+      if (!statsResult.success) {
+        logger.warn('Fallback roast disclaimer stats tracking failed', {
+          reason: statsResult.reason,
+          error: statsResult.error
+        });
       }
       
       return {

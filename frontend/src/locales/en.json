@@ -130,6 +130,30 @@
       "empty_state": "Nothing to show here yet"
     }
   },
+  "transparency": {
+    "title": "Response transparency",
+    "description": "Due to transparency policies, all automatic responses include a notice that they are AI-generated. Additionally, you can add the suggested text to your bio for greater visibility and protection.",
+    "bio_recommendation": "💡 Additional recommendation for your bio:",
+    "copy_button": "Copy text",
+    "copied_button": "Copied!",
+    "statistics_title": "📊 Disclaimer statistics (last 24h):",
+    "short_signatures": "Short signatures",
+    "short_signatures_description": "To save space",
+    "creative_disclaimers": "Creative disclaimers",
+    "creative_disclaimers_description": "For variety and branding",
+    "total_responses": "Total responses: {count}",
+    "preview_title": "Response preview:",
+    "short_example_label": "✓ Short signature (70% of responses)",
+    "creative_example_label": "✓ Creative disclaimer (30% of responses)",
+    "system_info": "ℹ️ All automatic responses now include an AI notice. The system automatically rotates between short signatures and creative disclaimers.",
+    "errors": {
+      "load_failed": "Failed to load transparency information",
+      "copy_failed": "Failed to copy text"
+    },
+    "notifications": {
+      "copy_success": "Text copied to clipboard"
+    }
+  },
   "forms": {
     "validation": {
       "required": "This field is required",
