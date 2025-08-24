@@ -5,6 +5,7 @@
 
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const planLimitsService = require('./planLimitsService');
 
 class WorkerNotificationService {
     constructor() {
@@ -35,7 +36,7 @@ class WorkerNotificationService {
             newPlan,
             status,
             timestamp: new Date().toISOString(),
-            limits: this.getPlanLimits(newPlan, status)
+            limits: await this.getPlanLimits(newPlan, status)
         };
 
         try {
@@ -74,7 +75,7 @@ class WorkerNotificationService {
             plan,
             status,
             timestamp: new Date().toISOString(),
-            limits: this.getPlanLimits(plan, status)
+            limits: await this.getPlanLimits(plan, status)
         };
 
         try {
@@ -98,13 +99,40 @@ class WorkerNotificationService {
     }
 
     /**
-     * Get plan limits configuration
+     * Get plan limits configuration from database
      * @param {string} plan - Plan name
      * @param {string} status - Subscription status
      * @returns {Object} Plan limits
      */
-    getPlanLimits(plan, status) {
-        const PLAN_LIMITS = {
+    async getPlanLimits(plan, status) {
+        try {
+            // Get limits from database via planLimitsService
+            const planLimits = await planLimitsService.getPlanLimits(plan);
+            
+            // If subscription is not active, apply free plan limits
+            if (status !== 'active') {
+                const freeLimits = await planLimitsService.getPlanLimits('free');
+                return {
+                    ...planLimits,
+                    ...freeLimits,
+                    suspended: true
+                };
+            }
+
+            return planLimits;
+        } catch (error) {
+            logger.error('Failed to get plan limits:', error);
+            // Fallback to hardcoded defaults on error
+            return this.getFallbackLimits(plan, status);
+        }
+    }
+
+    /**
+     * Get fallback limits (used when database is unavailable)
+     * @private
+     */
+    getFallbackLimits(plan, status) {
+        const FALLBACK_LIMITS = {
             free: {
                 maxRoasts: 100,
                 maxPlatforms: 1,
@@ -120,21 +148,20 @@ class WorkerNotificationService {
                 prioritySupport: true
             },
             creator_plus: {
-                maxRoasts: -1, // unlimited
-                maxPlatforms: -1, // unlimited
+                maxRoasts: -1,
+                maxPlatforms: -1,
                 shieldEnabled: true,
                 customPrompts: true,
                 prioritySupport: true
             }
         };
 
-        const planLimits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+        const planLimits = FALLBACK_LIMITS[plan] || FALLBACK_LIMITS.free;
         
-        // If subscription is not active, apply free plan limits
         if (status !== 'active') {
             return {
                 ...planLimits,
-                ...PLAN_LIMITS.free,
+                ...FALLBACK_LIMITS.free,
                 suspended: true
             };
         }
