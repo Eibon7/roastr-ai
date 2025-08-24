@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
+const planLimitsService = require('../services/planLimitsService');
 
 // Enhanced secure in-memory cache for analytics data (Issue #164)
 const analyticsCache = new Map();
@@ -103,11 +104,26 @@ const validatePlanId = (planId) => {
 /**
  * Get plan-based limits for a given plan
  * @param {string} planId - Plan ID
- * @returns {Object} Plan limits object
+ * @returns {Promise<Object>} Plan limits object
  */
-const getPlanLimits = (planId) => {
-    const validatedPlan = validatePlanId(planId);
-    return PLAN_LIMITS[validatedPlan] || PLAN_LIMITS.free;
+const getPlanLimits = async (planId) => {
+    try {
+        const validatedPlan = validatePlanId(planId);
+        const limits = await planLimitsService.getPlanLimits(validatedPlan);
+        
+        // Map to analytics format
+        return {
+            maxLimit: limits.monthlyResponsesLimit,
+            maxTimeRange: validatedPlan === 'free' ? 30 : (validatedPlan === 'pro' ? 90 : 365),
+            allowedFilters: validatedPlan === 'free' ? ['platform'] : ['platform', 'date_range', 'sentiment'],
+            rateLimit: validatedPlan === 'free' ? 10 : (validatedPlan === 'pro' ? 60 : 300)
+        };
+    } catch (error) {
+        logger.error('Failed to get plan limits from database:', error);
+        // Fallback to hardcoded limits
+        const validatedPlan = validatePlanId(planId);
+        return PLAN_LIMITS[validatedPlan] || PLAN_LIMITS.free;
+    }
 };
 
 // Issue #164: Robust input type validation
@@ -170,8 +186,14 @@ const analyticsRateLimit = require('express-rate-limit')({
     max: (req) => {
         // Issue #164: Use unified plan validation for rate limits
         const userPlan = req.user?.plan || 'free';
-        const planLimits = getPlanLimits(userPlan);
-        return planLimits.rateLimit;
+        // Note: Rate limiter doesn't support async, so use static limits
+        const rateLimits = {
+            'free': 10,
+            'pro': 60,
+            'creator_plus': 300,
+            'custom': 300
+        };
+        return rateLimits[userPlan] || rateLimits.free;
     },
     message: {
         success: false,
@@ -708,7 +730,7 @@ router.get('/roastr-persona-insights', async (req, res) => {
         }
 
         // Issue #164: Apply plan-based limits using unified validation
-        const planLimits = getPlanLimits(orgData.plan_id);
+        const planLimits = await getPlanLimits(orgData.plan_id);
         const effectiveLimit = Math.min(sanitizedLimit, planLimits.maxLimit);
 
         const dateThreshold = new Date();

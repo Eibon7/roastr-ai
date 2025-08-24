@@ -1,6 +1,15 @@
 const authService = require('../../../src/services/authService');
 const { supabaseServiceClient, supabaseAnonClient } = require('../../../src/config/supabase');
 
+// Mock planLimitsService
+jest.mock('../../../src/services/planLimitsService', () => ({
+  getPlanLimits: jest.fn(),
+  getAllPlanLimits: jest.fn(),
+  updatePlanLimits: jest.fn(),
+  checkLimit: jest.fn(),
+  clearCache: jest.fn()
+}));
+
 // Mock logger
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
@@ -953,24 +962,55 @@ describe('AuthService', () => {
   });
 
   describe('getPlanLimits', () => {
-    it('should return correct limits for known plans', () => {
-      const basicLimits = authService.getPlanLimits('basic');
-      expect(basicLimits.monthly_messages).toBe(100);
-      expect(basicLimits.monthly_tokens).toBe(10000);
-
-      const proLimits = authService.getPlanLimits('pro');
-      expect(proLimits.monthly_messages).toBe(1000);
-      expect(proLimits.monthly_tokens).toBe(100000);
-
-      const creatorLimits = authService.getPlanLimits('creator_plus');
-      expect(creatorLimits.monthly_messages).toBe(5000);
-      expect(creatorLimits.monthly_tokens).toBe(500000);
+    const planLimitsService = require('../../../src/services/planLimitsService');
+    
+    beforeEach(() => {
+      jest.clearAllMocks();
     });
 
-    it('should return basic limits for unknown plans', () => {
-      const unknownLimits = authService.getPlanLimits('unknown');
+    it('should return correct limits for known plans from database', async () => {
+      planLimitsService.getPlanLimits.mockResolvedValue({
+        monthlyResponsesLimit: 1000,
+        monthlyTokensLimit: 100000,
+        integrationsLimit: 5
+      });
+
+      const proLimits = await authService.getPlanLimits('pro');
+      expect(proLimits.monthly_messages).toBe(1000);
+      expect(proLimits.monthly_tokens).toBe(100000);
+      expect(proLimits.integrations).toBe(5);
+      expect(planLimitsService.getPlanLimits).toHaveBeenCalledWith('pro');
+    });
+
+    it('should map basic plan to free plan', async () => {
+      planLimitsService.getPlanLimits.mockResolvedValue({
+        monthlyResponsesLimit: 100,
+        monthlyTokensLimit: 10000,
+        integrationsLimit: 1
+      });
+
+      const basicLimits = await authService.getPlanLimits('basic');
+      expect(basicLimits.monthly_messages).toBe(100);
+      expect(basicLimits.monthly_tokens).toBe(10000);
+      expect(planLimitsService.getPlanLimits).toHaveBeenCalledWith('free');
+    });
+
+    it('should return fallback limits on database error', async () => {
+      planLimitsService.getPlanLimits.mockRejectedValue(new Error('Database error'));
+
+      const proLimits = await authService.getPlanLimits('pro');
+      expect(proLimits.monthly_messages).toBe(1000);
+      expect(proLimits.monthly_tokens).toBe(100000);
+      expect(proLimits.integrations).toBe(5);
+    });
+
+    it('should return fallback limits for unknown plans', async () => {
+      planLimitsService.getPlanLimits.mockRejectedValue(new Error('Plan not found'));
+
+      const unknownLimits = await authService.getPlanLimits('unknown_plan');
       expect(unknownLimits.monthly_messages).toBe(100);
       expect(unknownLimits.monthly_tokens).toBe(10000);
+      expect(unknownLimits.integrations).toBe(1); // Basic plan has 1 integration limit
     });
   });
 

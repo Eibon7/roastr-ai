@@ -7,6 +7,11 @@ const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const notificationService = require('../services/notificationService');
+const { 
+    notificationLimiter, 
+    notificationMarkLimiter, 
+    notificationDeleteLimiter 
+} = require('../middleware/notificationRateLimiter');
 
 const router = express.Router();
 
@@ -24,7 +29,7 @@ const VALID_NOTIFICATION_TYPES = [
  * GET /api/notifications
  * Get user notifications with filtering and pagination
  */
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', notificationLimiter, authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const {
@@ -95,7 +100,7 @@ router.get('/', authenticateToken, async (req, res) => {
  * GET /api/notifications/count
  * Get unread notification count
  */
-router.get('/count', authenticateToken, async (req, res) => {
+router.get('/count', notificationLimiter, authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -128,7 +133,7 @@ router.get('/count', authenticateToken, async (req, res) => {
  * POST /api/notifications/:id/mark-read
  * Mark a specific notification as read
  */
-router.post('/:id/mark-read', authenticateToken, async (req, res) => {
+router.post('/:id/mark-read', notificationMarkLimiter, authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const notificationId = req.params.id;
@@ -177,7 +182,7 @@ router.post('/:id/mark-read', authenticateToken, async (req, res) => {
  * POST /api/notifications/mark-all-read
  * Mark all user notifications as read
  */
-router.post('/mark-all-read', authenticateToken, async (req, res) => {
+router.post('/mark-all-read', notificationMarkLimiter, authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -210,7 +215,7 @@ router.post('/mark-all-read', authenticateToken, async (req, res) => {
  * GET /api/notifications/banners
  * Get active banner notifications that should be displayed prominently
  */
-router.get('/banners', authenticateToken, async (req, res) => {
+router.get('/banners', notificationLimiter, authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -258,7 +263,7 @@ router.get('/banners', authenticateToken, async (req, res) => {
  * DELETE /api/notifications/:id
  * Archive a notification (soft delete)
  */
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', notificationDeleteLimiter, authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const notificationId = req.params.id;

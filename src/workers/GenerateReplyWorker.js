@@ -722,7 +722,7 @@ class GenerateReplyWorker extends BaseWorker {
           tone: config.tone,
           humor_type: config.humor_type,
           generation_time_ms: generationTime,
-          tokens_used: response.tokensUsed || this.estimateTokens(response.text),
+          tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
           cost_cents: 5, // Base cost per generation
           post_status: 'pending',
           persona_fields_used: personaFieldsUsed

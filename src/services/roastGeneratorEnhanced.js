@@ -171,7 +171,6 @@ class RoastGeneratorEnhanced {
       } catch (error) {
         logger.warn('Failed to update disclaimer stats:', error.message);
       }
-
       return {
         ...result,
         roast: transparencyResult.finalText,

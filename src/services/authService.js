@@ -6,6 +6,7 @@ const { isChangeAllowed } = require('./planValidation');
 const auditService = require('./auditService');
 const { applyPlanLimits } = require('./subscriptionService');
 const passwordHistoryService = require('./passwordHistoryService');
+const planLimitsService = require('./planLimitsService');
 
 class AuthService {
     
@@ -513,15 +514,15 @@ class AuthService {
             }
 
             // Add usage alerts for each user
-            const usersWithAlerts = users.map(user => {
-                const planLimits = this.getPlanLimits(user.plan);
+            const usersWithAlerts = await Promise.all(users.map(async user => {
+                const planLimits = await this.getPlanLimits(user.plan);
                 const alerts = this.checkUsageAlerts(user, planLimits);
                 return {
                     ...user,
                     usage_alerts: alerts,
                     is_over_limit: alerts.length > 0
                 };
-            });
+            }));
 
             return {
                 users: usersWithAlerts,
@@ -642,7 +643,7 @@ class AuthService {
 
         try {
             // Validate plan
-            const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
+            const validPlans = ['free', 'starter', 'pro', 'plus', 'custom'];
             if (!validPlans.includes(newPlan)) {
                 throw new Error('Invalid plan. Valid plans are: ' + validPlans.join(', '));
             }
@@ -1164,7 +1165,7 @@ class AuthService {
             };
 
             // Calculate limits based on plan
-            const planLimits = this.getPlanLimits(user.plan);
+            const planLimits = await this.getPlanLimits(user.plan);
             
             // Check for usage alerts
             const alerts = this.checkUsageAlerts(user, planLimits);
@@ -1232,28 +1233,74 @@ class AuthService {
     }
 
     /**
-     * Get plan limits
+     * Get plan limits from database
      */
-    getPlanLimits(plan) {
+    async getPlanLimits(plan) {
+        try {
+            // Map old plan names to new plan IDs if needed
+            const planMap = {
+                'basic': 'free',
+                'starter': 'starter',
+                'pro': 'pro',
+                'creator_plus': 'plus', // Legacy mapping
+                'plus': 'plus'
+            };
+            
+            const planId = planMap[plan] || plan || 'free';
+            const limits = await planLimitsService.getPlanLimits(planId);
+            
+            // Map to old format for backward compatibility
+            return {
+                monthly_messages: limits.monthlyResponsesLimit,
+                monthly_tokens: limits.monthlyTokensLimit || limits.monthlyResponsesLimit * 100,
+                integrations: limits.integrationsLimit
+            };
+        } catch (error) {
+            logger.error('Failed to get plan limits:', error);
+            // Fallback to hardcoded limits
+            return this.getFallbackPlanLimits(plan);
+        }
+    }
+
+    /**
+     * Get fallback plan limits (used when database is unavailable)
+     * @private
+     */
+    getFallbackPlanLimits(plan) {
         const limits = {
-            basic: {
-                monthly_messages: 100,
-                monthly_tokens: 10000,
-                integrations: 1
+            free: {
+                monthly_messages: 10,
+                monthly_tokens: 50000,
+                integrations: 2,
+                monthly_analysis: 1000
+            },
+            starter: {
+                monthly_messages: 10,
+                monthly_tokens: 100000,
+                integrations: 2,
+                monthly_analysis: 1000
             },
             pro: {
                 monthly_messages: 1000,
-                monthly_tokens: 100000,
-                integrations: 5
-            },
-            creator_plus: {
-                monthly_messages: 5000,
                 monthly_tokens: 500000,
-                integrations: 999
+                integrations: 5,
+                monthly_analysis: 10000
+            },
+            plus: {
+                monthly_messages: 5000,
+                monthly_tokens: 2000000,
+                integrations: 10,
+                monthly_analysis: 100000
+            },
+            custom: {
+                monthly_messages: -1,
+                monthly_tokens: -1,
+                integrations: -1,
+                monthly_analysis: -1
             }
         };
 
-        return limits[plan] || limits.basic;
+        return limits[plan] || limits.free;
     }
 
     /**

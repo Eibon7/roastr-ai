@@ -8,6 +8,7 @@ import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Down
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
+import TransparencySettings from '../components/TransparencySettings';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
 
 // Password requirement component for visual feedback (legacy support)
@@ -1013,6 +1014,29 @@ export default function Settings() {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Transparency Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Eye className="h-5 w-5" />
+            <span>Transparencia de IA</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="text-sm text-blue-800 mb-2">
+              <strong>¿Por qué es necesario?</strong>
+            </div>
+            <div className="text-sm text-blue-700">
+              Por cumplimiento de las políticas de OpenAI y redes sociales, necesitamos identificar que algunas respuestas son generadas por IA.
+              Elige la opción que mejor se adapte a tu estilo.
+            </div>
+          </div>
+          
+          <TransparencySettings />
         </CardContent>
       </Card>
 
