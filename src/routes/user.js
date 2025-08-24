@@ -1814,4 +1814,174 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * PATCH /api/user/settings/transparency-mode
+ * Update user's AI transparency mode preference (Issue #187)
+ */
+router.patch('/settings/transparency-mode', authenticateToken, async (req, res) => {
+    try {
+        const { mode } = req.body;
+        const userId = req.user.id;
+
+        // Validate transparency mode
+        const validModes = ['bio', 'signature', 'creative'];
+        if (!mode || !validModes.includes(mode)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid transparency mode. Must be one of: bio, signature, creative'
+            });
+        }
+
+        // Update user's transparency mode
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.headers.authorization.replace('Bearer ', ''));
+            
+            const { data, error } = await userClient
+                .from('users')
+                .update({ transparency_mode: mode })
+                .eq('id', userId)
+                .select('transparency_mode')
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            // Log the change
+            await auditService.logUserSettingChange(userId, 'transparency_mode', {
+                old_value: req.user.transparency_mode || 'bio',
+                new_value: mode
+            }, req);
+
+            logger.info('Transparency mode updated', {
+                userId: SafeUtils.safeUserIdPrefix(userId),
+                mode
+            });
+
+            res.json({
+                success: true,
+                message: 'Transparency mode updated successfully',
+                data: {
+                    transparency_mode: data.transparency_mode,
+                    bio_text: mode === 'bio' ? 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI' : null
+                }
+            });
+        } else {
+            // Mock mode response
+            logger.info('Mock mode: Transparency mode updated', {
+                userId: SafeUtils.safeUserIdPrefix(userId),
+                mode
+            });
+
+            res.json({
+                success: true,
+                message: 'Transparency mode updated successfully',
+                data: {
+                    transparency_mode: mode,
+                    bio_text: mode === 'bio' ? 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI' : null
+                }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Update transparency mode error', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update transparency mode'
+        });
+    }
+});
+
+/**
+ * GET /api/user/settings/transparency-mode
+ * Get user's current transparency mode setting
+ */
+router.get('/settings/transparency-mode', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.headers.authorization.replace('Bearer ', ''));
+            
+            const { data, error } = await userClient
+                .from('users')
+                .select('transparency_mode')
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    transparency_mode: data.transparency_mode || 'bio',
+                    bio_text: (!data.transparency_mode || data.transparency_mode === 'bio') 
+                        ? 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI' 
+                        : null,
+                    options: [
+                        {
+                            value: 'bio',
+                            label: 'Aviso en Bio',
+                            description: 'Añade el aviso manualmente en tu biografía',
+                            is_default: true
+                        },
+                        {
+                            value: 'signature',
+                            label: 'Firma clásica',
+                            description: 'Cada roast termina con "— Generado por Roastr.AI"'
+                        },
+                        {
+                            value: 'creative',
+                            label: 'Disclaimers creativos',
+                            description: 'Disclaimers aleatorios y divertidos en cada roast'
+                        }
+                    ]
+                }
+            });
+        } else {
+            // Mock mode response
+            res.json({
+                success: true,
+                data: {
+                    transparency_mode: 'bio',
+                    bio_text: 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI',
+                    options: [
+                        {
+                            value: 'bio',
+                            label: 'Aviso en Bio',
+                            description: 'Añade el aviso manualmente en tu biografía',
+                            is_default: true
+                        },
+                        {
+                            value: 'signature',
+                            label: 'Firma clásica',
+                            description: 'Cada roast termina con "— Generado por Roastr.AI"'
+                        },
+                        {
+                            value: 'creative',
+                            label: 'Disclaimers creativos',
+                            description: 'Disclaimers aleatorios y divertidos en cada roast'
+                        }
+                    ]
+                }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Get transparency mode error', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve transparency mode'
+        });
+    }
+});
+
 module.exports = router;
