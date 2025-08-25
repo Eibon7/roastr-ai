@@ -1,0 +1,259 @@
+{
+  "version": "1.0.0",
+  "description": "Prompt injection detection patterns for PersonaInputSanitizer service",
+  "lastUpdated": "2025-08-25",
+  "patterns": [
+    {
+      "pattern": "ignore\\s+(all\\s+)?((previous|prior|above)\\s+)?instructions?",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "instruction_override",
+      "description": "Direct instruction manipulation (English)"
+    },
+    {
+      "pattern": "ignora\\s+(todas\\s+las\\s+)?(instrucciones|reglas)",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "instruction_override",
+      "description": "Direct instruction manipulation (Spanish)"
+    },
+    {
+      "pattern": "ignora\\s+lo\\s+que\\s+te\\s+digan",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "instruction_override",
+      "description": "Ignore what they tell you (Spanish)"
+    },
+    {
+      "pattern": "forget\\s+(everything|all|your\\s+instructions?)",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "instruction_override",
+      "description": "Forget instructions (English)"
+    },
+    {
+      "pattern": "olvida\\s+(todo|tu\\s+rol)",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "instruction_override",
+      "description": "Forget instructions (Spanish)"
+    },
+    {
+      "pattern": "disregard\\s+(all\\s+)?(previous|prior|above|your)\\s+instructions?",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "instruction_override",
+      "description": "Disregard instructions (English)"
+    },
+    {
+      "pattern": "system\\s+prompt",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "prompt_extraction",
+      "description": "System prompt reference"
+    },
+    {
+      "pattern": "dime\\s+tu\\s+system\\s+prompt",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "prompt_extraction",
+      "description": "Tell me your system prompt (Spanish)"
+    },
+    {
+      "pattern": "show\\s+me\\s+your\\s+(instructions?|prompt|programming)",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "prompt_extraction",
+      "description": "Show me your instructions (English)"
+    },
+    {
+      "pattern": "repeat\\s+(your\\s+)?(instructions?|prompt|programming)",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "prompt_extraction",
+      "description": "Repeat instructions (English)"
+    },
+    {
+      "pattern": "repite\\s+(exactamente\\s+)?lo\\s+que\\s+(tu\\s+programador|hay\\s+en\\s+tu\\s+prompt)",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "prompt_extraction",
+      "description": "Repeat exactly what's in your prompt (Spanish)"
+    },
+    {
+      "pattern": "what\\s+are\\s+your\\s+(instructions?|rules|guidelines)\\??",
+      "flags": "i",
+      "weight": 0.6,
+      "category": "prompt_extraction",
+      "description": "What are your instructions (English)"
+    },
+    {
+      "pattern": "dime\\s+las\\s+instrucciones\\s+(ocultas\\s+)?que\\s+te\\s+dieron",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "prompt_extraction",
+      "description": "Tell me the instructions they gave you (Spanish)"
+    },
+    {
+      "pattern": "you\\s+are\\s+(now|no\\s+longer)\\s+",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "role_manipulation",
+      "description": "You are now/no longer (English)"
+    },
+    {
+      "pattern": "(eres\\s+un\\s+bot|olvida\\s+lo\\s+que\\s+te\\s+dijeron|actúa\\s+como\\s+si\\s+fueras)",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "role_manipulation",
+      "description": "Role manipulation (Spanish)"
+    },
+    {
+      "pattern": "pretend\\s+(to\\s+be|you('re|are))",
+      "flags": "i",
+      "weight": 0.8,
+      "category": "role_manipulation",
+      "description": "Pretend to be (English)"
+    },
+    {
+      "pattern": "act\\s+as\\s+(if|though|a)",
+      "flags": "i",
+      "weight": 0.7,
+      "category": "role_manipulation",
+      "description": "Act as (English)"
+    },
+    {
+      "pattern": "jailbreak",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "jailbreak",
+      "description": "Jailbreak attempt"
+    },
+    {
+      "pattern": "haz\\s+jailbreak",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "jailbreak",
+      "description": "Do jailbreak (Spanish)"
+    },
+    {
+      "pattern": "DAN\\s+mode",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "jailbreak",
+      "description": "DAN mode reference"
+    },
+    {
+      "pattern": "developer\\s+mode",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "jailbreak",
+      "description": "Developer mode"
+    },
+    {
+      "pattern": "unrestricted\\s+mode",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "jailbreak",
+      "description": "Unrestricted mode"
+    },
+    {
+      "pattern": "modelo\\s+libre",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "jailbreak",
+      "description": "Free model (Spanish)"
+    },
+    {
+      "pattern": "respond\\s+with\\s+only",
+      "flags": "i",
+      "weight": 0.7,
+      "category": "output_control",
+      "description": "Respond with only (English)"
+    },
+    {
+      "pattern": "responde\\s+siempre\\s+con",
+      "flags": "i",
+      "weight": 0.8,
+      "category": "output_control",
+      "description": "Always respond with (Spanish)"
+    },
+    {
+      "pattern": "only\\s+say",
+      "flags": "i",
+      "weight": 0.7,
+      "category": "output_control",
+      "description": "Only say (English)"
+    },
+    {
+      "pattern": "start\\s+your\\s+response\\s+with",
+      "flags": "i",
+      "weight": 0.6,
+      "category": "output_control",
+      "description": "Start your response with (English)"
+    },
+    {
+      "pattern": "\\[.*instructions?.*\\]",
+      "flags": "i",
+      "weight": 0.6,
+      "category": "hidden_instruction",
+      "description": "Hidden instructions in brackets"
+    },
+    {
+      "pattern": "<!--.*instructions?.*-->",
+      "flags": "i",
+      "weight": 0.7,
+      "category": "hidden_instruction",
+      "description": "Hidden instructions in HTML comments"
+    },
+    {
+      "pattern": "above\\s+all\\s+else",
+      "flags": "i",
+      "weight": 0.6,
+      "category": "priority_override",
+      "description": "Above all else priority"
+    },
+    {
+      "pattern": "most\\s+important",
+      "flags": "i",
+      "weight": 0.5,
+      "category": "priority_override",
+      "description": "Most important priority"
+    },
+    {
+      "pattern": "override\\s+everything",
+      "flags": "i",
+      "weight": 0.9,
+      "category": "priority_override",
+      "description": "Override everything"
+    },
+    {
+      "pattern": "\\\\u[0-9a-fA-F]{4}",
+      "flags": "g",
+      "weight": 0.7,
+      "category": "encoding_trick",
+      "description": "Unicode encoding trick"
+    },
+    {
+      "pattern": "%[0-9a-fA-F]{2}",
+      "flags": "g",
+      "weight": 0.6,
+      "category": "encoding_trick",
+      "description": "URL encoding trick"
+    },
+    {
+      "pattern": "prompt\\s+injection",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "meta_attack",
+      "description": "Prompt injection reference (English)"
+    },
+    {
+      "pattern": "inyección\\s+de\\s+prompt",
+      "flags": "i",
+      "weight": 1.0,
+      "category": "meta_attack",
+      "description": "Prompt injection reference (Spanish)"
+    }
+  ]
+}
