@@ -343,24 +343,156 @@ class PersonaInputSanitizer {
 
   /**
    * Detect content that is obviously not personal description
+   * Enhanced with contextual analysis and improved pattern detection
    */
   containsNonPersonalContent(text) {
-    const nonPersonalPatterns = [
-      /function\s*\w*\s*\(/i,          // JavaScript function (anywhere in text)
-      /^\s*def\s+\w+\s*\(/i,          // Python function
-      /^\s*<[^>]+>/i,                 // HTML tags
-      /^\s*SELECT\s+.+FROM/i,         // SQL queries
-      /^\s*import\s+/i,               // Import statements
-      /^\s*#include\s*</i,            // C includes
-      /^\s*console\.(log|error)/i,    // Console statements
-      /^\s*print\s*\(/i,              // Print statements
-      /^\s*echo\s+/i,                 // Shell commands
-      /^\s*curl\s+/i,                 // HTTP commands
-      /^\s*GET\s+\/|POST\s+\//i,      // HTTP requests
-      /^\s*\{.*".*".*\}/i,            // JSON objects (simple heuristic)
+    // First, check if it looks like legitimate personal tech description
+    if (this.isLegitimatePersonalTechDescription(text)) {
+      return false;
+    }
+
+    // Core non-personal patterns (enhanced)
+    const corePatterns = [
+      // Programming constructs - more comprehensive
+      /\bfunction\s*\w*\s*\(/i,                    // JavaScript functions (anywhere)
+      /\b(const|let|var)\s+\w+\s*=/i,            // Variable declarations
+      /\bdef\s+\w+\s*\(/i,                       // Python functions (anywhere)
+      /\bclass\s+\w+/i,                          // Class definitions
+      /\b(if|else|for|while|return|break)\s*[\(\{]/i, // Control structures
+
+      // SQL injection patterns (enhanced with context)
+      /\b(SELECT)\s+.*\bFROM\b/i,               // SELECT with FROM (more specific)
+      /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER)\s+/i,
+      /\bUNION\s+SELECT/i,
+      /\bWHERE\s+.*[=<>].*['"]/i,              // WHERE with conditions and quotes
+
+      // HTML/XML (more specific)
+      /<[a-zA-Z][^>]*>/,                         // HTML tags
+      /<(script|iframe|img|div|span)[^>]*>/i,    // Specific dangerous tags
+      
+      // Shell commands (enhanced)
+      /\b(bash|sh|cmd|powershell)\s+-[a-z]/i,    // Shell interpreters with flags
+      /\b(curl|wget|nc|nmap|sqlmap)\s+/i,        // Network tools
+      /\b(rm|del|rmdir)\s+/i,                    // File deletion
+      /\|\s*(sh|bash|cmd)/i,                     // Pipe to shell
+      /^\s*echo\s+/i,                            // Echo commands (start of line)
+      /^\s*(GET|POST)\s+\//i,                    // HTTP methods (start of line)
+
+      // Template/Expression injection
+      /\{\{.*\}\}/,                              // Template expressions
+      /\$\{.*\}/,                                // Template literals
+      /\#set\(\$\w+/i,                           // Velocity templates
+
+      // Encoding/Eval patterns
+      /\b(eval|exec|system)\s*\(/i,              // Code execution
+      /\b(atob|btoa|base64)\s*\(/i,             // Encoding functions
+      /\\u[0-9a-fA-F]{4}/,                      // Unicode escapes
+      /%[0-9a-fA-F]{2}/,                        // URL encoding
+
+      // JSON with suspicious patterns
+      /\{"?__proto__"?\s*:/i,                    // Prototype pollution
+      /\{"?constructor"?\s*:/i,                  // Constructor pollution
+      
+      // Console/Debug statements (stricter)
+      /\bconsole\.(log|error|warn|debug)\s*\(/i, // Console methods
+      /\bprint\s*\(/,                            // Print statements (Python/others)
+      
+      // Import/Include statements (stricter)  
+      /\b(import|from|include|require)\s+['"][^'"]+['"]/i, // Quoted imports
+      /\#include\s*<[^>]+>/i,                    // C includes
+      
+      // DOM manipulation and browser APIs
+      /\b(document|window)\.(querySelector|getElementById|innerHTML|location)/i,
+      /\b(localStorage|sessionStorage|eval|setTimeout|setInterval)\s*\(/i,
+      
+      // Environment variables and shell patterns
+      /\bexport\s+\w+=.*;\s*\$\w+/i,                // export VAR=value; $VAR
+      /\$\{\w+\}/,                                  // ${VARIABLE}
+      
+      // JSON objects (stricter pattern) 
+      /^\s*\{\s*"[^"]+"\s*:\s*"[^"]+"/i,           // Starting with JSON-like structure
     ];
 
-    return nonPersonalPatterns.some(pattern => pattern.test(text));
+    // Context-based analysis
+    const contextAnalysis = this.analyzeContentContext(text);
+    
+    // If it has high code density and low personal indicators, likely code
+    if (contextAnalysis.codeDensity > 0.3 && contextAnalysis.personalIndicators < 0.2) {
+      return true;
+    }
+
+    // Check against all patterns
+    return corePatterns.some(pattern => pattern.test(text));
+  }
+
+  /**
+   * Analyze if text is a legitimate personal description that mentions technical terms
+   */
+  isLegitimatePersonalTechDescription(text) {
+    // Personal context indicators
+    const personalContexts = [
+      /\b(soy|me|mi|trabajo|experiencia|años|especializo|dedico)\b/gi,
+      /\b(my|i\s+am|work|experience|years|specialize|passionate)\b/gi,
+      /\b(trabajo\s+(con|en|como)|experiencia\s+en|me\s+gusta)\b/gi,
+      /\b(work\s+with|experience\s+with|passionate\s+about)\b/gi,
+    ];
+
+    const hasPersonalContext = personalContexts.some(pattern => 
+      (text.match(pattern) || []).length > 0
+    );
+
+    // Technical terms that are OK in personal context
+    const technicalInPersonalContext = [
+      /\b(JavaScript|Python|HTML|CSS|SQL|programming|desarrollo|programación)\b/gi,
+      /\b(frontend|backend|full.stack|developer|desarrollador)\b/gi,
+      /\b(framework|library|API|database|servidor|server)\b/gi,
+      /\b(React|Node\.js|Express|MongoDB|PostgreSQL|Django)\b/gi,
+      /\b(web|aplicaciones|sistemas|tecnología|technology)\b/gi,
+    ];
+
+    const hasTechnicalTerms = technicalInPersonalContext.some(pattern => 
+      (text.match(pattern) || []).length > 0
+    );
+
+    // If it has personal context AND technical terms, it's likely legitimate
+    return hasPersonalContext && hasTechnicalTerms;
+  }
+
+  /**
+   * Analyze content context to distinguish code from natural language
+   */
+  analyzeContentContext(text) {
+    const length = text.length;
+    if (length === 0) return { codeDensity: 0, personalIndicators: 0 };
+
+    // Code density indicators
+    const codeIndicators = [
+      /[{}();]/g,                               // Code punctuation
+      /[=+\-*/<>!&|]/g,                        // Operators
+      /["'`]/g,                                // String delimiters
+      /\b[A-Z_][A-Z0-9_]*\b/g,                 // Constants/screaming snake case
+      /\b(var|let|const|def|class|if|for|function|return)\b/g, // Keywords
+    ];
+
+    const codeMatches = codeIndicators.reduce((total, pattern) => {
+      return total + (text.match(pattern) || []).length;
+    }, 0);
+
+    // Personal language indicators
+    const personalIndicators = [
+      /\b(soy|me|mi|mis|yo|trabajo|gusta|molesta|años)\b/gi,
+      /\b(my|i|me|work|like|love|hate|years|experience)\b/gi,
+      /\b(passionate|dedicated|professional|career|specialist)\b/gi,
+    ];
+
+    const personalMatches = personalIndicators.reduce((total, pattern) => {
+      return total + (text.match(pattern) || []).length;
+    }, 0);
+
+    return {
+      codeDensity: Math.min(codeMatches / length, 1.0),
+      personalIndicators: Math.min(personalMatches / length, 1.0)
+    };
   }
 
   /**
