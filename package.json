@@ -79,6 +79,8 @@
     "logs:test": "node src/cli/logManager.js test",
     "validate:prices": "node scripts/validate-prices.js",
     "validate:prices:ci": "ENABLE_BILLING=true node scripts/validate-prices.js",
+    "validate:api-readiness": "node scripts/validate-api-readiness.js",
+    "test:api-readiness": "ENABLE_MOCK_MODE=true npm run validate:api-readiness",
     "test:staging:plan-limits": "node scripts/test-staging-plan-limits.js"
   },
   "repository": {
@@ -155,6 +157,7 @@
     "jest-environment-jsdom": "^30.0.5",
     "jest-junit": "^16.0.0",
     "jsdom": "^26.1.0",
+    "nock": "^13.3.3",
     "supertest": "^7.1.4"
   }
 }
