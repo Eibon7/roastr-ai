@@ -39,11 +39,12 @@ const PLATFORM_COLORS = {
   tiktok: 'bg-black'
 };
 
-function ApprovalCard({ response, onApprove, onReject, loading }) {
+function ApprovalCard({ response, onApprove, onReject, onRegenerate, loading }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(response.response_text);
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const { toast } = useToast();
 
   const handleApprove = async () => {
@@ -80,6 +81,25 @@ function ApprovalCard({ response, onApprove, onReject, loading }) {
     }
   };
 
+  const handleRegenerate = async () => {
+    setRegenerating(true);
+    try {
+      await onRegenerate(response.id);
+      toast({
+        title: "Response regenerated",
+        description: "A new roast has been generated for review",
+      });
+    } catch (error) {
+      toast({
+        title: "Error regenerating response", 
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   const platformColor = PLATFORM_COLORS[response.comment.platform] || 'bg-gray-500';
   const severityColor = SEVERITY_COLORS[response.comment.severity_level] || SEVERITY_COLORS.low;
 
@@ -96,6 +116,12 @@ function ApprovalCard({ response, onApprove, onReject, loading }) {
             {response.comment.toxicity_score && (
               <Badge variant="secondary">
                 {Math.round(response.comment.toxicity_score * 100)}% toxic
+              </Badge>
+            )}
+            {/* Attempt counter */}
+            {response.total_attempts > 1 && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                Attempt {response.attempt_number}/{response.total_attempts}
               </Badge>
             )}
           </div>
@@ -157,27 +183,47 @@ function ApprovalCard({ response, onApprove, onReject, loading }) {
         {/* Action Buttons */}
         <div className="space-y-3">
           {!showRejectForm ? (
-            <div className="flex space-x-2">
-              <Button
-                onClick={handleApprove}
-                disabled={loading}
-                className="flex-1"
-                size="sm"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Approve {isEditing ? '& Edit' : ''}
-              </Button>
-              <Button
-                onClick={() => setShowRejectForm(true)}
-                disabled={loading}
-                variant="destructive"
-                className="flex-1"
-                size="sm"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Reject
-              </Button>
-            </div>
+            <>
+              {/* Primary actions */}
+              <div className="flex space-x-2">
+                <Button
+                  onClick={handleApprove}
+                  disabled={loading || regenerating}
+                  className="flex-1"
+                  size="sm"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve {isEditing ? '& Edit' : ''}
+                </Button>
+                <Button
+                  onClick={() => setShowRejectForm(true)}
+                  disabled={loading || regenerating}
+                  variant="destructive"
+                  className="flex-1"
+                  size="sm"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject
+                </Button>
+              </div>
+              {/* Regenerate button */}
+              <div className="flex">
+                <Button
+                  onClick={handleRegenerate}
+                  disabled={loading || regenerating}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  {regenerating ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Regenerate
+                </Button>
+              </div>
+            </>
           ) : (
             <div className="space-y-2">
               <Textarea
@@ -415,6 +461,38 @@ export default function Approval() {
     }
   };
 
+  const regenerateResponse = async (responseId) => {
+    try {
+      const response = await fetch(`/api/approval/${responseId}/regenerate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to regenerate response');
+      }
+
+      const result = await response.json();
+      
+      // Remove old response from pending list
+      setPendingResponses(prev => prev.filter(r => r.id !== responseId));
+      
+      // Reload pending responses to get the new one
+      await loadPendingResponses();
+      
+      // Refresh stats
+      await loadStats();
+      
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const platforms = [...new Set(pendingResponses.map(r => r.comment.platform))];
 
   return (
@@ -491,6 +569,7 @@ export default function Approval() {
                   response={response}
                   onApprove={approveResponse}
                   onReject={rejectResponse}
+                  onRegenerate={regenerateResponse}
                   loading={processingIds.has(response.id)}
                 />
               ))}
