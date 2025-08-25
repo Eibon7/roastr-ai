@@ -7,6 +7,7 @@ const { handleSessionRefresh } = require('../middleware/sessionRefresh');
 const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
 const { passwordChangeRateLimiter } = require('../middleware/passwordChangeRateLimiter');
 const { validatePassword } = require('../utils/passwordValidator');
+const passwordValidationService = require('../services/passwordValidationService');
 const { isPasswordReused, addPasswordToHistory, isPasswordHistoryEnabled } = require('../services/passwordHistoryService');
 
 const router = express.Router();
@@ -406,7 +407,7 @@ router.post('/update-password', async (req, res) => {
  */
 router.post('/change-password', authenticateToken, passwordChangeRateLimiter, async (req, res) => {
     try {
-        const { currentPassword, newPassword } = req.body;
+        const { currentPassword, newPassword, confirmPassword } = req.body;
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
         
         if (!currentPassword || !newPassword) {
@@ -416,27 +417,38 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
             });
         }
 
-        if (currentPassword === newPassword) {
-            return res.status(400).json({
+        // Get current user's password hash for validation
+        const userClient = createUserClient(accessToken);
+        const { data: userData, error: userError } = await userClient
+            .from('users')
+            .select('password')
+            .eq('id', req.user.id)
+            .single();
+
+        if (userError || !userData) {
+            logger.error('Failed to retrieve user for password change:', userError);
+            return res.status(500).json({
                 success: false,
-                error: 'New password must be different from current password'
+                error: 'Unable to verify current password'
             });
         }
 
-        // Validate new password strength
-        const passwordValidation = validatePassword(newPassword);
-        if (!passwordValidation.isValid) {
+        // Use the new password validation service
+        const validation = await passwordValidationService.validatePasswordChange(
+            req.user.id,
+            currentPassword,
+            newPassword,
+            confirmPassword || newPassword, // Use newPassword as confirmation if not provided
+            userData.password
+        );
+
+        if (!validation.success) {
             return res.status(400).json({
                 success: false,
-                error: passwordValidation.errors.join('. '),
-                details: {
-                    validationErrors: passwordValidation.errors,
-                    requirements: {
-                        minLength: 8,
-                        requireNumber: true,
-                        requireUppercaseOrSymbol: true
-                    }
-                }
+                error: validation.error,
+                code: validation.code,
+                details: validation.details,
+                validationId: validation.validationId
             });
         }
 
@@ -458,8 +470,10 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
             newPassword
         );
         
-        logger.info('Password changed successfully with verification:', { 
-            userId: req.user.id 
+        logger.info('Password changed successfully with enhanced validation:', { 
+            userId: req.user.id,
+            validationId: validation.validationId,
+            strengthScore: validation.strengthScore
         });
 
         // Add password to history (if enabled)
@@ -470,7 +484,8 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
         res.json({
             success: true,
             message: 'Password changed successfully. Please use your new password for future logins.',
-            data: result
+            data: result,
+            validationId: validation.validationId
         });
 
     } catch (error) {
@@ -752,6 +767,7 @@ router.delete('/admin/users/:userId', authenticateToken, requireAdmin, async (re
 /**
  * POST /api/auth/admin/users/update-plan
  * Update user plan (admin only)
+ * Supports both body-based (userId) and param-based (id) syntax
  */
 router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (req, res) => {
     try {
@@ -765,7 +781,7 @@ router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (
         }
         
         // Validate plan value
-        const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
+        const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
         if (!validPlans.includes(newPlan)) {
             return res.status(400).json({
                 success: false,
@@ -783,6 +799,49 @@ router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (
         
     } catch (error) {
         logger.error('Update user plan endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/admin/users/:id/update-plan  
+ * Update user plan using path parameter (admin only)
+ * Alternative endpoint that takes userId from URL path
+ */
+router.post('/admin/users/:id/update-plan', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newPlan } = req.body;
+        
+        if (!id || !newPlan) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID and new plan are required'
+            });
+        }
+        
+        // Validate plan value
+        const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
+        if (!validPlans.includes(newPlan)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid plan. Valid plans are: ' + validPlans.join(', ')
+            });
+        }
+        
+        const adminId = req.user.id; // Get admin ID from authenticated user
+        const result = await authService.updateUserPlan(id, newPlan, adminId);
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Update user plan (by ID) endpoint error:', error.message);
         res.status(400).json({
             success: false,
             error: error.message
@@ -954,46 +1013,6 @@ router.post('/admin/users/:id/unsuspend', authenticateToken, requireAdmin, async
     }
 });
 
-/**
- * POST /api/auth/admin/users/:id/plan
- * Change user plan (admin only)
- */
-router.post('/admin/users/:id/plan', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { newPlan } = req.body;
-        
-        if (!id || !newPlan) {
-            return res.status(400).json({
-                success: false,
-                error: 'User ID and new plan are required'
-            });
-        }
-        
-        // Use the existing updateUserPlan method
-        const adminId = req.user.id; // Get admin ID from authenticated user
-        const result = await authService.updateUserPlan(id, newPlan, adminId);
-        
-        // Log the plan change activity
-        await authService.logUserActivity(id, 'plan_changed', {
-            performed_by: req.user.id,
-            old_plan: result.user?.plan,
-            new_plan: newPlan
-        });
-        
-        res.status(200).json({
-            success: true,
-            data: result
-        });
-        
-    } catch (error) {
-        logger.error('Change user plan endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
 
 /**
  * GET /api/auth/admin/users/:id/stats

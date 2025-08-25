@@ -5,6 +5,7 @@ const GatekeeperService = require('../services/gatekeeperService');
 const { mockMode } = require('../config/mockMode');
 const encryptionService = require('../services/encryptionService');
 const EmbeddingsService = require('../services/embeddingsService');
+const toxicityPatternsService = require('../services/toxicityPatternsService');
 
 /**
  * Analyze Toxicity Worker
@@ -42,13 +43,76 @@ class AnalyzeToxicityWorker extends BaseWorker {
       critical: 0.95 // Extreme content requiring immediate action
     };
     
-    // Pattern-based fallback rules
-    this.toxicPatterns = [
-      { pattern: /\b(idiot|stupid|dumb|moron)\b/i, score: 0.4, category: 'insult' },
-      { pattern: /\b(hate|kill|die|death)\b/i, score: 0.8, category: 'threat' },
-      { pattern: /\b(fuck|shit|damn|ass)\b/i, score: 0.3, category: 'profanity' },
-      { pattern: /\b(racist|nazi|hitler)\b/i, score: 0.9, category: 'hate' }
-    ];
+    // Pattern-based fallback rules (now loaded from external service)
+    this.toxicPatterns = toxicityPatternsService.getToxicPatternsForWorker();
+    this.slurPatterns = toxicityPatternsService.getSlurPatterns();
+    
+    // Toxicity analysis configuration (Issue #154)
+    this.contextWindowSize = {
+      min: 30,        // Minimum context window
+      default: 50,    // Default context window (expanded from 20)
+      max: 100,       // Maximum context window for complex analysis
+      dynamic: true   // Enable dynamic context window sizing
+    };
+  }
+  
+  /**
+   * Calculate dynamic context window size based on text characteristics
+   * Issue #154: Expand toxicity analysis context window
+   * @param {string} text - The text being analyzed
+   * @param {string} term - The specific term being analyzed
+   * @returns {number} - Optimal context window size
+   */
+  calculateContextWindowSize(text, term) {
+    if (!this.contextWindowSize.dynamic) {
+      return this.contextWindowSize.default;
+    }
+
+    let windowSize = this.contextWindowSize.default;
+
+    // Adjust based on text length
+    if (text.length < 50) {
+      windowSize = this.contextWindowSize.min; // Smaller window for short texts
+    } else if (text.length > 200) {
+      windowSize = Math.min(this.contextWindowSize.max, windowSize + 20); // Larger window for longer texts
+    }
+
+    // Adjust based on term characteristics
+    if (term.length > 10) {
+      windowSize += 10; // More context for longer terms/phrases
+    }
+
+    // Adjust based on sentence boundaries to avoid cutting mid-sentence
+    const termIndex = text.indexOf(term);
+    if (termIndex !== -1) {
+      const beforeText = text.substring(0, termIndex);
+      const afterText = text.substring(termIndex + term.length);
+      
+      // Look for sentence boundaries
+      const sentenceEndBefore = Math.max(
+        beforeText.lastIndexOf('.'),
+        beforeText.lastIndexOf('!'),
+        beforeText.lastIndexOf('?')
+      );
+      
+      const sentenceEndAfter = Math.min(
+        afterText.indexOf('.') !== -1 ? afterText.indexOf('.') : Infinity,
+        afterText.indexOf('!') !== -1 ? afterText.indexOf('!') : Infinity,
+        afterText.indexOf('?') !== -1 ? afterText.indexOf('?') : Infinity
+      );
+
+      // Expand window to include full sentences when reasonable
+      if (sentenceEndBefore !== -1 && (termIndex - sentenceEndBefore - 1) < windowSize * 1.5) {
+        windowSize = Math.max(windowSize, termIndex - sentenceEndBefore - 1);
+      }
+      
+      if (sentenceEndAfter !== Infinity && sentenceEndAfter < windowSize * 1.5) {
+        windowSize = Math.max(windowSize, sentenceEndAfter + 1);
+      }
+    }
+
+    // Ensure window size is within bounds
+    return Math.min(Math.max(windowSize, this.contextWindowSize.min), this.contextWindowSize.max);
   }
   
   /**
@@ -1351,10 +1415,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
         if (term.length > 8) termBoost += 0.1;
         if (term.includes(' ')) termBoost += 0.1; // Multi-word terms are more specific
         
-        // Check for negative context around the term
+        // Check for negative context around the term (using dynamic window sizing)
         const termIndex = commentText.indexOf(term);
-        const contextStart = Math.max(0, termIndex - 20);
-        const contextEnd = Math.min(commentText.length, termIndex + term.length + 20);
+        const windowSize = this.calculateContextWindowSize(commentText, term);
+        const contextStart = Math.max(0, termIndex - windowSize);
+        const contextEnd = Math.min(commentText.length, termIndex + term.length + windowSize);
         const context = commentText.substring(contextStart, contextEnd);
         
         // Negative words that amplify personal attacks
@@ -1369,13 +1434,8 @@ class AnalyzeToxicityWorker extends BaseWorker {
           termBoost += 0.3; // Significant boost for negative context
         }
         
-        // Check for slurs or derogatory language patterns
-        const slurPatterns = [
-          /f[a@]g/i, /tr[a@]nny/i, /ret[a@]rd/i, /n[i1]gg[e3]r/i,
-          /sp[i1]c/i, /ch[i1]nk/i, /k[i1]k[e3]/i
-        ];
-        
-        const hasSlur = slurPatterns.some(pattern => context.match(pattern));
+        // Check for slurs or derogatory language patterns (using external service)
+        const hasSlur = this.slurPatterns.some(pattern => context.match(pattern));
         if (hasSlur) {
           termBoost += 0.5; // Major boost for slurs
         }

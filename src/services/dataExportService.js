@@ -426,7 +426,7 @@ Generated on: ${new Date().toISOString()}
      */
     async anonymizeUserData(userId) {
         try {
-            logger.info('Starting user data anonymization', { userId: userId.substr(0, 8) + '...' });
+            logger.info('Starting user data anonymization', { userId: userId?.substr(0, 8) + '...' || 'unknown' });
 
             // Anonymize audit logs (keep for legal compliance but remove PII)
             await supabaseServiceClient
@@ -473,7 +473,7 @@ Generated on: ${new Date().toISOString()}
                     .in('organization_id', orgIds);
             }
 
-            logger.info('User data anonymization completed', { userId: userId.substr(0, 8) + '...' });
+            logger.info('User data anonymization completed', { userId: userId?.substr(0, 8) + '...' || 'unknown' });
 
         } catch (error) {
             logger.error('Error anonymizing user data', { 
@@ -489,7 +489,7 @@ Generated on: ${new Date().toISOString()}
      */
     async deleteUserData(userId) {
         try {
-            logger.info('Starting complete user data deletion', { userId: userId.substr(0, 8) + '...' });
+            logger.info('Starting complete user data deletion', { userId: userId?.substr(0, 8) + '...' || 'unknown' });
 
             // Get user organizations first
             const { data: organizations } = await supabaseServiceClient
@@ -528,7 +528,7 @@ Generated on: ${new Date().toISOString()}
             // Finally delete the user (this will cascade to remaining references)
             await supabaseServiceClient.from('users').delete().eq('id', userId);
 
-            logger.info('Complete user data deletion finished', { userId: userId.substr(0, 8) + '...' });
+            logger.info('Complete user data deletion finished', { userId: userId?.substr(0, 8) + '...' || 'unknown' });
 
         } catch (error) {
             logger.error('Error deleting user data', { 
