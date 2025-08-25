@@ -93,7 +93,7 @@
   },
   "homepage": "https://github.com/Eibon7/roastr-ai#readme",
   "dependencies": {
-    "@atproto/api": "^0.16.2",
+    "@atproto/api": "^0.16.3",
     "@sendgrid/mail": "^8.1.5",
     "@supabase/supabase-js": "^2.53.0",
     "@twurple/api": "^7.1.0",
