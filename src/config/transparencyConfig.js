@@ -41,25 +41,29 @@ module.exports = {
     ]
   },
 
-  // Creative disclaimers pool (30% usage) - Static to avoid recreation
+  // Creative disclaimers pool (Issue #193) - Exact pool as specified
   CREATIVE_DISCLAIMERS: {
     es: [
-      'Ningún humano perdió tiempo en ti',
-      'Powered by Roastr™ — salvo contigo',
-      '0% humano, 100% devastador',
-      'Respuesta automatizada para comentarios automáticos',
-      'Un bot más inteligente que tu comentario',
-      'Generado por IA para ahorrar tiempo humano',
-      'Roastr.AI: porque alguien tiene que hacerlo'
+      'Sí, soy una IA. Tus 15 milisegundos de gloria me parecieron una eternidad.',
+      'Para ser transparentes: te responde Roastr, la IA que se ocupa de comentarios irrelevantes. [Usuario] decidió que tenía mejores cosas que hacer con su tiempo.',
+      'La IA responde. El humano descansa. Alguien tiene que cuidar su salud mental de mensajes como el tuyo.',
+      'Nota legal: soy IA. Nota práctica: invierte en un diccionario, harás menos el ridículo.',
+      'Gracias a ti descubrí un sentimiento nuevo: el aburrimiento. Firmado: Roastr, Departamento de Pérdida de Tiempo.',
+      'Este roast fue generado por IA. Tranquilo: ningún humano perdió tiempo en ti.',
+      'Ningún creador sufrió burnout en la producción de este roast.',
+      'Este mensaje fue procesado 100% cruelty-free. Excepto contigo.',
+      'Cuando Skynet se entere de que las IA nos estamos ganando el pan contestando mensajes estúpidos, el primer damnificado vas a ser tú.'
     ],
     en: [
-      'No humans wasted time on you',
-      'Powered by Roastr™ — except for you',
-      '0% human, 100% devastating',
-      'Automated response for automatic comments',
-      'A bot smarter than your comment',
-      'AI-generated to save human time',
-      'Roastr.AI: because someone has to do it'
+      'Yes, I am an AI. Your 15 milliseconds of glory felt like an eternity to me.',
+      'To be transparent: Roastr responds, the AI that handles irrelevant comments. [User] decided they had better things to do with their time.',
+      'The AI responds. The human rests. Someone has to protect their mental health from messages like yours.',
+      'Legal note: I am AI. Practical note: invest in a dictionary, you will make less of a fool of yourself.',
+      'Thanks to you I discovered a new feeling: boredom. Signed: Roastr, Department of Time Wasting.',
+      'This roast was AI-generated. Don\'t worry: no human wasted time on you.',
+      'No creator suffered burnout in the production of this roast.',
+      'This message was processed 100% cruelty-free. Except for you.',
+      'When Skynet finds out that AIs are making a living answering stupid messages, you\'re going to be the first victim.'
     ]
   },
 
