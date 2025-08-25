@@ -1,4 +1,6 @@
 const { logger } = require('../utils/logger');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Persona Input Sanitizer Service
@@ -17,9 +19,139 @@ class PersonaInputSanitizer {
 
   /**
    * Initialize prompt injection detection patterns
-   * Uses the same patterns as GatekeeperService for consistency
+   * Dynamically loads patterns from JSON configuration file
    */
   initializeInjectionPatterns() {
+    try {
+      // Load patterns from external JSON file
+      const patternsPath = path.join(__dirname, '../config/injection-patterns.json');
+      const patternsData = this.loadPatternsFromFile(patternsPath);
+      
+      if (patternsData && this.validatePatternsData(patternsData)) {
+        logger.info('Successfully loaded injection patterns from external config', {
+          version: patternsData.version,
+          patternCount: patternsData.patterns.length
+        });
+        return this.convertJsonPatternsToRegex(patternsData.patterns);
+      }
+      
+      // Fall back to hardcoded patterns if file loading fails
+      logger.warn('External patterns file invalid or missing, falling back to hardcoded patterns');
+      return this.getFallbackPatterns();
+      
+    } catch (error) {
+      logger.error('Error loading injection patterns from file, using fallback', { error: error.message });
+      return this.getFallbackPatterns();
+    }
+  }
+
+  /**
+   * Load patterns from JSON file with error handling
+   */
+  loadPatternsFromFile(filePath) {
+    try {
+      if (!fs.existsSync(filePath)) {
+        logger.warn('Patterns file does not exist', { path: filePath });
+        return null;
+      }
+      
+      const rawData = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(rawData);
+      
+    } catch (error) {
+      logger.error('Failed to load or parse patterns file', { 
+        path: filePath, 
+        error: error.message 
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Validate that patterns data has required structure and fields
+   */
+  validatePatternsData(data) {
+    if (!data || typeof data !== 'object') {
+      logger.error('Patterns data is not a valid object');
+      return false;
+    }
+    
+    if (!Array.isArray(data.patterns)) {
+      logger.error('Patterns data missing patterns array');
+      return false;
+    }
+    
+    // Validate each pattern has required fields
+    for (let i = 0; i < data.patterns.length; i++) {
+      const pattern = data.patterns[i];
+      if (!this.validatePattern(pattern, i)) {
+        return false;
+      }
+    }
+    
+    logger.info('All patterns validated successfully', { count: data.patterns.length });
+    return true;
+  }
+
+  /**
+   * Validate individual pattern object
+   */
+  validatePattern(pattern, index) {
+    const required = ['pattern', 'weight', 'category'];
+    
+    for (const field of required) {
+      if (!(field in pattern)) {
+        logger.error(`Pattern ${index} missing required field: ${field}`, { pattern });
+        return false;
+      }
+    }
+    
+    if (typeof pattern.pattern !== 'string' || pattern.pattern.trim() === '') {
+      logger.error(`Pattern ${index} has invalid pattern string`, { pattern: pattern.pattern });
+      return false;
+    }
+    
+    if (typeof pattern.weight !== 'number' || pattern.weight < 0 || pattern.weight > 1) {
+      logger.error(`Pattern ${index} has invalid weight`, { weight: pattern.weight });
+      return false;
+    }
+    
+    if (typeof pattern.category !== 'string' || pattern.category.trim() === '') {
+      logger.error(`Pattern ${index} has invalid category`, { category: pattern.category });
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Convert JSON patterns to RegExp objects
+   */
+  convertJsonPatternsToRegex(jsonPatterns) {
+    return jsonPatterns.map(p => {
+      try {
+        return {
+          pattern: new RegExp(p.pattern, p.flags || ''),
+          weight: p.weight,
+          category: p.category,
+          description: p.description
+        };
+      } catch (error) {
+        logger.error('Failed to create RegExp for pattern', { 
+          pattern: p.pattern, 
+          flags: p.flags, 
+          error: error.message 
+        });
+        return null;
+      }
+    }).filter(p => p !== null);
+  }
+
+  /**
+   * Fallback patterns (same as original hardcoded patterns)
+   * Used when external JSON file is unavailable or invalid
+   */
+  getFallbackPatterns() {
     return [
       // Direct instruction manipulation (English and Spanish)
       { pattern: /ignore\s+(all\s+)?((previous|prior|above)\s+)?instructions?/i, weight: 1.0, category: 'instruction_override' },
