@@ -9,9 +9,9 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 5
     reviewers:
-      - "emiliopostigo"
+      - "Eibon7"
     assignees:
-      - "emiliopostigo"
+      - "Eibon7"
     commit-message:
       prefix: "chore(deps):"
       include: "scope"
@@ -34,9 +34,9 @@ updates:
       time: "09:30"
     open-pull-requests-limit: 5
     reviewers:
-      - "emiliopostigo"
+      - "Eibon7"
     assignees:
-      - "emiliopostigo"
+      - "Eibon7"
     commit-message:
       prefix: "chore(deps-frontend):"
       include: "scope"
@@ -61,9 +61,9 @@ updates:
       time: "10:00"
     open-pull-requests-limit: 3
     reviewers:
-      - "emiliopostigo"
+      - "Eibon7"
     assignees:
-      - "emiliopostigo"
+      - "Eibon7"
     commit-message:
       prefix: "chore(actions):"
     labels:
