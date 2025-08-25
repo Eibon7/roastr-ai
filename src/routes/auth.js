@@ -752,6 +752,7 @@ router.delete('/admin/users/:userId', authenticateToken, requireAdmin, async (re
 /**
  * POST /api/auth/admin/users/update-plan
  * Update user plan (admin only)
+ * Supports both body-based (userId) and param-based (id) syntax
  */
 router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (req, res) => {
     try {
@@ -765,7 +766,7 @@ router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (
         }
         
         // Validate plan value
-        const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
+        const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
         if (!validPlans.includes(newPlan)) {
             return res.status(400).json({
                 success: false,
@@ -783,6 +784,49 @@ router.post('/admin/users/update-plan', authenticateToken, requireAdmin, async (
         
     } catch (error) {
         logger.error('Update user plan endpoint error:', error.message);
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/auth/admin/users/:id/update-plan  
+ * Update user plan using path parameter (admin only)
+ * Alternative endpoint that takes userId from URL path
+ */
+router.post('/admin/users/:id/update-plan', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newPlan } = req.body;
+        
+        if (!id || !newPlan) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID and new plan are required'
+            });
+        }
+        
+        // Validate plan value
+        const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
+        if (!validPlans.includes(newPlan)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid plan. Valid plans are: ' + validPlans.join(', ')
+            });
+        }
+        
+        const adminId = req.user.id; // Get admin ID from authenticated user
+        const result = await authService.updateUserPlan(id, newPlan, adminId);
+        
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        logger.error('Update user plan (by ID) endpoint error:', error.message);
         res.status(400).json({
             success: false,
             error: error.message
@@ -954,46 +998,6 @@ router.post('/admin/users/:id/unsuspend', authenticateToken, requireAdmin, async
     }
 });
 
-/**
- * POST /api/auth/admin/users/:id/plan
- * Change user plan (admin only)
- */
-router.post('/admin/users/:id/plan', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { newPlan } = req.body;
-        
-        if (!id || !newPlan) {
-            return res.status(400).json({
-                success: false,
-                error: 'User ID and new plan are required'
-            });
-        }
-        
-        // Use the existing updateUserPlan method
-        const adminId = req.user.id; // Get admin ID from authenticated user
-        const result = await authService.updateUserPlan(id, newPlan, adminId);
-        
-        // Log the plan change activity
-        await authService.logUserActivity(id, 'plan_changed', {
-            performed_by: req.user.id,
-            old_plan: result.user?.plan,
-            new_plan: newPlan
-        });
-        
-        res.status(200).json({
-            success: true,
-            data: result
-        });
-        
-    } catch (error) {
-        logger.error('Change user plan endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
 
 /**
  * GET /api/auth/admin/users/:id/stats
