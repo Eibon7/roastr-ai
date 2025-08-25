@@ -12,6 +12,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const encryptionService = require('../services/encryptionService');
 const EmbeddingsService = require('../services/embeddingsService');
+const PersonaInputSanitizer = require('../services/personaInputSanitizer');
 const transparencyService = require('../services/transparencyService');
 const {
   accountDeletionLimiter,
@@ -29,6 +30,7 @@ const {
 const router = express.Router();
 const integrationsService = new UserIntegrationsService();
 const embeddingsService = new EmbeddingsService();
+const personaSanitizer = new PersonaInputSanitizer();
 
 /**
  * GET /api/user/integrations
@@ -1107,7 +1109,7 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
         const userId = req.user.id;
         const userClient = createUserClient(req.accessToken);
 
-        // Validate loQueMeDefine input
+        // Validate loQueMeDefine input with prompt injection detection
         if (loQueMeDefine !== null && loQueMeDefine !== undefined) {
             if (typeof loQueMeDefine !== 'string') {
                 return res.status(400).json({
@@ -1116,16 +1118,26 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
                 });
             }
 
-            // Sanitize and validate length
-            const sanitized = encryptionService.sanitizeForEncryption(loQueMeDefine);
-            if (sanitized.length > 300) {
+            // Apply prompt injection sanitization first
+            const sanitizedPersona = personaSanitizer.sanitizePersonaInput(loQueMeDefine);
+            if (sanitizedPersona === null) {
+                return res.status(400).json({
+                    success: false,
+                    error: personaSanitizer.getValidationErrorMessage(loQueMeDefine),
+                    rejectedForSecurity: true
+                });
+            }
+
+            // Apply encryption sanitization and validate length
+            const encryptionSanitized = encryptionService.sanitizeForEncryption(sanitizedPersona);
+            if (encryptionSanitized.length > 300) {
                 return res.status(400).json({
                     success: false,
                     error: 'loQueMeDefine cannot exceed 300 characters'
                 });
             }
 
-            if (sanitized.length === 0 && loQueMeDefine.trim().length > 0) {
+            if (encryptionSanitized.length === 0 && loQueMeDefine.trim().length > 0) {
                 return res.status(400).json({
                     success: false,
                     error: 'loQueMeDefine contains invalid characters'
@@ -1133,7 +1145,7 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             }
         }
 
-        // Validate loQueNoTolero input
+        // Validate loQueNoTolero input with prompt injection detection
         if (loQueNoTolero !== null && loQueNoTolero !== undefined) {
             if (typeof loQueNoTolero !== 'string') {
                 return res.status(400).json({
@@ -1142,16 +1154,26 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
                 });
             }
 
-            // Sanitize and validate length
-            const sanitized = encryptionService.sanitizeForEncryption(loQueNoTolero);
-            if (sanitized.length > 300) {
+            // Apply prompt injection sanitization first
+            const sanitizedIntolerance = personaSanitizer.sanitizePersonaInput(loQueNoTolero);
+            if (sanitizedIntolerance === null) {
+                return res.status(400).json({
+                    success: false,
+                    error: personaSanitizer.getValidationErrorMessage(loQueNoTolero),
+                    rejectedForSecurity: true
+                });
+            }
+
+            // Apply encryption sanitization and validate length
+            const encryptionSanitized = encryptionService.sanitizeForEncryption(sanitizedIntolerance);
+            if (encryptionSanitized.length > 300) {
                 return res.status(400).json({
                     success: false,
                     error: 'loQueNoTolero cannot exceed 300 characters'
                 });
             }
 
-            if (sanitized.length === 0 && loQueNoTolero.trim().length > 0) {
+            if (encryptionSanitized.length === 0 && loQueNoTolero.trim().length > 0) {
                 return res.status(400).json({
                     success: false,
                     error: 'loQueNoTolero contains invalid characters'
@@ -1159,7 +1181,7 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             }
         }
 
-        // Validate loQueMeDaIgual input
+        // Validate loQueMeDaIgual input with prompt injection detection
         if (loQueMeDaIgual !== null && loQueMeDaIgual !== undefined) {
             if (typeof loQueMeDaIgual !== 'string') {
                 return res.status(400).json({
@@ -1168,16 +1190,26 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
                 });
             }
 
-            // Sanitize and validate length
-            const sanitized = encryptionService.sanitizeForEncryption(loQueMeDaIgual);
-            if (sanitized.length > 300) {
+            // Apply prompt injection sanitization first
+            const sanitizedTolerance = personaSanitizer.sanitizePersonaInput(loQueMeDaIgual);
+            if (sanitizedTolerance === null) {
+                return res.status(400).json({
+                    success: false,
+                    error: personaSanitizer.getValidationErrorMessage(loQueMeDaIgual),
+                    rejectedForSecurity: true
+                });
+            }
+
+            // Apply encryption sanitization and validate length
+            const encryptionSanitized = encryptionService.sanitizeForEncryption(sanitizedTolerance);
+            if (encryptionSanitized.length > 300) {
                 return res.status(400).json({
                     success: false,
                     error: 'loQueMeDaIgual cannot exceed 300 characters'
                 });
             }
 
-            if (sanitized.length === 0 && loQueMeDaIgual.trim().length > 0) {
+            if (encryptionSanitized.length === 0 && loQueMeDaIgual.trim().length > 0) {
                 return res.status(400).json({
                     success: false,
                     error: 'loQueMeDaIgual contains invalid characters'
@@ -1214,6 +1246,25 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             .eq('id', userId)
             .single();
 
+        // Prepare sanitized versions for encryption
+        let sanitizedLoQueMeDefine = null;
+        let sanitizedLoQueNoTolero = null;
+        let sanitizedLoQueMeDaIgual = null;
+
+        // Pre-sanitize all inputs that passed validation
+        if (loQueMeDefine !== undefined && loQueMeDefine !== null && loQueMeDefine.trim() !== '') {
+            sanitizedLoQueMeDefine = personaSanitizer.sanitizePersonaInput(loQueMeDefine);
+            // If it reaches here, it should be valid (already checked above)
+        }
+
+        if (loQueNoTolero !== undefined && loQueNoTolero !== null && loQueNoTolero.trim() !== '') {
+            sanitizedLoQueNoTolero = personaSanitizer.sanitizePersonaInput(loQueNoTolero);
+        }
+
+        if (loQueMeDaIgual !== undefined && loQueMeDaIgual !== null && loQueMeDaIgual.trim() !== '') {
+            sanitizedLoQueMeDaIgual = personaSanitizer.sanitizePersonaInput(loQueMeDaIgual);
+        }
+
         // Prepare update data
         let updateData = {};
 
@@ -1222,14 +1273,14 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             updateData.lo_que_me_define_visible = isVisible;
             updateData.lo_que_me_define_updated_at = new Date().toISOString();
 
-            if (loQueMeDefine === null || loQueMeDefine.trim() === '') {
-                // User wants to clear the field
+            if (loQueMeDefine === null || loQueMeDefine.trim() === '' || sanitizedLoQueMeDefine === null) {
+                // User wants to clear the field or input was rejected
                 updateData.lo_que_me_define_encrypted = null;
             } else {
-                // Encrypt the sanitized content
-                const sanitized = encryptionService.sanitizeForEncryption(loQueMeDefine);
+                // Encrypt the sanitized and validated content
+                const encryptionSanitized = encryptionService.sanitizeForEncryption(sanitizedLoQueMeDefine);
                 try {
-                    updateData.lo_que_me_define_encrypted = encryptionService.encrypt(sanitized);
+                    updateData.lo_que_me_define_encrypted = encryptionService.encrypt(encryptionSanitized);
                     
                     // Set created_at if this is the first time setting the field
                     if (!existingData?.lo_que_me_define_encrypted) {
@@ -1253,14 +1304,14 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             updateData.lo_que_no_tolero_visible = isIntoleranceVisible;
             updateData.lo_que_no_tolero_updated_at = new Date().toISOString();
 
-            if (loQueNoTolero === null || loQueNoTolero.trim() === '') {
-                // User wants to clear the field
+            if (loQueNoTolero === null || loQueNoTolero.trim() === '' || sanitizedLoQueNoTolero === null) {
+                // User wants to clear the field or input was rejected
                 updateData.lo_que_no_tolero_encrypted = null;
             } else {
-                // Encrypt the sanitized content
-                const sanitized = encryptionService.sanitizeForEncryption(loQueNoTolero);
+                // Encrypt the sanitized and validated content
+                const encryptionSanitized = encryptionService.sanitizeForEncryption(sanitizedLoQueNoTolero);
                 try {
-                    updateData.lo_que_no_tolero_encrypted = encryptionService.encrypt(sanitized);
+                    updateData.lo_que_no_tolero_encrypted = encryptionService.encrypt(encryptionSanitized);
                     
                     // Set created_at if this is the first time setting the field
                     if (!existingData?.lo_que_no_tolero_encrypted) {
@@ -1284,14 +1335,14 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             updateData.lo_que_me_da_igual_visible = isToleranceVisible;
             updateData.lo_que_me_da_igual_updated_at = new Date().toISOString();
 
-            if (loQueMeDaIgual === null || loQueMeDaIgual.trim() === '') {
-                // User wants to clear the field
+            if (loQueMeDaIgual === null || loQueMeDaIgual.trim() === '' || sanitizedLoQueMeDaIgual === null) {
+                // User wants to clear the field or input was rejected
                 updateData.lo_que_me_da_igual_encrypted = null;
             } else {
-                // Encrypt the sanitized content
-                const sanitized = encryptionService.sanitizeForEncryption(loQueMeDaIgual);
+                // Encrypt the sanitized and validated content
+                const encryptionSanitized = encryptionService.sanitizeForEncryption(sanitizedLoQueMeDaIgual);
                 try {
-                    updateData.lo_que_me_da_igual_encrypted = encryptionService.encrypt(sanitized);
+                    updateData.lo_que_me_da_igual_encrypted = encryptionService.encrypt(encryptionSanitized);
                     
                     // Set created_at if this is the first time setting the field
                     if (!existingData?.lo_que_me_da_igual_encrypted) {

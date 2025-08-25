@@ -428,12 +428,44 @@ export default function Settings() {
         
         addNotification(successMessage, 'success');
       } else {
-        addNotification(result.error || 'Error al guardar Roastr Persona', 'error');
+        // Check if the error is due to security rejection
+        const errorMessage = result.error || 'Error al guardar Roastr Persona';
+        const isSecurityRejection = result.rejectedForSecurity === true;
+        
+        addNotification(errorMessage, 'error');
+        
+        // If it's a security rejection, also clear the field to prevent confusion
+        if (isSecurityRejection) {
+          if (isIdentity) {
+            setRoastrPersona(prev => ({ ...prev, loQueMeDefine: '' }));
+          } else if (isIntolerance) {
+            setRoastrPersona(prev => ({ ...prev, loQueNoTolero: '' }));
+          } else if (isTolerance) {
+            setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
+          }
+        }
       }
       
     } catch (error) {
       console.error('Roastr Persona save error:', error);
-      addNotification(error.message || 'Error al guardar Roastr Persona', 'error');
+      const errorMessage = error.message || 'Error al guardar Roastr Persona';
+      
+      // Check if it's a security-related error from the response
+      if (error.response?.data?.rejectedForSecurity) {
+        const securityMessage = error.response.data.error || errorMessage;
+        addNotification(securityMessage, 'error');
+        
+        // Clear the field that was rejected
+        if (isIdentity) {
+          setRoastrPersona(prev => ({ ...prev, loQueMeDefine: '' }));
+        } else if (isIntolerance) {
+          setRoastrPersona(prev => ({ ...prev, loQueNoTolero: '' }));
+        } else if (isTolerance) {
+          setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
+        }
+      } else {
+        addNotification(errorMessage, 'error');
+      }
     } finally {
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
