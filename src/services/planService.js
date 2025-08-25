@@ -4,6 +4,14 @@
 /**
  * Plan feature definitions
  * Enhanced with configurable duration (Issue #125)
+ * 
+ * Business Policy for Platform Integrations (Issue #110):
+ * - Free plan: 1 integration per social network (for basic individual usage)
+ * - Pro plan: 2 integrations per social network (for creators with multiple personal accounts)
+ * - Creator+ plan: 2 integrations per social network (for professionals managing higher volume, not agencies)
+ * - Custom plan: 2 integrations per social network (with other plan aspects configurable)
+ * 
+ * This policy ensures no plan can be abused by agencies to manage multiple client accounts
  */
 const PLAN_FEATURES = {
   free: {
@@ -46,7 +54,7 @@ const PLAN_FEATURES = {
     limits: {
       roastsPerMonth: 1000,
       commentsPerMonth: 5000,
-      platformIntegrations: 5
+      platformIntegrations: 2 // 2 accounts per social network as per business policy
     },
     features: {
       basicSupport: true,
@@ -74,7 +82,7 @@ const PLAN_FEATURES = {
     limits: {
       roastsPerMonth: -1, // Unlimited
       commentsPerMonth: -1, // Unlimited
-      platformIntegrations: 9
+      platformIntegrations: 2 // 2 integrations per social network as per business policy
     },
     features: {
       basicSupport: true,
@@ -101,7 +109,7 @@ const PLAN_FEATURES = {
     limits: {
       roastsPerMonth: -1, // Unlimited
       commentsPerMonth: -1, // Unlimited
-      platformIntegrations: -1 // Unlimited
+      platformIntegrations: 2 // 2 integrations per social network as per business policy
     },
     features: {
       basicSupport: true,

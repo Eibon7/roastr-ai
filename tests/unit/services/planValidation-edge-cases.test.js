@@ -23,12 +23,12 @@ describe('Plan Validation Edge Cases', () => {
                 },
                 pro: {
                     id: 'pro',
-                    limits: { roastsPerMonth: 1000, commentsPerMonth: 5000, platformIntegrations: 3 },
+                    limits: { roastsPerMonth: 1000, commentsPerMonth: 5000, platformIntegrations: 2 },
                     features: { basicSupport: true, prioritySupport: true, advancedAnalytics: true, teamCollaboration: false, customTones: false, apiAccess: false, shield: true, styleProfile: false }
                 },
                 creator_plus: {
                     id: 'creator_plus',
-                    limits: { roastsPerMonth: -1, commentsPerMonth: -1, platformIntegrations: 9 },
+                    limits: { roastsPerMonth: -1, commentsPerMonth: -1, platformIntegrations: 2 },
                     features: { basicSupport: true, prioritySupport: true, advancedAnalytics: true, teamCollaboration: true, customTones: true, apiAccess: true, shield: true, styleProfile: true }
                 }
             };
@@ -59,22 +59,22 @@ describe('Plan Validation Edge Cases', () => {
             expect(result.reason).toContain('Current monthly comments (600) exceeds new plan limit (500)');
         });
 
-        it('should block downgrade from creator_plus to pro when integrations exceed limit', async () => {
+        it('should block downgrade from creator_plus to pro when roasts exceed limit', async () => {
             const result = await planValidation.isChangeAllowed('creator_plus', 'pro', {
-                roastsThisMonth: 500,
+                roastsThisMonth: 1500, // Exceeds pro limit of 1000
                 commentsThisMonth: 2000,
-                activeIntegrations: 7
+                activeIntegrations: 2
             });
 
             expect(result.allowed).toBe(false);
-            expect(result.reason).toContain('Active integrations (7) exceeds new plan limit (3)');
+            expect(result.reason).toContain('Current monthly roasts (1500) exceeds new plan limit (1000)');
         });
 
         it('should provide warnings about lost features on allowed downgrade', async () => {
             const result = await planValidation.isChangeAllowed('creator_plus', 'pro', {
                 roastsThisMonth: 500,
                 commentsThisMonth: 2000,
-                activeIntegrations: 3
+                activeIntegrations: 2
             });
 
             expect(result.allowed).toBe(true);
@@ -156,7 +156,7 @@ describe('Plan Validation Edge Cases', () => {
             const result = await planValidation.isChangeAllowed('pro', 'pro', {
                 roastsThisMonth: 500,
                 commentsThisMonth: 2000,
-                activeIntegrations: 3
+                activeIntegrations: 2
             });
 
             expect(result.allowed).toBe(true);
@@ -225,8 +225,8 @@ describe('Plan Validation Edge Cases', () => {
     describe('Integration limits', () => {
         it('should return correct max integrations for each plan', () => {
             expect(planValidation.getMaxIntegrations('free')).toBe(1);
-            expect(planValidation.getMaxIntegrations('pro')).toBe(3);
-            expect(planValidation.getMaxIntegrations('creator_plus')).toBe(9);
+            expect(planValidation.getMaxIntegrations('pro')).toBe(2);
+            expect(planValidation.getMaxIntegrations('creator_plus')).toBe(2);
             expect(planValidation.getMaxIntegrations('invalid')).toBe(1);
         });
     });

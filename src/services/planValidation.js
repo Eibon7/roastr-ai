@@ -109,15 +109,19 @@ function getPlanTier(planId) {
 /**
  * Gets the maximum number of integrations for a plan
  * Enhanced with custom plan support (Issue #125)
+ * 
+ * Business Policy (Issue #110): All plans limited to max 2 integrations per social network
+ * to prevent agency usage where multiple client accounts are managed on a single plan.
+ * 
  * @param {string} planId - Plan ID
- * @returns {number} Maximum integrations allowed (-1 means unlimited)
+ * @returns {number} Maximum integrations allowed
  */
 function getMaxIntegrations(planId) {
   const limits = {
-    free: 1,
-    pro: 5, // Updated to match planService.js
-    creator_plus: 9,
-    custom: -1 // Unlimited for custom plans
+    free: 1,              // 1 integration per social network (basic individual usage)
+    pro: 2,               // 2 integrations per social network (creators with multiple personal accounts)
+    creator_plus: 2,      // 2 integrations per social network (professionals, not agencies)
+    custom: 2             // 2 integrations per social network (configurable other aspects)
   };
   return limits[planId] || 1;
 }
