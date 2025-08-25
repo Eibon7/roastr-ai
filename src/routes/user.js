@@ -1915,7 +1915,7 @@ router.patch('/settings/transparency-mode', authenticateToken, async (req, res) 
                 message: 'Transparency mode updated successfully',
                 data: {
                     transparency_mode: data.transparency_mode,
-                    bio_text: mode === 'bio' ? 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI' : null
+                    bio_text: mode === 'bio' ? transparencyService.getBioText('es') : null
                 }
             });
         } else {
@@ -1930,7 +1930,7 @@ router.patch('/settings/transparency-mode', authenticateToken, async (req, res) 
                 message: 'Transparency mode updated successfully',
                 data: {
                     transparency_mode: mode,
-                    bio_text: mode === 'bio' ? 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI' : null
+                    bio_text: mode === 'bio' ? transparencyService.getBioText('es') : null
                 }
             });
         }
@@ -1973,7 +1973,7 @@ router.get('/settings/transparency-mode', authenticateToken, async (req, res) =>
                 data: {
                     transparency_mode: data.transparency_mode || 'bio',
                     bio_text: (!data.transparency_mode || data.transparency_mode === 'bio') 
-                        ? 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI' 
+                        ? transparencyService.getBioText('es') 
                         : null,
                     options: [
                         {
@@ -2001,7 +2001,7 @@ router.get('/settings/transparency-mode', authenticateToken, async (req, res) =>
                 success: true,
                 data: {
                     transparency_mode: 'bio',
-                    bio_text: 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI',
+                    bio_text: transparencyService.getBioText('es'),
                     options: [
                         {
                             value: 'bio',
