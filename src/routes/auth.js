@@ -7,6 +7,7 @@ const { handleSessionRefresh } = require('../middleware/sessionRefresh');
 const { loginRateLimiter, getRateLimitMetrics, resetRateLimit } = require('../middleware/rateLimiter');
 const { passwordChangeRateLimiter } = require('../middleware/passwordChangeRateLimiter');
 const { validatePassword } = require('../utils/passwordValidator');
+const passwordValidationService = require('../services/passwordValidationService');
 const { isPasswordReused, addPasswordToHistory, isPasswordHistoryEnabled } = require('../services/passwordHistoryService');
 
 const router = express.Router();
@@ -406,7 +407,7 @@ router.post('/update-password', async (req, res) => {
  */
 router.post('/change-password', authenticateToken, passwordChangeRateLimiter, async (req, res) => {
     try {
-        const { currentPassword, newPassword } = req.body;
+        const { currentPassword, newPassword, confirmPassword } = req.body;
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
         
         if (!currentPassword || !newPassword) {
@@ -416,27 +417,38 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
             });
         }
 
-        if (currentPassword === newPassword) {
-            return res.status(400).json({
+        // Get current user's password hash for validation
+        const userClient = createUserClient(accessToken);
+        const { data: userData, error: userError } = await userClient
+            .from('users')
+            .select('password')
+            .eq('id', req.user.id)
+            .single();
+
+        if (userError || !userData) {
+            logger.error('Failed to retrieve user for password change:', userError);
+            return res.status(500).json({
                 success: false,
-                error: 'New password must be different from current password'
+                error: 'Unable to verify current password'
             });
         }
 
-        // Validate new password strength
-        const passwordValidation = validatePassword(newPassword);
-        if (!passwordValidation.isValid) {
+        // Use the new password validation service
+        const validation = await passwordValidationService.validatePasswordChange(
+            req.user.id,
+            currentPassword,
+            newPassword,
+            confirmPassword || newPassword, // Use newPassword as confirmation if not provided
+            userData.password
+        );
+
+        if (!validation.success) {
             return res.status(400).json({
                 success: false,
-                error: passwordValidation.errors.join('. '),
-                details: {
-                    validationErrors: passwordValidation.errors,
-                    requirements: {
-                        minLength: 8,
-                        requireNumber: true,
-                        requireUppercaseOrSymbol: true
-                    }
-                }
+                error: validation.error,
+                code: validation.code,
+                details: validation.details,
+                validationId: validation.validationId
             });
         }
 
@@ -458,8 +470,10 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
             newPassword
         );
         
-        logger.info('Password changed successfully with verification:', { 
-            userId: req.user.id 
+        logger.info('Password changed successfully with enhanced validation:', { 
+            userId: req.user.id,
+            validationId: validation.validationId,
+            strengthScore: validation.strengthScore
         });
 
         // Add password to history (if enabled)
@@ -470,7 +484,8 @@ router.post('/change-password', authenticateToken, passwordChangeRateLimiter, as
         res.json({
             success: true,
             message: 'Password changed successfully. Please use your new password for future logins.',
-            data: result
+            data: result,
+            validationId: validation.validationId
         });
 
     } catch (error) {

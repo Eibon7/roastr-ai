@@ -2,18 +2,20 @@
  * Encryption Service for Sensitive Personal Data
  * Issue #148: Secure encryption/decryption for Roastr Persona fields
  * 
- * This service provides AES-256-CBC encryption with HMAC authentication 
+ * This service provides AES-256-CBC encryption with HMAC-SHA256 authentication 
  * for sensitive user data like the "lo que me define" field in Roastr Persona feature.
  * 
  * Security Features:
- * - AES-256-CBC encryption with HMAC-SHA256 authentication
- * - Unique IV per encryption operation
+ * - AES-256-CBC encryption with HMAC-SHA256 authentication (Encrypt-then-MAC)
+ * - Unique IV per encryption operation (128-bit)
  * - HMAC verification for data integrity and authenticity
  * - Environment-based encryption key management
  * - Constant-time comparison to prevent timing attacks
+ * - 32-byte HMAC tag for authentication
  * 
- * Note: While GCM mode would provide authenticated encryption in a single operation,
- * CBC + HMAC provides equivalent security when implemented correctly.
+ * Algorithm Choice: CBC + HMAC provides equivalent security to GCM mode when 
+ * implemented correctly using the Encrypt-then-MAC approach, which is more 
+ * resistant to implementation errors than Authenticate-then-Encrypt patterns.
  */
 
 const crypto = require('crypto');

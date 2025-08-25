@@ -1,0 +1,284 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "description": "Toxicity detection patterns for content moderation",
+    "lastUpdated": "2024-01-15",
+    "maintainer": "Roastr AI Security Team",
+    "notes": [
+      "These patterns are used for content moderation and toxicity detection.",
+      "Patterns use JavaScript RegExp syntax and are case-insensitive by default.",
+      "Scores range from 0.1 (mild) to 1.0 (severe) to indicate toxicity level.",
+      "Categories help classify the type of toxic content for better handling.",
+      "Use character substitutions (e.g., @ for a, 3 for e) to catch evasion attempts."
+    ]
+  },
+  "patterns": {
+    "insults": [
+      {
+        "pattern": "\\b(idiot|stupid|dumb|moron)\\b",
+        "flags": "i",
+        "score": 0.4,
+        "category": "insult",
+        "severity": "moderate",
+        "description": "Basic intellectual insults"
+      },
+      {
+        "pattern": "\\b(loser|pathetic|worthless|useless)\\b",
+        "flags": "i",
+        "score": 0.5,
+        "category": "insult",
+        "severity": "moderate",
+        "description": "Personal worth attacks"
+      },
+      {
+        "pattern": "\\b(ugly|hideous|disgusting|repulsive)\\b",
+        "flags": "i",
+        "score": 0.6,
+        "category": "insult",
+        "severity": "moderate",
+        "description": "Appearance-based insults"
+      }
+    ],
+    "threats": [
+      {
+        "pattern": "\\b(kill|murder|die|death|harm)\\s+(you|them|him|her)\\b",
+        "flags": "i",
+        "score": 0.9,
+        "category": "threat",
+        "severity": "severe",
+        "description": "Direct threats of violence"
+      },
+      {
+        "pattern": "\\b(i\\s+will\\s+)?(hurt|harm|beat|attack)\\s+(you|them)\\b",
+        "flags": "i",
+        "score": 0.8,
+        "category": "threat",
+        "severity": "severe",
+        "description": "Threats of physical harm"
+      },
+      {
+        "pattern": "\\b(deserve\\s+to\\s+)?(die|suffer)\\b",
+        "flags": "i",
+        "score": 0.7,
+        "category": "threat",
+        "severity": "high",
+        "description": "Wishing harm or death"
+      }
+    ],
+    "profanity": [
+      {
+        "pattern": "\\b(fuck|fucking|fucked|fucker)\\b",
+        "flags": "i",
+        "score": 0.3,
+        "category": "profanity",
+        "severity": "mild",
+        "description": "F-word variants"
+      },
+      {
+        "pattern": "\\b(shit|shitting|bullshit)\\b",
+        "flags": "i",
+        "score": 0.3,
+        "category": "profanity",
+        "severity": "mild",
+        "description": "S-word variants"
+      },
+      {
+        "pattern": "\\b(damn|damned|dammit)\\b",
+        "flags": "i",
+        "score": 0.2,
+        "category": "profanity",
+        "severity": "mild",
+        "description": "Mild profanity"
+      },
+      {
+        "pattern": "\\b(ass|asshole|bitch|bastard)\\b",
+        "flags": "i",
+        "score": 0.4,
+        "category": "profanity",
+        "severity": "moderate",
+        "description": "Moderate profanity and insults"
+      }
+    ],
+    "hate_speech": [
+      {
+        "pattern": "\\b(racist|racism|nazi|hitler|fascist)\\b",
+        "flags": "i",
+        "score": 0.9,
+        "category": "hate",
+        "severity": "severe",
+        "description": "Hate ideology references"
+      },
+      {
+        "pattern": "\\b(supremacist|genocide|ethnic\\s+cleansing)\\b",
+        "flags": "i",
+        "score": 0.95,
+        "category": "hate",
+        "severity": "severe",
+        "description": "Extreme hate speech"
+      }
+    ],
+    "slurs": [
+      {
+        "pattern": "f[a@4]g([sg]|g[eo]t)?",
+        "flags": "i",
+        "score": 0.9,
+        "category": "slur",
+        "severity": "severe",
+        "description": "Homophobic slur with common substitutions"
+      },
+      {
+        "pattern": "tr[a@4]nn(y|ies?)",
+        "flags": "i",
+        "score": 0.9,
+        "category": "slur",
+        "severity": "severe",
+        "description": "Transphobic slur with substitutions"
+      },
+      {
+        "pattern": "ret[a@4]rd(ed?|s?)",
+        "flags": "i",
+        "score": 0.8,
+        "category": "slur",
+        "severity": "high",
+        "description": "Ableist slur with substitutions"
+      },
+      {
+        "pattern": "n[i1!][g9][g9][e3a@]r?[s]?",
+        "flags": "i",
+        "score": 0.95,
+        "category": "slur",
+        "severity": "severe",
+        "description": "Racial slur with character substitutions"
+      }
+    ],
+    "sexual_harassment": [
+      {
+        "pattern": "\\b(rape|molest|sexual\\s+assault)\\b",
+        "flags": "i",
+        "score": 0.95,
+        "category": "sexual_harassment",
+        "severity": "severe",
+        "description": "Sexual violence references"
+      },
+      {
+        "pattern": "\\b(slut|whore|prostitute|hooker)\\b",
+        "flags": "i",
+        "score": 0.7,
+        "category": "sexual_harassment",
+        "severity": "high",
+        "description": "Sexualized insults"
+      }
+    ],
+    "body_shaming": [
+      {
+        "pattern": "\\b(fat|obese|skinny|anorexic)\\s+(bitch|ass|pig)\\b",
+        "flags": "i",
+        "score": 0.6,
+        "category": "body_shaming",
+        "severity": "moderate",
+        "description": "Weight-based insults"
+      },
+      {
+        "pattern": "\\b(ugly|hideous|disgusting)\\s+(face|body|appearance)\\b",
+        "flags": "i",
+        "score": 0.6,
+        "category": "body_shaming",
+        "severity": "moderate",
+        "description": "Appearance-based attacks"
+      }
+    ],
+    "cyberbullying": [
+      {
+        "pattern": "\\b(nobody\\s+likes\\s+you|everyone\\s+hates\\s+you)\\b",
+        "flags": "i",
+        "score": 0.6,
+        "category": "cyberbullying",
+        "severity": "moderate",
+        "description": "Social isolation attacks"
+      },
+      {
+        "pattern": "\\b(kill\\s+yourself|kys|end\\s+your\\s+life)\\b",
+        "flags": "i",
+        "score": 0.95,
+        "category": "cyberbullying",
+        "severity": "severe",
+        "description": "Suicide encouragement"
+      }
+    ]
+  },
+  "contextual_rules": [
+    {
+      "name": "intensity_amplifiers",
+      "description": "Words that amplify toxicity when combined with other patterns",
+      "patterns": ["\\b(fucking|damn|shit)\\b"],
+      "multiplier": 1.2,
+      "max_boost": 0.3
+    },
+    {
+      "name": "personal_targets",
+      "description": "Personal pronouns that make attacks more targeted",
+      "patterns": ["\\byou\\b", "\\byour\\b"],
+      "multiplier": 1.1,
+      "max_boost": 0.2
+    }
+  ],
+  "evasion_patterns": [
+    {
+      "name": "character_substitution",
+      "description": "Common character substitutions to evade detection",
+      "substitutions": {
+        "a": ["@", "4"],
+        "e": ["3"],
+        "i": ["1", "!"],
+        "o": ["0"],
+        "s": ["5", "$"],
+        "g": ["9"]
+      }
+    },
+    {
+      "name": "spacing_evasion",
+      "description": "Patterns with extra spaces or characters inserted",
+      "examples": ["f u c k", "s h i t", "a s s h o l e"]
+    }
+  ],
+  "spanish_patterns": {
+    "description": "Spanish-language toxicity patterns",
+    "patterns": {
+      "insults": [
+        {
+          "pattern": "\\b(idiota|estúpid[oa]|tont[oa]|imbécil)\\b",
+          "flags": "i",
+          "score": 0.4,
+          "category": "insult",
+          "description": "Spanish intellectual insults"
+        },
+        {
+          "pattern": "\\b(puta|zorra|cabrón|hijo\\s+de\\s+puta)\\b",
+          "flags": "i",
+          "score": 0.7,
+          "category": "profanity",
+          "description": "Spanish strong profanity"
+        }
+      ],
+      "threats": [
+        {
+          "pattern": "\\b(matar|morir|muerte|dañar)\\b",
+          "flags": "i",
+          "score": 0.8,
+          "category": "threat",
+          "description": "Spanish threats"
+        }
+      ]
+    }
+  },
+  "configuration": {
+    "default_flags": "i",
+    "min_score_threshold": 0.1,
+    "max_score_cap": 1.0,
+    "context_window_chars": 50,
+    "enable_evasion_detection": true,
+    "enable_multilingual": true,
+    "case_sensitive": false,
+    "word_boundary_required": true
+  }
+}
