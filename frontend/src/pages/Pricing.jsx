@@ -24,6 +24,7 @@ export default function Pricing() {
   const [currentPlan, setCurrentPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const fetchApi = createMockFetch();
 
@@ -47,6 +48,7 @@ export default function Pricing() {
 
   const handleUpgrade = async (planId) => {
     setUpgrading(planId);
+    setError(null); // Clear any previous errors
     
     try {
       if (planId === 'free') {
@@ -57,6 +59,8 @@ export default function Pricing() {
         if (response.ok) {
           const data = await response.json();
           window.open(data.url, '_blank');
+        } else {
+          throw new Error('Failed to create billing portal session');
         }
       } else {
         // Handle upgrade through checkout
@@ -69,10 +73,13 @@ export default function Pricing() {
         if (response.ok) {
           const data = await response.json();
           window.location.href = data.url;
+        } else {
+          throw new Error('Failed to create checkout session');
         }
       }
     } catch (error) {
       console.error('Failed to initiate plan change:', error);
+      setError('Failed to process upgrade. Please try again.');
     } finally {
       setUpgrading(null);
     }
@@ -227,6 +234,21 @@ export default function Pricing() {
           </p>
         </div>
 
+        {/* Error Alert */}
+        {error && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md flex items-center justify-between">
+              <span>{error}</span>
+              <button 
+                onClick={() => setError(null)}
+                className="text-red-600 hover:text-red-800 font-semibold"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Plans Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {plans.map((plan) => {
@@ -345,7 +367,7 @@ export default function Pricing() {
                     <tr className="border-t">
                       <td className="p-4 font-medium">Monthly Roasts</td>
                       <td className="p-4 text-center">50</td>
-                      <td className="p-4 text-center">10</td>
+                      <td className="p-4 text-center">100</td>
                       <td className="p-4 text-center">1,000</td>
                       <td className="p-4 text-center">5,000</td>
                     </tr>
