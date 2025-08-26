@@ -60,26 +60,58 @@ export default function Pricing() {
           const data = await response.json();
           window.open(data.url, '_blank');
         } else {
+          // Check for specific error conditions
+          if (response.status === 401) {
+            setError('Your session has expired. Please log in again.');
+            return;
+          } else if (response.status >= 500) {
+            setError('Service temporarily unavailable. Please try again later.');
+            return;
+          }
           throw new Error('Failed to create billing portal session');
         }
       } else {
-        // Handle upgrade through checkout
+        // Handle upgrade through checkout with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
         const response = await fetchApi('/api/billing/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: planId })
+          body: JSON.stringify({ plan: planId }),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (response.ok) {
           const data = await response.json();
           window.location.href = data.url;
         } else {
+          // Check for specific error conditions
+          if (response.status === 401) {
+            setError('Your session has expired. Please log in again.');
+            return;
+          } else if (response.status >= 500) {
+            setError('Service temporarily unavailable. Please try again later.');
+            return;
+          }
           throw new Error('Failed to create checkout session');
         }
       }
     } catch (error) {
       console.error('Failed to initiate plan change:', error);
-      setError('Failed to process upgrade. Please try again.');
+      
+      // Enhanced error handling
+      if (error.name === 'AbortError') {
+        setError('Request timed out. Please check your connection and try again.');
+      } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+        setError('Network error. Please check your internet connection.');
+      } else if (error.message.includes('session has expired')) {
+        setError('Your session has expired. Please log in again.');
+      } else {
+        setError('Failed to process upgrade. Please try again.');
+      }
     } finally {
       setUpgrading(null);
     }
@@ -119,7 +151,7 @@ export default function Pricing() {
         'GPT-4 model',
         'Shield protection',
         '1,000 analyses per month',
-        '10 roasts per month',
+        '100 roasts per month',
         'Advanced toxicity detection',
         'Email support',
         '2 platform integrations'
