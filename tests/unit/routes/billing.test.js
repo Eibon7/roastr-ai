@@ -9,7 +9,7 @@ const express = require('express');
 process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
 process.env.STRIPE_PRICE_LOOKUP_PRO = 'plan_pro';
-process.env.STRIPE_PRICE_LOOKUP_CREATOR = 'plan_creator_plus';
+process.env.STRIPE_PRICE_LOOKUP_CREATOR = 'plan_plus';
 process.env.STRIPE_SUCCESS_URL = 'http://localhost:3000/success';
 process.env.STRIPE_CANCEL_URL = 'http://localhost:3000/cancel';
 process.env.STRIPE_PORTAL_RETURN_URL = 'http://localhost:3000/billing';
@@ -159,7 +159,7 @@ describe('Billing Routes Tests', () => {
             expect(response.body.data.plans).toBeDefined();
             expect(response.body.data.plans.free).toBeDefined();
             expect(response.body.data.plans.pro).toBeDefined();
-            expect(response.body.data.plans.creator_plus).toBeDefined();
+            expect(response.body.data.plans.plus).toBeDefined();
         });
     });
 
@@ -220,7 +220,7 @@ describe('Billing Routes Tests', () => {
                 .expect(400);
 
             expect(response.body.success).toBe(false);
-            expect(response.body.error).toBe('plan is required (free|pro|creator_plus)');
+            expect(response.body.error).toBe('plan is required (free|starter|pro|plus)');
         });
 
         it('should return error for invalid lookupKey', async () => {

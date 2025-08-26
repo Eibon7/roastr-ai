@@ -9,6 +9,10 @@ import AuthCallback from './pages/auth-callback';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDetail from './pages/admin/UserDetail';
 import AdminUsersPage from './pages/admin/users';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminMetrics from './pages/admin/AdminMetrics';
+import AdminLogs from './pages/admin/AdminLogs';
+import AdminSettings from './pages/admin/AdminSettings';
 import AppShell from './components/AppShell';
 import Dashboard from './pages/dashboard';
 import Compose from './pages/Compose';
@@ -56,10 +60,15 @@ function App() {
               <Route path="accounts" element={<AccountsPage />} />
             </Route>
             
-            {/* Admin routes (separate from AppShell) */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/user/:userId" element={<UserDetail />} />
+            {/* Admin routes with AdminLayout */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/users" replace />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="users/:userId" element={<UserDetail />} />
+              <Route path="metrics" element={<AdminMetrics />} />
+              <Route path="logs" element={<AdminLogs />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
             
             {/* 404 fallback */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

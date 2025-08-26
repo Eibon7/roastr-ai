@@ -279,13 +279,13 @@ describe('Admin Endpoints Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           userId: 'user-1',
-          newPlan: 'creator_plus'
+          newPlan: 'plus'
         });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('message');
-      expect(response.body.data.newPlan).toBe('creator_plus');
+      expect(response.body.data.newPlan).toBe('plus');
     });
 
     it('should validate plan value', async () => {

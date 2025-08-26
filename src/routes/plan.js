@@ -17,6 +17,18 @@ const AVAILABLE_PLANS = {
       customPrompts: false
     }
   },
+  starter: {
+    id: 'starter',
+    name: 'Starter',
+    price: 5.00,
+    features: {
+      roastsPerMonth: 100,
+      platformConnections: 2,
+      styleProfile: false,
+      prioritySupport: false,
+      customPrompts: false
+    }
+  },
   pro: {
     id: 'pro',
     name: 'Pro',

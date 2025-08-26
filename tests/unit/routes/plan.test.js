@@ -17,17 +17,17 @@ describe('Plan Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.plans).toBeInstanceOf(Array);
-      expect(response.body.data.plans.length).toBe(3);
+      expect(response.body.data.plans.length).toBe(4);
 
       // Verify plan structure
       const plans = response.body.data.plans;
       expect(plans.map(p => p.id)).toEqual(
-        expect.arrayContaining(['free', 'pro', 'creator_plus'])
+        expect.arrayContaining(['free', 'starter', 'pro', 'plus'])
       );
 
-      // Check Creator+ plan has style profile feature
-      const creatorPlan = plans.find(p => p.id === 'creator_plus');
-      expect(creatorPlan.features.styleProfile).toBe(true);
+      // Check Plus plan has style profile feature
+      const plusPlan = plans.find(p => p.id === 'plus');
+      expect(plusPlan.features.styleProfile).toBe(true);
 
       // Check Free plan doesn't have style profile
       const freePlan = plans.find(p => p.id === 'free');
@@ -59,7 +59,7 @@ describe('Plan Routes', () => {
     it('should require authentication', async () => {
       const response = await request(app)
         .post('/api/plan/select')
-        .send({ plan: 'creator_plus' });
+        .send({ plan: 'plus' });
 
       expect(response.status).toBe(401);
     });
@@ -74,15 +74,15 @@ describe('Plan Routes', () => {
       expect(response.body.error).toContain('Invalid plan selected');
     });
 
-    it('should successfully select Creator+ plan', async () => {
+    it('should successfully select Plus plan', async () => {
       const response = await request(app)
         .post('/api/plan/select')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ plan: 'creator_plus' });
+        .send({ plan: 'plus' });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.plan).toBe('creator_plus');
+      expect(response.body.data.plan).toBe('plus');
       expect(response.body.data.details.features.styleProfile).toBe(true);
     });
 
@@ -107,7 +107,7 @@ describe('Plan Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.comparison).toBeInstanceOf(Array);
-      expect(response.body.data.comparison.length).toBe(3);
+      expect(response.body.data.comparison.length).toBe(4);
       expect(response.body.data.styleProfileAvailable).toBe(true);
 
       // Verify feature comparison structure
