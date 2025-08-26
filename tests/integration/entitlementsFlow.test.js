@@ -340,21 +340,21 @@ describe('Entitlements Integration Flow', () => {
         });
     });
 
-    describe('Creator Plus Plan Flow', () => {
+    describe('Plus Plan Flow', () => {
         const creatorPrice = {
             id: 'price_creator123',
-            lookup_key: 'creator_plus_monthly',
+            lookup_key: 'plus_monthly',
             metadata: {
-                analysis_limit_monthly: '-1', // Unlimited
-                roast_limit_monthly: '-1', // Unlimited
+                analysis_limit_monthly: '100000',
+                roast_limit_monthly: '5000',
                 model: 'gpt-4',
                 shield_enabled: 'true',
                 rqc_mode: 'premium',
-                plan_name: 'creator_plus'
+                plan_name: 'plus'
             },
             product: {
                 id: 'prod_creator123',
-                name: 'Creator Plus Plan',
+                name: 'Plus Plan',
                 metadata: {}
             }
         };
@@ -372,7 +372,7 @@ describe('Entitlements Integration Flow', () => {
                             model: 'gpt-4',
                             shield_enabled: true,
                             rqc_mode: 'premium',
-                            plan_name: 'creator_plus'
+                            plan_name: 'plus'
                         }
                     })
                 })
@@ -415,7 +415,7 @@ describe('Entitlements Integration Flow', () => {
                 data: {
                     shield_enabled: true,
                     rqc_mode: 'premium',
-                    plan_name: 'creator_plus'
+                    plan_name: 'plus'
                 },
                 error: null
             });

@@ -249,31 +249,46 @@ const UserDetail = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-6">
-                    <nav className="flex" aria-label="Breadcrumb">
-                        <ol className="flex items-center space-x-4">
-                            <li>
-                                <Link to="/admin" className="text-gray-500 hover:text-gray-700">
-                                    Panel de Administración
-                                </Link>
-                            </li>
-                            <li className="flex items-center">
-                                <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                </svg>
-                                <span className="ml-4 text-sm font-medium text-gray-500">
-                                    Detalles de Usuario
-                                </span>
-                            </li>
-                        </ol>
-                    </nav>
+        <>  
+            {/* Superuser Banner */}
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-4 mb-6">
+                <div className="flex">
+                    <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    <div className="ml-3">
+                        <p className="text-sm text-yellow-700 dark:text-yellow-200">
+                            <strong>Vista de superusuario</strong> – actuando sobre la cuenta de <span className="font-semibold">{user.email}</span>
+                        </p>
+                    </div>
                 </div>
+            </div>
+            
+            {/* Header */}
+            <div className="mb-6">
+                <nav className="flex" aria-label="Breadcrumb">
+                    <ol className="flex items-center space-x-4">
+                        <li>
+                            <Link to="/admin/users" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                                Usuarios
+                            </Link>
+                        </li>
+                        <li className="flex items-center">
+                            <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span className="ml-4 text-sm font-medium text-gray-500">
+                                Detalles de Usuario
+                            </span>
+                        </li>
+                    </ol>
+                </nav>
+            </div>
 
-                {/* User Info Header */}
-                <div className="bg-white shadow rounded-lg mb-6">
+            {/* User Info Header */}
+            <div className="bg-white shadow rounded-lg mb-6">
                     <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
@@ -472,11 +487,116 @@ const UserDetail = () => {
                     </div>
                 )}
 
+                {/* Editable Configuration */}
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
+                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Configuraciones Editables</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Editar configuraciones del usuario desde el panel de administración</p>
+                    </div>
+                    <div className="px-6 py-4 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Plan</label>
+                                <select 
+                                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                                    defaultValue={user.plan}
+                                >
+                                    <option value="free">Free</option>
+                                    <option value="pro">Pro</option>
+                                    <option value="creator_plus">Creator Plus</option>
+                                    <option value="enterprise">Enterprise</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tono</label>
+                                <select className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                                    <option value="flanders">Flanders</option>
+                                    <option value="ligero">Ligero</option>
+                                    <option value="balanceado">Balanceado</option>
+                                    <option value="canalla">Canalla</option>
+                                    <option value="18plus">+18</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Shield (Escudo)</label>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Protección automática contra toxicidad</p>
+                                </div>
+                                <div>
+                                    <input
+                                        type="checkbox"
+                                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                        defaultChecked={true}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Auto-reply (Respuesta automática)</label>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Respuestas automáticas a comentarios</p>
+                                </div>
+                                <div>
+                                    <input
+                                        type="checkbox"
+                                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                        defaultChecked={false}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Roastr Persona</label>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Lo que me define</label>
+                                    <textarea
+                                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                                        rows="2"
+                                        placeholder="Personalidad, intereses, forma de hablar..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">No tolero</label>
+                                    <textarea
+                                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                                        rows="2"
+                                        placeholder="Temas o comportamientos que no acepta..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Me da igual</label>
+                                    <textarea
+                                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                                        rows="2"
+                                        placeholder="Temas neutrales, aspectos que no le afectan..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button
+                                type="button"
+                                className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="bg-primary-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                            >
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {/* User Info Details */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <div className="bg-white shadow rounded-lg">
-                        <div className="px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-medium text-gray-900">Información del Usuario</h3>
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Información del Usuario</h3>
                         </div>
                         <div className="px-6 py-4 space-y-4">
                             <div>
@@ -541,6 +661,64 @@ const UserDetail = () => {
                     </div>
                 </div>
 
+                {/* Quick Actions */}
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
+                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Acciones Rápidas</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Operaciones administrativas sobre la cuenta del usuario</p>
+                    </div>
+                    <div className="px-6 py-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Reset Password
+                            </button>
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center px-4 py-2 border border-green-300 dark:border-green-600 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            >
+                                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Re-auth Integraciones
+                            </button>
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center px-4 py-2 border border-yellow-300 dark:border-yellow-600 shadow-sm text-sm font-medium rounded-md text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                            >
+                                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L4.268 14.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                {user.suspended ? 'Reactivar' : 'Suspender'}
+                            </button>
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                onClick={() => {
+                                    const confirm1 = window.confirm('¿Estás seguro de que quieres eliminar esta cuenta?');
+                                    if (confirm1) {
+                                        const confirm2 = window.confirm('Esta acción NO se puede deshacer. ¿Continuar?');
+                                        if (confirm2) {
+                                            // Implement delete logic
+                                            alert('Funcionalidad de eliminación en desarrollo');
+                                        }
+                                    }
+                                }}
+                            >
+                                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Eliminar Cuenta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Recent Activities */}
                 {stats.recent_activities && stats.recent_activities.length > 0 && (
                     <div className="bg-white shadow rounded-lg">
@@ -592,8 +770,7 @@ const UserDetail = () => {
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </>
     );
 };
 

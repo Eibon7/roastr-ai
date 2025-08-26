@@ -270,7 +270,7 @@ describe('/api/auth/me Endpoint Integration Tests', () => {
       expect(userData.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       
       // Check plan is valid
-      expect(['free', 'pro', 'creator_plus', 'custom']).toContain(userData.plan);
+      expect(['free', 'starter', 'pro', 'plus', 'custom']).toContain(userData.plan);
       
       // Check created_at is valid ISO date
       expect(new Date(userData.created_at)).toBeInstanceOf(Date);

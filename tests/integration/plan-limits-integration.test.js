@@ -166,7 +166,7 @@ describe('Plan Limits Integration', () => {
     describe('Plan validation integration', () => {
         it('should validate plan IDs consistently', async () => {
             // Valid plans
-            const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
+            const validPlans = ['free', 'starter', 'pro', 'plus', 'custom'];
             
             for (const plan of validPlans) {
                 const limits = await planLimitsService.getPlanLimits(plan);
@@ -198,18 +198,18 @@ describe('Plan Limits Integration', () => {
             expect(overLimit).toBe(true);
         });
 
-        it('should handle unlimited limits', async () => {
-            // Add creator_plus data with unlimited roasts to mock data
+        it('should handle plan limits correctly', async () => {
+            // Add plus data with 5000 roasts limit to mock data
             const originalMockData = { ...mockSupabaseData };
-            mockSupabaseData.creator_plus = {
-                plan_id: 'creator_plus',
-                max_roasts: -1,
+            mockSupabaseData.plus = {
+                plan_id: 'plus',
+                max_roasts: 5000,
                 monthly_responses_limit: 5000,
                 shield_enabled: true
             };
 
-            const isOverLimit = await planLimitsService.checkLimit('creator_plus', 'roasts', 999999);
-            expect(isOverLimit).toBe(false); // Should never be over unlimited limit
+            const isOverLimit = await planLimitsService.checkLimit('plus', 'roasts', 4999);
+            expect(isOverLimit).toBe(false); // Should be within the 5000 limit
             
             // Restore original mock data
             Object.assign(mockSupabaseData, originalMockData);

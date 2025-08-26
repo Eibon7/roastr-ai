@@ -9,8 +9,9 @@ const { logger } = require('../utils/logger');
 // Plan hierarchy for upgrade checks
 const PLAN_HIERARCHY = {
     'free': 0,
-    'pro': 1,
-    'creator_plus': 2
+    'starter': 1,
+    'pro': 2,
+    'plus': 3
 };
 
 // Plan limits and features
@@ -20,12 +21,17 @@ const PLAN_LIMITS = {
         maxRoastsPerMonth: 100,
         features: ['basic_roasts']
     },
+    starter: {
+        maxPlatforms: 2,
+        maxRoastsPerMonth: 100,
+        features: ['basic_roasts']
+    },
     pro: {
         maxPlatforms: 5,
         maxRoastsPerMonth: 1000,
         features: ['basic_roasts', 'advanced_tones', 'analytics', 'priority_support']
     },
-    creator_plus: {
+    plus: {
         maxPlatforms: -1, // unlimited
         maxRoastsPerMonth: -1, // unlimited
         features: ['basic_roasts', 'advanced_tones', 'analytics', 'priority_support', 'custom_tones', 'api_access', 'white_label']

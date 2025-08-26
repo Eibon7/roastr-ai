@@ -282,49 +282,48 @@ const AdminUsersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-                  <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-4">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Panel de Administración
-                </h1>
-              </div>
+    <div>
+      {/* Filters and Search */}
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
+              <input
+                type="text"
+                placeholder="ID, email o handle de red social..."
+                className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+              />
             </div>
-            
-            <div className="flex items-center space-x-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Filtro por plan</label>
+              <select className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                <option value="">Todos los planes</option>
+                <option value="free">Free</option>
+                <option value="pro">Pro</option>
+                <option value="creator_plus">Creator Plus</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+              <select className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                <option value="">Todos</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+                <option value="suspended">Suspendidos</option>
+              </select>
+            </div>
+            <div className="flex items-end">
               <button
-                onClick={() => navigate('/dashboard')}
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                type="button"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
               >
-                Volver al Dashboard
-              </button>
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                {currentUser?.email}
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                Cerrar sesión
+                Filtrar
               </button>
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      </div>
 
         {/* Users Table */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
@@ -348,13 +347,13 @@ const AdminUsersPage = () => {
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Admin
+                    Handles Conectados
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Nivel de Uso
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Creado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Integraciones
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Acciones
@@ -421,15 +420,33 @@ const AdminUsersPage = () => {
                       {formatDate(user.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {user.organizations?.[0]?.monthly_responses_used || 0}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">@user_handle (X)</div>
+                        <div className="text-xs text-gray-500">@userYT (YouTube)</div>
+                        <div className="text-xs text-blue-600 dark:text-blue-400">2 conectados</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <div className="space-y-1">
+                        <div className="text-sm">Roasts: 45/1000</div>
+                        <div className="text-sm">Análisis: 128/2000</div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700 mt-1">
+                          <div className="bg-blue-600 h-1.5 rounded-full" style={{width: '15%'}}></div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex flex-wrap gap-2">
-                        {/* Change Plan Button */}
+                        {/* Change Plan Dropdown with Modal */}
                         <select
                           onChange={(e) => {
                             if (e.target.value && e.target.value !== user.plan) {
-                              updateUserPlan(user.id, e.target.value);
+                              const confirmChange = window.confirm(
+                                `¿Confirmar cambio de plan a ${e.target.value.toUpperCase()}?`
+                              );
+                              if (confirmChange) {
+                                updateUserPlan(user.id, e.target.value);
+                              }
                               e.target.value = user.plan; // Reset select
                             }
                           }}
@@ -441,8 +458,16 @@ const AdminUsersPage = () => {
                           <option value="free">Free</option>
                           <option value="pro">Pro</option>
                           <option value="creator_plus">Creator Plus</option>
-                          <option value="custom">Custom</option>
+                          <option value="enterprise">Enterprise</option>
                         </select>
+
+                        {/* Dashboard Button */}
+                        <button
+                          onClick={() => navigate(`/admin/users/${user.id}`)}
+                          className="inline-flex items-center px-3 py-1 border border-blue-300 dark:border-blue-600 shadow-sm text-xs leading-4 font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          📊 Dashboard
+                        </button>
 
                         {/* Suspend/Unsuspend Button */}
                         {currentUser?.id === user.id ? (
@@ -472,22 +497,6 @@ const AdminUsersPage = () => {
                             {user.suspended ? 'Reactivar' : 'Suspender'}
                           </button>
                         )}
-
-                        <button
-                          onClick={() => resetUserPassword(user.id)}
-                          disabled={actionLoading[`reset_${user.id}`]}
-                          className="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                        >
-                          {actionLoading[`reset_${user.id}`] ? (
-                            <svg className="animate-spin -ml-1 mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          ) : (
-                            '🔁'
-                          )}
-                          Reset
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -508,7 +517,6 @@ const AdminUsersPage = () => {
             </div>
           )}
         </div>
-      </main>
 
       {/* Suspension Modal */}
       <SuspensionModal
@@ -527,8 +535,6 @@ const AdminUsersPage = () => {
         type={toast.type}
         onClose={hideToast}
       />
-
-      <ThemeToggle />
     </div>
   );
 };

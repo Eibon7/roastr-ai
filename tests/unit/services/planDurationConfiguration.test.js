@@ -35,8 +35,8 @@ describe('Plan Duration Configuration (Issue #125)', () => {
       });
     });
 
-    test('should return duration configuration for creator_plus plan with trial and grace period', () => {
-      const duration = getPlanDuration('creator_plus');
+    test('should return duration configuration for plus plan with trial and grace period', () => {
+      const duration = getPlanDuration('plus');
       
       expect(duration).toMatchObject({
         days: 30,
@@ -82,8 +82,8 @@ describe('Plan Duration Configuration (Issue #125)', () => {
       expect(endDate).toEqual(expectedEndDate);
     });
 
-    test('should calculate end date for creator_plus plan with grace period', () => {
-      const endDate = calculatePlanEndDate('creator_plus', fixedStartDate);
+    test('should calculate end date for plus plan with grace period', () => {
+      const endDate = calculatePlanEndDate('plus', fixedStartDate);
       // 30 days + 7 days grace period = 37 days
       const expectedEndDate = new Date('2024-02-07T00:00:00.000Z');
       
@@ -132,7 +132,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
     test('should return false for standard plans', () => {
       expect(supportsCustomDuration('free')).toBe(false);
       expect(supportsCustomDuration('pro')).toBe(false);
-      expect(supportsCustomDuration('creator_plus')).toBe(false);
+      expect(supportsCustomDuration('plus')).toBe(false);
     });
 
     test('should return false for non-existent plan', () => {
@@ -155,8 +155,8 @@ describe('Plan Duration Configuration (Issue #125)', () => {
       expect(trialDays).toBe(7);
     });
 
-    test('should return 14 days for creator_plus plan', () => {
-      const trialDays = getPlanTrialDays('creator_plus');
+    test('should return 14 days for plus plan', () => {
+      const trialDays = getPlanTrialDays('plus');
       
       expect(trialDays).toBe(14);
     });
@@ -203,7 +203,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
     });
 
     test('should include duration in all plan definitions', () => {
-      const allPlans = ['free', 'pro', 'creator_plus', 'custom'];
+      const allPlans = ['free', 'pro', 'plus', 'custom'];
       
       allPlans.forEach(planId => {
         const plan = getPlanFeatures(planId);
@@ -272,21 +272,21 @@ describe('Plan Duration Configuration (Issue #125)', () => {
     });
 
     test('should handle negative grace period gracefully', () => {
-      const originalCreatorPlan = PLAN_FEATURES.creator_plus;
-      PLAN_FEATURES.creator_plus = {
+      const originalCreatorPlan = PLAN_FEATURES.plus;
+      PLAN_FEATURES.plus = {
         ...originalCreatorPlan,
         duration: { ...originalCreatorPlan.duration, gracePeriod: -5 }
       };
 
       const startDate = new Date('2024-01-01T00:00:00.000Z');
-      const endDate = calculatePlanEndDate('creator_plus', startDate);
+      const endDate = calculatePlanEndDate('plus', startDate);
       
       // Should subtract 5 days instead of adding
       const expectedEndDate = new Date('2024-01-26T00:00:00.000Z'); // 30 - 5 = 25 days
       expect(endDate).toEqual(expectedEndDate);
 
       // Restore original plan
-      PLAN_FEATURES.creator_plus = originalCreatorPlan;
+      PLAN_FEATURES.plus = originalCreatorPlan;
     });
   });
 
