@@ -410,50 +410,50 @@ const AdminUsersPage = () => {
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Filters and Search */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="ID, email o handle de red social..."
-                className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Filtro por plan</label>
-              <select
-                value={selectedPlan}
-                onChange={handlePlanFilterChange}
-                className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Todos los planes</option>
-                <option value="basic">Free</option>
-                <option value="pro">Pro</option>
-                <option value="creator_plus">Creator Plus</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
-              <select className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
-                <option value="">Todos</option>
-                <option value="active">Activos</option>
-                <option value="inactive">Inactivos</option>
-                <option value="suspended">Suspendidos</option>
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button
-                type="button"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-              >
-                Filtrar
-              </button>
+          <div className="px-4 py-5 sm:p-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="ID, email o handle de red social..."
+                  className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Filtro por plan</label>
+                <select
+                  value={selectedPlan}
+                  onChange={handlePlanFilterChange}
+                  className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Todos los planes</option>
+                  <option value="basic">Free</option>
+                  <option value="pro">Pro</option>
+                  <option value="creator_plus">Creator Plus</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                <select className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                  <option value="">Todos</option>
+                  <option value="active">Activos</option>
+                  <option value="inactive">Inactivos</option>
+                  <option value="suspended">Suspendidos</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Filtrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         </div>
       
         {/* Error Alert - Issue #240 */}
