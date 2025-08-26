@@ -67,6 +67,8 @@
     "changelog:add": "node scripts/add-changelog.js",
     "admin:setup": "node scripts/setup-admin.js",
     "admin:list": "node scripts/setup-admin.js --list",
+    "setup:test-users": "node scripts/setup-test-users.js",
+    "setup:test-users:dry": "node scripts/setup-test-users.js --dry-run",
     "logs:stats": "node src/cli/logManager.js stats",
     "logs:cleanup": "node src/cli/logManager.js cleanup",
     "logs:cleanup:dry": "node src/cli/logManager.js cleanup --dry-run",

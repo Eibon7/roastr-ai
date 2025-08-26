@@ -39,6 +39,10 @@ npm run twitter
 # Install dependencies
 npm install
 
+# Setup admin and test users for backoffice development (Issue #237)
+npm run setup:test-users:dry      # Preview what will be created
+npm run setup:test-users          # Execute the setup
+
 # Multi-tenant worker system
 npm run workers:start           # Start all workers
 npm run workers:status          # Check worker status
