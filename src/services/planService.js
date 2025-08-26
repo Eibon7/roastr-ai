@@ -25,8 +25,8 @@ const PLAN_FEATURES = {
       renewalType: 'automatic' // automatic, manual
     },
     limits: {
-      roastsPerMonth: 100,
-      commentsPerMonth: 500,
+      roastsPerMonth: 50,
+      commentsPerMonth: 100,
       platformIntegrations: 1
     },
     features: {
@@ -40,10 +40,36 @@ const PLAN_FEATURES = {
       styleProfile: false
     }
   },
+  starter: {
+    id: 'starter',
+    name: 'Starter',
+    price: 500, // €5.00 in cents
+    currency: 'eur',
+    duration: {
+      days: 30,
+      type: 'rolling',
+      renewalType: 'automatic'
+    },
+    limits: {
+      roastsPerMonth: 100,
+      commentsPerMonth: 1000,
+      platformIntegrations: 2
+    },
+    features: {
+      basicSupport: true,
+      prioritySupport: false,
+      advancedAnalytics: false,
+      teamCollaboration: false,
+      customTones: false,
+      apiAccess: false,
+      shield: true,
+      styleProfile: false
+    }
+  },
   pro: {
     id: 'pro',
     name: 'Pro',
-    price: 2000, // €20.00 in cents
+    price: 1500, // €15.00 in cents
     currency: 'eur',
     duration: {
       days: 30,
@@ -53,7 +79,7 @@ const PLAN_FEATURES = {
     },
     limits: {
       roastsPerMonth: 1000,
-      commentsPerMonth: 5000,
+      commentsPerMonth: 10000,
       platformIntegrations: 2 // 2 accounts per social network as per business policy
     },
     features: {
@@ -67,21 +93,21 @@ const PLAN_FEATURES = {
       styleProfile: false
     }
   },
-  creator_plus: {
-    id: 'creator_plus',
-    name: 'Creator+',
+  plus: {
+    id: 'plus',
+    name: 'Plus',
     price: 5000, // €50.00 in cents
     currency: 'eur',
     duration: {
       days: 30,
       type: 'rolling',
       renewalType: 'automatic',
-      trialDays: 14, // Creator+ plan includes 14-day trial
+      trialDays: 14, // Plus plan includes 14-day trial
       gracePeriod: 7 // Extra grace period for premium users
     },
     limits: {
-      roastsPerMonth: -1, // Unlimited
-      commentsPerMonth: -1, // Unlimited
+      roastsPerMonth: 5000,
+      commentsPerMonth: 100000,
       platformIntegrations: 2 // 2 integrations per social network as per business policy
     },
     features: {
@@ -209,7 +235,7 @@ function checkPlanLimits(planId, usage = {}) {
 function getPlanByLookupKey(lookupKey) {
   const lookupMap = {
     [process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly']: 'pro',
-    [process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly']: 'creator_plus'
+    [process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plus_monthly']: 'plus'
   };
   
   return lookupMap[lookupKey] || null;

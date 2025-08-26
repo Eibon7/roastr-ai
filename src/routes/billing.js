@@ -56,29 +56,39 @@ const PLAN_CONFIG = {
         price: 0,
         currency: 'eur',
         description: 'Perfect for getting started',
-        features: ['100 roasts per month', '1 platform integration', 'Basic support'],
+        features: ['50 roasts per month', '1 platform integration', 'Basic support'],
         maxPlatforms: 1,
-        maxRoasts: 100
+        maxRoasts: 50
+    },
+    starter: {
+        name: 'Starter',
+        price: 500, // €5.00 in cents
+        currency: 'eur',
+        description: 'Great for regular users',
+        features: ['100 roasts per month', '2 platform integrations', 'Shield protection', 'Email support'],
+        maxPlatforms: 2,
+        maxRoasts: 100,
+        lookupKey: process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly'
     },
     pro: {
         name: 'Pro',
-        price: 2000, // €20.00 in cents
+        price: 1500, // €15.00 in cents
         currency: 'eur',
-        description: 'Best for regular users',
-        features: ['1,000 roasts per month', '5 platform integrations', 'Priority support', 'Advanced analytics'],
-        maxPlatforms: 5,
+        description: 'Best for power users',
+        features: ['1,000 roasts per month', '2 platform integrations', 'Shield protection', 'Priority support', 'Advanced analytics'],
+        maxPlatforms: 2,
         maxRoasts: 1000,
         lookupKey: process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly'
     },
-    creator_plus: {
-        name: 'Creator+',
+    plus: {
+        name: 'Plus',
         price: 5000, // €50.00 in cents
         currency: 'eur', 
-        description: 'For power users and creators',
-        features: ['Unlimited roasts', 'All platform integrations', '24/7 support', 'Custom tones', 'API access'],
-        maxPlatforms: -1,
-        maxRoasts: -1,
-        lookupKey: process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly'
+        description: 'For creators and professionals',
+        features: ['5,000 roasts per month', '2 platform integrations', 'Shield protection', '24/7 support', 'Custom tones', 'API access'],
+        maxPlatforms: 2,
+        maxRoasts: 5000,
+        lookupKey: process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly'
     }
 };
 
@@ -120,8 +130,9 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         if (plan && !lookupKey) {
             // Map plan to lookup key
             const planLookupMap = {
+                'starter': process.env.STRIPE_PRICE_LOOKUP_STARTER || 'plan_starter',
                 'pro': process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
-                'creator_plus': process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plan_creator_plus'
+                'plus': process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plan_plus'
             };
             targetLookupKey = planLookupMap[plan];
         }
@@ -129,7 +140,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         if (!targetLookupKey) {
             return res.status(400).json({
                 success: false,
-                error: 'plan is required (free|pro|creator_plus)'
+                error: 'plan is required (free|starter|pro|plus)'
             });
         }
 
@@ -146,8 +157,9 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
 
         // Validate lookup key
         const validLookupKeys = [
+            process.env.STRIPE_PRICE_LOOKUP_STARTER || 'plan_starter',
             process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
-            process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plan_creator_plus'
+            process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plan_plus'
         ];
 
         if (!validLookupKeys.includes(targetLookupKey)) {
@@ -644,8 +656,8 @@ async function queueBillingJob(jobType, webhookData) {
                     
                     if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
                         newPlan = 'pro';
-                    } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
-                        newPlan = 'creator_plus';
+                    } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly')) {
+                        newPlan = 'plus';
                     }
                 }
 
@@ -749,8 +761,10 @@ async function handleCheckoutCompleted(session) {
     
     if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
         plan = 'pro';
-    } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
-        plan = 'creator_plus';
+    } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly')) {
+        plan = 'plus';
+    } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly')) {
+        plan = 'starter';
     }
 
     // Execute critical database operations in a transaction
@@ -860,8 +874,10 @@ async function handleSubscriptionUpdated(subscription) {
             
             if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
                 newPlan = 'pro';
-            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
-                newPlan = 'creator_plus';
+            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly')) {
+                newPlan = 'plus';
+            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly')) {
+                newPlan = 'starter';
             }
         }
 
@@ -1157,7 +1173,7 @@ async function handlePaymentFailed(invoice) {
 /**
  * Apply plan limits dynamically when subscription changes
  * @param {string} userId - User ID
- * @param {string} plan - New plan (free, pro, creator_plus)
+ * @param {string} plan - New plan (free, starter, pro, plus)
  * @param {string} status - Subscription status
  */
 async function applyPlanLimits(userId, plan, status) {
