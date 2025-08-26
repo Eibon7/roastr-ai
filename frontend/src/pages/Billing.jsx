@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { CreditCard, Download, ExternalLink, Check, Zap, AlertTriangle, Activity, BarChart3, TrendingUp } from 'lucide-react';
 import { createMockFetch } from '../lib/mockMode';
+import { getDefaultEntitlements, getDefaultUsage } from '../config/planDefaults';
 
 export default function Billing() {
   const [user, setUser] = useState(null);
@@ -111,21 +112,9 @@ export default function Billing() {
     );
   }
 
-  // Mock data fallback for development
-  const mockEntitlements = entitlements || {
-    analysis_limit_monthly: 1000,
-    roast_limit_monthly: 100,
-    plan_name: 'pro',
-    model: 'gpt-4',
-    shield_enabled: true,
-    rqc_mode: 'basic'
-  };
-
-  const mockUsage = usage || {
-    analysis_used: 750,
-    roast_used: 45,
-    costCents: 1500
-  };
+  // Use configurable defaults if data is not available
+  const mockEntitlements = entitlements || getDefaultEntitlements(user?.plan);
+  const mockUsage = usage || getDefaultUsage(user?.id);
 
   const costInDollars = mockUsage?.costCents ? (mockUsage.costCents / 100).toFixed(2) : '0.00';
 

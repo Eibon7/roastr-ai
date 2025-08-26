@@ -527,4 +527,265 @@ describe('Admin Routes', () => {
             expect(response.body.error).toBe('Failed to reactivate user');
         });
     });
+
+    describe('PATCH /api/admin/users/:userId/plan - Issue #235', () => {
+        test('should update user plan successfully', async () => {
+            const userId = 'user-123';
+            const newPlan = 'pro';
+            
+            // Mock user fetch
+            const mockUserQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        single: jest.fn(() => Promise.resolve({
+                            data: {
+                                id: userId,
+                                email: 'user@test.com',
+                                name: 'Test User',
+                                plan: 'basic'
+                            },
+                            error: null
+                        }))
+                    }))
+                }))
+            };
+
+            // Mock user update
+            const mockUpdateQuery = {
+                update: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        select: jest.fn(() => ({
+                            single: jest.fn(() => Promise.resolve({
+                                data: {
+                                    id: userId,
+                                    email: 'user@test.com',
+                                    plan: newPlan
+                                },
+                                error: null
+                            }))
+                        }))
+                    }))
+                }))
+            };
+
+            // Mock organization query
+            const mockOrgQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => Promise.resolve({
+                        data: [{ id: 'org-1', plan_id: 'free' }],
+                        error: null
+                    }))
+                }))
+            };
+
+            // Mock organization update
+            const mockOrgUpdateQuery = {
+                update: jest.fn(() => ({
+                    eq: jest.fn(() => Promise.resolve({
+                        data: null,
+                        error: null
+                    }))
+                }))
+            };
+
+            // Mock activity insert
+            const mockActivityQuery = {
+                insert: jest.fn(() => Promise.resolve({
+                    data: null,
+                    error: null
+                }))
+            };
+
+            supabaseServiceClient.from
+                .mockReturnValueOnce(mockUserQuery)  // First call for user fetch
+                .mockReturnValueOnce(mockUpdateQuery) // Second call for user update
+                .mockReturnValueOnce(mockOrgQuery)   // Third call for organization fetch
+                .mockReturnValueOnce(mockOrgUpdateQuery) // Fourth call for organization update
+                .mockReturnValueOnce(mockActivityQuery); // Fifth call for activity log
+
+            const response = await request(app)
+                .patch(`/api/admin/users/${userId}/plan`)
+                .send({ plan: newPlan })
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.user.plan).toBe(newPlan);
+            expect(response.body.data.message).toContain('Plan cambiado exitosamente');
+        });
+
+        test('should reject invalid plan', async () => {
+            const userId = 'user-123';
+            
+            const response = await request(app)
+                .patch(`/api/admin/users/${userId}/plan`)
+                .send({ plan: 'invalid-plan' })
+                .expect(400);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('Invalid plan');
+        });
+
+        test('should handle user not found', async () => {
+            const userId = 'nonexistent-user';
+            
+            const mockQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        single: jest.fn(() => Promise.resolve({
+                            data: null,
+                            error: { message: 'User not found' }
+                        }))
+                    }))
+                }))
+            };
+
+            supabaseServiceClient.from.mockReturnValueOnce(mockQuery);
+
+            const response = await request(app)
+                .patch(`/api/admin/users/${userId}/plan`)
+                .send({ plan: 'pro' })
+                .expect(404);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('User not found');
+        });
+    });
+
+    describe('GET /api/admin/users/:userId - Issue #235', () => {
+        test('should return detailed user information', async () => {
+            const userId = 'user-123';
+            
+            // Mock user details query
+            const mockUserQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        single: jest.fn(() => Promise.resolve({
+                            data: {
+                                id: userId,
+                                email: 'user@test.com',
+                                name: 'Test User',
+                                plan: 'pro',
+                                is_admin: false,
+                                active: true,
+                                suspended: false,
+                                created_at: '2023-01-01T00:00:00Z',
+                                organizations: [{
+                                    id: 'org-1',
+                                    name: 'Test Organization',
+                                    slug: 'test-org',
+                                    plan_id: 'pro',
+                                    monthly_responses_used: 50,
+                                    monthly_responses_limit: 1000
+                                }]
+                            },
+                            error: null
+                        }))
+                    }))
+                }))
+            };
+
+            // Mock integrations query
+            const mockIntegrationsQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => Promise.resolve({
+                        data: [
+                            {
+                                id: 'int-1',
+                                platform: 'twitter',
+                                enabled: true,
+                                handle: 'testuser',
+                                settings: {}
+                            }
+                        ],
+                        error: null
+                    }))
+                }))
+            };
+
+            // Mock activities query
+            const mockActivitiesQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        order: jest.fn(() => ({
+                            limit: jest.fn(() => Promise.resolve({
+                                data: [
+                                    {
+                                        id: 'act-1',
+                                        activity_type: 'message_sent',
+                                        platform: 'twitter',
+                                        created_at: '2023-01-01T00:00:00Z'
+                                    }
+                                ],
+                                error: null
+                            }))
+                        }))
+                    }))
+                }))
+            };
+
+            // Mock usage stats query
+            const mockUsageQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        gte: jest.fn(() => ({
+                            order: jest.fn(() => Promise.resolve({
+                                data: [
+                                    {
+                                        resource_type: 'roasts',
+                                        platform: 'twitter',
+                                        quantity: 10,
+                                        year: 2023,
+                                        month: 8
+                                    }
+                                ],
+                                error: null
+                            }))
+                        }))
+                    }))
+                }))
+            };
+
+            supabaseServiceClient.from
+                .mockReturnValueOnce(mockUserQuery)      // User details
+                .mockReturnValueOnce(mockIntegrationsQuery) // Integrations
+                .mockReturnValueOnce(mockActivitiesQuery)   // Activities
+                .mockReturnValueOnce(mockUsageQuery);       // Usage stats
+
+            const response = await request(app)
+                .get(`/api/admin/users/${userId}`)
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.id).toBe(userId);
+            expect(response.body.data.email).toBe('user@test.com');
+            expect(response.body.data.organization).toBeTruthy();
+            expect(response.body.data.integrations).toHaveLength(1);
+            expect(response.body.data.recent_activities).toHaveLength(1);
+            expect(response.body.data.usage_history).toHaveLength(1);
+        });
+
+        test('should handle user not found', async () => {
+            const userId = 'nonexistent-user';
+            
+            const mockQuery = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        single: jest.fn(() => Promise.resolve({
+                            data: null,
+                            error: { message: 'User not found' }
+                        }))
+                    }))
+                }))
+            };
+
+            supabaseServiceClient.from.mockReturnValueOnce(mockQuery);
+
+            const response = await request(app)
+                .get(`/api/admin/users/${userId}`)
+                .expect(404);
+
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('User not found');
+        });
+    });
 });

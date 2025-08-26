@@ -744,7 +744,16 @@ class AuthService {
             }
 
             if (subscriptionResult.error) {
-                logger.warn('Failed to update user subscription:', subscriptionResult.error.message);
+                logger.warn('Failed to update user subscription (proceeding with plan change):', {
+                    error: subscriptionResult.error.message,
+                    userId,
+                    newPlan,
+                    warning: 'Subscription table update failed, but user plan was updated successfully'
+                });
+                
+                // Track partial failure in result metadata for admin visibility
+                originalUserData.subscriptionUpdateFailed = true;
+                originalUserData.subscriptionUpdateError = subscriptionResult.error.message;
             }
 
             // Mark rollback as required from this point on
@@ -822,13 +831,20 @@ class AuthService {
             });
             
             return {
-                message: 'User plan updated successfully',
+                message: originalUserData.subscriptionUpdateFailed 
+                    ? 'User plan updated with warnings (subscription update failed)' 
+                    : 'User plan updated successfully',
                 user: userResult.data,
                 oldPlan,
                 newPlan,
                 limitsApplied: true,
                 auditLogged: true,
-                planDurationDays
+                planDurationDays,
+                warnings: originalUserData.subscriptionUpdateFailed ? [{
+                    type: 'subscription_update_failed',
+                    message: 'Failed to update subscription table',
+                    details: originalUserData.subscriptionUpdateError
+                }] : []
             };
 
         } catch (error) {

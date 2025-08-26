@@ -115,4 +115,98 @@ describe('Plan Consistency Tests (Issue #110)', () => {
             expect(proValidation).toBe(2);
         });
     });
+
+    describe('Integration downgrade validation', () => {
+        // Issue #202: Add explicit test for integration downgrade scenarios
+        it('should block downgrade when user has more active integrations than new plan limit', async () => {
+            const { isChangeAllowed } = require('../../../src/services/planValidation');
+            
+            // Scenario: User has 2 active integrations trying to downgrade from Pro to Free
+            const currentUsage = {
+                activeIntegrations: 2, // Pro plan allows 2
+                roastsThisMonth: 50,
+                commentsThisMonth: 200
+            };
+            
+            // Should be blocked because Free plan only allows 1 integration
+            const result = await isChangeAllowed('pro', 'free', currentUsage);
+            
+            expect(result.allowed).toBe(false);
+            expect(result.reason).toContain('integrations'); // Should mention integration limit issue
+        });
+
+        it('should allow downgrade when user integrations are within new plan limit', async () => {
+            const { isChangeAllowed } = require('../../../src/services/planValidation');
+            
+            // Scenario: User has 1 active integration trying to downgrade from Pro to Free
+            const currentUsage = {
+                activeIntegrations: 1, // Within Free plan limit
+                roastsThisMonth: 50,
+                commentsThisMonth: 200
+            };
+            
+            // Should be allowed because Free plan allows 1 integration
+            const result = await isChangeAllowed('pro', 'free', currentUsage);
+            
+            expect(result.allowed).toBe(true);
+            expect(result.reason).toBeNull();
+        });
+
+        it('should block downgrade with clear error message about integration limit', async () => {
+            const { isChangeAllowed } = require('../../../src/services/planValidation');
+            
+            // Scenario: Edge case where user somehow has 3 integrations (data inconsistency)
+            const currentUsage = {
+                activeIntegrations: 3, // More than any plan should allow
+                roastsThisMonth: 50,
+                commentsThisMonth: 200
+            };
+            
+            // Should be blocked for any downgrade
+            const resultToFree = await isChangeAllowed('creator_plus', 'free', currentUsage);
+            const resultToPro = await isChangeAllowed('creator_plus', 'pro', currentUsage);
+            
+            expect(resultToFree.allowed).toBe(false);
+            expect(resultToFree.reason).toContain('integrations');
+            
+            expect(resultToPro.allowed).toBe(false);
+            expect(resultToPro.reason).toContain('integrations');
+        });
+
+        it('should validate integration limits are enforced in all downgrade scenarios', async () => {
+            const { isChangeAllowed, getMaxIntegrations } = require('../../../src/services/planValidation');
+            
+            const testCases = [
+                { from: 'creator_plus', to: 'pro', integrations: 3, shouldBlock: true },
+                { from: 'creator_plus', to: 'pro', integrations: 2, shouldBlock: false },
+                { from: 'creator_plus', to: 'free', integrations: 2, shouldBlock: true },
+                { from: 'creator_plus', to: 'free', integrations: 1, shouldBlock: false },
+                { from: 'pro', to: 'free', integrations: 2, shouldBlock: true },
+                { from: 'pro', to: 'free', integrations: 1, shouldBlock: false },
+            ];
+            
+            for (const testCase of testCases) {
+                const currentUsage = {
+                    activeIntegrations: testCase.integrations,
+                    roastsThisMonth: 50,
+                    commentsThisMonth: 200
+                };
+                
+                const result = await isChangeAllowed(testCase.from, testCase.to, currentUsage);
+                const newPlanLimit = getMaxIntegrations(testCase.to);
+                
+                if (testCase.shouldBlock) {
+                    expect(result.allowed).toBe(false);
+                    expect(result.reason).toContain('integrations');
+                    expect(testCase.integrations).toBeGreaterThan(newPlanLimit);
+                } else {
+                    // Should be allowed (integration-wise, might fail for other reasons)
+                    expect(testCase.integrations).toBeLessThanOrEqual(newPlanLimit);
+                    if (result.allowed === false && result.reason?.includes('integrations')) {
+                        fail(`Expected integration check to pass but got: ${result.reason}`);
+                    }
+                }
+            }
+        });
+    });
 });

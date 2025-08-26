@@ -162,7 +162,7 @@ describe('Admin Plan Upgrade/Downgrade API', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
-            expect(response.body.error).toContain('Invalid plan. Valid plans are: free, pro, creator_plus, custom');
+            expect(response.body.error).toContain('Invalid plan. Valid plans are: free, starter, pro, plus, creator_plus, custom');
         });
 
         it('should handle user not found error', async () => {

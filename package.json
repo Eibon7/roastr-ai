@@ -67,6 +67,8 @@
     "changelog:add": "node scripts/add-changelog.js",
     "admin:setup": "node scripts/setup-admin.js",
     "admin:list": "node scripts/setup-admin.js --list",
+    "setup:test-users": "node scripts/setup-test-users.js",
+    "setup:test-users:dry": "node scripts/setup-test-users.js --dry-run",
     "logs:stats": "node src/cli/logManager.js stats",
     "logs:cleanup": "node src/cli/logManager.js cleanup",
     "logs:cleanup:dry": "node src/cli/logManager.js cleanup --dry-run",
@@ -79,6 +81,8 @@
     "logs:test": "node src/cli/logManager.js test",
     "validate:prices": "node scripts/validate-prices.js",
     "validate:prices:ci": "ENABLE_BILLING=true node scripts/validate-prices.js",
+    "validate:api-readiness": "node scripts/validate-api-readiness.js",
+    "test:api-readiness": "ENABLE_MOCK_MODE=true npm run validate:api-readiness",
     "test:staging:plan-limits": "node scripts/test-staging-plan-limits.js"
   },
   "repository": {
@@ -93,9 +97,9 @@
   },
   "homepage": "https://github.com/Eibon7/roastr-ai#readme",
   "dependencies": {
-    "@atproto/api": "^0.16.2",
+    "@atproto/api": "^0.16.3",
     "@sendgrid/mail": "^8.1.5",
-    "@supabase/supabase-js": "^2.53.0",
+    "@supabase/supabase-js": "^2.56.0",
     "@twurple/api": "^7.1.0",
     "@twurple/auth": "^7.1.0",
     "@twurple/chat": "^7.1.0",
@@ -155,6 +159,7 @@
     "jest-environment-jsdom": "^30.0.5",
     "jest-junit": "^16.0.0",
     "jsdom": "^26.1.0",
+    "nock": "^13.3.3",
     "supertest": "^7.1.4"
   }
 }

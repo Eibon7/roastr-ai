@@ -618,7 +618,7 @@ class AuditService {
       );
 
       logger.info('⚙️ User setting change logged:', {
-        userId: userId.substring(0, 8) + '...',
+        userId: userId?.substring(0, 8) + '...' || 'unknown',
         settingName,
         oldValue: details.old_value,
         newValue: details.new_value
