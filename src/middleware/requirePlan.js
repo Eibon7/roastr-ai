@@ -11,7 +11,7 @@ const PLAN_HIERARCHY = {
     'free': 0,
     'starter': 1,
     'pro': 2,
-    'plus': 3
+    'creator_plus': 3
 };
 
 // Plan limits and features
@@ -31,7 +31,7 @@ const PLAN_LIMITS = {
         maxRoastsPerMonth: 1000,
         features: ['basic_roasts', 'advanced_tones', 'analytics', 'priority_support']
     },
-    plus: {
+    creator_plus: {
         maxPlatforms: -1, // unlimited
         maxRoastsPerMonth: -1, // unlimited
         features: ['basic_roasts', 'advanced_tones', 'analytics', 'priority_support', 'custom_tones', 'api_access', 'white_label']

@@ -11,7 +11,7 @@ const AVAILABLE_PLANS = {
     price: 0,
     features: {
       roastsPerMonth: 100,
-      platformConnections: 1,
+      platformConnections: 2,
       styleProfile: false,
       prioritySupport: false,
       customPrompts: false
@@ -41,9 +41,9 @@ const AVAILABLE_PLANS = {
       customPrompts: true
     }
   },
-  plus: {
-    id: 'plus',
-    name: 'Plus',
+  creator_plus: {
+    id: 'creator_plus',
+    name: 'Creator+',
     price: 19.99,
     features: {
       roastsPerMonth: 5000,
