@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { logger } = require('../utils/logger');
 const { t } = require('../utils/i18n');
+const QueueService = require('./queueService');
 
 /**
  * Alerting Service for Roastr.ai Monitoring System
@@ -24,6 +25,11 @@ class AlertingService {
     
     this.alertHistory = new Map(); // For deduplication and rate limiting
     this.alertCounts = new Map(); // For hourly limits
+    
+    // Initialize queue service for async alert processing
+    this.queueService = null;
+    this.queueEnabled = process.env.ALERT_QUEUE_ENABLED !== 'false';
+    this.initializeQueueService();
     
     // Define alert thresholds
     this.thresholds = {
@@ -57,6 +63,101 @@ class AlertingService {
       hasWebhookUrl: !!this.config.webhookUrl,
       thresholds: this.thresholds
     });
+  }
+  
+  /**
+   * Initialize queue service for async alert processing
+   */
+  async initializeQueueService() {
+    if (!this.queueEnabled) {
+      this.log('info', 'Alert queue disabled, using direct sending only');
+      return;
+    }
+    
+    try {
+      this.queueService = new QueueService();
+      await this.queueService.initialize();
+      this.log('info', 'Alert queue service initialized successfully');
+    } catch (error) {
+      this.log('warn', 'Failed to initialize alert queue service, falling back to direct sending', {
+        error: error.message
+      });
+      this.queueService = null;
+    }
+  }
+  
+  /**
+   * Enqueue alert notification for async processing
+   * 
+   * @param {string} severity - critical, warning, info
+   * @param {string} title - Alert title
+   * @param {string} message - Alert message
+   * @param {object} data - Additional alert data
+   * @param {object} options - Alert options (priority, lang, etc.)
+   */
+  async enqueueAlert(severity, title, message, data = {}, options = {}) {
+    if (!this.queueService) {
+      this.log('debug', 'Queue service not available, using direct sending fallback');
+      return await this.sendAlert(severity, title, message, data, options);
+    }
+    
+    try {
+      // Create alert notification job payload
+      const alertPayload = {
+        organization_id: options.organizationId || 'system', // Default to system-level alerts
+        type: options.alertType || 'slack', // Default to Slack
+        severity,
+        title,
+        message,
+        data,
+        options: {
+          ...options,
+          force: true, // Force send since it's already queued
+          skipRateLimit: true // Skip rate limiting since queue manages this
+        },
+        lang: options.lang || 'en'
+      };
+      
+      // Determine priority based on severity
+      const priority = this.getAlertPriority(severity);
+      
+      // Add job to queue
+      const job = await this.queueService.addJob('alert_notification', alertPayload, {
+        priority,
+        maxAttempts: 3
+      });
+      
+      this.log('info', 'Alert notification enqueued successfully', {
+        jobId: job.id,
+        severity,
+        title: title.substring(0, 50) + (title.length > 50 ? '...' : ''),
+        priority
+      });
+      
+      return true;
+      
+    } catch (error) {
+      this.log('error', 'Failed to enqueue alert, falling back to direct sending', {
+        severity,
+        title,
+        error: error.message
+      });
+      
+      // Fallback to direct sending
+      return await this.sendAlert(severity, title, message, data, options);
+    }
+  }
+  
+  /**
+   * Get alert priority for queue processing
+   */
+  getAlertPriority(severity) {
+    switch (severity) {
+      case 'critical': return 1; // Highest priority
+      case 'warning': return 2;  // High priority
+      case 'info': return 3;     // Medium priority
+      default: return 3;
+    }
   }
   
   /**
@@ -141,7 +242,7 @@ class AlertingService {
     } catch (error) {
       this.log('error', 'Error during health check alerting', { error: error.message });
       
-      await this.sendAlert(
+      await this.enqueueAlert(
         'critical',
         t('alert.titles.health_check_error'),
         t('alert.messages.health_check_error', { error: error.message }),
@@ -179,7 +280,7 @@ class AlertingService {
     
     // Check failure thresholds
     if (failureRate >= this.thresholds.workerFailures.critical) {
-      await this.sendAlert(
+      await this.enqueueAlert(
         'critical',
         t('alert.titles.worker_failure_critical'),
         t('alert.messages.worker_failure_rate', {
@@ -195,7 +296,7 @@ class AlertingService {
         }
       );
     } else if (failureRate >= this.thresholds.workerFailures.warning) {
-      await this.sendAlert(
+      await this.enqueueAlert(
         'warning',
         t('alert.titles.worker_failure_warning'),
         t('alert.messages.worker_failure_rate', {
@@ -215,7 +316,7 @@ class AlertingService {
     // Alert on specific critical worker failures
     for (const failedWorker of failedWorkers) {
       if (failedWorker.status === 'error') {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'warning',
           t('alert.titles.worker_error', { workerType: failedWorker.type }),
           t('alert.messages.worker_error_detail', { 
@@ -238,7 +339,7 @@ class AlertingService {
       const depth = queueStats.total;
       
       if (depth >= this.thresholds.queueDepth.critical) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'critical',
           t('alert.titles.queue_depth_critical', { queueType }),
           t('alert.messages.queue_depth_critical', {
@@ -254,7 +355,7 @@ class AlertingService {
           }
         );
       } else if (depth >= this.thresholds.queueDepth.warning) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'warning',
           t('alert.titles.queue_depth_warning', { queueType }),
           t('alert.messages.queue_depth_warning', {
@@ -281,7 +382,7 @@ class AlertingService {
       const memoryUsage = systemStats.memory.usage;
       
       if (memoryUsage >= this.thresholds.memoryUsage.critical) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'critical',
           t('alert.titles.memory_usage_critical'),
           t('alert.messages.memory_usage_critical', {
@@ -295,7 +396,7 @@ class AlertingService {
           }
         );
       } else if (memoryUsage >= this.thresholds.memoryUsage.warning) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'warning',
           t('alert.titles.memory_usage_warning'),
           t('alert.messages.memory_usage_warning', {
@@ -316,7 +417,7 @@ class AlertingService {
       const avgResponseTime = systemStats.responseTime.average;
       
       if (avgResponseTime >= this.thresholds.responseTime.critical) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'critical',
           t('alert.titles.response_time_critical'),
           t('alert.messages.response_time_critical', {
@@ -330,7 +431,7 @@ class AlertingService {
           }
         );
       } else if (avgResponseTime >= this.thresholds.responseTime.warning) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'warning',
           t('alert.titles.response_time_warning'),
           t('alert.messages.response_time_warning', {
@@ -355,7 +456,7 @@ class AlertingService {
       const usagePercentage = costStats.budgetUsagePercentage;
       
       if (usagePercentage >= this.thresholds.costPercentage.critical) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'critical',
           t('alert.titles.cost_critical'),
           t('alert.messages.cost_critical', {
@@ -369,7 +470,7 @@ class AlertingService {
           }
         );
       } else if (usagePercentage >= this.thresholds.costPercentage.warning) {
-        await this.sendAlert(
+        await this.enqueueAlert(
           'warning',
           t('alert.titles.cost_warning'),
           t('alert.messages.cost_warning', {
@@ -558,12 +659,22 @@ class AlertingService {
   /**
    * Shutdown the alerting service and clean up resources
    */
-  shutdown() {
+  async shutdown() {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
-      this.log('info', 'Alerting Service shutdown complete');
     }
+    
+    if (this.queueService) {
+      try {
+        await this.queueService.shutdown();
+        this.log('info', 'Alert queue service shutdown complete');
+      } catch (error) {
+        this.log('warn', 'Error during queue service shutdown', { error: error.message });
+      }
+    }
+    
+    this.log('info', 'Alerting Service shutdown complete');
   }
   
   /**
