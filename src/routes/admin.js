@@ -50,43 +50,53 @@ router.get('/dashboard', async (req, res) => {
 
 /**
  * GET /api/admin/users
- * Obtener lista de usuarios con filtros
+ * Obtener lista de usuarios con filtros avanzados para backoffice
+ * Issue #235: Implements comprehensive user search and filtering
  */
 router.get('/users', async (req, res) => {
     try {
         const { 
-            limit = 50, 
+            limit = 25, 
             offset = 0, 
             search = '', 
-            admin_only = false,
-            active_only = false 
+            plan = '',
+            active_only = false,
+            page = 1
         } = req.query;
+
+        // Calculate offset from page if provided
+        const actualOffset = page > 1 ? (parseInt(page) - 1) * parseInt(limit) : parseInt(offset);
 
         let query = supabaseServiceClient
             .from('users')
             .select(`
-                id, email, name, is_admin, active, created_at, last_activity_at,
-                total_messages_sent, monthly_messages_sent, plan,
-                organizations!owner_id (id, name, monthly_responses_used)
-            `);
+                id, email, name, plan, is_admin, active, suspended, created_at, last_activity_at,
+                total_messages_sent, monthly_messages_sent,
+                organizations!owner_id (
+                    id, name, plan_id, monthly_responses_used, monthly_responses_limit
+                )
+            `, { count: 'exact' });
 
-        // Filtros
+        // Search filters - by ID, email, or handle
         if (search) {
-            query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
+            // Search by user ID, email, or name
+            query = query.or(`id.eq.${search},email.ilike.%${search}%,name.ilike.%${search}%`);
         }
 
-        if (admin_only === 'true') {
-            query = query.eq('is_admin', true);
+        // Plan filter
+        if (plan) {
+            query = query.eq('plan', plan);
         }
 
+        // Active only filter
         if (active_only === 'true') {
             query = query.eq('active', true);
         }
 
-        // Ordenar y paginar
+        // Order by creation date (newest first) and paginate
         query = query
             .order('created_at', { ascending: false })
-            .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+            .range(actualOffset, actualOffset + parseInt(limit) - 1);
 
         const { data: users, error, count } = await query;
 
@@ -94,15 +104,94 @@ router.get('/users', async (req, res) => {
             throw new Error(`Error fetching users: ${error.message}`);
         }
 
+        // Get social handles/integrations for each user
+        const usersWithHandles = await Promise.all(
+            (users || []).map(async (user) => {
+                try {
+                    // Get user's social media integrations
+                    const { data: integrations } = await supabaseServiceClient
+                        .from('integration_configs')
+                        .select('platform, handle, enabled')
+                        .eq('organization_id', user.organizations?.[0]?.id)
+                        .eq('enabled', true);
+
+                    // Format handles for display
+                    const handles = (integrations || []).map(integration => 
+                        `@${integration.handle || 'unknown'} (${integration.platform})`
+                    ).join(', ');
+
+                    // Calculate usage statistics
+                    const organization = user.organizations?.[0];
+                    const roastsUsed = organization?.monthly_responses_used || 0;
+                    const roastsLimit = organization?.monthly_responses_limit || 100;
+                    const analysisUsed = user.monthly_messages_sent || 0;
+                    
+                    // Get plan-specific analysis limit
+                    const planLimits = {
+                        basic: 100,
+                        pro: 1000, 
+                        creator_plus: 5000
+                    };
+                    const analysisLimit = planLimits[user.plan] || 100;
+
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        plan: user.plan,
+                        handles: handles || 'No connections',
+                        usage: {
+                            roasts: `${roastsUsed}/${roastsLimit}`,
+                            analysis: `${analysisUsed}/${analysisLimit}`
+                        },
+                        active: user.active,
+                        suspended: user.suspended,
+                        is_admin: user.is_admin,
+                        created_at: user.created_at,
+                        last_activity_at: user.last_activity_at
+                    };
+                } catch (integrationError) {
+                    logger.warn('Error fetching integrations for user:', { 
+                        userId: user.id, 
+                        error: integrationError.message 
+                    });
+                    
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        plan: user.plan,
+                        handles: 'Error loading',
+                        usage: {
+                            roasts: '0/0',
+                            analysis: '0/0'
+                        },
+                        active: user.active,
+                        suspended: user.suspended,
+                        is_admin: user.is_admin,
+                        created_at: user.created_at,
+                        last_activity_at: user.last_activity_at
+                    };
+                }
+            })
+        );
+
         res.json({
             success: true,
             data: {
-                users: users || [],
+                users: usersWithHandles,
                 pagination: {
-                    total: count,
+                    total: count || 0,
                     limit: parseInt(limit),
-                    offset: parseInt(offset),
-                    has_more: count > (parseInt(offset) + parseInt(limit))
+                    offset: actualOffset,
+                    page: parseInt(page),
+                    total_pages: Math.ceil((count || 0) / parseInt(limit)),
+                    has_more: (actualOffset + parseInt(limit)) < (count || 0)
+                },
+                filters: {
+                    search,
+                    plan,
+                    active_only
                 }
             }
         });
@@ -287,6 +376,259 @@ router.post('/users/:userId/reactivate', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to reactivate user',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * PATCH /api/admin/users/:userId/plan
+ * Cambiar plan de usuario manualmente (Issue #235)
+ */
+router.patch('/users/:userId/plan', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { plan } = req.body;
+
+        // Validate plan
+        const validPlans = ['basic', 'pro', 'creator_plus'];
+        if (!plan || !validPlans.includes(plan)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid plan',
+                message: 'Plan debe ser uno de: basic, pro, creator_plus'
+            });
+        }
+
+        // Get current user to check if exists
+        const { data: currentUser, error: fetchError } = await supabaseServiceClient
+            .from('users')
+            .select('id, email, name, plan')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError || !currentUser) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found',
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        // Check if plan is different
+        if (currentUser.plan === plan) {
+            return res.status(400).json({
+                success: false,
+                error: 'Plan unchanged',
+                message: 'El usuario ya tiene este plan'
+            });
+        }
+
+        // Update user plan
+        const { data: updatedUser, error: updateError } = await supabaseServiceClient
+            .from('users')
+            .update({ 
+                plan: plan,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+            .select()
+            .single();
+
+        if (updateError) {
+            throw new Error(`Error updating user plan: ${updateError.message}`);
+        }
+
+        // Update organization plan if user owns an organization
+        const { data: organizations } = await supabaseServiceClient
+            .from('organizations')
+            .select('id, plan_id')
+            .eq('owner_id', userId);
+
+        if (organizations && organizations.length > 0) {
+            const orgPlanMap = {
+                'basic': 'free',
+                'pro': 'pro', 
+                'creator_plus': 'creator_plus'
+            };
+
+            await supabaseServiceClient
+                .from('organizations')
+                .update({ 
+                    plan_id: orgPlanMap[plan],
+                    updated_at: new Date().toISOString()
+                })
+                .eq('owner_id', userId);
+        }
+
+        // Log the plan change
+        logger.info('User plan changed by admin:', {
+            targetUserId: userId,
+            targetUserEmail: currentUser.email,
+            oldPlan: currentUser.plan,
+            newPlan: plan,
+            performedBy: req.user.email,
+            organizationsUpdated: organizations?.length || 0
+        });
+
+        // Create activity log entry
+        await supabaseServiceClient
+            .from('user_activities')
+            .insert({
+                user_id: userId,
+                activity_type: 'plan_changed',
+                metadata: {
+                    old_plan: currentUser.plan,
+                    new_plan: plan,
+                    changed_by_admin: req.user.email
+                }
+            });
+
+        res.json({
+            success: true,
+            data: {
+                user: updatedUser,
+                message: `Plan cambiado exitosamente de ${currentUser.plan} a ${plan}`
+            }
+        });
+
+    } catch (error) {
+        logger.error('Update user plan endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update user plan',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/users/:userId
+ * Obtener detalles completos de un usuario para vista de superusuario (Issue #235)
+ */
+router.get('/users/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Get user details with extended information
+        const { data: user, error: userError } = await supabaseServiceClient
+            .from('users')
+            .select(`
+                id, email, name, plan, is_admin, active, suspended, suspended_reason, 
+                suspended_at, suspended_by, created_at, updated_at, last_login_at, last_activity_at,
+                total_messages_sent, monthly_messages_sent, total_tokens_consumed, monthly_tokens_consumed,
+                timezone, language,
+                organizations!owner_id (
+                    id, name, slug, plan_id, subscription_status, monthly_responses_used, 
+                    monthly_responses_limit, settings, created_at, updated_at
+                )
+            `)
+            .eq('id', userId)
+            .single();
+
+        if (userError || !user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found',
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        // Get user's integrations
+        const organization = user.organizations?.[0];
+        let integrations = [];
+        if (organization) {
+            const { data: integrationsData } = await supabaseServiceClient
+                .from('integration_configs')
+                .select(`
+                    id, platform, enabled, handle, settings, created_at, updated_at,
+                    tone, response_frequency, shield_enabled
+                `)
+                .eq('organization_id', organization.id);
+
+            integrations = integrationsData || [];
+        }
+
+        // Get recent activities
+        const { data: activities } = await supabaseServiceClient
+            .from('user_activities')
+            .select('id, activity_type, platform, tokens_used, metadata, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        // Get usage statistics for the last 6 months
+        const { data: usageStats } = await supabaseServiceClient
+            .from('usage_tracking')
+            .select('resource_type, platform, quantity, cost_cents, year, month')
+            .eq('user_id', userId)
+            .gte('created_at', new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString())
+            .order('created_at', { ascending: false });
+
+        // Calculate usage summaries
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        
+        const monthlyUsage = (usageStats || [])
+            .filter(stat => stat.year === currentYear && stat.month === currentMonth)
+            .reduce((acc, stat) => {
+                acc[stat.resource_type] = (acc[stat.resource_type] || 0) + stat.quantity;
+                return acc;
+            }, {});
+
+        // Format comprehensive user data
+        const userData = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            plan: user.plan,
+            is_admin: user.is_admin,
+            active: user.active,
+            suspended: user.suspended,
+            suspended_reason: user.suspended_reason,
+            suspended_at: user.suspended_at,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+            last_login_at: user.last_login_at,
+            last_activity_at: user.last_activity_at,
+            profile: {
+                timezone: user.timezone,
+                language: user.language
+            },
+            usage: {
+                total_messages_sent: user.total_messages_sent,
+                monthly_messages_sent: user.monthly_messages_sent,
+                total_tokens_consumed: user.total_tokens_consumed,
+                monthly_tokens_consumed: user.monthly_tokens_consumed,
+                current_month: monthlyUsage
+            },
+            organization: organization ? {
+                id: organization.id,
+                name: organization.name,
+                slug: organization.slug,
+                plan_id: organization.plan_id,
+                subscription_status: organization.subscription_status,
+                monthly_responses_used: organization.monthly_responses_used,
+                monthly_responses_limit: organization.monthly_responses_limit,
+                settings: organization.settings,
+                created_at: organization.created_at,
+                updated_at: organization.updated_at
+            } : null,
+            integrations: integrations,
+            recent_activities: activities || [],
+            usage_history: usageStats || []
+        };
+
+        res.json({
+            success: true,
+            data: userData
+        });
+
+    } catch (error) {
+        logger.error('Get user details endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch user details',
             message: error.message
         });
     }
