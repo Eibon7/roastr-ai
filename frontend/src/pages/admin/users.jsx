@@ -110,7 +110,7 @@ const AdminUsersPage = () => {
       if (data.success) {
         showToast(`Plan actualizado exitosamente a ${newPlan}`, 'success');
         // Refresh users list
-        await loadUsers(session.access_token, currentPage);
+        await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al actualizar plan');
       }
@@ -166,7 +166,7 @@ const AdminUsersPage = () => {
       if (data.success) {
         showToast('Usuario suspendido exitosamente', 'success');
         // Refresh users list
-        await loadUsers(session.access_token, currentPage);
+        await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al suspender usuario');
       }
@@ -194,7 +194,7 @@ const AdminUsersPage = () => {
       if (data.success) {
         showToast('Usuario reactivado exitosamente', 'success');
         // Refresh users list
-        await loadUsers(session.access_token, currentPage);
+        await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al reactivar usuario');
       }
