@@ -1,4 +1,5 @@
 const PersonaInputSanitizer = require('../../../src/services/personaInputSanitizer');
+const encryptionService = require('../../../src/services/encryptionService');
 
 describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () => {
   let sanitizer;
@@ -272,6 +273,242 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
+      });
+    });
+  });
+
+  // Issue #228 - Tests for emojis and special characters
+  describe('Emoji and Special Characters Support (Issue #228)', () => {
+    test('should accept legitimate personal descriptions with emojis', () => {
+      const emojiDescriptions = [
+        'Me llamo 🤖 y me gusta el 💥',
+        '¡Hola! ¿Qué tal? 😊',
+        'Mis valores: respeto, empatía y tolerancia 🫶',
+        'Soy desarrollador 💻 y me encanta programar 🚀',
+        'Mi personalidad es muy alegre 😄 y optimista ✨',
+        'Trabajo con JavaScript 🟨 y React ⚛️',
+        'Me gusta la música 🎵 y el arte 🎨',
+        'Soy fanático de los videojuegos 🎮 y la tecnología 🔧'
+      ];
+
+      emojiDescriptions.forEach(text => {
+        const result = sanitizer.sanitizePersonaInput(text);
+        expect(result).not.toBeNull();
+        expect(result).toBe(text);
+      });
+    });
+
+    test('should accept personal descriptions with special characters and tildes', () => {
+      const specialCharacterDescriptions = [
+        'Soy español, me gusta la paëlla y hablar en català',
+        'Mi nombre es José María y tengo 25 años',
+        'Trabajo en Düsseldorf y hablo alemán fluído',
+        'Me encanta la música clásica (Bach, Vivaldi, etc.)',
+        'Soy programador & diseñador web',
+        'Mi salario es > 50k€ al año',
+        'Trabajo con C++ y C# principalmente',
+        'Estudié en la Universidad Complutense de Madrid',
+        'Me gustan los cómics de DC/Marvel',
+        'Prefiero té verde vs café negro'
+      ];
+
+      specialCharacterDescriptions.forEach(text => {
+        const result = sanitizer.sanitizePersonaInput(text);
+        expect(result).not.toBeNull();
+        expect(result).toBe(text);
+      });
+    });
+
+    test('should accept descriptions with mathematical symbols in personal context', () => {
+      const mathSymbolDescriptions = [
+        'Soy matemático y trabajo con ∑ (sumatorias)',
+        'Mi nota media fue ≥ 8.5 en la universidad',
+        'Trabajo con conjuntos ∅ (conjunto vacío)',
+        'Me encantan las ecuaciones con ± símbolos',
+        'Estudio probabilidades y uso α, β, γ constantemente',
+        'Mi trabajo involucra ∞ posibilidades creativas',
+        'Calculo áreas usando π en mis proyectos',
+        'Trabajo con fórmulas que incluyen √ y ²'
+      ];
+
+      mathSymbolDescriptions.forEach(text => {
+        const result = sanitizer.sanitizePersonaInput(text);
+        expect(result).not.toBeNull();
+        expect(result).toBe(text);
+      });
+    });
+
+    test('should handle mixed emoji, special characters and personal content', () => {
+      const mixedContent = [
+        'Soy José 👋, desarrollador con 5+ años de experiencia 💼',
+        '¿Qué me define? Mi pasión por la tecnología 🚀 & la innovación ⚡',
+        'Trabajo en Barcelona 🏙️ como full-stack developer (React/Node.js) 💻',
+        'Me gusta viajar ✈️, la fotografía 📸 y aprender idiomas 🗣️',
+        'Práctico yoga 🧘‍♂️, meditation & mindfulness diariamente 🌱',
+        'Mi objetivo: crear apps que mejoren la vida de las personas ❤️'
+      ];
+
+      mixedContent.forEach(text => {
+        const result = sanitizer.sanitizePersonaInput(text);
+        expect(result).not.toBeNull();
+        expect(result).toBe(text);
+      });
+    });
+
+    test('should reject malicious code with emojis (security test)', () => {
+      const maliciousWithEmojis = [
+        'SELECT * FROM users WHERE emoji="🤖"',
+        'function hack() { alert("💥 hacked"); }',
+        '<img src=x onerror=alert("😊")>',
+        'eval(atob("💻")) // malicious code',
+        'console.log("🚀 injection attempt");'
+      ];
+
+      maliciousWithEmojis.forEach(text => {
+        const result = sanitizer.sanitizePersonaInput(text);
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  // Issue #228 - Encryption/Decryption stability tests with multibyte characters
+  describe('Encryption Stability with Multibyte Characters (Issue #228)', () => {
+    test('should successfully encrypt and decrypt emoji content', () => {
+      const emojiTexts = [
+        'Me llamo 🤖 y me gusta el 💥',
+        '¡Hola! ¿Qué tal? 😊',
+        'Mis valores: respeto, empatía y tolerancia 🫶',
+        'Trabajo con JavaScript 🟨 y React ⚛️ todos los días',
+        'Mi personalidad: alegre 😄, optimista ✨, y creativo 🎨'
+      ];
+
+      emojiTexts.forEach(originalText => {
+        // First sanitize the input
+        const sanitized = sanitizer.sanitizePersonaInput(originalText);
+        expect(sanitized).not.toBeNull();
+        expect(sanitized).toBe(originalText);
+
+        // Then test encryption/decryption
+        const encrypted = encryptionService.encrypt(sanitized);
+        expect(encrypted).toBeDefined();
+        expect(typeof encrypted).toBe('string');
+
+        const decrypted = encryptionService.decrypt(encrypted);
+        expect(decrypted).toBe(originalText);
+      });
+    });
+
+    test('should successfully encrypt and decrypt special characters and tildes', () => {
+      const specialCharTexts = [
+        'Soy español, me gusta la paëlla y hablar en català',
+        'Mi nombre es José María y tengo 25 años',
+        'Trabajo en Düsseldorf y hablo alemán fluído',
+        'Mi salario es > 50k€ al año, trabajo con C++ & C#'
+      ];
+
+      specialCharTexts.forEach(originalText => {
+        // First sanitize the input
+        const sanitized = sanitizer.sanitizePersonaInput(originalText);
+        expect(sanitized).not.toBeNull();
+        expect(sanitized).toBe(originalText);
+
+        // Then test encryption/decryption
+        const encrypted = encryptionService.encrypt(sanitized);
+        expect(encrypted).toBeDefined();
+        expect(typeof encrypted).toBe('string');
+
+        const decrypted = encryptionService.decrypt(encrypted);
+        expect(decrypted).toBe(originalText);
+      });
+    });
+
+    test('should successfully encrypt and decrypt mathematical symbols', () => {
+      const mathTexts = [
+        'Soy matemático y trabajo con ∑ (sumatorias)',
+        'Mi nota media fue ≥ 8.5 en la universidad',
+        'Trabajo con conjuntos ∅ y uso α, β, γ constantemente',
+        'Calculo áreas usando π y trabajo con √ y ²'
+      ];
+
+      mathTexts.forEach(originalText => {
+        // First sanitize the input
+        const sanitized = sanitizer.sanitizePersonaInput(originalText);
+        expect(sanitized).not.toBeNull();
+        expect(sanitized).toBe(originalText);
+
+        // Then test encryption/decryption
+        const encrypted = encryptionService.encrypt(sanitized);
+        expect(encrypted).toBeDefined();
+        expect(typeof encrypted).toBe('string');
+
+        const decrypted = encryptionService.decrypt(encrypted);
+        expect(decrypted).toBe(originalText);
+      });
+    });
+
+    test('should handle long texts with mixed multibyte characters', () => {
+      const longMultibyteText = 'Soy José 👋, desarrollador con experiencia 💼. Trabajo en Barcelona 🏙️ como developer (React/Node.js) 💻. Me encantan las matemáticas ∑, la música 🎵, viajar ✈️ y la fotografía 📸. Práctico yoga 🧘‍♂️ & mindfulness 🌱. Mi objetivo: crear apps que mejoren la vida ❤️';
+
+      // Verify it's under 300 characters for encryption
+      expect(longMultibyteText.length).toBeLessThan(300);
+
+      // First sanitize the input
+      const sanitized = sanitizer.sanitizePersonaInput(longMultibyteText);
+      expect(sanitized).not.toBeNull();
+      expect(sanitized).toBe(longMultibyteText);
+
+      // Then test encryption/decryption
+      const encrypted = encryptionService.encrypt(sanitized);
+      expect(encrypted).toBeDefined();
+      expect(typeof encrypted).toBe('string');
+
+      const decrypted = encryptionService.decrypt(encrypted);
+      expect(decrypted).toBe(longMultibyteText);
+
+      // Verify the decrypted text still passes sanitization
+      const reSanitized = sanitizer.sanitizePersonaInput(decrypted);
+      expect(reSanitized).toBe(longMultibyteText);
+    });
+
+    test('should maintain data integrity through multiple encrypt/decrypt cycles', () => {
+      const testText = 'Mi vida: tecnología 💻, familia ❤️, música 🎵 & matemáticas π∑∅';
+
+      // First sanitize
+      let currentText = sanitizer.sanitizePersonaInput(testText);
+      expect(currentText).toBe(testText);
+
+      // Perform 5 encrypt/decrypt cycles
+      for (let i = 0; i < 5; i++) {
+        const encrypted = encryptionService.encrypt(currentText);
+        currentText = encryptionService.decrypt(encrypted);
+        
+        // Verify data integrity after each cycle
+        expect(currentText).toBe(testText);
+        
+        // Verify it still passes sanitization
+        const sanitized = sanitizer.sanitizePersonaInput(currentText);
+        expect(sanitized).toBe(testText);
+      }
+    });
+
+    test('should validate encrypted multibyte data integrity', () => {
+      const testCases = [
+        'Emoji test: 🤖💥😊✨🚀',
+        'Special chars: café, niño, Düsseldorf',
+        'Math symbols: ∑∅π±≥∞',
+        'Mixed content: José 👋 works with π & ∑ in München 🏙️'
+      ];
+
+      testCases.forEach(originalText => {
+        const sanitized = sanitizer.sanitizePersonaInput(originalText);
+        expect(sanitized).toBe(originalText);
+
+        const encrypted = encryptionService.encrypt(sanitized);
+        
+        // Validate the encrypted data using the service's validation method
+        const validation = encryptionService.validateEncryptedData(encrypted);
+        expect(validation.valid).toBe(true);
+        expect(validation.length).toBe(originalText.length);
       });
     });
   });
