@@ -1137,4 +1137,262 @@ router.post('/plan-limits/refresh-cache', async (req, res) => {
     }
 });
 
+/**
+ * PATCH /api/admin/users/:userId/config
+ * Update user configuration (plan, shield, auto-reply, tone, persona)
+ * Issue #241: User dashboard admin functionality
+ */
+router.patch('/users/:userId/config', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { plan, tone, shieldEnabled, autoReplyEnabled, persona } = req.body;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+
+        // Build update object
+        const updates = {};
+        
+        if (plan !== undefined) updates.plan = plan;
+        if (tone !== undefined) updates.tone = tone;
+        if (shieldEnabled !== undefined) updates.shield_enabled = shieldEnabled;
+        if (autoReplyEnabled !== undefined) updates.auto_reply_enabled = autoReplyEnabled;
+        
+        // Handle persona fields
+        if (persona) {
+            if (persona.defines !== undefined) updates.persona_defines = persona.defines;
+            if (persona.doesntTolerate !== undefined) updates.persona_doesnt_tolerate = persona.doesntTolerate;
+            if (persona.doesntCare !== undefined) updates.persona_doesnt_care = persona.doesntCare;
+        }
+
+        // Update user
+        const { data: updatedUser, error: updateError } = await supabaseServiceClient
+            .from('users')
+            .update(updates)
+            .eq('id', userId)
+            .select()
+            .single();
+
+        if (updateError) {
+            throw new Error(`Error updating user configuration: ${updateError.message}`);
+        }
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Log the action
+        logger.info('User configuration updated by admin:', {
+            userId,
+            updatedBy: req.user.email,
+            updates: Object.keys(updates)
+        });
+
+        res.json({
+            success: true,
+            data: {
+                user: updatedUser,
+                message: 'User configuration updated successfully'
+            }
+        });
+
+    } catch (error) {
+        logger.error('Update user config endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update user configuration',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/admin/users/:userId/reauth-integrations
+ * Invalidate user's integration tokens (force re-authentication)
+ * Issue #241: User dashboard admin functionality
+ */
+router.post('/users/:userId/reauth-integrations', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+
+        // Check if user exists
+        const { data: user, error: userError } = await supabaseServiceClient
+            .from('users')
+            .select('id, email')
+            .eq('id', userId)
+            .single();
+
+        if (userError || !user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Invalidate integration tokens
+        const { error: tokenError } = await supabaseServiceClient
+            .from('integration_tokens')
+            .update({ 
+                is_valid: false,
+                invalidated_at: new Date().toISOString(),
+                invalidated_by: req.user.id,
+                invalidation_reason: 'admin_forced_reauth'
+            })
+            .eq('user_id', userId);
+
+        if (tokenError) {
+            logger.warn('Error invalidating integration tokens:', tokenError.message);
+        }
+
+        // Also clear any cached integration data
+        const { error: cacheError } = await supabaseServiceClient
+            .from('user_integrations')
+            .update({
+                status: 'disconnected',
+                last_sync_at: null,
+                sync_error: 'Authentication required - tokens invalidated by admin'
+            })
+            .eq('user_id', userId);
+
+        if (cacheError) {
+            logger.warn('Error updating integration status:', cacheError.message);
+        }
+
+        // Log the action
+        logger.info('User integrations invalidated by admin:', {
+            userId,
+            userEmail: user.email,
+            invalidatedBy: req.user.email,
+            reason: 'admin_forced_reauth'
+        });
+
+        res.json({
+            success: true,
+            data: {
+                message: `Integration tokens invalidated for user ${user.email}. User will need to re-authenticate their social media accounts.`
+            }
+        });
+
+    } catch (error) {
+        logger.error('Reauth integrations endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to invalidate integration tokens',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/admin/users/:userId/activity
+ * Get detailed user activity (roasts, shield intercepted comments, integrations)
+ * Issue #241: User dashboard admin functionality
+ */
+router.get('/users/:userId/activity', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { limit = 10 } = req.query;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'User ID is required'
+            });
+        }
+
+        // Check if user exists
+        const { data: user, error: userError } = await supabaseServiceClient
+            .from('users')
+            .select('id, email')
+            .eq('id', userId)
+            .single();
+
+        if (userError || !user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Get last 10 roasts generated
+        const { data: roasts, error: roastsError } = await supabaseServiceClient
+            .from('roast_responses')
+            .select(`
+                id, original_comment, roast_response, platform, 
+                toxicity_score, created_at, metadata
+            `)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(parseInt(limit));
+
+        if (roastsError) {
+            logger.warn('Error fetching user roasts:', roastsError.message);
+        }
+
+        // Get last 10 comments intercepted by Shield
+        const { data: shieldIntercepts, error: shieldError } = await supabaseServiceClient
+            .from('shield_actions')
+            .select(`
+                id, comment_text, platform, toxicity_score, 
+                action_taken, created_at, metadata
+            `)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(parseInt(limit));
+
+        if (shieldError) {
+            logger.warn('Error fetching shield intercepts:', shieldError.message);
+        }
+
+        // Get integrations status
+        const { data: integrations, error: integrationsError } = await supabaseServiceClient
+            .from('user_integrations')
+            .select(`
+                platform, status, connected_at, last_sync_at, 
+                sync_error, handle, metadata
+            `)
+            .eq('user_id', userId);
+
+        if (integrationsError) {
+            logger.warn('Error fetching user integrations:', integrationsError.message);
+        }
+
+        res.json({
+            success: true,
+            data: {
+                user: {
+                    id: user.id,
+                    email: user.email
+                },
+                recent_roasts: roasts || [],
+                shield_intercepts: shieldIntercepts || [],
+                integrations_status: integrations || [],
+                last_updated: new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get user activity endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch user activity',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

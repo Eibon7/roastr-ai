@@ -6,10 +6,25 @@ const UserDetail = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [stats, setStats] = useState(null);
+    const [activity, setActivity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+    const [configLoading, setConfigLoading] = useState(false);
+    
+    // Editable configuration state
+    const [editableConfig, setEditableConfig] = useState({
+        plan: '',
+        tone: 'balanceado',
+        shieldEnabled: true,
+        autoReplyEnabled: false,
+        persona: {
+            defines: '',
+            doesntTolerate: '',
+            doesntCare: ''
+        }
+    });
 
     // Check admin status
     useEffect(() => {
@@ -64,6 +79,19 @@ const UserDetail = () => {
                     const data = await response.json();
                     setUser(data.data.user);
                     setStats(data.data);
+                    
+                    // Initialize editable configuration with current user data
+                    setEditableConfig({
+                        plan: data.data.user.plan || 'free',
+                        tone: data.data.user.tone || 'balanceado',
+                        shieldEnabled: data.data.user.shield_enabled !== false,
+                        autoReplyEnabled: data.data.user.auto_reply_enabled === true,
+                        persona: {
+                            defines: data.data.user.persona_defines || '',
+                            doesntTolerate: data.data.user.persona_doesnt_tolerate || '',
+                            doesntCare: data.data.user.persona_doesnt_care || ''
+                        }
+                    });
                 } else {
                     const errorData = await response.json();
                     setError(errorData.error || 'Error fetching user details');
@@ -77,7 +105,31 @@ const UserDetail = () => {
         };
 
         fetchUserDetails();
+        fetchUserActivity();
     }, [userId, isAdmin]);
+
+    // Fetch detailed user activity
+    const fetchUserActivity = async () => {
+        if (!isAdmin) return;
+        
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/admin/users/${userId}/activity`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setActivity(data.data);
+            } else {
+                console.warn('Could not fetch user activity data');
+            }
+        } catch (error) {
+            console.warn('Error fetching user activity:', error);
+        }
+    };
 
     const handleToggleActive = async () => {
         setActionLoading(true);
@@ -195,6 +247,129 @@ const UserDetail = () => {
             }
         } catch (error) {
             console.error('Error changing user plan:', error);
+            alert('Network error occurred');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleSaveConfiguration = async () => {
+        setConfigLoading(true);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/admin/users/${userId}/config`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(editableConfig)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUser(data.data.user);
+                alert('Configuración actualizada exitosamente');
+            } else {
+                const errorData = await response.json();
+                alert('Error: ' + (errorData.error || 'Failed to update configuration'));
+            }
+        } catch (error) {
+            console.error('Error updating configuration:', error);
+            alert('Network error occurred');
+        } finally {
+            setConfigLoading(false);
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!window.confirm(`¿Estás seguro de que quieres resetear la contraseña de ${user.email}?`)) {
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch('/api/auth/admin/users/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId })
+            });
+
+            if (response.ok) {
+                alert('Email de reset de contraseña enviado al usuario');
+            } else {
+                const errorData = await response.json();
+                alert('Error: ' + (errorData.error || 'Failed to reset password'));
+            }
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            alert('Network error occurred');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleReAuthIntegrations = async () => {
+        if (!window.confirm(`¿Estás seguro de que quieres invalidar las integraciones de ${user.email}?`)) {
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/admin/users/${userId}/reauth-integrations`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                alert('Integraciones invalidadas. El usuario deberá reautenticar sus cuentas.');
+            } else {
+                const errorData = await response.json();
+                alert('Error: ' + (errorData.error || 'Failed to reauth integrations'));
+            }
+        } catch (error) {
+            console.error('Error reauth integrations:', error);
+            alert('Network error occurred');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirm1 = window.confirm(`¿Estás seguro de que quieres eliminar la cuenta de ${user.email}?`);
+        if (!confirm1) return;
+        
+        const confirm2 = window.confirm('Esta acción NO se puede deshacer. ¿Continuar?');
+        if (!confirm2) return;
+
+        setActionLoading(true);
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/auth/admin/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                alert('Cuenta eliminada exitosamente');
+                navigate('/admin/users');
+            } else {
+                const errorData = await response.json();
+                alert('Error: ' + (errorData.error || 'Failed to delete account'));
+            }
+        } catch (error) {
+            console.error('Error deleting account:', error);
             alert('Network error occurred');
         } finally {
             setActionLoading(false);
@@ -499,7 +674,8 @@ const UserDetail = () => {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Plan</label>
                                 <select 
                                     className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                                    defaultValue={user.plan}
+                                    value={editableConfig.plan}
+                                    onChange={(e) => setEditableConfig({...editableConfig, plan: e.target.value})}
                                 >
                                     <option value="free">Free</option>
                                     <option value="pro">Pro</option>
@@ -509,7 +685,11 @@ const UserDetail = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tono</label>
-                                <select className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                                <select 
+                                    className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                                    value={editableConfig.tone}
+                                    onChange={(e) => setEditableConfig({...editableConfig, tone: e.target.value})}
+                                >
                                     <option value="flanders">Flanders</option>
                                     <option value="ligero">Ligero</option>
                                     <option value="balanceado">Balanceado</option>
@@ -528,7 +708,8 @@ const UserDetail = () => {
                                     <input
                                         type="checkbox"
                                         className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                        defaultChecked={true}
+                                        checked={editableConfig.shieldEnabled}
+                                        onChange={(e) => setEditableConfig({...editableConfig, shieldEnabled: e.target.checked})}
                                     />
                                 </div>
                             </div>
@@ -541,7 +722,8 @@ const UserDetail = () => {
                                     <input
                                         type="checkbox"
                                         className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                        defaultChecked={false}
+                                        checked={editableConfig.autoReplyEnabled}
+                                        onChange={(e) => setEditableConfig({...editableConfig, autoReplyEnabled: e.target.checked})}
                                     />
                                 </div>
                             </div>
@@ -555,6 +737,8 @@ const UserDetail = () => {
                                         className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                                         rows="2"
                                         placeholder="Personalidad, intereses, forma de hablar..."
+                                        value={editableConfig.persona.defines}
+                                        onChange={(e) => setEditableConfig({...editableConfig, persona: {...editableConfig.persona, defines: e.target.value}})}
                                     />
                                 </div>
                                 <div>
@@ -563,6 +747,8 @@ const UserDetail = () => {
                                         className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                                         rows="2"
                                         placeholder="Temas o comportamientos que no acepta..."
+                                        value={editableConfig.persona.doesntTolerate}
+                                        onChange={(e) => setEditableConfig({...editableConfig, persona: {...editableConfig.persona, doesntTolerate: e.target.value}})}
                                     />
                                 </div>
                                 <div>
@@ -571,6 +757,8 @@ const UserDetail = () => {
                                         className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                                         rows="2"
                                         placeholder="Temas neutrales, aspectos que no le afectan..."
+                                        value={editableConfig.persona.doesntCare}
+                                        onChange={(e) => setEditableConfig({...editableConfig, persona: {...editableConfig.persona, doesntCare: e.target.value}})}
                                     />
                                 </div>
                             </div>
@@ -579,14 +767,18 @@ const UserDetail = () => {
                             <button
                                 type="button"
                                 className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                onClick={() => window.location.reload()}
+                                disabled={configLoading}
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="button"
-                                className="bg-primary-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                className="bg-primary-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={handleSaveConfiguration}
+                                disabled={configLoading}
                             >
-                                Guardar Cambios
+                                {configLoading ? 'Guardando...' : 'Guardar Cambios'}
                             </button>
                         </div>
                     </div>
@@ -659,6 +851,53 @@ const UserDetail = () => {
                             </div>
                         </div>
                     </div>
+                
+                    {/* Integrations Status */}
+                    <div className="bg-white shadow rounded-lg">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-medium text-gray-900">Estado de Integraciones</h3>
+                            <p className="text-sm text-gray-600">Cuentas conectadas y handles</p>
+                        </div>
+                        <div className="px-6 py-4">
+                            {activity?.integrations_status?.length > 0 ? (
+                                <div className="space-y-3">
+                                    {activity.integrations_status.map((integration, index) => (
+                                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex-shrink-0">
+                                                    <div className={`w-3 h-3 rounded-full ${
+                                                        integration.status === 'connected' ? 'bg-green-500' : 
+                                                        integration.status === 'error' ? 'bg-red-500' : 'bg-gray-400'
+                                                    }`}></div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900 capitalize">{integration.platform}</p>
+                                                    {integration.handle && (
+                                                        <p className="text-sm text-gray-600">@{integration.handle}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-500 capitalize">{integration.status}</p>
+                                                {integration.last_sync_at && (
+                                                    <p className="text-xs text-gray-400">
+                                                        Última sync: {formatDate(integration.last_sync_at)}
+                                                    </p>
+                                                )}
+                                                {integration.sync_error && (
+                                                    <p className="text-xs text-red-500">Error: {integration.sync_error}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <p className="text-sm text-gray-500">No hay integraciones configuradas</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Quick Actions */}
@@ -671,7 +910,9 @@ const UserDetail = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <button
                                 type="button"
-                                className="inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                className="inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={handleResetPassword}
+                                disabled={actionLoading}
                             >
                                 <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -680,7 +921,9 @@ const UserDetail = () => {
                             </button>
                             <button
                                 type="button"
-                                className="inline-flex items-center justify-center px-4 py-2 border border-green-300 dark:border-green-600 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                className="inline-flex items-center justify-center px-4 py-2 border border-green-300 dark:border-green-600 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={handleReAuthIntegrations}
+                                disabled={actionLoading}
                             >
                                 <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -689,7 +932,9 @@ const UserDetail = () => {
                             </button>
                             <button
                                 type="button"
-                                className="inline-flex items-center justify-center px-4 py-2 border border-yellow-300 dark:border-yellow-600 shadow-sm text-sm font-medium rounded-md text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                                className="inline-flex items-center justify-center px-4 py-2 border border-yellow-300 dark:border-yellow-600 shadow-sm text-sm font-medium rounded-md text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={user.suspended ? handleUnsuspend : handleSuspend}
+                                disabled={actionLoading}
                             >
                                 <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L4.268 14.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -698,17 +943,9 @@ const UserDetail = () => {
                             </button>
                             <button
                                 type="button"
-                                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                onClick={() => {
-                                    const confirm1 = window.confirm('¿Estás seguro de que quieres eliminar esta cuenta?');
-                                    if (confirm1) {
-                                        const confirm2 = window.confirm('Esta acción NO se puede deshacer. ¿Continuar?');
-                                        if (confirm2) {
-                                            // Implement delete logic
-                                            alert('Funcionalidad de eliminación en desarrollo');
-                                        }
-                                    }
-                                }}
+                                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-md text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={handleDeleteAccount}
+                                disabled={actionLoading}
                             >
                                 <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -719,20 +956,109 @@ const UserDetail = () => {
                     </div>
                 </div>
 
-                {/* Recent Activities */}
-                {stats.recent_activities && stats.recent_activities.length > 0 && (
+                {/* Detailed Activity Sections */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* Recent Roasts */}
                     <div className="bg-white shadow rounded-lg">
                         <div className="px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-medium text-gray-900">Actividades Recientes</h3>
-                            <p className="text-sm text-gray-600">Últimos 30 días</p>
+                            <h3 className="text-lg font-medium text-gray-900">Últimos Roasts Generados</h3>
+                            <p className="text-sm text-gray-600">Últimas 10 respuestas generadas</p>
+                        </div>
+                        <div className="px-6 py-4">
+                            {activity?.recent_roasts?.length > 0 ? (
+                                <div className="space-y-4">
+                                    {activity.recent_roasts.map((roast, index) => (
+                                        <div key={roast.id || index} className="border border-gray-200 rounded-lg p-4">
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-900">Comentario Original:</p>
+                                                    <p className="text-sm text-gray-600 mb-2 italic">"{roast.original_comment}"</p>
+                                                    <p className="text-sm font-medium text-gray-900">Roast Generado:</p>
+                                                    <p className="text-sm text-blue-600 font-medium">"{roast.roast_response}"</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                                                <div className="flex items-center space-x-3">
+                                                    <span className="capitalize bg-gray-100 px-2 py-1 rounded">{roast.platform}</span>
+                                                    {roast.toxicity_score && (
+                                                        <span className={`px-2 py-1 rounded ${
+                                                            roast.toxicity_score > 0.7 ? 'bg-red-100 text-red-800' :
+                                                            roast.toxicity_score > 0.5 ? 'bg-yellow-100 text-yellow-800' :
+                                                            'bg-green-100 text-green-800'
+                                                        }`}>
+                                                            Toxicidad: {(roast.toxicity_score * 100).toFixed(0)}%
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span>{formatDate(roast.created_at)}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <p className="text-sm text-gray-500">No hay roasts generados recientemente</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Shield Intercepts */}
+                    <div className="bg-white shadow rounded-lg">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-medium text-gray-900">Comentarios Interceptados por Shield</h3>
+                            <p className="text-sm text-gray-600">Últimas 10 intervenciones del escudo</p>
+                        </div>
+                        <div className="px-6 py-4">
+                            {activity?.shield_intercepts?.length > 0 ? (
+                                <div className="space-y-4">
+                                    {activity.shield_intercepts.map((intercept, index) => (
+                                        <div key={intercept.id || index} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-900">Comentario Interceptado:</p>
+                                                    <p className="text-sm text-gray-700 mb-2 italic">"{intercept.comment_text}"</p>
+                                                    <p className="text-sm font-medium text-gray-900">Acción Tomada:</p>
+                                                    <p className="text-sm text-red-600 font-medium capitalize">{intercept.action_taken}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
+                                                <div className="flex items-center space-x-3">
+                                                    <span className="capitalize bg-white px-2 py-1 rounded border">{intercept.platform}</span>
+                                                    {intercept.toxicity_score && (
+                                                        <span className="bg-red-200 text-red-800 px-2 py-1 rounded">
+                                                            Toxicidad: {(intercept.toxicity_score * 100).toFixed(0)}%
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span>{formatDate(intercept.created_at)}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <p className="text-sm text-gray-500">No hay interceptaciones de Shield recientes</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Legacy Recent Activities - Keep if stats.recent_activities exists */}
+                {stats?.recent_activities && stats.recent_activities.length > 0 && (
+                    <div className="bg-white shadow rounded-lg mb-6">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-medium text-gray-900">Otras Actividades Recientes</h3>
+                            <p className="text-sm text-gray-600">Últimos 30 días - actividades generales</p>
                         </div>
                         <div className="px-6 py-4">
                             <div className="flow-root">
                                 <ul className="-mb-8">
-                                    {stats.recent_activities.map((activity, index) => (
+                                    {stats.recent_activities.slice(0, 5).map((activity, index) => (
                                         <li key={index}>
                                             <div className="relative pb-8">
-                                                {index !== stats.recent_activities.length - 1 && (
+                                                {index !== stats.recent_activities.slice(0, 5).length - 1 && (
                                                     <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" />
                                                 )}
                                                 <div className="relative flex space-x-3">
