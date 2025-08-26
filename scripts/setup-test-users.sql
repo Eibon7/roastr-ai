@@ -396,8 +396,11 @@ $$ LANGUAGE plpgsql;
 -- Execute the integration setup (this will run after organizations are created by trigger)
 SELECT setup_test_user_integrations();
 
--- Clean up the temporary function
-DROP FUNCTION setup_test_user_integrations();
+-- Keep the utility function for future use with documentation
+COMMENT ON FUNCTION setup_test_user_integrations IS 'Helper for test data setup - can be reused for maintenance';
+
+-- Optionally drop if you prefer clean slate (uncomment next line)
+-- DROP FUNCTION setup_test_user_integrations();
 
 -- ============================================================================
 -- SETUP USER SUBSCRIPTIONS
@@ -460,8 +463,8 @@ BEGIN
                 ELSE '{}'::jsonb
             END,
             user_record.monthly_messages_sent * 15, -- Assume 15 cents per response
-            user_record.org_id,
-            user_record.monthly_messages_sent >= user_record.org_id
+            user_record.monthly_responses_limit,
+            user_record.monthly_messages_sent >= user_record.monthly_responses_limit
         )
         ON CONFLICT (organization_id, year, month) DO UPDATE SET
             total_responses = EXCLUDED.total_responses,

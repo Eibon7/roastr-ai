@@ -33,10 +33,10 @@ npm run setup:test-users
 | Email | Plan | Usage Pattern | Integrations | Purpose |
 |-------|------|---------------|--------------|---------|
 | `test.free@roastr.ai` | Free | 0% (no usage) | None | Test free plan limits |
-| `test.starter@roastr.ai` | Pro | 30% usage | Twitter | Test low usage pro user |
-| `test.pro@roastr.ai` | Pro | 80% usage | Twitter + YouTube | Test high usage pro user |
-| `test.plus@roastr.ai` | Creator Plus | 50% usage | Twitter + Instagram | Test moderate creator usage |
-| `test.heavy@roastr.ai` | Creator Plus | 100% usage | Twitter + YouTube + Instagram + Discord | Test limit-reached user |
+| `test.starter@roastr.ai` | Pro | 3% usage (30/1000) | Twitter | Test low usage pro user |
+| `test.pro@roastr.ai` | Pro | 80% usage (800/1000) | Twitter + YouTube | Test high usage pro user |
+| `test.plus@roastr.ai` | Creator Plus | 50% usage (2500/5000) | Twitter + Instagram | Test moderate creator usage |
+| `test.heavy@roastr.ai` | Creator Plus | 100% usage (5000/5000) | Twitter + YouTube + Instagram + Discord | Test limit-reached user |
 | `test.empty@roastr.ai` | Free | 0% (inactive) | None | Test inactive user |
 
 ### 🔗 Social Media Integrations

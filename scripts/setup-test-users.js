@@ -14,6 +14,12 @@ let supabaseServiceClient;
 try {
   const { supabaseServiceClient: client } = require('../src/config/supabase');
   supabaseServiceClient = client;
+  
+  // Validate Supabase environment
+  if (!process.env.SUPABASE_URL?.includes('supabase')) {
+    console.warn('⚠️  URL doesn\'t appear to be a Supabase URL');
+    console.warn('   Current SUPABASE_URL:', process.env.SUPABASE_URL?.substring(0, 50) + '...');
+  }
 } catch (error) {
   console.error('❌ Error loading Supabase client:', error.message);
   console.error('Please ensure your environment variables are set:');
@@ -122,46 +128,58 @@ async function verifySetup() {
       console.log(`  - ${user.email} (${user.plan}, usage: ${user.monthly_messages_sent})`);
     });
     
-    // Check organizations
-    const { data: orgs, error: orgsError } = await supabaseServiceClient
-      .from('organizations')
-      .select(`
-        name, 
-        slug, 
-        plan_id, 
-        monthly_responses_limit, 
-        monthly_responses_used,
-        users!inner(email, is_test)
-      `)
-      .eq('users.is_test', true);
-    
-    if (!orgsError && orgs) {
-      console.log('🏢 Organizations created:');
-      orgs.forEach(org => {
-        console.log(`  - ${org.name} (${org.plan_id}, ${org.monthly_responses_used}/${org.monthly_responses_limit})`);
-      });
+    // Check organizations with granular error handling
+    try {
+      const { data: orgs, error: orgsError } = await supabaseServiceClient
+        .from('organizations')
+        .select(`
+          name, 
+          slug, 
+          plan_id, 
+          monthly_responses_limit, 
+          monthly_responses_used,
+          users!inner(email, is_test)
+        `)
+        .eq('users.is_test', true);
+      
+      if (orgsError) {
+        console.warn('⚠️  Could not verify organizations:', orgsError.message);
+      } else if (orgs) {
+        console.log('🏢 Organizations created:');
+        orgs.forEach(org => {
+          console.log(`  - ${org.name} (${org.plan_id}, ${org.monthly_responses_used}/${org.monthly_responses_limit})`);
+        });
+      }
+    } catch (error) {
+      console.warn('⚠️  Organization verification failed:', error.message);
     }
     
-    // Check integrations
-    const { data: integrations, error: intError } = await supabaseServiceClient
-      .from('integration_configs')
-      .select(`
-        platform,
-        enabled,
-        tone,
-        config,
-        organizations!inner(
-          users!inner(email, is_test)
-        )
-      `)
-      .eq('organizations.users.is_test', true);
-    
-    if (!intError && integrations) {
-      console.log('🔗 Integrations created:');
-      integrations.forEach(int => {
-        const handle = int.config?.handle || int.config?.username || int.config?.channel_id || 'N/A';
-        console.log(`  - ${int.platform}: ${handle} (${int.tone})`);
-      });
+    // Check integrations with granular error handling
+    try {
+      const { data: integrations, error: intError } = await supabaseServiceClient
+        .from('integration_configs')
+        .select(`
+          platform,
+          enabled,
+          tone,
+          config,
+          organizations!inner(
+            users!inner(email, is_test)
+          )
+        `)
+        .eq('organizations.users.is_test', true);
+      
+      if (intError) {
+        console.warn('⚠️  Could not verify integrations:', intError.message);
+      } else if (integrations) {
+        console.log('🔗 Integrations created:');
+        integrations.forEach(int => {
+          const handle = int.config?.handle || int.config?.username || int.config?.channel_id || 'N/A';
+          console.log(`  - ${int.platform}: ${handle} (${int.tone})`);
+        });
+      }
+    } catch (error) {
+      console.warn('⚠️  Integration verification failed:', error.message);
     }
     
     console.log('✅ Verification completed');
@@ -189,10 +207,10 @@ async function main() {
     console.log('👤 Admin user: emiliopostigo@gmail.com');
     console.log('🧪 Test users:');
     console.log('  - test.free@roastr.ai (free plan, 0 usage)');
-    console.log('  - test.starter@roastr.ai (pro plan, 30% usage)');
-    console.log('  - test.pro@roastr.ai (pro plan, 80% usage)');
-    console.log('  - test.plus@roastr.ai (creator_plus plan, 50% usage)');
-    console.log('  - test.heavy@roastr.ai (creator_plus plan, 100% usage)');
+    console.log('  - test.starter@roastr.ai (pro plan, 3% usage - 30/1000)');
+    console.log('  - test.pro@roastr.ai (pro plan, 80% usage - 800/1000)');
+    console.log('  - test.plus@roastr.ai (creator_plus plan, 50% usage - 2500/5000)');
+    console.log('  - test.heavy@roastr.ai (creator_plus plan, 100% usage - 5000/5000)');
     console.log('  - test.empty@roastr.ai (free plan, 0 usage)');
     console.log('');
     console.log('🔗 Social integrations for paid users');
