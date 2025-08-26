@@ -5,6 +5,7 @@
  */
 
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
@@ -24,7 +25,7 @@ const notificationLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   keyGenerator: (req) => {
     // Use IP + user ID for authenticated requests
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     const userId = req.user?.id || 'anonymous';
     return `notification:${ip}:${userId}`;
   },
@@ -64,7 +65,7 @@ const notificationMarkLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     const userId = req.user?.id || 'anonymous';
     return `notification_mark:${ip}:${userId}`;
   },
@@ -103,7 +104,7 @@ const notificationDeleteLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     const userId = req.user?.id || 'anonymous';
     return `notification_delete:${ip}:${userId}`;
   },
@@ -170,7 +171,7 @@ const createNotificationRateLimiter = (type, customConfig = {}) => {
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: customConfig.keyGenerator || ((req) => {
-      const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+      const ip = ipKeyGenerator(req);
       const userId = req.user?.id || 'anonymous';
       return `notification_${type}:${ip}:${userId}`;
     }),
