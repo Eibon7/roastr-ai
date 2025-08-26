@@ -114,7 +114,7 @@ export default function Billing() {
 
   // Use configurable defaults if data is not available
   const mockEntitlements = entitlements || getDefaultEntitlements(user?.plan);
-  const mockUsage = usage || getDefaultUsage();
+  const mockUsage = usage || getDefaultUsage(user?.id);
 
   const costInDollars = mockUsage?.costCents ? (mockUsage.costCents / 100).toFixed(2) : '0.00';
 
