@@ -235,7 +235,9 @@ function checkPlanLimits(planId, usage = {}) {
 function getPlanByLookupKey(lookupKey) {
   const lookupMap = {
     [process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly']: 'pro',
-    [process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plus_monthly']: 'plus'
+    [process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plus_monthly']: 'plus',
+    'plus_monthly': 'plus',
+    'creator_plus_monthly': 'plus'
   };
   
   return lookupMap[lookupKey] || null;

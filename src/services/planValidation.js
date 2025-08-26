@@ -100,6 +100,7 @@ function getPlanTier(planId) {
   const tiers = {
     free: 0,
     pro: 1,
+    plus: 2, // Plus plan (same as creator_plus)
     creator_plus: 2,
     custom: 3 // Custom plans are highest tier
   };
@@ -120,6 +121,7 @@ function getMaxIntegrations(planId) {
   const limits = {
     free: 1,              // 1 integration per social network (basic individual usage)
     pro: 2,               // 2 integrations per social network (creators with multiple personal accounts)
+    plus: 2,              // 2 integrations per social network (same as creator_plus)
     creator_plus: 2,      // 2 integrations per social network (professionals, not agencies)
     custom: 2             // 2 integrations per social network (configurable other aspects)
   };
