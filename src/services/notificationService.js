@@ -282,23 +282,26 @@ class NotificationService {
     }
 
     /**
-     * Get user notifications
+     * Get user notifications with cursor-based pagination
      * @param {string} userId - User ID
      * @param {Object} options - Query options
      * @param {string} options.status - Filter by status (unread, read, archived)
      * @param {string} options.type - Filter by type
      * @param {boolean} options.includeExpired - Include expired notifications
      * @param {number} options.limit - Result limit
-     * @param {number} options.offset - Result offset
-     * @returns {Promise<Object>} Notifications list
+     * @param {string} options.cursor - Cursor for pagination (ISO timestamp)
+     * @param {number} options.offset - Result offset (legacy support)
+     * @returns {Promise<Object>} Notifications list with pagination info
      */
     async getUserNotifications(userId, {
         status = null,
         type = null,
         includeExpired = false,
         limit = 50,
+        cursor = null,
         offset = 0
     } = {}) {
+        const startTime = Date.now();
         try {
             let query = supabaseServiceClient
                 .from('user_notifications')
@@ -318,21 +321,68 @@ class NotificationService {
                 query = query.or('expires_at.is.null,expires_at.gt.' + new Date().toISOString());
             }
 
-            // Apply pagination and ordering
-            query = query
-                .order('created_at', { ascending: false })
-                .range(offset, offset + limit - 1);
+            // Apply cursor-based pagination if cursor is provided
+            if (cursor) {
+                // For cursor-based pagination, fetch records created before the cursor
+                query = query
+                    .lt('created_at', cursor)
+                    .order('created_at', { ascending: false })
+                    .limit(limit + 1); // Fetch one extra to check if there are more
+            } else {
+                // Legacy offset-based pagination
+                query = query
+                    .order('created_at', { ascending: false })
+                    .range(offset, offset + limit - 1);
+            }
 
-            const { data, error, count } = await query;
+            const { data, error } = await query;
 
             if (error) {
                 throw error;
             }
 
+            const notifications = data || [];
+            
+            // For cursor-based pagination, check if there are more results
+            let hasMore = false;
+            let nextCursor = null;
+            
+            if (cursor) {
+                hasMore = notifications.length > limit;
+                if (hasMore) {
+                    // Remove the extra record and set the next cursor
+                    notifications.pop();
+                }
+                // Fix nextCursor assignment: only set cursor when hasMore AND notifications exist
+                nextCursor = notifications.length > 0 && hasMore 
+                    ? notifications[notifications.length - 1]?.created_at 
+                    : null;
+            } else {
+                // Legacy: hasMore detection for offset pagination
+                // This is less accurate but maintains backward compatibility
+                hasMore = notifications.length === limit;
+            }
+
+            // Log query duration for performance monitoring
+            const queryDuration = Date.now() - startTime;
+            const paginationType = cursor !== null ? 'cursor' : 'offset';
+            
+            logger.info('📝 Notifications query completed:', {
+                userId: userId.substring(0, 8) + '***', // Safe logging
+                paginationType,
+                cursor: cursor ? cursor.substring(0, 19) + '...' : null,
+                limit,
+                resultCount: notifications.length,
+                hasMore,
+                queryDuration: `${queryDuration}ms`,
+                filters: { status, type, includeExpired }
+            });
+
             return {
                 success: true,
-                data: data || [],
-                count: data?.length || 0
+                data: notifications,
+                hasMore,
+                nextCursor
             };
 
         } catch (error) {

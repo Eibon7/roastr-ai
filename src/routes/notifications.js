@@ -27,7 +27,13 @@ const VALID_NOTIFICATION_TYPES = [
 
 /**
  * GET /api/notifications
- * Get user notifications with filtering and pagination
+ * Get user notifications with cursor-based pagination for better performance
+ * Query parameters:
+ * - cursor: ISO timestamp of last item from previous page
+ * - limit: Page size (default: 50, max: 100)
+ * - status: Filter by status (unread, read, archived)
+ * - type: Filter by notification type
+ * - include_expired: Include expired notifications (default: false)
  */
 router.get('/', notificationLimiter, authenticateToken, async (req, res) => {
     try {
@@ -37,12 +43,13 @@ router.get('/', notificationLimiter, authenticateToken, async (req, res) => {
             type,
             include_expired = 'false',
             limit = 50,
-            offset = 0
+            cursor,
+            // Legacy support for offset-based pagination
+            offset
         } = req.query;
 
         // Validate parameters
         const parsedLimit = Math.min(parseInt(limit) || 50, 100); // Max 100
-        const parsedOffset = parseInt(offset) || 0;
         const includeExpired = include_expired === 'true';
 
         if (status && !['unread', 'read', 'archived'].includes(status)) {
@@ -59,12 +66,24 @@ router.get('/', notificationLimiter, authenticateToken, async (req, res) => {
             });
         }
 
+        // Validate cursor if provided
+        if (cursor !== undefined && (!cursor.trim() || !Date.parse(cursor))) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid cursor. Must be a valid ISO timestamp'
+            });
+        }
+
+        // Use cursor-based pagination if cursor is provided, otherwise fall back to offset
+        const useCursorPagination = cursor !== undefined;
+        
         const result = await notificationService.getUserNotifications(userId, {
             status,
             type,
             includeExpired,
             limit: parsedLimit,
-            offset: parsedOffset
+            cursor: useCursorPagination ? cursor : undefined,
+            offset: useCursorPagination ? undefined : (parseInt(offset) || 0)
         });
 
         if (!result.success) {
@@ -74,16 +93,25 @@ router.get('/', notificationLimiter, authenticateToken, async (req, res) => {
             });
         }
 
+        // Build pagination response
+        const paginationResponse = {
+            limit: parsedLimit,
+            hasMore: result.hasMore
+        };
+
+        if (useCursorPagination) {
+            paginationResponse.nextCursor = result.nextCursor || null;
+        } else {
+            // Legacy offset pagination
+            const parsedOffset = parseInt(offset) || 0;
+            paginationResponse.offset = parsedOffset;
+        }
+
         res.json({
             success: true,
             data: {
                 notifications: result.data,
-                count: result.count,
-                pagination: {
-                    limit: parsedLimit,
-                    offset: parsedOffset,
-                    hasMore: result.count === parsedLimit
-                }
+                pagination: paginationResponse
             }
         });
 

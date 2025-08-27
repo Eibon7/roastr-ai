@@ -442,6 +442,351 @@ class UserIntegrationsService {
 
     return platformSpecific[platform] || baseFeatures;
   }
+
+  /**
+   * Get detailed account information by account ID
+   * Issue #256: GET /api/user/accounts/:id endpoint support
+   */
+  async getAccountDetails(userId, accountId) {
+    try {
+      const userIntegrations = await this.getUserIntegrations(userId);
+      if (!userIntegrations.success) {
+        return userIntegrations;
+      }
+
+      // Find account by ID (for mock, we'll use platform name as ID)
+      const account = userIntegrations.data.find(acc => 
+        acc.platform === accountId && acc.status === 'connected'
+      );
+
+      if (!account) {
+        return {
+          success: false,
+          error: 'Account not found'
+        };
+      }
+
+      // Generate mock account details
+      const accountDetails = {
+        id: account.platform,
+        platform: account.platform,
+        handle: account.platform_username || `@mock_${account.platform}_user`,
+        status: account.status,
+        username: account.platform_username || `mock_${account.platform}_user`,
+        platform_user_id: account.platform_user_id || `mock_${account.platform}_123`,
+        connected_at: account.connected_at,
+        updated_at: account.updated_at,
+        monthlyRoasts: Math.floor(Math.random() * 500) + 100, // Mock counter
+        settings: {
+          autoApprove: Math.random() > 0.5, // Random bool
+          shieldEnabled: Math.random() > 0.3, // Usually enabled
+          shieldLevel: Math.floor(Math.random() * 80) + 20, // 20-100%
+          defaultTone: ['Flanders', 'Ligero', 'Balanceado', 'Canalla'][Math.floor(Math.random() * 4)]
+        },
+        limits: {
+          monthlyLimit: 2000,
+          dailyLimit: 100
+        },
+        usage: {
+          thisMonth: Math.floor(Math.random() * 400) + 50,
+          today: Math.floor(Math.random() * 20) + 1
+        }
+      };
+
+      return {
+        success: true,
+        data: accountDetails
+      };
+
+    } catch (error) {
+      logger.error('Error getting account details:', error);
+      return {
+        success: false,
+        error: 'Failed to get account details'
+      };
+    }
+  }
+
+  /**
+   * Get recent roasts for a specific account
+   * Issue #256: GET /api/user/accounts/:id/roasts endpoint support
+   */
+  async getAccountRoasts(userId, accountId, options = {}) {
+    try {
+      const { limit = 10, offset = 0 } = options;
+
+      // Verify account exists and belongs to user
+      const accountDetails = await this.getAccountDetails(userId, accountId);
+      if (!accountDetails.success) {
+        return accountDetails;
+      }
+
+      // Generate mock roasts
+      const mockRoasts = this.generateMockRoasts(accountId, limit + offset);
+      const paginatedRoasts = mockRoasts.slice(offset, offset + limit);
+
+      return {
+        success: true,
+        data: paginatedRoasts,
+        total: mockRoasts.length
+      };
+
+    } catch (error) {
+      logger.error('Error getting account roasts:', error);
+      return {
+        success: false,
+        error: 'Failed to get account roasts'
+      };
+    }
+  }
+
+  /**
+   * Generate mock roast data for testing
+   */
+  generateMockRoasts(accountId, count) {
+    const roasts = [];
+    const statuses = ['pending', 'approved', 'rejected'];
+    const mockComments = [
+      "Esta aplicación es horrible",
+      "No sirve para nada este bot",
+      "Pérdida de tiempo total",
+      "Qué basura de servicio",
+      "No funciona nunca bien"
+    ];
+    const mockRoastResponses = [
+      "Vaya, alguien más talentoso que tú en criticar sin construir nada 🎭",
+      "Tu negatividad tiene más consistencia que tu crítica constructiva 😅",
+      "Impresionante cómo logras criticar sin ofrecer alternativas 🤔",
+      "Tu expertise en quejas es realmente... única 🏆",
+      "Qué creativo eres encontrando problemas sin soluciones 🎨"
+    ];
+
+    for (let i = 0; i < count; i++) {
+      const createdAt = new Date(Date.now() - (i * 1000 * 60 * 60 * 2)); // 2 hours apart
+      roasts.push({
+        id: `roast_${accountId}_${i + 1}`,
+        accountId: accountId,
+        original: mockComments[i % mockComments.length],
+        roast: mockRoastResponses[i % mockRoastResponses.length],
+        status: statuses[i % statuses.length],
+        createdAt: createdAt.toISOString(),
+        updatedAt: createdAt.toISOString(),
+        toxicityScore: Math.random() * 0.8 + 0.2, // 0.2-1.0
+        platform: accountId,
+        metadata: {
+          tone: ['Flanders', 'Ligero', 'Balanceado', 'Canalla'][Math.floor(Math.random() * 4)],
+          regenerated: Math.random() > 0.8,
+          originalCommentId: `comment_${accountId}_${i + 1}`
+        }
+      });
+    }
+
+    return roasts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  /**
+   * Approve a roast
+   * Issue #256: POST /api/user/accounts/:id/roasts/:roastId/approve
+   */
+  async approveRoast(userId, accountId, roastId) {
+    try {
+      // Verify account ownership
+      const accountDetails = await this.getAccountDetails(userId, accountId);
+      if (!accountDetails.success) {
+        return accountDetails;
+      }
+
+      // Mock approval - in real implementation, this would update database
+      logger.info('Mock roast approval:', {
+        userId: SafeUtils.safeUserIdPrefix(userId),
+        accountId,
+        roastId
+      });
+
+      return {
+        success: true,
+        data: {
+          id: roastId,
+          status: 'approved',
+          approvedAt: new Date().toISOString()
+        }
+      };
+
+    } catch (error) {
+      logger.error('Error approving roast:', error);
+      return {
+        success: false,
+        error: 'Failed to approve roast'
+      };
+    }
+  }
+
+  /**
+   * Decline a roast
+   * Issue #256: POST /api/user/accounts/:id/roasts/:roastId/decline
+   */
+  async declineRoast(userId, accountId, roastId, reason = null) {
+    try {
+      // Verify account ownership
+      const accountDetails = await this.getAccountDetails(userId, accountId);
+      if (!accountDetails.success) {
+        return accountDetails;
+      }
+
+      // Mock decline
+      logger.info('Mock roast decline:', {
+        userId: SafeUtils.safeUserIdPrefix(userId),
+        accountId,
+        roastId,
+        reason
+      });
+
+      return {
+        success: true,
+        data: {
+          id: roastId,
+          status: 'rejected',
+          rejectedAt: new Date().toISOString(),
+          reason
+        }
+      };
+
+    } catch (error) {
+      logger.error('Error declining roast:', error);
+      return {
+        success: false,
+        error: 'Failed to decline roast'
+      };
+    }
+  }
+
+  /**
+   * Regenerate a roast
+   * Issue #256: POST /api/user/accounts/:id/roasts/:roastId/regenerate
+   */
+  async regenerateRoast(userId, accountId, roastId, options = {}) {
+    try {
+      // Verify account ownership
+      const accountDetails = await this.getAccountDetails(userId, accountId);
+      if (!accountDetails.success) {
+        return accountDetails;
+      }
+
+      // Mock regeneration - create new roast based on original
+      const newRoastId = `roast_${accountId}_${Date.now()}`;
+      const mockRoastResponses = [
+        "Ah, un crítico profesional sin diploma, qué refrescante 🎓",
+        "Tu dedicación a la negatividad es admirable, casi artística 🎨",
+        "Veo que tu talento especial es encontrar fallas en todo 🔍",
+        "Qué nivel de expertise en quejas, deberías dar clases 📚",
+        "Tu consistencia en criticar sin construir es impresionante 🏗️"
+      ];
+
+      logger.info('Mock roast regeneration:', {
+        userId: SafeUtils.safeUserIdPrefix(userId),
+        accountId,
+        originalRoastId: roastId,
+        newRoastId,
+        options
+      });
+
+      return {
+        success: true,
+        data: {
+          id: newRoastId,
+          accountId,
+          original: "Esta aplicación es horrible", // Would get from original roast
+          roast: mockRoastResponses[Math.floor(Math.random() * mockRoastResponses.length)],
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          regeneratedFrom: roastId,
+          tone: options.tone || 'Balanceado',
+          intensity: options.intensity || 5
+        }
+      };
+
+    } catch (error) {
+      logger.error('Error regenerating roast:', error);
+      return {
+        success: false,
+        error: 'Failed to regenerate roast'
+      };
+    }
+  }
+
+  /**
+   * Update account settings
+   * Issue #256: PATCH /api/user/accounts/:id/settings
+   */
+  async updateAccountSettings(userId, accountId, settings) {
+    try {
+      // Verify account ownership
+      const accountDetails = await this.getAccountDetails(userId, accountId);
+      if (!accountDetails.success) {
+        return accountDetails;
+      }
+
+      // Mock settings update - in real implementation, would update database
+      const updatedSettings = {
+        ...accountDetails.data.settings,
+        ...settings,
+        updatedAt: new Date().toISOString()
+      };
+
+      logger.info('Mock account settings update:', {
+        userId: SafeUtils.safeUserIdPrefix(userId),
+        accountId,
+        updatedFields: Object.keys(settings)
+      });
+
+      return {
+        success: true,
+        data: {
+          accountId,
+          settings: updatedSettings
+        }
+      };
+
+    } catch (error) {
+      logger.error('Error updating account settings:', error);
+      return {
+        success: false,
+        error: 'Failed to update account settings'
+      };
+    }
+  }
+
+  /**
+   * Disconnect account by ID
+   * Issue #256: DELETE /api/user/accounts/:id
+   */
+  async disconnectAccount(userId, accountId) {
+    try {
+      // Get account details first
+      const accountDetails = await this.getAccountDetails(userId, accountId);
+      if (!accountDetails.success) {
+        return accountDetails;
+      }
+
+      // Use existing disconnect method
+      const result = await this.disconnectIntegration(userId, accountId);
+      
+      if (result.success) {
+        result.data.platform = accountDetails.data.platform;
+        result.data.handle = accountDetails.data.handle;
+      }
+
+      return result;
+
+    } catch (error) {
+      logger.error('Error disconnecting account:', error);
+      return {
+        success: false,
+        error: 'Failed to disconnect account'
+      };
+    }
+  }
 }
 
 module.exports = UserIntegrationsService;
