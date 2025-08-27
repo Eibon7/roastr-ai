@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis');
 const { createClient } = require('redis');
 const { logger } = require('../utils/logger');
@@ -43,7 +44,7 @@ const createRateLimiter = (windowMs, max, message, keyPrefix) => {
     keyGenerator: (req) => {
       // Use both IP and user ID for more accurate rate limiting
       const userId = req.user?.id || 'anonymous';
-      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      const ip = ipKeyGenerator(req);
       return `${keyPrefix}:${userId}:${ip}`;
     },
     skip: (req) => {

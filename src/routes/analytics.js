@@ -181,6 +181,7 @@ const validateString = (value, defaultValue = '', maxLength = 1000) => {
 };
 
 // Rate limiting for analytics endpoints to prevent abuse (Issue #162)
+const { ipKeyGenerator } = require('express-rate-limit');
 const analyticsRateLimit = require('express-rate-limit')({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: (req) => {
@@ -201,7 +202,7 @@ const analyticsRateLimit = require('express-rate-limit')({
     },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => `analytics:${req.ip}:${req.user?.id || 'anonymous'}`,
+    keyGenerator: (req) => `analytics:${ipKeyGenerator(req)}:${req.user?.id || 'anonymous'}`,
     skip: (req) => {
         // Skip rate limiting in test environment
         return process.env.NODE_ENV === 'test';
