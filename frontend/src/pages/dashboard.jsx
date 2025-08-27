@@ -19,6 +19,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import AccountModal from '../components/AccountModal';
 
 export default function Dashboard() {
   const [adminMode, setAdminMode] = useState(false);
@@ -27,6 +28,8 @@ export default function Dashboard() {
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [connectingPlatform, setConnectingPlatform] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -204,6 +207,105 @@ export default function Dashboard() {
     return usage?.limit || 5000; // Default limit
   };
 
+  // Modal handlers for AccountModal
+  const handleCloseModal = () => {
+    setAccountModalOpen(false);
+    setSelectedAccount(null);
+  };
+
+  const handleAccountAction = async (action, ...args) => {
+    if (!selectedAccount) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/user/accounts/${selectedAccount.platform}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(args[0] || {})
+      });
+
+      if (response.ok) {
+        // Refresh accounts data after successful action
+        const accountsRes = await fetch('/api/user/integrations', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (accountsRes.ok) {
+          const accountsData = await accountsRes.json();
+          setAccounts(accountsData.data || []);
+        }
+      }
+    } catch (error) {
+      console.error(`Error performing ${action}:`, error);
+    }
+  };
+
+  const handleApproveRoast = async (accountId, roastId) => {
+    return handleAccountAction(`roasts/${roastId}/approve`);
+  };
+
+  const handleRejectRoast = async (accountId, roastId) => {
+    return handleAccountAction(`roasts/${roastId}/decline`);
+  };
+
+  const handleToggleAutoApprove = async (accountId, enabled) => {
+    return handleAccountAction('settings', { autoApprove: enabled });
+  };
+
+  const handleToggleAccount = async (accountId, status) => {
+    // For now, just a placeholder - would need backend implementation
+    console.log('Toggle account status:', accountId, status);
+  };
+
+  const handleChangeShieldLevel = async (accountId, level) => {
+    return handleAccountAction('settings', { shieldLevel: level });
+  };
+
+  const handleToggleShield = async (accountId, enabled) => {
+    return handleAccountAction('settings', { shieldEnabled: enabled });
+  };
+
+  const handleChangeTone = async (accountId, tone) => {
+    return handleAccountAction('settings', { defaultTone: tone });
+  };
+
+  const handleDisconnectAccount = async (accountId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/user/accounts/${accountId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ confirmation: 'DISCONNECT' })
+      });
+
+      if (response.ok) {
+        // Refresh accounts data
+        const accountsRes = await fetch('/api/user/integrations', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (accountsRes.ok) {
+          const accountsData = await accountsRes.json();
+          setAccounts(accountsData.data || []);
+        }
+        
+        handleCloseModal();
+      }
+    } catch (error) {
+      console.error('Error disconnecting account:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -325,8 +427,8 @@ export default function Dashboard() {
                   key={account.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                   onClick={() => {
-                    // TODO: Open account detail modal (future issue)
-                    console.log('Open account detail for:', account);
+                    setSelectedAccount(account);
+                    setAccountModalOpen(true);
                   }}
                 >
                   <div className="flex items-center space-x-4">
@@ -419,6 +521,24 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Account Modal */}
+      {accountModalOpen && selectedAccount && (
+        <AccountModal
+          account={selectedAccount}
+          roasts={[]} // Will be fetched by the modal
+          intercepted={[]} // Mock Shield data
+          onApproveRoast={handleApproveRoast}
+          onRejectRoast={handleRejectRoast}
+          onToggleAutoApprove={handleToggleAutoApprove}
+          onToggleAccount={handleToggleAccount}
+          onChangeShieldLevel={handleChangeShieldLevel}
+          onToggleShield={handleToggleShield}
+          onChangeTone={handleChangeTone}
+          onDisconnectAccount={handleDisconnectAccount}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 }

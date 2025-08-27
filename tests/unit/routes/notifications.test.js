@@ -69,7 +69,8 @@ describe('Notifications Routes', () => {
                     notificationService.getUserNotifications.mockResolvedValueOnce({
                         success: true,
                         data: [],
-                        count: 0
+                        hasMore: false,
+                        nextCursor: null
                     });
 
                     const response = await request(app)
@@ -80,11 +81,10 @@ describe('Notifications Routes', () => {
                         success: true,
                         data: {
                             notifications: [],
-                            count: 0,
                             pagination: {
                                 limit: 50,
-                                offset: 0,
-                                hasMore: false
+                                hasMore: false,
+                                offset: 0
                             }
                         }
                     });
@@ -94,6 +94,7 @@ describe('Notifications Routes', () => {
                         type: type,
                         includeExpired: false,
                         limit: 50,
+                        cursor: undefined,
                         offset: 0
                     });
                 }
@@ -142,7 +143,8 @@ describe('Notifications Routes', () => {
                 notificationService.getUserNotifications.mockResolvedValueOnce({
                     success: true,
                     data: [],
-                    count: 0
+                    hasMore: false,
+                    nextCursor: null
                 });
 
                 const response = await request(app)
@@ -153,11 +155,10 @@ describe('Notifications Routes', () => {
                     success: true,
                     data: {
                         notifications: [],
-                        count: 0,
                         pagination: {
                             limit: 50,
-                            offset: 0,
-                            hasMore: false
+                            hasMore: false,
+                            offset: 0
                         }
                     }
                 });
@@ -167,6 +168,7 @@ describe('Notifications Routes', () => {
                     type: undefined,
                     includeExpired: false,
                     limit: 50,
+                    cursor: undefined,
                     offset: 0
                 });
             });
@@ -180,7 +182,8 @@ describe('Notifications Routes', () => {
                     notificationService.getUserNotifications.mockResolvedValueOnce({
                         success: true,
                         data: [],
-                        count: 0
+                        hasMore: false,
+                        nextCursor: null
                     });
 
                     const response = await request(app)
@@ -223,7 +226,8 @@ describe('Notifications Routes', () => {
                 notificationService.getUserNotifications.mockResolvedValueOnce({
                     success: true,
                     data: [],
-                    count: 0
+                    hasMore: false,
+                    nextCursor: null
                 });
 
                 response = await request(app)
@@ -262,6 +266,210 @@ describe('Notifications Routes', () => {
                     success: false,
                     error: 'Failed to fetch notifications'
                 });
+            });
+        });
+
+        describe('Cursor-based pagination', () => {
+            it('should use cursor pagination when cursor is provided', async () => {
+                const cursor = '2024-01-01T12:00:00.000Z';
+                notificationService.getUserNotifications.mockResolvedValueOnce({
+                    success: true,
+                    data: [
+                        { id: 'notif-1', created_at: '2024-01-01T11:00:00.000Z' },
+                        { id: 'notif-2', created_at: '2024-01-01T10:00:00.000Z' }
+                    ],
+                    hasMore: true,
+                    nextCursor: '2024-01-01T10:00:00.000Z'
+                });
+
+                const response = await request(app)
+                    .get(`/api/notifications?cursor=${encodeURIComponent(cursor)}&limit=2`)
+                    .expect(200);
+
+                expect(response.body).toEqual({
+                    success: true,
+                    data: {
+                        notifications: [
+                            { id: 'notif-1', created_at: '2024-01-01T11:00:00.000Z' },
+                            { id: 'notif-2', created_at: '2024-01-01T10:00:00.000Z' }
+                        ],
+                        pagination: {
+                            limit: 2,
+                            hasMore: true,
+                            nextCursor: '2024-01-01T10:00:00.000Z'
+                        }
+                    }
+                });
+
+                expect(notificationService.getUserNotifications).toHaveBeenCalledWith('test-user-id', {
+                    status: undefined,
+                    type: undefined,
+                    includeExpired: false,
+                    limit: 2,
+                    cursor: cursor,
+                    offset: undefined
+                });
+            });
+
+            it('should fall back to offset pagination when cursor is not provided', async () => {
+                notificationService.getUserNotifications.mockResolvedValueOnce({
+                    success: true,
+                    data: [
+                        { id: 'notif-1', created_at: '2024-01-01T12:00:00.000Z' }
+                    ],
+                    hasMore: false,
+                    nextCursor: null
+                });
+
+                const response = await request(app)
+                    .get('/api/notifications?offset=10&limit=1')
+                    .expect(200);
+
+                expect(response.body).toEqual({
+                    success: true,
+                    data: {
+                        notifications: [
+                            { id: 'notif-1', created_at: '2024-01-01T12:00:00.000Z' }
+                        ],
+                        pagination: {
+                            limit: 1,
+                            hasMore: false,
+                            offset: 10
+                        }
+                    }
+                });
+
+                expect(notificationService.getUserNotifications).toHaveBeenCalledWith('test-user-id', {
+                    status: undefined,
+                    type: undefined,
+                    includeExpired: false,
+                    limit: 1,
+                    cursor: undefined,
+                    offset: 10
+                });
+            });
+
+            it('should return 400 for invalid cursor format', async () => {
+                const response = await request(app)
+                    .get('/api/notifications?cursor=invalid-timestamp')
+                    .expect(400);
+
+                expect(response.body).toEqual({
+                    success: false,
+                    error: 'Invalid cursor. Must be a valid ISO timestamp'
+                });
+
+                expect(notificationService.getUserNotifications).not.toHaveBeenCalled();
+            });
+
+            it('should handle empty cursor string', async () => {
+                notificationService.getUserNotifications.mockResolvedValueOnce({
+                    success: true,
+                    data: [],
+                    hasMore: false,
+                    nextCursor: null
+                });
+
+                const response = await request(app)
+                    .get('/api/notifications?cursor=')
+                    .expect(200);
+
+                expect(response.body.data.pagination).toHaveProperty('nextCursor', null);
+                
+                expect(notificationService.getUserNotifications).toHaveBeenCalledWith('test-user-id', {
+                    status: undefined,
+                    type: undefined,
+                    includeExpired: false,
+                    limit: 50,
+                    cursor: '',
+                    offset: undefined
+                });
+            });
+
+            it('should combine cursor pagination with filters', async () => {
+                const cursor = '2024-01-01T12:00:00.000Z';
+                notificationService.getUserNotifications.mockResolvedValueOnce({
+                    success: true,
+                    data: [
+                        { 
+                            id: 'notif-1', 
+                            created_at: '2024-01-01T11:00:00.000Z', 
+                            status: 'unread',
+                            type: 'payment_failed'
+                        }
+                    ],
+                    hasMore: false,
+                    nextCursor: '2024-01-01T11:00:00.000Z'
+                });
+
+                const response = await request(app)
+                    .get(`/api/notifications?cursor=${encodeURIComponent(cursor)}&status=unread&type=payment_failed&include_expired=true`)
+                    .expect(200);
+
+                expect(response.body.success).toBe(true);
+                expect(response.body.data.notifications).toHaveLength(1);
+                expect(response.body.data.pagination.nextCursor).toBe('2024-01-01T11:00:00.000Z');
+
+                expect(notificationService.getUserNotifications).toHaveBeenCalledWith('test-user-id', {
+                    status: 'unread',
+                    type: 'payment_failed',
+                    includeExpired: true,
+                    limit: 50,
+                    cursor: cursor,
+                    offset: undefined
+                });
+            });
+
+            it('should handle cursor with no more results', async () => {
+                const cursor = '2024-01-01T12:00:00.000Z';
+                notificationService.getUserNotifications.mockResolvedValueOnce({
+                    success: true,
+                    data: [],
+                    hasMore: false,
+                    nextCursor: null
+                });
+
+                const response = await request(app)
+                    .get(`/api/notifications?cursor=${encodeURIComponent(cursor)}`)
+                    .expect(200);
+
+                expect(response.body).toEqual({
+                    success: true,
+                    data: {
+                        notifications: [],
+                        pagination: {
+                            limit: 50,
+                            hasMore: false,
+                            nextCursor: null
+                        }
+                    }
+                });
+            });
+
+            it('should respect limit parameter with cursor pagination', async () => {
+                const cursor = '2024-01-01T12:00:00.000Z';
+                notificationService.getUserNotifications.mockResolvedValueOnce({
+                    success: true,
+                    data: Array.from({ length: 100 }, (_, i) => ({
+                        id: `notif-${i}`,
+                        created_at: `2024-01-01T${11-Math.floor(i/10)}:${i%10}0:00.000Z`
+                    })),
+                    hasMore: true,
+                    nextCursor: '2024-01-01T01:00:00.000Z'
+                });
+
+                const response = await request(app)
+                    .get(`/api/notifications?cursor=${encodeURIComponent(cursor)}&limit=150`)
+                    .expect(200);
+
+                // Should cap limit at 100
+                expect(notificationService.getUserNotifications).toHaveBeenCalledWith('test-user-id', 
+                    expect.objectContaining({
+                        limit: 100
+                    })
+                );
+
+                expect(response.body.data.pagination.limit).toBe(100);
             });
         });
     });

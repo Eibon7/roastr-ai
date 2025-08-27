@@ -164,6 +164,403 @@ router.post('/integrations/disconnect', authenticateToken, async (req, res) => {
 });
 
 /**
+ * GET /api/user/accounts/:id
+ * Get detailed information about a specific connected account
+ * Issue #256: Modal de cuenta conectada
+ */
+router.get('/accounts/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        // Validate account ID format
+        if (!id || id.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Account ID is required'
+            });
+        }
+
+        // Get account details from integrations service
+        const accountDetails = await integrationsService.getAccountDetails(userId, id);
+        
+        if (!accountDetails.success) {
+            if (accountDetails.error === 'Account not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Account not found or does not belong to user'
+                });
+            }
+            throw new Error(accountDetails.error);
+        }
+
+        res.json({
+            success: true,
+            data: accountDetails.data
+        });
+
+    } catch (error) {
+        logger.error('Get account details error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            accountId: req.params.id,
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve account details'
+        });
+    }
+});
+
+/**
+ * GET /api/user/accounts/:id/roasts
+ * Get recent roasts for a specific account
+ * Issue #256: Lista de los últimos 10 roasts
+ */
+router.get('/accounts/:id/roasts', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+        const offset = parseInt(req.query.offset) || 0;
+
+        // Get recent roasts for this account
+        const roastsResult = await integrationsService.getAccountRoasts(userId, id, { limit, offset });
+        
+        if (!roastsResult.success) {
+            if (roastsResult.error === 'Account not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Account not found or does not belong to user'
+                });
+            }
+            throw new Error(roastsResult.error);
+        }
+
+        res.json({
+            success: true,
+            data: roastsResult.data,
+            pagination: {
+                limit,
+                offset,
+                total: roastsResult.total || 0
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get account roasts error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            accountId: req.params.id,
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve account roasts'
+        });
+    }
+});
+
+/**
+ * POST /api/user/accounts/:id/roasts/:roastId/approve
+ * Approve a pending roast for publication
+ * Issue #256: Aprobar roast functionality
+ */
+router.post('/accounts/:id/roasts/:roastId/approve', authenticateToken, async (req, res) => {
+    try {
+        const { id, roastId } = req.params;
+        const userId = req.user.id;
+
+        const result = await integrationsService.approveRoast(userId, id, roastId);
+        
+        if (!result.success) {
+            if (result.error === 'Roast not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Roast not found or does not belong to account'
+                });
+            }
+            throw new Error(result.error);
+        }
+
+        // Log the approval action
+        logger.info('Roast approved:', {
+            userId: SafeUtils.safeUserIdPrefix(userId),
+            accountId: id,
+            roastId: roastId
+        });
+
+        res.json({
+            success: true,
+            message: 'Roast approved successfully',
+            data: result.data
+        });
+
+    } catch (error) {
+        logger.error('Approve roast error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            accountId: req.params.id,
+            roastId: req.params.roastId,
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to approve roast'
+        });
+    }
+});
+
+/**
+ * POST /api/user/accounts/:id/roasts/:roastId/decline
+ * Decline a pending roast
+ * Issue #256: Declinar roast functionality
+ */
+router.post('/accounts/:id/roasts/:roastId/decline', authenticateToken, async (req, res) => {
+    try {
+        const { id, roastId } = req.params;
+        const { reason } = req.body;
+        const userId = req.user.id;
+
+        const result = await integrationsService.declineRoast(userId, id, roastId, reason);
+        
+        if (!result.success) {
+            if (result.error === 'Roast not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Roast not found or does not belong to account'
+                });
+            }
+            throw new Error(result.error);
+        }
+
+        // Log the decline action
+        logger.info('Roast declined:', {
+            userId: SafeUtils.safeUserIdPrefix(userId),
+            accountId: id,
+            roastId: roastId,
+            reason: reason || 'No reason provided'
+        });
+
+        res.json({
+            success: true,
+            message: 'Roast declined successfully',
+            data: result.data
+        });
+
+    } catch (error) {
+        logger.error('Decline roast error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            accountId: req.params.id,
+            roastId: req.params.roastId,
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to decline roast'
+        });
+    }
+});
+
+/**
+ * POST /api/user/accounts/:id/roasts/:roastId/regenerate
+ * Regenerate a roast with potentially different parameters
+ * Issue #256: Regenerar roast functionality
+ */
+router.post('/accounts/:id/roasts/:roastId/regenerate', authenticateToken, async (req, res) => {
+    try {
+        const { id, roastId } = req.params;
+        const userId = req.user.id;
+        const { tone, intensity } = req.body;
+
+        const result = await integrationsService.regenerateRoast(userId, id, roastId, { tone, intensity });
+        
+        if (!result.success) {
+            if (result.error === 'Roast not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Roast not found or does not belong to account'
+                });
+            }
+            if (result.error === 'Usage limit exceeded') {
+                return res.status(429).json({
+                    success: false,
+                    error: 'Monthly roast limit exceeded. Upgrade your plan to continue.'
+                });
+            }
+            throw new Error(result.error);
+        }
+
+        // Log the regeneration action
+        logger.info('Roast regenerated:', {
+            userId: SafeUtils.safeUserIdPrefix(userId),
+            accountId: id,
+            originalRoastId: roastId,
+            newRoastId: result.data.id
+        });
+
+        res.json({
+            success: true,
+            message: 'Roast regenerated successfully',
+            data: result.data
+        });
+
+    } catch (error) {
+        logger.error('Regenerate roast error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            accountId: req.params.id,
+            roastId: req.params.roastId,
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to regenerate roast'
+        });
+    }
+});
+
+/**
+ * PATCH /api/user/accounts/:id/settings
+ * Update account-specific settings
+ * Issue #256: Settings de la cuenta (auto-approval, shield, tone)
+ */
+router.patch('/accounts/:id/settings', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const settings = req.body;
+
+        // Validate settings
+        const allowedSettings = ['autoApprove', 'shieldEnabled', 'shieldLevel', 'defaultTone'];
+        const validSettings = {};
+        
+        for (const [key, value] of Object.entries(settings)) {
+            if (allowedSettings.includes(key)) {
+                validSettings[key] = value;
+            }
+        }
+
+        if (Object.keys(validSettings).length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No valid settings provided'
+            });
+        }
+
+        // Validate specific setting values
+        if (validSettings.shieldLevel !== undefined) {
+            if (typeof validSettings.shieldLevel !== 'number' || validSettings.shieldLevel < 1 || validSettings.shieldLevel > 100) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Shield level must be a number between 1 and 100'
+                });
+            }
+        }
+
+        if (validSettings.defaultTone !== undefined) {
+            const validTones = ['Flanders', 'Ligero', 'Balanceado', 'Canalla', '+18'];
+            if (!validTones.includes(validSettings.defaultTone)) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Invalid tone. Must be one of: ${validTones.join(', ')}`
+                });
+            }
+        }
+
+        const result = await integrationsService.updateAccountSettings(userId, id, validSettings);
+        
+        if (!result.success) {
+            if (result.error === 'Account not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Account not found or does not belong to user'
+                });
+            }
+            throw new Error(result.error);
+        }
+
+        // Log the settings update
+        logger.info('Account settings updated:', {
+            userId: SafeUtils.safeUserIdPrefix(userId),
+            accountId: id,
+            updatedSettings: Object.keys(validSettings)
+        });
+
+        res.json({
+            success: true,
+            message: 'Account settings updated successfully',
+            data: result.data
+        });
+
+    } catch (error) {
+        logger.error('Update account settings error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            accountId: req.params.id,
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update account settings'
+        });
+    }
+});
+
+/**
+ * DELETE /api/user/accounts/:id
+ * Disconnect/delete a connected social media account
+ * Issue #256: Desconectar cuenta functionality
+ */
+router.delete('/accounts/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const { confirmation } = req.body;
+
+        // Require explicit confirmation
+        if (confirmation !== 'DISCONNECT') {
+            return res.status(400).json({
+                success: false,
+                error: 'Please provide confirmation: "DISCONNECT" to confirm account deletion'
+            });
+        }
+
+        const result = await integrationsService.disconnectAccount(userId, id);
+        
+        if (!result.success) {
+            if (result.error === 'Account not found') {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Account not found or does not belong to user'
+                });
+            }
+            throw new Error(result.error);
+        }
+
+        // Log the disconnection
+        logger.info('Account disconnected:', {
+            userId: SafeUtils.safeUserIdPrefix(userId),
+            accountId: id,
+            platform: result.data.platform
+        });
+
+        res.json({
+            success: true,
+            message: `${result.data.platform} account disconnected successfully`,
+            data: result.data
+        });
+
+    } catch (error) {
+        logger.error('Disconnect account error:', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            accountId: req.params.id,
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to disconnect account'
+        });
+    }
+});
+
+/**
  * POST /api/user/preferences
  * Save user onboarding preferences
  */

@@ -4,14 +4,14 @@
  * Modal for managing individual social media account settings, roasts, and shield
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ShieldInterceptedList from './ShieldInterceptedList';
 import { NETWORK_ICONS, NETWORK_COLORS, TONE_EXAMPLES, SHIELD_LEVELS, TONE_OPTIONS } from '../mocks/social';
 
 const AccountModal = ({
   account,
-  roasts,
-  intercepted,
+  roasts: initialRoasts,
+  intercepted: initialIntercepted,
   onApproveRoast,
   onRejectRoast,
   onToggleAutoApprove,
@@ -26,10 +26,68 @@ const AccountModal = ({
   const [shieldExpanded, setShieldExpanded] = useState(false);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [loadingStates, setLoadingStates] = useState({});
+  const [accountDetails, setAccountDetails] = useState(null);
+  const [roasts, setRoasts] = useState(initialRoasts || []);
+  const [intercepted, setIntercepted] = useState(initialIntercepted || []);
+  const [loading, setLoading] = useState(true);
 
-  const networkIcon = NETWORK_ICONS[account.network] || '📱';
-  const networkColor = NETWORK_COLORS[account.network] || 'bg-gray-600 text-white';
-  const isActive = account.status === 'active';
+  const networkIcon = NETWORK_ICONS[account.network || account.platform] || '📱';
+  const networkColor = NETWORK_COLORS[account.network || account.platform] || 'bg-gray-600 text-white';
+  const isActive = account.status === 'active' || account.status === 'connected';
+
+  // Fetch account details and roasts when modal opens
+  useEffect(() => {
+    const fetchAccountData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        
+        // Fetch account details
+        const detailsResponse = await fetch(`/api/user/accounts/${account.platform || account.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          setAccountDetails(detailsData.data);
+        }
+
+        // Fetch recent roasts
+        const roastsResponse = await fetch(`/api/user/accounts/${account.platform || account.id}/roasts?limit=10`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (roastsResponse.ok) {
+          const roastsData = await roastsResponse.json();
+          setRoasts(roastsData.data || []);
+        }
+
+        // Mock intercepted comments for now
+        setIntercepted([
+          {
+            id: 'intercepted_1',
+            comment: 'Comentario tóxico interceptado',
+            action: 'Bloquear',
+            timestamp: new Date().toISOString(),
+            severity: 'high'
+          }
+        ]);
+
+      } catch (error) {
+        console.error('Error fetching account data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (account) {
+      fetchAccountData();
+    }
+  }, [account]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('es-ES', {
@@ -115,8 +173,18 @@ const AccountModal = ({
       tabIndex={-1}
     >
       <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        {loading ? (
+          // Loading State
+          <div className="p-8 text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] mb-4">
+              <span className="sr-only">Cargando...</span>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400">Cargando datos de la cuenta...</p>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-4">
             <div className={`w-12 h-12 rounded-lg ${networkColor} flex items-center justify-center text-2xl font-bold`}>
               {networkIcon}
@@ -125,7 +193,7 @@ const AccountModal = ({
             <div>
               <div className="flex items-center space-x-3">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {account.handle}
+                  {accountDetails?.handle || account.handle || account.username || `@${account.platform}_user`}
                 </h2>
                 
                 {/* Status */}
@@ -138,12 +206,12 @@ const AccountModal = ({
                 
                 {/* Monthly Roasts */}
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatRoastCount(account.monthlyRoasts)} roasts/mes
+                  {formatRoastCount(accountDetails?.monthlyRoasts || account.monthlyRoasts || 0)} roasts/mes
                 </div>
               </div>
               
               <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                {account.network === 'twitter' ? 'X' : account.network}
+                {account.platform === 'twitter' ? 'X / Twitter' : account.platform}
               </p>
             </div>
           </div>
@@ -240,7 +308,7 @@ const AccountModal = ({
                         </div>
 
                         {/* Approval Buttons - Only show if auto-approve is OFF and status is pending */}
-                        {!account.settings.autoApprove && roast.status === 'pending' && (
+                        {!(accountDetails?.settings?.autoApprove || false) && roast.status === 'pending' && (
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleRejectRoast(roast.id)}
@@ -279,13 +347,13 @@ const AccountModal = ({
                   
                   {/* Shield Status */}
                   <div className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${account.settings.shieldEnabled ? 'bg-green-500' : 'bg-gray-400'}`} />
+                    <div className={`w-3 h-3 rounded-full ${accountDetails?.settings?.shieldEnabled ? 'bg-green-500' : 'bg-gray-400'}`} />
                     <span className={`text-sm font-medium ${
-                      account.settings.shieldEnabled 
+                      accountDetails?.settings?.shieldEnabled 
                         ? 'text-green-600 dark:text-green-400' 
                         : 'text-gray-500 dark:text-gray-400'
                     }`}>
-                      {account.settings.shieldEnabled ? 'Activo' : 'Inactivo'}
+                      {accountDetails?.settings?.shieldEnabled ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
                 </div>
@@ -296,7 +364,7 @@ const AccountModal = ({
               </div>
 
               {/* Shield Stats */}
-              {account.settings.shieldEnabled && (
+              {accountDetails?.settings?.shieldEnabled && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                   <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
                     Estadísticas de protección
@@ -312,7 +380,7 @@ const AccountModal = ({
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {account.settings.shieldLevel}%
+                        {accountDetails?.settings?.shieldLevel || 50}%
                       </div>
                       <div className="text-xs text-blue-700 dark:text-blue-300">
                         Nivel actual
@@ -335,7 +403,7 @@ const AccountModal = ({
                 <button
                   onClick={() => setShieldExpanded(!shieldExpanded)}
                   className="flex items-center justify-between w-full p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                  disabled={!account.settings.shieldEnabled}
+                  disabled={!(accountDetails?.settings?.shieldEnabled || false)}
                 >
                   <div className="flex items-center space-x-3">
                     <span className="text-xl">🛡️</span>
@@ -349,7 +417,7 @@ const AccountModal = ({
                     </div>
                   </div>
                   
-                  {account.settings.shieldEnabled && (
+                  {accountDetails?.settings?.shieldEnabled && (
                     <svg
                       className={`w-5 h-5 text-gray-400 transition-transform ${
                         shieldExpanded ? 'rotate-180' : ''
@@ -363,7 +431,7 @@ const AccountModal = ({
                   )}
                 </button>
 
-                {shieldExpanded && account.settings.shieldEnabled && (
+                {shieldExpanded && accountDetails?.settings?.shieldEnabled && (
                   <div className="mt-4">
                     <ShieldInterceptedList interceptedItems={intercepted} />
                   </div>
@@ -392,14 +460,14 @@ const AccountModal = ({
                   </div>
                   
                   <button
-                    onClick={() => onToggleAutoApprove(account.id, !account.settings.autoApprove)}
+                    onClick={() => onToggleAutoApprove(account.platform || account.id, !(accountDetails?.settings?.autoApprove || false))}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                      account.settings.autoApprove ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600'
+                      accountDetails?.settings?.autoApprove ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600'
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        account.settings.autoApprove ? 'translate-x-6' : 'translate-x-1'
+                        accountDetails?.settings?.autoApprove ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
@@ -419,28 +487,28 @@ const AccountModal = ({
                   </div>
                   
                   <button
-                    onClick={() => onToggleShield(account.id, !account.settings.shieldEnabled)}
+                    onClick={() => onToggleShield(account.platform || account.id, !(accountDetails?.settings?.shieldEnabled || false))}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                      account.settings.shieldEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600'
+                      accountDetails?.settings?.shieldEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600'
                     }`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        account.settings.shieldEnabled ? 'translate-x-6' : 'translate-x-1'
+                        accountDetails?.settings?.shieldEnabled ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
                 </div>
 
                 {/* Shield Level Dropdown */}
-                {account.settings.shieldEnabled && (
+                {accountDetails?.settings?.shieldEnabled && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nivel de protección
                     </label>
                     <select
-                      value={account.settings.shieldLevel}
-                      onChange={(e) => onChangeShieldLevel(account.id, parseInt(e.target.value))}
+                      value={accountDetails?.settings?.shieldLevel || 50}
+                      onChange={(e) => onChangeShieldLevel(account.platform || account.id, parseInt(e.target.value))}
                       className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     >
                       {SHIELD_LEVELS.map(level => (
@@ -460,8 +528,8 @@ const AccountModal = ({
                     Tono del roast por defecto
                   </label>
                   <select
-                    value={account.settings.defaultTone}
-                    onChange={(e) => onChangeTone(account.id, e.target.value)}
+                    value={accountDetails?.settings?.defaultTone || 'Balanceado'}
+                    onChange={(e) => onChangeTone(account.platform || account.id, e.target.value)}
                     className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     {TONE_OPTIONS.map(tone => (
@@ -475,10 +543,10 @@ const AccountModal = ({
                 {/* Tone Preview */}
                 <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
                   <p className="text-sm text-purple-900 dark:text-purple-100 font-medium mb-1">
-                    Ejemplo de roast {account.settings.defaultTone.toLowerCase()}:
+                    Ejemplo de roast {(accountDetails?.settings?.defaultTone || 'Balanceado').toLowerCase()}:
                   </p>
                   <p className="text-sm text-purple-700 dark:text-purple-300 italic">
-                    {TONE_EXAMPLES[account.settings.defaultTone]}
+                    {TONE_EXAMPLES[accountDetails?.settings?.defaultTone || 'Balanceado']}
                   </p>
                 </div>
               </div>
@@ -496,7 +564,7 @@ const AccountModal = ({
                   </div>
                   
                   <button
-                    onClick={() => onToggleAccount(account.id, isActive ? 'inactive' : 'active')}
+                    onClick={() => onToggleAccount(accountDetails?.id || account.platform || account.id, isActive ? 'inactive' : 'active')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive
                         ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/40'
@@ -547,6 +615,8 @@ const AccountModal = ({
             </div>
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   );
