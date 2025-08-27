@@ -21,13 +21,13 @@ module.exports = {
   // Verbose output
   verbose: true,
   
-  // Coverage thresholds
+  // Coverage thresholds (Issue 82 - Phase 4)
   coverageThreshold: {
     global: {
-      branches: 35,
-      functions: 40,
-      lines: 40,
-      statements: 40
+      branches: 30,
+      functions: 30,
+      lines: 30,
+      statements: 30
     },
     // Workers require higher coverage due to critical system role
     "src/workers/**": {

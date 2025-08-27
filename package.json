@@ -83,7 +83,13 @@
     "validate:prices:ci": "ENABLE_BILLING=true node scripts/validate-prices.js",
     "validate:api-readiness": "node scripts/validate-api-readiness.js",
     "test:api-readiness": "ENABLE_MOCK_MODE=true npm run validate:api-readiness",
-    "test:staging:plan-limits": "node scripts/test-staging-plan-limits.js"
+    "test:staging:plan-limits": "node scripts/test-staging-plan-limits.js",
+    "test:scopes": "node scripts/test/runner.js scopes",
+    "ci:test:auth": "ENABLE_MOCK_MODE=true jest --testPathPattern=auth --ci --runInBand",
+    "ci:test:workers": "ENABLE_MOCK_MODE=true jest --testPathPattern=workers --ci --runInBand",
+    "ci:test:billing": "ENABLE_MOCK_MODE=true jest --testPathPattern=billing --ci --runInBand",
+    "coverage:generate": "ENABLE_MOCK_MODE=true jest --coverage --silent",
+    "coverage:check": "ENABLE_MOCK_MODE=true jest --coverage --passWithNoTests"
   },
   "repository": {
     "type": "git",
