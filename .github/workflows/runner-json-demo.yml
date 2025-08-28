@@ -1,0 +1,46 @@
+name: Runner JSON Demo
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feat/issue-281-mocks-runner-docs
+
+jobs:
+  runner-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: List platforms (JSON)
+        run: |
+          node scripts/test/runner.js list-platforms --json | tee platforms.json
+          echo '### Platforms (from runner --json)' >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat platforms.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          test "$(jq -r '.platforms | index("twitter")' platforms.json)" != "null"
+
+      - name: Lint + Typecheck (JSON)
+        run: |
+          node scripts/test/runner.js check --json | tee check.json
+          echo '### Check summary (from runner --json)' >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat check.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          LINT_EXIT=$(jq -r '.lintExitCode // .exitCode // 0' check.json || echo 0)
+          TYPE_EXIT=$(jq -r '.typecheck.exitCode // 0' check.json || echo 0)
+          if [ "$LINT_EXIT" -ne 0 ] || [ "$TYPE_EXIT" -ne 0 ]; then
+            echo "Runner check failed: lint=$LINT_EXIT typecheck=$TYPE_EXIT"
+            exit 1
+          fi
+
