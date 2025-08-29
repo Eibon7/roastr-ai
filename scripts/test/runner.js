@@ -56,20 +56,16 @@ function runJest(patterns, options = {}) {
   return new Promise((resolve, reject) => {
     const jestArgs = [];
 
-    // Add test patterns - convert globs to regex-safe patterns
+    // Add test patterns - use simple pattern matching for Jest
     if (patterns && patterns.length > 0) {
+      // For Jest testPathPattern, we can use simpler patterns
+      // Convert glob patterns to Jest-compatible regex patterns
       const regexPatterns = patterns.map(pattern => {
-        // Convert glob patterns to regex-safe patterns
+        // Replace ** with .* and * with [^/]* for directory matching
         return pattern
-          .replace(/\*\*/g, '.*')        // ** becomes .*
-          .replace(/\*/g, '[^/]*')       // * becomes [^/]*
-          .replace(/\./g, '\\.')         // Escape dots
-          .replace(/\+/g, '\\+')         // Escape plus signs
-          .replace(/\?/g, '\\?')         // Escape question marks
-          .replace(/\[/g, '\\[')         // Escape square brackets
-          .replace(/\]/g, '\\]')         // Escape square brackets
-          .replace(/\(/g, '\\(')         // Escape parentheses
-          .replace(/\)/g, '\\)');        // Escape parentheses
+          .replace(/\*\*/g, '.*')
+          .replace(/\*/g, '[^/]*')
+          .replace(/\./g, '\\.');
       });
       jestArgs.push('--testPathPattern', regexPatterns.join('|'));
     }
