@@ -1,3 +1,11 @@
+/**
+ * AuthService
+ * Centralizes authentication and user account flows around Supabase auth and
+ * our application database (users, organizations, subscriptions, limits).
+ *
+ * All methods are asynchronous, log meaningful events, and throw on failure
+ * so that callers can handle errors uniformly in routes and CLIs.
+ */
 const { supabaseServiceClient, supabaseAnonClient, createUserClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
 const crypto = require('crypto');
@@ -11,7 +19,10 @@ const planLimitsService = require('./planLimitsService');
 class AuthService {
     
     /**
-     * Sign up a new user with email and password
+     * Sign up a new user with email and password.
+     * @param {{ email: string, password: string, name?: string }} params Credentials and optional name.
+     * @returns {Promise<{ user: import('@supabase/supabase-js').User, session: any, profile: any }>}
+     * @throws {Error} If auth creation or user profile insertion fails.
      */
     async signUp({ email, password, name }) {
         try {
@@ -72,7 +83,10 @@ class AuthService {
     }
 
     /**
-     * Sign up with magic link
+     * Sign up with magic link.
+     * @param {{ email: string, name?: string }} params Email and optional display name.
+     * @returns {Promise<{ message: string, email: string }>}
+     * @throws {Error} If sending the magic link fails.
      */
     async signUpWithMagicLink({ email, name }) {
         try {
@@ -103,7 +117,11 @@ class AuthService {
     }
 
     /**
-     * Sign in with email and password
+     * Sign in with email and password.
+     * Also fetches the user profile from the `users` table.
+     * @param {{ email: string, password: string }} params Credentials.
+     * @returns {Promise<{ user: any, session: any, profile: any | null }>}
+     * @throws {Error} If authentication fails.
      */
     async signIn({ email, password }) {
         try {
@@ -146,7 +164,11 @@ class AuthService {
     }
 
     /**
-     * Sign in with magic link
+     * Sign in with magic link.
+     * Sends a sign‑in magic link to the specified email.
+     * @param {string} email Account email address.
+     * @returns {Promise<{ message: string, email: string }>}
+     * @throws {Error} If sending the magic link fails.
      */
     async signInWithMagicLink(email) {
         try {
@@ -172,7 +194,10 @@ class AuthService {
     }
 
     /**
-     * Sign out user
+     * Sign out the current user.
+     * @param {string} accessToken User access token.
+     * @returns {Promise<{ message: string }>}
+     * @throws {Error} If sign out fails.
      */
     async signOut(accessToken) {
         try {
@@ -193,7 +218,10 @@ class AuthService {
     }
 
     /**
-     * Get current user profile
+     * Get current user profile and related organization/integrations.
+     * @param {string} accessToken Valid access token for the user.
+     * @returns {Promise<any>} Profile object including `integrations`.
+     * @throws {Error} If token is invalid or profile cannot be fetched.
      */
     async getCurrentUser(accessToken) {
         try {
@@ -246,7 +274,10 @@ class AuthService {
     }
 
     /**
-     * Reset password
+     * Send password reset email.
+     * @param {string} email Account email address.
+     * @returns {Promise<{ message: string, email: string }>}
+     * @throws {Error} If sending the reset email fails.
      */
     async resetPassword(email) {
         try {
@@ -270,8 +301,12 @@ class AuthService {
     }
 
     /**
-     * Update user profile
-     */
+    * Update user profile fields.
+    * @param {string} accessToken User access token.
+    * @param {Record<string, any>} updates Partial update object for `users`.
+    * @returns {Promise<any>} Updated profile row.
+    * @throws {Error} If authentication or update fails.
+    */
     async updateProfile(accessToken, updates) {
         try {
             const userClient = createUserClient(accessToken);
@@ -306,7 +341,11 @@ class AuthService {
     }
 
     /**
-     * Update password with access token
+     * Update password with access token.
+     * @param {string} accessToken User access token.
+     * @param {string} newPassword New password to set.
+     * @returns {Promise<{ message: string }>}
+     * @throws {Error} If update fails.
      */
     async updatePassword(accessToken, newPassword) {
         try {
@@ -332,7 +371,13 @@ class AuthService {
     }
 
     /**
-     * Update password with current password verification (Issue #89)
+     * Update password after verifying the current password.
+     * Enforces password history policy (no recent reuse).
+     * @param {string} accessToken User access token.
+     * @param {string} currentPassword Current password (verification).
+     * @param {string} newPassword New password to set.
+     * @returns {Promise<{ message: string, user: { id: string, email: string } }>} Minimal success payload.
+     * @throws {Error} If auth, verification, or update fails.
      */
     async updatePasswordWithVerification(accessToken, currentPassword, newPassword) {
         try {
@@ -402,7 +447,11 @@ class AuthService {
     }
 
     /**
-     * Verify email confirmation token
+     * Verify email confirmation token.
+     * @param {string} token Verification token hash.
+     * @param {string} type Verification type (e.g., signup, recovery).
+     * @param {string} email Email address under verification.
+     * @returns {Promise<{ success: boolean, data?: any, error?: string }>}
      */
     async verifyEmail(token, type, email) {
         try {
@@ -429,7 +478,9 @@ class AuthService {
     }
 
     /**
-     * Admin: List all users with enhanced filtering and search (service client)
+     * Admin: List users with enhanced filtering and search.
+     * @param {{ limit?: number, offset?: number, search?: string, plan?: string, active?: boolean, suspended?: boolean, sortBy?: string, sortOrder?: 'asc'|'desc' }} [options]
+     * @returns {Promise<{ users: any[], pagination: { total: number, limit: number, offset: number, has_more: boolean } }>}
      */
     async listUsers(options = {}) {
         try {
@@ -541,7 +592,10 @@ class AuthService {
     }
 
     /**
-     * Admin: Delete user (service client)
+     * Admin: Delete user (service client).
+     * Removes auth user and best‑effort cleans database user row.
+     * @param {string} userId Target user id.
+     * @returns {Promise<{ message: string }>}
      */
     async deleteUser(userId) {
         try {
@@ -573,7 +627,9 @@ class AuthService {
     }
 
     /**
-     * Admin: Create user manually (service client)
+     * Admin: Create user manually (service client).
+     * @param {{ email: string, password?: string, name?: string, plan?: string, isAdmin?: boolean }} params
+     * @returns {Promise<{ user: any, temporaryPassword: string | null }>}
      */
     async createUserManually({ email, password, name, plan = 'free', isAdmin = false }) {
         try {
@@ -632,9 +688,13 @@ class AuthService {
     }
 
     /**
-     * Admin: Update user plan (service client)
-     * Updates user plan, subscription, organization limits and logs audit trail
-     * Implements rollback mechanism for failed limit application (Issue #125)
+     * Admin: Update user plan (service client).
+     * Updates user plan, subscription, organization limits and logs audit trail.
+     * Implements rollback mechanism for failed limit application.
+     * @param {string} userId Target user id.
+     * @param {string} newPlan New plan identifier.
+     * @param {string|null} [adminId] Admin performing the change.
+     * @returns {Promise<{ message: string, plan: string }>}
      */
     async updateUserPlan(userId, newPlan, adminId = null) {
         let rollbackRequired = false;

@@ -67,7 +67,7 @@ router.get('/', notificationLimiter, authenticateToken, async (req, res) => {
         }
 
         // Validate cursor if provided
-        if (cursor && !Date.parse(cursor)) {
+        if (cursor !== undefined && (!cursor.trim() || !Date.parse(cursor))) {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid cursor. Must be a valid ISO timestamp'

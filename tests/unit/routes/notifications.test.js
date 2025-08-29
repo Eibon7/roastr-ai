@@ -362,28 +362,30 @@ describe('Notifications Routes', () => {
                 expect(notificationService.getUserNotifications).not.toHaveBeenCalled();
             });
 
-            it('should handle empty cursor string', async () => {
-                notificationService.getUserNotifications.mockResolvedValueOnce({
-                    success: true,
-                    data: [],
-                    hasMore: false,
-                    nextCursor: null
-                });
-
+            it('should return 400 for empty cursor string', async () => {
                 const response = await request(app)
                     .get('/api/notifications?cursor=')
-                    .expect(200);
+                    .expect(400);
 
-                expect(response.body.data.pagination).toHaveProperty('nextCursor', null);
-                
-                expect(notificationService.getUserNotifications).toHaveBeenCalledWith('test-user-id', {
-                    status: undefined,
-                    type: undefined,
-                    includeExpired: false,
-                    limit: 50,
-                    cursor: '',
-                    offset: undefined
+                expect(response.body).toEqual({
+                    success: false,
+                    error: 'Invalid cursor. Must be a valid ISO timestamp'
                 });
+
+                expect(notificationService.getUserNotifications).not.toHaveBeenCalled();
+            });
+
+            it('should return 400 for cursor with only whitespace', async () => {
+                const response = await request(app)
+                    .get('/api/notifications?cursor=   ')
+                    .expect(400);
+
+                expect(response.body).toEqual({
+                    success: false,
+                    error: 'Invalid cursor. Must be a valid ISO timestamp'
+                });
+
+                expect(notificationService.getUserNotifications).not.toHaveBeenCalled();
             });
 
             it('should combine cursor pagination with filters', async () => {
@@ -443,6 +445,45 @@ describe('Notifications Routes', () => {
                             nextCursor: null
                         }
                     }
+                });
+            });
+
+            it('should set nextCursor=null when hasMore=false even with data', async () => {
+                const cursor = '2024-01-01T12:00:00.000Z';
+                notificationService.getUserNotifications.mockResolvedValueOnce({
+                    success: true,
+                    data: [
+                        { id: 'notif-1', created_at: '2024-01-01T11:00:00.000Z' }
+                    ],
+                    hasMore: false,
+                    nextCursor: null // Properly set to null when hasMore is false
+                });
+
+                const response = await request(app)
+                    .get(`/api/notifications?cursor=${encodeURIComponent(cursor)}`)
+                    .expect(200);
+
+                expect(response.body).toEqual({
+                    success: true,
+                    data: {
+                        notifications: [
+                            { id: 'notif-1', created_at: '2024-01-01T11:00:00.000Z' }
+                        ],
+                        pagination: {
+                            limit: 50,
+                            hasMore: false,
+                            nextCursor: null
+                        }
+                    }
+                });
+
+                expect(notificationService.getUserNotifications).toHaveBeenCalledWith('test-user-id', {
+                    status: undefined,
+                    type: undefined,
+                    includeExpired: false,
+                    limit: 50,
+                    cursor: cursor,
+                    offset: undefined
                 });
             });
 

@@ -301,6 +301,7 @@ class NotificationService {
         cursor = null,
         offset = 0
     } = {}) {
+        const startTime = Date.now();
         try {
             let query = supabaseServiceClient
                 .from('user_notifications')
@@ -351,15 +352,31 @@ class NotificationService {
                 if (hasMore) {
                     // Remove the extra record and set the next cursor
                     notifications.pop();
-                    nextCursor = notifications[notifications.length - 1]?.created_at || null;
-                } else if (notifications.length > 0) {
-                    nextCursor = notifications[notifications.length - 1]?.created_at || null;
                 }
+                // Fix nextCursor assignment: only set cursor when hasMore AND notifications exist
+                nextCursor = notifications.length > 0 && hasMore 
+                    ? notifications[notifications.length - 1]?.created_at 
+                    : null;
             } else {
                 // Legacy: hasMore detection for offset pagination
                 // This is less accurate but maintains backward compatibility
                 hasMore = notifications.length === limit;
             }
+
+            // Log query duration for performance monitoring
+            const queryDuration = Date.now() - startTime;
+            const paginationType = cursor !== null ? 'cursor' : 'offset';
+            
+            logger.info('📝 Notifications query completed:', {
+                userId: userId.substring(0, 8) + '***', // Safe logging
+                paginationType,
+                cursor: cursor ? cursor.substring(0, 19) + '...' : null,
+                limit,
+                resultCount: notifications.length,
+                hasMore,
+                queryDuration: `${queryDuration}ms`,
+                filters: { status, type, includeExpired }
+            });
 
             return {
                 success: true,
