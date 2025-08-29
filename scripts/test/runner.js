@@ -3,7 +3,6 @@
 const { Command } = require('commander');
 const { spawn } = require('child_process');
 const colors = require('colors');
-const path = require('path');
 const glob = require('glob');
 
 /**
@@ -56,18 +55,10 @@ function runJest(patterns, options = {}) {
   return new Promise((resolve, reject) => {
     const jestArgs = [];
 
-    // Add test patterns - use simple pattern matching for Jest
+    // Add test patterns - use Jest's native pattern matching
     if (patterns && patterns.length > 0) {
-      // For Jest testPathPattern, we can use simpler patterns
-      // Convert glob patterns to Jest-compatible regex patterns
-      const regexPatterns = patterns.map(pattern => {
-        // Replace ** with .* and * with [^/]* for directory matching
-        return pattern
-          .replace(/\*\*/g, '.*')
-          .replace(/\*/g, '[^/]*')
-          .replace(/\./g, '\\.');
-      });
-      jestArgs.push('--testPathPatterns', regexPatterns.join('|'));
+      // Jest can handle simple glob patterns directly
+      jestArgs.push('--testPathPatterns', patterns.join('|'));
     }
 
     // Add mock mode environment variable
@@ -239,8 +230,12 @@ program
     console.log(colors.cyan('\n📁 Checking scope patterns:'));
     Object.entries(TEST_SCOPES).forEach(([key, scope]) => {
       const hasTests = scope.patterns.some(pattern => {
-        const glob = require('glob');
-        return glob.sync(pattern).length > 0;
+        try {
+          return glob.sync(pattern).length > 0;
+        } catch (error) {
+          console.log(colors.yellow(`⚠️  Invalid pattern for ${key}: ${pattern} - ${error.message}`));
+          return false;
+        }
       });
 
       if (hasTests) {
