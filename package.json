@@ -82,8 +82,14 @@
     "validate:prices": "node scripts/validate-prices.js",
     "validate:prices:ci": "ENABLE_BILLING=true node scripts/validate-prices.js",
     "validate:api-readiness": "node scripts/validate-api-readiness.js",
-    "test:api-readiness": "ENABLE_MOCK_MODE=true npm run validate:api-readiness",
-    "test:staging:plan-limits": "node scripts/test-staging-plan-limits.js"
+    "test:api-readiness": "cross-env ENABLE_MOCK_MODE=true npm run validate:api-readiness",
+    "test:staging:plan-limits": "node scripts/test-staging-plan-limits.js",
+    "test:scopes": "node scripts/test/runner.js scopes",
+    "ci:test:auth": "cross-env ENABLE_MOCK_MODE=true jest --testPathPatterns=\"(^|/)auth(/|$)\" --ci --runInBand",
+    "ci:test:workers": "cross-env ENABLE_MOCK_MODE=true jest --testPathPatterns=\"(^|/)workers(/|$)\" --ci --runInBand",
+    "ci:test:billing": "cross-env ENABLE_MOCK_MODE=true jest --testPathPatterns=\"(^|/)billing(/|$)\" --ci --runInBand",
+    "coverage:generate": "cross-env ENABLE_MOCK_MODE=true jest --coverage --silent",
+    "coverage:check": "cross-env ENABLE_MOCK_MODE=true jest --coverage --passWithNoTests"
   },
   "repository": {
     "type": "git",
@@ -154,8 +160,10 @@
     "@tailwindcss/postcss": "^4.1.12",
     "autoprefixer": "^10.4.21",
     "babel-jest": "^30.0.5",
+    "cross-env": "^10.0.0",
     "eslint": "^9.33.0",
-    "jest": "^29.7.0",
+    "glob": "^10.3.10",
+    "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "jest-junit": "^16.0.0",
     "jsdom": "^26.1.0",
