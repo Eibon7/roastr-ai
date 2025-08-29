@@ -10,12 +10,15 @@ Esta regla asegura que Augment procese automáticamente las sugerencias de CodeR
 ## Behavior
 - Cuando CodeRabbit sugiera cambios o fixes en un commit o PR:
   1. **Aplicar automáticamente** las sugerencias en el código.
-  2. **Ejecutar los tests existentes** (npm test / jest) para verificar que todo sigue funcionando.
-  3. Si los tests pasan:
+  2. **Instalar dependencias** con `npm ci` antes de ejecutar tests.
+  3. **Ejecutar los tests existentes** (npm test / jest) para verificar que todo sigue funcionando.
+     - Tests que llaman servicios externos deben ser omitidos a menos que las variables de entorno requeridas estén presentes.
+     - Variables de entorno requeridas para tests externos: `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `TWITTER_BEARER_TOKEN`.
+  4. Si los tests pasan:
      - Comentar en la PR que las sugerencias se aplicaron y los tests han pasado correctamente.
-     - **Cerrar la issue original asociada** si corresponde.
+     - **Cerrar la issue original asociada** solo si la PR contiene el label `auto-close-issue` o incluye la directiva `[AUTO-CLOSE-ISSUE]` en el cuerpo de la PR.
      - Dejar la PR lista para merge manual por parte del usuario.
-  4. Si los tests fallan:
+  5. Si los tests fallan:
      - Mantener la PR abierta.
      - Crear un comentario en GitHub resumiendo los fallos y proponiendo pasos siguientes.
 - Nunca eliminar ni sobrescribir código crítico sin dejar un diff claro en la PR.

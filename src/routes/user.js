@@ -1279,7 +1279,7 @@ router.get('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimit
 /**
  * POST /api/user/data-export
  * Request GDPR data export via email (Issue #258)
- * Rate limited: 3 attempts per hour per IP/user
+ * Rate limited: 5 attempts per hour per IP/user
  */
 router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimiter, async (req, res) => {
     try {
@@ -1328,7 +1328,6 @@ router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimi
         const downloadUrl = `${req.protocol}://${req.get('host')}${exportResult.downloadUrl}`;
 
         // Send email with download link
-        const emailService = require('../services/emailService');
         await emailService.sendDataExportEmail(userData.email, {
             userName: userData.name || 'User',
             downloadUrl,
@@ -1349,7 +1348,7 @@ router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimi
 
         logger.info('GDPR data export requested via email', {
             userId: SafeUtils.safeUserIdPrefix(userId),
-            email: userData.email,
+            email: SafeUtils.maskEmail(userData.email),
             filename: exportResult.filename,
             size: exportResult.size
         });

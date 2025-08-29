@@ -19,6 +19,44 @@ const SafeUtils = {
   },
 
   /**
+   * Safely mask an email address for logging without exposing PII
+   * @param {string} email - The email address to mask
+   * @returns {string} Masked email address
+   */
+  maskEmail(email) {
+    if (!email || typeof email !== 'string') {
+      return 'unknown-email';
+    }
+
+    const atIndex = email.indexOf('@');
+    if (atIndex === -1) {
+      return 'invalid-email';
+    }
+
+    const localPart = email.substring(0, atIndex);
+    const domain = email.substring(atIndex + 1);
+
+    // Mask local part: keep first character, mask the rest
+    const maskedLocal = localPart.length > 1
+      ? localPart.charAt(0) + '*'.repeat(Math.min(localPart.length - 1, 6))
+      : '*';
+
+    // Mask domain: keep first character and TLD, mask the middle
+    const domainParts = domain.split('.');
+    if (domainParts.length < 2) {
+      return maskedLocal + '@***';
+    }
+
+    const domainName = domainParts[0];
+    const tld = domainParts[domainParts.length - 1];
+    const maskedDomain = domainName.length > 1
+      ? domainName.charAt(0) + '*'.repeat(Math.min(domainName.length - 1, 4)) + '.' + tld
+      : '***.' + tld;
+
+    return maskedLocal + '@' + maskedDomain;
+  },
+
+  /**
    * Safely get a string value with optional fallback
    * @param {any} value - The value to safely convert to string
    * @param {string} fallback - Fallback value if undefined/null

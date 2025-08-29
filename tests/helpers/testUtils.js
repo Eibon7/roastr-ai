@@ -189,14 +189,20 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
     quotaScenario = null // 'near' | 'over' | null
   } = options;
 
+  // Derive effective plan from scenarioType if it indicates a specific plan
+  let effectivePlan = planType;
+  if (['enterprise', 'agency', 'plus', 'pro', 'freeTier'].includes(scenarioType)) {
+    effectivePlan = scenarioType === 'freeTier' ? 'free' : scenarioType;
+  }
+
   // Use shared plan limits for consistency
-  const defaults = PLAN_LIMITS[planType] || PLAN_LIMITS.free;
+  const defaults = PLAN_LIMITS[effectivePlan] || PLAN_LIMITS.free;
 
   // Build base entitlements and usage
   const finalEntitlements = {
-    plan_name: planType,
+    plan_name: entitlements.plan_name || effectivePlan,
     monthlyResponsesLimit: defaults.monthlyResponsesLimit,
-    integrationsLimit: defaults.integrationsLimit,
+    integrationsLimit: entitlements.platforms || defaults.platforms,
     shieldEnabled: defaults.shieldEnabled,
     ...entitlements
   };
@@ -213,14 +219,14 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
       id: userId,
       email: `test-${userId}@example.com`,
       role: userRole,
-      plan: planType,
+      plan: effectivePlan,
       createdAt: new Date().toISOString(),
       isActive: isActive && !suspended
     },
     organization: {
       id: orgId,
       name: `Test Org ${orgId}`,
-      plan: planType,
+      plan: effectivePlan,
       createdAt: new Date().toISOString(),
       status: suspended ? 'suspended' : 'active',
       suspendedReason: suspended ? (suspendedReason || 'Suspended by scenario') : null,
@@ -268,7 +274,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         },
         usage: {
           roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: planDefaults.enterprise.monthlyResponsesLimit,
+          limit: finalEntitlements.monthlyResponsesLimit,
           costControl: {
             enabled: true,
             monthlyBudget: 500,
@@ -293,7 +299,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         },
         usage: {
           roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: planDefaults.agency.monthlyResponsesLimit,
+          limit: PLAN_LIMITS.agency.monthlyResponsesLimit,
           costControl: {
             enabled: true,
             monthlyBudget: 250,
@@ -317,7 +323,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         },
         usage: {
           roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: planDefaults.plus.monthlyResponsesLimit
+          limit: PLAN_LIMITS.plus.monthlyResponsesLimit
         }
       };
 
@@ -336,7 +342,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         },
         usage: {
           roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: planDefaults.pro.monthlyResponsesLimit,
+          limit: PLAN_LIMITS.pro.monthlyResponsesLimit,
           costControl: {
             enabled: true,
             monthlyBudget: 50,
@@ -359,7 +365,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         },
         usage: {
           roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: planDefaults.free.monthlyResponsesLimit,
+          limit: PLAN_LIMITS.free.monthlyResponsesLimit,
           costControl: {
             enabled: false
           }

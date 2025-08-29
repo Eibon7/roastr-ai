@@ -362,10 +362,156 @@ program
   .option('--json', 'Print JSON output')
   .action(listPlatforms);
 
+// Command: Check project health by running npm scripts
+program
+  .command('check')
+  .description('Run project health checks using npm scripts')
+  .option('--json', 'Output results in JSON format')
+  .action(async (options) => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+
+      // Check if package.json exists
+      const packageJsonPath = path.join(process.cwd(), 'package.json');
+      if (!fs.existsSync(packageJsonPath)) {
+        const result = {
+          command: null,
+          exitCode: 0,
+          message: 'no check/test script'
+        };
+
+        if (options.json) {
+          console.log(JSON.stringify(result));
+        } else {
+          console.log('No package.json found - no check/test script available');
+        }
+        return;
+      }
+
+      // Read package.json to find available scripts
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      const scripts = packageJson.scripts || {};
+
+      // Prefer 'check' script, then 'test'
+      let scriptName = null;
+      if (scripts.check) {
+        scriptName = 'check';
+      } else if (scripts.test) {
+        scriptName = 'test';
+      }
+
+      if (!scriptName) {
+        const result = {
+          command: null,
+          exitCode: 0,
+          message: 'no check/test script'
+        };
+
+        if (options.json) {
+          console.log(JSON.stringify(result));
+        } else {
+          console.log('No check or test script found in package.json');
+        }
+        return;
+      }
+
+      // Run the npm script
+      const command = `npm run ${scriptName}`;
+
+      return new Promise((resolve) => {
+        const child = spawn('npm', ['run', scriptName], {
+          stdio: 'pipe',
+          env: process.env
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        child.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
+
+        child.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+
+        child.on('close', (exitCode) => {
+          // Trim output to reasonable length for JSON
+          const maxLength = 2000;
+          const trimmedStdout = stdout.length > maxLength ?
+            stdout.substring(0, maxLength) + '...[truncated]' : stdout;
+          const trimmedStderr = stderr.length > maxLength ?
+            stderr.substring(0, maxLength) + '...[truncated]' : stderr;
+
+          const result = {
+            command,
+            exitCode,
+            stdout: trimmedStdout,
+            stderr: trimmedStderr
+          };
+
+          if (options.json) {
+            console.log(JSON.stringify(result));
+          } else {
+            console.log(colors.cyan(`🔍 Ran: ${command}`));
+            console.log(colors.gray(`Exit code: ${exitCode}`));
+            if (stdout) {
+              console.log(colors.green('📤 Output:'));
+              console.log(stdout);
+            }
+            if (stderr) {
+              console.log(colors.red('📤 Errors:'));
+              console.log(stderr);
+            }
+          }
+
+          // Set process exit code to match child exit code
+          process.exitCode = exitCode;
+          resolve();
+        });
+
+        child.on('error', (error) => {
+          const result = {
+            command,
+            exitCode: 1,
+            stdout: '',
+            stderr: `Failed to start process: ${error.message}`
+          };
+
+          if (options.json) {
+            console.log(JSON.stringify(result));
+          } else {
+            console.error(colors.red(`❌ Failed to run ${command}: ${error.message}`));
+          }
+
+          process.exitCode = 1;
+          resolve();
+        });
+      });
+
+    } catch (error) {
+      const result = {
+        command: null,
+        exitCode: 1,
+        stdout: '',
+        stderr: `Check command failed: ${error.message}`
+      };
+
+      if (options.json) {
+        console.log(JSON.stringify(result));
+      } else {
+        console.error(colors.red(`❌ Check command failed: ${error.message}`));
+      }
+
+      process.exitCode = 1;
+    }
+  });
+
 // Error handling for unknown commands
 program.on('command:*', () => {
   console.error(colors.red('❌ Invalid command: %s'), program.args.join(' '));
-  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, validate'));
+  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, validate, check'));
   console.log(colors.gray('Use --help for more information'));
   process.exit(1);
 });

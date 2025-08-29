@@ -48,6 +48,41 @@ jest.mock('../../../src/config/supabase', () => ({
             })
         })
     },
+    createUserClient: jest.fn(() => ({
+        from: () => ({
+            select: () => ({
+                eq: () => ({
+                    single: () => Promise.resolve({
+                        data: {
+                            id: 'user-123',
+                            email: 'test@example.com',
+                            name: 'Test User',
+                            plan: 'free',
+                            is_admin: false,
+                            active: true,
+                            onboarding_complete: true,
+                            preferences: {},
+                            created_at: new Date().toISOString(),
+                            organizations: []
+                        },
+                        error: null
+                    })
+                })
+            })
+        }),
+        auth: {
+            getUser: () => Promise.resolve({
+                data: {
+                    user: {
+                        id: 'user-123',
+                        email: 'test@example.com',
+                        name: 'Test User'
+                    }
+                },
+                error: null
+            })
+        }
+    })),
     getUserFromToken: jest.fn().mockResolvedValue({
         id: 'user-123',
         email: 'test@example.com',

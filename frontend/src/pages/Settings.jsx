@@ -347,38 +347,7 @@ export default function Settings() {
     }
   };
 
-  // Data export handling
-  const handleDataExport = async () => {
-    try {
-      addNotification('Preparando exportación de datos...', 'info');
-      
-      // This would call a data export endpoint
-      const result = await apiClient.get('/auth/export-data');
-      
-      if (result.success) {
-        // Create and download file
-        const dataStr = JSON.stringify(result.data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `roastr-data-export-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        addNotification('Datos exportados correctamente', 'success');
-      } else {
-        addNotification('Error al exportar datos', 'error');
-      }
-      
-    } catch (error) {
-      console.error('Data export error:', error);
-      addNotification('La exportación de datos estará disponible próximamente', 'info');
-    }
-  };
+
 
   // Password reset handling (Issue #258)
   const handlePasswordReset = async () => {
@@ -1703,7 +1672,7 @@ export default function Settings() {
                   Download all your personal data in JSON format (GDPR compliance)
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={handleDataExport}>
+              <Button variant="outline" size="sm" onClick={() => setShowDataExportModal(true)}>
                 <Download className="h-4 w-4 mr-2" />
                 Export Data
               </Button>
