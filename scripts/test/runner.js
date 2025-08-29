@@ -14,39 +14,145 @@ const program = new Command();
 program.name('test-runner').description('CLI test runner with scope filtering').version('1.0.0');
 
 const TEST_SCOPES = {
+  // Enhanced scopes from PR #282
+  unit: {
+    description: 'Run unit tests only',
+    patterns: ['tests/unit/**/*.test.js'],
+    mockModeRecommended: true
+  },
+  integration: {
+    description: 'Run integration tests only',
+    patterns: ['tests/integration/**/*.test.js'],
+    mockModeRecommended: false
+  },
+  smoke: {
+    description: 'Run smoke tests only',
+    patterns: ['tests/smoke/**/*.test.js'],
+    mockModeRecommended: true
+  },
+  routes: {
+    description: 'Run API route tests',
+    patterns: ['tests/unit/routes/**/*.test.js'],
+    mockModeRecommended: true
+  },
+  services: {
+    description: 'Run service layer tests',
+    patterns: ['tests/unit/services/**/*.test.js'],
+    mockModeRecommended: true
+  },
+  workers: {
+    description: 'Run background worker tests',
+    patterns: ['tests/unit/workers/**/*.test.js'],
+    mockModeRecommended: true
+  },
+  middleware: {
+    description: 'Run middleware tests',
+    patterns: ['tests/unit/middleware/**/*.test.js'],
+    mockModeRecommended: true
+  },
+  billing: {
+    description: 'Run billing and payment tests',
+    patterns: [
+      'tests/unit/routes/billing*.test.js',
+      'tests/unit/services/*billing*.test.js',
+      'tests/unit/workers/*billing*.test.js'
+    ],
+    mockModeRecommended: true,
+    requiresEnvVars: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET']
+  },
+  security: {
+    description: 'Run security and auth tests',
+    patterns: [
+      'tests/unit/routes/auth*.test.js',
+      'tests/unit/middleware/auth*.test.js',
+      'tests/unit/services/auth*.test.js',
+      'tests/unit/middleware/security*.test.js'
+    ],
+    mockModeRecommended: true
+  },
+  // Legacy scopes for backward compatibility
   auth: {
     name: 'Authentication & Authorization',
     patterns: ['tests/unit/auth/**/*.test.js', 'tests/integration/auth/**/*.test.js'],
-    description: 'User authentication, authorization, and session management tests'
+    description: 'User authentication, authorization, and session management tests',
+    mockModeRecommended: true
   },
-  workers: {
-    name: 'Background Workers',
-    patterns: ['tests/unit/workers/**/*.test.js', 'tests/integration/workers/**/*.test.js'],
-    description: 'Background job processing and queue management tests'
-  },
-  billing: {
-    name: 'Billing & Subscriptions',
-    patterns: ['tests/unit/routes/billing*.test.js', 'tests/integration/*billing*.test.js', 'tests/integration/plan-*.test.js', 'tests/integration/stripe*.test.js'],
-    description: 'Payment processing, subscription management, and billing tests'
-  },
-  services: {
-    name: 'Core Services',
-    patterns: ['tests/unit/services/**/*.test.js'],
-    description: 'Core business logic and service layer tests'
-  },
-  routes: {
-    name: 'API Routes',
-    patterns: ['tests/unit/routes/**/*.test.js'],
-    description: 'API endpoint and routing tests'
-  },
-  integration: {
-    name: 'Integration Tests',
-    patterns: ['tests/integration/**/*.test.js'],
-    description: 'End-to-end and integration tests'
+  all: {
+    description: 'Run all tests',
+    patterns: ['tests/**/*.test.js'],
+    mockModeRecommended: false
   }
 };
 
-const PLATFORMS = ['twitter', 'instagram', 'facebook', 'linkedin', 'tiktok'];
+// Enhanced platform filters from PR #282
+const PLATFORM_FILTERS = {
+  twitter: 'twitter|Twitter',
+  youtube: 'youtube|YouTube',
+  instagram: 'instagram|Instagram',
+  facebook: 'facebook|Facebook',
+  discord: 'discord|Discord',
+  twitch: 'twitch|Twitch',
+  reddit: 'reddit|Reddit',
+  tiktok: 'tiktok|TikTok',
+  bluesky: 'bluesky|Bluesky'
+};
+
+const PLATFORMS = Object.keys(PLATFORM_FILTERS); // For backward compatibility
+
+/**
+ * Print available scopes with enhanced formatting from PR #282
+ */
+function listScopes() {
+  console.log(colors.cyan('📋 Available test scopes:\n'));
+
+  Object.entries(TEST_SCOPES).forEach(([scope, config]) => {
+    const mockIcon = config.mockModeRecommended ? '🔶' : '🔷';
+    console.log(`  ${mockIcon} ${scope.padEnd(12)} - ${config.description}`);
+
+    if (config.requiresEnvVars) {
+      console.log(colors.gray(`    ${''.padEnd(12)}   Requires: ${config.requiresEnvVars.join(', ')}`));
+    }
+  });
+
+  console.log(colors.cyan('\n📝 Legend:'));
+  console.log('  🔶 Mock mode recommended');
+  console.log('  🔷 Real mode recommended');
+  console.log(colors.cyan('\n🌐 Available platforms:'), Object.keys(PLATFORM_FILTERS).join(', '));
+}
+
+/**
+ * Print available platforms with JSON support from PR #282
+ */
+function listPlatforms(options = {}) {
+  const names = Object.keys(PLATFORM_FILTERS);
+  if (options.json) {
+    console.log(JSON.stringify({ platforms: names }, null, 2));
+    return;
+  }
+  console.log(colors.cyan('🌐 Available platforms:\n'));
+  names.forEach((p) => console.log(`  - ${p}`));
+}
+
+/**
+ * Check if required environment variables are set from PR #282
+ */
+function checkRequiredEnvVars(scope) {
+  const scopeConfig = TEST_SCOPES[scope];
+  if (!scopeConfig?.requiresEnvVars) return true;
+
+  const missingVars = scopeConfig.requiresEnvVars.filter(varName => !process.env[varName]);
+
+  if (missingVars.length > 0) {
+    console.log(colors.yellow(`⚠️  Missing required environment variables for ${scope}:`));
+    missingVars.forEach(varName => {
+      console.log(colors.red(`   - ${varName}`));
+    });
+    console.log(colors.gray('\nSet these variables before running tests for this scope.'));
+    return false;
+  }
+
+  return true;
+}
 
 /**
  * Execute Jest with specified patterns and options
@@ -113,17 +219,12 @@ function runJest(patterns, options = {}) {
   });
 }
 
-// Command: List available scopes
+// Command: List available scopes (enhanced from PR #282)
 program
   .command('scopes')
   .description('List all available test scopes')
   .action(() => {
-    console.log(colors.cyan('📦 Available Test Scopes:\n'));
-    Object.entries(TEST_SCOPES).forEach(([key, scope]) => {
-      console.log(colors.yellow(`  ${key.padEnd(12)} - ${scope.name}`));
-      console.log(colors.gray(`    ${scope.description}`));
-      console.log(colors.gray(`    Patterns: ${scope.patterns.join(', ')}\n`));
-    });
+    listScopes();
   });
 
 // Command: Run tests by scope
@@ -149,8 +250,14 @@ program
         process.exit(1);
       }
 
+      // Check required environment variables (from PR #282)
+      if (!checkRequiredEnvVars(scope)) {
+        process.exit(1);
+      }
+
       const scopeConfig = TEST_SCOPES[scope];
-      console.log(colors.cyan(`🎯 Running ${scopeConfig.name} tests...`));
+      const scopeName = scopeConfig.name || scopeConfig.description;
+      console.log(colors.cyan(`🎯 Running ${scopeName} tests...`));
       console.log(colors.gray(`Description: ${scopeConfig.description}\n`));
 
       await runJest(scopeConfig.patterns, options);
@@ -248,10 +355,17 @@ program
     console.log(colors.green('\n✅ Test setup validation complete'));
   });
 
+// Command: List available platforms (from PR #282)
+program
+  .command('list-platforms')
+  .description('List available platform filters')
+  .option('--json', 'Print JSON output')
+  .action(listPlatforms);
+
 // Error handling for unknown commands
 program.on('command:*', () => {
   console.error(colors.red('❌ Invalid command: %s'), program.args.join(' '));
-  console.log(colors.yellow('Available commands: scopes, run, all, platforms, validate'));
+  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, validate'));
   console.log(colors.gray('Use --help for more information'));
   process.exit(1);
 });

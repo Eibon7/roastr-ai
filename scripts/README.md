@@ -10,9 +10,12 @@ The advanced test runner (`scripts/test/runner.js`) provides scope-based test ex
 
 ### Features
 
-- **Scope-based test organization** - Run tests by functional area (auth, workers, billing, etc.)
+- **Enhanced scope-based test organization** - Run tests by functional area with improved categorization
 - **Mock mode support** - Enable mocked external services for faster CI execution
-- **Platform filtering** - Filter tests by social media platform
+- **Extended platform filtering** - Support for 9+ social media platforms including Bluesky, Discord
+- **Environment variable validation** - Automatic checking of required env vars per scope
+- **JSON output support** - Machine-readable output for automation
+- **Enhanced visual feedback** - Color-coded recommendations and status indicators
 - **CI optimization** - Special modes for continuous integration
 - **Coverage integration** - Generate and validate coverage reports
 - **Comprehensive validation** - Verify test setup and configuration
@@ -57,6 +60,15 @@ node scripts/test/runner.js all
 node scripts/test/runner.js all --mock-mode --coverage
 ```
 
+#### List Available Platforms (New in PR #282)
+```bash
+# List all supported platforms
+node scripts/test/runner.js list-platforms
+
+# JSON output for automation
+node scripts/test/runner.js list-platforms --json
+```
+
 #### Platform Management
 ```bash
 # List available platforms
@@ -93,13 +105,23 @@ node scripts/test/runner.js validate
 | `routes` | API Routes | `tests/unit/routes/**` |
 | `integration` | Integration Tests | `tests/integration/**` |
 
-### Supported Platforms
+### Supported Platforms (Enhanced in PR #282)
 
 - `twitter` - Twitter/X integration tests
+- `youtube` - YouTube integration tests
 - `instagram` - Instagram integration tests
 - `facebook` - Facebook integration tests
-- `linkedin` - LinkedIn integration tests
+- `discord` - Discord integration tests
+- `twitch` - Twitch integration tests
+- `reddit` - Reddit integration tests
 - `tiktok` - TikTok integration tests
+- `bluesky` - Bluesky integration tests
+
+**New Features:**
+- 🔶 **Mock mode recommendations** - Visual indicators for optimal test execution
+- 🔷 **Real mode recommendations** - When external services are required
+- ⚠️ **Environment variable validation** - Automatic checking of required env vars
+- 📊 **JSON output support** - Machine-readable platform lists for automation
 
 ## 📦 NPM Scripts
 

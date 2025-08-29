@@ -155,6 +155,358 @@ const setMockEnvVars = () => {
 };
 
 /**
+ * Multi-tenant test scenarios (Issue #277, #281)
+ *
+ * Options support configurable limits, entitlements, roles, and account states,
+ * plus quota edge-case simulations (near/over limit).
+ */
+const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) => {
+  const {
+    planType = 'free',
+    userRole = 'user',
+    platforms = ['twitter'],
+    orgId = generateTestId(),
+    userId = generateTestId(),
+    // Account state
+    isActive = true,
+    suspended = false,
+    suspendedReason = null,
+    // Entitlements / limits (overrides)
+    entitlements = {},
+    // Usage overrides and edge simulation
+    usage: usageOverrides = {},
+    quotaScenario = null // 'near' | 'over' | null
+  } = options;
+
+  // Derived defaults by plan
+  const planDefaults = {
+    free: { monthlyResponsesLimit: 10, integrationsLimit: 1, shieldEnabled: false },
+    plus: { monthlyResponsesLimit: 250, integrationsLimit: 2, shieldEnabled: true },
+    pro: { monthlyResponsesLimit: 1000, integrationsLimit: 5, shieldEnabled: true },
+    agency: { monthlyResponsesLimit: 5000, integrationsLimit: 10, shieldEnabled: true },
+    enterprise: { monthlyResponsesLimit: 10000, integrationsLimit: 9, shieldEnabled: true }
+  };
+  const defaults = planDefaults[planType] || planDefaults.free;
+
+  // Build base entitlements and usage
+  const finalEntitlements = {
+    plan_name: planType,
+    monthlyResponsesLimit: defaults.monthlyResponsesLimit,
+    integrationsLimit: defaults.integrationsLimit,
+    shieldEnabled: defaults.shieldEnabled,
+    ...entitlements
+  };
+
+  // Compute usage per quotaScenario
+  const limit = finalEntitlements.monthlyResponsesLimit;
+  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (planType === 'free' ? 8 : 45);
+  if (quotaScenario === 'near') roastsThisMonth = Math.max(0, limit - 1);
+  if (quotaScenario === 'over') roastsThisMonth = limit + 5;
+
+  const baseScenario = {
+    organizationId: orgId,
+    user: {
+      id: userId,
+      email: `test-${userId}@example.com`,
+      role: userRole,
+      plan: planType,
+      createdAt: new Date().toISOString(),
+      isActive: isActive && !suspended
+    },
+    organization: {
+      id: orgId,
+      name: `Test Org ${orgId}`,
+      plan: planType,
+      createdAt: new Date().toISOString(),
+      status: suspended ? 'suspended' : 'active',
+      suspendedReason: suspended ? (suspendedReason || 'Suspended by scenario') : null,
+      settings: {
+        enabledPlatforms: platforms,
+        moderationLevel: 'standard',
+        autoResponse: true
+      },
+      entitlements: finalEntitlements
+    },
+    platforms: platforms.map(platform => ({
+      platform,
+      isConnected: true,
+      credentials: `mock-${platform}-credentials`,
+      settings: {
+        autoModerate: true,
+        responseEnabled: planType !== 'free'
+      }
+    })),
+    usage: {
+      roastsThisMonth,
+      limit,
+      currentSpend: usageOverrides.currentSpend ?? 0,
+      tokensUsed: usageOverrides.tokensUsed ?? 0
+    }
+  };
+
+  // Extend based on scenario type
+  switch (scenarioType) {
+    case 'enterprise':
+      return {
+        ...baseScenario,
+        user: { ...baseScenario.user, role: 'admin', plan: 'enterprise' },
+        organization: {
+          ...baseScenario.organization,
+          plan: 'enterprise',
+          settings: {
+            ...baseScenario.organization.settings,
+            enabledPlatforms: ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
+            moderationLevel: 'strict',
+            customBranding: true,
+            apiAccess: true,
+            bulkOperations: true
+          }
+        },
+        usage: {
+          roastsThisMonth: baseScenario.usage.roastsThisMonth,
+          limit: planDefaults.enterprise.monthlyResponsesLimit,
+          costControl: {
+            enabled: true,
+            monthlyBudget: 500,
+            currentSpend: 75.50
+          }
+        }
+      };
+      
+    case 'agency':
+      return {
+        ...baseScenario,
+        user: { ...baseScenario.user, role: 'admin', plan: 'agency' },
+        organization: {
+          ...baseScenario.organization,
+          plan: 'agency',
+          settings: {
+            ...baseScenario.organization.settings,
+            enabledPlatforms: platforms.length > 6 ? platforms.slice(0, 6) : platforms,
+            moderationLevel: 'enhanced',
+            teamSeats: 25
+          }
+        },
+        usage: {
+          roastsThisMonth: baseScenario.usage.roastsThisMonth,
+          limit: planDefaults.agency.monthlyResponsesLimit,
+          costControl: {
+            enabled: true,
+            monthlyBudget: 250,
+            currentSpend: 40
+          }
+        }
+      };
+
+    case 'plus':
+      return {
+        ...baseScenario,
+        user: { ...baseScenario.user, plan: 'plus' },
+        organization: {
+          ...baseScenario.organization,
+          plan: 'plus',
+          settings: {
+            ...baseScenario.organization.settings,
+            enabledPlatforms: platforms.length > 2 ? platforms.slice(0, 2) : platforms,
+            moderationLevel: 'standard'
+          }
+        },
+        usage: {
+          roastsThisMonth: baseScenario.usage.roastsThisMonth,
+          limit: planDefaults.plus.monthlyResponsesLimit
+        }
+      };
+
+    case 'pro':
+      return {
+        ...baseScenario,
+        user: { ...baseScenario.user, plan: 'pro' },
+        organization: {
+          ...baseScenario.organization,
+          plan: 'pro',
+          settings: {
+            ...baseScenario.organization.settings,
+            enabledPlatforms: platforms.length > 3 ? platforms.slice(0, 3) : platforms,
+            moderationLevel: 'enhanced'
+          }
+        },
+        usage: {
+          roastsThisMonth: baseScenario.usage.roastsThisMonth,
+          limit: planDefaults.pro.monthlyResponsesLimit,
+          costControl: {
+            enabled: true,
+            monthlyBudget: 50,
+            currentSpend: 12.75
+          }
+        }
+      };
+      
+    case 'freeTier':
+      return {
+        ...baseScenario,
+        organization: {
+          ...baseScenario.organization,
+          settings: {
+            ...baseScenario.organization.settings,
+            enabledPlatforms: ['twitter'], // Free tier limited to 1 platform
+            moderationLevel: 'basic',
+            autoResponse: false // Limited features
+          }
+        },
+        usage: {
+          roastsThisMonth: baseScenario.usage.roastsThisMonth,
+          limit: planDefaults.free.monthlyResponsesLimit,
+          costControl: {
+            enabled: false
+          }
+        }
+      };
+      
+    case 'multiUser':
+      const additionalUsers = Array.from({ length: 3 }, (_, i) => ({
+        id: generateTestId(),
+        email: `user${i}@${orgId}.example.com`,
+        role: i === 0 ? 'admin' : 'user',
+        plan: planType,
+        createdAt: new Date().toISOString(),
+        isActive: true
+      }));
+      
+      return {
+        ...baseScenario,
+        users: [baseScenario.user, ...additionalUsers],
+        organization: {
+          ...baseScenario.organization,
+          settings: {
+            ...baseScenario.organization.settings,
+            userLimit: planType === 'enterprise' ? 100 : planType === 'pro' ? 10 : 1,
+            roleBasedAccess: true
+          }
+        }
+      };
+      
+    case 'suspended':
+      return {
+        ...baseScenario,
+        user: { ...baseScenario.user, isActive: false, suspendedAt: new Date().toISOString() },
+        organization: {
+          ...baseScenario.organization,
+          status: 'suspended',
+          suspendedReason: suspendedReason || 'Payment failed'
+        }
+      };
+      
+    case 'simple':
+    default:
+      return baseScenario;
+  }
+};
+
+/**
+ * Mock multi-tenant database queries
+ */
+const createMultiTenantMocks = (scenario) => {
+  const mockDatabase = {
+    // User queries
+    getUserById: jest.fn().mockResolvedValue(scenario.user),
+    getUsersByOrg: jest.fn().mockResolvedValue(scenario.users || [scenario.user]),
+    
+    // Organization queries  
+    getOrganizationById: jest.fn().mockResolvedValue(scenario.organization),
+    getOrgSettings: jest.fn().mockResolvedValue(scenario.organization.settings),
+    
+    // Platform queries
+    getPlatformsByOrg: jest.fn().mockResolvedValue(scenario.platforms),
+    
+    // Usage queries
+    getUsageStats: jest.fn().mockResolvedValue({
+      roastsThisMonth: scenario.usage?.roastsThisMonth ?? 0,
+      limit: scenario.usage?.limit ?? 0,
+      currentSpend: scenario.usage?.currentSpend ?? 0,
+      tokensUsed: scenario.usage?.tokensUsed ?? 0,
+      isNearLimit: typeof scenario.usage?.limit === 'number' && typeof scenario.usage?.roastsThisMonth === 'number'
+        ? (scenario.usage.roastsThisMonth >= Math.max(0, scenario.usage.limit - 1) && scenario.usage.roastsThisMonth <= scenario.usage.limit)
+        : false,
+      isOverLimit: typeof scenario.usage?.limit === 'number' && typeof scenario.usage?.roastsThisMonth === 'number'
+        ? (scenario.usage.roastsThisMonth > scenario.usage.limit)
+        : false
+    }),
+    
+    // RLS (Row Level Security) helpers
+    setCurrentUser: jest.fn().mockImplementation((userId) => {
+      // Mock setting RLS context
+      return Promise.resolve({ userId, orgId: scenario.organizationId });
+    })
+  };
+  
+  return mockDatabase;
+};
+
+/**
+ * Platform-specific mock data generators
+ */
+const createPlatformMockData = (platform, options = {}) => {
+  const { count = 5, toxicityLevel = 'moderate' } = options;
+  
+  const platformGenerators = {
+    twitter: () => Array.from({ length: count }, (_, i) => ({
+      id: `tweet_${generateTestId()}`,
+      text: `Mock Twitter comment ${i + 1} - ${toxicityLevel} toxicity`,
+      author_id: `user_${generateTestId()}`,
+      created_at: new Date().toISOString(),
+      platform: 'twitter',
+      toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
+    })),
+    
+    youtube: () => Array.from({ length: count }, (_, i) => ({
+      id: `comment_${generateTestId()}`,
+      snippet: {
+        textDisplay: `Mock YouTube comment ${i + 1} - ${toxicityLevel} toxicity`,
+        authorDisplayName: `TestUser${i + 1}`,
+        publishedAt: new Date().toISOString()
+      },
+      platform: 'youtube',
+      toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
+    })),
+    
+    instagram: () => Array.from({ length: count }, (_, i) => ({
+      id: `ig_comment_${generateTestId()}`,
+      text: `Mock Instagram comment ${i + 1} - ${toxicityLevel} toxicity`,
+      username: `testuser${i + 1}`,
+      timestamp: new Date().toISOString(),
+      platform: 'instagram',
+      toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
+    }))
+  };
+  
+  return platformGenerators[platform] ? platformGenerators[platform]() : [];
+};
+
+/**
+ * Mock service responses for different plans
+ */
+const createPlanBasedMockResponse = (planType, service, method) => {
+  const planLimits = {
+    free: { roasts: 10, platforms: 1, features: ['basic'] },
+    pro: { roasts: 500, platforms: 3, features: ['basic', 'advanced'] },
+    enterprise: { roasts: 10000, platforms: 9, features: ['basic', 'advanced', 'custom'] }
+  };
+  
+  const limits = planLimits[planType] || planLimits.free;
+  
+  return {
+    success: true,
+    data: {
+      planType,
+      limits,
+      service,
+      method,
+      timestamp: new Date().toISOString()
+    }
+  };
+};
+
+/**
  * Limpiar mocks después de los tests
  */
 const cleanupMocks = () => {
@@ -175,5 +527,10 @@ module.exports = {
   generateTestId,
   validateApiResponse,
   setMockEnvVars,
-  cleanupMocks
+  cleanupMocks,
+  // New multi-tenant utilities (Issue #277)
+  createMultiTenantTestScenario,
+  createMultiTenantMocks,
+  createPlatformMockData,
+  createPlanBasedMockResponse
 };
