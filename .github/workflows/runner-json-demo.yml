@@ -44,19 +44,27 @@ jobs:
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat check.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          # Parse lint exit code with proper error handling
-          if ! LINT_EXIT=$(jq -r '.lintExitCode // .exitCode // 0' check.json); then
-            echo "Error: Failed to parse check.json for lint exit code"
+          # Parse exit code from our new check command format
+          if ! CHECK_EXIT=$(jq -r '.exitCode // 0' check.json); then
+            echo "Error: Failed to parse check.json for exit code"
             exit 1
           fi
-          # Parse typecheck exit code with proper error handling
-          if ! TYPE_EXIT=$(jq -r '.typecheck.exitCode // 0' check.json); then
-            echo "Error: Failed to parse check.json for typecheck exit code"
+          # Parse command that was run
+          if ! CHECK_COMMAND=$(jq -r '.command // "unknown"' check.json); then
+            echo "Error: Failed to parse check.json for command"
             exit 1
           fi
-          # Check if either lint or typecheck failed
-          if [ "$LINT_EXIT" -ne 0 ] || [ "$TYPE_EXIT" -ne 0 ]; then
-            echo "Runner check failed: lint=$LINT_EXIT typecheck=$TYPE_EXIT"
+          echo "Check command: $CHECK_COMMAND"
+          echo "Check exit code: $CHECK_EXIT"
+          # Check if the command failed
+          if [ "$CHECK_EXIT" -ne 0 ]; then
+            echo "Runner check failed with exit code: $CHECK_EXIT"
+            # Show stderr if available
+            if STDERR_OUTPUT=$(jq -r '.stderr // ""' check.json 2>/dev/null) && [ -n "$STDERR_OUTPUT" ]; then
+              echo "Error output:"
+              echo "$STDERR_OUTPUT"
+            fi
             exit 1
           fi
+          echo "✅ Check passed successfully"
 
