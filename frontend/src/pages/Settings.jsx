@@ -72,6 +72,10 @@ export default function Settings() {
   const [showDataExportModal, setShowDataExportModal] = useState(false);
   const [dataExportLoading, setDataExportLoading] = useState(false);
 
+  // Password reset rate limiting state
+  const [lastPasswordResetAttempt, setLastPasswordResetAttempt] = useState(0);
+  const RESET_COOLDOWN_MS = 60000; // 60 seconds
+
   // Roastr Persona state
   const [roastrPersona, setRoastrPersona] = useState({
     loQueMeDefine: '',
@@ -378,8 +382,17 @@ export default function Settings() {
 
   // Password reset handling (Issue #258)
   const handlePasswordReset = async () => {
+    // Check rate limiting first
+    const now = Date.now();
+    if (now - lastPasswordResetAttempt < RESET_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((RESET_COOLDOWN_MS - (now - lastPasswordResetAttempt)) / 1000);
+      addNotification(`Por favor espera ${remainingSeconds} segundos antes de solicitar otro enlace de cambio de contraseña`, 'warning');
+      return;
+    }
+
     try {
       setPasswordResetLoading(true);
+      setLastPasswordResetAttempt(now);
 
       // Guard: Verify user and email exist before making API call
       if (!user || !user.email) {

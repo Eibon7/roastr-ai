@@ -3,6 +3,17 @@
  */
 
 /**
+ * Shared plan limits constants to ensure consistency across all test utilities
+ */
+const PLAN_LIMITS = {
+  free: { roasts: 10, monthlyResponsesLimit: 10, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: false },
+  plus: { roasts: 250, monthlyResponsesLimit: 250, platforms: 2, integrationsLimit: 4, features: ['basic', 'advanced'], shieldEnabled: true },
+  pro: { roasts: 1000, monthlyResponsesLimit: 1000, platforms: 3, integrationsLimit: 6, features: ['basic', 'advanced'], shieldEnabled: true },
+  agency: { roasts: 5000, monthlyResponsesLimit: 5000, platforms: 10, integrationsLimit: 20, features: ['basic', 'advanced', 'agency'], shieldEnabled: true },
+  enterprise: { roasts: 10000, monthlyResponsesLimit: 10000, platforms: 9, integrationsLimit: 18, features: ['basic', 'advanced', 'custom'], shieldEnabled: true }
+};
+
+/**
  * Mock response para OpenAI API
  */
 const createMockOpenAIResponse = (text) => ({
@@ -178,15 +189,8 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
     quotaScenario = null // 'near' | 'over' | null
   } = options;
 
-  // Derived defaults by plan
-  const planDefaults = {
-    free: { monthlyResponsesLimit: 10, integrationsLimit: 1, shieldEnabled: false },
-    plus: { monthlyResponsesLimit: 250, integrationsLimit: 2, shieldEnabled: true },
-    pro: { monthlyResponsesLimit: 1000, integrationsLimit: 5, shieldEnabled: true },
-    agency: { monthlyResponsesLimit: 5000, integrationsLimit: 10, shieldEnabled: true },
-    enterprise: { monthlyResponsesLimit: 10000, integrationsLimit: 10, shieldEnabled: true }
-  };
-  const defaults = planDefaults[planType] || planDefaults.free;
+  // Use shared plan limits for consistency
+  const defaults = PLAN_LIMITS[planType] || PLAN_LIMITS.free;
 
   // Build base entitlements and usage
   const finalEntitlements = {
@@ -486,13 +490,8 @@ const createPlatformMockData = (platform, options = {}) => {
  * Mock service responses for different plans
  */
 const createPlanBasedMockResponse = (planType, service, method) => {
-  const planLimits = {
-    free: { roasts: 10, platforms: 1, features: ['basic'] },
-    pro: { roasts: 500, platforms: 3, features: ['basic', 'advanced'] },
-    enterprise: { roasts: 10000, platforms: 9, features: ['basic', 'advanced', 'custom'] }
-  };
-  
-  const limits = planLimits[planType] || planLimits.free;
+  // Use shared plan limits for consistency
+  const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.free;
   
   return {
     success: true,

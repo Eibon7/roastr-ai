@@ -13,6 +13,80 @@ jest.mock('../../../frontend/src/lib/api', () => ({
     apiClient: mockApiClient
 }));
 
+// Shared helper functions to avoid duplication
+const createPasswordResetHandler = (userEmail) => {
+    return async () => {
+        try {
+            const result = await mockApiClient.post('/auth/reset-password', {
+                email: userEmail
+            });
+
+            if (result.success) {
+                return { success: true, message: 'Se ha enviado un enlace de cambio de contraseña a tu email' };
+            }
+        } catch (error) {
+            return { success: false, message: 'Error al enviar el enlace de cambio de contraseña' };
+        }
+    };
+};
+
+const createDataExportHandler = () => {
+    return async () => {
+        try {
+            const result = await mockApiClient.post('/user/data-export');
+
+            if (result.success) {
+                return {
+                    success: true,
+                    message: 'Se ha enviado un enlace de descarga a tu email',
+                    data: result.data
+                };
+            }
+        } catch (error) {
+            return { success: false, message: 'Error al solicitar la exportación de datos' };
+        }
+    };
+};
+
+const createPasswordResetHandlerWithNotifications = (addNotification, setPasswordResetLoading) => {
+    return async () => {
+        try {
+            setPasswordResetLoading(true);
+            const result = await mockApiClient.post('/auth/reset-password', {
+                email: 'test@example.com'
+            });
+
+            if (result.success) {
+                addNotification('Se ha enviado un enlace de cambio de contraseña a tu email', 'success');
+            }
+        } catch (error) {
+            addNotification('Error al enviar el enlace de cambio de contraseña', 'error');
+        } finally {
+            setPasswordResetLoading(false);
+        }
+    };
+};
+
+const createDataExportHandlerWithNotifications = (addNotification, setDataExportLoading, setShowDataExportModal) => {
+    return async () => {
+        try {
+            setDataExportLoading(true);
+            const result = await mockApiClient.post('/user/data-export');
+
+            if (result.success) {
+                addNotification('Se ha enviado un enlace de descarga a tu email', 'success');
+                if (setShowDataExportModal) {
+                    setShowDataExportModal(false);
+                }
+            }
+        } catch (error) {
+            addNotification('Error al solicitar la exportación de datos', 'error');
+        } finally {
+            setDataExportLoading(false);
+        }
+    };
+};
+
 describe('Settings Profile Logic (Issue #258)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -21,23 +95,9 @@ describe('Settings Profile Logic (Issue #258)', () => {
     describe('Password Reset Logic', () => {
         it('should call correct API endpoint for password reset', async () => {
             mockApiClient.post.mockResolvedValue({ success: true });
-            
-            // Simulate the password reset function from Settings component
-            const handlePasswordReset = async (userEmail) => {
-                try {
-                    const result = await mockApiClient.post('/auth/reset-password', {
-                        email: userEmail
-                    });
-                    
-                    if (result.success) {
-                        return { success: true, message: 'Se ha enviado un enlace de cambio de contraseña a tu email' };
-                    }
-                } catch (error) {
-                    return { success: false, message: 'Error al enviar el enlace de cambio de contraseña' };
-                }
-            };
 
-            const result = await handlePasswordReset('test@example.com');
+            const handlePasswordReset = createPasswordResetHandler('test@example.com');
+            const result = await handlePasswordReset();
             
             expect(mockApiClient.post).toHaveBeenCalledWith('/auth/reset-password', {
                 email: 'test@example.com'
@@ -48,37 +108,45 @@ describe('Settings Profile Logic (Issue #258)', () => {
 
         it('should handle password reset errors gracefully', async () => {
             mockApiClient.post.mockRejectedValue(new Error('Network error'));
-            
-            const handlePasswordReset = async (userEmail) => {
-                try {
-                    const result = await mockApiClient.post('/auth/reset-password', {
-                        email: userEmail
-                    });
-                    
-                    if (result.success) {
-                        return { success: true, message: 'Se ha enviado un enlace de cambio de contraseña a tu email' };
-                    }
-                } catch (error) {
-                    return { success: false, message: 'Error al enviar el enlace de cambio de contraseña' };
-                }
-            };
 
-            const result = await handlePasswordReset('test@example.com');
+            const handlePasswordReset = createPasswordResetHandler('test@example.com');
+            const result = await handlePasswordReset();
             
             expect(result.success).toBe(false);
             expect(result.message).toContain('Error al enviar el enlace de cambio de contraseña');
         });
 
         it('should validate email format before sending request', () => {
+            // More comprehensive RFC-5322 compliant email validation
             const validateEmail = (email) => {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!email || typeof email !== 'string') return false;
+
+                // Check for consecutive dots, leading/trailing dots
+                if (email.includes('..') || email.startsWith('.') || email.includes('.@') || email.includes('@.') || email.endsWith('.')) {
+                    return false;
+                }
+
+                // RFC-5322 compliant regex pattern
+                const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
                 return emailRegex.test(email);
             };
 
+            // Test valid email addresses
             expect(validateEmail('test@example.com')).toBe(true);
+            expect(validateEmail('user.name+tag@example.co.uk')).toBe(true);
+            expect(validateEmail('test.email-with-dash@example.com')).toBe(true);
+            expect(validateEmail('user123@sub.domain.example.org')).toBe(true);
+
+            // Test invalid email addresses
             expect(validateEmail('invalid-email')).toBe(false);
             expect(validateEmail('')).toBe(false);
             expect(validateEmail('test@')).toBe(false);
+            expect(validateEmail('@example.com')).toBe(false);
+            expect(validateEmail('test..double.dot@example.com')).toBe(false);
+            expect(validateEmail('test@.example.com')).toBe(false);
+            expect(validateEmail('test@example.')).toBe(false);
+            expect(validateEmail(null)).toBe(false);
+            expect(validateEmail(undefined)).toBe(false);
         });
     });
 
@@ -95,24 +163,8 @@ describe('Settings Profile Logic (Issue #258)', () => {
                     estimatedDeliveryMinutes: 5
                 }
             });
-            
-            // Simulate the data export function from Settings component
-            const handleDataExportRequest = async () => {
-                try {
-                    const result = await mockApiClient.post('/user/data-export');
-                    
-                    if (result.success) {
-                        return { 
-                            success: true, 
-                            message: 'Se ha enviado un enlace de descarga a tu email',
-                            data: result.data
-                        };
-                    }
-                } catch (error) {
-                    return { success: false, message: 'Error al solicitar la exportación de datos' };
-                }
-            };
 
+            const handleDataExportRequest = createDataExportHandler();
             const result = await handleDataExportRequest();
             
             expect(mockApiClient.post).toHaveBeenCalledWith('/user/data-export');
@@ -126,23 +178,8 @@ describe('Settings Profile Logic (Issue #258)', () => {
 
         it('should handle data export errors gracefully', async () => {
             mockApiClient.post.mockRejectedValue(new Error('Server error'));
-            
-            const handleDataExportRequest = async () => {
-                try {
-                    const result = await mockApiClient.post('/user/data-export');
-                    
-                    if (result.success) {
-                        return { 
-                            success: true, 
-                            message: 'Se ha enviado un enlace de descarga a tu email',
-                            data: result.data
-                        };
-                    }
-                } catch (error) {
-                    return { success: false, message: 'Error al solicitar la exportación de datos' };
-                }
-            };
 
+            const handleDataExportRequest = createDataExportHandler();
             const result = await handleDataExportRequest();
             
             expect(result.success).toBe(false);
@@ -269,7 +306,7 @@ describe('Settings Profile Logic (Issue #258)', () => {
     describe('Integration Logic', () => {
         it('should handle complete password reset flow', async () => {
             mockApiClient.post.mockResolvedValue({ success: true });
-            
+
             let passwordResetLoading = false;
             let notifications = [];
 
@@ -281,22 +318,7 @@ describe('Settings Profile Logic (Issue #258)', () => {
                 notifications.push({ message, type, id: Date.now() });
             };
 
-            const handlePasswordReset = async () => {
-                try {
-                    setPasswordResetLoading(true);
-                    const result = await mockApiClient.post('/auth/reset-password', {
-                        email: 'test@example.com'
-                    });
-                    
-                    if (result.success) {
-                        addNotification('Se ha enviado un enlace de cambio de contraseña a tu email', 'success');
-                    }
-                } catch (error) {
-                    addNotification('Error al enviar el enlace de cambio de contraseña', 'error');
-                } finally {
-                    setPasswordResetLoading(false);
-                }
-            };
+            const handlePasswordReset = createPasswordResetHandlerWithNotifications(addNotification, setPasswordResetLoading);
 
             await handlePasswordReset();
 
@@ -307,11 +329,11 @@ describe('Settings Profile Logic (Issue #258)', () => {
         });
 
         it('should handle complete data export flow', async () => {
-            mockApiClient.post.mockResolvedValue({ 
+            mockApiClient.post.mockResolvedValue({
                 success: true,
                 data: { email: 'test@example.com', filename: 'export.zip' }
             });
-            
+
             let dataExportLoading = false;
             let showDataExportModal = true;
             let notifications = [];
@@ -328,21 +350,7 @@ describe('Settings Profile Logic (Issue #258)', () => {
                 notifications.push({ message, type, id: Date.now() });
             };
 
-            const handleDataExportRequest = async () => {
-                try {
-                    setDataExportLoading(true);
-                    const result = await mockApiClient.post('/user/data-export');
-                    
-                    if (result.success) {
-                        addNotification('Se ha enviado un enlace de descarga a tu email', 'success');
-                        setShowDataExportModal(false);
-                    }
-                } catch (error) {
-                    addNotification('Error al solicitar la exportación de datos', 'error');
-                } finally {
-                    setDataExportLoading(false);
-                }
-            };
+            const handleDataExportRequest = createDataExportHandlerWithNotifications(addNotification, setDataExportLoading, setShowDataExportModal);
 
             await handleDataExportRequest();
 

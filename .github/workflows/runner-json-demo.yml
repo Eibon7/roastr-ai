@@ -31,7 +31,11 @@ jobs:
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat platforms.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          test "$(jq -r --arg platform "$TEST_PLATFORM" '.platforms | index($platform)' platforms.json)" != "null"
+          # Use jq in exit-on-false mode to test platform existence with proper error handling
+          if ! jq -e --arg platform "$TEST_PLATFORM" '.platforms | contains([$platform])' platforms.json > /dev/null; then
+            echo "Platform '$TEST_PLATFORM' not found in platforms.json"
+            exit 1
+          fi
 
       - name: Lint + Typecheck (JSON)
         run: |
@@ -40,8 +44,17 @@ jobs:
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat check.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          LINT_EXIT=$(jq -r '.lintExitCode // .exitCode // 0' check.json || echo 0)
-          TYPE_EXIT=$(jq -r '.typecheck.exitCode // 0' check.json || echo 0)
+          # Parse lint exit code with proper error handling
+          if ! LINT_EXIT=$(jq -r '.lintExitCode // .exitCode // 0' check.json); then
+            echo "Error: Failed to parse check.json for lint exit code"
+            exit 1
+          fi
+          # Parse typecheck exit code with proper error handling
+          if ! TYPE_EXIT=$(jq -r '.typecheck.exitCode // 0' check.json); then
+            echo "Error: Failed to parse check.json for typecheck exit code"
+            exit 1
+          fi
+          # Check if either lint or typecheck failed
           if [ "$LINT_EXIT" -ne 0 ] || [ "$TYPE_EXIT" -ne 0 ]; then
             echo "Runner check failed: lint=$LINT_EXIT typecheck=$TYPE_EXIT"
             exit 1
