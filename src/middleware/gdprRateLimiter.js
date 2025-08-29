@@ -5,6 +5,7 @@
  */
 
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
@@ -24,7 +25,7 @@ const accountDeletionLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   keyGenerator: (req) => {
     // Use IP + user ID for authenticated requests
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     const userId = req.user?.id || 'anonymous';
     return `gdpr_delete:${ip}:${userId}`;
   },
@@ -63,7 +64,7 @@ const dataExportLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     const userId = req.user?.id || 'anonymous';
     return `gdpr_export:${ip}:${userId}`;
   },
@@ -102,7 +103,7 @@ const dataDownloadLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     // For download endpoint, we use IP + token prefix for rate limiting
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     const token = req.params.token || 'no-token';
     const tokenPrefix = token && typeof token === 'string' && token.length >= 8 ? token.substr(0, 8) : 'no-token';
     return `gdpr_download:${ip}:${tokenPrefix}`;
@@ -141,7 +142,7 @@ const deletionCancellationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     const userId = req.user?.id || 'anonymous';
     return `gdpr_cancel:${ip}:${userId}`;
   },
@@ -179,7 +180,7 @@ const gdprGlobalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const ip = ipKeyGenerator(req);
     return `gdpr_global:${ip}`;
   },
   handler: (req, res) => {

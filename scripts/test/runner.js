@@ -1,67 +1,53 @@
 #!/usr/bin/env node
 
+const { Command } = require('commander');
+const { spawn } = require('child_process');
+const colors = require('colors');
+const glob = require('glob');
+
 /**
- * CLI Test Runner for Roastr.ai
- * Issue #277 - Complete CLI tools implementation
- * 
- * Advanced test runner with scope filtering, platform support, and mock mode
- * Also supports linting and type checking tasks
+ * Advanced CLI test runner with scope filtering - Issue 82 Phase 4
+ * Provides comprehensive test execution with mock mode and platform filtering
  */
 
-const { program } = require('commander');
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+const program = new Command();
+program.name('test-runner').description('CLI test runner with scope filtering').version('1.0.0');
 
-// Test scopes configuration
 const TEST_SCOPES = {
+  // Enhanced scopes from PR #282
   unit: {
     description: 'Run unit tests only',
-    patterns: [
-      'tests/unit/**/*.test.js'
-    ],
+    patterns: ['tests/unit/**/*.test.js'],
     mockModeRecommended: true
   },
   integration: {
-    description: 'Run integration tests only', 
-    patterns: [
-      'tests/integration/**/*.test.js'
-    ],
+    description: 'Run integration tests only',
+    patterns: ['tests/integration/**/*.test.js'],
     mockModeRecommended: false
   },
   smoke: {
     description: 'Run smoke tests only',
-    patterns: [
-      'tests/smoke/**/*.test.js'
-    ],
+    patterns: ['tests/smoke/**/*.test.js'],
     mockModeRecommended: true
   },
   routes: {
     description: 'Run API route tests',
-    patterns: [
-      'tests/unit/routes/**/*.test.js'
-    ],
+    patterns: ['tests/unit/routes/**/*.test.js'],
     mockModeRecommended: true
   },
   services: {
     description: 'Run service layer tests',
-    patterns: [
-      'tests/unit/services/**/*.test.js'
-    ],
+    patterns: ['tests/unit/services/**/*.test.js'],
     mockModeRecommended: true
   },
   workers: {
     description: 'Run background worker tests',
-    patterns: [
-      'tests/unit/workers/**/*.test.js'
-    ],
+    patterns: ['tests/unit/workers/**/*.test.js'],
     mockModeRecommended: true
   },
   middleware: {
     description: 'Run middleware tests',
-    patterns: [
-      'tests/unit/middleware/**/*.test.js'
-    ],
+    patterns: ['tests/unit/middleware/**/*.test.js'],
     mockModeRecommended: true
   },
   billing: {
@@ -84,19 +70,24 @@ const TEST_SCOPES = {
     ],
     mockModeRecommended: true
   },
+  // Legacy scopes for backward compatibility
+  auth: {
+    name: 'Authentication & Authorization',
+    patterns: ['tests/unit/auth/**/*.test.js', 'tests/integration/auth/**/*.test.js'],
+    description: 'User authentication, authorization, and session management tests',
+    mockModeRecommended: true
+  },
   all: {
     description: 'Run all tests',
-    patterns: [
-      'tests/**/*.test.js'
-    ],
+    patterns: ['tests/**/*.test.js'],
     mockModeRecommended: false
   }
 };
 
-// Platform filters
+// Enhanced platform filters from PR #282
 const PLATFORM_FILTERS = {
   twitter: 'twitter|Twitter',
-  youtube: 'youtube|YouTube',  
+  youtube: 'youtube|YouTube',
   instagram: 'instagram|Instagram',
   facebook: 'facebook|Facebook',
   discord: 'discord|Discord',
@@ -106,29 +97,31 @@ const PLATFORM_FILTERS = {
   bluesky: 'bluesky|Bluesky'
 };
 
+const PLATFORMS = Object.keys(PLATFORM_FILTERS); // For backward compatibility
+
 /**
- * Print available scopes
+ * Print available scopes with enhanced formatting from PR #282
  */
 function listScopes() {
-  console.log('📋 Available test scopes:\n');
-  
+  console.log(colors.cyan('📋 Available test scopes:\n'));
+
   Object.entries(TEST_SCOPES).forEach(([scope, config]) => {
     const mockIcon = config.mockModeRecommended ? '🔶' : '🔷';
     console.log(`  ${mockIcon} ${scope.padEnd(12)} - ${config.description}`);
-    
+
     if (config.requiresEnvVars) {
-      console.log(`    ${''.padEnd(12)}   Requires: ${config.requiresEnvVars.join(', ')}`);
+      console.log(colors.gray(`    ${''.padEnd(12)}   Requires: ${config.requiresEnvVars.join(', ')}`));
     }
   });
-  
-  console.log('\n📝 Legend:');
+
+  console.log(colors.cyan('\n📝 Legend:'));
   console.log('  🔶 Mock mode recommended');
   console.log('  🔷 Real mode recommended');
-  console.log('\n🌐 Available platforms:', Object.keys(PLATFORM_FILTERS).join(', '));
+  console.log(colors.cyan('\n🌐 Available platforms:'), Object.keys(PLATFORM_FILTERS).join(', '));
 }
 
 /**
- * Print available platforms
+ * Print available platforms with JSON support from PR #282
  */
 function listPlatforms(options = {}) {
   const names = Object.keys(PLATFORM_FILTERS);
@@ -136,373 +129,250 @@ function listPlatforms(options = {}) {
     console.log(JSON.stringify({ platforms: names }, null, 2));
     return;
   }
-  console.log('🌐 Available platforms:\n');
+  console.log(colors.cyan('🌐 Available platforms:\n'));
   names.forEach((p) => console.log(`  - ${p}`));
 }
 
 /**
- * Check if required environment variables are set
+ * Check if required environment variables are set from PR #282
  */
 function checkRequiredEnvVars(scope) {
   const scopeConfig = TEST_SCOPES[scope];
   if (!scopeConfig?.requiresEnvVars) return true;
-  
+
   const missingVars = scopeConfig.requiresEnvVars.filter(varName => !process.env[varName]);
-  
+
   if (missingVars.length > 0) {
-    console.error(`❌ Missing required environment variables for scope '${scope}':`);
+    console.log(colors.yellow(`⚠️  Missing required environment variables for ${scope}:`));
     missingVars.forEach(varName => {
-      console.error(`   - ${varName}`);
+      console.log(colors.red(`   - ${varName}`));
     });
-    console.error('\n💡 Tip: Set these variables in your .env file or use --mock-mode');
+    console.log(colors.gray('\nSet these variables before running tests for this scope.'));
     return false;
   }
-  
+
   return true;
 }
 
 /**
- * Build Jest command with proper configuration
+ * Execute Jest with specified patterns and options
  */
-function buildJestCommand(scope, options) {
-  const scopeConfig = TEST_SCOPES[scope];
-  if (!scopeConfig) {
-    const available = Object.keys(TEST_SCOPES).join(', ');
-    throw new Error(`Invalid scope: '${scope}'. Available: ${available}. Use 'list-scopes' for details.`);
-  }
-  
-  let cmd = ['npx', 'jest'];
-  let env = { ...process.env };
-  
-  // Configure mock mode
-  if (options.mockMode) {
-    env.ENABLE_MOCK_MODE = 'true';
-    cmd.push('--config=jest.skipExternal.config.js');
-    console.log('🔶 Running in mock mode');
-  } else {
-    console.log('🔷 Running in real mode');
-  }
-  
-  // Add test patterns
-  if (scope !== 'all') {
-    scopeConfig.patterns.forEach(pattern => {
-      cmd.push(pattern);
-    });
-  }
-  
-  // Add platform filter
-  if (options.platform) {
-    const platformPattern = PLATFORM_FILTERS[options.platform.toLowerCase()];
-    if (!platformPattern) {
-      throw new Error(`Invalid platform: '${options.platform}'. Available: ${Object.keys(PLATFORM_FILTERS).join(', ')}`);
-    }
-    cmd.push('--testNamePattern', platformPattern);
-    console.log(`🌐 Filtering by platform: ${options.platform}`);
-  }
-  
-  // Add additional Jest options
-  if (options.coverage) {
-    cmd.push('--coverage');
-    if (options.coverageReporters) {
-      options.coverageReporters.split(',').forEach(reporter => {
-        cmd.push('--coverageReporters', reporter.trim());
-      });
-    }
-  }
-  
-  if (options.verbose) {
-    cmd.push('--verbose');
-  }
-  
-  if (options.silent) {
-    cmd.push('--silent');
-  }
-  
-  if (options.watchAll === false || options.ci) {
-    cmd.push('--watchAll=false');
-  }
-  
-  if (options.runInBand) {
-    cmd.push('--runInBand');
-  }
-  
-  if (options.testTimeout) {
-    cmd.push('--testTimeout', options.testTimeout);
-  }
-  
-  return { cmd, env };
-}
-
-/**
- * Execute Jest command
- */
-function runJestCommand(cmd, env) {
+function runJest(patterns, options = {}) {
   return new Promise((resolve, reject) => {
-    console.log(`🚀 Executing: ${cmd.join(' ')}\n`);
-    
-    const child = spawn(cmd[0], cmd.slice(1), {
+    const jestArgs = [];
+
+    // Add test patterns - use Jest's native pattern matching
+    if (patterns && patterns.length > 0) {
+      // Jest can handle simple glob patterns directly
+      jestArgs.push('--testPathPatterns', patterns.join('|'));
+    }
+
+    // Add mock mode environment variable
+    const env = { ...process.env };
+    if (options.mockMode) {
+      env.ENABLE_MOCK_MODE = 'true';
+      console.log(colors.blue('🔧 Mock mode enabled - external services will be mocked'));
+    }
+
+    // Add CI mode options
+    if (options.ci) {
+      jestArgs.push('--ci', '--runInBand', '--silent');
+    }
+
+    // Add coverage options
+    if (options.coverage) {
+      jestArgs.push('--coverage');
+    }
+
+    // Add verbose output
+    if (options.verbose) {
+      jestArgs.push('--verbose');
+    }
+
+    // Add platform filtering
+    if (options.platform) {
+      jestArgs.push('--testNamePattern', options.platform);
+      console.log(colors.magenta(`🎯 Filtering tests for platform: ${options.platform}`));
+    }
+
+    console.log(colors.green(`🚀 Running Jest with args: ${jestArgs.join(' ')}`));
+
+    const jest = spawn('npx', ['jest', ...jestArgs], {
       stdio: 'inherit',
-      env,
-      cwd: path.resolve(__dirname, '../..')
+      env
     });
-    
-    child.on('close', (code) => {
+
+    jest.on('close', (code) => {
       if (code === 0) {
-        console.log('\n✅ Tests completed successfully');
-        resolve(code);
+        console.log(colors.green('✅ Tests completed successfully'));
+        resolve();
       } else {
-        console.log(`\n❌ Tests failed with exit code ${code}`);
-        resolve(code);
+        console.log(colors.red(`❌ Tests failed with exit code ${code}`));
+        reject(new Error(`Jest exited with code ${code}`));
       }
     });
-    
-    child.on('error', (error) => {
-      console.error('❌ Failed to start test runner:', error.message);
+
+    jest.on('error', (error) => {
+      console.error(colors.red('❌ Failed to start Jest:'), error.message);
       reject(error);
     });
   });
 }
 
-/**
- * Run a generic command with spawn and inherit stdio
- */
-function runCommand(cmd, options = {}) {
-  return new Promise((resolve, reject) => {
-    const cwd = options.cwd || path.resolve(__dirname, '../..');
-    const env = { ...process.env, ...(options.env || {}) };
-    console.log(`🚀 Executing: ${cmd.join(' ')} (cwd: ${cwd})\n`);
-    const child = spawn(cmd[0], cmd.slice(1), {
-      stdio: 'inherit',
-      env,
-      cwd
-    });
-    child.on('close', (code) => resolve(code));
-    child.on('error', (error) => reject(error));
-  });
-}
-
-/**
- * Lint command
- */
-async function runLint(options) {
-  try {
-    console.log('🔎 Running ESLint...');
-
-    const cmd = ['npx', 'eslint', 'src/', 'tests/', '--quiet', '--no-error-on-unmatched-pattern'];
-    if (options.fix) cmd.push('--fix');
-
-    const exitCode = await runCommand(cmd);
-    if (exitCode === 0) {
-      console.log('\n✅ Lint completed successfully');
-    } else {
-      console.log(`\n❌ Lint failed with exit code ${exitCode}`);
-    }
-    if (options.json) {
-      console.log(JSON.stringify({ command: 'lint', exitCode }, null, 2));
-    }
-    process.exit(exitCode);
-  } catch (error) {
-    console.error('❌ Error running lint:', error.message);
-    process.exit(1);
-  }
-}
-
-/**
- * Typecheck command (TypeScript if available)
- * - Looks for tsconfig.json in repo root and frontend/
- * - Runs `npx tsc --noEmit` where found
- * - Gracefully skips if no TypeScript configuration is detected
- */
-async function runTypecheck() {
-  try {
-    console.log('🔡 Running type check...');
-
-    const searchDirs = [path.resolve(__dirname, '../..'), path.resolve(__dirname, '../../frontend')];
-    const found = searchDirs.filter(dir => fs.existsSync(path.join(dir, 'tsconfig.json')));
-
-    if (found.length === 0) {
-      console.log('ℹ️ No tsconfig.json found. Skipping typecheck.');
-      if (process.env.RUNNER_JSON === '1') {
-        console.log(JSON.stringify({ command: 'typecheck', skipped: true, exitCode: 0 }, null, 2));
-      }
-      process.exit(0);
-      return;
-    }
-
-    let overallExit = 0;
-    for (const dir of found) {
-      console.log(`📁 Typechecking in: ${dir}`);
-      const code = await runCommand(['npx', 'tsc', '--noEmit'], { cwd: dir });
-      if (code !== 0) overallExit = code;
-    }
-
-    if (overallExit === 0) {
-      console.log('\n✅ Typecheck passed');
-    } else {
-      console.log(`\n❌ Typecheck failed with exit code ${overallExit}`);
-    }
-    if (process.env.RUNNER_JSON === '1') {
-      console.log(JSON.stringify({ command: 'typecheck', skipped: false, exitCode: overallExit }, null, 2));
-    }
-    process.exit(overallExit);
-  } catch (error) {
-    console.error('❌ Error running typecheck:', error.message);
-    process.exit(1);
-  }
-}
-
-/**
- * Combined check: lint then typecheck
- */
-async function runCheck(options) {
-  try {
-    console.log('🧰 Running lint + typecheck...');
-    const lintCmd = ['npx', 'eslint', 'src/', 'tests/', '--quiet', '--no-error-on-unmatched-pattern'];
-    if (options.fix) lintCmd.push('--fix');
-    const lintCode = await runCommand(lintCmd);
-    if (lintCode !== 0) {
-      console.log('\n❌ Lint failed, skipping typecheck');
-      if (options.json) {
-        console.log(JSON.stringify({ command: 'check', lintExitCode: lintCode, typecheck: { skipped: true } }, null, 2));
-      }
-      process.exit(lintCode);
-      return;
-    }
-
-    // Reuse typecheck logic
-    const searchDirs = [path.resolve(__dirname, '../..'), path.resolve(__dirname, '../../frontend')];
-    const found = searchDirs.filter(dir => fs.existsSync(path.join(dir, 'tsconfig.json')));
-    if (found.length === 0) {
-      console.log('\nℹ️ No tsconfig.json found. Typecheck skipped.');
-      console.log('✅ Check completed (lint passed)');
-      if (options.json) {
-        console.log(JSON.stringify({ command: 'check', lintExitCode: 0, typecheck: { skipped: true, exitCode: 0 } }, null, 2));
-      }
-      process.exit(0);
-      return;
-    }
-    let overallExit = 0;
-    for (const dir of found) {
-      console.log(`\n📁 Typechecking in: ${dir}`);
-      const code = await runCommand(['npx', 'tsc', '--noEmit'], { cwd: dir });
-      if (code !== 0) overallExit = code;
-    }
-    if (options.json) {
-      console.log(JSON.stringify({ command: 'check', lintExitCode: 0, typecheck: { skipped: false, exitCode: overallExit } }, null, 2));
-    }
-    process.exit(overallExit);
-  } catch (error) {
-    console.error('❌ Error running check:', error.message);
-    process.exit(1);
-  }
-}
-
-/**
- * Main run command
- */
-async function runTests(scope, options) {
-  try {
-    // Validate scope
-    if (!TEST_SCOPES[scope]) {
-      const available = Object.keys(TEST_SCOPES).join(', ');
-      console.error(`❌ Invalid scope: '${scope}'. Available: ${available}`);
-      console.log("\n💡 Tip: run 'node scripts/test/runner.js list-scopes' to see details");
-      process.exit(1);
-    }
-    
-    // Check environment variables
-    if (!options.mockMode && !checkRequiredEnvVars(scope)) {
-      process.exit(1);
-    }
-    
-    // Show recommendations
-    const scopeConfig = TEST_SCOPES[scope];
-    if (!options.mockMode && scopeConfig.mockModeRecommended) {
-      console.log('💡 Consider using --mock-mode for faster execution');
-    }
-    
-    console.log(`🧪 Running ${scope} tests...`);
-    
-    // Build and execute command
-    const { cmd, env } = buildJestCommand(scope, options);
-    const exitCode = await runJestCommand(cmd, env);
-    if (options.json) {
-      const summary = {
-        command: 'run',
-        scope,
-        platform: options.platform || null,
-        mockMode: !!options.mockMode,
-        exitCode
-      };
-      console.log(JSON.stringify(summary, null, 2));
-    }
-    process.exit(exitCode);
-    
-  } catch (error) {
-    console.error('❌ Error running tests:', error.message);
-    process.exit(1);
-  }
-}
-
-// CLI Configuration
+// Command: List available scopes (enhanced from PR #282)
 program
-  .name('test-runner')
-  .description('Advanced CLI test runner for Roastr.ai')
-  .version('1.0.0');
-
-program
-  .command('list-scopes')
+  .command('scopes')
   .description('List all available test scopes')
-  .action(listScopes);
+  .action(() => {
+    listScopes();
+  });
 
+// Command: Run tests by scope
 program
   .command('run <scope>')
   .description('Run tests for a specific scope')
-  .option('--mock-mode', 'Enable mock mode for faster execution')
-  .option('--platform <platform>', 'Filter tests by platform (twitter, youtube, etc.)')
+  .option('--mock-mode', 'Enable mock mode for external services')
+  .option('--platform <platform>', `Filter tests by platform (${PLATFORMS.join(', ')})`)
+  .option('--ci', 'Run in CI mode (silent, run in band)')
   .option('--coverage', 'Generate coverage report')
-  .option('--coverage-reporters <reporters>', 'Coverage reporters (comma-separated)', 'text,html')
   .option('--verbose', 'Enable verbose output')
-  .option('--silent', 'Run in silent mode')
-  .option('--ci', 'Run in CI mode (no watch)')
-  .option('--run-in-band', 'Run tests serially')
-  .option('--test-timeout <ms>', 'Test timeout in milliseconds', '10000')
-  .option('--json', 'Print JSON summary for CI')
-  .action(runTests);
+  .action(async (scope, options) => {
+    try {
+      if (!TEST_SCOPES[scope]) {
+        console.error(colors.red(`❌ Unknown scope: ${scope}`));
+        console.log(colors.yellow('Available scopes:'), Object.keys(TEST_SCOPES).join(', '));
+        process.exit(1);
+      }
 
-// Lint command
+      if (options.platform && !PLATFORMS.includes(options.platform)) {
+        console.error(colors.red(`❌ Unknown platform: ${options.platform}`));
+        console.log(colors.yellow('Available platforms:'), PLATFORMS.join(', '));
+        process.exit(1);
+      }
+
+      // Check required environment variables (from PR #282)
+      if (!checkRequiredEnvVars(scope)) {
+        process.exit(1);
+      }
+
+      const scopeConfig = TEST_SCOPES[scope];
+      const scopeName = scopeConfig.name || scopeConfig.description;
+      console.log(colors.cyan(`🎯 Running ${scopeName} tests...`));
+      console.log(colors.gray(`Description: ${scopeConfig.description}\n`));
+
+      await runJest(scopeConfig.patterns, options);
+
+    } catch (error) {
+      console.error(colors.red('❌ Test execution failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Command: Run all tests with options
 program
-  .command('lint')
-  .description('Run ESLint on backend (src/) and tests')
-  .option('--fix', 'Automatically fix problems')
-  .option('--json', 'Print JSON summary for CI')
-  .action(runLint);
+  .command('all')
+  .description('Run all tests across all scopes')
+  .option('--mock-mode', 'Enable mock mode for external services')
+  .option('--platform <platform>', `Filter tests by platform (${PLATFORMS.join(', ')})`)
+  .option('--ci', 'Run in CI mode (silent, run in band)')
+  .option('--coverage', 'Generate coverage report')
+  .option('--verbose', 'Enable verbose output')
+  .action(async (options) => {
+    try {
+      console.log(colors.cyan('🎯 Running all tests...\n'));
 
-// Typecheck command
+      // Collect all patterns from all scopes
+      const allPatterns = Object.values(TEST_SCOPES)
+        .flatMap(scope => scope.patterns);
+
+      await runJest(allPatterns, options);
+
+    } catch (error) {
+      console.error(colors.red('❌ Test execution failed:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Command: List platforms
 program
-  .command('typecheck')
-  .description('Run TypeScript type checking if configured')
-  .option('--json', 'Print JSON summary for CI')
-  .action(runTypecheck);
+  .command('platforms')
+  .description('List all available platforms for filtering')
+  .action(() => {
+    console.log(colors.cyan('🌐 Available Platforms:\n'));
+    PLATFORMS.forEach(platform => {
+      console.log(colors.yellow(`  ${platform}`));
+    });
+    console.log(colors.gray('\nUse --platform <name> to filter tests by platform'));
+  });
 
-// Combined check
+// Command: Validate test setup
 program
-  .command('check')
-  .description('Run lint then typecheck')
-  .option('--fix', 'Automatically fix problems before typecheck')
-  .option('--json', 'Print JSON summary for CI')
-  .action(runCheck);
+  .command('validate')
+  .description('Validate test configuration and dependencies')
+  .action(() => {
+    console.log(colors.cyan('🔍 Validating test setup...\n'));
 
-// List platforms
+    // Check if Jest is available
+    try {
+      require.resolve('jest');
+      console.log(colors.green('✅ Jest is available'));
+    } catch (error) {
+      console.log(colors.red('❌ Jest is not installed'));
+      return;
+    }
+
+    // Check if test directories exist
+    const fs = require('fs');
+    const testDirs = ['tests/unit', 'tests/integration'];
+
+    testDirs.forEach(dir => {
+      if (fs.existsSync(dir)) {
+        console.log(colors.green(`✅ ${dir} directory exists`));
+      } else {
+        console.log(colors.yellow(`⚠️  ${dir} directory not found`));
+      }
+    });
+
+    // Check scope patterns
+    console.log(colors.cyan('\n📁 Checking scope patterns:'));
+    Object.entries(TEST_SCOPES).forEach(([key, scope]) => {
+      const hasTests = scope.patterns.some(pattern => {
+        try {
+          return glob.sync(pattern).length > 0;
+        } catch (error) {
+          console.log(colors.yellow(`⚠️  Invalid pattern for ${key}: ${pattern} - ${error.message}`));
+          return false;
+        }
+      });
+
+      if (hasTests) {
+        console.log(colors.green(`✅ ${key} scope has test files`));
+      } else {
+        console.log(colors.yellow(`⚠️  ${key} scope has no test files matching patterns`));
+      }
+    });
+
+    console.log(colors.green('\n✅ Test setup validation complete'));
+  });
+
+// Command: List available platforms (from PR #282)
 program
   .command('list-platforms')
   .description('List available platform filters')
   .option('--json', 'Print JSON output')
   .action(listPlatforms);
 
-// Default help
-if (process.argv.length === 2) {
-  program.help();
+// Error handling for unknown commands
+program.on('command:*', () => {
+  console.error(colors.red('❌ Invalid command: %s'), program.args.join(' '));
+  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, validate'));
+  console.log(colors.gray('Use --help for more information'));
+  process.exit(1);
+});
+
+// Show help if no command provided
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
 }
 
 program.parse();
