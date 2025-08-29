@@ -1,7 +1,6 @@
 name: Runner JSON Demo
 
 on:
-  pull_request:
   push:
     branches:
       - feat/issue-281-mocks-runner-docs
