@@ -37,9 +37,10 @@ const SafeUtils = {
     const domain = email.substring(atIndex + 1);
 
     // Mask local part: keep first character, mask the rest
+    // For single-character local parts, preserve the character instead of replacing with '*'
     const maskedLocal = localPart.length > 1
       ? localPart.charAt(0) + '*'.repeat(Math.min(localPart.length - 1, 6))
-      : '*';
+      : localPart.charAt(0);
 
     // Mask domain: keep first character and TLD, mask the middle
     const domainParts = domain.split('.');

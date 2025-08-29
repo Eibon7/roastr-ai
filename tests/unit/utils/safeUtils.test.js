@@ -78,6 +78,40 @@ describe('SafeUtils - Issue #154: Optional chaining and safe string operations',
     });
   });
 
+  describe('maskEmail', () => {
+    it('should preserve single-character local parts', () => {
+      expect(SafeUtils.maskEmail('a@example.com')).toBe('a@e****.com');
+      expect(SafeUtils.maskEmail('x@test.co')).toBe('x@t***.co');
+      expect(SafeUtils.maskEmail('j@domain.org')).toBe('j@d****.org');
+    });
+
+    it('should mask multi-character local parts correctly', () => {
+      expect(SafeUtils.maskEmail('ab@example.com')).toBe('a*@e****.com');
+      expect(SafeUtils.maskEmail('john@example.com')).toBe('j***@e****.com');
+      expect(SafeUtils.maskEmail('verylongemail@domain.com')).toBe('v******@d****.com');
+    });
+
+    it('should handle invalid emails gracefully', () => {
+      expect(SafeUtils.maskEmail('invalid-email')).toBe('invalid-email');
+      expect(SafeUtils.maskEmail('')).toBe('unknown-email');
+      expect(SafeUtils.maskEmail(null)).toBe('unknown-email');
+      expect(SafeUtils.maskEmail(undefined)).toBe('unknown-email');
+    });
+
+    it('should mask domain parts correctly', () => {
+      expect(SafeUtils.maskEmail('test@a.com')).toBe('t***@***.com');
+      expect(SafeUtils.maskEmail('user@example.co.uk')).toBe('u***@e****.uk');
+      expect(SafeUtils.maskEmail('email@x.y')).toBe('e****@***.y');
+    });
+
+    it('should handle edge cases', () => {
+      expect(SafeUtils.maskEmail('a@b.c')).toBe('a@***.c');
+      expect(SafeUtils.maskEmail('x@y.z')).toBe('x@***.z');
+      expect(SafeUtils.maskEmail('test@')).toBe('t***@***');
+      expect(SafeUtils.maskEmail('@domain.com')).toBe('@d****.com');
+    });
+  });
+
   describe('integration with logging', () => {
     it('should work in logging scenarios to prevent crashes', () => {
       const testCases = [
