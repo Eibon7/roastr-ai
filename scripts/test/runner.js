@@ -67,7 +67,7 @@ function runJest(patterns, options = {}) {
           .replace(/\*/g, '[^/]*')
           .replace(/\./g, '\\.');
       });
-      jestArgs.push('--testPathPattern', regexPatterns.join('|'));
+      jestArgs.push('--testPathPatterns', regexPatterns.join('|'));
     }
 
     // Add mock mode environment variable
