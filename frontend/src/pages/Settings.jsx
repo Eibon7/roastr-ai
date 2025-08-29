@@ -359,21 +359,22 @@ export default function Settings() {
       return;
     }
 
+    // Guard: Verify user and email exist before making API call
+    if (!user || !user.email) {
+      addNotification('No se pudo obtener tu dirección de email. Por favor, recarga la página e inténtalo de nuevo.', 'error');
+      return;
+    }
+
     try {
       setPasswordResetLoading(true);
-      setLastPasswordResetAttempt(now);
-
-      // Guard: Verify user and email exist before making API call
-      if (!user || !user.email) {
-        addNotification('No se pudo obtener tu dirección de email. Por favor, recarga la página e inténtalo de nuevo.', 'error');
-        return;
-      }
 
       const result = await apiClient.post('/auth/reset-password', {
         email: user.email
       });
 
       if (result.success) {
+        // Only set cooldown after successful API request
+        setLastPasswordResetAttempt(now);
         addNotification('Se ha enviado un enlace de cambio de contraseña a tu email', 'success');
       } else {
         throw new Error(result.error || 'Error al enviar el enlace de cambio de contraseña');

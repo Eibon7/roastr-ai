@@ -39,13 +39,14 @@ jobs:
 
       - name: Lint + Typecheck (JSON)
         run: |
+          set -euo pipefail
           node scripts/test/runner.js check --json | tee check.json
           echo '### Check summary (from runner --json)' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat check.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          # Parse exit code from our new check command format
-          if ! CHECK_EXIT=$(jq -r '.exitCode // 0' check.json); then
+          # Parse exit code from our new check command format with numeric coercion
+          if ! CHECK_EXIT=$(jq -r '(.exitCode // 0) | tonumber' check.json); then
             echo "Error: Failed to parse check.json for exit code"
             exit 1
           fi
@@ -56,8 +57,8 @@ jobs:
           fi
           echo "Check command: $CHECK_COMMAND"
           echo "Check exit code: $CHECK_EXIT"
-          # Check if the command failed
-          if [ "$CHECK_EXIT" -ne 0 ]; then
+          # Check if the command failed (ensure numeric comparison)
+          if [ "$CHECK_EXIT" -ne 0 ] 2>/dev/null; then
             echo "Runner check failed with exit code: $CHECK_EXIT"
             # Show stderr if available
             if STDERR_OUTPUT=$(jq -r '.stderr // ""' check.json 2>/dev/null) && [ -n "$STDERR_OUTPUT" ]; then

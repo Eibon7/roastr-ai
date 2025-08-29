@@ -1324,8 +1324,24 @@ router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimi
             throw new Error('Data export generation failed');
         }
 
-        // Generate full download URL
-        const downloadUrl = `${req.protocol}://${req.get('host')}${exportResult.downloadUrl}`;
+        // Generate full download URL using trusted origin
+        const trustedOrigin = process.env.APP_PUBLIC_URL || process.env.PUBLIC_BASE_URL;
+        let downloadUrl;
+
+        if (!trustedOrigin) {
+            if (process.env.NODE_ENV === 'production') {
+                throw new Error('APP_PUBLIC_URL or PUBLIC_BASE_URL must be configured in production');
+            }
+            // Fallback for development only
+            downloadUrl = `${req.protocol}://${req.get('host')}${exportResult.downloadUrl}`;
+        } else {
+            // Validate and normalize trusted origin
+            if (!trustedOrigin.match(/^https?:\/\/.+/)) {
+                throw new Error('Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must be a valid http/https URL');
+            }
+            const normalizedOrigin = trustedOrigin.replace(/\/$/, ''); // Remove trailing slash
+            downloadUrl = `${normalizedOrigin}${exportResult.downloadUrl}`;
+        }
 
         // Send email with download link
         await emailService.sendDataExportEmail(userData.email, {
