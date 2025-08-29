@@ -263,6 +263,29 @@ class EmailService {
     }
 
     /**
+     * Send data export email (Issue #258 - GDPR compliance)
+     * @param {string} userEmail - User email address
+     * @param {Object} exportData - Data export details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendDataExportEmail(userEmail, exportData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '📦 Your Data Export is Ready',
+            templateName: 'data_export',
+            templateData: {
+                userName: exportData.userName || 'User',
+                downloadUrl: exportData.downloadUrl,
+                filename: exportData.filename,
+                size: exportData.size, // Size in KB
+                expiresAt: exportData.expiresAt,
+                expiryTime: '24 hours',
+                supportEmail: exportData.supportEmail || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
      * Send plan change notification
      * @param {string} userEmail - User email address
      * @param {Object} changeData - Plan change details
