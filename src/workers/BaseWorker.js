@@ -314,16 +314,18 @@ class BaseWorker {
    */
   async handleJobError(job, error) {
     const jobId = job.id || 'unknown';
-    
+
     this.log('error', 'Job processing failed', {
       jobId,
       error: error.message,
       attempts: job.attempts || 0
     });
-    
+
+    // Always increment failed jobs counter, regardless of queue service success
+    this.failedJobs++;
+
     try {
       await this.queueService.failJob(job, error);
-      this.failedJobs++;
     } catch (failureError) {
       this.log('error', 'Failed to handle job error', {
         jobId,

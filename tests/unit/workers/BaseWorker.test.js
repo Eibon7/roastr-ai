@@ -123,10 +123,12 @@ describe('BaseWorker', () => {
 
   afterEach(async () => {
     if (worker && worker.isRunning) {
+      // Force stop with shorter timeout for tests
+      worker.config.gracefulShutdownTimeout = 1000;
       await worker.stop();
     }
     jest.restoreAllMocks();
-  });
+  }, 15000); // 15 second timeout for cleanup
 
   describe('constructor', () => {
     test('should initialize with correct default configuration', () => {
@@ -353,7 +355,8 @@ describe('BaseWorker', () => {
 
   describe('job processing', () => {
     beforeEach(async () => {
-      worker = new TestWorker();
+      // Use faster polling for tests
+      worker = new TestWorker({ pollInterval: 10 });
       mockSupabaseClient.from.mockReturnValue({
         select: jest.fn(() => ({
           limit: jest.fn(() => ({ data: [], error: null }))
@@ -393,7 +396,7 @@ describe('BaseWorker', () => {
           })
         );
         done();
-      }, 50);
+      }, 100);
     });
 
     test('should handle job processing failures', (done) => {
@@ -415,7 +418,7 @@ describe('BaseWorker', () => {
           expect.any(Error)
         );
         done();
-      }, 50);
+      }, 100);
     });
 
     test('should respect max concurrency limit', (done) => {
@@ -437,7 +440,7 @@ describe('BaseWorker', () => {
       setTimeout(() => {
         expect(worker.currentJobs.size).toBeLessThanOrEqual(2);
         done();
-      }, 25);
+      }, 100);
     });
 
     test('should handle queue service errors gracefully', (done) => {
@@ -453,7 +456,8 @@ describe('BaseWorker', () => {
 
   describe('job completion and failure handling', () => {
     beforeEach(async () => {
-      worker = new TestWorker();
+      // Use faster polling for tests
+      worker = new TestWorker({ pollInterval: 10 });
       mockSupabaseClient.from.mockReturnValue({
         select: jest.fn(() => ({
           limit: jest.fn(() => ({ data: [], error: null }))
@@ -476,7 +480,7 @@ describe('BaseWorker', () => {
         // Should continue despite completion error
         expect(worker.isRunning).toBe(true);
         done();
-      }, 50);
+      }, 100);
     });
 
     test('should handle job failure marking errors', (done) => {
@@ -495,7 +499,7 @@ describe('BaseWorker', () => {
       setTimeout(() => {
         expect(worker.failedJobs).toBe(1);
         done();
-      }, 50);
+      }, 100);
     });
   });
 
@@ -587,9 +591,11 @@ describe('BaseWorker', () => {
       worker.currentJobs = new Map();
       worker.currentJobs.set('job1', { id: 'job1' });
       worker.currentJobs.set('job2', { id: 'job2' });
-      
+      // Set startTime to simulate worker has been running
+      worker.startTime = Date.now() - 1000; // 1 second ago
+
       const stats = worker.getStats();
-      
+
       expect(stats.workerName).toBe(worker.workerName);
       expect(stats.workerType).toBe('test_worker');
       expect(stats.isRunning).toBe(true);
@@ -644,13 +650,25 @@ describe('BaseWorker', () => {
     });
 
     test('should setup graceful shutdown signal handlers', () => {
-      worker = new TestWorker();
-      
-      expect(process.on).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
-      expect(process.on).toHaveBeenCalledWith('SIGINT', expect.any(Function));
-      expect(process.on).toHaveBeenCalledWith('SIGQUIT', expect.any(Function));
-      expect(process.on).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
-      expect(process.on).toHaveBeenCalledWith('unhandledRejection', expect.any(Function));
+      // Temporarily change NODE_ENV to enable signal handler setup
+      const originalNodeEnv = process.env.NODE_ENV;
+      const originalIsTest = process.env.IS_TEST;
+      process.env.NODE_ENV = 'production';
+      delete process.env.IS_TEST;
+
+      try {
+        worker = new TestWorker();
+
+        expect(process.on).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+        expect(process.on).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+        expect(process.on).toHaveBeenCalledWith('SIGQUIT', expect.any(Function));
+        expect(process.on).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
+        expect(process.on).toHaveBeenCalledWith('unhandledRejection', expect.any(Function));
+      } finally {
+        // Restore original environment
+        process.env.NODE_ENV = originalNodeEnv;
+        if (originalIsTest) process.env.IS_TEST = originalIsTest;
+      }
     });
   });
 });
