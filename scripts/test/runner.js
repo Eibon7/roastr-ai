@@ -419,10 +419,17 @@ program
       // Run the npm script
       const command = `npm run ${scriptName}`;
 
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const child = spawn('npm', ['run', scriptName], {
           stdio: 'pipe',
           env: process.env
+        });
+
+        // Handle spawn errors immediately
+        child.on('error', (error) => {
+          console.error(`Failed to spawn process: ${error.message}`);
+          reject(error);
+          return;
         });
 
         let stdout = '';

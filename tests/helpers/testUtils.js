@@ -195,8 +195,14 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
     effectivePlan = scenarioType === 'freeTier' ? 'free' : scenarioType;
   }
 
+  // Validate effectivePlan against PLAN_LIMITS
+  if (!PLAN_LIMITS.hasOwnProperty(effectivePlan)) {
+    console.warn(`Invalid plan type '${effectivePlan}' detected, falling back to 'free' plan`);
+    effectivePlan = 'free';
+  }
+
   // Use shared plan limits for consistency
-  const defaults = PLAN_LIMITS[effectivePlan] || PLAN_LIMITS.free;
+  const defaults = PLAN_LIMITS[effectivePlan];
 
   // Build base entitlements and usage
   const finalEntitlements = {
