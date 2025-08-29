@@ -88,7 +88,7 @@ node scripts/test/runner.js validate
 |-------|-------------|----------|
 | `auth` | Authentication & Authorization | `tests/unit/auth/**`, `tests/integration/auth/**` |
 | `workers` | Background Workers | `tests/unit/workers/**`, `tests/integration/workers/**` |
-| `billing` | Billing & Subscriptions | `tests/unit/routes/billing*`, `tests/integration/billing/**` |
+| `billing` | Billing & Subscriptions | `tests/unit/routes/billing/**`, `tests/integration/*billing*`, `tests/integration/plan-*`, `tests/integration/stripe*` |
 | `services` | Core Services | `tests/unit/services/**` |
 | `routes` | API Routes | `tests/unit/routes/**` |
 | `integration` | Integration Tests | `tests/integration/**` |
@@ -161,7 +161,12 @@ done
 Provides reusable mocks for organizations, users, and tenant-scoped data:
 
 ```javascript
-const { createMockOrganization, createMockUser, createMultiTenantTestScenario } = require('./tests/utils/multiTenantMocks');
+// Using Jest moduleNameMapper alias (recommended)
+const { createMockOrganization, createMockUser, createMultiTenantTestScenario } = require('@tests/utils/multiTenantMocks');
+
+// Alternative: relative path from test file location
+// For tests/unit/** files: require('../../utils/multiTenantMocks')
+// For tests/integration/** files: require('../utils/multiTenantMocks')
 
 // Create a test organization
 const org = createMockOrganization({ plan: 'enterprise', name: 'Test Corp' });
@@ -178,7 +183,12 @@ const scenario = createMultiTenantTestScenario('simple');
 Provides consistent mocks for core system components:
 
 ```javascript
-const { createMockQueueService, createMockShieldService, createMockBillingService } = require('./tests/utils/sharedMocks');
+// Using Jest moduleNameMapper alias (recommended)
+const { createMockQueueService, createMockShieldService, createMockBillingService } = require('@tests/utils/sharedMocks');
+
+// Alternative: relative path from test file location
+// For tests/unit/** files: require('../../utils/sharedMocks')
+// For tests/integration/** files: require('../utils/sharedMocks')
 
 // Mock queue service for job processing tests
 const queueService = createMockQueueService();

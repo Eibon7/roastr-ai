@@ -175,11 +175,11 @@ function createMockUsageData(organizationId, overrides = {}) {
   return {
     organization_id: organizationId,
     period: overrides.period || new Date().toISOString().slice(0, 7), // YYYY-MM
-    roasts_generated: overrides.roasts_generated || Math.floor(Math.random() * 100),
-    api_calls: overrides.api_calls || Math.floor(Math.random() * 1000),
-    storage_used: overrides.storage_used || Math.floor(Math.random() * 1024), // MB
-    bandwidth_used: overrides.bandwidth_used || Math.floor(Math.random() * 5120), // MB
-    cost: overrides.cost || (Math.random() * 50).toFixed(2),
+    roasts_generated: overrides.roasts_generated !== undefined ? overrides.roasts_generated : 25,
+    api_calls: overrides.api_calls !== undefined ? overrides.api_calls : 150,
+    storage_used: overrides.storage_used !== undefined ? overrides.storage_used : 512, // MB
+    bandwidth_used: overrides.bandwidth_used !== undefined ? overrides.bandwidth_used : 2048, // MB
+    cost: overrides.cost !== undefined ? Number(overrides.cost) : 12.50,
     created_at: new Date().toISOString(),
     ...overrides
   };

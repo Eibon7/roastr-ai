@@ -4,6 +4,7 @@ const { Command } = require('commander');
 const { spawn } = require('child_process');
 const colors = require('colors');
 const path = require('path');
+const glob = require('glob');
 
 /**
  * Advanced CLI test runner with scope filtering - Issue 82 Phase 4
@@ -26,7 +27,7 @@ const TEST_SCOPES = {
   },
   billing: {
     name: 'Billing & Subscriptions',
-    patterns: ['tests/unit/routes/billing*.test.js', 'tests/integration/billing/**/*.test.js'],
+    patterns: ['tests/unit/routes/billing*.test.js', 'tests/integration/*billing*.test.js', 'tests/integration/plan-*.test.js', 'tests/integration/stripe*.test.js'],
     description: 'Payment processing, subscription management, and billing tests'
   },
   services: {
@@ -55,9 +56,22 @@ function runJest(patterns, options = {}) {
   return new Promise((resolve, reject) => {
     const jestArgs = [];
 
-    // Add test patterns
+    // Add test patterns - convert globs to regex-safe patterns
     if (patterns && patterns.length > 0) {
-      jestArgs.push('--testPathPattern', patterns.join('|'));
+      const regexPatterns = patterns.map(pattern => {
+        // Convert glob patterns to regex-safe patterns
+        return pattern
+          .replace(/\*\*/g, '.*')        // ** becomes .*
+          .replace(/\*/g, '[^/]*')       // * becomes [^/]*
+          .replace(/\./g, '\\.')         // Escape dots
+          .replace(/\+/g, '\\+')         // Escape plus signs
+          .replace(/\?/g, '\\?')         // Escape question marks
+          .replace(/\[/g, '\\[')         // Escape square brackets
+          .replace(/\]/g, '\\]')         // Escape square brackets
+          .replace(/\(/g, '\\(')         // Escape parentheses
+          .replace(/\)/g, '\\)');        // Escape parentheses
+      });
+      jestArgs.push('--testPathPattern', regexPatterns.join('|'));
     }
 
     // Add mock mode environment variable

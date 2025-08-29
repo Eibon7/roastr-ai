@@ -6,6 +6,11 @@ module.exports = {
   testMatch: [
     '<rootDir>/tests/**/*.test.js'
   ],
+
+  // Module name mapping for easier imports
+  moduleNameMapper: {
+    '^@tests/(.*)$': '<rootDir>/tests/$1'
+  },
   
   // Coverage settings
   collectCoverageFrom: [
