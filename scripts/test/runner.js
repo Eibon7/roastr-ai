@@ -86,15 +86,15 @@ const TEST_SCOPES = {
 
 // Enhanced platform filters from PR #282
 const PLATFORM_FILTERS = {
-  twitter: 'twitter|Twitter',
-  youtube: 'youtube|YouTube',
-  instagram: 'instagram|Instagram',
-  facebook: 'facebook|Facebook',
-  discord: 'discord|Discord',
-  twitch: 'twitch|Twitch',
-  reddit: 'reddit|Reddit',
-  tiktok: 'tiktok|TikTok',
-  bluesky: 'bluesky|Bluesky'
+  twitter: '\\b(?:twitter|Twitter)\\b',
+  youtube: '\\b(?:youtube|YouTube)\\b',
+  instagram: '\\b(?:instagram|Instagram)\\b',
+  facebook: '\\b(?:facebook|Facebook)\\b',
+  discord: '\\b(?:discord|Discord)\\b',
+  twitch: '\\b(?:twitch|Twitch)\\b',
+  reddit: '\\b(?:reddit|Reddit)\\b',
+  tiktok: '\\b(?:tiktok|TikTok)\\b',
+  bluesky: '\\b(?:bluesky|Bluesky)\\b'
 };
 
 const PLATFORMS = Object.keys(PLATFORM_FILTERS); // For backward compatibility

@@ -381,8 +381,14 @@ export default function Settings() {
     try {
       setPasswordResetLoading(true);
 
+      // Guard: Verify user and email exist before making API call
+      if (!user || !user.email) {
+        addNotification('No se pudo obtener tu dirección de email. Por favor, recarga la página e inténtalo de nuevo.', 'error');
+        return;
+      }
+
       const result = await apiClient.post('/auth/reset-password', {
-        email: user?.email
+        email: user.email
       });
 
       if (result.success) {

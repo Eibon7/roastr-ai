@@ -6,6 +6,7 @@
 const request = require('supertest');
 const express = require('express');
 const bodyParser = require('body-parser');
+const userRouter = require('../../../src/routes/user');
 
 // Mock all dependencies first
 jest.mock('../../../src/services/emailService', () => ({
@@ -71,9 +72,17 @@ jest.mock('../../../src/middleware/auth', () => ({
     }
 }));
 
-jest.mock('../../../src/middleware/gdprRateLimiter', () => (req, res, next) => next());
-jest.mock('../../../src/middleware/rateLimiter', () => ({
-    dataExportLimiter: (req, res, next) => next()
+jest.mock('../../../src/middleware/gdprRateLimiter', () => ({
+    gdprGlobalLimiter: (req, res, next) => next(),
+    dataExportLimiter: (req, res, next) => next(),
+    accountDeletionLimiter: (req, res, next) => next(),
+    dataDownloadLimiter: (req, res, next) => next(),
+    deletionCancellationLimiter: (req, res, next) => next()
+}));
+jest.mock('../../../src/middleware/roastrPersonaRateLimiter', () => ({
+    roastrPersonaReadLimiter: (req, res, next) => next(),
+    roastrPersonaWriteLimiter: (req, res, next) => next(),
+    roastrPersonaDeleteLimiter: (req, res, next) => next()
 }));
 
 describe('User Profile Settings (Issue #258) - Simplified', () => {
@@ -84,42 +93,9 @@ describe('User Profile Settings (Issue #258) - Simplified', () => {
         // Create Express app for testing
         app = express();
         app.use(bodyParser.json());
-        
-        // Add a simple route to test POST data export
-        app.post('/api/user/data-export', (req, res) => {
-            if (!req.headers.authorization) {
-                return res.status(401).json({ success: false, error: 'Unauthorized' });
-            }
-            
-            res.json({
-                success: true,
-                message: 'Data export has been generated and sent to your email address',
-                data: {
-                    email: 'test@example.com',
-                    filename: 'user-data-export.zip',
-                    size: 1024,
-                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                    estimatedDeliveryMinutes: 5
-                }
-            });
-        });
 
-        // Add a simple route to test GET profile
-        app.get('/api/user/profile', (req, res) => {
-            if (!req.headers.authorization) {
-                return res.status(401).json({ success: false, error: 'Unauthorized' });
-            }
-            
-            res.json({
-                success: true,
-                data: {
-                    id: 'user-123',
-                    email: 'test@example.com',
-                    name: 'Test User',
-                    plan: 'free'
-                }
-            });
-        });
+        // Mount the real user router instead of mock routes
+        app.use('/api/user', userRouter);
 
         jest.clearAllMocks();
     });

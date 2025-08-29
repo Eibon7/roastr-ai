@@ -184,7 +184,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
     plus: { monthlyResponsesLimit: 250, integrationsLimit: 2, shieldEnabled: true },
     pro: { monthlyResponsesLimit: 1000, integrationsLimit: 5, shieldEnabled: true },
     agency: { monthlyResponsesLimit: 5000, integrationsLimit: 10, shieldEnabled: true },
-    enterprise: { monthlyResponsesLimit: 10000, integrationsLimit: 9, shieldEnabled: true }
+    enterprise: { monthlyResponsesLimit: 10000, integrationsLimit: 10, shieldEnabled: true }
   };
   const defaults = planDefaults[planType] || planDefaults.free;
 

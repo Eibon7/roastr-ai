@@ -84,8 +84,9 @@ describe('Settings Profile Logic (Issue #258)', () => {
 
     describe('Data Export Logic', () => {
         it('should call correct API endpoint for data export request', async () => {
-            mockApiClient.post.mockResolvedValue({ 
+            mockApiClient.post.mockResolvedValue({
                 success: true,
+                message: 'Data export has been generated and sent to your email address',
                 data: {
                     email: 'test@example.com',
                     filename: 'user-data-export.zip',
@@ -179,10 +180,10 @@ describe('Settings Profile Logic (Issue #258)', () => {
 
             const expiryTime = calculateExpiryTime();
             const now = new Date();
-            const hoursDiff = (expiryTime - now) / (1000 * 60 * 60);
-            
-            expect(hoursDiff).toBeGreaterThan(23.9);
-            expect(hoursDiff).toBeLessThan(24.1);
+            const msDiff = expiryTime - now;
+            const expectedMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+            expect(Math.abs(msDiff - expectedMs)).toBeLessThan(100); // Allow 100ms tolerance
         });
     });
 

@@ -6,6 +6,9 @@ on:
     branches:
       - feat/issue-281-mocks-runner-docs
 
+env:
+  TEST_PLATFORM: "bluesky"  # Platform to validate exists in platforms.json
+
 jobs:
   runner-json:
     runs-on: ubuntu-latest
@@ -28,7 +31,7 @@ jobs:
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat platforms.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          test "$(jq -r '.platforms | index("twitter")' platforms.json)" != "null"
+          test "$(jq -r --arg platform "$TEST_PLATFORM" '.platforms | index($platform)' platforms.json)" != "null"
 
       - name: Lint + Typecheck (JSON)
         run: |
