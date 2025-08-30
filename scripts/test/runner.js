@@ -431,6 +431,8 @@ program
         const stderrBuffer = [];
         let stdoutSize = 0;
         let stderrSize = 0;
+        let stdoutTruncated = false;
+        let stderrTruncated = false;
 
         // Only buffer output when JSON mode is requested
         if (options.json) {
@@ -443,6 +445,7 @@ program
             while (stdoutSize > maxBufferLength && stdoutBuffer.length > 1) {
               const removed = stdoutBuffer.shift();
               stdoutSize -= removed.length;
+              stdoutTruncated = true;
             }
           });
 
@@ -455,6 +458,7 @@ program
             while (stderrSize > maxBufferLength && stderrBuffer.length > 1) {
               const removed = stderrBuffer.shift();
               stderrSize -= removed.length;
+              stderrTruncated = true;
             }
           });
         }
@@ -470,10 +474,10 @@ program
             finalStderr = stderrBuffer.join('');
 
             // Add truncation indicator if we had to remove chunks
-            if (stdoutBuffer.length > 0 && stdoutSize >= maxBufferLength) {
+            if (stdoutTruncated) {
               finalStdout = '...[truncated]' + finalStdout;
             }
-            if (stderrBuffer.length > 0 && stderrSize >= maxBufferLength) {
+            if (stderrTruncated) {
               finalStderr = '...[truncated]' + finalStderr;
             }
           }

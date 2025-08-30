@@ -5,6 +5,9 @@ on:
     branches:
       - feat/issue-281-mocks-runner-docs
 
+permissions:
+  contents: read
+
 env:
   TEST_PLATFORM: "bluesky"  # Platform to validate exists in platforms.json
 
@@ -39,14 +42,19 @@ jobs:
       - name: Lint + Typecheck (JSON)
         run: |
           set -euo pipefail
-          # Ensure the JSON file is produced even if the runner exits non-zero
-          set +o pipefail
-          node scripts/test/runner.js check --json | tee check.json || true
-          set -o pipefail
+          # Write stdout directly to check.json and stderr to check.stderr
+          node scripts/test/runner.js check --json > check.json 2> check.stderr || true
           echo '### Check summary (from runner --json)' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat check.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          # Append stderr if non-empty for quick visibility
+          if [ -s check.stderr ]; then
+            echo '### Error output' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat check.stderr >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
           # Parse exit code from our new check command format with numeric coercion
           if ! CHECK_EXIT=$(jq -r '(.exitCode // 0) | tonumber' check.json); then
             echo "Error: Failed to parse check.json for exit code"
