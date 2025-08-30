@@ -425,12 +425,54 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
+   * Build persona context from available persona fields
+   * @private
+   */
+  buildPersonaContext(personaData, personaFieldsUsed) {
+    if (!personaData || !personaData.hasPersona || !personaData.fieldsAvailable) {
+      return null;
+    }
+
+    let personaEnhancements = [];
+
+    if (personaData.fieldsAvailable.includes('lo_que_me_define')) {
+      personaEnhancements.push('Considera la personalidad definida del usuario');
+      personaFieldsUsed.loQueMeDefineUsed = true;
+    }
+
+    if (personaData.fieldsAvailable.includes('lo_que_no_tolero')) {
+      personaEnhancements.push('Ten en cuenta lo que el usuario no tolera');
+      personaFieldsUsed.loQueNoToleroUsed = true;
+    }
+
+    if (personaData.fieldsAvailable.includes('lo_que_me_da_igual')) {
+      personaEnhancements.push('Considera las cosas que le dan igual al usuario');
+      personaFieldsUsed.loQueMeDaIgualUsed = true;
+    }
+
+    // Filter out empty or falsy elements and join with proper formatting
+    const validEnhancements = personaEnhancements.filter(enhancement =>
+      enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
+    );
+
+    if (validEnhancements.length === 0) {
+      return null;
+    }
+
+    // Join and trim the final context
+    const personaContext = validEnhancements.join('. ').trim();
+
+    // Ensure it ends with a period if it doesn't already
+    return personaContext.endsWith('.') ? personaContext : personaContext + '.';
+  }
+
+  /**
    * Generate response using OpenAI
    */
   async generateOpenAIResponse(originalText, config, context) {
     const { tone, humor_type } = config;
     const { platform, severity_level, toxicity_score, categories, personaData } = context;
-    
+
     // Track which persona fields will be used (Issue #81)
     let personaFieldsUsed = {
       loQueMeDefineUsed: false,
@@ -446,44 +488,37 @@ class GenerateReplyWorker extends BaseWorker {
       custom_style_prompt: config.custom_style_prompt
     };
 
-    // Enhance prompt with persona context if available
-    if (personaData && personaData.hasPersona) {
-      let personaEnhancements = [];
-      
-      if (personaData.fieldsAvailable.includes('lo_que_me_define')) {
-        personaEnhancements.push('Considera la personalidad definida del usuario');
-        personaFieldsUsed.loQueMeDefineUsed = true;
-      }
-      
-      if (personaData.fieldsAvailable.includes('lo_que_no_tolero')) {
-        personaEnhancements.push('Ten en cuenta lo que el usuario no tolera');
-        personaFieldsUsed.loQueNoToleroUsed = true;
-      }
-      
-      if (personaData.fieldsAvailable.includes('lo_que_me_da_igual')) {
-        personaEnhancements.push('Considera las cosas que le dan igual al usuario');
-        personaFieldsUsed.loQueMeDaIgualUsed = true;
-      }
-      
-      if (personaEnhancements.length > 0) {
-        userConfig.persona_context = personaEnhancements.join('. ');
-        this.log('debug', 'Enhanced response with persona context', {
-          fieldsUsed: Object.keys(personaFieldsUsed).filter(key => personaFieldsUsed[key])
-        });
-      }
+    // Enhance prompt with persona context if available using robust helper
+    const personaContext = this.buildPersonaContext(personaData, personaFieldsUsed);
+    if (personaContext) {
+      userConfig.persona_context = personaContext;
+      this.log('debug', 'Enhanced response with persona context', {
+        fieldsUsed: Object.keys(personaFieldsUsed).filter(key => personaFieldsUsed[key]),
+        contextLength: personaContext.length
+      });
     }
 
-    // Build enhanced system prompt using master template
-    const systemPrompt = await this.promptTemplate.buildPrompt({
-      originalComment: originalText,
-      toxicityData: {
-        score: toxicity_score,
-        severity: severity_level,
-        categories: categories || []
-      },
-      userConfig,
-      includeReferences: true // Include references by default in worker
-    });
+    // Build enhanced system prompt using master template with error handling
+    let systemPrompt;
+    try {
+      systemPrompt = await this.promptTemplate.buildPrompt({
+        originalComment: originalText,
+        toxicityData: {
+          score: toxicity_score,
+          severity: severity_level,
+          categories: categories || []
+        },
+        userConfig,
+        includeReferences: true // Include references by default in worker
+      });
+    } catch (err) {
+      this.log('error', 'Failed to build system prompt', {
+        error: err.message,
+        originalTextLength: originalText.length,
+        userConfig: Object.keys(userConfig)
+      });
+      throw new Error('Prompt generation failed');
+    }
     
     // Add platform constraints to the end of the prompt
     const platformConstraint = this.getPlatformConstraint(platform);
