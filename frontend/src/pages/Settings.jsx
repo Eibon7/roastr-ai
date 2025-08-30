@@ -64,7 +64,18 @@ export default function Settings() {
     }
   });
   const [notifications, setNotifications] = useState([]);
-  
+
+  // Password reset state (Issue #258)
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+
+  // Data export state (Issue #258)
+  const [showDataExportModal, setShowDataExportModal] = useState(false);
+  const [dataExportLoading, setDataExportLoading] = useState(false);
+
+  // Password reset rate limiting state
+  const [lastPasswordResetAttempt, setLastPasswordResetAttempt] = useState(0);
+  const RESET_COOLDOWN_MS = 60000; // 60 seconds
+
   // Roastr Persona state
   const [roastrPersona, setRoastrPersona] = useState({
     loQueMeDefine: '',
@@ -336,36 +347,64 @@ export default function Settings() {
     }
   };
 
-  // Data export handling
-  const handleDataExport = async () => {
+
+
+  // Password reset handling (Issue #258)
+  const handlePasswordReset = async () => {
+    // Check rate limiting first
+    const now = Date.now();
+    if (now - lastPasswordResetAttempt < RESET_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((RESET_COOLDOWN_MS - (now - lastPasswordResetAttempt)) / 1000);
+      addNotification(`Por favor espera ${remainingSeconds} segundos antes de solicitar otro enlace de cambio de contraseña`, 'warning');
+      return;
+    }
+
+    // Guard: Verify user and email exist before making API call
+    if (!user || !user.email) {
+      addNotification('No se pudo obtener tu dirección de email. Por favor, recarga la página e inténtalo de nuevo.', 'error');
+      return;
+    }
+
     try {
-      addNotification('Preparando exportación de datos...', 'info');
-      
-      // This would call a data export endpoint
-      const result = await apiClient.get('/auth/export-data');
-      
+      setPasswordResetLoading(true);
+
+      const result = await apiClient.post('/auth/reset-password', {
+        email: user.email
+      });
+
       if (result.success) {
-        // Create and download file
-        const dataStr = JSON.stringify(result.data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `roastr-data-export-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        addNotification('Datos exportados correctamente', 'success');
+        // Only set cooldown after successful API request
+        setLastPasswordResetAttempt(now);
+        addNotification('Se ha enviado un enlace de cambio de contraseña a tu email', 'success');
       } else {
-        addNotification('Error al exportar datos', 'error');
+        throw new Error(result.error || 'Error al enviar el enlace de cambio de contraseña');
       }
-      
     } catch (error) {
-      console.error('Data export error:', error);
-      addNotification('La exportación de datos estará disponible próximamente', 'info');
+      console.error('Password reset error:', error);
+      addNotification('Error al enviar el enlace de cambio de contraseña', 'error');
+    } finally {
+      setPasswordResetLoading(false);
+    }
+  };
+
+  // Data export request handling (Issue #258)
+  const handleDataExportRequest = async () => {
+    try {
+      setDataExportLoading(true);
+
+      const result = await apiClient.post('/user/data-export');
+
+      if (result.success) {
+        addNotification('Se ha enviado un enlace de descarga a tu email', 'success');
+        setShowDataExportModal(false);
+      } else {
+        throw new Error(result.error || 'Error al solicitar la exportación de datos');
+      }
+    } catch (error) {
+      console.error('Data export request error:', error);
+      addNotification('Error al solicitar la exportación de datos', 'error');
+    } finally {
+      setDataExportLoading(false);
     }
   };
 
@@ -860,191 +899,52 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Password Change Section */}
+          {/* Password Change Section - Issue #258 */}
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <label className="block text-sm font-medium mb-2">Contraseña</label>
-            {passwordForm.showForm ? (
-              <form onSubmit={handlePasswordChange} className="space-y-4">
-                <Input
-                  type="password"
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  placeholder="Contraseña actual"
-                  required
-                />
-                <div className="space-y-2">
-                  <Input
-                    type="password"
-                    value={passwordForm.newPassword}
-                    onChange={(e) => {
-                      const newPassword = e.target.value;
-                      setPasswordForm(prev => ({ ...prev, newPassword }));
-                      if (newPassword) {
-                        validateNewPassword(newPassword);
-                      } else {
-                        setPasswordForm(prev => ({
-                          ...prev,
-                          validation: { isValid: false, errors: [], strength: 0 }
-                        }));
-                      }
-                    }}
-                    placeholder="Nueva contraseña"
-                    required
-                    minLength={8}
-                    className={passwordForm.newPassword && !passwordForm.validation.isValid ? 'border-red-300 focus:border-red-500' : ''}
-                  />
-                  
-                  {/* Password strength indicator */}
-                  {passwordForm.newPassword && (
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              passwordForm.validation.strength === 0 ? 'bg-red-500 w-1/5' :
-                              passwordForm.validation.strength === 1 ? 'bg-orange-500 w-2/5' :
-                              passwordForm.validation.strength === 2 ? 'bg-yellow-500 w-3/5' :
-                              passwordForm.validation.strength === 3 ? 'bg-green-500 w-4/5' :
-                              'bg-emerald-500 w-full'
-                            }`}
-                          />
-                        </div>
-                        <span className={`text-xs font-medium ${
-                          passwordForm.validation.strength === 0 ? 'text-red-600' :
-                          passwordForm.validation.strength === 1 ? 'text-orange-600' :
-                          passwordForm.validation.strength === 2 ? 'text-yellow-600' :
-                          passwordForm.validation.strength === 3 ? 'text-green-600' :
-                          'text-emerald-600'
-                        }`}>
-                          {getPasswordStrengthLabel(passwordForm.validation.strength)}
-                        </span>
-                      </div>
-                      
-                      {/* Enhanced password requirements checklist (Issue #133) */}
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Requisitos de contraseña:</div>
-                        <div className="space-y-1">
-                          {(() => {
-                            const criteria = getPasswordCriteria(passwordForm.newPassword);
-                            return (
-                              <>
-                                <PasswordRequirement 
-                                  met={criteria.length}
-                                  text="Al menos 8 caracteres"
-                                />
-                                <PasswordRequirement 
-                                  met={criteria.noSpaces}
-                                  text="Sin espacios en blanco"
-                                />
-                                <PasswordRequirement 
-                                  met={criteria.lowercase}
-                                  text="Al menos una letra minúscula"
-                                />
-                                <PasswordRequirement 
-                                  met={criteria.number}
-                                  text="Al menos un número"
-                                />
-                                <PasswordRequirement 
-                                  met={criteria.uppercaseOrSpecial}
-                                  text="Al menos una mayúscula o carácter especial (!@#$%^&*)"
-                                />
-                                <PasswordRequirement 
-                                  met={criteria.different}
-                                  text="Diferente de la contraseña actual"
-                                />
-                              </>
-                            );
-                          })()}
-                        </div>
-                        
-                        {/* Additional feedback for Issue #133 */}
-                        {passwordForm.newPassword.length > 0 && !passwordForm.validation.isValid && (
-                          <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-                            <div className="flex items-start">
-                              <XCircle className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                              <div className="text-xs text-red-600 dark:text-red-400">
-                                {passwordForm.validation.errors.join('. ')}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {passwordForm.newPassword.length > 0 && passwordForm.validation.isValid && (
-                          <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                            <div className="flex items-center">
-                              <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                              <div className="text-xs text-green-600 dark:text-green-400">
-                                ¡Contraseña válida y segura!
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+            <div>
+              <Input
+                type="password"
+                value="••••••••••••"
+                disabled
+                className="bg-muted mb-2"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePasswordReset}
+                disabled={passwordResetLoading}
+              >
+                {passwordResetLoading ? 'Enviando...' : 'Cambiar contraseña'}
+              </Button>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                <div className="flex">
+                  <Mail className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
+                  <p className="text-xs text-blue-800">
+                    Al hacer clic en "Cambiar contraseña", recibirás un email con un enlace seguro para restablecer tu contraseña.
+                  </p>
                 </div>
-                <Input
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  placeholder="Confirmar nueva contraseña"
-                  required
-                  minLength={8}
-                />
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="flex">
-                    <Shield className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
-                    <div className="text-xs text-blue-800 dark:text-blue-200">
-                      <p>• Ingresa tu contraseña actual para verificar tu identidad</p>
-                      <p>• La nueva contraseña debe ser diferente a la actual</p>
-                      <p>• Usa la guía de fortaleza arriba para crear una contraseña segura</p>
-                      <p className="mt-1 font-medium">• Los cambios de contraseña están limitados a 5 intentos por hora por seguridad</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    type="submit" 
-                    size="sm" 
-                    disabled={passwordForm.isSubmitting || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword || !passwordForm.validation.isValid}
-                  >
-                    {passwordForm.isSubmitting ? 'Cambiando...' : 'Cambiar contraseña'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setPasswordForm(prev => ({ 
-                        ...prev, 
-                        showForm: false, 
-                        currentPassword: '', 
-                        newPassword: '', 
-                        confirmPassword: '' 
-                      }));
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <div>
-                <Input 
-                  type="password" 
-                  value="••••••••••••" 
-                  disabled
-                  className="bg-muted mb-2"
-                />
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setPasswordForm(prev => ({ ...prev, showForm: true }))}
-                >
-                  Cambiar contraseña
-                </Button>
               </div>
-            )}
+            </div>
+          </div>
+
+          {/* Data Export Section - Issue #258 */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <label className="block text-sm font-medium mb-2">Descargar mis datos</label>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Descarga una copia de todos tus datos personales almacenados en Roastr (cumplimiento RGPD).
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDataExportModal(true)}
+                className="flex items-center space-x-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Solicitar descarga</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -1773,7 +1673,7 @@ export default function Settings() {
                   Download all your personal data in JSON format (GDPR compliance)
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={handleDataExport}>
+              <Button variant="outline" size="sm" onClick={() => setShowDataExportModal(true)}>
                 <Download className="h-4 w-4 mr-2" />
                 Export Data
               </Button>
@@ -1804,6 +1704,61 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Data Export Modal - Issue #258 */}
+      {showDataExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Descargar mis datos
+            </h3>
+            <div className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex">
+                  <Mail className="w-5 h-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
+                      Recibirás un correo con un enlace para descargar tus datos de Roastr
+                    </p>
+                    <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                      <li>• El enlace será válido por 24 horas</li>
+                      <li>• El archivo incluirá todos tus datos personales</li>
+                      <li>• Formato: ZIP con archivos JSON y CSV</li>
+                      <li>• Cumplimiento RGPD - Artículo 15</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                <div className="flex">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                    Por seguridad, el enlace de descarga expirará automáticamente en 24 horas.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 mt-6">
+              <Button
+                onClick={handleDataExportRequest}
+                disabled={dataExportLoading}
+                className="flex-1"
+              >
+                {dataExportLoading ? 'Procesando...' : 'Solicitar descarga'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowDataExportModal(false)}
+                disabled={dataExportLoading}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

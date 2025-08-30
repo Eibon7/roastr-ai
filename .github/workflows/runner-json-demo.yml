@@ -1,10 +1,12 @@
 name: Runner JSON Demo
 
 on:
-  pull_request:
   push:
     branches:
       - feat/issue-281-mocks-runner-docs
+
+env:
+  TEST_PLATFORM: "bluesky"  # Platform to validate exists in platforms.json
 
 jobs:
   runner-json:
@@ -28,19 +30,46 @@ jobs:
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat platforms.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          test "$(jq -r '.platforms | index("twitter")' platforms.json)" != "null"
+          # Use jq in exit-on-false mode to test platform existence with proper error handling
+          if ! jq -e --arg platform "$TEST_PLATFORM" '.platforms | contains([$platform])' platforms.json > /dev/null; then
+            echo "Platform '$TEST_PLATFORM' not found in platforms.json"
+            exit 1
+          fi
 
       - name: Lint + Typecheck (JSON)
         run: |
+          set -euo pipefail
           node scripts/test/runner.js check --json | tee check.json
           echo '### Check summary (from runner --json)' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat check.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          LINT_EXIT=$(jq -r '.lintExitCode // .exitCode // 0' check.json || echo 0)
-          TYPE_EXIT=$(jq -r '.typecheck.exitCode // 0' check.json || echo 0)
-          if [ "$LINT_EXIT" -ne 0 ] || [ "$TYPE_EXIT" -ne 0 ]; then
-            echo "Runner check failed: lint=$LINT_EXIT typecheck=$TYPE_EXIT"
+          # Parse exit code from our new check command format with numeric coercion
+          if ! CHECK_EXIT=$(jq -r '(.exitCode // 0) | tonumber' check.json); then
+            echo "Error: Failed to parse check.json for exit code"
             exit 1
           fi
+          # Parse command that was run
+          if ! CHECK_COMMAND=$(jq -r '.command // "unknown"' check.json); then
+            echo "Error: Failed to parse check.json for command"
+            exit 1
+          fi
+          echo "Check command: $CHECK_COMMAND"
+          echo "Check exit code: $CHECK_EXIT"
+          # Check if the command failed (ensure numeric comparison)
+          # First validate that CHECK_EXIT is a numeric string
+          if ! echo "$CHECK_EXIT" | grep -q '^[0-9]\+$'; then
+            echo "Error: CHECK_EXIT is not a valid numeric value: $CHECK_EXIT"
+            exit 1
+          fi
+          if [ "$CHECK_EXIT" -ne 0 ]; then
+            echo "Runner check failed with exit code: $CHECK_EXIT"
+            # Show stderr if available
+            if STDERR_OUTPUT=$(jq -r '.stderr // ""' check.json 2>/dev/null) && [ -n "$STDERR_OUTPUT" ]; then
+              echo "Error output:"
+              echo "$STDERR_OUTPUT"
+            fi
+            exit 1
+          fi
+          echo "✅ Check passed successfully"
 

@@ -1277,6 +1277,123 @@ router.get('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimit
 });
 
 /**
+ * POST /api/user/data-export
+ * Request GDPR data export via email (Issue #258)
+ * Rate limited: 5 attempts per hour per IP/user
+ */
+router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimiter, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Get user details for email
+        const { data: userData, error: userError } = await supabaseServiceClient
+            .from('users')
+            .select('email, name')
+            .eq('id', userId)
+            .single();
+
+        if (userError || !userData) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Log data access request
+        await auditService.logGdprAction({
+            action: 'personal_data_export_requested',
+            userId,
+            actorId: userId,
+            actorType: 'user',
+            resourceType: 'data_export_request',
+            resourceId: 'user_data_export_email_request',
+            details: {
+                access_method: 'profile_settings',
+                export_type: 'email_request',
+                user_email: userData.email
+            },
+            legalBasis: 'gdpr_article_15_right_of_access',
+            retentionPeriodDays: 730
+        }, req);
+
+        // Generate data export
+        const dataExportService = new DataExportService();
+        const exportResult = await dataExportService.exportUserData(userId);
+
+        if (!exportResult.success) {
+            throw new Error('Data export generation failed');
+        }
+
+        // Generate full download URL using trusted origin
+        const trustedOrigin = process.env.APP_PUBLIC_URL || process.env.PUBLIC_BASE_URL;
+        let downloadUrl;
+
+        if (!trustedOrigin) {
+            if (process.env.NODE_ENV === 'production') {
+                throw new Error('APP_PUBLIC_URL or PUBLIC_BASE_URL must be configured in production');
+            }
+            // Fallback for development only
+            downloadUrl = `${req.protocol}://${req.get('host')}${exportResult.downloadUrl}`;
+        } else {
+            // Validate and normalize trusted origin
+            if (!trustedOrigin.match(/^https?:\/\/.+/)) {
+                throw new Error('Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must be a valid http/https URL');
+            }
+            const normalizedOrigin = trustedOrigin.replace(/\/$/, ''); // Remove trailing slash
+            downloadUrl = `${normalizedOrigin}${exportResult.downloadUrl}`;
+        }
+
+        // Send email with download link
+        await emailService.sendDataExportEmail(userData.email, {
+            userName: userData.name || 'User',
+            downloadUrl,
+            filename: exportResult.filename,
+            size: Math.round(exportResult.size / 1024), // Size in KB
+            expiresAt: exportResult.expiresAt,
+            supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+        });
+
+        // Log successful export request
+        await auditService.logDataExport(userId, {
+            filename: exportResult.filename,
+            size: exportResult.size,
+            expiresAt: exportResult.expiresAt,
+            deliveryMethod: 'email',
+            emailSent: true
+        });
+
+        logger.info('GDPR data export requested via email', {
+            userId: SafeUtils.safeUserIdPrefix(userId),
+            email: SafeUtils.maskEmail(userData.email),
+            filename: exportResult.filename,
+            size: exportResult.size
+        });
+
+        res.json({
+            success: true,
+            message: 'Data export has been generated and sent to your email address',
+            data: {
+                email: userData.email,
+                filename: exportResult.filename,
+                size: exportResult.size,
+                expiresAt: exportResult.expiresAt.toISOString(),
+                estimatedDeliveryMinutes: 5
+            }
+        });
+
+    } catch (error) {
+        logger.error('GDPR data export email request failed', {
+            userId: req.user?.id?.substr(0, 8) + '...',
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process data export request'
+        });
+    }
+});
+
+/**
  * GET /api/user/data-export/download/:token
  * Download exported data using secure token
  * Rate limited: 10 attempts per hour per IP/token (Issue #115)
