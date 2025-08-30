@@ -42,28 +42,25 @@ describe('Ajustes Settings Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
+    // Create stable builder instance with jest.fn() methods
+    const stableBuilder = {
+      select: jest.fn(),
+      eq: jest.fn(),
+      single: jest.fn(),
+      update: jest.fn(),
+      insert: jest.fn()
+    };
+
+    // Make methods return the same builder or appropriate sub-builder
+    stableBuilder.select.mockReturnValue(stableBuilder);
+    stableBuilder.eq.mockReturnValue(stableBuilder);
+    stableBuilder.update.mockReturnValue(stableBuilder);
+    stableBuilder.insert.mockReturnValue(stableBuilder);
+
     // Mock Supabase client
     mockUserClient = {
-      from: jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn()
-          }))
-        })),
-        update: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn()
-            }))
-          }))
-        })),
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn()
-          }))
-        }))
-      }))
+      from: jest.fn(() => stableBuilder)
     };
 
     createUserClient.mockReturnValue(mockUserClient);
