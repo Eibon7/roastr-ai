@@ -3,6 +3,7 @@ const CostControlService = require('../services/costControl');
 const RoastPromptTemplate = require('../services/roastPromptTemplate');
 const transparencyService = require('../services/transparencyService');
 const { mockMode } = require('../config/mockMode');
+const { PLATFORM_LIMITS } = require('../config/constants');
 
 /**
  * Generate Reply Worker
@@ -539,7 +540,7 @@ class GenerateReplyWorker extends BaseWorker {
     let platformConstraints = '';
     switch (platform) {
       case 'twitter':
-        platformConstraints = 'Keep responses under 280 characters for Twitter.';
+        platformConstraints = `Keep responses under ${PLATFORM_LIMITS.twitter.maxLength} characters for Twitter.`;
         break;
       case 'youtube':
         platformConstraints = 'YouTube comment style, can be slightly longer but still concise.';
@@ -573,7 +574,7 @@ class GenerateReplyWorker extends BaseWorker {
    */
   getPlatformConstraint(platform) {
     const constraints = {
-      'twitter': 'RESTRICCIÓN DE PLATAFORMA: Respuesta máxima de 280 caracteres para Twitter.',
+      'twitter': `RESTRICCIÓN DE PLATAFORMA: Respuesta máxima de ${PLATFORM_LIMITS.twitter.maxLength} caracteres para Twitter.`,
       'youtube': 'RESTRICCIÓN DE PLATAFORMA: Estilo de comentario de YouTube, puede ser ligeramente más largo pero mantén la concisión.',
       'instagram': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Instagram, amigable pero con sarcasmo.',
       'facebook': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Facebook, considera audiencia más amplia.',
@@ -610,7 +611,7 @@ class GenerateReplyWorker extends BaseWorker {
     
     switch (platform) {
       case 'twitter':
-        maxLength = 270; // Leave room for mentions/context
+        maxLength = PLATFORM_LIMITS.twitter.maxLength - 10; // Leave room for mentions/context
         break;
       case 'instagram':
         maxLength = 500;
@@ -619,7 +620,7 @@ class GenerateReplyWorker extends BaseWorker {
         maxLength = 1000;
         break;
       default:
-        maxLength = 280;
+        maxLength = PLATFORM_LIMITS.twitter.maxLength;
     }
     
     if (response.length <= maxLength) {

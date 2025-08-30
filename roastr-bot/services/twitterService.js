@@ -6,6 +6,7 @@
 const { TwitterApi } = require('twitter-api-v2');
 const logger = require('../utils/logger');
 const filters = require('../utils/filters');
+const { PLATFORM_LIMITS } = require('../../src/config/constants');
 
 class TwitterService {
   constructor(config = {}) {
@@ -221,7 +222,7 @@ class TwitterService {
       }
 
       // Ensure roast text fits Twitter's character limit
-      const maxLength = 280;
+      const maxLength = PLATFORM_LIMITS.twitter.maxLength;
       let tweetText = roastText;
       
       if (tweetText.length > maxLength) {
