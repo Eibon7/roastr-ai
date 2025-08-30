@@ -303,8 +303,33 @@ class StripeWebhookService {
                 creditAmount
             });
 
-            // Get payment intent to track the transaction
-            const paymentIntentId = session.payment_intent;
+            // Validate and extract payment intent ID
+            let paymentIntentId;
+            if (!session.payment_intent) {
+                logger.error('Missing payment_intent in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    metadata: session.metadata
+                });
+                throw new Error('Payment intent is required for addon purchase completion');
+            }
+
+            // Extract payment intent ID (handle both string and object formats)
+            if (typeof session.payment_intent === 'string') {
+                paymentIntentId = session.payment_intent;
+            } else if (typeof session.payment_intent === 'object' && session.payment_intent.id) {
+                paymentIntentId = session.payment_intent.id;
+            } else {
+                logger.error('Invalid payment_intent format in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    paymentIntentType: typeof session.payment_intent,
+                    paymentIntentValue: session.payment_intent
+                });
+                throw new Error('Payment intent must be a string or object with id property');
+            }
 
             // Execute atomic transaction for addon purchase
             const { data: transactionResult, error: transactionError } = await supabaseServiceClient
