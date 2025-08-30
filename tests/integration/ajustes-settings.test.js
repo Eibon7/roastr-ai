@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../../src/app');
+const app = require('../../src/index');
 const { createUserClient } = require('../../src/config/supabase');
 const { flags } = require('../../src/config/flags');
 
@@ -288,11 +288,32 @@ describe('Ajustes Settings Integration Tests', () => {
 
         // Should either reject or sanitize the input
         if (response.status === 200) {
-          // If accepted, ensure it's properly sanitized
+          // If accepted, verify it's properly sanitized by checking stored value
           expect(response.body.success).toBe(true);
+
+          // Retrieve the stored value to verify sanitization
+          const getResponse = await request(app)
+            .get('/api/user/roastr-persona')
+            .set('Authorization', authToken);
+
+          expect(getResponse.status).toBe(200);
+          const storedValue = getResponse.body.data.loQueMeDefine;
+
+          // Verify malicious content is removed/escaped
+          expect(storedValue).not.toContain('<script>');
+          expect(storedValue).not.toContain('javascript:');
+          expect(storedValue).not.toContain('onload=');
+          expect(storedValue).not.toContain('onerror=');
+
+          // Should be sanitized version (HTML entities or stripped)
+          if (maliciousInput.includes('<script>')) {
+            expect(storedValue).toMatch(/(&lt;script&gt;|alert\(|sanitized)/i);
+          }
         } else {
-          // If rejected, should be a validation error
+          // If rejected, should be a validation error with proper message
           expect(response.status).toBe(400);
+          expect(response.body.success).toBe(false);
+          expect(response.body.error).toMatch(/(invalid|malicious|script|security|validation)/i);
         }
       }
     });
@@ -326,19 +347,30 @@ describe('Ajustes Settings Integration Tests', () => {
 
   describe('Performance and Limits', () => {
     it('should handle concurrent theme updates', async () => {
-      const promises = [];
-      
-      for (let i = 0; i < 5; i++) {
-        mockUserClient.from().select().eq().single.mockResolvedValueOnce({
+      // Create a shared latch to control when DB operations resolve
+      let resolveLatch;
+      const latchPromise = new Promise(resolve => {
+        resolveLatch = resolve;
+      });
+
+      // Mock implementation that waits for the latch
+      mockUserClient.from().select().eq().single.mockImplementation(() => {
+        return latchPromise.then(() => ({
           data: { preferences: { theme: 'system' } },
           error: null
-        });
+        }));
+      });
 
-        mockUserClient.from().update().eq().select().single.mockResolvedValueOnce({
+      mockUserClient.from().update().eq().select().single.mockImplementation(() => {
+        return latchPromise.then(() => ({
           data: { preferences: { theme: 'dark' } },
           error: null
-        });
+        }));
+      });
 
+      // Start all requests concurrently
+      const promises = [];
+      for (let i = 0; i < 5; i++) {
         promises.push(
           request(app)
             .patch('/api/user/settings/theme')
@@ -346,6 +378,12 @@ describe('Ajustes Settings Integration Tests', () => {
             .send({ theme: 'dark' })
         );
       }
+
+      // Allow a brief moment for all requests to start
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Release the latch to allow all DB operations to complete
+      resolveLatch();
 
       const responses = await Promise.all(promises);
       responses.forEach(response => {

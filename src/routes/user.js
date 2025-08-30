@@ -2400,8 +2400,8 @@ router.patch('/settings/transparency-mode', authenticateToken, async (req, res) 
 
         // Update user's transparency mode
         if (flags.isEnabled('ENABLE_SUPABASE')) {
-            const userClient = createUserClient(req.headers.authorization.replace('Bearer ', ''));
-            
+            const userClient = createUserClient(req.accessToken);
+
             const { data, error } = await userClient
                 .from('users')
                 .update({ transparency_mode: mode })
@@ -2470,8 +2470,8 @@ router.get('/settings/transparency-mode', authenticateToken, async (req, res) =>
         const userId = req.user.id;
 
         if (flags.isEnabled('ENABLE_SUPABASE')) {
-            const userClient = createUserClient(req.headers.authorization.replace('Bearer ', ''));
-            
+            const userClient = createUserClient(req.accessToken);
+
             const { data, error } = await userClient
                 .from('users')
                 .select('transparency_mode')
@@ -2559,7 +2559,7 @@ router.get('/settings/theme', authenticateToken, async (req, res) => {
         const userId = req.user.id;
 
         if (flags.isEnabled('ENABLE_SUPABASE')) {
-            const userClient = createUserClient(req.headers.authorization.replace('Bearer ', ''));
+            const userClient = createUserClient(req.accessToken);
 
             const { data, error } = await userClient
                 .from('users')
@@ -2611,100 +2611,7 @@ router.get('/settings/theme', authenticateToken, async (req, res) => {
     }
 });
 
-/**
- * PATCH /api/user/settings/theme
- * Update user's theme preference (Issue #259)
- */
-router.patch('/settings/theme', authenticateToken, async (req, res) => {
-    try {
-        const { theme } = req.body;
-        const userId = req.user.id;
 
-        // Validate theme
-        const validThemes = ['light', 'dark', 'system'];
-        if (!theme || !validThemes.includes(theme)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid theme. Must be one of: light, dark, system'
-            });
-        }
-
-        if (flags.isEnabled('ENABLE_SUPABASE')) {
-            const userClient = createUserClient(req.headers.authorization.replace('Bearer ', ''));
-
-            // Get current preferences
-            const { data: currentData, error: fetchError } = await userClient
-                .from('users')
-                .select('preferences')
-                .eq('id', userId)
-                .single();
-
-            if (fetchError) {
-                throw fetchError;
-            }
-
-            // Update preferences with new theme
-            const updatedPreferences = {
-                ...(currentData.preferences || {}),
-                theme
-            };
-
-            const { data, error } = await userClient
-                .from('users')
-                .update({ preferences: updatedPreferences })
-                .eq('id', userId)
-                .select('preferences')
-                .single();
-
-            if (error) {
-                throw error;
-            }
-
-            // Log the change
-            await auditService.logUserSettingChange(userId, 'theme', {
-                old_value: currentData.preferences?.theme || 'system',
-                new_value: theme
-            }, req);
-
-            logger.info('Theme setting updated', {
-                userId: SafeUtils.safeUserIdPrefix(userId),
-                theme
-            });
-
-            res.json({
-                success: true,
-                message: 'Theme setting updated successfully',
-                data: {
-                    theme: updatedPreferences.theme
-                }
-            });
-        } else {
-            // Mock mode response
-            logger.info('Mock mode: Theme setting updated', {
-                userId: SafeUtils.safeUserIdPrefix(userId),
-                theme
-            });
-
-            res.json({
-                success: true,
-                message: 'Theme setting updated successfully',
-                data: {
-                    theme
-                }
-            });
-        }
-
-    } catch (error) {
-        logger.error('Update theme setting error', {
-            userId: SafeUtils.safeUserIdPrefix(req.user.id),
-            error: error.message
-        });
-        res.status(500).json({
-            success: false,
-            error: 'Failed to update theme setting'
-        });
-    }
-});
 
 /**
  * GET /api/user/settings/transparency-explanation

@@ -72,7 +72,10 @@ node scripts/test/runner.js list-platforms --json
 #### Platform Management
 ```bash
 # List available platforms
-node scripts/test/runner.js platforms
+node scripts/test/runner.js list-platforms
+
+# JSON output for automation
+node scripts/test/runner.js list-platforms --json
 
 # Run tests filtered by platform
 node scripts/test/runner.js run services --platform instagram

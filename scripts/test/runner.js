@@ -425,12 +425,7 @@ program
           env: process.env
         });
 
-        // Handle spawn errors immediately
-        child.on('error', (error) => {
-          console.error(`Failed to spawn process: ${error.message}`);
-          reject(error);
-          return;
-        });
+
 
         let stdout = '';
         let stderr = '';
