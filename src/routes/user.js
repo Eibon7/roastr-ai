@@ -2132,8 +2132,8 @@ router.delete('/roastr-persona', authenticateToken, roastrPersonaDeleteLimiter, 
             const { data: deleteResult, error: deleteError } = await userClient
                 .rpc('delete_roastr_persona_transactional', {
                     p_user_id: userId,
-                p_field_type: field
-            });
+                    p_field_type: field
+                });
 
         if (deleteError || !deleteResult?.success) {
             const errorMessage = deleteError?.message || deleteResult?.error || 'Unknown error';

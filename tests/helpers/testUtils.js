@@ -196,7 +196,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
   }
 
   // Validate effectivePlan against PLAN_LIMITS
-  if (!PLAN_LIMITS.hasOwnProperty(effectivePlan)) {
+  if (!Object.prototype.hasOwnProperty.call(PLAN_LIMITS, effectivePlan)) {
     console.warn(`Invalid plan type '${effectivePlan}' detected, falling back to 'free' plan`);
     effectivePlan = 'free';
   }

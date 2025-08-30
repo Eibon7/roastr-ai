@@ -16,13 +16,13 @@ jest.mock('../../../src/services/emailService', () => ({
 
 jest.mock('../../../src/services/dataExportService', () => {
     return jest.fn().mockImplementation(() => ({
-        exportUserData: jest.fn().mockResolvedValue({
+        exportUserData: jest.fn().mockImplementation(() => Promise.resolve({
             success: true,
             downloadUrl: '/api/user/data-export/download/mock-token',
             filename: 'user-data-export.zip',
             size: 1024000,
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-        })
+        }))
     }));
 });
 
