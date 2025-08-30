@@ -215,7 +215,7 @@ describe('Ajustes Settings Integration Tests', () => {
   describe('Error Handling', () => {
     it('should handle Roastr Persona validation errors', async () => {
       // Test with text too long
-      const longText = 'a'.repeat(501); // Exceeds 500 char limit
+      const longText = 'a'.repeat(1001);
 
       const response = await request(app)
         .post('/api/user/roastr-persona')
@@ -305,12 +305,18 @@ describe('Ajustes Settings Integration Tests', () => {
           expect(storedValue).not.toContain('onload=');
           expect(storedValue).not.toContain('onerror=');
 
-          // Should be sanitized version (HTML entities or stripped)
-          if (maliciousInput.includes('<script>')) {
-            // More robust check that accepts common sanitized forms
-            expect(storedValue).toMatch(/(&lt;script&gt;|&amp;lt;script&amp;gt;|alert\\\(|alert&amp;#40;|sanitized)/i);
-            // Ensure raw script tags are not present
-            expect(storedValue).not.toContain('<script>');
+          // Verify that dangerous input has been neutralized
+          // Check that raw dangerous tokens are not present
+          expect(storedValue).not.toContain('<script>');
+          expect(storedValue).not.toContain('onerror=');
+          expect(storedValue).not.toContain('javascript:');
+
+          // Ensure the input was altered (not identical to original)
+          expect(storedValue).not.toBe(maliciousInput);
+
+          // If angle brackets remain, they should be escaped
+          if (storedValue.includes('<') || storedValue.includes('>')) {
+            expect(storedValue).toMatch(/&lt;|&gt;/);
           }
         } else {
           // If rejected, should be a validation error with proper message
@@ -344,10 +350,10 @@ describe('Ajustes Settings Integration Tests', () => {
       expect(getResponse.status).toBe(200);
       const storedValue = getResponse.body.data.loQueMeDefine;
 
-      // Should preserve legitimate technical content without alteration
+      // Backend preserves legitimate technical content verbatim when it passes validation
       expect(storedValue).toContain('JavaScript function alert()');
       expect(storedValue).toContain('script tags in plain text');
-      // Ensure it's not flagged or altered unexpectedly
+      // PersonaInputSanitizer returns original text unchanged if it passes validation
       expect(storedValue).toBe(legitimateTechnicalContent);
     });
 

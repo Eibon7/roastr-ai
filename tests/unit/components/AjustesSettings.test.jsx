@@ -259,21 +259,40 @@ describe('AjustesSettings Component', () => {
     };
 
     apiClient.get.mockImplementation((url) => {
-      if (url === '/user/settings/transparency-mode') {
-        return Promise.resolve(mockResponseWithoutBio);
-      }
-
-      // Derive a reliable key and provide safe fallback
-      const key = url.split('/').pop();
-      if (mockApiResponses.hasOwnProperty(key)) {
-        return Promise.resolve(mockApiResponses[key]);
-      }
+      // First try exact match on full URL
       if (mockApiResponses.hasOwnProperty(url)) {
         return Promise.resolve(mockApiResponses[url]);
       }
 
-      // Safe fallback to prevent undefined responses
-      return Promise.resolve(mockResponseWithoutBio);
+      // Handle specific known endpoint
+      if (url === '/user/settings/transparency-mode') {
+        return Promise.resolve(mockResponseWithoutBio);
+      }
+
+      // Extract pathname reliably using URL constructor or regex
+      let pathname;
+      try {
+        // Try URL constructor first (handles full URLs)
+        const urlObj = new URL(url, 'http://localhost');
+        pathname = urlObj.pathname;
+      } catch {
+        // Fallback to treating as pathname directly
+        pathname = url;
+      }
+
+      // Check against pathname
+      if (mockApiResponses.hasOwnProperty(pathname)) {
+        return Promise.resolve(mockApiResponses[pathname]);
+      }
+
+      // Check final path segment
+      const pathSegment = pathname.split('/').pop();
+      if (mockApiResponses.hasOwnProperty(pathSegment)) {
+        return Promise.resolve(mockApiResponses[pathSegment]);
+      }
+
+      // Fail explicitly instead of returning generic response
+      return Promise.reject(new Error(`Unexpected mock request: ${url}`));
     });
 
     render(<AjustesSettings user={mockUser} onNotification={mockOnNotification} />);
