@@ -39,7 +39,10 @@ jobs:
       - name: Lint + Typecheck (JSON)
         run: |
           set -euo pipefail
-          node scripts/test/runner.js check --json | tee check.json
+          # Ensure the JSON file is produced even if the runner exits non-zero
+          set +o pipefail
+          node scripts/test/runner.js check --json | tee check.json || true
+          set -o pipefail
           echo '### Check summary (from runner --json)' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat check.json >> $GITHUB_STEP_SUMMARY

@@ -301,7 +301,7 @@ class EmailService {
                 userName: exportData.userName || 'User',
                 downloadUrl: exportData.downloadUrl,
                 filename: exportData.filename,
-                size: formatFileSize(exportData.size),
+                size: formatFileSize(exportData.size ?? 0),
                 expiresAt: exportData.expiresAt,
                 expiryTime: '24 hours',
                 supportEmail: exportData.supportEmail || 'support@roastr.ai'

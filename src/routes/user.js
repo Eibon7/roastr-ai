@@ -1834,11 +1834,26 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             const userClient = createUserClient(req.accessToken);
 
             // Get existing data to determine if we need to set created_at timestamps
-            const { data: existingData } = await userClient
+            const { data: existingData, error: existingError } = await userClient
                 .from('users')
                 .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted')
                 .eq('id', userId)
                 .single();
+
+            // Handle query errors explicitly; if no row found, proceed with safe defaults
+            if (existingError && existingError.code !== 'PGRST116') {
+                logger.error('Failed to fetch existing Roastr Persona data', {
+                    userId: SafeUtils.safeUserIdPrefix(userId),
+                    error: existingError.message
+                });
+                return res.status(500).json({ success: false, error: 'Failed to retrieve existing persona data' });
+            }
+
+            const existingDataSafe = existingData || {
+                lo_que_me_define_encrypted: null,
+                lo_que_no_tolero_encrypted: null,
+                lo_que_me_da_igual_encrypted: null
+            };
 
         // Prepare sanitized versions for encryption
         let sanitizedLoQueMeDefine = null;
@@ -1877,7 +1892,7 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
                     updateData.lo_que_me_define_encrypted = encryptionService.encrypt(encryptionSanitized);
                     
                     // Set created_at if this is the first time setting the field
-                    if (!existingData?.lo_que_me_define_encrypted) {
+                    if (!existingDataSafe.lo_que_me_define_encrypted) {
                         updateData.lo_que_me_define_created_at = new Date().toISOString();
                     }
                 } catch (encryptError) {
@@ -1908,7 +1923,7 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
                     updateData.lo_que_no_tolero_encrypted = encryptionService.encrypt(encryptionSanitized);
                     
                     // Set created_at if this is the first time setting the field
-                    if (!existingData?.lo_que_no_tolero_encrypted) {
+                    if (!existingDataSafe.lo_que_no_tolero_encrypted) {
                         updateData.lo_que_no_tolero_created_at = new Date().toISOString();
                     }
                 } catch (encryptError) {
@@ -1939,7 +1954,7 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
                     updateData.lo_que_me_da_igual_encrypted = encryptionService.encrypt(encryptionSanitized);
                     
                     // Set created_at if this is the first time setting the field
-                    if (!existingData?.lo_que_me_da_igual_encrypted) {
+                    if (!existingDataSafe.lo_que_me_da_igual_encrypted) {
                         updateData.lo_que_me_da_igual_created_at = new Date().toISOString();
                     }
                 } catch (encryptError) {
@@ -2824,8 +2839,23 @@ router.patch('/settings/theme', authenticateToken, async (req, res) => {
                 throw fetchError;
             }
 
-            const oldTheme = currentData.preferences?.theme || 'system';
-            const updatedPreferences = { ...(currentData.preferences || {}), theme };
+            const oldTheme = currentData?.preferences?.theme || 'system';
+
+            // Validate and coerce preferences to a plain object before merging
+            let updatedPreferences;
+            try {
+                const prefs = currentData?.preferences;
+                const isPlainObject = prefs && typeof prefs === 'object' && !Array.isArray(prefs);
+                const basePrefs = isPlainObject ? prefs : {};
+                updatedPreferences = { ...basePrefs, theme };
+            } catch (mergeError) {
+                logger.error('Failed to merge preferences for theme update', {
+                    userId: SafeUtils.safeUserIdPrefix(userId),
+                    error: mergeError.message,
+                    type: typeof currentData?.preferences
+                });
+                return res.status(500).json({ success: false, error: 'Failed to update theme preference' });
+            }
 
             // Update the user's theme preference
             const { data, error } = await userClient
