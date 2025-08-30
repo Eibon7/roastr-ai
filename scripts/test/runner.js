@@ -421,41 +421,72 @@ program
 
       return new Promise((resolve, reject) => {
         const child = spawn('npm', ['run', scriptName], {
-          stdio: 'pipe',
+          stdio: options.json ? 'pipe' : 'inherit',
           env: process.env
         });
 
-        // Handle spawn errors immediately
-        child.on('error', (error) => {
-          console.error(`Failed to spawn process: ${error.message}`);
-          reject(error);
-          return;
-        });
+        // Circular buffer implementation for bounded memory usage
+        const maxBufferLength = 2000;
+        const stdoutBuffer = [];
+        const stderrBuffer = [];
+        let stdoutSize = 0;
+        let stderrSize = 0;
+        let stdoutTruncated = false;
+        let stderrTruncated = false;
 
-        let stdout = '';
-        let stderr = '';
+        // Only buffer output when JSON mode is requested
+        if (options.json) {
+          child.stdout.on('data', (data) => {
+            const chunk = data.toString();
+            stdoutBuffer.push(chunk);
+            stdoutSize += chunk.length;
 
-        child.stdout.on('data', (data) => {
-          stdout += data.toString();
-        });
+            // Remove oldest chunks if buffer exceeds limit
+            while (stdoutSize > maxBufferLength && stdoutBuffer.length > 1) {
+              const removed = stdoutBuffer.shift();
+              stdoutSize -= removed.length;
+              stdoutTruncated = true;
+            }
+          });
 
-        child.stderr.on('data', (data) => {
-          stderr += data.toString();
-        });
+          child.stderr.on('data', (data) => {
+            const chunk = data.toString();
+            stderrBuffer.push(chunk);
+            stderrSize += chunk.length;
 
+            // Remove oldest chunks if buffer exceeds limit
+            while (stderrSize > maxBufferLength && stderrBuffer.length > 1) {
+              const removed = stderrBuffer.shift();
+              stderrSize -= removed.length;
+              stderrTruncated = true;
+            }
+          });
+        }
+
+        // Handle process termination in a single handler
         child.on('close', (exitCode) => {
-          // Trim output to reasonable length for JSON
-          const maxLength = 2000;
-          const trimmedStdout = stdout.length > maxLength ?
-            stdout.substring(0, maxLength) + '...[truncated]' : stdout;
-          const trimmedStderr = stderr.length > maxLength ?
-            stderr.substring(0, maxLength) + '...[truncated]' : stderr;
+          // Construct final output from circular buffers
+          let finalStdout = '';
+          let finalStderr = '';
+
+          if (options.json) {
+            finalStdout = stdoutBuffer.join('');
+            finalStderr = stderrBuffer.join('');
+
+            // Add truncation indicator if we had to remove chunks
+            if (stdoutTruncated) {
+              finalStdout = '...[truncated]' + finalStdout;
+            }
+            if (stderrTruncated) {
+              finalStderr = '...[truncated]' + finalStderr;
+            }
+          }
 
           const result = {
             command,
             exitCode,
-            stdout: trimmedStdout,
-            stderr: trimmedStderr
+            stdout: finalStdout,
+            stderr: finalStderr
           };
 
           if (options.json) {
@@ -463,14 +494,6 @@ program
           } else {
             console.log(colors.cyan(`🔍 Ran: ${command}`));
             console.log(colors.gray(`Exit code: ${exitCode}`));
-            if (stdout) {
-              console.log(colors.green('📤 Output:'));
-              console.log(stdout);
-            }
-            if (stderr) {
-              console.log(colors.red('📤 Errors:'));
-              console.log(stderr);
-            }
           }
 
           // Set process exit code to match child exit code
@@ -478,6 +501,7 @@ program
           resolve();
         });
 
+        // Handle spawn failures only
         child.on('error', (error) => {
           const result = {
             command,
@@ -518,7 +542,7 @@ program
 // Error handling for unknown commands
 program.on('command:*', () => {
   console.error(colors.red('❌ Invalid command: %s'), program.args.join(' '));
-  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, validate, check'));
+  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, platforms, validate, check'));
   console.log(colors.gray('Use --help for more information'));
   process.exit(1);
 });

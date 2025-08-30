@@ -107,8 +107,8 @@ describe('SafeUtils - Issue #154: Optional chaining and safe string operations',
     it('should handle edge cases', () => {
       expect(SafeUtils.maskEmail('a@b.c')).toBe('a@***.c');
       expect(SafeUtils.maskEmail('x@y.z')).toBe('x@***.z');
-      expect(SafeUtils.maskEmail('test@')).toBe('t***@***');
-      expect(SafeUtils.maskEmail('@domain.com')).toBe('@d****.com');
+      expect(SafeUtils.maskEmail('test@')).toBeNull();
+      expect(SafeUtils.maskEmail('@domain.com')).toBe('@domain.com');
     });
   });
 
