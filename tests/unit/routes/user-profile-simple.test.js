@@ -3,12 +3,7 @@
  * Tests password reset and data export features in Settings → Profile
  */
 
-const request = require('supertest');
-const express = require('express');
-const bodyParser = require('body-parser');
-const userRouter = require('../../../src/routes/user');
-
-// Mock all dependencies first
+// Mock all dependencies first before importing router
 jest.mock('../../../src/services/emailService', () => ({
     sendDataExportEmail: jest.fn().mockResolvedValue({ success: true }),
     sendPasswordResetEmail: jest.fn().mockResolvedValue({ success: true })
@@ -30,6 +25,12 @@ jest.mock('../../../src/services/auditService', () => ({
     logGdprAction: jest.fn().mockResolvedValue(true),
     logDataExport: jest.fn().mockResolvedValue(true)
 }));
+
+// Import dependencies after mocks are registered
+const request = require('supertest');
+const express = require('express');
+const bodyParser = require('body-parser');
+const userRouter = require('../../../src/routes/user');
 
 jest.mock('../../../src/config/supabase', () => ({
     supabaseServiceClient: {
