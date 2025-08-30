@@ -305,12 +305,6 @@ describe('Ajustes Settings Integration Tests', () => {
           expect(storedValue).not.toContain('onload=');
           expect(storedValue).not.toContain('onerror=');
 
-          // Verify that dangerous input has been neutralized
-          // Check that raw dangerous tokens are not present
-          expect(storedValue).not.toContain('<script>');
-          expect(storedValue).not.toContain('onerror=');
-          expect(storedValue).not.toContain('javascript:');
-
           // Ensure the input was altered (not identical to original)
           expect(storedValue).not.toBe(maliciousInput);
 

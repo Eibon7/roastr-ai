@@ -425,44 +425,64 @@ program
           env: process.env
         });
 
-        let stdout = '';
-        let stderr = '';
+        // Circular buffer implementation for bounded memory usage
         const maxBufferLength = 2000;
+        const stdoutBuffer = [];
+        const stderrBuffer = [];
+        let stdoutSize = 0;
+        let stderrSize = 0;
 
         // Only buffer output when JSON mode is requested
         if (options.json) {
           child.stdout.on('data', (data) => {
             const chunk = data.toString();
-            // Keep a rolling buffer - truncate if too long
-            stdout += chunk;
-            if (stdout.length > maxBufferLength) {
-              stdout = stdout.substring(stdout.length - maxBufferLength);
-              if (!stdout.includes('...[truncated]')) {
-                stdout = '...[truncated]' + stdout;
-              }
+            stdoutBuffer.push(chunk);
+            stdoutSize += chunk.length;
+
+            // Remove oldest chunks if buffer exceeds limit
+            while (stdoutSize > maxBufferLength && stdoutBuffer.length > 1) {
+              const removed = stdoutBuffer.shift();
+              stdoutSize -= removed.length;
             }
           });
 
           child.stderr.on('data', (data) => {
             const chunk = data.toString();
-            // Keep a rolling buffer - truncate if too long
-            stderr += chunk;
-            if (stderr.length > maxBufferLength) {
-              stderr = stderr.substring(stderr.length - maxBufferLength);
-              if (!stderr.includes('...[truncated]')) {
-                stderr = '...[truncated]' + stderr;
-              }
+            stderrBuffer.push(chunk);
+            stderrSize += chunk.length;
+
+            // Remove oldest chunks if buffer exceeds limit
+            while (stderrSize > maxBufferLength && stderrBuffer.length > 1) {
+              const removed = stderrBuffer.shift();
+              stderrSize -= removed.length;
             }
           });
         }
 
         // Handle process termination in a single handler
         child.on('close', (exitCode) => {
+          // Construct final output from circular buffers
+          let finalStdout = '';
+          let finalStderr = '';
+
+          if (options.json) {
+            finalStdout = stdoutBuffer.join('');
+            finalStderr = stderrBuffer.join('');
+
+            // Add truncation indicator if we had to remove chunks
+            if (stdoutBuffer.length > 0 && stdoutSize >= maxBufferLength) {
+              finalStdout = '...[truncated]' + finalStdout;
+            }
+            if (stderrBuffer.length > 0 && stderrSize >= maxBufferLength) {
+              finalStderr = '...[truncated]' + finalStderr;
+            }
+          }
+
           const result = {
             command,
             exitCode,
-            stdout: options.json ? stdout : '',
-            stderr: options.json ? stderr : ''
+            stdout: finalStdout,
+            stderr: finalStderr
           };
 
           if (options.json) {

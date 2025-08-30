@@ -10,6 +10,30 @@ const path = require('path');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
+/**
+ * Format file size with validation and human-readable output
+ * @param {*} size - The size value to format
+ * @returns {string} - Formatted size string
+ */
+function formatFileSize(size) {
+    // Validate and coerce to number
+    const numSize = Number(size);
+
+    // Check if it's a valid positive number
+    if (!Number.isFinite(numSize) || numSize < 0) {
+        return '0 KB'; // Default fallback
+    }
+
+    // Convert bytes to KB/MB with appropriate formatting
+    if (numSize < 1024) {
+        return `${numSize.toFixed(0)} KB`;
+    } else if (numSize < 1024 * 1024) {
+        return `${(numSize / 1024).toFixed(1)} MB`;
+    } else {
+        return `${(numSize / (1024 * 1024)).toFixed(1)} GB`;
+    }
+}
+
 class EmailService {
     constructor() {
         this.isConfigured = false;
@@ -277,7 +301,7 @@ class EmailService {
                 userName: exportData.userName || 'User',
                 downloadUrl: exportData.downloadUrl,
                 filename: exportData.filename,
-                size: exportData.size, // Size in KB
+                size: formatFileSize(exportData.size),
                 expiresAt: exportData.expiresAt,
                 expiryTime: '24 hours',
                 supportEmail: exportData.supportEmail || 'support@roastr.ai'

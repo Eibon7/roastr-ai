@@ -4,7 +4,7 @@ type: "automatic"
 
 Context
 
-Actualmente Augment solicita confirmación antes de ejecutar npm test o jest. Queremos que las pruebas formen parte natural del flujo de desarrollo (validar cambios, confirmar fixes, CI local) sin depender de la intervención manual.
+Actualmente, Augment solicita confirmación antes de ejecutar npm test o Jest. Queremos que las pruebas formen parte natural del flujo de desarrollo (validar cambios, confirmar correcciones, CI local) sin depender de la intervención manual.
 
 Behavior
 	1.	Detonantes:
