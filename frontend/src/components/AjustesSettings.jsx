@@ -198,8 +198,21 @@ const AjustesSettings = ({ user, onNotification }) => {
 
   const handleCopyBioText = async () => {
     try {
-      // Check if modern clipboard API is available
+      // Check if modern clipboard API is available and optionally check permissions
       if (navigator.clipboard && navigator.clipboard.writeText) {
+        // Optionally check clipboard-write permission for clearer user messages
+        if (navigator.permissions) {
+          try {
+            const permission = await navigator.permissions.query({ name: 'clipboard-write' });
+            if (permission.state === 'denied') {
+              onNotification?.('Permisos de portapapeles denegados. Intenta copiar manualmente.', 'error');
+              return;
+            }
+          } catch (permError) {
+            // Permission API not supported, continue with clipboard attempt
+          }
+        }
+
         await navigator.clipboard.writeText(copyState.bioText);
         setCopyState(prev => ({ ...prev, copied: true }));
         onNotification?.('Texto copiado al portapapeles', 'success');
@@ -208,16 +221,24 @@ const AjustesSettings = ({ user, onNotification }) => {
           setCopyState(prev => ({ ...prev, copied: false }));
         }, 2000);
       } else {
-        // Fallback for older browsers
+        // Fallback for older browsers with improved accessibility
+        const activeElement = document.activeElement;
+        const selection = window.getSelection();
+        const selectedRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
         const textarea = document.createElement('textarea');
         textarea.value = copyState.bioText;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        textarea.style.pointerEvents = 'none';
+        textarea.readOnly = true;
+        textarea.setAttribute('aria-hidden', 'true');
+        textarea.setAttribute('tabindex', '-1');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+
         document.body.appendChild(textarea);
-        textarea.select();
 
         try {
+          textarea.select();
           const successful = document.execCommand('copy');
           if (successful) {
             setCopyState(prev => ({ ...prev, copied: true }));
@@ -233,7 +254,15 @@ const AjustesSettings = ({ user, onNotification }) => {
           console.error('execCommand copy failed:', execError);
           onNotification?.('La función de copiar no está disponible en este navegador', 'error');
         } finally {
+          // Restore focus and selection
           document.body.removeChild(textarea);
+          if (activeElement && activeElement.focus) {
+            activeElement.focus();
+          }
+          if (selectedRange && selection) {
+            selection.removeAllRanges();
+            selection.addRange(selectedRange);
+          }
         }
       }
     } catch (error) {
@@ -242,6 +271,10 @@ const AjustesSettings = ({ user, onNotification }) => {
       // Handle specific clipboard API errors
       if (error.name === 'NotAllowedError') {
         onNotification?.('Permisos de portapapeles denegados. Intenta copiar manualmente.', 'error');
+      } else if (error.name === 'SecurityError') {
+        onNotification?.('Error de seguridad al acceder al portapapeles. Intenta copiar manualmente.', 'error');
+      } else if (error.name === 'AbortError') {
+        onNotification?.('Operación de copiado cancelada.', 'error');
       } else {
         onNotification?.('Error al copiar el texto', 'error');
       }
@@ -573,7 +606,7 @@ const RoastrPersonaField = ({
             </div>
             <Button
               onClick={handleSave}
-              disabled={isSaving || fieldValue.length === 0}
+              disabled={isSaving || (fieldValue ?? '').trim().length === 0}
               size="sm"
             >
               {isSaving ? (
