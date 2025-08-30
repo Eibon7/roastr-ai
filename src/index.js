@@ -36,6 +36,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const { router: planRoutes } = require('./routes/plan');
 const { router: newIntegrationsRoutes } = require('./routes/integrations-new');
 const styleProfileRoutes = require('./routes/style-profile');
+const stylecardsRoutes = require('./routes/stylecards');
 const configRoutes = require('./routes/config');
 const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
@@ -186,6 +187,9 @@ app.use('/api/integrations', newIntegrationsRoutes);
 
 // Style profile routes (authenticated, Creator+ only)
 app.use('/api/style-profile', styleProfileRoutes);
+
+// Stylecards routes (authenticated, Pro+ only) - Issue #293
+app.use('/api/stylecards', stylecardsRoutes);
 
 // Configuration routes (authenticated)
 app.use('/api/config', configRoutes);

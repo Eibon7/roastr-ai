@@ -404,19 +404,23 @@ export default function Settings() {
         payload.isToleranceVisible = roastrPersona.isToleranceVisible;
       }
       
-      const result = await apiClient.post('/user/roastr-persona', payload);
+      const resp = await apiClient.post('/user/roastr-persona', payload);
 
-      if (result.success) {
+      if (resp?.data?.success) {
+        const trimmed = text.trim();
         setRoastrPersona(prev => ({
           ...prev,
-          hasContent: !!result.data.hasContent,
-          hasIntoleranceContent: !!result.data.hasIntoleranceContent,
-          hasToleranceContent: !!result.data.hasToleranceContent,
+          hasContent: !!resp.data?.hasContent,
+          hasIntoleranceContent: !!resp.data?.hasIntoleranceContent,
+          hasToleranceContent: !!resp.data?.hasToleranceContent,
+          loQueMeDefine: isIdentity ? trimmed : prev.loQueMeDefine,
+          loQueNoTolero: isIntolerance ? trimmed : prev.loQueNoTolero,
+          loQueMeDaIgual: isTolerance ? trimmed : prev.loQueMeDaIgual,
           showForm: isIdentity ? false : prev.showForm,
           showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
           showToleranceForm: isTolerance ? false : prev.showToleranceForm
         }));
-        
+
         let successMessage;
         if (isIdentity) {
           successMessage = 'Definición personal actualizada correctamente';
@@ -425,15 +429,15 @@ export default function Settings() {
         } else if (isTolerance) {
           successMessage = 'Tolerancias personales actualizadas correctamente';
         }
-        
+
         addNotification(successMessage, 'success');
       } else {
         // Check if the error is due to security rejection
-        const errorMessage = result.error || 'Error al guardar Roastr Persona';
-        const isSecurityRejection = result.rejectedForSecurity === true;
-        
+        const errorMessage = resp?.data?.error || resp?.error || 'Error al guardar Roastr Persona';
+        const isSecurityRejection = resp?.data?.rejectedForSecurity === true || resp?.rejectedForSecurity === true;
+
         addNotification(errorMessage, 'error');
-        
+
         // If it's a security rejection, also clear the field to prevent confusion
         if (isSecurityRejection) {
           if (isIdentity) {
@@ -444,17 +448,20 @@ export default function Settings() {
             setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
           }
         }
+
+        setRoastrPersona(prev => ({ ...prev, isSaving: false }));
       }
-      
+
     } catch (error) {
-      console.error('Roastr Persona save error:', error);
-      const errorMessage = error.message || 'Error al guardar Roastr Persona';
-      
+      const apiMessage = error.response?.data?.message || error.response?.data?.error;
+      console.error('Roastr Persona save error:', apiMessage || error.message);
+      const errorMessage = apiMessage || error.message || 'Error al guardar Roastr Persona';
+
       // Check if it's a security-related error from the response
       if (error.response?.data?.rejectedForSecurity) {
         const securityMessage = error.response.data.error || errorMessage;
         addNotification(securityMessage, 'error');
-        
+
         // Clear the field that was rejected
         if (isIdentity) {
           setRoastrPersona(prev => ({ ...prev, loQueMeDefine: '' }));
@@ -466,6 +473,8 @@ export default function Settings() {
       } else {
         addNotification(errorMessage, 'error');
       }
+
+      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     } finally {
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
