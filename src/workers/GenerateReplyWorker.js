@@ -132,15 +132,21 @@ class GenerateReplyWorker extends BaseWorker {
    * Process reply generation job
    */
   async processJob(job) {
-    const { 
-      comment_id, 
-      organization_id, 
-      platform, 
+    // FIX: Critical fixes from CodeRabbit review (outside diff)
+    // Validate job payload exists before destructuring
+    if (!job?.payload) {
+      throw new Error('Invalid job: missing payload');
+    }
+
+    const {
+      comment_id,
+      organization_id,
+      platform,
       original_text,
       toxicity_score,
       severity_level,
-      categories 
-    } = job.payload || job;
+      categories
+    } = job.payload;
     
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
@@ -409,8 +415,12 @@ class GenerateReplyWorker extends BaseWorker {
         response = await this.generateOpenAIResponse(originalText, config, context);
         response.service = 'openai';
       } catch (error) {
+        // FIX: Critical fixes from CodeRabbit review (outside diff)
+        // Enhanced error logging with stack trace and safe property access
         this.log('warn', 'OpenAI generation failed, using template fallback', {
-          error: error.message
+          error: error?.message || 'Unknown error',
+          stack: error?.stack || 'No stack trace available',
+          originalTextLength: originalText?.length || 0
         });
       }
     }
@@ -433,7 +443,9 @@ class GenerateReplyWorker extends BaseWorker {
       return null;
     }
 
-    let personaEnhancements = [];
+    // FIX: Critical fixes from CodeRabbit review (outside diff)
+    // Use const instead of let for immutable arrays
+    const personaEnhancements = [];
 
     if (personaData.fieldsAvailable.includes('lo_que_me_define')) {
       personaEnhancements.push('Considera la personalidad definida del usuario');
@@ -474,14 +486,15 @@ class GenerateReplyWorker extends BaseWorker {
     const { platform, severity_level, toxicity_score, categories, personaData } = context;
 
     // Track which persona fields will be used (Issue #81)
-    let personaFieldsUsed = {
+    const personaFieldsUsed = {
       loQueMeDefineUsed: false,
       loQueNoToleroUsed: false,
       loQueMeDaIgualUsed: false
     };
 
+    // FIX: Critical fixes from CodeRabbit review (outside diff)
     // Build enhanced user config with persona data if available
-    let userConfig = {
+    const userConfig = {
       tone: tone,
       humor_type: humor_type,
       intensity_level: config.intensity_level || 3,
@@ -512,12 +525,15 @@ class GenerateReplyWorker extends BaseWorker {
         includeReferences: true // Include references by default in worker
       });
     } catch (err) {
+      // FIX: Critical fixes from CodeRabbit review (outside diff)
+      // Enhanced error logging with stack trace
       this.log('error', 'Failed to build system prompt', {
         error: err.message,
-        originalTextLength: originalText.length,
-        userConfig: Object.keys(userConfig)
+        stack: err.stack,
+        originalTextLength: originalText?.length || 0,
+        userConfig: userConfig ? Object.keys(userConfig) : []
       });
-      throw new Error('Prompt generation failed');
+      throw new Error(`Prompt generation failed: ${err.message}`);
     }
     
     // Add platform constraints to the end of the prompt
@@ -724,25 +740,57 @@ class GenerateReplyWorker extends BaseWorker {
           );
           finalResponseText = transparencyResult.finalText;
           
-          // Update disclaimer usage statistics with robust retry logic (Issue #199)
-          const statsResult = await transparencyService.updateDisclaimerStats(
-            transparencyResult.disclaimer,
-            transparencyResult.disclaimerType,
-            config.language || 'es',
-            {
-              maxRetries: 3,
-              retryDelay: 1000,
-              fallbackToLocal: true,
-              context: {
-                organizationId,
-                workerId: this.workerId || 'unknown',
-                responseId: response.id
+          // FIX: Critical fixes from CodeRabbit review (outside diff)
+          // Update disclaimer usage statistics with enhanced fallback retry logic
+          let statsResult;
+          try {
+            statsResult = await transparencyService.updateDisclaimerStats(
+              transparencyResult.disclaimer,
+              transparencyResult.disclaimerType,
+              config.language || 'es',
+              {
+                maxRetries: 3,
+                retryDelay: 1000,
+                fallbackToLocal: true,
+                context: {
+                  organizationId,
+                  workerId: this.workerId || 'unknown',
+                  responseId: response.id
+                }
               }
+            );
+          } catch (statsError) {
+            // Fallback with enhanced retry logic
+            this.log('warn', 'Primary disclaimer stats update failed, attempting fallback', {
+              error: statsError.message,
+              stack: statsError.stack
+            });
+
+            try {
+              // Wait 3 seconds and retry with simpler options
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              statsResult = await transparencyService.updateDisclaimerStats(
+                transparencyResult.disclaimer,
+                transparencyResult.disclaimerType,
+                config.language || 'es',
+                {
+                  maxRetries: 2,
+                  retryDelay: 3000,
+                  fallbackToLocal: true
+                }
+              );
+            } catch (fallbackError) {
+              this.log('error', 'Disclaimer stats fallback also failed', {
+                error: fallbackError.message,
+                stack: fallbackError.stack
+              });
+              // Continue without stats tracking rather than failing the entire operation
+              statsResult = { success: false, reason: 'fallback_failed' };
             }
-          );
-          
+          }
+
           // Log the result for monitoring
-          if (statsResult.success) {
+          if (statsResult?.success) {
             this.log('info', 'Disclaimer stats tracking successful', {
               disclaimerType: transparencyResult.disclaimerType,
               attempt: statsResult.attempt,
@@ -750,9 +798,9 @@ class GenerateReplyWorker extends BaseWorker {
             });
           } else {
             this.log('warn', 'Disclaimer stats tracking failed', {
-              reason: statsResult.reason,
-              error: statsResult.error,
-              processingTime: statsResult.processingTimeMs
+              reason: statsResult?.reason || 'unknown',
+              error: statsResult?.error || 'no error details',
+              processingTime: statsResult?.processingTimeMs || 0
             });
           }
           
@@ -770,23 +818,58 @@ class GenerateReplyWorker extends BaseWorker {
         }
       }
 
-      const { data: stored, error } = await this.supabase
-        .from('responses')
-        .insert({
-          organization_id: organizationId,
-          comment_id: commentId,
-          response_text: finalResponseText,
-          tone: config.tone,
-          humor_type: config.humor_type,
-          generation_time_ms: generationTime,
-          tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
-          cost_cents: 5, // Base cost per generation
-          post_status: 'pending',
-          persona_fields_used: personaFieldsUsed
-        })
-        .select()
-        .single();
-      
+      // FIX: Critical fixes from CodeRabbit review (outside diff)
+      // Enhanced Supabase insertion with automatic retry
+      let stored, error;
+      const insertData = {
+        organization_id: organizationId,
+        comment_id: commentId,
+        response_text: finalResponseText,
+        tone: config.tone,
+        humor_type: config.humor_type,
+        generation_time_ms: generationTime,
+        tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
+        cost_cents: 5, // Base cost per generation
+        post_status: 'pending',
+        persona_fields_used: personaFieldsUsed
+      };
+
+      try {
+        const result = await this.supabase
+          .from('responses')
+          .insert(insertData)
+          .select()
+          .single();
+
+        stored = result.data;
+        error = result.error;
+      } catch (insertError) {
+        this.log('warn', 'First Supabase insertion attempt failed, retrying', {
+          error: insertError.message,
+          commentId
+        });
+
+        // Second attempt after brief delay
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const retryResult = await this.supabase
+            .from('responses')
+            .insert(insertData)
+            .select()
+            .single();
+
+          stored = retryResult.data;
+          error = retryResult.error;
+        } catch (retryError) {
+          this.log('error', 'Supabase insertion retry also failed', {
+            error: retryError.message,
+            stack: retryError.stack,
+            commentId
+          });
+          throw retryError;
+        }
+      }
+
       if (error) throw error;
       
       // Log persona usage for analytics
