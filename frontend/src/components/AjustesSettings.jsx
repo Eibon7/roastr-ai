@@ -198,16 +198,53 @@ const AjustesSettings = ({ user, onNotification }) => {
 
   const handleCopyBioText = async () => {
     try {
-      await navigator.clipboard.writeText(copyState.bioText);
-      setCopyState(prev => ({ ...prev, copied: true }));
-      onNotification?.('Texto copiado al portapapeles', 'success');
-      
-      setTimeout(() => {
-        setCopyState(prev => ({ ...prev, copied: false }));
-      }, 2000);
+      // Check if modern clipboard API is available
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(copyState.bioText);
+        setCopyState(prev => ({ ...prev, copied: true }));
+        onNotification?.('Texto copiado al portapapeles', 'success');
+
+        setTimeout(() => {
+          setCopyState(prev => ({ ...prev, copied: false }));
+        }, 2000);
+      } else {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = copyState.bioText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        textarea.style.pointerEvents = 'none';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            setCopyState(prev => ({ ...prev, copied: true }));
+            onNotification?.('Texto copiado al portapapeles', 'success');
+
+            setTimeout(() => {
+              setCopyState(prev => ({ ...prev, copied: false }));
+            }, 2000);
+          } else {
+            throw new Error('execCommand failed');
+          }
+        } catch (execError) {
+          console.error('execCommand copy failed:', execError);
+          onNotification?.('La función de copiar no está disponible en este navegador', 'error');
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      }
     } catch (error) {
       console.error('Failed to copy bio text:', error);
-      onNotification?.('Error al copiar el texto', 'error');
+
+      // Handle specific clipboard API errors
+      if (error.name === 'NotAllowedError') {
+        onNotification?.('Permisos de portapapeles denegados. Intenta copiar manualmente.', 'error');
+      } else {
+        onNotification?.('Error al copiar el texto', 'error');
+      }
     }
   };
 

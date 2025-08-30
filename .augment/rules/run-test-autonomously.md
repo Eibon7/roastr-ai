@@ -1,5 +1,5 @@
 ---
-type: "manual"
+type: "automatic"
 ---
 
 Context
