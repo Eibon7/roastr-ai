@@ -191,6 +191,48 @@ describe('AjustesSettings Component', () => {
     });
   });
 
+  it('should show permission error when clipboard write is not allowed', async () => {
+    // Make writeText reject with NotAllowedError
+    const originalWriteText = navigator.clipboard.writeText;
+    navigator.clipboard.writeText = jest.fn().mockRejectedValue(Object.assign(new Error('NotAllowedError'), { name: 'NotAllowedError' }));
+
+    render(<AjustesSettings user={mockUser} onNotification={mockOnNotification} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Texto sugerido para tu bio')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Copiar'));
+
+    await waitFor(() => {
+      expect(navigator.clipboard.writeText).toHaveBeenCalled();
+      expect(mockOnNotification).toHaveBeenCalledWith(expect.stringContaining('Permisos de portapapeles denegados'), 'error');
+    });
+
+    // Restore original
+    navigator.clipboard.writeText = originalWriteText;
+  });
+
+  it('should show generic error when clipboard write fails', async () => {
+    const originalWriteText = navigator.clipboard.writeText;
+    navigator.clipboard.writeText = jest.fn().mockRejectedValue(new Error('copy failed'));
+
+    render(<AjustesSettings user={mockUser} onNotification={mockOnNotification} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Texto sugerido para tu bio')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Copiar'));
+
+    await waitFor(() => {
+      expect(navigator.clipboard.writeText).toHaveBeenCalled();
+      expect(mockOnNotification).toHaveBeenCalledWith(expect.stringContaining('Error al copiar'), 'error');
+    });
+
+    navigator.clipboard.writeText = originalWriteText;
+  });
+
   it('should handle API errors gracefully', async () => {
     apiClient.get.mockRejectedValue(new Error('API Error'));
 

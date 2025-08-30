@@ -74,7 +74,14 @@ export default function Settings() {
   const [dataExportLoading, setDataExportLoading] = useState(false);
 
   // Data export rate limiting state
-  const [lastDataExportAttempt, setLastDataExportAttempt] = useState(0);
+  const [lastDataExportAttempt, setLastDataExportAttempt] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lastDataExportAttempt');
+      return stored ? parseInt(stored, 10) : 0;
+    } catch (_) {
+      return 0;
+    }
+  });
   const DATA_EXPORT_COOLDOWN_MS = 300000; // 5 minutes
 
   // Password reset rate limiting state
@@ -144,11 +151,6 @@ export default function Settings() {
           setRoastrPersona(prev => ({ ...prev, isLoading: false }));
         }
 
-        // Initialize rate limiting state from localStorage
-        const storedDataExportAttempt = localStorage.getItem('lastDataExportAttempt');
-        if (storedDataExportAttempt) {
-          setLastDataExportAttempt(parseInt(storedDataExportAttempt, 10));
-        }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
         addNotification('Error al cargar datos del usuario', 'error');
