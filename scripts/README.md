@@ -60,16 +60,9 @@ node scripts/test/runner.js all
 node scripts/test/runner.js all --mock-mode --coverage
 ```
 
-#### List Available Platforms (New in PR #282)
-```bash
-# List all supported platforms
-node scripts/test/runner.js list-platforms
-
-# JSON output for automation
-node scripts/test/runner.js list-platforms --json
-```
-
 #### Platform Management
+Shows how to run tests filtered by platform.
+
 ```bash
 # List available platforms
 node scripts/test/runner.js list-platforms

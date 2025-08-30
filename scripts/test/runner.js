@@ -421,36 +421,48 @@ program
 
       return new Promise((resolve, reject) => {
         const child = spawn('npm', ['run', scriptName], {
-          stdio: 'pipe',
+          stdio: options.json ? 'pipe' : 'inherit',
           env: process.env
         });
 
-
-
         let stdout = '';
         let stderr = '';
+        const maxBufferLength = 2000;
 
-        child.stdout.on('data', (data) => {
-          stdout += data.toString();
-        });
+        // Only buffer output when JSON mode is requested
+        if (options.json) {
+          child.stdout.on('data', (data) => {
+            const chunk = data.toString();
+            // Keep a rolling buffer - truncate if too long
+            stdout += chunk;
+            if (stdout.length > maxBufferLength) {
+              stdout = stdout.substring(stdout.length - maxBufferLength);
+              if (!stdout.includes('...[truncated]')) {
+                stdout = '...[truncated]' + stdout;
+              }
+            }
+          });
 
-        child.stderr.on('data', (data) => {
-          stderr += data.toString();
-        });
+          child.stderr.on('data', (data) => {
+            const chunk = data.toString();
+            // Keep a rolling buffer - truncate if too long
+            stderr += chunk;
+            if (stderr.length > maxBufferLength) {
+              stderr = stderr.substring(stderr.length - maxBufferLength);
+              if (!stderr.includes('...[truncated]')) {
+                stderr = '...[truncated]' + stderr;
+              }
+            }
+          });
+        }
 
+        // Handle process termination in a single handler
         child.on('close', (exitCode) => {
-          // Trim output to reasonable length for JSON
-          const maxLength = 2000;
-          const trimmedStdout = stdout.length > maxLength ?
-            stdout.substring(0, maxLength) + '...[truncated]' : stdout;
-          const trimmedStderr = stderr.length > maxLength ?
-            stderr.substring(0, maxLength) + '...[truncated]' : stderr;
-
           const result = {
             command,
             exitCode,
-            stdout: trimmedStdout,
-            stderr: trimmedStderr
+            stdout: options.json ? stdout : '',
+            stderr: options.json ? stderr : ''
           };
 
           if (options.json) {
@@ -458,14 +470,6 @@ program
           } else {
             console.log(colors.cyan(`🔍 Ran: ${command}`));
             console.log(colors.gray(`Exit code: ${exitCode}`));
-            if (stdout) {
-              console.log(colors.green('📤 Output:'));
-              console.log(stdout);
-            }
-            if (stderr) {
-              console.log(colors.red('📤 Errors:'));
-              console.log(stderr);
-            }
           }
 
           // Set process exit code to match child exit code
@@ -473,6 +477,7 @@ program
           resolve();
         });
 
+        // Handle spawn failures only
         child.on('error', (error) => {
           const result = {
             command,
@@ -513,7 +518,7 @@ program
 // Error handling for unknown commands
 program.on('command:*', () => {
   console.error(colors.red('❌ Invalid command: %s'), program.args.join(' '));
-  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, validate, check'));
+  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, platforms, validate, check'));
   console.log(colors.gray('Use --help for more information'));
   process.exit(1);
 });
