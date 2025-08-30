@@ -262,7 +262,18 @@ describe('AjustesSettings Component', () => {
       if (url === '/user/settings/transparency-mode') {
         return Promise.resolve(mockResponseWithoutBio);
       }
-      return Promise.resolve(mockApiResponses[url.split('/').pop()]);
+
+      // Derive a reliable key and provide safe fallback
+      const key = url.split('/').pop();
+      if (mockApiResponses.hasOwnProperty(key)) {
+        return Promise.resolve(mockApiResponses[key]);
+      }
+      if (mockApiResponses.hasOwnProperty(url)) {
+        return Promise.resolve(mockApiResponses[url]);
+      }
+
+      // Safe fallback to prevent undefined responses
+      return Promise.resolve(mockResponseWithoutBio);
     });
 
     render(<AjustesSettings user={mockUser} onNotification={mockOnNotification} />);

@@ -307,7 +307,10 @@ describe('Ajustes Settings Integration Tests', () => {
 
           // Should be sanitized version (HTML entities or stripped)
           if (maliciousInput.includes('<script>')) {
-            expect(storedValue).toMatch(/(&lt;script&gt;|alert\(|sanitized)/i);
+            // More robust check that accepts common sanitized forms
+            expect(storedValue).toMatch(/(&lt;script&gt;|&amp;lt;script&amp;gt;|alert\\\(|alert&amp;#40;|sanitized)/i);
+            // Ensure raw script tags are not present
+            expect(storedValue).not.toContain('<script>');
           }
         } else {
           // If rejected, should be a validation error with proper message
@@ -316,6 +319,36 @@ describe('Ajustes Settings Integration Tests', () => {
           expect(response.body.error).toMatch(/(invalid|malicious|script|security|validation)/i);
         }
       }
+    });
+
+    it('should accept legitimate technical content without false positives', async () => {
+      const legitimateTechnicalContent = 'JavaScript function alert() or mentioning script tags in plain text';
+
+      const response = await request(app)
+        .post('/api/user/roastr-persona')
+        .set('Authorization', authToken)
+        .send({
+          loQueMeDefine: legitimateTechnicalContent,
+          isVisible: false
+        });
+
+      // Should be accepted (200) with success
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+
+      // Verify the stored value preserves the legitimate technical text
+      const getResponse = await request(app)
+        .get('/api/user/roastr-persona')
+        .set('Authorization', authToken);
+
+      expect(getResponse.status).toBe(200);
+      const storedValue = getResponse.body.data.loQueMeDefine;
+
+      // Should preserve legitimate technical content without alteration
+      expect(storedValue).toContain('JavaScript function alert()');
+      expect(storedValue).toContain('script tags in plain text');
+      // Ensure it's not flagged or altered unexpectedly
+      expect(storedValue).toBe(legitimateTechnicalContent);
     });
 
     it('should ensure Roastr Persona fields are encrypted in storage', async () => {

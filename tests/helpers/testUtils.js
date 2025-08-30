@@ -215,7 +215,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
 
   // Compute usage per quotaScenario
   const limit = finalEntitlements.monthlyResponsesLimit;
-  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (planType === 'free' ? 8 : 45);
+  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (effectivePlan === 'free' ? 8 : 45);
   if (quotaScenario === 'near') roastsThisMonth = Math.max(0, limit - 1);
   if (quotaScenario === 'over') roastsThisMonth = limit + 5;
 
@@ -249,7 +249,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
       credentials: `mock-${platform}-credentials`,
       settings: {
         autoModerate: true,
-        responseEnabled: planType !== 'free'
+        responseEnabled: effectivePlan !== 'free'
       }
     })),
     usage: {
@@ -383,7 +383,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         id: generateTestId(),
         email: `user${i}@${orgId}.example.com`,
         role: i === 0 ? 'admin' : 'user',
-        plan: planType,
+        plan: effectivePlan,
         createdAt: new Date().toISOString(),
         isActive: true
       }));
@@ -395,7 +395,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           ...baseScenario.organization,
           settings: {
             ...baseScenario.organization.settings,
-            userLimit: planType === 'enterprise' ? 100 : planType === 'pro' ? 10 : 1,
+            userLimit: effectivePlan === 'enterprise' ? 100 : effectivePlan === 'pro' ? 10 : 1,
             roleBasedAccess: true
           }
         }

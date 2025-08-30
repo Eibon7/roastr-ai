@@ -576,7 +576,6 @@ router.post('/preferences', authenticateToken, async (req, res) => {
         } = req.body;
 
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
 
         // Validate preferred_platforms
         const validPlatforms = [
@@ -615,6 +614,7 @@ router.post('/preferences', authenticateToken, async (req, res) => {
         
         // In mock mode, skip database operations and return success
         if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
             const { data, error: userError } = await userClient
                 .from('users')
                 .update({
@@ -763,26 +763,46 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
 
-        const { data: userProfile, error } = await userClient
-            .from('users')
-            .select(`
-                id, email, name, plan, is_admin, active, 
-                onboarding_complete, preferences, created_at,
-                organizations!owner_id (id, name, plan_id)
-            `)
-            .eq('id', userId)
-            .single();
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
 
-        if (error) {
-            throw new Error(`Failed to fetch user profile: ${error.message}`);
+            const { data: userProfile, error } = await userClient
+                .from('users')
+                .select(`
+                    id, email, name, plan, is_admin, active,
+                    onboarding_complete, preferences, created_at,
+                    organizations!owner_id (id, name, plan_id)
+                `)
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                throw new Error(`Failed to fetch user profile: ${error.message}`);
+            }
+
+            res.json({
+                success: true,
+                data: userProfile
+            });
+        } else {
+            // Mock mode response
+            res.json({
+                success: true,
+                data: {
+                    id: userId,
+                    email: 'test@example.com',
+                    name: 'Test User',
+                    plan: 'free',
+                    is_admin: false,
+                    active: true,
+                    onboarding_complete: true,
+                    preferences: {},
+                    created_at: new Date().toISOString(),
+                    organizations: []
+                }
+            });
         }
-
-        res.json({
-            success: true,
-            data: userProfile
-        });
 
     } catch (error) {
         logger.error('Get user profile error:', error.message);
@@ -1335,12 +1355,43 @@ router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimi
             // Fallback for development only
             downloadUrl = `${req.protocol}://${req.get('host')}${exportResult.downloadUrl}`;
         } else {
-            // Validate and normalize trusted origin
-            if (!trustedOrigin.match(/^https?:\/\/.+/)) {
-                throw new Error('Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must be a valid http/https URL');
+            // Validate that trustedOrigin is a well-formed origin
+            let parsedOrigin;
+            try {
+                parsedOrigin = new URL(trustedOrigin);
+                if (!['http:', 'https:'].includes(parsedOrigin.protocol)) {
+                    throw new Error('Invalid protocol');
+                }
+                if (parsedOrigin.pathname !== '/' || parsedOrigin.search || parsedOrigin.hash) {
+                    throw new Error('Origin must not contain path, query, or fragment');
+                }
+            } catch (error) {
+                throw new Error('Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must be a valid http/https origin');
             }
-            const normalizedOrigin = trustedOrigin.replace(/\/$/, ''); // Remove trailing slash
-            downloadUrl = `${normalizedOrigin}${exportResult.downloadUrl}`;
+
+            // Normalize by taking only the origin (protocol + host + optional port) and strip trailing slash
+            const normalizedOrigin = parsedOrigin.origin.replace(/\/$/, '');
+
+            // Validate that exportResult.downloadUrl is a relative path that begins with a single '/'
+            if (!exportResult.downloadUrl || typeof exportResult.downloadUrl !== 'string') {
+                throw new Error('Invalid download URL: must be a string');
+            }
+
+            // Reject URLs that look like full URLs or contain protocol, host, double slashes, or path traversal
+            if (exportResult.downloadUrl.includes('://') ||
+                exportResult.downloadUrl.includes('//') ||
+                exportResult.downloadUrl.includes('..') ||
+                !exportResult.downloadUrl.startsWith('/')) {
+                throw new Error('Invalid download URL: must be a relative path starting with /');
+            }
+
+            // Construct the final downloadUrl using URL-safe join
+            try {
+                const fullUrl = new URL(exportResult.downloadUrl, normalizedOrigin + '/');
+                downloadUrl = fullUrl.href;
+            } catch (error) {
+                throw new Error('Failed to construct valid download URL');
+            }
         }
 
         // Send email with download link
@@ -1503,31 +1554,33 @@ router.get('/gdpr-audit', authenticateToken, async (req, res) => {
 router.get('/roastr-persona', authenticateToken, roastrPersonaReadLimiter, async (req, res) => {
     try {
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
 
-        const { data: userData, error } = await userClient
-            .from('users')
-            .select(`
-                id,
-                lo_que_me_define_encrypted,
-                lo_que_me_define_visible,
-                lo_que_me_define_created_at,
-                lo_que_me_define_updated_at,
-                lo_que_no_tolero_encrypted,
-                lo_que_no_tolero_visible,
-                lo_que_no_tolero_created_at,
-                lo_que_no_tolero_updated_at,
-                lo_que_me_da_igual_encrypted,
-                lo_que_me_da_igual_visible,
-                lo_que_me_da_igual_created_at,
-                lo_que_me_da_igual_updated_at
-            `)
-            .eq('id', userId)
-            .single();
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
 
-        if (error) {
-            throw new Error(`Failed to fetch Roastr Persona: ${error.message}`);
-        }
+            const { data: userData, error } = await userClient
+                .from('users')
+                .select(`
+                    id,
+                    lo_que_me_define_encrypted,
+                    lo_que_me_define_visible,
+                    lo_que_me_define_created_at,
+                    lo_que_me_define_updated_at,
+                    lo_que_no_tolero_encrypted,
+                    lo_que_no_tolero_visible,
+                    lo_que_no_tolero_created_at,
+                    lo_que_no_tolero_updated_at,
+                    lo_que_me_da_igual_encrypted,
+                    lo_que_me_da_igual_visible,
+                    lo_que_me_da_igual_created_at,
+                    lo_que_me_da_igual_updated_at
+                `)
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                throw new Error(`Failed to fetch Roastr Persona: ${error.message}`);
+            }
 
         // Decrypt the lo_que_me_define field if it exists
         let loQueMeDefine = null;
@@ -1574,28 +1627,53 @@ router.get('/roastr-persona', authenticateToken, roastrPersonaReadLimiter, async
             }
         }
 
-        res.json({
-            success: true,
-            data: {
-                loQueMeDefine,
-                isVisible: userData.lo_que_me_define_visible || false,
-                createdAt: userData.lo_que_me_define_created_at,
-                updatedAt: userData.lo_que_me_define_updated_at,
-                hasContent: !!userData.lo_que_me_define_encrypted,
-                // Intolerance fields
-                loQueNoTolero,
-                isIntoleranceVisible: userData.lo_que_no_tolero_visible || false,
-                intoleranceCreatedAt: userData.lo_que_no_tolero_created_at,
-                intoleranceUpdatedAt: userData.lo_que_no_tolero_updated_at,
-                hasIntoleranceContent: !!userData.lo_que_no_tolero_encrypted,
-                // Tolerance fields (lo que me da igual)
-                loQueMeDaIgual,
-                isToleranceVisible: userData.lo_que_me_da_igual_visible || false,
-                toleranceCreatedAt: userData.lo_que_me_da_igual_created_at,
-                toleranceUpdatedAt: userData.lo_que_me_da_igual_updated_at,
-                hasToleranceContent: !!userData.lo_que_me_da_igual_encrypted
-            }
-        });
+            res.json({
+                success: true,
+                data: {
+                    loQueMeDefine,
+                    isVisible: userData.lo_que_me_define_visible || false,
+                    createdAt: userData.lo_que_me_define_created_at,
+                    updatedAt: userData.lo_que_me_define_updated_at,
+                    hasContent: !!userData.lo_que_me_define_encrypted,
+                    // Intolerance fields
+                    loQueNoTolero,
+                    isIntoleranceVisible: userData.lo_que_no_tolero_visible || false,
+                    intoleranceCreatedAt: userData.lo_que_no_tolero_created_at,
+                    intoleranceUpdatedAt: userData.lo_que_no_tolero_updated_at,
+                    hasIntoleranceContent: !!userData.lo_que_no_tolero_encrypted,
+                    // Tolerance fields (lo que me da igual)
+                    loQueMeDaIgual,
+                    isToleranceVisible: userData.lo_que_me_da_igual_visible || false,
+                    toleranceCreatedAt: userData.lo_que_me_da_igual_created_at,
+                    toleranceUpdatedAt: userData.lo_que_me_da_igual_updated_at,
+                    hasToleranceContent: !!userData.lo_que_me_da_igual_encrypted
+                }
+            });
+        } else {
+            // Mock mode response
+            res.json({
+                success: true,
+                data: {
+                    loQueMeDefine: null,
+                    isVisible: false,
+                    createdAt: null,
+                    updatedAt: null,
+                    hasContent: false,
+                    // Intolerance fields
+                    loQueNoTolero: null,
+                    isIntoleranceVisible: false,
+                    intoleranceCreatedAt: null,
+                    intoleranceUpdatedAt: null,
+                    hasIntoleranceContent: false,
+                    // Tolerance fields (lo que me da igual)
+                    loQueMeDaIgual: null,
+                    isToleranceVisible: false,
+                    toleranceCreatedAt: null,
+                    toleranceUpdatedAt: null,
+                    hasToleranceContent: false
+                }
+            });
+        }
 
     } catch (error) {
         logger.error('Get Roastr Persona error:', error.message);
@@ -1621,7 +1699,6 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             isToleranceVisible = false 
         } = req.body;
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
 
         // Validate loQueMeDefine input with prompt injection detection
         if (loQueMeDefine !== null && loQueMeDefine !== undefined) {
@@ -1753,12 +1830,15 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             });
         }
 
-        // Get existing data to determine if we need to set created_at timestamps
-        const { data: existingData } = await userClient
-            .from('users')
-            .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted')
-            .eq('id', userId)
-            .single();
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
+
+            // Get existing data to determine if we need to set created_at timestamps
+            const { data: existingData } = await userClient
+                .from('users')
+                .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted')
+                .eq('id', userId)
+                .single();
 
         // Prepare sanitized versions for encryption
         let sanitizedLoQueMeDefine = null;
@@ -1946,29 +2026,55 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
             }
         }
 
-        res.json({
-            success: true,
-            message: 'Roastr Persona updated successfully',
-            data: {
-                loQueMeDefine: responseLoQueMeDefine,
-                isVisible: updatedUser.lo_que_me_define_visible,
-                createdAt: updatedUser.lo_que_me_define_created_at,
-                updatedAt: updatedUser.lo_que_me_define_updated_at,
-                hasContent: !!updatedUser.lo_que_me_define_encrypted,
-                // Intolerance fields
-                loQueNoTolero: responseLoQueNoTolero,
-                isIntoleranceVisible: updatedUser.lo_que_no_tolero_visible,
-                intoleranceCreatedAt: updatedUser.lo_que_no_tolero_created_at,
-                intoleranceUpdatedAt: updatedUser.lo_que_no_tolero_updated_at,
-                hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted,
-                // Tolerance fields (lo que me da igual)
-                loQueMeDaIgual: responseLoQueMeDaIgual,
-                isToleranceVisible: updatedUser.lo_que_me_da_igual_visible,
-                toleranceCreatedAt: updatedUser.lo_que_me_da_igual_created_at,
-                toleranceUpdatedAt: updatedUser.lo_que_me_da_igual_updated_at,
-                hasToleranceContent: !!updatedUser.lo_que_me_da_igual_encrypted
-            }
-        });
+            res.json({
+                success: true,
+                message: 'Roastr Persona updated successfully',
+                data: {
+                    loQueMeDefine: responseLoQueMeDefine,
+                    isVisible: updatedUser.lo_que_me_define_visible,
+                    createdAt: updatedUser.lo_que_me_define_created_at,
+                    updatedAt: updatedUser.lo_que_me_define_updated_at,
+                    hasContent: !!updatedUser.lo_que_me_define_encrypted,
+                    // Intolerance fields
+                    loQueNoTolero: responseLoQueNoTolero,
+                    isIntoleranceVisible: updatedUser.lo_que_no_tolero_visible,
+                    intoleranceCreatedAt: updatedUser.lo_que_no_tolero_created_at,
+                    intoleranceUpdatedAt: updatedUser.lo_que_no_tolero_updated_at,
+                    hasIntoleranceContent: !!updatedUser.lo_que_no_tolero_encrypted,
+                    // Tolerance fields (lo que me da igual)
+                    loQueMeDaIgual: responseLoQueMeDaIgual,
+                    isToleranceVisible: updatedUser.lo_que_me_da_igual_visible,
+                    toleranceCreatedAt: updatedUser.lo_que_me_da_igual_created_at,
+                    toleranceUpdatedAt: updatedUser.lo_que_me_da_igual_updated_at,
+                    hasToleranceContent: !!updatedUser.lo_que_me_da_igual_encrypted
+                }
+            });
+        } else {
+            // Mock mode response
+            res.json({
+                success: true,
+                message: 'Roastr Persona updated successfully',
+                data: {
+                    loQueMeDefine: loQueMeDefine || null,
+                    isVisible: isVisible || false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    hasContent: !!(loQueMeDefine && loQueMeDefine.trim()),
+                    // Intolerance fields
+                    loQueNoTolero: loQueNoTolero || null,
+                    isIntoleranceVisible: isIntoleranceVisible || false,
+                    intoleranceCreatedAt: new Date().toISOString(),
+                    intoleranceUpdatedAt: new Date().toISOString(),
+                    hasIntoleranceContent: !!(loQueNoTolero && loQueNoTolero.trim()),
+                    // Tolerance fields (lo que me da igual)
+                    loQueMeDaIgual: loQueMeDaIgual || null,
+                    isToleranceVisible: isToleranceVisible || false,
+                    toleranceCreatedAt: new Date().toISOString(),
+                    toleranceUpdatedAt: new Date().toISOString(),
+                    hasToleranceContent: !!(loQueMeDaIgual && loQueMeDaIgual.trim())
+                }
+            });
+        }
 
     } catch (error) {
         logger.error('Save Roastr Persona error:', error.message);
@@ -1987,7 +2093,6 @@ router.post('/roastr-persona', authenticateToken, roastrPersonaWriteLimiter, asy
 router.delete('/roastr-persona', authenticateToken, roastrPersonaDeleteLimiter, async (req, res) => {
     try {
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
         const { field = 'all' } = req.query;
 
         // Validate field parameter
@@ -2020,10 +2125,13 @@ router.delete('/roastr-persona', authenticateToken, roastrPersonaDeleteLimiter, 
             updateData.lo_que_me_da_igual_updated_at = timestamp;
         }
 
-        // Use transactional delete function for data consistency (Issue #154)
-        const { data: deleteResult, error: deleteError } = await userClient
-            .rpc('delete_roastr_persona_transactional', {
-                p_user_id: userId,
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
+
+            // Use transactional delete function for data consistency (Issue #154)
+            const { data: deleteResult, error: deleteError } = await userClient
+                .rpc('delete_roastr_persona_transactional', {
+                    p_user_id: userId,
                 p_field_type: field
             });
 
@@ -2046,17 +2154,31 @@ router.delete('/roastr-persona', authenticateToken, roastrPersonaDeleteLimiter, 
             fieldsCleared: Object.keys(updateData).filter(key => key.includes('encrypted'))
         });
 
-        res.json({
-            success: true,
-            message: `Roastr Persona ${field === 'all' ? 'completely' : `(${field})`} deleted successfully`,
-            data: {
-                field: field,
-                deletedAt: timestamp,
-                identityDeletedAt: field === 'identity' || field === 'all' ? updatedUser.lo_que_me_define_updated_at : null,
-                intoleranceDeletedAt: field === 'intolerance' || field === 'all' ? updatedUser.lo_que_no_tolero_updated_at : null,
-                toleranceDeletedAt: field === 'tolerance' || field === 'all' ? updatedUser.lo_que_me_da_igual_updated_at : null
-            }
-        });
+            res.json({
+                success: true,
+                message: `Roastr Persona ${field === 'all' ? 'completely' : `(${field})`} deleted successfully`,
+                data: {
+                    field: field,
+                    deletedAt: timestamp,
+                    identityDeletedAt: field === 'identity' || field === 'all' ? updatedUser.lo_que_me_define_updated_at : null,
+                    intoleranceDeletedAt: field === 'intolerance' || field === 'all' ? updatedUser.lo_que_no_tolero_updated_at : null,
+                    toleranceDeletedAt: field === 'tolerance' || field === 'all' ? updatedUser.lo_que_me_da_igual_updated_at : null
+                }
+            });
+        } else {
+            // Mock mode response
+            res.json({
+                success: true,
+                message: `Roastr Persona ${field === 'all' ? 'completely' : `(${field})`} deleted successfully`,
+                data: {
+                    field: field,
+                    deletedAt: timestamp,
+                    identityDeletedAt: field === 'identity' || field === 'all' ? timestamp : null,
+                    intoleranceDeletedAt: field === 'intolerance' || field === 'all' ? timestamp : null,
+                    toleranceDeletedAt: field === 'tolerance' || field === 'all' ? timestamp : null
+                }
+            });
+        }
 
     } catch (error) {
         logger.error('Delete Roastr Persona error:', error.message);
@@ -2213,14 +2335,16 @@ async function generateEmbeddingsForPersona(userId, personaData, userClient) {
 router.get('/entitlements', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
 
-        // Get user's entitlements from account_entitlements table
-        const { data: entitlements, error } = await userClient
-            .from('account_entitlements')
-            .select('*')
-            .eq('account_id', userId)
-            .single();
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
+
+            // Get user's entitlements from account_entitlements table
+            const { data: entitlements, error } = await userClient
+                .from('account_entitlements')
+                .select('*')
+                .eq('account_id', userId)
+                .single();
 
         if (error) {
             if (error.code === 'PGRST116') {
@@ -2244,10 +2368,28 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
             throw error;
         }
 
-        res.json({
-            success: true,
-            data: entitlements
-        });
+            res.json({
+                success: true,
+                data: entitlements
+            });
+        } else {
+            // Mock mode response
+            const defaultEntitlements = {
+                analysis_limit_monthly: 100,
+                roast_limit_monthly: 50,
+                model: 'gpt-3.5-turbo',
+                shield_enabled: false,
+                rqc_mode: 'basic',
+                plan_name: 'free',
+                stripe_price_id: null,
+                stripe_product_id: null
+            };
+
+            res.json({
+                success: true,
+                data: defaultEntitlements
+            });
+        }
 
     } catch (error) {
         logger.error('Get user entitlements error:', {
@@ -2268,17 +2410,19 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
 router.get('/usage', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
 
-        // Get current month's usage from usage_counters table
-        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
 
-        const { data: usage, error } = await userClient
-            .from('usage_counters')
-            .select('*')
-            .eq('account_id', userId)
-            .eq('month', currentMonth)
-            .single();
+            // Get current month's usage from usage_counters table
+            const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+
+            const { data: usage, error } = await userClient
+                .from('usage_counters')
+                .select('*')
+                .eq('account_id', userId)
+                .eq('month', currentMonth)
+                .single();
 
         if (error) {
             if (error.code === 'PGRST116') {
@@ -2298,15 +2442,30 @@ router.get('/usage', authenticateToken, async (req, res) => {
             throw error;
         }
 
-        res.json({
-            success: true,
-            data: {
-                analysis_used: usage.analysis_count || 0,
-                roast_used: usage.roast_count || 0,
-                month: usage.month,
-                costCents: usage.cost_cents || 0
-            }
-        });
+            res.json({
+                success: true,
+                data: {
+                    analysis_used: usage.analysis_count || 0,
+                    roast_used: usage.roast_count || 0,
+                    month: usage.month,
+                    costCents: usage.cost_cents || 0
+                }
+            });
+        } else {
+            // Mock mode response
+            const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+            const defaultUsage = {
+                analysis_used: 0,
+                roast_used: 0,
+                month: currentMonth,
+                costCents: 0
+            };
+
+            res.json({
+                success: true,
+                data: defaultUsage
+            });
+        }
 
     } catch (error) {
         logger.error('Get user usage error:', {
@@ -2327,19 +2486,21 @@ router.get('/usage', authenticateToken, async (req, res) => {
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
 
-        // Get user information with entitlements
-        const { data: user, error } = await userClient
-            .from('users')
-            .select(`
-                id,
-                email,
-                full_name,
-                plan,
-                stripe_customer_id,
-                created_at,
-                updated_at
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
+
+            // Get user information with entitlements
+            const { data: user, error } = await userClient
+                .from('users')
+                .select(`
+                    id,
+                    email,
+                    full_name,
+                    plan,
+                    stripe_customer_id,
+                    created_at,
+                    updated_at
             `)
             .eq('id', userId)
             .single();
@@ -2363,10 +2524,30 @@ router.get('/', authenticateToken, async (req, res) => {
             rqc_mode: entitlements?.rqc_mode || 'basic'
         };
 
-        res.json({
-            success: true,
-            data: userResponse
-        });
+            res.json({
+                success: true,
+                data: userResponse
+            });
+        } else {
+            // Mock mode response
+            const userResponse = {
+                id: userId,
+                email: 'test@example.com',
+                full_name: 'Test User',
+                plan: 'free',
+                stripe_customer_id: null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                model: 'gpt-3.5-turbo',
+                shield_enabled: false,
+                rqc_mode: 'basic'
+            };
+
+            res.json({
+                success: true,
+                data: userResponse
+            });
+        }
 
     } catch (error) {
         logger.error('Get user profile error:', {
@@ -2611,7 +2792,97 @@ router.get('/settings/theme', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * PATCH /api/user/settings/theme
+ * Update user's theme preference (Issue #259)
+ */
+router.patch('/settings/theme', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { theme } = req.body;
 
+        // Validate theme input
+        const validThemes = ['light', 'dark', 'system'];
+        if (!validThemes.includes(theme)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid theme. Must be one of: light, dark, system'
+            });
+        }
+
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
+
+            // Fetch current preferences to get old theme for audit
+            const { data: currentData, error: fetchError } = await userClient
+                .from('users')
+                .select('preferences')
+                .eq('id', userId)
+                .single();
+
+            if (fetchError) {
+                throw fetchError;
+            }
+
+            const oldTheme = currentData.preferences?.theme || 'system';
+            const updatedPreferences = { ...(currentData.preferences || {}), theme };
+
+            // Update the user's theme preference
+            const { data, error } = await userClient
+                .from('users')
+                .update({ preferences: updatedPreferences })
+                .eq('id', userId)
+                .select('preferences')
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            // Log the setting change for audit
+            try {
+                await auditService.logUserSettingChange(
+                    userId,
+                    'theme',
+                    {
+                        old_value: oldTheme,
+                        new_value: theme
+                    },
+                    req
+                );
+            } catch (auditError) {
+                logger.error('Failed to log theme change audit', {
+                    userId: SafeUtils.safeUserIdPrefix(userId),
+                    error: auditError.message
+                });
+                // Don't fail the request for audit errors
+            }
+
+            res.json({
+                success: true,
+                message: 'Theme updated successfully',
+                data: { theme }
+            });
+        } else {
+            // Mock mode response
+            res.json({
+                success: true,
+                message: 'Theme updated successfully',
+                data: { theme }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Update theme setting error', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update theme setting'
+        });
+    }
+});
 
 /**
  * GET /api/user/settings/transparency-explanation
