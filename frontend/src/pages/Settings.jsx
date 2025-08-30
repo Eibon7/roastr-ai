@@ -8,6 +8,7 @@ import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Down
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
+import AjustesSettings from '../components/AjustesSettings';
 import TransparencySettings from '../components/TransparencySettings';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
 
@@ -1681,6 +1682,12 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Ajustes Section */}
+      <AjustesSettings
+        user={user}
+        onNotification={addNotification}
+      />
 
       {/* Danger Zone */}
       <Card>
