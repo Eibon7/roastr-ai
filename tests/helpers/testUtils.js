@@ -5,12 +5,13 @@
 /**
  * Shared plan limits constants to ensure consistency across all test utilities
  */
+// Note: integrationsLimit is intentionally higher than platforms to allow multiple integrations per platform
 const PLAN_LIMITS = {
   free: { roasts: 10, monthlyResponsesLimit: 10, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: false },
   plus: { roasts: 250, monthlyResponsesLimit: 250, platforms: 2, integrationsLimit: 4, features: ['basic', 'advanced'], shieldEnabled: true },
   pro: { roasts: 1000, monthlyResponsesLimit: 1000, platforms: 3, integrationsLimit: 6, features: ['basic', 'advanced'], shieldEnabled: true },
   agency: { roasts: 5000, monthlyResponsesLimit: 5000, platforms: 10, integrationsLimit: 20, features: ['basic', 'advanced', 'agency'], shieldEnabled: true },
-  enterprise: { roasts: 10000, monthlyResponsesLimit: 10000, platforms: 9, integrationsLimit: 18, features: ['basic', 'advanced', 'custom'], shieldEnabled: true }
+  enterprise: { roasts: 10000, monthlyResponsesLimit: 10000, platforms: 10, integrationsLimit: 20, features: ['basic', 'advanced', 'custom'], shieldEnabled: true }
 };
 
 /**
