@@ -12,7 +12,7 @@ const { flags } = require('../config/flags');
 
 /**
  * Format file size with validation and human-readable output
- * @param {*} size - The size value to format
+ * @param {*} size - The size value in bytes to format
  * @returns {string} - Formatted size string
  */
 function formatFileSize(size) {
@@ -21,16 +21,18 @@ function formatFileSize(size) {
 
     // Check if it's a valid positive number
     if (!Number.isFinite(numSize) || numSize < 0) {
-        return '0 KB'; // Default fallback
+        return '0 B'; // Default fallback
     }
 
-    // Convert bytes to KB/MB with appropriate formatting
+    // Convert bytes to appropriate units with correct formatting
     if (numSize < 1024) {
-        return `${numSize.toFixed(0)} KB`;
+        return `${numSize.toFixed(0)} B`;
     } else if (numSize < 1024 * 1024) {
-        return `${(numSize / 1024).toFixed(1)} MB`;
+        return `${(numSize / 1024).toFixed(1)} KB`;
+    } else if (numSize < 1024 * 1024 * 1024) {
+        return `${(numSize / (1024 * 1024)).toFixed(1)} MB`;
     } else {
-        return `${(numSize / (1024 * 1024)).toFixed(1)} GB`;
+        return `${(numSize / (1024 * 1024 * 1024)).toFixed(1)} GB`;
     }
 }
 
