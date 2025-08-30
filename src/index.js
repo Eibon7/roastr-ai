@@ -32,6 +32,7 @@ const webhooksRoutes = require('./routes/webhooks');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/user');
 const billingRoutes = require('./routes/billing');
+const shopRoutes = require('./routes/shop');
 const dashboardRoutes = require('./routes/dashboard');
 const { router: planRoutes } = require('./routes/plan');
 const { router: newIntegrationsRoutes } = require('./routes/integrations-new');
@@ -174,6 +175,9 @@ app.use('/api/plan', planRoutes);
 
 // Billing routes (Stripe integration)
 app.use('/api/billing', billingRoutes);
+
+// Shop routes (addon purchases)
+app.use('/api/shop', shopRoutes);
 
 // Dashboard routes (public/authenticated)
 app.use('/api', dashboardRoutes);

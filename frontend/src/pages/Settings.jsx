@@ -10,6 +10,7 @@ import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
 import AjustesSettings from '../components/AjustesSettings';
 import TransparencySettings from '../components/TransparencySettings';
+import ShopSettings from '../components/ShopSettings';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
 
 // Password requirement component for visual feedback (legacy support)
@@ -1004,6 +1005,12 @@ export default function Settings() {
           <TransparencySettings />
         </CardContent>
       </Card>
+
+      {/* Shop */}
+      <ShopSettings
+        user={user}
+        onNotification={addNotification}
+      />
 
       {/* Roastr Persona */}
       <Card>
