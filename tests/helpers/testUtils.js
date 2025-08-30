@@ -396,7 +396,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           ...baseScenario.organization,
           settings: {
             ...baseScenario.organization.settings,
-            userLimit: effectivePlan === 'enterprise' ? 100 : effectivePlan === 'pro' ? 10 : 1,
+            userLimit: effectivePlan === 'enterprise' ? 100 : effectivePlan === 'agency' ? 25 : effectivePlan === 'pro' ? 10 : 1,
             roleBasedAccess: true
           }
         }
