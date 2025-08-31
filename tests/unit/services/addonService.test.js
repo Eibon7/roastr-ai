@@ -248,15 +248,65 @@ describe('AddonService', () => {
 
         it('should deny action for invalid action type', async () => {
             const result = await addonService.canPerformAction(
-                mockUserId, 
-                'invalid_action', 
-                mockPlanLimits, 
+                mockUserId,
+                'invalid_action',
+                mockPlanLimits,
                 mockCurrentUsage
             );
 
             expect(result).toEqual({
                 allowed: false,
                 reason: 'Invalid action type'
+            });
+        });
+
+        it('should handle analysis action with correct pluralization (fix for CodeRabbit issue)', async () => {
+            // Test that 'analysis' action uses correct key mapping instead of naive pluralization
+            const planLimits = {
+                monthly_analyses_limit: 50,  // Correct plural form
+                monthly_responses_limit: 100
+            };
+            const currentUsage = {
+                analyses_used: 10,  // Correct plural form
+                monthly_responses_used: 20
+            };
+
+            const result = await addonService.canPerformAction(
+                mockUserId,
+                'analysis',
+                planLimits,
+                currentUsage
+            );
+
+            expect(result).toEqual({
+                allowed: true,
+                source: 'plan',
+                remaining: 40  // 50 - 10
+            });
+        });
+
+        it('should fallback to monthly_responses_limit for analysis when specific limit not found', async () => {
+            // Test fallback behavior when analysis-specific limits are not defined
+            const planLimits = {
+                monthly_responses_limit: 100
+                // No monthly_analyses_limit defined
+            };
+            const currentUsage = {
+                monthly_responses_used: 30
+                // No analyses_used defined
+            };
+
+            const result = await addonService.canPerformAction(
+                mockUserId,
+                'analysis',
+                planLimits,
+                currentUsage
+            );
+
+            expect(result).toEqual({
+                allowed: true,
+                source: 'plan',
+                remaining: 70  // 100 - 30
             });
         });
     });

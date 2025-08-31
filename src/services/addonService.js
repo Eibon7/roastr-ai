@@ -181,9 +181,11 @@ class AddonService {
                 return { allowed: false, reason: 'Invalid action type' };
             }
 
-            // Check plan limits first
-            const planLimit = planLimits[`monthly_${action}s_limit`] || planLimits.monthly_responses_limit || 0;
-            const usage = currentUsage[`${action}s_used`] || currentUsage.monthly_responses_used || 0;
+            // Check plan limits first (handle irregular plurals)
+            const planKeyMap = { roast: 'monthly_roasts_limit', analysis: 'monthly_analyses_limit' };
+            const usageKeyMap = { roast: 'roasts_used', analysis: 'analyses_used' };
+            const planLimit = planLimits[planKeyMap[action]] ?? planLimits.monthly_responses_limit ?? 0;
+            const usage = currentUsage[usageKeyMap[action]] ?? currentUsage.monthly_responses_used ?? 0;
 
             if (usage < planLimit) {
                 return { 
