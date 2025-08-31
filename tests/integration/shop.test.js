@@ -12,20 +12,32 @@ const stripeWrapper = require('../../src/services/stripeWrapper');
 jest.mock('../../src/config/supabase');
 jest.mock('../../src/services/stripeWrapper');
 
+// Mock auth middleware to return test user (hoisted)
+jest.mock('../../src/middleware/auth', () => ({
+    authenticateToken: (req, res, next) => {
+        req.user = { id: 'test-user-123', email: 'test@example.com' };
+        next();
+    },
+    requireAdmin: (req, res, next) => {
+        next();
+    },
+    optionalAuth: (req, res, next) => {
+        req.user = { id: 'test-user-123', email: 'test@example.com' };
+        next();
+    }
+}));
+
+// Mock requirePlan middleware
+jest.mock('../../src/middleware/requirePlan', () => ({
+    requirePlan: (plans) => (req, res, next) => {
+        next();
+    }
+}));
+
 describe('Shop API Integration Tests', () => {
     let mockUserClient;
     const testUserId = 'test-user-123';
     const authToken = 'Bearer valid-token';
-
-    // Mock auth middleware to return test user
-    beforeAll(() => {
-        jest.doMock('../../src/middleware/auth', () => ({
-            authenticateToken: (req, res, next) => {
-                req.user = { id: testUserId, email: 'test@example.com' };
-                next();
-            }
-        }));
-    });
 
     beforeEach(() => {
         jest.clearAllMocks();
