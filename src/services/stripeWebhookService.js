@@ -75,7 +75,7 @@ class StripeWebhookService {
             switch (event.type) {
                 case 'checkout.session.completed':
                     // Check if this is an addon purchase or subscription
-                    if (event.data.object.mode === 'payment' && event.data.object.metadata?.addon_key) {
+                    if (event.data.object?.mode === 'payment' && event.data.object?.metadata?.addon_key) {
                         result = await this._handleAddonPurchaseCompleted(event.data.object);
                     } else {
                         result = await this._handleCheckoutCompleted(event.data.object);

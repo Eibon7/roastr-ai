@@ -163,6 +163,92 @@ describe('StripeWebhookService', () => {
             expect(result.success).toBe(false);
             expect(result.error).toContain('No user_id in checkout session metadata');
         });
+
+        it('should handle malformed event data gracefully (CodeRabbit fix)', async () => {
+            // Test case for the CodeRabbit fix: event.data.object?.mode validation
+            const malformedEvents = [
+                // Case 1: event.data.object is null
+                {
+                    ...baseEvent,
+                    data: {
+                        object: null
+                    }
+                },
+                // Case 2: event.data.object.mode is undefined
+                {
+                    ...baseEvent,
+                    data: {
+                        object: {
+                            id: 'cs_test_session',
+                            // mode is missing
+                            metadata: { addon_key: 'test_addon' }
+                        }
+                    }
+                },
+                // Case 3: event.data.object exists but mode is null
+                {
+                    ...baseEvent,
+                    data: {
+                        object: {
+                            id: 'cs_test_session',
+                            mode: null,
+                            metadata: { addon_key: 'test_addon' }
+                        }
+                    }
+                }
+            ];
+
+            // Mock successful processing for all cases
+            supabaseServiceClient.rpc
+                .mockResolvedValue({ data: false, error: null }) // Not processed
+                .mockResolvedValue({ data: 'webhook-uuid', error: null }) // Start processing
+                .mockResolvedValue({ data: true, error: null }); // Complete processing
+
+            for (const malformedEvent of malformedEvents) {
+                const result = await webhookService.processWebhookEvent(malformedEvent);
+
+                // Should not throw runtime error and should process as regular checkout
+                expect(result.success).toBe(true);
+                expect(result.error).toBeUndefined();
+            }
+        });
+
+        it('should correctly identify addon purchases with proper validation', async () => {
+            // Test that addon purchases are correctly identified when all properties exist
+            const addonPurchaseEvent = {
+                ...baseEvent,
+                data: {
+                    object: {
+                        id: 'cs_test_session',
+                        mode: 'payment',
+                        customer: 'cus_test123',
+                        metadata: {
+                            addon_key: 'test_addon',
+                            user_id: 'user-123'
+                        }
+                    }
+                }
+            };
+
+            // Mock the addon purchase handler
+            webhookService._handleAddonPurchaseCompleted = jest.fn().mockResolvedValue({
+                success: true,
+                addonKey: 'test_addon'
+            });
+
+            // Mock successful processing
+            supabaseServiceClient.rpc
+                .mockResolvedValueOnce({ data: false, error: null }) // Not processed
+                .mockResolvedValueOnce({ data: 'webhook-uuid', error: null }) // Start processing
+                .mockResolvedValueOnce({ data: true, error: null }); // Complete processing
+
+            const result = await webhookService.processWebhookEvent(addonPurchaseEvent);
+
+            expect(result.success).toBe(true);
+            expect(webhookService._handleAddonPurchaseCompleted).toHaveBeenCalledWith(
+                addonPurchaseEvent.data.object
+            );
+        });
     });
 
     describe('_handleCheckoutCompleted', () => {
