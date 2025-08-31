@@ -317,6 +317,19 @@ class StripeWebhookService {
                 throw new Error('Payment intent must be a string or object with id property');
             }
 
+            // Validate amount_total
+            const amountCents = session.amount_total;
+            if (typeof amountCents !== 'number' || amountCents <= 0) {
+                logger.error('Invalid amount_total in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    amountTotal: session.amount_total,
+                    amountType: typeof session.amount_total
+                });
+                throw new Error('Invalid payment amount in checkout session');
+            }
+
             // Execute atomic transaction for addon purchase
             const { data: transactionResult, error: transactionError } = await supabaseServiceClient
                 .rpc('execute_addon_purchase_transaction', {
@@ -324,7 +337,7 @@ class StripeWebhookService {
                     p_addon_key: addonKey,
                     p_stripe_payment_intent_id: paymentIntentId,
                     p_stripe_checkout_session_id: session.id,
-                    p_amount_cents: session.amount_total,
+                    p_amount_cents: amountCents,
                     p_addon_type: addonType,
                     p_credit_amount: creditAmount,
                     p_feature_key: featureKey

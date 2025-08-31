@@ -541,6 +541,140 @@ describe('StripeWebhookService', () => {
             );
         });
     });
+
+    describe('_handleAddonPurchaseCompleted', () => {
+        const baseAddonSession = {
+            id: 'cs_test_addon_session',
+            mode: 'payment',
+            customer: 'cus_test123',
+            payment_intent: 'pi_test123',
+            amount_total: 1999, // $19.99 in cents
+            metadata: {
+                user_id: 'user-123',
+                addon_key: 'test_addon'
+            }
+        };
+
+        beforeEach(() => {
+            // Mock the addon service
+            jest.doMock('../../../src/services/addonService', () => ({
+                getAddonByKey: jest.fn().mockResolvedValue({
+                    key: 'test_addon',
+                    type: 'credits',
+                    credit_amount: 100,
+                    feature_key: null
+                })
+            }));
+
+            // Mock successful RPC call
+            supabaseServiceClient.rpc.mockResolvedValue({
+                data: { success: true, credits_added: 100 },
+                error: null
+            });
+        });
+
+        it('should handle valid addon purchase successfully', async () => {
+            const result = await webhookService._handleAddonPurchaseCompleted(baseAddonSession);
+
+            expect(result.success).toBe(true);
+            expect(result.addonKey).toBe('test_addon');
+            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                'execute_addon_purchase_transaction',
+                expect.objectContaining({
+                    p_user_id: 'user-123',
+                    p_addon_key: 'test_addon',
+                    p_stripe_payment_intent_id: 'pi_test123',
+                    p_stripe_checkout_session_id: 'cs_test_addon_session',
+                    p_amount_cents: 1999
+                })
+            );
+        });
+
+        it('should validate amount_total and reject invalid amounts (CodeRabbit fix)', async () => {
+            const invalidAmountSessions = [
+                // Case 1: amount_total is undefined
+                {
+                    ...baseAddonSession,
+                    amount_total: undefined
+                },
+                // Case 2: amount_total is null
+                {
+                    ...baseAddonSession,
+                    amount_total: null
+                },
+                // Case 3: amount_total is string
+                {
+                    ...baseAddonSession,
+                    amount_total: "1999"
+                },
+                // Case 4: amount_total is zero
+                {
+                    ...baseAddonSession,
+                    amount_total: 0
+                },
+                // Case 5: amount_total is negative
+                {
+                    ...baseAddonSession,
+                    amount_total: -100
+                }
+            ];
+
+            for (const invalidSession of invalidAmountSessions) {
+                await expect(webhookService._handleAddonPurchaseCompleted(invalidSession))
+                    .rejects
+                    .toThrow('Invalid payment amount in checkout session');
+            }
+        });
+
+        it('should handle payment_intent validation correctly', async () => {
+            // Test missing payment_intent
+            const sessionWithoutPaymentIntent = {
+                ...baseAddonSession,
+                payment_intent: undefined
+            };
+
+            await expect(webhookService._handleAddonPurchaseCompleted(sessionWithoutPaymentIntent))
+                .rejects
+                .toThrow('Payment intent is required for addon purchase completion');
+
+            // Test payment_intent as object with id
+            const sessionWithPaymentIntentObject = {
+                ...baseAddonSession,
+                payment_intent: { id: 'pi_object_test123' }
+            };
+
+            const result = await webhookService._handleAddonPurchaseCompleted(sessionWithPaymentIntentObject);
+
+            expect(result.success).toBe(true);
+            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                'execute_addon_purchase_transaction',
+                expect.objectContaining({
+                    p_stripe_payment_intent_id: 'pi_object_test123'
+                })
+            );
+        });
+
+        it('should handle valid numeric amount_total correctly', async () => {
+            const validAmountSessions = [
+                { ...baseAddonSession, amount_total: 1 },      // Minimum valid amount
+                { ...baseAddonSession, amount_total: 999 },    // Small amount
+                { ...baseAddonSession, amount_total: 9999 },   // Large amount
+                { ...baseAddonSession, amount_total: 1.99 }    // Decimal (though Stripe usually uses integers)
+            ];
+
+            for (const validSession of validAmountSessions) {
+                const result = await webhookService._handleAddonPurchaseCompleted(validSession);
+
+                expect(result.success).toBe(true);
+                expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                    'execute_addon_purchase_transaction',
+                    expect.objectContaining({
+                        p_amount_cents: validSession.amount_total
+                    })
+                );
+            }
+        });
+    });
 });
 
 describe('Integration with real Stripe payloads', () => {
