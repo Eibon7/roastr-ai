@@ -66,6 +66,18 @@ describe('ExportCleanupWorker - Issue #116', () => {
             expect(worker.retentionRules.maxAgeAfterCreation).toBe(24 * 60 * 60 * 1000);
             expect(worker.retentionRules.maxAgeAfterDownload).toBe(60 * 60 * 1000);
         });
+
+        test('should merge provided retention configuration', () => {
+            const customWorker = new ExportCleanupWorker({
+                scanInterval: 5000,
+                maxAgeAfterCreation: 2 * 60 * 60 * 1000,
+                maxAgeAfterDownload: 30 * 60 * 1000
+            });
+
+            expect(customWorker.retentionRules.scanInterval).toBe(5000);
+            expect(customWorker.retentionRules.maxAgeAfterCreation).toBe(2 * 60 * 60 * 1000);
+            expect(customWorker.retentionRules.maxAgeAfterDownload).toBe(30 * 60 * 1000);
+        });
     });
 
     describe('Token Cleanup', () => {
@@ -117,6 +129,30 @@ describe('ExportCleanupWorker - Issue #116', () => {
 
             expect(result.delete).toBe(false);
             expect(result.reason).toBe('within_retention_period');
+        });
+
+        test('deleting a file also removes its download token', async () => {
+            await fs.mkdir(mockExportDir, { recursive: true });
+
+            const oldTime = Date.now() - (25 * 60 * 60 * 1000); // 25 hours ago
+            const filename = 'user-data-export-abc-123.zip';
+            const filepath = path.join(mockExportDir, filename);
+
+            await fs.writeFile(filepath, 'test');
+            await fs.utimes(filepath, new Date(oldTime), new Date(oldTime));
+
+            global.downloadTokens.set('token123', {
+                filepath,
+                filename,
+                expiresAt: Date.now() + (60 * 60 * 1000),
+                createdAt: Date.now()
+            });
+
+            const results = await worker.scanAndCleanupFiles();
+
+            expect(results.deleted).toBe(1);
+            expect(results.tokensCleanedUp).toBe(1);
+            expect(global.downloadTokens.has('token123')).toBe(false);
         });
     });
 

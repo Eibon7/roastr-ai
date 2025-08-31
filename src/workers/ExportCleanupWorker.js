@@ -20,12 +20,18 @@ class ExportCleanupWorker extends BaseWorker {
         
         this.exportDir = path.join(process.cwd(), 'temp', 'exports');
         this.dataExportService = new DataExportService();
-        
+
         // File retention rules (in milliseconds)
+        const {
+            maxAgeAfterCreation = 24 * 60 * 60 * 1000, // 24 hours
+            maxAgeAfterDownload = 60 * 60 * 1000,      // 1 hour
+            scanInterval = 15 * 60 * 1000              // Scan every 15 minutes
+        } = options;
+
         this.retentionRules = {
-            maxAgeAfterCreation: 24 * 60 * 60 * 1000, // 24 hours
-            maxAgeAfterDownload: 60 * 60 * 1000,      // 1 hour
-            scanInterval: 15 * 60 * 1000              // Scan every 15 minutes
+            maxAgeAfterCreation,
+            maxAgeAfterDownload,
+            scanInterval
         };
         
         this.cleanupStats = {
@@ -121,6 +127,7 @@ class ExportCleanupWorker extends BaseWorker {
             const fileResults = await this.scanAndCleanupFiles();
             scanStats.filesScanned = fileResults.scanned;
             scanStats.filesDeleted = fileResults.deleted;
+            scanStats.tokensCleanedUp += fileResults.tokensCleanedUp;
             scanStats.errors = fileResults.errors;
 
             // Update global statistics
@@ -229,6 +236,7 @@ class ExportCleanupWorker extends BaseWorker {
         const results = {
             scanned: 0,
             deleted: 0,
+            tokensCleanedUp: 0,
             errors: []
         };
 
@@ -266,6 +274,18 @@ class ExportCleanupWorker extends BaseWorker {
                     if (shouldDelete.delete) {
                         await fs.unlink(filepath);
                         results.deleted++;
+
+                        // Clean up associated download token if present
+                        const downloadInfo = this.findDownloadInfoForFile(filepath);
+                        if (downloadInfo) {
+                            global.downloadTokens.delete(downloadInfo.token);
+                            results.tokensCleanedUp++;
+                            logger.info('Removed download token for deleted file', {
+                                workerName: this.workerName,
+                                filename,
+                                token: downloadInfo.token.substring(0, 8) + '...'
+                            });
+                        }
 
                         logger.info('Deleted expired export file', {
                             workerName: this.workerName,
