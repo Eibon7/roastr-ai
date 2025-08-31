@@ -3,6 +3,7 @@ const CostControlService = require('../services/costControl');
 const RoastPromptTemplate = require('../services/roastPromptTemplate');
 const transparencyService = require('../services/transparencyService');
 const { mockMode } = require('../config/mockMode');
+const { PLATFORM_LIMITS } = require('../config/constants');
 
 /**
  * Generate Reply Worker
@@ -131,15 +132,21 @@ class GenerateReplyWorker extends BaseWorker {
    * Process reply generation job
    */
   async processJob(job) {
-    const { 
-      comment_id, 
-      organization_id, 
-      platform, 
+    // FIX: Critical fixes from CodeRabbit review (outside diff)
+    // Validate job payload exists before destructuring
+    if (!job?.payload) {
+      throw new Error('Invalid job: missing payload');
+    }
+
+    const {
+      comment_id,
+      organization_id,
+      platform,
       original_text,
       toxicity_score,
       severity_level,
-      categories 
-    } = job.payload || job;
+      categories
+    } = job.payload;
     
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
@@ -408,8 +415,12 @@ class GenerateReplyWorker extends BaseWorker {
         response = await this.generateOpenAIResponse(originalText, config, context);
         response.service = 'openai';
       } catch (error) {
+        // FIX: Critical fixes from CodeRabbit review (outside diff)
+        // Enhanced error logging with stack trace and safe property access
         this.log('warn', 'OpenAI generation failed, using template fallback', {
-          error: error.message
+          error: error?.message || 'Unknown error',
+          stack: error?.stack || 'No stack trace available',
+          originalTextLength: originalText?.length || 0
         });
       }
     }
@@ -424,65 +435,106 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
+   * Build persona context from available persona fields
+   * @private
+   */
+  buildPersonaContext(personaData, personaFieldsUsed) {
+    if (!personaData || !personaData.hasPersona || !personaData.fieldsAvailable) {
+      return null;
+    }
+
+    // FIX: Critical fixes from CodeRabbit review (outside diff)
+    // Use const instead of let for immutable arrays
+    const personaEnhancements = [];
+
+    if (personaData.fieldsAvailable.includes('lo_que_me_define')) {
+      personaEnhancements.push('Considera la personalidad definida del usuario');
+      personaFieldsUsed.loQueMeDefineUsed = true;
+    }
+
+    if (personaData.fieldsAvailable.includes('lo_que_no_tolero')) {
+      personaEnhancements.push('Ten en cuenta lo que el usuario no tolera');
+      personaFieldsUsed.loQueNoToleroUsed = true;
+    }
+
+    if (personaData.fieldsAvailable.includes('lo_que_me_da_igual')) {
+      personaEnhancements.push('Considera las cosas que le dan igual al usuario');
+      personaFieldsUsed.loQueMeDaIgualUsed = true;
+    }
+
+    // Filter out empty or falsy elements and join with proper formatting
+    const validEnhancements = personaEnhancements.filter(enhancement =>
+      enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
+    );
+
+    if (validEnhancements.length === 0) {
+      return null;
+    }
+
+    // Join and trim the final context
+    const personaContext = validEnhancements.join('. ').trim();
+
+    // Ensure it ends with a period if it doesn't already
+    return personaContext.endsWith('.') ? personaContext : personaContext + '.';
+  }
+
+  /**
    * Generate response using OpenAI
    */
   async generateOpenAIResponse(originalText, config, context) {
     const { tone, humor_type } = config;
     const { platform, severity_level, toxicity_score, categories, personaData } = context;
-    
+
     // Track which persona fields will be used (Issue #81)
-    let personaFieldsUsed = {
+    const personaFieldsUsed = {
       loQueMeDefineUsed: false,
       loQueNoToleroUsed: false,
       loQueMeDaIgualUsed: false
     };
 
+    // FIX: Critical fixes from CodeRabbit review (outside diff)
     // Build enhanced user config with persona data if available
-    let userConfig = {
+    const userConfig = {
       tone: tone,
       humor_type: humor_type,
       intensity_level: config.intensity_level || 3,
       custom_style_prompt: config.custom_style_prompt
     };
 
-    // Enhance prompt with persona context if available
-    if (personaData && personaData.hasPersona) {
-      let personaEnhancements = [];
-      
-      if (personaData.fieldsAvailable.includes('lo_que_me_define')) {
-        personaEnhancements.push('Considera la personalidad definida del usuario');
-        personaFieldsUsed.loQueMeDefineUsed = true;
-      }
-      
-      if (personaData.fieldsAvailable.includes('lo_que_no_tolero')) {
-        personaEnhancements.push('Ten en cuenta lo que el usuario no tolera');
-        personaFieldsUsed.loQueNoToleroUsed = true;
-      }
-      
-      if (personaData.fieldsAvailable.includes('lo_que_me_da_igual')) {
-        personaEnhancements.push('Considera las cosas que le dan igual al usuario');
-        personaFieldsUsed.loQueMeDaIgualUsed = true;
-      }
-      
-      if (personaEnhancements.length > 0) {
-        userConfig.persona_context = personaEnhancements.join('. ');
-        this.log('debug', 'Enhanced response with persona context', {
-          fieldsUsed: Object.keys(personaFieldsUsed).filter(key => personaFieldsUsed[key])
-        });
-      }
+    // Enhance prompt with persona context if available using robust helper
+    const personaContext = this.buildPersonaContext(personaData, personaFieldsUsed);
+    if (personaContext) {
+      userConfig.persona_context = personaContext;
+      this.log('debug', 'Enhanced response with persona context', {
+        fieldsUsed: Object.keys(personaFieldsUsed).filter(key => personaFieldsUsed[key]),
+        contextLength: personaContext.length
+      });
     }
 
-    // Build enhanced system prompt using master template
-    const systemPrompt = await this.promptTemplate.buildPrompt({
-      originalComment: originalText,
-      toxicityData: {
-        score: toxicity_score,
-        severity: severity_level,
-        categories: categories || []
-      },
-      userConfig,
-      includeReferences: true // Include references by default in worker
-    });
+    // Build enhanced system prompt using master template with error handling
+    let systemPrompt;
+    try {
+      systemPrompt = await this.promptTemplate.buildPrompt({
+        originalComment: originalText,
+        toxicityData: {
+          score: toxicity_score,
+          severity: severity_level,
+          categories: categories || []
+        },
+        userConfig,
+        includeReferences: true // Include references by default in worker
+      });
+    } catch (err) {
+      // FIX: Critical fixes from CodeRabbit review (outside diff)
+      // Enhanced error logging with stack trace
+      this.log('error', 'Failed to build system prompt', {
+        error: err.message,
+        stack: err.stack,
+        originalTextLength: originalText?.length || 0,
+        userConfig: userConfig ? Object.keys(userConfig) : []
+      });
+      throw new Error(`Prompt generation failed: ${err.message}`);
+    }
     
     // Add platform constraints to the end of the prompt
     const platformConstraint = this.getPlatformConstraint(platform);
@@ -539,7 +591,7 @@ class GenerateReplyWorker extends BaseWorker {
     let platformConstraints = '';
     switch (platform) {
       case 'twitter':
-        platformConstraints = 'Keep responses under 280 characters for Twitter.';
+        platformConstraints = `Keep responses under ${PLATFORM_LIMITS.twitter.maxLength} characters for Twitter.`;
         break;
       case 'youtube':
         platformConstraints = 'YouTube comment style, can be slightly longer but still concise.';
@@ -573,7 +625,7 @@ class GenerateReplyWorker extends BaseWorker {
    */
   getPlatformConstraint(platform) {
     const constraints = {
-      'twitter': 'RESTRICCIÓN DE PLATAFORMA: Respuesta máxima de 280 caracteres para Twitter.',
+      'twitter': `RESTRICCIÓN DE PLATAFORMA: Respuesta máxima de ${PLATFORM_LIMITS.twitter.maxLength} caracteres para Twitter.`,
       'youtube': 'RESTRICCIÓN DE PLATAFORMA: Estilo de comentario de YouTube, puede ser ligeramente más largo pero mantén la concisión.',
       'instagram': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Instagram, amigable pero con sarcasmo.',
       'facebook': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Facebook, considera audiencia más amplia.',
@@ -610,7 +662,7 @@ class GenerateReplyWorker extends BaseWorker {
     
     switch (platform) {
       case 'twitter':
-        maxLength = 270; // Leave room for mentions/context
+        maxLength = PLATFORM_LIMITS.twitter.maxLength - 10; // Leave room for mentions/context
         break;
       case 'instagram':
         maxLength = 500;
@@ -619,7 +671,7 @@ class GenerateReplyWorker extends BaseWorker {
         maxLength = 1000;
         break;
       default:
-        maxLength = 280;
+        maxLength = PLATFORM_LIMITS.twitter.maxLength;
     }
     
     if (response.length <= maxLength) {
@@ -688,25 +740,57 @@ class GenerateReplyWorker extends BaseWorker {
           );
           finalResponseText = transparencyResult.finalText;
           
-          // Update disclaimer usage statistics with robust retry logic (Issue #199)
-          const statsResult = await transparencyService.updateDisclaimerStats(
-            transparencyResult.disclaimer,
-            transparencyResult.disclaimerType,
-            config.language || 'es',
-            {
-              maxRetries: 3,
-              retryDelay: 1000,
-              fallbackToLocal: true,
-              context: {
-                organizationId,
-                workerId: this.workerId || 'unknown',
-                responseId: response.id
+          // FIX: Critical fixes from CodeRabbit review (outside diff)
+          // Update disclaimer usage statistics with enhanced fallback retry logic
+          let statsResult;
+          try {
+            statsResult = await transparencyService.updateDisclaimerStats(
+              transparencyResult.disclaimer,
+              transparencyResult.disclaimerType,
+              config.language || 'es',
+              {
+                maxRetries: 3,
+                retryDelay: 1000,
+                fallbackToLocal: true,
+                context: {
+                  organizationId,
+                  workerId: this.workerId || 'unknown',
+                  responseId: response.id
+                }
               }
+            );
+          } catch (statsError) {
+            // Fallback with enhanced retry logic
+            this.log('warn', 'Primary disclaimer stats update failed, attempting fallback', {
+              error: statsError.message,
+              stack: statsError.stack
+            });
+
+            try {
+              // Wait 3 seconds and retry with simpler options
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              statsResult = await transparencyService.updateDisclaimerStats(
+                transparencyResult.disclaimer,
+                transparencyResult.disclaimerType,
+                config.language || 'es',
+                {
+                  maxRetries: 2,
+                  retryDelay: 3000,
+                  fallbackToLocal: true
+                }
+              );
+            } catch (fallbackError) {
+              this.log('error', 'Disclaimer stats fallback also failed', {
+                error: fallbackError.message,
+                stack: fallbackError.stack
+              });
+              // Continue without stats tracking rather than failing the entire operation
+              statsResult = { success: false, reason: 'fallback_failed' };
             }
-          );
-          
+          }
+
           // Log the result for monitoring
-          if (statsResult.success) {
+          if (statsResult?.success) {
             this.log('info', 'Disclaimer stats tracking successful', {
               disclaimerType: transparencyResult.disclaimerType,
               attempt: statsResult.attempt,
@@ -714,9 +798,9 @@ class GenerateReplyWorker extends BaseWorker {
             });
           } else {
             this.log('warn', 'Disclaimer stats tracking failed', {
-              reason: statsResult.reason,
-              error: statsResult.error,
-              processingTime: statsResult.processingTimeMs
+              reason: statsResult?.reason || 'unknown',
+              error: statsResult?.error || 'no error details',
+              processingTime: statsResult?.processingTimeMs || 0
             });
           }
           
@@ -734,23 +818,58 @@ class GenerateReplyWorker extends BaseWorker {
         }
       }
 
-      const { data: stored, error } = await this.supabase
-        .from('responses')
-        .insert({
-          organization_id: organizationId,
-          comment_id: commentId,
-          response_text: finalResponseText,
-          tone: config.tone,
-          humor_type: config.humor_type,
-          generation_time_ms: generationTime,
-          tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
-          cost_cents: 5, // Base cost per generation
-          post_status: 'pending',
-          persona_fields_used: personaFieldsUsed
-        })
-        .select()
-        .single();
-      
+      // FIX: Critical fixes from CodeRabbit review (outside diff)
+      // Enhanced Supabase insertion with automatic retry
+      let stored, error;
+      const insertData = {
+        organization_id: organizationId,
+        comment_id: commentId,
+        response_text: finalResponseText,
+        tone: config.tone,
+        humor_type: config.humor_type,
+        generation_time_ms: generationTime,
+        tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
+        cost_cents: 5, // Base cost per generation
+        post_status: 'pending',
+        persona_fields_used: personaFieldsUsed
+      };
+
+      try {
+        const result = await this.supabase
+          .from('responses')
+          .insert(insertData)
+          .select()
+          .single();
+
+        stored = result.data;
+        error = result.error;
+      } catch (insertError) {
+        this.log('warn', 'First Supabase insertion attempt failed, retrying', {
+          error: insertError.message,
+          commentId
+        });
+
+        // Second attempt after brief delay
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const retryResult = await this.supabase
+            .from('responses')
+            .insert(insertData)
+            .select()
+            .single();
+
+          stored = retryResult.data;
+          error = retryResult.error;
+        } catch (retryError) {
+          this.log('error', 'Supabase insertion retry also failed', {
+            error: retryError.message,
+            stack: retryError.stack,
+            commentId
+          });
+          throw retryError;
+        }
+      }
+
       if (error) throw error;
       
       // Log persona usage for analytics

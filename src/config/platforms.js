@@ -1,16 +1,18 @@
 /**
  * Platform-specific configuration for roast generation
- * 
+ *
  * Centralizes platform constraints, style guides, and formatting rules
  * to improve maintainability and enable dynamic platform support.
- * 
+ *
  * Issue #128: Extract hardcoded platform rules to dedicated config
  */
+
+const { PLATFORM_LIMITS } = require('./constants');
 
 const PLATFORMS = {
   twitter: {
     name: 'Twitter',
-    maxLength: 280,
+    maxLength: PLATFORM_LIMITS.twitter.maxLength,
     supports: {
       hashtags: true,
       mentions: true,
@@ -32,7 +34,7 @@ const PLATFORMS = {
 
   instagram: {
     name: 'Instagram',
-    maxLength: 2200,
+    maxLength: PLATFORM_LIMITS.instagram.maxLength,
     supports: {
       hashtags: true,
       mentions: true,
@@ -54,7 +56,7 @@ const PLATFORMS = {
 
   facebook: {
     name: 'Facebook',
-    maxLength: 63206,
+    maxLength: PLATFORM_LIMITS.facebook.maxLength,
     supports: {
       hashtags: true,
       mentions: true,
@@ -77,7 +79,7 @@ const PLATFORMS = {
 
   linkedin: {
     name: 'LinkedIn',
-    maxLength: 3000,
+    maxLength: PLATFORM_LIMITS.linkedin.maxLength,
     supports: {
       hashtags: true,
       mentions: true,
@@ -100,7 +102,7 @@ const PLATFORMS = {
 
   tiktok: {
     name: 'TikTok',
-    maxLength: 2200,
+    maxLength: PLATFORM_LIMITS.tiktok.maxLength,
     supports: {
       hashtags: true,
       mentions: true,
@@ -122,7 +124,7 @@ const PLATFORMS = {
 
   youtube: {
     name: 'YouTube',
-    maxLength: 10000,
+    maxLength: PLATFORM_LIMITS.youtube.maxLength,
     supports: {
       hashtags: true,
       mentions: false,
@@ -145,7 +147,7 @@ const PLATFORMS = {
 
   discord: {
     name: 'Discord',
-    maxLength: 2000,
+    maxLength: PLATFORM_LIMITS.discord.maxLength,
     supports: {
       mentions: true,
       emojis: true,
@@ -168,7 +170,7 @@ const PLATFORMS = {
 
   reddit: {
     name: 'Reddit',
-    maxLength: 40000,
+    maxLength: PLATFORM_LIMITS.reddit.maxLength,
     supports: {
       mentions: true,
       emojis: true,
@@ -191,7 +193,7 @@ const PLATFORMS = {
 
   bluesky: {
     name: 'Bluesky',
-    maxLength: 300,
+    maxLength: PLATFORM_LIMITS.bluesky.maxLength,
     supports: {
       mentions: true,
       hashtags: true,
@@ -233,7 +235,7 @@ function getPlatformConfig(platformName) {
  */
 function getPlatformLimit(platformName) {
   const config = getPlatformConfig(platformName);
-  return config ? config.maxLength : 1000;
+  return config ? config.maxLength : PLATFORM_LIMITS.default.maxLength;
 }
 
 /**
@@ -243,7 +245,7 @@ function getPlatformLimit(platformName) {
  */
 function getPreferredLength(platformName) {
   const config = getPlatformConfig(platformName);
-  return config ? config.style.preferredLength : 280;
+  return config ? config.style.preferredLength : PLATFORM_LIMITS.twitter.maxLength;
 }
 
 /**
@@ -267,7 +269,7 @@ function getPlatformStyle(platformName) {
   const config = getPlatformConfig(platformName);
   return config ? config.style : {
     tone: 'neutral',
-    preferredLength: 280,
+    preferredLength: PLATFORM_LIMITS.twitter.maxLength,
     emojiUsage: 'moderate'
   };
 }
