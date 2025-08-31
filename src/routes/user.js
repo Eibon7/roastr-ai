@@ -614,6 +614,15 @@ router.post('/preferences', authenticateToken, async (req, res) => {
         
         // In mock mode, skip database operations and return success
         if (flags.isEnabled('ENABLE_SUPABASE')) {
+            // Validate access token before creating user client
+            if (!req.accessToken || typeof req.accessToken !== 'string') {
+                logger.error('Missing or invalid access token for user client creation', { userId: userId?.substr(0, 8) + '...' || 'unknown' });
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized: Invalid access token'
+                });
+            }
+
             const userClient = createUserClient(req.accessToken);
             const { data, error: userError } = await userClient
                 .from('users')
@@ -763,54 +772,53 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
+            if (flags.isEnabled('ENABLE_SUPABASE')) {
+                const userClient = createUserClient(req.accessToken);
 
-        if (flags.isEnabled('ENABLE_SUPABASE')) {
-            const userClient = createUserClient(req.accessToken);
+                const { data: userProfile, error } = await userClient
+                    .from('users')
+                    .select(`
+                        id, email, name, plan, is_admin, active,
+                        onboarding_complete, preferences, created_at,
+                        organizations!owner_id (id, name, plan_id)
+                    `)
+                    .eq('id', userId)
+                    .single();
 
-            const { data: userProfile, error } = await userClient
-                .from('users')
-                .select(`
-                    id, email, name, plan, is_admin, active,
-                    onboarding_complete, preferences, created_at,
-                    organizations!owner_id (id, name, plan_id)
-                `)
-                .eq('id', userId)
-                .single();
-
-            if (error) {
-                throw new Error(`Failed to fetch user profile: ${error.message}`);
-            }
-
-            res.json({
-                success: true,
-                data: userProfile
-            });
-        } else {
-            // Mock mode response
-            res.json({
-                success: true,
-                data: {
-                    id: userId,
-                    email: 'test@example.com',
-                    name: 'Test User',
-                    plan: 'free',
-                    is_admin: false,
-                    active: true,
-                    onboarding_complete: true,
-                    preferences: {},
-                    created_at: new Date().toISOString(),
-                    organizations: []
+                if (error) {
+                    throw new Error(`Failed to fetch user profile: ${error.message}`);
                 }
-            });
-        }
 
-    } catch (error) {
-        logger.error('Get user profile error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to retrieve user profile'
-        });
-    }
+                res.json({
+                    success: true,
+                    data: userProfile
+                });
+            } else {
+                // Mock mode response
+                res.json({
+                    success: true,
+                    data: {
+                        id: userId,
+                        email: 'test@example.com',
+                        name: 'Test User',
+                        plan: 'free',
+                        is_admin: false,
+                        active: true,
+                        onboarding_complete: true,
+                        preferences: {},
+                        created_at: new Date().toISOString(),
+                        organizations: []
+                    }
+                });
+            }
+        } catch (error) {
+            logger.error('Get user profile error:', error.message);
+            res.status(500).json({
+                success: false,
+                error: error.message || 'Failed to fetch user profile'
+            });
+            return;
+        }
 });
 
 /**
@@ -1359,38 +1367,94 @@ router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimi
             let parsedOrigin;
             try {
                 parsedOrigin = new URL(trustedOrigin);
-                if (!['http:', 'https:'].includes(parsedOrigin.protocol)) {
-                    throw new Error('Invalid protocol');
-                }
-                if (parsedOrigin.pathname !== '/' || parsedOrigin.search || parsedOrigin.hash) {
-                    throw new Error('Origin must not contain path, query, or fragment');
-                }
             } catch (error) {
-                throw new Error('Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must be a valid http/https origin');
+                throw new Error(`Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: failed to parse "${trustedOrigin}": ${error.message}`);
             }
 
-            // Normalize by taking only the origin (protocol + host + optional port) and strip trailing slash
-            const normalizedOrigin = parsedOrigin.origin.replace(/\/$/, '');
+            // Require http or https protocol
+            if (!['http:', 'https:'].includes(parsedOrigin.protocol)) {
+                throw new Error(`Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: protocol must be http or https, got "${parsedOrigin.protocol}" in "${trustedOrigin}"`);
+            }
+
+            // Require no username or password
+            if (parsedOrigin.username || parsedOrigin.password) {
+                throw new Error(`Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must not contain credentials in "${trustedOrigin}"`);
+            }
+
+            // Require no search or hash
+            if (parsedOrigin.search || parsedOrigin.hash) {
+                throw new Error(`Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must not contain query or fragment in "${trustedOrigin}"`);
+            }
+
+            // Allow pathname to be either '' or '/'
+            if (parsedOrigin.pathname !== '' && parsedOrigin.pathname !== '/') {
+                throw new Error(`Invalid APP_PUBLIC_URL or PUBLIC_BASE_URL: must not contain path, got "${parsedOrigin.pathname}" in "${trustedOrigin}"`);
+            }
+
+            // Use parsedOrigin.origin as the normalized origin (no regex manipulation)
+            const normalizedOrigin = parsedOrigin.origin;
 
             // Validate that exportResult.downloadUrl is a relative path that begins with a single '/'
             if (!exportResult.downloadUrl || typeof exportResult.downloadUrl !== 'string') {
-                throw new Error('Invalid download URL: must be a string');
+                throw new Error(`Invalid download URL: must be a string, got: ${typeof exportResult.downloadUrl}`);
             }
 
-            // Reject URLs that look like full URLs or contain protocol, host, double slashes, or path traversal
-            if (exportResult.downloadUrl.includes('://') ||
-                exportResult.downloadUrl.includes('//') ||
-                exportResult.downloadUrl.includes('..') ||
-                !exportResult.downloadUrl.startsWith('/')) {
-                throw new Error('Invalid download URL: must be a relative path starting with /');
+            // Decode and normalize the path to catch percent-encoded attacks
+            let decodedPath;
+            try {
+                decodedPath = decodeURIComponent(exportResult.downloadUrl);
+            } catch (error) {
+                throw new Error(`Invalid download URL: failed to decode path "${exportResult.downloadUrl}": ${error.message}`);
+            }
+
+            // Normalize path: replace backslashes with forward slashes, collapse repeated slashes
+            const normalizedPath = decodedPath
+                .replace(/\\/g, '/')
+                .replace(/\/+/g, '/');
+
+            // Strict validation checks
+            if (!normalizedPath.startsWith('/')) {
+                throw new Error(`Invalid download URL: must start with '/', got: "${exportResult.downloadUrl}"`);
+            }
+
+            if (normalizedPath.includes('..')) {
+                throw new Error(`Invalid download URL: path traversal detected in "${exportResult.downloadUrl}"`);
+            }
+
+            if (normalizedPath.includes('\0')) {
+                throw new Error(`Invalid download URL: null byte detected in "${exportResult.downloadUrl}"`);
+            }
+
+            if (normalizedPath.includes('://')) {
+                throw new Error(`Invalid download URL: scheme detected in "${exportResult.downloadUrl}"`);
+            }
+
+            // Check for percent-encoded reserved characters that could be used for attacks
+            const suspiciousPatterns = [
+                '%2e%2e', '%2E%2E', // encoded ..
+                '%2f', '%2F',       // encoded /
+                '%5c', '%5C',       // encoded \
+                '%00'               // encoded null byte
+            ];
+
+            const lowerPath = exportResult.downloadUrl.toLowerCase();
+            for (const pattern of suspiciousPatterns) {
+                if (lowerPath.includes(pattern)) {
+                    throw new Error(`Invalid download URL: suspicious encoding detected in "${exportResult.downloadUrl}"`);
+                }
+            }
+
+            // Reject double slashes after the leading slash
+            if (normalizedPath.substring(1).includes('//')) {
+                throw new Error(`Invalid download URL: double slashes detected in "${exportResult.downloadUrl}"`);
             }
 
             // Construct the final downloadUrl using URL-safe join
             try {
-                const fullUrl = new URL(exportResult.downloadUrl, normalizedOrigin + '/');
+                const fullUrl = new URL(normalizedPath, normalizedOrigin + '/');
                 downloadUrl = fullUrl.href;
             } catch (error) {
-                throw new Error('Failed to construct valid download URL');
+                throw new Error(`Failed to construct valid download URL from origin "${trustedOrigin}" and path "${exportResult.downloadUrl}": ${error.message}`);
             }
         }
 
@@ -1415,7 +1479,7 @@ router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimi
 
         logger.info('GDPR data export requested via email', {
             userId: SafeUtils.safeUserIdPrefix(userId),
-            email: SafeUtils.maskEmail(userData.email),
+            email: SafeUtils.maskEmail(userData.email) || 'invalid-email',
             filename: exportResult.filename,
             size: exportResult.size
         });

@@ -21,7 +21,7 @@ const SafeUtils = {
   /**
    * Safely mask an email address for logging without exposing PII
    * @param {string} email - The email address to mask
-   * @returns {string} Masked email address
+   * @returns {string|null} Masked email address or null when domain is missing/malformed
    */
   maskEmail(email) {
     if (!email || typeof email !== 'string') {

@@ -28,6 +28,16 @@ jest.mock('../../../src/config/flags', () => ({
     }
 }));
 
+// Mock the addon service at the top level to prevent module cache pollution
+jest.mock('../../../src/services/addonService', () => ({
+    getAddonByKey: jest.fn().mockResolvedValue({
+        key: 'test_addon',
+        type: 'credits',
+        credit_amount: 100,
+        feature_key: null
+    })
+}));
+
 jest.mock('../../../src/utils/logger', () => ({
     logger: {
         info: jest.fn(),
@@ -556,16 +566,6 @@ describe('StripeWebhookService', () => {
         };
 
         beforeEach(() => {
-            // Mock the addon service
-            jest.doMock('../../../src/services/addonService', () => ({
-                getAddonByKey: jest.fn().mockResolvedValue({
-                    key: 'test_addon',
-                    type: 'credits',
-                    credit_amount: 100,
-                    feature_key: null
-                })
-            }));
-
             // Mock successful RPC call
             supabaseServiceClient.rpc.mockResolvedValue({
                 data: { success: true, credits_added: 100 },
