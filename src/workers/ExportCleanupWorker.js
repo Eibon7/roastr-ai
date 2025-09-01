@@ -402,6 +402,8 @@ class ExportCleanupWorker extends BaseWorker {
     /**
      * Remove all download tokens that reference the given filepath.
      * Returns the number of tokens removed.
+     * @param {string} filepath - The file path to clean up tokens for
+     * @returns {number} Number of tokens removed
      */
     removeAllTokensForFile(filepath) {
         if (!global.downloadTokens) return 0;
