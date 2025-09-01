@@ -275,15 +275,14 @@ class ExportCleanupWorker extends BaseWorker {
                         await fs.unlink(filepath);
                         results.deleted++;
 
-                        // Clean up associated download token if present
-                        const downloadInfo = this.findDownloadInfoForFile(filepath);
-                        if (downloadInfo) {
-                            global.downloadTokens.delete(downloadInfo.token);
-                            results.tokensCleanedUp++;
-                            logger.info('Removed download token for deleted file', {
+                        // Clean up all associated download tokens, if any
+                        const removedCount = this.removeAllTokensForFile(filepath);
+                        if (removedCount > 0) {
+                            results.tokensCleanedUp += removedCount;
+                            logger.info('Removed download token(s) for deleted file', {
                                 workerName: this.workerName,
                                 filename,
-                                token: downloadInfo.token.substring(0, 8) + '...'
+                                tokensRemoved: removedCount
                             });
                         }
 
@@ -398,6 +397,22 @@ class ExportCleanupWorker extends BaseWorker {
         }
 
         return null;
+    }
+
+    /**
+     * Remove all download tokens that reference the given filepath.
+     * Returns the number of tokens removed.
+     */
+    removeAllTokensForFile(filepath) {
+        if (!global.downloadTokens) return 0;
+        let removed = 0;
+        for (const [token, dt] of Array.from(global.downloadTokens.entries())) {
+            if (dt.filepath === filepath) {
+                global.downloadTokens.delete(token);
+                removed++;
+            }
+        }
+        return removed;
     }
 
     /**

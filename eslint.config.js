@@ -1,4 +1,4 @@
-export default [
+module.exports = [
   {
     languageOptions: {
       ecmaVersion: 2022,

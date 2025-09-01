@@ -10,10 +10,24 @@ const logger = require('../utils/logger');
 
 class StylecardService {
   constructor() {
-    this.supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
+    // Use mock client if Supabase is not configured
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+      this.supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_KEY
+      );
+    } else {
+      // Mock Supabase client for testing/development
+      this.supabase = {
+        from: () => ({
+          select: () => ({ data: [], error: null }),
+          insert: () => ({ data: [], error: null }),
+          update: () => ({ data: [], error: null }),
+          delete: () => ({ data: [], error: null }),
+          upsert: () => ({ data: [], error: null })
+        })
+      };
+    }
     
     // Configuration
     this.config = {
