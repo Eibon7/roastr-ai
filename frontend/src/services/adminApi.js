@@ -5,7 +5,7 @@
  * Handles all admin-related API calls including feature flags and kill switch
  */
 
-import { apiClient } from './api';
+import { apiClient } from './apiClient';
 
 class AdminApiService {
   /**

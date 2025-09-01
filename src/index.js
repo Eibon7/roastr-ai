@@ -41,6 +41,7 @@ const configRoutes = require('./routes/config');
 const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
+const roastRoutes = require('./routes/roast');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -202,6 +203,9 @@ app.use('/api/analytics', analyticsRoutes);
 
 // Notifications routes (authenticated)
 app.use('/api/notifications', notificationsRoutes);
+
+// Roast generation routes (authenticated)
+app.use('/api/roast', roastRoutes);
 
 // Worker status routes (authenticated)
 const { router: workersRoutes } = require('./routes/workers');
@@ -632,34 +636,8 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 });
 
 // ============================================================================
-// ROAST PREVIEW ENDPOINTS
+// ROAST ENDPOINTS - Now handled by /api/roast routes
 // ============================================================================
-
-// 📌 RUTA: Preview de roast con tono específico
-app.post('/api/roast/preview', async (req, res) => {
-  try {
-    const { message, tone = 'sarcastic', humorType = 'witty' } = req.body;
-
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Debes enviar un campo "message" válido.' });
-    }
-
-    // Generate roast with specific tone
-    const customPrompt = `Generate a ${tone} and ${humorType} roast response to: "${message}". Keep it clever and not offensive.`;
-    
-    const roast = await roastGenerator.generateRoastWithPrompt(message, customPrompt);
-    
-    res.json({ 
-      roast,
-      tone,
-      humorType,
-      preview: true
-    });
-  } catch (error) {
-    console.error('❌ Error generating roast preview:', error.message);
-    res.status(500).json({ error: 'No se pudo generar el preview del roast.' });
-  }
-});
 
 // Add error handling middleware (must be last)
 app.use(errorHandler);

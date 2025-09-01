@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -13,7 +13,7 @@ import {
   Loader2,
   CreditCard
 } from 'lucide-react';
-import { apiClient } from '../lib/api';
+import { apiClient } from '../services/api';
 
 const ShopSettings = ({ user, onNotification }) => {
   const [shopData, setShopData] = useState({
@@ -34,6 +34,23 @@ const ShopSettings = ({ user, onNotification }) => {
     error: null,
     success: null
   });
+
+  // Create addon lookup map for performance optimization
+  const addonLookupMap = useMemo(() => {
+    const map = new Map();
+    if (shopData.addons) {
+      Object.values(shopData.addons).forEach(category => {
+        if (Array.isArray(category)) {
+          category.forEach(addon => {
+            if (addon.key && addon.name) {
+              map.set(addon.key, addon.name);
+            }
+          });
+        }
+      });
+    }
+    return map;
+  }, [shopData.addons]);
 
   useEffect(() => {
     loadShopData();
@@ -276,13 +293,10 @@ const ShopSettings = ({ user, onNotification }) => {
               {userAddons.recentPurchases.slice(0, 5).map((purchase, index) => {
                 // Helper functions for formatting
                 const formatAddonName = (addonKey) => {
-                  // If we have the addon name from the shop data, use it
-                  if (shopData.addons) {
-                    for (const category of Object.values(shopData.addons)) {
-                      const addon = category.find(a => a.key === addonKey);
-                      if (addon) return addon.name;
-                    }
-                  }
+                  // Use the optimized lookup map for O(1) performance
+                  const addonName = addonLookupMap.get(addonKey);
+                  if (addonName) return addonName;
+
                   // Fallback: convert addon_key to title case
                   return addonKey
                     .replace(/_/g, ' ')

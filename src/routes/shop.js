@@ -282,10 +282,12 @@ router.post('/checkout', authenticateToken, async (req, res) => {
                 amount_cents: addon.price_cents,
                 currency: addon.currency,
                 status: 'pending'
-            });
+            })
+            .select()
+            .single();
 
         // Check for database insert errors
-        if (insertError || !insertData) {
+        if (insertError) {
             logger.error('Failed to record purchase initiation:', insertError);
             return res.status(500).json({
                 success: false,

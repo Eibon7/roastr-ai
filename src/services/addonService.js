@@ -4,7 +4,7 @@
  */
 
 const { supabaseServiceClient } = require('../config/supabase');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 class AddonService {
     /**
@@ -58,11 +58,13 @@ class AddonService {
                 });
 
             if (error) {
-                logger.error('Failed to consume addon credits:', {
-                    userId,
+                logger.error('Failed to consume addon credits - RPC error:', {
+                    userId: userId?.substring(0, 8) + '...',
                     category,
                     amount,
-                    error
+                    error: error.message || error,
+                    errorCode: error.code,
+                    errorDetails: error.details
                 });
                 return false;
             }

@@ -4,7 +4,7 @@ const userRoutes = require('../../../src/routes/user');
 const { authenticateToken } = require('../../../src/middleware/auth');
 const { createUserClient } = require('../../../src/config/supabase');
 const auditService = require('../../../src/services/auditService');
-const { flags } = require('../../../src/config/flags');
+const flags = require('../../../src/config/flags');
 
 // Mock dependencies
 jest.mock('../../../src/middleware/auth');

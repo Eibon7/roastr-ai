@@ -4,6 +4,15 @@ const RoastPromptTemplate = require('../services/roastPromptTemplate');
 const transparencyService = require('../services/transparencyService');
 const { mockMode } = require('../config/mockMode');
 const { shouldBlockAutopost } = require('../middleware/killSwitch');
+const { PLATFORM_LIMITS } = require('../config/constants');
+
+// OpenAI pricing constants (per 1M tokens, in USD)
+const OPENAI_PRICING = {
+  'gpt-4o-mini': {
+    input: 0.15,  // $0.15 per 1M input tokens
+    output: 0.60  // $0.60 per 1M output tokens
+  }
+};
 
 /**
  * Generate Reply Worker
@@ -553,7 +562,7 @@ class GenerateReplyWorker extends BaseWorker {
     let platformConstraints = '';
     switch (platform) {
       case 'twitter':
-        platformConstraints = 'Keep responses under 280 characters for Twitter.';
+        platformConstraints = `Keep responses under ${PLATFORM_LIMITS.twitter} characters for Twitter.`;
         break;
       case 'youtube':
         platformConstraints = 'YouTube comment style, can be slightly longer but still concise.';
@@ -624,7 +633,7 @@ class GenerateReplyWorker extends BaseWorker {
     
     switch (platform) {
       case 'twitter':
-        maxLength = 270; // Leave room for mentions/context
+        maxLength = PLATFORM_LIMITS.twitter - 10; // Leave room for mentions/context
         break;
       case 'instagram':
         maxLength = 500;
@@ -633,7 +642,7 @@ class GenerateReplyWorker extends BaseWorker {
         maxLength = 1000;
         break;
       default:
-        maxLength = 280;
+        maxLength = PLATFORM_LIMITS.twitter;
     }
     
     if (response.length <= maxLength) {
@@ -758,7 +767,7 @@ class GenerateReplyWorker extends BaseWorker {
           humor_type: config.humor_type,
           generation_time_ms: generationTime,
           tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
-          cost_cents: 5, // Base cost per generation
+          cost_cents: this.calculateTokenCost(response.tokensUsed || this.estimateTokens(finalResponseText), response.model),
           post_status: 'pending',
           persona_fields_used: personaFieldsUsed
         })
@@ -837,6 +846,47 @@ class GenerateReplyWorker extends BaseWorker {
     // More accurate estimation for OpenAI models
     // ~4 characters per token for English, ~6 for other languages
     return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * Calculate actual cost in cents based on tokens used
+   */
+  calculateTokenCost(tokensUsed, model = 'gpt-4o-mini') {
+    try {
+      if (!tokensUsed || tokensUsed <= 0) {
+        return 5; // Fallback to base cost if no token data
+      }
+
+      const pricing = OPENAI_PRICING[model];
+      if (!pricing) {
+        this.log('warn', `Unknown model pricing: ${model}, using fallback cost`);
+        return 5; // Fallback to base cost for unknown models
+      }
+
+      // For simplicity, assume 80% input tokens, 20% output tokens
+      // This is a reasonable approximation for chat completions
+      const inputTokens = Math.ceil(tokensUsed * 0.8);
+      const outputTokens = Math.ceil(tokensUsed * 0.2);
+
+      // Calculate cost in USD per million tokens, then convert to cents
+      const inputCostUSD = (inputTokens / 1000000) * pricing.input;
+      const outputCostUSD = (outputTokens / 1000000) * pricing.output;
+      const totalCostUSD = inputCostUSD + outputCostUSD;
+
+      // Convert to cents and round
+      const costCents = Math.round(totalCostUSD * 100);
+
+      // Ensure minimum cost of 1 cent for any API call
+      return Math.max(costCents, 1);
+
+    } catch (error) {
+      this.log('error', 'Error calculating token cost', {
+        tokensUsed,
+        model,
+        error: error.message
+      });
+      return 5; // Fallback to base cost on error
+    }
   }
 }
 

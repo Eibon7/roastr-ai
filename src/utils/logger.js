@@ -33,9 +33,9 @@ const SafeUtils = {
       return 'invalid-email';
     }
 
-    // If there's no local part, treat as invalid input but return original to avoid misleading masking
+    // If there's no local part, treat as invalid input and return safe placeholder
     if (atIndex === 0) {
-      return email; // e.g., "@domain.com"
+      return '[invalid email]'; // e.g., "@domain.com"
     }
 
     const localPart = email.substring(0, atIndex);

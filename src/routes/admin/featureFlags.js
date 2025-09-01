@@ -289,16 +289,42 @@ router.post('/kill-switch', async (req, res) => {
  */
 router.get('/audit-logs', async (req, res) => {
     try {
-        const { 
-            limit = 50, 
-            offset = 0, 
-            action_type, 
+        const {
+            limit = 50,
+            offset = 0,
+            action_type,
             resource_type,
             admin_user_id,
             start_date,
             end_date
         } = req.query;
-        
+
+        // Validate and sanitize pagination parameters
+        const parsedLimit = parseInt(limit, 10);
+        const parsedOffset = parseInt(offset, 10);
+
+        if (!Number.isFinite(parsedLimit) || parsedLimit <= 0 || parsedLimit > 100) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid limit parameter. Must be a positive integer between 1 and 100.'
+            });
+        }
+
+        if (!Number.isFinite(parsedOffset) || parsedOffset < 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid offset parameter. Must be a non-negative integer.'
+            });
+        }
+
+        const endRange = parsedOffset + parsedLimit - 1;
+        if (endRange < parsedOffset) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid pagination range. Computed end range is invalid.'
+            });
+        }
+
         let query = supabaseServiceClient
             .from('admin_audit_logs')
             .select(`
@@ -306,9 +332,9 @@ router.get('/audit-logs', async (req, res) => {
                 admin_user:admin_user_id (
                     id, email, name
                 )
-            `)
+            `, { count: 'exact' })
             .order('created_at', { ascending: false })
-            .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+            .range(parsedOffset, endRange);
         
         // Apply filters
         if (action_type) {
@@ -348,8 +374,8 @@ router.get('/audit-logs', async (req, res) => {
             data: {
                 logs,
                 pagination: {
-                    offset: parseInt(offset),
-                    limit: parseInt(limit),
+                    offset: parsedOffset,
+                    limit: parsedLimit,
                     total: count
                 }
             }

@@ -10,11 +10,20 @@ const { supabaseServiceClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
 
 class KillSwitchService {
-    constructor() {
+    constructor(options = {}) {
         this.cache = new Map();
         this.cacheTimeout = 30000; // 30 seconds cache
         this.lastCacheUpdate = 0;
         this.isInitialized = false;
+
+        // Configuration for missing flag behavior
+        this.config = {
+            missingFlagBehavior: options.missingFlagBehavior || 'disable', // 'disable', 'enable', 'throw'
+            defaultValues: options.defaultValues || {
+                is_enabled: false,
+                flag_value: false
+            }
+        };
     }
 
     /**
@@ -94,8 +103,10 @@ class KillSwitchService {
         if (!this.isInitialized || this.needsCacheRefresh()) {
             try {
                 await this.refreshCache();
+                this.isInitialized = true;
             } catch (error) {
                 logger.warn('Cache refresh failed, using stale data', { error: error.message });
+                // Keep isInitialized as false when refresh fails
             }
         }
 
@@ -113,8 +124,7 @@ class KillSwitchService {
                 .single();
 
             if (error || !flag) {
-                logger.warn('Flag not found', { flagKey });
-                return { is_enabled: false, flag_value: false };
+                return this.handleMissingFlag(flagKey, error);
             }
 
             return {
@@ -124,7 +134,43 @@ class KillSwitchService {
             };
         } catch (error) {
             logger.error('Failed to get flag from database', { flagKey, error: error.message });
-            return { is_enabled: false, flag_value: false };
+            return this.handleMissingFlag(flagKey, error);
+        }
+    }
+
+    /**
+     * Handle missing flag based on configuration
+     */
+    handleMissingFlag(flagKey, error = null) {
+        const errorContext = {
+            flagKey,
+            missingFlagBehavior: this.config.missingFlagBehavior,
+            error: error?.message || 'Flag not found'
+        };
+
+        logger.warn('Handling missing flag', errorContext);
+
+        switch (this.config.missingFlagBehavior) {
+            case 'enable':
+                logger.info('Missing flag behavior: enabling flag by default', { flagKey });
+                return {
+                    is_enabled: true,
+                    flag_value: true,
+                    cached_at: Date.now()
+                };
+
+            case 'throw':
+                logger.error('Missing flag behavior: throwing error', errorContext);
+                throw new Error(`Feature flag '${flagKey}' not found and missingFlagBehavior is set to 'throw'`);
+
+            case 'disable':
+            default:
+                logger.info('Missing flag behavior: disabling flag by default', { flagKey });
+                return {
+                    is_enabled: this.config.defaultValues.is_enabled,
+                    flag_value: this.config.defaultValues.flag_value,
+                    cached_at: Date.now()
+                };
         }
     }
 
@@ -183,6 +229,12 @@ class KillSwitchService {
 
 // Singleton instance
 const killSwitchService = new KillSwitchService();
+
+// Auto-initialize the singleton on module import
+killSwitchService.initialize().catch(error => {
+    logger.error('Failed to auto-initialize kill switch service on import', { error: error.message });
+    // Don't throw - allow graceful degradation
+});
 
 /**
  * Middleware to check kill switch before autopost operations
