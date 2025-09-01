@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ShopSettings from '../../../frontend/src/components/ShopSettings';
 import { apiClient } from '../../../frontend/src/lib/api';
@@ -17,9 +17,8 @@ jest.mock('../../../frontend/src/lib/api', () => ({
     }
 }));
 
-// Mock window.location
-delete window.location;
-window.location = { href: '' };
+// Mock window.location safely
+const originalLocation = window.location;
 
 describe('ShopSettings Component', () => {
     const mockUser = {
@@ -89,7 +88,19 @@ describe('ShopSettings Component', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        window.location.href = '';
+        // Mock window.location safely
+        Object.defineProperty(window, 'location', {
+            value: { href: '' },
+            configurable: true
+        });
+    });
+
+    afterEach(() => {
+        // Restore original window.location
+        Object.defineProperty(window, 'location', {
+            value: originalLocation,
+            configurable: true
+        });
     });
 
     it('should render loading state initially', () => {
@@ -223,8 +234,12 @@ describe('ShopSettings Component', () => {
             expect(screen.getByText('Compras Recientes')).toBeInTheDocument();
         });
 
-        expect(screen.getByText('roasts_100')).toBeInTheDocument();
-        expect(screen.getByText('$4.99')).toBeInTheDocument();
+        // Find the recent purchase row/container that contains 'roasts_100'
+        const recentPurchaseRow = screen.getByText('roasts_100').closest('div');
+        expect(recentPurchaseRow).toBeInTheDocument();
+
+        // Scope the price assertion to this specific purchase item
+        expect(within(recentPurchaseRow).getByText('$4.99')).toBeInTheDocument();
         expect(screen.getByText('completed')).toBeInTheDocument();
     });
 
