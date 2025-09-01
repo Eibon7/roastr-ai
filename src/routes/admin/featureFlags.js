@@ -254,7 +254,7 @@ router.post('/kill-switch', async (req, res) => {
         // Log with high priority
         logger.warn('KILL SWITCH TOGGLED', {
             adminUserId: SafeUtils.safeUserIdPrefix(req.user.id),
-            adminEmail: SafeUtils.maskEmail(req.user.email) || 'unknown-email',
+            adminEmail: SafeUtils.maskEmail(req.user.email),
             previousState: currentFlag.is_enabled,
             newState: updatedFlag.is_enabled,
             reason: reason || 'No reason provided',
@@ -303,6 +303,14 @@ router.get('/audit-logs', async (req, res) => {
         const parsedLimit = parseInt(limit, 10);
         const parsedOffset = parseInt(offset, 10);
 
+        // Validate that parsed values are integers
+        if (!Number.isInteger(parsedLimit) || !Number.isInteger(parsedOffset)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid pagination range or values too large'
+            });
+        }
+
         if (!Number.isFinite(parsedLimit) || parsedLimit <= 0 || parsedLimit > 100) {
             return res.status(400).json({
                 success: false,
@@ -314,6 +322,23 @@ router.get('/audit-logs', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid offset parameter. Must be a non-negative integer.'
+            });
+        }
+
+        // Check that values are within safe integer bounds
+        if (parsedOffset > Number.MAX_SAFE_INTEGER || parsedLimit > Number.MAX_SAFE_INTEGER) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid pagination range or values too large'
+            });
+        }
+
+        // Verify that the addition won't overflow using BigInt
+        const endRangeBigInt = BigInt(parsedOffset) + BigInt(parsedLimit) - 1n;
+        if (endRangeBigInt > BigInt(Number.MAX_SAFE_INTEGER)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid pagination range or values too large'
             });
         }
 

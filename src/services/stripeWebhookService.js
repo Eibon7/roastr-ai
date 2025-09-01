@@ -8,6 +8,7 @@
 const { supabaseServiceClient } = require('../config/supabase');
 const EntitlementsService = require('./entitlementsService');
 const StripeWrapper = require('./stripeWrapper');
+const creditsService = require('./creditsService');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
@@ -330,6 +331,60 @@ class StripeWebhookService {
                 throw new Error('Invalid payment amount in checkout session');
             }
 
+            // Validate currency
+            const sessionCurrency = session.currency;
+            if (!sessionCurrency || typeof sessionCurrency !== 'string') {
+                logger.error('Invalid or missing currency in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    currency: session.currency,
+                    currencyType: typeof session.currency
+                });
+                throw new Error('Invalid or missing currency in checkout session');
+            }
+
+            // Fetch addon details from database for price and currency validation
+            const { data: addonDetails, error: addonError } = await supabaseServiceClient
+                .from('shop_addons')
+                .select('price_cents, currency, addon_key')
+                .eq('addon_key', addonKey)
+                .eq('is_active', true)
+                .single();
+
+            if (addonError || !addonDetails) {
+                logger.error('Failed to fetch addon details for validation', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    error: addonError
+                });
+                throw new Error('Addon not found or inactive');
+            }
+
+            // Validate price and currency against database
+            if (addonDetails.price_cents !== amountCents) {
+                logger.error('Price mismatch between session and database', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    sessionAmount: amountCents,
+                    expectedAmount: addonDetails.price_cents
+                });
+                throw new Error('Payment amount does not match expected addon price');
+            }
+
+            if (addonDetails.currency.toLowerCase() !== sessionCurrency.toLowerCase()) {
+                logger.error('Currency mismatch between session and database', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    sessionCurrency: sessionCurrency,
+                    expectedCurrency: addonDetails.currency
+                });
+                throw new Error('Payment currency does not match expected addon currency');
+            }
+
             // Execute atomic transaction for addon purchase
             const { data: transactionResult, error: transactionError } = await supabaseServiceClient
                 .rpc('execute_addon_purchase_transaction', {
@@ -338,6 +393,8 @@ class StripeWebhookService {
                     p_stripe_payment_intent_id: paymentIntentId,
                     p_stripe_checkout_session_id: session.id,
                     p_amount_cents: amountCents,
+                    p_currency: sessionCurrency,
+                    p_expected_price_cents: addonDetails.price_cents,
                     p_addon_type: addonType,
                     p_credit_amount: creditAmount,
                     p_feature_key: featureKey
@@ -478,11 +535,39 @@ class StripeWebhookService {
                 };
             }
 
+            // Reset credits for new billing period if Credits v2 is enabled
+            let creditsReset = false;
+            if (flags.isEnabled('ENABLE_CREDITS_V2')) {
+                try {
+                    creditsReset = await creditsService.resetCreditsForNewPeriod(userId, {
+                        start: new Date(subscription.current_period_start * 1000).toISOString(),
+                        end: new Date(subscription.current_period_end * 1000).toISOString(),
+                        stripeCustomerId: customerId
+                    });
+
+                    if (creditsReset) {
+                        logger.info('Credits reset for subscription update', {
+                            userId,
+                            subscriptionId,
+                            plan
+                        });
+                    }
+                } catch (error) {
+                    logger.error('Failed to reset credits during subscription update', {
+                        userId,
+                        subscriptionId,
+                        error: error.message
+                    });
+                    // Don't fail the webhook for credit reset errors
+                }
+            }
+
             return {
                 success: true,
                 accountId: userId,
                 message: 'Subscription updated with atomic transaction',
                 entitlementsUpdated: transactionResult?.entitlements_updated || false,
+                creditsReset,
                 planName: transactionResult?.new_plan || plan,
                 oldPlan: transactionResult?.old_plan,
                 subscriptionStatus: subscription.status,
@@ -602,11 +687,44 @@ class StripeWebhookService {
                 };
             }
 
+            // Reset credits for new billing period if this is a subscription renewal
+            let creditsReset = false;
+            if (flags.isEnabled('ENABLE_CREDITS_V2') && invoice.subscription) {
+                try {
+                    // Get subscription details to determine billing period
+                    if (this.stripeWrapper) {
+                        const subscription = await this.stripeWrapper.subscriptions.retrieve(invoice.subscription);
+
+                        creditsReset = await creditsService.resetCreditsForNewPeriod(userId, {
+                            start: new Date(subscription.current_period_start * 1000).toISOString(),
+                            end: new Date(subscription.current_period_end * 1000).toISOString(),
+                            stripeCustomerId: customerId
+                        });
+
+                        if (creditsReset) {
+                            logger.info('Credits reset for payment succeeded', {
+                                userId,
+                                subscriptionId: invoice.subscription,
+                                invoiceId: invoice.id
+                            });
+                        }
+                    }
+                } catch (error) {
+                    logger.error('Failed to reset credits during payment succeeded', {
+                        userId,
+                        invoiceId: invoice.id,
+                        error: error.message
+                    });
+                    // Don't fail the webhook for credit reset errors
+                }
+            }
+
             return {
                 success: true,
                 accountId: userId,
                 message: 'Payment succeeded with atomic transaction',
                 statusUpdated: transactionResult?.status_updated || false,
+                creditsReset,
                 invoiceId: invoice.id,
                 amount: invoice.amount_paid,
                 transactionResult

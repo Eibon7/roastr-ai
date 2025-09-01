@@ -217,11 +217,15 @@ describe('AddonService', () => {
                 error: null
             });
 
+            // Use plan limits where usage equals or exceeds the limit
+            const planLimitsExceeded = { monthly_responses_limit: 100 };
+            const currentUsageExceeded = { monthly_responses_used: 100 };
+
             const result = await addonService.canPerformAction(
-                mockUserId, 
-                'roast', 
-                mockPlanLimits, 
-                mockCurrentUsage
+                mockUserId,
+                'roast',
+                planLimitsExceeded,
+                currentUsageExceeded
             );
 
             expect(result).toEqual({
@@ -237,11 +241,15 @@ describe('AddonService', () => {
                 error: null
             });
 
+            // Use plan limits where usage equals or exceeds the limit
+            const planLimitsExceeded = { monthly_responses_limit: 100 };
+            const currentUsageExceeded = { monthly_responses_used: 100 };
+
             const result = await addonService.canPerformAction(
-                mockUserId, 
-                'roast', 
-                mockPlanLimits, 
-                mockCurrentUsage
+                mockUserId,
+                'roast',
+                planLimitsExceeded,
+                currentUsageExceeded
             );
 
             expect(result.allowed).toBe(false);

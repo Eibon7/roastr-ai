@@ -28,6 +28,10 @@ const {
 } = require('../middleware/roastrPersonaRateLimiter');
 
 const router = express.Router();
+
+// Mount credits routes
+const creditsRoutes = require('./credits');
+router.use('/credits', creditsRoutes);
 const integrationsService = new UserIntegrationsService();
 const embeddingsService = new EmbeddingsService();
 const personaSanitizer = new PersonaInputSanitizer();
@@ -772,8 +776,18 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-            if (flags.isEnabled('ENABLE_SUPABASE')) {
-                const userClient = createUserClient(req.accessToken);
+
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            // Validate access token before creating user client
+            if (!req.accessToken || typeof req.accessToken !== 'string') {
+                logger.error('Missing or invalid access token for user client creation', { userId: userId?.substr(0, 8) + '...' || 'unknown' });
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized: Invalid access token'
+                });
+            }
+
+            const userClient = createUserClient(req.accessToken);
 
                 const { data: userProfile, error } = await userClient
                     .from('users')
@@ -1479,7 +1493,7 @@ router.post('/data-export', authenticateToken, gdprGlobalLimiter, dataExportLimi
 
         logger.info('GDPR data export requested via email', {
             userId: SafeUtils.safeUserIdPrefix(userId),
-            email: SafeUtils.maskEmail(userData.email) || 'invalid-email',
+            email: SafeUtils.maskEmail(userData.email),
             filename: exportResult.filename,
             size: exportResult.size
         });

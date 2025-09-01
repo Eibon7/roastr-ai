@@ -272,16 +272,19 @@ router.post('/checkout', authenticateToken, async (req, res) => {
             idempotencyKey: idempotencyKey
         });
 
-        // Record purchase initiation
+        // Record purchase initiation using upsert to prevent duplicates
         const { data: insertData, error: insertError } = await supabaseServiceClient
             .from('addon_purchase_history')
-            .insert({
+            .upsert({
                 user_id: userId,
                 addon_key: addon.addon_key,
                 stripe_checkout_session_id: session.id,
                 amount_cents: addon.price_cents,
                 currency: addon.currency,
                 status: 'pending'
+            }, {
+                onConflict: 'stripe_checkout_session_id',
+                ignoreDuplicates: false
             })
             .select()
             .single();

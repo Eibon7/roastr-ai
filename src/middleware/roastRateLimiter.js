@@ -10,12 +10,13 @@ const { logger } = require('../utils/logger');
 class RoastRateLimitStore {
     constructor() {
         this.store = new Map();
+        this.cleanupInterval = null;
         this.cleanup();
     }
 
     // Clean up expired entries every 5 minutes
     cleanup() {
-        setInterval(() => {
+        this.cleanupInterval = setInterval(() => {
             const now = Date.now();
             for (const [key, data] of this.store.entries()) {
                 if (now > data.resetTime) {
@@ -23,6 +24,20 @@ class RoastRateLimitStore {
                 }
             }
         }, 5 * 60 * 1000);
+
+        // Prevent the interval from keeping the Node.js event loop alive
+        if (this.cleanupInterval && typeof this.cleanupInterval.unref === 'function') {
+            this.cleanupInterval.unref();
+        }
+    }
+
+    // Method to properly dispose of the store and cleanup resources
+    dispose() {
+        if (this.cleanupInterval) {
+            clearInterval(this.cleanupInterval);
+            this.cleanupInterval = null;
+        }
+        this.store.clear();
     }
 
     getKey(ip, userId = null) {
@@ -102,22 +117,36 @@ class RoastRateLimitStore {
 const store = new RoastRateLimitStore();
 
 /**
- * Extract client IP address with IPv6 support
+ * Extract client IP address with IPv6 support and spoofing protection
+ * Uses Express's built-in IP parsing which respects trust proxy configuration
  */
 function getClientIP(req) {
-    // Check various headers for the real IP
-    const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) {
-        // Take the first IP if there are multiple
-        const ip = forwarded.split(',')[0].trim();
-        return ip;
+    // Priority order for IP detection (most secure to least secure)
+
+    // 1. Use Express's built-in IP parsing (respects trust proxy configuration)
+    if (req.ip && req.ip !== '::1' && req.ip !== '127.0.0.1') {
+        return req.ip;
     }
-    
-    return req.headers['x-real-ip'] || 
-           req.connection?.remoteAddress || 
-           req.socket?.remoteAddress ||
-           req.ip ||
-           'unknown';
+
+    // 2. Use first entry from trusted proxy chain (if available and non-empty)
+    if (req.ips && Array.isArray(req.ips) && req.ips.length > 0 && req.ips[0]) {
+        return req.ips[0];
+    }
+
+    // 3. Fallback to X-Real-IP header (for specific proxy configurations)
+    const realIP = req.headers['x-real-ip'];
+    if (realIP && typeof realIP === 'string' && realIP.trim()) {
+        return realIP.trim();
+    }
+
+    // 4. Direct connection IP addresses
+    const directIP = req.connection?.remoteAddress || req.socket?.remoteAddress;
+    if (directIP && directIP !== '::1' && directIP !== '127.0.0.1') {
+        return directIP;
+    }
+
+    // 5. Final fallback
+    return 'unknown';
 }
 
 /**
@@ -155,7 +184,10 @@ function createRoastRateLimiter(options = {}) {
         if (current.count > maxRequests) {
             const remainingMs = store.getRemainingTime(key);
             const remainingMinutes = Math.ceil(remainingMs / (60 * 1000));
-            
+            const remainingSeconds = Math.ceil(remainingMs / 1000);
+            const resetEpochSeconds = Math.floor((Date.now() + remainingMs) / 1000);
+            const remainingRequests = Math.max(0, maxRequests - current.count);
+
             logger.warn('Roast rate limit exceeded', {
                 ip,
                 userId,
@@ -166,6 +198,17 @@ function createRoastRateLimiter(options = {}) {
                 isAuthenticated
             });
 
+            // Set standard rate limiting headers before sending response
+            res.set({
+                'Retry-After': remainingSeconds,
+                'RateLimit-Limit': maxRequests,
+                'RateLimit-Remaining': remainingRequests,
+                'RateLimit-Reset': resetEpochSeconds,
+                'X-RateLimit-Limit': maxRequests,
+                'X-RateLimit-Remaining': remainingRequests,
+                'X-RateLimit-Reset': resetEpochSeconds
+            });
+
             return res.status(429).json({
                 success: false,
                 error: 'Rate limit exceeded',
@@ -173,7 +216,7 @@ function createRoastRateLimiter(options = {}) {
                     limit: maxRequests,
                     windowMs: config.windowMs,
                     retryAfter: remainingMinutes,
-                    message: isAuthenticated 
+                    message: isAuthenticated
                         ? `You have exceeded the rate limit of ${maxRequests} requests per ${config.windowMs / 60000} minutes. Please try again in ${remainingMinutes} minutes.`
                         : `Rate limit exceeded. Please sign in for higher limits or try again in ${remainingMinutes} minutes.`
                 },
@@ -220,5 +263,7 @@ function createCustomRoastRateLimiter(authenticatedLimit, anonymousLimit, window
 module.exports = {
     createRoastRateLimiter,
     createCustomRoastRateLimiter,
-    RoastRateLimitStore
+    RoastRateLimitStore,
+    // Export the store instance for cleanup if needed
+    store
 };

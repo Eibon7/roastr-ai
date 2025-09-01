@@ -141,6 +141,11 @@ class GenerateReplyWorker extends BaseWorker {
    * Process reply generation job
    */
   async processJob(job) {
+    // Validate that job.payload exists
+    if (!job.payload) {
+      throw new Error('Job payload is missing or undefined. Expected job structure: { payload: { comment_id, organization_id, platform, original_text, toxicity_score, severity_level, categories } }');
+    }
+
     const {
       comment_id,
       organization_id,
@@ -149,7 +154,7 @@ class GenerateReplyWorker extends BaseWorker {
       toxicity_score,
       severity_level,
       categories
-    } = job.payload || job;
+    } = job.payload;
 
     // Check kill switch before processing
     const autopostCheck = await shouldBlockAutopost(platform);
@@ -629,11 +634,13 @@ class GenerateReplyWorker extends BaseWorker {
    * Validate response length for platform constraints
    */
   validateResponseLength(response, platform) {
+    // Define consistent Twitter character limit with buffer for mentions/context
+    const TWITTER_EFFECTIVE_LIMIT = PLATFORM_LIMITS.twitter - 10;
     let maxLength;
-    
+
     switch (platform) {
       case 'twitter':
-        maxLength = PLATFORM_LIMITS.twitter - 10; // Leave room for mentions/context
+        maxLength = TWITTER_EFFECTIVE_LIMIT;
         break;
       case 'instagram':
         maxLength = 500;
@@ -642,7 +649,7 @@ class GenerateReplyWorker extends BaseWorker {
         maxLength = 1000;
         break;
       default:
-        maxLength = PLATFORM_LIMITS.twitter;
+        maxLength = TWITTER_EFFECTIVE_LIMIT;
     }
     
     if (response.length <= maxLength) {

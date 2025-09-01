@@ -113,7 +113,7 @@ async function getUserPlanInfo(userId) {
 }
 
 /**
- * Check if user has sufficient credits
+ * Check if user has sufficient credits (UTC-based calculation)
  */
 async function checkUserCredits(userId, plan) {
     try {
@@ -124,10 +124,11 @@ async function checkUserCredits(userId, plan) {
             return { hasCredits: true, remaining: -1, limit: -1 };
         }
 
-        // Get current month usage
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
+        // Get current month usage using UTC-based start of month calculation
+        const now = new Date();
+        const year = now.getUTCFullYear();
+        const month = now.getUTCMonth();
+        const startOfMonth = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
 
         const { data: usage, error } = await supabaseServiceClient
             .from('roast_usage')
@@ -168,6 +169,43 @@ async function recordRoastUsage(userId, metadata = {}) {
     } catch (error) {
         logger.error('Error recording roast usage:', error);
         // Don't fail the request if we can't record usage
+    }
+}
+
+/**
+ * Atomically consume roast credits (check and record in single operation)
+ */
+async function consumeRoastCredits(userId, plan, metadata = {}) {
+    try {
+        const planFeatures = getPlanFeatures(plan);
+        const monthlyLimit = planFeatures.limits.roastsPerMonth;
+
+        const { data: result, error } = await supabaseServiceClient
+            .rpc('consume_roast_credits', {
+                p_user_id: userId,
+                p_plan: plan,
+                p_monthly_limit: monthlyLimit,
+                p_metadata: metadata
+            });
+
+        if (error) {
+            logger.error('Error consuming roast credits:', error);
+            throw error;
+        }
+
+        return result;
+    } catch (error) {
+        logger.error('Error in consumeRoastCredits:', error);
+        // Return failure result
+        return {
+            success: false,
+            hasCredits: false,
+            remaining: 0,
+            limit: 50,
+            used: 0,
+            unlimited: false,
+            error: error.message
+        };
     }
 }
 
@@ -355,23 +393,7 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
         // Get user plan info
         const userPlan = await getUserPlanInfo(userId);
 
-        // Check user credits
-        const creditCheck = await checkUserCredits(userId, userPlan.plan);
-        if (!creditCheck.hasCredits) {
-            return res.status(402).json({
-                success: false,
-                error: 'Insufficient credits',
-                details: {
-                    remaining: creditCheck.remaining,
-                    limit: creditCheck.limit,
-                    used: creditCheck.used,
-                    plan: userPlan.plan
-                },
-                timestamp: new Date().toISOString()
-            });
-        }
-
-        // Analyze content with Perspective API
+        // Analyze content with Perspective API first (before consuming credits)
         const contentAnalysis = await analyzeContent(text);
 
         // Check if content is safe for roasting
@@ -383,6 +405,32 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
                     toxicityScore: contentAnalysis.toxicityScore,
                     categories: contentAnalysis.categories,
                     reason: 'Content exceeds toxicity threshold'
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Prepare metadata for credit consumption
+        const usageMetadata = {
+            tone,
+            intensity,
+            humorType,
+            toxicityScore: contentAnalysis.toxicityScore
+        };
+
+        // Atomically consume credits (check and record in single operation)
+        const creditResult = await consumeRoastCredits(userId, userPlan.plan, usageMetadata);
+
+        if (!creditResult.success) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient credits',
+                details: {
+                    remaining: creditResult.remaining,
+                    limit: creditResult.limit,
+                    used: creditResult.used,
+                    plan: userPlan.plan,
+                    error: creditResult.error
                 },
                 timestamp: new Date().toISOString()
             });
@@ -405,14 +453,8 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
             roastConfig
         );
 
-        // Record usage (consume credits)
-        await recordRoastUsage(userId, {
-            tone,
-            intensity,
-            humorType,
-            toxicityScore: contentAnalysis.toxicityScore,
-            roastLength: generationResult.roast?.length || 0
-        });
+        // Update metadata with roast length (credits already consumed)
+        usageMetadata.roastLength = generationResult.roast?.length || 0;
 
         const processingTime = Date.now() - startTime;
 
@@ -426,7 +468,7 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
             toxicityScore: contentAnalysis.toxicityScore,
             processingTimeMs: processingTime,
             roastLength: generationResult.roast?.length || 0,
-            creditsRemaining: creditCheck.remaining - 1
+            creditsRemaining: creditResult.remaining
         });
 
         // Return successful response
@@ -446,9 +488,10 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
                     generatedAt: new Date().toISOString()
                 },
                 credits: {
-                    remaining: Math.max(0, creditCheck.remaining - 1),
-                    limit: creditCheck.limit,
-                    used: creditCheck.used + 1
+                    remaining: creditResult.remaining,
+                    limit: creditResult.limit,
+                    used: creditResult.used,
+                    unlimited: creditResult.unlimited
                 }
             },
             timestamp: new Date().toISOString()

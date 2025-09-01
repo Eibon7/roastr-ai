@@ -150,15 +150,16 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION consume_addon_credits(p_user_id UUID, p_addon_category VARCHAR, p_amount INTEGER)
 RETURNS BOOLEAN AS $$
 DECLARE
-    addon_record RECORD;
+    addon_id UUID;
     remaining_to_consume INTEGER := p_amount;
-    credits_to_consume INTEGER;
-    update_result INTEGER;
+    consumed_credits INTEGER;
+    new_status VARCHAR;
+    update_result RECORD;
 BEGIN
-    -- Get user addons with remaining credits, ordered by oldest first
-    -- Use FOR UPDATE to lock rows and prevent concurrent consumption
-    FOR addon_record IN
-        SELECT ua.id, ua.credits_remaining
+    -- Process addons in order, using atomic UPDATE...RETURNING for each
+    WHILE remaining_to_consume > 0 LOOP
+        -- Get the next addon ID with available credits
+        SELECT ua.id INTO addon_id
         FROM user_addons ua
         JOIN shop_addons sa ON ua.addon_key = sa.addon_key
         WHERE ua.user_id = p_user_id
@@ -166,40 +167,49 @@ BEGIN
         AND ua.status = 'active'
         AND ua.credits_remaining > 0
         ORDER BY ua.created_at ASC
-        FOR UPDATE
-    LOOP
-        IF remaining_to_consume <= 0 THEN
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED;
+
+        -- Exit if no more addons with credits
+        IF addon_id IS NULL THEN
             EXIT;
         END IF;
 
-        IF addon_record.credits_remaining >= remaining_to_consume THEN
-            -- This addon has enough credits to fulfill the request
-            credits_to_consume := remaining_to_consume;
-            UPDATE user_addons
-            SET credits_used = credits_used + credits_to_consume,
-                updated_at = NOW()
-            WHERE id = addon_record.id
-            AND credits_remaining >= credits_to_consume;
+        -- Determine how many credits to consume and new status
+        SELECT
+            CASE
+                WHEN credits_remaining >= remaining_to_consume THEN remaining_to_consume
+                ELSE credits_remaining
+            END,
+            CASE
+                WHEN credits_remaining >= remaining_to_consume THEN 'active'
+                ELSE 'consumed'
+            END
+        INTO consumed_credits, new_status
+        FROM user_addons
+        WHERE id = addon_id;
 
-            GET DIAGNOSTICS update_result = ROW_COUNT;
-            IF update_result > 0 THEN
-                remaining_to_consume := 0;
-            END IF;
-        ELSE
-            -- Consume all remaining credits from this addon
-            credits_to_consume := addon_record.credits_remaining;
-            UPDATE user_addons
-            SET credits_used = credits_used + credits_to_consume,
-                status = 'consumed',
-                updated_at = NOW()
-            WHERE id = addon_record.id
-            AND credits_remaining > 0;
+        -- Atomically update the addon and get the actual consumed amount
+        UPDATE user_addons
+        SET
+            credits_used = credits_used + consumed_credits,
+            credits_remaining = credits_remaining - consumed_credits,
+            status = new_status,
+            updated_at = NOW()
+        WHERE id = addon_id
+        AND credits_remaining >= consumed_credits
+        RETURNING credits_used, credits_remaining, status INTO update_result;
 
-            GET DIAGNOSTICS update_result = ROW_COUNT;
-            IF update_result > 0 THEN
-                remaining_to_consume := remaining_to_consume - credits_to_consume;
-            END IF;
+        -- Check if update succeeded (row was found and had enough credits)
+        IF update_result IS NULL THEN
+            -- Another transaction consumed the credits, try next addon
+            addon_id := NULL;
+            CONTINUE;
         END IF;
+
+        -- Subtract consumed credits from remaining amount
+        remaining_to_consume := remaining_to_consume - consumed_credits;
+        addon_id := NULL; -- Reset for next iteration
     END LOOP;
 
     RETURN remaining_to_consume = 0;
@@ -234,6 +244,8 @@ CREATE OR REPLACE FUNCTION execute_addon_purchase_transaction(
     p_stripe_payment_intent_id VARCHAR,
     p_stripe_checkout_session_id VARCHAR,
     p_amount_cents INTEGER,
+    p_currency VARCHAR DEFAULT 'USD',
+    p_expected_price_cents INTEGER DEFAULT NULL,
     p_addon_type VARCHAR,
     p_credit_amount INTEGER DEFAULT 0,
     p_feature_key VARCHAR DEFAULT NULL
@@ -246,14 +258,32 @@ DECLARE
 BEGIN
     -- Start transaction
     BEGIN
-        -- Validate that the addon exists in shop_addons
-        SELECT EXISTS(
-            SELECT 1 FROM shop_addons WHERE addon_key = p_addon_key
-        ) INTO addon_exists;
+        -- Validate that the addon exists in shop_addons and get price/currency for validation
+        DECLARE
+            addon_price_cents INTEGER;
+            addon_currency VARCHAR(3);
+        BEGIN
+            SELECT price_cents, currency
+            INTO addon_price_cents, addon_currency
+            FROM shop_addons
+            WHERE addon_key = p_addon_key AND is_active = TRUE;
 
-        IF NOT addon_exists THEN
-            RAISE EXCEPTION 'Addon with key % does not exist in shop_addons', p_addon_key;
-        END IF;
+            IF addon_price_cents IS NULL THEN
+                RAISE EXCEPTION 'Addon with key % does not exist or is inactive in shop_addons', p_addon_key;
+            END IF;
+
+            -- Validate price if expected price is provided
+            IF p_expected_price_cents IS NOT NULL AND addon_price_cents != p_expected_price_cents THEN
+                RAISE EXCEPTION 'Price mismatch for addon %: expected % cents, got % cents',
+                    p_addon_key, addon_price_cents, p_expected_price_cents;
+            END IF;
+
+            -- Validate currency
+            IF UPPER(addon_currency) != UPPER(p_currency) THEN
+                RAISE EXCEPTION 'Currency mismatch for addon %: expected %, got %',
+                    p_addon_key, addon_currency, p_currency;
+            END IF;
+        END;
 
         -- Update purchase history to completed
         UPDATE addon_purchase_history

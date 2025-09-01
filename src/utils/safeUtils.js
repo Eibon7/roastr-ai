@@ -12,13 +12,9 @@ class SafeUtils {
     if (!userId || typeof userId !== 'string') {
       return 'unknown-user';
     }
-    
-    // Show first 8 characters followed by asterisks
-    if (userId.length <= 8) {
-      return userId.substring(0, 4) + '****';
-    }
-    
-    return userId.substring(0, 8) + '****';
+
+    // Show first 4 characters maximum followed by asterisks
+    return userId.slice(0, Math.min(4, userId.length)) + '****';
   }
 
   /**
@@ -33,19 +29,26 @@ class SafeUtils {
 
     const atIndex = email.indexOf('@');
     if (atIndex === -1) {
-      // Not a valid email format, mask most of it
-      return email.substring(0, 2) + '****';
+      // Invalid email format (no '@', missing local or domain)
+      return '****@****';
     }
 
     const localPart = email.substring(0, atIndex);
-    const domain = email.substring(atIndex);
+    const domain = email.substring(atIndex + 1);
 
-    // Show first 2 characters of local part, mask the rest
-    if (localPart.length <= 2) {
-      return localPart + '****' + domain;
+    // Check for missing local part or domain
+    if (localPart.length === 0 || domain.length === 0) {
+      return '****@****';
     }
 
-    return localPart.substring(0, 2) + '****' + domain;
+    // For valid emails: reveal characters based on local part length
+    if (localPart.length <= 3) {
+      // Reveal first character + mask rest + '@' + domain
+      return localPart.charAt(0) + '****@' + domain;
+    } else {
+      // Reveal first two characters + mask rest + '@' + domain
+      return localPart.substring(0, 2) + '****@' + domain;
+    }
   }
 
   /**

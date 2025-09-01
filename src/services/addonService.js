@@ -8,6 +8,53 @@ const { logger } = require('../utils/logger');
 
 class AddonService {
     /**
+     * Normalize RPC boolean results to handle Postgres return value variations
+     * @param {any} result - RPC result that may be true/false, 1/0, 't'/'f', etc.
+     * @returns {boolean} Normalized boolean value
+     */
+    normalizeRpcResult(result) {
+        if (result === null || result === undefined) {
+            return false;
+        }
+
+        // Handle explicit boolean values
+        if (typeof result === 'boolean') {
+            return result;
+        }
+
+        // Handle string representations
+        if (typeof result === 'string') {
+            const normalized = result.toLowerCase();
+            return normalized === 'true' || normalized === 't';
+        }
+
+        // Handle numeric representations
+        if (typeof result === 'number') {
+            return result === 1;
+        }
+
+        // Default to false for any other type
+        return false;
+    }
+
+    /**
+     * Mask user ID for consistent logging redaction
+     * @param {string} userId - User ID to mask
+     * @returns {string} Masked user ID
+     */
+    maskUserId(userId) {
+        if (!userId || typeof userId !== 'string') {
+            return 'unknown';
+        }
+
+        if (userId.length <= 5) {
+            return '***';
+        }
+
+        // Show first 3 chars + "****" + last 2 chars
+        return userId.substring(0, 3) + '****' + userId.substring(userId.length - 2);
+    }
+    /**
      * Get user's available addon credits by category
      * @param {string} userId - User ID
      * @param {string} category - Addon category ('roasts', 'analysis')
@@ -23,7 +70,7 @@ class AddonService {
 
             if (error) {
                 logger.error('Failed to get user addon credits:', {
-                    userId,
+                    userId: this.maskUserId(userId),
                     category,
                     error
                 });
@@ -33,7 +80,7 @@ class AddonService {
             return credits || 0;
         } catch (error) {
             logger.error('Error getting user addon credits:', {
-                userId,
+                userId: this.maskUserId(userId),
                 category,
                 error: error.message
             });
@@ -69,24 +116,29 @@ class AddonService {
                 return false;
             }
 
-            if (success) {
+            // Normalize RPC result to handle Postgres boolean variations
+            const normalizedSuccess = this.normalizeRpcResult(success);
+
+            if (normalizedSuccess) {
                 logger.info('Addon credits consumed successfully:', {
-                    userId,
+                    userId: this.maskUserId(userId),
                     category,
-                    amount
+                    amount,
+                    success: normalizedSuccess
                 });
             } else {
                 logger.warn('Insufficient addon credits:', {
-                    userId,
+                    userId: this.maskUserId(userId),
                     category,
-                    amount
+                    amount,
+                    success: normalizedSuccess
                 });
             }
 
-            return success || false;
+            return normalizedSuccess;
         } catch (error) {
             logger.error('Error consuming addon credits:', {
-                userId,
+                userId: this.maskUserId(userId),
                 category,
                 amount,
                 error: error.message
@@ -111,17 +163,19 @@ class AddonService {
 
             if (error) {
                 logger.error('Failed to check user feature addon:', {
-                    userId,
+                    userId: this.maskUserId(userId),
                     featureKey,
                     error
                 });
                 return false;
             }
 
-            return hasFeature || false;
+            // Normalize RPC result to handle Postgres boolean variations
+            const normalizedResult = this.normalizeRpcResult(hasFeature);
+            return normalizedResult;
         } catch (error) {
             logger.error('Error checking user feature addon:', {
-                userId,
+                userId: this.maskUserId(userId),
                 featureKey,
                 error: error.message
             });
@@ -153,7 +207,7 @@ class AddonService {
             };
         } catch (error) {
             logger.error('Error getting user addon summary:', {
-                userId,
+                userId: this.maskUserId(userId),
                 error: error.message
             });
             return {
@@ -217,7 +271,7 @@ class AddonService {
 
         } catch (error) {
             logger.error('Error checking action permission:', {
-                userId,
+                userId: this.maskUserId(userId),
                 action,
                 error: error.message
             });
@@ -267,7 +321,7 @@ class AddonService {
 
         } catch (error) {
             logger.error('Error recording action usage:', {
-                userId,
+                userId: this.maskUserId(userId),
                 action,
                 error: error.message
             });
@@ -308,7 +362,7 @@ class AddonService {
 
             if (error) {
                 logger.error('Failed to get addon purchase history:', {
-                    userId,
+                    userId: this.maskUserId(userId),
                     error
                 });
                 return [];
@@ -317,7 +371,7 @@ class AddonService {
             return purchases || [];
         } catch (error) {
             logger.error('Error getting addon purchase history:', {
-                userId,
+                userId: this.maskUserId(userId),
                 error: error.message
             });
             return [];

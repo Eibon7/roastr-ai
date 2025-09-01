@@ -437,28 +437,50 @@ program
         // Only buffer output when JSON mode is requested
         if (options.json) {
           child.stdout.on('data', (data) => {
-            const chunk = data.toString();
-            stdoutBuffer.push(chunk);
-            stdoutSize += chunk.length;
+            let chunk = data.toString();
 
-            // Remove oldest chunks if buffer exceeds limit
-            while (stdoutSize > maxBufferLength && stdoutBuffer.length > 1) {
-              const removed = stdoutBuffer.shift();
-              stdoutSize -= removed.length;
+            // If chunk itself exceeds maxBufferLength, trim it
+            if (chunk.length > maxBufferLength) {
+              chunk = chunk.slice(-maxBufferLength);
               stdoutTruncated = true;
+              // Replace entire buffer with trimmed chunk
+              stdoutBuffer.length = 0;
+              stdoutBuffer.push(chunk);
+              stdoutSize = chunk.length;
+            } else {
+              stdoutBuffer.push(chunk);
+              stdoutSize += chunk.length;
+
+              // Remove oldest chunks if buffer exceeds limit
+              while (stdoutSize > maxBufferLength && stdoutBuffer.length > 1) {
+                const removed = stdoutBuffer.shift();
+                stdoutSize -= removed.length;
+                stdoutTruncated = true;
+              }
             }
           });
 
           child.stderr.on('data', (data) => {
-            const chunk = data.toString();
-            stderrBuffer.push(chunk);
-            stderrSize += chunk.length;
+            let chunk = data.toString();
 
-            // Remove oldest chunks if buffer exceeds limit
-            while (stderrSize > maxBufferLength && stderrBuffer.length > 1) {
-              const removed = stderrBuffer.shift();
-              stderrSize -= removed.length;
+            // If chunk itself exceeds maxBufferLength, trim it
+            if (chunk.length > maxBufferLength) {
+              chunk = chunk.slice(-maxBufferLength);
               stderrTruncated = true;
+              // Replace entire buffer with trimmed chunk
+              stderrBuffer.length = 0;
+              stderrBuffer.push(chunk);
+              stderrSize = chunk.length;
+            } else {
+              stderrBuffer.push(chunk);
+              stderrSize += chunk.length;
+
+              // Remove oldest chunks if buffer exceeds limit
+              while (stderrSize > maxBufferLength && stderrBuffer.length > 1) {
+                const removed = stderrBuffer.shift();
+                stderrSize -= removed.length;
+                stderrTruncated = true;
+              }
             }
           });
         }

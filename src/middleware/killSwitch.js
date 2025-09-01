@@ -8,6 +8,9 @@
 
 const { supabaseServiceClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
+const fs = require('fs').promises;
+const path = require('path');
+const crypto = require('crypto');
 
 class KillSwitchService {
     constructor(options = {}) {
@@ -24,6 +27,116 @@ class KillSwitchService {
                 flag_value: false
             }
         };
+
+        // Local cache file configuration
+        this.localCacheConfig = {
+            filePath: path.join(process.cwd(), '.cache', 'kill-switch-state.json'),
+            tempFilePath: path.join(process.cwd(), '.cache', 'kill-switch-state.tmp'),
+            ttlMinutes: options.localCacheTTL || 60, // 1 hour default TTL
+            encryptionKey: options.encryptionKey || process.env.KILL_SWITCH_CACHE_KEY || 'default-key-change-in-production'
+        };
+
+        // Ensure cache directory exists
+        this.ensureCacheDirectory();
+    }
+
+    /**
+     * Ensure cache directory exists
+     */
+    async ensureCacheDirectory() {
+        try {
+            const cacheDir = path.dirname(this.localCacheConfig.filePath);
+            await fs.mkdir(cacheDir, { recursive: true, mode: 0o700 });
+        } catch (error) {
+            logger.error('Failed to create cache directory', { error: error.message });
+        }
+    }
+
+    /**
+     * Encrypt data for local cache
+     */
+    encrypt(data) {
+        try {
+            const cipher = crypto.createCipher('aes-256-cbc', this.localCacheConfig.encryptionKey);
+            let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
+            encrypted += cipher.final('hex');
+            return encrypted;
+        } catch (error) {
+            logger.error('Failed to encrypt cache data', { error: error.message });
+            return null;
+        }
+    }
+
+    /**
+     * Decrypt data from local cache
+     */
+    decrypt(encryptedData) {
+        try {
+            const decipher = crypto.createDecipher('aes-256-cbc', this.localCacheConfig.encryptionKey);
+            let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+            decrypted += decipher.final('utf8');
+            return JSON.parse(decrypted);
+        } catch (error) {
+            logger.error('Failed to decrypt cache data', { error: error.message });
+            return null;
+        }
+    }
+
+    /**
+     * Save kill switch state to local cache
+     */
+    async saveLocalCache(killSwitchState) {
+        try {
+            const cacheData = {
+                killSwitchActive: killSwitchState,
+                timestamp: Date.now(),
+                version: 1
+            };
+
+            const encryptedData = this.encrypt(cacheData);
+            if (!encryptedData) return false;
+
+            // Atomic write: write to temp file then rename
+            await fs.writeFile(this.localCacheConfig.tempFilePath, encryptedData, { mode: 0o600 });
+            await fs.rename(this.localCacheConfig.tempFilePath, this.localCacheConfig.filePath);
+
+            logger.debug('Kill switch state saved to local cache', { killSwitchActive: killSwitchState });
+            return true;
+        } catch (error) {
+            logger.error('Failed to save local cache', { error: error.message });
+            return false;
+        }
+    }
+
+    /**
+     * Load kill switch state from local cache
+     */
+    async loadLocalCache() {
+        try {
+            const encryptedData = await fs.readFile(this.localCacheConfig.filePath, 'utf8');
+            const cacheData = this.decrypt(encryptedData);
+
+            if (!cacheData) return null;
+
+            // Check TTL
+            const ageMinutes = (Date.now() - cacheData.timestamp) / (1000 * 60);
+            if (ageMinutes > this.localCacheConfig.ttlMinutes) {
+                logger.debug('Local cache expired', { ageMinutes, ttl: this.localCacheConfig.ttlMinutes });
+                return null;
+            }
+
+            logger.debug('Kill switch state loaded from local cache', {
+                killSwitchActive: cacheData.killSwitchActive,
+                ageMinutes: Math.round(ageMinutes)
+            });
+
+            return cacheData.killSwitchActive;
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                logger.error('Failed to load local cache', { error: error.message });
+            }
+            return null;
+        }
     }
 
     /**
@@ -176,15 +289,36 @@ class KillSwitchService {
 
     /**
      * Check if the global kill switch is active
+     * Uses local cache fallback when database is unavailable
      */
     async isKillSwitchActive() {
         try {
             const flag = await this.getFlag('KILL_SWITCH_AUTOPOST');
-            return flag.is_enabled === true;
+            const isActive = flag.is_enabled === true;
+
+            // Update local cache with current state
+            await this.saveLocalCache(isActive);
+
+            return isActive;
         } catch (error) {
-            logger.error('Error checking kill switch status', { error: error.message });
-            // Fail open - if we can't check the kill switch, don't block operations
-            return false;
+            logger.error('Error checking kill switch status from database', { error: error.message });
+
+            // Try to load from local cache as fallback
+            const cachedState = await this.loadLocalCache();
+            if (cachedState !== null) {
+                logger.warn('Using cached kill switch state due to database error', {
+                    cachedState,
+                    error: error.message
+                });
+                return cachedState;
+            }
+
+            // If no cache available, fail closed for kill switch (block operations)
+            // This is the safe default for a kill switch - when in doubt, block
+            logger.error('No cached kill switch state available, failing closed (blocking operations)', {
+                error: error.message
+            });
+            return true;
         }
     }
 
@@ -278,9 +412,14 @@ const checkKillSwitch = async (req, res, next) => {
         next();
     } catch (error) {
         logger.error('Kill switch middleware error', { error: error.message });
-        // In case of error, allow the request to proceed (fail open)
-        // This prevents the kill switch from breaking the system if there's a DB issue
-        next();
+        // The isKillSwitchActive method now handles fallback logic internally
+        // If it returns true due to error, we should block the request
+        return res.status(503).json({
+            success: false,
+            error: 'Service temporarily unavailable',
+            code: 'KILL_SWITCH_ERROR',
+            message: 'Unable to verify system status, blocking operation for safety'
+        });
     }
 };
 
@@ -319,12 +458,18 @@ const checkPlatformAutopost = (platform) => {
 
             next();
         } catch (error) {
-            logger.error('Platform autopost middleware error', { 
-                platform, 
-                error: error.message 
+            logger.error('Platform autopost middleware error', {
+                platform,
+                error: error.message
             });
-            // Fail open
-            next();
+            // Fail closed for safety - block the request if we can't verify status
+            return res.status(503).json({
+                success: false,
+                error: 'Service temporarily unavailable',
+                code: 'PLATFORM_CHECK_ERROR',
+                message: 'Unable to verify platform autopost status, blocking operation for safety',
+                platform
+            });
         }
     };
 };
@@ -374,11 +519,11 @@ const shouldBlockAutopost = async (platform = null) => {
         };
     } catch (error) {
         logger.error('Error checking autopost status', { error: error.message, platform });
-        // Fail open - allow autopost if we can't check the status
+        // Fail closed - block autopost if we can't check the status (safety first)
         return {
-            blocked: false,
+            blocked: true,
             reason: 'CHECK_FAILED',
-            message: 'Could not verify autopost status, allowing operation'
+            message: 'Could not verify autopost status, blocking operation for safety'
         };
     }
 };

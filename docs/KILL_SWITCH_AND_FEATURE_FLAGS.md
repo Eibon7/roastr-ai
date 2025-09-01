@@ -11,7 +11,7 @@ This document describes the comprehensive Kill Switch and Feature Flags system i
 ### 🚨 Emergency Kill Switch
 - **Global Autopost Kill Switch**: Instantly disable all automatic posting across all platforms and users
 - **Emergency Response**: Immediate effect with comprehensive audit logging
-- **Fail-Safe Design**: System fails open if kill switch status cannot be determined
+- **Fail-Safe Design**: Kill switch fails closed (blocks operations) when status cannot be determined, with local cache fallback for database outages
 
 ### 🎛️ Dynamic Feature Flags
 - **Runtime Control**: Enable/disable features without deployments
@@ -182,9 +182,23 @@ await adminApi.updateFeatureFlag('AUTOPOST_TWITTER', {
 
 1. **Admin Verification**: All endpoints verify admin status
 2. **Audit Logging**: Every action is logged with full context
-3. **Fail-Safe Design**: System fails open on errors to prevent lockouts
-4. **Rate Limiting**: Consider implementing rate limits for flag changes
-5. **Backup Access**: Ensure database-level access for emergency situations
+3. **Fail-Safe Design**: Kill switch fails closed (blocks operations) when database is unavailable, with encrypted local cache fallback
+4. **Local Cache Security**: Kill switch state cached locally with AES-256 encryption and restricted file permissions (0600)
+5. **Cache TTL**: Local cache expires after 1 hour to prevent stale state from persisting indefinitely
+6. **Atomic Updates**: Local cache uses atomic write operations (write-temp-rename) to prevent corruption
+7. **Rate Limiting**: Consider implementing rate limits for flag changes
+8. **Backup Access**: Ensure database-level access for emergency situations
+
+### Local Cache Fallback Behavior
+
+The kill switch implements a secure local cache fallback system to handle database outages:
+
+- **Primary**: Always attempt to read kill switch state from database first
+- **Fallback**: If database is unavailable, use encrypted local cache file (`.cache/kill-switch-state.json`)
+- **Fail-Closed**: If both database and cache are unavailable, kill switch activates (blocks operations)
+- **Cache Refresh**: Successful database reads update the local cache automatically
+- **TTL Protection**: Cached state expires after 1 hour to prevent indefinite stale state
+- **Security**: Cache file is encrypted with AES-256 and has restricted permissions (owner read/write only)
 
 ## Monitoring and Alerting
 

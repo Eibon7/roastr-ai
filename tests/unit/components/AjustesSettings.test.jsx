@@ -306,9 +306,12 @@ describe('AjustesSettings Component', () => {
         return Promise.resolve(mockApiResponses[url]);
       }
 
-      // Handle specific known endpoint
+      // Handle specific known endpoints
       if (url === '/user/settings/transparency-mode') {
         return Promise.resolve(mockResponseWithoutBio);
+      }
+      if (url === '/roastr-persona/theme') {
+        return Promise.resolve(mockApiResponses.theme);
       }
 
       // Extract pathname reliably using URL constructor or regex

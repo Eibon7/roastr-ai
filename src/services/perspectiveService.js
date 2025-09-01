@@ -74,6 +74,28 @@ class PerspectiveService {
     }
 
     /**
+     * Normalize attribute name from snake_case to camelCase
+     * @param {string} attribute - Attribute name (e.g., 'SEVERE_TOXICITY')
+     * @returns {string} Normalized camelCase name (e.g., 'severeToxicity')
+     */
+    normalizeAttributeName(attribute) {
+        if (!attribute || typeof attribute !== 'string') {
+            return '';
+        }
+
+        // Split on underscores and convert to camelCase
+        const parts = attribute.toLowerCase().split('_');
+
+        // First part stays lowercase, subsequent parts get capitalized
+        return parts.reduce((result, part, index) => {
+            if (index === 0) {
+                return part;
+            }
+            return result + part.charAt(0).toUpperCase() + part.slice(1);
+        }, '');
+    }
+
+    /**
      * Parse Perspective API response
      */
     parseResponse(data) {
@@ -84,8 +106,8 @@ class PerspectiveService {
         // Extract scores for each attribute
         for (const [attribute, attributeData] of Object.entries(scores)) {
             const score = attributeData.summaryScore?.value || 0;
-            const key = attribute.toLowerCase().replace('_', '');
-            
+            const key = this.normalizeAttributeName(attribute);
+
             analysis[key] = score;
 
             // Flag categories that exceed threshold
@@ -99,8 +121,8 @@ class PerspectiveService {
 
         return {
             toxicity,
-            severeToxicity: analysis.severetoxicity || 0,
-            identityAttack: analysis.identityattack || 0,
+            severeToxicity: analysis.severeToxicity || 0,
+            identityAttack: analysis.identityAttack || 0,
             insult: analysis.insult || 0,
             profanity: analysis.profanity || 0,
             threat: analysis.threat || 0,

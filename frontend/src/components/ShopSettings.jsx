@@ -91,13 +91,37 @@ const ShopSettings = ({ user, onNotification }) => {
 
   const handlePurchase = async (addonKey) => {
     setPurchaseState({ loading: true, error: null, success: null });
-    
+
     try {
       const result = await apiClient.post('/shop/checkout', { addonKey });
-      
+
       if (result.success && result.data.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = result.data.url;
+        // Validate the URL before redirecting
+        if (typeof result.data.url !== 'string' || result.data.url.trim() === '') {
+          throw new Error('Invalid checkout URL received');
+        }
+
+        try {
+          const url = new URL(result.data.url);
+
+          // Verify it's HTTPS and from an allowed Stripe domain
+          if (url.protocol !== 'https:') {
+            throw new Error('Checkout URL must use HTTPS');
+          }
+
+          const allowedDomains = ['checkout.stripe.com'];
+          const isAllowedDomain = allowedDomains.includes(url.hostname) ||
+                                 url.hostname.endsWith('.stripe.com');
+
+          if (!isAllowedDomain) {
+            throw new Error('Checkout URL must be from Stripe');
+          }
+
+          // Redirect to validated Stripe Checkout
+          window.location.href = result.data.url;
+        } catch (urlError) {
+          throw new Error('Invalid or unsafe checkout URL');
+        }
       } else {
         throw new Error('Failed to create checkout session');
       }
@@ -304,14 +328,18 @@ const ShopSettings = ({ user, onNotification }) => {
                 };
 
                 const formatCurrency = (amountCents) => {
-                  return new Intl.NumberFormat('en-US', {
+                  // Use Spanish locale or browser's locale for currency formatting
+                  const locale = navigator.language || 'es-ES';
+                  return new Intl.NumberFormat(locale, {
                     style: 'currency',
                     currency: 'USD'
                   }).format(amountCents / 100);
                 };
 
                 const formatDate = (dateString) => {
-                  return new Date(dateString).toLocaleDateString('en-US', {
+                  // Use Spanish locale or browser's locale for date formatting
+                  const locale = navigator.language || 'es-ES';
+                  return new Date(dateString).toLocaleDateString(locale, {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric'

@@ -47,6 +47,16 @@ const { authenticateToken, optionalAuth } = require('./middleware/auth');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Configure trust proxy for proper IP detection in production
+// This is essential for rate limiting to work correctly behind proxies/load balancers
+if (process.env.NODE_ENV === 'production') {
+  // Trust first proxy in production (common for cloud deployments)
+  app.set('trust proxy', 1);
+} else {
+  // In development, trust all proxies for testing
+  app.set('trust proxy', true);
+}
+
 // Apply security middleware
 app.use(helmetConfig);
 app.use(corsConfig);

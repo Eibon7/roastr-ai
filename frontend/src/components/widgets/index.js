@@ -7,6 +7,7 @@ import JobsQueueCard from './JobsQueueCard';
 import UsageCostCard from './UsageCostCard';
 import LogsTableCard from './LogsTableCard';
 import StyleProfileCard from './StyleProfileCard';
+import CreditsCard from './CreditsCard';
 
 export const WIDGETS = {
   planStatus: PlanStatusCard,
@@ -16,6 +17,7 @@ export const WIDGETS = {
   activity: ActivityFeedCard,
   queue: JobsQueueCard,
   costs: UsageCostCard,
+  credits: CreditsCard,
   logs: LogsTableCard,
 };
 
