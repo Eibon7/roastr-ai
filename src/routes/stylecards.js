@@ -6,9 +6,22 @@
 const express = require('express');
 const router = express.Router();
 const stylecardService = require('../services/stylecardService');
-const { authenticateToken, requirePlan } = require('../middleware/auth');
-const { validateRequest } = require('../middleware/validation');
-const { body, param, query } = require('express-validator');
+const { authenticateToken } = require('../middleware/auth');
+const { requirePlan } = require('../middleware/requirePlan');
+const { body, param, query, validationResult } = require('express-validator');
+
+// Simple validation middleware
+const validateRequest = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      error: 'Validation failed',
+      details: errors.array()
+    });
+  }
+  next();
+};
 const logger = require('../utils/logger');
 
 /**
