@@ -3,31 +3,14 @@
  * Manages automatic style profile generation from social media content
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseServiceClient } = require('../config/supabase');
 const embeddingsService = require('./embeddingsService');
 const styleProfileGenerator = require('./styleProfileGenerator');
 const logger = require('../utils/logger');
 
 class StylecardService {
   constructor() {
-    // Use mock client if Supabase is not configured
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
-      this.supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_KEY
-      );
-    } else {
-      // Mock Supabase client for testing/development
-      this.supabase = {
-        from: () => ({
-          select: () => ({ data: [], error: null }),
-          insert: () => ({ data: [], error: null }),
-          update: () => ({ data: [], error: null }),
-          delete: () => ({ data: [], error: null }),
-          upsert: () => ({ data: [], error: null })
-        })
-      };
-    }
+    this.supabase = supabaseServiceClient;
     
     // Configuration
     this.config = {
