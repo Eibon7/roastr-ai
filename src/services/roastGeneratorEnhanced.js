@@ -285,7 +285,7 @@ class RoastGeneratorEnhanced {
         tone: tone,
         humor_type: rqcConfig.humor_type || 'witty',
         intensity_level: rqcConfig.intensity_level,
-        custom_style_prompt: rqcConfig.custom_style_prompt
+        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
       },
       includeReferences: rqcConfig.plan !== 'free' // Include references for Pro+ plans
     });
@@ -406,7 +406,7 @@ class RoastGeneratorEnhanced {
         tone: tone,
         humor_type: rqcConfig.humor_type || 'clever',
         intensity_level: rqcConfig.intensity_level,
-        custom_style_prompt: rqcConfig.custom_style_prompt
+        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
       },
       includeReferences: true // Always include references for Creator+ plans
     });
@@ -502,8 +502,8 @@ Configuración de usuario:
 - Nivel de intensidad: ${rqcConfig.intensity_level}/5
 - Plan: ${rqcConfig.plan} (con revisión RQC)`;
 
-    // Add custom style prompt if available (admin-configured)
-    if (rqcConfig.custom_style_prompt) {
+    // Add custom style prompt if available (admin-configured) and feature flag is enabled
+    if (flags.isEnabled('ENABLE_CUSTOM_PROMPT') && rqcConfig.custom_style_prompt) {
       prompt += `\n- Estilo personalizado: ${rqcConfig.custom_style_prompt}`;
     }
 

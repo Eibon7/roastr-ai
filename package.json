@@ -58,6 +58,7 @@
     "lint": "eslint src/ tests/ --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "jest tests/smoke/ --verbose",
+    "test:log-management": "node scripts/test-log-management.js",
     "test:integration-backend": "INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand",
     "test:integration-backend:fixtures": "USE_FIXTURES=true USE_BACKEND_FIXTURES=true INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand",
     "test:integration-backend:ci": "USE_FIXTURES=true USE_BACKEND_FIXTURES=true INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand --coverage",

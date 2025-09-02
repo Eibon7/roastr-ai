@@ -408,6 +408,17 @@ export default function Settings() {
     }
   };
 
+  // Utility function to sanitize input text
+  const sanitizeInput = (text) => {
+    if (!text || typeof text !== 'string') return '';
+
+    return text
+      .trim()
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/[<>]/g, '') // Remove potential HTML tags
+      .substring(0, 300); // Ensure max length
+  };
+
   // Roastr Persona handlers
   const handleSaveRoastrPersona = async (fieldType = 'identity') => {
     const isIdentity = fieldType === 'identity';
@@ -416,15 +427,20 @@ export default function Settings() {
     
     let text;
     if (isIdentity) {
-      text = roastrPersona.loQueMeDefine;
+      text = sanitizeInput(roastrPersona.loQueMeDefine);
     } else if (isIntolerance) {
-      text = roastrPersona.loQueNoTolero;
+      text = sanitizeInput(roastrPersona.loQueNoTolero);
     } else if (isTolerance) {
-      text = roastrPersona.loQueMeDaIgual;
+      text = sanitizeInput(roastrPersona.loQueMeDaIgual);
     }
-    
+
     if (text.length > 300) {
       addNotification('El texto no puede exceder los 300 caracteres', 'error');
+      return;
+    }
+
+    if (text.length === 0) {
+      addNotification('El campo no puede estar vacío', 'error');
       return;
     }
 
@@ -433,31 +449,31 @@ export default function Settings() {
       
       const payload = {};
       if (isIdentity) {
-        payload.loQueMeDefine = text.trim() || null;
+        payload.loQueMeDefine = text || null;
         payload.isVisible = roastrPersona.isVisible;
       } else if (isIntolerance) {
-        payload.loQueNoTolero = text.trim() || null;
+        payload.loQueNoTolero = text || null;
         payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
       } else if (isTolerance) {
-        payload.loQueMeDaIgual = text.trim() || null;
+        payload.loQueMeDaIgual = text || null;
         payload.isToleranceVisible = roastrPersona.isToleranceVisible;
       }
       
       const resp = await apiClient.post('/user/roastr-persona', payload);
 
       if (resp?.data?.success) {
-        const trimmed = text.trim();
         setRoastrPersona(prev => ({
           ...prev,
           hasContent: !!resp.data?.hasContent,
           hasIntoleranceContent: !!resp.data?.hasIntoleranceContent,
           hasToleranceContent: !!resp.data?.hasToleranceContent,
-          loQueMeDefine: isIdentity ? trimmed : prev.loQueMeDefine,
-          loQueNoTolero: isIntolerance ? trimmed : prev.loQueNoTolero,
-          loQueMeDaIgual: isTolerance ? trimmed : prev.loQueMeDaIgual,
+          loQueMeDefine: isIdentity ? text : prev.loQueMeDefine,
+          loQueNoTolero: isIntolerance ? text : prev.loQueNoTolero,
+          loQueMeDaIgual: isTolerance ? text : prev.loQueMeDaIgual,
           showForm: isIdentity ? false : prev.showForm,
           showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
-          showToleranceForm: isTolerance ? false : prev.showToleranceForm
+          showToleranceForm: isTolerance ? false : prev.showToleranceForm,
+          isSaving: false
         }));
 
         let successMessage;
@@ -513,7 +529,6 @@ export default function Settings() {
         addNotification(errorMessage, 'error');
       }
 
-      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     } finally {
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
