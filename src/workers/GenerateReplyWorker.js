@@ -4,6 +4,9 @@ const RoastPromptTemplate = require('../services/roastPromptTemplate');
 const transparencyService = require('../services/transparencyService');
 const { mockMode } = require('../config/mockMode');
 const { PLATFORM_LIMITS } = require('../config/constants');
+const { JobValidator, ValidationError } = require('../utils/jobValidator');
+const { WorkerErrorHandler, WorkerError } = require('../utils/errorHandler');
+const { globalCircuitBreakerManager } = require('../utils/circuitBreaker');
 
 /**
  * Generate Reply Worker
@@ -24,13 +27,17 @@ class GenerateReplyWorker extends BaseWorker {
       maxRetries: 3,
       ...options
     });
-    
+
     this.costControl = new CostControlService();
     this.promptTemplate = new RoastPromptTemplate();
-    
+
+    // Initialize enhanced error handling
+    this.errorHandler = new WorkerErrorHandler(this);
+    this.circuitBreaker = globalCircuitBreakerManager;
+
     // Initialize OpenAI client
     this.initializeOpenAI();
-    
+
     // Roast templates for fallback
     this.initializeTemplates();
     
@@ -129,24 +136,22 @@ class GenerateReplyWorker extends BaseWorker {
   
   
   /**
-   * Process reply generation job
+   * Process reply generation job with enhanced validation and error handling
    */
   async processJob(job) {
-    // FIX: Critical fixes from CodeRabbit review (outside diff)
-    // Validate job payload exists before destructuring
-    if (!job?.payload) {
-      throw new Error('Invalid job: missing payload');
-    }
+    try {
+      // Validate job structure using centralized validator
+      JobValidator.validateJob('generate_reply', job);
 
-    const {
-      comment_id,
-      organization_id,
-      platform,
-      original_text,
-      toxicity_score,
-      severity_level,
-      categories
-    } = job.payload;
+      const {
+        comment_id,
+        organization_id,
+        platform,
+        original_text,
+        toxicity_score,
+        severity_level,
+        categories
+      } = job.payload;
     
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
@@ -160,23 +165,27 @@ class GenerateReplyWorker extends BaseWorker {
       throw new Error(`Organization ${organization_id} has reached limits: ${canProcess.reason}`);
     }
     
-    // Get comment and integration config
-    const comment = await this.getComment(comment_id);
-    if (!comment) {
-      throw new Error(`Comment ${comment_id} not found`);
-    }
-    
-    const integrationConfig = await this.getIntegrationConfig(
-      organization_id, 
-      comment.integration_config_id
+    // Get comment and integration config with robust error handling
+    const comment = await this.errorHandler.handleDatabaseOperation(
+      () => this.getComment(comment_id),
+      { operation: 'getComment', commentId: comment_id }
     );
-    
-    if (!integrationConfig) {
-      throw new Error(`Integration config not found for comment ${comment_id}`);
+
+    if (!comment.data) {
+      throw new WorkerError(`Comment ${comment_id} not found`, 'COMMENT_NOT_FOUND', false);
+    }
+
+    const integrationConfig = await this.errorHandler.handleDatabaseOperation(
+      () => this.getIntegrationConfig(organization_id, comment.data.integration_config_id),
+      { operation: 'getIntegrationConfig', organizationId: organization_id }
+    );
+
+    if (!integrationConfig.data) {
+      throw new WorkerError(`Integration config not found for comment ${comment_id}`, 'CONFIG_NOT_FOUND', false);
     }
     
     // Check response frequency (probabilistic filtering)
-    if (!this.shouldRespondBasedOnFrequency(integrationConfig.response_frequency)) {
+    if (!this.shouldRespondBasedOnFrequency(integrationConfig.data.response_frequency)) {
       return {
         success: true,
         summary: 'Response skipped based on frequency setting',
@@ -184,32 +193,47 @@ class GenerateReplyWorker extends BaseWorker {
         reason: 'frequency_filter'
       };
     }
-    
+
     // Fetch user's Roastr Persona data for enhanced response generation (Issue #81)
-    const personaData = await this.fetchPersonaData(organization_id);
-    
-    // Generate response
+    const personaData = await this.errorHandler.handleDatabaseOperation(
+      () => this.fetchPersonaData(organization_id),
+      { operation: 'fetchPersonaData', organizationId: organization_id }
+    );
+
+    // Generate response with circuit breaker protection and fallback
     const startTime = Date.now();
-    const response = await this.generateResponse(
-      original_text,
-      integrationConfig,
+    const response = await this.circuitBreaker.execute(
+      'openai',
+      () => this.generateResponse(
+        original_text,
+        integrationConfig.data,
+        {
+          toxicity_score,
+          severity_level,
+          categories,
+          platform,
+          personaData: personaData?.data // Include persona data in context
+        }
+      ),
+      () => this.generateTemplateResponse(integrationConfig.data, { toxicity_score, categories }),
       {
-        toxicity_score,
-        severity_level,
-        categories,
-        platform,
-        personaData // Include persona data in context
+        failureThreshold: 3,
+        recoveryTimeout: 60000,
+        expectedErrors: ['rate limit', 'quota exceeded']
       }
     );
     const generationTime = Date.now() - startTime;
     
-    // Store response in database
-    const storedResponse = await this.storeResponse(
-      comment_id,
-      organization_id,
-      response,
-      integrationConfig,
-      generationTime
+    // Store response in database with error handling
+    const storedResponse = await this.errorHandler.handleDatabaseOperation(
+      () => this.storeResponse(
+        comment_id,
+        organization_id,
+        response,
+        integrationConfig.data,
+        generationTime
+      ),
+      { operation: 'storeResponse', commentId: comment_id }
     );
     
     // Record usage and cost with enhanced tracking
@@ -224,8 +248,8 @@ class GenerateReplyWorker extends BaseWorker {
         tokensUsed,
         generationTime,
         service: response.service,
-        tone: integrationConfig.tone,
-        humorType: integrationConfig.humor_type,
+        tone: integrationConfig.data.tone,
+        humorType: integrationConfig.data.humor_type,
         originalTextLength: original_text.length,
         responseLength: response.text.length
       },
@@ -234,67 +258,84 @@ class GenerateReplyWorker extends BaseWorker {
     );
     
     // Queue posting job (if auto-posting is enabled)
-    if (integrationConfig.config.auto_post !== false) {
-      await this.queuePostingJob(organization_id, storedResponse, platform);
+    if (integrationConfig.data.auto_post !== false) {
+      await this.errorHandler.handleWithFallback(
+        () => this.queuePostingJob(organization_id, storedResponse.data, platform),
+        null, // No fallback for posting - just log the error
+        { operation: 'queuePostingJob', organizationId: organization_id }
+      );
     }
-    
+
     return {
       success: true,
       summary: `Generated ${response.service} response: "${response.text.substring(0, 50)}..."`,
-      responseId: storedResponse.id,
+      responseId: storedResponse.data?.id,
       responseText: response.text,
       service: response.service,
       generationTime,
-      tokensUsed: response.tokensUsed || this.estimateTokens(response.text)
+      tokensUsed: response.tokensUsed || this.estimateTokens(response.text),
+      config: {
+        tone: integrationConfig.data.tone,
+        humor_type: integrationConfig.data.humor_type,
+        platform
+      }
     };
+
+    } catch (error) {
+      // Enhanced error handling with proper logging and response
+      this.errorHandler.logError(error, {
+        operation: 'processJob',
+        commentId: job.payload?.comment_id,
+        organizationId: job.payload?.organization_id,
+        platform: job.payload?.platform
+      });
+
+      if (error instanceof ValidationError) {
+        return this.errorHandler.createErrorResponse(error, job.id);
+      }
+
+      if (error instanceof WorkerError) {
+        return this.errorHandler.createErrorResponse(error, job.id);
+      }
+
+      // For unexpected errors, create a generic response
+      return this.errorHandler.createErrorResponse(
+        new WorkerError(
+          `Unexpected error in reply generation: ${error.message}`,
+          'UNEXPECTED_ERROR',
+          true,
+          { originalError: error.message }
+        ),
+        job.id
+      );
+    }
   }
   
   /**
    * Get comment from database
    */
   async getComment(commentId) {
-    try {
-      const { data: comment, error } = await this.supabase
-        .from('comments')
-        .select('*')
-        .eq('id', commentId)
-        .single();
-      
-      if (error) throw error;
-      return comment;
-      
-    } catch (error) {
-      this.log('error', 'Failed to get comment', {
-        commentId,
-        error: error.message
-      });
-      return null;
-    }
+    const { data: comment, error } = await this.supabase
+      .from('comments')
+      .select('*')
+      .eq('id', commentId)
+      .single();
+
+    return { data: comment, error };
   }
   
   /**
    * Get integration configuration
    */
   async getIntegrationConfig(organizationId, configId) {
-    try {
-      const { data: config, error } = await this.supabase
-        .from('integration_configs')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .eq('id', configId)
-        .single();
-      
-      if (error) throw error;
-      return config;
-      
-    } catch (error) {
-      this.log('error', 'Failed to get integration config', {
-        organizationId,
-        configId,
-        error: error.message
-      });
-      return null;
-    }
+    const { data: config, error } = await this.supabase
+      .from('integration_configs')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('id', configId)
+      .single();
+
+    return { data: config, error };
   }
 
   /**
@@ -311,11 +352,7 @@ class GenerateReplyWorker extends BaseWorker {
         .single();
 
       if (orgError || !orgData) {
-        this.log('warn', 'Could not find organization for persona lookup', {
-          organizationId,
-          error: orgError?.message
-        });
-        return null;
+        return { data: null, error: orgError };
       }
 
       // Fetch persona data for the owner
@@ -335,22 +372,18 @@ class GenerateReplyWorker extends BaseWorker {
         .single();
 
       if (userError || !userData) {
-        this.log('debug', 'No persona data found for organization owner', {
-          organizationId,
-          ownerId: orgData.owner_id
-        });
-        return null;
+        return { data: null, error: userError };
       }
 
       // Check if any persona fields are configured
       const hasPersonaData = !!(
-        userData.lo_que_me_define_encrypted || 
-        userData.lo_que_no_tolero_encrypted || 
+        userData.lo_que_me_define_encrypted ||
+        userData.lo_que_no_tolero_encrypted ||
         userData.lo_que_me_da_igual_encrypted
       );
 
       if (!hasPersonaData) {
-        return null; // No persona configured
+        return { data: null, error: null }; // No persona configured
       }
 
       // Decrypt persona fields (simplified version - in production you'd use the encryption service)
@@ -382,14 +415,10 @@ class GenerateReplyWorker extends BaseWorker {
         hasEmbeddings: personaData.embeddings.available
       });
 
-      return personaData;
+      return { data: personaData, error: null };
 
     } catch (error) {
-      this.log('error', 'Failed to fetch persona data', {
-        organizationId,
-        error: error.message
-      });
-      return null;
+      return { data: null, error: { message: error.message } };
     }
   }
   
