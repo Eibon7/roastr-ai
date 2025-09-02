@@ -26,35 +26,65 @@ describe('ENABLE_CUSTOM_PROMPT Feature Flag', () => {
 
   describe('Basic Flag Functionality', () => {
     test('should be disabled by default when env var is not set', () => {
+      // Test the flag logic directly
+      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
       delete process.env.ENABLE_CUSTOM_PROMPT;
 
-      // Test the flag logic directly
       const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
       expect(flagValue).toBe(false);
+
+      // Restore original value
+      if (originalValue !== undefined) {
+        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
+      }
     });
 
     test('should be enabled when env var is set to true', () => {
+      // Test the flag logic directly
+      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
       process.env.ENABLE_CUSTOM_PROMPT = 'true';
 
-      // Test the flag logic directly
       const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
       expect(flagValue).toBe(true);
+
+      // Restore original value
+      if (originalValue !== undefined) {
+        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
+      } else {
+        delete process.env.ENABLE_CUSTOM_PROMPT;
+      }
     });
 
     test('should be disabled when env var is set to false', () => {
+      // Test the flag logic directly
+      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
       process.env.ENABLE_CUSTOM_PROMPT = 'false';
 
-      // Test the flag logic directly
       const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
       expect(flagValue).toBe(false);
+
+      // Restore original value
+      if (originalValue !== undefined) {
+        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
+      } else {
+        delete process.env.ENABLE_CUSTOM_PROMPT;
+      }
     });
 
     test('should be disabled when env var is set to any other value', () => {
+      // Test the flag logic directly
+      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
       process.env.ENABLE_CUSTOM_PROMPT = 'yes';
 
-      // Test the flag logic directly
       const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
       expect(flagValue).toBe(false);
+
+      // Restore original value
+      if (originalValue !== undefined) {
+        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
+      } else {
+        delete process.env.ENABLE_CUSTOM_PROMPT;
+      }
     });
   });
 

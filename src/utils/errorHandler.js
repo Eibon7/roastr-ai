@@ -104,19 +104,35 @@ class WorkerErrorHandler {
    * Execute operation with timeout
    */
   async handleWithTimeout(operation, timeoutMs = 30000, context = {}) {
-    return Promise.race([
-      operation(),
-      new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new WorkerError(
-            `Operation timed out after ${timeoutMs}ms`,
-            'TIMEOUT',
-            true,
-            { timeoutMs, context }
-          ));
-        }, timeoutMs);
-      })
-    ]);
+    let timer;
+
+    const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new WorkerError(
+          `Operation timed out after ${timeoutMs}ms`,
+          'TIMEOUT',
+          true,
+          { timeoutMs, context }
+        ));
+      }, timeoutMs);
+    });
+
+    try {
+      // Wrap operation to handle synchronous throws
+      const operationPromise = Promise.resolve().then(() => operation());
+
+      const result = await Promise.race([
+        operationPromise,
+        timeoutPromise
+      ]);
+
+      return result;
+    } finally {
+      // Always clear the timer regardless of how the promise settles
+      if (timer) {
+        clearTimeout(timer);
+      }
+    }
   }
 
   /**

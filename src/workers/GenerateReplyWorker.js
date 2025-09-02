@@ -215,7 +215,16 @@ class GenerateReplyWorker extends BaseWorker {
           personaData: personaData?.data // Include persona data in context
         }
       ),
-      () => this.generateTemplateResponse(integrationConfig.data, { toxicity_score, categories }),
+      () => this.generateTemplateResponse(
+        original_text,
+        integrationConfig.data,
+        {
+          toxicity_score,
+          categories,
+          platform,
+          personaData: personaData?.data
+        }
+      ),
       {
         failureThreshold: 3,
         recoveryTimeout: 60000,
@@ -258,7 +267,7 @@ class GenerateReplyWorker extends BaseWorker {
     );
     
     // Queue posting job (if auto-posting is enabled)
-    if (integrationConfig.data.auto_post !== false) {
+    if (integrationConfig.data.auto_post !== false && storedResponse.data) {
       await this.errorHandler.handleWithFallback(
         () => this.queuePostingJob(organization_id, storedResponse.data, platform),
         null, // No fallback for posting - just log the error
@@ -269,7 +278,7 @@ class GenerateReplyWorker extends BaseWorker {
     return {
       success: true,
       summary: `Generated ${response.service} response: "${response.text.substring(0, 50)}..."`,
-      responseId: storedResponse.data?.id,
+      responseId: storedResponse.data?.id || null,
       responseText: response.text,
       service: response.service,
       generationTime,
@@ -900,7 +909,7 @@ class GenerateReplyWorker extends BaseWorker {
       }
 
       if (error) throw error;
-      
+
       // Log persona usage for analytics
       if (personaFieldsUsed && personaFieldsUsed.length > 0) {
         this.log('info', 'Persona fields used in response generation', {
@@ -910,7 +919,7 @@ class GenerateReplyWorker extends BaseWorker {
           fieldsCount: personaFieldsUsed.length
         });
       }
-      
+
       return stored;
       
     } catch (error) {

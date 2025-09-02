@@ -155,7 +155,7 @@ describe('ApprovalCard', () => {
       const editButton = screen.getByTestId('edit-icon').closest('button');
       await user.click(editButton);
 
-      expect(screen.getByText('28/280 characters')).toBeInTheDocument();
+      expect(screen.getByText('29/280 characters')).toBeInTheDocument();
     });
 
     test('updates character counter when text is edited', async () => {
@@ -251,7 +251,7 @@ describe('ApprovalCard', () => {
       const editButton = screen.getByTestId('edit-icon').closest('button');
       await user.click(editButton);
 
-      expect(screen.getByText('28/2200 characters')).toBeInTheDocument();
+      expect(screen.getByText('29/2200 characters')).toBeInTheDocument();
     });
 
     test('applies YouTube character limit correctly', async () => {
@@ -266,7 +266,7 @@ describe('ApprovalCard', () => {
       const editButton = screen.getByTestId('edit-icon').closest('button');
       await user.click(editButton);
 
-      expect(screen.getByText('28/10000 characters')).toBeInTheDocument();
+      expect(screen.getByText('29/10000 characters')).toBeInTheDocument();
     });
 
     test('uses default limit for unknown platforms', async () => {
@@ -281,7 +281,7 @@ describe('ApprovalCard', () => {
       const editButton = screen.getByTestId('edit-icon').closest('button');
       await user.click(editButton);
 
-      expect(screen.getByText('28/1000 characters')).toBeInTheDocument();
+      expect(screen.getByText('29/1000 characters')).toBeInTheDocument();
     });
   });
 

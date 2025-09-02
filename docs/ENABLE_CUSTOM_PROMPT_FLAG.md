@@ -226,9 +226,17 @@ pm2 restart roastr-api
 # Verificar que la flag se carga correctamente
 grep "ENABLE_CUSTOM_PROMPT" logs/app.log
 
-# Verificar uso de prompts personalizados
-grep "Estilo personalizado" logs/app.log
+# Verificar uso de prompts personalizados (evitar logging de contenido sensible)
+grep "customPromptApplied" logs/app.log
+grep "customPromptHash" logs/app.log
 ```
+
+**Nota de Seguridad:** Para evitar filtración de datos sensibles, registra solo metadatos del prompt personalizado:
+- `customPromptApplied: true/false` - indica si se aplicó un prompt personalizado
+- `promptLength: <número>` - longitud del prompt para análisis
+- `customPromptHash: <hash>` - hash corto (primeros 8 caracteres de SHA256) para correlación
+
+Evita registrar el contenido completo del prompt en los logs.
 
 ### Métricas Sugeridas
 

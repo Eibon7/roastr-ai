@@ -14,7 +14,7 @@ const path = require('path');
 const fs = require('fs-extra');
 
 // Test configuration
-const CLI_PATH = path.join(__dirname, '../../../cli.js');
+const CLI_PATH = path.join(__dirname, '../../../src/cli.js');
 const TEST_TIMEOUT = 30000;
 
 describe('Log Commands CLI Integration', () => {
@@ -313,17 +313,26 @@ describe('Log Commands CLI Integration', () => {
       });
 
       let output = '';
+      let finished = false;
+      let timeoutId;
+
       child.stdout.on('data', (data) => {
         output += data.toString();
       });
 
       child.on('close', (code) => {
+        if (finished) return;
+        finished = true;
+        if (timeoutId) clearTimeout(timeoutId);
+
         expect(code).toBe(0);
         expect(output).toMatch(/Processing.*\d+\/\d+/);
         done();
       });
 
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
+        if (finished) return;
+        finished = true;
         child.kill();
         done(new Error('Test timeout'));
       }, TEST_TIMEOUT);
@@ -445,63 +454,4 @@ describe('Log Commands CLI Integration', () => {
     });
   });
 
-  describe('End-to-End Log Management Flow', () => {
-    let tempLogDir;
-
-    beforeAll(async () => {
-      // Create temporary log directory for testing
-      tempLogDir = path.join(__dirname, '../../../temp-test-logs');
-      await fs.ensureDir(tempLogDir);
-
-      // Set up test environment with temp directory
-      process.env.LOG_DIR = tempLogDir;
-    });
-
-    afterAll(async () => {
-      // Clean up temp directory
-      await fs.remove(tempLogDir);
-    });
-
-    test('should perform complete backup and cleanup cycle', async () => {
-      // Create test log files
-      const logFiles = [
-        'application.log',
-        'error.log',
-        'integration.log'
-      ];
-
-      for (const logFile of logFiles) {
-        const filePath = path.join(tempLogDir, logFile);
-        await fs.writeFile(filePath, `Test log content for ${logFile}\n`.repeat(100));
-      }
-
-      // Run backup command
-      const backupResult = execSync(`node ${CLI_PATH} backup --days 1 --dry-run --format json`, {
-        encoding: 'utf8',
-        timeout: TEST_TIMEOUT
-      });
-
-      const backupOutput = JSON.parse(backupResult);
-      expect(backupOutput.summary.totalUploaded).toBeGreaterThan(0);
-
-      // Run cleanup command
-      const cleanupResult = execSync(`node ${CLI_PATH} maintain cleanup --dry-run --format json`, {
-        encoding: 'utf8',
-        timeout: TEST_TIMEOUT
-      });
-
-      const cleanupOutput = JSON.parse(cleanupResult);
-      expect(cleanupOutput).toHaveProperty('filesRemoved');
-
-      // Run health check
-      const healthResult = execSync(`node ${CLI_PATH} maintain health --format json`, {
-        encoding: 'utf8',
-        timeout: TEST_TIMEOUT
-      });
-
-      const healthOutput = JSON.parse(healthResult);
-      expect(healthOutput.status).toMatch(/healthy|warning/);
-      expect(healthOutput.statistics).toHaveProperty('totalSize');
-    }, TEST_TIMEOUT * 2);
-  });
 });

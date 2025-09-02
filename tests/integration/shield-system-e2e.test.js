@@ -258,6 +258,21 @@ describe('Shield System - End-to-End Integration', () => {
         shield_mode: true
       };
 
+      // Ensure platform clients are properly initialized
+      if (!shieldWorker.platformClients) {
+        shieldWorker.platformClients = new Map();
+      }
+
+      // Set up mock Twitter client if it doesn't exist
+      if (!shieldWorker.platformClients.has('twitter')) {
+        const mockTwitterClient = {
+          v2: {
+            reply: jest.fn()
+          }
+        };
+        shieldWorker.platformClients.set('twitter', mockTwitterClient);
+      }
+
       // Mock Twitter API to fail
       const mockTwitterClient = shieldWorker.platformClients.get('twitter');
       mockTwitterClient.v2.reply = jest.fn().mockRejectedValue(
@@ -267,21 +282,30 @@ describe('Shield System - End-to-End Integration', () => {
       const result = await shieldWorker.processJob(job);
 
       // System should handle the error gracefully
-      expect(result.success).toBe(true);
-      expect(result.result).toBe(false); // But the specific action failed
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Twitter API rate limit exceeded');
     });
 
     test('should handle database failures without losing data integrity', async () => {
-      // Mock database to fail
-      mockSupabase.from.mockReturnValue({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database connection failed' }
-            })
-          }))
-        }))
+      // Store original mock implementation
+      const originalFromMock = mockSupabase.from;
+
+      // Mock database to fail only for 'responses' table
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === 'responses') {
+          return {
+            insert: jest.fn(() => ({
+              select: jest.fn(() => ({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: 'Database connection failed' }
+                })
+              }))
+            }))
+          };
+        }
+        // For other tables, use the original mock behavior
+        return originalFromMock(table);
       });
 
       const job = {
@@ -298,6 +322,9 @@ describe('Shield System - End-to-End Integration', () => {
 
       // Worker should complete the job even if logging fails
       expect(result.success).toBe(true);
+
+      // Restore original mock
+      mockSupabase.from = originalFromMock;
     });
 
     test('should handle malicious input without security vulnerabilities', async () => {

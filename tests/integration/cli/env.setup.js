@@ -37,7 +37,7 @@ process.env.LOG_BACKUP_ENABLED = 'true';
 process.env.LOG_BACKUP_RECENT_DAYS = '7';
 process.env.LOG_BACKUP_RETENTION_DAYS = '90';
 process.env.LOG_BACKUP_SCHEDULE = '0 3 * * *';
-process.env.LOG_BACKUP_CLEANUP_SCHEDULE = '0 4 0 * *';
+process.env.LOG_BACKUP_CLEANUP_SCHEDULE = '0 4 1 * *';
 
 // Log monitoring configuration
 process.env.LOG_MONITORING_ENABLED = 'true';

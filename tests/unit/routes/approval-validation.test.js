@@ -157,10 +157,53 @@ describe('Approval API - Character Limit Validation', () => {
 
     test('should approve response with valid edited text', async () => {
       const editedText = 'This is a valid edited response for Twitter';
-      
-      supabaseServiceClient.update.mockResolvedValue({
-        data: { ...mockResponse, response_text: editedText, post_status: 'approved' },
-        error: null
+
+      // Use the same mockUpdateChain pattern as earlier tests
+      const mockUpdateChain = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: { ...mockResponse, response_text: editedText, post_status: 'approved' },
+          error: null
+        })
+      };
+
+      // Mock job queue insert
+      const mockJobInsert = {
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      };
+
+      supabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockOrganization,
+              error: null
+            })
+          };
+        }
+        if (table === 'responses') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockResponse,
+              error: null
+            }),
+            ...mockUpdateChain
+          };
+        }
+        if (table === 'job_queue') {
+          return mockJobInsert;
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null })
+        };
       });
 
       const response = await request(app)
@@ -169,7 +212,7 @@ describe('Approval API - Character Limit Validation', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(supabaseServiceClient.update).toHaveBeenCalledWith({
+      expect(mockUpdateChain.update).toHaveBeenCalledWith({
         post_status: 'approved',
         posted_at: expect.any(String),
         response_text: editedText
@@ -179,10 +222,53 @@ describe('Approval API - Character Limit Validation', () => {
     test('should trim whitespace from edited text', async () => {
       const editedTextWithWhitespace = '  Valid response with whitespace  ';
       const trimmedText = 'Valid response with whitespace';
-      
-      supabaseServiceClient.update.mockResolvedValue({
-        data: { ...mockResponse, response_text: trimmedText, post_status: 'approved' },
-        error: null
+
+      // Use the same mockUpdateChain pattern as earlier tests
+      const mockUpdateChain = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: { ...mockResponse, response_text: trimmedText, post_status: 'approved' },
+          error: null
+        })
+      };
+
+      // Mock job queue insert
+      const mockJobInsert = {
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      };
+
+      supabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockOrganization,
+              error: null
+            })
+          };
+        }
+        if (table === 'responses') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockResponse,
+              error: null
+            }),
+            ...mockUpdateChain
+          };
+        }
+        if (table === 'job_queue') {
+          return mockJobInsert;
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null })
+        };
       });
 
       const response = await request(app)
@@ -191,7 +277,7 @@ describe('Approval API - Character Limit Validation', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(supabaseServiceClient.update).toHaveBeenCalledWith({
+      expect(mockUpdateChain.update).toHaveBeenCalledWith({
         post_status: 'approved',
         posted_at: expect.any(String),
         response_text: trimmedText
@@ -199,9 +285,52 @@ describe('Approval API - Character Limit Validation', () => {
     });
 
     test('should ignore empty edited text', async () => {
-      supabaseServiceClient.update.mockResolvedValue({
-        data: { ...mockResponse, post_status: 'approved' },
-        error: null
+      // Use the same mockUpdateChain pattern as earlier tests
+      const mockUpdateChain = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: { ...mockResponse, post_status: 'approved' },
+          error: null
+        })
+      };
+
+      // Mock job queue insert
+      const mockJobInsert = {
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      };
+
+      supabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockOrganization,
+              error: null
+            })
+          };
+        }
+        if (table === 'responses') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockResponse,
+              error: null
+            }),
+            ...mockUpdateChain
+          };
+        }
+        if (table === 'job_queue') {
+          return mockJobInsert;
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null })
+        };
       });
 
       const response = await request(app)
@@ -210,7 +339,7 @@ describe('Approval API - Character Limit Validation', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(supabaseServiceClient.update).toHaveBeenCalledWith({
+      expect(mockUpdateChain.update).toHaveBeenCalledWith({
         post_status: 'approved',
         posted_at: expect.any(String)
         // Should not include response_text since edited_text was empty after trim
@@ -219,10 +348,53 @@ describe('Approval API - Character Limit Validation', () => {
 
     test('should handle very long edited text gracefully', async () => {
       const veryLongText = 'a'.repeat(10000); // Much longer than any platform limit
-      
-      supabaseServiceClient.update.mockResolvedValue({
-        data: { ...mockResponse, response_text: veryLongText, post_status: 'approved' },
-        error: null
+
+      // Use the same mockUpdateChain pattern as earlier tests
+      const mockUpdateChain = {
+        update: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: { ...mockResponse, response_text: veryLongText, post_status: 'approved' },
+          error: null
+        })
+      };
+
+      // Mock job queue insert
+      const mockJobInsert = {
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      };
+
+      supabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockOrganization,
+              error: null
+            })
+          };
+        }
+        if (table === 'responses') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockResponse,
+              error: null
+            }),
+            ...mockUpdateChain
+          };
+        }
+        if (table === 'job_queue') {
+          return mockJobInsert;
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null })
+        };
       });
 
       const response = await request(app)
@@ -231,7 +403,7 @@ describe('Approval API - Character Limit Validation', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(supabaseServiceClient.update).toHaveBeenCalledWith({
+      expect(mockUpdateChain.update).toHaveBeenCalledWith({
         post_status: 'approved',
         posted_at: expect.any(String),
         response_text: veryLongText

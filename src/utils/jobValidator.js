@@ -133,6 +133,11 @@ class JobValidator {
       throw new ValidationError('Job is required');
     }
 
+    if (!job.payload) {
+      throw new ValidationError('Job payload is required');
+    }
+
+    const { payload } = job;
     const required = [
       'comment_id',
       'organization_id',
@@ -142,27 +147,27 @@ class JobValidator {
       'shield_mode'
     ];
 
-    const missing = required.filter(field => job[field] === undefined);
+    const missing = required.filter(field => payload[field] === undefined);
     if (missing.length > 0) {
       throw new ValidationError(`Missing required fields: ${missing.join(', ')}`);
     }
 
     // Validate shield_mode
-    if (job.shield_mode !== true) {
+    if (payload.shield_mode !== true) {
       throw new ValidationError('Shield action job must be in Shield mode', 'shield_mode');
     }
 
     // Validate action type
     const validActions = [
       'reply_warning',
-      'mute_user', 
+      'mute_user',
       'block_user',
       'remove_content',
       'ban_user',
       'remove_comment'
     ];
 
-    if (!validActions.includes(job.action)) {
+    if (!validActions.includes(payload.action)) {
       throw new ValidationError(`Invalid action. Must be one of: ${validActions.join(', ')}`, 'action');
     }
 
@@ -181,10 +186,9 @@ class JobValidator {
     const sanitizeObject = (obj) => {
       for (const key in obj) {
         if (typeof obj[key] === 'string') {
-          // Remove potential script tags and SQL injection patterns
+          // Remove potential script tags only - preserve legitimate quotes and symbols
           obj[key] = obj[key]
             .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-            .replace(/['";]|--|\*\/|\*\*|\/\*/g, '')
             .trim();
         } else if (typeof obj[key] === 'object' && obj[key] !== null) {
           sanitizeObject(obj[key]);
@@ -200,21 +204,27 @@ class JobValidator {
    * Validate job based on worker type
    */
   static validateJob(workerType, job) {
-    // Sanitize first
-    const sanitizedJob = this.sanitizeJob(job);
-
+    // First validate the raw job
     switch (workerType) {
       case 'generate_reply':
-        return this.validateGenerateReplyJob(sanitizedJob);
+        this.validateGenerateReplyJob(job);
+        break;
       case 'analyze_toxicity':
-        return this.validateAnalyzeToxicityJob(sanitizedJob);
+        this.validateAnalyzeToxicityJob(job);
+        break;
       case 'fetch_comments':
-        return this.validateFetchCommentsJob(sanitizedJob);
+        this.validateFetchCommentsJob(job);
+        break;
       case 'shield_action':
-        return this.validateShieldActionJob(sanitizedJob);
+        this.validateShieldActionJob(job);
+        break;
       default:
         throw new ValidationError(`Unknown worker type: ${workerType}`);
     }
+
+    // Then sanitize and return the sanitized job
+    const sanitizedJob = this.sanitizeJob(job);
+    return sanitizedJob;
   }
 
   /**

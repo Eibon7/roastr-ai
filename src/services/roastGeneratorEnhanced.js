@@ -18,6 +18,9 @@ const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 require('dotenv').config();
 
+// Maximum length for custom prompts and comments
+const MAX_PROMPT_LENGTH = 500;
+
 class RoastGeneratorEnhanced {
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -33,6 +36,38 @@ class RoastGeneratorEnhanced {
     this.rqcService = new RQCService(this.openai);
     this.promptTemplate = new RoastPromptTemplate();
     this.isMockMode = false;
+  }
+
+  /**
+   * Sanitize prompt text to prevent injection and limit size
+   * @param {string} text - Text to sanitize
+   * @returns {string} - Sanitized text
+   */
+  sanitizePrompt(text) {
+    if (!text || typeof text !== 'string') {
+      return '';
+    }
+
+    let sanitized = text
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Remove script blocks specifically
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      // Replace control characters with spaces (except newlines and tabs)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
+      // Collapse excessive newlines (more than 2 consecutive)
+      .replace(/\n{3,}/g, '\n\n')
+      // Trim whitespace
+      .trim()
+      // Collapse multiple spaces
+      .replace(/\s+/g, ' ');
+
+    // Enforce maximum length by truncation
+    if (sanitized.length > MAX_PROMPT_LENGTH) {
+      sanitized = sanitized.substring(0, MAX_PROMPT_LENGTH);
+    }
+
+    return sanitized;
   }
 
   /**
@@ -274,9 +309,15 @@ class RoastGeneratorEnhanced {
    * Generate roast with basic moderation integrated in prompt (Free/Pro)
    */
   async generateWithBasicModeration(text, toxicityScore, tone, rqcConfig) {
+    // Sanitize inputs to prevent prompt injection
+    const sanitizedComment = this.sanitizePrompt(text);
+    const sanitizedCustomPrompt = flags.isEnabled('ENABLE_CUSTOM_PROMPT') && rqcConfig.custom_style_prompt
+      ? this.sanitizePrompt(rqcConfig.custom_style_prompt)
+      : null;
+
     // Build prompt using the master template
     const systemPrompt = await this.promptTemplate.buildPrompt({
-      originalComment: text,
+      originalComment: sanitizedComment,
       toxicityData: {
         score: toxicityScore,
         categories: [] // Could be enhanced with actual toxicity categories
@@ -285,7 +326,7 @@ class RoastGeneratorEnhanced {
         tone: tone,
         humor_type: rqcConfig.humor_type || 'witty',
         intensity_level: rqcConfig.intensity_level,
-        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
+        custom_style_prompt: sanitizedCustomPrompt
       },
       includeReferences: rqcConfig.plan !== 'free' // Include references for Pro+ plans
     });
@@ -396,9 +437,15 @@ class RoastGeneratorEnhanced {
    * Generate initial roast without moderation constraints
    */
   async generateInitialRoast(text, tone, rqcConfig) {
+    // Sanitize inputs to prevent prompt injection (mirror the basic moderation path)
+    const sanitizedComment = this.sanitizePrompt(text);
+    const sanitizedCustomPrompt = flags.isEnabled('ENABLE_CUSTOM_PROMPT') && rqcConfig.custom_style_prompt
+      ? this.sanitizePrompt(rqcConfig.custom_style_prompt)
+      : null;
+
     // Build prompt using the master template with advanced options
     const systemPrompt = await this.promptTemplate.buildPrompt({
-      originalComment: text,
+      originalComment: sanitizedComment,
       toxicityData: {
         categories: [] // Could be enhanced with actual toxicity categories
       },
@@ -406,7 +453,7 @@ class RoastGeneratorEnhanced {
         tone: tone,
         humor_type: rqcConfig.humor_type || 'clever',
         intensity_level: rqcConfig.intensity_level,
-        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
+        custom_style_prompt: sanitizedCustomPrompt
       },
       includeReferences: true // Always include references for Creator+ plans
     });

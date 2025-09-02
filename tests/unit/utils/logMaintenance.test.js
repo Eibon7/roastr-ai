@@ -16,7 +16,16 @@ const LogBackupService = require('../../../src/services/logBackupService');
 // Mock dependencies
 jest.mock('cron');
 jest.mock('../../../src/services/logBackupService');
-jest.mock('../../../src/services/alertService');
+jest.mock('../../../src/services/alertService', () => {
+  return jest.fn().mockImplementation(() => ({
+    sendAlert: jest.fn().mockResolvedValue({
+      sent: true,
+      successCount: 1,
+      totalChannels: 1,
+      results: [{ type: 'internal', success: true }]
+    })
+  }));
+});
 jest.mock('../../../src/utils/advancedLogger', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -69,7 +78,12 @@ describe('LogMaintenanceService', () => {
     mockBackupService = {
       isBackupEnabled: jest.fn().mockReturnValue(true),
       backupRecentLogs: jest.fn(),
-      cleanOldBackups: jest.fn()
+      cleanOldBackups: jest.fn(),
+      getStatus: jest.fn().mockReturnValue({
+        configured: { bucket: true },
+        enabled: true
+      }),
+      listBackups: jest.fn().mockResolvedValue([])
     };
     LogBackupService.mockImplementation(() => mockBackupService);
 
