@@ -13,6 +13,13 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// Mock flags
+jest.mock('../../../src/config/flags', () => ({
+  flags: {
+    isEnabled: jest.fn()
+  }
+}));
+
 describe('RQCService', () => {
   let rqcService;
   let mockOpenAI;
@@ -194,7 +201,14 @@ describe('RQCService', () => {
       expect(result.verdict).toBe('pass');
     });
 
-    it('should use custom style prompt when configured', async () => {
+    it('should use custom style prompt when configured and flag is enabled', async () => {
+      // Mock the flags module
+      const { flags } = require('../../../src/config/flags');
+      flags.isEnabled = jest.fn().mockImplementation((flag) => {
+        if (flag === 'ENABLE_CUSTOM_PROMPT') return true;
+        return false;
+      });
+
       mockOpenAI.chat.completions.create.mockResolvedValue({
         choices: [{ message: { content: 'PASS' } }]
       });
@@ -204,7 +218,7 @@ describe('RQCService', () => {
       await rqcService.runStyleReviewer(
         'Test',
         'Test roast',
-        { 
+        {
           intensity_level: 3,
           custom_style_prompt: customPrompt
         }
@@ -213,6 +227,35 @@ describe('RQCService', () => {
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.messages[1].content).toContain(customPrompt);
       expect(callArgs.messages[1].content).toContain('ESTILO PERSONALIZADO CONFIGURADO');
+    });
+
+    it('should NOT use custom style prompt when flag is disabled', async () => {
+      // Mock the flags module
+      const { flags } = require('../../../src/config/flags');
+      flags.isEnabled = jest.fn().mockImplementation((flag) => {
+        if (flag === 'ENABLE_CUSTOM_PROMPT') return false;
+        return false;
+      });
+
+      mockOpenAI.chat.completions.create.mockResolvedValue({
+        choices: [{ message: { content: 'PASS' } }]
+      });
+
+      const customPrompt = 'Use intellectual humor with literary references';
+
+      await rqcService.runStyleReviewer(
+        'Test',
+        'Test roast',
+        {
+          intensity_level: 3,
+          custom_style_prompt: customPrompt
+        }
+      );
+
+      const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
+      expect(callArgs.messages[1].content).not.toContain(customPrompt);
+      expect(callArgs.messages[1].content).not.toContain('ESTILO PERSONALIZADO CONFIGURADO');
+      expect(callArgs.messages[1].content).toContain('ESTILO ESTÁNDAR');
     });
 
     it('should fail roast that doesn\'t match configured style', async () => {

@@ -8,6 +8,7 @@
  */
 
 const { logger } = require('../utils/logger');
+const { flags } = require('../config/flags');
 
 class RQCService {
   constructor(openaiClient) {
@@ -214,8 +215,8 @@ RESPUESTA:`;
 
 NIVEL DE INTENSIDAD: ${userConfig.intensity_level}/5`;
 
-    // Add custom style prompt if configured by admin
-    if (userConfig.custom_style_prompt) {
+    // Add custom style prompt if configured by admin and feature flag is enabled
+    if (flags.isEnabled('ENABLE_CUSTOM_PROMPT') && userConfig.custom_style_prompt) {
       styleInstructions += `\n\nESTILO PERSONALIZADO CONFIGURADO:
 ${userConfig.custom_style_prompt}`;
     } else {

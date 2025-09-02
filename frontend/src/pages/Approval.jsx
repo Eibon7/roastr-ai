@@ -39,7 +39,21 @@ const PLATFORM_COLORS = {
   tiktok: 'bg-black'
 };
 
-function ApprovalCard({ response, onApprove, onReject, onRegenerate, loading }) {
+// Platform character limits
+const PLATFORM_LIMITS = {
+  twitter: 280,
+  instagram: 2200,
+  facebook: 63206,
+  linkedin: 3000,
+  tiktok: 2200,
+  youtube: 10000,
+  discord: 2000,
+  reddit: 40000,
+  bluesky: 300,
+  default: 1000
+};
+
+export function ApprovalCard({ response, onApprove, onReject, onRegenerate, loading }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(response.response_text);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -47,13 +61,30 @@ function ApprovalCard({ response, onApprove, onReject, onRegenerate, loading }) 
   const [regenerating, setRegenerating] = useState(false);
   const { toast } = useToast();
 
+  // Character limit validation
+  const platformLimit = PLATFORM_LIMITS[response.comment.platform] || PLATFORM_LIMITS.default;
+  const currentLength = editedText.length;
+  const isOverLimit = currentLength > platformLimit;
+  const remainingChars = platformLimit - currentLength;
+
   const handleApprove = async () => {
+    // Validate character limit before approving
+    if (isEditing && isOverLimit) {
+      toast({
+        title: "Cannot approve response",
+        description: `Response exceeds ${platformLimit} character limit for ${response.comment.platform}. Please shorten the text.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await onApprove(response.id, isEditing ? editedText : null);
       toast({
         title: "Response approved",
         description: "The roast has been approved and queued for posting",
       });
+      setIsEditing(false); // Exit edit mode after successful approval
     } catch (error) {
       toast({
         title: "Error approving response",
@@ -165,12 +196,34 @@ function ApprovalCard({ response, onApprove, onReject, onRegenerate, loading }) 
           </div>
           
           {isEditing ? (
-            <Textarea
-              value={editedText}
-              onChange={(e) => setEditedText(e.target.value)}
-              className="min-h-20"
-              placeholder="Edit the response text..."
-            />
+            <div className="space-y-2">
+              <Textarea
+                value={editedText}
+                onChange={(e) => setEditedText(e.target.value)}
+                className={`min-h-20 ${isOverLimit ? 'border-red-500 focus:border-red-500' : ''}`}
+                placeholder="Edit the response text..."
+              />
+              <div className="flex justify-between items-center text-xs">
+                <span className={`${isOverLimit ? 'text-red-500' : remainingChars < 20 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+                  {currentLength}/{platformLimit} characters
+                </span>
+                {isOverLimit && (
+                  <span className="text-red-500 font-medium">
+                    {Math.abs(remainingChars)} characters over limit
+                  </span>
+                )}
+                {remainingChars > 0 && remainingChars < 20 && (
+                  <span className="text-yellow-500 font-medium">
+                    {remainingChars} characters remaining
+                  </span>
+                )}
+              </div>
+              {isOverLimit && (
+                <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                  ⚠️ This response is too long for {response.comment.platform}. Please shorten it before approving.
+                </div>
+              )}
+            </div>
           ) : (
             <div className="p-3 bg-primary/5 rounded-lg text-sm border-l-4 border-primary">
               {response.response_text}
@@ -188,12 +241,16 @@ function ApprovalCard({ response, onApprove, onReject, onRegenerate, loading }) 
               <div className="flex space-x-2">
                 <Button
                   onClick={handleApprove}
-                  disabled={loading || regenerating}
-                  className="flex-1"
+                  disabled={loading || regenerating || (isEditing && isOverLimit)}
+                  className={`flex-1 ${isEditing && isOverLimit ? 'opacity-50 cursor-not-allowed' : ''}`}
                   size="sm"
+                  title={isEditing && isOverLimit ? `Cannot approve: ${Math.abs(remainingChars)} characters over limit` : ''}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Approve {isEditing ? '& Edit' : ''}
+                  {isEditing && isOverLimit && (
+                    <span className="ml-1 text-xs">⚠️</span>
+                  )}
                 </Button>
                 <Button
                   onClick={() => setShowRejectForm(true)}
