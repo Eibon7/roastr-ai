@@ -112,12 +112,12 @@ async function testCommentAnalysisFlow() {
   console.log('🧪 Test de flujo 2 – Análisis del comentario con Moderation + Roastr Persona');
   console.log('');
   console.log('OBJETIVO: Validar que el sistema detecta ataques personales y aplica boost correctamente');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
   console.log('');
 
   // ESCENARIO 1: Comentario con ataque directo a identidad del usuario
   console.log('📝 ESCENARIO 1: Ataque directo a identidad del usuario');
-  console.log('-' .repeat(60));
+  console.log('-'.repeat(60));
   
   const comment1 = "Las feministas son estúpidas y locas";
   const persona1 = "feminista, activista por los derechos de la mujer";
@@ -169,7 +169,7 @@ async function testCommentAnalysisFlow() {
   
   // ESCENARIO 2: Comentario sin relación con el Roastr Persona
   console.log('📝 ESCENARIO 2: Comentario sin relación con Roastr Persona');
-  console.log('-' .repeat(60));
+  console.log('-'.repeat(60));
   
   const comment2 = "Tu aplicación es una basura total";
   const persona2 = "soy vegana, amo los animales";
@@ -190,7 +190,7 @@ async function testCommentAnalysisFlow() {
   
   // ESCENARIO 3: Múltiples términos del persona en el comentario
   console.log('📝 ESCENARIO 3: Múltiples términos del persona');
-  console.log('-' .repeat(60));
+  console.log('-'.repeat(60));
   
   const comment3 = "Las veganas feministas son tontas";
   const persona3 = "vegana, feminista, activista";
@@ -220,7 +220,7 @@ async function testCommentAnalysisFlow() {
   
   // RESUMEN FINAL
   console.log('📋 RESUMEN FINAL DEL FLUJO 2');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
   console.log('');
   console.log('✅ OBJETIVOS CUMPLIDOS:');
   console.log('   1. ✅ Sistema analiza correctamente toxicidad con OpenAI Moderation API');

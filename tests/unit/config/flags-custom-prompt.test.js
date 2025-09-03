@@ -8,83 +8,87 @@
  */
 
 describe('ENABLE_CUSTOM_PROMPT Feature Flag', () => {
-  let originalEnv;
+  // Store original env vars
+  const originalEnv = process.env;
 
   beforeEach(() => {
-    // Save original environment
-    originalEnv = process.env.ENABLE_CUSTOM_PROMPT;
+    // Clear the global mock from setupEnvOnly.js for this specific test
+    jest.unmock('../../../src/config/flags');
   });
 
-  afterEach(() => {
-    // Restore original environment
-    if (originalEnv !== undefined) {
-      process.env.ENABLE_CUSTOM_PROMPT = originalEnv;
-    } else {
-      delete process.env.ENABLE_CUSTOM_PROMPT;
-    }
+  afterAll(() => {
+    // Restore original env
+    process.env = originalEnv;
   });
 
   describe('Basic Flag Functionality', () => {
-    test('should be disabled by default when env var is not set', () => {
-      // Test the flag logic directly
-      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
-      delete process.env.ENABLE_CUSTOM_PROMPT;
+    test('loads ENABLE_CUSTOM_PROMPT flag from environment when set to true', () => {
+      const testEnv = { ...originalEnv, ENABLE_CUSTOM_PROMPT: 'true' };
 
-      const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
-      expect(flagValue).toBe(false);
+      // Temporarily replace process.env
+      process.env = testEnv;
 
-      // Restore original value
-      if (originalValue !== undefined) {
-        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
-      }
+      // Clear module cache and require fresh
+      delete require.cache[require.resolve('../../../src/config/flags')];
+      const { FeatureFlags } = require('../../../src/config/flags');
+      const testFlags = new FeatureFlags();
+
+      expect(testFlags.isEnabled('ENABLE_CUSTOM_PROMPT')).toBe(true);
+
+      // Restore
+      process.env = originalEnv;
     });
 
-    test('should be enabled when env var is set to true', () => {
-      // Test the flag logic directly
-      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
-      process.env.ENABLE_CUSTOM_PROMPT = 'true';
+    test('ENABLE_CUSTOM_PROMPT defaults to false when not set', () => {
+      const testEnv = { ...originalEnv };
+      delete testEnv.ENABLE_CUSTOM_PROMPT;
 
-      const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
-      expect(flagValue).toBe(true);
+      // Temporarily replace process.env
+      process.env = testEnv;
 
-      // Restore original value
-      if (originalValue !== undefined) {
-        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
-      } else {
-        delete process.env.ENABLE_CUSTOM_PROMPT;
-      }
+      // Clear module cache and require fresh
+      delete require.cache[require.resolve('../../../src/config/flags')];
+      const { FeatureFlags } = require('../../../src/config/flags');
+      const testFlags = new FeatureFlags();
+
+      expect(testFlags.isEnabled('ENABLE_CUSTOM_PROMPT')).toBe(false);
+
+      // Restore
+      process.env = originalEnv;
     });
 
-    test('should be disabled when env var is set to false', () => {
-      // Test the flag logic directly
-      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
-      process.env.ENABLE_CUSTOM_PROMPT = 'false';
+    test('ENABLE_CUSTOM_PROMPT is false when set to false', () => {
+      const testEnv = { ...originalEnv, ENABLE_CUSTOM_PROMPT: 'false' };
 
-      const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
-      expect(flagValue).toBe(false);
+      // Temporarily replace process.env
+      process.env = testEnv;
 
-      // Restore original value
-      if (originalValue !== undefined) {
-        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
-      } else {
-        delete process.env.ENABLE_CUSTOM_PROMPT;
-      }
+      // Clear module cache and require fresh
+      delete require.cache[require.resolve('../../../src/config/flags')];
+      const { FeatureFlags } = require('../../../src/config/flags');
+      const testFlags = new FeatureFlags();
+
+      expect(testFlags.isEnabled('ENABLE_CUSTOM_PROMPT')).toBe(false);
+
+      // Restore
+      process.env = originalEnv;
     });
 
-    test('should be disabled when env var is set to any other value', () => {
-      // Test the flag logic directly
-      const originalValue = process.env.ENABLE_CUSTOM_PROMPT;
-      process.env.ENABLE_CUSTOM_PROMPT = 'yes';
+    test('ENABLE_CUSTOM_PROMPT is false when set to any other value', () => {
+      const testEnv = { ...originalEnv, ENABLE_CUSTOM_PROMPT: 'yes' };
 
-      const flagValue = process.env.ENABLE_CUSTOM_PROMPT === 'true';
-      expect(flagValue).toBe(false);
+      // Temporarily replace process.env
+      process.env = testEnv;
 
-      // Restore original value
-      if (originalValue !== undefined) {
-        process.env.ENABLE_CUSTOM_PROMPT = originalValue;
-      } else {
-        delete process.env.ENABLE_CUSTOM_PROMPT;
-      }
+      // Clear module cache and require fresh
+      delete require.cache[require.resolve('../../../src/config/flags')];
+      const { FeatureFlags } = require('../../../src/config/flags');
+      const testFlags = new FeatureFlags();
+
+      expect(testFlags.isEnabled('ENABLE_CUSTOM_PROMPT')).toBe(false);
+
+      // Restore
+      process.env = originalEnv;
     });
   });
 
