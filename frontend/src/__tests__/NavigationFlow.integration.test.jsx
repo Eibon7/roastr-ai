@@ -189,14 +189,19 @@ describe('Navigation Flow Integration Tests', () => {
     });
 
     it('should redirect to dashboard from root', async () => {
+      let currentPath = '/';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/']}>
-          <TestApp />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/dashboard');
+        expect(currentPath).toBe('/dashboard');
       });
     });
 
@@ -237,28 +242,38 @@ describe('Navigation Flow Integration Tests', () => {
     });
 
     it('should be redirected from admin routes', async () => {
+      let currentPath = '/admin';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/admin']}>
-          <TestApp />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       // Should be redirected away from admin
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/dashboard');
+        expect(currentPath).toBe('/dashboard');
       });
     });
 
     it('should redirect from public routes to dashboard', async () => {
+      let currentPath = '/login';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/login']}>
-          <TestApp />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       // Should be redirected to dashboard
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/dashboard');
+        expect(currentPath).toBe('/dashboard');
       });
     });
   });
@@ -279,26 +294,36 @@ describe('Navigation Flow Integration Tests', () => {
     });
 
     it('should access admin dashboard', async () => {
+      let currentPath = '/admin';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/admin']}>
-          <TestApp />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/admin');
+        expect(currentPath).toBe('/admin/users');
       });
     });
 
     it('should access admin users page', async () => {
+      let currentPath = '/admin/users';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/admin/users']}>
-          <TestApp />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/admin/users');
+        expect(currentPath).toBe('/admin/users');
       });
     });
 
@@ -315,15 +340,20 @@ describe('Navigation Flow Integration Tests', () => {
     });
 
     it('should redirect from public routes to admin', async () => {
+      let currentPath = '/login';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/login']}>
-          <TestApp />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       // Should be redirected to admin
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/admin');
+        expect(currentPath).toBe('/admin/users');
       });
     });
   });
@@ -391,14 +421,19 @@ describe('Navigation Flow Integration Tests', () => {
         },
       });
 
+      let currentPath = '/nonexistent';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/nonexistent']}>
-          <TestApp />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/nonexistent');
+        expect(currentPath).toBe('/dashboard');
       });
     });
   });

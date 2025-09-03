@@ -12,7 +12,7 @@ import { useFeatureFlags } from '../hooks/useFeatureFlags';
  * Solo visible cuando el feature flag ENABLE_SHOP está activo
  */
 export default function Shop() {
-  const { flags, loading: flagsLoading } = useFeatureFlags();
+  const { flags = {}, loading: flagsLoading } = useFeatureFlags();
 
   // Determine if purchases are enabled based on feature flag
   const purchasesEnabled = flags.ENABLE_SHOP === true;

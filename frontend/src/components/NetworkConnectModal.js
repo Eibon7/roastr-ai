@@ -44,13 +44,13 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
   const networkColor = NETWORK_COLORS[network] || 'bg-gray-600 text-white';
 
   // Validation utilities
-  const validateCredentials = () => {
+  const validateCredentials = (credentialsToValidate = credentials) => {
     const errors = {};
     const trimmedCredentials = {};
 
     // Trim and validate each field
-    Object.keys(credentials).forEach(key => {
-      const value = credentials[key];
+    Object.keys(credentialsToValidate).forEach(key => {
+      const value = credentialsToValidate[key];
       if (typeof value === 'string') {
         trimmedCredentials[key] = value.trim();
       } else {
@@ -88,8 +88,23 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
       }
     }
 
+    return { isValid: Object.keys(errors).length === 0, trimmedCredentials, errors };
+  };
+
+  // Live validation - check if form is valid without setting errors
+  const isFormValid = () => {
+    const { isValid } = validateCredentials();
+    return isValid;
+  };
+
+  // Handle input changes with live validation
+  const handleInputChange = (field, value) => {
+    const newCredentials = { ...credentials, [field]: value };
+    setCredentials(newCredentials);
+
+    // Run validation and update errors immediately
+    const { errors } = validateCredentials(newCredentials);
     setValidationErrors(errors);
-    return { isValid: Object.keys(errors).length === 0, trimmedCredentials };
   };
 
   const handleCredentialsSubmit = async (e) => {
@@ -98,7 +113,8 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
     setError(null);
 
     // Validate credentials before submission
-    const { isValid, trimmedCredentials } = validateCredentials();
+    const { isValid, trimmedCredentials, errors } = validateCredentials();
+    setValidationErrors(errors);
     if (!isValid) {
       setLoading(false);
       return;
@@ -239,7 +255,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                     <input
                       type="password"
                       value={credentials.apiKey}
-                      onChange={(e) => setCredentials(prev => ({ ...prev, apiKey: e.target.value }))}
+                      onChange={(e) => handleInputChange('apiKey', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                         validationErrors.apiKey ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
                       }`}
@@ -259,7 +275,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                     <input
                       type="password"
                       value={credentials.accessToken}
-                      onChange={(e) => setCredentials(prev => ({ ...prev, accessToken: e.target.value }))}
+                      onChange={(e) => handleInputChange('accessToken', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                         validationErrors.accessToken ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
                       }`}
@@ -284,7 +300,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                     <input
                       type="text"
                       value={credentials.username}
-                      onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
+                      onChange={(e) => handleInputChange('username', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                         validationErrors.username ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
                       }`}
@@ -303,7 +319,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                     <input
                       type="password"
                       value={credentials.password}
-                      onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                         validationErrors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
                       }`}
@@ -334,7 +350,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || Object.keys(validationErrors).length > 0}
+                  disabled={loading || !isFormValid()}
                   className={`flex-1 px-4 py-2 text-sm font-medium text-white ${networkColor.includes('gradient') ? networkColor : networkColor.replace('text-white', '')} hover:opacity-90 rounded-lg transition-opacity disabled:opacity-50`}
                 >
                   {loading ? 'Conectando...' : 'Conectar'}
