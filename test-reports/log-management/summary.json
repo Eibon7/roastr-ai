@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-09-02T09:45:16.319Z",
+  "totalSuites": 4,
+  "passedSuites": 0,
+  "failedSuites": 4,
+  "results": [
+    {
+      "success": false,
+      "suite": "Log Backup Service Unit Tests",
+      "error": "Command failed: npx jest --config /Users/emiliopostigo/roastr-ai/roastr-ai/temp-jest-config.json --verbose"
+    },
+    {
+      "success": false,
+      "suite": "Log Maintenance Unit Tests",
+      "error": "Command failed: npx jest --config /Users/emiliopostigo/roastr-ai/roastr-ai/temp-jest-config.json --verbose"
+    },
+    {
+      "success": false,
+      "suite": "Alert Service Unit Tests",
+      "error": "Command failed: npx jest --config /Users/emiliopostigo/roastr-ai/roastr-ai/temp-jest-config.json --verbose"
+    },
+    {
+      "success": false,
+      "suite": "CLI Integration Tests",
+      "error": "Command failed: npx jest --config /Users/emiliopostigo/roastr-ai/roastr-ai/temp-jest-config.json --verbose"
+    }
+  ]
+}
