@@ -116,18 +116,18 @@ export default function Sidebar() {
                     to={item.path}
                     onClick={isMobile ? closeSidebar : undefined}
                     className={({ isActive }) =>
-                      `flex items-center justify-center w-12 h-12 rounded-lg transition-colors group relative ${
+                      `flex items-center justify-center w-12 h-12 rounded-lg transition-colors group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                         isActive
                           ? 'bg-gray-900 text-white'
                           : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
                       }`
                     }
-                    title={item.name}
+                    aria-label={item.name}
                   >
                     <IconComponent className="h-5 w-5" />
 
                     {/* Tooltip */}
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50" aria-hidden="true">
                       {item.name}
                     </div>
                   </NavLink>

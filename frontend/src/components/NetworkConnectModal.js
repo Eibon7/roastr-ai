@@ -4,8 +4,9 @@
  * Modal for connecting a new social media account with credentials
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NETWORK_ICONS, NETWORK_COLORS } from '../mocks/social';
+import { apiClient } from '../lib/api';
 
 const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen }) => {
   const [step, setStep] = useState(1); // 1: credentials, 2: validation, 3: success
@@ -18,40 +19,113 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
     accessToken: ''
   });
   const [validationResult, setValidationResult] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+      setLoading(false);
+      setError(null);
+      setCredentials({
+        username: '',
+        password: '',
+        apiKey: '',
+        accessToken: ''
+      });
+      setValidationResult(null);
+      setValidationErrors({});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const networkIcon = NETWORK_ICONS[network] || '📱';
   const networkColor = NETWORK_COLORS[network] || 'bg-gray-600 text-white';
 
+  // Validation utilities
+  const validateCredentials = () => {
+    const errors = {};
+    const trimmedCredentials = {};
+
+    // Trim and validate each field
+    Object.keys(credentials).forEach(key => {
+      const value = credentials[key];
+      if (typeof value === 'string') {
+        trimmedCredentials[key] = value.trim();
+      } else {
+        trimmedCredentials[key] = value;
+      }
+    });
+
+    if (network === 'twitter') {
+      // Validate API Key
+      if (!trimmedCredentials.apiKey) {
+        errors.apiKey = 'API Key es requerido';
+      } else if (trimmedCredentials.apiKey.length < 10) {
+        errors.apiKey = 'API Key debe tener al menos 10 caracteres';
+      }
+
+      // Validate Access Token
+      if (!trimmedCredentials.accessToken) {
+        errors.accessToken = 'Access Token es requerido';
+      } else if (trimmedCredentials.accessToken.length < 10) {
+        errors.accessToken = 'Access Token debe tener al menos 10 caracteres';
+      }
+    } else if (network === 'instagram' || network === 'facebook') {
+      // Validate username
+      if (!trimmedCredentials.username) {
+        errors.username = 'Usuario es requerido';
+      } else if (trimmedCredentials.username.length < 2) {
+        errors.username = 'Usuario debe tener al menos 2 caracteres';
+      }
+
+      // Validate password
+      if (!trimmedCredentials.password) {
+        errors.password = 'Contraseña es requerida';
+      } else if (trimmedCredentials.password.length < 6) {
+        errors.password = 'Contraseña debe tener al menos 6 caracteres';
+      }
+    }
+
+    setValidationErrors(errors);
+    return { isValid: Object.keys(errors).length === 0, trimmedCredentials };
+  };
+
   const handleCredentialsSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    // Validate credentials before submission
+    const { isValid, trimmedCredentials } = validateCredentials();
+    if (!isValid) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Step 1: Submit credentials and validate connection
-      const response = await fetch('/api/user/integrations/connect', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          platform: network,
-          credentials: credentials
-        })
+      // Use apiClient for secure authenticated requests
+      const response = await apiClient.request('POST', '/user/integrations/connect', {
+        platform: network,
+        credentials: trimmedCredentials
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setValidationResult(data);
+      if (response && !response.error) {
+        setValidationResult(response);
+        // Clear credentials immediately after successful submission
+        setCredentials({
+          username: '',
+          password: '',
+          apiKey: '',
+          accessToken: ''
+        });
         setStep(2);
       } else {
-        setError(data.error || 'Error al conectar la cuenta');
+        setError(response?.error || 'Error al conectar la cuenta');
       }
     } catch (err) {
+      console.error('Connection error:', err);
       setError('Error de conexión. Por favor, inténtalo de nuevo.');
     } finally {
       setLoading(false);
@@ -62,33 +136,33 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
     setLoading(true);
     setError(null);
 
+    // Guard against null/undefined validationResult
+    if (!validationResult || !validationResult.accountId) {
+      setError('Datos de validación no disponibles. Por favor, intenta conectar de nuevo.');
+      setLoading(false);
+      setStep(1); // Go back to credentials step
+      return;
+    }
+
     try {
-      // Step 2: Test if we can post from the connected account
-      const response = await fetch('/api/user/integrations/test-response', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          platform: network,
-          accountId: validationResult.accountId
-        })
+      // Use apiClient for secure authenticated requests
+      const response = await apiClient.request('POST', '/user/integrations/test-response', {
+        platform: network,
+        accountId: validationResult.accountId
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response && !response.error) {
         setStep(3);
         // Call the parent's onConnect with the successful connection data
         setTimeout(() => {
-          onConnect(network, data);
+          onConnect(network, response);
           onClose();
         }, 2000);
       } else {
-        setError(data.error || 'No se pudo validar la capacidad de respuesta');
+        setError(response?.error || 'No se pudo validar la capacidad de respuesta');
       }
     } catch (err) {
+      console.error('Validation error:', err);
       setError('Error al validar la cuenta. Por favor, inténtalo de nuevo.');
     } finally {
       setLoading(false);
@@ -163,26 +237,40 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       API Key
                     </label>
                     <input
-                      type="text"
+                      type="password"
                       value={credentials.apiKey}
                       onChange={(e) => setCredentials(prev => ({ ...prev, apiKey: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                        validationErrors.apiKey ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
                       placeholder="Tu API Key de Twitter"
+                      autoComplete="new-password"
+                      aria-label="API Key de Twitter"
                       required
                     />
+                    {validationErrors.apiKey && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.apiKey}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Access Token
                     </label>
                     <input
-                      type="text"
+                      type="password"
                       value={credentials.accessToken}
                       onChange={(e) => setCredentials(prev => ({ ...prev, accessToken: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                        validationErrors.accessToken ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
                       placeholder="Tu Access Token de Twitter"
+                      autoComplete="new-password"
+                      aria-label="Access Token de Twitter"
                       required
                     />
+                    {validationErrors.accessToken && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.accessToken}</p>
+                    )}
                   </div>
                 </>
               )}
@@ -197,10 +285,16 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       type="text"
                       value={credentials.username}
                       onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                        validationErrors.username ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
                       placeholder="Tu nombre de usuario"
+                      autoComplete="username"
                       required
                     />
+                    {validationErrors.username && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.username}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -210,10 +304,16 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       type="password"
                       value={credentials.password}
                       onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                        validationErrors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
                       placeholder="Tu contraseña"
+                      autoComplete="current-password"
                       required
                     />
+                    {validationErrors.password && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.password}</p>
+                    )}
                   </div>
                 </>
               )}
@@ -234,7 +334,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || Object.keys(validationErrors).length > 0}
                   className={`flex-1 px-4 py-2 text-sm font-medium text-white ${networkColor.includes('gradient') ? networkColor : networkColor.replace('text-white', '')} hover:opacity-90 rounded-lg transition-opacity disabled:opacity-50`}
                 >
                   {loading ? 'Conectando...' : 'Conectar'}

@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react';
 import { isMockModeEnabled } from '../lib/mockMode';
 
+// Shared fallback flags constant used across all fallback scenarios
+const FALLBACK_FLAGS = {
+  ENABLE_SHOP: false,
+  ENABLE_STYLE_PROFILE: true,
+  ENABLE_RQC: false,
+  ENABLE_SHIELD: false,
+  ENABLE_BILLING: false,
+};
+
+// Mock flags for development mode (extends fallback with mock-specific overrides)
+const MOCK_FLAGS = {
+  ...FALLBACK_FLAGS,
+  ENABLE_RQC: true,
+  ENABLE_SHIELD: true,
+  ENABLE_BILLING: true,
+};
+
 /**
  * Hook para acceder a los feature flags del sistema
  * En modo mock, devuelve flags predeterminados para desarrollo
@@ -15,17 +32,10 @@ export const useFeatureFlags = () => {
     const fetchFlags = async () => {
       try {
         setLoading(true);
-        
+
         // En modo mock, usar flags predeterminados
         if (isMockModeEnabled()) {
-          const mockFlags = {
-            ENABLE_SHOP: false, // Shop deshabilitado por defecto en mock
-            ENABLE_STYLE_PROFILE: true,
-            ENABLE_RQC: true,
-            ENABLE_SHIELD: true,
-            ENABLE_BILLING: true,
-          };
-          setFlags(mockFlags);
+          setFlags(MOCK_FLAGS);
           setLoading(false);
           return;
         }
@@ -43,25 +53,13 @@ export const useFeatureFlags = () => {
           setFlags(data.flags || {});
         } else {
           // Fallback a flags por defecto si falla la API
-          setFlags({
-            ENABLE_SHOP: false,
-            ENABLE_STYLE_PROFILE: true,
-            ENABLE_RQC: false,
-            ENABLE_SHIELD: false,
-            ENABLE_BILLING: false,
-          });
+          setFlags(FALLBACK_FLAGS);
         }
       } catch (err) {
         console.error('Error fetching feature flags:', err);
         setError(err.message);
         // Fallback a flags por defecto
-        setFlags({
-          ENABLE_SHOP: false,
-          ENABLE_STYLE_PROFILE: true,
-          ENABLE_RQC: false,
-          ENABLE_SHIELD: false,
-          ENABLE_BILLING: false,
-        });
+        setFlags(FALLBACK_FLAGS);
       } finally {
         setLoading(false);
       }

@@ -1,9 +1,95 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import App from '../App';
+import { MemoryRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider } from '../contexts/AuthContext';
+import { Login, Register, ResetPassword } from '../pages/auth';
+import AuthCallback from '../pages/auth-callback';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import UserDetail from '../pages/admin/UserDetail';
+import AdminUsersPage from '../pages/admin/users';
+import AdminLayout from '../components/admin/AdminLayout';
+import AdminMetrics from '../pages/admin/AdminMetrics';
+import AdminLogs from '../pages/admin/AdminLogs';
+import AdminSettings from '../pages/admin/AdminSettings';
+import AppShell from '../components/AppShell';
+import Dashboard from '../pages/dashboard';
+import Compose from '../pages/Compose';
+import Integrations from '../pages/Integrations';
+import Billing from '../pages/Billing';
+import Settings from '../pages/Settings';
+import Logs from '../pages/Logs';
+import PlanPicker from '../pages/PlanPicker';
+import Connect from '../pages/Connect';
+import StyleProfile from '../pages/StyleProfile';
+import Configuration from '../pages/Configuration';
+import Approval from '../pages/Approval';
+import AccountsPage from '../pages/AccountsPage';
+import Pricing from '../pages/Pricing';
+import Shop from '../pages/Shop';
+import ProtectedRoute, { AdminRoute, AuthRoute, PublicRoute } from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
 import { isMockModeEnabled } from '../lib/mockMode';
+
+// Helper component to track current location
+const LocationTracker = ({ onLocationChange }) => {
+  const location = useLocation();
+  React.useEffect(() => {
+    onLocationChange(location.pathname);
+  }, [location.pathname, onLocationChange]);
+  return null;
+};
+
+// Test version of App without Router wrapper
+const TestApp = ({ onLocationChange }) => {
+  return (
+    <AuthProvider>
+      <div className="App">
+        {onLocationChange && <LocationTracker onLocationChange={onLocationChange} />}
+        <Routes>
+          {/* Public routes - redirect if already authenticated */}
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+
+          {/* Protected routes with AppShell - require authentication */}
+          <Route path="/" element={<AuthRoute><AppShell /></AuthRoute>}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="compose" element={<Compose />} />
+            <Route path="integrations" element={<Integrations />} />
+            <Route path="integrations/connect" element={<Connect />} />
+            <Route path="configuration" element={<Configuration />} />
+            <Route path="approval" element={<Approval />} />
+            <Route path="billing" element={<Billing />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="logs" element={<Logs />} />
+            <Route path="plans" element={<PlanPicker />} />
+            <Route path="pricing" element={<Pricing />} />
+            <Route path="style-profile" element={<StyleProfile />} />
+            <Route path="style-profile/generate" element={<StyleProfile />} />
+            <Route path="accounts" element={<AccountsPage />} />
+            <Route path="profile" element={<Settings />} />
+            <Route path="shop" element={<Shop />} />
+          </Route>
+
+          {/* Admin routes with AdminLayout - require admin permissions */}
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<Navigate to="/admin/users" replace />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="users/:userId" element={<UserDetail />} />
+            <Route path="metrics" element={<AdminMetrics />} />
+            <Route path="logs" element={<AdminLogs />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+
+          {/* 404 fallback */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </div>
+    </AuthProvider>
+  );
+};
 
 // Mock dependencies
 jest.mock('../contexts/AuthContext');
@@ -45,22 +131,27 @@ describe('Navigation Flow Integration Tests', () => {
     });
 
     it('should redirect to login when accessing protected routes', async () => {
+      let currentPath = '/dashboard';
+      const handleLocationChange = (path) => {
+        currentPath = path;
+      };
+
       render(
         <MemoryRouter initialEntries={['/dashboard']}>
-          <App />
+          <TestApp onLocationChange={handleLocationChange} />
         </MemoryRouter>
       );
 
       // Should be redirected to login
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/dashboard');
+        expect(currentPath).toBe('/login');
       });
     });
 
     it('should show login page when accessing /login', async () => {
       render(
         <MemoryRouter initialEntries={['/login']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -72,7 +163,7 @@ describe('Navigation Flow Integration Tests', () => {
     it('should show register page when accessing /register', async () => {
       render(
         <MemoryRouter initialEntries={['/register']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -100,19 +191,19 @@ describe('Navigation Flow Integration Tests', () => {
     it('should redirect to dashboard from root', async () => {
       render(
         <MemoryRouter initialEntries={['/']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/');
+        expect(window.location.pathname).toBe('/dashboard');
       });
     });
 
     it('should access dashboard successfully', async () => {
       render(
         <MemoryRouter initialEntries={['/dashboard']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -124,7 +215,7 @@ describe('Navigation Flow Integration Tests', () => {
     it('should access settings page', async () => {
       render(
         <MemoryRouter initialEntries={['/settings']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -136,7 +227,7 @@ describe('Navigation Flow Integration Tests', () => {
     it('should access shop page when feature flag is enabled', async () => {
       render(
         <MemoryRouter initialEntries={['/shop']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -148,26 +239,26 @@ describe('Navigation Flow Integration Tests', () => {
     it('should be redirected from admin routes', async () => {
       render(
         <MemoryRouter initialEntries={['/admin']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
       // Should be redirected away from admin
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/admin');
+        expect(window.location.pathname).toBe('/dashboard');
       });
     });
 
     it('should redirect from public routes to dashboard', async () => {
       render(
         <MemoryRouter initialEntries={['/login']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
       // Should be redirected to dashboard
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/login');
+        expect(window.location.pathname).toBe('/dashboard');
       });
     });
   });
@@ -190,7 +281,7 @@ describe('Navigation Flow Integration Tests', () => {
     it('should access admin dashboard', async () => {
       render(
         <MemoryRouter initialEntries={['/admin']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -202,7 +293,7 @@ describe('Navigation Flow Integration Tests', () => {
     it('should access admin users page', async () => {
       render(
         <MemoryRouter initialEntries={['/admin/users']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -214,7 +305,7 @@ describe('Navigation Flow Integration Tests', () => {
     it('should also access normal user routes', async () => {
       render(
         <MemoryRouter initialEntries={['/dashboard']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -226,13 +317,13 @@ describe('Navigation Flow Integration Tests', () => {
     it('should redirect from public routes to admin', async () => {
       render(
         <MemoryRouter initialEntries={['/login']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
       // Should be redirected to admin
       await waitFor(() => {
-        expect(window.location.pathname).toBe('/login');
+        expect(window.location.pathname).toBe('/admin');
       });
     });
   });
@@ -248,7 +339,7 @@ describe('Navigation Flow Integration Tests', () => {
 
       render(
         <MemoryRouter initialEntries={['/dashboard']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -275,7 +366,7 @@ describe('Navigation Flow Integration Tests', () => {
 
       render(
         <MemoryRouter initialEntries={['/shop']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 
@@ -302,7 +393,7 @@ describe('Navigation Flow Integration Tests', () => {
 
       render(
         <MemoryRouter initialEntries={['/nonexistent']}>
-          <App />
+          <TestApp />
         </MemoryRouter>
       );
 

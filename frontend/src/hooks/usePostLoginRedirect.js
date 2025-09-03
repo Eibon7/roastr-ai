@@ -18,10 +18,16 @@ export const usePostLoginRedirect = () => {
     // Solo redirigir si el usuario está autenticado
     if (isAuthenticated && userData) {
       if (isAdmin) {
-        console.log('Redirecting admin user to backoffice');
+        // Development-only logging
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Redirecting admin user to backoffice');
+        }
         navigate('/admin');
       } else {
-        console.log('Redirecting normal user to dashboard');
+        // Development-only logging
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Redirecting normal user to dashboard');
+        }
         navigate('/dashboard');
       }
     }

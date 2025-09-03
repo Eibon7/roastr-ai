@@ -6,11 +6,17 @@ import { useAuth } from '../../contexts/AuthContext';
 // Mock the useAuth hook
 jest.mock('../../contexts/AuthContext');
 
-// Mock react-router-dom
+// Mock react-router-dom completely
 jest.mock('react-router-dom', () => ({
   Navigate: ({ to }) => <div data-testid="navigate" data-to={to}>Redirecting to {to}</div>,
   useLocation: () => ({ pathname: '/test' }),
+  MemoryRouter: ({ children, initialEntries }) => <div data-testid="memory-router">{children}</div>,
 }));
+
+// Create a mock MemoryRouter component for testing
+const MockMemoryRouter = ({ children, initialEntries }) => (
+  <div data-testid="memory-router">{children}</div>
+);
 
 const TestComponent = () => <div>Test Content</div>;
 
@@ -104,11 +110,11 @@ describe('ProtectedRoute', () => {
       });
 
       render(
-        <BrowserRouter>
+        <MockMemoryRouter initialEntries={['/']}>
           <ProtectedRoute requireAuth={true} requireAdmin={true}>
             <TestComponent />
           </ProtectedRoute>
-        </BrowserRouter>
+        </MockMemoryRouter>
       );
 
       expect(screen.getByText('Test Content')).toBeInTheDocument();
@@ -123,11 +129,11 @@ describe('ProtectedRoute', () => {
       });
 
       render(
-        <MemoryRouter initialEntries={['/admin']}>
+        <MockMemoryRouter initialEntries={['/admin']}>
           <ProtectedRoute requireAuth={true} requireAdmin={true}>
             <TestComponent />
           </ProtectedRoute>
-        </MemoryRouter>
+        </MockMemoryRouter>
       );
 
       expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
@@ -144,11 +150,11 @@ describe('ProtectedRoute', () => {
       });
 
       render(
-        <MemoryRouter initialEntries={['/admin']}>
+        <MockMemoryRouter initialEntries={['/admin']}>
           <ProtectedRoute requireAuth={true} requireAdmin={true} redirectTo="/custom">
             <TestComponent />
           </ProtectedRoute>
-        </MemoryRouter>
+        </MockMemoryRouter>
       );
 
       expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
@@ -166,11 +172,11 @@ describe('AdminRoute', () => {
     });
 
     render(
-      <BrowserRouter>
+      <MockMemoryRouter initialEntries={['/']}>
         <AdminRoute>
           <TestComponent />
         </AdminRoute>
-      </BrowserRouter>
+      </MockMemoryRouter>
     );
 
     expect(screen.getByText('Test Content')).toBeInTheDocument();
@@ -187,11 +193,11 @@ describe('AuthRoute', () => {
     });
 
     render(
-      <BrowserRouter>
+      <MockMemoryRouter initialEntries={['/']}>
         <AuthRoute>
           <TestComponent />
         </AuthRoute>
-      </BrowserRouter>
+      </MockMemoryRouter>
     );
 
     expect(screen.getByText('Test Content')).toBeInTheDocument();
@@ -208,11 +214,11 @@ describe('PublicRoute', () => {
     });
 
     render(
-      <BrowserRouter>
+      <MockMemoryRouter initialEntries={['/']}>
         <PublicRoute>
           <TestComponent />
         </PublicRoute>
-      </BrowserRouter>
+      </MockMemoryRouter>
     );
 
     expect(screen.getByText('Test Content')).toBeInTheDocument();
@@ -227,11 +233,11 @@ describe('PublicRoute', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/login']}>
+      <MockMemoryRouter initialEntries={['/login']}>
         <PublicRoute>
           <TestComponent />
         </PublicRoute>
-      </MemoryRouter>
+      </MockMemoryRouter>
     );
 
     expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
@@ -246,11 +252,11 @@ describe('PublicRoute', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/login']}>
+      <MockMemoryRouter initialEntries={['/login']}>
         <PublicRoute>
           <TestComponent />
         </PublicRoute>
-      </MemoryRouter>
+      </MockMemoryRouter>
     );
 
     expect(screen.queryByText('Test Content')).not.toBeInTheDocument();

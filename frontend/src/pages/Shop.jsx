@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { ShoppingBag, Star, Zap, Shield, Palette, Crown } from 'lucide-react';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 /**
  * Shop Page Component
@@ -11,6 +12,11 @@ import { ShoppingBag, Star, Zap, Shield, Palette, Crown } from 'lucide-react';
  * Solo visible cuando el feature flag ENABLE_SHOP está activo
  */
 export default function Shop() {
+  const { flags, loading: flagsLoading } = useFeatureFlags();
+
+  // Determine if purchases are enabled based on feature flag
+  const purchasesEnabled = flags.ENABLE_SHOP === true;
+
   const addons = [
     {
       id: 'premium-tones',
@@ -156,9 +162,9 @@ export default function Shop() {
                   onClick={() => handlePurchase(addon.id)}
                   className="w-full"
                   variant={addon.popular ? 'default' : 'outline'}
-                  disabled={true} // Disabled until shop is ready
+                  disabled={flagsLoading || !purchasesEnabled}
                 >
-                  {addon.popular ? 'Obtener ahora' : 'Próximamente'}
+                  {flagsLoading ? 'Cargando...' : (purchasesEnabled ? (addon.popular ? 'Obtener ahora' : 'Comprar') : 'Próximamente')}
                 </Button>
               </CardContent>
             </Card>

@@ -411,18 +411,32 @@ export default function Settings() {
   // Logout handler
   const handleLogout = async () => {
     try {
-      // Call logout endpoint if it exists
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // First, sign out from Supabase client session
+      await authHelpers.signOut();
+
+      // Optionally call backend logout endpoint to clear server-side sessions
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (backendError) {
+        // Backend logout is optional, don't fail if it errors
+        console.error('Backend logout failed:', backendError);
+      }
+
+      // Clear any remaining localStorage keys
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Redirect to login
+      window.location.href = '/login';
     } catch (error) {
       console.error('Error during logout:', error);
-    } finally {
-      // Clear local storage and redirect regardless of API response
+      // Even if signOut fails, clear localStorage and redirect
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

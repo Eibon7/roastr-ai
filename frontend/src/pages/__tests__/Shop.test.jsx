@@ -5,9 +5,21 @@ import Shop from '../Shop';
 // Mock console.log to test purchase handler
 const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
 
+// Mock useFeatureFlags hook
+jest.mock('../../hooks/useFeatureFlags', () => ({
+  useFeatureFlags: jest.fn()
+}));
+
+const { useFeatureFlags } = require('../../hooks/useFeatureFlags');
+
 describe('Shop', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default mock: shop disabled, not loading
+    useFeatureFlags.mockReturnValue({
+      flags: { ENABLE_SHOP: false },
+      loading: false
+    });
   });
 
   afterAll(() => {
@@ -63,12 +75,12 @@ describe('Shop', () => {
     expect(screen.getByText(/Métricas de engagement detalladas/)).toBeInTheDocument();
   });
 
-  it('should have disabled purchase buttons', () => {
+  it('should have disabled purchase buttons when shop is disabled', () => {
     render(<Shop />);
 
     const buttons = screen.getAllByRole('button');
-    const purchaseButtons = buttons.filter(button => 
-      button.textContent === 'Obtener ahora' || button.textContent === 'Próximamente'
+    const purchaseButtons = buttons.filter(button =>
+      button.textContent.includes('Próximamente')
     );
 
     purchaseButtons.forEach(button => {
@@ -76,13 +88,60 @@ describe('Shop', () => {
     });
   });
 
-  it('should call handlePurchase when button is clicked (if enabled)', () => {
+  it('should show loading state when flags are loading', () => {
+    useFeatureFlags.mockReturnValue({
+      flags: {},
+      loading: true
+    });
+
     render(<Shop />);
 
-    // Since buttons are disabled, we can't test the actual click
-    // But we can verify the console.log would be called with correct addon ID
-    // This is more of a code structure test
-    expect(mockConsoleLog).not.toHaveBeenCalled();
+    const buttons = screen.getAllByRole('button');
+    const purchaseButtons = buttons.filter(button =>
+      button.textContent.includes('Cargando...')
+    );
+
+    expect(purchaseButtons.length).toBeGreaterThan(0);
+    purchaseButtons.forEach(button => {
+      expect(button).toBeDisabled();
+    });
+  });
+
+  it('should enable purchase buttons when shop is enabled', () => {
+    useFeatureFlags.mockReturnValue({
+      flags: { ENABLE_SHOP: true },
+      loading: false
+    });
+
+    render(<Shop />);
+
+    const buttons = screen.getAllByRole('button');
+    const purchaseButtons = buttons.filter(button =>
+      button.textContent === 'Obtener ahora' || button.textContent === 'Comprar'
+    );
+
+    purchaseButtons.forEach(button => {
+      expect(button).not.toBeDisabled();
+    });
+  });
+
+  it('should call handlePurchase when button is clicked and shop is enabled', () => {
+    useFeatureFlags.mockReturnValue({
+      flags: { ENABLE_SHOP: true },
+      loading: false
+    });
+
+    render(<Shop />);
+
+    const buttons = screen.getAllByRole('button');
+    const firstPurchaseButton = buttons.find(button =>
+      button.textContent === 'Obtener ahora' || button.textContent === 'Comprar'
+    );
+
+    if (firstPurchaseButton) {
+      fireEvent.click(firstPurchaseButton);
+      expect(mockConsoleLog).toHaveBeenCalled();
+    }
   });
 
   it('should render contact information', () => {
