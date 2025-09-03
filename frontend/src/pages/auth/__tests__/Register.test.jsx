@@ -70,7 +70,7 @@ describe('Register Component', () => {
     expect(usernameInput).toHaveAttribute('required');
     expect(passwordInput).toHaveAttribute('type', 'password');
     expect(passwordInput).toHaveAttribute('required');
-    expect(passwordInput).toHaveAttribute('minLength', '6');
+    expect(passwordInput).toHaveAttribute('minlength', '6');
   });
 
   test('shows success UI after successful registration', async () => {
