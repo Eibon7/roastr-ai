@@ -11,7 +11,8 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  
+  const [timeoutId, setTimeoutId] = useState(null);
+
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
@@ -20,6 +21,15 @@ const Register = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [timeoutId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -38,23 +48,29 @@ const Register = () => {
     setIsLoading(true);
     setError(null);
 
-    const result = await authService.register(formData.username, formData.password);
-    
-    if (result.success) {
-      setSuccess(true);
-      // Redirect to login after a short delay
-      setTimeout(() => {
-        navigate('/login', { 
-          state: { 
-            message: 'Account created successfully! Please check your email to verify your account.' 
-          } 
-        });
-      }, 2000);
-    } else {
-      setError(result.message);
+    try {
+      const result = await authService.register(formData.username, formData.password);
+
+      if (result.success) {
+        setSuccess(true);
+        // Redirect to login after a short delay
+        const id = setTimeout(() => {
+          navigate('/login', {
+            state: {
+              message: 'Account created successfully! Please check your email to verify your account.'
+            }
+          });
+        }, 2000);
+        setTimeoutId(id);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   if (success) {

@@ -43,17 +43,23 @@ const Login = () => {
     setError(null);
     setShowRecovery(false);
 
-    const result = await authService.signIn(formData.username, formData.password);
-    
-    if (result.success) {
-      // Success - navigation will be handled by useEffect when auth state changes
-      console.log('Login successful');
-    } else {
-      setError(result.message);
+    try {
+      const result = await authService.signIn(formData.username, formData.password);
+
+      if (result.success) {
+        // Success - navigation will be handled by useEffect when auth state changes
+        console.log('Login successful');
+      } else {
+        setError(result.message);
+        setShowRecovery(true);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
       setShowRecovery(true);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleRecoveryEmail = async () => {
@@ -63,17 +69,23 @@ const Login = () => {
     }
 
     setRecoveryLoading(true);
-    const result = await authService.sendRecoveryEmail(formData.username);
-    
-    if (result.success) {
-      setRecoverySuccess(true);
-      setError(null);
-      setShowRecovery(false);
-    } else {
-      setError(result.message);
+
+    try {
+      const result = await authService.sendRecoveryEmail(formData.username);
+
+      if (result.success) {
+        setRecoverySuccess(true);
+        setError(null);
+        setShowRecovery(false);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Recovery email error:', error);
+      setError(error.message || 'Failed to send recovery email. Please try again.');
+    } finally {
+      setRecoveryLoading(false);
     }
-    
-    setRecoveryLoading(false);
   };
 
   if (recoverySuccess) {
