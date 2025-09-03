@@ -388,11 +388,11 @@ router.get('/flags', (req, res) => {
             error: 'Failed to retrieve feature flags',
             flags: {
                 ENABLE_SHOP: false,
-                ENABLE_STYLE_PROFILE: true,
+                ENABLE_STYLE_PROFILE: false,
                 ENABLE_RQC: false,
                 ENABLE_SHIELD: false,
                 ENABLE_BILLING: false,
-                ENABLE_MAGIC_LINK: true,
+                ENABLE_MAGIC_LINK: false,
             }
         });
     }

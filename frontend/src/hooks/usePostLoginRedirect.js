@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
  */
 export const usePostLoginRedirect = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { isAuthenticated, isAdmin, userData, loading } = useAuth();
 
   useEffect(() => {
@@ -17,24 +18,22 @@ export const usePostLoginRedirect = () => {
 
     // Solo redirigir si el usuario está autenticado
     if (isAuthenticated && userData) {
-      if (isAdmin) {
-        // Development-only logging
+      const target = isAdmin ? '/admin' : '/dashboard';
+      if (pathname !== target) {
         if (process.env.NODE_ENV === 'development') {
-          console.log('Redirecting admin user to backoffice');
+          console.log(
+            isAdmin
+              ? 'Redirecting admin user to backoffice'
+              : 'Redirecting normal user to dashboard'
+          );
         }
-        navigate('/admin');
-      } else {
-        // Development-only logging
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Redirecting normal user to dashboard');
-        }
-        navigate('/dashboard');
+        navigate(target, { replace: true });
       }
     }
-  }, [isAuthenticated, isAdmin, userData, loading, navigate]);
+  }, [isAuthenticated, isAdmin, userData, loading, navigate, pathname]);
 
   return {
-    isRedirecting: isAuthenticated && !loading,
+    isRedirecting: isAuthenticated && !loading && !!userData,
     targetRoute: isAuthenticated ? (isAdmin ? '/admin' : '/dashboard') : null
   };
 };
