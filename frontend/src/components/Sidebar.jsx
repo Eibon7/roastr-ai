@@ -1,88 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Pencil, 
-  Puzzle, 
-  CreditCard, 
-  Settings, 
-  FileText,
-  Activity,
-  Wand2,
-  Crown,
-  Cog,
-  Eye,
+import {
+  LayoutGrid,
+  Settings,
+  ShoppingBag,
   Menu,
-  X,
-  DollarSign
+  X
 } from 'lucide-react';
+import useFeatureFlags from '../hooks/useFeatureFlags';
 
-const navItems = [
+// Base navigation items (always visible)
+const baseNavItems = [
   {
     name: 'Dashboard',
     path: '/dashboard',
-    icon: LayoutDashboard,
-    description: 'Overview & widgets'
-  },
-  {
-    name: 'Compose',
-    path: '/compose',
-    icon: Pencil,
-    description: 'Roast preview sandbox'
-  },
-  {
-    name: 'Integrations',
-    path: '/integrations',
-    icon: Puzzle,
-    description: 'Platform connections'
-  },
-  {
-    name: 'Configuration',
-    path: '/configuration',
-    icon: Cog,
-    description: 'Platform settings'
-  },
-  {
-    name: 'Approval',
-    path: '/approval',
-    icon: Eye,
-    description: 'Review responses'
-  },
-  {
-    name: 'Style Profile',
-    path: '/style-profile',
-    icon: Wand2,
-    description: 'AI roast personality'
-  },
-  {
-    name: 'Pricing',
-    path: '/pricing',
-    icon: DollarSign,
-    description: 'Plans & pricing'
-  },
-  {
-    name: 'Billing',
-    path: '/billing',
-    icon: CreditCard,
-    description: 'Usage & billing'
+    icon: LayoutGrid
   },
   {
     name: 'Settings',
     path: '/settings',
-    icon: Settings,
-    description: 'Feature flags & config'
-  },
+    icon: Settings
+  }
+];
+
+// Conditional navigation items
+const conditionalNavItems = [
   {
-    name: 'Logs',
-    path: '/logs',
-    icon: FileText,
-    description: 'System activity'
+    name: 'Shop',
+    path: '/shop',
+    icon: ShoppingBag,
+    requiresFlag: 'ENABLE_SHOP'
   }
 ];
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { isEnabled } = useFeatureFlags();
+
+  // Build navigation items based on feature flags
+  const navItems = [
+    ...baseNavItems,
+    ...conditionalNavItems.filter(item =>
+      !item.requiresFlag || isEnabled(item.requiresFlag)
+    )
+  ];
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -111,64 +73,68 @@ export default function Sidebar() {
       {isMobile && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 p-2 bg-card rounded-lg border border-border shadow-lg lg:hidden"
+          className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg border border-gray-200 shadow-lg lg:hidden"
+          aria-label="Toggle sidebar"
         >
-          {isOpen ? <X className="h-5 w-5 text-foreground" /> : <Menu className="h-5 w-5 text-foreground" />}
+          {isOpen ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
         </button>
       )}
 
       {/* Backdrop for mobile */}
       {isMobile && isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out z-30 overflow-hidden
+      <aside
+        className={`fixed left-0 top-0 h-screen w-16 bg-gray-50 border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-30 overflow-hidden
           ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
       >
-        <div className="flex flex-col h-full p-4">
-          <nav className="space-y-2 flex-1 overflow-y-auto">
-            {navItems.map((item) => {
-            const IconComponent = item.icon;
-            
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={isMobile ? closeSidebar : undefined}
-                className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                  }`
-                }
-              >
-                <IconComponent className="h-5 w-5 flex-shrink-0" />
-                <div className="flex flex-col">
-                  <span>{item.name}</span>
-                  <span className="text-xs opacity-75">{item.description}</span>
-                </div>
-              </NavLink>
-            );
-          })}
-          </nav>
-
-          {/* Footer with version info */}
-          <div className="mt-4 flex-shrink-0">
-            <div className="text-xs text-muted-foreground text-center p-2 bg-muted rounded-lg">
-              <div className="flex items-center justify-center space-x-1 mb-1">
-                <Activity className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">Mock Mode Active</span>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center justify-center h-16 border-b border-gray-200">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">R</span>
               </div>
-              <div className="truncate">v1.0.0-dashboard</div>
             </div>
           </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 py-4">
+            <div className="space-y-2 px-2">
+              {navItems.map((item) => {
+                const IconComponent = item.icon;
+
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    onClick={isMobile ? closeSidebar : undefined}
+                    className={({ isActive }) =>
+                      `flex items-center justify-center w-12 h-12 rounded-lg transition-colors group relative ${
+                        isActive
+                          ? 'bg-gray-900 text-white'
+                          : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                      }`
+                    }
+                    title={item.name}
+                  >
+                    <IconComponent className="h-5 w-5" />
+
+                    {/* Tooltip */}
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                      {item.name}
+                    </div>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </nav>
         </div>
       </aside>
     </>

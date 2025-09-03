@@ -25,6 +25,8 @@ import Configuration from './pages/Configuration';
 import Approval from './pages/Approval';
 import AccountsPage from './pages/AccountsPage';
 import Pricing from './pages/Pricing';
+import Shop from './pages/Shop';
+import ProtectedRoute, { AdminRoute, AuthRoute, PublicRoute } from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -33,14 +35,14 @@ function App() {
       <AuthProvider>
         <div className="App">
           <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Public routes - redirect if already authenticated */}
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+            <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             
-            {/* Protected routes with AppShell */}
-            <Route path="/" element={<AppShell />}>
+            {/* Protected routes with AppShell - require authentication */}
+            <Route path="/" element={<AuthRoute><AppShell /></AuthRoute>}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="compose" element={<Compose />} />
@@ -56,10 +58,12 @@ function App() {
               <Route path="style-profile" element={<StyleProfile />} />
               <Route path="style-profile/generate" element={<StyleProfile />} />
               <Route path="accounts" element={<AccountsPage />} />
+              <Route path="profile" element={<Settings />} /> {/* Profile redirects to Settings for now */}
+              <Route path="shop" element={<Shop />} />
             </Route>
             
-            {/* Admin routes with AdminLayout */}
-            <Route path="/admin" element={<AdminLayout />}>
+            {/* Admin routes with AdminLayout - require admin permissions */}
+            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<Navigate to="/admin/users" replace />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:userId" element={<UserDetail />} />
