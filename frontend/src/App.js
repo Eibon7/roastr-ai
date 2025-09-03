@@ -2,9 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import LoginPage from './pages/login';
-import RegisterPage from './pages/register';
-import ResetPasswordPage from './pages/reset-password';
+import { Login, Register, ResetPassword } from './pages/auth';
 import AuthCallback from './pages/auth-callback';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDetail from './pages/admin/UserDetail';
@@ -36,9 +34,9 @@ function App() {
         <div className="App">
           <Routes>
             {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             
             {/* Protected routes with AppShell */}
