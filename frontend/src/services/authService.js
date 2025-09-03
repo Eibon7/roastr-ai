@@ -26,6 +26,7 @@ class AuthService {
       };
     } catch (error) {
       return {
+        success: false,
         error: true,
         message: this._getErrorMessage(error, 'login')
       };
@@ -47,6 +48,7 @@ class AuthService {
       };
     } catch (error) {
       return {
+        success: false,
         error: true,
         message: this._getErrorMessage(error, 'register')
       };
@@ -67,6 +69,7 @@ class AuthService {
       };
     } catch (error) {
       return {
+        success: false,
         error: true,
         message: this._getErrorMessage(error, 'recovery')
       };
@@ -85,6 +88,7 @@ class AuthService {
       };
     } catch (error) {
       return {
+        success: false,
         error: true,
         message: 'Failed to sign out'
       };
@@ -112,10 +116,12 @@ class AuthService {
     
     // Login specific errors
     if (context === 'login') {
-      if (message.includes('Invalid login credentials') || 
-          message.includes('Invalid email or password') ||
-          message.includes('Email not confirmed')) {
+      if (message.includes('Invalid login credentials') ||
+          message.includes('Invalid email or password')) {
         return 'Wrong email or password';
+      }
+      if (message.includes('Email not confirmed')) {
+        return 'Please verify your email before signing in. Check your inbox for a verification link.';
       }
       if (message.includes('Too many requests')) {
         return 'Too many login attempts. Please try again later.';

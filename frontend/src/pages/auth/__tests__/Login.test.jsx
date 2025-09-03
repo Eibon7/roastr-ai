@@ -1,15 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-
-// Simple mock for router
-const MockRouter = ({ children }) => <div>{children}</div>;
-const MockLink = ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>;
-
-// Mock react-router-dom
-jest.mock('react-router-dom', () => ({
-  useNavigate: () => jest.fn(),
-  Link: MockLink,
-}));
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock auth context
 jest.mock('../../../contexts/AuthContext', () => ({
@@ -30,11 +22,15 @@ const Login = require('../Login').default;
 
 const renderLogin = () => {
   return render(
-    <MockRouter>
+    <MemoryRouter>
       <Login />
-    </MockRouter>
+    </MemoryRouter>
   );
 };
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('Login Component', () => {
   test('renders login form correctly', () => {
@@ -65,5 +61,38 @@ describe('Login Component', () => {
     expect(usernameInput).toHaveAttribute('required');
     expect(passwordInput).toHaveAttribute('type', 'password');
     expect(passwordInput).toHaveAttribute('required');
+  });
+
+  test('shows error and recovery action when sign-in fails', async () => {
+    const { signIn } = require('../../../services/authService');
+    signIn.mockResolvedValueOnce({ success: false, message: 'Invalid credentials' });
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Username'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'secret123');
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    expect(await screen.findByText('Invalid credentials')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send recovery email' })).toBeInTheDocument();
+  });
+
+  test('sends recovery email and shows success UI', async () => {
+    const { signIn, sendRecoveryEmail } = require('../../../services/authService');
+    signIn.mockResolvedValueOnce({ success: false, message: 'Invalid credentials' });
+    sendRecoveryEmail.mockResolvedValueOnce({ success: true });
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Username'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'secret123');
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Send recovery email' }));
+    expect(await screen.findByText('Check your email')).toBeInTheDocument();
+  });
+
+  test('requires email before sending recovery email', async () => {
+    const { signIn } = require('../../../services/authService');
+    signIn.mockResolvedValueOnce({ success: false, message: 'Invalid credentials' });
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Password'), 'secret123');
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Send recovery email' }));
+    expect(await screen.findByText('Please enter your email address first')).toBeInTheDocument();
   });
 });

@@ -1,14 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-
-// Simple mock for router
-const MockRouter = ({ children }) => <div>{children}</div>;
-const MockLink = ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>;
-
-// Mock react-router-dom
-jest.mock('react-router-dom', () => ({
-  Link: MockLink,
-}));
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock auth service
 jest.mock('../../../services/authService', () => ({
@@ -19,11 +12,15 @@ const ResetPassword = require('../ResetPassword').default;
 
 const renderResetPassword = () => {
   return render(
-    <MockRouter>
+    <MemoryRouter>
       <ResetPassword />
-    </MockRouter>
+    </MemoryRouter>
   );
 };
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('ResetPassword Component', () => {
   test('renders reset password form correctly', () => {
@@ -65,5 +62,23 @@ describe('ResetPassword Component', () => {
 
     expect(emailInput).toHaveAttribute('type', 'email');
     expect(emailInput).toHaveAttribute('required');
+  });
+
+  test('submits email and shows success UI', async () => {
+    const { sendRecoveryEmail } = require('../../../services/authService');
+    sendRecoveryEmail.mockResolvedValueOnce({ success: true });
+    renderResetPassword();
+    await userEvent.type(screen.getByLabelText('Email address'), 'a@b.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
+    expect(await screen.findByText('Check your email')).toBeInTheDocument();
+  });
+
+  test('shows backend error message on failure', async () => {
+    const { sendRecoveryEmail } = require('../../../services/authService');
+    sendRecoveryEmail.mockResolvedValueOnce({ success: false, message: 'Rate limited' });
+    renderResetPassword();
+    await userEvent.type(screen.getByLabelText('Email address'), 'a@b.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
+    expect(await screen.findByText('Rate limited')).toBeInTheDocument();
   });
 });

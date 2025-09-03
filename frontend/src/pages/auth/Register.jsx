@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import authService from '../../services/authService';
@@ -11,7 +11,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [timeoutId, setTimeoutId] = useState(null);
+  const timeoutRef = useRef(null);
 
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -25,11 +25,11 @@ const Register = () => {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
-  }, [timeoutId]);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -49,19 +49,19 @@ const Register = () => {
     setError(null);
 
     try {
-      const result = await authService.register(formData.username, formData.password);
+      const username = formData.username.trim();
+      const result = await authService.register(username, formData.password);
 
       if (result.success) {
         setSuccess(true);
         // Redirect to login after a short delay
-        const id = setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
           navigate('/login', {
             state: {
               message: 'Account created successfully! Please check your email to verify your account.'
             }
           });
         }, 2000);
-        setTimeoutId(id);
       } else {
         setError(result.message);
       }
@@ -147,6 +147,7 @@ const Register = () => {
                   type="password"
                   autoComplete="new-password"
                   required
+                  minLength={6}
                   value={formData.password}
                   onChange={handleInputChange}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"

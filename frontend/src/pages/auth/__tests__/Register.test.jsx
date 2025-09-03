@@ -1,15 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-
-// Simple mock for router
-const MockRouter = ({ children }) => <div>{children}</div>;
-const MockLink = ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>;
-
-// Mock react-router-dom
-jest.mock('react-router-dom', () => ({
-  useNavigate: () => jest.fn(),
-  Link: MockLink,
-}));
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock auth context
 jest.mock('../../../contexts/AuthContext', () => ({
@@ -29,11 +21,15 @@ const Register = require('../Register').default;
 
 const renderRegister = () => {
   return render(
-    <MockRouter>
+    <MemoryRouter>
       <Register />
-    </MockRouter>
+    </MemoryRouter>
   );
 };
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('Register Component', () => {
   test('renders registration form correctly', () => {
@@ -74,5 +70,28 @@ describe('Register Component', () => {
     expect(usernameInput).toHaveAttribute('required');
     expect(passwordInput).toHaveAttribute('type', 'password');
     expect(passwordInput).toHaveAttribute('required');
+    expect(passwordInput).toHaveAttribute('minLength', '6');
+  });
+
+  test('shows success UI after successful registration', async () => {
+    const { register } = require('../../../services/authService');
+    register.mockResolvedValueOnce({ success: true });
+    renderRegister();
+    await userEvent.type(screen.getByLabelText('Username'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'secret123');
+    await userEvent.click(screen.getByRole('button', { name: 'Register' }));
+    expect(await screen.findByText('Account created successfully!')).toBeInTheDocument();
+  });
+
+  test('renders fallback error when exception has no message', async () => {
+    const { register } = require('../../../services/authService');
+    register.mockRejectedValueOnce(new Error());
+    renderRegister();
+    await userEvent.type(screen.getByLabelText('Username'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'secret123');
+    await userEvent.click(screen.getByRole('button', { name: 'Register' }));
+    expect(
+      await screen.findByText('An unexpected error occurred. Please try again.')
+    ).toBeInTheDocument();
   });
 });

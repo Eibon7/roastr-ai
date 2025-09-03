@@ -44,7 +44,8 @@ const Login = () => {
     setShowRecovery(false);
 
     try {
-      const result = await authService.signIn(formData.username, formData.password);
+      const username = formData.username.trim();
+      const result = await authService.signIn(username, formData.password);
 
       if (result.success) {
         // Success - navigation will be handled by useEffect when auth state changes
