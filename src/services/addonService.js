@@ -50,6 +50,17 @@ class AddonService {
      */
     async consumeAddonCredits(userId, category, amount = 1) {
         try {
+            // Validate amount parameter
+            if (!Number.isInteger(amount) || amount <= 0) {
+                logger.warn('Invalid amount parameter for consumeAddonCredits:', {
+                    userId,
+                    category,
+                    amount,
+                    message: 'Amount must be a positive integer'
+                });
+                return false;
+            }
+
             const { data: success, error } = await supabaseServiceClient
                 .rpc('consume_addon_credits', {
                     p_user_id: userId,
@@ -186,8 +197,8 @@ class AddonService {
             const usage = currentUsage[`${action}s_used`] || currentUsage.monthly_responses_used || 0;
 
             if (usage < planLimit) {
-                return { 
-                    allowed: true, 
+                return {
+                    allowed: true,
                     source: 'plan',
                     remaining: planLimit - usage
                 };
@@ -196,15 +207,15 @@ class AddonService {
             // Check addon credits
             const addonCredits = await this.getUserAddonCredits(userId, category);
             if (addonCredits > 0) {
-                return { 
-                    allowed: true, 
+                return {
+                    allowed: true,
                     source: 'addon',
                     remaining: addonCredits
                 };
             }
 
-            return { 
-                allowed: false, 
+            return {
+                allowed: false,
                 reason: 'Limit exceeded and no addon credits available',
                 planLimit,
                 usage,
@@ -231,33 +242,40 @@ class AddonService {
      */
     async recordActionUsage(userId, action, planLimits, currentUsage) {
         try {
-            const permission = await this.canPerformAction(userId, action, planLimits, currentUsage);
-            
-            if (!permission.allowed) {
-                return { success: false, reason: permission.reason };
+            const categoryMap = { 'roast': 'roasts', 'analysis': 'analysis' };
+            const category = categoryMap[action];
+
+            if (!category) {
+                return { success: false, reason: 'Invalid action type' };
             }
 
-            if (permission.source === 'addon') {
-                // Consume addon credits
-                const categoryMap = { 'roast': 'roasts', 'analysis': 'analysis' };
-                const category = categoryMap[action];
-                
-                const consumed = await this.consumeAddonCredits(userId, category, 1);
-                if (!consumed) {
-                    return { success: false, reason: 'Failed to consume addon credits' };
-                }
+            // Check plan limits first
+            const planLimit = planLimits[`monthly_${action}s_limit`] || planLimits.monthly_responses_limit || 0;
+            const usage = currentUsage[`${action}s_used`] || currentUsage.monthly_responses_used || 0;
 
-                return { 
-                    success: true, 
+            if (usage < planLimit) {
+                // Usage will be recorded by the calling service against plan limits
+                return {
+                    success: true,
+                    source: 'plan',
+                    planRemaining: planLimit - usage - 1
+                };
+            }
+
+            // Plan limit exceeded, try to consume addon credits atomically
+            const consumed = await this.consumeAddonCredits(userId, category, 1);
+            if (consumed) {
+                // Get remaining credits after consumption for reporting
+                const remainingCredits = await this.getUserAddonCredits(userId, category);
+                return {
+                    success: true,
                     source: 'addon',
-                    creditsRemaining: permission.remaining - 1
+                    creditsRemaining: remainingCredits
                 };
             } else {
-                // Usage will be recorded by the calling service against plan limits
-                return { 
-                    success: true, 
-                    source: 'plan',
-                    planRemaining: permission.remaining - 1
+                return {
+                    success: false,
+                    reason: 'Limit exceeded and no addon credits available'
                 };
             }
 

@@ -83,9 +83,9 @@ module.exports = {
       setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
     },
     {
-      displayName: 'dom-tests', 
+      displayName: 'dom-tests',
       testEnvironment: 'jsdom',
-      testMatch: ['<rootDir>/tests/unit/auth/**/*.test.js'],
+      testMatch: ['<rootDir>/tests/unit/auth/**/*.test.js', '<rootDir>/tests/unit/components/**/*.test.jsx'],
       setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
     }
   ]

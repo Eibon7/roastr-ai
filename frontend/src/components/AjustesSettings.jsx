@@ -116,12 +116,18 @@ const AjustesSettings = ({ user, onNotification }) => {
       }
 
       // Load transparency bio text
-      const transparencyResult = await apiClient.get('/user/settings/transparency-mode');
-      if (transparencyResult?.data?.success && transparencyResult.data.data?.bio_text) {
-        setCopyState(prev => ({
-          ...prev,
-          bioText: transparencyResult.data.data.bio_text
-        }));
+      try {
+        const transparencyResult = await apiClient.get('/user/settings/transparency-mode');
+        if (transparencyResult?.data?.success && transparencyResult.data.data?.bio_text) {
+          setCopyState(prev => ({
+            ...prev,
+            bioText: transparencyResult.data.data.bio_text
+          }));
+        }
+      } catch (transparencyError) {
+        console.error('Failed to load transparency settings:', transparencyError);
+        // Don't show notification for transparency error as it's not critical
+        // The transparency section will handle its own error state
       }
 
     } catch (error) {

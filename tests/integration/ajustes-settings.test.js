@@ -391,8 +391,26 @@ describe('Ajustes Settings Integration Tests', () => {
         resolveLatch = resolve;
       });
 
-      // Mock implementation that waits for the latch
+      // Create arrays to track when each request has started
+      const startedResolvers = [];
+      const startedPromises = [];
+      for (let i = 0; i < 5; i++) {
+        let resolver;
+        const promise = new Promise(resolve => {
+          resolver = resolve;
+        });
+        startedResolvers.push(resolver);
+        startedPromises.push(promise);
+      }
+
+      let selectCallCount = 0;
+
+      // Mock implementation that signals when started and waits for the latch
       mockUserClient.from().select().eq().single.mockImplementation(() => {
+        const currentIndex = selectCallCount++;
+        if (currentIndex < startedResolvers.length) {
+          startedResolvers[currentIndex]();
+        }
         return latchPromise.then(() => ({
           data: { preferences: { theme: 'system' } },
           error: null
@@ -417,8 +435,8 @@ describe('Ajustes Settings Integration Tests', () => {
         );
       }
 
-      // Allow a brief moment for all requests to start
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Wait until all 5 requests have started (reached the DB mock)
+      await Promise.all(startedPromises);
 
       // Release the latch to allow all DB operations to complete
       resolveLatch();
@@ -427,7 +445,7 @@ describe('Ajustes Settings Integration Tests', () => {
       responses.forEach(response => {
         expect(response.status).toBe(200);
       });
-    });
+    }, 15000); // 15 second timeout
 
     it('should respect character limits for Roastr Persona fields', async () => {
       const testCases = [

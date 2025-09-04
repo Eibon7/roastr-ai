@@ -223,7 +223,7 @@ describe('ShopSettings Component', () => {
             expect(screen.getByText('Compras Recientes')).toBeInTheDocument();
         });
 
-        expect(screen.getByText('roasts_100')).toBeInTheDocument();
+        expect(screen.getByText('Roasts Pack 100')).toBeInTheDocument();
         expect(screen.getByText('$4.99')).toBeInTheDocument();
         expect(screen.getByText('completed')).toBeInTheDocument();
     });

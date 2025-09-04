@@ -33,9 +33,9 @@ const SafeUtils = {
       return 'invalid-email';
     }
 
-    // If there's no local part, treat as invalid input but return original to avoid misleading masking
+    // If there's no local part, treat as invalid input and return null for consistency
     if (atIndex === 0) {
-      return email; // e.g., "@domain.com"
+      return null; // e.g., "@domain.com" - return null for invalid/malformed emails
     }
 
     const localPart = email.substring(0, atIndex);
@@ -43,7 +43,7 @@ const SafeUtils = {
 
     // If domain is missing or malformed, treat as invalid
     if (!domain || !domain.includes('.')) {
-      return null; // e.g., "test@"
+      return ''; // e.g., "test@" - return empty string to maintain string return type
     }
 
     // Mask local part: keep first character, mask the rest

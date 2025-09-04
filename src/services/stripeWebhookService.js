@@ -331,6 +331,53 @@ class StripeWebhookService {
                 throw new Error('Payment intent must be a string or object with id property');
             }
 
+            // Validate session.amount_total
+            if (!session.amount_total || typeof session.amount_total !== 'number') {
+                logger.error('Invalid or missing amount_total in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    amountTotal: session.amount_total,
+                    amountTotalType: typeof session.amount_total
+                });
+
+                // Update purchase history as failed
+                await supabaseServiceClient
+                    .from('addon_purchase_history')
+                    .update({
+                        status: 'failed',
+                        failed_at: new Date().toISOString(),
+                        error_message: 'Invalid amount_total in checkout session'
+                    })
+                    .eq('stripe_checkout_session_id', session.id);
+
+                throw new Error('Amount total must be a valid number');
+            }
+
+            // Coerce to integer and validate it's positive
+            const amountCents = parseInt(session.amount_total, 10);
+            if (!Number.isInteger(amountCents) || amountCents <= 0) {
+                logger.error('Invalid amount_total value in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    originalAmount: session.amount_total,
+                    parsedAmount: amountCents
+                });
+
+                // Update purchase history as failed
+                await supabaseServiceClient
+                    .from('addon_purchase_history')
+                    .update({
+                        status: 'failed',
+                        failed_at: new Date().toISOString(),
+                        error_message: 'Amount total must be a positive integer'
+                    })
+                    .eq('stripe_checkout_session_id', session.id);
+
+                throw new Error('Amount total must be a positive integer');
+            }
+
             // Execute atomic transaction for addon purchase
             const { data: transactionResult, error: transactionError } = await supabaseServiceClient
                 .rpc('execute_addon_purchase_transaction', {
@@ -338,7 +385,7 @@ class StripeWebhookService {
                     p_addon_key: addonKey,
                     p_stripe_payment_intent_id: paymentIntentId,
                     p_stripe_checkout_session_id: session.id,
-                    p_amount_cents: session.amount_total,
+                    p_amount_cents: amountCents,
                     p_addon_type: addonType,
                     p_credit_amount: creditAmount,
                     p_feature_key: featureKey

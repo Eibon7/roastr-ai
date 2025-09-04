@@ -84,24 +84,48 @@ router.get('/user/addons', authenticateToken, async (req, res) => {
         const userId = req.user.id;
 
         // Get user's addon credits by category
-        const { data: roastCredits } = await supabaseServiceClient
+        const { data: roastCredits, error: roastCreditsError } = await supabaseServiceClient
             .rpc('get_user_addon_credits', {
                 p_user_id: userId,
                 p_addon_category: 'roasts'
             });
 
-        const { data: analysisCredits } = await supabaseServiceClient
+        if (roastCreditsError) {
+            logger.error('Failed to fetch roast credits:', roastCreditsError);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to fetch user roast credits'
+            });
+        }
+
+        const { data: analysisCredits, error: analysisCreditsError } = await supabaseServiceClient
             .rpc('get_user_addon_credits', {
                 p_user_id: userId,
                 p_addon_category: 'analysis'
             });
 
+        if (analysisCreditsError) {
+            logger.error('Failed to fetch analysis credits:', analysisCreditsError);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to fetch user analysis credits'
+            });
+        }
+
         // Check active feature addons
-        const { data: rqcEnabled } = await supabaseServiceClient
+        const { data: rqcEnabled, error: rqcError } = await supabaseServiceClient
             .rpc('user_has_feature_addon', {
                 p_user_id: userId,
                 p_feature_key: 'rqc_enabled'
             });
+
+        if (rqcError) {
+            logger.error('Failed to check RQC feature status:', rqcError);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to check feature status'
+            });
+        }
 
         // Get recent purchases
         const { data: recentPurchases, error: purchasesError } = await supabaseServiceClient
@@ -234,9 +258,24 @@ router.post('/checkout', authenticateToken, async (req, res) => {
         // Get or generate idempotency key for Stripe session creation
         let idempotencyKey = req.headers['x-idempotency-key'] || req.headers['idempotency-key'];
         if (!idempotencyKey) {
-            // Generate a UUID fallback if no idempotency key provided
-            idempotencyKey = crypto.randomUUID();
-            logger.debug('Generated idempotency key for checkout session:', { userId, addonKey, idempotencyKey });
+            // Generate a deterministic idempotency key based on purchase context
+            // This ensures identical requests get the same key while different purchases do not
+            const secret = process.env.ROASTR_API_KEY || 'default-shop-secret';
+            const canonicalString = `${userId}:${addon.addon_key}:${addon.price_cents}:${addon.currency}`;
+
+            // Create HMAC-SHA256 hash for deterministic but secure idempotency key
+            idempotencyKey = crypto
+                .createHmac('sha256', secret)
+                .update(canonicalString)
+                .digest('hex')
+                .substring(0, 32); // Truncate to reasonable length
+
+            logger.debug('Generated deterministic idempotency key for checkout session:', {
+                userId,
+                addonKey: addon.addon_key,
+                canonicalString,
+                idempotencyKey
+            });
         }
 
         // Create checkout session for one-time payment
@@ -283,10 +322,11 @@ router.post('/checkout', authenticateToken, async (req, res) => {
                 amount_cents: addon.price_cents,
                 currency: addon.currency,
                 status: 'pending'
-            });
+            })
+            .select(); // Return the inserted row(s)
 
         // Check for database insert errors
-        if (insertError || !insertData) {
+        if (insertError || !insertData || insertData.length === 0) {
             logger.error('Failed to record purchase initiation:', insertError);
             return res.status(500).json({
                 success: false,
