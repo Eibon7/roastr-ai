@@ -651,7 +651,8 @@ class StripeWebhookService {
                     p_amount_due: invoice.amount_due,
                     p_attempt_count: invoice.attempt_count || 0,
                     p_next_attempt_date: invoice.next_payment_attempt ? new Date(invoice.next_payment_attempt * 1000).toISOString() : null,
-                    p_payment_failed_at: new Date().toISOString()
+                    p_payment_failed_at: new Date().toISOString(),
+                    p_stripe_payment_intent_id: invoice.payment_intent || null // CodeRabbit: Include payment intent ID for traceability
                 });
 
             if (transactionError) {

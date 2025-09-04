@@ -273,20 +273,68 @@ const ShopSettings = ({ user, onNotification }) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {userAddons.recentPurchases.slice(0, 5).map((purchase, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
-                  <span className="text-sm">{purchase.addon_key}</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm">${(purchase.amount_cents / 100).toFixed(2)}</span>
-                    <Badge 
-                      variant={purchase.status === 'completed' ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {purchase.status}
-                    </Badge>
+              {userAddons.recentPurchases.slice(0, 5).map((purchase, index) => {
+                // Helper functions for formatting
+                const formatAddonName = (addonKey) => {
+                  // If we have the addon name from the shop data, use it
+                  if (shopData.addons) {
+                    for (const category of Object.values(shopData.addons)) {
+                      const addon = category.find(a => a.key === addonKey);
+                      if (addon) return addon.name;
+                    }
+                  }
+                  // Fallback: convert addon_key to title case
+                  return addonKey
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase());
+                };
+
+                const formatCurrency = (amountCents, currency = 'USD') => {
+                  return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: (currency || 'USD').toUpperCase()
+                  }).format(amountCents / 100);
+                };
+
+                const formatDate = (dateString) => {
+                  return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  });
+                };
+
+                const formatStatus = (status) => {
+                  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+                };
+
+                return (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium" aria-label={`Addon: ${formatAddonName(purchase.addon_key)}`}>
+                        {formatAddonName(purchase.addon_key)}
+                      </div>
+                      {purchase.created_at && (
+                        <div className="text-xs text-muted-foreground mt-1" aria-label={`Purchase date: ${formatDate(purchase.created_at)}`}>
+                          {formatDate(purchase.created_at)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-semibold" aria-label={`Amount: ${formatCurrency(purchase.amount_cents, purchase.currency)}`}>
+                        {formatCurrency(purchase.amount_cents, purchase.currency)}
+                      </span>
+                      <Badge
+                        variant={purchase.status === 'completed' ? 'default' : 'secondary'}
+                        className="text-xs"
+                        aria-label={`Status: ${formatStatus(purchase.status)}`}
+                      >
+                        {formatStatus(purchase.status)}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

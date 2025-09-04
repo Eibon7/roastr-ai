@@ -10,6 +10,7 @@ const { supabaseServiceClient } = require('../config/supabase');
 const stripeWrapper = require('../services/stripeWrapper');
 const logger = require('../utils/logger');
 const flags = require('../config/flags');
+const crypto = require('crypto');
 
 /**
  * GET /api/shop/addons
@@ -108,6 +109,7 @@ router.get('/user/addons', authenticateToken, async (req, res) => {
             .select(`
                 addon_key,
                 amount_cents,
+                currency,
                 status,
                 completed_at,
                 created_at
@@ -209,6 +211,34 @@ router.post('/checkout', authenticateToken, async (req, res) => {
                 });
         }
 
+        // Validate FRONTEND_URL before creating session
+        if (!process.env.FRONTEND_URL || process.env.FRONTEND_URL.trim() === '') {
+            logger.error('FRONTEND_URL is not configured');
+            return res.status(500).json({
+                success: false,
+                error: 'FRONTEND_URL is not configured'
+            });
+        }
+
+        // Validate FRONTEND_URL format
+        try {
+            new URL(process.env.FRONTEND_URL);
+        } catch (urlError) {
+            logger.error('FRONTEND_URL is not a valid URL:', process.env.FRONTEND_URL);
+            return res.status(500).json({
+                success: false,
+                error: 'FRONTEND_URL is not configured properly'
+            });
+        }
+
+        // Get or generate idempotency key for Stripe session creation
+        let idempotencyKey = req.headers['x-idempotency-key'] || req.headers['idempotency-key'];
+        if (!idempotencyKey) {
+            // Generate a UUID fallback if no idempotency key provided
+            idempotencyKey = crypto.randomUUID();
+            logger.debug('Generated idempotency key for checkout session:', { userId, addonKey, idempotencyKey });
+        }
+
         // Create checkout session for one-time payment
         const session = await stripeWrapper.checkout.sessions.create({
             customer: customer.id,
@@ -239,10 +269,12 @@ router.post('/checkout', authenticateToken, async (req, res) => {
                 credit_amount: addon.credit_amount?.toString() || '0',
                 feature_key: addon.feature_key || ''
             }
+        }, {
+            idempotencyKey: idempotencyKey
         });
 
         // Record purchase initiation
-        await supabaseServiceClient
+        const { data: insertData, error: insertError } = await supabaseServiceClient
             .from('addon_purchase_history')
             .insert({
                 user_id: userId,
@@ -252,6 +284,15 @@ router.post('/checkout', authenticateToken, async (req, res) => {
                 currency: addon.currency,
                 status: 'pending'
             });
+
+        // Check for database insert errors
+        if (insertError || !insertData) {
+            logger.error('Failed to record purchase initiation:', insertError);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to record purchase initiation'
+            });
+        }
 
         logger.info('Addon checkout session created:', {
             userId,

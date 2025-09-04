@@ -574,6 +574,9 @@ const RoastrPersonaField = ({
     onSave(fieldValue, fieldVisibility);
   };
 
+  // CodeRabbit: Check if there are actual changes to prevent unnecessary saves
+  const hasChanges = fieldValue !== value || fieldVisibility !== isVisible;
+
   const getVariantColor = () => {
     switch (variant) {
       case 'intolerance': return 'text-red-600';
@@ -649,7 +652,7 @@ const RoastrPersonaField = ({
             </div>
             <Button
               onClick={handleSave}
-              disabled={isSaving || (fieldValue ?? '').trim().length === 0}
+              disabled={isSaving || (fieldValue ?? '').trim().length === 0 || !hasChanges}
               size="sm"
             >
               {isSaving ? (
