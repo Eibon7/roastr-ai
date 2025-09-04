@@ -109,6 +109,7 @@ router.get('/user/addons', authenticateToken, async (req, res) => {
             .select(`
                 addon_key,
                 amount_cents,
+                currency,
                 status,
                 completed_at,
                 created_at

@@ -90,6 +90,10 @@ describe('Shop API Integration Tests', () => {
         mockServiceClient = supabaseServiceClient;
         mockUserClient = createUserClient();
 
+        // Ensure service client used by routes is the same mock
+        const supabaseModule = require('../../src/config/supabase');
+        supabaseModule.supabaseServiceClient = mockServiceClient;
+
         // Mock Stripe wrapper
         stripeWrapper.customers = {
             retrieve: jest.fn(),

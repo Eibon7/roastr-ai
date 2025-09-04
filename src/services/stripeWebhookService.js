@@ -357,7 +357,8 @@ class StripeWebhookService {
                     .update({
                         status: 'failed',
                         failed_at: new Date().toISOString(),
-                        error_message: transactionError.message
+                        error_message: transactionError.message,
+                        stripe_payment_intent_id: paymentIntentId
                     })
                     .eq('stripe_checkout_session_id', session.id);
 

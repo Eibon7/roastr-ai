@@ -289,10 +289,10 @@ const ShopSettings = ({ user, onNotification }) => {
                     .replace(/\b\w/g, l => l.toUpperCase());
                 };
 
-                const formatCurrency = (amountCents) => {
+                const formatCurrency = (amountCents, currency = 'USD') => {
                   return new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD'
+                    currency: (currency || 'USD').toUpperCase()
                   }).format(amountCents / 100);
                 };
 
@@ -321,8 +321,8 @@ const ShopSettings = ({ user, onNotification }) => {
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold" aria-label={`Amount: ${formatCurrency(purchase.amount_cents)}`}>
-                        {formatCurrency(purchase.amount_cents)}
+                      <span className="text-sm font-semibold" aria-label={`Amount: ${formatCurrency(purchase.amount_cents, purchase.currency)}`}>
+                        {formatCurrency(purchase.amount_cents, purchase.currency)}
                       </span>
                       <Badge
                         variant={purchase.status === 'completed' ? 'default' : 'secondary'}
