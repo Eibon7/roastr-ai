@@ -131,16 +131,22 @@ class GenerateReplyWorker extends BaseWorker {
    * Process reply generation job
    */
   async processJob(job) {
-    const { 
-      comment_id, 
-      organization_id, 
-      platform, 
+    const {
+      comment_id,
+      organization_id,
+      platform,
       original_text,
       toxicity_score,
       severity_level,
-      categories 
+      categories
     } = job.payload || job;
-    
+    if (!comment_id || !organization_id || !platform) {
+      throw new Error('Missing required fields: comment_id, organization_id, or platform');
+    }
+    if (typeof original_text !== 'string' || original_text.trim() === '') {
+      this.log('warn', 'original_text missing or empty in job payload', { comment_id, organization_id, platform });
+    }
+
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
       organization_id, 

@@ -17,15 +17,13 @@ describe('Shop API Integration Tests', () => {
     const testUserId = 'test-user-123';
     const authToken = 'Bearer valid-token';
 
-    // Mock auth middleware to return test user
-    beforeAll(() => {
-        jest.doMock('../../src/middleware/auth', () => ({
-            authenticateToken: (req, res, next) => {
-                req.user = { id: testUserId, email: 'test@example.com' };
-                next();
-            }
-        }));
-    });
+// Mock auth middleware to return test user (hoisted)
+jest.mock('../../src/middleware/auth', () => ({
+  authenticateToken: (req, res, next) => {
+    req.user = { id: 'test-user-123', email: 'test@example.com' };
+    next();
+  },
+}));
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -56,6 +54,9 @@ describe('Shop API Integration Tests', () => {
         };
 
         createUserClient.mockReturnValue(mockUserClient);
+        // Ensure service client used by routes is the same mock
+        const supabaseModule = require('../../src/config/supabase');
+        supabaseModule.supabaseServiceClient = mockUserClient;
     });
 
     describe('GET /api/shop/addons', () => {

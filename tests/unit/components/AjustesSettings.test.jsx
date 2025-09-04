@@ -171,7 +171,7 @@ describe('AjustesSettings Component', () => {
 
     // Should show the form
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/Soy desarrollador/)).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Soy desarrollador')).toBeInTheDocument();
     });
   });
 
@@ -274,7 +274,7 @@ describe('AjustesSettings Component', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/Soy desarrollador/)).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Soy desarrollador')).toBeInTheDocument();
     });
 
     // Try to save
@@ -375,7 +375,7 @@ describe('AjustesSettings Component', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      const textarea = screen.getByPlaceholderText(/Soy desarrollador/);
+      const textarea = screen.getByDisplayValue('Soy desarrollador');
       expect(textarea).toBeInTheDocument();
       expect(textarea).toHaveAttribute('maxLength', '300');
     });

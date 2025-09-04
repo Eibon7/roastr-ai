@@ -17,9 +17,17 @@ jest.mock('../../../frontend/src/lib/api', () => ({
     }
 }));
 
-// Mock window.location
-delete window.location;
-window.location = { href: '' };
+// Store original window.location
+const originalLocation = window.location;
+
+beforeAll(() => {
+    delete window.location;
+    window.location = { href: '' };
+});
+
+afterAll(() => {
+    window.location = originalLocation;
+});
 
 describe('ShopSettings Component', () => {
     const mockUser = {

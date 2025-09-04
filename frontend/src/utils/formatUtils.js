@@ -30,27 +30,27 @@ export function formatCurrency(amountCents, currency = 'USD', locale = 'en-US') 
  */
 export function formatFileSize(bytes) {
   if (typeof bytes !== 'number' || isNaN(bytes)) {
-    return '0B';
+    return '0 B';
   }
-  
+
   if (bytes === 0) {
-    return '0B';
+    return '0 B';
   }
-  
+
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let size = Math.abs(bytes);
   let unitIndex = 0;
-  
+
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024;
     unitIndex++;
   }
-  
+
   // Use appropriate decimal places based on size
   const decimals = unitIndex === 0 ? 0 : size >= 100 ? 1 : 2;
   const formattedSize = size.toFixed(decimals);
-  
-  return `${bytes < 0 ? '-' : ''}${formattedSize}${units[unitIndex]}`;
+
+  return `${bytes < 0 ? '-' : ''}${formattedSize} ${units[unitIndex]}`;
 }
 
 /**

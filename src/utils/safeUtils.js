@@ -59,6 +59,10 @@ function safeGet(obj, path, fallback = undefined) {
     let current = obj;
 
     for (const key of keys) {
+        // Disallow traversing special prototype properties
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+            return fallback;
+        }
         // Check if current is an object and has the key as own property
         if (current === null || current === undefined ||
             typeof current !== 'object' ||

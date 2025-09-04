@@ -12,6 +12,17 @@ const logger = require('../utils/logger');
 const flags = require('../config/flags');
 const crypto = require('crypto');
 
+// Zero decimal currencies (amounts are in the smallest unit, not cents)
+const ZERO_DECIMAL_CURRENCIES = new Set([
+  'BIF','CLP','DJF','GNF','JPY','KMF','KRW','MGA','PYG','RWF','UGX','VND','VUV','XAF','XOF','XPF'
+]);
+
+const formatPrice = (minor, currency = 'USD') => {
+  const cur = (currency || 'USD').toUpperCase();
+  const amount = ZERO_DECIMAL_CURRENCIES.has(cur) ? minor : minor / 100;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(amount);
+};
+
 /**
  * GET /api/shop/addons
  * Get list of available shop addons
@@ -45,7 +56,7 @@ router.get('/addons', authenticateToken, async (req, res) => {
                 price: {
                     cents: addon.price_cents,
                     currency: addon.currency,
-                    formatted: `$${(addon.price_cents / 100).toFixed(2)}`
+                    formatted: formatPrice(addon.price_cents, addon.currency)
                 },
                 type: addon.addon_type,
                 creditAmount: addon.credit_amount,
