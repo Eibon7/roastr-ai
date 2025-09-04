@@ -22,8 +22,8 @@ describe('TestUtils Plan Limits Consistency', () => {
                 // Verify roasts/monthlyResponsesLimit consistency
                 expect(scenarioLimits.monthlyResponsesLimit).toBe(mockLimits.roasts);
 
-                // Verify platforms/integrationsLimit consistency
-                expect(scenarioLimits.integrationsLimit).toBe(mockLimits.platforms);
+                // Verify integrationsLimit consistency
+                expect(scenarioLimits.integrationsLimit).toBe(mockLimits.integrationsLimit);
 
                 // Verify features consistency
                 expect(mockLimits.features).toBeDefined();
@@ -39,11 +39,11 @@ describe('TestUtils Plan Limits Consistency', () => {
             const mockResponse = createPlanBasedMockResponse('free', 'test', 'GET');
 
             expect(scenario.organization.entitlements.monthlyResponsesLimit).toBe(10);
-            expect(scenario.organization.entitlements.integrationsLimit).toBe(1);
+            expect(scenario.organization.entitlements.integrationsLimit).toBe(2);
             expect(scenario.organization.entitlements.shieldEnabled).toBe(false);
 
             expect(mockResponse.data.limits.roasts).toBe(10);
-            expect(mockResponse.data.limits.platforms).toBe(1);
+            expect(mockResponse.data.limits.integrationsLimit).toBe(2);
             expect(mockResponse.data.limits.shieldEnabled).toBe(false);
         });
 
@@ -52,11 +52,11 @@ describe('TestUtils Plan Limits Consistency', () => {
             const mockResponse = createPlanBasedMockResponse('pro', 'test', 'GET');
 
             expect(scenario.organization.entitlements.monthlyResponsesLimit).toBe(1000);
-            expect(scenario.organization.entitlements.integrationsLimit).toBe(3);
+            expect(scenario.organization.entitlements.integrationsLimit).toBe(6);
             expect(scenario.organization.entitlements.shieldEnabled).toBe(true);
 
             expect(mockResponse.data.limits.roasts).toBe(1000);
-            expect(mockResponse.data.limits.platforms).toBe(3);
+            expect(mockResponse.data.limits.integrationsLimit).toBe(6);
             expect(mockResponse.data.limits.shieldEnabled).toBe(true);
         });
 
@@ -65,12 +65,21 @@ describe('TestUtils Plan Limits Consistency', () => {
             const mockResponse = createPlanBasedMockResponse('enterprise', 'test', 'GET');
 
             expect(scenario.organization.entitlements.monthlyResponsesLimit).toBe(10000);
-            expect(scenario.organization.entitlements.integrationsLimit).toBe(9);
+            expect(scenario.organization.entitlements.integrationsLimit).toBe(18);
             expect(scenario.organization.entitlements.shieldEnabled).toBe(true);
 
             expect(mockResponse.data.limits.roasts).toBe(10000);
-            expect(mockResponse.data.limits.platforms).toBe(9);
+            expect(mockResponse.data.limits.integrationsLimit).toBe(18);
             expect(mockResponse.data.limits.shieldEnabled).toBe(true);
+        });
+
+        it('should preserve explicit integrationsLimit of 0', () => {
+            const scenario = createMultiTenantTestScenario('simple', {
+                planType: 'pro',
+                entitlements: { integrationsLimit: 0 }
+            });
+
+            expect(scenario.organization.entitlements.integrationsLimit).toBe(0);
         });
     });
 });

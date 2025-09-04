@@ -2,7 +2,7 @@ const QueueService = require('./queueService');
 const WorkerManager = require('../workers/WorkerManager');
 const alertingService = require('./alertingService');
 const metricsService = require('./metricsService');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 const { flags } = require('../config/flags');
 const { createClient } = require('@supabase/supabase-js');
 

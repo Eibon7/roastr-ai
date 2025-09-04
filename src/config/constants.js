@@ -23,16 +23,16 @@ const DEFAULT_TONE = 'sarcastic';
 
 // Platform constraints (character limits)
 const PLATFORM_LIMITS = {
-  twitter: 280,
-  instagram: 2200,
-  facebook: 63206,
-  linkedin: 3000,
-  tiktok: 2200,
-  youtube: 10000,
-  discord: 2000,
-  reddit: 40000,
-  bluesky: 300,
-  default: 1000
+  twitter: { maxLength: 280 },
+  instagram: { maxLength: 2200 },
+  facebook: { maxLength: 63206 },
+  linkedin: { maxLength: 3000 },
+  tiktok: { maxLength: 2200 },
+  youtube: { maxLength: 10000 },
+  discord: { maxLength: 2000 },
+  reddit: { maxLength: 40000 },
+  bluesky: { maxLength: 300 },
+  default: { maxLength: 1000 }
 };
 
 // Comment categories for classification

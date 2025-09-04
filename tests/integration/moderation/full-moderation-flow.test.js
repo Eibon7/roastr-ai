@@ -1,5 +1,6 @@
 const request = require('supertest');
 const { createMockModerationInput, simulateToxicComment, setupTestUserWithPersona, waitForCondition } = require('../../utils/testHelpers');
+const { PLATFORM_LIMITS } = require('../../../src/config/constants');
 
 // Mock services
 jest.mock('../../../src/services/openai', () => ({
@@ -373,7 +374,7 @@ describe('Full Moderation Flow Integration', () => {
 
   describe('Content Approval and Filtering', () => {
     it('should filter out inappropriate roast responses', async () => {
-      const inappropriateRoasts = [
+const inappropriateRoasts = [
         'Tu madre es una...', // Family insults
         'Espero que te mueras', // Death wishes
         'Eres un [slur]', // Slurs
@@ -401,9 +402,9 @@ describe('Full Moderation Flow Integration', () => {
 
     it('should apply platform-specific content rules', async () => {
       const platforms = {
-        twitter: { maxLength: 280, allowHashtags: true },
-        youtube: { maxLength: 10000, allowLinks: true },
-        instagram: { maxLength: 2200, allowEmojis: true }
+        twitter: { maxLength: PLATFORM_LIMITS.twitter.maxLength, allowHashtags: true },
+        youtube: { maxLength: PLATFORM_LIMITS.youtube.maxLength, allowLinks: true },
+        instagram: { maxLength: PLATFORM_LIMITS.instagram.maxLength, allowEmojis: true }
       };
 
       const roast = '¡Vaya comentario! ' + '😂'.repeat(50);

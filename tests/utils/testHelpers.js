@@ -1,5 +1,6 @@
 // Test utilities for moderation and shield testing
 const { v4: uuidv4 } = require('uuid');
+const { PLATFORM_LIMITS } = require('../../src/config/constants');
 
 /**
  * Creates a mock moderation input for testing
@@ -96,7 +97,7 @@ function setupTestUserWithPersona(overrides = {}) {
       custom_style_prompt: 'Be clever but not mean',
       language_preference: 'es',
       platform_styles: {
-        twitter: { use_hashtags: true, max_length: 280 },
+        twitter: { use_hashtags: true, max_length: PLATFORM_LIMITS.twitter.maxLength },
         youtube: { use_emojis: true }
       }
     },

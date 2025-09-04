@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
-import { 
-  Twitter, 
-  Instagram, 
-  Youtube, 
-  Facebook, 
+import {
+  Twitter,
+  Instagram,
+  Youtube,
+  Facebook,
   MessageCircle,
   Twitch,
   Users,
@@ -17,7 +17,14 @@ import {
   ExternalLink,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Clock,
+  Edit,
+  RefreshCw,
+  Trash2,
+  Send,
+  Shield,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import AccountModal from '../components/AccountModal';
 
@@ -30,6 +37,8 @@ export default function Dashboard() {
   const [connectingPlatform, setConnectingPlatform] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [recentRoasts, setRecentRoasts] = useState([]);
+  const [roastsLoading, setRoastsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -82,19 +91,40 @@ export default function Dashboard() {
     }
   }, [location]);
 
+  // Fetch recent roasts
+  const fetchRecentRoasts = async () => {
+    try {
+      setRoastsLoading(true);
+      const response = await fetch('/api/user/roasts/recent?limit=10', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRecentRoasts(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching recent roasts:', error);
+    } finally {
+      setRoastsLoading(false);
+    }
+  };
+
   // Fetch user accounts and usage data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch connected accounts
         const accountsRes = await fetch('/api/user/integrations', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        
+
         if (accountsRes.ok) {
           const accountsData = await accountsRes.json();
           setAccounts(accountsData.data || []);
@@ -106,11 +136,14 @@ export default function Dashboard() {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        
+
         if (usageRes.ok) {
           const usageData = await usageRes.json();
           setUsage(usageData.data || {});
         }
+
+        // Fetch recent roasts
+        await fetchRecentRoasts();
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -205,6 +238,65 @@ export default function Dashboard() {
 
   const getTotalRoastsLimit = () => {
     return usage?.limit || 5000; // Default limit
+  };
+
+  // Roast action handlers
+  const handleEditRoast = async (roastId) => {
+    // TODO: Implement edit roast functionality
+    console.log('Edit roast:', roastId);
+  };
+
+  const handleRegenerateRoast = async (roastId) => {
+    try {
+      const response = await fetch(`/api/user/roasts/${roastId}/regenerate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        await fetchRecentRoasts(); // Refresh roasts
+      }
+    } catch (error) {
+      console.error('Error regenerating roast:', error);
+    }
+  };
+
+  const handleDiscardRoast = async (roastId) => {
+    try {
+      const response = await fetch(`/api/user/roasts/${roastId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        await fetchRecentRoasts(); // Refresh roasts
+      }
+    } catch (error) {
+      console.error('Error discarding roast:', error);
+    }
+  };
+
+  const handlePublishRoast = async (roastId) => {
+    try {
+      const response = await fetch(`/api/user/roasts/${roastId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        await fetchRecentRoasts(); // Refresh roasts
+      }
+    } catch (error) {
+      console.error('Error publishing roast:', error);
+    }
   };
 
   // Modal handlers for AccountModal
@@ -446,10 +538,22 @@ export default function Dashboard() {
                   <div className="text-right">
                     <div className="flex items-center space-x-2 mb-1">
                       {getStatusBadge(account.status)}
+                      {account.shield_enabled && (
+                        <Badge variant="outline" className="text-xs">
+                          <Shield className="h-3 w-3 mr-1" />
+                          Shield
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {platformUsage.roasts || 0} / {platformUsage.limit || 1000} roasts
                     </p>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <SettingsIcon className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {account.tone || 'sarcastic'} • {account.auto_approve ? 'Auto' : 'Manual'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -519,6 +623,128 @@ export default function Dashboard() {
               <span>Ver todas las integraciones disponibles</span>
             </button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Roasts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-5 w-5" />
+              <span>Últimos roasts</span>
+            </div>
+            <Badge variant="outline">
+              {recentRoasts.length} recientes
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {roastsLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <div>
+                      <Skeleton className="h-4 w-32 mb-2" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : recentRoasts.length > 0 ? (
+            <div className="space-y-4">
+              {recentRoasts.map((roast) => {
+                const IconComponent = platformIcons[roast.platform] || AlertCircle;
+
+                return (
+                  <div
+                    key={roast.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4 flex-1">
+                      <IconComponent className="h-8 w-8 text-muted-foreground" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h4 className="font-medium truncate">{platformNames[roast.platform]}</h4>
+                          <Badge
+                            variant={roast.status === 'published' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {roast.status === 'published' ? 'Publicado' :
+                             roast.status === 'pending' ? 'Pendiente' : 'Borrador'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {roast.content || 'Sin contenido'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(roast.created_at).toLocaleDateString('es-ES', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditRoast(roast.id)}
+                        title="Editar roast"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRegenerateRoast(roast.id)}
+                        title="Regenerar roast"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                      {roast.status !== 'published' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePublishRoast(roast.id)}
+                          title="Publicar roast"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDiscardRoast(roast.id)}
+                        title="Descartar roast"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="font-medium mb-2">No hay roasts recientes</h3>
+              <p className="text-sm text-muted-foreground">
+                Los roasts aparecerán aquí cuando empieces a usar Roastr
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
