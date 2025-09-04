@@ -8,7 +8,9 @@ import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Down
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
+import AjustesSettings from '../components/AjustesSettings';
 import TransparencySettings from '../components/TransparencySettings';
+import ShopSettings from '../components/ShopSettings';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
 
 // Password requirement component for visual feedback (legacy support)
@@ -71,6 +73,17 @@ export default function Settings() {
   // Data export state (Issue #258)
   const [showDataExportModal, setShowDataExportModal] = useState(false);
   const [dataExportLoading, setDataExportLoading] = useState(false);
+
+  // Data export rate limiting state
+  const [lastDataExportAttempt, setLastDataExportAttempt] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lastDataExportAttempt');
+      return stored ? parseInt(stored, 10) : 0;
+    } catch (_) {
+      return 0;
+    }
+  });
+  const DATA_EXPORT_COOLDOWN_MS = 300000; // 5 minutes
 
   // Password reset rate limiting state
   const [lastPasswordResetAttempt, setLastPasswordResetAttempt] = useState(0);
@@ -138,6 +151,7 @@ export default function Settings() {
           console.error('Failed to load Roastr Persona:', roastrPersonaError);
           setRoastrPersona(prev => ({ ...prev, isLoading: false }));
         }
+
       } catch (error) {
         console.error('Failed to fetch user data:', error);
         addNotification('Error al cargar datos del usuario', 'error');
@@ -389,8 +403,22 @@ export default function Settings() {
 
   // Data export request handling (Issue #258)
   const handleDataExportRequest = async () => {
+    // Check client-side rate limiting
+    const now = Date.now();
+    const timeSinceLastAttempt = now - lastDataExportAttempt;
+
+    if (timeSinceLastAttempt < DATA_EXPORT_COOLDOWN_MS) {
+      const remainingTime = Math.ceil((DATA_EXPORT_COOLDOWN_MS - timeSinceLastAttempt) / 60000);
+      addNotification(`Debes esperar ${remainingTime} minuto(s) antes de solicitar otra exportación`, 'warning');
+      return;
+    }
+
     try {
       setDataExportLoading(true);
+      setLastDataExportAttempt(now);
+
+      // Store timestamp in localStorage for persistence
+      localStorage.setItem('lastDataExportAttempt', now.toString());
 
       const result = await apiClient.post('/user/data-export');
 
@@ -402,7 +430,13 @@ export default function Settings() {
       }
     } catch (error) {
       console.error('Data export request error:', error);
-      addNotification('Error al solicitar la exportación de datos', 'error');
+
+      // Handle rate limiting response from server
+      if (error.response?.status === 429) {
+        addNotification('Has alcanzado el límite de solicitudes. Inténtalo más tarde.', 'warning');
+      } else {
+        addNotification('Error al solicitar la exportación de datos', 'error');
+      }
     } finally {
       setDataExportLoading(false);
     }
@@ -1015,6 +1049,12 @@ export default function Settings() {
           <TransparencySettings />
         </CardContent>
       </Card>
+
+      {/* Shop */}
+      <ShopSettings
+        user={user}
+        onNotification={addNotification}
+      />
 
       {/* Roastr Persona */}
       <Card>
@@ -1726,6 +1766,12 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      {/* Ajustes Section */}
+      <AjustesSettings
+        user={user}
+        onNotification={addNotification}
+      />
+
       {/* Logout Section */}
       <Card>
         <CardHeader>
@@ -1751,7 +1797,6 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
-
       {/* Danger Zone */}
       <Card>
         <CardHeader>

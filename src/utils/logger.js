@@ -33,8 +33,18 @@ const SafeUtils = {
       return 'invalid-email';
     }
 
+    // If there's no local part, treat as invalid input and return null for consistency
+    if (atIndex === 0) {
+      return null; // e.g., "@domain.com" - return null for invalid/malformed emails
+    }
+
     const localPart = email.substring(0, atIndex);
     const domain = email.substring(atIndex + 1);
+
+    // If domain is missing or malformed, treat as invalid
+    if (!domain || !domain.includes('.')) {
+      return ''; // e.g., "test@" - return empty string to maintain string return type
+    }
 
     // Mask local part: keep first character, mask the rest
     // For single-character local parts, preserve the character instead of replacing with '*'
@@ -44,10 +54,6 @@ const SafeUtils = {
 
     // Mask domain: keep first character and TLD, mask the middle
     const domainParts = domain.split('.');
-    if (domainParts.length < 2) {
-      return maskedLocal + '@***';
-    }
-
     const domainName = domainParts[0];
     const tld = domainParts[domainParts.length - 1];
     const maskedDomain = domainName.length > 1

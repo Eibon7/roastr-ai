@@ -74,32 +74,37 @@ class StripeWebhookService {
             // Route to appropriate handler
             switch (event.type) {
                 case 'checkout.session.completed':
-                    result = await this._handleCheckoutCompleted(event.data.object);
+                    // Check if this is an addon purchase or subscription
+                    if (event.data.object.mode === 'payment' && event.data.object.metadata?.addon_key) {
+                        result = await this._handleAddonPurchaseCompleted(event.data.object);
+                    } else {
+                        result = await this._handleCheckoutCompleted(event.data.object);
+                    }
                     break;
-                
+
                 case 'customer.subscription.created':
                 case 'customer.subscription.updated':
                     result = await this._handleSubscriptionUpdated(event.data.object);
                     break;
-                
+
                 case 'customer.subscription.deleted':
                     result = await this._handleSubscriptionDeleted(event.data.object);
                     break;
-                
+
                 case 'invoice.payment_succeeded':
                     result = await this._handlePaymentSucceeded(event.data.object);
                     break;
-                
+
                 case 'invoice.payment_failed':
                     result = await this._handlePaymentFailed(event.data.object);
                     break;
-                
+
                 default:
                     logger.info('Unhandled webhook event type', {
                         eventId: event.id,
                         eventType: event.type
                     });
-                    
+
                     result = {
                         success: true,
                         message: 'Event type not handled',
@@ -271,6 +276,174 @@ class StripeWebhookService {
 
         } catch (error) {
             throw new Error(`Checkout completion failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * Handle addon purchase completion
+     * @private
+     */
+    async _handleAddonPurchaseCompleted(session) {
+        try {
+            const userId = session.metadata.user_id;
+            const addonKey = session.metadata.addon_key;
+            const addonType = session.metadata.addon_type;
+            const creditAmount = parseInt(session.metadata.credit_amount) || 0;
+            const featureKey = session.metadata.feature_key || null;
+
+            if (!userId || !addonKey) {
+                throw new Error('Missing required metadata for addon purchase');
+            }
+
+            logger.info('Processing addon purchase completion', {
+                sessionId: session.id,
+                userId,
+                addonKey,
+                addonType,
+                creditAmount
+            });
+
+            // Validate and extract payment intent ID
+            let paymentIntentId;
+            if (!session.payment_intent) {
+                logger.error('Missing payment_intent in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    metadata: session.metadata
+                });
+                throw new Error('Payment intent is required for addon purchase completion');
+            }
+
+            // Extract payment intent ID (handle both string and object formats)
+            if (typeof session.payment_intent === 'string') {
+                paymentIntentId = session.payment_intent;
+            } else if (typeof session.payment_intent === 'object' && session.payment_intent.id) {
+                paymentIntentId = session.payment_intent.id;
+            } else {
+                logger.error('Invalid payment_intent format in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    paymentIntentType: typeof session.payment_intent,
+                    paymentIntentValue: session.payment_intent
+                });
+                throw new Error('Payment intent must be a string or object with id property');
+            }
+
+            // Validate session.amount_total
+            if (!session.amount_total || typeof session.amount_total !== 'number') {
+                logger.error('Invalid or missing amount_total in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    amountTotal: session.amount_total,
+                    amountTotalType: typeof session.amount_total
+                });
+
+                // Update purchase history as failed
+                await supabaseServiceClient
+                    .from('addon_purchase_history')
+                    .update({
+                        status: 'failed',
+                        failed_at: new Date().toISOString(),
+                        error_message: 'Invalid amount_total in checkout session'
+                    })
+                    .eq('stripe_checkout_session_id', session.id);
+
+                throw new Error('Amount total must be a valid number');
+            }
+
+            // Robust numeric validation - coerce to Number and validate
+            const amountNumber = Number(session.amount_total);
+
+            // Check if conversion resulted in a valid number
+            if (isNaN(amountNumber) || !Number.isSafeInteger(amountNumber) || amountNumber <= 0) {
+                logger.error('Invalid amount_total value in checkout session', {
+                    sessionId: session.id,
+                    userId,
+                    addonKey,
+                    originalAmount: session.amount_total,
+                    coercedAmount: amountNumber,
+                    isNaN: isNaN(amountNumber),
+                    isSafeInteger: Number.isSafeInteger(amountNumber),
+                    isPositive: amountNumber > 0
+                });
+
+                // Update purchase history as failed
+                await supabaseServiceClient
+                    .from('addon_purchase_history')
+                    .update({
+                        status: 'failed',
+                        failed_at: new Date().toISOString(),
+                        error_message: 'Amount total must be a positive integer'
+                    })
+                    .eq('stripe_checkout_session_id', session.id);
+
+                throw new Error('Amount total must be a positive integer');
+            }
+
+            const amountCents = amountNumber;
+
+            // Execute atomic transaction for addon purchase
+            const { data: transactionResult, error: transactionError } = await supabaseServiceClient
+                .rpc('execute_addon_purchase_transaction', {
+                    p_user_id: userId,
+                    p_addon_key: addonKey,
+                    p_stripe_payment_intent_id: paymentIntentId,
+                    p_stripe_checkout_session_id: session.id,
+                    p_amount_cents: amountCents,
+                    p_addon_type: addonType,
+                    p_credit_amount: creditAmount,
+                    p_feature_key: featureKey
+                });
+
+            if (transactionError) {
+                logger.error('Addon purchase transaction failed:', {
+                    userId,
+                    addonKey,
+                    sessionId: session.id,
+                    error: transactionError
+                });
+
+                // Update purchase history as failed
+                await supabaseServiceClient
+                    .from('addon_purchase_history')
+                    .update({
+                        status: 'failed',
+                        failed_at: new Date().toISOString(),
+                        error_message: transactionError.message
+                    })
+                    .eq('stripe_checkout_session_id', session.id);
+
+                return {
+                    success: false,
+                    accountId: userId,
+                    message: 'Addon purchase transaction failed',
+                    error: transactionError
+                };
+            }
+
+            logger.info('Addon purchase completed successfully', {
+                userId,
+                addonKey,
+                sessionId: session.id,
+                creditsAdded: creditAmount,
+                featureActivated: featureKey
+            });
+
+            return {
+                success: true,
+                accountId: userId,
+                message: 'Addon purchase completed successfully',
+                addonKey,
+                creditsAdded: creditAmount,
+                featureActivated: featureKey,
+                transactionResult
+            };
+
+        } catch (error) {
+            throw new Error(`Addon purchase completion failed: ${error.message}`);
         }
     }
 
@@ -532,7 +705,8 @@ class StripeWebhookService {
                     p_amount_due: invoice.amount_due,
                     p_attempt_count: invoice.attempt_count || 0,
                     p_next_attempt_date: invoice.next_payment_attempt ? new Date(invoice.next_payment_attempt * 1000).toISOString() : null,
-                    p_payment_failed_at: new Date().toISOString()
+                    p_payment_failed_at: new Date().toISOString(),
+                    p_stripe_payment_intent_id: invoice.payment_intent || null // CodeRabbit: Include payment intent ID for traceability
                 });
 
             if (transactionError) {
