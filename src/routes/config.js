@@ -358,4 +358,44 @@ router.post('/reload', requireAdmin, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/config/flags
+ * Get feature flags for frontend consumption
+ * Public endpoint (no authentication required for basic flags)
+ */
+router.get('/flags', (req, res) => {
+    try {
+        // Get frontend-relevant flags only
+        const frontendFlags = {
+            ENABLE_SHOP: flags.isEnabled('ENABLE_SHOP'),
+            ENABLE_STYLE_PROFILE: flags.isEnabled('ENABLE_STYLE_PROFILE'),
+            ENABLE_RQC: flags.isEnabled('ENABLE_RQC'),
+            ENABLE_SHIELD: flags.isEnabled('ENABLE_SHIELD'),
+            ENABLE_BILLING: flags.isEnabled('ENABLE_BILLING'),
+            ENABLE_MAGIC_LINK: flags.isEnabled('ENABLE_MAGIC_LINK'),
+        };
+
+        res.status(200).json({
+            success: true,
+            flags: frontendFlags,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        logger.error('Feature flags endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve feature flags',
+            flags: {
+                ENABLE_SHOP: false,
+                ENABLE_STYLE_PROFILE: false,
+                ENABLE_RQC: false,
+                ENABLE_SHIELD: false,
+                ENABLE_BILLING: false,
+                ENABLE_MAGIC_LINK: false,
+            }
+        });
+    }
+});
+
 module.exports = router;

@@ -232,6 +232,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     isPro: userData?.plan === 'pro' || userData?.plan === 'enterprise',
     hasRQC: userData?.rqcEnabled === true,
+    isAdmin: userData?.is_admin === true,
   };
 
   return (

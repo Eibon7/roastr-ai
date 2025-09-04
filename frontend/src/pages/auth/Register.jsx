@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import authService from '../../services/authService';
+import usePostLoginRedirect from '../../hooks/usePostLoginRedirect';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -16,11 +17,8 @@ const Register = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
+  // Use the post-login redirect hook
+  usePostLoginRedirect();
 
   // Cleanup timeout on unmount
   useEffect(() => {
