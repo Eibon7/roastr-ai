@@ -6,6 +6,7 @@ const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
 const CostControlService = require('../services/costControl');
 const revenueRoutes = require('./revenue');
+const featureFlagsRoutes = require('./admin/featureFlags');
 const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
@@ -18,6 +19,9 @@ router.use(isAdminMiddleware);
 
 // Revenue dashboard routes (admin only)
 router.use('/revenue', revenueRoutes);
+
+// Feature flags and kill switch routes (admin only)
+router.use('/', featureFlagsRoutes);
 
 /**
  * GET /api/admin/dashboard

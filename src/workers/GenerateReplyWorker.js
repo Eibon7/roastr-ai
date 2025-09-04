@@ -3,6 +3,7 @@ const CostControlService = require('../services/costControl');
 const RoastPromptTemplate = require('../services/roastPromptTemplate');
 const transparencyService = require('../services/transparencyService');
 const { mockMode } = require('../config/mockMode');
+const { shouldBlockAutopost } = require('../middleware/killSwitch');
 const { PLATFORM_LIMITS } = require('../config/constants');
 
 /**
@@ -147,7 +148,20 @@ class GenerateReplyWorker extends BaseWorker {
       severity_level,
       categories
     } = job.payload;
-    
+
+    // Check kill switch before processing
+    const autopostCheck = await shouldBlockAutopost(platform);
+    if (autopostCheck.blocked) {
+      this.logger.warn('Reply generation blocked by kill switch', {
+        comment_id,
+        organization_id,
+        platform,
+        reason: autopostCheck.reason,
+        message: autopostCheck.message
+      });
+      throw new Error(`Reply generation blocked: ${autopostCheck.message}`);
+    }
+
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
       organization_id, 

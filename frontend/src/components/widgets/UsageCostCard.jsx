@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
 import { DollarSign, Zap, Brain, Shield } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatUtils';
 
 export default function UsageCostCard() {
   const [usage, setUsage] = useState(null);
@@ -45,7 +46,7 @@ export default function UsageCostCard() {
     );
   }
 
-  const costInDollars = usage?.costCents ? (usage.costCents / 100).toFixed(2) : '0.00';
+  const formattedCost = formatCurrency(usage?.costCents || 0, usage?.currency || 'USD');
 
   return (
     <Card>
@@ -70,7 +71,7 @@ export default function UsageCostCard() {
                 <span className="text-sm text-muted-foreground">Total Cost</span>
               </div>
               <div className="text-2xl font-bold text-green-600">
-                ${costInDollars}
+                {formattedCost}
               </div>
             </div>
             
