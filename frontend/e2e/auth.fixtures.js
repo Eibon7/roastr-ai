@@ -3,18 +3,34 @@
  */
 
 export const TEST_USERS = {
+  // Issue #318 - Specific test users as per requirements
+  admin: {
+    email: 'admin@roastr.ai',
+    password: 'Admin123',
+    name: 'Admin User',
+    isAdmin: true
+  },
+
+  user: {
+    email: 'user@roastr.ai',
+    password: 'User123',
+    name: 'Regular User',
+    isAdmin: false
+  },
+
+  // Legacy test users for backward compatibility
   validUser: {
     email: 'valid.user@example.com',
     password: 'ValidPass123!',
     name: 'Valid User'
   },
-  
+
   testUser: () => ({
     email: `test.user+${Date.now()}@example.com`,
     password: 'TestPass123!',
     name: 'Test User'
   }),
-  
+
   adminUser: {
     email: 'admin@example.com',
     password: 'AdminPass123!',
@@ -190,10 +206,10 @@ export async function cleanupTestUser(email) {
 
 /**
  * Mock network responses for testing error scenarios
- * @param {import('@playwright/test').Page} page 
- * @param {string} endpoint 
- * @param {number} status 
- * @param {Object} response 
+ * @param {import('@playwright/test').Page} page
+ * @param {string} endpoint
+ * @param {number} status
+ * @param {Object} response
  */
 export async function mockNetworkResponse(page, endpoint, status, response) {
   await page.route(endpoint, route => {
@@ -202,5 +218,125 @@ export async function mockNetworkResponse(page, endpoint, status, response) {
       contentType: 'application/json',
       body: JSON.stringify(response)
     });
+  });
+}
+
+/**
+ * Mock successful login response for Issue #318 test users
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} user - User object with email, password, isAdmin
+ */
+export async function mockLoginSuccess(page, user) {
+  await page.route('**/api/auth/login', route => {
+    const requestBody = route.request().postDataJSON();
+
+    if (requestBody.email === user.email && requestBody.password === user.password) {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'Login successful',
+          data: {
+            access_token: 'mock-jwt-token',
+            refresh_token: 'mock-refresh-token',
+            expires_at: Date.now() + 3600000, // 1 hour
+            user: {
+              id: user.isAdmin ? 'admin-user-id' : 'regular-user-id',
+              email: user.email,
+              email_confirmed: true,
+              is_admin: user.isAdmin,
+              name: user.name,
+              plan: user.isAdmin ? 'enterprise' : 'free'
+            }
+          }
+        })
+      });
+    } else {
+      route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          error: 'Email o contraseña incorrectos'
+        })
+      });
+    }
+  });
+}
+
+/**
+ * Mock feature flags response
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} flags - Feature flags object
+ */
+export async function mockFeatureFlags(page, flags = {}) {
+  const defaultFlags = {
+    ENABLE_SHOP: false,
+    ENABLE_STYLE_PROFILE: true,
+    ENABLE_RQC: false,
+    ENABLE_SHIELD: false,
+    ENABLE_BILLING: false,
+    ...flags
+  };
+
+  await page.route('**/api/config/flags', route => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        flags: defaultFlags
+      })
+    });
+  });
+}
+
+/**
+ * Mock logout response
+ * @param {import('@playwright/test').Page} page
+ */
+export async function mockLogout(page) {
+  await page.route('**/api/auth/logout', route => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        message: 'Logout successful'
+      })
+    });
+  });
+}
+
+/**
+ * Setup authentication state for a user
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} user - User object
+ */
+export async function setupAuthState(page, user) {
+  // Set localStorage with auth data
+  await page.addInitScript((userData) => {
+    localStorage.setItem('auth_token', 'mock-jwt-token');
+    localStorage.setItem('refresh_token', 'mock-refresh-token');
+    localStorage.setItem('user_data', JSON.stringify({
+      id: userData.isAdmin ? 'admin-user-id' : 'regular-user-id',
+      email: userData.email,
+      name: userData.name,
+      is_admin: userData.isAdmin,
+      plan: userData.isAdmin ? 'enterprise' : 'free'
+    }));
+  }, user);
+}
+
+/**
+ * Clear authentication state
+ * @param {import('@playwright/test').Page} page
+ */
+export async function clearAuthState(page) {
+  await page.addInitScript(() => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
   });
 }
