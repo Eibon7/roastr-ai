@@ -658,7 +658,11 @@ const RoastrPersonaField = ({
             </div>
             <Button
               onClick={handleSave}
-              disabled={isSaving || (fieldValue ?? '').trim().length === 0 || !hasChanges}
+              disabled={
+                isSaving ||
+                (((fieldValue ?? '').trim() === (value ?? '').trim()) &&
+                 fieldVisibility === isVisible)
+              }
               size="sm"
             >
               {isSaving ? (

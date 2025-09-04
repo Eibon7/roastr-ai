@@ -268,26 +268,11 @@ router.post('/checkout', authenticateToken, async (req, res) => {
 
         // Get or generate idempotency key for Stripe session creation
         let idempotencyKey = req.headers['x-idempotency-key'] || req.headers['idempotency-key'];
-        if (!idempotencyKey) {
-            // Generate a deterministic idempotency key based on purchase context
-            // This ensures identical requests get the same key while different purchases do not
-            const secret = process.env.IDEMPOTENCY_SECRET;
-            const canonicalString = `${userId}:${addon.addon_key}:${addon.price_cents}:${addon.currency}`;
-
-            // Create HMAC-SHA256 hash for deterministic but secure idempotency key
-            idempotencyKey = crypto
-                .createHmac('sha256', secret)
-                .update(canonicalString)
-                .digest('hex')
-                .substring(0, 32); // Truncate to reasonable length
-
-            logger.debug('Generated deterministic idempotency key for checkout session:', {
-                userId,
-                addonKey: addon.addon_key,
-                canonicalString,
-                idempotencyKey
-            });
-        }
+        // Use provided key (truncated) or fall back to a random UUID
+        idempotencyKey = idempotencyKey
+            ? String(idempotencyKey).slice(0, 255)
+            : crypto.randomUUID();
+        logger.debug('Using idempotency key for checkout session', { userId, addonKey: addon.addon_key });
 
         // Create checkout session for one-time payment
         const session = await stripeWrapper.checkout.sessions.create({
