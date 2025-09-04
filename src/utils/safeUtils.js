@@ -33,7 +33,7 @@ function safeJsonStringify(obj, fallback = '{}') {
 /**
  * Safely access nested object properties
  * @param {object} obj - Object to access
- * @param {string} path - Dot notation path (e.g., 'user.profile.name')
+ * @param {string|Array} path - Dot notation path (e.g., 'user.profile.name') or array of keys
  * @param {*} fallback - Fallback value if path doesn't exist
  * @returns {*} Value at path or fallback
  */
@@ -41,17 +41,33 @@ function safeGet(obj, path, fallback = undefined) {
     if (!obj || typeof obj !== 'object') {
         return fallback;
     }
-    
-    const keys = path.split('.');
+
+    // Validate and normalize path
+    let keys;
+    if (typeof path === 'string') {
+        if (path === '') {
+            return fallback;
+        }
+        keys = path.split('.');
+    } else if (Array.isArray(path)) {
+        keys = path;
+    } else {
+        // Path is neither string nor array
+        return fallback;
+    }
+
     let current = obj;
-    
+
     for (const key of keys) {
-        if (current === null || current === undefined || !(key in current)) {
+        // Check if current is an object and has the key as own property
+        if (current === null || current === undefined ||
+            typeof current !== 'object' ||
+            !Object.prototype.hasOwnProperty.call(current, key)) {
             return fallback;
         }
         current = current[key];
     }
-    
+
     return current;
 }
 

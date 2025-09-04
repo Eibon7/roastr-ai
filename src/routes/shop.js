@@ -260,7 +260,7 @@ router.post('/checkout', authenticateToken, async (req, res) => {
         if (!idempotencyKey) {
             // Generate a deterministic idempotency key based on purchase context
             // This ensures identical requests get the same key while different purchases do not
-            const secret = process.env.ROASTR_API_KEY || 'default-shop-secret';
+            const secret = process.env.IDEMPOTENCY_SECRET;
             const canonicalString = `${userId}:${addon.addon_key}:${addon.price_cents}:${addon.currency}`;
 
             // Create HMAC-SHA256 hash for deterministic but secure idempotency key

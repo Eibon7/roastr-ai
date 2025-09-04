@@ -3,6 +3,26 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+// Validate critical environment variables at startup
+function validateEnvironment() {
+  // Skip validation during tests
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
+  const requiredVars = ['IDEMPOTENCY_SECRET'];
+  const missing = requiredVars.filter(varName => !process.env[varName] || process.env[varName].trim() === '');
+
+  if (missing.length > 0) {
+    console.error('❌ Missing required environment variables:', missing.join(', '));
+    console.error('💡 Please set IDEMPOTENCY_SECRET to a strong randomly generated secret');
+    process.exit(1);
+  }
+}
+
+// Run environment validation
+validateEnvironment();
+
 // Security and monitoring middleware
 const { 
   helmetConfig, 

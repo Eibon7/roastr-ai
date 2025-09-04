@@ -354,15 +354,20 @@ class StripeWebhookService {
                 throw new Error('Amount total must be a valid number');
             }
 
-            // Coerce to integer and validate it's positive
-            const amountCents = parseInt(session.amount_total, 10);
-            if (!Number.isInteger(amountCents) || amountCents <= 0) {
+            // Robust numeric validation - coerce to Number and validate
+            const amountNumber = Number(session.amount_total);
+
+            // Check if conversion resulted in a valid number
+            if (isNaN(amountNumber) || !Number.isSafeInteger(amountNumber) || amountNumber <= 0) {
                 logger.error('Invalid amount_total value in checkout session', {
                     sessionId: session.id,
                     userId,
                     addonKey,
                     originalAmount: session.amount_total,
-                    parsedAmount: amountCents
+                    coercedAmount: amountNumber,
+                    isNaN: isNaN(amountNumber),
+                    isSafeInteger: Number.isSafeInteger(amountNumber),
+                    isPositive: amountNumber > 0
                 });
 
                 // Update purchase history as failed
@@ -377,6 +382,8 @@ class StripeWebhookService {
 
                 throw new Error('Amount total must be a positive integer');
             }
+
+            const amountCents = amountNumber;
 
             // Execute atomic transaction for addon purchase
             const { data: transactionResult, error: transactionError } = await supabaseServiceClient
