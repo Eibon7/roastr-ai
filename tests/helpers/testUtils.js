@@ -209,7 +209,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
   const finalEntitlements = {
     plan_name: entitlements.plan_name || effectivePlan,
     monthlyResponsesLimit: defaults.monthlyResponsesLimit,
-    integrationsLimit: entitlements.integrationsLimit || defaults.integrationsLimit,
+    integrationsLimit: entitlements.integrationsLimit ?? defaults.integrationsLimit ?? defaults.platforms,
     shieldEnabled: defaults.shieldEnabled,
     ...entitlements
   };

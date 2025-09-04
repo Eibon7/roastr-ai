@@ -251,6 +251,20 @@ class StripeWebhookService {
                 });
             }
 
+            // Trigger automatic stylecard generation for Pro/Plus users (Issue #293)
+            if (success && (plan === 'pro' || plan === 'creator_plus')) {
+                try {
+                    await this._triggerStylecardGeneration(userId, transactionResult?.organization_id);
+                } catch (stylecardError) {
+                    // Don't fail the checkout if stylecard generation fails
+                    logger.warn('Failed to trigger stylecard generation after checkout', {
+                        userId,
+                        plan,
+                        error: stylecardError.message
+                    });
+                }
+            }
+
             return {
                 success: true,
                 accountId: userId,
@@ -855,6 +869,85 @@ class StripeWebhookService {
                 success: false,
                 error: error.message
             };
+        }
+    }
+
+    /**
+     * Trigger automatic stylecard generation for new Pro/Plus subscribers
+     * @private
+     */
+    async _triggerStylecardGeneration(userId, organizationId) {
+        try {
+            // Import stylecardService here to avoid circular dependencies
+            const stylecardService = require('./stylecardService');
+
+            // Get user's connected integrations
+            const { data: integrations, error } = await supabaseServiceClient
+                .from('integration_configs')
+                .select('platform')
+                .eq('organization_id', organizationId)
+                .eq('enabled', true);
+
+            if (error) {
+                logger.error('Failed to get user integrations for stylecard generation', {
+                    userId,
+                    organizationId,
+                    error: error.message
+                });
+                return;
+            }
+
+            const connectedPlatforms = integrations?.map(i => i.platform) || [];
+
+            // Only trigger if user has connected platforms
+            if (connectedPlatforms.length === 0) {
+                logger.info('No connected platforms found, skipping stylecard generation', {
+                    userId,
+                    organizationId
+                });
+                return;
+            }
+
+            // Filter to supported platforms
+            const supportedPlatforms = ['twitter', 'instagram', 'tiktok', 'youtube', 'twitch'];
+            const validPlatforms = connectedPlatforms.filter(p => supportedPlatforms.includes(p));
+
+            if (validPlatforms.length === 0) {
+                logger.info('No supported platforms found for stylecard generation', {
+                    userId,
+                    organizationId,
+                    connectedPlatforms
+                });
+                return;
+            }
+
+            // Trigger stylecard generation
+            const result = await stylecardService.triggerStylecardGeneration(
+                userId,
+                organizationId,
+                validPlatforms,
+                {
+                    language: 'es', // Default to Spanish
+                    forceRegenerate: false,
+                    maxContent: 50
+                }
+            );
+
+            logger.info('Automatic stylecard generation triggered', {
+                userId,
+                organizationId,
+                platforms: validPlatforms,
+                jobId: result.jobId
+            });
+
+        } catch (error) {
+            logger.error('Failed to trigger automatic stylecard generation', {
+                userId,
+                organizationId,
+                error: error.message,
+                stack: error.stack
+            });
+            // Don't throw - this is a background operation
         }
     }
 }
