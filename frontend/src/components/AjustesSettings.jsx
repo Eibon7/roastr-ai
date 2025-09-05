@@ -4,24 +4,28 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { 
-  Settings, 
-  User, 
-  Info, 
-  Eye, 
-  EyeOff, 
-  Save, 
-  Copy, 
-  Check, 
-  Sun, 
-  Moon, 
+import {
+  Settings,
+  User,
+  Info,
+  Eye,
+  EyeOff,
+  Save,
+  Copy,
+  Check,
+  Sun,
+  Moon,
   Monitor,
   Palette,
   Shield,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  X
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import TransparencySettings from './TransparencySettings';
+import SensitiveDataModal from './ui/SensitiveDataModal';
+import { detectSensitiveData, generateWarningMessage, isClipboardClearingSupported, clearClipboard } from '../utils/sensitiveDataDetector';
 
 const AjustesSettings = ({ user, onNotification }) => {
   // Roastr Persona state
@@ -50,7 +54,12 @@ const AjustesSettings = ({ user, onNotification }) => {
   // Copy state for bio text
   const [copyState, setCopyState] = useState({
     copied: false,
-    bioText: ''
+    bioText: '',
+    showSensitiveModal: false,
+    pendingCopyData: null,
+    showWarning: false,
+    warningMessage: '',
+    clearingClipboard: false
   });
 
   useEffect(() => {
@@ -242,6 +251,36 @@ const AjustesSettings = ({ user, onNotification }) => {
 
   const handleCopyBioText = async () => {
     try {
+      // Detect sensitive data in the bio text
+      const detection = detectSensitiveData(copyState.bioText, {
+        checkPersonaFlag: true,
+        isPersonaSensitive: true, // Bio text is considered persona data
+        strictMode: false
+      });
+
+      // If sensitive data is detected, show confirmation modal
+      if (detection.isSensitive) {
+        setCopyState(prev => ({
+          ...prev,
+          showSensitiveModal: true,
+          pendingCopyData: {
+            text: copyState.bioText,
+            detection
+          }
+        }));
+        return;
+      }
+
+      // If not sensitive, proceed with copy
+      await performClipboardCopy(copyState.bioText, detection);
+    } catch (error) {
+      console.error('Failed to initiate copy operation:', error);
+      onNotification?.('Error al iniciar la operación de copiado', 'error');
+    }
+  };
+
+  const performClipboardCopy = async (textToCopy, detection) => {
+    try {
       // Check if modern clipboard API is available and optionally check permissions
       if (navigator.clipboard && navigator.clipboard.writeText) {
         // Optionally check clipboard-write permission for clearer user messages
@@ -257,57 +296,11 @@ const AjustesSettings = ({ user, onNotification }) => {
           }
         }
 
-        await navigator.clipboard.writeText(copyState.bioText);
-        setCopyState(prev => ({ ...prev, copied: true }));
-        onNotification?.('Texto copiado al portapapeles', 'success');
-
-        setTimeout(() => {
-          setCopyState(prev => ({ ...prev, copied: false }));
-        }, 2000);
+        await navigator.clipboard.writeText(textToCopy);
+        handleSuccessfulCopy(detection);
       } else {
         // Fallback for older browsers with improved accessibility
-        const activeElement = document.activeElement;
-        const selection = window.getSelection();
-        const selectedRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-        const textarea = document.createElement('textarea');
-        textarea.value = copyState.bioText;
-        textarea.readOnly = true;
-        textarea.setAttribute('aria-hidden', 'true');
-        textarea.setAttribute('tabindex', '-1');
-        textarea.style.position = 'absolute';
-        textarea.style.left = '-9999px';
-        textarea.style.top = '-9999px';
-
-        document.body.appendChild(textarea);
-
-        try {
-          textarea.select();
-          const successful = document.execCommand('copy');
-          if (successful) {
-            setCopyState(prev => ({ ...prev, copied: true }));
-            onNotification?.('Texto copiado al portapapeles', 'success');
-
-            setTimeout(() => {
-              setCopyState(prev => ({ ...prev, copied: false }));
-            }, 2000);
-          } else {
-            throw new Error('execCommand failed');
-          }
-        } catch (execError) {
-          console.error('execCommand copy failed:', execError);
-          onNotification?.('La función de copiar no está disponible en este navegador', 'error');
-        } finally {
-          // Restore focus and selection
-          document.body.removeChild(textarea);
-          if (activeElement && activeElement.focus) {
-            activeElement.focus();
-          }
-          if (selectedRange && selection) {
-            selection.removeAllRanges();
-            selection.addRange(selectedRange);
-          }
-        }
+        await performFallbackCopy(textToCopy, detection);
       }
     } catch (error) {
       console.error('Failed to copy bio text:', error);
@@ -323,6 +316,111 @@ const AjustesSettings = ({ user, onNotification }) => {
         onNotification?.('Error al copiar el texto', 'error');
       }
     }
+  };
+
+  const performFallbackCopy = async (textToCopy, detection) => {
+    const activeElement = document.activeElement;
+    const selection = window.getSelection();
+    const selectedRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+    textarea.readOnly = true;
+    textarea.setAttribute('aria-hidden', 'true');
+    textarea.setAttribute('tabindex', '-1');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '-9999px';
+
+    document.body.appendChild(textarea);
+
+    try {
+      textarea.select();
+      const successful = document.execCommand('copy');
+      if (successful) {
+        handleSuccessfulCopy(detection);
+      } else {
+        throw new Error('execCommand failed');
+      }
+    } catch (execError) {
+      console.error('execCommand copy failed:', execError);
+      onNotification?.('La función de copiar no está disponible en este navegador', 'error');
+    } finally {
+      // Restore focus and selection
+      document.body.removeChild(textarea);
+      if (activeElement && activeElement.focus) {
+        activeElement.focus();
+      }
+      if (selectedRange && selection) {
+        selection.removeAllRanges();
+        selection.addRange(selectedRange);
+      }
+    }
+  };
+
+  const handleSuccessfulCopy = (detection) => {
+    setCopyState(prev => ({ ...prev, copied: true }));
+    onNotification?.('Texto copiado al portapapeles', 'success');
+
+    // Show warning if sensitive data was detected
+    if (detection.isSensitive) {
+      const warningMessage = generateWarningMessage(detection);
+      setCopyState(prev => ({
+        ...prev,
+        showWarning: true,
+        warningMessage
+      }));
+
+      // Auto-hide warning after 8 seconds
+      setTimeout(() => {
+        setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
+      }, 8000);
+
+      // Offer clipboard clearing after 30 seconds if supported
+      if (isClipboardClearingSupported()) {
+        setTimeout(() => {
+          setCopyState(prev => ({ ...prev, clearingClipboard: true }));
+          clearClipboard().then(() => {
+            setCopyState(prev => ({ ...prev, clearingClipboard: false }));
+          });
+        }, 30000);
+      }
+    }
+
+    // Reset copied state after 2 seconds
+    setTimeout(() => {
+      setCopyState(prev => ({ ...prev, copied: false }));
+    }, 2000);
+  };
+
+  const handleSensitiveModalConfirm = () => {
+    if (copyState.pendingCopyData) {
+      performClipboardCopy(
+        copyState.pendingCopyData.text,
+        copyState.pendingCopyData.detection
+      );
+    }
+    setCopyState(prev => ({
+      ...prev,
+      showSensitiveModal: false,
+      pendingCopyData: null
+    }));
+  };
+
+  const handleSensitiveModalClose = () => {
+    setCopyState(prev => ({
+      ...prev,
+      showSensitiveModal: false,
+      pendingCopyData: null
+    }));
+  };
+
+  const handleClearClipboard = async () => {
+    const success = await clearClipboard();
+    if (success) {
+      onNotification?.('Portapapeles limpiado', 'success');
+    }
+    setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
   };
 
   const getThemeIcon = (themeValue) => {
@@ -472,25 +570,67 @@ const AjustesSettings = ({ user, onNotification }) => {
                     "{copyState.bioText}"
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyBioText}
-                  disabled={copyState.copied}
-                >
-                  {copyState.copied ? (
-                    <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Copiado
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copiar
-                    </>
+                <div className="flex items-center space-x-2">
+                  {copyState.clearingClipboard && (
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Clock className="h-3 w-3 mr-1 animate-spin" />
+                      Limpiando...
+                    </div>
                   )}
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyBioText}
+                    disabled={copyState.copied || copyState.clearingClipboard}
+                  >
+                    {copyState.copied ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Copiado
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
+
+              {/* Warning message for sensitive data */}
+              {copyState.showWarning && copyState.warningMessage && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-amber-800">
+                        {copyState.warningMessage}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {isClipboardClearingSupported() && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleClearClipboard}
+                          className="text-xs h-6 px-2"
+                        >
+                          Limpiar portapapeles
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }))}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -686,6 +826,15 @@ const RoastrPersonaField = ({
           {value}
         </div>
       )}
+
+      {/* Sensitive Data Confirmation Modal */}
+      <SensitiveDataModal
+        isOpen={copyState.showSensitiveModal}
+        onClose={handleSensitiveModalClose}
+        onConfirm={handleSensitiveModalConfirm}
+        detection={copyState.pendingCopyData?.detection}
+        textPreview={copyState.pendingCopyData?.text}
+      />
     </div>
   );
 };

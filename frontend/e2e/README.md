@@ -41,12 +41,12 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 const TEST_USERS = {
   admin: {
     email: 'admin@roastr.ai',
-    password: 'Admin123',
+    password: 'AdminTest123!',
     isAdmin: true
   },
   user: {
     email: 'user@roastr.ai',
-    password: 'User123',
+    password: 'UserTest123!',
     isAdmin: false
   }
 };

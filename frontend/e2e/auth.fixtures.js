@@ -7,14 +7,14 @@ export const TEST_USERS = {
   // Issue #318 - Specific test users as per requirements
   admin: {
     email: 'admin@roastr.ai',
-    password: 'Admin123',
+    password: 'AdminTest123!',
     name: 'Admin User',
     isAdmin: true
   },
 
   user: {
     email: 'user@roastr.ai',
-    password: 'User123',
+    password: 'UserTest123!',
     name: 'Regular User',
     isAdmin: false
   },

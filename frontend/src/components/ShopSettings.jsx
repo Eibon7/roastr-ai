@@ -14,6 +14,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
+import { formatCurrency } from '../utils/formatUtils';
 
 const ShopSettings = ({ user, onNotification }) => {
   const [shopData, setShopData] = useState({
@@ -331,12 +332,7 @@ const ShopSettings = ({ user, onNotification }) => {
                     .replace(/\b\w/g, l => l.toUpperCase());
                 };
 
-                const formatCurrency = (amountCents, currency = 'USD') => {
-                  return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: (currency || 'USD').toUpperCase()
-                  }).format(amountCents / 100);
-                };
+
 
                 const formatDate = (dateString) => {
                   return new Date(dateString).toLocaleDateString('en-US', {
