@@ -38,3 +38,7 @@ tests/integration/backend/fixtures/validation-report.json
 # Test environment files (not committed)
 .env.test.real
 .api-readiness-report.json
+
+# Test results and artifacts
+frontend/test-results/
+test-results/

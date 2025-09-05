@@ -214,13 +214,13 @@ jest.mock('../../src/middleware/auth', () => ({
                 url: 'https://checkout.stripe.com/pay/cs_test123'
             };
 
-            // Mock addon lookup
-            mockUserClient.from().select().eq().single.mockResolvedValue({
+            // Mock addon lookup (first call)
+            mockUserClient.from().select().eq().single.mockResolvedValueOnce({
                 data: mockAddon,
                 error: null
             });
 
-            // Mock user subscription lookup
+            // Mock user subscription lookup (second call)
             mockUserClient.from().select().eq().single.mockResolvedValue({
                 data: { stripe_customer_id: 'cus_test123' },
                 error: null
@@ -324,13 +324,13 @@ jest.mock('../../src/middleware/auth', () => ({
                 url: 'https://checkout.stripe.com/pay/cs_test123'
             };
 
-            // Mock addon lookup
-            mockUserClient.from().select().eq().single.mockResolvedValue({
+            // Mock addon lookup (first call)
+            mockUserClient.from().select().eq().single.mockResolvedValueOnce({
                 data: mockAddon,
                 error: null
             });
 
-            // Mock no existing customer
+            // Mock no existing customer (second call)
             mockUserClient.from().select().eq().single.mockResolvedValue({
                 data: null,
                 error: null

@@ -72,7 +72,7 @@ URL: http://localhost:3000/admin
 #### **3. Credenciales de Prueba**
 ```
 Email: admin@roastr.ai
-Password: admin123
+Password: AdminTest123!
 ```
 
 #### **4. Navegación**
