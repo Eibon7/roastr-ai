@@ -30,8 +30,6 @@ test.describe('Feature Flags - Shop Functionality', () => {
       const shopLinkCount = await shopLinks.count();
 
       // This test documents the current state - shop may or may not be available
-      console.log(`Found ${shopLinkCount} shop links in the application`);
-
       // Test passes regardless - it's documenting current state
       expect(shopLinkCount).toBeGreaterThanOrEqual(0);
     });

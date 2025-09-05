@@ -10,12 +10,12 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 - ✅ **Display login form correctly** - Verifies login form elements are present and accessible
 - ✅ **Handle login form submission** - Tests form interaction and validation
 - ✅ **Validate email format** - Checks HTML5 email validation
-- ✅ **Check for password reset link** - Verifies forgot password functionality availability
-- ✅ **Check for registration link** - Verifies registration functionality availability
+- ✅ **Verify presence of password reset link** - Ensures "Forgot password" is available and accessible
+- ✅ **Verify presence of registration link** - Ensures registration is available and accessible
 
 #### Navigation Flow Tests
-- ✅ **Check application routing** - Tests basic route accessibility
-- ✅ **Check protected routes redirect to login** - Verifies authentication guards
+- ✅ **Verify application routing** - Tests basic route accessibility
+- ✅ **Protected routes redirect to login** - Verifies authentication guards
 
 #### Accessibility Validation
 - ✅ **Basic accessibility attributes on login form** - Checks form accessibility
@@ -24,13 +24,13 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 ### 🏪 Feature Flags Tests (`feature-flags.spec.js`)
 
 #### Shop Feature Flag Testing
-- ✅ **Check shop availability in application** - Documents current shop feature state
+- ✅ **Verify shop availability in application** - Documents current shop feature state
 - ✅ **Handle shop URL access** - Tests direct shop URL access behavior
 - ✅ **Check admin interface accessibility** - Tests admin area access patterns
 
 #### Application Navigation
-- ✅ **Check main navigation structure** - Validates navigation elements
-- ✅ **Check page responsiveness** - Tests responsive design
+- ✅ **Verify main navigation structure** - Validates navigation elements
+- ✅ **Verify page responsiveness** - Tests responsive design
 
 #### Error Handling
 - ✅ **Handle network errors gracefully** - Tests application resilience
@@ -45,12 +45,14 @@ const TEST_USERS = {
     isAdmin: true
   },
   user: {
-    email: 'user@roastr.ai', 
+    email: 'user@roastr.ai',
     password: 'User123',
     isAdmin: false
   }
 };
 ```
+
+**Note**: These credentials are for local/dev E2E testing only. Do not reuse in staging/production and ensure any deployed environments reject these fixed passwords.
 
 ## Test Architecture
 
@@ -61,16 +63,19 @@ The tests use a simplified approach that:
 - Focuses on critical user journeys that work with the existing codebase
 - Provides documentation of current functionality
 
-### Mock Functions Available
+### Mock Functions Available (reserved for future scenarios)
 - `mockLoginSuccess()` - Mock successful authentication
 - `mockFeatureFlags()` - Mock feature flag responses
 - `setupAuthState()` - Setup authenticated user state
 - `clearAuthState()` - Clear authentication state
 
+Current specs avoid these mocks unless explicitly noted in a test.
+
 ## Running Tests
 
 ```bash
 # Run all E2E tests
+npx playwright install --with-deps
 npm run test:e2e
 
 # Run specific test files
@@ -86,7 +91,7 @@ npx playwright test --headed
 
 ## Test Results
 
-All 15 tests are currently passing:
+All 15 tests pass:
 - ✅ 8 Login and Navigation tests
 - ✅ 6 Feature Flag tests  
 - ✅ 1 Error Handling test
@@ -94,7 +99,7 @@ All 15 tests are currently passing:
 ## Configuration
 
 Tests are configured in `playwright.config.js`:
-- Base URL: `http://localhost:3000`
+- Base URL: `http://localhost:3000` (override with `PLAYWRIGHT_BASE_URL`)
 - Browsers: Chromium, Firefox, WebKit
 - Screenshots on failure
 - Trace collection on retry
@@ -114,6 +119,8 @@ Tests are configured in `playwright.config.js`:
 2. **Admin Interface Access** - Redirects to login when unauthenticated
 3. **Password Reset/Registration** - Links may or may not be present
 4. **Feature Flag Behavior** - Tests document current application behavior
+
+**Note**: These reflect today's UI state; tests are written to assert resilient, high-level behavior rather than brittle selectors. This helps future readers interpret failures after UI changes.
 
 ## Notes
 

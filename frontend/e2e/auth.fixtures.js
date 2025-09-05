@@ -1,6 +1,7 @@
 /**
  * Test fixtures and utilities for E2E authentication tests
  */
+import { expect } from '@playwright/test';
 
 export const TEST_USERS = {
   // Issue #318 - Specific test users as per requirements
@@ -180,8 +181,8 @@ export async function checkAuthAccessibility(page) {
   const passwordInput = page.locator('[name="password"]');
   
   await expect(emailInput).toHaveAttribute('type', 'email');
-  await expect(emailInput).toHaveAttribute('required');
-  await expect(passwordInput).toHaveAttribute('required');
+  await expect(emailInput).toHaveJSProperty('required', true);
+  await expect(passwordInput).toHaveJSProperty('required', true);
 }
 
 /**
@@ -228,6 +229,9 @@ export async function mockNetworkResponse(page, endpoint, status, response) {
  */
 export async function mockLoginSuccess(page, user) {
   await page.route('**/api/auth/login', route => {
+    if (route.request().method() !== 'POST') {
+      return route.continue();
+    }
     const requestBody = route.request().postDataJSON();
 
     if (requestBody.email === user.email && requestBody.password === user.password) {
@@ -313,9 +317,13 @@ export async function mockLogout(page) {
  * Setup authentication state for a user
  * @param {import('@playwright/test').Page} page
  * @param {Object} user - User object
+ *
+ * WARNING: This test fixture uses localStorage for tokens which is INSECURE.
+ * TODO: This is for testing purposes only and must NEVER be used in production.
+ * Production applications should use httpOnly cookies for secure token storage.
  */
 export async function setupAuthState(page, user) {
-  // Set localStorage with auth data
+  // Set localStorage with auth data (TEST ONLY - use httpOnly cookies in production)
   await page.addInitScript((userData) => {
     localStorage.setItem('auth_token', 'mock-jwt-token');
     localStorage.setItem('refresh_token', 'mock-refresh-token');

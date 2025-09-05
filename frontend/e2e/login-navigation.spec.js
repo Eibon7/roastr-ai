@@ -129,11 +129,8 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Test that basic routes are accessible
       await page.goto('/');
 
-      // Should either show login page or redirect to login
-      const currentUrl = page.url();
-      const isLoginPage = currentUrl.includes('/login') || currentUrl === 'http://localhost:3000/';
-
-      expect(isLoginPage).toBeTruthy();
+      // Should redirect to /login when unauthenticated
+      await expect(page).toHaveURL(/\/login(?:\?|$|\/)/);
 
       // Verify page loads without errors
       const pageTitle = await page.title();
@@ -146,12 +143,7 @@ test.describe('Login and Navigation - Issue #318', () => {
 
       for (const route of protectedRoutes) {
         await page.goto(route);
-
-        // Should redirect to login or show login page
-        const currentUrl = page.url();
-        const isRedirectedToLogin = currentUrl.includes('/login') || currentUrl === 'http://localhost:3000/';
-
-        expect(isRedirectedToLogin).toBeTruthy();
+        await expect(page).toHaveURL(/\/login(?:\?|$|\/)/);
       }
     });
   });
