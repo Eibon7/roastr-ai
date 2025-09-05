@@ -10,16 +10,19 @@
  * @returns {string} Formatted currency (e.g., "$12.34", "€10.50")
  */
 export function formatCurrency(amountCents, currency = 'USD', locale = 'en-US') {
+  // Safely normalize currency to a valid string
+  const safeCurrency = (typeof currency === 'string' && currency) ? currency.toUpperCase() : 'USD';
+
   if (typeof amountCents !== 'number' || isNaN(amountCents)) {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: String(currency || 'USD').toUpperCase()
+      currency: safeCurrency
     }).format(0);
   }
 
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: String(currency || 'USD').toUpperCase()
+    currency: safeCurrency
   }).format(amountCents / 100);
 }
 
