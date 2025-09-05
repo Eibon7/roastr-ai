@@ -75,16 +75,14 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Check email input validation
       const emailInput = page.locator('input[type="email"], input[name="email"]');
 
-      if (await emailInput.count() > 0) {
-        await emailInput.fill('invalid-email');
+      // Ensure email input exists before proceeding with validation test
+      await expect(emailInput).toBeVisible();
 
-        // Check if HTML5 validation works
-        const isValid = await emailInput.evaluate(el => el.checkValidity());
-        expect(isValid).toBeFalsy();
-      } else {
-        // If no email input found, test still passes
-        expect(true).toBeTruthy();
-      }
+      await emailInput.fill('invalid-email');
+
+      // Check if HTML5 validation works
+      const isValid = await emailInput.evaluate(el => el.checkValidity());
+      expect(isValid).toBeFalsy();
     });
 
     test('should check for password reset link', async ({ page }) => {
@@ -131,7 +129,8 @@ test.describe('Login and Navigation - Issue #318', () => {
 
       // Should either show login page or redirect to login
       const currentUrl = page.url();
-      const isLoginPage = currentUrl.includes('/login') || currentUrl === 'http://localhost:3000/';
+      const url = new URL(currentUrl);
+      const isLoginPage = url.pathname.includes('/login') || url.pathname === '/';
 
       expect(isLoginPage).toBeTruthy();
 
@@ -149,7 +148,8 @@ test.describe('Login and Navigation - Issue #318', () => {
 
         // Should redirect to login or show login page
         const currentUrl = page.url();
-        const isRedirectedToLogin = currentUrl.includes('/login') || currentUrl === 'http://localhost:3000/';
+        const url = new URL(currentUrl);
+        const isRedirectedToLogin = url.pathname.includes('/login') || url.pathname === '/';
 
         expect(isRedirectedToLogin).toBeTruthy();
       }
