@@ -456,6 +456,7 @@ const AjustesSettings = ({ user, onNotification }) => {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
@@ -692,6 +693,16 @@ const AjustesSettings = ({ user, onNotification }) => {
         </div>
       </CardContent>
     </Card>
+
+    {/* Sensitive Data Confirmation Modal */}
+    <SensitiveDataModal
+      isOpen={copyState.showSensitiveModal}
+      onClose={handleSensitiveModalClose}
+      onConfirm={handleSensitiveModalConfirm}
+      detection={copyState.pendingCopyData?.detection}
+      textPreview={copyState.pendingCopyData?.text}
+    />
+    </>
   );
 };
 
@@ -826,15 +837,6 @@ const RoastrPersonaField = ({
           {value}
         </div>
       )}
-
-      {/* Sensitive Data Confirmation Modal */}
-      <SensitiveDataModal
-        isOpen={copyState.showSensitiveModal}
-        onClose={handleSensitiveModalClose}
-        onConfirm={handleSensitiveModalConfirm}
-        detection={copyState.pendingCopyData?.detection}
-        textPreview={copyState.pendingCopyData?.text}
-      />
     </div>
   );
 };
