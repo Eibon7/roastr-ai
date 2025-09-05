@@ -13,13 +13,13 @@ export function formatCurrency(amountCents, currency = 'USD', locale = 'en-US') 
   if (typeof amountCents !== 'number' || isNaN(amountCents)) {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: (currency || 'USD').toUpperCase()
+      currency: String(currency || 'USD').toUpperCase()
     }).format(0);
   }
 
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: (currency || 'USD').toUpperCase()
+    currency: String(currency || 'USD').toUpperCase()
   }).format(amountCents / 100);
 }
 
