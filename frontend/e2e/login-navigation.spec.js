@@ -82,8 +82,8 @@ test.describe('Login and Navigation - Issue #318', () => {
         const isValid = await emailInput.evaluate(el => el.checkValidity());
         expect(isValid).toBeFalsy();
       } else {
-        // If no email input found, test still passes
-        expect(true).toBeTruthy();
+        // If no email input found, the test should fail
+        throw new Error('Email input not found - login form validation cannot be tested');
       }
     });
 

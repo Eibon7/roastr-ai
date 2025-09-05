@@ -15,6 +15,8 @@ test.describe('Feature Flags - Shop Functionality', () => {
   test.beforeEach(async ({ page }) => {
     // Clear any existing auth state
     await clearAuthState(page);
+    // Deterministic baseline
+    await mockFeatureFlags(page, { ENABLE_SHOP: false });
   });
 
   test.describe('Shop Feature Flag Disabled', () => {
@@ -28,14 +30,12 @@ test.describe('Feature Flags - Shop Functionality', () => {
       await page.goto('/');
 
       // Wait for page to load
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
-      // Check if shop links exist anywhere in the application
-      const shopLinks = page.locator('a[href*="shop"]');
-      const shopLinkCount = await shopLinks.count();
-
-      // With shop flag disabled, there should be no shop links
-      expect(shopLinkCount).toBe(0);
+      // Optional: authenticate if sidebar requires auth
+      // await setupAuthState(page, TEST_USERS.user);
+      const shopNavLink = page.locator('nav a:has-text("Shop")');
+      await expect(shopNavLink).toHaveCount(0);
     });
 
     test('should redirect or show 404 when accessing shop URL with flag disabled', async ({ page }) => {
@@ -93,40 +93,24 @@ test.describe('Feature Flags - Shop Functionality', () => {
       await page.goto('/');
 
       // Wait for page to load
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
-      // Check if shop links exist anywhere in the application
-      const shopLinks = page.locator('a[href*="shop"]');
-      const shopLinkCount = await shopLinks.count();
+      // Log in if nav is gated
+      await setupAuthState(page, TEST_USERS.user);
+      await page.goto('/');
+      await page.waitForLoadState('domcontentloaded');
 
-      // With shop flag enabled, there should be shop links (if implemented)
-      // Note: This test will pass if shop links are present or if shop feature isn't implemented yet
-      expect(shopLinkCount).toBeGreaterThanOrEqual(0);
+      const shopNavLink = page.locator('nav a:has-text("Shop")');
+      await expect(shopNavLink).toHaveCount(1);
     });
 
     test('should handle shop URL access when flag is enabled', async ({ page }) => {
-      // Try to access shop directly
+      await setupAuthState(page, TEST_USERS.user);
       await page.goto('/shop');
-
-      // Wait for page to load
-      await page.waitForLoadState('networkidle');
-
-      // Check what happens - behavior may vary based on implementation
-      const currentUrl = page.url();
-      const pageContent = await page.textContent('body');
-
-      // With shop flag enabled, the behavior should be consistent
-      // This test documents the current behavior when shop flag is enabled
-      const staysOnShopUrl = currentUrl.includes('/shop');
-      const hasShopContent = pageContent?.toLowerCase().includes('shop') || false;
-      const isNotFound = pageContent?.toLowerCase().includes('404') || pageContent?.toLowerCase().includes('not found') || false;
-      const isRedirected = !currentUrl.includes('/shop');
-
-      // At least one of these behaviors should occur (documenting current state)
-      expect(staysOnShopUrl || hasShopContent || isNotFound || isRedirected).toBeTruthy();
-
-      // Log the behavior for debugging
-      console.log(`Shop URL behavior with flag enabled: URL=${currentUrl}, hasContent=${hasShopContent}, isNotFound=${isNotFound}, isRedirected=${isRedirected}`);
+      await page.waitForLoadState('domcontentloaded');
+      await expect(page).toHaveURL(/\/shop(?:\/|$)/);
+      // Basic content smoke check (adjust selector to your Shop page)
+      await expect(page.locator('main')).toBeVisible();
     });
   });
 

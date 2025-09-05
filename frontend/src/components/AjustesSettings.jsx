@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -61,6 +61,29 @@ const AjustesSettings = ({ user, onNotification }) => {
     warningMessage: '',
     clearingClipboard: false
   });
+
+  // Refs for timeout cleanup
+  const warningTimeoutRef = useRef(null);
+  const clipboardClearTimeoutRef = useRef(null);
+  const copyStateTimeoutRef = useRef(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Cleanup all timeouts on unmount
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+      if (clipboardClearTimeoutRef.current) {
+        clearTimeout(clipboardClearTimeoutRef.current);
+      }
+      if (copyStateTimeoutRef.current) {
+        clearTimeout(copyStateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     loadAjustesData();
@@ -220,13 +243,14 @@ const AjustesSettings = ({ user, onNotification }) => {
   };
 
   const applyThemeToUI = (theme) => {
+    if (typeof document === 'undefined') return;
     const html = document.documentElement;
     const body = document.body;
-    
+
     // Remove existing theme classes
     html.classList.remove('light', 'dark');
     body.classList.remove('light', 'dark');
-    
+
     if (theme === 'light') {
       html.classList.add('light');
       body.classList.add('light');
@@ -236,7 +260,7 @@ const AjustesSettings = ({ user, onNotification }) => {
       body.classList.add('dark');
       html.style.colorScheme = 'dark';
     } else if (theme === 'system') {
-      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDarkMode = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (isDarkMode) {
         html.classList.add('dark');
         body.classList.add('dark');
@@ -288,7 +312,8 @@ const AjustesSettings = ({ user, onNotification }) => {
           try {
             const permission = await navigator.permissions.query({ name: 'clipboard-write' });
             if (permission.state === 'denied') {
-              onNotification?.('Permisos de portapapeles denegados. Intenta copiar manualmente.', 'error');
+              onNotification?.('Permisos de portapapeles denegados. Intentando método alternativo…', 'warning');
+              await performFallbackCopy(textToCopy, detection);
               return;
             }
           } catch (permError) {
@@ -339,12 +364,14 @@ const AjustesSettings = ({ user, onNotification }) => {
       const successful = document.execCommand('copy');
       if (successful) {
         handleSuccessfulCopy(detection);
+        return true;
       } else {
         throw new Error('execCommand failed');
       }
     } catch (execError) {
       console.error('execCommand copy failed:', execError);
       onNotification?.('La función de copiar no está disponible en este navegador', 'error');
+      return false;
     } finally {
       // Restore focus and selection
       document.body.removeChild(textarea);
@@ -372,24 +399,47 @@ const AjustesSettings = ({ user, onNotification }) => {
       }));
 
       // Auto-hide warning after 8 seconds
-      setTimeout(() => {
-        setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+      warningTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
+        }
       }, 8000);
 
       // Offer clipboard clearing after 30 seconds if supported
       if (isClipboardClearingSupported()) {
-        setTimeout(() => {
-          setCopyState(prev => ({ ...prev, clearingClipboard: true }));
-          clearClipboard().then(() => {
-            setCopyState(prev => ({ ...prev, clearingClipboard: false }));
-          });
+        if (clipboardClearTimeoutRef.current) {
+          clearTimeout(clipboardClearTimeoutRef.current);
+        }
+        clipboardClearTimeoutRef.current = setTimeout(async () => {
+          if (isMountedRef.current) {
+            setCopyState(prev => ({ ...prev, clearingClipboard: true }));
+            try {
+              await clearClipboard();
+              if (isMountedRef.current) {
+                setCopyState(prev => ({ ...prev, clearingClipboard: false }));
+              }
+            } catch (error) {
+              console.error('Error clearing clipboard:', error);
+              if (isMountedRef.current) {
+                setCopyState(prev => ({ ...prev, clearingClipboard: false }));
+              }
+            }
+          }
         }, 30000);
       }
     }
 
     // Reset copied state after 2 seconds
-    setTimeout(() => {
-      setCopyState(prev => ({ ...prev, copied: false }));
+    if (copyStateTimeoutRef.current) {
+      clearTimeout(copyStateTimeoutRef.current);
+    }
+    copyStateTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        setCopyState(prev => ({ ...prev, copied: false }));
+      }
     }, 2000);
   };
 
@@ -416,11 +466,20 @@ const AjustesSettings = ({ user, onNotification }) => {
   };
 
   const handleClearClipboard = async () => {
-    const success = await clearClipboard();
-    if (success) {
-      onNotification?.('Portapapeles limpiado', 'success');
+    try {
+      const success = await clearClipboard();
+      if (success) {
+        onNotification?.('Portapapeles limpiado', 'success');
+        setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
+      } else {
+        onNotification?.('No se pudo limpiar el portapapeles', 'error');
+        // Only clear warnings on success - keep them visible if clearing failed
+      }
+    } catch (error) {
+      console.error('Error clearing clipboard:', error);
+      onNotification?.('No se pudo limpiar el portapapeles', 'error');
+      // Keep warnings visible if clearing failed due to exception
     }
-    setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
   };
 
   const getThemeIcon = (themeValue) => {

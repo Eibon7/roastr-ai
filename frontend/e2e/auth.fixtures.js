@@ -228,11 +228,17 @@ export async function mockNetworkResponse(page, endpoint, status, response) {
  * @param {Object} user - User object with email, password, isAdmin
  */
 export async function mockLoginSuccess(page, user) {
-  await page.route('**/api/auth/login', route => {
+  await page.unroute('**/api/auth/login').catch(() => {});
+  await page.route('**/api/auth/login', async route => {
     if (route.request().method() !== 'POST') {
       return route.continue();
     }
-    const requestBody = route.request().postDataJSON();
+    let requestBody = {};
+    try {
+      requestBody = route.request().postDataJSON();
+    } catch {
+      /* fallback to empty object if not JSON */
+    }
 
     if (requestBody.email === user.email && requestBody.password === user.password) {
       route.fulfill({
@@ -275,6 +281,7 @@ export async function mockLoginSuccess(page, user) {
  * @param {Object} flags - Feature flags object
  */
 export async function mockFeatureFlags(page, flags = {}) {
+  await page.unroute('**/api/config/flags').catch(() => {});
   const defaultFlags = {
     ENABLE_SHOP: false,
     ENABLE_STYLE_PROFILE: true,
@@ -301,6 +308,7 @@ export async function mockFeatureFlags(page, flags = {}) {
  * @param {import('@playwright/test').Page} page
  */
 export async function mockLogout(page) {
+  await page.unroute('**/api/auth/logout').catch(() => {});
   await page.route('**/api/auth/logout', route => {
     route.fulfill({
       status: 200,
