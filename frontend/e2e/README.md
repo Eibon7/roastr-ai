@@ -35,7 +35,38 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 #### Error Handling
 - ✅ **Handle network errors gracefully** - Tests application resilience
 
-## Test Users (Configured but not actively used in simplified tests)
+## Test Users Configuration
+
+### Environment Variables (Recommended for CI/CD)
+
+For secure testing in CI/CD environments, set these environment variables:
+
+```bash
+# Primary test users for Issue #318
+E2E_ADMIN_EMAIL=admin@your-test-domain.com
+E2E_ADMIN_PASSWORD=SecureAdminPassword123!
+E2E_ADMIN_NAME="Admin User"
+
+E2E_USER_EMAIL=user@your-test-domain.com
+E2E_USER_PASSWORD=SecureUserPassword123!
+E2E_USER_NAME="Regular User"
+
+# Legacy test users (for backward compatibility)
+E2E_VALID_USER_EMAIL=valid.user@your-test-domain.com
+E2E_VALID_USER_PASSWORD=SecureValidPassword123!
+E2E_VALID_USER_NAME="Valid User"
+
+E2E_TEST_USER_PASSWORD=SecureTestPassword123!
+E2E_TEST_USER_NAME="Test User"
+
+E2E_ADMIN_USER_EMAIL=admin@your-test-domain.com
+E2E_ADMIN_USER_PASSWORD=SecureAdminUserPassword123!
+E2E_ADMIN_USER_NAME="Admin User"
+```
+
+### Local Development Defaults
+
+If environment variables are not set, the following defaults are used for local development only:
 
 ```javascript
 const TEST_USERS = {
@@ -52,7 +83,11 @@ const TEST_USERS = {
 };
 ```
 
-**Note**: These credentials are for local/dev E2E testing only. Do not reuse in staging/production and ensure any deployed environments reject these fixed passwords.
+**Security Note**:
+- Default credentials are for local development only
+- Always use environment variables in CI/CD and staging environments
+- Never commit real credentials to version control
+- Ensure deployed environments reject these default passwords
 
 ## Test Architecture
 
@@ -73,8 +108,9 @@ Current specs avoid these mocks unless explicitly noted in a test.
 
 ## Running Tests
 
+### Local Development
 ```bash
-# Run all E2E tests
+# Run all E2E tests (uses default credentials)
 npx playwright install --with-deps
 npm run test:e2e
 
@@ -87,6 +123,29 @@ npx playwright test --reporter=line
 
 # Run in headed mode (see browser)
 npx playwright test --headed
+```
+
+### CI/CD Environment
+For secure testing in CI/CD, create a `.env.test` file or set environment variables:
+
+```bash
+# Set environment variables for secure testing
+export E2E_ADMIN_EMAIL=admin@your-test-domain.com
+export E2E_ADMIN_PASSWORD=SecureAdminPassword123!
+export E2E_USER_EMAIL=user@your-test-domain.com
+export E2E_USER_PASSWORD=SecureUserPassword123!
+
+# Then run tests
+npm run test:e2e
+```
+
+Or create a `.env.test` file in the frontend directory:
+```bash
+# frontend/.env.test
+E2E_ADMIN_EMAIL=admin@your-test-domain.com
+E2E_ADMIN_PASSWORD=SecureAdminPassword123!
+E2E_USER_EMAIL=user@your-test-domain.com
+E2E_USER_PASSWORD=SecureUserPassword123!
 ```
 
 ## Test Results

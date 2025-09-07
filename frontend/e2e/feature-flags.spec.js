@@ -171,8 +171,10 @@ test.describe('Feature Flags - Shop Functionality', () => {
 
       // Wait for error UI or toast to appear instead of networkidle
       const errorSelector = '[data-testid="error-message"], .error-toast, .error-banner';
-      await page.waitForSelector(errorSelector, { timeout: 10000 }).catch(() => {
-        // If no specific error UI, check for fallback content
+      await page.waitForSelector(errorSelector, { timeout: 10000 }).catch((error) => {
+        // Log the timeout/error for debugging
+        console.log(`Timeout waiting for error UI selector "${errorSelector}":`, error.message);
+        // Continue with fallback check after logging
       });
 
       // Verify error handling or fallback UI is shown

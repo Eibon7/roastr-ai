@@ -3,41 +3,50 @@
  */
 import { expect } from '@playwright/test';
 
-export const TEST_USERS = {
-  // Issue #318 - Specific test users as per requirements
-  admin: {
-    email: 'admin@roastr.ai',
-    password: 'AdminTest123!',
-    name: 'Admin User',
-    isAdmin: true
-  },
+/**
+ * Get test user credentials from environment variables with secure defaults
+ * Environment variables should be set for CI/CD environments
+ * Defaults are provided for local development only
+ */
+function getTestUserCredentials() {
+  return {
+    // Issue #318 - Specific test users as per requirements
+    admin: {
+      email: process.env.E2E_ADMIN_EMAIL || 'admin@roastr.ai',
+      password: process.env.E2E_ADMIN_PASSWORD || 'AdminTest123!',
+      name: process.env.E2E_ADMIN_NAME || 'Admin User',
+      isAdmin: true
+    },
 
-  user: {
-    email: 'user@roastr.ai',
-    password: 'UserTest123!',
-    name: 'Regular User',
-    isAdmin: false
-  },
+    user: {
+      email: process.env.E2E_USER_EMAIL || 'user@roastr.ai',
+      password: process.env.E2E_USER_PASSWORD || 'UserTest123!',
+      name: process.env.E2E_USER_NAME || 'Regular User',
+      isAdmin: false
+    },
 
-  // Legacy test users for backward compatibility
-  validUser: {
-    email: 'valid.user@example.com',
-    password: 'ValidPass123!',
-    name: 'Valid User'
-  },
+    // Legacy test users for backward compatibility
+    validUser: {
+      email: process.env.E2E_VALID_USER_EMAIL || 'valid.user@example.com',
+      password: process.env.E2E_VALID_USER_PASSWORD || 'ValidPass123!',
+      name: process.env.E2E_VALID_USER_NAME || 'Valid User'
+    },
 
-  testUser: () => ({
-    email: `test.user+${Date.now()}@example.com`,
-    password: 'TestPass123!',
-    name: 'Test User'
-  }),
+    testUser: () => ({
+      email: `test.user+${Date.now()}@example.com`,
+      password: process.env.E2E_TEST_USER_PASSWORD || 'TestPass123!',
+      name: process.env.E2E_TEST_USER_NAME || 'Test User'
+    }),
 
-  adminUser: {
-    email: 'admin@example.com',
-    password: 'AdminPass123!',
-    name: 'Admin User'
-  }
-};
+    adminUser: {
+      email: process.env.E2E_ADMIN_USER_EMAIL || 'admin@example.com',
+      password: process.env.E2E_ADMIN_USER_PASSWORD || 'AdminPass123!',
+      name: process.env.E2E_ADMIN_USER_NAME || 'Admin User'
+    }
+  };
+}
+
+export const TEST_USERS = getTestUserCredentials();
 
 export const INVALID_PASSWORDS = [
   {
@@ -236,8 +245,10 @@ export async function mockLoginSuccess(page, user) {
     let requestBody = {};
     try {
       requestBody = route.request().postDataJSON();
-    } catch {
-      /* fallback to empty object if not JSON */
+    } catch (error) {
+      // Log parsing error for debugging while preserving fallback behavior
+      console.warn('Failed to parse request body as JSON in mockLoginSuccess:', error.message);
+      // Fallback to empty object for non-JSON requests
     }
 
     if (requestBody.email === user.email && requestBody.password === user.password) {

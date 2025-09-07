@@ -4,30 +4,211 @@
  */
 
 /**
+ * Luhn algorithm implementation for credit card validation
+ * @param {string} number - The number to validate
+ * @returns {boolean} Whether the number passes Luhn checksum
+ */
+function luhnCheck(number) {
+  const digits = number.replace(/\D/g, '').split('').map(Number);
+  let sum = 0;
+  let isEven = false;
+
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = digits[i];
+
+    if (isEven) {
+      digit *= 2;
+      if (digit > 9) {
+        digit -= 9;
+      }
+    }
+
+    sum += digit;
+    isEven = !isEven;
+  }
+
+  return sum % 10 === 0;
+}
+
+/**
+ * Validate credit card number with proper checks
+ * @param {string} candidate - Potential credit card number
+ * @returns {boolean} Whether it's a valid credit card
+ */
+function isValidCreditCard(candidate) {
+  const cleaned = candidate.replace(/[\s-]/g, '');
+
+  // Check length (13-19 digits for most cards)
+  if (!/^\d{13,19}$/.test(cleaned)) {
+    return false;
+  }
+
+  // Check known IIN ranges (first few digits)
+  const firstDigit = cleaned[0];
+  const firstTwoDigits = cleaned.substring(0, 2);
+  const firstFourDigits = cleaned.substring(0, 4);
+
+  // Major card networks
+  const isVisa = firstDigit === '4';
+  const isMastercard = (firstTwoDigits >= '51' && firstTwoDigits <= '55') ||
+                       (firstFourDigits >= '2221' && firstFourDigits <= '2720');
+  const isAmex = firstTwoDigits === '34' || firstTwoDigits === '37';
+  const isDiscover = firstFourDigits === '6011' || firstTwoDigits === '65' ||
+                     (firstFourDigits >= '6221' && firstFourDigits <= '6229') ||
+                     (firstFourDigits >= '6440' && firstFourDigits <= '6449') ||
+                     (firstFourDigits >= '6500' && firstFourDigits <= '6599');
+  const isDiners = firstTwoDigits === '30' || firstTwoDigits === '36' || firstTwoDigits === '38';
+  const isJCB = (firstFourDigits >= '3528' && firstFourDigits <= '3589');
+
+  const isKnownNetwork = isVisa || isMastercard || isAmex || isDiscover || isDiners || isJCB;
+
+  // If it doesn't match known networks, it's likely not a credit card
+  if (!isKnownNetwork) {
+    return false;
+  }
+
+  // Validate with Luhn algorithm
+  return luhnCheck(cleaned);
+}
+
+/**
+ * Validate SSN with proper rules and context
+ * @param {string} candidate - Potential SSN
+ * @param {string} context - Surrounding text for context
+ * @returns {boolean} Whether it's a valid SSN format
+ */
+function isValidSSN(candidate, context = '') {
+  const cleaned = candidate.replace(/\D/g, '');
+
+  // Must be exactly 9 digits
+  if (cleaned.length !== 9) {
+    return false;
+  }
+
+  // Check if it's in proper SSN format (XXX-XX-XXXX)
+  const hasProperFormat = /^\d{3}-\d{2}-\d{4}$/.test(candidate);
+
+  // If it's not in proper format, check for contextual clues
+  if (!hasProperFormat) {
+    const contextLower = context.toLowerCase();
+    const ssnKeywords = ['ssn', 'social security', 'social', 'security number', 'tax id', 'taxpayer id'];
+    const hasSSNContext = ssnKeywords.some(keyword => contextLower.includes(keyword));
+
+    // Without proper format and context, don't flag as SSN
+    if (!hasSSNContext) {
+      return false;
+    }
+  }
+
+  const area = cleaned.substring(0, 3);
+  const group = cleaned.substring(3, 5);
+  const serial = cleaned.substring(5, 9);
+
+  // Invalid area numbers
+  if (area === '000' || area === '666' || (area >= '900' && area <= '999')) {
+    return false;
+  }
+
+  // Invalid group numbers
+  if (group === '00') {
+    return false;
+  }
+
+  // Invalid serial numbers
+  if (serial === '0000') {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Validate bank account with contextual checks
+ * @param {string} candidate - Potential bank account number
+ * @param {string} context - Surrounding text for context
+ * @returns {boolean} Whether it's likely a bank account
+ */
+function isValidBankAccount(candidate, context = '') {
+  // Check if it's an IBAN format
+  const ibanPattern = /^[A-Z]{2}\d{2}[A-Z0-9]{4,30}$/;
+  if (ibanPattern.test(candidate)) {
+    return true; // IBAN is always considered a bank account
+  }
+
+  const cleaned = candidate.replace(/\D/g, '');
+
+  // Basic length check (8-17 digits is too broad, narrow it down)
+  if (cleaned.length < 8 || cleaned.length > 17) {
+    return false;
+  }
+
+  // Check for contextual keywords nearby
+  const contextLower = context.toLowerCase();
+  const bankKeywords = [
+    'account', 'acct', 'bank', 'routing', 'aba', 'swift',
+    'cuenta', 'banco', 'iban', 'bic', 'sort code'
+  ];
+
+  const hasContext = bankKeywords.some(keyword =>
+    contextLower.includes(keyword)
+  );
+
+  // Require context for bank account detection
+  if (!hasContext) {
+    return false;
+  }
+
+  // Additional checks for common false positives
+  // Don't flag if it's likely a phone number, ID, or other common number
+  if (cleaned.length === 10) {
+    // Could be phone number
+    return false;
+  }
+
+  // For 9-digit numbers, check if it's specifically routing-related
+  if (cleaned.length === 9) {
+    const routingKeywords = ['routing', 'aba', 'transit'];
+    const hasRoutingContext = routingKeywords.some(keyword =>
+      contextLower.includes(keyword)
+    );
+    if (!hasRoutingContext) {
+      return false;
+    }
+  }
+
+  if (cleaned.length === 16) {
+    // Could be credit card
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Patterns for detecting sensitive information
  */
 const SENSITIVE_PATTERNS = {
   // Email addresses
   email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-  
+
   // Phone numbers (various formats)
   phone: /\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b/g,
-  
-  // Credit card numbers (basic pattern)
-  creditCard: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
-  
-  // National ID patterns (basic - can be expanded for specific countries)
-  nationalId: /\b\d{3}-?\d{2}-?\d{4}\b/g, // SSN format
-  
+
+  // Credit card numbers (safer initial pattern for candidates)
+  creditCard: /\b\d{4}[\s-]*\d{4}[\s-]*\d{4}[\s-]*\d{1,4}(?:[\s-]*\d{1,4})?\b/g,
+
+  // National ID patterns (stricter SSN format)
+  nationalId: /\b\d{3}-\d{2}-\d{4}\b/g,
+
   // Passwords, tokens, keys
   credentials: /\b(password|token|key|secret|api[_-]?key|access[_-]?token)\s*[:=]\s*\S+/gi,
-  
+
   // URLs with potential sensitive info
   sensitiveUrls: /https?:\/\/[^\s]*(?:token|key|password|secret|auth)[^\s]*/gi,
-  
-  // Bank account numbers (basic pattern)
-  bankAccount: /\b\d{8,17}\b/g,
-  
+
+  // Bank account numbers (contextual pattern - will be validated with context)
+  bankAccount: /\b(?:\d{8,17}|[A-Z]{2}\d{2}[A-Z0-9]{4,30})\b/g,
+
   // IP addresses (might be sensitive in some contexts)
   ipAddress: /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g
 };
@@ -68,31 +249,58 @@ export function detectSensitiveData(text, options = {}) {
   const suggestions = [];
   let confidence = 0;
 
-  // Check against patterns
+  // Check against patterns with validation
   for (const [type, pattern] of Object.entries(SENSITIVE_PATTERNS)) {
     const matches = text.match(pattern);
     if (matches && matches.length > 0) {
-      detectedTypes.push(type);
-      confidence += 0.8; // High confidence for pattern matches
-      
+      let validMatches = [];
+
+      // Apply additional validation for specific types
       switch (type) {
-        case 'email':
-          suggestions.push('Se detectaron direcciones de email');
-          break;
-        case 'phone':
-          suggestions.push('Se detectaron números de teléfono');
-          break;
         case 'creditCard':
-          suggestions.push('Se detectaron posibles números de tarjeta');
+          validMatches = matches.filter(match => isValidCreditCard(match));
           break;
         case 'nationalId':
-          suggestions.push('Se detectaron posibles números de identificación');
+          validMatches = matches.filter(match => isValidSSN(match, text));
           break;
-        case 'credentials':
-          suggestions.push('Se detectaron credenciales o tokens');
+        case 'bankAccount':
+          // For bank accounts, we already use contextual patterns, but double-check
+          validMatches = matches.filter(match => {
+            // Extract just the number part for validation
+            const numberPart = match.replace(/\b(?:account|acct|bank|routing|iban|swift|bic)[\s:]*/gi, '');
+            return isValidBankAccount(numberPart, text);
+          });
           break;
         default:
-          suggestions.push(`Se detectó información potencialmente sensible: ${type}`);
+          validMatches = matches;
+      }
+
+      if (validMatches.length > 0) {
+        detectedTypes.push(type);
+        confidence += 0.8; // High confidence for validated pattern matches
+
+        switch (type) {
+          case 'email':
+            suggestions.push('Se detectaron direcciones de email');
+            break;
+          case 'phone':
+            suggestions.push('Se detectaron números de teléfono');
+            break;
+          case 'creditCard':
+            suggestions.push('Se detectaron números de tarjeta válidos');
+            break;
+          case 'nationalId':
+            suggestions.push('Se detectaron números de identificación válidos');
+            break;
+          case 'bankAccount':
+            suggestions.push('Se detectaron números de cuenta bancaria');
+            break;
+          case 'credentials':
+            suggestions.push('Se detectaron credenciales o tokens');
+            break;
+          default:
+            suggestions.push(`Se detectó información potencialmente sensible: ${type}`);
+        }
       }
     }
   }
@@ -119,7 +327,7 @@ export function detectSensitiveData(text, options = {}) {
   // Normalize confidence to 0-1 range
   confidence = Math.min(confidence, 1);
 
-  const isSensitive = confidence > 0.3 || (options.strictMode && confidence > 0.1);
+  const isSensitive = confidence > 0.3 || (!!options.strictMode && confidence > 0.1);
 
   return {
     isSensitive,

@@ -97,8 +97,8 @@ test.describe('Login and Navigation - Issue #318', () => {
 
       if (linkExists) {
         await expect(forgotPasswordLink.first()).toBeVisible();
-        // Verify link is clickable
-        await expect(forgotPasswordLink.first()).toHaveAttribute('href');
+        // Verify link is clickable and has a non-empty href
+        await expect(forgotPasswordLink.first()).toHaveAttribute('href', /.+/);
       }
 
       // This test passes regardless of whether the link exists
@@ -115,8 +115,8 @@ test.describe('Login and Navigation - Issue #318', () => {
 
       if (linkExists) {
         await expect(registerLink.first()).toBeVisible();
-        // Verify link is clickable
-        await expect(registerLink.first()).toHaveAttribute('href');
+        // Verify link is clickable and has a non-empty href
+        await expect(registerLink.first()).toHaveAttribute('href', /.+/);
       }
 
       // This test passes regardless of whether the link exists
