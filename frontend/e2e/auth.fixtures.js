@@ -29,7 +29,8 @@ function getTestUserCredentials() {
     validUser: {
       email: process.env.E2E_VALID_USER_EMAIL || 'valid.user@example.com',
       password: process.env.E2E_VALID_USER_PASSWORD || 'ValidPass123!',
-      name: process.env.E2E_VALID_USER_NAME || 'Valid User'
+      name: process.env.E2E_VALID_USER_NAME || 'Valid User',
+      isAdmin: process.env.E2E_IS_ADMIN_VALID_USER ? process.env.E2E_IS_ADMIN_VALID_USER === 'true' : false
     },
 
     testUser: () => ({
@@ -41,7 +42,8 @@ function getTestUserCredentials() {
     adminUser: {
       email: process.env.E2E_ADMIN_USER_EMAIL || 'admin@example.com',
       password: process.env.E2E_ADMIN_USER_PASSWORD || 'AdminPass123!',
-      name: process.env.E2E_ADMIN_USER_NAME || 'Admin User'
+      name: process.env.E2E_ADMIN_USER_NAME || 'Admin User',
+      isAdmin: process.env.E2E_IS_ADMIN_ADMIN_USER ? process.env.E2E_IS_ADMIN_ADMIN_USER === 'true' : true
     }
   };
 }
