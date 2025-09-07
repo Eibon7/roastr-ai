@@ -79,7 +79,12 @@ test.describe('Login and Navigation - Issue #318', () => {
         await emailInput.fill('invalid-email');
 
         // Check if HTML5 validation works
-        const isValid = await emailInput.evaluate(el => el.checkValidity());
+        const isValid = await emailInput.evaluate(el => {
+          if (el instanceof HTMLInputElement) {
+            return el.checkValidity();
+          }
+          return false;
+        });
         expect(isValid).toBeFalsy();
       } else {
         // If no email input found, the test should fail

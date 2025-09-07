@@ -42,3 +42,5 @@ tests/integration/backend/fixtures/validation-report.json
 # Test results and artifacts
 frontend/test-results/
 test-results/
+frontend/playwright-report/
+**/playwright-report/
