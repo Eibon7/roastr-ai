@@ -24,9 +24,16 @@ const SensitiveDataModal = ({
   };
 
   // Truncate text preview for display
-  const truncatedPreview = textPreview && textPreview.length > 100 
-    ? textPreview.substring(0, 100) + '...' 
+  const truncatedPreview = textPreview && textPreview.length > 100
+    ? textPreview.substring(0, 100) + '...'
     : textPreview;
+
+  // Safe access to suggestions with null check
+  const suggestions = detection?.suggestions ?? [];
+
+  // Safe access to confidence with type check and clamping
+  const confidence = typeof detection?.confidence === 'number' ? detection.confidence : 0;
+  const clampedConfidence = Math.max(0, Math.min(1, confidence));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -59,9 +66,9 @@ const SensitiveDataModal = ({
                 <p className="font-medium mb-1">
                   Se ha detectado información que podría ser sensible
                 </p>
-                {detection.suggestions && detection.suggestions.length > 0 && (
+                {suggestions.length > 0 && (
                   <ul className="list-disc list-inside space-y-1">
-                    {detection.suggestions.slice(0, 2).map((suggestion, index) => (
+                    {suggestions.slice(0, 2).map((suggestion, index) => (
                       <li key={index}>{suggestion}</li>
                     ))}
                   </ul>
@@ -83,13 +90,13 @@ const SensitiveDataModal = ({
           )}
 
           {/* Confidence indicator */}
-          {detection.confidence > 0.7 && (
+          {clampedConfidence > 0.7 && (
             <div className="text-xs text-gray-500 flex items-center space-x-1">
               <span>Nivel de confianza: Alto</span>
               <div className="w-12 h-1 bg-red-200 rounded">
-                <div 
-                  className="h-1 bg-red-500 rounded" 
-                  style={{ width: `${detection.confidence * 100}%` }}
+                <div
+                  className="h-1 bg-red-500 rounded"
+                  style={{ width: `${clampedConfidence * 100}%` }}
                 />
               </div>
             </div>
