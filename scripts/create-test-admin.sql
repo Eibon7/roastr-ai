@@ -3,8 +3,12 @@
 
 -- Crear usuario admin de prueba (Supabase Auth)
 -- Nota: Este debe ejecutarse primero en la consola de Supabase Auth
+-- IMPORTANTE: Reemplace <ADMIN_PASSWORD> con una contraseña segura generada
 -- INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, role)
--- VALUES ('00000000-0000-0000-0000-000000000001', 'admin@roastr.ai', crypt('AdminTest123!', gen_salt('bf')), NOW(), NOW(), NOW(), 'authenticated');
+-- VALUES ('00000000-0000-0000-0000-000000000001', 'admin@roastr.ai', crypt('<ADMIN_PASSWORD>', gen_salt('bf')), NOW(), NOW(), NOW(), 'authenticated');
+--
+-- Recomendación: Use gen_salt() y crypt() para generar contraseñas seguras en tiempo de ejecución
+-- Almacene las credenciales en un gestor de secretos y rote regularmente
 
 -- Insertar usuario administrador en la tabla users (después de crear en Auth)
 INSERT INTO users (

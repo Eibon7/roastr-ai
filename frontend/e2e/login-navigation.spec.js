@@ -31,10 +31,10 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Navigate to login page
       await page.goto('/login');
 
-      // Verify login form elements are present
-      const emailInput = page.locator('input[type="email"], input[name="email"]');
-      const passwordInput = page.locator('input[type="password"], input[name="password"]');
-      const submitButton = page.locator('button[type="submit"]');
+      // Verify login form elements are present using accessible locators
+      const emailInput = page.getByRole('textbox', { name: /email/i });
+      const passwordInput = page.getByLabel(/password/i);
+      const submitButton = page.getByRole('button', { name: /submit|sign in|log in/i });
 
       await expect(emailInput).toBeVisible();
       await expect(passwordInput).toBeVisible();
@@ -49,9 +49,9 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Navigate to login page
       await page.goto('/login');
 
-      // Fill form with test credentials
-      const emailInput = page.locator('input[type="email"], input[name="email"]');
-      const passwordInput = page.locator('input[type="password"], input[name="password"]');
+      // Fill form with test credentials using accessible locators
+      const emailInput = page.getByRole('textbox', { name: /email/i });
+      const passwordInput = page.getByLabel(/password/i);
 
       if (await emailInput.count() > 0) {
         await emailInput.fill('test@example.com');
@@ -61,7 +61,7 @@ test.describe('Login and Navigation - Issue #318', () => {
       }
 
       // Verify submit button exists
-      const submitButton = page.locator('button[type="submit"]');
+      const submitButton = page.getByRole('button', { name: /submit|sign in|log in/i });
       await expect(submitButton).toBeVisible();
 
       // Note: We don't actually submit to avoid real authentication
@@ -73,7 +73,7 @@ test.describe('Login and Navigation - Issue #318', () => {
       await page.goto('/login');
 
       // Check email input validation
-      const emailInput = page.locator('input[type="email"], input[name="email"]');
+      const emailInput = page.getByRole('textbox', { name: /email/i });
 
       if (await emailInput.count() > 0) {
         await emailInput.fill('invalid-email');
@@ -152,9 +152,9 @@ test.describe('Login and Navigation - Issue #318', () => {
     test('should have basic accessibility attributes on login form', async ({ page }) => {
       await page.goto('/login');
 
-      // Check input attributes
-      const emailInput = page.locator('[name="email"], [type="email"]');
-      const passwordInput = page.locator('[name="password"]');
+      // Check input attributes using accessible locators
+      const emailInput = page.getByRole('textbox', { name: /email/i });
+      const passwordInput = page.getByLabel(/password/i);
 
       if (await emailInput.count() > 0) {
         await expect(emailInput).toHaveAttribute('type', 'email');
@@ -165,7 +165,7 @@ test.describe('Login and Navigation - Issue #318', () => {
       }
 
       // Check button accessibility
-      const submitButton = page.locator('button[type="submit"]');
+      const submitButton = page.getByRole('button', { name: /submit|sign in|log in/i });
       if (await submitButton.count() > 0) {
         await expect(submitButton).toHaveAttribute('type', 'submit');
       }

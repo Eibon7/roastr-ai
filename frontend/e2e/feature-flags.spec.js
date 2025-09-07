@@ -158,17 +158,28 @@ test.describe('Feature Flags - Shop Functionality', () => {
 
   test.describe('Error Handling', () => {
     test('should handle network errors gracefully', async ({ page }) => {
-      // Test with network failures
-      await page.route('**/api/**', route => {
-        route.abort('failed');
+      // Stub specific feature-flags API endpoint with 500 error
+      await page.route('**/api/feature-flags', route => {
+        route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Internal Server Error' })
+        });
       });
 
       await page.goto('/');
-      await page.waitForLoadState('networkidle');
 
-      // Page should still load even with API failures
+      // Wait for error UI or toast to appear instead of networkidle
+      const errorSelector = '[data-testid="error-message"], .error-toast, .error-banner';
+      await page.waitForSelector(errorSelector, { timeout: 10000 }).catch(() => {
+        // If no specific error UI, check for fallback content
+      });
+
+      // Verify error handling or fallback UI is shown
+      const hasErrorUI = await page.locator(errorSelector).count() > 0;
       const pageContent = await page.textContent('body');
-      expect(pageContent).toBeTruthy();
+
+      expect(hasErrorUI || pageContent.includes('error') || pageContent.includes('Error')).toBeTruthy();
     });
   });
 });
