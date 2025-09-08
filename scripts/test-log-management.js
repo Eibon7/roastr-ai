@@ -7,7 +7,7 @@
  * Includes unit tests, integration tests, and coverage reporting
  */
 
-const { execSync, spawn } = require('child_process');
+const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs-extra');
 
@@ -106,10 +106,9 @@ async function runTestSuite(suite) {
   await fs.writeJson(configPath, jestConfig, { spaces: 2 });
   
   try {
-    const result = execSync(
-      `npx jest --config ${configPath} --verbose`,
-      { 
-        encoding: 'utf8',
+    execSync(
+      `npx jest --config "${configPath}" --verbose`,
+      {
         cwd: ROOT_DIR,
         stdio: 'inherit'
       }

@@ -535,8 +535,8 @@ describe('Roastr Persona Functionality', () => {
 
       const textarea = screen.getByTestId('identity-textarea');
 
-      // Test with null-like values
-      fireEvent.change(textarea, { target: { value: null } });
+      // Test with empty/whitespace values
+      fireEvent.change(textarea, { target: { value: '   ' } });
       const saveButton = screen.getByTestId('identity-save');
       fireEvent.click(saveButton);
 
