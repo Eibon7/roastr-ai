@@ -31,10 +31,10 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Navigate to login page
       await page.goto('/login');
 
-      // Verify login form elements are present
-      const emailInput = page.locator('input[type="email"], input[name="email"]');
-      const passwordInput = page.locator('input[type="password"], input[name="password"]');
-      const submitButton = page.locator('button[type="submit"]');
+      // Verify login form elements are present using accessible locators
+      const emailInput = page.getByRole('textbox', { name: /email/i });
+      const passwordInput = page.getByLabel(/password/i);
+      const submitButton = page.getByRole('button', { name: /submit|sign in|log in/i });
 
       await expect(emailInput).toBeVisible();
       await expect(passwordInput).toBeVisible();
@@ -49,9 +49,9 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Navigate to login page
       await page.goto('/login');
 
-      // Fill form with test credentials
-      const emailInput = page.locator('input[type="email"], input[name="email"]');
-      const passwordInput = page.locator('input[type="password"], input[name="password"]');
+      // Fill form with test credentials using accessible locators
+      const emailInput = page.getByRole('textbox', { name: /email/i });
+      const passwordInput = page.getByLabel(/password/i);
 
       if (await emailInput.count() > 0) {
         await emailInput.fill('test@example.com');
@@ -61,7 +61,7 @@ test.describe('Login and Navigation - Issue #318', () => {
       }
 
       // Verify submit button exists
-      const submitButton = page.locator('button[type="submit"]');
+      const submitButton = page.getByRole('button', { name: /submit|sign in|log in/i });
       await expect(submitButton).toBeVisible();
 
       // Note: We don't actually submit to avoid real authentication
@@ -73,16 +73,23 @@ test.describe('Login and Navigation - Issue #318', () => {
       await page.goto('/login');
 
       // Check email input validation
-      const emailInput = page.locator('input[type="email"], input[name="email"]');
+      const emailInput = page.getByRole('textbox', { name: /email/i });
 
-      // Ensure email input exists before proceeding with validation test
-      await expect(emailInput).toBeVisible();
+      if (await emailInput.count() > 0) {
+        await emailInput.fill('invalid-email');
 
-      await emailInput.fill('invalid-email');
-
-      // Check if HTML5 validation works
-      const isValid = await emailInput.evaluate(el => el.checkValidity());
-      expect(isValid).toBeFalsy();
+        // Check if HTML5 validation works
+        const isValid = await emailInput.evaluate(el => {
+          if (el instanceof HTMLInputElement) {
+            return el.checkValidity();
+          }
+          return false;
+        });
+        expect(isValid).toBeFalsy();
+      } else {
+        // If no email input found, the test should fail
+        throw new Error('Email input not found - login form validation cannot be tested');
+      }
     });
 
     test('should check for password reset link', async ({ page }) => {
@@ -95,8 +102,8 @@ test.describe('Login and Navigation - Issue #318', () => {
 
       if (linkExists) {
         await expect(forgotPasswordLink.first()).toBeVisible();
-        // Verify link is clickable
-        await expect(forgotPasswordLink.first()).toHaveAttribute('href');
+        // Verify link is clickable and has a non-empty href
+        await expect(forgotPasswordLink.first()).toHaveAttribute('href', /.+/);
       }
 
       // This test passes regardless of whether the link exists
@@ -113,8 +120,8 @@ test.describe('Login and Navigation - Issue #318', () => {
 
       if (linkExists) {
         await expect(registerLink.first()).toBeVisible();
-        // Verify link is clickable
-        await expect(registerLink.first()).toHaveAttribute('href');
+        // Verify link is clickable and has a non-empty href
+        await expect(registerLink.first()).toHaveAttribute('href', /.+/);
       }
 
       // This test passes regardless of whether the link exists
@@ -127,12 +134,8 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Test that basic routes are accessible
       await page.goto('/');
 
-      // Should either show login page or redirect to login
-      const currentUrl = page.url();
-      const url = new URL(currentUrl);
-      const isLoginPage = url.pathname.includes('/login') || url.pathname === '/';
-
-      expect(isLoginPage).toBeTruthy();
+      // Should redirect to /login when unauthenticated
+      await expect(page).toHaveURL(/\/login(?:\?|$|\/)/);
 
       // Verify page loads without errors
       const pageTitle = await page.title();
@@ -145,13 +148,7 @@ test.describe('Login and Navigation - Issue #318', () => {
 
       for (const route of protectedRoutes) {
         await page.goto(route);
-
-        // Should redirect to login or show login page
-        const currentUrl = page.url();
-        const url = new URL(currentUrl);
-        const isRedirectedToLogin = url.pathname.includes('/login') || url.pathname === '/';
-
-        expect(isRedirectedToLogin).toBeTruthy();
+        await expect(page).toHaveURL(/\/login(?:\?|$|\/)/);
       }
     });
   });
@@ -160,9 +157,9 @@ test.describe('Login and Navigation - Issue #318', () => {
     test('should have basic accessibility attributes on login form', async ({ page }) => {
       await page.goto('/login');
 
-      // Check input attributes
-      const emailInput = page.locator('[name="email"], [type="email"]');
-      const passwordInput = page.locator('[name="password"]');
+      // Check input attributes using accessible locators
+      const emailInput = page.getByRole('textbox', { name: /email/i });
+      const passwordInput = page.getByLabel(/password/i);
 
       if (await emailInput.count() > 0) {
         await expect(emailInput).toHaveAttribute('type', 'email');
@@ -173,7 +170,7 @@ test.describe('Login and Navigation - Issue #318', () => {
       }
 
       // Check button accessibility
-      const submitButton = page.locator('button[type="submit"]');
+      const submitButton = page.getByRole('button', { name: /submit|sign in|log in/i });
       if (await submitButton.count() > 0) {
         await expect(submitButton).toHaveAttribute('type', 'submit');
       }

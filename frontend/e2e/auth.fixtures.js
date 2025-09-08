@@ -1,42 +1,54 @@
 /**
  * Test fixtures and utilities for E2E authentication tests
  */
+import { expect } from '@playwright/test';
 
-export const TEST_USERS = {
-  // Issue #318 - Specific test users as per requirements
-  admin: {
-    email: 'admin@roastr.ai',
-    password: 'Admin123',
-    name: 'Admin User',
-    isAdmin: true
-  },
+/**
+ * Get test user credentials from environment variables with secure defaults
+ * Environment variables should be set for CI/CD environments
+ * Defaults are provided for local development only
+ */
+function getTestUserCredentials() {
+  return {
+    // Issue #318 - Specific test users as per requirements
+    admin: {
+      email: process.env.E2E_ADMIN_EMAIL || 'admin@roastr.ai',
+      password: process.env.E2E_ADMIN_PASSWORD || 'AdminTest123!',
+      name: process.env.E2E_ADMIN_NAME || 'Admin User',
+      isAdmin: true
+    },
 
-  user: {
-    email: 'user@roastr.ai',
-    password: 'User123',
-    name: 'Regular User',
-    isAdmin: false
-  },
+    user: {
+      email: process.env.E2E_USER_EMAIL || 'user@roastr.ai',
+      password: process.env.E2E_USER_PASSWORD || 'UserTest123!',
+      name: process.env.E2E_USER_NAME || 'Regular User',
+      isAdmin: false
+    },
 
-  // Legacy test users for backward compatibility
-  validUser: {
-    email: 'valid.user@example.com',
-    password: 'ValidPass123!',
-    name: 'Valid User'
-  },
+    // Legacy test users for backward compatibility
+    validUser: {
+      email: process.env.E2E_VALID_USER_EMAIL || 'valid.user@example.com',
+      password: process.env.E2E_VALID_USER_PASSWORD || 'ValidPass123!',
+      name: process.env.E2E_VALID_USER_NAME || 'Valid User',
+      isAdmin: process.env.E2E_IS_ADMIN_VALID_USER ? process.env.E2E_IS_ADMIN_VALID_USER === 'true' : false
+    },
 
-  testUser: () => ({
-    email: `test.user+${Date.now()}@example.com`,
-    password: 'TestPass123!',
-    name: 'Test User'
-  }),
+    testUser: () => ({
+      email: `test.user+${Date.now()}@example.com`,
+      password: process.env.E2E_TEST_USER_PASSWORD || 'TestPass123!',
+      name: process.env.E2E_TEST_USER_NAME || 'Test User'
+    }),
 
-  adminUser: {
-    email: 'admin@example.com',
-    password: 'AdminPass123!',
-    name: 'Admin User'
-  }
-};
+    adminUser: {
+      email: process.env.E2E_ADMIN_USER_EMAIL || 'admin@example.com',
+      password: process.env.E2E_ADMIN_USER_PASSWORD || 'AdminPass123!',
+      name: process.env.E2E_ADMIN_USER_NAME || 'Admin User',
+      isAdmin: process.env.E2E_IS_ADMIN_ADMIN_USER ? process.env.E2E_IS_ADMIN_ADMIN_USER === 'true' : true
+    }
+  };
+}
+
+export const TEST_USERS = getTestUserCredentials();
 
 export const INVALID_PASSWORDS = [
   {
@@ -180,8 +192,8 @@ export async function checkAuthAccessibility(page) {
   const passwordInput = page.locator('[name="password"]');
   
   await expect(emailInput).toHaveAttribute('type', 'email');
-  await expect(emailInput).toHaveAttribute('required');
-  await expect(passwordInput).toHaveAttribute('required');
+  await expect(emailInput).toHaveJSProperty('required', true);
+  await expect(passwordInput).toHaveJSProperty('required', true);
 }
 
 /**
@@ -227,8 +239,19 @@ export async function mockNetworkResponse(page, endpoint, status, response) {
  * @param {Object} user - User object with email, password, isAdmin
  */
 export async function mockLoginSuccess(page, user) {
+  await page.unroute('**/api/auth/login').catch(() => {});
   await page.route('**/api/auth/login', async route => {
-    const requestBody = await route.request().postDataJSON();
+    if (route.request().method() !== 'POST') {
+      return route.continue();
+    }
+    let requestBody = {};
+    try {
+      requestBody = route.request().postDataJSON();
+    } catch (error) {
+      // Log parsing error for debugging while preserving fallback behavior
+      console.warn('Failed to parse request body as JSON in mockLoginSuccess:', error.message);
+      // Fallback to empty object for non-JSON requests
+    }
 
     if (requestBody.email === user.email && requestBody.password === user.password) {
       route.fulfill({
@@ -271,6 +294,7 @@ export async function mockLoginSuccess(page, user) {
  * @param {Object} flags - Feature flags object
  */
 export async function mockFeatureFlags(page, flags = {}) {
+  await page.unroute('**/api/config/flags').catch(() => {});
   const defaultFlags = {
     ENABLE_SHOP: false,
     ENABLE_STYLE_PROFILE: true,
@@ -297,6 +321,7 @@ export async function mockFeatureFlags(page, flags = {}) {
  * @param {import('@playwright/test').Page} page
  */
 export async function mockLogout(page) {
+  await page.unroute('**/api/auth/logout').catch(() => {});
   await page.route('**/api/auth/logout', route => {
     route.fulfill({
       status: 200,

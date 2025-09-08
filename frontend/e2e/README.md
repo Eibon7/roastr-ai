@@ -10,12 +10,12 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 - ✅ **Display login form correctly** - Verifies login form elements are present and accessible
 - ✅ **Handle login form submission** - Tests form interaction and validation
 - ✅ **Validate email format** - Checks HTML5 email validation
-- ✅ **Check for password reset link** - Verifies forgot password functionality availability
-- ✅ **Check for registration link** - Verifies registration functionality availability
+- ✅ **Verify presence of password reset link** - Ensures "Forgot password" is available and accessible
+- ✅ **Verify presence of registration link** - Ensures registration is available and accessible
 
 #### Navigation Flow Tests
-- ✅ **Check application routing** - Tests basic route accessibility
-- ✅ **Check protected routes redirect to login** - Verifies authentication guards
+- ✅ **Verify application routing** - Tests basic route accessibility
+- ✅ **Protected routes redirect to login** - Verifies authentication guards
 
 #### Accessibility Validation
 - ✅ **Basic accessibility attributes on login form** - Checks form accessibility
@@ -24,33 +24,70 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 ### 🏪 Feature Flags Tests (`feature-flags.spec.js`)
 
 #### Shop Feature Flag Testing
-- ✅ **Check shop availability in application** - Documents current shop feature state
+- ✅ **Verify shop availability in application** - Documents current shop feature state
 - ✅ **Handle shop URL access** - Tests direct shop URL access behavior
 - ✅ **Check admin interface accessibility** - Tests admin area access patterns
 
 #### Application Navigation
-- ✅ **Check main navigation structure** - Validates navigation elements
-- ✅ **Check page responsiveness** - Tests responsive design
+- ✅ **Verify main navigation structure** - Validates navigation elements
+- ✅ **Verify page responsiveness** - Tests responsive design
 
 #### Error Handling
 - ✅ **Handle network errors gracefully** - Tests application resilience
 
-## Test Users (Configured but not actively used in simplified tests)
+## Test Users Configuration
+
+### Environment Variables (Recommended for CI/CD)
+
+For secure testing in CI/CD environments, set these environment variables:
+
+```bash
+# Primary test users for Issue #318
+E2E_ADMIN_EMAIL=admin@your-test-domain.com
+E2E_ADMIN_PASSWORD=SecureAdminPassword123!
+E2E_ADMIN_NAME="Admin User"
+
+E2E_USER_EMAIL=user@your-test-domain.com
+E2E_USER_PASSWORD=SecureUserPassword123!
+E2E_USER_NAME="Regular User"
+
+# Legacy test users (for backward compatibility)
+E2E_VALID_USER_EMAIL=valid.user@your-test-domain.com
+E2E_VALID_USER_PASSWORD=SecureValidPassword123!
+E2E_VALID_USER_NAME="Valid User"
+
+E2E_TEST_USER_PASSWORD=SecureTestPassword123!
+E2E_TEST_USER_NAME="Test User"
+
+E2E_ADMIN_USER_EMAIL=admin@your-test-domain.com
+E2E_ADMIN_USER_PASSWORD=SecureAdminUserPassword123!
+E2E_ADMIN_USER_NAME="Admin User"
+```
+
+### Local Development Defaults
+
+If environment variables are not set, the following defaults are used for local development only:
 
 ```javascript
 const TEST_USERS = {
   admin: {
     email: 'admin@roastr.ai',
-    password: 'Admin123',
+    password: 'AdminTest123!',
     isAdmin: true
   },
   user: {
-    email: 'user@roastr.ai', 
-    password: 'User123',
+    email: 'user@roastr.ai',
+    password: 'UserTest123!',
     isAdmin: false
   }
 };
 ```
+
+**Security Note**:
+- Default credentials are for local development only
+- Always use environment variables in CI/CD and staging environments
+- Never commit real credentials to version control
+- Ensure deployed environments reject these default passwords
 
 ## Test Architecture
 
@@ -61,16 +98,20 @@ The tests use a simplified approach that:
 - Focuses on critical user journeys that work with the existing codebase
 - Provides documentation of current functionality
 
-### Mock Functions Available
+### Mock Functions Available (reserved for future scenarios)
 - `mockLoginSuccess()` - Mock successful authentication
 - `mockFeatureFlags()` - Mock feature flag responses
 - `setupAuthState()` - Setup authenticated user state
 - `clearAuthState()` - Clear authentication state
 
+Current specs avoid these mocks unless explicitly noted in a test.
+
 ## Running Tests
 
+### Local Development
 ```bash
-# Run all E2E tests
+# Run all E2E tests (uses default credentials)
+npx playwright install --with-deps
 npm run test:e2e
 
 # Run specific test files
@@ -84,9 +125,32 @@ npx playwright test --reporter=line
 npx playwright test --headed
 ```
 
+### CI/CD Environment
+For secure testing in CI/CD, create a `.env.test` file or set environment variables:
+
+```bash
+# Set environment variables for secure testing
+export E2E_ADMIN_EMAIL=admin@your-test-domain.com
+export E2E_ADMIN_PASSWORD=SecureAdminPassword123!
+export E2E_USER_EMAIL=user@your-test-domain.com
+export E2E_USER_PASSWORD=SecureUserPassword123!
+
+# Then run tests
+npm run test:e2e
+```
+
+Or create a `.env.test` file in the frontend directory:
+```bash
+# frontend/.env.test
+E2E_ADMIN_EMAIL=admin@your-test-domain.com
+E2E_ADMIN_PASSWORD=SecureAdminPassword123!
+E2E_USER_EMAIL=user@your-test-domain.com
+E2E_USER_PASSWORD=SecureUserPassword123!
+```
+
 ## Test Results
 
-All 15 tests are currently passing:
+All 15 tests pass:
 - ✅ 8 Login and Navigation tests
 - ✅ 6 Feature Flag tests  
 - ✅ 1 Error Handling test
@@ -94,7 +158,7 @@ All 15 tests are currently passing:
 ## Configuration
 
 Tests are configured in `playwright.config.js`:
-- Base URL: `http://localhost:3000`
+- Base URL: `http://localhost:3000` (override with `PLAYWRIGHT_BASE_URL`)
 - Browsers: Chromium, Firefox, WebKit
 - Screenshots on failure
 - Trace collection on retry
@@ -114,6 +178,8 @@ Tests are configured in `playwright.config.js`:
 2. **Admin Interface Access** - Redirects to login when unauthenticated
 3. **Password Reset/Registration** - Links may or may not be present
 4. **Feature Flag Behavior** - Tests document current application behavior
+
+**Note**: These reflect today's UI state; tests are written to assert resilient, high-level behavior rather than brittle selectors. This helps future readers interpret failures after UI changes.
 
 ## Notes
 
