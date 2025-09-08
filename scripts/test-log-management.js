@@ -132,27 +132,51 @@ async function generateCoverageReport() {
   logSubHeader('Generating combined coverage report');
   
   try {
-    // Merge coverage reports
     const mergedCoverageDir = path.join(COVERAGE_DIR, 'merged');
     await fs.ensureDir(mergedCoverageDir);
     
-    // Use nyc to merge coverage reports
+    // Find all coverage.json files from individual test suites
+    const coverageFiles = [];
+    const suiteDirectories = await fs.readdir(COVERAGE_DIR);
+    
+    for (const dir of suiteDirectories) {
+      if (dir === 'merged') continue; // Skip the merged directory
+      
+      const suiteCoverageDir = path.join(COVERAGE_DIR, dir);
+      const coverageJsonPath = path.join(suiteCoverageDir, 'coverage-final.json');
+      
+      if (await fs.pathExists(coverageJsonPath)) {
+        coverageFiles.push(coverageJsonPath);
+      }
+    }
+    
+    if (coverageFiles.length === 0) {
+      log('⚠ No coverage files found to merge', 'yellow');
+      return;
+    }
+    
+    log(`📊 Found ${coverageFiles.length} coverage files to merge`, 'blue');
+    
+    // Use nyc to merge coverage files
+    const mergedCoverageFile = path.join(mergedCoverageDir, 'coverage.json');
     execSync(
-      `npx nyc merge "${COVERAGE_DIR}" "${path.join(mergedCoverageDir, 'coverage.json')}"`,
+      `npx nyc merge ${coverageFiles.join(' ')} ${mergedCoverageFile}`,
       { cwd: ROOT_DIR, stdio: 'inherit' }
     );
     
-    // Generate HTML report
+    // Generate HTML report from merged coverage
     execSync(
-      `npx nyc report --reporter=html --reporter=text --report-dir="${mergedCoverageDir}"`,
+      `npx nyc report --temp-dir=${mergedCoverageDir} --reporter=html --reporter=text --reporter=text-summary --report-dir=${mergedCoverageDir}`,
       { cwd: ROOT_DIR, stdio: 'inherit' }
     );
     
-    log('✓ Coverage report generated', 'green');
-    log(`📊 Coverage report: ${path.join(mergedCoverageDir, 'index.html')}`, 'cyan');
+    log('✓ Coverage report generated successfully', 'green');
+    log(`📊 HTML Coverage report: ${path.join(mergedCoverageDir, 'index.html')}`, 'cyan');
+    log(`📋 Text summary available in console output above`, 'cyan');
     
   } catch (error) {
     log(`⚠ Failed to generate coverage report: ${error.message}`, 'yellow');
+    log('💡 This might be expected if no coverage files were generated', 'blue');
   }
 }
 

@@ -526,6 +526,56 @@ const cleanupMocks = () => {
   jest.resetModules();
 };
 
+/**
+ * Environment variable backup and restore utilities
+ * Prevents test environment variable leakage between tests
+ */
+let envBackup = {};
+
+const backupEnvironmentVars = (keys = []) => {
+  // If no keys provided, backup commonly modified environment variables
+  const defaultKeys = [
+    'NODE_ENV', 'ENABLE_MOCK_MODE', 'ENABLE_RQC', 'ENABLE_SHIELD', 'ENABLE_BILLING',
+    'ENABLE_CUSTOM_PROMPT', 'ENABLE_SHOP', 'OPENAI_API_KEY', 'STRIPE_SECRET_KEY',
+    'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_KEY'
+  ];
+  
+  const keysToBackup = keys.length > 0 ? keys : defaultKeys;
+  
+  keysToBackup.forEach(key => {
+    envBackup[key] = process.env[key];
+  });
+};
+
+const restoreEnvironmentVars = () => {
+  Object.keys(envBackup).forEach(key => {
+    if (envBackup[key] === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = envBackup[key];
+    }
+  });
+  envBackup = {};
+};
+
+const withMockEnvironment = (envVars, testFn) => {
+  return () => {
+    const originalKeys = Object.keys(envVars);
+    backupEnvironmentVars(originalKeys);
+    
+    // Set mock environment variables
+    Object.keys(envVars).forEach(key => {
+      process.env[key] = envVars[key];
+    });
+    
+    try {
+      return testFn();
+    } finally {
+      restoreEnvironmentVars();
+    }
+  };
+};
+
 module.exports = {
   createMockOpenAIResponse,
   getMockRoastByTone,
@@ -540,6 +590,10 @@ module.exports = {
   validateApiResponse,
   setMockEnvVars,
   cleanupMocks,
+  // Environment backup utilities (Issue #313)
+  backupEnvironmentVars,
+  restoreEnvironmentVars,
+  withMockEnvironment,
   // New multi-tenant utilities (Issue #277)
   createMultiTenantTestScenario,
   createMultiTenantMocks,
