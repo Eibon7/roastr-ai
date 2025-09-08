@@ -267,7 +267,7 @@ class GenerateReplyWorker extends BaseWorker {
     // Queue posting job (if auto-posting is enabled)
     if (integrationConfig.data.auto_post !== false) {
       await this.errorHandler.handleWithFallback(
-        () => this.queuePostingJob(organization_id, storedResponse.data, platform),
+        () => this.queuePostingJob(organization_id, storedResponse, platform),
         null, // No fallback for posting - just log the error
         { operation: 'queuePostingJob', organizationId: organization_id }
       );
@@ -276,7 +276,7 @@ class GenerateReplyWorker extends BaseWorker {
     return {
       success: true,
       summary: `Generated ${response.service} response: "${response.text.substring(0, 50)}..."`,
-      responseId: storedResponse.data?.id,
+      responseId: storedResponse?.id,
       responseText: response.text,
       service: response.service,
       generationTime,

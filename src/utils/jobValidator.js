@@ -170,6 +170,36 @@ class JobValidator {
   }
 
   /**
+   * Normalize job shape to ensure consistent structure
+   */
+  static normalizeJob(job) {
+    if (!job) return job;
+    
+    // If job already has a payload, return as-is
+    if (job.payload) {
+      return job;
+    }
+    
+    // If job looks like it IS the payload, wrap it
+    const possiblePayloadKeys = [
+      'comment_id', 'organization_id', 'platform', 'original_text',
+      'text', 'integration_config_id', 'toxicity_score', 'severity_level'
+    ];
+    
+    const hasPayloadKeys = possiblePayloadKeys.some(key => job[key] !== undefined);
+    
+    if (hasPayloadKeys) {
+      return {
+        payload: job,
+        id: job.id || null,
+        type: job.type || null
+      };
+    }
+    
+    return job;
+  }
+
+  /**
    * Sanitize job data to prevent injection attacks
    */
   static sanitizeJob(job) {
@@ -200,8 +230,9 @@ class JobValidator {
    * Validate job based on worker type
    */
   static validateJob(workerType, job) {
-    // Sanitize first
-    const sanitizedJob = this.sanitizeJob(job);
+    // Normalize job shape first, then sanitize
+    const normalizedJob = this.normalizeJob(job);
+    const sanitizedJob = this.sanitizeJob(normalizedJob);
 
     switch (workerType) {
       case 'generate_reply':

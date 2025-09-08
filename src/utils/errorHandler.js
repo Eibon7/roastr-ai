@@ -20,8 +20,31 @@ class WorkerError extends Error {
 
 class WorkerErrorHandler {
   constructor(logger = console) {
-    this.logger = logger;
+    this.logger = this.createLoggerAdapter(logger);
     this.retryDelays = [1000, 2000, 4000, 8000, 16000]; // Exponential backoff
+  }
+
+  /**
+   * Create a logger adapter to handle different logging interfaces
+   */
+  createLoggerAdapter(logger) {
+    const adapter = {};
+    
+    // Map common logging methods
+    adapter.info = logger.info?.bind(logger) || logger.log?.bind(logger) || (() => {});
+    adapter.warn = logger.warn?.bind(logger) || logger.log?.bind(logger) || (() => {});
+    adapter.error = logger.error?.bind(logger) || logger.log?.bind(logger) || (() => {});
+    adapter.debug = logger.debug?.bind(logger) || logger.log?.bind(logger) || (() => {});
+    
+    // Handle worker-style log method (that takes level as first argument)
+    if (typeof logger.log === 'function' && !logger.info && !logger.warn && !logger.error) {
+      adapter.info = (message, meta = {}) => logger.log('info', message, meta);
+      adapter.warn = (message, meta = {}) => logger.log('warn', message, meta);
+      adapter.error = (message, meta = {}) => logger.log('error', message, meta);
+      adapter.debug = (message, meta = {}) => logger.log('debug', message, meta);
+    }
+    
+    return adapter;
   }
 
   /**
@@ -31,7 +54,7 @@ class WorkerErrorHandler {
     try {
       return await operation();
     } catch (error) {
-      this.logger.warn?.('Operation failed, using fallback', {
+      this.logger.warn('Operation failed, using fallback', {
         error: error.message,
         context,
         stack: error.stack
@@ -41,7 +64,7 @@ class WorkerErrorHandler {
         try {
           return await fallback();
         } catch (fallbackError) {
-          this.logger.error?.('Fallback also failed', {
+          this.logger.error('Fallback also failed', {
             originalError: error.message,
             fallbackError: fallbackError.message,
             context
@@ -80,7 +103,7 @@ class WorkerErrorHandler {
         if (attempt < maxRetries) {
           const delay = this.retryDelays[attempt] || this.retryDelays[this.retryDelays.length - 1];
           
-          this.logger.warn?.(`Attempt ${attempt + 1} failed, retrying in ${delay}ms`, {
+          this.logger.warn(`Attempt ${attempt + 1} failed, retrying in ${delay}ms`, {
             error: error.message,
             attempt: attempt + 1,
             maxRetries,
@@ -290,14 +313,14 @@ class WorkerErrorHandler {
 
     if (error instanceof WorkerError) {
       if (error.retryable) {
-        this.logger.warn?.('Retryable worker error', logData);
+        this.logger.warn('Retryable worker error', logData);
       } else {
-        this.logger.error?.('Non-retryable worker error', logData);
+        this.logger.error('Non-retryable worker error', logData);
       }
     } else if (error instanceof ValidationError) {
-      this.logger.warn?.('Validation error', logData);
+      this.logger.warn('Validation error', logData);
     } else {
-      this.logger.error?.('Unexpected error', logData);
+      this.logger.error('Unexpected error', logData);
     }
   }
 

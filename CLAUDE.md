@@ -18,6 +18,17 @@ The system is designed as a multi-tenant SaaS platform with:
 - **9 platform integrations** (Twitter, YouTube, Instagram, Facebook, etc.)
 - **Master Prompt Template System** (v1-roast-prompt) for consistent, high-quality roast generation
 
+## Business Model
+
+The platform operates on a subscription-based model with multiple tiers:
+
+- **Free Plan**: Basic roast generation with limited features and platform access
+- **Starter Plan**: €5/month - Enhanced features with increased limits and additional platforms
+- **Pro Plan**: €15/month - Advanced features, custom styles, multiple platforms, analytics
+- **Plus Plan**: €50/month - Premium tier with maximum capabilities, priority support, custom integrations
+
+*Note: Enterprise plans are not currently available but may be considered for future releases.*
+
 ## Development Commands
 
 ```bash

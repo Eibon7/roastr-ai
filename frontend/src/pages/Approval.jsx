@@ -131,7 +131,7 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
     }
   };
 
-  const platformColor = PLATFORM_COLORS[response.comment.platform] || 'bg-gray-500';
+  const platformColor = PLATFORM_COLORS[response.comment.platform?.toLowerCase()] || 'bg-gray-500';
   const severityColor = SEVERITY_COLORS[response.comment.severity_level] || SEVERITY_COLORS.low;
 
   return (
@@ -144,7 +144,7 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
             <Badge variant="outline" className={severityColor}>
               {response.comment.severity_level}
             </Badge>
-            {response.comment.toxicity_score && (
+            {response.comment.toxicity_score != null && (
               <Badge variant="secondary">
                 {Math.round(response.comment.toxicity_score * 100)}% toxic
               </Badge>
