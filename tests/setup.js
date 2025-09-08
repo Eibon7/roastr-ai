@@ -1,5 +1,12 @@
 // Jest setup file for DOM testing environment
 
+// Import jest-dom for custom matchers
+require('@testing-library/jest-dom');
+
+// Import React for proper hook support
+const React = require('react');
+global.React = React;
+
 // Polyfills for jsdom
 global.TextEncoder = require('util').TextEncoder;
 global.TextDecoder = require('util').TextDecoder;

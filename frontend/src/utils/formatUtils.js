@@ -1,173 +1,97 @@
 /**
- * Utility functions for formatting data
+ * Frontend formatting utilities
  */
 
 /**
- * Format a number as currency (from cents)
- * @param {number} amountCents - The amount in cents to format
- * @param {string} currency - The currency code (default: 'USD')
- * @param {string} locale - The locale for formatting (default: 'en-US')
- * @returns {string} Formatted currency string
+ * Format currency amount with proper internationalization
+ * @param {number} amountCents - Amount in cents
+ * @param {string} currency - Currency code (default: 'USD')
+ * @param {string} locale - Locale for formatting (default: 'en-US')
+ * @returns {string} Formatted currency (e.g., "$12.34", "€10.50")
  */
 export function formatCurrency(amountCents, currency = 'USD', locale = 'en-US') {
+  // Safely normalize currency to a valid string
+  const safeCurrency = (typeof currency === 'string' && currency) ? currency.toUpperCase() : 'USD';
+
   if (typeof amountCents !== 'number' || isNaN(amountCents)) {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: (currency || 'USD').toUpperCase()
+      currency: safeCurrency
     }).format(0);
   }
 
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: (currency || 'USD').toUpperCase()
+    currency: safeCurrency
   }).format(amountCents / 100);
 }
 
 /**
- * Format a number with commas as thousands separators
- * @param {number} num - The number to format
- * @returns {string} Formatted number string
+ * Format file size in human readable format
+ * @param {number} bytes - Size in bytes
+ * @returns {string} Formatted size with units (B, KB, MB, GB, TB)
  */
-export function formatNumber(num) {
-  if (typeof num !== 'number' || isNaN(num)) {
-    return '0';
+export function formatFileSize(bytes) {
+  if (typeof bytes !== 'number' || isNaN(bytes)) {
+    return '0 B';
   }
 
-  return new Intl.NumberFormat('en-US').format(num);
+  if (bytes === 0) {
+    return '0 B';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let size = Math.abs(bytes);
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+
+  // Use appropriate decimal places based on size
+  const decimals = unitIndex === 0 ? 0 : size >= 100 ? 1 : 2;
+  const formattedSize = size.toFixed(decimals);
+
+  return `${bytes < 0 ? '-' : ''}${formattedSize} ${units[unitIndex]}`;
 }
 
 /**
- * Format bytes to human readable format
- * @param {number} bytes - The number of bytes
- * @param {number} decimals - Number of decimal places (default: 2)
- * @returns {string} Formatted bytes string
+ * Format number with thousand separators
+ * @param {number} value - Number to format
+ * @returns {string} Formatted number (e.g., "1,234,567")
  */
-export function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
-
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+export function formatNumber(value) {
+  if (typeof value !== 'number' || isNaN(value)) {
+    return '0';
+  }
+  
+  return value.toLocaleString();
 }
 
 /**
- * Format a percentage
- * @param {number} value - The value to format as percentage
+ * Format percentage with appropriate decimal places
+ * @param {number} value - Percentage value (0-100)
  * @param {number} decimals - Number of decimal places (default: 1)
- * @returns {string} Formatted percentage string
+ * @returns {string} Formatted percentage (e.g., "85.5%")
  */
 export function formatPercentage(value, decimals = 1) {
   if (typeof value !== 'number' || isNaN(value)) {
-    return '0%';
+    return '0.0%';
   }
-
+  
   return `${value.toFixed(decimals)}%`;
 }
 
 /**
- * Format a date to a readable string
- * @param {Date|string} date - The date to format
- * @param {string} locale - The locale to use (default: 'en-US')
- * @returns {string} Formatted date string
- */
-export function formatDate(date, locale = 'en-US') {
-  if (!date) return '';
-
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  if (isNaN(dateObj.getTime())) {
-    return '';
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(dateObj);
-}
-
-/**
- * Format a date and time to a readable string
- * @param {Date|string} date - The date to format
- * @param {string} locale - The locale to use (default: 'en-US')
- * @returns {string} Formatted date and time string
- */
-export function formatDateTime(date, locale = 'en-US') {
-  if (!date) return '';
-
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  if (isNaN(dateObj.getTime())) {
-    return '';
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(dateObj);
-}
-
-/**
- * Format a relative time (e.g., "2 hours ago")
- * @param {Date|string} date - The date to format
- * @returns {string} Formatted relative time string
- */
-export function formatRelativeTime(date) {
-  if (!date) return '';
-
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  if (isNaN(dateObj.getTime())) {
-    return '';
-  }
-
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - dateObj) / 1000);
-
-  if (diffInSeconds < 60) {
-    return 'just now';
-  }
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) {
-    return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
-  }
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths} month${diffInMonths === 1 ? '' : 's'} ago`;
-  }
-
-  const diffInYears = Math.floor(diffInMonths / 12);
-  return `${diffInYears} year${diffInYears === 1 ? '' : 's'} ago`;
-}
-
-/**
- * Truncate text to a specified length
- * @param {string} text - The text to truncate
+ * Truncate text to specified length with ellipsis
+ * @param {string} text - Text to truncate
  * @param {number} maxLength - Maximum length (default: 100)
  * @param {string} suffix - Suffix to add when truncated (default: '...')
  * @returns {string} Truncated text
  */
 export function truncateText(text, maxLength = 100, suffix = '...') {
-  if (!text || typeof text !== 'string') {
+  if (typeof text !== 'string') {
     return '';
   }
 

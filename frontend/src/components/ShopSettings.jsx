@@ -3,17 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import { 
-  ShoppingCart, 
-  Zap, 
-  BarChart3, 
-  Shield, 
-  CheckCircle, 
+import {
+  ShoppingCart,
+  Zap,
+  BarChart3,
+  Shield,
+  CheckCircle,
   AlertCircle,
   Loader2,
   CreditCard
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
+import { formatCurrency } from '../utils/formatUtils';
 
 const ShopSettings = ({ user, onNotification }) => {
   const [shopData, setShopData] = useState({
@@ -30,7 +31,7 @@ const ShopSettings = ({ user, onNotification }) => {
   });
 
   const [purchaseState, setPurchaseState] = useState({
-    loading: false,
+    loadingByKey: new Set(), // Track loading state per addon key
     error: null,
     success: null
   });
@@ -72,12 +73,29 @@ const ShopSettings = ({ user, onNotification }) => {
     }
   };
 
+  // Helper function to check if a specific addon is loading
+  const isLoadingFor = (addonKey) => {
+    return purchaseState.loadingByKey.has(addonKey);
+  };
+
   const handlePurchase = async (addonKey) => {
-    setPurchaseState({ loading: true, error: null, success: null });
-    
+    // Prevent concurrent purchases for the same addon
+    if (isLoadingFor(addonKey)) {
+      return;
+    }
+
+    // Set loading state for this specific addon
+    setPurchaseState(prev => ({
+      ...prev,
+      loadingByKey: new Set([...prev.loadingByKey, addonKey]),
+      error: null,
+      success: null
+    }));
+
     try {
       const result = await apiClient.post('/shop/checkout', { addonKey });
-      
+
+
       if (result.success && result.data.url) {
         // Redirect to Stripe Checkout
         window.location.href = result.data.url;
@@ -86,12 +104,40 @@ const ShopSettings = ({ user, onNotification }) => {
       }
     } catch (error) {
       console.error('Purchase failed:', error);
-      setPurchaseState({
-        loading: false,
-        error: 'No se pudo completar la compra. Inténtalo de nuevo.',
-        success: null
+
+      // Determine error type and create appropriate user message
+      let errorMessage = 'No se pudo completar la compra. Inténtalo de nuevo.';
+      let notificationMessage = 'Error en la compra';
+
+      // Check if it's a network error (no response from server)
+      if (!error.response && (error.code === 'NETWORK_ERROR' || error.message?.includes('fetch') || error.message?.includes('network'))) {
+        errorMessage = 'Error de conexión — por favor verifica tu conexión a internet.';
+        notificationMessage = 'Error de conexión';
+      }
+      // Check if it's an API error with response
+      else if (error.response) {
+        const status = error.response.status;
+        const apiMessage = error.response.data?.message || error.response.data?.error;
+
+        if (apiMessage) {
+          errorMessage = `Error del servidor (${status}): ${apiMessage}`;
+        } else {
+          errorMessage = `Error del servidor (${status}). Inténtalo de nuevo.`;
+        }
+        notificationMessage = `Error del servidor (${status})`;
+      }
+
+      setPurchaseState(prev => {
+        const newLoadingByKey = new Set(prev.loadingByKey);
+        newLoadingByKey.delete(addonKey);
+        return {
+          ...prev,
+          loadingByKey: newLoadingByKey,
+          error: errorMessage,
+          success: null
+        };
       });
-      onNotification?.('Error en la compra', 'error');
+      onNotification?.(notificationMessage, 'error');
     }
   };
 
@@ -130,12 +176,12 @@ const ShopSettings = ({ user, onNotification }) => {
           </div>
         )}
 
-        <Button 
+        <Button
           onClick={() => handlePurchase(addon.key)}
-          disabled={purchaseState.loading}
+          disabled={isLoadingFor(addon.key)}
           className="w-full"
         >
-          {purchaseState.loading ? (
+          {isLoadingFor(addon.key) ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Procesando...
@@ -275,26 +321,42 @@ const ShopSettings = ({ user, onNotification }) => {
             <div className="space-y-2">
               {userAddons.recentPurchases.slice(0, 5).map((purchase, index) => {
                 // Helper functions for formatting
-                const formatAddonName = (addonKey) => {
-                  // If we have the addon name from the shop data, use it
+                const formatAddonName = (purchase) => {
+                  // First priority: use purchase.addon_name if available
+                  if (purchase.addon_name) {
+                    return purchase.addon_name;
+                  }
+
+                  // Second priority: lookup from shop data
                   if (shopData.addons) {
                     for (const category of Object.values(shopData.addons)) {
-                      const addon = category.find(a => a.key === addonKey);
+                      const addon = category.find(a => a.key === purchase.addon_key);
                       if (addon) return addon.name;
                     }
                   }
-                  // Fallback: convert addon_key to title case
-                  return addonKey
+
+                  // Third priority: hardcoded mapping for common addons
+                  const addonNameMap = {
+                    'roasts_100': 'Roasts Pack 100',
+                    'roasts_500': 'Roasts Pack 500',
+                    'roasts_1000': 'Roasts Pack 1000',
+                    'analysis_10k': 'Análisis Pack 10K',
+                    'analysis_50k': 'Análisis Pack 50K',
+                    'analysis_100k': 'Análisis Pack 100K',
+                    'rqc_monthly': 'RQC (Roastr Quality Check)'
+                  };
+
+                  if (addonNameMap[purchase.addon_key]) {
+                    return addonNameMap[purchase.addon_key];
+                  }
+
+                  // Final fallback: convert addon_key to title case
+                  return purchase.addon_key
                     .replace(/_/g, ' ')
                     .replace(/\b\w/g, l => l.toUpperCase());
                 };
 
-                const formatCurrency = (amountCents, currency = 'USD') => {
-                  return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: (currency || 'USD').toUpperCase()
-                  }).format(amountCents / 100);
-                };
+
 
                 const formatDate = (dateString) => {
                   return new Date(dateString).toLocaleDateString('en-US', {
@@ -307,12 +369,11 @@ const ShopSettings = ({ user, onNotification }) => {
                 const formatStatus = (status) => {
                   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
                 };
-
                 return (
                   <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex-1">
-                      <div className="text-sm font-medium" aria-label={`Addon: ${formatAddonName(purchase.addon_key)}`}>
-                        {formatAddonName(purchase.addon_key)}
+                      <div className="text-sm font-medium" aria-label={`Addon: ${formatAddonName(purchase)}`}>
+                        {formatAddonName(purchase)}
                       </div>
                       {purchase.created_at && (
                         <div className="text-xs text-muted-foreground mt-1" aria-label={`Purchase date: ${formatDate(purchase.created_at)}`}>

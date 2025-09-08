@@ -12,6 +12,7 @@ import AjustesSettings from '../components/AjustesSettings';
 import TransparencySettings from '../components/TransparencySettings';
 import ShopSettings from '../components/ShopSettings';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 // Password requirement component for visual feedback (legacy support)
 const PasswordRequirement = ({ met, text }) => (
@@ -28,6 +29,8 @@ const PasswordRequirement = ({ met, text }) => (
 );
 
 export default function Settings() {
+  const { isEnabled: isFeatureEnabled } = useFeatureFlags();
+  
   const [settings, setSettings] = useState({
     roastTone: 'balanced',
     responseFrequency: 'normal',
@@ -442,6 +445,17 @@ export default function Settings() {
     }
   };
 
+  // Utility function to sanitize input text
+  const sanitizeInput = (text) => {
+    if (!text || typeof text !== 'string') return '';
+
+    return text
+      .trim()
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/[<>]/g, '') // Remove potential HTML tags
+      .substring(0, 300); // Ensure max length
+  };
+
   // Logout handler
   const handleLogout = async () => {
     try {
@@ -485,45 +499,44 @@ export default function Settings() {
     
     let text;
     if (isIdentity) {
-      text = roastrPersona.loQueMeDefine;
+      text = sanitizeInput(roastrPersona.loQueMeDefine);
     } else if (isIntolerance) {
-      text = roastrPersona.loQueNoTolero;
+      text = sanitizeInput(roastrPersona.loQueNoTolero);
     } else if (isTolerance) {
-      text = roastrPersona.loQueMeDaIgual;
+      text = sanitizeInput(roastrPersona.loQueMeDaIgual);
     }
-    
-    if (text.length > 300) {
-      addNotification('El texto no puede exceder los 300 caracteres', 'error');
+
+    if (text.length === 0) {
+      addNotification('El campo no puede estar vacío', 'error');
       return;
     }
 
     try {
       setRoastrPersona(prev => ({ ...prev, isSaving: true }));
-      
+
       const payload = {};
       if (isIdentity) {
-        payload.loQueMeDefine = text.trim() || null;
+        payload.loQueMeDefine = text;
         payload.isVisible = roastrPersona.isVisible;
       } else if (isIntolerance) {
-        payload.loQueNoTolero = text.trim() || null;
+        payload.loQueNoTolero = text;
         payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
       } else if (isTolerance) {
-        payload.loQueMeDaIgual = text.trim() || null;
+        payload.loQueMeDaIgual = text;
         payload.isToleranceVisible = roastrPersona.isToleranceVisible;
       }
       
       const resp = await apiClient.post('/user/roastr-persona', payload);
 
-      if (resp?.data?.success) {
-        const trimmed = text.trim();
+      if (resp?.success) {
         setRoastrPersona(prev => ({
           ...prev,
           hasContent: !!resp.data?.hasContent,
           hasIntoleranceContent: !!resp.data?.hasIntoleranceContent,
           hasToleranceContent: !!resp.data?.hasToleranceContent,
-          loQueMeDefine: isIdentity ? trimmed : prev.loQueMeDefine,
-          loQueNoTolero: isIntolerance ? trimmed : prev.loQueNoTolero,
-          loQueMeDaIgual: isTolerance ? trimmed : prev.loQueMeDaIgual,
+          loQueMeDefine: isIdentity ? text : prev.loQueMeDefine,
+          loQueNoTolero: isIntolerance ? text : prev.loQueNoTolero,
+          loQueMeDaIgual: isTolerance ? text : prev.loQueMeDaIgual,
           showForm: isIdentity ? false : prev.showForm,
           showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
           showToleranceForm: isTolerance ? false : prev.showToleranceForm
@@ -556,8 +569,6 @@ export default function Settings() {
             setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
           }
         }
-
-        setRoastrPersona(prev => ({ ...prev, isSaving: false }));
       }
 
     } catch (error) {
@@ -582,7 +593,6 @@ export default function Settings() {
         addNotification(errorMessage, 'error');
       }
 
-      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     } finally {
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
@@ -1050,11 +1060,13 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Shop */}
-      <ShopSettings
-        user={user}
-        onNotification={addNotification}
-      />
+      {/* Shop - Solo mostrar si el feature flag está habilitado */}
+      {isFeatureEnabled('ENABLE_SHOP') && (
+        <ShopSettings
+          user={user}
+          onNotification={addNotification}
+        />
+      )}
 
       {/* Roastr Persona */}
       <Card>
@@ -1797,7 +1809,6 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
-
       {/* Danger Zone */}
       <Card>
         <CardHeader>

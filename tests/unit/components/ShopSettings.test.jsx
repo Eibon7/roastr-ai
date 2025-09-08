@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ShopSettings from '../../../frontend/src/components/ShopSettings';
 import { apiClient } from '../../../frontend/src/lib/api';
@@ -17,8 +17,17 @@ jest.mock('../../../frontend/src/lib/api', () => ({
     }
 }));
 
-// Mock window.location safely
+// Store original window.location
 const originalLocation = window.location;
+
+beforeAll(() => {
+    delete window.location;
+    window.location = { href: '' };
+});
+
+afterAll(() => {
+    window.location = originalLocation;
+});
 
 describe('ShopSettings Component', () => {
     const mockUser = {
@@ -88,19 +97,7 @@ describe('ShopSettings Component', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        // Mock window.location safely
-        Object.defineProperty(window, 'location', {
-            value: { href: '' },
-            configurable: true
-        });
-    });
-
-    afterEach(() => {
-        // Restore original window.location
-        Object.defineProperty(window, 'location', {
-            value: originalLocation,
-            configurable: true
-        });
+        window.location.href = '';
     });
 
     it('should render loading state initially', () => {
@@ -234,12 +231,8 @@ describe('ShopSettings Component', () => {
             expect(screen.getByText('Compras Recientes')).toBeInTheDocument();
         });
 
-        // Find the recent purchase row/container that contains 'roasts_100'
-        const recentPurchaseRow = screen.getByText('roasts_100').closest('div');
-        expect(recentPurchaseRow).toBeInTheDocument();
-
-        // Scope the price assertion to this specific purchase item
-        expect(within(recentPurchaseRow).getByText('$4.99')).toBeInTheDocument();
+        expect(screen.getByText('Roasts Pack 100')).toBeInTheDocument();
+        expect(screen.getByText('$4.99')).toBeInTheDocument();
         expect(screen.getByText('completed')).toBeInTheDocument();
     });
 

@@ -20,7 +20,8 @@ describe('formatUtils', () => {
 
     it('should handle different locales', () => {
       expect(formatCurrency(1234, 'USD', 'en-US')).toBe('$12.34');
-      expect(formatCurrency(1234, 'EUR', 'de-DE')).toBe('12,34 €');
+      const eurDE = formatCurrency(1234, 'EUR', 'de-DE');
+      expect(eurDE.replace(/\u00A0/g, ' ')).toBe('12,34 €');
     });
 
     it('should handle invalid inputs gracefully', () => {

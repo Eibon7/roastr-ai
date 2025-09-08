@@ -171,7 +171,7 @@ describe('AjustesSettings Component', () => {
 
     // Should show the form
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/Soy desarrollador/)).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Soy desarrollador')).toBeInTheDocument();
     });
   });
 
@@ -274,7 +274,7 @@ describe('AjustesSettings Component', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/Soy desarrollador/)).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Soy desarrollador')).toBeInTheDocument();
     });
 
     // Try to save
@@ -300,40 +300,36 @@ describe('AjustesSettings Component', () => {
       data: { ...mockApiResponses.transparency.data, bio_text: null }
     };
 
+    // Create a Map with canonical paths for simplified lookup
+    const responseMap = new Map();
+
+    // Populate the map with canonical paths
+    Object.entries(mockApiResponses).forEach(([key, value]) => {
+      responseMap.set(key, value);
+    });
+
+    // Add the special case for transparency-mode
+    responseMap.set('/user/settings/transparency-mode', mockResponseWithoutBio);
+
     apiClient.get.mockImplementation((url) => {
-      // First try exact match on full URL
-      if (mockApiResponses.hasOwnProperty(url)) {
-        return Promise.resolve(mockApiResponses[url]);
-      }
-
-      // Handle specific known endpoint
-      if (url === '/user/settings/transparency-mode') {
-        return Promise.resolve(mockResponseWithoutBio);
-      }
-
-      // Extract pathname reliably using URL constructor or regex
-      let pathname;
+      // Normalize the incoming request to a canonical pathname
+      let canonicalPath;
       try {
         // Try URL constructor first (handles full URLs)
         const urlObj = new URL(url, 'http://localhost');
-        pathname = urlObj.pathname;
+        canonicalPath = urlObj.pathname;
       } catch {
         // Fallback to treating as pathname directly
-        pathname = url;
+        canonicalPath = url;
       }
 
-      // Check against pathname
-      if (mockApiResponses.hasOwnProperty(pathname)) {
-        return Promise.resolve(mockApiResponses[pathname]);
+      // Single Map lookup
+      const response = responseMap.get(canonicalPath);
+      if (response) {
+        return Promise.resolve(response);
       }
 
-      // Check final path segment
-      const pathSegment = pathname.split('/').pop();
-      if (mockApiResponses.hasOwnProperty(pathSegment)) {
-        return Promise.resolve(mockApiResponses[pathSegment]);
-      }
-
-      // Fail explicitly instead of returning generic response
+      // Reject if not found
       return Promise.reject(new Error(`Unexpected mock request: ${url}`));
     });
 
@@ -379,7 +375,7 @@ describe('AjustesSettings Component', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
-      const textarea = screen.getByPlaceholderText(/Soy desarrollador/);
+      const textarea = screen.getByDisplayValue('Soy desarrollador');
       expect(textarea).toBeInTheDocument();
       expect(textarea).toHaveAttribute('maxLength', '300');
     });

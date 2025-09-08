@@ -26,6 +26,9 @@ process.env.STRIPE_SUCCESS_URL = 'http://localhost:3000/success';
 process.env.STRIPE_CANCEL_URL = 'http://localhost:3000/cancel';
 process.env.STRIPE_PORTAL_RETURN_URL = 'http://localhost:3000/dashboard';
 
+// Mock security secrets
+process.env.IDEMPOTENCY_SECRET = 'mock-idempotency-secret-for-testing-12345678901234567890';
+
 // Enable style profile feature for tests
 process.env.ENABLE_STYLE_PROFILE = 'true';
 

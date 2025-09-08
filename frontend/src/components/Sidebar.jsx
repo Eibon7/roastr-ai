@@ -6,9 +6,7 @@ import {
   ShoppingBag,
   Menu,
   X,
-  Flame,
-  Edit3,
-  Link2
+  Flame
 } from 'lucide-react';
 import useFeatureFlags from '../hooks/useFeatureFlags';
 
@@ -18,16 +16,6 @@ const baseNavItems = [
     name: 'Dashboard',
     path: '/dashboard',
     icon: LayoutGrid
-  },
-  {
-    name: 'Compose',
-    path: '/compose',
-    icon: Edit3
-  },
-  {
-    name: 'Integrations',
-    path: '/integrations',
-    icon: Link2
   },
   {
     name: 'Settings',
@@ -107,7 +95,7 @@ export default function Sidebar() {
         className={`fixed left-0 top-0 h-screen w-20 bg-red-600 transform transition-transform duration-300 ease-in-out z-30 overflow-hidden
           ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
-        style={{ backgroundColor: '#D11A1A' }}
+        style={{ backgroundColor: '#E02025' }}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}

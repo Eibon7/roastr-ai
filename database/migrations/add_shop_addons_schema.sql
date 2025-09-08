@@ -3,6 +3,10 @@
 -- Issue #260: Settings → Shop functionality for addon purchases
 -- ============================================================================
 
+-- Ensure uuid-ossp extension exists for UUID generation
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+
 -- Shop addons table - defines available addons for purchase
 CREATE TABLE shop_addons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -40,12 +44,12 @@ CREATE TABLE shop_addons (
 -- User addon purchases table - tracks user purchases and current balances
 CREATE TABLE user_addons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     addon_key VARCHAR(50) NOT NULL,
-    
+
     -- Purchase tracking
     stripe_payment_intent_id VARCHAR(255),
-    stripe_checkout_session_id VARCHAR(255),
+    stripe_checkout_session_id VARCHAR(255) UNIQUE,
     purchase_price_cents INTEGER NOT NULL,
     purchased_at TIMESTAMPTZ DEFAULT NOW(),
     
@@ -66,14 +70,15 @@ CREATE TABLE user_addons (
     
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    CONSTRAINT user_addons_status_check CHECK (status IN ('active', 'expired', 'consumed'))
+
+    CONSTRAINT user_addons_status_check CHECK (status IN ('active', 'expired', 'consumed')),
+    CONSTRAINT uq_user_addons_stripe_payment_intent_id UNIQUE(user_id, stripe_payment_intent_id)
 );
 
 -- Purchase history table - detailed log of all addon purchases
 CREATE TABLE addon_purchase_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     addon_key VARCHAR(50) NOT NULL,
     
     -- Purchase details
@@ -152,11 +157,9 @@ RETURNS BOOLEAN AS $$
 DECLARE
     addon_record RECORD;
     remaining_to_consume INTEGER := p_amount;
-    credits_to_consume INTEGER;
-    update_result INTEGER;
 BEGIN
     -- Get user addons with remaining credits, ordered by oldest first
-    -- Use FOR UPDATE to lock rows and prevent concurrent consumption
+    -- Use FOR UPDATE SKIP LOCKED to prevent race conditions and double-spend
     FOR addon_record IN
         SELECT ua.id, ua.credits_remaining
         FROM user_addons ua
@@ -166,42 +169,32 @@ BEGIN
         AND ua.status = 'active'
         AND ua.credits_remaining > 0
         ORDER BY ua.created_at ASC
-        FOR UPDATE
+        FOR UPDATE SKIP LOCKED
     LOOP
         IF remaining_to_consume <= 0 THEN
             EXIT;
         END IF;
-
+        
         IF addon_record.credits_remaining >= remaining_to_consume THEN
             -- This addon has enough credits to fulfill the request
-            credits_to_consume := remaining_to_consume;
             UPDATE user_addons
-            SET credits_used = credits_used + credits_to_consume,
+            SET credits_used = credits_used + remaining_to_consume,
                 updated_at = NOW()
-            WHERE id = addon_record.id
-            AND credits_remaining >= credits_to_consume;
-
-            GET DIAGNOSTICS update_result = ROW_COUNT;
-            IF update_result > 0 THEN
-                remaining_to_consume := 0;
-            END IF;
+            WHERE id = addon_record.id;
+            
+            remaining_to_consume := 0;
         ELSE
             -- Consume all remaining credits from this addon
-            credits_to_consume := addon_record.credits_remaining;
             UPDATE user_addons
-            SET credits_used = credits_used + credits_to_consume,
+            SET credits_used = credits_used + addon_record.credits_remaining,
                 status = 'consumed',
                 updated_at = NOW()
-            WHERE id = addon_record.id
-            AND credits_remaining > 0;
-
-            GET DIAGNOSTICS update_result = ROW_COUNT;
-            IF update_result > 0 THEN
-                remaining_to_consume := remaining_to_consume - credits_to_consume;
-            END IF;
+            WHERE id = addon_record.id;
+            
+            remaining_to_consume := remaining_to_consume - addon_record.credits_remaining;
         END IF;
     END LOOP;
-
+    
     RETURN remaining_to_consume = 0;
 END;
 $$ LANGUAGE plpgsql;
@@ -242,19 +235,14 @@ RETURNS JSONB AS $$
 DECLARE
     result JSONB := '{}';
     feature_expires_at TIMESTAMPTZ := NULL;
-    addon_exists BOOLEAN := FALSE;
 BEGIN
+    -- Validate credit amount for credit-based addons
+    IF p_addon_type = 'credits' AND p_credit_amount <= 0 THEN
+        RAISE EXCEPTION 'Credit amount must be positive for credit-based addons';
+    END IF;
+
     -- Start transaction
     BEGIN
-        -- Validate that the addon exists in shop_addons
-        SELECT EXISTS(
-            SELECT 1 FROM shop_addons WHERE addon_key = p_addon_key
-        ) INTO addon_exists;
-
-        IF NOT addon_exists THEN
-            RAISE EXCEPTION 'Addon with key % does not exist in shop_addons', p_addon_key;
-        END IF;
-
         -- Update purchase history to completed
         UPDATE addon_purchase_history
         SET status = 'completed',
