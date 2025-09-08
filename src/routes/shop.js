@@ -235,14 +235,14 @@ router.post('/checkout', authenticateToken, async (req, res) => {
                 metadata: { user_id: userId }
             });
 
-            // Update user_subscriptions with customer ID
+            // Update user_subscriptions with customer ID only
             await supabaseServiceClient
                 .from('user_subscriptions')
                 .upsert({
                     user_id: userId,
-                    stripe_customer_id: customer.id,
-                    plan: 'free',
-                    status: 'active'
+                    stripe_customer_id: customer.id
+                }, {
+                    onConflict: 'user_id'
                 });
         }
 
@@ -277,7 +277,7 @@ router.post('/checkout', authenticateToken, async (req, res) => {
         // Create checkout session for one-time payment
         const session = await stripeWrapper.checkout.sessions.create({
             customer: customer.id,
-            payment_method_types: ['card'],
+            automatic_payment_methods: { enabled: true },
             mode: 'payment', // One-time payment for addons
             line_items: [{
                 price_data: {

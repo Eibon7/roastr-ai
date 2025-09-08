@@ -113,7 +113,6 @@ test.describe('Feature Flags - Shop Functionality', () => {
       await expect(page.locator('main')).toBeVisible();
     });
   });
-
   test.describe('Application Navigation', () => {
     test('should check main navigation structure', async ({ page }) => {
       // Navigate to home page

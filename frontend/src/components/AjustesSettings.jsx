@@ -129,8 +129,8 @@ const AjustesSettings = ({ user, onNotification }) => {
         if (themeResult?.data?.success) {
           setThemeSettings(prev => ({
             ...prev,
-            theme: themeResult.data.data?.theme,
-            options: themeResult.data.data?.options,
+            theme: themeResult.data.data?.theme || prev.theme,
+            options: themeResult.data.data?.options || prev.options || [],
             isLoading: false
           }));
         } else {

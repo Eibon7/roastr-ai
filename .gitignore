@@ -28,6 +28,9 @@ Thumbs.db
 # Coverage reports
 coverage/
 
+# Test artifacts
+frontend/test-results/
+
 # Local configs
 *.local
 

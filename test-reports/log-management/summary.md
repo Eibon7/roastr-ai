@@ -29,5 +29,5 @@
 
 ## Coverage
 
-Coverage reports are available in the `coverage/log-management/merged` directory.
+Coverage reports are available in the `coverage/log-management/merged` directory when tests pass successfully, and will also be available in CI artifacts.
 
