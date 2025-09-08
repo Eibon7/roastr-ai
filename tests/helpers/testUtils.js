@@ -5,12 +5,13 @@
 /**
  * Shared plan limits constants to ensure consistency across all test utilities
  */
+// Note: integrationsLimit is intentionally higher than platforms to allow multiple integrations per platform
 const PLAN_LIMITS = {
   free: { roasts: 10, monthlyResponsesLimit: 10, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: false },
   plus: { roasts: 250, monthlyResponsesLimit: 250, platforms: 2, integrationsLimit: 4, features: ['basic', 'advanced'], shieldEnabled: true },
   pro: { roasts: 1000, monthlyResponsesLimit: 1000, platforms: 3, integrationsLimit: 6, features: ['basic', 'advanced'], shieldEnabled: true },
   agency: { roasts: 5000, monthlyResponsesLimit: 5000, platforms: 10, integrationsLimit: 20, features: ['basic', 'advanced', 'agency'], shieldEnabled: true },
-  enterprise: { roasts: 10000, monthlyResponsesLimit: 10000, platforms: 9, integrationsLimit: 18, features: ['basic', 'advanced', 'custom'], shieldEnabled: true }
+  enterprise: { roasts: 10000, monthlyResponsesLimit: 10000, platforms: 10, integrationsLimit: 20, features: ['basic', 'advanced', 'custom'], shieldEnabled: true }
 };
 
 /**
@@ -196,7 +197,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
   }
 
   // Validate effectivePlan against PLAN_LIMITS
-  if (!PLAN_LIMITS.hasOwnProperty(effectivePlan)) {
+  if (!Object.prototype.hasOwnProperty.call(PLAN_LIMITS, effectivePlan)) {
     console.warn(`Invalid plan type '${effectivePlan}' detected, falling back to 'free' plan`);
     effectivePlan = 'free';
   }
@@ -215,7 +216,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
 
   // Compute usage per quotaScenario
   const limit = finalEntitlements.monthlyResponsesLimit;
-  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (planType === 'free' ? 8 : 45);
+  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (effectivePlan === 'free' ? 8 : 45);
   if (quotaScenario === 'near') roastsThisMonth = Math.max(0, limit - 1);
   if (quotaScenario === 'over') roastsThisMonth = limit + 5;
 
@@ -249,7 +250,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
       credentials: `mock-${platform}-credentials`,
       settings: {
         autoModerate: true,
-        responseEnabled: planType !== 'free'
+        responseEnabled: effectivePlan !== 'free'
       }
     })),
     usage: {
@@ -383,7 +384,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         id: generateTestId(),
         email: `user${i}@${orgId}.example.com`,
         role: i === 0 ? 'admin' : 'user',
-        plan: planType,
+        plan: effectivePlan,
         createdAt: new Date().toISOString(),
         isActive: true
       }));
@@ -395,7 +396,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           ...baseScenario.organization,
           settings: {
             ...baseScenario.organization.settings,
-            userLimit: planType === 'enterprise' ? 100 : planType === 'pro' ? 10 : 1,
+            userLimit: effectivePlan === 'enterprise' ? 100 : effectivePlan === 'agency' ? 25 : effectivePlan === 'pro' ? 10 : 1,
             roleBasedAccess: true
           }
         }

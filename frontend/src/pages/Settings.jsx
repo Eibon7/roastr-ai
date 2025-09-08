@@ -4,11 +4,13 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X, Heart, Eye, EyeOff } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X, Heart, Eye, EyeOff, LogOut, Trash2 } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
+import AjustesSettings from '../components/AjustesSettings';
 import TransparencySettings from '../components/TransparencySettings';
+import ShopSettings from '../components/ShopSettings';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
 
 // Password requirement component for visual feedback (legacy support)
@@ -71,6 +73,17 @@ export default function Settings() {
   // Data export state (Issue #258)
   const [showDataExportModal, setShowDataExportModal] = useState(false);
   const [dataExportLoading, setDataExportLoading] = useState(false);
+
+  // Data export rate limiting state
+  const [lastDataExportAttempt, setLastDataExportAttempt] = useState(() => {
+    try {
+      const stored = localStorage.getItem('lastDataExportAttempt');
+      return stored ? parseInt(stored, 10) : 0;
+    } catch (_) {
+      return 0;
+    }
+  });
+  const DATA_EXPORT_COOLDOWN_MS = 300000; // 5 minutes
 
   // Password reset rate limiting state
   const [lastPasswordResetAttempt, setLastPasswordResetAttempt] = useState(0);
@@ -138,6 +151,7 @@ export default function Settings() {
           console.error('Failed to load Roastr Persona:', roastrPersonaError);
           setRoastrPersona(prev => ({ ...prev, isLoading: false }));
         }
+
       } catch (error) {
         console.error('Failed to fetch user data:', error);
         addNotification('Error al cargar datos del usuario', 'error');
@@ -389,8 +403,22 @@ export default function Settings() {
 
   // Data export request handling (Issue #258)
   const handleDataExportRequest = async () => {
+    // Check client-side rate limiting
+    const now = Date.now();
+    const timeSinceLastAttempt = now - lastDataExportAttempt;
+
+    if (timeSinceLastAttempt < DATA_EXPORT_COOLDOWN_MS) {
+      const remainingTime = Math.ceil((DATA_EXPORT_COOLDOWN_MS - timeSinceLastAttempt) / 60000);
+      addNotification(`Debes esperar ${remainingTime} minuto(s) antes de solicitar otra exportación`, 'warning');
+      return;
+    }
+
     try {
       setDataExportLoading(true);
+      setLastDataExportAttempt(now);
+
+      // Store timestamp in localStorage for persistence
+      localStorage.setItem('lastDataExportAttempt', now.toString());
 
       const result = await apiClient.post('/user/data-export');
 
@@ -402,7 +430,13 @@ export default function Settings() {
       }
     } catch (error) {
       console.error('Data export request error:', error);
-      addNotification('Error al solicitar la exportación de datos', 'error');
+
+      // Handle rate limiting response from server
+      if (error.response?.status === 429) {
+        addNotification('Has alcanzado el límite de solicitudes. Inténtalo más tarde.', 'warning');
+      } else {
+        addNotification('Error al solicitar la exportación de datos', 'error');
+      }
     } finally {
       setDataExportLoading(false);
     }
@@ -417,6 +451,41 @@ export default function Settings() {
       .replace(/\s+/g, ' ') // Replace multiple spaces with single space
       .replace(/[<>]/g, '') // Remove potential HTML tags
       .substring(0, 300); // Ensure max length
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      // First, sign out from Supabase client session
+      await authHelpers.signOut();
+
+      // Optionally call backend logout endpoint to clear server-side sessions
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (backendError) {
+        // Backend logout is optional, don't fail if it errors
+        console.error('Backend logout failed:', backendError);
+      }
+
+      // Clear any remaining localStorage keys
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Redirect to login
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Even if signOut fails, clear localStorage and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
   };
 
   // Roastr Persona handlers
@@ -434,11 +503,6 @@ export default function Settings() {
       text = sanitizeInput(roastrPersona.loQueMeDaIgual);
     }
 
-    if (text.length > 300) {
-      addNotification('El texto no puede exceder los 300 caracteres', 'error');
-      return;
-    }
-
     if (text.length === 0) {
       addNotification('El campo no puede estar vacío', 'error');
       return;
@@ -446,22 +510,22 @@ export default function Settings() {
 
     try {
       setRoastrPersona(prev => ({ ...prev, isSaving: true }));
-      
+
       const payload = {};
       if (isIdentity) {
-        payload.loQueMeDefine = text || null;
+        payload.loQueMeDefine = text;
         payload.isVisible = roastrPersona.isVisible;
       } else if (isIntolerance) {
-        payload.loQueNoTolero = text || null;
+        payload.loQueNoTolero = text;
         payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
       } else if (isTolerance) {
-        payload.loQueMeDaIgual = text || null;
+        payload.loQueMeDaIgual = text;
         payload.isToleranceVisible = roastrPersona.isToleranceVisible;
       }
       
       const resp = await apiClient.post('/user/roastr-persona', payload);
 
-      if (resp?.data?.success) {
+      if (resp?.success) {
         setRoastrPersona(prev => ({
           ...prev,
           hasContent: !!resp.data?.hasContent,
@@ -472,8 +536,7 @@ export default function Settings() {
           loQueMeDaIgual: isTolerance ? text : prev.loQueMeDaIgual,
           showForm: isIdentity ? false : prev.showForm,
           showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
-          showToleranceForm: isTolerance ? false : prev.showToleranceForm,
-          isSaving: false
+          showToleranceForm: isTolerance ? false : prev.showToleranceForm
         }));
 
         let successMessage;
@@ -503,8 +566,6 @@ export default function Settings() {
             setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
           }
         }
-
-        setRoastrPersona(prev => ({ ...prev, isSaving: false }));
       }
 
     } catch (error) {
@@ -995,6 +1056,12 @@ export default function Settings() {
           <TransparencySettings />
         </CardContent>
       </Card>
+
+      {/* Shop */}
+      <ShopSettings
+        user={user}
+        onNotification={addNotification}
+      />
 
       {/* Roastr Persona */}
       <Card>
@@ -1706,6 +1773,37 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      {/* Ajustes Section */}
+      <AjustesSettings
+        user={user}
+        onNotification={addNotification}
+      />
+
+      {/* Logout Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <LogOut className="h-5 w-5" />
+            <span>Cerrar sesión</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div className="font-medium mb-2">Cerrar sesión en este dispositivo</div>
+            <div className="text-sm text-muted-foreground mb-3">
+              Cierra tu sesión actual y regresa a la página de login.
+            </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Cerrar sesión
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       {/* Danger Zone */}
       <Card>
         <CardHeader>

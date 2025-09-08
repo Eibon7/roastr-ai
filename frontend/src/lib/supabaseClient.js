@@ -401,6 +401,7 @@ export const authHelpers = {
         name: 'Demo User',
         plan: 'pro',
         rqcEnabled: true,
+        is_admin: false, // Mock user is not admin by default
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MockUser',
         joinedAt: '2024-01-15T10:00:00Z',
         lastActive: new Date().toISOString(),

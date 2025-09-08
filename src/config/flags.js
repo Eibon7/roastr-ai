@@ -53,7 +53,10 @@ class FeatureFlags {
       ENABLE_RATE_LIMIT: process.env.ENABLE_RATE_LIMIT !== 'false', // Default enabled unless explicitly disabled
       
       // Style Profile Feature
-      ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false' // Default enabled unless explicitly disabled
+      ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false', // Default enabled unless explicitly disabled
+
+      // Shop Feature
+      ENABLE_SHOP: process.env.ENABLE_SHOP === 'true' || false // Default disabled unless explicitly enabled
     };
   }
 

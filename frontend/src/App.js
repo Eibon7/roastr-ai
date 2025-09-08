@@ -2,9 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import LoginPage from './pages/login';
-import RegisterPage from './pages/register';
-import ResetPasswordPage from './pages/reset-password';
+import { Login, Register, ResetPassword } from './pages/auth';
 import AuthCallback from './pages/auth-callback';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDetail from './pages/admin/UserDetail';
@@ -27,6 +25,8 @@ import Configuration from './pages/Configuration';
 import Approval from './pages/Approval';
 import AccountsPage from './pages/AccountsPage';
 import Pricing from './pages/Pricing';
+import Shop from './pages/Shop';
+import ProtectedRoute, { AdminRoute, AuthRoute, PublicRoute } from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -35,14 +35,14 @@ function App() {
       <AuthProvider>
         <div className="App">
           <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            {/* Public routes - redirect if already authenticated */}
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+            <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             
-            {/* Protected routes with AppShell */}
-            <Route path="/" element={<AppShell />}>
+            {/* Protected routes with AppShell - require authentication */}
+            <Route path="/" element={<AuthRoute><AppShell /></AuthRoute>}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="compose" element={<Compose />} />
@@ -58,10 +58,12 @@ function App() {
               <Route path="style-profile" element={<StyleProfile />} />
               <Route path="style-profile/generate" element={<StyleProfile />} />
               <Route path="accounts" element={<AccountsPage />} />
+              <Route path="profile" element={<Settings />} /> {/* Profile redirects to Settings for now */}
+              <Route path="shop" element={<Shop />} />
             </Route>
             
-            {/* Admin routes with AdminLayout */}
-            <Route path="/admin" element={<AdminLayout />}>
+            {/* Admin routes with AdminLayout - require admin permissions */}
+            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<Navigate to="/admin/users" replace />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:userId" element={<UserDetail />} />

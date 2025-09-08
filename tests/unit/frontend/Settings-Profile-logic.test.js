@@ -23,6 +23,8 @@ const createPasswordResetHandler = (userEmail) => {
 
             if (result.success) {
                 return { success: true, message: 'Se ha enviado un enlace de cambio de contraseña a tu email' };
+            } else {
+                return { success: false, message: result.message || 'Error al enviar el enlace de cambio de contraseña' };
             }
         } catch (error) {
             return { success: false, message: 'Error al enviar el enlace de cambio de contraseña' };
@@ -41,6 +43,8 @@ const createDataExportHandler = () => {
                     message: 'Se ha enviado un enlace de descarga a tu email',
                     data: result.data
                 };
+            } else {
+                return { success: false, message: result.message || 'Error al solicitar la exportación de datos' };
             }
         } catch (error) {
             return { success: false, message: 'Error al solicitar la exportación de datos' };

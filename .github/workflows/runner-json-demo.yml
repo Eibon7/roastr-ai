@@ -5,6 +5,9 @@ on:
     branches:
       - feat/issue-281-mocks-runner-docs
 
+permissions:
+  contents: read
+
 env:
   TEST_PLATFORM: "bluesky"  # Platform to validate exists in platforms.json
 
@@ -39,11 +42,19 @@ jobs:
       - name: Lint + Typecheck (JSON)
         run: |
           set -euo pipefail
-          node scripts/test/runner.js check --json | tee check.json
+          # Write stdout directly to check.json and stderr to check.stderr
+          node scripts/test/runner.js check --json > check.json 2> check.stderr || true
           echo '### Check summary (from runner --json)' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat check.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          # Append stderr if non-empty for quick visibility
+          if [ -s check.stderr ]; then
+            echo '### Error output' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat check.stderr >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
           # Parse exit code from our new check command format with numeric coercion
           if ! CHECK_EXIT=$(jq -r '(.exitCode // 0) | tonumber' check.json); then
             echo "Error: Failed to parse check.json for exit code"
@@ -57,11 +68,7 @@ jobs:
           echo "Check command: $CHECK_COMMAND"
           echo "Check exit code: $CHECK_EXIT"
           # Check if the command failed (ensure numeric comparison)
-          # First validate that CHECK_EXIT is a numeric string
-          if ! echo "$CHECK_EXIT" | grep -q '^[0-9]\+$'; then
-            echo "Error: CHECK_EXIT is not a valid numeric value: $CHECK_EXIT"
-            exit 1
-          fi
+          # jq's tonumber already validated the numeric type above
           if [ "$CHECK_EXIT" -ne 0 ]; then
             echo "Runner check failed with exit code: $CHECK_EXIT"
             # Show stderr if available

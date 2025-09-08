@@ -1,0 +1,373 @@
+/**
+ * Integration tests for Shop API endpoints
+ * Issue #260: Settings → Shop functionality
+ */
+
+const request = require('supertest');
+const { app } = require('../../src/index');
+const { createUserClient } = require('../../src/config/supabase');
+const stripeWrapper = require('../../src/services/stripeWrapper');
+
+// Mock dependencies
+jest.mock('../../src/config/supabase');
+jest.mock('../../src/services/stripeWrapper');
+
+describe('Shop API Integration Tests', () => {
+    let mockUserClient;
+    const testUserId = 'test-user-123';
+    const authToken = 'Bearer valid-token';
+
+// Mock auth middleware to return test user (hoisted)
+jest.mock('../../src/middleware/auth', () => ({
+  authenticateToken: (req, res, next) => {
+    req.user = { id: 'test-user-123', email: 'test@example.com' };
+    next();
+  },
+}));
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        
+        // Create stable builder instance with jest.fn() methods
+        const stableBuilder = {
+            select: jest.fn(),
+            eq: jest.fn(),
+            single: jest.fn(),
+            order: jest.fn(),
+            limit: jest.fn(),
+            insert: jest.fn(),
+            upsert: jest.fn()
+        };
+
+        // Make methods return the same builder or appropriate sub-builder
+        stableBuilder.select.mockReturnValue(stableBuilder);
+        stableBuilder.eq.mockReturnValue(stableBuilder);
+        stableBuilder.order.mockReturnValue(stableBuilder);
+        stableBuilder.limit.mockReturnValue(stableBuilder);
+        stableBuilder.insert.mockReturnValue(stableBuilder);
+        stableBuilder.upsert.mockReturnValue(stableBuilder);
+
+        // Mock Supabase client
+        mockUserClient = {
+            from: jest.fn(() => stableBuilder),
+            rpc: jest.fn()
+        };
+
+        createUserClient.mockReturnValue(mockUserClient);
+        // Ensure service client used by routes is the same mock
+        const supabaseModule = require('../../src/config/supabase');
+        supabaseModule.supabaseServiceClient = mockUserClient;
+    });
+
+    describe('GET /api/shop/addons', () => {
+        it('should return available shop addons grouped by category', async () => {
+            const mockAddons = [
+                {
+                    id: 'addon-1',
+                    addon_key: 'roasts_100',
+                    name: 'Roasts Pack 100',
+                    description: 'Pack de 100 roasts extra',
+                    category: 'roasts',
+                    price_cents: 499,
+                    currency: 'USD',
+                    addon_type: 'credits',
+                    credit_amount: 100,
+                    feature_key: null
+                },
+                {
+                    id: 'addon-2',
+                    addon_key: 'rqc_monthly',
+                    name: 'RQC (Roastr Quality Check)',
+                    description: 'Filtro de calidad automático',
+                    category: 'features',
+                    price_cents: 1499,
+                    currency: 'USD',
+                    addon_type: 'feature',
+                    credit_amount: 0,
+                    feature_key: 'rqc_enabled'
+                }
+            ];
+
+            mockUserClient.from().select().eq().order.mockResolvedValue({
+                data: mockAddons,
+                error: null
+            });
+
+            const response = await request(app)
+                .get('/api/shop/addons')
+                .set('Authorization', authToken);
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.addons).toHaveProperty('roasts');
+            expect(response.body.data.addons).toHaveProperty('features');
+            expect(response.body.data.addons.roasts).toHaveLength(1);
+            expect(response.body.data.addons.features).toHaveLength(1);
+            
+            // Check addon structure
+            const roastAddon = response.body.data.addons.roasts[0];
+            expect(roastAddon).toMatchObject({
+                key: 'roasts_100',
+                name: 'Roasts Pack 100',
+                price: {
+                    cents: 499,
+                    currency: 'USD',
+                    formatted: '$4.99'
+                },
+                type: 'credits',
+                creditAmount: 100
+            });
+        });
+
+        it('should handle database errors gracefully', async () => {
+            mockUserClient.from().select().eq().order.mockResolvedValue({
+                data: null,
+                error: { message: 'Database error' }
+            });
+
+            const response = await request(app)
+                .get('/api/shop/addons')
+                .set('Authorization', authToken);
+
+            expect(response.status).toBe(500);
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('Failed to fetch addons');
+        });
+    });
+
+    describe('GET /api/shop/user/addons', () => {
+        it('should return user addon status and credits', async () => {
+            // Mock RPC calls for credits and features
+            mockUserClient.rpc
+                .mockResolvedValueOnce({ data: 50, error: null }) // roast credits
+                .mockResolvedValueOnce({ data: 1000, error: null }) // analysis credits
+                .mockResolvedValueOnce({ data: true, error: null }); // rqc enabled
+
+            // Mock purchase history
+            mockUserClient.from().select().eq().order().limit.mockResolvedValue({
+                data: [
+                    {
+                        addon_key: 'roasts_100',
+                        amount_cents: 499,
+                        status: 'completed',
+                        completed_at: '2024-01-15T10:00:00Z',
+                        created_at: '2024-01-15T09:55:00Z'
+                    }
+                ],
+                error: null
+            });
+
+            const response = await request(app)
+                .get('/api/shop/user/addons')
+                .set('Authorization', authToken);
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data).toMatchObject({
+                credits: {
+                    roasts: 50,
+                    analysis: 1000
+                },
+                features: {
+                    rqc_enabled: true
+                },
+                recentPurchases: expect.arrayContaining([
+                    expect.objectContaining({
+                        addon_key: 'roasts_100',
+                        amount_cents: 499,
+                        status: 'completed'
+                    })
+                ])
+            });
+
+            // Verify RPC calls
+            expect(mockUserClient.rpc).toHaveBeenCalledWith('get_user_addon_credits', {
+                p_user_id: testUserId,
+                p_addon_category: 'roasts'
+            });
+            expect(mockUserClient.rpc).toHaveBeenCalledWith('get_user_addon_credits', {
+                p_user_id: testUserId,
+                p_addon_category: 'analysis'
+            });
+            expect(mockUserClient.rpc).toHaveBeenCalledWith('user_has_feature_addon', {
+                p_user_id: testUserId,
+                p_feature_key: 'rqc_enabled'
+            });
+        });
+    });
+
+    describe('POST /api/shop/checkout', () => {
+        it('should create Stripe checkout session for valid addon', async () => {
+            const mockAddon = {
+                addon_key: 'roasts_100',
+                name: 'Roasts Pack 100',
+                description: 'Pack de 100 roasts extra',
+                price_cents: 499,
+                currency: 'USD',
+                addon_type: 'credits',
+                credit_amount: 100
+            };
+
+            const mockCustomer = { id: 'cus_test123' };
+            const mockSession = {
+                id: 'cs_test123',
+                url: 'https://checkout.stripe.com/pay/cs_test123'
+            };
+
+            // Mock addon lookup
+            mockUserClient.from().select().eq().single.mockResolvedValue({
+                data: mockAddon,
+                error: null
+            });
+
+            // Mock user subscription lookup
+            mockUserClient.from().select().eq().single.mockResolvedValue({
+                data: { stripe_customer_id: 'cus_test123' },
+                error: null
+            });
+
+            // Mock Stripe calls
+            stripeWrapper.customers = {
+                retrieve: jest.fn().mockResolvedValue(mockCustomer),
+                create: jest.fn().mockResolvedValue(mockCustomer)
+            };
+            stripeWrapper.checkout = {
+                sessions: {
+                    create: jest.fn().mockResolvedValue(mockSession)
+                }
+            };
+
+            // Mock purchase history insert
+            mockUserClient.from().insert.mockResolvedValue({
+                data: null,
+                error: null
+            });
+
+            const response = await request(app)
+                .post('/api/shop/checkout')
+                .set('Authorization', authToken)
+                .send({ addonKey: 'roasts_100' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data).toMatchObject({
+                sessionId: 'cs_test123',
+                url: 'https://checkout.stripe.com/pay/cs_test123'
+            });
+
+            // Verify Stripe checkout session creation
+            expect(stripeWrapper.checkout.sessions.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    customer: 'cus_test123',
+                    mode: 'payment',
+                    line_items: expect.arrayContaining([
+                        expect.objectContaining({
+                            price_data: expect.objectContaining({
+                                unit_amount: 499,
+                                product_data: expect.objectContaining({
+                                    name: 'Roasts Pack 100'
+                                })
+                            }),
+                            quantity: 1
+                        })
+                    ]),
+                    metadata: expect.objectContaining({
+                        user_id: testUserId,
+                        addon_key: 'roasts_100',
+                        addon_type: 'credits',
+                        credit_amount: '100'
+                    })
+                })
+            );
+        });
+
+        it('should return 400 when addon key is missing', async () => {
+            const response = await request(app)
+                .post('/api/shop/checkout')
+                .set('Authorization', authToken)
+                .send({});
+
+            expect(response.status).toBe(400);
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('Addon key is required');
+        });
+
+        it('should return 404 when addon is not found', async () => {
+            mockUserClient.from().select().eq().single.mockResolvedValue({
+                data: null,
+                error: { message: 'Not found' }
+            });
+
+            const response = await request(app)
+                .post('/api/shop/checkout')
+                .set('Authorization', authToken)
+                .send({ addonKey: 'invalid_addon' });
+
+            expect(response.status).toBe(404);
+            expect(response.body.success).toBe(false);
+            expect(response.body.error).toBe('Addon not found');
+        });
+
+        it('should create new Stripe customer when none exists', async () => {
+            const mockAddon = {
+                addon_key: 'roasts_100',
+                name: 'Roasts Pack 100',
+                price_cents: 499,
+                currency: 'USD',
+                addon_type: 'credits',
+                credit_amount: 100
+            };
+
+            const mockCustomer = { id: 'cus_new123' };
+            const mockSession = {
+                id: 'cs_test123',
+                url: 'https://checkout.stripe.com/pay/cs_test123'
+            };
+
+            // Mock addon lookup
+            mockUserClient.from().select().eq().single.mockResolvedValue({
+                data: mockAddon,
+                error: null
+            });
+
+            // Mock no existing customer
+            mockUserClient.from().select().eq().single.mockResolvedValue({
+                data: null,
+                error: null
+            });
+
+            // Mock Stripe customer creation
+            stripeWrapper.customers = {
+                create: jest.fn().mockResolvedValue(mockCustomer)
+            };
+            stripeWrapper.checkout = {
+                sessions: {
+                    create: jest.fn().mockResolvedValue(mockSession)
+                }
+            };
+
+            // Mock customer upsert
+            mockUserClient.from().upsert.mockResolvedValue({
+                data: null,
+                error: null
+            });
+
+            // Mock purchase history insert
+            mockUserClient.from().insert.mockResolvedValue({
+                data: null,
+                error: null
+            });
+
+            const response = await request(app)
+                .post('/api/shop/checkout')
+                .set('Authorization', authToken)
+                .send({ addonKey: 'roasts_100' });
+
+            expect(response.status).toBe(200);
+            expect(stripeWrapper.customers.create).toHaveBeenCalledWith({
+                email: 'test@example.com',
+                metadata: { user_id: testUserId }
+            });
+        });
+    });
+});
