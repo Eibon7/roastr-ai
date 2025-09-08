@@ -5,7 +5,6 @@
 
 -- Ensure uuid-ossp extension exists for UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Shop addons table - defines available addons for purchase
 CREATE TABLE shop_addons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

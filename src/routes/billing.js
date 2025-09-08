@@ -421,79 +421,92 @@ router.get('/subscription', authenticateToken, async (req, res) => {
 
 /**
  * POST /webhooks/stripe
- * Handle Stripe webhooks for subscription events with idempotency
+ * Handle Stripe webhooks for subscription events with enhanced security and idempotency
  */
-router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
-    // Early return if billing is disabled
-    if (!flags.isEnabled('ENABLE_BILLING')) {
-        logger.warn('Webhook received but billing is disabled');
-        return res.status(503).json({ error: 'Billing temporarily unavailable' });
-    }
+const { stripeWebhookSecurity } = require('../middleware/webhookSecurity');
 
-    const sig = req.headers['stripe-signature'];
-    let event;
-
-    try {
-        // Verify webhook signature
-        event = stripeWrapper.webhooks.constructEvent(
-            req.body,
-            sig,
-            process.env.STRIPE_WEBHOOK_SECRET
-        );
-    } catch (err) {
-        logger.error('Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    logger.info('Stripe webhook received:', {
-        type: event.type,
-        id: event.id,
-        created: event.created
-    });
-
-    try {
-        // Process event using the new webhook service with idempotency
-        const result = await webhookService.processWebhookEvent(event);
-
-        if (result.success) {
-            logger.info('Webhook processed successfully:', {
-                eventId: event.id,
-                eventType: event.type,
-                idempotent: result.idempotent,
-                processingTime: result.processingTimeMs
-            });
-        } else {
-            logger.error('Webhook processing failed:', {
-                eventId: event.id,
-                eventType: event.type,
-                error: result.error
-            });
+router.post('/webhooks/stripe', 
+    express.raw({ type: 'application/json' }),
+    stripeWebhookSecurity({
+        secret: process.env.STRIPE_WEBHOOK_SECRET,
+        tolerance: 300, // 5 minutes tolerance
+        enableIdempotency: true,
+        enableSuspiciousPayloadDetection: true
+    }),
+    async (req, res) => {
+        // Early return if billing is disabled
+        if (!flags.isEnabled('ENABLE_BILLING')) {
+            logger.warn('Webhook received but billing is disabled');
+            return res.status(503).json({ error: 'Billing temporarily unavailable' });
         }
 
-        // Always return 200 to prevent Stripe from retrying
-        res.json({ 
-            received: true,
-            processed: result.success,
-            idempotent: result.idempotent || false,
-            message: result.message || 'Event processed'
-        });
+        const requestId = req.webhookSecurity?.requestId;
+        let event;
 
-    } catch (error) {
-        logger.error('Critical webhook processing error:', {
-            eventId: event.id,
-            eventType: event.type,
-            error: error.message,
-            stack: error.stack
-        });
+        try {
+            // Parse event (already validated by security middleware)
+            event = JSON.parse(req.body.toString());
+            
+            logger.info('Stripe webhook received:', {
+                requestId,
+                type: event.type,
+                id: event.id,
+                created: event.created,
+                timestampAge: req.webhookSecurity?.timestampAge,
+                bodySize: req.webhookSecurity?.bodySize
+            });
 
-        // Still return 200 to prevent Stripe from retrying
-        res.json({ 
-            received: true,
-            processed: false,
-            error: 'Processing failed but acknowledged'
-        });
+            // Process event using the webhook service with enhanced context
+            const result = await webhookService.processWebhookEvent(event, {
+                requestId,
+                securityContext: req.webhookSecurity
+            });
+
+            if (result.success) {
+                logger.info('Webhook processed successfully:', {
+                    requestId,
+                    eventId: event.id,
+                    eventType: event.type,
+                    idempotent: result.idempotent,
+                    processingTime: result.processingTimeMs
+                });
+            } else {
+                logger.error('Webhook processing failed:', {
+                    requestId,
+                    eventId: event.id,
+                    eventType: event.type,
+                    error: result.error
+                });
+            }
+
+            // Always return 200 to prevent Stripe from retrying
+            res.json({ 
+                received: true,
+                processed: result.success,
+                idempotent: result.idempotent || false,
+                message: result.message || 'Event processed',
+                requestId
+            });
+
+        } catch (error) {
+            logger.error('Critical webhook processing error:', {
+                requestId,
+                eventId: event?.id,
+                eventType: event?.type,
+                error: error.message,
+                stack: error.stack
+            });
+
+            // Still return 200 to prevent Stripe from retrying
+            res.json({ 
+                received: true,
+                processed: false,
+                error: 'Processing failed but acknowledged',
+                requestId
+            });
+        }
     }
-});
+);
 
 /**
  * GET /api/billing/webhook-stats

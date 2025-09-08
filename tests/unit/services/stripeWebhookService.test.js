@@ -28,6 +28,16 @@ jest.mock('../../../src/config/flags', () => ({
     }
 }));
 
+// Mock the addon service at the top level to prevent module cache pollution
+jest.mock('../../../src/services/addonService', () => ({
+    getAddonByKey: jest.fn().mockResolvedValue({
+        key: 'test_addon',
+        type: 'credits',
+        credit_amount: 100,
+        feature_key: null
+    })
+}));
+
 jest.mock('../../../src/utils/logger', () => ({
     logger: {
         info: jest.fn(),
@@ -162,6 +172,92 @@ describe('StripeWebhookService', () => {
 
             expect(result.success).toBe(false);
             expect(result.error).toContain('No user_id in checkout session metadata');
+        });
+
+        it('should handle malformed event data gracefully (CodeRabbit fix)', async () => {
+            // Test case for the CodeRabbit fix: event.data.object?.mode validation
+            const malformedEvents = [
+                // Case 1: event.data.object is null
+                {
+                    ...baseEvent,
+                    data: {
+                        object: null
+                    }
+                },
+                // Case 2: event.data.object.mode is undefined
+                {
+                    ...baseEvent,
+                    data: {
+                        object: {
+                            id: 'cs_test_session',
+                            // mode is missing
+                            metadata: { addon_key: 'test_addon' }
+                        }
+                    }
+                },
+                // Case 3: event.data.object exists but mode is null
+                {
+                    ...baseEvent,
+                    data: {
+                        object: {
+                            id: 'cs_test_session',
+                            mode: null,
+                            metadata: { addon_key: 'test_addon' }
+                        }
+                    }
+                }
+            ];
+
+            // Mock successful processing for all cases
+            supabaseServiceClient.rpc
+                .mockResolvedValue({ data: false, error: null }) // Not processed
+                .mockResolvedValue({ data: 'webhook-uuid', error: null }) // Start processing
+                .mockResolvedValue({ data: true, error: null }); // Complete processing
+
+            for (const malformedEvent of malformedEvents) {
+                const result = await webhookService.processWebhookEvent(malformedEvent);
+
+                // Should not throw runtime error and should process as regular checkout
+                expect(result.success).toBe(true);
+                expect(result.error).toBeUndefined();
+            }
+        });
+
+        it('should correctly identify addon purchases with proper validation', async () => {
+            // Test that addon purchases are correctly identified when all properties exist
+            const addonPurchaseEvent = {
+                ...baseEvent,
+                data: {
+                    object: {
+                        id: 'cs_test_session',
+                        mode: 'payment',
+                        customer: 'cus_test123',
+                        metadata: {
+                            addon_key: 'test_addon',
+                            user_id: 'user-123'
+                        }
+                    }
+                }
+            };
+
+            // Mock the addon purchase handler
+            webhookService._handleAddonPurchaseCompleted = jest.fn().mockResolvedValue({
+                success: true,
+                addonKey: 'test_addon'
+            });
+
+            // Mock successful processing
+            supabaseServiceClient.rpc
+                .mockResolvedValueOnce({ data: false, error: null }) // Not processed
+                .mockResolvedValueOnce({ data: 'webhook-uuid', error: null }) // Start processing
+                .mockResolvedValueOnce({ data: true, error: null }); // Complete processing
+
+            const result = await webhookService.processWebhookEvent(addonPurchaseEvent);
+
+            expect(result.success).toBe(true);
+            expect(webhookService._handleAddonPurchaseCompleted).toHaveBeenCalledWith(
+                addonPurchaseEvent.data.object
+            );
         });
     });
 
@@ -453,6 +549,169 @@ describe('StripeWebhookService', () => {
                 'cleanup_webhook_events',
                 { older_than_days: 30 }
             );
+        });
+    });
+
+    describe('_handleAddonPurchaseCompleted', () => {
+        const baseAddonSession = {
+            id: 'cs_test_addon_session',
+            mode: 'payment',
+            customer: 'cus_test123',
+            payment_intent: 'pi_test123',
+            amount_total: 1999, // $19.99 in cents
+            currency: 'usd',
+            metadata: {
+                user_id: 'user-123',
+                addon_key: 'test_addon'
+            }
+        };
+
+        beforeEach(() => {
+            // Mock addon details query
+            supabaseServiceClient.from.mockReturnValue({
+                select: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockReturnValue({
+                        eq: jest.fn().mockReturnValue({
+                            single: jest.fn().mockResolvedValue({
+                                data: {
+                                    price_cents: 1999,
+                                    currency: 'USD',
+                                    addon_key: 'test_addon'
+                                },
+                                error: null
+                            })
+                        })
+                    })
+                })
+            });
+
+            // Mock successful RPC call
+            supabaseServiceClient.rpc.mockResolvedValue({
+                data: { success: true, credits_added: 100 },
+                error: null
+            });
+        });
+
+        it('should handle valid addon purchase successfully', async () => {
+            const result = await webhookService._handleAddonPurchaseCompleted(baseAddonSession);
+
+            expect(result.success).toBe(true);
+            expect(result.addonKey).toBe('test_addon');
+            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                'execute_addon_purchase_transaction',
+                expect.objectContaining({
+                    p_user_id: 'user-123',
+                    p_addon_key: 'test_addon',
+                    p_stripe_payment_intent_id: 'pi_test123',
+                    p_stripe_checkout_session_id: 'cs_test_addon_session',
+                    p_amount_cents: 1999
+                })
+            );
+        });
+
+        it('should validate amount_total and reject invalid amounts (CodeRabbit fix)', async () => {
+            const invalidAmountSessions = [
+                // Case 1: amount_total is undefined
+                {
+                    ...baseAddonSession,
+                    amount_total: undefined
+                },
+                // Case 2: amount_total is null
+                {
+                    ...baseAddonSession,
+                    amount_total: null
+                },
+                // Case 3: amount_total is string
+                {
+                    ...baseAddonSession,
+                    amount_total: "1999"
+                },
+                // Case 4: amount_total is zero
+                {
+                    ...baseAddonSession,
+                    amount_total: 0
+                },
+                // Case 5: amount_total is negative
+                {
+                    ...baseAddonSession,
+                    amount_total: -100
+                }
+            ];
+
+            for (const invalidSession of invalidAmountSessions) {
+                await expect(webhookService._handleAddonPurchaseCompleted(invalidSession))
+                    .rejects
+                    .toThrow('Invalid payment amount in checkout session');
+            }
+        });
+
+        it('should handle payment_intent validation correctly', async () => {
+            // Test missing payment_intent
+            const sessionWithoutPaymentIntent = {
+                ...baseAddonSession,
+                payment_intent: undefined
+            };
+
+            await expect(webhookService._handleAddonPurchaseCompleted(sessionWithoutPaymentIntent))
+                .rejects
+                .toThrow('Payment intent is required for addon purchase completion');
+
+            // Test payment_intent as object with id
+            const sessionWithPaymentIntentObject = {
+                ...baseAddonSession,
+                payment_intent: { id: 'pi_object_test123' }
+            };
+
+            const result = await webhookService._handleAddonPurchaseCompleted(sessionWithPaymentIntentObject);
+
+            expect(result.success).toBe(true);
+            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                'execute_addon_purchase_transaction',
+                expect.objectContaining({
+                    p_stripe_payment_intent_id: 'pi_object_test123'
+                })
+            );
+        });
+
+        it('should handle valid numeric amount_total correctly', async () => {
+            const validAmountSessions = [
+                { ...baseAddonSession, amount_total: 1 },      // Minimum valid amount
+                { ...baseAddonSession, amount_total: 999 },    // Small amount
+                { ...baseAddonSession, amount_total: 9999 },   // Large amount
+                { ...baseAddonSession, amount_total: 1.99 }    // Decimal (though Stripe usually uses integers)
+            ];
+
+            for (const validSession of validAmountSessions) {
+                // Mock addon details query with matching price for each test
+                supabaseServiceClient.from.mockReturnValue({
+                    select: jest.fn().mockReturnValue({
+                        eq: jest.fn().mockReturnValue({
+                            eq: jest.fn().mockReturnValue({
+                                single: jest.fn().mockResolvedValue({
+                                    data: {
+                                        price_cents: validSession.amount_total,
+                                        currency: 'USD',
+                                        addon_key: 'test_addon'
+                                    },
+                                    error: null
+                                })
+                            })
+                        })
+                    })
+                });
+
+                const result = await webhookService._handleAddonPurchaseCompleted(validSession);
+
+                expect(result.success).toBe(true);
+                expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                    'execute_addon_purchase_transaction',
+                    expect.objectContaining({
+                        p_amount_cents: validSession.amount_total,
+                        p_currency: validSession.currency,
+                        p_expected_price_cents: validSession.amount_total
+                    })
+                );
+            }
         });
     });
 });

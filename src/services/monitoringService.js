@@ -519,6 +519,31 @@ class MonitoringService {
       this.systemMetrics.errorCount++;
     }
   }
+
+  /**
+   * Track webhook processing for metrics
+   */
+  trackWebhookProcessing(eventType, metadata = {}) {
+    try {
+      this.log('info', 'Webhook processing tracked', {
+        eventType,
+        processingTimeMs: metadata.processingTimeMs,
+        success: metadata.success,
+        handled: metadata.handled,
+        accountId: metadata.accountId || 'unknown',
+        timestamp: new Date().toISOString()
+      });
+
+      // Could emit to external metrics system here (Prometheus, DataDog, etc.)
+      // For now, just log with structured data for metrics aggregation
+      
+    } catch (error) {
+      this.log('warn', 'Failed to track webhook processing', {
+        eventType,
+        error: error.message
+      });
+    }
+  }
   
   /**
    * Get failed health checks

@@ -10,6 +10,7 @@ const EntitlementsService = require('./entitlementsService');
 const StripeWrapper = require('./stripeWrapper');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const monitoringService = require('./monitoringService');
 
 class StripeWebhookService {
     constructor() {
@@ -122,6 +123,22 @@ class StripeWebhookService {
                 });
 
             const processingTime = Date.now() - startTime;
+            
+            // Emit metrics for monitoring
+            try {
+                monitoringService.trackWebhookProcessing(event.type, {
+                    eventId: event.id,
+                    processingTimeMs: processingTime,
+                    success: result.success,
+                    handled: result.handled !== false,
+                    accountId: result.accountId
+                });
+            } catch (metricsError) {
+                logger.warn('Failed to emit webhook metrics', {
+                    eventId: event.id,
+                    error: metricsError.message
+                });
+            }
             
             logger.info('Webhook event processed successfully', {
                 eventId: event.id,
@@ -655,6 +672,33 @@ class StripeWebhookService {
                     message: 'Payment success transaction failed',
                     error: transactionError
                 };
+            }
+
+            // Reset credits for new billing cycle if this is a subscription payment
+            if (invoice.subscription) {
+                try {
+                    const creditsService = require('./creditsService');
+                    const resetResult = await creditsService.resetCreditsForBillingCycle(userId, {
+                        stripeCustomerId: customerId,
+                        subscriptionId: invoice.subscription,
+                        billingPeriodStart: new Date(invoice.period_start * 1000),
+                        billingPeriodEnd: new Date(invoice.period_end * 1000)
+                    });
+
+                    logger.info('Credits reset for billing cycle', {
+                        userId,
+                        invoiceId: invoice.id,
+                        subscriptionId: invoice.subscription,
+                        creditsResetSuccess: resetResult
+                    });
+                } catch (creditsError) {
+                    // Log error but don't fail the webhook - payment was successful
+                    logger.warn('Failed to reset credits during payment success', {
+                        userId,
+                        invoiceId: invoice.id,
+                        error: creditsError.message
+                    });
+                }
             }
 
             return {

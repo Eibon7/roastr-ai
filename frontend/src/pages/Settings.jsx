@@ -423,6 +423,10 @@ export default function Settings() {
       const result = await apiClient.post('/user/data-export');
 
       if (result.success) {
+        // Only update timestamp on success
+        setLastDataExportAttempt(now);
+        localStorage.setItem('lastDataExportAttempt', now.toString());
+
         addNotification('Se ha enviado un enlace de descarga a tu email', 'success');
         setShowDataExportModal(false);
       } else {
@@ -433,8 +437,32 @@ export default function Settings() {
 
       // Handle rate limiting response from server
       if (error.response?.status === 429) {
+        const retryAfter = error.response?.headers?.['retry-after'];
+
+        if (retryAfter) {
+          let retryTimestamp;
+
+          // Handle numeric seconds format
+          if (/^\d+$/.test(retryAfter)) {
+            retryTimestamp = now + (parseInt(retryAfter, 10) * 1000);
+          } else {
+            // Handle HTTP-date format
+            const retryDate = new Date(retryAfter);
+            if (!isNaN(retryDate.getTime())) {
+              retryTimestamp = retryDate.getTime();
+            } else {
+              // Fallback if header is invalid
+              retryTimestamp = now;
+            }
+          }
+
+          setLastDataExportAttempt(retryTimestamp);
+          localStorage.setItem('lastDataExportAttempt', retryTimestamp.toString());
+        }
+
         addNotification('Has alcanzado el límite de solicitudes. Inténtalo más tarde.', 'warning');
       } else {
+        // For other failures, don't update the timestamp
         addNotification('Error al solicitar la exportación de datos', 'error');
       }
     } finally {

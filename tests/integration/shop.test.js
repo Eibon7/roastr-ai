@@ -5,6 +5,14 @@
 
 const request = require('supertest');
 const { app } = require('../../src/index');
+<<<<<<< HEAD
+const { createUserClient, supabaseServiceClient } = require('../../src/config/supabase');
+const stripeWrapper = require('../../src/services/stripeWrapper');
+
+// Mock dependencies
+jest.mock('../../src/config/supabase', () => {
+    const createStableBuilder = () => {
+=======
 const { createUserClient } = require('../../src/config/supabase');
 const stripeWrapper = require('../../src/services/stripeWrapper');
 
@@ -29,6 +37,7 @@ jest.mock('../../src/middleware/auth', () => ({
         jest.clearAllMocks();
         
         // Create stable builder instance with jest.fn() methods
+>>>>>>> origin/main
         const stableBuilder = {
             select: jest.fn(),
             eq: jest.fn(),
@@ -36,7 +45,13 @@ jest.mock('../../src/middleware/auth', () => ({
             order: jest.fn(),
             limit: jest.fn(),
             insert: jest.fn(),
+<<<<<<< HEAD
+            upsert: jest.fn(),
+            mockResolvedValue: jest.fn(),
+            mockResolvedValueOnce: jest.fn()
+=======
             upsert: jest.fn()
+>>>>>>> origin/main
         };
 
         // Make methods return the same builder or appropriate sub-builder
@@ -46,6 +61,78 @@ jest.mock('../../src/middleware/auth', () => ({
         stableBuilder.limit.mockReturnValue(stableBuilder);
         stableBuilder.insert.mockReturnValue(stableBuilder);
         stableBuilder.upsert.mockReturnValue(stableBuilder);
+<<<<<<< HEAD
+        stableBuilder.single.mockReturnValue(stableBuilder);
+
+        return stableBuilder;
+    };
+
+    const mockServiceClient = {
+        from: jest.fn(() => createStableBuilder()),
+        rpc: jest.fn()
+    };
+
+    const mockUserClient = {
+        from: jest.fn(() => createStableBuilder()),
+        rpc: jest.fn()
+    };
+
+    return {
+        supabaseServiceClient: mockServiceClient,
+        createUserClient: jest.fn(() => mockUserClient)
+    };
+});
+jest.mock('../../src/services/stripeWrapper');
+
+// Mock auth middleware to return test user (hoisted)
+jest.mock('../../src/middleware/auth', () => ({
+    authenticateToken: (req, res, next) => {
+        req.user = { id: 'test-user-123', email: 'test@example.com' };
+        next();
+    },
+    requireAdmin: (req, res, next) => {
+        next();
+    },
+    optionalAuth: (req, res, next) => {
+        req.user = { id: 'test-user-123', email: 'test@example.com' };
+        next();
+    }
+}));
+
+// Mock requirePlan middleware
+jest.mock('../../src/middleware/requirePlan', () => ({
+    requirePlan: (plans) => (req, res, next) => {
+        next();
+    }
+}));
+
+describe('Shop API Integration Tests', () => {
+    let mockUserClient, mockServiceClient;
+    const testUserId = 'test-user-123';
+    const authToken = 'Bearer valid-token';
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+
+        // Set required environment variables
+        process.env.FRONTEND_URL = 'https://test.example.com';
+
+        // Get references to the mocked clients
+        const { supabaseServiceClient, createUserClient } = require('../../src/config/supabase');
+        mockServiceClient = supabaseServiceClient;
+        mockUserClient = createUserClient();
+
+        // Mock Stripe wrapper
+        stripeWrapper.customers = {
+            retrieve: jest.fn(),
+            create: jest.fn()
+        };
+        stripeWrapper.checkout = {
+            sessions: {
+                create: jest.fn()
+            }
+        };
+=======
 
         // Mock Supabase client
         mockUserClient = {
@@ -57,6 +144,7 @@ jest.mock('../../src/middleware/auth', () => ({
         // Ensure service client used by routes is the same mock
         const supabaseModule = require('../../src/config/supabase');
         supabaseModule.supabaseServiceClient = mockUserClient;
+>>>>>>> origin/main
     });
 
     describe('GET /api/shop/addons', () => {
@@ -88,10 +176,24 @@ jest.mock('../../src/middleware/auth', () => ({
                 }
             ];
 
+<<<<<<< HEAD
+            // Mock the addons query
+            const mockAddonsBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                order: jest.fn().mockResolvedValue({
+                    data: mockAddons,
+                    error: null
+                })
+            };
+
+            mockServiceClient.from.mockReturnValueOnce(mockAddonsBuilder);
+=======
             mockUserClient.from().select().eq().order.mockResolvedValue({
                 data: mockAddons,
                 error: null
             });
+>>>>>>> origin/main
 
             const response = await request(app)
                 .get('/api/shop/addons')
@@ -120,10 +222,24 @@ jest.mock('../../src/middleware/auth', () => ({
         });
 
         it('should handle database errors gracefully', async () => {
+<<<<<<< HEAD
+            // Mock the addons query with error
+            const mockErrorBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                order: jest.fn().mockResolvedValue({
+                    data: null,
+                    error: { message: 'Database error' }
+                })
+            };
+
+            mockServiceClient.from.mockReturnValueOnce(mockErrorBuilder);
+=======
             mockUserClient.from().select().eq().order.mockResolvedValue({
                 data: null,
                 error: { message: 'Database error' }
             });
+>>>>>>> origin/main
 
             const response = await request(app)
                 .get('/api/shop/addons')
@@ -138,11 +254,37 @@ jest.mock('../../src/middleware/auth', () => ({
     describe('GET /api/shop/user/addons', () => {
         it('should return user addon status and credits', async () => {
             // Mock RPC calls for credits and features
+<<<<<<< HEAD
+            mockServiceClient.rpc
+=======
             mockUserClient.rpc
+>>>>>>> origin/main
                 .mockResolvedValueOnce({ data: 50, error: null }) // roast credits
                 .mockResolvedValueOnce({ data: 1000, error: null }) // analysis credits
                 .mockResolvedValueOnce({ data: true, error: null }); // rqc enabled
 
+<<<<<<< HEAD
+            // Mock purchase history - need to mock the from() call to return a builder with the right data
+            const mockPurchaseBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                order: jest.fn().mockReturnThis(),
+                limit: jest.fn().mockResolvedValue({
+                    data: [
+                        {
+                            addon_key: 'roasts_100',
+                            amount_cents: 499,
+                            status: 'completed',
+                            completed_at: '2024-01-15T10:00:00Z',
+                            created_at: '2024-01-15T09:55:00Z'
+                        }
+                    ],
+                    error: null
+                })
+            };
+
+            mockServiceClient.from.mockReturnValueOnce(mockPurchaseBuilder);
+=======
             // Mock purchase history
             mockUserClient.from().select().eq().order().limit.mockResolvedValue({
                 data: [
@@ -156,6 +298,7 @@ jest.mock('../../src/middleware/auth', () => ({
                 ],
                 error: null
             });
+>>>>>>> origin/main
 
             const response = await request(app)
                 .get('/api/shop/user/addons')
@@ -181,6 +324,17 @@ jest.mock('../../src/middleware/auth', () => ({
             });
 
             // Verify RPC calls
+<<<<<<< HEAD
+            expect(mockServiceClient.rpc).toHaveBeenCalledWith('get_user_addon_credits', {
+                p_user_id: testUserId,
+                p_addon_category: 'roasts'
+            });
+            expect(mockServiceClient.rpc).toHaveBeenCalledWith('get_user_addon_credits', {
+                p_user_id: testUserId,
+                p_addon_category: 'analysis'
+            });
+            expect(mockServiceClient.rpc).toHaveBeenCalledWith('user_has_feature_addon', {
+=======
             expect(mockUserClient.rpc).toHaveBeenCalledWith('get_user_addon_credits', {
                 p_user_id: testUserId,
                 p_addon_category: 'roasts'
@@ -190,6 +344,7 @@ jest.mock('../../src/middleware/auth', () => ({
                 p_addon_category: 'analysis'
             });
             expect(mockUserClient.rpc).toHaveBeenCalledWith('user_has_feature_addon', {
+>>>>>>> origin/main
                 p_user_id: testUserId,
                 p_feature_key: 'rqc_enabled'
             });
@@ -215,6 +370,41 @@ jest.mock('../../src/middleware/auth', () => ({
             };
 
             // Mock addon lookup (first call)
+<<<<<<< HEAD
+            const mockAddonBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: mockAddon,
+                    error: null
+                })
+            };
+
+            // Mock user subscription lookup (second call)
+            const mockUserSubBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { stripe_customer_id: 'cus_test123' },
+                    error: null
+                })
+            };
+
+            // Mock purchase history insert (third call)
+            const mockInsertBuilder = {
+                insert: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { id: 'mock-purchase-id' },
+                    error: null
+                })
+            };
+
+            mockServiceClient.from
+                .mockReturnValueOnce(mockAddonBuilder)
+                .mockReturnValueOnce(mockUserSubBuilder)
+                .mockReturnValueOnce(mockInsertBuilder);
+=======
             mockUserClient.from().select().eq().single.mockResolvedValueOnce({
                 data: mockAddon,
                 error: null
@@ -225,6 +415,7 @@ jest.mock('../../src/middleware/auth', () => ({
                 data: { stripe_customer_id: 'cus_test123' },
                 error: null
             });
+>>>>>>> origin/main
 
             // Mock Stripe calls
             stripeWrapper.customers = {
@@ -237,11 +428,15 @@ jest.mock('../../src/middleware/auth', () => ({
                 }
             };
 
+<<<<<<< HEAD
+
+=======
             // Mock purchase history insert
             mockUserClient.from().insert.mockResolvedValue({
                 data: null,
                 error: null
             });
+>>>>>>> origin/main
 
             const response = await request(app)
                 .post('/api/shop/checkout')
@@ -260,23 +455,49 @@ jest.mock('../../src/middleware/auth', () => ({
                 expect.objectContaining({
                     customer: 'cus_test123',
                     mode: 'payment',
+<<<<<<< HEAD
+                    payment_method_types: ['card'],
+                    line_items: expect.arrayContaining([
+                        expect.objectContaining({
+                            price_data: expect.objectContaining({
+                                currency: 'usd',
+                                unit_amount: 499,
+                                product_data: expect.objectContaining({
+                                    name: 'Roasts Pack 100',
+                                    description: 'Pack de 100 roasts extra'
+=======
                     line_items: expect.arrayContaining([
                         expect.objectContaining({
                             price_data: expect.objectContaining({
                                 unit_amount: 499,
                                 product_data: expect.objectContaining({
                                     name: 'Roasts Pack 100'
+>>>>>>> origin/main
                                 })
                             }),
                             quantity: 1
                         })
                     ]),
+<<<<<<< HEAD
+                    success_url: expect.stringContaining('https://test.example.com/settings?tab=shop&success=true'),
+                    cancel_url: expect.stringContaining('https://test.example.com/settings?tab=shop&canceled=true'),
+=======
+>>>>>>> origin/main
                     metadata: expect.objectContaining({
                         user_id: testUserId,
                         addon_key: 'roasts_100',
                         addon_type: 'credits',
+<<<<<<< HEAD
+                        credit_amount: '100',
+                        feature_key: ''
+                    })
+                }),
+                expect.objectContaining({
+                    idempotencyKey: expect.any(String)
+=======
                         credit_amount: '100'
                     })
+>>>>>>> origin/main
                 })
             );
         });
@@ -293,7 +514,11 @@ jest.mock('../../src/middleware/auth', () => ({
         });
 
         it('should return 404 when addon is not found', async () => {
+<<<<<<< HEAD
+            mockServiceClient.from().select().eq().single.mockResolvedValue({
+=======
             mockUserClient.from().select().eq().single.mockResolvedValue({
+>>>>>>> origin/main
                 data: null,
                 error: { message: 'Not found' }
             });
@@ -325,6 +550,50 @@ jest.mock('../../src/middleware/auth', () => ({
             };
 
             // Mock addon lookup (first call)
+<<<<<<< HEAD
+            const mockAddonBuilder2 = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: mockAddon,
+                    error: null
+                })
+            };
+
+            // Mock no existing customer (second call)
+            const mockUserSubBuilder2 = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: null,
+                    error: null
+                })
+            };
+
+            // Mock customer upsert (third call)
+            const mockUpsertBuilder = {
+                upsert: jest.fn().mockResolvedValue({
+                    data: null,
+                    error: null
+                })
+            };
+
+            // Mock purchase history insert (fourth call)
+            const mockInsertBuilder2 = {
+                insert: jest.fn().mockReturnThis(),
+                select: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { id: 'mock-purchase-id' },
+                    error: null
+                })
+            };
+
+            mockServiceClient.from
+                .mockReturnValueOnce(mockAddonBuilder2)
+                .mockReturnValueOnce(mockUserSubBuilder2)
+                .mockReturnValueOnce(mockUpsertBuilder)
+                .mockReturnValueOnce(mockInsertBuilder2);
+=======
             mockUserClient.from().select().eq().single.mockResolvedValueOnce({
                 data: mockAddon,
                 error: null
@@ -335,6 +604,7 @@ jest.mock('../../src/middleware/auth', () => ({
                 data: null,
                 error: null
             });
+>>>>>>> origin/main
 
             // Mock Stripe customer creation
             stripeWrapper.customers = {
@@ -346,6 +616,9 @@ jest.mock('../../src/middleware/auth', () => ({
                 }
             };
 
+<<<<<<< HEAD
+
+=======
             // Mock customer upsert
             mockUserClient.from().upsert.mockResolvedValue({
                 data: null,
@@ -357,6 +630,7 @@ jest.mock('../../src/middleware/auth', () => ({
                 data: null,
                 error: null
             });
+>>>>>>> origin/main
 
             const response = await request(app)
                 .post('/api/shop/checkout')

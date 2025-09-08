@@ -11,6 +11,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminMetrics from './pages/admin/AdminMetrics';
 import AdminLogs from './pages/admin/AdminLogs';
 import AdminSettings from './pages/admin/AdminSettings';
+import SystemControlPanel from './pages/admin/SystemControlPanel';
 import AppShell from './components/AppShell';
 import Dashboard from './pages/dashboard';
 import Compose from './pages/Compose';
@@ -70,6 +71,7 @@ function App() {
               <Route path="metrics" element={<AdminMetrics />} />
               <Route path="logs" element={<AdminLogs />} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="system-control" element={<SystemControlPanel />} />
             </Route>
             
             {/* 404 fallback */}

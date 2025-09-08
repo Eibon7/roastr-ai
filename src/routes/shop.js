@@ -12,17 +12,6 @@ const logger = require('../utils/logger');
 const flags = require('../config/flags');
 const crypto = require('crypto');
 
-// Zero decimal currencies (amounts are in the smallest unit, not cents)
-const ZERO_DECIMAL_CURRENCIES = new Set([
-  'BIF','CLP','DJF','GNF','JPY','KMF','KRW','MGA','PYG','RWF','UGX','VND','VUV','XAF','XOF','XPF'
-]);
-
-const formatPrice = (minor, currency = 'USD') => {
-  const cur = (currency || 'USD').toUpperCase();
-  const amount = ZERO_DECIMAL_CURRENCIES.has(cur) ? minor : minor / 100;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(amount);
-};
-
 /**
  * GET /api/shop/addons
  * Get list of available shop addons
@@ -56,7 +45,7 @@ router.get('/addons', authenticateToken, async (req, res) => {
                 price: {
                     cents: addon.price_cents,
                     currency: addon.currency,
-                    formatted: formatPrice(addon.price_cents, addon.currency)
+                    formatted: `$${(addon.price_cents / 100).toFixed(2)}`
                 },
                 type: addon.addon_type,
                 creditAmount: addon.credit_amount,
@@ -95,48 +84,24 @@ router.get('/user/addons', authenticateToken, async (req, res) => {
         const userId = req.user.id;
 
         // Get user's addon credits by category
-        const { data: roastCredits, error: roastCreditsError } = await supabaseServiceClient
+        const { data: roastCredits } = await supabaseServiceClient
             .rpc('get_user_addon_credits', {
                 p_user_id: userId,
                 p_addon_category: 'roasts'
             });
 
-        if (roastCreditsError) {
-            logger.error('Failed to fetch roast credits:', roastCreditsError);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to fetch user roast credits'
-            });
-        }
-
-        const { data: analysisCredits, error: analysisCreditsError } = await supabaseServiceClient
+        const { data: analysisCredits } = await supabaseServiceClient
             .rpc('get_user_addon_credits', {
                 p_user_id: userId,
                 p_addon_category: 'analysis'
             });
 
-        if (analysisCreditsError) {
-            logger.error('Failed to fetch analysis credits:', analysisCreditsError);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to fetch user analysis credits'
-            });
-        }
-
         // Check active feature addons
-        const { data: rqcEnabled, error: rqcError } = await supabaseServiceClient
+        const { data: rqcEnabled } = await supabaseServiceClient
             .rpc('user_has_feature_addon', {
                 p_user_id: userId,
                 p_feature_key: 'rqc_enabled'
             });
-
-        if (rqcError) {
-            logger.error('Failed to check RQC feature status:', rqcError);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to check feature status'
-            });
-        }
 
         // Get recent purchases
         const { data: recentPurchases, error: purchasesError } = await supabaseServiceClient
@@ -144,7 +109,6 @@ router.get('/user/addons', authenticateToken, async (req, res) => {
             .select(`
                 addon_key,
                 amount_cents,
-                currency,
                 status,
                 completed_at,
                 created_at
@@ -235,14 +199,14 @@ router.post('/checkout', authenticateToken, async (req, res) => {
                 metadata: { user_id: userId }
             });
 
-            // Update user_subscriptions with customer ID only
+            // Update user_subscriptions with customer ID
             await supabaseServiceClient
                 .from('user_subscriptions')
                 .upsert({
                     user_id: userId,
-                    stripe_customer_id: customer.id
-                }, {
-                    onConflict: 'user_id'
+                    stripe_customer_id: customer.id,
+                    plan: 'free',
+                    status: 'active'
                 });
         }
 
@@ -268,16 +232,16 @@ router.post('/checkout', authenticateToken, async (req, res) => {
 
         // Get or generate idempotency key for Stripe session creation
         let idempotencyKey = req.headers['x-idempotency-key'] || req.headers['idempotency-key'];
-        // Use provided key (truncated) or fall back to a random UUID
-        idempotencyKey = idempotencyKey
-            ? String(idempotencyKey).slice(0, 255)
-            : crypto.randomUUID();
-        logger.debug('Using idempotency key for checkout session', { userId, addonKey: addon.addon_key });
+        if (!idempotencyKey) {
+            // Generate a UUID fallback if no idempotency key provided
+            idempotencyKey = crypto.randomUUID();
+            logger.debug('Generated idempotency key for checkout session:', { userId, addonKey, idempotencyKey });
+        }
 
         // Create checkout session for one-time payment
         const session = await stripeWrapper.checkout.sessions.create({
             customer: customer.id,
-            automatic_payment_methods: { enabled: true },
+            payment_method_types: ['card'],
             mode: 'payment', // One-time payment for addons
             line_items: [{
                 price_data: {
@@ -308,21 +272,25 @@ router.post('/checkout', authenticateToken, async (req, res) => {
             idempotencyKey: idempotencyKey
         });
 
-        // Record purchase initiation
+        // Record purchase initiation using upsert to prevent duplicates
         const { data: insertData, error: insertError } = await supabaseServiceClient
             .from('addon_purchase_history')
-            .insert({
+            .upsert({
                 user_id: userId,
                 addon_key: addon.addon_key,
                 stripe_checkout_session_id: session.id,
                 amount_cents: addon.price_cents,
                 currency: addon.currency,
                 status: 'pending'
+            }, {
+                onConflict: 'stripe_checkout_session_id',
+                ignoreDuplicates: false
             })
-            .select(); // Return the inserted row(s)
+            .select()
+            .single();
 
         // Check for database insert errors
-        if (insertError || !insertData || insertData.length === 0) {
+        if (insertError) {
             logger.error('Failed to record purchase initiation:', insertError);
             return res.status(500).json({
                 success: false,
