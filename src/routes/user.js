@@ -612,6 +612,9 @@ router.post('/preferences', authenticateToken, async (req, res) => {
         // Update user preferences and mark onboarding as complete
         let updatedUser = null;
         
+        // Declare userClient in outer scope to avoid reference errors
+        let userClient = null;
+
         // In mock mode, skip database operations and return success
         if (flags.isEnabled('ENABLE_SUPABASE')) {
             // Validate access token before creating user client
@@ -623,7 +626,7 @@ router.post('/preferences', authenticateToken, async (req, res) => {
                 });
             }
 
-            const userClient = createUserClient(req.accessToken);
+            userClient = createUserClient(req.accessToken);
             const { data, error: userError } = await userClient
                 .from('users')
                 .update({
@@ -654,7 +657,7 @@ router.post('/preferences', authenticateToken, async (req, res) => {
         }
 
         // If user selected preferred platforms, create integration configs for them
-        if (preferred_platforms.length > 0 && flags.isEnabled('ENABLE_SUPABASE')) {
+        if (preferred_platforms.length > 0 && flags.isEnabled('ENABLE_SUPABASE') && userClient) {
             // Get user's organization (only in real mode)
             const { data: userData, error: orgError } = await userClient
                 .from('users')

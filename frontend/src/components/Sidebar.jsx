@@ -5,7 +5,10 @@ import {
   Settings,
   ShoppingBag,
   Menu,
-  X
+  X,
+  Flame,
+  Edit3,
+  Link2
 } from 'lucide-react';
 import useFeatureFlags from '../hooks/useFeatureFlags';
 
@@ -15,6 +18,16 @@ const baseNavItems = [
     name: 'Dashboard',
     path: '/dashboard',
     icon: LayoutGrid
+  },
+  {
+    name: 'Compose',
+    path: '/compose',
+    icon: Edit3
+  },
+  {
+    name: 'Integrations',
+    path: '/integrations',
+    icon: Link2
   },
   {
     name: 'Settings',
@@ -37,6 +50,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { isEnabled } = useFeatureFlags();
+  // Force refresh - red sidebar with icons only
 
   // Build navigation items based on feature flags
   const navItems = [
@@ -90,23 +104,22 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-16 bg-gray-50 border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-30 overflow-hidden
+        className={`fixed left-0 top-0 h-screen w-20 bg-red-600 transform transition-transform duration-300 ease-in-out z-30 overflow-hidden
           ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
+        style={{ backgroundColor: '#D11A1A' }}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 border-b border-gray-200">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">R</span>
-              </div>
+          <div className="flex items-center justify-center h-20 border-b border-red-500 border-opacity-30">
+            <div className="flex items-center justify-center">
+              <Flame className="w-8 h-8 text-white" />
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 py-4">
-            <div className="space-y-2 px-2">
+          <nav className="flex-1 py-6">
+            <div className="space-y-3 px-3">
               {navItems.map((item) => {
                 const IconComponent = item.icon;
 
@@ -116,18 +129,18 @@ export default function Sidebar() {
                     to={item.path}
                     onClick={isMobile ? closeSidebar : undefined}
                     className={({ isActive }) =>
-                      `flex items-center justify-center w-12 h-12 rounded-lg transition-colors group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+                      `flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-200 group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-red-600 ${
                         isActive
-                          ? 'bg-gray-900 text-white'
-                          : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                          ? 'bg-white bg-opacity-20 text-white shadow-lg'
+                          : 'text-white text-opacity-70 hover:bg-white hover:bg-opacity-10 hover:text-white'
                       }`
                     }
                     aria-label={item.name}
                   >
-                    <IconComponent className="h-5 w-5" />
+                    <IconComponent className="h-6 w-6" />
 
                     {/* Tooltip */}
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50" aria-hidden="true">
+                    <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg" aria-hidden="true">
                       {item.name}
                     </div>
                   </NavLink>
