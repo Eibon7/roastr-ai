@@ -356,7 +356,7 @@ describe('Ajustes Settings Integration Tests', () => {
           // Verify the input was properly normalized/sanitized
           // Compare against a sanitized version rather than strict inequality
           const expectedSanitized = sanitizeForComparison(maliciousInput);
-          expect([storedValue, expectedSanitized]).toContain(storedValue);
+          expect(storedValue).toBe(expectedSanitized);
 
           // If angle brackets remain, they must be escaped
           if (storedValue.includes('<') || storedValue.includes('>')) {

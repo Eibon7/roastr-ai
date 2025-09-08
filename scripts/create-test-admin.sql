@@ -1,22 +1,55 @@
 -- Script para crear un usuario administrador de prueba
 -- Ejecutar en Supabase SQL Editor
 
--- Crear usuario admin de prueba (Supabase Auth)
--- Nota: Este debe ejecutarse primero en la consola de Supabase Auth
--- IMPORTANTE: Reemplace <ADMIN_PASSWORD> con una contraseña segura generada
--- INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, role)
--- VALUES ('00000000-0000-0000-0000-000000000001', 'admin@roastr.ai', crypt('<ADMIN_PASSWORD>', gen_salt('bf')), NOW(), NOW(), NOW(), 'authenticated');
---
--- Recomendación: Use gen_salt() y crypt() para generar contraseñas seguras en tiempo de ejecución
--- Almacene las credenciales en un gestor de secretos y rote regularmente
+-- Enable pgcrypto extension for password hashing
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Insertar usuario administrador en la tabla users (después de crear en Auth)
+-- Check if admin user exists in auth.users and get the ID
+-- This script will fail fast if the admin user doesn't exist in auth.users
+DO $$
+DECLARE
+    admin_uuid UUID;
+BEGIN
+    -- Look up the admin user ID from auth.users
+    SELECT id INTO admin_uuid
+    FROM auth.users
+    WHERE email = 'admin@roastr.ai';
+
+    -- Fail fast if admin user doesn't exist in auth.users
+    IF admin_uuid IS NULL THEN
+        RAISE EXCEPTION 'Admin user admin@roastr.ai does not exist in auth.users. Please create the user through Supabase Auth first.';
+    END IF;
+
+    -- Store the admin UUID for use in subsequent statements
+    -- We'll use this UUID in the INSERT statements below
+    RAISE NOTICE 'Found admin user with ID: %', admin_uuid;
+END $$;
+
+-- Alternative approach: Create admin user through supported auth creation path
+-- IMPORTANT: Replace <ADMIN_PASSWORD> with a securely generated password
+-- Store the generated password in a secrets manager, do not commit it to version control
+--
+-- Example of secure password generation and storage:
+-- 1. Generate password: openssl rand -base64 32
+-- 2. Store in secrets manager (AWS Secrets Manager, HashiCorp Vault, etc.)
+-- 3. Use the password below and then rotate it regularly
+--
+-- Uncomment and modify the following to create the admin user:
+-- INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, role)
+-- VALUES ('00000000-0000-0000-0000-000000000001', 'admin@roastr.ai',
+--         crypt('<ADMIN_PASSWORD>', gen_salt('bf')), NOW(), NOW(), NOW(), 'authenticated')
+-- ON CONFLICT (email) DO UPDATE SET
+--     encrypted_password = EXCLUDED.encrypted_password,
+--     updated_at = NOW();
+
+-- Insertar usuario administrador en la tabla users (using the existing auth user)
+-- This will fail if the admin user doesn't exist in auth.users
 INSERT INTO users (
-    id, 
-    email, 
-    name, 
-    plan, 
-    is_admin, 
+    id,
+    email,
+    name,
+    plan,
+    is_admin,
     active,
     total_messages_sent,
     total_tokens_consumed,
@@ -24,9 +57,10 @@ INSERT INTO users (
     monthly_tokens_consumed,
     created_at,
     last_activity_at
-) VALUES (
-    '00000000-0000-0000-0000-000000000001',
-    'admin@roastr.ai',
+)
+SELECT
+    au.id,
+    au.email,
     'Administrador Sistema',
     'creator_plus',
     TRUE,
@@ -37,7 +71,9 @@ INSERT INTO users (
     0,
     NOW(),
     NOW()
-) ON CONFLICT (id) DO UPDATE SET
+FROM auth.users au
+WHERE au.email = 'admin@roastr.ai'
+ON CONFLICT (id) DO UPDATE SET
     is_admin = TRUE,
     plan = 'creator_plus',
     name = 'Administrador Sistema';

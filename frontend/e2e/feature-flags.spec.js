@@ -159,7 +159,8 @@ test.describe('Feature Flags - Shop Functionality', () => {
   test.describe('Error Handling', () => {
     test('should handle network errors gracefully', async ({ page }) => {
       // Stub specific feature-flags API endpoint with 500 error
-      await page.route('**/api/feature-flags', route => {
+      // Use the correct endpoint path that matches the app and fixtures
+      await page.route('**/api/config/flags', route => {
         route.fulfill({
           status: 500,
           contentType: 'application/json',
