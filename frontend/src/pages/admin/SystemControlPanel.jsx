@@ -5,7 +5,7 @@
  * Dedicated admin page for kill switch and feature flags management
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -34,43 +34,75 @@ const SystemControlPanel = () => {
   const [systemStatus, setSystemStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('kill-switch');
   const navigate = useNavigate();
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     checkAdminAndLoadData();
+
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   const checkAdminAndLoadData = async () => {
     try {
+      if (!mountedRef.current) return;
       setLoading(true);
-      
+
       // Check admin access
       const session = await authHelpers.getCurrentSession();
+      if (!mountedRef.current) return;
+
       if (!session?.access_token) {
+        toast.error('Authentication required', {
+          description: 'Please log in to access the admin panel'
+        });
         navigate('/login');
         return;
       }
 
       const userData = await authHelpers.getUserFromAPI(session.access_token);
+      if (!mountedRef.current) return;
+
       if (!userData.is_admin) {
+        toast.error('Access denied', {
+          description: 'You do not have administrator privileges'
+        });
         navigate('/dashboard');
         return;
       }
 
-      setCurrentUser(userData);
-      
+      if (mountedRef.current) {
+        setCurrentUser(userData);
+      }
+
       // Load system status
       try {
         const statusResponse = await adminApi.getSystemStatus();
-        setSystemStatus(statusResponse.data);
+        if (mountedRef.current) {
+          setSystemStatus(statusResponse.data);
+        }
       } catch (error) {
         console.warn('Could not load system status:', error);
+        if (mountedRef.current) {
+          toast.error('Failed to load system status', {
+            description: error.message || 'Unable to retrieve current system health information'
+          });
+        }
       }
-      
+
     } catch (error) {
       console.error('Admin check error:', error);
-      navigate('/dashboard');
+      if (mountedRef.current) {
+        toast.error('Failed to load system status', {
+          description: error.message || 'Unable to verify administrator access'
+        });
+        navigate('/dashboard');
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 

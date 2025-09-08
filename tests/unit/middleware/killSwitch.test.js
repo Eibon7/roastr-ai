@@ -236,15 +236,39 @@ describe('Kill Switch Middleware', () => {
       expect(res.json).not.toHaveBeenCalled();
     });
 
-    it('should fail open on database errors', async () => {
+    it('should fail closed on database errors', async () => {
       // Mock the service methods to throw errors directly
-      jest.spyOn(killSwitchService, 'isKillSwitchActive').mockRejectedValue(new Error('Database connection failed'));
-      jest.spyOn(killSwitchService, 'isAutopostEnabled').mockRejectedValue(new Error('Database connection failed'));
+      const isKillSwitchActiveSpy = jest.spyOn(killSwitchService, 'isKillSwitchActive').mockRejectedValue(new Error('Database connection failed'));
+      const isAutopostEnabledSpy = jest.spyOn(killSwitchService, 'isAutopostEnabled').mockRejectedValue(new Error('Database connection failed'));
 
       await checkKillSwitch(req, res, next);
 
-      expect(next).toHaveBeenCalled();
-      expect(res.status).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Service temporarily unavailable',
+        code: 'KILL_SWITCH_ERROR',
+        message: 'Unable to verify system status, blocking operation for safety'
+      });
+      expect(next).not.toHaveBeenCalled();
+
+      // Restore mocks
+      isKillSwitchActiveSpy.mockRestore();
+      isAutopostEnabledSpy.mockRestore();
+    });
+
+    it('should verify fail-open behavior for isAutopostEnabled method', async () => {
+      // Mock the getFlag method to throw an error to test fail-open behavior
+      const getFlagSpy = jest.spyOn(killSwitchService, 'getFlag').mockRejectedValue(new Error('Database connection failed'));
+
+      // Test that isAutopostEnabled fails open (returns true on error)
+      const result = await killSwitchService.isAutopostEnabled();
+
+      expect(result).toBe(true); // Should fail open
+      expect(getFlagSpy).toHaveBeenCalledWith('ENABLE_AUTOPOST');
+
+      // Restore mocks
+      getFlagSpy.mockRestore();
     });
   });
 
@@ -307,15 +331,15 @@ describe('Kill Switch Middleware', () => {
       expect(result.message).toBe('Autopost is allowed');
     });
 
-    it('should fail open on errors', async () => {
+    it('should fail closed on errors', async () => {
       // Mock the service methods to throw errors directly
       jest.spyOn(killSwitchService, 'isKillSwitchActive').mockRejectedValue(new Error('Database error'));
 
       const result = await shouldBlockAutopost();
 
-      expect(result.blocked).toBe(false);
+      expect(result.blocked).toBe(true);
       expect(result.reason).toBe('CHECK_FAILED');
-      expect(result.message).toBe('Could not verify autopost status, allowing operation');
+      expect(result.message).toBe('Could not verify autopost status, blocking operation for safety');
     });
   });
 

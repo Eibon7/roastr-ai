@@ -103,10 +103,11 @@ ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
 -- Only admins can read/write feature flags
 CREATE POLICY "Admin only access to feature flags" ON feature_flags
     FOR ALL USING (
+        auth.uid() IS NOT NULL AND
         EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.is_admin = true 
+            SELECT 1 FROM users
+            WHERE users.id = auth.uid()
+            AND users.is_admin = true
             AND users.active = true
         )
     );
@@ -114,10 +115,11 @@ CREATE POLICY "Admin only access to feature flags" ON feature_flags
 -- Only admins can read audit logs, no one can modify them directly
 CREATE POLICY "Admin read-only access to audit logs" ON admin_audit_logs
     FOR SELECT USING (
+        auth.uid() IS NOT NULL AND
         EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.is_admin = true 
+            SELECT 1 FROM users
+            WHERE users.id = auth.uid()
+            AND users.is_admin = true
             AND users.active = true
         )
     );

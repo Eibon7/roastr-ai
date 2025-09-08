@@ -5,7 +5,7 @@
  * Handles all admin-related API calls including feature flags and kill switch
  */
 
-import { apiClient } from './api';
+import { apiClient } from './apiClient';
 
 class AdminApiService {
   /**
@@ -21,7 +21,7 @@ class AdminApiService {
    * Update a specific feature flag
    */
   async updateFeatureFlag(flagKey, updates) {
-    const response = await apiClient.put(`/admin/feature-flags/${flagKey}`, updates);
+    const response = await apiClient.put(`/admin/feature-flags/${encodeURIComponent(flagKey)}`, updates);
     return response.data;
   }
 
@@ -102,7 +102,7 @@ class AdminApiService {
    * Delete a feature flag
    */
   async deleteFeatureFlag(flagKey) {
-    const response = await apiClient.delete(`/admin/feature-flags/${flagKey}`);
+    const response = await apiClient.delete(`/admin/feature-flags/${encodeURIComponent(flagKey)}`);
     return response.data;
   }
 
@@ -110,7 +110,7 @@ class AdminApiService {
    * Get feature flag usage analytics
    */
   async getFeatureFlagAnalytics(flagKey, timeRange = '7d') {
-    const response = await apiClient.get(`/admin/feature-flags/${flagKey}/analytics`, {
+    const response = await apiClient.get(`/admin/feature-flags/${encodeURIComponent(flagKey)}/analytics`, {
       params: { timeRange }
     });
     return response.data;
@@ -140,7 +140,7 @@ class AdminApiService {
    * Test feature flag configuration
    */
   async testFeatureFlag(flagKey, testValue) {
-    const response = await apiClient.post(`/admin/feature-flags/${flagKey}/test`, {
+    const response = await apiClient.post(`/admin/feature-flags/${encodeURIComponent(flagKey)}/test`, {
       test_value: testValue
     });
     return response.data;
@@ -150,7 +150,7 @@ class AdminApiService {
    * Get feature flag dependencies
    */
   async getFeatureFlagDependencies(flagKey) {
-    const response = await apiClient.get(`/admin/feature-flags/${flagKey}/dependencies`);
+    const response = await apiClient.get(`/admin/feature-flags/${encodeURIComponent(flagKey)}/dependencies`);
     return response.data;
   }
 
@@ -158,7 +158,7 @@ class AdminApiService {
    * Schedule feature flag toggle
    */
   async scheduleFeatureFlagToggle(flagKey, scheduledTime, enabled, reason = null) {
-    const response = await apiClient.post(`/admin/feature-flags/${flagKey}/schedule`, {
+    const response = await apiClient.post(`/admin/feature-flags/${encodeURIComponent(flagKey)}/schedule`, {
       scheduled_time: scheduledTime,
       enabled,
       reason
@@ -178,7 +178,7 @@ class AdminApiService {
    * Cancel scheduled feature flag change
    */
   async cancelScheduledChange(scheduleId) {
-    const response = await apiClient.delete(`/admin/feature-flags/scheduled/${scheduleId}`);
+    const response = await apiClient.delete(`/admin/feature-flags/scheduled/${encodeURIComponent(scheduleId)}`);
     return response.data;
   }
 
@@ -194,7 +194,7 @@ class AdminApiService {
    * Acknowledge system alert
    */
   async acknowledgeAlert(alertId) {
-    const response = await apiClient.post(`/admin/system-alerts/${alertId}/acknowledge`);
+    const response = await apiClient.post(`/admin/system-alerts/${encodeURIComponent(alertId)}/acknowledge`);
     return response.data;
   }
 
@@ -220,7 +220,7 @@ class AdminApiService {
    * Get feature flag rollout status
    */
   async getFeatureFlagRollout(flagKey) {
-    const response = await apiClient.get(`/admin/feature-flags/${flagKey}/rollout`);
+    const response = await apiClient.get(`/admin/feature-flags/${encodeURIComponent(flagKey)}/rollout`);
     return response.data;
   }
 
@@ -228,7 +228,7 @@ class AdminApiService {
    * Update feature flag rollout percentage
    */
   async updateFeatureFlagRollout(flagKey, percentage, targetGroups = []) {
-    const response = await apiClient.put(`/admin/feature-flags/${flagKey}/rollout`, {
+    const response = await apiClient.put(`/admin/feature-flags/${encodeURIComponent(flagKey)}/rollout`, {
       percentage,
       target_groups: targetGroups
     });
@@ -285,7 +285,7 @@ class AdminApiService {
    * Update platform-specific autopost settings
    */
   async updatePlatformAutopostSettings(platform, enabled) {
-    const response = await apiClient.put(`/admin/platform-autopost/${platform}`, {
+    const response = await apiClient.put(`/admin/platform-autopost/${encodeURIComponent(platform)}`, {
       enabled
     });
     return response.data;

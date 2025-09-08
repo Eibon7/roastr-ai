@@ -46,23 +46,23 @@ describe('Feature Flags Admin API', () => {
 
     jest.clearAllMocks();
 
-    // Setup Supabase mocks
-    mockRange = jest.fn().mockReturnThis();
-    mockOrder = jest.fn().mockReturnThis();
-    mockEq = jest.fn().mockReturnThis();
-    mockUpdate = jest.fn().mockReturnThis();
-    mockInsert = jest.fn().mockReturnThis();
-    mockSelect = jest.fn().mockReturnThis();
+    // Setup Supabase mocks with proper chaining
+    mockRange = jest.fn();
+    mockOrder = jest.fn();
+    mockEq = jest.fn();
+    mockUpdate = jest.fn();
+    mockInsert = jest.fn();
+    mockSelect = jest.fn();
 
-    supabaseServiceClient.from.mockReturnValue({
+    // Reset all mocks to return chainable objects by default
+    supabaseServiceClient.from.mockImplementation(() => ({
       select: mockSelect,
       update: mockUpdate,
       insert: mockInsert,
       eq: mockEq,
       order: mockOrder,
-      range: mockRange,
-      single: jest.fn()
-    });
+      range: mockRange
+    }));
   });
 
   describe('GET /admin/feature-flags', () => {
@@ -90,9 +90,17 @@ describe('Feature Flags Admin API', () => {
         }
       ];
 
-      mockSelect.mockResolvedValue({
+      // Mock the select chain for getting all flags: select().order().order()
+      // The route calls .order() twice: once for category, once for flag_name
+      const mockOrder2 = jest.fn().mockResolvedValue({
         data: mockFlags,
         error: null
+      });
+
+      mockSelect.mockReturnValue({
+        order: mockOrder.mockReturnValue({
+          order: mockOrder2
+        })
       });
 
       const response = await request(app)
@@ -117,9 +125,19 @@ describe('Feature Flags Admin API', () => {
         }
       ];
 
-      mockEq.mockResolvedValue({
-        data: mockFlags,
-        error: null
+      // Mock the select chain for filtered flags: select().order().order().eq()
+      // The route calls .order() twice, then .eq() for category filter
+      const mockOrder2 = jest.fn().mockReturnValue({
+        eq: mockEq.mockResolvedValue({
+          data: mockFlags,
+          error: null
+        })
+      });
+
+      mockSelect.mockReturnValue({
+        order: mockOrder.mockReturnValue({
+          order: mockOrder2
+        })
       });
 
       const response = await request(app)
@@ -164,22 +182,38 @@ describe('Feature Flags Admin API', () => {
         updated_at: '2025-01-09T01:00:00Z'
       };
 
-      // Mock getting current flag
-      supabaseServiceClient.from().select().eq().single = jest.fn().mockResolvedValue({
+      // Mock getting current flag with proper chaining
+      const mockSelectSingle = jest.fn().mockResolvedValue({
         data: currentFlag,
         error: null
       });
 
-      // Mock update
-      supabaseServiceClient.from().update().eq().select().single = jest.fn().mockResolvedValue({
+      const mockUpdateSingle = jest.fn().mockResolvedValue({
         data: updatedFlag,
         error: null
       });
 
-      // Mock audit log insert
-      supabaseServiceClient.from().insert = jest.fn().mockResolvedValue({
-        error: null
-      });
+      // Setup chainable mocks for select flow
+      const selectChain = {
+        eq: jest.fn().mockReturnValue({
+          single: mockSelectSingle
+        })
+      };
+
+      // Setup chainable mocks for update flow
+      const updateChain = {
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: mockUpdateSingle
+          })
+        })
+      };
+
+      // Mock the from() calls to return appropriate chains
+      supabaseServiceClient.from
+        .mockReturnValueOnce({ select: jest.fn().mockReturnValue(selectChain) }) // First call for getting current flag
+        .mockReturnValueOnce({ update: jest.fn().mockReturnValue(updateChain) }) // Second call for update
+        .mockReturnValueOnce({ insert: jest.fn().mockResolvedValue({ error: null }) }); // Third call for audit log
 
       const response = await request(app)
         .put('/admin/feature-flags/AUTOPOST_TWITTER')
@@ -208,9 +242,20 @@ describe('Feature Flags Admin API', () => {
     });
 
     it('should return 404 for non-existent flag', async () => {
-      supabaseServiceClient.from().select().eq().single = jest.fn().mockResolvedValue({
+      // Mock with proper chaining for non-existent flag
+      const mockSingle = jest.fn().mockResolvedValue({
         data: null,
         error: { message: 'Not found' }
+      });
+
+      const selectChain = {
+        eq: jest.fn().mockReturnValue({
+          single: mockSingle
+        })
+      };
+
+      supabaseServiceClient.from.mockReturnValue({
+        select: jest.fn().mockReturnValue(selectChain)
       });
 
       const response = await request(app)
@@ -239,22 +284,38 @@ describe('Feature Flags Admin API', () => {
         updated_at: '2025-01-09T01:00:00Z'
       };
 
-      // Mock getting current flag
-      supabaseServiceClient.from().select().eq().single = jest.fn().mockResolvedValue({
+      // Mock getting current flag with proper chaining
+      const mockSelectSingle = jest.fn().mockResolvedValue({
         data: currentFlag,
         error: null
       });
 
-      // Mock update
-      supabaseServiceClient.from().update().eq().select().single = jest.fn().mockResolvedValue({
+      const mockUpdateSingle = jest.fn().mockResolvedValue({
         data: updatedFlag,
         error: null
       });
 
-      // Mock audit log insert
-      supabaseServiceClient.from().insert = jest.fn().mockResolvedValue({
-        error: null
-      });
+      // Setup chainable mocks for select flow
+      const selectChain = {
+        eq: jest.fn().mockReturnValue({
+          single: mockSelectSingle
+        })
+      };
+
+      // Setup chainable mocks for update flow
+      const updateChain = {
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: mockUpdateSingle
+          })
+        })
+      };
+
+      // Mock the from() calls to return appropriate chains
+      supabaseServiceClient.from
+        .mockReturnValueOnce({ select: jest.fn().mockReturnValue(selectChain) }) // First call for getting current flag
+        .mockReturnValueOnce({ update: jest.fn().mockReturnValue(updateChain) }) // Second call for update
+        .mockReturnValueOnce({ insert: jest.fn().mockResolvedValue({ error: null }) }); // Third call for audit log
 
       const response = await request(app)
         .post('/admin/kill-switch')
@@ -282,22 +343,38 @@ describe('Feature Flags Admin API', () => {
         updated_at: '2025-01-09T01:00:00Z'
       };
 
-      // Mock getting current flag
-      supabaseServiceClient.from().select().eq().single = jest.fn().mockResolvedValue({
+      // Mock getting current flag with proper chaining
+      const mockSelectSingle = jest.fn().mockResolvedValue({
         data: currentFlag,
         error: null
       });
 
-      // Mock update
-      supabaseServiceClient.from().update().eq().select().single = jest.fn().mockResolvedValue({
+      const mockUpdateSingle = jest.fn().mockResolvedValue({
         data: updatedFlag,
         error: null
       });
 
-      // Mock audit log insert
-      supabaseServiceClient.from().insert = jest.fn().mockResolvedValue({
-        error: null
-      });
+      // Setup chainable mocks for select flow
+      const selectChain = {
+        eq: jest.fn().mockReturnValue({
+          single: mockSelectSingle
+        })
+      };
+
+      // Setup chainable mocks for update flow
+      const updateChain = {
+        eq: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: mockUpdateSingle
+          })
+        })
+      };
+
+      // Mock the from() calls to return appropriate chains
+      supabaseServiceClient.from
+        .mockReturnValueOnce({ select: jest.fn().mockReturnValue(selectChain) }) // First call for getting current flag
+        .mockReturnValueOnce({ update: jest.fn().mockReturnValue(updateChain) }) // Second call for update
+        .mockReturnValueOnce({ insert: jest.fn().mockResolvedValue({ error: null }) }); // Third call for audit log
 
       const response = await request(app)
         .post('/admin/kill-switch')
@@ -325,9 +402,20 @@ describe('Feature Flags Admin API', () => {
     });
 
     it('should return 404 if kill switch flag not found', async () => {
-      supabaseServiceClient.from().select().eq().single = jest.fn().mockResolvedValue({
+      // Mock with proper chaining for non-existent flag
+      const mockSingle = jest.fn().mockResolvedValue({
         data: null,
         error: { message: 'Not found' }
+      });
+
+      const selectChain = {
+        eq: jest.fn().mockReturnValue({
+          single: mockSingle
+        })
+      };
+
+      supabaseServiceClient.from.mockReturnValue({
+        select: jest.fn().mockReturnValue(selectChain)
       });
 
       const response = await request(app)
@@ -363,10 +451,15 @@ describe('Feature Flags Admin API', () => {
         }
       ];
 
-      mockRange.mockResolvedValue({
-        data: mockLogs,
-        error: null,
-        count: 1
+      // Mock the audit logs query chain: select().order().range()
+      mockSelect.mockReturnValue({
+        order: mockOrder.mockReturnValue({
+          range: mockRange.mockResolvedValue({
+            data: mockLogs,
+            error: null,
+            count: 1
+          })
+        })
       });
 
       const response = await request(app)
@@ -382,9 +475,16 @@ describe('Feature Flags Admin API', () => {
     });
 
     it('should filter logs by action type', async () => {
-      mockEq.mockResolvedValue({
-        data: [],
-        error: null
+      // Mock the audit logs query chain with filter: select().order().range().eq()
+      mockSelect.mockReturnValue({
+        order: mockOrder.mockReturnValue({
+          range: mockRange.mockReturnValue({
+            eq: mockEq.mockResolvedValue({
+              data: [],
+              error: null
+            })
+          })
+        })
       });
 
       await request(app)

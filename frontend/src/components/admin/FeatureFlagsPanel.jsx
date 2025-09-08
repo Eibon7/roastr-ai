@@ -67,41 +67,79 @@ const FeatureFlagsPanel = () => {
   };
 
   const handleFlagToggle = async (flagKey, currentEnabled) => {
+    // Capture the intended new state and previous state for rollback
+    const newEnabledState = !currentEnabled;
+    let previousFlagState = null;
+    let previousCategorizedState = null;
+
     try {
-      setUpdatingFlags(prev => new Set(prev).add(flagKey));
-      
-      await adminApi.updateFeatureFlag(flagKey, {
-        is_enabled: !currentEnabled
+      // Mark flag as updating using functional updater
+      setUpdatingFlags(prev => {
+        const newSet = new Set(prev);
+        newSet.add(flagKey);
+        return newSet;
       });
-      
-      // Update local state
-      setFlags(prevFlags => 
-        prevFlags.map(flag => 
-          flag.flag_key === flagKey 
-            ? { ...flag, is_enabled: !currentEnabled }
+
+      // Capture previous state for potential rollback
+      setFlags(prevFlags => {
+        previousFlagState = prevFlags.find(flag => flag.flag_key === flagKey);
+        return prevFlags;
+      });
+
+      setFlagsByCategory(prevCategorized => {
+        previousCategorizedState = { ...prevCategorized };
+        return prevCategorized;
+      });
+
+      // Make API call with the intended new state
+      await adminApi.updateFeatureFlag(flagKey, {
+        is_enabled: newEnabledState
+      });
+
+      // Update local state using functional updaters with immutable copies
+      setFlags(prevFlags =>
+        prevFlags.map(flag =>
+          flag.flag_key === flagKey
+            ? { ...flag, is_enabled: newEnabledState }
             : flag
         )
       );
-      
-      // Update categorized flags
+
+      // Update categorized flags with immutable copies
       setFlagsByCategory(prevCategorized => {
         const newCategorized = { ...prevCategorized };
         Object.keys(newCategorized).forEach(category => {
           newCategorized[category] = newCategorized[category].map(flag =>
-            flag.flag_key === flagKey 
-              ? { ...flag, is_enabled: !currentEnabled }
+            flag.flag_key === flagKey
+              ? { ...flag, is_enabled: newEnabledState }
               : flag
           );
         });
         return newCategorized;
       });
-      
-      toast.success(`Feature flag ${!currentEnabled ? 'enabled' : 'disabled'}`);
-      
+
+      toast.success(`Feature flag ${newEnabledState ? 'enabled' : 'disabled'}`);
+
     } catch (error) {
       console.error('Failed to update feature flag:', error);
       toast.error('Failed to update feature flag');
+
+      // Rollback to previous state on error
+      if (previousFlagState) {
+        setFlags(prevFlags =>
+          prevFlags.map(flag =>
+            flag.flag_key === flagKey
+              ? { ...previousFlagState }
+              : flag
+          )
+        );
+      }
+
+      if (previousCategorizedState) {
+        setFlagsByCategory(previousCategorizedState);
+      }
     } finally {
+      // Remove from updating flags using functional updater
       setUpdatingFlags(prev => {
         const newSet = new Set(prev);
         newSet.delete(flagKey);

@@ -559,6 +559,7 @@ describe('StripeWebhookService', () => {
             customer: 'cus_test123',
             payment_intent: 'pi_test123',
             amount_total: 1999, // $19.99 in cents
+            currency: 'usd',
             metadata: {
                 user_id: 'user-123',
                 addon_key: 'test_addon'
@@ -566,6 +567,24 @@ describe('StripeWebhookService', () => {
         };
 
         beforeEach(() => {
+            // Mock addon details query
+            supabaseServiceClient.from.mockReturnValue({
+                select: jest.fn().mockReturnValue({
+                    eq: jest.fn().mockReturnValue({
+                        eq: jest.fn().mockReturnValue({
+                            single: jest.fn().mockResolvedValue({
+                                data: {
+                                    price_cents: 1999,
+                                    currency: 'USD',
+                                    addon_key: 'test_addon'
+                                },
+                                error: null
+                            })
+                        })
+                    })
+                })
+            });
+
             // Mock successful RPC call
             supabaseServiceClient.rpc.mockResolvedValue({
                 data: { success: true, credits_added: 100 },
@@ -663,13 +682,33 @@ describe('StripeWebhookService', () => {
             ];
 
             for (const validSession of validAmountSessions) {
+                // Mock addon details query with matching price for each test
+                supabaseServiceClient.from.mockReturnValue({
+                    select: jest.fn().mockReturnValue({
+                        eq: jest.fn().mockReturnValue({
+                            eq: jest.fn().mockReturnValue({
+                                single: jest.fn().mockResolvedValue({
+                                    data: {
+                                        price_cents: validSession.amount_total,
+                                        currency: 'USD',
+                                        addon_key: 'test_addon'
+                                    },
+                                    error: null
+                                })
+                            })
+                        })
+                    })
+                });
+
                 const result = await webhookService._handleAddonPurchaseCompleted(validSession);
 
                 expect(result.success).toBe(true);
                 expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
                     'execute_addon_purchase_transaction',
                     expect.objectContaining({
-                        p_amount_cents: validSession.amount_total
+                        p_amount_cents: validSession.amount_total,
+                        p_currency: validSession.currency,
+                        p_expected_price_cents: validSession.amount_total
                     })
                 );
             }

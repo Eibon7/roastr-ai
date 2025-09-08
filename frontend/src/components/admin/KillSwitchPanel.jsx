@@ -5,7 +5,8 @@
  * Provides emergency kill switch controls for administrators
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Card, 
   CardHeader, 
@@ -36,9 +37,79 @@ const KillSwitchPanel = () => {
   const [pendingState, setPendingState] = useState(false);
   const [reason, setReason] = useState('');
 
+  // Focus management refs
+  const triggerElementRef = useRef(null);
+  const modalRef = useRef(null);
+  const firstFocusableRef = useRef(null);
+  const lastFocusableRef = useRef(null);
+  const textareaRef = useRef(null);
+
   useEffect(() => {
     loadKillSwitchStatus();
   }, []);
+
+  // Focus management and keyboard handling for modal
+  useEffect(() => {
+    if (!showConfirmDialog) return;
+
+    // Set initial focus to Cancel button
+    if (firstFocusableRef.current) {
+      firstFocusableRef.current.focus();
+    }
+
+    // Store the trigger element for focus restoration
+    triggerElementRef.current = document.activeElement;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelToggle();
+        return;
+      }
+
+      if (e.key === 'Enter' && !textareaRef.current?.contains(e.target)) {
+        e.preventDefault();
+        confirmToggle();
+        return;
+      }
+
+      // Focus trap logic
+      if (e.key === 'Tab') {
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+
+        if (!focusableElements?.length) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          // Shift + Tab
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      // Restore focus to trigger element when modal closes
+      if (triggerElementRef.current) {
+        triggerElementRef.current.focus();
+      }
+    };
+  }, [showConfirmDialog]);
 
   const loadKillSwitchStatus = async () => {
     try {
@@ -62,6 +133,8 @@ const KillSwitchPanel = () => {
   };
 
   const handleToggleRequest = (newState) => {
+    // Store the current active element (the switch) for focus restoration
+    triggerElementRef.current = document.activeElement;
     setPendingState(newState);
     setShowConfirmDialog(true);
   };
@@ -178,36 +251,52 @@ const KillSwitchPanel = () => {
       </Card>
 
       {/* Confirmation Dialog */}
-      {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      {showConfirmDialog && createPortal(
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              cancelToggle();
+            }
+          }}
+        >
+          <div
+            ref={modalRef}
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            aria-describedby="modal-description"
+          >
             <div className="flex items-center gap-3 mb-4">
               <AlertCircle className={`h-6 w-6 ${pendingState ? 'text-red-600' : 'text-green-600'}`} />
-              <h3 className="text-lg font-semibold">
+              <h3 id="modal-title" className="text-lg font-semibold">
                 {pendingState ? 'Activate Kill Switch' : 'Deactivate Kill Switch'}
               </h3>
             </div>
-            
+
             <div className="space-y-4">
-              <p className="text-gray-700">
-                {pendingState 
+              <p id="modal-description" className="text-gray-700">
+                {pendingState
                   ? 'This will immediately stop ALL autopost operations across all platforms and users. Use only in emergencies.'
                   : 'This will re-enable autopost operations. Make sure the issue has been resolved.'
                 }
               </p>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="reason-textarea" className="block text-sm font-medium text-gray-700 mb-2">
                   Reason (optional)
                 </label>
                 <textarea
+                  id="reason-textarea"
+                  ref={textareaRef}
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder={pendingState 
+                  placeholder={pendingState
                     ? 'Why are you activating the kill switch?'
                     : 'Why are you deactivating the kill switch?'
                   }
-                  className="w-full p-2 border border-gray-300 rounded-md resize-none"
+                  className="w-full p-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   rows={3}
                 />
               </div>
@@ -215,23 +304,28 @@ const KillSwitchPanel = () => {
 
             <div className="flex gap-3 mt-6">
               <Button
+                ref={firstFocusableRef}
                 onClick={cancelToggle}
                 variant="outline"
                 className="flex-1"
+                tabIndex={0}
               >
                 Cancel
               </Button>
               <Button
+                ref={lastFocusableRef}
                 onClick={confirmToggle}
                 variant={pendingState ? 'destructive' : 'default'}
                 className="flex-1"
                 disabled={toggling}
+                tabIndex={0}
               >
                 {toggling ? 'Processing...' : 'Confirm'}
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

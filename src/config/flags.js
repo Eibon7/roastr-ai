@@ -55,6 +55,9 @@ class FeatureFlags {
       // Style Profile Feature
       ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false', // Default enabled unless explicitly disabled
 
+      // Credits v2 Feature
+      ENABLE_CREDITS_V2: process.env.ENABLE_CREDITS_V2 === 'true' || false,
+
       // Custom Prompt Feature
       ENABLE_CUSTOM_PROMPT: process.env.ENABLE_CUSTOM_PROMPT === 'true', // Default disabled, requires explicit activation
 
