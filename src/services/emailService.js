@@ -10,6 +10,35 @@ const path = require('path');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
+/**
+ * Format file size with validation and human-readable output
+ * @param {*} size - The size value in bytes to format
+ * @returns {string} - Formatted size string
+ */
+function formatFileSize(size, locale = process.env.DEFAULT_LOCALE || 'en-US') {
+    const num = Number(size);
+    if (!Number.isFinite(num) || num < 0) {
+        // Keep current fallback but surface the anomaly for observability
+        try { 
+            const logger = require('../utils/logger');
+            if (logger && logger.logger && logger.logger.warn) {
+                logger.logger.warn('formatFileSize: invalid size', { size });
+            }
+        } catch {}
+        return '0 B';
+    }
+    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    let val = num;
+    let idx = 0;
+    while (val >= 1024 && idx < units.length - 1) {
+        val /= 1024;
+        idx++;
+    }
+    const maxFrac = idx === 0 ? 0 : (val < 10 ? 1 : 0); // 1 decimal only for small non-byte values
+    const nf = new Intl.NumberFormat(locale, { maximumFractionDigits: maxFrac });
+    return `${nf.format(val)} ${units[idx]}`;
+}
+
 class EmailService {
     constructor() {
         this.isConfigured = false;
@@ -80,8 +109,10 @@ class EmailService {
             // Prepare email message
             const msg = {
                 to: to,
-                from: process.env.SENDGRID_FROM_EMAIL || 'noreply@roastr.ai',
-                fromName: process.env.SENDGRID_FROM_NAME || 'Roastr.ai',
+                from: {
+                    email: process.env.SENDGRID_FROM_EMAIL || 'noreply@roastr.ai',
+                    name: process.env.SENDGRID_FROM_NAME || 'Roastr.ai'
+                },
                 subject: subject,
                 html: htmlContent,
                 // Add plain text version
@@ -258,6 +289,29 @@ class EmailService {
                 resetLink: resetData.resetLink,
                 expiryTime: resetData.expiryTime || '24 hours',
                 supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai'
+            }
+        });
+    }
+
+    /**
+     * Send data export email (Issue #258 - GDPR compliance)
+     * @param {string} userEmail - User email address
+     * @param {Object} exportData - Data export details
+     * @returns {Promise<Object>} Send result
+     */
+    async sendDataExportEmail(userEmail, exportData) {
+        return await this.sendEmail({
+            to: userEmail,
+            subject: '📦 Tu exportación de datos está lista',
+            templateName: 'data_export',
+            templateData: {
+                userName: exportData.userName || 'User',
+                downloadUrl: exportData.downloadUrl,
+                filename: exportData.filename,
+                size: formatFileSize(exportData.size ?? 0),
+                expiresAt: exportData.expiresAt,
+                expiryTime: '24 horas',
+                supportEmail: exportData.supportEmail || 'support@roastr.ai'
             }
         });
     }

@@ -577,7 +577,7 @@ const AdminDashboard = () => {
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
                             <Link 
-                              to={`/admin/user/${user.id}`}
+                              to={`/admin/users/${user.id}`}
                               className="hover:text-primary-600 dark:hover:text-primary-400"
                             >
                               {user.name || 'Sin nombre'}

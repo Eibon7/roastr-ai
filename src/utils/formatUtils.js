@@ -115,8 +115,9 @@ function truncateText(text, maxLength = 100, suffix = '...') {
   if (text.length <= maxLength) {
     return text;
   }
-  
-  return text.substring(0, maxLength - suffix.length) + suffix;
+
+  const headLen = Math.max(0, maxLength - suffix.length);
+  return text.substring(0, headLen) + suffix;
 }
 
 module.exports = {

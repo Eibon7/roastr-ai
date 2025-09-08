@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
-import { 
-  Twitter, 
-  Instagram, 
-  Youtube, 
-  Facebook, 
+import {
+  Twitter,
+  Instagram,
+  Youtube,
+  Facebook,
   MessageCircle,
   Twitch,
   Users,
@@ -17,7 +17,14 @@ import {
   ExternalLink,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Clock,
+  Edit,
+  RefreshCw,
+  Trash2,
+  Send,
+  Shield,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import AccountModal from '../components/AccountModal';
 
@@ -30,6 +37,8 @@ export default function Dashboard() {
   const [connectingPlatform, setConnectingPlatform] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [recentRoasts, setRecentRoasts] = useState([]);
+  const [roastsLoading, setRoastsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -82,19 +91,40 @@ export default function Dashboard() {
     }
   }, [location]);
 
+  // Fetch recent roasts
+  const fetchRecentRoasts = async () => {
+    try {
+      setRoastsLoading(true);
+      const response = await fetch('/api/user/roasts/recent?limit=10', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRecentRoasts(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching recent roasts:', error);
+    } finally {
+      setRoastsLoading(false);
+    }
+  };
+
   // Fetch user accounts and usage data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch connected accounts
         const accountsRes = await fetch('/api/user/integrations', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        
+
         if (accountsRes.ok) {
           const accountsData = await accountsRes.json();
           setAccounts(accountsData.data || []);
@@ -106,11 +136,14 @@ export default function Dashboard() {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        
+
         if (usageRes.ok) {
           const usageData = await usageRes.json();
           setUsage(usageData.data || {});
         }
+
+        // Fetch recent roasts
+        await fetchRecentRoasts();
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -205,6 +238,65 @@ export default function Dashboard() {
 
   const getTotalRoastsLimit = () => {
     return usage?.limit || 5000; // Default limit
+  };
+
+  // Roast action handlers
+  const handleEditRoast = async (roastId) => {
+    // TODO: Implement edit roast functionality
+    console.log('Edit roast:', roastId);
+  };
+
+  const handleRegenerateRoast = async (roastId) => {
+    try {
+      const response = await fetch(`/api/user/roasts/${roastId}/regenerate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        await fetchRecentRoasts(); // Refresh roasts
+      }
+    } catch (error) {
+      console.error('Error regenerating roast:', error);
+    }
+  };
+
+  const handleDiscardRoast = async (roastId) => {
+    try {
+      const response = await fetch(`/api/user/roasts/${roastId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        await fetchRecentRoasts(); // Refresh roasts
+      }
+    } catch (error) {
+      console.error('Error discarding roast:', error);
+    }
+  };
+
+  const handlePublishRoast = async (roastId) => {
+    try {
+      const response = await fetch(`/api/user/roasts/${roastId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        await fetchRecentRoasts(); // Refresh roasts
+      }
+    } catch (error) {
+      console.error('Error publishing roast:', error);
+    }
   };
 
   // Modal handlers for AccountModal
@@ -395,150 +487,132 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {adminMode && adminModeUser ? `Dashboard de ${adminModeUser.name || adminModeUser.email}` : 'Cuentas conectadas'}
+            Dashboard
           </h1>
           <div className="flex items-center space-x-2 mt-2">
-            <span className="text-2xl font-semibold">
-              {getTotalRoastsUsed().toLocaleString()} / {getTotalRoastsLimit().toLocaleString()}
+            <span className="text-sm text-muted-foreground">
+              Dashboard > X > @handle_1
             </span>
-            <span className="text-muted-foreground">roasts utilizados</span>
           </div>
         </div>
       </div>
 
-      {/* Connected Accounts */}
+      {/* Dashboard Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Roasts this month */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Roasts this month
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">4000</div>
+          </CardContent>
+        </Card>
+
+        {/* Engagement */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Engagement
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">248 Likes - 50 Shares</div>
+          </CardContent>
+        </Card>
+
+        {/* Shield interceptions */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Shield interceptions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">800</div>
+          </CardContent>
+        </Card>
+      </div>
+
+
+
+      {/* Recent Roasts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Roasts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Mock roast data based on your design */}
+            {[
+              {
+                id: 1,
+                text: "Tu código es una basura",
+                response: "Gracias por tu comentario, me encanta tu entusiasmo por la basura",
+                status: "approved"
+              },
+              {
+                id: 2,
+                text: "Tu código es una basura",
+                response: "Gracias por tu comentario, me encanta tu entusiasmo por la basura",
+                status: "approved"
+              },
+              {
+                id: 3,
+                text: "Tu código es una basura",
+                response: "Gracias por tu comentario, me encanta tu entusiasmo por la basura",
+                status: "approved"
+              },
+              {
+                id: 4,
+                text: "Tu código es una basura",
+                response: "Gracias por tu comentario, me encanta tu entusiasmo por la basura",
+                status: "approved"
+              }
+            ].map((roast) => (
+              <div key={roast.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <div className="text-sm text-muted-foreground mb-1">{roast.text}</div>
+                  <div className="text-sm">{roast.response}</div>
+                </div>
+                <div className="flex items-center space-x-2 ml-4">
+                  <Button size="sm" variant="outline" className="bg-green-50 text-green-600 border-green-200">
+                    <CheckCircle className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="outline" className="bg-red-50 text-red-600 border-red-200">
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Shield Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Mis cuentas conectadas</span>
-            <Badge variant="outline">
-              {accounts?.length || 0} conectadas
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {accounts && accounts.length > 0 ? (
-            accounts.map((account) => {
-              const IconComponent = platformIcons[account.platform] || AlertCircle;
-              const platformUsage = usage?.platformUsage?.[account.platform] || {};
-              
-              return (
-                <div
-                  key={account.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => {
-                    setSelectedAccount(account);
-                    setAccountModalOpen(true);
-                  }}
-                >
-                  <div className="flex items-center space-x-4">
-                    <IconComponent className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium">{platformNames[account.platform]}</h3>
-                        {getStatusIcon(account.status)}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        @{account.username || account.handle || 'usuario'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-2 mb-1">
-                      {getStatusBadge(account.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {platformUsage.roasts || 0} / {platformUsage.limit || 1000} roasts
-                    </p>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-8">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-medium mb-2">No hay cuentas conectadas</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Conecta tus redes sociales para empezar a usar Roastr
-              </p>
+            <span>Shield</span>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-muted-foreground">Active</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Connect New Accounts */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Plus className="h-5 w-5" />
-            <span>Conectar otras cuentas</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {availablePlatforms.map((platform) => {
-              const IconComponent = platformIcons[platform];
-              const isAtLimit = isPlatformAtLimit(platform);
-              const isConnecting = connectingPlatform === platform;
-              
-              return (
-                <Button
-                  key={platform}
-                  variant="outline"
-                  className="flex items-center space-x-2 h-auto p-4"
-                  disabled={isAtLimit || isConnecting}
-                  onClick={() => handleConnectPlatform(platform)}
-                  title={isAtLimit ? "Límite alcanzado (máximo 2 cuentas por plataforma)" : ""}
-                >
-                  <IconComponent className="h-5 w-5" />
-                  <div className="text-left">
-                    <div className="font-medium text-xs">
-                      {platformNames[platform]}
-                    </div>
-                    {isAtLimit ? (
-                      <div className="text-xs text-muted-foreground">
-                        Límite alcanzado
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">
-                        {getConnectedAccountsForPlatform(platform).length}/2 conectadas
-                      </div>
-                    )}
-                  </div>
-                  {isConnecting && (
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  )}
-                </Button>
-              );
-            })}
-          </div>
-          
-          <div className="mt-4 pt-4 border-t">
-            <button className="flex items-center space-x-2 text-sm text-primary hover:underline">
-              <ExternalLink className="h-4 w-4" />
-              <span>Ver todas las integraciones disponibles</span>
-            </button>
-          </div>
+          <Button variant="outline" className="w-full justify-start">
+            <Users className="h-4 w-4 mr-2" />
+            Manage Shielded Comments
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Account Modal */}
-      {accountModalOpen && selectedAccount && (
-        <AccountModal
-          account={selectedAccount}
-          roasts={[]} // Will be fetched by the modal
-          intercepted={[]} // Mock Shield data
-          onApproveRoast={handleApproveRoast}
-          onRejectRoast={handleRejectRoast}
-          onToggleAutoApprove={handleToggleAutoApprove}
-          onToggleAccount={handleToggleAccount}
-          onChangeShieldLevel={handleChangeShieldLevel}
-          onToggleShield={handleToggleShield}
-          onChangeTone={handleChangeTone}
-          onDisconnectAccount={handleDisconnectAccount}
-          onClose={handleCloseModal}
-        />
-      )}
     </div>
   );
 }

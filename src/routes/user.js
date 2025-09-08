@@ -639,13 +639,9 @@ router.post('/preferences', authenticateToken, async (req, res) => {
             }
             
             updatedUser = data;
-        } else {
-            // Mock mode: simulate successful update
-            logger.info('Mock mode: User preferences updated', { userId: userId?.substr(0, 8) + '...' || 'unknown', humor_tone, humor_style });
-        }
 
-        // If user selected preferred platforms, create integration configs for them
-        if (preferred_platforms.length > 0 && flags.isEnabled('ENABLE_SUPABASE')) {
+            // If user selected preferred platforms, create integration configs for them
+            if (preferred_platforms.length > 0) {
             // Get user's organization (only in real mode)
             const { data: userData, error: orgError } = await userClient
                 .from('users')
@@ -704,6 +700,10 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 
                 await Promise.all(integrationPromises);
             }
+            } // Close preferred_platforms.length > 0 block
+        } else {
+            // Mock mode: simulate successful update
+            logger.info('Mock mode: User preferences updated', { userId: userId?.substr(0, 8) + '...' || 'unknown', humor_tone, humor_style });
         }
 
         logger.info('User preferences saved and onboarding completed:', {
@@ -763,27 +763,46 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 router.get('/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const userClient = createUserClient(req.accessToken);
+        
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const userClient = createUserClient(req.accessToken);
 
-        const { data: userProfile, error } = await userClient
-            .from('users')
-            .select(`
-                id, email, name, plan, is_admin, active, 
-                onboarding_complete, preferences, created_at,
-                organizations!owner_id (id, name, plan_id)
-            `)
-            .eq('id', userId)
-            .single();
+            const { data: userProfile, error } = await userClient
+                .from('users')
+                .select(`
+                    id, email, name, plan, is_admin, active,
+                    onboarding_complete, preferences, created_at,
+                    organizations!owner_id (id, name, plan_id)
+                `)
+                .eq('id', userId)
+                .single();
 
-        if (error) {
-            throw new Error(`Failed to fetch user profile: ${error.message}`);
+            if (error) {
+                throw new Error(`Failed to fetch user profile: ${error.message}`);
+            }
+
+            res.json({
+                success: true,
+                data: userProfile
+            });
+        } else {
+            // Mock mode response
+            res.json({
+                success: true,
+                data: {
+                    id: userId,
+                    email: 'test@example.com',
+                    name: 'Test User',
+                    plan: 'free',
+                    is_admin: false,
+                    active: true,
+                    onboarding_complete: true,
+                    preferences: {},
+                    created_at: new Date().toISOString(),
+                    organizations: []
+                }
+            });
         }
-
-        res.json({
-            success: true,
-            data: userProfile
-        });
-
     } catch (error) {
         logger.error('Get user profile error:', error.message);
         res.status(500).json({

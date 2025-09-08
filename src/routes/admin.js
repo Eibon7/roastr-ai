@@ -6,7 +6,8 @@ const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
 const CostControlService = require('../services/costControl');
 const revenueRoutes = require('./revenue');
-const { exec } = require('child_process');
+const featureFlagsRoutes = require('./admin/featureFlags');
+const { exec, execFile } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 const planLimitsService = require('../services/planLimitsService');
@@ -642,17 +643,28 @@ router.post('/integrations/test', async (req, res) => {
     try {
         const { platforms = '' } = req.body;
         
-        // Construir comando
-        let command = 'npm run integrations:test';
-        if (platforms) {
-            command = `INTEGRATIONS_ENABLED=${platforms} ${command}`;
-        }
+        // Sanitize platforms input to prevent shell injection
+        const safePlatforms = String(platforms || '')
+            .replace(/[^a-z_,]/gi, '')            // allow only letters/commas/underscores
+            .toLowerCase();
 
-        // Ejecutar comando con timeout
-        exec(command, { 
-            cwd: process.cwd(),
-            timeout: 60000 // 60 segundos
-        }, (error, stdout, stderr) => {
+        // Set up environment with sanitized platforms
+        const env = { 
+            ...process.env, 
+            INTEGRATIONS_ENABLED: safePlatforms || undefined 
+        };
+
+        // Use execFile to prevent shell injection
+        const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+        execFile(
+            npmCommand,
+            ['run', 'integrations:test'],
+            { 
+                cwd: process.cwd(), 
+                timeout: 60000,
+                env 
+            },
+            (error, stdout, stderr) => {
             if (error) {
                 logger.error('Integration test error:', error.message);
                 return res.status(500).json({

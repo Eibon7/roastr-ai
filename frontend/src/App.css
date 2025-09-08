@@ -236,11 +236,7 @@ main, aside, .flex-1 {
   transform: translateX(4px);
 }
 
-/* Enhance sidebar styling */
-aside {
-  background-color: var(--card) !important;
-  border-right: 1px solid var(--border) !important;
-}
+/* Enhance sidebar styling - removed to allow custom sidebar colors */
 
 /* Main content area enhancement */
 main {
