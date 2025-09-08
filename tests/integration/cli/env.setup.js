@@ -14,6 +14,7 @@ process.env.TEST_ORIGINAL_ENV = JSON.stringify({
 // Set up test environment variables
 process.env.NODE_ENV = 'test';
 process.env.LOG_LEVEL = 'error';
+process.env.LOG_DIR = 'tmp/test-logs';
 
 // Log backup configuration
 process.env.LOG_BACKUP_S3_BUCKET = 'test-log-backup-bucket';
@@ -21,6 +22,9 @@ process.env.LOG_BACKUP_S3_PREFIX = 'test-logs';
 process.env.AWS_REGION = 'us-east-1';
 process.env.AWS_ACCESS_KEY_ID = 'test-access-key';
 process.env.AWS_SECRET_ACCESS_KEY = 'test-secret-key';
+process.env.AWS_EC2_METADATA_DISABLED = 'true';
+process.env.AWS_SDK_LOAD_CONFIG = '0';
+process.env.AWS_S3_FORCE_PATH_STYLE = 'true';
 
 // Log cleanup configuration
 process.env.LOG_CLEANUP_ENABLED = 'true';
@@ -45,7 +49,7 @@ process.env.LOG_MONITORING_SCHEDULE = '0 */6 * * *';
 process.env.LOG_ALERT_THRESHOLD_GB = '5.0';
 
 // Alert configuration
-process.env.LOG_ALERT_WEBHOOK_URL = 'https://hooks.slack.com/test-webhook';
+process.env.LOG_ALERT_WEBHOOK_URL = 'http://127.0.0.1:65535/test-webhook';
 process.env.EMAIL_ALERTS_ENABLED = 'true';
 process.env.ALERTING_ENABLED = 'true';
 process.env.MAX_ALERTS_PER_HOUR = '10';

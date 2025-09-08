@@ -9,9 +9,11 @@ module.exports = {
   testMatch: ['**/tests/integration/cli/**/*.test.js'],
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/tests/integration/cli/setup.js'],
+  clearMocks: true,
+  restoreMocks: true,
   testTimeout: 30000,
   maxWorkers: 1, // Run CLI tests sequentially to avoid conflicts
-  
+
   // Coverage configuration
   collectCoverage: true,
   collectCoverageFrom: [
@@ -20,16 +22,16 @@ module.exports = {
     'src/services/alertService.js',
     'cli.js'
   ],
-  coverageDirectory: 'coverage/cli-integration',
+  coverageDirectory: process.env.COVERAGE_DIR || 'coverage/cli-integration',
   coverageReporters: ['text', 'lcov', 'html'],
-  
+
   // Environment variables for testing
   setupFiles: ['<rootDir>/tests/integration/cli/env.setup.js'],
-  
+
   // Verbose output for debugging
   verbose: true,
-  
-  // Handle long-running operations
-  forceExit: true,
+
+  // Handle long-running operations - prefer fixing open handles
+  // forceExit: true, // prefer fixing open handles
   detectOpenHandles: true
 };

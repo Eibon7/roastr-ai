@@ -503,11 +503,6 @@ export default function Settings() {
       text = sanitizeInput(roastrPersona.loQueMeDaIgual);
     }
 
-    if (text.length > 300) {
-      addNotification('El texto no puede exceder los 300 caracteres', 'error');
-      return;
-    }
-
     if (text.length === 0) {
       addNotification('El campo no puede estar vacío', 'error');
       return;
@@ -515,22 +510,22 @@ export default function Settings() {
 
     try {
       setRoastrPersona(prev => ({ ...prev, isSaving: true }));
-      
+
       const payload = {};
       if (isIdentity) {
-        payload.loQueMeDefine = text || null;
+        payload.loQueMeDefine = text;
         payload.isVisible = roastrPersona.isVisible;
       } else if (isIntolerance) {
-        payload.loQueNoTolero = text || null;
+        payload.loQueNoTolero = text;
         payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
       } else if (isTolerance) {
-        payload.loQueMeDaIgual = text || null;
+        payload.loQueMeDaIgual = text;
         payload.isToleranceVisible = roastrPersona.isToleranceVisible;
       }
       
       const resp = await apiClient.post('/user/roastr-persona', payload);
 
-      if (resp?.data?.success) {
+      if (resp?.success) {
         setRoastrPersona(prev => ({
           ...prev,
           hasContent: !!resp.data?.hasContent,
@@ -541,8 +536,7 @@ export default function Settings() {
           loQueMeDaIgual: isTolerance ? text : prev.loQueMeDaIgual,
           showForm: isIdentity ? false : prev.showForm,
           showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
-          showToleranceForm: isTolerance ? false : prev.showToleranceForm,
-          isSaving: false
+          showToleranceForm: isTolerance ? false : prev.showToleranceForm
         }));
 
         let successMessage;
@@ -572,8 +566,6 @@ export default function Settings() {
             setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
           }
         }
-
-        setRoastrPersona(prev => ({ ...prev, isSaving: false }));
       }
 
     } catch (error) {
