@@ -13,35 +13,9 @@
  * 9. Se crean entradas en responses y roast_attempts
  */
 
-const { mockMode } = require('./src/config/mockMode');
-const FetchCommentsWorker = require('./src/workers/FetchCommentsWorker');
-const AnalyzeToxicityWorker = require('./src/workers/AnalyzeToxicityWorker');
-const GenerateReplyWorker = require('./src/workers/GenerateReplyWorker');
+// Removed unused imports that can break direct execution
 
-// Mock de servicios externos (sin Jest para ejecución directa)
-const mockSupabase = {
-  from: () => ({
-    select: () => ({
-      eq: () => ({
-        single: () => Promise.resolve({ data: null, error: null }),
-        limit: () => Promise.resolve({ data: [], error: null })
-      }),
-      insert: () => Promise.resolve({ data: { id: 'mock-id' }, error: null }),
-      update: () => ({
-        eq: () => ({
-          select: () => ({
-            single: () => Promise.resolve({ data: { id: 'mock-id' }, error: null })
-          })
-        })
-      })
-    })
-  })
-};
-
-const mockQueueService = {
-  add: () => Promise.resolve({ id: 'job-123' }),
-  addJob: () => Promise.resolve({ id: 'job-123' })
-};
+// Removed unused mocks to keep the script minimal and avoid confusion
 
 const mockTwitterService = {
   postResponse: () => Promise.resolve({
@@ -158,7 +132,10 @@ async function testAutoRoastPostingFlow() {
   console.log('📊 PASO 2: Verificación de límites y disponibilidad');
   console.log('-'.repeat(40));
   
-  const roastsAvailable = organizationConfig.monthly_responses_limit - organizationConfig.monthly_responses_used;
+  const roastsAvailable = Math.max(
+    0,
+    organizationConfig.monthly_responses_limit - organizationConfig.monthly_responses_used
+  );
   const canGenerateRoast = roastsAvailable > 0 && userConfig.plan !== 'free';
   
   console.log(`Roasts disponibles: ${roastsAvailable}`);

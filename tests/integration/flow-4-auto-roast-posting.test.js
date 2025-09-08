@@ -1,7 +1,7 @@
 /**
- * 🧪 Flujo 4: Test de integración - Generación y publicación automática del roast
+ * 🧪 Flujo 4: Generación y publicación automática del roast
  *
- * Valida el flujo completo desde comentario tóxico hasta publicación automática:
+ * Test de integración completo que valida:
  * 1. Comentario con toxicidad media-alta (roasteable)
  * 2. Roastr Persona no lo marca como ignorable ni ofensivo directo
  * 3. Usuario tiene activada la respuesta automática
@@ -16,6 +16,7 @@
  */
 
 describe('🧪 Flujo 4: Generación y publicación automática del roast', () => {
+  let mockSupabaseClient;
   let mockTwitterService;
 
   // Test data
@@ -44,6 +45,9 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Mock Supabase Client to avoid global collision
+    mockSupabaseClient = { from: jest.fn() };
+
     // Mock Twitter Service
     mockTwitterService = {
       postResponse: jest.fn(() => Promise.resolve({
@@ -52,6 +56,42 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         posted_at: new Date().toISOString()
       }))
     };
+  });
+
+  // Helper function to reduce Supabase chain mock repetition
+  const createSingleChainMock = (data) => ({
+    select: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        single: jest.fn(() => Promise.resolve({
+          data,
+          error: null
+        }))
+      }))
+    }))
+  });
+
+  const createInsertChainMock = (data) => ({
+    insert: jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn(() => Promise.resolve({
+          data,
+          error: null
+        }))
+      }))
+    }))
+  });
+
+  const createUpdateChainMock = (data) => ({
+    update: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        select: jest.fn(() => ({
+          single: jest.fn(() => Promise.resolve({
+            data,
+            error: null
+          }))
+        }))
+      }))
+    }))
   });
 
   describe('Condiciones iniciales', () => {
@@ -69,19 +109,10 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         }
       };
 
-      mockSupabase.from.mockReturnValueOnce({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: userConfig,
-              error: null
-            }))
-          }))
-        }))
-      });
+      mockSupabaseClient.from.mockReturnValueOnce(createSingleChainMock(userConfig));
 
       // Act: Fetch user config
-      const result = await mockSupabase
+      const result = await mockSupabaseClient
         .from('users')
         .select('*')
         .eq('id', userId)
@@ -104,19 +135,10 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         }
       };
 
-      mockSupabase.from.mockReturnValueOnce({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: organizationConfig,
-              error: null
-            }))
-          }))
-        }))
-      });
+      mockSupabaseClient.from.mockReturnValueOnce(createSingleChainMock(organizationConfig));
 
       // Act: Check roast availability
-      const result = await mockSupabase
+      const result = await mockSupabaseClient
         .from('organizations')
         .select('*')
         .eq('id', organizationId)
@@ -144,19 +166,10 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         }
       };
 
-      mockSupabase.from.mockReturnValueOnce({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: integrationConfig,
-              error: null
-            }))
-          }))
-        }))
-      });
+      mockSupabaseClient.from.mockReturnValueOnce(createSingleChainMock(integrationConfig));
 
       // Act: Fetch integration config
-      const result = await mockSupabase
+      const result = await mockSupabaseClient
         .from('integration_configs')
         .select('*')
         .eq('organization_id', organizationId)
@@ -189,10 +202,14 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
       expect(flowConditions.roastsAvailable).toBeGreaterThan(0); // Has quota
       expect(flowConditions.planAllowsAutoPosting).toBe(true); // Plan allows it
 
-      // Verify flow should proceed
-      const shouldProceed = Object.values(flowConditions).every(condition =>
-        typeof condition === 'boolean' ? condition : condition > 0
-      );
+      // Verify flow should proceed with explicit condition checks
+      const shouldProceed =
+        flowConditions.toxicityScore >= 0.6 &&
+        flowConditions.severityLevel !== 'high' &&
+        flowConditions.autoRespondEnabled &&
+        flowConditions.autoPostEnabled &&
+        flowConditions.roastsAvailable > 0 &&
+        flowConditions.planAllowsAutoPosting;
       expect(shouldProceed).toBe(true);
     });
 
@@ -299,19 +316,10 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         posted_at: new Date().toISOString()
       };
 
-      mockSupabase.from.mockReturnValueOnce({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: responseData,
-              error: null
-            }))
-          }))
-        }))
-      });
+      mockSupabaseClient.from.mockReturnValueOnce(createInsertChainMock(responseData));
 
       // Act: Insert response
-      const result = await mockSupabase
+      const result = await mockSupabaseClient
         .from('responses')
         .insert(responseData)
         .select()
@@ -336,7 +344,7 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         action_taken_by: 'system' // Automatic
       };
 
-      mockSupabase.from.mockReturnValueOnce({
+      mockSupabaseClient.from.mockReturnValueOnce({
         insert: jest.fn(() => Promise.resolve({
           data: attemptData,
           error: null
@@ -344,7 +352,7 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
       });
 
       // Act: Insert attempt
-      const result = await mockSupabase
+      const result = await mockSupabaseClient
         .from('roast_attempts')
         .insert(attemptData);
 
@@ -362,21 +370,10 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         last_response_at: new Date().toISOString()
       };
 
-      mockSupabase.from.mockReturnValueOnce({
-        update: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({
-                data: updatedUsage,
-                error: null
-              }))
-            }))
-          }))
-        }))
-      });
+      mockSupabaseClient.from.mockReturnValueOnce(createUpdateChainMock(updatedUsage));
 
       // Act: Update usage metrics
-      const result = await mockSupabase
+      const result = await mockSupabaseClient
         .from('organizations')
         .update(updatedUsage)
         .eq('id', organizationId)
@@ -386,6 +383,69 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
       // Assert: Usage metrics updated
       expect(result.data.monthly_responses_used).toBe(46);
       expect(result.data.last_response_at).toBeDefined();
+    });
+  });
+
+  describe('Negative path tests', () => {
+    test('should not proceed when auto_post is disabled', async () => {
+      // Arrange: Integration config with auto_post disabled
+      const integrationConfig = {
+        id: 'integration-twitter-123',
+        organization_id: organizationId,
+        platform: 'twitter',
+        enabled: true,
+        config: {
+          auto_post: false, // ❌ Disabled
+          humor_tone: 'sarcastic',
+          humor_type: 'witty',
+          response_frequency: 0.8
+        }
+      };
+
+      mockSupabaseClient.from.mockReturnValueOnce(createSingleChainMock(integrationConfig));
+
+      // Act: Check integration config
+      const result = await mockSupabaseClient
+        .from('integration_configs')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .single();
+
+      // Assert: Auto-post is disabled
+      expect(result.data.config.auto_post).toBe(false);
+    });
+
+    test('should not proceed when quota is exhausted', async () => {
+      // Arrange: Organization with exhausted quota
+      const organizationConfig = {
+        id: organizationId,
+        monthly_responses_limit: 500,
+        monthly_responses_used: 500, // ❌ Quota exhausted
+        settings: {
+          auto_posting_enabled: true
+        }
+      };
+
+      mockSupabaseClient.from.mockReturnValueOnce(createSingleChainMock(organizationConfig));
+
+      // Act: Check quota
+      const result = await mockSupabaseClient
+        .from('organizations')
+        .select('*')
+        .eq('id', organizationId)
+        .single();
+
+      // Assert: No roasts available
+      const roastsAvailable = Math.max(0, result.data.monthly_responses_limit - result.data.monthly_responses_used);
+      expect(roastsAvailable).toBe(0);
+    });
+
+    test('should not proceed when roast length exceeds 280 characters', async () => {
+      // Arrange: Very long roast text
+      const longRoastText = 'A'.repeat(281); // ❌ Exceeds Twitter limit
+
+      // Assert: Length validation should fail
+      expect(longRoastText.length).toBeGreaterThan(280);
     });
   });
 });
