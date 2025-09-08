@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Alert, AlertDescription } from './ui/alert';
-import { 
-  ShoppingCart, 
-  Zap, 
-  BarChart3, 
-  Shield, 
-  CheckCircle, 
+import {
+  ShoppingCart,
+  Zap,
+  BarChart3,
+  Shield,
+  CheckCircle,
   AlertCircle,
   Loader2,
   CreditCard
@@ -103,17 +103,40 @@ const ShopSettings = ({ user, onNotification }) => {
       }
     } catch (error) {
       console.error('Purchase failed:', error);
+
+      // Determine error type and create appropriate user message
+      let errorMessage = 'No se pudo completar la compra. Inténtalo de nuevo.';
+      let notificationMessage = 'Error en la compra';
+
+      // Check if it's a network error (no response from server)
+      if (!error.response && (error.code === 'NETWORK_ERROR' || error.message?.includes('fetch') || error.message?.includes('network'))) {
+        errorMessage = 'Error de conexión — por favor verifica tu conexión a internet.';
+        notificationMessage = 'Error de conexión';
+      }
+      // Check if it's an API error with response
+      else if (error.response) {
+        const status = error.response.status;
+        const apiMessage = error.response.data?.message || error.response.data?.error;
+
+        if (apiMessage) {
+          errorMessage = `Error del servidor (${status}): ${apiMessage}`;
+        } else {
+          errorMessage = `Error del servidor (${status}). Inténtalo de nuevo.`;
+        }
+        notificationMessage = `Error del servidor (${status})`;
+      }
+
       setPurchaseState(prev => {
         const newLoadingByKey = new Set(prev.loadingByKey);
         newLoadingByKey.delete(addonKey);
         return {
           ...prev,
           loadingByKey: newLoadingByKey,
-          error: 'No se pudo completar la compra. Inténtalo de nuevo.',
+          error: errorMessage,
           success: null
         };
       });
-      onNotification?.('Error en la compra', 'error');
+      onNotification?.(notificationMessage, 'error');
     }
   };
 
@@ -345,12 +368,11 @@ const ShopSettings = ({ user, onNotification }) => {
                 const formatStatus = (status) => {
                   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
                 };
-
                 return (
                   <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex-1">
-                      <div className="text-sm font-medium" aria-label={`Addon: ${formatAddonName(purchase)}`}>
-                        {formatAddonName(purchase)}
+                      <div className="text-sm font-medium" aria-label={`Addon: ${formatAddonName(purchase, shopData)}`}>
+                        {formatAddonName(purchase, shopData)}
                       </div>
                       {purchase.created_at && (
                         <div className="text-xs text-muted-foreground mt-1" aria-label={`Purchase date: ${formatDate(purchase.created_at)}`}>
