@@ -55,6 +55,9 @@ class FeatureFlags {
       // Style Profile Feature
       ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false', // Default enabled unless explicitly disabled
 
+      // Custom Prompt Feature
+      ENABLE_CUSTOM_PROMPT: process.env.ENABLE_CUSTOM_PROMPT === 'true', // Default disabled, requires explicit activation
+
       // Shop Feature
       ENABLE_SHOP: process.env.ENABLE_SHOP === 'true' || false // Default disabled unless explicitly enabled
     };
@@ -207,7 +210,9 @@ class FeatureFlags {
         shield: this.flags.ENABLE_SHIELD ? 'enabled' : 'disabled',
         styleProfile: this.flags.ENABLE_STYLE_PROFILE ? 'enabled' : 'disabled',
         magicLink: this.flags.ENABLE_MAGIC_LINK ? 'enabled' : 'disabled',
-        emailNotifications: this.flags.ENABLE_EMAIL_NOTIFICATIONS ? 'enabled' : 'disabled'
+        emailNotifications: this.flags.ENABLE_EMAIL_NOTIFICATIONS ? 'enabled' : 'disabled',
+        customPrompt: this.flags.ENABLE_CUSTOM_PROMPT ? 'enabled' : 'disabled',
+        shop: this.flags.ENABLE_SHOP ? 'enabled' : 'disabled'
       }
     };
   }

@@ -23,6 +23,7 @@ router.get('/health', (req, res) => {
     const flagsStatus = {
       rqc: flags.isEnabled('ENABLE_RQC'),
       shield: flags.isEnabled('ENABLE_SHIELD'),
+      customPrompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT'),
       mockMode: flags.isEnabled('MOCK_MODE'),
       verboseLogs: flags.isEnabled('VERBOSE_LOGS')
     };
