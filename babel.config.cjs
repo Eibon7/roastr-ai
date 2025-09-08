@@ -8,8 +8,8 @@ module.exports = (api) => {
     ['@babel/preset-env', { targets: { node: 'current' } }]
   ];
   
-  // Add React preset for integration tests and component tests that use JSX
-  if (isTest && (isIntegrationTest || process.env.npm_lifecycle_event?.includes('test'))) {
+  // Add React preset for all test environments to support JSX
+  if (isTest) {
     presets.push(['@babel/preset-react', { runtime: 'automatic' }]);
   }
   

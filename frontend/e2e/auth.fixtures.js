@@ -1,26 +1,54 @@
 /**
  * Test fixtures and utilities for E2E authentication tests
  */
+import { expect } from '@playwright/test';
 
-export const TEST_USERS = {
-  validUser: {
-    email: 'valid.user@example.com',
-    password: 'ValidPass123!',
-    name: 'Valid User'
-  },
-  
-  testUser: () => ({
-    email: `test.user+${Date.now()}@example.com`,
-    password: 'TestPass123!',
-    name: 'Test User'
-  }),
-  
-  adminUser: {
-    email: 'admin@example.com',
-    password: 'AdminPass123!',
-    name: 'Admin User'
-  }
-};
+/**
+ * Get test user credentials from environment variables with secure defaults
+ * Environment variables should be set for CI/CD environments
+ * Defaults are provided for local development only
+ */
+function getTestUserCredentials() {
+  return {
+    // Issue #318 - Specific test users as per requirements
+    admin: {
+      email: process.env.E2E_ADMIN_EMAIL || 'admin@roastr.ai',
+      password: process.env.E2E_ADMIN_PASSWORD || 'AdminTest123!',
+      name: process.env.E2E_ADMIN_NAME || 'Admin User',
+      isAdmin: true
+    },
+
+    user: {
+      email: process.env.E2E_USER_EMAIL || 'user@roastr.ai',
+      password: process.env.E2E_USER_PASSWORD || 'UserTest123!',
+      name: process.env.E2E_USER_NAME || 'Regular User',
+      isAdmin: false
+    },
+
+    // Legacy test users for backward compatibility
+    validUser: {
+      email: process.env.E2E_VALID_USER_EMAIL || 'valid.user@example.com',
+      password: process.env.E2E_VALID_USER_PASSWORD || 'ValidPass123!',
+      name: process.env.E2E_VALID_USER_NAME || 'Valid User',
+      isAdmin: process.env.E2E_IS_ADMIN_VALID_USER ? process.env.E2E_IS_ADMIN_VALID_USER === 'true' : false
+    },
+
+    testUser: () => ({
+      email: `test.user+${Date.now()}@example.com`,
+      password: process.env.E2E_TEST_USER_PASSWORD || 'TestPass123!',
+      name: process.env.E2E_TEST_USER_NAME || 'Test User'
+    }),
+
+    adminUser: {
+      email: process.env.E2E_ADMIN_USER_EMAIL || 'admin@example.com',
+      password: process.env.E2E_ADMIN_USER_PASSWORD || 'AdminPass123!',
+      name: process.env.E2E_ADMIN_USER_NAME || 'Admin User',
+      isAdmin: process.env.E2E_IS_ADMIN_ADMIN_USER ? process.env.E2E_IS_ADMIN_ADMIN_USER === 'true' : true
+    }
+  };
+}
+
+export const TEST_USERS = getTestUserCredentials();
 
 export const INVALID_PASSWORDS = [
   {
@@ -164,8 +192,8 @@ export async function checkAuthAccessibility(page) {
   const passwordInput = page.locator('[name="password"]');
   
   await expect(emailInput).toHaveAttribute('type', 'email');
-  await expect(emailInput).toHaveAttribute('required');
-  await expect(passwordInput).toHaveAttribute('required');
+  await expect(emailInput).toHaveJSProperty('required', true);
+  await expect(passwordInput).toHaveJSProperty('required', true);
 }
 
 /**
@@ -190,10 +218,10 @@ export async function cleanupTestUser(email) {
 
 /**
  * Mock network responses for testing error scenarios
- * @param {import('@playwright/test').Page} page 
- * @param {string} endpoint 
- * @param {number} status 
- * @param {Object} response 
+ * @param {import('@playwright/test').Page} page
+ * @param {string} endpoint
+ * @param {number} status
+ * @param {Object} response
  */
 export async function mockNetworkResponse(page, endpoint, status, response) {
   await page.route(endpoint, route => {
@@ -202,5 +230,142 @@ export async function mockNetworkResponse(page, endpoint, status, response) {
       contentType: 'application/json',
       body: JSON.stringify(response)
     });
+  });
+}
+
+/**
+ * Mock successful login response for Issue #318 test users
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} user - User object with email, password, isAdmin
+ */
+export async function mockLoginSuccess(page, user) {
+  await page.unroute('**/api/auth/login').catch(() => {});
+  await page.route('**/api/auth/login', async route => {
+    if (route.request().method() !== 'POST') {
+      return route.continue();
+    }
+    let requestBody = {};
+    try {
+      requestBody = route.request().postDataJSON();
+    } catch (error) {
+      // Log parsing error for debugging while preserving fallback behavior
+      console.warn('Failed to parse request body as JSON in mockLoginSuccess:', error.message);
+      // Fallback to empty object for non-JSON requests
+    }
+
+    if (requestBody.email === user.email && requestBody.password === user.password) {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'Login successful',
+          data: {
+            access_token: 'mock-jwt-token',
+            refresh_token: 'mock-refresh-token',
+            expires_at: Date.now() + 3600000, // 1 hour
+            user: {
+              id: user.isAdmin ? 'admin-user-id' : 'regular-user-id',
+              email: user.email,
+              email_confirmed: true,
+              is_admin: user.isAdmin,
+              name: user.name,
+              plan: user.isAdmin ? 'enterprise' : 'free'
+            }
+          }
+        })
+      });
+    } else {
+      route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          error: 'Email o contraseña incorrectos'
+        })
+      });
+    }
+  });
+}
+
+/**
+ * Mock feature flags response
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} flags - Feature flags object
+ */
+export async function mockFeatureFlags(page, flags = {}) {
+  await page.unroute('**/api/config/flags').catch(() => {});
+  const defaultFlags = {
+    ENABLE_SHOP: false,
+    ENABLE_STYLE_PROFILE: true,
+    ENABLE_RQC: false,
+    ENABLE_SHIELD: false,
+    ENABLE_BILLING: false,
+    ...flags
+  };
+
+  await page.route('**/api/config/flags', route => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        flags: defaultFlags
+      })
+    });
+  });
+}
+
+/**
+ * Mock logout response
+ * @param {import('@playwright/test').Page} page
+ */
+export async function mockLogout(page) {
+  await page.unroute('**/api/auth/logout').catch(() => {});
+  await page.route('**/api/auth/logout', route => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        message: 'Logout successful'
+      })
+    });
+  });
+}
+
+/**
+ * Setup authentication state for a user
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} user - User object
+ *
+ * WARNING: This test fixture uses localStorage for tokens which is INSECURE.
+ * TODO: This is for testing purposes only and must NEVER be used in production.
+ * Production applications should use httpOnly cookies for secure token storage.
+ */
+export async function setupAuthState(page, user) {
+  // Set localStorage with auth data (TEST ONLY - use httpOnly cookies in production)
+  await page.addInitScript((userData) => {
+    localStorage.setItem('auth_token', 'mock-jwt-token');
+    localStorage.setItem('refresh_token', 'mock-refresh-token');
+    localStorage.setItem('user_data', JSON.stringify({
+      id: userData.isAdmin ? 'admin-user-id' : 'regular-user-id',
+      email: userData.email,
+      name: userData.name,
+      is_admin: userData.isAdmin,
+      plan: userData.isAdmin ? 'enterprise' : 'free'
+    }));
+  }, user);
+}
+
+/**
+ * Clear authentication state
+ * @param {import('@playwright/test').Page} page
+ */
+export async function clearAuthState(page) {
+  await page.addInitScript(() => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
   });
 }
