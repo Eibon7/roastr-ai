@@ -67,14 +67,14 @@ CREATE TABLE credit_consumption_log (
     metadata JSONB DEFAULT '{}',
     
     -- Timestamps
-    consumed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
-    -- Indexes
-    INDEX idx_credit_log_user_id (user_id),
-    INDEX idx_credit_log_type (credit_type),
-    INDEX idx_credit_log_consumed_at (consumed_at),
-    INDEX idx_credit_log_user_type_date (user_id, credit_type, consumed_at)
+    consumed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Indexes for credit consumption log
+CREATE INDEX idx_credit_log_user_id ON credit_consumption_log (user_id);
+CREATE INDEX idx_credit_log_type ON credit_consumption_log (credit_type);
+CREATE INDEX idx_credit_log_consumed_at ON credit_consumption_log (consumed_at);
+CREATE INDEX idx_credit_log_user_type_date ON credit_consumption_log (user_id, credit_type, consumed_at);
 
 -- Create function to get or create active period for user
 CREATE OR REPLACE FUNCTION get_or_create_active_period(

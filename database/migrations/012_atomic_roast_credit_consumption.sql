@@ -41,12 +41,18 @@ BEGIN
     END IF;
     
     -- Get current month usage with row-level locking to prevent race conditions
+    -- Lock the user's records first, then aggregate
+    PERFORM 1 FROM roast_usage 
+    WHERE user_id = p_user_id 
+    AND created_at >= current_month_start 
+    FOR UPDATE;
+    
+    -- Now safely aggregate the usage
     SELECT COALESCE(SUM(count), 0)
     INTO current_usage
     FROM roast_usage
     WHERE user_id = p_user_id
-    AND created_at >= current_month_start
-    FOR UPDATE;
+    AND created_at >= current_month_start;
     
     -- Calculate remaining credits
     remaining_credits := p_monthly_limit - current_usage;
