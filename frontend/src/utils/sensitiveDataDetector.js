@@ -58,7 +58,8 @@ function isValidCreditCard(candidate) {
                      (firstFourDigits >= '6440' && firstFourDigits <= '6449') ||
                      (firstFourDigits >= '6500' && firstFourDigits <= '6599');
   const isDiners = firstTwoDigits === '30' || firstTwoDigits === '36' || firstTwoDigits === '38';
-  const isJCB = (firstFourDigits >= '3528' && firstFourDigits <= '3589');
+  const firstFour = parseInt(firstFourDigits, 10);
+  const isJCB = !isNaN(firstFour) && (firstFour >= 3528 && firstFour <= 3589);
 
   const isKnownNetwork = isVisa || isMastercard || isAmex || isDiscover || isDiners || isJCB;
 
@@ -105,7 +106,8 @@ function isValidSSN(candidate, context = '') {
   const serial = cleaned.substring(5, 9);
 
   // Invalid area numbers
-  if (area === '000' || area === '666' || (area >= '900' && area <= '999')) {
+  const areaNum = parseInt(area, 10);
+  if (area === '000' || area === '666' || (!isNaN(areaNum) && areaNum >= 900 && areaNum <= 999)) {
     return false;
   }
 
@@ -161,8 +163,12 @@ function isValidBankAccount(candidate, context = '') {
   // Additional checks for common false positives
   // Don't flag if it's likely a phone number, ID, or other common number
   if (cleaned.length === 10) {
-    // Could be phone number
-    return false;
+    // Check if it matches phone number patterns
+    const phonePattern = /^(\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/;
+    const originalWithSpaces = candidate.replace(/[\s-().]/g, '');
+    if (phonePattern.test(candidate) || /^[0-9]{10}$/.test(originalWithSpaces)) {
+      return false;
+    }
   }
 
   // For 9-digit numbers, check if it's specifically routing-related
@@ -189,16 +195,16 @@ function isValidBankAccount(candidate, context = '') {
  */
 const SENSITIVE_PATTERNS = {
   // Email addresses
-  email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+  email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
 
   // Phone numbers (various formats)
   phone: /\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b/g,
 
-  // Credit card numbers (safer initial pattern for candidates)
-  creditCard: /\b\d{4}[\s-]*\d{4}[\s-]*\d{4}[\s-]*\d{1,4}(?:[\s-]*\d{1,4})?\b/g,
+  // Credit card numbers (stricter pattern for candidates - 13-19 contiguous digits OR properly grouped)
+  creditCard: /\b(?:\d{13,19}|\d{4}[\s-]+\d{4}[\s-]+\d{4}[\s-]+\d{1,7})\b/g,
 
-  // National ID patterns (stricter SSN format)
-  nationalId: /\b\d{3}-\d{2}-\d{4}\b/g,
+  // National ID patterns (dashed or contiguous 9-digit SSN format)
+  nationalId: /\b(?:\d{3}-\d{2}-\d{4}|\d{9})\b/g,
 
   // Passwords, tokens, keys
   credentials: /\b(password|token|key|secret|api[_-]?key|access[_-]?token)\s*[:=]\s*\S+/gi,
@@ -366,7 +372,8 @@ export function generateWarningMessage(detection) {
  * @returns {boolean} Whether clipboard clearing is supported
  */
 export function isClipboardClearingSupported() {
-  return !!(navigator.clipboard && navigator.clipboard.writeText);
+  return typeof navigator !== 'undefined' &&
+         !!(navigator.clipboard && navigator.clipboard.writeText);
 }
 
 /**
