@@ -147,6 +147,68 @@ const AccountModal = ({
     );
   }, [account.id, onRejectRoast, handleAsyncAction]);
 
+  // New roast action handlers
+  const handleEditRoast = useCallback((roastId) => {
+    handleAsyncAction(
+      `edit-${roastId}`,
+      () => {
+        // TODO: Implement edit roast functionality
+        console.log('Edit roast:', roastId);
+      },
+      'Roast editado correctamente'
+    );
+  }, [handleAsyncAction]);
+
+  const handleRegenerateRoast = useCallback((roastId) => {
+    handleAsyncAction(
+      `regenerate-${roastId}`,
+      async () => {
+        const response = await fetch(`/api/user/roasts/${roastId}/regenerate`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) throw new Error('Failed to regenerate roast');
+      },
+      'Roast regenerado correctamente'
+    );
+  }, [handleAsyncAction]);
+
+  const handlePublishRoast = useCallback((roastId) => {
+    handleAsyncAction(
+      `publish-${roastId}`,
+      async () => {
+        const response = await fetch(`/api/user/roasts/${roastId}/publish`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) throw new Error('Failed to publish roast');
+      },
+      'Roast publicado correctamente'
+    );
+  }, [handleAsyncAction]);
+
+  const handleDiscardRoast = useCallback((roastId) => {
+    handleAsyncAction(
+      `discard-${roastId}`,
+      async () => {
+        const response = await fetch(`/api/user/roasts/${roastId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (!response.ok) throw new Error('Failed to discard roast');
+      },
+      'Roast descartado correctamente'
+    );
+  }, [handleAsyncAction]);
+
   const handleDisconnect = () => {
     handleAsyncAction(
       'disconnect',
@@ -307,27 +369,72 @@ const AccountModal = ({
                           </span>
                         </div>
 
-                        {/* Approval Buttons - Only show if auto-approve is OFF and status is pending */}
-                        {!(accountDetails?.settings?.autoApprove || false) && roast.status === 'pending' && (
-                          <div className="flex space-x-2">
+                        {/* Action Buttons */}
+                        <div className="flex space-x-2">
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => handleEditRoast(roast.id)}
+                            disabled={loadingStates[`edit-${roast.id}`]}
+                            className="px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-50"
+                            aria-label="Editar roast"
+                          >
+                            {loadingStates[`edit-${roast.id}`] ? '⏳' : '✏️'} Editar
+                          </button>
+
+                          {/* Regenerate Button */}
+                          <button
+                            onClick={() => handleRegenerateRoast(roast.id)}
+                            disabled={loadingStates[`regenerate-${roast.id}`]}
+                            className="px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                            aria-label="Regenerar roast"
+                          >
+                            {loadingStates[`regenerate-${roast.id}`] ? '⏳' : '🔄'} Regenerar
+                          </button>
+
+                          {/* Publish Button - Only show if not published */}
+                          {roast.status !== 'published' && (
                             <button
-                              onClick={() => handleRejectRoast(roast.id)}
-                              disabled={loadingStates[`reject-${roast.id}`]}
-                              className="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
-                              aria-label="Rechazar roast"
-                            >
-                              {loadingStates[`reject-${roast.id}`] ? '⏳' : '❌'} Rechazar
-                            </button>
-                            <button
-                              onClick={() => handleApproveRoast(roast.id)}
-                              disabled={loadingStates[`approve-${roast.id}`]}
+                              onClick={() => handlePublishRoast(roast.id)}
+                              disabled={loadingStates[`publish-${roast.id}`]}
                               className="px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors disabled:opacity-50"
-                              aria-label="Aprobar roast"
+                              aria-label="Publicar roast"
                             >
-                              {loadingStates[`approve-${roast.id}`] ? '⏳' : '✅'} Aprobar
+                              {loadingStates[`publish-${roast.id}`] ? '⏳' : '📤'} Publicar
                             </button>
-                          </div>
-                        )}
+                          )}
+
+                          {/* Discard Button */}
+                          <button
+                            onClick={() => handleDiscardRoast(roast.id)}
+                            disabled={loadingStates[`discard-${roast.id}`]}
+                            className="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
+                            aria-label="Descartar roast"
+                          >
+                            {loadingStates[`discard-${roast.id}`] ? '⏳' : '🗑️'} Descartar
+                          </button>
+
+                          {/* Approval Buttons - Only show if auto-approve is OFF and status is pending */}
+                          {!(accountDetails?.settings?.autoApprove || false) && roast.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => handleRejectRoast(roast.id)}
+                                disabled={loadingStates[`reject-${roast.id}`]}
+                                className="px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
+                                aria-label="Rechazar roast"
+                              >
+                                {loadingStates[`reject-${roast.id}`] ? '⏳' : '❌'} Rechazar
+                              </button>
+                              <button
+                                onClick={() => handleApproveRoast(roast.id)}
+                                disabled={loadingStates[`approve-${roast.id}`]}
+                                className="px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors disabled:opacity-50"
+                                aria-label="Aprobar roast"
+                              >
+                                {loadingStates[`approve-${roast.id}`] ? '⏳' : '✅'} Aprobar
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

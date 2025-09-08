@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge';
 import { CreditCard, Download, ExternalLink, Check, Zap, AlertTriangle, Activity, BarChart3, TrendingUp } from 'lucide-react';
 import { createMockFetch } from '../lib/mockMode';
 import { getDefaultEntitlements, getDefaultUsage } from '../config/planDefaults';
+import { formatCurrency } from '../utils/formatUtils';
 
 export default function Billing() {
   const [user, setUser] = useState(null);
@@ -116,7 +117,7 @@ export default function Billing() {
   const mockEntitlements = entitlements || getDefaultEntitlements(user?.plan);
   const mockUsage = usage || getDefaultUsage(user?.id);
 
-  const costInDollars = mockUsage?.costCents ? (mockUsage.costCents / 100).toFixed(2) : '0.00';
+  const formattedCost = formatCurrency(mockUsage?.costCents || 0, mockUsage?.currency || 'USD');
 
   return (
     <div className="space-y-8">
@@ -207,7 +208,7 @@ export default function Billing() {
             <CardTitle className="text-sm font-medium">Total Spend</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">€{costInDollars}</div>
+            <div className="text-2xl font-bold text-green-600">{formattedCost}</div>
             <div className="text-xs text-muted-foreground">This month</div>
           </CardContent>
         </Card>
