@@ -101,6 +101,27 @@ function formatNumber(value) {
 }
 
 /**
+ * Format currency amount with proper internationalization
+ * @param {number} amountCents - Amount in cents
+ * @param {string} currency - Currency code (default: 'USD')
+ * @param {string} locale - Locale for formatting (default: 'en-US')
+ * @returns {string} Formatted currency (e.g., "$12.34", "€10.50")
+ */
+function formatCurrency(amountCents, currency = 'USD', locale = 'en-US') {
+  if (typeof amountCents !== 'number' || isNaN(amountCents)) {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: (currency || 'USD').toUpperCase()
+    }).format(0);
+  }
+
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: (currency || 'USD').toUpperCase()
+  }).format(amountCents / 100);
+}
+
+/**
  * Truncate text to specified length with ellipsis
  * @param {string} text - Text to truncate
  * @param {number} maxLength - Maximum length (default: 100)
@@ -111,11 +132,11 @@ function truncateText(text, maxLength = 100, suffix = '...') {
   if (typeof text !== 'string') {
     return '';
   }
-  
+
   if (text.length <= maxLength) {
     return text;
   }
-  
+
   return text.substring(0, maxLength - suffix.length) + suffix;
 }
 
@@ -124,5 +145,6 @@ module.exports = {
   formatDuration,
   formatPercentage,
   formatNumber,
+  formatCurrency,
   truncateText
 };

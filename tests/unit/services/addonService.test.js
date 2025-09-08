@@ -27,11 +27,17 @@ jest.mock('../../../src/config/supabase', () => ({
 
 // Mock logger
 jest.mock('../../../src/utils/logger', () => ({
+<<<<<<< HEAD
     logger: {
         info: jest.fn(),
         warn: jest.fn(),
         error: jest.fn()
     }
+=======
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+>>>>>>> origin/main
 }));
 
 describe('AddonService', () => {
@@ -122,6 +128,24 @@ describe('AddonService', () => {
                 p_amount: 1
             });
         });
+<<<<<<< HEAD
+=======
+
+        it('should return false for invalid amount parameter', async () => {
+            const result1 = await addonService.consumeAddonCredits(mockUserId, 'roasts', 0);
+            const result2 = await addonService.consumeAddonCredits(mockUserId, 'roasts', -1);
+            const result3 = await addonService.consumeAddonCredits(mockUserId, 'roasts', 1.5);
+            const result4 = await addonService.consumeAddonCredits(mockUserId, 'roasts', 'invalid');
+
+            expect(result1).toBe(false);
+            expect(result2).toBe(false);
+            expect(result3).toBe(false);
+            expect(result4).toBe(false);
+
+            // Should not call the RPC for invalid amounts
+            expect(supabaseServiceClient.rpc).not.toHaveBeenCalled();
+        });
+>>>>>>> origin/main
     });
 
     describe('userHasFeatureAddon', () => {
@@ -217,15 +241,25 @@ describe('AddonService', () => {
                 error: null
             });
 
+<<<<<<< HEAD
             // Use plan limits where usage equals or exceeds the limit
             const planLimitsExceeded = { monthly_responses_limit: 100 };
             const currentUsageExceeded = { monthly_responses_used: 100 };
+=======
+            const planLimits = { monthly_responses_limit: 100 };
+            const currentUsage = { monthly_responses_used: 100 }; // Plan limit exceeded
+>>>>>>> origin/main
 
             const result = await addonService.canPerformAction(
                 mockUserId,
                 'roast',
+<<<<<<< HEAD
                 planLimitsExceeded,
                 currentUsageExceeded
+=======
+                planLimits,
+                currentUsage
+>>>>>>> origin/main
             );
 
             expect(result).toEqual({
@@ -241,15 +275,25 @@ describe('AddonService', () => {
                 error: null
             });
 
+<<<<<<< HEAD
             // Use plan limits where usage equals or exceeds the limit
             const planLimitsExceeded = { monthly_responses_limit: 100 };
             const currentUsageExceeded = { monthly_responses_used: 100 };
+=======
+            const planLimits = { monthly_responses_limit: 100 };
+            const currentUsage = { monthly_responses_used: 100 }; // Plan limit exceeded
+>>>>>>> origin/main
 
             const result = await addonService.canPerformAction(
                 mockUserId,
                 'roast',
+<<<<<<< HEAD
                 planLimitsExceeded,
                 currentUsageExceeded
+=======
+                planLimits,
+                currentUsage
+>>>>>>> origin/main
             );
 
             expect(result.allowed).toBe(false);
@@ -258,9 +302,15 @@ describe('AddonService', () => {
 
         it('should deny action for invalid action type', async () => {
             const result = await addonService.canPerformAction(
+<<<<<<< HEAD
                 mockUserId,
                 'invalid_action',
                 mockPlanLimits,
+=======
+                mockUserId, 
+                'invalid_action', 
+                mockPlanLimits, 
+>>>>>>> origin/main
                 mockCurrentUsage
             );
 
@@ -269,6 +319,7 @@ describe('AddonService', () => {
                 reason: 'Invalid action type'
             });
         });
+<<<<<<< HEAD
 
         it('should handle analysis action with correct pluralization (fix for CodeRabbit issue)', async () => {
             // Test that 'analysis' action uses correct key mapping instead of naive pluralization
@@ -319,22 +370,37 @@ describe('AddonService', () => {
                 remaining: 70  // 100 - 30
             });
         });
+=======
+>>>>>>> origin/main
     });
 
     describe('recordActionUsage', () => {
         it('should record usage from addon credits when plan limit exceeded', async () => {
+<<<<<<< HEAD
             // Mock canPerformAction to return addon source
             supabaseServiceClient.rpc
                 .mockResolvedValueOnce({ data: 10, error: null }) // getUserAddonCredits
                 .mockResolvedValueOnce({ data: true, error: null }); // consumeAddonCredits
+=======
+            // Mock the atomic behavior: consumeAddonCredits then getUserAddonCredits
+            supabaseServiceClient.rpc
+                .mockResolvedValueOnce({ data: true, error: null }) // consumeAddonCredits
+                .mockResolvedValueOnce({ data: 9, error: null }); // getUserAddonCredits (after consumption)
+>>>>>>> origin/main
 
             const planLimits = { monthly_responses_limit: 100 };
             const currentUsage = { monthly_responses_used: 100 };
 
             const result = await addonService.recordActionUsage(
+<<<<<<< HEAD
                 mockUserId, 
                 'roast', 
                 planLimits, 
+=======
+                mockUserId,
+                'roast',
+                planLimits,
+>>>>>>> origin/main
                 currentUsage
             );
 

@@ -21,7 +21,7 @@ const SafeUtils = {
   /**
    * Safely mask an email address for logging without exposing PII
    * @param {string} email - The email address to mask
-   * @returns {string} Masked email address or placeholder for invalid inputs
+   * @returns {string} Masked email address
    */
   maskEmail(email) {
     if (!email || typeof email !== 'string') {
@@ -33,9 +33,9 @@ const SafeUtils = {
       return 'invalid-email';
     }
 
-    // If there's no local part, treat as invalid input and return safe placeholder
+    // If there's no local part, treat as invalid input and return null for consistency
     if (atIndex === 0) {
-      return '[invalid email]'; // e.g., "@domain.com"
+      return null; // e.g., "@domain.com" - return null for invalid/malformed emails
     }
 
     const localPart = email.substring(0, atIndex);
@@ -43,7 +43,7 @@ const SafeUtils = {
 
     // If domain is missing or malformed, treat as invalid
     if (!domain || !domain.includes('.')) {
-      return '[invalid email]'; // e.g., "test@"
+      return ''; // e.g., "test@" - return empty string to maintain string return type
     }
 
     // Mask local part: keep first character, mask the rest

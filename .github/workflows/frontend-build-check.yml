@@ -3,13 +3,13 @@ name: Frontend Build Check & Case Sensitivity
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, codex/*]
     paths:
       - 'frontend/**'
       - 'src/**'
       - 'package.json'
       - 'frontend/package.json'
-  
+
   pull_request:
     branches: [main, develop]
     paths:

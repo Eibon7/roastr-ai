@@ -171,7 +171,11 @@ describe('AjustesSettings Component', () => {
 
     // Should show the form
     await waitFor(() => {
+<<<<<<< HEAD
       expect(screen.getByPlaceholderText(/Soy desarrollador/)).toBeInTheDocument();
+=======
+      expect(screen.getByDisplayValue('Soy desarrollador')).toBeInTheDocument();
+>>>>>>> origin/main
     });
   });
 
@@ -274,7 +278,11 @@ describe('AjustesSettings Component', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
+<<<<<<< HEAD
       expect(screen.getByPlaceholderText(/Soy desarrollador/)).toBeInTheDocument();
+=======
+      expect(screen.getByDisplayValue('Soy desarrollador')).toBeInTheDocument();
+>>>>>>> origin/main
     });
 
     // Try to save
@@ -300,6 +308,7 @@ describe('AjustesSettings Component', () => {
       data: { ...mockApiResponses.transparency.data, bio_text: null }
     };
 
+<<<<<<< HEAD
     apiClient.get.mockImplementation((url) => {
       // First try exact match on full URL
       if (mockApiResponses.hasOwnProperty(url)) {
@@ -337,6 +346,38 @@ describe('AjustesSettings Component', () => {
       }
 
       // Fail explicitly instead of returning generic response
+=======
+    // Create a Map with canonical paths for simplified lookup
+    const responseMap = new Map();
+
+    // Populate the map with canonical paths
+    Object.entries(mockApiResponses).forEach(([key, value]) => {
+      responseMap.set(key, value);
+    });
+
+    // Add the special case for transparency-mode
+    responseMap.set('/user/settings/transparency-mode', mockResponseWithoutBio);
+
+    apiClient.get.mockImplementation((url) => {
+      // Normalize the incoming request to a canonical pathname
+      let canonicalPath;
+      try {
+        // Try URL constructor first (handles full URLs)
+        const urlObj = new URL(url, 'http://localhost');
+        canonicalPath = urlObj.pathname;
+      } catch {
+        // Fallback to treating as pathname directly
+        canonicalPath = url;
+      }
+
+      // Single Map lookup
+      const response = responseMap.get(canonicalPath);
+      if (response) {
+        return Promise.resolve(response);
+      }
+
+      // Reject if not found
+>>>>>>> origin/main
       return Promise.reject(new Error(`Unexpected mock request: ${url}`));
     });
 
@@ -382,7 +423,11 @@ describe('AjustesSettings Component', () => {
     fireEvent.click(editButtons[0]);
 
     await waitFor(() => {
+<<<<<<< HEAD
       const textarea = screen.getByPlaceholderText(/Soy desarrollador/);
+=======
+      const textarea = screen.getByDisplayValue('Soy desarrollador');
+>>>>>>> origin/main
       expect(textarea).toBeInTheDocument();
       expect(textarea).toHaveAttribute('maxLength', '300');
     });

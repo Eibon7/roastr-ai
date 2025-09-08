@@ -8,7 +8,6 @@
 const { supabaseServiceClient } = require('../config/supabase');
 const EntitlementsService = require('./entitlementsService');
 const StripeWrapper = require('./stripeWrapper');
-const creditsService = require('./creditsService');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
@@ -76,7 +75,7 @@ class StripeWebhookService {
             switch (event.type) {
                 case 'checkout.session.completed':
                     // Check if this is an addon purchase or subscription
-                    if (event.data.object?.mode === 'payment' && event.data.object?.metadata?.addon_key) {
+                    if (event.data.object.mode === 'payment' && event.data.object.metadata?.addon_key) {
                         result = await this._handleAddonPurchaseCompleted(event.data.object);
                     } else {
                         result = await this._handleCheckoutCompleted(event.data.object);
@@ -252,6 +251,20 @@ class StripeWebhookService {
                 });
             }
 
+            // Trigger automatic stylecard generation for Pro/Plus users (Issue #293)
+            if (success && (plan === 'pro' || plan === 'creator_plus')) {
+                try {
+                    await this._triggerStylecardGeneration(userId, transactionResult?.organization_id);
+                } catch (stylecardError) {
+                    // Don't fail the checkout if stylecard generation fails
+                    logger.warn('Failed to trigger stylecard generation after checkout', {
+                        userId,
+                        plan,
+                        error: stylecardError.message
+                    });
+                }
+            }
+
             return {
                 success: true,
                 accountId: userId,
@@ -318,72 +331,59 @@ class StripeWebhookService {
                 throw new Error('Payment intent must be a string or object with id property');
             }
 
-            // Validate amount_total
-            const amountCents = session.amount_total;
-            if (typeof amountCents !== 'number' || amountCents <= 0) {
-                logger.error('Invalid amount_total in checkout session', {
+            // Validate session.amount_total
+            if (!session.amount_total || typeof session.amount_total !== 'number') {
+                logger.error('Invalid or missing amount_total in checkout session', {
                     sessionId: session.id,
                     userId,
                     addonKey,
                     amountTotal: session.amount_total,
-                    amountType: typeof session.amount_total
+                    amountTotalType: typeof session.amount_total
                 });
-                throw new Error('Invalid payment amount in checkout session');
+
+                // Update purchase history as failed
+                await supabaseServiceClient
+                    .from('addon_purchase_history')
+                    .update({
+                        status: 'failed',
+                        failed_at: new Date().toISOString(),
+                        error_message: 'Invalid amount_total in checkout session'
+                    })
+                    .eq('stripe_checkout_session_id', session.id);
+
+                throw new Error('Amount total must be a valid number');
             }
 
-            // Validate currency
-            const sessionCurrency = session.currency;
-            if (!sessionCurrency || typeof sessionCurrency !== 'string') {
-                logger.error('Invalid or missing currency in checkout session', {
+            // Robust numeric validation - coerce to Number and validate
+            const amountNumber = Number(session.amount_total);
+
+            // Check if conversion resulted in a valid number
+            if (isNaN(amountNumber) || !Number.isSafeInteger(amountNumber) || amountNumber <= 0) {
+                logger.error('Invalid amount_total value in checkout session', {
                     sessionId: session.id,
                     userId,
                     addonKey,
-                    currency: session.currency,
-                    currencyType: typeof session.currency
+                    originalAmount: session.amount_total,
+                    coercedAmount: amountNumber,
+                    isNaN: isNaN(amountNumber),
+                    isSafeInteger: Number.isSafeInteger(amountNumber),
+                    isPositive: amountNumber > 0
                 });
-                throw new Error('Invalid or missing currency in checkout session');
+
+                // Update purchase history as failed
+                await supabaseServiceClient
+                    .from('addon_purchase_history')
+                    .update({
+                        status: 'failed',
+                        failed_at: new Date().toISOString(),
+                        error_message: 'Amount total must be a positive integer'
+                    })
+                    .eq('stripe_checkout_session_id', session.id);
+
+                throw new Error('Amount total must be a positive integer');
             }
 
-            // Fetch addon details from database for price and currency validation
-            const { data: addonDetails, error: addonError } = await supabaseServiceClient
-                .from('shop_addons')
-                .select('price_cents, currency, addon_key')
-                .eq('addon_key', addonKey)
-                .eq('is_active', true)
-                .single();
-
-            if (addonError || !addonDetails) {
-                logger.error('Failed to fetch addon details for validation', {
-                    sessionId: session.id,
-                    userId,
-                    addonKey,
-                    error: addonError
-                });
-                throw new Error('Addon not found or inactive');
-            }
-
-            // Validate price and currency against database
-            if (addonDetails.price_cents !== amountCents) {
-                logger.error('Price mismatch between session and database', {
-                    sessionId: session.id,
-                    userId,
-                    addonKey,
-                    sessionAmount: amountCents,
-                    expectedAmount: addonDetails.price_cents
-                });
-                throw new Error('Payment amount does not match expected addon price');
-            }
-
-            if (addonDetails.currency.toLowerCase() !== sessionCurrency.toLowerCase()) {
-                logger.error('Currency mismatch between session and database', {
-                    sessionId: session.id,
-                    userId,
-                    addonKey,
-                    sessionCurrency: sessionCurrency,
-                    expectedCurrency: addonDetails.currency
-                });
-                throw new Error('Payment currency does not match expected addon currency');
-            }
+            const amountCents = amountNumber;
 
             // Execute atomic transaction for addon purchase
             const { data: transactionResult, error: transactionError } = await supabaseServiceClient
@@ -393,8 +393,6 @@ class StripeWebhookService {
                     p_stripe_payment_intent_id: paymentIntentId,
                     p_stripe_checkout_session_id: session.id,
                     p_amount_cents: amountCents,
-                    p_currency: sessionCurrency,
-                    p_expected_price_cents: addonDetails.price_cents,
                     p_addon_type: addonType,
                     p_credit_amount: creditAmount,
                     p_feature_key: featureKey
@@ -535,39 +533,11 @@ class StripeWebhookService {
                 };
             }
 
-            // Reset credits for new billing period if Credits v2 is enabled
-            let creditsReset = false;
-            if (flags.isEnabled('ENABLE_CREDITS_V2')) {
-                try {
-                    creditsReset = await creditsService.resetCreditsForNewPeriod(userId, {
-                        start: new Date(subscription.current_period_start * 1000).toISOString(),
-                        end: new Date(subscription.current_period_end * 1000).toISOString(),
-                        stripeCustomerId: customerId
-                    });
-
-                    if (creditsReset) {
-                        logger.info('Credits reset for subscription update', {
-                            userId,
-                            subscriptionId,
-                            plan
-                        });
-                    }
-                } catch (error) {
-                    logger.error('Failed to reset credits during subscription update', {
-                        userId,
-                        subscriptionId,
-                        error: error.message
-                    });
-                    // Don't fail the webhook for credit reset errors
-                }
-            }
-
             return {
                 success: true,
                 accountId: userId,
                 message: 'Subscription updated with atomic transaction',
                 entitlementsUpdated: transactionResult?.entitlements_updated || false,
-                creditsReset,
                 planName: transactionResult?.new_plan || plan,
                 oldPlan: transactionResult?.old_plan,
                 subscriptionStatus: subscription.status,
@@ -687,44 +657,11 @@ class StripeWebhookService {
                 };
             }
 
-            // Reset credits for new billing period if this is a subscription renewal
-            let creditsReset = false;
-            if (flags.isEnabled('ENABLE_CREDITS_V2') && invoice.subscription) {
-                try {
-                    // Get subscription details to determine billing period
-                    if (this.stripeWrapper) {
-                        const subscription = await this.stripeWrapper.subscriptions.retrieve(invoice.subscription);
-
-                        creditsReset = await creditsService.resetCreditsForNewPeriod(userId, {
-                            start: new Date(subscription.current_period_start * 1000).toISOString(),
-                            end: new Date(subscription.current_period_end * 1000).toISOString(),
-                            stripeCustomerId: customerId
-                        });
-
-                        if (creditsReset) {
-                            logger.info('Credits reset for payment succeeded', {
-                                userId,
-                                subscriptionId: invoice.subscription,
-                                invoiceId: invoice.id
-                            });
-                        }
-                    }
-                } catch (error) {
-                    logger.error('Failed to reset credits during payment succeeded', {
-                        userId,
-                        invoiceId: invoice.id,
-                        error: error.message
-                    });
-                    // Don't fail the webhook for credit reset errors
-                }
-            }
-
             return {
                 success: true,
                 accountId: userId,
                 message: 'Payment succeeded with atomic transaction',
                 statusUpdated: transactionResult?.status_updated || false,
-                creditsReset,
                 invoiceId: invoice.id,
                 amount: invoice.amount_paid,
                 transactionResult
@@ -768,7 +705,8 @@ class StripeWebhookService {
                     p_amount_due: invoice.amount_due,
                     p_attempt_count: invoice.attempt_count || 0,
                     p_next_attempt_date: invoice.next_payment_attempt ? new Date(invoice.next_payment_attempt * 1000).toISOString() : null,
-                    p_payment_failed_at: new Date().toISOString()
+                    p_payment_failed_at: new Date().toISOString(),
+                    p_stripe_payment_intent_id: invoice.payment_intent || null // CodeRabbit: Include payment intent ID for traceability
                 });
 
             if (transactionError) {
@@ -972,6 +910,85 @@ class StripeWebhookService {
                 success: false,
                 error: error.message
             };
+        }
+    }
+
+    /**
+     * Trigger automatic stylecard generation for new Pro/Plus subscribers
+     * @private
+     */
+    async _triggerStylecardGeneration(userId, organizationId) {
+        try {
+            // Import stylecardService here to avoid circular dependencies
+            const stylecardService = require('./stylecardService');
+
+            // Get user's connected integrations
+            const { data: integrations, error } = await supabaseServiceClient
+                .from('integration_configs')
+                .select('platform')
+                .eq('organization_id', organizationId)
+                .eq('enabled', true);
+
+            if (error) {
+                logger.error('Failed to get user integrations for stylecard generation', {
+                    userId,
+                    organizationId,
+                    error: error.message
+                });
+                return;
+            }
+
+            const connectedPlatforms = integrations?.map(i => i.platform) || [];
+
+            // Only trigger if user has connected platforms
+            if (connectedPlatforms.length === 0) {
+                logger.info('No connected platforms found, skipping stylecard generation', {
+                    userId,
+                    organizationId
+                });
+                return;
+            }
+
+            // Filter to supported platforms
+            const supportedPlatforms = ['twitter', 'instagram', 'tiktok', 'youtube', 'twitch'];
+            const validPlatforms = connectedPlatforms.filter(p => supportedPlatforms.includes(p));
+
+            if (validPlatforms.length === 0) {
+                logger.info('No supported platforms found for stylecard generation', {
+                    userId,
+                    organizationId,
+                    connectedPlatforms
+                });
+                return;
+            }
+
+            // Trigger stylecard generation
+            const result = await stylecardService.triggerStylecardGeneration(
+                userId,
+                organizationId,
+                validPlatforms,
+                {
+                    language: 'es', // Default to Spanish
+                    forceRegenerate: false,
+                    maxContent: 50
+                }
+            );
+
+            logger.info('Automatic stylecard generation triggered', {
+                userId,
+                organizationId,
+                platforms: validPlatforms,
+                jobId: result.jobId
+            });
+
+        } catch (error) {
+            logger.error('Failed to trigger automatic stylecard generation', {
+                userId,
+                organizationId,
+                error: error.message,
+                stack: error.stack
+            });
+            // Don't throw - this is a background operation
         }
     }
 }

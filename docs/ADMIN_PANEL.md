@@ -71,9 +71,11 @@ URL: http://localhost:3000/admin
 
 #### **3. Credenciales de Prueba**
 ```
-Email: admin@roastr.ai
-Password: admin123
+Email: <YOUR_ADMIN_EMAIL>
+Password: <YOUR_ADMIN_PASSWORD>
 ```
+
+**Nota:** Para desarrollo local únicamente. Genere las credenciales usando el script `scripts/create-test-admin.sql` o configure las variables de entorno apropiadas. Rote o elimine estas credenciales después del uso.
 
 #### **4. Navegación**
 ```

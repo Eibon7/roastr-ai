@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X, Heart, Eye, EyeOff } from 'lucide-react';
+import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X, Heart, Eye, EyeOff, LogOut, Trash2 } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { authHelpers } from '../lib/supabaseClient';
 import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
@@ -415,6 +415,10 @@ export default function Settings() {
 
     try {
       setDataExportLoading(true);
+      setLastDataExportAttempt(now);
+
+      // Store timestamp in localStorage for persistence
+      localStorage.setItem('lastDataExportAttempt', now.toString());
 
       const result = await apiClient.post('/user/data-export');
 
@@ -466,6 +470,52 @@ export default function Settings() {
     }
   };
 
+  // Utility function to sanitize input text
+  const sanitizeInput = (text) => {
+    if (!text || typeof text !== 'string') return '';
+
+    return text
+      .trim()
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/[<>]/g, '') // Remove potential HTML tags
+      .substring(0, 300); // Ensure max length
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      // First, sign out from Supabase client session
+      await authHelpers.signOut();
+
+      // Optionally call backend logout endpoint to clear server-side sessions
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (backendError) {
+        // Backend logout is optional, don't fail if it errors
+        console.error('Backend logout failed:', backendError);
+      }
+
+      // Clear any remaining localStorage keys
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Redirect to login
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Even if signOut fails, clear localStorage and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+  };
+
   // Roastr Persona handlers
   const handleSaveRoastrPersona = async (fieldType = 'identity') => {
     const isIdentity = fieldType === 'identity';
@@ -474,15 +524,20 @@ export default function Settings() {
     
     let text;
     if (isIdentity) {
-      text = roastrPersona.loQueMeDefine;
+      text = sanitizeInput(roastrPersona.loQueMeDefine);
     } else if (isIntolerance) {
-      text = roastrPersona.loQueNoTolero;
+      text = sanitizeInput(roastrPersona.loQueNoTolero);
     } else if (isTolerance) {
-      text = roastrPersona.loQueMeDaIgual;
+      text = sanitizeInput(roastrPersona.loQueMeDaIgual);
     }
-    
+
     if (text.length > 300) {
       addNotification('El texto no puede exceder los 300 caracteres', 'error');
+      return;
+    }
+
+    if (text.length === 0) {
+      addNotification('El campo no puede estar vacío', 'error');
       return;
     }
 
@@ -491,29 +546,33 @@ export default function Settings() {
       
       const payload = {};
       if (isIdentity) {
-        payload.loQueMeDefine = text.trim() || null;
+        payload.loQueMeDefine = text || null;
         payload.isVisible = roastrPersona.isVisible;
       } else if (isIntolerance) {
-        payload.loQueNoTolero = text.trim() || null;
+        payload.loQueNoTolero = text || null;
         payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
       } else if (isTolerance) {
-        payload.loQueMeDaIgual = text.trim() || null;
+        payload.loQueMeDaIgual = text || null;
         payload.isToleranceVisible = roastrPersona.isToleranceVisible;
       }
       
-      const result = await apiClient.post('/user/roastr-persona', payload);
+      const resp = await apiClient.post('/user/roastr-persona', payload);
 
-      if (result.success) {
+      if (resp?.data?.success) {
         setRoastrPersona(prev => ({
           ...prev,
-          hasContent: !!result.data.hasContent,
-          hasIntoleranceContent: !!result.data.hasIntoleranceContent,
-          hasToleranceContent: !!result.data.hasToleranceContent,
+          hasContent: !!resp.data?.hasContent,
+          hasIntoleranceContent: !!resp.data?.hasIntoleranceContent,
+          hasToleranceContent: !!resp.data?.hasToleranceContent,
+          loQueMeDefine: isIdentity ? text : prev.loQueMeDefine,
+          loQueNoTolero: isIntolerance ? text : prev.loQueNoTolero,
+          loQueMeDaIgual: isTolerance ? text : prev.loQueMeDaIgual,
           showForm: isIdentity ? false : prev.showForm,
           showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
-          showToleranceForm: isTolerance ? false : prev.showToleranceForm
+          showToleranceForm: isTolerance ? false : prev.showToleranceForm,
+          isSaving: false
         }));
-        
+
         let successMessage;
         if (isIdentity) {
           successMessage = 'Definición personal actualizada correctamente';
@@ -522,15 +581,15 @@ export default function Settings() {
         } else if (isTolerance) {
           successMessage = 'Tolerancias personales actualizadas correctamente';
         }
-        
+
         addNotification(successMessage, 'success');
       } else {
         // Check if the error is due to security rejection
-        const errorMessage = result.error || 'Error al guardar Roastr Persona';
-        const isSecurityRejection = result.rejectedForSecurity === true;
-        
+        const errorMessage = resp?.data?.error || resp?.error || 'Error al guardar Roastr Persona';
+        const isSecurityRejection = resp?.data?.rejectedForSecurity === true || resp?.rejectedForSecurity === true;
+
         addNotification(errorMessage, 'error');
-        
+
         // If it's a security rejection, also clear the field to prevent confusion
         if (isSecurityRejection) {
           if (isIdentity) {
@@ -541,17 +600,20 @@ export default function Settings() {
             setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
           }
         }
+
+        setRoastrPersona(prev => ({ ...prev, isSaving: false }));
       }
-      
+
     } catch (error) {
-      console.error('Roastr Persona save error:', error);
-      const errorMessage = error.message || 'Error al guardar Roastr Persona';
-      
+      const apiMessage = error.response?.data?.message || error.response?.data?.error;
+      console.error('Roastr Persona save error:', apiMessage || error.message);
+      const errorMessage = apiMessage || error.message || 'Error al guardar Roastr Persona';
+
       // Check if it's a security-related error from the response
       if (error.response?.data?.rejectedForSecurity) {
         const securityMessage = error.response.data.error || errorMessage;
         addNotification(securityMessage, 'error');
-        
+
         // Clear the field that was rejected
         if (isIdentity) {
           setRoastrPersona(prev => ({ ...prev, loQueMeDefine: '' }));
@@ -563,6 +625,7 @@ export default function Settings() {
       } else {
         addNotification(errorMessage, 'error');
       }
+
     } finally {
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
@@ -1752,6 +1815,31 @@ export default function Settings() {
         onNotification={addNotification}
       />
 
+      {/* Logout Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <LogOut className="h-5 w-5" />
+            <span>Cerrar sesión</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div className="font-medium mb-2">Cerrar sesión en este dispositivo</div>
+            <div className="text-sm text-muted-foreground mb-3">
+              Cierra tu sesión actual y regresa a la página de login.
+            </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Cerrar sesión
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       {/* Danger Zone */}
       <Card>
         <CardHeader>

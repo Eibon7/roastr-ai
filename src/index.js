@@ -3,6 +3,26 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+// Validate critical environment variables at startup
+function validateEnvironment() {
+  // Skip validation during tests
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
+  const requiredVars = ['IDEMPOTENCY_SECRET'];
+  const missing = requiredVars.filter(varName => !process.env[varName] || process.env[varName].trim() === '');
+
+  if (missing.length > 0) {
+    console.error('❌ Missing required environment variables:', missing.join(', '));
+    console.error('💡 Please set IDEMPOTENCY_SECRET to a strong randomly generated secret');
+    process.exit(1);
+  }
+}
+
+// Run environment validation
+validateEnvironment();
+
 // Security and monitoring middleware
 const { 
   helmetConfig, 
@@ -37,6 +57,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const { router: planRoutes } = require('./routes/plan');
 const { router: newIntegrationsRoutes } = require('./routes/integrations-new');
 const styleProfileRoutes = require('./routes/style-profile');
+const stylecardsRoutes = require('./routes/stylecards');
 const configRoutes = require('./routes/config');
 const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
@@ -201,6 +222,9 @@ app.use('/api/integrations', newIntegrationsRoutes);
 
 // Style profile routes (authenticated, Creator+ only)
 app.use('/api/style-profile', styleProfileRoutes);
+
+// Stylecards routes (authenticated, Pro+ only) - Issue #293
+app.use('/api/stylecards', stylecardsRoutes);
 
 // Configuration routes (authenticated)
 app.use('/api/config', configRoutes);

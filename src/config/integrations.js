@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { PLATFORM_LIMITS } = require('./constants');
 
 module.exports = {
   // Control global de integraciones
@@ -104,7 +105,7 @@ module.exports = {
   // Configuración global de filtros
   globalFilters: {
     minCommentLength: parseInt(process.env.GLOBAL_MIN_COMMENT_LENGTH) || 5,
-    maxCommentLength: parseInt(process.env.GLOBAL_MAX_COMMENT_LENGTH) || 280,
+    maxCommentLength: parseInt(process.env.GLOBAL_MAX_COMMENT_LENGTH) || PLATFORM_LIMITS.twitter.maxLength,
     bannedWords: process.env.GLOBAL_BANNED_WORDS?.split(',') || ['spam', 'bot', 'fake'],
     toxicityThreshold: parseFloat(process.env.GLOBAL_TOXICITY_THRESHOLD) || 0.7,
   },

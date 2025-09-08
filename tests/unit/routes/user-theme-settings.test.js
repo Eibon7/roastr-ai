@@ -4,15 +4,22 @@ const userRoutes = require('../../../src/routes/user');
 const { authenticateToken } = require('../../../src/middleware/auth');
 const { createUserClient } = require('../../../src/config/supabase');
 const auditService = require('../../../src/services/auditService');
+<<<<<<< HEAD
 const flags = require('../../../src/config/flags');
+=======
+const { flags } = require('../../../src/config/flags');
+>>>>>>> origin/main
 
 // Mock dependencies
 jest.mock('../../../src/middleware/auth');
 jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/services/auditService');
 jest.mock('../../../src/config/flags');
+<<<<<<< HEAD
 jest.mock('../../../src/utils/logger');
 jest.mock('../../../src/utils/SafeUtils');
+=======
+>>>>>>> origin/main
 
 const app = express();
 app.use(express.json());
@@ -21,33 +28,51 @@ app.use('/api/user', userRoutes);
 describe('User Theme Settings API', () => {
   let mockUserClient;
   let mockUser;
+<<<<<<< HEAD
   let selectSingleMock;
   let updateSingleMock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
+=======
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+>>>>>>> origin/main
     mockUser = {
       id: 'test-user-id',
       email: 'test@example.com'
     };
 
+<<<<<<< HEAD
     // Create stable mock functions
     selectSingleMock = jest.fn();
     updateSingleMock = jest.fn();
 
     // Create mock client with stable references
+=======
+>>>>>>> origin/main
     mockUserClient = {
       from: jest.fn(() => ({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
+<<<<<<< HEAD
             single: selectSingleMock
+=======
+            single: jest.fn()
+>>>>>>> origin/main
           }))
         })),
         update: jest.fn(() => ({
           eq: jest.fn(() => ({
             select: jest.fn(() => ({
+<<<<<<< HEAD
               single: updateSingleMock
+=======
+              single: jest.fn()
+>>>>>>> origin/main
             }))
           }))
         }))
@@ -56,16 +81,25 @@ describe('User Theme Settings API', () => {
 
     authenticateToken.mockImplementation((req, res, next) => {
       req.user = mockUser;
+<<<<<<< HEAD
       req.accessToken = 'test-token';
+=======
+      req.headers = { authorization: 'Bearer test-token' };
+>>>>>>> origin/main
       next();
     });
 
     createUserClient.mockReturnValue(mockUserClient);
+<<<<<<< HEAD
     auditService.logUserSettingChange = jest.fn().mockResolvedValue();
     flags.isEnabled = jest.fn((flag) => {
       if (flag === 'ENABLE_SUPABASE') return true;
       return false;
     });
+=======
+    auditService.logUserSettingChange = jest.fn();
+    flags.isEnabled = jest.fn().mockReturnValue(true);
+>>>>>>> origin/main
   });
 
   describe('GET /api/user/settings/theme', () => {
@@ -75,7 +109,11 @@ describe('User Theme Settings API', () => {
         other_setting: 'value'
       };
 
+<<<<<<< HEAD
       selectSingleMock.mockResolvedValue({
+=======
+      mockUserClient.from().select().eq().single.mockResolvedValue({
+>>>>>>> origin/main
         data: { preferences: mockPreferences },
         error: null
       });
@@ -99,7 +137,11 @@ describe('User Theme Settings API', () => {
     });
 
     it('should return default theme when no preferences exist', async () => {
+<<<<<<< HEAD
       selectSingleMock.mockResolvedValue({
+=======
+      mockUserClient.from().select().eq().single.mockResolvedValue({
+>>>>>>> origin/main
         data: { preferences: null },
         error: null
       });
@@ -124,7 +166,14 @@ describe('User Theme Settings API', () => {
     });
 
     it('should handle database errors', async () => {
+<<<<<<< HEAD
       selectSingleMock.mockRejectedValue(new Error('Database error'));
+=======
+      mockUserClient.from().select().eq().single.mockResolvedValue({
+        data: null,
+        error: new Error('Database error')
+      });
+>>>>>>> origin/main
 
       const response = await request(app)
         .get('/api/user/settings/theme')
@@ -144,13 +193,21 @@ describe('User Theme Settings API', () => {
       const updatedPreferences = { theme: 'dark', other_setting: 'value' };
 
       // Mock current preferences fetch
+<<<<<<< HEAD
       selectSingleMock.mockResolvedValue({
+=======
+      mockUserClient.from().select().eq().single.mockResolvedValue({
+>>>>>>> origin/main
         data: { preferences: currentPreferences },
         error: null
       });
 
       // Mock update
+<<<<<<< HEAD
       updateSingleMock.mockResolvedValue({
+=======
+      mockUserClient.from().update().eq().select().single.mockResolvedValue({
+>>>>>>> origin/main
         data: { preferences: updatedPreferences },
         error: null
       });
@@ -163,7 +220,11 @@ describe('User Theme Settings API', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         success: true,
+<<<<<<< HEAD
         message: 'Theme updated successfully',
+=======
+        message: 'Theme setting updated successfully',
+>>>>>>> origin/main
         data: {
           theme: 'dark'
         }
@@ -208,13 +269,21 @@ describe('User Theme Settings API', () => {
 
     it('should handle missing current preferences', async () => {
       // Mock current preferences fetch (no preferences)
+<<<<<<< HEAD
       selectSingleMock.mockResolvedValue({
+=======
+      mockUserClient.from().select().eq().single.mockResolvedValue({
+>>>>>>> origin/main
         data: { preferences: null },
         error: null
       });
 
       // Mock update
+<<<<<<< HEAD
       updateSingleMock.mockResolvedValue({
+=======
+      mockUserClient.from().update().eq().select().single.mockResolvedValue({
+>>>>>>> origin/main
         data: { preferences: { theme: 'dark' } },
         error: null
       });
@@ -247,7 +316,11 @@ describe('User Theme Settings API', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         success: true,
+<<<<<<< HEAD
         message: 'Theme updated successfully',
+=======
+        message: 'Theme setting updated successfully',
+>>>>>>> origin/main
         data: {
           theme: 'dark'
         }
@@ -255,7 +328,14 @@ describe('User Theme Settings API', () => {
     });
 
     it('should handle database errors during fetch', async () => {
+<<<<<<< HEAD
       selectSingleMock.mockRejectedValue(new Error('Database error'));
+=======
+      mockUserClient.from().select().eq().single.mockResolvedValue({
+        data: null,
+        error: new Error('Database error')
+      });
+>>>>>>> origin/main
 
       const response = await request(app)
         .patch('/api/user/settings/theme')
@@ -271,13 +351,24 @@ describe('User Theme Settings API', () => {
 
     it('should handle database errors during update', async () => {
       // Mock successful fetch
+<<<<<<< HEAD
       selectSingleMock.mockResolvedValue({
+=======
+      mockUserClient.from().select().eq().single.mockResolvedValue({
+>>>>>>> origin/main
         data: { preferences: { theme: 'light' } },
         error: null
       });
 
       // Mock failed update
+<<<<<<< HEAD
       updateSingleMock.mockRejectedValue(new Error('Update failed'));
+=======
+      mockUserClient.from().update().eq().select().single.mockResolvedValue({
+        data: null,
+        error: new Error('Update failed')
+      });
+>>>>>>> origin/main
 
       const response = await request(app)
         .patch('/api/user/settings/theme')
@@ -298,12 +389,20 @@ describe('User Theme Settings API', () => {
         // Reset mocks
         jest.clearAllMocks();
         
+<<<<<<< HEAD
         selectSingleMock.mockResolvedValue({
+=======
+        mockUserClient.from().select().eq().single.mockResolvedValue({
+>>>>>>> origin/main
           data: { preferences: { theme: 'system' } },
           error: null
         });
 
+<<<<<<< HEAD
         updateSingleMock.mockResolvedValue({
+=======
+        mockUserClient.from().update().eq().select().single.mockResolvedValue({
+>>>>>>> origin/main
           data: { preferences: { theme } },
           error: null
         });

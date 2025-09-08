@@ -103,6 +103,22 @@ jest.mock('@twurple/auth', () => ({
   StaticAuthProvider: jest.fn()
 }));
 
+// Mock platform services for tests
+const mockTwitterService = {
+  sendDM: jest.fn(),
+  muteUser: jest.fn(),
+  blockUser: jest.fn(),
+  removeContent: jest.fn(),
+  initialize: jest.fn()
+};
+
+const mockYouTubeService = {
+  removeContent: jest.fn(),
+  muteUser: jest.fn(),
+  reportUser: jest.fn(),
+  initialize: jest.fn()
+};
+
 describe('ShieldActionWorker', () => {
   let worker;
   let mockSupabase;
@@ -136,28 +152,40 @@ describe('ShieldActionWorker', () => {
     test('should execute warning action', async () => {
       const job = {
         id: 'job-123',
+        comment_id: 'comment-789',
         organization_id: 'org-123',
         platform: 'twitter',
-        action_type: 'warning',
-        user_id: 'user-456',
-        comment_id: 'comment-789',
-        payload: {
-          warning_message: 'Please keep comments respectful',
-          toxicity_score: 0.75,
-          categories: ['TOXICITY']
-        }
+        platform_user_id: 'user-456',
+        platform_username: 'testuser',
+        action: 'reply_warning',
+        shield_mode: true
       };
 
-      mockTwitterService.sendDM.mockResolvedValue({
-        success: true,
-        message_id: 'dm-123'
+      // Mock Twitter client
+      worker.platformClients.set('twitter', {
+        v2: {
+          reply: jest.fn().mockResolvedValue({
+            data: { id: 'tweet-123' }
+          })
+        }
       });
 
-      // Mock action update
+      // Mock database operations
       mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: null
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { id: 'action-123' },
+              error: null
+            })
+          })
+        }),
+        upsert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { id: 'behavior-123' },
+              error: null
+            })
           })
         })
       });
@@ -165,34 +193,30 @@ describe('ShieldActionWorker', () => {
       const result = await worker.processJob(job);
 
       expect(result.success).toBe(true);
-      expect(result.action_type).toBe('warning');
+      expect(result.action).toBe('reply_warning');
       expect(result.platform).toBe('twitter');
-      expect(result.details.message_id).toBe('dm-123');
-
-      expect(mockTwitterService.sendDM).toHaveBeenCalledWith(
-        'user-456',
-        'Please keep comments respectful'
-      );
     });
 
     test('should execute temporary mute action', async () => {
       const job = {
         id: 'job-456',
+        comment_id: 'comment-123',
         organization_id: 'org-123',
         platform: 'twitter',
-        action_type: 'temporary_mute',
-        user_id: 'user-789',
-        comment_id: 'comment-123',
-        payload: {
-          duration_hours: 24,
-          reason: 'Toxic behavior'
-        }
+        platform_user_id: 'user-789',
+        platform_username: 'toxicuser',
+        action: 'mute_user',
+        duration: 24,
+        shield_mode: true
       };
 
-      mockTwitterService.muteUser.mockResolvedValue({
-        success: true,
-        mute_id: 'mute-456',
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      // Mock Twitter client
+      worker.platformClients.set('twitter', {
+        v1: {
+          createMute: jest.fn().mockResolvedValue({
+            success: true
+          })
+        }
       });
 
       mockSupabase.from.mockReturnValue({

@@ -217,13 +217,15 @@ describe('GenerateReplyWorker', () => {
         payload: {
           comment_id: 'comment-456',
           organization_id: 'org-limited',
-          platform: 'twitter'
+          platform: 'twitter',
+          original_text: 'Test comment'
         }
       };
 
-      await expect(worker.processJob(job)).rejects.toThrow(
-        'Organization org-limited has reached limits: monthly_limit_exceeded'
-      );
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Organization org-limited has reached limits: monthly_limit_exceeded');
     });
 
     test('should handle low toxicity comments', async () => {
@@ -513,7 +515,7 @@ describe('GenerateReplyWorker', () => {
 
       const result = await worker.getIntegrationConfig(organizationId, configId);
 
-      expect(result).toEqual(mockConfig);
+      expect(result.data).toEqual(mockConfig);
       expect(mockSupabase.from).toHaveBeenCalledWith('integration_configs');
     });
 
@@ -536,7 +538,7 @@ describe('GenerateReplyWorker', () => {
 
       const result = await worker.getIntegrationConfig(organizationId, configId);
 
-      expect(result).toBeNull();
+      expect(result.data).toBeNull();
     });
   });
 
@@ -547,15 +549,20 @@ describe('GenerateReplyWorker', () => {
         // Missing required fields
       };
 
-      await expect(worker.processJob(malformedJob)).rejects.toThrow();
+      const result = await worker.processJob(malformedJob);
+
+      expect(result.success).toBe(false);
+      expect(result.type).toBe('VALIDATION_ERROR');
     });
 
     test('should handle comment not found', async () => {
       const job = {
+        id: 'job-missing-comment',
         payload: {
-          id: 'job-missing-comment',
           organization_id: 'org-123',
-          comment_id: 'missing-comment'
+          comment_id: 'missing-comment',
+          platform: 'twitter',
+          original_text: 'Test comment'
         }
       };
 
@@ -574,9 +581,10 @@ describe('GenerateReplyWorker', () => {
         })
       });
 
-      await expect(worker.processJob(job)).rejects.toThrow(
-        'Comment missing-comment not found'
-      );
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Comment missing-comment not found');
     });
 
     test('should handle roast generation failures gracefully', async () => {
@@ -629,9 +637,10 @@ describe('GenerateReplyWorker', () => {
         }
       });
 
-      await expect(worker.processJob(job)).rejects.toThrow(
-        'Integration config not found for comment comment-456'
-      );
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Integration config not found for comment comment-456');
     });
   });
 });

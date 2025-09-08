@@ -4,6 +4,7 @@
  */
 
 const { supabaseServiceClient } = require('../config/supabase');
+<<<<<<< HEAD
 const { logger } = require('../utils/logger');
 
 class AddonService {
@@ -55,6 +56,12 @@ class AddonService {
         return userId.substring(0, 3) + '****' + userId.substring(userId.length - 2);
     }
     /**
+=======
+const logger = require('../utils/logger');
+
+class AddonService {
+    /**
+>>>>>>> origin/main
      * Get user's available addon credits by category
      * @param {string} userId - User ID
      * @param {string} category - Addon category ('roasts', 'analysis')
@@ -70,7 +77,11 @@ class AddonService {
 
             if (error) {
                 logger.error('Failed to get user addon credits:', {
+<<<<<<< HEAD
                     userId: this.maskUserId(userId),
+=======
+                    userId,
+>>>>>>> origin/main
                     category,
                     error
                 });
@@ -80,7 +91,11 @@ class AddonService {
             return credits || 0;
         } catch (error) {
             logger.error('Error getting user addon credits:', {
+<<<<<<< HEAD
                 userId: this.maskUserId(userId),
+=======
+                userId,
+>>>>>>> origin/main
                 category,
                 error: error.message
             });
@@ -97,6 +112,20 @@ class AddonService {
      */
     async consumeAddonCredits(userId, category, amount = 1) {
         try {
+<<<<<<< HEAD
+=======
+            // Validate amount parameter
+            if (!Number.isInteger(amount) || amount <= 0) {
+                logger.warn('Invalid amount parameter for consumeAddonCredits:', {
+                    userId,
+                    category,
+                    amount,
+                    message: 'Amount must be a positive integer'
+                });
+                return false;
+            }
+
+>>>>>>> origin/main
             const { data: success, error } = await supabaseServiceClient
                 .rpc('consume_addon_credits', {
                     p_user_id: userId,
@@ -105,6 +134,7 @@ class AddonService {
                 });
 
             if (error) {
+<<<<<<< HEAD
                 logger.error('Failed to consume addon credits - RPC error:', {
                     userId: userId?.substring(0, 8) + '...',
                     category,
@@ -112,10 +142,18 @@ class AddonService {
                     error: error.message || error,
                     errorCode: error.code,
                     errorDetails: error.details
+=======
+                logger.error('Failed to consume addon credits:', {
+                    userId,
+                    category,
+                    amount,
+                    error
+>>>>>>> origin/main
                 });
                 return false;
             }
 
+<<<<<<< HEAD
             // Normalize RPC result to handle Postgres boolean variations
             const normalizedSuccess = this.normalizeRpcResult(success);
 
@@ -139,6 +177,26 @@ class AddonService {
         } catch (error) {
             logger.error('Error consuming addon credits:', {
                 userId: this.maskUserId(userId),
+=======
+            if (success) {
+                logger.info('Addon credits consumed successfully:', {
+                    userId,
+                    category,
+                    amount
+                });
+            } else {
+                logger.warn('Insufficient addon credits:', {
+                    userId,
+                    category,
+                    amount
+                });
+            }
+
+            return success || false;
+        } catch (error) {
+            logger.error('Error consuming addon credits:', {
+                userId,
+>>>>>>> origin/main
                 category,
                 amount,
                 error: error.message
@@ -163,19 +221,30 @@ class AddonService {
 
             if (error) {
                 logger.error('Failed to check user feature addon:', {
+<<<<<<< HEAD
                     userId: this.maskUserId(userId),
+=======
+                    userId,
+>>>>>>> origin/main
                     featureKey,
                     error
                 });
                 return false;
             }
 
+<<<<<<< HEAD
             // Normalize RPC result to handle Postgres boolean variations
             const normalizedResult = this.normalizeRpcResult(hasFeature);
             return normalizedResult;
         } catch (error) {
             logger.error('Error checking user feature addon:', {
                 userId: this.maskUserId(userId),
+=======
+            return hasFeature || false;
+        } catch (error) {
+            logger.error('Error checking user feature addon:', {
+                userId,
+>>>>>>> origin/main
                 featureKey,
                 error: error.message
             });
@@ -207,7 +276,11 @@ class AddonService {
             };
         } catch (error) {
             logger.error('Error getting user addon summary:', {
+<<<<<<< HEAD
                 userId: this.maskUserId(userId),
+=======
+                userId,
+>>>>>>> origin/main
                 error: error.message
             });
             return {
@@ -237,6 +310,7 @@ class AddonService {
                 return { allowed: false, reason: 'Invalid action type' };
             }
 
+<<<<<<< HEAD
             // Check plan limits first (handle irregular plurals)
             const planKeyMap = { roast: 'monthly_roasts_limit', analysis: 'monthly_analyses_limit' };
             const usageKeyMap = { roast: 'roasts_used', analysis: 'analyses_used' };
@@ -246,6 +320,15 @@ class AddonService {
             if (usage < planLimit) {
                 return { 
                     allowed: true, 
+=======
+            // Check plan limits first
+            const planLimit = planLimits[`monthly_${action}s_limit`] || planLimits.monthly_responses_limit || 0;
+            const usage = currentUsage[`${action}s_used`] || currentUsage.monthly_responses_used || 0;
+
+            if (usage < planLimit) {
+                return {
+                    allowed: true,
+>>>>>>> origin/main
                     source: 'plan',
                     remaining: planLimit - usage
                 };
@@ -254,15 +337,25 @@ class AddonService {
             // Check addon credits
             const addonCredits = await this.getUserAddonCredits(userId, category);
             if (addonCredits > 0) {
+<<<<<<< HEAD
                 return { 
                     allowed: true, 
+=======
+                return {
+                    allowed: true,
+>>>>>>> origin/main
                     source: 'addon',
                     remaining: addonCredits
                 };
             }
 
+<<<<<<< HEAD
             return { 
                 allowed: false, 
+=======
+            return {
+                allowed: false,
+>>>>>>> origin/main
                 reason: 'Limit exceeded and no addon credits available',
                 planLimit,
                 usage,
@@ -271,7 +364,11 @@ class AddonService {
 
         } catch (error) {
             logger.error('Error checking action permission:', {
+<<<<<<< HEAD
                 userId: this.maskUserId(userId),
+=======
+                userId,
+>>>>>>> origin/main
                 action,
                 error: error.message
             });
@@ -289,6 +386,7 @@ class AddonService {
      */
     async recordActionUsage(userId, action, planLimits, currentUsage) {
         try {
+<<<<<<< HEAD
             const permission = await this.canPerformAction(userId, action, planLimits, currentUsage);
             
             if (!permission.allowed) {
@@ -316,12 +414,52 @@ class AddonService {
                     success: true, 
                     source: 'plan',
                     planRemaining: permission.remaining - 1
+=======
+            const categoryMap = { 'roast': 'roasts', 'analysis': 'analysis' };
+            const category = categoryMap[action];
+
+            if (!category) {
+                return { success: false, reason: 'Invalid action type' };
+            }
+
+            // Check plan limits first
+            const planLimit = planLimits[`monthly_${action}s_limit`] || planLimits.monthly_responses_limit || 0;
+            const usage = currentUsage[`${action}s_used`] || currentUsage.monthly_responses_used || 0;
+
+            if (usage < planLimit) {
+                // Usage will be recorded by the calling service against plan limits
+                return {
+                    success: true,
+                    source: 'plan',
+                    planRemaining: planLimit - usage - 1
+                };
+            }
+
+            // Plan limit exceeded, try to consume addon credits atomically
+            const consumed = await this.consumeAddonCredits(userId, category, 1);
+            if (consumed) {
+                // Get remaining credits after consumption for reporting
+                const remainingCredits = await this.getUserAddonCredits(userId, category);
+                return {
+                    success: true,
+                    source: 'addon',
+                    creditsRemaining: remainingCredits
+                };
+            } else {
+                return {
+                    success: false,
+                    reason: 'Limit exceeded and no addon credits available'
+>>>>>>> origin/main
                 };
             }
 
         } catch (error) {
             logger.error('Error recording action usage:', {
+<<<<<<< HEAD
                 userId: this.maskUserId(userId),
+=======
+                userId,
+>>>>>>> origin/main
                 action,
                 error: error.message
             });
@@ -362,7 +500,11 @@ class AddonService {
 
             if (error) {
                 logger.error('Failed to get addon purchase history:', {
+<<<<<<< HEAD
                     userId: this.maskUserId(userId),
+=======
+                    userId,
+>>>>>>> origin/main
                     error
                 });
                 return [];
@@ -371,7 +513,11 @@ class AddonService {
             return purchases || [];
         } catch (error) {
             logger.error('Error getting addon purchase history:', {
+<<<<<<< HEAD
                 userId: this.maskUserId(userId),
+=======
+                userId,
+>>>>>>> origin/main
                 error: error.message
             });
             return [];
