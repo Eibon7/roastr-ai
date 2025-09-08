@@ -275,6 +275,9 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
 
   describe('Validaciones del roast generado', () => {
     test('debe validar que el roast pasa todas las validaciones internas', async () => {
+      // Import the actual validation function
+      const { validateRoastForPlatform } = require('../../src/config/platforms');
+
       // Arrange: Generated roast
       const generatedRoast = {
         response_text: 'Mi app será lo que sea, pero al menos no necesito insultar a desconocidos en internet para sentirme mejor. Tal vez deberías probar a programar algo antes de criticar 🤓',
@@ -284,22 +287,14 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         tokens_used: 45
       };
 
-      // Act: Run validations
-      const validations = {
-        lengthCheck: generatedRoast.response_text.length <= 280, // Twitter limit
-        moderationCheck: true, // Passes internal moderation
-        toxicityCheck: true, // Not too toxic
-        brandSafetyCheck: true // Brand-safe
-      };
+      // Act: Run actual validation
+      const validationResult = validateRoastForPlatform(generatedRoast.response_text, 'twitter');
 
-      // Assert: All validations pass
-      expect(validations.lengthCheck).toBe(true);
-      expect(validations.moderationCheck).toBe(true);
-      expect(validations.toxicityCheck).toBe(true);
-      expect(validations.brandSafetyCheck).toBe(true);
-      
-      const allValidationsPassed = Object.values(validations).every(v => v === true);
-      expect(allValidationsPassed).toBe(true);
+      // Assert: Validation passes
+      expect(validationResult.isValid).toBe(true);
+      expect(validationResult.originalLength).toBe(generatedRoast.response_text.length);
+      expect(validationResult.limit).toBe(280);
+      expect(validationResult.originalLength).toBeLessThanOrEqual(validationResult.limit);
     });
   });
 
@@ -441,11 +436,35 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
     });
 
     test('should not proceed when roast length exceeds 280 characters', async () => {
+      // Import validation function
+      const { validateRoastForPlatform } = require('../../src/config/platforms');
+
       // Arrange: Very long roast text
       const longRoastText = 'A'.repeat(281); // ❌ Exceeds Twitter limit
 
+      // Mock Twitter service to spy on posting calls
+      const mockPostResponse = jest.fn().mockRejectedValue(new Error('Text exceeds maximum length'));
+      const mockTwitterService = {
+        postResponse: mockPostResponse
+      };
+
+      // Act: Validate the roast length
+      const validationResult = validateRoastForPlatform(longRoastText, 'twitter');
+
       // Assert: Length validation should fail
       expect(longRoastText.length).toBeGreaterThan(280);
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.originalLength).toBe(281);
+      expect(validationResult.limit).toBe(280);
+
+      // Test that posting would be rejected for oversized content
+      if (!validationResult.isValid) {
+        await expect(mockTwitterService.postResponse('test-id', longRoastText))
+          .rejects.toThrow('Text exceeds maximum length');
+      }
+
+      // Verify posting service was called and rejected the oversized text
+      expect(mockPostResponse).toHaveBeenCalledWith('test-id', longRoastText);
     });
   });
 });

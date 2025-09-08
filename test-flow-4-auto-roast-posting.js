@@ -191,25 +191,38 @@ async function testAutoRoastPostingFlow() {
   // PASO 5: Publicación automática en la red social
   console.log('📤 PASO 5: Publicación automática en la red social');
   console.log('-'.repeat(40));
-  
-  if (allValidationsPassed && integrationConfig.config.auto_post) {
-    const postingResult = await mockTwitterService.postResponse(
-      incomingComment.platform_comment_id,
-      generatedRoast.response_text
-    );
-    
-    console.log(`✅ Publicación en Twitter: ${postingResult.success ? 'EXITOSA' : 'FALLIDA'}`);
-    console.log(`✅ ID de respuesta en plataforma: ${postingResult.platform_response_id}`);
-    console.log(`✅ Fecha de publicación: ${postingResult.posted_at}`);
-    
-    // Actualizar estado del roast a 'posted'
-    generatedRoast.post_status = 'posted';
-    generatedRoast.platform_response_id = postingResult.platform_response_id;
-    generatedRoast.posted_at = postingResult.posted_at;
-    
+
+  // Verificar que la integración esté habilitada y que auto_post esté activado
+  if (allValidationsPassed && integrationConfig.enabled && integrationConfig.config.auto_post) {
+    try {
+      const postingResult = await mockTwitterService.postResponse(
+        incomingComment.platform_comment_id,
+        generatedRoast.response_text
+      );
+
+      console.log(`✅ Publicación en Twitter: ${postingResult.success ? 'EXITOSA' : 'FALLIDA'}`);
+      console.log(`✅ ID de respuesta en plataforma: ${postingResult.platform_response_id}`);
+      console.log(`✅ Fecha de publicación: ${postingResult.posted_at}`);
+
+      // Actualizar estado del roast a 'posted' en caso de éxito
+      generatedRoast.post_status = 'posted';
+      generatedRoast.platform_response_id = postingResult.platform_response_id;
+      generatedRoast.posted_at = postingResult.posted_at;
+
+    } catch (error) {
+      console.log(`❌ Error en publicación automática: ${error.message}`);
+
+      // Actualizar estado del roast a 'failed' en caso de error
+      generatedRoast.post_status = 'failed';
+      generatedRoast.platform_response_id = null;
+      generatedRoast.posted_at = null;
+      generatedRoast.post_error = error.message;
+    }
+
   } else {
     console.log(`❌ Publicación automática omitida:`);
     console.log(`   - Validaciones pasadas: ${allValidationsPassed}`);
+    console.log(`   - Integración habilitada: ${integrationConfig.enabled || false}`);
     console.log(`   - Auto-post habilitado: ${integrationConfig.config.auto_post}`);
   }
   console.log('');
@@ -268,27 +281,42 @@ async function testAutoRoastPostingFlow() {
   console.log('📋 RESUMEN FINAL DEL FLUJO 4');
   console.log('='.repeat(80));
   console.log('');
-  console.log('✅ OBJETIVOS CUMPLIDOS:');
-  console.log('   1. ✅ Comentario con toxicidad media-alta detectado correctamente');
-  console.log('   2. ✅ Roastr Persona no marcó como ignorable ni ofensivo directo');
-  console.log('   3. ✅ Usuario tiene respuesta automática activada');
-  console.log('   4. ✅ Hay roasts disponibles según el plan del usuario');
-  console.log('   5. ✅ Sistema generó roast automáticamente');
-  console.log('   6. ✅ Roast pasó todas las validaciones internas');
-  console.log('   7. ✅ Roast se publicó automáticamente en la red social');
-  console.log('   8. ✅ Estado del roast cambió a "posted" en la base de datos');
-  console.log('   9. ✅ Se crearon entradas en tablas "responses" y "roast_attempts"');
+
+  // Verificar el estado real de la publicación
+  const postStatus = (generatedRoast?.post_status || 'unknown').toLowerCase();
+  const isPosted = postStatus === 'posted';
+
+  if (isPosted) {
+    console.log('✅ OBJETIVOS CUMPLIDOS:');
+    console.log('   1. ✅ Comentario con toxicidad media-alta detectado correctamente');
+    console.log('   2. ✅ Roastr Persona no marcó como ignorable ni ofensivo directo');
+    console.log('   3. ✅ Usuario tiene respuesta automática activada');
+    console.log('   4. ✅ Hay roasts disponibles según el plan del usuario');
+    console.log('   5. ✅ Sistema generó roast automáticamente');
+    console.log('   6. ✅ Roast pasó todas las validaciones internas');
+    console.log('   7. ✅ Roast se publicó automáticamente en la red social');
+    console.log('   8. ✅ Estado del roast cambió a "posted" en la base de datos');
+    console.log('   9. ✅ Se crearon entradas en tablas "responses" y "roast_attempts"');
+    console.log('');
+    console.log('🎉 Test de flujo 4 completado exitosamente!');
+    console.log('   El sistema de generación y publicación automática funciona correctamente.');
+  } else {
+    console.log('❌ FLUJO COMPLETADO CON FALLOS:');
+    console.log(`   - Estado de publicación: ${postStatus.toUpperCase()}`);
+    if (generatedRoast?.post_error) {
+      console.log(`   - Error: ${generatedRoast.post_error}`);
+    }
+    console.log('   - El roast se generó pero no se pudo publicar automáticamente');
+  }
+
   console.log('');
   console.log('📊 ESTADÍSTICAS DEL FLUJO:');
-  console.log(`   - Toxicidad del comentario: ${incomingComment.toxicity_score}`);
-  console.log(`   - Tiempo de generación: ${generatedRoast.generation_time_ms}ms`);
-  console.log(`   - Longitud del roast: ${generatedRoast.response_text.length} caracteres`);
-  console.log(`   - Tokens consumidos: ${generatedRoast.tokens_used}`);
-  console.log(`   - Costo: ${generatedRoast.cost_cents} centavos`);
-  console.log(`   - Estado final: ${generatedRoast.post_status.toUpperCase()}`);
-  console.log('');
-  console.log('🎉 Test de flujo 4 completado exitosamente!');
-  console.log('   El sistema de generación y publicación automática funciona correctamente.');
+  console.log(`   - Toxicidad del comentario: ${incomingComment?.toxicity_score || 'N/A'}`);
+  console.log(`   - Tiempo de generación: ${generatedRoast?.generation_time_ms || 'N/A'}ms`);
+  console.log(`   - Longitud del roast: ${generatedRoast?.response_text?.length || 'N/A'} caracteres`);
+  console.log(`   - Tokens consumidos: ${generatedRoast?.tokens_used || 'N/A'}`);
+  console.log(`   - Costo: ${generatedRoast?.cost_cents || 'N/A'} centavos`);
+  console.log(`   - Estado final: ${(generatedRoast?.post_status || 'UNKNOWN').toUpperCase()}`);
   console.log('');
 }
 
