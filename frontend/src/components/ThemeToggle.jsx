@@ -3,9 +3,9 @@ import { Sun, Moon, Monitor } from 'lucide-react';
 
 const ThemeToggle = () => {
   const [theme, setTheme] = useState(() => {
-    // Check localStorage first, then default to light
+    // Check localStorage first, then default to system
     const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'light';
+    return savedTheme || 'system';
   });
 
   // Apply theme immediately on mount (before useEffect)
@@ -17,8 +17,7 @@ const ThemeToggle = () => {
     html.classList.remove('light', 'dark');
     body.classList.remove('light', 'dark');
     
-    const currentTheme = localStorage.getItem('theme') || 
-      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const currentTheme = localStorage.getItem('theme') || 'system';
     
     if (currentTheme === 'system') {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -129,13 +128,13 @@ const ThemeToggle = () => {
   const getLabel = (themeName = theme) => {
     switch (themeName) {
       case 'light':
-        return 'Light';
+        return 'Claro';
       case 'dark':
-        return 'Dark';
+        return 'Oscuro';
       case 'system':
-        return 'System';
+        return 'Sistema';
       default:
-        return 'Light';
+        return 'Sistema';
     }
   };
 
@@ -154,17 +153,24 @@ const ThemeToggle = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
-          {['light', 'dark', 'system'].map((themeName) => (
+        <div className="absolute right-0 mt-2 w-36 bg-card border border-border rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
+          {['system', 'light', 'dark'].map((themeName) => (
             <button
               key={themeName}
               onClick={() => selectTheme(themeName)}
               className={`w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-accent transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                theme === themeName ? 'bg-accent' : ''
+                theme === themeName ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
               }`}
             >
               {getIcon(themeName)}
-              <span className="text-sm text-foreground">{getLabel(themeName)}</span>
+              <span className="text-sm">{getLabel(themeName)}</span>
+              {theme === themeName && (
+                <div className="ml-auto">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
             </button>
           ))}
         </div>
