@@ -17,14 +17,14 @@ class FeatureFlags {
     return {
       // Core System Features
       ENABLE_BILLING: this.checkBillingAvailable(),
-      ENABLE_RQC: process.env.ENABLE_RQC === 'true' || false,
+      ENABLE_RQC: process.env.ENABLE_RQC === 'true' || false, // Disabled by default - under development
       ENABLE_SHIELD: process.env.ENABLE_SHIELD === 'true' || false,
       
-      // Platform Integration Features  
+      // Platform Integration Features
       ENABLE_REAL_TWITTER: this.checkTwitterKeys(),
       ENABLE_REAL_YOUTUBE: this.checkYouTubeKeys(),
-      ENABLE_REAL_INSTAGRAM: this.checkInstagramKeys(),
-      ENABLE_REAL_FACEBOOK: this.checkFacebookKeys(),
+      ENABLE_REAL_INSTAGRAM: process.env.ENABLE_REAL_INSTAGRAM === 'true' || false, // Disabled by default - under development
+      ENABLE_REAL_FACEBOOK: process.env.ENABLE_REAL_FACEBOOK === 'true' || false, // Disabled by default - under development
       ENABLE_REAL_DISCORD: this.checkDiscordKeys(),
       ENABLE_REAL_TWITCH: this.checkTwitchKeys(),
       ENABLE_REAL_REDDIT: this.checkRedditKeys(),
@@ -52,14 +52,18 @@ class FeatureFlags {
       ENABLE_PASSWORD_HISTORY: process.env.ENABLE_PASSWORD_HISTORY !== 'false', // Default enabled unless explicitly disabled
       ENABLE_RATE_LIMIT: process.env.ENABLE_RATE_LIMIT !== 'false', // Default enabled unless explicitly disabled
       
-      // Style Profile Feature
+      // Style Profile Feature (basic style analysis)
       ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false', // Default enabled unless explicitly disabled
 
       // Credits v2 Feature
       ENABLE_CREDITS_V2: process.env.ENABLE_CREDITS_V2 === 'true' || false,
 
       // Custom Prompt Feature
-      ENABLE_CUSTOM_PROMPT: process.env.ENABLE_CUSTOM_PROMPT === 'true', // Default disabled, requires explicit activation
+      ENABLE_CUSTOM_PROMPT: process.env.ENABLE_CUSTOM_PROMPT === 'true' || false, // Default disabled, requires explicit activation
+
+      // UI Platform Features (separate from API integration)
+      ENABLE_FACEBOOK_UI: process.env.ENABLE_FACEBOOK_UI === 'true' || false, // Default disabled - under development
+      ENABLE_INSTAGRAM_UI: process.env.ENABLE_INSTAGRAM_UI === 'true' || false, // Default disabled - under development
 
       // Shop Feature
       ENABLE_SHOP: process.env.ENABLE_SHOP === 'true' || false // Default disabled unless explicitly enabled
@@ -215,7 +219,9 @@ class FeatureFlags {
         magicLink: this.flags.ENABLE_MAGIC_LINK ? 'enabled' : 'disabled',
         emailNotifications: this.flags.ENABLE_EMAIL_NOTIFICATIONS ? 'enabled' : 'disabled',
         customPrompt: this.flags.ENABLE_CUSTOM_PROMPT ? 'enabled' : 'disabled',
-        shop: this.flags.ENABLE_SHOP ? 'enabled' : 'disabled'
+        shop: this.flags.ENABLE_SHOP ? 'enabled' : 'disabled',
+        facebookUI: this.flags.ENABLE_FACEBOOK_UI ? 'enabled' : 'disabled',
+        instagramUI: this.flags.ENABLE_INSTAGRAM_UI ? 'enabled' : 'disabled'
       }
     };
   }

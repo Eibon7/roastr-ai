@@ -23,6 +23,7 @@
     "workers:status:watch": "node src/workers/cli/worker-status.js --watch",
     "workers:status:json": "node src/workers/cli/worker-status.js --json",
     "worker:account-deletion": "node src/workers/cli/start-account-deletion-worker.js",
+    "worker:model-availability": "node src/workers/ModelAvailabilityWorker.js",
     "queue:manage": "node src/workers/cli/queue-manager.js",
     "queue:status": "node src/workers/cli/queue-manager.js status",
     "queue:monitor": "node src/workers/cli/queue-manager.js monitor",

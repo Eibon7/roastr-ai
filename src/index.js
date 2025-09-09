@@ -241,6 +241,10 @@ app.use('/api/notifications', notificationsRoutes);
 // Roast generation routes (authenticated)
 app.use('/api/roast', roastRoutes);
 
+// Model availability routes (authenticated, admin) - Issue #326
+const modelAvailabilityRoutes = require('./routes/modelAvailability');
+app.use('/api/model-availability', modelAvailabilityRoutes);
+
 // Worker status routes (authenticated)
 const { router: workersRoutes } = require('./routes/workers');
 app.use('/api/workers', workersRoutes);
@@ -690,9 +694,19 @@ let server;
 
 // Only start server if this file is run directly (not imported by tests)
 if (require.main === module) {
+  // Start Model Availability Worker (Issue #326)
+  try {
+    const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
+    const worker = startModelAvailabilityWorker();
+    console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
+  } catch (error) {
+    console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+  }
+
   server = app.listen(port, () => {
     console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
     console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
+    console.log(`🔄 GPT-5 Detection: Active (checks every 24h)`);
     
     const serviceStatus = flags.getServiceStatus();
     console.log(`💾 Database:`, serviceStatus.database);

@@ -3,29 +3,72 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Send, Sparkles, Eye, Save } from 'lucide-react';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 export default function Compose() {
   const [message, setMessage] = useState('');
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState('twitter');
+  const [styleProfile, setStyleProfile] = useState({});
+  const { isEnabled } = useFeatureFlags();
+  const [persona, setPersona] = useState('');
+  const [tokensUsed, setTokensUsed] = useState(0);
+  const [analysisRemaining, setAnalysisRemaining] = useState(null);
+  const [roastsRemaining, setRoastsRemaining] = useState(null);
+  const [error, setError] = useState(null);
 
   const handlePreview = async () => {
     if (!message.trim()) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
+      // Get auth token (assuming you have auth context)
+      const token = localStorage.getItem('authToken');
+      
       const response = await fetch('/api/roast/preview', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: message })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          text: message,
+          styleProfile: styleProfile,
+          persona: persona || null,
+          platform: selectedPlatform
+        })
       });
       
       if (response.ok) {
         const data = await response.json();
         setPreview(data.roast);
+        setTokensUsed(data.tokensUsed);
+        setAnalysisRemaining(data.analysisCountRemaining);
+        setRoastsRemaining(data.roastsRemaining);
+      } else {
+        const errorData = await response.json();
+        if (response.status === 402) {
+          // Insufficient credits
+          setError({
+            type: 'credits',
+            message: errorData.details?.message || 'Insufficient credits'
+          });
+        } else {
+          setError({
+            type: 'general',
+            message: errorData.error || 'Failed to generate preview'
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to generate preview:', error);
+      setError({
+        type: 'network',
+        message: 'Network error. Please try again.'
+      });
     } finally {
       setLoading(false);
     }
@@ -35,13 +78,64 @@ export default function Compose() {
     if (!preview) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
-      // In real implementation, this would send to selected platforms
-      console.log('Sending roast:', preview);
-      setMessage('');
-      setPreview(null);
+      const token = localStorage.getItem('authToken');
+      
+      // Use the /generate endpoint to consume roast credits
+      const response = await fetch('/api/roast/generate', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          text: message,
+          styleProfile: styleProfile,
+          persona: persona || null,
+          platform: selectedPlatform
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update credits after successful roast generation
+        setRoastsRemaining(data.data?.credits?.remaining || roastsRemaining - 1);
+        
+        // In real implementation, this would send to selected platforms
+        console.log('Roast generated and sent:', data.data.roast);
+        
+        // Clear form
+        setMessage('');
+        setPreview(null);
+        setPersona('');
+        setError(null);
+        
+        // Show success message
+        alert('Roast generated and ready to send!');
+        
+      } else {
+        const errorData = await response.json();
+        if (response.status === 402) {
+          setError({
+            type: 'credits',
+            message: errorData.details?.message || 'Insufficient roast credits'
+          });
+        } else {
+          setError({
+            type: 'general',
+            message: errorData.error || 'Failed to generate final roast'
+          });
+        }
+      }
     } catch (error) {
       console.error('Failed to send roast:', error);
+      setError({
+        type: 'network',
+        message: 'Network error. Please try again.'
+      });
     } finally {
       setLoading(false);
     }
@@ -55,6 +149,20 @@ export default function Compose() {
         <p className="text-muted-foreground">
           Generate and send AI-powered roasts to your social media platforms
         </p>
+        {/* Credit Display */}
+        {(analysisRemaining !== null || roastsRemaining !== null) && (
+          <div className="flex space-x-4 mt-2 text-sm text-muted-foreground">
+            {analysisRemaining !== null && (
+              <span>Análisis restantes: <Badge variant="outline">{analysisRemaining}</Badge></span>
+            )}
+            {roastsRemaining !== null && (
+              <span>Roasts restantes: <Badge variant="outline">{roastsRemaining}</Badge></span>
+            )}
+            {tokensUsed > 0 && (
+              <span>Tokens usados: <Badge variant="secondary">{tokensUsed}</Badge></span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -67,6 +175,24 @@ export default function Compose() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Error Display */}
+            {error && (
+              <div className={`p-3 rounded-md text-sm ${
+                error.type === 'credits' 
+                  ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' 
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {error.message}
+                {error.type === 'credits' && (
+                  <div className="mt-2">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      Actualizar Plan
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               <label htmlFor="message" className="block text-sm font-medium mb-2">
                 Message to roast
@@ -84,6 +210,42 @@ export default function Compose() {
               </div>
             </div>
 
+            {/* Platform Selection */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Platform</label>
+              <select
+                value={selectedPlatform}
+                onChange={(e) => setSelectedPlatform(e.target.value)}
+                className="w-full p-2 border border-input rounded-md bg-background text-sm"
+              >
+                <option value="twitter">🐦 Twitter</option>
+                {isEnabled('ENABLE_FACEBOOK_UI') && <option value="facebook">📘 Facebook</option>}
+                {isEnabled('ENABLE_INSTAGRAM_UI') && <option value="instagram">📷 Instagram</option>}
+                <option value="youtube">📺 YouTube</option>
+                <option value="tiktok">🎵 TikTok</option>
+                <option value="reddit">🔴 Reddit</option>
+                <option value="discord">💬 Discord</option>
+                <option value="twitch">🎮 Twitch</option>
+                <option value="bluesky">🦋 Bluesky</option>
+              </select>
+            </div>
+
+            {/* Persona Input */}
+            <div>
+              <label htmlFor="persona" className="block text-sm font-medium mb-2">
+                Persona (Optional)
+              </label>
+              <input
+                id="persona"
+                type="text"
+                value={persona}
+                onChange={(e) => setPersona(e.target.value)}
+                placeholder="e.g., Sarcastic comedian, Tech reviewer, etc."
+                className="w-full p-2 border border-input rounded-md bg-background text-sm"
+                maxLength={100}
+              />
+            </div>
+
             <div className="flex space-x-2">
               <Button 
                 onClick={handlePreview}
@@ -91,7 +253,7 @@ export default function Compose() {
                 className="flex-1"
               >
                 <Eye className="h-4 w-4 mr-2" />
-                Generate Preview
+                {loading ? 'Generating...' : 'Generate Preview'}
               </Button>
               <Button
                 variant="outline"
@@ -131,22 +293,33 @@ export default function Compose() {
                   <div className="text-foreground">{preview}</div>
                 </div>
                 
-                {/* Platform Selection */}
-                <div>
-                  <div className="text-sm font-medium mb-2">Send to platforms:</div>
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked className="rounded" />
-                      <span className="text-sm">🐦 Twitter</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" className="rounded" />
-                      <span className="text-sm">📘 Facebook</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" className="rounded" />
-                      <span className="text-sm">📷 Instagram</span>
-                    </label>
+                {/* Platform and Metadata Display */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm font-medium mb-1">Target Platform:</div>
+                    <Badge variant="outline" className="text-xs">
+                      {selectedPlatform === 'twitter' && '🐦 Twitter'}
+                      {selectedPlatform === 'facebook' && '📘 Facebook'}
+                      {selectedPlatform === 'instagram' && '📷 Instagram'}
+                      {selectedPlatform === 'youtube' && '📺 YouTube'}
+                      {selectedPlatform === 'tiktok' && '🎵 TikTok'}
+                      {selectedPlatform === 'reddit' && '🔴 Reddit'}
+                      {selectedPlatform === 'discord' && '💬 Discord'}
+                      {selectedPlatform === 'twitch' && '🎮 Twitch'}
+                      {selectedPlatform === 'bluesky' && '🦋 Bluesky'}
+                    </Badge>
+                  </div>
+                  
+                  {persona && (
+                    <div>
+                      <div className="text-sm font-medium mb-1">Persona:</div>
+                      <div className="text-sm text-muted-foreground">{persona}</div>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-4 text-xs text-muted-foreground">
+                    {tokensUsed > 0 && <span>Tokens: {tokensUsed}</span>}
+                    <span>Length: {preview.length} chars</span>
                   </div>
                 </div>
 

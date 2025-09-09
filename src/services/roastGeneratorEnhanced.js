@@ -274,6 +274,9 @@ class RoastGeneratorEnhanced {
    * Generate roast with basic moderation integrated in prompt (Free/Pro)
    */
   async generateWithBasicModeration(text, toxicityScore, tone, rqcConfig) {
+    // Get model based on plan (Issue #326)
+    const model = await this.getModelForPlan(rqcConfig.plan);
+    
     // Build prompt using the master template
     const systemPrompt = await this.promptTemplate.buildPrompt({
       originalComment: text,
@@ -291,7 +294,7 @@ class RoastGeneratorEnhanced {
     });
     
     const completion = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: model,
       messages: [
         {
           role: "system",
@@ -306,6 +309,7 @@ class RoastGeneratorEnhanced {
     
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
+      model: model,
       intensityLevel: rqcConfig.intensity_level,
       roastLength: roast.length,
       promptVersion: this.promptTemplate.getVersion()
@@ -396,6 +400,9 @@ class RoastGeneratorEnhanced {
    * Generate initial roast without moderation constraints
    */
   async generateInitialRoast(text, tone, rqcConfig) {
+    // Get model based on plan (Issue #326)
+    const model = await this.getModelForPlan(rqcConfig.plan);
+    
     // Build prompt using the master template with advanced options
     const systemPrompt = await this.promptTemplate.buildPrompt({
       originalComment: text,
@@ -412,7 +419,7 @@ class RoastGeneratorEnhanced {
     });
 
     const completion = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: model,
       messages: [
         {
           role: "system",
@@ -429,7 +436,9 @@ class RoastGeneratorEnhanced {
   /**
    * Generate safe fallback roast
    */
-  async generateFallbackRoast(text, tone) {
+  async generateFallbackRoast(text, tone, plan = 'free') {
+    const model = await this.getModelForPlan(plan);
+    
     const fallbackPrompt = `Eres Roastr, un bot que responde con comentarios ingeniosos y seguros.
 
 Reglas estrictas:
@@ -442,7 +451,7 @@ Reglas estrictas:
 Responde únicamente con el roast seguro, sin explicaciones.`;
 
     const completion = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: model,
       messages: [
         {
           role: "system",
@@ -617,10 +626,12 @@ Configuración de usuario:
     return this.generateRoast(text, toxicityScore, tone);
   }
 
-  async generateRoastWithPrompt(text, customPrompt) {
+  async generateRoastWithPrompt(text, customPrompt, plan = 'pro') {
     try {
+      const model = await this.getModelForPlan(plan);
+      
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: model,
         messages: [
           {
             role: "system",
@@ -639,6 +650,34 @@ Configuración de usuario:
     } catch (error) {
       logger.error("❌ Error generating roast with custom prompt:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Get AI model for plan with GPT-5 auto-detection (Issue #326)
+   */
+  async getModelForPlan(plan) {
+    try {
+      const { getModelAvailabilityService } = require('./modelAvailabilityService');
+      const modelService = getModelAvailabilityService();
+      
+      // Use the smart model selection with GPT-5 detection
+      return await modelService.getModelForPlan(plan);
+    } catch (error) {
+      logger.error('Error getting model for plan in RoastGenerator, using fallback', {
+        plan,
+        error: error.message
+      });
+      
+      // Safe fallback to previous logic
+      const fallbackModels = {
+        'free': 'gpt-3.5-turbo',
+        'starter': 'gpt-4o',
+        'pro': 'gpt-4o', 
+        'plus': 'gpt-4o',
+        'custom': 'gpt-4o'
+      };
+      return fallbackModels[plan] || 'gpt-4o';
     }
   }
 }
