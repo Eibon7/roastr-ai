@@ -8,6 +8,8 @@ import UsageCostCard from './UsageCostCard';
 import LogsTableCard from './LogsTableCard';
 import StyleProfileCard from './StyleProfileCard';
 import CreditsCard from './CreditsCard';
+import AnalysisUsageCard from './AnalysisUsageCard';
+import RoastUsageCard from './RoastUsageCard';
 
 export const WIDGETS = {
   planStatus: PlanStatusCard,
@@ -19,6 +21,8 @@ export const WIDGETS = {
   costs: UsageCostCard,
   credits: CreditsCard,
   logs: LogsTableCard,
+  analysisUsage: AnalysisUsageCard,
+  roastUsage: RoastUsageCard,
 };
 
 export const DEFAULT_LAYOUT = [
@@ -72,5 +76,15 @@ export const WIDGET_CONFIGS = {
     title: 'System Logs',
     description: 'Error & info messages',
     gridCols: 'md:col-span-3'
+  },
+  analysisUsage: {
+    title: 'Analysis Usage',
+    description: 'Comments analyzed this month',
+    gridCols: 'md:col-span-1'
+  },
+  roastUsage: {
+    title: 'Roast Usage',
+    description: 'Roasts generated this month',
+    gridCols: 'md:col-span-1'
   }
 };

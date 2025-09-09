@@ -2527,25 +2527,25 @@ router.get('/usage', authenticateToken, async (req, res) => {
             res.json({
                 success: true,
                 data: {
-                    analysis_used: usage.analysis_count || 0,
-                    roast_used: usage.roast_count || 0,
-                    month: usage.month,
+                    analysis_used: usage.analysis_used || 0,
+                    roast_used: usage.roasts_used || 0,
+                    month: usage.period_start ? usage.period_start.slice(0, 7) : currentMonth,
                     costCents: usage.cost_cents || 0
                 }
             });
         } else {
-            // Mock mode response
+            // Mock mode response with realistic data
             const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-            const defaultUsage = {
-                analysis_used: 0,
-                roast_used: 0,
+            const mockUsage = {
+                analysis_used: Math.floor(Math.random() * 7500) + 2500, // 2500-10000
+                roast_used: Math.floor(Math.random() * 2500) + 500, // 500-3000
                 month: currentMonth,
-                costCents: 0
+                costCents: Math.floor(Math.random() * 1500) + 250 // $2.50-$17.50
             };
 
             res.json({
                 success: true,
-                data: defaultUsage
+                data: mockUsage
             });
         }
 
