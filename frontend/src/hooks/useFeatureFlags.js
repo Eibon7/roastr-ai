@@ -35,43 +35,46 @@ export const useFeatureFlags = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
     const fetchFlags = async () => {
       try {
         setLoading(true);
 
         // En modo mock, usar flags predeterminados
         if (isMockModeEnabled()) {
-          setFlags(MOCK_FLAGS);
-          setLoading(false);
+          if (!cancelled) setFlags(MOCK_FLAGS);
+          if (!cancelled) setLoading(false);
           return;
         }
 
         // En modo real, obtener flags del backend
         const response = await fetch('/api/config/flags', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Accept': 'application/json' },
+          signal: controller.signal,
         });
 
         if (response.ok) {
           const data = await response.json();
-          setFlags(data.flags || {});
+          const merged = { ...FALLBACK_FLAGS, ...(data.flags || {}) };
+          if (!cancelled) setFlags(merged);
         } else {
           // Fallback a flags por defecto si falla la API
-          setFlags(FALLBACK_FLAGS);
+          if (!cancelled) setFlags(FALLBACK_FLAGS);
         }
       } catch (err) {
         console.error('Error fetching feature flags:', err);
-        setError(err.message);
+        if (!cancelled) setError(err.message);
         // Fallback a flags por defecto
-        setFlags(FALLBACK_FLAGS);
+        if (!cancelled) setFlags(FALLBACK_FLAGS);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchFlags();
+    return () => { cancelled = true; controller.abort(); };
   }, []);
 
   return {

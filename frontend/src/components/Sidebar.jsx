@@ -74,8 +74,11 @@ export default function Sidebar() {
       {/* Mobile Menu Button */}
       {isMobile && (
         <button
+          type="button"
           onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-60 p-2 bg-white rounded-lg border border-gray-200 shadow-lg lg:hidden"
+          aria-controls="app-sidebar"
+          aria-expanded={isOpen}
+          className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg border border-gray-200 shadow-lg lg:hidden"
           aria-label="Toggle sidebar"
         >
           {isOpen ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
@@ -94,6 +97,7 @@ export default function Sidebar() {
       <aside
         id="app-sidebar"
         aria-hidden={isMobile && !isOpen}
+        inert={isMobile && !isOpen ? '' : undefined}
         className={`roastr-sidebar fixed left-0 top-0 h-screen w-16 transform transition-transform duration-300 ease-in-out z-40 overflow-hidden
           ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
@@ -102,7 +106,6 @@ export default function Sidebar() {
           {/* Logo */}
           <div className="flex items-center justify-center h-20 roastr-sidebar__logo">
             <Flame className="w-8 h-8 text-white" />
-            <span className="sr-only">Roastr</span>
           </div>
 
           {/* Navigation */}
@@ -122,7 +125,6 @@ export default function Sidebar() {
                       }`
                     }
                     aria-label={item.name}
-                    title={item.name}
                   >
                     <IconComponent className="h-6 w-6" />
                   </NavLink>

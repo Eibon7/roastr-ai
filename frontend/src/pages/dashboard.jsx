@@ -44,7 +44,7 @@ export default function Dashboard() {
   const [roastsLoading, setRoastsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled, loading: flagsLoading } = useFeatureFlags();
 
   // Platform icons mapping
   const platformIcons = {
@@ -73,13 +73,15 @@ export default function Dashboard() {
   };
 
   // Available platforms for connection (filtered by feature flags)
-  const allPlatforms = ['twitter', 'instagram', 'youtube', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
-  const availablePlatforms = allPlatforms.filter(platform => {
-    // Hide Facebook and Instagram if their UI feature flags are disabled
-    if (platform === 'facebook' && !isEnabled('ENABLE_FACEBOOK_UI')) return false;
-    if (platform === 'instagram' && !isEnabled('ENABLE_INSTAGRAM_UI')) return false;
-    return true;
-  });
+  const allPlatforms = ['twitter','instagram','youtube','facebook','discord','twitch','reddit','tiktok','bluesky'];
+  const availablePlatforms = React.useMemo(() => {
+    if (flagsLoading) return allPlatforms; // avoid flicker while resolving flags
+    return allPlatforms.filter((platform) => {
+      if (platform === 'facebook' && !isEnabled('ENABLE_FACEBOOK_UI')) return false;
+      if (platform === 'instagram' && !isEnabled('ENABLE_INSTAGRAM_UI')) return false;
+      return true;
+    });
+  }, [flagsLoading, isEnabled]);
 
   // Check for admin mode on component mount - Issue #240
   useEffect(() => {

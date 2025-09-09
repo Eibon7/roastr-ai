@@ -155,6 +155,21 @@ body {
   color: white !important;
 }
 
+/* Hide any text content in sidebar logo area */
+.roastr-sidebar__logo {
+  overflow: hidden !important;
+}
+
+.roastr-sidebar__logo * {
+  text-indent: -9999px !important;
+  font-size: 0 !important;
+}
+
+.roastr-sidebar__logo svg {
+  text-indent: 0 !important;
+  font-size: initial !important;
+}
+
 .border-red-500 {
   border-color: #ef4444;
 }
