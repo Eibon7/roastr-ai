@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import AnalysisUsageCard from '../components/widgets/AnalysisUsageCard';
 import RoastUsageCard from '../components/widgets/RoastUsageCard';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import {
   Twitter,
   Instagram,
@@ -43,6 +44,7 @@ export default function Dashboard() {
   const [roastsLoading, setRoastsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { isEnabled } = useFeatureFlags();
 
   // Platform icons mapping
   const platformIcons = {
@@ -70,8 +72,14 @@ export default function Dashboard() {
     bluesky: 'Bluesky'
   };
 
-  // Available platforms for connection
-  const availablePlatforms = ['twitter', 'instagram', 'youtube', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+  // Available platforms for connection (filtered by feature flags)
+  const allPlatforms = ['twitter', 'instagram', 'youtube', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+  const availablePlatforms = allPlatforms.filter(platform => {
+    // Hide Facebook and Instagram if their UI feature flags are disabled
+    if (platform === 'facebook' && !isEnabled('ENABLE_FACEBOOK_UI')) return false;
+    if (platform === 'instagram' && !isEnabled('ENABLE_INSTAGRAM_UI')) return false;
+    return true;
+  });
 
   // Check for admin mode on component mount - Issue #240
   useEffect(() => {

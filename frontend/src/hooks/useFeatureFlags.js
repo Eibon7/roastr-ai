@@ -5,17 +5,23 @@ import { isMockModeEnabled } from '../lib/mockMode';
 const FALLBACK_FLAGS = {
   ENABLE_SHOP: false,
   ENABLE_STYLE_PROFILE: true,
-  ENABLE_RQC: false,
+  ENABLE_RQC: false, // Disabled by default - under development
   ENABLE_SHIELD: false,
   ENABLE_BILLING: false,
+  ENABLE_CUSTOM_PROMPT: false, // Disabled by default - under development
+  ENABLE_FACEBOOK_UI: false, // Disabled by default - under development
+  ENABLE_INSTAGRAM_UI: false, // Disabled by default - under development
 };
 
 // Mock flags for development mode (extends fallback with mock-specific overrides)
 const MOCK_FLAGS = {
   ...FALLBACK_FLAGS,
-  ENABLE_RQC: true,
+  ENABLE_RQC: false, // Keep disabled even in mock mode - under development
   ENABLE_SHIELD: true,
   ENABLE_BILLING: true,
+  ENABLE_CUSTOM_PROMPT: false, // Keep disabled even in mock mode - under development
+  ENABLE_FACEBOOK_UI: false, // Keep disabled even in mock mode - under development
+  ENABLE_INSTAGRAM_UI: false, // Keep disabled even in mock mode - under development
 };
 
 /**

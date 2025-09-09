@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Send, Sparkles, Eye, Save } from 'lucide-react';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 export default function Compose() {
   const [message, setMessage] = useState('');
@@ -10,6 +11,7 @@ export default function Compose() {
   const [loading, setLoading] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState('twitter');
   const [styleProfile, setStyleProfile] = useState({});
+  const { isEnabled } = useFeatureFlags();
   const [persona, setPersona] = useState('');
   const [tokensUsed, setTokensUsed] = useState(0);
   const [analysisRemaining, setAnalysisRemaining] = useState(null);
@@ -211,14 +213,14 @@ export default function Compose() {
             {/* Platform Selection */}
             <div>
               <label className="block text-sm font-medium mb-2">Platform</label>
-              <select 
-                value={selectedPlatform} 
+              <select
+                value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
                 className="w-full p-2 border border-input rounded-md bg-background text-sm"
               >
                 <option value="twitter">🐦 Twitter</option>
-                <option value="facebook">📘 Facebook</option>
-                <option value="instagram">📷 Instagram</option>
+                {isEnabled('ENABLE_FACEBOOK_UI') && <option value="facebook">📘 Facebook</option>}
+                {isEnabled('ENABLE_INSTAGRAM_UI') && <option value="instagram">📷 Instagram</option>}
                 <option value="youtube">📺 YouTube</option>
                 <option value="tiktok">🎵 TikTok</option>
                 <option value="reddit">🔴 Reddit</option>

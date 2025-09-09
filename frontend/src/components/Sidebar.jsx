@@ -75,7 +75,7 @@ export default function Sidebar() {
       {isMobile && (
         <button
           onClick={toggleSidebar}
-          className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg border border-gray-200 shadow-lg lg:hidden"
+          className="fixed top-4 left-4 z-60 p-2 bg-white rounded-lg border border-gray-200 shadow-lg lg:hidden"
           aria-label="Toggle sidebar"
         >
           {isOpen ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
@@ -92,7 +92,9 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`roastr-sidebar fixed left-0 top-0 h-screen w-16 transform transition-transform duration-300 ease-in-out z-50 overflow-hidden
+        id="app-sidebar"
+        aria-hidden={isMobile && !isOpen}
+        className={`roastr-sidebar fixed left-0 top-0 h-screen w-16 transform transition-transform duration-300 ease-in-out z-40 overflow-hidden
           ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
       >
@@ -101,6 +103,7 @@ export default function Sidebar() {
           <div className="flex items-center justify-center h-20 roastr-sidebar__logo">
             <div className="flex items-center justify-center">
               <Flame className="w-8 h-8 text-white" />
+              <span className="sr-only">Roastr</span>
             </div>
           </div>
 
@@ -117,13 +120,13 @@ export default function Sidebar() {
                     onClick={isMobile ? closeSidebar : undefined}
                     className={({ isActive }) =>
                       `roastr-sidebar-nav-item flex items-center justify-center w-12 h-12 group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 ${
-                        isActive ? 'active text-white' : 'text-white text-opacity-70 hover:text-white'
+                        isActive ? 'active text-white' : 'text-white/70 hover:text-white'
                       }`
                     }
                     aria-label={item.name}
                     title={item.name}
                   >
-                    <IconComponent className="h-6 w-6 text-white" />
+                    <IconComponent className="h-6 w-6" />
                   </NavLink>
                 );
               })}
