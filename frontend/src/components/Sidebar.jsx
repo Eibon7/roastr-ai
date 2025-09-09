@@ -101,10 +101,8 @@ export default function Sidebar() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-20 roastr-sidebar__logo">
-            <div className="flex items-center justify-center">
-              <Flame className="w-8 h-8 text-white" />
-              <span className="sr-only">Roastr</span>
-            </div>
+            <Flame className="w-8 h-8 text-white" />
+            <span className="sr-only">Roastr</span>
           </div>
 
           {/* Navigation */}
