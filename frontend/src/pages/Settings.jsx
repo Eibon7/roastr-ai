@@ -12,6 +12,7 @@ import AjustesSettings from '../components/AjustesSettings';
 import TransparencySettings from '../components/TransparencySettings';
 import ShopSettings from '../components/ShopSettings';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 // Password requirement component for visual feedback (legacy support)
 const PasswordRequirement = ({ met, text }) => (
@@ -28,6 +29,8 @@ const PasswordRequirement = ({ met, text }) => (
 );
 
 export default function Settings() {
+  const { isEnabled: isFeatureEnabled } = useFeatureFlags();
+  
   const [settings, setSettings] = useState({
     roastTone: 'balanced',
     responseFrequency: 'normal',
@@ -1085,11 +1088,13 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Shop */}
-      <ShopSettings
-        user={user}
-        onNotification={addNotification}
-      />
+      {/* Shop - Solo mostrar si el feature flag está habilitado */}
+      {isFeatureEnabled('ENABLE_SHOP') && (
+        <ShopSettings
+          user={user}
+          onNotification={addNotification}
+        />
+      )}
 
       {/* Roastr Persona */}
       <Card>

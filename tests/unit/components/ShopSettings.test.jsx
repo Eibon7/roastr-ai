@@ -4,11 +4,7 @@
  */
 
 import React from 'react';
-<<<<<<< HEAD
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-=======
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
->>>>>>> origin/main
 import '@testing-library/jest-dom';
 import ShopSettings from '../../../frontend/src/components/ShopSettings';
 import { apiClient } from '../../../frontend/src/lib/api';
@@ -21,11 +17,6 @@ jest.mock('../../../frontend/src/lib/api', () => ({
     }
 }));
 
-<<<<<<< HEAD
-// Mock window.location safely
-const originalLocation = window.location;
-
-=======
 // Store original window.location
 const originalLocation = window.location;
 
@@ -38,7 +29,6 @@ afterAll(() => {
     window.location = originalLocation;
 });
 
->>>>>>> origin/main
 describe('ShopSettings Component', () => {
     const mockUser = {
         id: 'user-123',
@@ -107,23 +97,7 @@ describe('ShopSettings Component', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-<<<<<<< HEAD
-        // Mock window.location safely
-        Object.defineProperty(window, 'location', {
-            value: { href: '' },
-            configurable: true
-        });
-    });
-
-    afterEach(() => {
-        // Restore original window.location
-        Object.defineProperty(window, 'location', {
-            value: originalLocation,
-            configurable: true
-        });
-=======
         window.location.href = '';
->>>>>>> origin/main
     });
 
     it('should render loading state initially', () => {
@@ -257,17 +231,8 @@ describe('ShopSettings Component', () => {
             expect(screen.getByText('Compras Recientes')).toBeInTheDocument();
         });
 
-<<<<<<< HEAD
-        // Find the recent purchase row/container that contains 'roasts_100'
-        const recentPurchaseRow = screen.getByText('roasts_100').closest('div');
-        expect(recentPurchaseRow).toBeInTheDocument();
-
-        // Scope the price assertion to this specific purchase item
-        expect(within(recentPurchaseRow).getByText('$4.99')).toBeInTheDocument();
-=======
         expect(screen.getByText('Roasts Pack 100')).toBeInTheDocument();
         expect(screen.getByText('$4.99')).toBeInTheDocument();
->>>>>>> origin/main
         expect(screen.getByText('completed')).toBeInTheDocument();
     });
 

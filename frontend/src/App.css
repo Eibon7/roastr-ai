@@ -102,6 +102,55 @@ body {
   margin-left: 4rem;
 }
 
+.ml-20 {
+  margin-left: 5rem;
+}
+
+.w-20 {
+  width: 5rem;
+}
+
+.w-14 {
+  width: 3.5rem;
+}
+
+.h-14 {
+  height: 3.5rem;
+}
+
+.h-20 {
+  height: 5rem;
+}
+
+/* Red color utilities for Roastr brand */
+.bg-red-600 {
+  background-color: #dc2626;
+}
+
+.border-red-500 {
+  border-color: #ef4444;
+}
+
+.border-opacity-30 {
+  border-opacity: 0.3;
+}
+
+.text-opacity-70 {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.bg-opacity-20 {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.bg-opacity-10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+
 /* Main content wrapper */
 .main-content {
   background: rgba(255, 255, 255, 0.1);
@@ -901,15 +950,15 @@ textarea.border {
 }
 
 @media (max-width: 767px) {
-  main.ml-64, main.ml-16 {
+  main.ml-64, main.ml-16, main.ml-20 {
     margin-left: 0 !important;
     padding-top: 5rem; /* Space for mobile menu button */
   }
-  
+
   .flex-1 {
     max-width: 100vw;
   }
-  
+
   /* Hide desktop sidebar utilities on mobile */
   .lg-hidden {
     display: block;

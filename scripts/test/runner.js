@@ -161,10 +161,10 @@ function runJest(patterns, options = {}) {
   return new Promise((resolve, reject) => {
     const jestArgs = [];
 
-    // Add test patterns - use Jest's native pattern matching
+    // Add test patterns - pass glob patterns as positional args
     if (patterns && patterns.length > 0) {
-      // Jest can handle simple glob patterns directly
-      jestArgs.push('--testPathPatterns', patterns.join('|'));
+      // Pass glob patterns as positional args; Jest will resolve them
+      jestArgs.push(...patterns);
     }
 
     // Add mock mode environment variable

@@ -16,7 +16,7 @@ export default function AppShell() {
         <Sidebar />
         
         {/* Main Content */}
-        <main className="ml-16 p-6">
+        <main className="ml-20 p-6">
           <Outlet />
         </main>
       </div>

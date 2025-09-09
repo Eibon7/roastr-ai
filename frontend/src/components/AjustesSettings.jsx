@@ -1,27 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { 
-  Settings, 
-  User, 
-  Info, 
-  Eye, 
-  EyeOff, 
-  Save, 
-  Copy, 
-  Check, 
-  Sun, 
-  Moon, 
+import {
+  Settings,
+  User,
+  Info,
+  Eye,
+  EyeOff,
+  Save,
+  Copy,
+  Check,
+  Sun,
+  Moon,
   Monitor,
   Palette,
   Shield,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  X
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import TransparencySettings from './TransparencySettings';
+import SensitiveDataModal from './ui/SensitiveDataModal';
+import { detectSensitiveData, generateWarningMessage, isClipboardClearingSupported, clearClipboard } from '../utils/sensitiveDataDetector';
 
 const AjustesSettings = ({ user, onNotification }) => {
   // Roastr Persona state
@@ -50,8 +54,37 @@ const AjustesSettings = ({ user, onNotification }) => {
   // Copy state for bio text
   const [copyState, setCopyState] = useState({
     copied: false,
-    bioText: ''
+    bioText: '',
+    showSensitiveModal: false,
+    pendingCopyData: null,
+    showWarning: false,
+    warningMessage: '',
+    clearingClipboard: false
   });
+
+  // Refs for timeout cleanup
+  const warningTimeoutRef = useRef(null);
+  const clipboardClearTimeoutRef = useRef(null);
+  const copyStateTimeoutRef = useRef(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Cleanup all timeouts on unmount
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+      if (clipboardClearTimeoutRef.current) {
+        clearTimeout(clipboardClearTimeoutRef.current);
+      }
+      if (copyStateTimeoutRef.current) {
+        clearTimeout(copyStateTimeoutRef.current);
+      }
+    };
+  }, []);
+
 
   useEffect(() => {
     loadAjustesData();
@@ -97,8 +130,8 @@ const AjustesSettings = ({ user, onNotification }) => {
         if (themeResult?.data?.success) {
           setThemeSettings(prev => ({
             ...prev,
-            theme: themeResult.data.data?.theme,
-            options: themeResult.data.data?.options,
+            theme: themeResult.data.data?.theme || prev.theme,
+            options: themeResult.data.data?.options || prev.options || [],
             isLoading: false
           }));
         } else {
@@ -116,12 +149,18 @@ const AjustesSettings = ({ user, onNotification }) => {
       }
 
       // Load transparency bio text
-      const transparencyResult = await apiClient.get('/user/settings/transparency-mode');
-      if (transparencyResult?.data?.success && transparencyResult.data.data?.bio_text) {
-        setCopyState(prev => ({
-          ...prev,
-          bioText: transparencyResult.data.data.bio_text
-        }));
+      try {
+        const transparencyResult = await apiClient.get('/user/settings/transparency-mode');
+        if (transparencyResult?.data?.success && transparencyResult.data.data?.bio_text) {
+          setCopyState(prev => ({
+            ...prev,
+            bioText: transparencyResult.data.data.bio_text
+          }));
+        }
+      } catch (transparencyError) {
+        console.error('Failed to load transparency settings:', transparencyError);
+        // Don't show notification for transparency error as it's not critical
+        // The transparency section will handle its own error state
       }
 
     } catch (error) {
@@ -205,13 +244,15 @@ const AjustesSettings = ({ user, onNotification }) => {
   };
 
   const applyThemeToUI = (theme) => {
+    if (typeof document === 'undefined') return;
     const html = document.documentElement;
     const body = document.body;
-    
+
     // Remove existing theme classes
     html.classList.remove('light', 'dark');
     body.classList.remove('light', 'dark');
-    
+
+
     if (theme === 'light') {
       html.classList.add('light');
       body.classList.add('light');
@@ -221,7 +262,7 @@ const AjustesSettings = ({ user, onNotification }) => {
       body.classList.add('dark');
       html.style.colorScheme = 'dark';
     } else if (theme === 'system') {
-      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDarkMode = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (isDarkMode) {
         html.classList.add('dark');
         body.classList.add('dark');
@@ -236,6 +277,36 @@ const AjustesSettings = ({ user, onNotification }) => {
 
   const handleCopyBioText = async () => {
     try {
+      // Detect sensitive data in the bio text
+      const detection = detectSensitiveData(copyState.bioText, {
+        checkPersonaFlag: true,
+        isPersonaSensitive: true, // Bio text is considered persona data
+        strictMode: false
+      });
+
+      // If sensitive data is detected, show confirmation modal
+      if (detection.isSensitive) {
+        setCopyState(prev => ({
+          ...prev,
+          showSensitiveModal: true,
+          pendingCopyData: {
+            text: copyState.bioText,
+            detection
+          }
+        }));
+        return;
+      }
+
+      // If not sensitive, proceed with copy
+      await performClipboardCopy(copyState.bioText, detection);
+    } catch (error) {
+      console.error('Failed to initiate copy operation:', error);
+      onNotification?.('Error al iniciar la operación de copiado', 'error');
+    }
+  };
+
+  const performClipboardCopy = async (textToCopy, detection) => {
+    try {
       // Check if modern clipboard API is available and optionally check permissions
       if (navigator.clipboard && navigator.clipboard.writeText) {
         // Optionally check clipboard-write permission for clearer user messages
@@ -243,7 +314,8 @@ const AjustesSettings = ({ user, onNotification }) => {
           try {
             const permission = await navigator.permissions.query({ name: 'clipboard-write' });
             if (permission.state === 'denied') {
-              onNotification?.('Permisos de portapapeles denegados. Intenta copiar manualmente.', 'error');
+              onNotification?.('Permisos de portapapeles denegados. Intentando método alternativo…', 'warning');
+              await performFallbackCopy(textToCopy, detection);
               return;
             }
           } catch (permError) {
@@ -251,57 +323,11 @@ const AjustesSettings = ({ user, onNotification }) => {
           }
         }
 
-        await navigator.clipboard.writeText(copyState.bioText);
-        setCopyState(prev => ({ ...prev, copied: true }));
-        onNotification?.('Texto copiado al portapapeles', 'success');
-
-        setTimeout(() => {
-          setCopyState(prev => ({ ...prev, copied: false }));
-        }, 2000);
+        await navigator.clipboard.writeText(textToCopy);
+        handleSuccessfulCopy(detection);
       } else {
         // Fallback for older browsers with improved accessibility
-        const activeElement = document.activeElement;
-        const selection = window.getSelection();
-        const selectedRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-        const textarea = document.createElement('textarea');
-        textarea.value = copyState.bioText;
-        textarea.readOnly = true;
-        textarea.setAttribute('aria-hidden', 'true');
-        textarea.setAttribute('tabindex', '-1');
-        textarea.style.position = 'absolute';
-        textarea.style.left = '-9999px';
-        textarea.style.top = '-9999px';
-
-        document.body.appendChild(textarea);
-
-        try {
-          textarea.select();
-          const successful = document.execCommand('copy');
-          if (successful) {
-            setCopyState(prev => ({ ...prev, copied: true }));
-            onNotification?.('Texto copiado al portapapeles', 'success');
-
-            setTimeout(() => {
-              setCopyState(prev => ({ ...prev, copied: false }));
-            }, 2000);
-          } else {
-            throw new Error('execCommand failed');
-          }
-        } catch (execError) {
-          console.error('execCommand copy failed:', execError);
-          onNotification?.('La función de copiar no está disponible en este navegador', 'error');
-        } finally {
-          // Restore focus and selection
-          document.body.removeChild(textarea);
-          if (activeElement && activeElement.focus) {
-            activeElement.focus();
-          }
-          if (selectedRange && selection) {
-            selection.removeAllRanges();
-            selection.addRange(selectedRange);
-          }
-        }
+        await performFallbackCopy(textToCopy, detection);
       }
     } catch (error) {
       console.error('Failed to copy bio text:', error);
@@ -318,6 +344,146 @@ const AjustesSettings = ({ user, onNotification }) => {
       }
     }
   };
+
+  const performFallbackCopy = async (textToCopy, detection) => {
+    const activeElement = document.activeElement;
+    const selection = window.getSelection();
+    const selectedRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+    textarea.readOnly = true;
+    textarea.setAttribute('aria-hidden', 'true');
+    textarea.setAttribute('tabindex', '-1');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '-9999px';
+
+    document.body.appendChild(textarea);
+
+    try {
+      textarea.select();
+      const successful = document.execCommand('copy');
+      if (successful) {
+        handleSuccessfulCopy(detection);
+        return true;
+      } else {
+        throw new Error('execCommand failed');
+      }
+    } catch (execError) {
+      console.error('execCommand copy failed:', execError);
+      onNotification?.('La función de copiar no está disponible en este navegador', 'error');
+      return false;
+    } finally {
+      // Restore focus and selection
+      document.body.removeChild(textarea);
+      if (activeElement && activeElement.focus) {
+        activeElement.focus();
+      }
+      if (selectedRange && selection) {
+        selection.removeAllRanges();
+        selection.addRange(selectedRange);
+      }
+    }
+  };
+
+  const handleSuccessfulCopy = (detection) => {
+    setCopyState(prev => ({ ...prev, copied: true }));
+    onNotification?.('Texto copiado al portapapeles', 'success');
+
+    // Show warning if sensitive data was detected
+    if (detection.isSensitive) {
+      const warningMessage = generateWarningMessage(detection);
+      setCopyState(prev => ({
+        ...prev,
+        showWarning: true,
+        warningMessage
+      }));
+
+      // Auto-hide warning after 8 seconds
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+      warningTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
+        }
+      }, 8000);
+
+      // Offer clipboard clearing after 30 seconds if supported
+      if (isClipboardClearingSupported()) {
+        if (clipboardClearTimeoutRef.current) {
+          clearTimeout(clipboardClearTimeoutRef.current);
+        }
+        clipboardClearTimeoutRef.current = setTimeout(async () => {
+          if (isMountedRef.current) {
+            setCopyState(prev => ({ ...prev, clearingClipboard: true }));
+            try {
+              await clearClipboard();
+              if (isMountedRef.current) {
+                setCopyState(prev => ({ ...prev, clearingClipboard: false }));
+              }
+            } catch (error) {
+              console.error('Error clearing clipboard:', error);
+              if (isMountedRef.current) {
+                setCopyState(prev => ({ ...prev, clearingClipboard: false }));
+              }
+            }
+          }
+        }, 30000);
+      }
+    }
+
+    // Reset copied state after 2 seconds
+    if (copyStateTimeoutRef.current) {
+      clearTimeout(copyStateTimeoutRef.current);
+    }
+    copyStateTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        setCopyState(prev => ({ ...prev, copied: false }));
+      }
+    }, 2000);
+  };
+
+  const handleSensitiveModalConfirm = () => {
+    if (copyState.pendingCopyData) {
+      performClipboardCopy(
+        copyState.pendingCopyData.text,
+        copyState.pendingCopyData.detection
+      );
+    }
+    setCopyState(prev => ({
+      ...prev,
+      showSensitiveModal: false,
+      pendingCopyData: null
+    }));
+  };
+
+  const handleSensitiveModalClose = () => {
+    setCopyState(prev => ({
+      ...prev,
+      showSensitiveModal: false,
+      pendingCopyData: null
+    }));
+  };
+
+  const handleClearClipboard = async () => {
+    try {
+      const success = await clearClipboard();
+      if (success) {
+        onNotification?.('Portapapeles limpiado', 'success');
+        setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }));
+      } else {
+        onNotification?.('No se pudo limpiar el portapapeles', 'error');
+        // Only clear warnings on success - keep them visible if clearing failed
+      }
+    } catch (error) {
+      console.error('Error clearing clipboard:', error);
+      onNotification?.('No se pudo limpiar el portapapeles', 'error');
+      // Keep warnings visible if clearing failed due to exception
+    }
+  };
+
 
   const getThemeIcon = (themeValue) => {
     switch (themeValue) {
@@ -352,6 +518,7 @@ const AjustesSettings = ({ user, onNotification }) => {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
@@ -466,25 +633,67 @@ const AjustesSettings = ({ user, onNotification }) => {
                     "{copyState.bioText}"
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyBioText}
-                  disabled={copyState.copied}
-                >
-                  {copyState.copied ? (
-                    <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Copiado
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copiar
-                    </>
+                <div className="flex items-center space-x-2">
+                  {copyState.clearingClipboard && (
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Clock className="h-3 w-3 mr-1 animate-spin" />
+                      Limpiando...
+                    </div>
                   )}
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyBioText}
+                    disabled={copyState.copied || copyState.clearingClipboard}
+                  >
+                    {copyState.copied ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Copiado
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
+
+              {/* Warning message for sensitive data */}
+              {copyState.showWarning && copyState.warningMessage && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-amber-800">
+                        {copyState.warningMessage}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {isClipboardClearingSupported() && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleClearClipboard}
+                          className="text-xs h-6 px-2"
+                        >
+                          Limpiar portapapeles
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCopyState(prev => ({ ...prev, showWarning: false, warningMessage: '' }))}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -546,6 +755,16 @@ const AjustesSettings = ({ user, onNotification }) => {
         </div>
       </CardContent>
     </Card>
+
+    {/* Sensitive Data Confirmation Modal */}
+    <SensitiveDataModal
+      isOpen={copyState.showSensitiveModal}
+      onClose={handleSensitiveModalClose}
+      onConfirm={handleSensitiveModalConfirm}
+      detection={copyState.pendingCopyData?.detection}
+      textPreview={copyState.pendingCopyData?.text}
+    />
+    </>
   );
 };
 
@@ -573,6 +792,10 @@ const RoastrPersonaField = ({
   const handleSave = () => {
     onSave(fieldValue, fieldVisibility);
   };
+
+  // CodeRabbit: Check if there are actual changes to prevent unnecessary saves
+  const hasChanges = fieldValue !== value || fieldVisibility !== isVisible;
+
 
   const getVariantColor = () => {
     switch (variant) {
@@ -649,7 +872,11 @@ const RoastrPersonaField = ({
             </div>
             <Button
               onClick={handleSave}
-              disabled={isSaving || (fieldValue ?? '').trim().length === 0}
+              disabled={
+                isSaving ||
+                (((fieldValue ?? '').trim() === (value ?? '').trim()) &&
+                 fieldVisibility === isVisible)
+              }
               size="sm"
             >
               {isSaving ? (

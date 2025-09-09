@@ -10,7 +10,6 @@ const EntitlementsService = require('./entitlementsService');
 const StripeWrapper = require('./stripeWrapper');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
-const monitoringService = require('./monitoringService');
 
 class StripeWebhookService {
     constructor() {
@@ -76,7 +75,7 @@ class StripeWebhookService {
             switch (event.type) {
                 case 'checkout.session.completed':
                     // Check if this is an addon purchase or subscription
-                    if (event.data.object.mode === 'payment' && event.data.object.metadata?.addon_key) {
+                    if (event.data.object?.mode === 'payment' && event.data.object?.metadata?.addon_key) {
                         result = await this._handleAddonPurchaseCompleted(event.data.object);
                     } else {
                         result = await this._handleCheckoutCompleted(event.data.object);
@@ -123,22 +122,6 @@ class StripeWebhookService {
                 });
 
             const processingTime = Date.now() - startTime;
-            
-            // Emit metrics for monitoring
-            try {
-                monitoringService.trackWebhookProcessing(event.type, {
-                    eventId: event.id,
-                    processingTimeMs: processingTime,
-                    success: result.success,
-                    handled: result.handled !== false,
-                    accountId: result.accountId
-                });
-            } catch (metricsError) {
-                logger.warn('Failed to emit webhook metrics', {
-                    eventId: event.id,
-                    error: metricsError.message
-                });
-            }
             
             logger.info('Webhook event processed successfully', {
                 eventId: event.id,
@@ -348,59 +331,18 @@ class StripeWebhookService {
                 throw new Error('Payment intent must be a string or object with id property');
             }
 
-            // Validate session.amount_total
-            if (!session.amount_total || typeof session.amount_total !== 'number') {
-                logger.error('Invalid or missing amount_total in checkout session', {
+            // Validate amount_total
+            const amountCents = session.amount_total;
+            if (typeof amountCents !== 'number' || amountCents <= 0) {
+                logger.error('Invalid amount_total in checkout session', {
                     sessionId: session.id,
                     userId,
                     addonKey,
                     amountTotal: session.amount_total,
-                    amountTotalType: typeof session.amount_total
+                    amountType: typeof session.amount_total
                 });
-
-                // Update purchase history as failed
-                await supabaseServiceClient
-                    .from('addon_purchase_history')
-                    .update({
-                        status: 'failed',
-                        failed_at: new Date().toISOString(),
-                        error_message: 'Invalid amount_total in checkout session'
-                    })
-                    .eq('stripe_checkout_session_id', session.id);
-
-                throw new Error('Amount total must be a valid number');
+                throw new Error('Invalid payment amount in checkout session');
             }
-
-            // Robust numeric validation - coerce to Number and validate
-            const amountNumber = Number(session.amount_total);
-
-            // Check if conversion resulted in a valid number
-            if (isNaN(amountNumber) || !Number.isSafeInteger(amountNumber) || amountNumber <= 0) {
-                logger.error('Invalid amount_total value in checkout session', {
-                    sessionId: session.id,
-                    userId,
-                    addonKey,
-                    originalAmount: session.amount_total,
-                    coercedAmount: amountNumber,
-                    isNaN: isNaN(amountNumber),
-                    isSafeInteger: Number.isSafeInteger(amountNumber),
-                    isPositive: amountNumber > 0
-                });
-
-                // Update purchase history as failed
-                await supabaseServiceClient
-                    .from('addon_purchase_history')
-                    .update({
-                        status: 'failed',
-                        failed_at: new Date().toISOString(),
-                        error_message: 'Amount total must be a positive integer'
-                    })
-                    .eq('stripe_checkout_session_id', session.id);
-
-                throw new Error('Amount total must be a positive integer');
-            }
-
-            const amountCents = amountNumber;
 
             // Execute atomic transaction for addon purchase
             const { data: transactionResult, error: transactionError } = await supabaseServiceClient
@@ -429,7 +371,8 @@ class StripeWebhookService {
                     .update({
                         status: 'failed',
                         failed_at: new Date().toISOString(),
-                        error_message: transactionError.message
+                        error_message: transactionError.message,
+                        stripe_payment_intent_id: paymentIntentId
                     })
                     .eq('stripe_checkout_session_id', session.id);
 
@@ -674,33 +617,6 @@ class StripeWebhookService {
                 };
             }
 
-            // Reset credits for new billing cycle if this is a subscription payment
-            if (invoice.subscription) {
-                try {
-                    const creditsService = require('./creditsService');
-                    const resetResult = await creditsService.resetCreditsForBillingCycle(userId, {
-                        stripeCustomerId: customerId,
-                        subscriptionId: invoice.subscription,
-                        billingPeriodStart: new Date(invoice.period_start * 1000),
-                        billingPeriodEnd: new Date(invoice.period_end * 1000)
-                    });
-
-                    logger.info('Credits reset for billing cycle', {
-                        userId,
-                        invoiceId: invoice.id,
-                        subscriptionId: invoice.subscription,
-                        creditsResetSuccess: resetResult
-                    });
-                } catch (creditsError) {
-                    // Log error but don't fail the webhook - payment was successful
-                    logger.warn('Failed to reset credits during payment success', {
-                        userId,
-                        invoiceId: invoice.id,
-                        error: creditsError.message
-                    });
-                }
-            }
-
             return {
                 success: true,
                 accountId: userId,
@@ -749,8 +665,7 @@ class StripeWebhookService {
                     p_amount_due: invoice.amount_due,
                     p_attempt_count: invoice.attempt_count || 0,
                     p_next_attempt_date: invoice.next_payment_attempt ? new Date(invoice.next_payment_attempt * 1000).toISOString() : null,
-                    p_payment_failed_at: new Date().toISOString(),
-                    p_stripe_payment_intent_id: invoice.payment_intent || null // CodeRabbit: Include payment intent ID for traceability
+                    p_payment_failed_at: new Date().toISOString()
                 });
 
             if (transactionError) {

@@ -157,8 +157,8 @@ export default function Billing() {
               <div className="text-3xl font-bold capitalize">{mockEntitlements.plan_name}</div>
               <div className="text-muted-foreground mt-1">
                 {mockEntitlements.plan_name === 'free' ? 'Free forever' : 
-                 mockEntitlements.plan_name === 'starter' ? '€5/month' :
-                 mockEntitlements.plan_name === 'pro' ? '€15/month' : '€50/month'}
+                 mockEntitlements.plan_name === 'starter' ? `${formatCurrency(500, 'USD')}/month` :
+                 mockEntitlements.plan_name === 'pro' ? `${formatCurrency(1500, 'USD')}/month` : `${formatCurrency(5000, 'USD')}/month`}
               </div>
             </div>
             <div>
@@ -278,9 +278,9 @@ export default function Billing() {
             {mockEntitlements.plan_name !== 'free' ? (
               <>
                 {[
-                  { date: 'Dec 15, 2024', amount: `€${mockEntitlements.plan_name === 'starter' ? '5.00' : mockEntitlements.plan_name === 'pro' ? '15.00' : '50.00'}`, status: 'Paid', invoice: 'INV-001' },
-                  { date: 'Nov 15, 2024', amount: `€${mockEntitlements.plan_name === 'starter' ? '5.00' : mockEntitlements.plan_name === 'pro' ? '15.00' : '50.00'}`, status: 'Paid', invoice: 'INV-002' },
-                  { date: 'Oct 15, 2024', amount: `€${mockEntitlements.plan_name === 'starter' ? '5.00' : mockEntitlements.plan_name === 'pro' ? '15.00' : '50.00'}`, status: 'Paid', invoice: 'INV-003' },
+                  { date: 'Dec 15, 2024', amount: formatCurrency(mockEntitlements.plan_name === 'starter' ? 500 : mockEntitlements.plan_name === 'pro' ? 1500 : 5000, 'USD'), status: 'Paid', invoice: 'INV-001' },
+                  { date: 'Nov 15, 2024', amount: formatCurrency(mockEntitlements.plan_name === 'starter' ? 500 : mockEntitlements.plan_name === 'pro' ? 1500 : 5000, 'USD'), status: 'Paid', invoice: 'INV-002' },
+                  { date: 'Oct 15, 2024', amount: formatCurrency(mockEntitlements.plan_name === 'starter' ? 500 : mockEntitlements.plan_name === 'pro' ? 1500 : 5000, 'USD'), status: 'Paid', invoice: 'INV-003' },
                 ].map((item, index) => (
                   <div key={index} className="flex items-center justify-between py-3 border-b last:border-0">
                     <div>
