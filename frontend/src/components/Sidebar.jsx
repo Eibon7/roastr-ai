@@ -92,14 +92,22 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-20 bg-red-600 transform transition-transform duration-300 ease-in-out z-30 overflow-hidden
+        className={`roastr-sidebar fixed left-0 top-0 h-screen w-16 transform transition-transform duration-300 ease-in-out z-50 overflow-hidden
           ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
-        style={{ backgroundColor: '#E02025' }}
+        style={{
+          backgroundColor: '#E02025',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-20 border-b border-red-500 border-opacity-30">
+          <div
+            className="flex items-center justify-center h-20"
+            style={{
+              borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
             <div className="flex items-center justify-center">
               <Flame className="w-8 h-8 text-white" />
             </div>
@@ -107,7 +115,7 @@ export default function Sidebar() {
 
           {/* Navigation */}
           <nav className="flex-1 py-6">
-            <div className="space-y-3 px-3">
+            <div className="space-y-3 px-2">
               {navItems.map((item) => {
                 const IconComponent = item.icon;
 
@@ -117,20 +125,26 @@ export default function Sidebar() {
                     to={item.path}
                     onClick={isMobile ? closeSidebar : undefined}
                     className={({ isActive }) =>
-                      `flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-200 group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-red-600 ${
+                      `roastr-sidebar-nav-item flex items-center justify-center w-12 h-12 transition-all duration-200 group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 ${
                         isActive
-                          ? 'bg-white bg-opacity-20 text-white shadow-lg'
-                          : 'text-white text-opacity-70 hover:bg-white hover:bg-opacity-10 hover:text-white'
+                          ? 'text-white'
+                          : 'text-white text-opacity-70 hover:text-white'
                       }`
                     }
+                    style={({ isActive }) => ({
+                      textDecoration: 'none',
+                      fontSize: '0',
+                      lineHeight: '0',
+                      textIndent: '-9999px',
+                      overflow: 'hidden',
+                      backgroundColor: isActive ? '#BD1B1F' : 'transparent',
+                      borderRadius: '12px',
+                      transition: 'all 0.2s ease-in-out'
+                    })}
                     aria-label={item.name}
+                    title={item.name}
                   >
-                    <IconComponent className="h-6 w-6" />
-
-                    {/* Tooltip */}
-                    <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg" aria-hidden="true">
-                      {item.name}
-                    </div>
+                    <IconComponent className="h-6 w-6 text-white" />
                   </NavLink>
                 );
               })}
