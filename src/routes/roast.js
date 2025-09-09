@@ -54,10 +54,10 @@ if (flags.isEnabled('ENABLE_PERSPECTIVE_API')) {
 const roastRateLimit = createRoastRateLimiter();
 
 /**
- * Validate roast request parameters
+ * Validate roast request parameters (Enhanced for Issue #326)
  */
 function validateRoastRequest(req) {
-    const { text, tone, intensity, humorType } = req.body;
+    const { text, tone, intensity, humorType, styleProfile, persona, platform } = req.body;
     const errors = [];
 
     // Validate text
@@ -82,6 +82,20 @@ function validateRoastRequest(req) {
 
     if (intensity && (typeof intensity !== 'number' || intensity < 1 || intensity > 5)) {
         errors.push('Intensity must be a number between 1 and 5');
+    }
+
+    // Validate new parameters for Issue #326
+    if (styleProfile && typeof styleProfile !== 'object') {
+        errors.push('Style profile must be an object');
+    }
+
+    if (persona && typeof persona !== 'string') {
+        errors.push('Persona must be a string');
+    }
+
+    const validPlatforms = ['twitter', 'facebook', 'instagram', 'youtube', 'tiktok', 'reddit', 'discord', 'twitch', 'bluesky'];
+    if (platform && !validPlatforms.includes(platform)) {
+        errors.push(`Platform must be one of: ${validPlatforms.join(', ')}`);
     }
 
     return errors;
@@ -113,7 +127,7 @@ async function getUserPlanInfo(userId) {
 }
 
 /**
- * Check if user has sufficient credits (UTC-based calculation)
+ * Check if user has sufficient roast credits (UTC-based calculation)
  */
 async function checkUserCredits(userId, plan) {
     try {
@@ -154,6 +168,90 @@ async function checkUserCredits(userId, plan) {
 }
 
 /**
+ * Check if user has sufficient analysis credits (Issue #326)
+ */
+async function checkAnalysisCredits(userId, plan) {
+    try {
+        const planFeatures = getPlanFeatures(plan);
+        // Analysis limit from database migration (monthly_analysis_limit)
+        const monthlyAnalysisLimit = getAnalysisLimitForPlan(plan);
+
+        if (monthlyAnalysisLimit === -1) {
+            return { hasCredits: true, remaining: -1, limit: -1 };
+        }
+
+        // Get current month analysis usage
+        const now = new Date();
+        const year = now.getUTCFullYear();
+        const month = now.getUTCMonth();
+        const startOfMonth = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+
+        const { data: usage, error } = await supabaseServiceClient
+            .from('analysis_usage')
+            .select('count')
+            .eq('user_id', userId)
+            .gte('created_at', startOfMonth.toISOString())
+            .single();
+
+        const currentUsage = usage?.count || 0;
+        const remaining = monthlyAnalysisLimit - currentUsage;
+
+        return {
+            hasCredits: remaining > 0,
+            remaining: Math.max(0, remaining),
+            limit: monthlyAnalysisLimit,
+            used: currentUsage
+        };
+    } catch (error) {
+        logger.error('Error checking analysis credits:', error);
+        // Default to allowing the request if we can't check
+        return { hasCredits: true, remaining: 1, limit: 1000 };
+    }
+}
+
+/**
+ * Get analysis limit for plan (Issue #326)
+ */
+function getAnalysisLimitForPlan(plan) {
+    const limits = {
+        'free': 1000,
+        'starter': 1000,
+        'pro': 10000,
+        'plus': 100000,
+        'custom': -1
+    };
+    return limits[plan] || 1000;
+}
+
+/**
+ * Get AI model for plan with GPT-5 auto-detection (Issue #326)
+ */
+async function getModelForPlan(plan) {
+    try {
+        const { getModelAvailabilityService } = require('../services/modelAvailabilityService');
+        const modelService = getModelAvailabilityService();
+        
+        // Use the smart model selection with GPT-5 detection
+        return await modelService.getModelForPlan(plan);
+    } catch (error) {
+        logger.error('Error getting model for plan, using fallback', {
+            plan,
+            error: error.message
+        });
+        
+        // Safe fallback to previous logic
+        const fallbackModels = {
+            'free': 'gpt-3.5-turbo',
+            'starter': 'gpt-4o',
+            'pro': 'gpt-4o', 
+            'plus': 'gpt-4o',
+            'custom': 'gpt-4o'
+        };
+        return fallbackModels[plan] || 'gpt-4o';
+    }
+}
+
+/**
  * Record roast usage
  */
 async function recordRoastUsage(userId, metadata = {}) {
@@ -168,6 +266,25 @@ async function recordRoastUsage(userId, metadata = {}) {
             });
     } catch (error) {
         logger.error('Error recording roast usage:', error);
+        // Don't fail the request if we can't record usage
+    }
+}
+
+/**
+ * Record analysis usage (Issue #326)
+ */
+async function recordAnalysisUsage(userId, metadata = {}) {
+    try {
+        await supabaseServiceClient
+            .from('analysis_usage')
+            .insert({
+                user_id: userId,
+                count: 1,
+                metadata,
+                created_at: new Date().toISOString()
+            });
+    } catch (error) {
+        logger.error('Error recording analysis usage:', error);
         // Don't fail the request if we can't record usage
     }
 }
@@ -256,8 +373,11 @@ async function analyzeContent(text) {
 
 /**
  * POST /api/roast/preview
- * Generate a roast preview without consuming credits
+ * Generate a roast preview with analysis credit consumption (Issue #326)
  * Requires authentication
+ * 
+ * Request: { text, styleProfile, persona, platform }
+ * Response: { roast, tokensUsed, analysisCountRemaining, roastsRemaining }
  */
 router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
     const startTime = Date.now();
@@ -274,11 +394,50 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
             });
         }
 
-        const { text, tone = 'sarcastic', intensity = 3, humorType = 'witty' } = req.body;
+        const { 
+            text, 
+            styleProfile = {}, 
+            persona = null, 
+            platform = 'twitter',
+            tone = 'sarcastic', 
+            intensity = 3, 
+            humorType = 'witty' 
+        } = req.body;
+        
         const userId = req.user.id;
 
         // Get user plan info
         const userPlan = await getUserPlanInfo(userId);
+
+        // Check analysis credits BEFORE processing (Issue #326)
+        const analysisCheck = await checkAnalysisCredits(userId, userPlan.plan);
+        if (!analysisCheck.hasCredits) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient analysis credits',
+                details: {
+                    analysisCountRemaining: analysisCheck.remaining,
+                    analysisLimit: analysisCheck.limit,
+                    plan: userPlan.plan,
+                    message: 'Agotaste tu límite de análisis, actualiza tu plan'
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Check roast credits to include in response
+        const roastCheck = await checkUserCredits(userId, userPlan.plan);
+
+        // Consume 1 analysis credit (Issue #326)
+        await recordAnalysisUsage(userId, {
+            endpoint: 'preview',
+            platform,
+            hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
+            hasPersona: !!persona,
+            tone,
+            intensity,
+            humorType
+        });
 
         // Analyze content with Perspective API
         const contentAnalysis = await analyzeContent(text);
@@ -297,16 +456,21 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
             });
         }
 
-        // Prepare roast generation config
+        // Prepare enhanced roast generation config (Issue #326)
         const roastConfig = {
             plan: userPlan.plan,
             tone,
             humor_type: humorType,
             intensity_level: intensity,
-            preview_mode: true
+            preview_mode: true,
+            userId: userId,
+            styleProfile: styleProfile,
+            persona: persona,
+            platform: platform,
+            language: 'es' // Default to Spanish
         };
 
-        // Generate roast
+        // Generate roast with enhanced configuration
         const generationResult = await roastGenerator.generateRoast(
             text,
             contentAnalysis.toxicityScore,
@@ -315,35 +479,52 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
         );
 
         const processingTime = Date.now() - startTime;
+        const tokensUsed = generationResult.tokensUsed || roastGenerator.estimateTokens(text + generationResult.roast);
 
-        // Log successful preview generation
-        logger.info('Roast preview generated', {
+        // Calculate remaining credits after consumption
+        const analysisRemaining = Math.max(0, analysisCheck.remaining - 1);
+
+        // Log successful preview generation (Issue #326)
+        logger.info('Enhanced roast preview generated', {
             userId,
             plan: userPlan.plan,
+            platform,
+            hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
+            hasPersona: !!persona,
             tone,
             intensity,
             humorType,
+            tokensUsed,
+            analysisRemaining,
+            roastsRemaining: roastCheck.remaining,
             toxicityScore: contentAnalysis.toxicityScore,
             processingTimeMs: processingTime,
             roastLength: generationResult.roast?.length || 0
         });
 
-        // Return successful response
+        // Get model info for metadata
+        const selectedModel = await getModelForPlan(userPlan.plan);
+
+        // Return Issue #326 compliant response
         res.json({
             success: true,
-            data: {
-                roast: generationResult.roast,
-                metadata: {
-                    tone,
-                    intensity,
-                    humorType,
-                    toxicityScore: contentAnalysis.toxicityScore,
-                    safe: contentAnalysis.safe,
-                    preview: true,
-                    plan: userPlan.plan,
-                    processingTimeMs: processingTime,
-                    generatedAt: new Date().toISOString()
-                }
+            roast: generationResult.roast,
+            tokensUsed: tokensUsed,
+            analysisCountRemaining: analysisRemaining,
+            roastsRemaining: roastCheck.remaining,
+            metadata: {
+                platform,
+                styleProfile: styleProfile,
+                persona: persona,
+                tone,
+                intensity,
+                humorType,
+                toxicityScore: contentAnalysis.toxicityScore,
+                safe: contentAnalysis.safe,
+                plan: userPlan.plan,
+                processingTimeMs: processingTime,
+                generatedAt: new Date().toISOString(),
+                model: selectedModel
             },
             timestamp: new Date().toISOString()
         });
@@ -351,17 +532,47 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
     } catch (error) {
         const processingTime = Date.now() - startTime;
         
-        logger.error('Roast preview generation failed', {
+        logger.error('Enhanced roast preview generation failed', {
             userId: req.user?.id,
             error: error.message,
             stack: error.stack,
             processingTimeMs: processingTime
         });
 
+        // Fallback to mock on OpenAI API failure (Issue #326)
+        if (error.message.includes('OpenAI') || error.message.includes('API')) {
+            logger.warn('OpenAI API failed, falling back to mock mode', {
+                userId: req.user?.id,
+                error: error.message
+            });
+            
+            try {
+                const mockGenerator = new (require('../services/roastGeneratorMock'))();
+                const mockRoast = await mockGenerator.generateRoast(req.body.text || 'Error processing request', 0.5, req.body.tone || 'sarcastic');
+                
+                res.json({
+                    success: true,
+                    roast: mockRoast + ' (Modo de prueba)',
+                    tokensUsed: 50,
+                    analysisCountRemaining: 999,
+                    roastsRemaining: 99,
+                    metadata: {
+                        fallbackMode: true,
+                        error: 'OpenAI API unavailable',
+                        generatedAt: new Date().toISOString()
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            } catch (mockError) {
+                logger.error('Mock fallback also failed:', mockError);
+            }
+        }
+
         res.status(500).json({
             success: false,
             error: 'Failed to generate roast preview',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            details: process.env.NODE_ENV === 'development' ? error.message : 'Servicio temporalmente no disponible',
             timestamp: new Date().toISOString()
         });
     }
