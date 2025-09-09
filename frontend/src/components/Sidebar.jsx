@@ -95,19 +95,10 @@ export default function Sidebar() {
         className={`roastr-sidebar fixed left-0 top-0 h-screen w-16 transform transition-transform duration-300 ease-in-out z-50 overflow-hidden
           ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
         `}
-        style={{
-          backgroundColor: '#E02025',
-          borderRight: '1px solid rgba(255, 255, 255, 0.1)'
-        }}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div
-            className="flex items-center justify-center h-20"
-            style={{
-              borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
-            }}
-          >
+          <div className="flex items-center justify-center h-20 roastr-sidebar__logo">
             <div className="flex items-center justify-center">
               <Flame className="w-8 h-8 text-white" />
             </div>
@@ -125,22 +116,10 @@ export default function Sidebar() {
                     to={item.path}
                     onClick={isMobile ? closeSidebar : undefined}
                     className={({ isActive }) =>
-                      `roastr-sidebar-nav-item flex items-center justify-center w-12 h-12 transition-all duration-200 group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 ${
-                        isActive
-                          ? 'text-white'
-                          : 'text-white text-opacity-70 hover:text-white'
+                      `roastr-sidebar-nav-item flex items-center justify-center w-12 h-12 group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 ${
+                        isActive ? 'active text-white' : 'text-white text-opacity-70 hover:text-white'
                       }`
                     }
-                    style={({ isActive }) => ({
-                      textDecoration: 'none',
-                      fontSize: '0',
-                      lineHeight: '0',
-                      textIndent: '-9999px',
-                      overflow: 'hidden',
-                      backgroundColor: isActive ? '#BD1B1F' : 'transparent',
-                      borderRadius: '12px',
-                      transition: 'all 0.2s ease-in-out'
-                    })}
                     aria-label={item.name}
                     title={item.name}
                   >

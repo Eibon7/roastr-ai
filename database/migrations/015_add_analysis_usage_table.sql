@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS analysis_usage (
 -- Add indexes for performance
 CREATE INDEX IF NOT EXISTS idx_analysis_usage_user_id ON analysis_usage(user_id);
 CREATE INDEX IF NOT EXISTS idx_analysis_usage_created_at ON analysis_usage(created_at);
-CREATE INDEX IF NOT EXISTS idx_analysis_usage_user_month ON analysis_usage(user_id, date_trunc('month', created_at));
+-- Supports WHERE user_id = ? AND created_at >= ?
+CREATE INDEX IF NOT EXISTS idx_analysis_usage_user_created_at ON analysis_usage(user_id, created_at);
 
 -- Add Row Level Security (RLS) for multi-tenant isolation
 ALTER TABLE analysis_usage ENABLE ROW LEVEL SECURITY;

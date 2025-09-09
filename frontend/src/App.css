@@ -42,6 +42,7 @@ body {
   --input: #e2e8f0;
   --ring: #3b82f6;
   --radius: 0.5rem;
+  --sidebar-width: 4rem; /* matches w-16 Tailwind class */
 }
 
 /* Dark mode */
@@ -130,6 +131,7 @@ body {
 /* Roastr Sidebar - Force red color */
 .roastr-sidebar {
   background-color: #E02025 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .roastr-sidebar-nav-item {
@@ -144,6 +146,11 @@ body {
 /* Active state - darker red background */
 .roastr-sidebar-nav-item.active {
   background-color: #BD1B1F !important;
+}
+
+/* Logo area divider */
+.roastr-sidebar__logo {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .border-red-500 {
@@ -316,8 +323,8 @@ main, aside, .flex-1 {
   transform: translateX(4px);
 }
 
-/* Enhance sidebar styling */
-aside {
+/* Enhance sidebar styling - except for roastr-sidebar */
+aside:not(.roastr-sidebar) {
   background-color: var(--card) !important;
   border-right: 1px solid var(--border) !important;
 }
@@ -329,7 +336,7 @@ main {
   padding: 1.5rem;
   min-height: calc(100vh - 4rem);
   box-sizing: border-box;
-  max-width: calc(100vw - 16rem);
+  max-width: calc(100vw - var(--sidebar-width));
 }
 
 /* Fixed sidebar */
@@ -532,7 +539,7 @@ main {
 /* More flex utilities */
 .flex-1 { 
   flex: 1 1 0%;
-  max-width: calc(100vw - 16rem);
+  max-width: calc(100vw - var(--sidebar-width));
   overflow-x: hidden;
 }
 .flex-shrink-0 { flex-shrink: 0; }
