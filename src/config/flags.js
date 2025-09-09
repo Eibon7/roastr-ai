@@ -17,14 +17,14 @@ class FeatureFlags {
     return {
       // Core System Features
       ENABLE_BILLING: this.checkBillingAvailable(),
-      ENABLE_RQC: process.env.ENABLE_RQC === 'true' || false, // Disabled by default - under development
-      ENABLE_SHIELD: process.env.ENABLE_SHIELD === 'true' || false,
+      ENABLE_RQC: process.env.ENABLE_RQC === 'true', // Disabled by default - under development
+      ENABLE_SHIELD: process.env.ENABLE_SHIELD === 'true',
       
       // Platform Integration Features
       ENABLE_REAL_TWITTER: this.checkTwitterKeys(),
       ENABLE_REAL_YOUTUBE: this.checkYouTubeKeys(),
-      ENABLE_REAL_INSTAGRAM: process.env.ENABLE_REAL_INSTAGRAM === 'true' || false, // Disabled by default - under development
-      ENABLE_REAL_FACEBOOK: process.env.ENABLE_REAL_FACEBOOK === 'true' || false, // Disabled by default - under development
+      ENABLE_REAL_INSTAGRAM: process.env.ENABLE_REAL_INSTAGRAM === 'true' || this.checkInstagramKeys(),
+      ENABLE_REAL_FACEBOOK: process.env.ENABLE_REAL_FACEBOOK === 'true' || this.checkFacebookKeys(),
       ENABLE_REAL_DISCORD: this.checkDiscordKeys(),
       ENABLE_REAL_TWITCH: this.checkTwitchKeys(),
       ENABLE_REAL_REDDIT: this.checkRedditKeys(),
@@ -56,17 +56,17 @@ class FeatureFlags {
       ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false', // Default enabled unless explicitly disabled
 
       // Credits v2 Feature
-      ENABLE_CREDITS_V2: process.env.ENABLE_CREDITS_V2 === 'true' || false,
+      ENABLE_CREDITS_V2: process.env.ENABLE_CREDITS_V2 === 'true',
 
       // Custom Prompt Feature
-      ENABLE_CUSTOM_PROMPT: process.env.ENABLE_CUSTOM_PROMPT === 'true' || false, // Default disabled, requires explicit activation
+      ENABLE_CUSTOM_PROMPT: process.env.ENABLE_CUSTOM_PROMPT === 'true', // Default disabled, requires explicit activation
 
       // UI Platform Features (separate from API integration)
-      ENABLE_FACEBOOK_UI: process.env.ENABLE_FACEBOOK_UI === 'true' || false, // Default disabled - under development
-      ENABLE_INSTAGRAM_UI: process.env.ENABLE_INSTAGRAM_UI === 'true' || false, // Default disabled - under development
+      ENABLE_FACEBOOK_UI: process.env.ENABLE_FACEBOOK_UI === 'true', // Default disabled - under development
+      ENABLE_INSTAGRAM_UI: process.env.ENABLE_INSTAGRAM_UI === 'true', // Default disabled - under development
 
       // Shop Feature
-      ENABLE_SHOP: process.env.ENABLE_SHOP === 'true' || false // Default disabled unless explicitly enabled
+      ENABLE_SHOP: process.env.ENABLE_SHOP === 'true' // Default disabled unless explicitly enabled
     };
   }
 

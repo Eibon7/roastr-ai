@@ -81,7 +81,7 @@ export default function Dashboard() {
       if (platform === 'instagram' && !isEnabled('ENABLE_INSTAGRAM_UI')) return false;
       return true;
     });
-  }, [flagsLoading, isEnabled]);
+  }, [flagsLoading, isEnabled, allPlatforms]);
 
   // Check for admin mode on component mount - Issue #240
   useEffect(() => {
