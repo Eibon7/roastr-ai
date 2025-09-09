@@ -11,6 +11,7 @@ import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
 import AjustesSettings from '../components/AjustesSettings';
 import TransparencySettings from '../components/TransparencySettings';
 import ShopSettings from '../components/ShopSettings';
+import ThemeToggle from '../components/ThemeToggle';
 import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
@@ -1746,36 +1747,18 @@ export default function Settings() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Palette className="h-5 w-5" />
-            <span>Appearance</span>
+            <span>Estilo de la interfaz</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="space-y-4">
             <div>
-              <div className="font-medium">Dark Mode</div>
-              <div className="text-sm text-muted-foreground">
-                Switch between light and dark themes
+              <div className="font-medium mb-2">Tema de la aplicación</div>
+              <div className="text-sm text-muted-foreground mb-3">
+                Elige el tema de la interfaz que prefieras. El modo "Sistema" se adapta automáticamente a las preferencias de tu dispositivo.
               </div>
+              <ThemeToggle />
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.darkMode}
-                onChange={(e) => updateSetting('darkMode', e.target.checked)}
-                className="sr-only"
-              />
-              <div className={`w-11 h-6 rounded-full transition-colors ${
-                settings.darkMode 
-                  ? 'bg-primary' 
-                  : 'bg-gray-200 dark:bg-gray-700'
-              }`}>
-                <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                  settings.darkMode 
-                    ? 'translate-x-5' 
-                    : 'translate-x-0.5'
-                } mt-0.5`} />
-              </div>
-            </label>
           </div>
         </CardContent>
       </Card>

@@ -127,6 +127,25 @@ body {
   background-color: #dc2626;
 }
 
+/* Roastr Sidebar - Force red color */
+.roastr-sidebar {
+  background-color: #E02025 !important;
+}
+
+.roastr-sidebar-nav-item {
+  transition: all 0.2s ease-in-out !important;
+  border-radius: 12px !important;
+}
+
+.roastr-sidebar-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Active state - darker red background */
+.roastr-sidebar-nav-item.active {
+  background-color: #BD1B1F !important;
+}
+
 .border-red-500 {
   border-color: #ef4444;
 }
