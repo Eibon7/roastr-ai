@@ -1752,6 +1752,124 @@ router.get('/roastr-persona', authenticateToken, roastrPersonaReadLimiter, async
 });
 
 /**
+ * POST /api/user/roastr-persona/validate
+ * Validate Roastr Persona input for real-time feedback
+ * This endpoint is lightweight and doesn't save data
+ */
+router.post('/roastr-persona/validate', authenticateToken, async (req, res) => {
+    try {
+        const { field, value } = req.body;
+        
+        // Validate input parameters
+        if (!field || !['loQueMeDefine', 'loQueNoTolero', 'loQueMeDaIgual'].includes(field)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Campo inválido'
+            });
+        }
+
+        if (!value || typeof value !== 'string') {
+            return res.json({
+                success: true,
+                valid: true,
+                message: 'Campo vacío es válido'
+            });
+        }
+
+        // Check length
+        const maxLength = 300;
+        if (value.length > maxLength) {
+            return res.json({
+                success: true,
+                valid: false,
+                error: `El texto no puede superar los ${maxLength} caracteres`,
+                currentLength: value.length,
+                maxLength
+            });
+        }
+
+        // Check for prompt injection using PersonaInputSanitizer
+        const personaSanitizer = new PersonaInputSanitizer();
+        const sanitizedValue = personaSanitizer.sanitizePersonaInput(value);
+        
+        if (sanitizedValue === null) {
+            return res.json({
+                success: true,
+                valid: false,
+                error: 'El contenido contiene patrones no permitidos o intenta manipular el sistema'
+            });
+        }
+
+        // Check total length across all fields
+        const userId = req.user.id;
+        const { data: existingData } = await supabaseServiceClient
+            .from('users')
+            .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted')
+            .eq('id', userId)
+            .single();
+
+        let totalLength = value.length;
+        
+        if (existingData) {
+            // Decrypt existing values to check their lengths
+            if (field !== 'loQueMeDefine' && existingData.lo_que_me_define_encrypted) {
+                try {
+                    const decrypted = encryptionService.decrypt(existingData.lo_que_me_define_encrypted);
+                    totalLength += decrypted.length;
+                } catch (e) {
+                    logger.warn('Failed to decrypt lo_que_me_define for length check', { error: e.message });
+                }
+            }
+            
+            if (field !== 'loQueNoTolero' && existingData.lo_que_no_tolero_encrypted) {
+                try {
+                    const decrypted = encryptionService.decrypt(existingData.lo_que_no_tolero_encrypted);
+                    totalLength += decrypted.length;
+                } catch (e) {
+                    logger.warn('Failed to decrypt lo_que_no_tolero for length check', { error: e.message });
+                }
+            }
+            
+            if (field !== 'loQueMeDaIgual' && existingData.lo_que_me_da_igual_encrypted) {
+                try {
+                    const decrypted = encryptionService.decrypt(existingData.lo_que_me_da_igual_encrypted);
+                    totalLength += decrypted.length;
+                } catch (e) {
+                    logger.warn('Failed to decrypt lo_que_me_da_igual for length check', { error: e.message });
+                }
+            }
+        }
+
+        const maxTotalLength = 900;
+        if (totalLength > maxTotalLength) {
+            return res.json({
+                success: true,
+                valid: false,
+                error: `El total de todos los campos no puede superar los ${maxTotalLength} caracteres`,
+                currentTotalLength: totalLength,
+                maxTotalLength
+            });
+        }
+
+        // All validations passed
+        return res.json({
+            success: true,
+            valid: true,
+            sanitizedLength: sanitizedValue.length,
+            currentLength: value.length,
+            totalLength
+        });
+
+    } catch (error) {
+        logger.error('Error validating Roastr Persona input:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Error al validar el contenido'
+        });
+    }
+});
+
+/**
  * POST /api/user/roastr-persona
  * Save or update user's Roastr Persona including "lo que me define" and "lo que no tolero"
  */
@@ -3008,6 +3126,233 @@ router.get('/settings/transparency-explanation', authenticateToken, async (req, 
         res.status(500).json({
             success: false,
             error: 'Failed to retrieve transparency information'
+        });
+    }
+});
+
+/**
+ * GET /api/user/settings/style
+ * Get user's style preferences for roast generation
+ */
+router.get('/settings/style', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            try {
+                const { data, error } = await supabaseServiceClient
+                    .from('user_style_settings')
+                    .select('style, settings, created_at, updated_at')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+                    logger.error('Database error fetching style settings', {
+                        userId: SafeUtils.safeUserIdPrefix(userId),
+                        error: error.message,
+                        code: error.code
+                    });
+                    throw error;
+                }
+
+                res.json({
+                    success: true,
+                    data: {
+                        style: data?.style || 'sarcastic',
+                        settings: data?.settings || {
+                            intensity: 3,
+                            humor_type: 'witty',
+                            creativity: 3,
+                            politeness: 2
+                        },
+                        created_at: data?.created_at,
+                        updated_at: data?.updated_at
+                    }
+                });
+            } catch (dbError) {
+                logger.error('Failed to fetch style settings from database', {
+                    userId: SafeUtils.safeUserIdPrefix(userId),
+                    error: dbError.message,
+                    stack: dbError.stack
+                });
+                // Return default settings on database error
+                res.json({
+                    success: true,
+                    data: {
+                        style: 'sarcastic',
+                        settings: {
+                            intensity: 3,
+                            humor_type: 'witty',
+                            creativity: 3,
+                            politeness: 2
+                        },
+                        created_at: null,
+                        updated_at: null
+                    }
+                });
+            }
+        } else {
+            // Mock mode - return default settings
+            res.json({
+                success: true,
+                data: {
+                    style: 'sarcastic',
+                    settings: {
+                        intensity: 3,
+                        humor_type: 'witty',
+                        creativity: 3,
+                        politeness: 2
+                    },
+                    created_at: null,
+                    updated_at: null
+                }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Get style settings error', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve style settings'
+        });
+    }
+});
+
+/**
+ * POST /api/user/settings/style
+ * Update user's style preferences for roast generation
+ */
+router.post('/settings/style', authenticateToken, async (req, res) => {
+    try {
+        const { style, settings } = req.body;
+        const userId = req.user.id;
+
+        // Validate input
+        if (!style) {
+            return res.status(400).json({
+                success: false,
+                error: 'Style is required'
+            });
+        }
+
+        // Validate style value
+        const validStyles = ['sarcastic', 'witty', 'playful', 'direct', 'friendly', 'custom'];
+        if (!validStyles.includes(style)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid style value'
+            });
+        }
+
+        // Validate settings if provided
+        if (settings) {
+            const { intensity, humor_type, creativity, politeness } = settings;
+            
+            if (intensity !== undefined && (intensity < 1 || intensity > 5)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Intensity must be between 1 and 5'
+                });
+            }
+
+            if (creativity !== undefined && (creativity < 1 || creativity > 5)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Creativity must be between 1 and 5'
+                });
+            }
+
+            if (politeness !== undefined && (politeness < 1 || politeness > 5)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Politeness must be between 1 and 5'
+                });
+            }
+
+            const validHumorTypes = ['witty', 'sarcastic', 'playful', 'dry', 'gentle', 'custom'];
+            if (humor_type && !validHumorTypes.includes(humor_type)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid humor type'
+                });
+            }
+        }
+
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            try {
+                const { data, error } = await supabaseServiceClient
+                    .from('user_style_settings')
+                    .upsert({
+                        user_id: userId,
+                        style: style,
+                        settings: settings || {
+                            intensity: 3,
+                            humor_type: 'witty',
+                            creativity: 3,
+                            politeness: 2
+                        },
+                        updated_at: new Date().toISOString()
+                    }, { 
+                        onConflict: 'user_id' 
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    logger.error('Database error updating style settings', {
+                        userId: SafeUtils.safeUserIdPrefix(userId),
+                        error: error.message,
+                        code: error.code
+                    });
+                    throw error;
+                }
+
+                res.json({
+                    success: true,
+                    message: 'Style settings updated successfully',
+                    data: {
+                        style: data.style,
+                        settings: data.settings,
+                        updated_at: data.updated_at
+                    }
+                });
+            } catch (dbError) {
+                logger.error('Failed to update style settings in database', {
+                    userId: SafeUtils.safeUserIdPrefix(userId),
+                    error: dbError.message,
+                    stack: dbError.stack
+                });
+                throw dbError;
+            }
+        } else {
+            // Mock mode - just return success
+            res.json({
+                success: true,
+                message: 'Style settings updated successfully',
+                data: {
+                    style: style,
+                    settings: settings || {
+                        intensity: 3,
+                        humor_type: 'witty',
+                        creativity: 3,
+                        politeness: 2
+                    },
+                    updated_at: new Date().toISOString()
+                }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Update style settings error', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update style settings'
         });
     }
 });

@@ -84,97 +84,51 @@ export default function RoastUsageCard({ user, className = '' }) {
 
   if (loading) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5" />
-            <span>Roast usage</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-2 w-full" />
-            <Skeleton className="h-4 w-24" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className={`usage-card-roast flex items-center justify-between p-4 flex-shrink-0 ${className}`}>
+        <div>
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+        <Skeleton className="h-12 w-16" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5" />
-            <span>Roast usage</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2 text-red-600">
+      <div className={`usage-card-error flex items-center justify-between p-4 flex-shrink-0 ${className}`}>
+        <div>
+          <div className="flex items-center space-x-2 text-red-600 mb-1">
             <AlertTriangle className="h-4 w-4" />
-            <span className="text-sm">Error loading usage data</span>
+            <span className="text-base font-bold">Roast usage</span>
           </div>
-        </CardContent>
-      </Card>
+          <span className="text-sm text-red-500">Error loading data</span>
+        </div>
+        <span className="text-5xl font-bold text-red-500">--</span>
+      </div>
     );
   }
 
+  // Determine border color based on usage
+  const getBorderColor = () => {
+    if (usagePercentage >= 90) return 'border-l-red-400';
+    if (usagePercentage >= 75) return 'border-l-yellow-400';
+    return 'border-l-purple-400'; // Default purple for roasts
+  };
+
+  const percentageUsed = roastLimit > 0 ? Math.round((roastUsed / roastLimit) * 100) : 0;
+
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5 text-purple-600" />
-            <span>Roast usage</span>
-          </div>
-          {usagePercentage >= 90 && (
-            <Badge variant="destructive" className="text-xs">
-              Limit reached
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Usage Numbers */}
-          <div className="flex items-baseline space-x-1">
-            <span className={`text-2xl font-bold ${getStatusColor()}`}>
-              {roastUsed.toLocaleString()}
-            </span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-lg font-medium text-muted-foreground">
-              {roastLimit === -1 ? '∞' : roastLimit.toLocaleString()}
-            </span>
-            <span className="text-sm text-muted-foreground ml-1">roasts</span>
-          </div>
-
-          {/* Progress Bar */}
-          {roastLimit !== -1 && (
-            <div className="space-y-2">
-              <div className="w-full bg-muted rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all duration-300 ${getProgressColor()}`}
-                  style={{ width: `${usagePercentage}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{usagePercentage.toFixed(1)}% used</span>
-                <span>{(roastLimit - roastUsed).toLocaleString()} remaining</span>
-              </div>
-            </div>
-          )}
-
-          {/* Status Message */}
-          <div className="flex items-center space-x-2 text-xs">
-            <Zap className="h-3 w-3 text-muted-foreground" />
-            <span className="text-muted-foreground">
-              Roasts generated this month
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className={`usage-card-roast flex items-center justify-between p-4 flex-shrink-0 ${className}`}>
+      <div>
+        <h3 className="text-base font-bold text-gray-900 mb-1">Roast usage</h3>
+        <p className="text-sm text-gray-500">
+          {roastUsed.toLocaleString()}/{roastLimit === -1 ? '∞' : roastLimit.toLocaleString()} roasts
+        </p>
+      </div>
+      <div className="text-5xl font-bold text-gray-900">
+        {percentageUsed}%
+      </div>
+    </div>
   );
 }

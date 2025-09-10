@@ -24,10 +24,14 @@ import {
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import TransparencySettings from './TransparencySettings';
+import StyleSelector from './StyleSelector';
 import SensitiveDataModal from './ui/SensitiveDataModal';
 import { detectSensitiveData, generateWarningMessage, isClipboardClearingSupported, clearClipboard } from '../utils/sensitiveDataDetector';
+import { useI18n } from '../hooks/useI18n';
 
 const AjustesSettings = ({ user, onNotification }) => {
+  const { t } = useI18n();
+
   // Roastr Persona state
   const [roastrPersona, setRoastrPersona] = useState({
     loQueMeDefine: '',
@@ -87,85 +91,98 @@ const AjustesSettings = ({ user, onNotification }) => {
 
 
   useEffect(() => {
-    loadAjustesData();
+    const controller = new AbortController();
+    loadAjustesData(controller.signal);
+    
+    // Cleanup function to cancel requests if component unmounts
+    return () => {
+      controller.abort();
+    };
   }, []);
 
-  const loadAjustesData = async () => {
+  const loadAjustesData = async (signal) => {
     try {
-      // Load Roastr Persona data
-      try {
-        const roastrPersonaResult = await apiClient.get('/user/roastr-persona');
-        if (roastrPersonaResult?.data?.success) {
-          setRoastrPersona(prev => ({
-            ...prev,
-            loQueMeDefine: roastrPersonaResult.data.data?.loQueMeDefine || '',
-            loQueNoTolero: roastrPersonaResult.data.data?.loQueNoTolero || '',
-            loQueMeDaIgual: roastrPersonaResult.data.data?.loQueMeDaIgual || '',
-            isVisible: roastrPersonaResult.data.data?.isVisible || false,
-            isIntoleranceVisible: roastrPersonaResult.data.data?.isIntoleranceVisible || false,
-            isToleranceVisible: roastrPersonaResult.data.data?.isToleranceVisible || false,
-            isLoading: false
-          }));
-        } else {
-          // Handle success: false case
-          setRoastrPersona(prev => ({
-            ...prev,
-            loQueMeDefine: '',
-            loQueNoTolero: '',
-            loQueMeDaIgual: '',
-            isVisible: false,
-            isIntoleranceVisible: false,
-            isToleranceVisible: false,
-            isLoading: false
-          }));
+      // Load all data concurrently with Promise.allSettled for better error handling
+      const [roastrPersonaResult, themeResult, transparencyResult] = await Promise.allSettled([
+        apiClient.get('/user/roastr-persona', { signal }),
+        apiClient.get('/user/settings/theme', { signal }),
+        apiClient.get('/user/settings/transparency-mode', { signal })
+      ]);
+
+      // Handle Roastr Persona result
+      if (roastrPersonaResult.status === 'fulfilled' && roastrPersonaResult.value?.data?.success) {
+        setRoastrPersona(prev => ({
+          ...prev,
+          loQueMeDefine: roastrPersonaResult.value.data.data?.loQueMeDefine || '',
+          loQueNoTolero: roastrPersonaResult.value.data.data?.loQueNoTolero || '',
+          loQueMeDaIgual: roastrPersonaResult.value.data.data?.loQueMeDaIgual || '',
+          isVisible: roastrPersonaResult.value.data.data?.isVisible || false,
+          isIntoleranceVisible: roastrPersonaResult.value.data.data?.isIntoleranceVisible || false,
+          isToleranceVisible: roastrPersonaResult.value.data.data?.isToleranceVisible || false,
+          isLoading: false
+        }));
+      } else {
+        // Handle failure or success: false case
+        if (roastrPersonaResult.status === 'rejected') {
+          console.error('Failed to load roastr persona:', roastrPersonaResult.reason);
         }
-      } catch (roastrError) {
-        console.error('Failed to load roastr persona:', roastrError);
-        setRoastrPersona(prev => ({ ...prev, isLoading: false }));
+        setRoastrPersona(prev => ({
+          ...prev,
+          loQueMeDefine: '',
+          loQueNoTolero: '',
+          loQueMeDaIgual: '',
+          isVisible: false,
+          isIntoleranceVisible: false,
+          isToleranceVisible: false,
+          isLoading: false
+        }));
       }
 
-      // Load theme settings
-      try {
-        const themeResult = await apiClient.get('/user/settings/theme');
-        if (themeResult?.data?.success) {
-          setThemeSettings(prev => ({
-            ...prev,
-            theme: themeResult.data.data?.theme || prev.theme,
-            options: themeResult.data.data?.options || prev.options || [],
-            isLoading: false
-          }));
-        } else {
-          // Handle success: false case
-          setThemeSettings(prev => ({
-            ...prev,
-            theme: 'system',
-            options: [],
-            isLoading: false
-          }));
+      // Handle theme settings result
+      if (themeResult.status === 'fulfilled' && themeResult.value?.data?.success) {
+        setThemeSettings(prev => ({
+          ...prev,
+          theme: themeResult.value.data.data?.theme || prev.theme,
+          options: themeResult.value.data.data?.options || prev.options || [],
+          isLoading: false
+        }));
+      } else {
+        // Handle failure or success: false case
+        if (themeResult.status === 'rejected') {
+          console.error('Failed to load theme settings:', themeResult.reason);
         }
-      } catch (themeError) {
-        console.error('Failed to load theme settings:', themeError);
-        setThemeSettings(prev => ({ ...prev, isLoading: false }));
+        setThemeSettings(prev => ({
+          ...prev,
+          theme: 'system',
+          options: [],
+          isLoading: false
+        }));
       }
 
-      // Load transparency bio text
-      try {
-        const transparencyResult = await apiClient.get('/user/settings/transparency-mode');
-        if (transparencyResult?.data?.success && transparencyResult.data.data?.bio_text) {
-          setCopyState(prev => ({
-            ...prev,
-            bioText: transparencyResult.data.data.bio_text
-          }));
-        }
-      } catch (transparencyError) {
-        console.error('Failed to load transparency settings:', transparencyError);
+      // Handle transparency settings result
+      if (transparencyResult.status === 'fulfilled' && 
+          transparencyResult.value?.data?.success && 
+          transparencyResult.value.data.data?.bio_text) {
+        setCopyState(prev => ({
+          ...prev,
+          bioText: transparencyResult.value.data.data.bio_text
+        }));
+      } else {
         // Don't show notification for transparency error as it's not critical
         // The transparency section will handle its own error state
+        if (transparencyResult.status === 'rejected') {
+          console.error('Failed to load transparency settings:', transparencyResult.reason);
+        }
       }
 
     } catch (error) {
+      // Don't show error notification for cancelled requests
+      if (error.name === 'AbortError') {
+        console.log('Data loading request was cancelled');
+        return;
+      }
       console.error('Failed to load ajustes data:', error);
-      onNotification?.('Error al cargar la configuración', 'error');
+      onNotification?.(t('settings.notifications.loading_error'), 'error');
       setRoastrPersona(prev => ({ ...prev, isLoading: false }));
       setThemeSettings(prev => ({ ...prev, isLoading: false }));
     }
@@ -173,6 +190,7 @@ const AjustesSettings = ({ user, onNotification }) => {
 
   const handleRoastrPersonaSave = async (field, value, visibility) => {
     const trimmedValue = value.trim();
+    const controller = new AbortController();
 
     try {
       setRoastrPersona(prev => ({ ...prev, isSaving: true }));
@@ -189,7 +207,7 @@ const AjustesSettings = ({ user, onNotification }) => {
         payload.isToleranceVisible = visibility;
       }
 
-      const result = await apiClient.post('/user/roastr-persona', payload);
+      const result = await apiClient.post('/user/roastr-persona', payload, { signal: controller.signal });
 
       if (result?.data?.success) {
         setRoastrPersona(prev => ({
@@ -203,23 +221,30 @@ const AjustesSettings = ({ user, onNotification }) => {
           showToleranceForm: field === 'tolerance' ? false : prev.showToleranceForm,
           isSaving: false
         }));
-        onNotification?.('Roastr Persona actualizada correctamente', 'success');
+        onNotification?.(t('settings.notifications.persona_updated'), 'success');
       } else {
         setRoastrPersona(prev => ({ ...prev, isSaving: false }));
-        onNotification?.(result?.data?.error || 'Error al guardar Roastr Persona', 'error');
+        onNotification?.(result?.data?.error || t('settings.notifications.persona_error'), 'error');
       }
     } catch (error) {
+      // Don't show error notification for cancelled requests
+      if (error.name === 'AbortError') {
+        console.log('Roastr Persona save request was cancelled');
+        return;
+      }
       console.error('Failed to save Roastr Persona:', error);
-      onNotification?.('Error al guardar Roastr Persona', 'error');
+      onNotification?.(t('settings.notifications.persona_error'), 'error');
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
   };
 
   const handleThemeChange = async (newTheme) => {
+    const controller = new AbortController();
+    
     try {
       setThemeSettings(prev => ({ ...prev, isSaving: true }));
 
-      const resp = await apiClient.patch('/user/settings/theme', { theme: newTheme });
+      const resp = await apiClient.patch('/user/settings/theme', { theme: newTheme }, { signal: controller.signal });
 
       if (resp?.data?.success) {
         setThemeSettings(prev => ({
@@ -231,14 +256,19 @@ const AjustesSettings = ({ user, onNotification }) => {
         // Apply theme immediately to the UI
         applyThemeToUI(newTheme);
 
-        onNotification?.('Tema actualizado correctamente', 'success');
+        onNotification?.(t('settings.notifications.theme_updated'), 'success');
       } else {
-        onNotification?.(resp?.data?.error || 'Error al actualizar el tema', 'error');
+        onNotification?.(resp?.data?.error || t('settings.notifications.theme_error'), 'error');
         setThemeSettings(prev => ({ ...prev, isSaving: false }));
       }
     } catch (error) {
+      // Don't show error notification for cancelled requests
+      if (error.name === 'AbortError') {
+        console.log('Theme change request was cancelled');
+        return;
+      }
       console.error('Failed to update theme:', error);
-      onNotification?.('Error al actualizar el tema', 'error');
+      onNotification?.(t('settings.notifications.theme_error'), 'error');
       setThemeSettings(prev => ({ ...prev, isSaving: false }));
     }
   };
@@ -523,7 +553,7 @@ const AjustesSettings = ({ user, onNotification }) => {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Settings className="h-5 w-5" />
-          <span>Ajustes</span>
+          <span>{t('settings.title')}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -531,16 +561,25 @@ const AjustesSettings = ({ user, onNotification }) => {
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <User className="h-4 w-4" />
-            <h4 className="text-md font-medium">Roastr Persona</h4>
+            <h4 className="text-md font-medium">{t('settings.roastr_persona.title')}</h4>
           </div>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start space-x-2">
               <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-800">
-                <p>
-                  Define tu personalidad para roasts más precisos. Estos campos están cifrados 
-                  y solo tú puedes verlos. Ayudan a personalizar las respuestas según tu identidad.
+                <p className="font-medium mb-2">
+                  ¿Por qué configurar tu Roastr Persona?
+                </p>
+                <ul className="list-disc list-inside space-y-1 mb-3">
+                  <li>Roasts más personalizados y auténticos según tu estilo</li>
+                  <li>Detección mejorada de ataques específicos hacia ti</li>
+                  <li>Filtrado inteligente de comentarios sensibles</li>
+                  <li>Mayor control sobre los temas de respuesta</li>
+                </ul>
+                <p className="text-xs bg-blue-100 rounded p-2 border border-blue-300">
+                  <strong>🔒 Privacidad garantizada:</strong> Todos los datos están encriptados con AES-256 
+                  y son privados por defecto. Solo tú puedes verlos y decidir si hacerlos públicos.
                 </p>
               </div>
             </div>
@@ -698,6 +737,11 @@ const AjustesSettings = ({ user, onNotification }) => {
           )}
         </div>
 
+        {/* Style Selector Section */}
+        <div className="space-y-4">
+          <StyleSelector />
+        </div>
+
         {/* Estilo de la interfaz Section */}
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -778,23 +822,104 @@ const RoastrPersonaField = ({
   isSaving, 
   onSave, 
   onToggleForm, 
-  maxLength,
+  maxLength = 300,
   variant = 'default'
 }) => {
   const [fieldValue, setFieldValue] = useState(value);
   const [fieldVisibility, setFieldVisibility] = useState(isVisible);
+  const [validationError, setValidationError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
     setFieldValue(value);
     setFieldVisibility(isVisible);
   }, [value, isVisible]);
 
+  // Real-time validation with backend integration
+  useEffect(() => {
+    const controller = new AbortController();
+    
+    const validateInput = async () => {
+      if (!fieldValue || fieldValue.trim().length === 0) {
+        setValidationError('');
+        return;
+      }
+
+      setIsValidating(true);
+      
+      // Quick client-side length check
+      if (fieldValue.length > maxLength) {
+        setValidationError(`El texto no puede superar los ${maxLength} caracteres`);
+        setIsValidating(false);
+        return;
+      }
+
+      // Quick client-side pattern check
+      const suspiciousPatterns = [
+        /ignore.*previous.*instructions?/i,
+        /disregard.*above/i,
+        /forget.*what.*said/i,
+        /system.*prompt/i,
+        /\{\{.*\}\}/,
+        /<script.*>/i,
+        /javascript:/i,
+        /on\w+\s*=/i
+      ];
+
+      const hasSuspiciousContent = suspiciousPatterns.some(pattern => pattern.test(fieldValue));
+      if (hasSuspiciousContent) {
+        setValidationError('El contenido contiene patrones no permitidos');
+        setIsValidating(false);
+        return;
+      }
+
+      // Backend validation for comprehensive checking
+      try {
+        const fieldMap = {
+          'default': 'loQueMeDefine',
+          'intolerance': 'loQueNoTolero', 
+          'tolerance': 'loQueMeDaIgual'
+        };
+        
+        const fieldName = fieldMap[variant] || 'loQueMeDefine';
+        
+        const result = await apiClient.post('/user/roastr-persona/validate', {
+          field: fieldName,
+          value: fieldValue
+        }, { signal: controller.signal });
+
+        if (result?.data?.success) {
+          if (!result.data.valid) {
+            setValidationError(result.data.error || 'Contenido no válido');
+          } else {
+            setValidationError('');
+          }
+        }
+      } catch (error) {
+        // Don't log warnings for cancelled validation requests
+        if (error.name !== 'AbortError') {
+          console.warn('Backend validation unavailable:', error);
+        }
+      }
+
+      setIsValidating(false);
+    };
+
+    const debounceTimer = setTimeout(validateInput, 500);
+    return () => {
+      clearTimeout(debounceTimer);
+      controller.abort();
+    };
+  }, [fieldValue, maxLength, variant]);
+
   const handleSave = () => {
+    if (validationError || isValidating) return;
     onSave(fieldValue, fieldVisibility);
   };
 
-  // CodeRabbit: Check if there are actual changes to prevent unnecessary saves
+  // Check if there are actual changes to prevent unnecessary saves
   const hasChanges = fieldValue !== value || fieldVisibility !== isVisible;
+  const canSave = !validationError && !isValidating && fieldValue.trim().length > 0;
 
 
   const getVariantColor = () => {
@@ -810,6 +935,17 @@ const RoastrPersonaField = ({
       case 'intolerance': return <AlertCircle className="h-4 w-4" />;
       case 'tolerance': return <Check className="h-4 w-4" />;
       default: return <User className="h-4 w-4" />;
+    }
+  };
+
+  const getFieldDescription = () => {
+    switch (variant) {
+      case 'intolerance': 
+        return 'Define los temas o comentarios que no toleras. Roastr será más agresivo al defender estos límites y puede filtrar o bloquear automáticamente este tipo de contenido.';
+      case 'tolerance':
+        return 'Indica los temas que no te afectan o te dan igual. Roastr ignorará estos comentarios o responderá con humor ligero, sin tomárselos en serio.';
+      default:
+        return 'Describe quién eres: tu profesión, hobbies, valores, gustos. Esto ayuda a Roastr a generar respuestas más auténticas y detectar ataques personalizados.';
     }
   };
 
@@ -839,13 +975,31 @@ const RoastrPersonaField = ({
 
       {showForm && (
         <div className="space-y-3">
-          <Textarea
-            value={fieldValue}
-            onChange={(e) => setFieldValue(e.target.value)}
-            placeholder={placeholder}
-            maxLength={maxLength}
-            className="min-h-[100px]"
-          />
+          <p className="text-xs text-gray-600 bg-gray-50 rounded p-2">
+            {getFieldDescription()}
+          </p>
+          <div className="relative">
+            <Textarea
+              value={fieldValue}
+              onChange={(e) => setFieldValue(e.target.value)}
+              placeholder={placeholder}
+              maxLength={maxLength + 50} // Allow some overflow to show validation
+              className={`min-h-[100px] ${validationError ? 'border-red-500 focus:border-red-500' : ''}`}
+            />
+            {isValidating && (
+              <div className="absolute top-2 right-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </div>
+          
+          {validationError && (
+            <div className="flex items-center space-x-1 text-red-600 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              <span>{validationError}</span>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Button
@@ -866,14 +1020,14 @@ const RoastrPersonaField = ({
                   </>
                 )}
               </Button>
-              <span className="text-xs text-gray-500">
+              <span className={`text-xs ${fieldValue.length > maxLength ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
                 {fieldValue.length}/{maxLength}
               </span>
             </div>
             <Button
               onClick={handleSave}
               disabled={
-                isSaving ||
+                isSaving || !canSave ||
                 (((fieldValue ?? '').trim() === (value ?? '').trim()) &&
                  fieldVisibility === isVisible)
               }

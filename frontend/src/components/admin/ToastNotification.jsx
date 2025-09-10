@@ -74,7 +74,7 @@ const ToastNotification = ({
   if (!isVisible && !isExiting) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-60 max-w-sm w-full">
+    <div className="fixed top-4 right-4 z-50 max-w-sm w-full">
       <div className={`${getToastStyles()} transform transition-all duration-300 ease-in-out ${
         isVisible && !isExiting 
           ? 'translate-x-0 opacity-100 scale-100' 
