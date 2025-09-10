@@ -538,9 +538,18 @@ const AjustesSettings = ({ user, onNotification }) => {
             <div className="flex items-start space-x-2">
               <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-800">
-                <p>
-                  Define tu personalidad para roasts más precisos. Estos campos están cifrados 
-                  y solo tú puedes verlos. Ayudan a personalizar las respuestas según tu identidad.
+                <p className="font-medium mb-2">
+                  ¿Por qué configurar tu Roastr Persona?
+                </p>
+                <ul className="list-disc list-inside space-y-1 mb-3">
+                  <li>Roasts más personalizados y auténticos según tu estilo</li>
+                  <li>Detección mejorada de ataques específicos hacia ti</li>
+                  <li>Filtrado inteligente de comentarios sensibles</li>
+                  <li>Mayor control sobre los temas de respuesta</li>
+                </ul>
+                <p className="text-xs bg-blue-100 rounded p-2 border border-blue-300">
+                  <strong>🔒 Privacidad garantizada:</strong> Todos los datos están encriptados con AES-256 
+                  y son privados por defecto. Solo tú puedes verlos y decidir si hacerlos públicos.
                 </p>
               </div>
             </div>
@@ -887,6 +896,17 @@ const RoastrPersonaField = ({
     }
   };
 
+  const getFieldDescription = () => {
+    switch (variant) {
+      case 'intolerance': 
+        return 'Define los temas o comentarios que no toleras. Roastr será más agresivo al defender estos límites y puede filtrar o bloquear automáticamente este tipo de contenido.';
+      case 'tolerance':
+        return 'Indica los temas que no te afectan o te dan igual. Roastr ignorará estos comentarios o responderá con humor ligero, sin tomárselos en serio.';
+      default:
+        return 'Describe quién eres: tu profesión, hobbies, valores, gustos. Esto ayuda a Roastr a generar respuestas más auténticas y detectar ataques personalizados.';
+    }
+  };
+
   return (
     <div className="border border-gray-200 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
@@ -913,6 +933,9 @@ const RoastrPersonaField = ({
 
       {showForm && (
         <div className="space-y-3">
+          <p className="text-xs text-gray-600 bg-gray-50 rounded p-2">
+            {getFieldDescription()}
+          </p>
           <div className="relative">
             <Textarea
               value={fieldValue}

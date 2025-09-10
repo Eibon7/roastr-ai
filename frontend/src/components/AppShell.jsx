@@ -9,7 +9,7 @@ export default function AppShell() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="ml-0 md:ml-16 p-16">
+      <main className="ml-16 px-16 py-16 max-w-7xl mx-auto">
         <Outlet />
       </main>
     </div>

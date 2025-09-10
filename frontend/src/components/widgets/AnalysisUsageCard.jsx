@@ -84,7 +84,7 @@ export default function AnalysisUsageCard({ user, className = '' }) {
 
   if (loading) {
     return (
-      <div className={`w-[375px] h-[93px] bg-white rounded border-l-8 border-l-yellow-400 flex items-center p-4 shadow-sm ${className}`}>
+      <div className={`w-[375px] h-[93px] bg-white rounded border-l-8 border-l-yellow-400 flex items-center p-4 shadow-sm flex-shrink-0 ${className}`}>
         <div className="flex-1">
           <Skeleton className="h-4 w-24 mb-2" />
           <Skeleton className="h-3 w-32" />
@@ -95,7 +95,7 @@ export default function AnalysisUsageCard({ user, className = '' }) {
 
   if (error) {
     return (
-      <div className={`w-[375px] h-[93px] bg-white rounded border-l-8 border-l-red-400 flex items-center p-4 shadow-sm ${className}`}>
+      <div className={`w-[375px] h-[93px] bg-white rounded border-l-8 border-l-red-400 flex items-center p-4 shadow-sm flex-shrink-0 ${className}`}>
         <div className="flex-1">
           <div className="flex items-center space-x-2 text-red-600">
             <AlertTriangle className="h-4 w-4" />
@@ -115,7 +115,7 @@ export default function AnalysisUsageCard({ user, className = '' }) {
   };
 
   return (
-    <div className={`w-[375px] h-[93px] bg-white rounded border-l-8 ${getBorderColor()} flex items-center p-4 shadow-sm ${className}`}>
+    <div className={`w-[375px] h-[93px] bg-white rounded border-l-8 ${getBorderColor()} flex items-center p-4 shadow-sm flex-shrink-0 ${className}`}>
       <div className="flex-1">
         <h3 className="text-sm font-medium text-gray-900 mb-1">Analysis usage</h3>
         <p className="text-xs text-gray-500">
