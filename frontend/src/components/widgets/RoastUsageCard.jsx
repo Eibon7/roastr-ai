@@ -84,21 +84,27 @@ export default function RoastUsageCard({ user, className = '' }) {
 
   if (loading) {
     return (
-      <div className={`w-[375px] h-[93px] border-l-8 border-l-purple-500 border-b border-b-gray-200 flex flex-col justify-center p-4 flex-shrink-0 ${className}`}>
-        <Skeleton className="h-4 w-24 mb-2" />
-        <Skeleton className="h-3 w-32" />
+      <div className={`w-[375px] h-[93px] bg-white border border-gray-200 rounded border-l-8 border-l-purple-500 flex items-center justify-between p-4 flex-shrink-0 ${className}`} style={{ borderColor: '#EAEEEF' }}>
+        <div>
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+        <Skeleton className="h-12 w-16" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={`w-[375px] h-[93px] border-l-8 border-l-red-500 border-b border-b-gray-200 flex flex-col justify-center p-4 flex-shrink-0 ${className}`}>
-        <div className="flex items-center space-x-2 text-red-600 mb-1">
-          <AlertTriangle className="h-4 w-4" />
-          <span className="text-sm font-medium">Roast usage</span>
+      <div className={`w-[375px] h-[93px] bg-white border border-gray-200 rounded border-l-8 border-l-red-500 flex items-center justify-between p-4 flex-shrink-0 ${className}`} style={{ borderColor: '#EAEEEF' }}>
+        <div>
+          <div className="flex items-center space-x-2 text-red-600 mb-1">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-base font-bold">Roast usage</span>
+          </div>
+          <span className="text-sm text-red-500">Error loading data</span>
         </div>
-        <span className="text-xs text-red-500">Error loading data</span>
+        <span className="text-5xl font-bold text-red-500">--</span>
       </div>
     );
   }
@@ -113,11 +119,16 @@ export default function RoastUsageCard({ user, className = '' }) {
   const percentageUsed = roastLimit > 0 ? Math.round((roastUsed / roastLimit) * 100) : 0;
 
   return (
-    <div className={`w-[375px] h-[93px] border-l-8 border-l-purple-500 border-b border-b-gray-200 flex flex-col justify-center p-4 flex-shrink-0 ${className}`}>
-      <h3 className="text-sm font-medium text-gray-900 mb-1">Roast usage</h3>
-      <p className="text-xs text-gray-500">
-        {roastUsed.toLocaleString()}/{roastLimit === -1 ? '∞' : roastLimit.toLocaleString()} roasts ({percentageUsed}%)
-      </p>
+    <div className={`w-[375px] h-[93px] bg-white border border-gray-200 rounded border-l-8 border-l-purple-500 flex items-center justify-between p-4 flex-shrink-0 ${className}`} style={{ borderColor: '#EAEEEF' }}>
+      <div>
+        <h3 className="text-base font-bold text-gray-900 mb-1">Roast usage</h3>
+        <p className="text-sm text-gray-500">
+          {roastUsed.toLocaleString()}/{roastLimit === -1 ? '∞' : roastLimit.toLocaleString()} roasts
+        </p>
+      </div>
+      <div className="text-5xl font-bold text-gray-900">
+        {percentageUsed}%
+      </div>
     </div>
   );
 }
