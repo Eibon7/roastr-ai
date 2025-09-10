@@ -172,33 +172,43 @@ body {
 
 /* Usage Cards - Responsive design with max size 375x93 */
 .usage-card-analysis {
-  width: 100% !important;
-  max-width: 375px !important;
+  width: 375px !important;
   height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
   border-left: 8px solid #FFD046 !important;
   border-radius: 4px !important;
+  flex-shrink: 0 !important;
 }
 
 .usage-card-roast {
-  width: 100% !important;
-  max-width: 375px !important;
+  width: 375px !important;
   height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
   border-left: 8px solid #FF69EB !important;
   border-radius: 4px !important;
+  flex-shrink: 0 !important;
 }
 
 .usage-card-error {
-  width: 100% !important;
-  max-width: 375px !important;
+  width: 375px !important;
   height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
   border-left: 8px solid #ef4444 !important;
   border-radius: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Responsive behavior for mobile */
+@media (max-width: 767px) {
+  .usage-card-analysis,
+  .usage-card-roast,
+  .usage-card-error {
+    width: 100% !important;
+    max-width: 375px !important;
+  }
 }
 
 .border-red-500 {

@@ -288,7 +288,8 @@ app.get('/api/metrics', authenticateToken, async (req, res) => {
   }
 });
 
-// Test monitoring system endpoint (authenticated)
+// Test monitoring system endpoint (authenticated) - disabled in production unless explicitly enabled
+if (process.env.NODE_ENV !== 'production' || flags.isEnabled('ENABLE_DEBUG_LOGS')) {
 app.post('/api/monitoring/test', authenticateToken, async (req, res) => {
   try {
     const testResults = await monitoringService.runSystemTest();
@@ -310,8 +311,10 @@ app.post('/api/monitoring/test', authenticateToken, async (req, res) => {
     });
   }
 });
+}
 
-// Send test alert endpoint (authenticated)
+// Send test alert endpoint (authenticated) - disabled in production unless explicitly enabled
+if (process.env.NODE_ENV !== 'production' || flags.isEnabled('ENABLE_DEBUG_LOGS')) {
 app.post('/api/monitoring/alert/test', authenticateToken, async (req, res) => {
   try {
     const { severity = 'info', title = 'Test Alert', message = 'This is a test alert' } = req.body;
@@ -347,6 +350,7 @@ app.post('/api/monitoring/alert/test', authenticateToken, async (req, res) => {
     });
   }
 });
+}
 
 // Get alerting service stats (authenticated)
 app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {

@@ -710,7 +710,7 @@ router.get('/config', async (req, res) => {
             features: {
                 shield_enabled: process.env.SHIELD_ENABLED || 'true',
                 debug: process.env.DEBUG || 'false',
-                node_env: process.env.NODE_ENV || 'development'
+                node_env: process.env.NODE_ENV === 'production' ? 'production' : 'non-production'
             },
             limits: {
                 response_frequency: process.env.RESPONSE_FREQUENCY || '1.0',
