@@ -7,6 +7,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import AnalysisUsageCard from '../components/widgets/AnalysisUsageCard';
 import RoastUsageCard from '../components/widgets/RoastUsageCard';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { useSidebar } from '../contexts/SidebarContext';
 import {
   Twitter,
   Instagram,
@@ -45,6 +46,7 @@ export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isEnabled, loading: flagsLoading } = useFeatureFlags();
+  const { isSidebarVisible } = useSidebar();
 
   // Platform icons mapping
   const platformIcons = {
@@ -505,7 +507,7 @@ export default function Dashboard() {
       </div>
 
       {/* Usage Cards */}
-      <div className="flex flex-col lg:flex-row gap-6 mb-8">
+      <div className={`flex gap-6 mb-8 ${isSidebarVisible ? 'flex-row' : 'flex-col'}`}>
         <AnalysisUsageCard user={adminModeUser || { plan: 'pro' }} />
         <RoastUsageCard user={adminModeUser || { plan: 'pro' }} />
       </div>

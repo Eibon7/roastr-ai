@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutGrid,
@@ -9,6 +9,7 @@ import {
   Flame
 } from 'lucide-react';
 import useFeatureFlags from '../hooks/useFeatureFlags';
+import { useSidebar } from '../contexts/SidebarContext';
 
 // Base navigation items (always visible)
 const baseNavItems = [
@@ -35,8 +36,7 @@ const conditionalNavItems = [
 ];
 
 export default function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const { isOpen, isMobile, toggleSidebar, closeSidebar } = useSidebar();
   const { isEnabled } = useFeatureFlags();
   // Force refresh - red sidebar with icons only
 
@@ -47,27 +47,6 @@ export default function Sidebar() {
       !item.requiresFlag || isEnabled(item.requiresFlag)
     )
   ];
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setIsOpen(false);
-      }
-    };
-
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const closeSidebar = () => {
-    setIsOpen(false);
-  };
 
   return (
     <>
