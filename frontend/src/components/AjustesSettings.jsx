@@ -27,8 +27,11 @@ import TransparencySettings from './TransparencySettings';
 import StyleSelector from './StyleSelector';
 import SensitiveDataModal from './ui/SensitiveDataModal';
 import { detectSensitiveData, generateWarningMessage, isClipboardClearingSupported, clearClipboard } from '../utils/sensitiveDataDetector';
+import { useI18n } from '../hooks/useI18n';
 
 const AjustesSettings = ({ user, onNotification }) => {
+  const { t } = useI18n();
+
   // Roastr Persona state
   const [roastrPersona, setRoastrPersona] = useState({
     loQueMeDefine: '',
@@ -179,7 +182,7 @@ const AjustesSettings = ({ user, onNotification }) => {
         return;
       }
       console.error('Failed to load ajustes data:', error);
-      onNotification?.('Error al cargar la configuración', 'error');
+      onNotification?.(t('settings.notifications.loading_error'), 'error');
       setRoastrPersona(prev => ({ ...prev, isLoading: false }));
       setThemeSettings(prev => ({ ...prev, isLoading: false }));
     }
@@ -218,10 +221,10 @@ const AjustesSettings = ({ user, onNotification }) => {
           showToleranceForm: field === 'tolerance' ? false : prev.showToleranceForm,
           isSaving: false
         }));
-        onNotification?.('Roastr Persona actualizada correctamente', 'success');
+        onNotification?.(t('settings.notifications.persona_updated'), 'success');
       } else {
         setRoastrPersona(prev => ({ ...prev, isSaving: false }));
-        onNotification?.(result?.data?.error || 'Error al guardar Roastr Persona', 'error');
+        onNotification?.(result?.data?.error || t('settings.notifications.persona_error'), 'error');
       }
     } catch (error) {
       // Don't show error notification for cancelled requests
@@ -230,7 +233,7 @@ const AjustesSettings = ({ user, onNotification }) => {
         return;
       }
       console.error('Failed to save Roastr Persona:', error);
-      onNotification?.('Error al guardar Roastr Persona', 'error');
+      onNotification?.(t('settings.notifications.persona_error'), 'error');
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
     }
   };
@@ -253,9 +256,9 @@ const AjustesSettings = ({ user, onNotification }) => {
         // Apply theme immediately to the UI
         applyThemeToUI(newTheme);
 
-        onNotification?.('Tema actualizado correctamente', 'success');
+        onNotification?.(t('settings.notifications.theme_updated'), 'success');
       } else {
-        onNotification?.(resp?.data?.error || 'Error al actualizar el tema', 'error');
+        onNotification?.(resp?.data?.error || t('settings.notifications.theme_error'), 'error');
         setThemeSettings(prev => ({ ...prev, isSaving: false }));
       }
     } catch (error) {
@@ -265,7 +268,7 @@ const AjustesSettings = ({ user, onNotification }) => {
         return;
       }
       console.error('Failed to update theme:', error);
-      onNotification?.('Error al actualizar el tema', 'error');
+      onNotification?.(t('settings.notifications.theme_error'), 'error');
       setThemeSettings(prev => ({ ...prev, isSaving: false }));
     }
   };
@@ -550,7 +553,7 @@ const AjustesSettings = ({ user, onNotification }) => {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Settings className="h-5 w-5" />
-          <span>Ajustes</span>
+          <span>{t('settings.title')}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -558,7 +561,7 @@ const AjustesSettings = ({ user, onNotification }) => {
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <User className="h-4 w-4" />
-            <h4 className="text-md font-medium">Roastr Persona</h4>
+            <h4 className="text-md font-medium">{t('settings.roastr_persona.title')}</h4>
           </div>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

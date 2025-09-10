@@ -130,6 +130,90 @@
       "empty_state": "Nothing to show here yet"
     }
   },
+  "settings": {
+    "title": "Settings",
+    "loading": "Loading",
+    "roastr_persona": {
+      "title": "Roastr Persona",
+      "description": "Why configure your Roastr Persona?",
+      "benefits": {
+        "personalized": "More personalized and authentic roasts according to your style",
+        "detection": "Enhanced detection of specific attacks toward you",
+        "filtering": "Smart filtering of sensitive comments",
+        "control": "Greater control over response topics"
+      },
+      "privacy_note": "🔒 Privacy guaranteed: All data is encrypted with AES-256 and private by default. Only you can see and decide whether to make them public.",
+      "identity": {
+        "label": "What defines me",
+        "placeholder": "e.g.: I'm a developer, I like coffee, I hate unnecessary meetings...",
+        "description": "Describe who you are: your profession, hobbies, values, tastes. This helps Roastr generate more authentic responses and detect personalized attacks."
+      },
+      "intolerance": {
+        "label": "What I don't tolerate",
+        "placeholder": "e.g.: Comments about my appearance, jokes about my family...",
+        "description": "Define topics or comments you don't tolerate. Roastr will be more aggressive defending these boundaries and may filter or automatically block this type of content."
+      },
+      "tolerance": {
+        "label": "What I don't care about",
+        "placeholder": "e.g.: Jokes about my age, comments about my music taste...",
+        "description": "Indicate topics that don't affect you or you don't care about. Roastr will ignore these comments or respond with light humor, not taking them seriously."
+      },
+      "actions": {
+        "configure": "Configure",
+        "edit": "Edit",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving...",
+        "configured": "Configured"
+      },
+      "visibility": {
+        "visible": "Visible",
+        "private": "Private"
+      }
+    },
+    "transparency": {
+      "title": "Transparency",
+      "description": "For policy compliance, you can choose how to identify that some responses are AI-generated. It's not mandatory, but a customization option.",
+      "bio_text": {
+        "suggested_title": "Suggested text for your bio",
+        "copy": "Copy",
+        "copied": "Copied",
+        "clearing": "Clearing...",
+        "clear_clipboard": "Clear clipboard"
+      }
+    },
+    "interface": {
+      "title": "Interface style",
+      "description": "Choose your preferred interface theme",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System",
+        "default": "Default"
+      }
+    },
+    "notifications": {
+      "persona_updated": "Roastr Persona updated successfully",
+      "persona_error": "Error saving Roastr Persona",
+      "theme_updated": "Theme updated successfully",
+      "theme_error": "Error updating theme",
+      "loading_error": "Error loading configuration",
+      "copy_success": "Text copied to clipboard",
+      "copy_error": "Error copying text",
+      "copy_init_error": "Error initiating copy operation",
+      "copy_cancelled": "Copy operation cancelled",
+      "clipboard_denied": "Clipboard permissions denied. Trying alternative method...",
+      "clipboard_security": "Security error accessing clipboard. Try copying manually.",
+      "clipboard_unavailable": "Copy function not available in this browser",
+      "clipboard_cleared": "Clipboard cleared",
+      "clipboard_clear_error": "Could not clear clipboard"
+    },
+    "validation": {
+      "max_length": "Text cannot exceed {max} characters",
+      "suspicious_content": "Content contains disallowed patterns",
+      "invalid_content": "Invalid content"
+    }
+  },
   "transparency": {
     "title": "Response transparency",
     "description": "Due to transparency policies, all automatic responses include a notice that they are AI-generated. Additionally, you can add the suggested text to your bio for greater visibility and protection.",
