@@ -170,23 +170,12 @@ body {
   font-size: initial !important;
 }
 
-/* Usage Cards - Force exact dimensions and borders */
-.usage-card {
+/* Usage Metrics - Simple design with left border and bottom line */
+.usage-metric {
   width: 375px !important;
   height: 93px !important;
   border-left-width: 8px !important;
-}
-
-.usage-card-analysis {
-  border-left-color: #eab308 !important; /* yellow-500 */
-}
-
-.usage-card-roast {
-  border-left-color: #a855f7 !important; /* purple-500 */
-}
-
-.usage-card-error {
-  border-left-color: #ef4444 !important; /* red-500 */
+  border-bottom-width: 1px !important;
 }
 
 .border-red-500 {

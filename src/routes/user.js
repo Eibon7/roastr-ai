@@ -3130,4 +3130,189 @@ router.get('/settings/transparency-explanation', authenticateToken, async (req, 
     }
 });
 
+/**
+ * GET /api/user/settings/style
+ * Get user's style preferences for roast generation
+ */
+router.get('/settings/style', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const { data, error } = await supabaseServiceClient
+                .from('user_style_settings')
+                .select('style, settings, created_at, updated_at')
+                .eq('user_id', userId)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+                throw error;
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    style: data?.style || 'sarcastic',
+                    settings: data?.settings || {
+                        intensity: 3,
+                        humor_type: 'witty',
+                        creativity: 3,
+                        politeness: 2
+                    },
+                    created_at: data?.created_at,
+                    updated_at: data?.updated_at
+                }
+            });
+        } else {
+            // Mock mode - return default settings
+            res.json({
+                success: true,
+                data: {
+                    style: 'sarcastic',
+                    settings: {
+                        intensity: 3,
+                        humor_type: 'witty',
+                        creativity: 3,
+                        politeness: 2
+                    },
+                    created_at: null,
+                    updated_at: null
+                }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Get style settings error', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve style settings'
+        });
+    }
+});
+
+/**
+ * POST /api/user/settings/style
+ * Update user's style preferences for roast generation
+ */
+router.post('/settings/style', authenticateToken, async (req, res) => {
+    try {
+        const { style, settings } = req.body;
+        const userId = req.user.id;
+
+        // Validate input
+        if (!style) {
+            return res.status(400).json({
+                success: false,
+                error: 'Style is required'
+            });
+        }
+
+        // Validate style value
+        const validStyles = ['sarcastic', 'witty', 'playful', 'direct', 'friendly', 'custom'];
+        if (!validStyles.includes(style)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid style value'
+            });
+        }
+
+        // Validate settings if provided
+        if (settings) {
+            const { intensity, humor_type, creativity, politeness } = settings;
+            
+            if (intensity !== undefined && (intensity < 1 || intensity > 5)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Intensity must be between 1 and 5'
+                });
+            }
+
+            if (creativity !== undefined && (creativity < 1 || creativity > 5)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Creativity must be between 1 and 5'
+                });
+            }
+
+            if (politeness !== undefined && (politeness < 1 || politeness > 5)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Politeness must be between 1 and 5'
+                });
+            }
+
+            const validHumorTypes = ['witty', 'sarcastic', 'playful', 'dry', 'gentle', 'custom'];
+            if (humor_type && !validHumorTypes.includes(humor_type)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid humor type'
+                });
+            }
+        }
+
+        if (flags.isEnabled('ENABLE_SUPABASE')) {
+            const { data, error } = await supabaseServiceClient
+                .from('user_style_settings')
+                .upsert({
+                    user_id: userId,
+                    style: style,
+                    settings: settings || {
+                        intensity: 3,
+                        humor_type: 'witty',
+                        creativity: 3,
+                        politeness: 2
+                    },
+                    updated_at: new Date().toISOString()
+                }, { 
+                    onConflict: 'user_id' 
+                })
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            res.json({
+                success: true,
+                message: 'Style settings updated successfully',
+                data: {
+                    style: data.style,
+                    settings: data.settings,
+                    updated_at: data.updated_at
+                }
+            });
+        } else {
+            // Mock mode - just return success
+            res.json({
+                success: true,
+                message: 'Style settings updated successfully',
+                data: {
+                    style: style,
+                    settings: settings || {
+                        intensity: 3,
+                        humor_type: 'witty',
+                        creativity: 3,
+                        politeness: 2
+                    },
+                    updated_at: new Date().toISOString()
+                }
+            });
+        }
+
+    } catch (error) {
+        logger.error('Update style settings error', {
+            userId: SafeUtils.safeUserIdPrefix(req.user.id),
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update style settings'
+        });
+    }
+});
+
 module.exports = router;

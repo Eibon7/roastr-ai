@@ -708,6 +708,11 @@ const AjustesSettings = ({ user, onNotification }) => {
           )}
         </div>
 
+        {/* Style Selector Section */}
+        <div className="space-y-4">
+          <StyleSelector />
+        </div>
+
         {/* Estilo de la interfaz Section */}
         <div className="space-y-4">
           <div className="flex items-center space-x-2">

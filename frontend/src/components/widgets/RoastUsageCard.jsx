@@ -84,25 +84,21 @@ export default function RoastUsageCard({ user, className = '' }) {
 
   if (loading) {
     return (
-      <div className={`usage-card usage-card-roast bg-white rounded-md flex items-center p-4 shadow-sm flex-shrink-0 ${className}`}>
-        <div className="flex-1">
-          <Skeleton className="h-4 w-24 mb-2" />
-          <Skeleton className="h-3 w-32" />
-        </div>
+      <div className={`w-[375px] h-[93px] border-l-8 border-l-purple-500 border-b border-b-gray-200 flex flex-col justify-center p-4 flex-shrink-0 ${className}`}>
+        <Skeleton className="h-4 w-24 mb-2" />
+        <Skeleton className="h-3 w-32" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={`usage-card usage-card-error bg-white rounded-md flex items-center p-4 shadow-sm flex-shrink-0 ${className}`}>
-        <div className="flex-1">
-          <div className="flex items-center space-x-2 text-red-600">
-            <AlertTriangle className="h-4 w-4" />
-            <span className="text-sm font-medium">Roast usage</span>
-          </div>
-          <span className="text-xs text-red-500">Error loading data</span>
+      <div className={`w-[375px] h-[93px] border-l-8 border-l-red-500 border-b border-b-gray-200 flex flex-col justify-center p-4 flex-shrink-0 ${className}`}>
+        <div className="flex items-center space-x-2 text-red-600 mb-1">
+          <AlertTriangle className="h-4 w-4" />
+          <span className="text-sm font-medium">Roast usage</span>
         </div>
+        <span className="text-xs text-red-500">Error loading data</span>
       </div>
     );
   }
@@ -114,14 +110,14 @@ export default function RoastUsageCard({ user, className = '' }) {
     return 'border-l-purple-400'; // Default purple for roasts
   };
 
+  const percentageUsed = roastLimit > 0 ? Math.round((roastUsed / roastLimit) * 100) : 0;
+
   return (
-    <div className={`usage-card usage-card-roast bg-white rounded-md flex items-center p-4 shadow-sm flex-shrink-0 ${className}`}>
-      <div className="flex-1">
-        <h3 className="text-sm font-medium text-gray-900 mb-1">Roast usage</h3>
-        <p className="text-xs text-gray-500">
-          {roastUsed.toLocaleString()}/{roastLimit === -1 ? '∞' : roastLimit.toLocaleString()} roasts
-        </p>
-      </div>
+    <div className={`w-[375px] h-[93px] border-l-8 border-l-purple-500 border-b border-b-gray-200 flex flex-col justify-center p-4 flex-shrink-0 ${className}`}>
+      <h3 className="text-sm font-medium text-gray-900 mb-1">Roast usage</h3>
+      <p className="text-xs text-gray-500">
+        {roastUsed.toLocaleString()}/{roastLimit === -1 ? '∞' : roastLimit.toLocaleString()} roasts ({percentageUsed}%)
+      </p>
     </div>
   );
 }
