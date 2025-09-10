@@ -130,6 +130,90 @@
       "empty_state": "Nada que mostrar aquí todavía"
     }
   },
+  "settings": {
+    "title": "Ajustes",
+    "loading": "Cargando",
+    "roastr_persona": {
+      "title": "Roastr Persona",
+      "description": "¿Por qué configurar tu Roastr Persona?",
+      "benefits": {
+        "personalized": "Roasts más personalizados y auténticos según tu estilo",
+        "detection": "Detección mejorada de ataques específicos hacia ti",
+        "filtering": "Filtrado inteligente de comentarios sensibles",
+        "control": "Mayor control sobre los temas de respuesta"
+      },
+      "privacy_note": "🔒 Privacidad garantizada: Todos los datos están encriptados con AES-256 y son privados por defecto. Solo tú puedes verlos y decidir si hacerlos públicos.",
+      "identity": {
+        "label": "Lo que me define",
+        "placeholder": "Ej: Soy desarrollador, me gusta el café, odio las reuniones innecesarias...",
+        "description": "Describe quién eres: tu profesión, hobbies, valores, gustos. Esto ayuda a Roastr a generar respuestas más auténticas y detectar ataques personalizados."
+      },
+      "intolerance": {
+        "label": "Lo que no tolero",
+        "placeholder": "Ej: Comentarios sobre mi apariencia, bromas sobre mi familia...",
+        "description": "Define los temas o comentarios que no toleras. Roastr será más agresivo al defender estos límites y puede filtrar o bloquear automáticamente este tipo de contenido."
+      },
+      "tolerance": {
+        "label": "Lo que me da igual",
+        "placeholder": "Ej: Bromas sobre mi edad, comentarios sobre mis gustos musicales...",
+        "description": "Indica los temas que no te afectan o te dan igual. Roastr ignorará estos comentarios o responderá con humor ligero, sin tomárselos en serio."
+      },
+      "actions": {
+        "configure": "Configurar",
+        "edit": "Editar",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "configured": "Configurado"
+      },
+      "visibility": {
+        "visible": "Visible",
+        "private": "Privado"
+      }
+    },
+    "transparency": {
+      "title": "Transparencia",
+      "description": "Por cumplimiento de políticas, puedes elegir cómo identificar que algunas respuestas son generadas por IA. No es obligatorio, sino una opción de personalización.",
+      "bio_text": {
+        "suggested_title": "Texto sugerido para tu bio",
+        "copy": "Copiar",
+        "copied": "Copiado",
+        "clearing": "Limpiando...",
+        "clear_clipboard": "Limpiar portapapeles"
+      }
+    },
+    "interface": {
+      "title": "Estilo de la interfaz",
+      "description": "Elige el tema de la interfaz que prefieras",
+      "themes": {
+        "light": "Claro",
+        "dark": "Oscuro",
+        "system": "Sistema",
+        "default": "Por defecto"
+      }
+    },
+    "notifications": {
+      "persona_updated": "Roastr Persona actualizada correctamente",
+      "persona_error": "Error al guardar Roastr Persona",
+      "theme_updated": "Tema actualizado correctamente",
+      "theme_error": "Error al actualizar el tema",
+      "loading_error": "Error al cargar la configuración",
+      "copy_success": "Texto copiado al portapapeles",
+      "copy_error": "Error al copiar el texto",
+      "copy_init_error": "Error al iniciar la operación de copiado",
+      "copy_cancelled": "Operación de copiado cancelada",
+      "clipboard_denied": "Permisos de portapapeles denegados. Intentando método alternativo…",
+      "clipboard_security": "Error de seguridad al acceder al portapapeles. Intenta copiar manualmente.",
+      "clipboard_unavailable": "La función de copiar no está disponible en este navegador",
+      "clipboard_cleared": "Portapapeles limpiado",
+      "clipboard_clear_error": "No se pudo limpiar el portapapeles"
+    },
+    "validation": {
+      "max_length": "El texto no puede superar los {max} caracteres",
+      "suspicious_content": "El contenido contiene patrones no permitidos",
+      "invalid_content": "Contenido no válido"
+    }
+  },
   "transparency": {
     "title": "Transparencia en las respuestas",
     "description": "Por políticas de transparencia, todas las respuestas automáticas incluyen un aviso de que son generadas por IA. Además, puedes añadir en tu bio el texto sugerido para dar mayor visibilidad y protección.",

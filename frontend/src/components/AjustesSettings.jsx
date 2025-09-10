@@ -173,6 +173,11 @@ const AjustesSettings = ({ user, onNotification }) => {
       }
 
     } catch (error) {
+      // Don't show error notification for cancelled requests
+      if (error.name === 'AbortError') {
+        console.log('Data loading request was cancelled');
+        return;
+      }
       console.error('Failed to load ajustes data:', error);
       onNotification?.('Error al cargar la configuración', 'error');
       setRoastrPersona(prev => ({ ...prev, isLoading: false }));
@@ -254,6 +259,11 @@ const AjustesSettings = ({ user, onNotification }) => {
         setThemeSettings(prev => ({ ...prev, isSaving: false }));
       }
     } catch (error) {
+      // Don't show error notification for cancelled requests
+      if (error.name === 'AbortError') {
+        console.log('Theme change request was cancelled');
+        return;
+      }
       console.error('Failed to update theme:', error);
       onNotification?.('Error al actualizar el tema', 'error');
       setThemeSettings(prev => ({ ...prev, isSaving: false }));
@@ -824,6 +834,8 @@ const RoastrPersonaField = ({
 
   // Real-time validation with backend integration
   useEffect(() => {
+    const controller = new AbortController();
+    
     const validateInput = async () => {
       if (!fieldValue || fieldValue.trim().length === 0) {
         setValidationError('');
@@ -871,7 +883,7 @@ const RoastrPersonaField = ({
         const result = await apiClient.post('/user/roastr-persona/validate', {
           field: fieldName,
           value: fieldValue
-        });
+        }, { signal: controller.signal });
 
         if (result?.data?.success) {
           if (!result.data.valid) {
@@ -881,15 +893,20 @@ const RoastrPersonaField = ({
           }
         }
       } catch (error) {
-        // If backend validation fails, rely on client-side validation
-        console.warn('Backend validation unavailable:', error);
+        // Don't log warnings for cancelled validation requests
+        if (error.name !== 'AbortError') {
+          console.warn('Backend validation unavailable:', error);
+        }
       }
 
       setIsValidating(false);
     };
 
     const debounceTimer = setTimeout(validateInput, 500);
-    return () => clearTimeout(debounceTimer);
+    return () => {
+      clearTimeout(debounceTimer);
+      controller.abort();
+    };
   }, [fieldValue, maxLength, variant]);
 
   const handleSave = () => {
