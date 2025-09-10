@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import TransparencySettings from './TransparencySettings';
+import StyleSelector from './StyleSelector';
 import SensitiveDataModal from './ui/SensitiveDataModal';
 import { detectSensitiveData, generateWarningMessage, isClipboardClearingSupported, clearClipboard } from '../utils/sensitiveDataDetector';
 
