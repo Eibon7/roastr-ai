@@ -544,16 +544,15 @@ describe('BaseWorker', () => {
       const longJob = { id: 'long-job', delay: 100 };
       worker.currentJobs.set('long-job', longJob);
 
+      // Start the stop process (non-blocking)
       const stopPromise = worker.stop();
       
-      // Simulate job completion after 50ms
-      setTimeout(() => {
-        worker.currentJobs.delete('long-job');
-      }, 50);
-
-      // Advance timers to simulate job completion
-      jest.advanceTimersByTime(50);
-      await Promise.resolve();
+      // Wait a moment then clear the job
+      await jest.advanceTimersByTimeAsync(50);
+      worker.currentJobs.delete('long-job');
+      
+      // Let the stop process check for the cleared job
+      await jest.advanceTimersByTimeAsync(50);
 
       await stopPromise;
       
