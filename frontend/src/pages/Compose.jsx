@@ -21,12 +21,27 @@ export default function Compose() {
   const handlePreview = async () => {
     if (!message.trim()) return;
     
+    // Prevent concurrent requests
+    if (loading) return;
+    
     setLoading(true);
     setError(null);
     
     try {
-      // Get auth token (assuming you have auth context)
-      const token = localStorage.getItem('authToken');
+      // Get auth token - use consistent key
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError({
+          type: 'auth',
+          message: 'Please log in to generate roasts'
+        });
+        return;
+      }
+      
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       const response = await fetch('/api/roast/preview', {
         method: 'POST',
@@ -39,36 +54,72 @@ export default function Compose() {
           styleProfile: styleProfile,
           persona: persona || null,
           platform: selectedPlatform
-        })
+        }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (response.ok) {
         const data = await response.json();
-        setPreview(data.roast);
-        setTokensUsed(data.tokensUsed);
-        setAnalysisRemaining(data.analysisCountRemaining);
-        setRoastsRemaining(data.roastsRemaining);
+        setPreview(data.roast || data.data?.roast);
+        setTokensUsed(data.tokensUsed || data.data?.tokensUsed || 0);
+        setAnalysisRemaining(data.analysisCountRemaining || data.data?.analysisCountRemaining);
+        setRoastsRemaining(data.roastsRemaining || data.data?.roastsRemaining);
       } else {
-        const errorData = await response.json();
-        if (response.status === 402) {
-          // Insufficient credits
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: 'Unknown server error' };
+        }
+        
+        if (response.status === 401) {
+          setError({
+            type: 'auth',
+            message: 'Session expired. Please log in again.'
+          });
+        } else if (response.status === 402) {
           setError({
             type: 'credits',
-            message: errorData.details?.message || 'Insufficient credits'
+            message: errorData.details?.message || errorData.error || 'Insufficient credits'
+          });
+        } else if (response.status === 429) {
+          setError({
+            type: 'rate_limit',
+            message: 'Too many requests. Please wait a moment and try again.'
+          });
+        } else if (response.status >= 500) {
+          setError({
+            type: 'server',
+            message: 'Server error. Please try again later.'
           });
         } else {
           setError({
             type: 'general',
-            message: errorData.error || 'Failed to generate preview'
+            message: errorData.error || errorData.message || 'Failed to generate preview'
           });
         }
       }
     } catch (error) {
       console.error('Failed to generate preview:', error);
-      setError({
-        type: 'network',
-        message: 'Network error. Please try again.'
-      });
+      
+      if (error.name === 'AbortError') {
+        setError({
+          type: 'timeout',
+          message: 'Request timed out. Please try again.'
+        });
+      } else if (!navigator.onLine) {
+        setError({
+          type: 'offline',
+          message: 'No internet connection. Please check your connection and try again.'
+        });
+      } else {
+        setError({
+          type: 'network',
+          message: 'Network error. Please check your connection and try again.'
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -77,11 +128,26 @@ export default function Compose() {
   const handleSend = async () => {
     if (!preview) return;
     
+    // Prevent concurrent requests
+    if (loading) return;
+    
     setLoading(true);
     setError(null);
     
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError({
+          type: 'auth',
+          message: 'Please log in to send roasts'
+        });
+        return;
+      }
+      
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       // Use the /generate endpoint to consume roast credits
       const response = await fetch('/api/roast/generate', {
@@ -95,8 +161,11 @@ export default function Compose() {
           styleProfile: styleProfile,
           persona: persona || null,
           platform: selectedPlatform
-        })
+        }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (response.ok) {
         const data = await response.json();
@@ -117,25 +186,59 @@ export default function Compose() {
         alert('Roast generated and ready to send!');
         
       } else {
-        const errorData = await response.json();
-        if (response.status === 402) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: 'Unknown server error' };
+        }
+        
+        if (response.status === 401) {
+          setError({
+            type: 'auth',
+            message: 'Session expired. Please log in again.'
+          });
+        } else if (response.status === 402) {
           setError({
             type: 'credits',
-            message: errorData.details?.message || 'Insufficient roast credits'
+            message: errorData.details?.message || errorData.error || 'Insufficient roast credits'
+          });
+        } else if (response.status === 429) {
+          setError({
+            type: 'rate_limit',
+            message: 'Too many requests. Please wait a moment and try again.'
+          });
+        } else if (response.status >= 500) {
+          setError({
+            type: 'server',
+            message: 'Server error. Please try again later.'
           });
         } else {
           setError({
             type: 'general',
-            message: errorData.error || 'Failed to generate final roast'
+            message: errorData.error || errorData.message || 'Failed to generate final roast'
           });
         }
       }
     } catch (error) {
       console.error('Failed to send roast:', error);
-      setError({
-        type: 'network',
-        message: 'Network error. Please try again.'
-      });
+      
+      if (error.name === 'AbortError') {
+        setError({
+          type: 'timeout',
+          message: 'Request timed out. Please try again.'
+        });
+      } else if (!navigator.onLine) {
+        setError({
+          type: 'offline',
+          message: 'No internet connection. Please check your connection and try again.'
+        });
+      } else {
+        setError({
+          type: 'network',
+          message: 'Network error. Please check your connection and try again.'
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -179,7 +282,11 @@ export default function Compose() {
             {error && (
               <div className={`p-3 rounded-md text-sm ${
                 error.type === 'credits' 
-                  ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' 
+                  ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                  : error.type === 'auth'
+                  ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                  : error.type === 'rate_limit' || error.type === 'timeout'
+                  ? 'bg-orange-50 text-orange-800 border border-orange-200'
                   : 'bg-red-50 text-red-800 border border-red-200'
               }`}>
                 {error.message}
@@ -187,6 +294,20 @@ export default function Compose() {
                   <div className="mt-2">
                     <Button size="sm" variant="outline" className="text-xs">
                       Actualizar Plan
+                    </Button>
+                  </div>
+                )}
+                {error.type === 'auth' && (
+                  <div className="mt-2">
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => window.location.href = '/login'}>
+                      Iniciar Sesión
+                    </Button>
+                  </div>
+                )}
+                {(error.type === 'rate_limit' || error.type === 'timeout') && (
+                  <div className="mt-2">
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setError(null)}>
+                      Reintentar
                     </Button>
                   </div>
                 )}

@@ -220,8 +220,19 @@ class RoastGeneratorEnhanced {
     } catch (error) {
       logger.error('❌ Error in enhanced roast generation:', error);
       
-      // Fallback to safe roast
-      const rawFallbackRoast = await this.generateFallbackRoast(text, tone);
+      // Fallback to safe roast (never fail)
+      let rawFallbackRoast;
+      try {
+        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'free');
+      } catch (fallbackErr) {
+        logger.error('Fallback generation failed, using mock/static roast', { error: fallbackErr.message });
+        try {
+          const mock = this.mockGenerator || new RoastGeneratorMock();
+          rawFallbackRoast = await mock.generateRoast(text, 0.2, tone);
+        } catch {
+          rawFallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
+        }
+      }
       
       // Apply unified transparency disclaimer even to fallback roasts (Issue #196)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
@@ -384,7 +395,18 @@ class RoastGeneratorEnhanced {
 
     // Generate fallback roast
     logger.info('🔄 Generating fallback roast after RQC failure');
-    const fallbackRoast = await this.generateFallbackRoast(text, tone);
+    let fallbackRoast;
+    try {
+      fallbackRoast = await this.generateFallbackRoast(text, tone);
+    } catch (fallbackErr) {
+      logger.error('RQC fallback generation failed, using mock/static roast', { error: fallbackErr.message });
+      try {
+        const mock = this.mockGenerator || new RoastGeneratorMock();
+        fallbackRoast = await mock.generateRoast(text, 0.2, tone);
+      } catch {
+        fallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
+      }
+    }
     
     return {
       roast: fallbackRoast,
@@ -437,9 +459,10 @@ class RoastGeneratorEnhanced {
    * Generate safe fallback roast
    */
   async generateFallbackRoast(text, tone, plan = 'free') {
-    const model = await this.getModelForPlan(plan);
-    
-    const fallbackPrompt = `Eres Roastr, un bot que responde con comentarios ingeniosos y seguros.
+    try {
+      const model = await this.getModelForPlan(plan);
+
+      const fallbackPrompt = `Eres Roastr, un bot que responde con comentarios ingeniosos y seguros.
 
 Reglas estrictas:
 - Sé ingenioso pero completamente inofensivo
@@ -450,23 +473,32 @@ Reglas estrictas:
 
 Responde únicamente con el roast seguro, sin explicaciones.`;
 
-    const completion = await this.openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: "system",
-          content: fallbackPrompt
-        },
-        {
-          role: "user",
-          content: text
-        }
-      ],
-      max_tokens: 80,
-      temperature: 0.5, // Lower temperature for safety
-    });
+      const completion = await this.openai.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: "system",
+            content: fallbackPrompt
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ],
+        max_tokens: 80,
+        temperature: 0.5, // Lower temperature for safety
+      });
 
-    return completion.choices[0].message.content.trim();
+      return completion.choices[0].message.content.trim();
+    } catch (err) {
+      logger.error('OpenAI fallback failed, returning mock/static roast', { error: err.message });
+      try {
+        const mock = this.mockGenerator || new RoastGeneratorMock();
+        return await mock.generateRoast(text, 0.2, tone);
+      } catch {
+        return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
+      }
+    }
   }
 
   /**
@@ -649,7 +681,16 @@ Configuración de usuario:
       return completion.choices[0].message.content;
     } catch (error) {
       logger.error("❌ Error generating roast with custom prompt:", error);
-      throw error;
+      try {
+        return await this.generateFallbackRoast(text, 'sarcastic', plan);
+      } catch {
+        const mock = this.mockGenerator || new RoastGeneratorMock();
+        try {
+          return await mock.generateRoast(text, 0.2, 'sarcastic');
+        } catch {
+          return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
+        }
+      }
     }
   }
 

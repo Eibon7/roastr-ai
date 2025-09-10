@@ -17,14 +17,14 @@ class FeatureFlags {
     return {
       // Core System Features
       ENABLE_BILLING: this.checkBillingAvailable(),
-      ENABLE_RQC: process.env.ENABLE_RQC === 'true', // Disabled by default - under development
-      ENABLE_SHIELD: process.env.ENABLE_SHIELD === 'true',
+      ENABLE_RQC: this.parseFlag(process.env.ENABLE_RQC), // Disabled by default - under development
+      ENABLE_SHIELD: this.parseFlag(process.env.ENABLE_SHIELD),
       
       // Platform Integration Features
       ENABLE_REAL_TWITTER: this.checkTwitterKeys(),
       ENABLE_REAL_YOUTUBE: this.checkYouTubeKeys(),
-      ENABLE_REAL_INSTAGRAM: process.env.ENABLE_REAL_INSTAGRAM === 'true' || this.checkInstagramKeys(),
-      ENABLE_REAL_FACEBOOK: process.env.ENABLE_REAL_FACEBOOK === 'true' || this.checkFacebookKeys(),
+      ENABLE_REAL_INSTAGRAM: this.parseFlag(process.env.ENABLE_REAL_INSTAGRAM) || this.checkInstagramKeys(),
+      ENABLE_REAL_FACEBOOK: this.parseFlag(process.env.ENABLE_REAL_FACEBOOK) || this.checkFacebookKeys(),
       ENABLE_REAL_DISCORD: this.checkDiscordKeys(),
       ENABLE_REAL_TWITCH: this.checkTwitchKeys(),
       ENABLE_REAL_REDDIT: this.checkRedditKeys(),
@@ -42,31 +42,31 @@ class FeatureFlags {
       ENABLE_SUPABASE: this.checkSupabaseKeys(),
       
       // Development Features
-      ENABLE_DEBUG_LOGS: process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development',
-      VERBOSE_LOGS: process.env.VERBOSE_LOGS === 'true',
+      ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG) || process.env.NODE_ENV === 'development',
+      VERBOSE_LOGS: this.parseFlag(process.env.VERBOSE_LOGS),
       MOCK_MODE: mockMode.isMockMode,
-      ENABLE_MOCK_PERSISTENCE: process.env.ENABLE_MOCK_PERSISTENCE === 'true' || mockMode.isMockMode,
+      ENABLE_MOCK_PERSISTENCE: this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
       
       // Auth Features
-      ENABLE_MAGIC_LINK: process.env.ENABLE_MAGIC_LINK !== 'false', // Default enabled unless explicitly disabled
-      ENABLE_PASSWORD_HISTORY: process.env.ENABLE_PASSWORD_HISTORY !== 'false', // Default enabled unless explicitly disabled
-      ENABLE_RATE_LIMIT: process.env.ENABLE_RATE_LIMIT !== 'false', // Default enabled unless explicitly disabled
+      ENABLE_MAGIC_LINK: this.parseFlag(process.env.ENABLE_MAGIC_LINK, true), // Default enabled
+      ENABLE_PASSWORD_HISTORY: this.parseFlag(process.env.ENABLE_PASSWORD_HISTORY, true), // Default enabled  
+      ENABLE_RATE_LIMIT: this.parseFlag(process.env.ENABLE_RATE_LIMIT, true), // Default enabled
       
       // Style Profile Feature (basic style analysis)
-      ENABLE_STYLE_PROFILE: process.env.ENABLE_STYLE_PROFILE !== 'false', // Default enabled unless explicitly disabled
+      ENABLE_STYLE_PROFILE: this.parseFlag(process.env.ENABLE_STYLE_PROFILE, true), // Default enabled
 
       // Credits v2 Feature
-      ENABLE_CREDITS_V2: process.env.ENABLE_CREDITS_V2 === 'true',
+      ENABLE_CREDITS_V2: this.parseFlag(process.env.ENABLE_CREDITS_V2),
 
       // Custom Prompt Feature
-      ENABLE_CUSTOM_PROMPT: process.env.ENABLE_CUSTOM_PROMPT === 'true', // Default disabled, requires explicit activation
+      ENABLE_CUSTOM_PROMPT: this.parseFlag(process.env.ENABLE_CUSTOM_PROMPT), // Default disabled, requires explicit activation
 
       // UI Platform Features (separate from API integration)
-      ENABLE_FACEBOOK_UI: process.env.ENABLE_FACEBOOK_UI === 'true', // Default disabled - under development
-      ENABLE_INSTAGRAM_UI: process.env.ENABLE_INSTAGRAM_UI === 'true', // Default disabled - under development
+      ENABLE_FACEBOOK_UI: this.parseFlag(process.env.ENABLE_FACEBOOK_UI), // Default disabled - under development
+      ENABLE_INSTAGRAM_UI: this.parseFlag(process.env.ENABLE_INSTAGRAM_UI), // Default disabled - under development
 
       // Shop Feature
-      ENABLE_SHOP: process.env.ENABLE_SHOP === 'true' // Default disabled unless explicitly enabled
+      ENABLE_SHOP: this.parseFlag(process.env.ENABLE_SHOP) // Default disabled unless explicitly enabled
     };
   }
 
@@ -177,6 +177,25 @@ class FeatureFlags {
   }
 
   /**
+   * Parse environment variable to boolean with proper handling
+   * @param {string} value - Environment variable value
+   * @param {boolean} defaultValue - Default value if undefined
+   * @returns {boolean}
+   */
+  parseFlag(value, defaultValue = false) {
+    if (value === undefined || value === null) {
+      return defaultValue;
+    }
+    
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    
+    const stringValue = String(value).toLowerCase().trim();
+    return stringValue === 'true' || stringValue === '1' || stringValue === 'yes';
+  }
+
+  /**
    * Check if a feature is enabled
    */
   isEnabled(flagName) {
@@ -236,7 +255,7 @@ class FeatureFlags {
   shouldUseMockOAuth() {
     return this.flags.MOCK_MODE || 
            process.env.NODE_ENV === 'test' || 
-           process.env.FORCE_MOCK_OAUTH === 'true';
+           this.parseFlag(process.env.FORCE_MOCK_OAUTH);
   }
 
   /**
