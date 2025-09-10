@@ -3139,30 +3139,58 @@ router.get('/settings/style', authenticateToken, async (req, res) => {
         const userId = req.user.id;
 
         if (flags.isEnabled('ENABLE_SUPABASE')) {
-            const { data, error } = await supabaseServiceClient
-                .from('user_style_settings')
-                .select('style, settings, created_at, updated_at')
-                .eq('user_id', userId)
-                .single();
+            try {
+                const { data, error } = await supabaseServiceClient
+                    .from('user_style_settings')
+                    .select('style, settings, created_at, updated_at')
+                    .eq('user_id', userId)
+                    .single();
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-                throw error;
-            }
-
-            res.json({
-                success: true,
-                data: {
-                    style: data?.style || 'sarcastic',
-                    settings: data?.settings || {
-                        intensity: 3,
-                        humor_type: 'witty',
-                        creativity: 3,
-                        politeness: 2
-                    },
-                    created_at: data?.created_at,
-                    updated_at: data?.updated_at
+                if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+                    logger.error('Database error fetching style settings', {
+                        userId: SafeUtils.safeUserIdPrefix(userId),
+                        error: error.message,
+                        code: error.code
+                    });
+                    throw error;
                 }
-            });
+
+                res.json({
+                    success: true,
+                    data: {
+                        style: data?.style || 'sarcastic',
+                        settings: data?.settings || {
+                            intensity: 3,
+                            humor_type: 'witty',
+                            creativity: 3,
+                            politeness: 2
+                        },
+                        created_at: data?.created_at,
+                        updated_at: data?.updated_at
+                    }
+                });
+            } catch (dbError) {
+                logger.error('Failed to fetch style settings from database', {
+                    userId: SafeUtils.safeUserIdPrefix(userId),
+                    error: dbError.message,
+                    stack: dbError.stack
+                });
+                // Return default settings on database error
+                res.json({
+                    success: true,
+                    data: {
+                        style: 'sarcastic',
+                        settings: {
+                            intensity: 3,
+                            humor_type: 'witty',
+                            creativity: 3,
+                            politeness: 2
+                        },
+                        created_at: null,
+                        updated_at: null
+                    }
+                });
+            }
         } else {
             // Mock mode - return default settings
             res.json({
@@ -3254,37 +3282,51 @@ router.post('/settings/style', authenticateToken, async (req, res) => {
         }
 
         if (flags.isEnabled('ENABLE_SUPABASE')) {
-            const { data, error } = await supabaseServiceClient
-                .from('user_style_settings')
-                .upsert({
-                    user_id: userId,
-                    style: style,
-                    settings: settings || {
-                        intensity: 3,
-                        humor_type: 'witty',
-                        creativity: 3,
-                        politeness: 2
-                    },
-                    updated_at: new Date().toISOString()
-                }, { 
-                    onConflict: 'user_id' 
-                })
-                .select()
-                .single();
+            try {
+                const { data, error } = await supabaseServiceClient
+                    .from('user_style_settings')
+                    .upsert({
+                        user_id: userId,
+                        style: style,
+                        settings: settings || {
+                            intensity: 3,
+                            humor_type: 'witty',
+                            creativity: 3,
+                            politeness: 2
+                        },
+                        updated_at: new Date().toISOString()
+                    }, { 
+                        onConflict: 'user_id' 
+                    })
+                    .select()
+                    .single();
 
-            if (error) {
-                throw error;
-            }
-
-            res.json({
-                success: true,
-                message: 'Style settings updated successfully',
-                data: {
-                    style: data.style,
-                    settings: data.settings,
-                    updated_at: data.updated_at
+                if (error) {
+                    logger.error('Database error updating style settings', {
+                        userId: SafeUtils.safeUserIdPrefix(userId),
+                        error: error.message,
+                        code: error.code
+                    });
+                    throw error;
                 }
-            });
+
+                res.json({
+                    success: true,
+                    message: 'Style settings updated successfully',
+                    data: {
+                        style: data.style,
+                        settings: data.settings,
+                        updated_at: data.updated_at
+                    }
+                });
+            } catch (dbError) {
+                logger.error('Failed to update style settings in database', {
+                    userId: SafeUtils.safeUserIdPrefix(userId),
+                    error: dbError.message,
+                    stack: dbError.stack
+                });
+                throw dbError;
+            }
         } else {
             // Mock mode - just return success
             res.json({
