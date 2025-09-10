@@ -170,9 +170,10 @@ body {
   font-size: initial !important;
 }
 
-/* Usage Cards - Exact design specifications */
+/* Usage Cards - Responsive design with max size 375x93 */
 .usage-card-analysis {
-  width: 375px !important;
+  width: 100% !important;
+  max-width: 375px !important;
   height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
@@ -181,7 +182,8 @@ body {
 }
 
 .usage-card-roast {
-  width: 375px !important;
+  width: 100% !important;
+  max-width: 375px !important;
   height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
@@ -190,7 +192,8 @@ body {
 }
 
 .usage-card-error {
-  width: 375px !important;
+  width: 100% !important;
+  max-width: 375px !important;
   height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
