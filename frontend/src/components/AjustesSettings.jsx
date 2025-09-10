@@ -778,23 +778,97 @@ const RoastrPersonaField = ({
   isSaving, 
   onSave, 
   onToggleForm, 
-  maxLength,
+  maxLength = 300,
   variant = 'default'
 }) => {
   const [fieldValue, setFieldValue] = useState(value);
   const [fieldVisibility, setFieldVisibility] = useState(isVisible);
+  const [validationError, setValidationError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
     setFieldValue(value);
     setFieldVisibility(isVisible);
   }, [value, isVisible]);
 
+  // Real-time validation with backend integration
+  useEffect(() => {
+    const validateInput = async () => {
+      if (!fieldValue || fieldValue.trim().length === 0) {
+        setValidationError('');
+        return;
+      }
+
+      setIsValidating(true);
+      
+      // Quick client-side length check
+      if (fieldValue.length > maxLength) {
+        setValidationError(`El texto no puede superar los ${maxLength} caracteres`);
+        setIsValidating(false);
+        return;
+      }
+
+      // Quick client-side pattern check
+      const suspiciousPatterns = [
+        /ignore.*previous.*instructions?/i,
+        /disregard.*above/i,
+        /forget.*what.*said/i,
+        /system.*prompt/i,
+        /\{\{.*\}\}/,
+        /<script.*>/i,
+        /javascript:/i,
+        /on\w+\s*=/i
+      ];
+
+      const hasSuspiciousContent = suspiciousPatterns.some(pattern => pattern.test(fieldValue));
+      if (hasSuspiciousContent) {
+        setValidationError('El contenido contiene patrones no permitidos');
+        setIsValidating(false);
+        return;
+      }
+
+      // Backend validation for comprehensive checking
+      try {
+        const fieldMap = {
+          'default': 'loQueMeDefine',
+          'intolerance': 'loQueNoTolero', 
+          'tolerance': 'loQueMeDaIgual'
+        };
+        
+        const fieldName = fieldMap[variant] || 'loQueMeDefine';
+        
+        const result = await apiClient.post('/user/roastr-persona/validate', {
+          field: fieldName,
+          value: fieldValue
+        });
+
+        if (result?.data?.success) {
+          if (!result.data.valid) {
+            setValidationError(result.data.error || 'Contenido no válido');
+          } else {
+            setValidationError('');
+          }
+        }
+      } catch (error) {
+        // If backend validation fails, rely on client-side validation
+        console.warn('Backend validation unavailable:', error);
+      }
+
+      setIsValidating(false);
+    };
+
+    const debounceTimer = setTimeout(validateInput, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [fieldValue, maxLength, variant]);
+
   const handleSave = () => {
+    if (validationError || isValidating) return;
     onSave(fieldValue, fieldVisibility);
   };
 
-  // CodeRabbit: Check if there are actual changes to prevent unnecessary saves
+  // Check if there are actual changes to prevent unnecessary saves
   const hasChanges = fieldValue !== value || fieldVisibility !== isVisible;
+  const canSave = !validationError && !isValidating && fieldValue.trim().length > 0;
 
 
   const getVariantColor = () => {
@@ -839,13 +913,28 @@ const RoastrPersonaField = ({
 
       {showForm && (
         <div className="space-y-3">
-          <Textarea
-            value={fieldValue}
-            onChange={(e) => setFieldValue(e.target.value)}
-            placeholder={placeholder}
-            maxLength={maxLength}
-            className="min-h-[100px]"
-          />
+          <div className="relative">
+            <Textarea
+              value={fieldValue}
+              onChange={(e) => setFieldValue(e.target.value)}
+              placeholder={placeholder}
+              maxLength={maxLength + 50} // Allow some overflow to show validation
+              className={`min-h-[100px] ${validationError ? 'border-red-500 focus:border-red-500' : ''}`}
+            />
+            {isValidating && (
+              <div className="absolute top-2 right-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </div>
+          
+          {validationError && (
+            <div className="flex items-center space-x-1 text-red-600 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              <span>{validationError}</span>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Button
@@ -866,14 +955,14 @@ const RoastrPersonaField = ({
                   </>
                 )}
               </Button>
-              <span className="text-xs text-gray-500">
+              <span className={`text-xs ${fieldValue.length > maxLength ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
                 {fieldValue.length}/{maxLength}
               </span>
             </div>
             <Button
               onClick={handleSave}
               disabled={
-                isSaving ||
+                isSaving || !canSave ||
                 (((fieldValue ?? '').trim() === (value ?? '').trim()) &&
                  fieldVisibility === isVisible)
               }

@@ -505,7 +505,7 @@ export default function Dashboard() {
       </div>
 
       {/* Usage Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         <AnalysisUsageCard user={adminModeUser || { plan: 'pro' }} />
         <RoastUsageCard user={adminModeUser || { plan: 'pro' }} />
       </div>

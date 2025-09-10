@@ -1752,6 +1752,124 @@ router.get('/roastr-persona', authenticateToken, roastrPersonaReadLimiter, async
 });
 
 /**
+ * POST /api/user/roastr-persona/validate
+ * Validate Roastr Persona input for real-time feedback
+ * This endpoint is lightweight and doesn't save data
+ */
+router.post('/roastr-persona/validate', authenticateToken, async (req, res) => {
+    try {
+        const { field, value } = req.body;
+        
+        // Validate input parameters
+        if (!field || !['loQueMeDefine', 'loQueNoTolero', 'loQueMeDaIgual'].includes(field)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Campo inválido'
+            });
+        }
+
+        if (!value || typeof value !== 'string') {
+            return res.json({
+                success: true,
+                valid: true,
+                message: 'Campo vacío es válido'
+            });
+        }
+
+        // Check length
+        const maxLength = 300;
+        if (value.length > maxLength) {
+            return res.json({
+                success: true,
+                valid: false,
+                error: `El texto no puede superar los ${maxLength} caracteres`,
+                currentLength: value.length,
+                maxLength
+            });
+        }
+
+        // Check for prompt injection using PersonaInputSanitizer
+        const personaSanitizer = new PersonaInputSanitizer();
+        const sanitizedValue = personaSanitizer.sanitizePersonaInput(value);
+        
+        if (sanitizedValue === null) {
+            return res.json({
+                success: true,
+                valid: false,
+                error: 'El contenido contiene patrones no permitidos o intenta manipular el sistema'
+            });
+        }
+
+        // Check total length across all fields
+        const userId = req.user.id;
+        const { data: existingData } = await supabaseServiceClient
+            .from('users')
+            .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted')
+            .eq('id', userId)
+            .single();
+
+        let totalLength = value.length;
+        
+        if (existingData) {
+            // Decrypt existing values to check their lengths
+            if (field !== 'loQueMeDefine' && existingData.lo_que_me_define_encrypted) {
+                try {
+                    const decrypted = encryptionService.decrypt(existingData.lo_que_me_define_encrypted);
+                    totalLength += decrypted.length;
+                } catch (e) {
+                    logger.warn('Failed to decrypt lo_que_me_define for length check', { error: e.message });
+                }
+            }
+            
+            if (field !== 'loQueNoTolero' && existingData.lo_que_no_tolero_encrypted) {
+                try {
+                    const decrypted = encryptionService.decrypt(existingData.lo_que_no_tolero_encrypted);
+                    totalLength += decrypted.length;
+                } catch (e) {
+                    logger.warn('Failed to decrypt lo_que_no_tolero for length check', { error: e.message });
+                }
+            }
+            
+            if (field !== 'loQueMeDaIgual' && existingData.lo_que_me_da_igual_encrypted) {
+                try {
+                    const decrypted = encryptionService.decrypt(existingData.lo_que_me_da_igual_encrypted);
+                    totalLength += decrypted.length;
+                } catch (e) {
+                    logger.warn('Failed to decrypt lo_que_me_da_igual for length check', { error: e.message });
+                }
+            }
+        }
+
+        const maxTotalLength = 900;
+        if (totalLength > maxTotalLength) {
+            return res.json({
+                success: true,
+                valid: false,
+                error: `El total de todos los campos no puede superar los ${maxTotalLength} caracteres`,
+                currentTotalLength: totalLength,
+                maxTotalLength
+            });
+        }
+
+        // All validations passed
+        return res.json({
+            success: true,
+            valid: true,
+            sanitizedLength: sanitizedValue.length,
+            currentLength: value.length,
+            totalLength
+        });
+
+    } catch (error) {
+        logger.error('Error validating Roastr Persona input:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Error al validar el contenido'
+        });
+    }
+});
+
+/**
  * POST /api/user/roastr-persona
  * Save or update user's Roastr Persona including "lo que me define" and "lo que no tolero"
  */
