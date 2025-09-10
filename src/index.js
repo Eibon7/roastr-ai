@@ -115,7 +115,7 @@ app.get('/health', (req, res) => {
       timestamp: new Date().toISOString(),
       uptime: `${Math.floor(uptime)}s`,
       version,
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV === 'production' ? 'production' : 'development'
     });
   } catch (error) {
     console.error('Health check error:', error);

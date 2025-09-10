@@ -42,7 +42,7 @@ class FeatureFlags {
       ENABLE_SUPABASE: this.checkSupabaseKeys(),
       
       // Development Features
-      ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG) || process.env.NODE_ENV === 'development',
+      ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG), // Disabled by default, requires explicit environment variable
       VERBOSE_LOGS: this.parseFlag(process.env.VERBOSE_LOGS),
       MOCK_MODE: mockMode.isMockMode,
       ENABLE_MOCK_PERSISTENCE: this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
