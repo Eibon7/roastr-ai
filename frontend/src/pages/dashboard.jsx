@@ -507,7 +507,7 @@ export default function Dashboard() {
       </div>
 
       {/* Usage Cards */}
-      <div className={`flex gap-6 mb-8 ${isSidebarVisible ? 'flex-row' : 'flex-col'}`}>
+      <div className="flex flex-col lg:flex-row gap-6 mb-8">
         <AnalysisUsageCard user={adminModeUser || { plan: 'pro' }} />
         <RoastUsageCard user={adminModeUser || { plan: 'pro' }} />
       </div>

@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
 import { MessageCircle, Zap, AlertTriangle } from 'lucide-react';
-import { useSidebar } from '../../contexts/SidebarContext';
 import { PLAN_DEFAULTS } from '../../config/planDefaults';
 
 export default function RoastUsageCard({ user, className = '' }) {
@@ -11,7 +10,6 @@ export default function RoastUsageCard({ user, className = '' }) {
   const [planLimits, setPlanLimits] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isSidebarVisible } = useSidebar();
 
   useEffect(() => {
     const fetchUsageData = async () => {
@@ -86,7 +84,7 @@ export default function RoastUsageCard({ user, className = '' }) {
 
   if (loading) {
     return (
-      <div className={`usage-card-roast flex items-center justify-between p-4 h-24 flex-shrink-0 ${isSidebarVisible ? 'w-96' : 'w-full'} ${className}`}>
+      <div className={`usage-card-roast flex items-center justify-between p-4 w-full lg:w-96 h-24 flex-shrink-0 ${className}`}>
         <div>
           <Skeleton className="h-4 w-24 mb-2" />
           <Skeleton className="h-3 w-32" />
@@ -98,7 +96,7 @@ export default function RoastUsageCard({ user, className = '' }) {
 
   if (error) {
     return (
-      <div className={`usage-card-error flex items-center justify-between p-4 h-24 flex-shrink-0 ${isSidebarVisible ? 'w-96' : 'w-full'} ${className}`}>
+      <div className={`usage-card-error flex items-center justify-between p-4 w-full lg:w-96 h-24 flex-shrink-0 ${className}`}>
         <div>
           <div className="flex items-center space-x-2 text-red-600 mb-1">
             <AlertTriangle className="h-4 w-4" />
@@ -121,7 +119,7 @@ export default function RoastUsageCard({ user, className = '' }) {
   const percentageUsed = roastLimit > 0 ? Math.round((roastUsed / roastLimit) * 100) : 0;
 
   return (
-    <div className={`usage-card-roast flex items-center justify-between p-4 h-24 flex-shrink-0 ${isSidebarVisible ? 'w-96' : 'w-full'} ${className}`}>
+    <div className={`usage-card-roast flex items-center justify-between p-4 w-full lg:w-96 h-24 flex-shrink-0 ${className}`}>
       <div>
         <h3 className="text-base font-bold text-gray-900 mb-1">Roast usage</h3>
         <p className="text-sm text-gray-500">
