@@ -88,80 +88,88 @@ const AjustesSettings = ({ user, onNotification }) => {
 
 
   useEffect(() => {
-    loadAjustesData();
+    const controller = new AbortController();
+    loadAjustesData(controller.signal);
+    
+    // Cleanup function to cancel requests if component unmounts
+    return () => {
+      controller.abort();
+    };
   }, []);
 
-  const loadAjustesData = async () => {
+  const loadAjustesData = async (signal) => {
     try {
-      // Load Roastr Persona data
-      try {
-        const roastrPersonaResult = await apiClient.get('/user/roastr-persona');
-        if (roastrPersonaResult?.data?.success) {
-          setRoastrPersona(prev => ({
-            ...prev,
-            loQueMeDefine: roastrPersonaResult.data.data?.loQueMeDefine || '',
-            loQueNoTolero: roastrPersonaResult.data.data?.loQueNoTolero || '',
-            loQueMeDaIgual: roastrPersonaResult.data.data?.loQueMeDaIgual || '',
-            isVisible: roastrPersonaResult.data.data?.isVisible || false,
-            isIntoleranceVisible: roastrPersonaResult.data.data?.isIntoleranceVisible || false,
-            isToleranceVisible: roastrPersonaResult.data.data?.isToleranceVisible || false,
-            isLoading: false
-          }));
-        } else {
-          // Handle success: false case
-          setRoastrPersona(prev => ({
-            ...prev,
-            loQueMeDefine: '',
-            loQueNoTolero: '',
-            loQueMeDaIgual: '',
-            isVisible: false,
-            isIntoleranceVisible: false,
-            isToleranceVisible: false,
-            isLoading: false
-          }));
+      // Load all data concurrently with Promise.allSettled for better error handling
+      const [roastrPersonaResult, themeResult, transparencyResult] = await Promise.allSettled([
+        apiClient.get('/user/roastr-persona', { signal }),
+        apiClient.get('/user/settings/theme', { signal }),
+        apiClient.get('/user/settings/transparency-mode', { signal })
+      ]);
+
+      // Handle Roastr Persona result
+      if (roastrPersonaResult.status === 'fulfilled' && roastrPersonaResult.value?.data?.success) {
+        setRoastrPersona(prev => ({
+          ...prev,
+          loQueMeDefine: roastrPersonaResult.value.data.data?.loQueMeDefine || '',
+          loQueNoTolero: roastrPersonaResult.value.data.data?.loQueNoTolero || '',
+          loQueMeDaIgual: roastrPersonaResult.value.data.data?.loQueMeDaIgual || '',
+          isVisible: roastrPersonaResult.value.data.data?.isVisible || false,
+          isIntoleranceVisible: roastrPersonaResult.value.data.data?.isIntoleranceVisible || false,
+          isToleranceVisible: roastrPersonaResult.value.data.data?.isToleranceVisible || false,
+          isLoading: false
+        }));
+      } else {
+        // Handle failure or success: false case
+        if (roastrPersonaResult.status === 'rejected') {
+          console.error('Failed to load roastr persona:', roastrPersonaResult.reason);
         }
-      } catch (roastrError) {
-        console.error('Failed to load roastr persona:', roastrError);
-        setRoastrPersona(prev => ({ ...prev, isLoading: false }));
+        setRoastrPersona(prev => ({
+          ...prev,
+          loQueMeDefine: '',
+          loQueNoTolero: '',
+          loQueMeDaIgual: '',
+          isVisible: false,
+          isIntoleranceVisible: false,
+          isToleranceVisible: false,
+          isLoading: false
+        }));
       }
 
-      // Load theme settings
-      try {
-        const themeResult = await apiClient.get('/user/settings/theme');
-        if (themeResult?.data?.success) {
-          setThemeSettings(prev => ({
-            ...prev,
-            theme: themeResult.data.data?.theme || prev.theme,
-            options: themeResult.data.data?.options || prev.options || [],
-            isLoading: false
-          }));
-        } else {
-          // Handle success: false case
-          setThemeSettings(prev => ({
-            ...prev,
-            theme: 'system',
-            options: [],
-            isLoading: false
-          }));
+      // Handle theme settings result
+      if (themeResult.status === 'fulfilled' && themeResult.value?.data?.success) {
+        setThemeSettings(prev => ({
+          ...prev,
+          theme: themeResult.value.data.data?.theme || prev.theme,
+          options: themeResult.value.data.data?.options || prev.options || [],
+          isLoading: false
+        }));
+      } else {
+        // Handle failure or success: false case
+        if (themeResult.status === 'rejected') {
+          console.error('Failed to load theme settings:', themeResult.reason);
         }
-      } catch (themeError) {
-        console.error('Failed to load theme settings:', themeError);
-        setThemeSettings(prev => ({ ...prev, isLoading: false }));
+        setThemeSettings(prev => ({
+          ...prev,
+          theme: 'system',
+          options: [],
+          isLoading: false
+        }));
       }
 
-      // Load transparency bio text
-      try {
-        const transparencyResult = await apiClient.get('/user/settings/transparency-mode');
-        if (transparencyResult?.data?.success && transparencyResult.data.data?.bio_text) {
-          setCopyState(prev => ({
-            ...prev,
-            bioText: transparencyResult.data.data.bio_text
-          }));
-        }
-      } catch (transparencyError) {
-        console.error('Failed to load transparency settings:', transparencyError);
+      // Handle transparency settings result
+      if (transparencyResult.status === 'fulfilled' && 
+          transparencyResult.value?.data?.success && 
+          transparencyResult.value.data.data?.bio_text) {
+        setCopyState(prev => ({
+          ...prev,
+          bioText: transparencyResult.value.data.data.bio_text
+        }));
+      } else {
         // Don't show notification for transparency error as it's not critical
         // The transparency section will handle its own error state
+        if (transparencyResult.status === 'rejected') {
+          console.error('Failed to load transparency settings:', transparencyResult.reason);
+        }
       }
 
     } catch (error) {
@@ -174,6 +182,7 @@ const AjustesSettings = ({ user, onNotification }) => {
 
   const handleRoastrPersonaSave = async (field, value, visibility) => {
     const trimmedValue = value.trim();
+    const controller = new AbortController();
 
     try {
       setRoastrPersona(prev => ({ ...prev, isSaving: true }));
@@ -190,7 +199,7 @@ const AjustesSettings = ({ user, onNotification }) => {
         payload.isToleranceVisible = visibility;
       }
 
-      const result = await apiClient.post('/user/roastr-persona', payload);
+      const result = await apiClient.post('/user/roastr-persona', payload, { signal: controller.signal });
 
       if (result?.data?.success) {
         setRoastrPersona(prev => ({
@@ -210,6 +219,11 @@ const AjustesSettings = ({ user, onNotification }) => {
         onNotification?.(result?.data?.error || 'Error al guardar Roastr Persona', 'error');
       }
     } catch (error) {
+      // Don't show error notification for cancelled requests
+      if (error.name === 'AbortError') {
+        console.log('Roastr Persona save request was cancelled');
+        return;
+      }
       console.error('Failed to save Roastr Persona:', error);
       onNotification?.('Error al guardar Roastr Persona', 'error');
       setRoastrPersona(prev => ({ ...prev, isSaving: false }));
@@ -217,10 +231,12 @@ const AjustesSettings = ({ user, onNotification }) => {
   };
 
   const handleThemeChange = async (newTheme) => {
+    const controller = new AbortController();
+    
     try {
       setThemeSettings(prev => ({ ...prev, isSaving: true }));
 
-      const resp = await apiClient.patch('/user/settings/theme', { theme: newTheme });
+      const resp = await apiClient.patch('/user/settings/theme', { theme: newTheme }, { signal: controller.signal });
 
       if (resp?.data?.success) {
         setThemeSettings(prev => ({

@@ -170,12 +170,32 @@ body {
   font-size: initial !important;
 }
 
-/* Usage Metrics - Simple design with left border and bottom line */
-.usage-metric {
+/* Usage Cards - Exact design specifications */
+.usage-card-analysis {
   width: 375px !important;
   height: 93px !important;
-  border-left-width: 8px !important;
-  border-bottom-width: 1px !important;
+  background-color: white !important;
+  border: 1px solid #EAEEEF !important;
+  border-left: 8px solid #eab308 !important;
+  border-radius: 4px !important;
+}
+
+.usage-card-roast {
+  width: 375px !important;
+  height: 93px !important;
+  background-color: white !important;
+  border: 1px solid #EAEEEF !important;
+  border-left: 8px solid #a855f7 !important;
+  border-radius: 4px !important;
+}
+
+.usage-card-error {
+  width: 375px !important;
+  height: 93px !important;
+  background-color: white !important;
+  border: 1px solid #EAEEEF !important;
+  border-left: 8px solid #ef4444 !important;
+  border-radius: 4px !important;
 }
 
 .border-red-500 {
