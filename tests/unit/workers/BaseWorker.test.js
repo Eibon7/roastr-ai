@@ -124,11 +124,11 @@ describe('BaseWorker', () => {
   afterEach(async () => {
     if (worker && worker.isRunning) {
       // Force stop with shorter timeout for tests
-      worker.config.gracefulShutdownTimeout = 1000;
+      worker.config.gracefulShutdownTimeout = 100;
       await worker.stop();
     }
     jest.restoreAllMocks();
-  }, 15000); // 15 second timeout for cleanup
+  });
 
   describe('constructor', () => {
     test('should initialize with correct default configuration', () => {
@@ -355,6 +355,7 @@ describe('BaseWorker', () => {
 
   describe('job processing', () => {
     beforeEach(async () => {
+      jest.useFakeTimers();
       // Use faster polling for tests
       worker = new TestWorker({ pollInterval: 10 });
       mockSupabaseClient.from.mockReturnValue({
@@ -365,7 +366,11 @@ describe('BaseWorker', () => {
       await worker.start();
     });
 
-    test('should process jobs successfully', (done) => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    test('should process jobs successfully', async () => {
       const testJob = {
         id: 'test-job-1',
         organization_id: 'org-123',
@@ -377,29 +382,31 @@ describe('BaseWorker', () => {
         .mockResolvedValueOnce(testJob)
         .mockResolvedValue(null); // No more jobs
 
-      // Give the processing loop time to run
-      setTimeout(() => {
-        expect(worker.processJobCalls).toHaveLength(1);
-        expect(worker.processJobCalls[0]).toEqual(testJob);
-        expect(worker.processedJobs).toBe(1);
-        expect(worker.failedJobs).toBe(0);
-        expect(mockQueueService.completeJob).toHaveBeenCalledWith(
-          testJob,
-          expect.objectContaining({
-            result: expect.objectContaining({
-              success: true,
-              result: 'success',
-              summary: 'Test job completed'
-            }),
-            processingTime: expect.any(Number),
-            completedBy: worker.workerName
-          })
-        );
-        done();
-      }, 100);
+      // Advance timers to trigger processing loop
+      await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
+      
+      // Wait for async operations to complete
+      await Promise.resolve();
+
+      expect(worker.processJobCalls).toHaveLength(1);
+      expect(worker.processJobCalls[0]).toEqual(testJob);
+      expect(worker.processedJobs).toBe(1);
+      expect(worker.failedJobs).toBe(0);
+      expect(mockQueueService.completeJob).toHaveBeenCalledWith(
+        testJob,
+        expect.objectContaining({
+          result: expect.objectContaining({
+            success: true,
+            result: 'success',
+            summary: 'Test job completed'
+          }),
+          processingTime: expect.any(Number),
+          completedBy: worker.workerName
+        })
+      );
     });
 
-    test('should handle job processing failures', (done) => {
+    test('should handle job processing failures', async () => {
       const failingJob = {
         id: 'failing-job',
         organization_id: 'org-123',
@@ -411,17 +418,20 @@ describe('BaseWorker', () => {
         .mockResolvedValueOnce(failingJob)
         .mockResolvedValue(null);
 
-      setTimeout(() => {
-        expect(worker.failedJobs).toBe(1);
-        expect(mockQueueService.failJob).toHaveBeenCalledWith(
-          failingJob,
-          expect.any(Error)
-        );
-        done();
-      }, 100);
+      // Advance timers to trigger processing loop
+      await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
+      
+      // Wait for async operations to complete
+      await Promise.resolve();
+
+      expect(worker.failedJobs).toBe(1);
+      expect(mockQueueService.failJob).toHaveBeenCalledWith(
+        failingJob,
+        expect.any(Error)
+      );
     });
 
-    test('should respect max concurrency limit', (done) => {
+    test('should respect max concurrency limit', async () => {
       worker.config.maxConcurrency = 2;
       
       const jobs = [
@@ -436,26 +446,28 @@ describe('BaseWorker', () => {
         .mockResolvedValueOnce(jobs[2])
         .mockResolvedValue(null);
 
+      // Advance timers to trigger processing loop multiple times
+      await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
+      await Promise.resolve();
+      
       // Check that only 2 jobs run concurrently
-      setTimeout(() => {
-        expect(worker.currentJobs.size).toBeLessThanOrEqual(2);
-        done();
-      }, 100);
+      expect(worker.currentJobs.size).toBeLessThanOrEqual(2);
     });
 
-    test('should handle queue service errors gracefully', (done) => {
+    test('should handle queue service errors gracefully', async () => {
       mockQueueService.getNextJob.mockRejectedValue(new Error('Queue connection lost'));
 
-      // Let the processing loop handle the error
-      setTimeout(() => {
-        expect(worker.isRunning).toBe(true); // Should continue running
-        done();
-      }, worker.config.pollInterval + 50);
+      // Advance timers to trigger processing loop
+      await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
+      await Promise.resolve();
+      
+      expect(worker.isRunning).toBe(true); // Should continue running
     });
   });
 
   describe('job completion and failure handling', () => {
     beforeEach(async () => {
+      jest.useFakeTimers();
       // Use faster polling for tests
       worker = new TestWorker({ pollInterval: 10 });
       mockSupabaseClient.from.mockReturnValue({
@@ -466,7 +478,11 @@ describe('BaseWorker', () => {
       await worker.start();
     });
 
-    test('should handle job completion errors', (done) => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    test('should handle job completion errors', async () => {
       const testJob = { id: 'job-1', organization_id: 'org-123' };
       
       mockQueueService.getNextJob
@@ -475,15 +491,16 @@ describe('BaseWorker', () => {
       
       mockQueueService.completeJob.mockRejectedValue(new Error('Failed to mark complete'));
 
-      setTimeout(() => {
-        expect(worker.processedJobs).toBe(1);
-        // Should continue despite completion error
-        expect(worker.isRunning).toBe(true);
-        done();
-      }, 100);
+      // Advance timers to trigger processing loop
+      await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
+      await Promise.resolve();
+
+      expect(worker.processedJobs).toBe(1);
+      // Should continue despite completion error
+      expect(worker.isRunning).toBe(true);
     });
 
-    test('should handle job failure marking errors', (done) => {
+    test('should handle job failure marking errors', async () => {
       const failingJob = {
         id: 'failing-job',
         shouldFail: true,
@@ -496,14 +513,23 @@ describe('BaseWorker', () => {
       
       mockQueueService.failJob.mockRejectedValue(new Error('Failed to mark as failed'));
 
-      setTimeout(() => {
-        expect(worker.failedJobs).toBe(1);
-        done();
-      }, 100);
+      // Advance timers to trigger processing loop
+      await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
+      await Promise.resolve();
+
+      expect(worker.failedJobs).toBe(1);
     });
   });
 
   describe('graceful shutdown', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     test('should wait for current jobs to complete', async () => {
       worker = new TestWorker({ gracefulShutdownTimeout: 1000 });
       mockSupabaseClient.from.mockReturnValue({
@@ -518,12 +544,15 @@ describe('BaseWorker', () => {
       const longJob = { id: 'long-job', delay: 100 };
       worker.currentJobs.set('long-job', longJob);
 
+      // Start the stop process (non-blocking)
       const stopPromise = worker.stop();
       
-      // Simulate job completion
-      setTimeout(() => {
-        worker.currentJobs.delete('long-job');
-      }, 50);
+      // Wait a moment then clear the job
+      await jest.advanceTimersByTimeAsync(50);
+      worker.currentJobs.delete('long-job');
+      
+      // Let the stop process check for the cleared job
+      await jest.advanceTimersByTimeAsync(50);
 
       await stopPromise;
       
@@ -543,12 +572,14 @@ describe('BaseWorker', () => {
       // Simulate a job that doesn't complete
       worker.currentJobs.set('stuck-job', { id: 'stuck-job' });
 
-      const startTime = Date.now();
-      await worker.stop();
-      const stopTime = Date.now();
+      const stopPromise = worker.stop();
+
+      // Advance timers past the graceful shutdown timeout
+      await jest.advanceTimersByTimeAsync(100);
+
+      await stopPromise;
 
       expect(worker.isRunning).toBe(false);
-      expect(stopTime - startTime).toBeLessThan(100); // Should timeout quickly
     });
   });
 
@@ -577,11 +608,16 @@ describe('BaseWorker', () => {
     });
 
     test('should sleep for specified duration', async () => {
-      const startTime = Date.now();
-      await worker.sleep(50);
-      const endTime = Date.now();
+      jest.useFakeTimers();
       
-      expect(endTime - startTime).toBeGreaterThanOrEqual(45);
+      const sleepPromise = worker.sleep(50);
+      
+      // Advance timers
+      jest.advanceTimersByTime(50);
+      
+      await expect(sleepPromise).resolves.toBeUndefined();
+      
+      jest.useRealTimers();
     });
 
     test('should return correct statistics', () => {
@@ -623,30 +659,19 @@ describe('BaseWorker', () => {
   });
 
   describe('process signal handling', () => {
-    let originalListeners;
-    let mockProcess;
+    let processOnSpy;
+    let processExitSpy;
 
     beforeEach(() => {
-      // Store original process listeners
-      originalListeners = {
-        SIGTERM: process.listeners('SIGTERM'),
-        SIGINT: process.listeners('SIGINT'),
-        SIGQUIT: process.listeners('SIGQUIT'),
-        uncaughtException: process.listeners('uncaughtException'),
-        unhandledRejection: process.listeners('unhandledRejection')
-      };
-
       // Mock process methods
-      mockProcess = {
-        on: jest.spyOn(process, 'on').mockImplementation(),
-        exit: jest.spyOn(process, 'exit').mockImplementation()
-      };
+      processOnSpy = jest.spyOn(process, 'on').mockImplementation(() => process);
+      processExitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
     });
 
     afterEach(() => {
-      // Restore original listeners
-      mockProcess.on.mockRestore();
-      mockProcess.exit.mockRestore();
+      // Restore mocks
+      processOnSpy.mockRestore();
+      processExitSpy.mockRestore();
     });
 
     test('should setup graceful shutdown signal handlers', () => {
@@ -659,16 +684,32 @@ describe('BaseWorker', () => {
       try {
         worker = new TestWorker();
 
-        expect(process.on).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
-        expect(process.on).toHaveBeenCalledWith('SIGINT', expect.any(Function));
-        expect(process.on).toHaveBeenCalledWith('SIGQUIT', expect.any(Function));
-        expect(process.on).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
-        expect(process.on).toHaveBeenCalledWith('unhandledRejection', expect.any(Function));
+        // Verify all signal handlers are registered
+        expect(processOnSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+        expect(processOnSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+        expect(processOnSpy).toHaveBeenCalledWith('SIGQUIT', expect.any(Function));
+        expect(processOnSpy).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
+        expect(processOnSpy).toHaveBeenCalledWith('unhandledRejection', expect.any(Function));
       } finally {
         // Restore original environment
         process.env.NODE_ENV = originalNodeEnv;
         if (originalIsTest) process.env.IS_TEST = originalIsTest;
       }
+    });
+
+    test('should skip signal handlers in test environment', () => {
+      // Ensure we're in test environment
+      process.env.NODE_ENV = 'test';
+      process.env.IS_TEST = 'true';
+
+      worker = new TestWorker();
+
+      // Signal handlers should not be registered in test environment
+      const signalHandlerCalls = processOnSpy.mock.calls.filter(call => 
+        ['SIGTERM', 'SIGINT', 'SIGQUIT', 'uncaughtException', 'unhandledRejection'].includes(call[0])
+      );
+      
+      expect(signalHandlerCalls).toHaveLength(0);
     });
   });
 });

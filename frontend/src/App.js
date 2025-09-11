@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { SidebarProvider } from './contexts/SidebarContext';
 import { Login, Register, ResetPassword } from './pages/auth';
 import AuthCallback from './pages/auth-callback';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -34,7 +35,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="App">
+        <SidebarProvider>
+          <div className="App">
           <Routes>
             {/* Public routes - redirect if already authenticated */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -77,7 +79,8 @@ function App() {
             {/* 404 fallback */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </div>
+          </div>
+        </SidebarProvider>
       </AuthProvider>
     </Router>
   );

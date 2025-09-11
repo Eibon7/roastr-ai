@@ -170,10 +170,8 @@ body {
   font-size: initial !important;
 }
 
-/* Usage Cards - Exact design specifications */
+/* Usage Cards - Fixed styling only, responsive handled by Tailwind */
 .usage-card-analysis {
-  width: 375px !important;
-  height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
   border-left: 8px solid #FFD046 !important;
@@ -181,8 +179,6 @@ body {
 }
 
 .usage-card-roast {
-  width: 375px !important;
-  height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
   border-left: 8px solid #FF69EB !important;
@@ -190,8 +186,6 @@ body {
 }
 
 .usage-card-error {
-  width: 375px !important;
-  height: 93px !important;
   background-color: white !important;
   border: 1px solid #EAEEEF !important;
   border-left: 8px solid #ef4444 !important;

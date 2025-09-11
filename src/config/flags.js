@@ -14,10 +14,12 @@ class FeatureFlags {
   }
 
   loadFlags() {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     return {
       // Core System Features
       ENABLE_BILLING: this.checkBillingAvailable(),
-      ENABLE_RQC: this.parseFlag(process.env.ENABLE_RQC), // Disabled by default - under development
+      ENABLE_RQC: this.parseDevelopmentFlag(process.env.ENABLE_RQC, isProduction), // Disabled by default - under development
       ENABLE_SHIELD: this.parseFlag(process.env.ENABLE_SHIELD),
       
       // Platform Integration Features
@@ -42,7 +44,7 @@ class FeatureFlags {
       ENABLE_SUPABASE: this.checkSupabaseKeys(),
       
       // Development Features
-      ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG) || process.env.NODE_ENV === 'development',
+      ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG), // Disabled by default, requires explicit environment variable
       VERBOSE_LOGS: this.parseFlag(process.env.VERBOSE_LOGS),
       MOCK_MODE: mockMode.isMockMode,
       ENABLE_MOCK_PERSISTENCE: this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
@@ -59,11 +61,11 @@ class FeatureFlags {
       ENABLE_CREDITS_V2: this.parseFlag(process.env.ENABLE_CREDITS_V2),
 
       // Custom Prompt Feature
-      ENABLE_CUSTOM_PROMPT: this.parseFlag(process.env.ENABLE_CUSTOM_PROMPT), // Default disabled, requires explicit activation
+      ENABLE_CUSTOM_PROMPT: this.parseDevelopmentFlag(process.env.ENABLE_CUSTOM_PROMPT, isProduction), // Default disabled, requires explicit activation - under development
 
       // UI Platform Features (separate from API integration)
-      ENABLE_FACEBOOK_UI: this.parseFlag(process.env.ENABLE_FACEBOOK_UI), // Default disabled - under development
-      ENABLE_INSTAGRAM_UI: this.parseFlag(process.env.ENABLE_INSTAGRAM_UI), // Default disabled - under development
+      ENABLE_FACEBOOK_UI: this.parseDevelopmentFlag(process.env.ENABLE_FACEBOOK_UI, isProduction), // Default disabled - under development
+      ENABLE_INSTAGRAM_UI: this.parseDevelopmentFlag(process.env.ENABLE_INSTAGRAM_UI, isProduction), // Default disabled - under development
 
       // Shop Feature
       ENABLE_SHOP: this.parseFlag(process.env.ENABLE_SHOP) // Default disabled unless explicitly enabled
@@ -193,6 +195,23 @@ class FeatureFlags {
     
     const stringValue = String(value).toLowerCase().trim();
     return stringValue === 'true' || stringValue === '1' || stringValue === 'yes';
+  }
+
+  /**
+   * Parse development feature flag with production safety
+   * Development features are automatically disabled in production environment
+   * @param {string} value - Environment variable value
+   * @param {boolean} isProduction - Whether we're in production environment
+   * @returns {boolean}
+   */
+  parseDevelopmentFlag(value, isProduction = false) {
+    // Always return false for development features in production
+    if (isProduction) {
+      return false;
+    }
+    
+    // In non-production environments, use normal parsing
+    return this.parseFlag(value, false);
   }
 
   /**
