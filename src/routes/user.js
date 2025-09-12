@@ -456,7 +456,7 @@ router.patch('/accounts/:id/settings', authenticateToken, async (req, res) => {
         }
 
         if (validSettings.defaultTone !== undefined) {
-            const validTones = ['Flanders', 'Ligero', 'Balanceado', 'Canalla', '+18'];
+            const validTones = ['Flanders', 'Balanceado', 'Canalla'];
             if (!validTones.includes(validSettings.defaultTone)) {
                 return res.status(400).json({
                     success: false,

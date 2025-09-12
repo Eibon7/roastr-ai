@@ -691,10 +691,8 @@ const UserDetail = () => {
                                     onChange={(e) => setEditableConfig({...editableConfig, tone: e.target.value})}
                                 >
                                     <option value="flanders">Flanders</option>
-                                    <option value="ligero">Ligero</option>
                                     <option value="balanceado">Balanceado</option>
                                     <option value="canalla">Canalla</option>
-                                    <option value="18plus">+18</option>
                                 </select>
                             </div>
                         </div>
