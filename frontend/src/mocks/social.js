@@ -14,7 +14,7 @@ export const MOCK_ACCOUNTS = [
       autoApprove: true,
       shieldEnabled: true,
       shieldLevel: 95,
-      defaultTone: 'Comico',
+      defaultTone: 'Flanders',
     },
   },
   {
@@ -27,7 +27,7 @@ export const MOCK_ACCOUNTS = [
       autoApprove: false,
       shieldEnabled: true,
       shieldLevel: 98,
-      defaultTone: 'Afilado',
+      defaultTone: 'Canalla',
     },
   },
   {
@@ -40,7 +40,7 @@ export const MOCK_ACCOUNTS = [
       autoApprove: true,
       shieldEnabled: false,
       shieldLevel: 100,
-      defaultTone: 'Seco',
+      defaultTone: 'Balanceado',
     },
   },
 ];
@@ -138,10 +138,9 @@ export const MOCK_AVAILABLE_NETWORKS = [
 ];
 
 export const TONE_EXAMPLES = {
-  'Comico': '"¡Vaya, qué comentario tan... creativo! 😄"',
-  'Sarcástico': '"Oh sí, brillante... como un eclipse."',
-  'Seco': '"No."',
-  'Afilado': '"Pincha, pero no sangra."',
+  'Flanders': '"¡Vaya, qué comentario tan... creativo! 😄"',
+  'Balanceado': '"Interesante perspectiva, aunque creo que se podría mejorar un poco."',
+  'Canalla': '"¿En serio? Ese comentario necesita una ambulancia porque acaba de sufrir un accidente cerebrovascular."',
 };
 
 export const SHIELD_LEVELS = [
@@ -152,10 +151,9 @@ export const SHIELD_LEVELS = [
 ];
 
 export const TONE_OPTIONS = [
-  'Comico',
-  'Sarcástico', 
-  'Seco',
-  'Afilado'
+  'Flanders',
+  'Balanceado', 
+  'Canalla'
 ];
 
 // Network icon mappings
