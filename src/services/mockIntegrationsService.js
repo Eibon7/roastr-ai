@@ -482,7 +482,7 @@ class UserIntegrationsService {
           autoApprove: Math.random() > 0.5, // Random bool
           shieldEnabled: Math.random() > 0.3, // Usually enabled
           shieldLevel: Math.floor(Math.random() * 80) + 20, // 20-100%
-          defaultTone: getRandomTone()
+          defaultTone: ['Flanders', 'Balanceado', 'Canalla'][Math.floor(Math.random() * 3)]
         },
         limits: {
           monthlyLimit: 2000,
@@ -575,7 +575,7 @@ class UserIntegrationsService {
         toxicityScore: Math.random() * 0.8 + 0.2, // 0.2-1.0
         platform: accountId,
         metadata: {
-          tone: getRandomTone(),
+          tone: ['Flanders', 'Balanceado', 'Canalla'][Math.floor(Math.random() * 3)],
           regenerated: Math.random() > 0.8,
           originalCommentId: `comment_${accountId}_${i + 1}`
         }
