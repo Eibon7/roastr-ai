@@ -8,6 +8,7 @@
 const { flags } = require('../config/flags');
 const { logger, SafeUtils } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
+const { getRandomTone } = require('../config/tones');
 const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
@@ -481,7 +482,7 @@ class UserIntegrationsService {
           autoApprove: Math.random() > 0.5, // Random bool
           shieldEnabled: Math.random() > 0.3, // Usually enabled
           shieldLevel: Math.floor(Math.random() * 80) + 20, // 20-100%
-          defaultTone: ['Flanders', 'Balanceado', 'Canalla'][Math.floor(Math.random() * 3)]
+          defaultTone: getRandomTone()
         },
         limits: {
           monthlyLimit: 2000,
@@ -574,7 +575,7 @@ class UserIntegrationsService {
         toxicityScore: Math.random() * 0.8 + 0.2, // 0.2-1.0
         platform: accountId,
         metadata: {
-          tone: ['Flanders', 'Balanceado', 'Canalla'][Math.floor(Math.random() * 3)],
+          tone: getRandomTone(),
           regenerated: Math.random() > 0.8,
           originalCommentId: `comment_${accountId}_${i + 1}`
         }

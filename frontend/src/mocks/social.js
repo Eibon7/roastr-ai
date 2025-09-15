@@ -3,6 +3,9 @@
  * Realistic dataset for multi-account social network management
  */
 
+// Import tone configuration from centralized config
+import { TONE_EXAMPLES, TONE_OPTIONS } from '../config/tones';
+
 export const MOCK_ACCOUNTS = [
   {
     id: 'acc_tw_1',
@@ -137,23 +140,14 @@ export const MOCK_AVAILABLE_NETWORKS = [
   { network: 'linkedin', name: 'LinkedIn', connectedCount: 0 },
 ];
 
-export const TONE_EXAMPLES = {
-  'Flanders': '"¡Vaya, qué comentario tan... creativo! 😄"',
-  'Balanceado': '"Interesante perspectiva, aunque creo que se podría mejorar un poco."',
-  'Canalla': '"¿En serio? Ese comentario necesita una ambulancia porque acaba de sufrir un accidente cerebrovascular."',
-};
+// Re-export for backward compatibility
+export { TONE_EXAMPLES, TONE_OPTIONS };
 
 export const SHIELD_LEVELS = [
   { value: 90, label: '90% (Más laxo)' },
   { value: 95, label: '95%' },
   { value: 98, label: '98% (Más estricto)' },
   { value: 100, label: '100% (El más estricto)' },
-];
-
-export const TONE_OPTIONS = [
-  'Flanders',
-  'Balanceado', 
-  'Canalla'
 ];
 
 // Network icon mappings
