@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../components/ThemeToggle';
 import SuspensionModal from '../../components/admin/SuspensionModal';
 import ToastNotification from '../../components/admin/ToastNotification';
+import VirtualScrollTable from '../../components/admin/VirtualScrollTable';
 import { authHelpers } from '../../lib/supabaseClient';
 
 const AdminUsersPage = () => {
@@ -366,6 +367,176 @@ const AdminUsersPage = () => {
     });
   };
 
+  // Render functions for virtual scrolling
+  const renderTableHeader = () => (
+    <thead className="bg-gray-50 dark:bg-gray-700">
+      <tr>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Usuario
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Handles Conectados
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Plan
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Uso
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Estado
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Acciones
+        </th>
+      </tr>
+    </thead>
+  );
+
+  const renderUserRow = (user, index) => (
+    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+      {/* User Info */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {user.email.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="ml-3">
+            <div className="text-sm font-medium text-gray-900 dark:text-white">
+              {user.name || 'Sin nombre'}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {user.email}
+            </div>
+            <div className="text-xs text-gray-400 dark:text-gray-500">
+              ID: {user.id.slice(0, 8)}...
+            </div>
+          </div>
+        </div>
+      </td>
+
+      {/* Handles - Issue #240 */}
+      <td className="px-6 py-4">
+        <div className="text-sm text-gray-900 dark:text-white">
+          {user.handles && user.handles !== 'No connections' && user.handles !== 'Error loading' ? (
+            <div className="space-y-1">
+              {user.handles.split(', ').map((handle, idx) => (
+                <div key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 mr-1 mb-1">
+                  {handle}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-gray-500 dark:text-gray-400 text-xs">
+              {user.handles || 'Sin conexiones'}
+            </span>
+          )}
+        </div>
+      </td>
+
+      {/* Plan */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(user.plan)}`}>
+          {user.plan === 'basic' ? 'Free' : user.plan === 'creator_plus' ? 'Creator+' : user.plan}
+        </span>
+      </td>
+
+      {/* Usage - Issue #240 */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900 dark:text-white">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Roasts: {user.usage?.roasts || '0/0'}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Análisis: {user.usage?.analysis || '0/0'}
+          </div>
+        </div>
+      </td>
+
+      {/* Status */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex flex-col space-y-1">
+          {user.suspended ? (
+            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
+              🚫 Suspendido
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
+              ✅ Activo
+            </span>
+          )}
+          {user.is_admin && (
+            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300">
+              👑 Admin
+            </span>
+          )}
+        </div>
+      </td>
+      
+      {/* Actions - Issue #240 */}
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <div className="flex flex-col gap-2">
+          {/* Plan Change Dropdown - Issue #240 */}
+          <select
+            onChange={(e) => {
+              if (e.target.value && e.target.value !== user.plan) {
+                handlePlanChangeClick(user, e.target.value);
+                e.target.value = ""; // Reset select
+              }
+            }}
+            disabled={actionLoading[`plan_${user.id}`]}
+            defaultValue=""
+            className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+          >
+            <option value="">📋 Plan: {user.plan === 'basic' ? 'Free' : user.plan === 'creator_plus' ? 'Creator+' : user.plan}</option>
+            {user.plan !== 'basic' && <option value="basic">→ Free</option>}
+            {user.plan !== 'pro' && <option value="pro">→ Pro</option>}
+            {user.plan !== 'creator_plus' && <option value="creator_plus">→ Creator Plus</option>}
+          </select>
+
+          {/* Superuser Dashboard Button - Issue #240 */}
+          <button
+            onClick={() => handleViewUserDashboard(user)}
+            className="inline-flex items-center px-3 py-1 border border-purple-300 dark:border-purple-600 shadow-sm text-xs leading-4 font-medium rounded-md text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+          >
+            🔍 Dashboard
+          </button>
+
+          {/* Suspend/Unsuspend Button */}
+          {currentUser?.id === user.id ? (
+            <span className="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 text-xs leading-4 font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-not-allowed">
+              👤 Tu cuenta
+            </span>
+          ) : (
+            <button
+              onClick={() => handleSuspendClick(user)}
+              disabled={actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]}
+              className={`inline-flex items-center px-3 py-1 border shadow-sm text-xs leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
+                user.suspended 
+                  ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:ring-green-500'
+                  : 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:ring-red-500'
+              }`}
+            >
+              {(actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]) ? (
+                <svg className="animate-spin -ml-1 mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : user.suspended ? (
+                '✅'
+              ) : (
+                '🚫'
+              )}
+              {user.suspended ? 'Reactivar' : 'Suspender'}
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -512,34 +683,35 @@ const AdminUsersPage = () => {
             </div>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Usuario
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Handles Conectados
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Plan
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Uso
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {/* Loading Skeleton - Issue #240 */}
-                {loading ? (
-                  [...Array(3)].map((_, index) => (
+          {/* Virtual Scrolling Table - Issue #261 */}
+          {loading ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Usuario
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Handles Conectados
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Plan
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Uso
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {/* Loading Skeleton - Issue #240 */}
+                  {[...Array(3)].map((_, index) => (
                     <tr key={index} className="animate-pulse">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -572,154 +744,21 @@ const AdminUsersPage = () => {
                         </div>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    {/* User Info */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {user.email.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {user.name || 'Sin nombre'}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {user.email}
-                          </div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500">
-                            ID: {user.id.slice(0, 8)}...
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Handles - Issue #240 */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {user.handles && user.handles !== 'No connections' && user.handles !== 'Error loading' ? (
-                          <div className="space-y-1">
-                            {user.handles.split(', ').map((handle, index) => (
-                              <div key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 mr-1 mb-1">
-                                {handle}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-500 dark:text-gray-400 text-xs">
-                            {user.handles || 'Sin conexiones'}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Plan */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(user.plan)}`}>
-                        {user.plan === 'basic' ? 'Free' : user.plan === 'creator_plus' ? 'Creator+' : user.plan}
-                      </span>
-                    </td>
-
-                    {/* Usage - Issue #240 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Roasts: {user.usage?.roasts || '0/0'}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Análisis: {user.usage?.analysis || '0/0'}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col space-y-1">
-                        {user.suspended ? (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
-                            🚫 Suspendido
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
-                            ✅ Activo
-                          </span>
-                        )}
-                        {user.is_admin && (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300">
-                            👑 Admin
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    {/* Actions - Issue #240 */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex flex-col gap-2">
-                        {/* Plan Change Dropdown - Issue #240 */}
-                        <select
-                          onChange={(e) => {
-                            if (e.target.value && e.target.value !== user.plan) {
-                              handlePlanChangeClick(user, e.target.value);
-                              e.target.value = ""; // Reset select
-                            }
-                          }}
-                          disabled={actionLoading[`plan_${user.id}`]}
-                          defaultValue=""
-                          className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-                        >
-                          <option value="">📋 Plan: {user.plan === 'basic' ? 'Free' : user.plan === 'creator_plus' ? 'Creator+' : user.plan}</option>
-                          {user.plan !== 'basic' && <option value="basic">→ Free</option>}
-                          {user.plan !== 'pro' && <option value="pro">→ Pro</option>}
-                          {user.plan !== 'creator_plus' && <option value="creator_plus">→ Creator Plus</option>}
-                        </select>
-
-                        {/* Superuser Dashboard Button - Issue #240 */}
-                        <button
-                          onClick={() => handleViewUserDashboard(user)}
-                          className="inline-flex items-center px-3 py-1 border border-purple-300 dark:border-purple-600 shadow-sm text-xs leading-4 font-medium rounded-md text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                        >
-                          🔍 Dashboard
-                        </button>
-
-                        {/* Suspend/Unsuspend Button */}
-                        {currentUser?.id === user.id ? (
-                          <span className="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 text-xs leading-4 font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-not-allowed">
-                            👤 Tu cuenta
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleSuspendClick(user)}
-                            disabled={actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]}
-                            className={`inline-flex items-center px-3 py-1 border shadow-sm text-xs leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 ${
-                              user.suspended 
-                                ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 focus:ring-green-500'
-                                : 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 focus:ring-red-500'
-                            }`}
-                          >
-                            {(actionLoading[`suspend_${user.id}`] || actionLoading[`unsuspend_${user.id}`]) ? (
-                              <svg className="animate-spin -ml-1 mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            ) : user.suspended ? (
-                              '✅'
-                            ) : (
-                              '🚫'
-                            )}
-                            {user.suspended ? 'Reactivar' : 'Suspender'}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <VirtualScrollTable
+              data={users}
+              rowHeight={120}
+              visibleRows={12}
+              renderRow={renderUserRow}
+              renderHeader={renderTableHeader}
+              threshold={1000}
+              className="overflow-x-auto"
+            />
+          )}
 
           {users.length === 0 && !loading && (
             <div className="text-center py-12">

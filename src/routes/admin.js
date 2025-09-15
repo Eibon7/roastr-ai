@@ -1,7 +1,11 @@
 const express = require('express');
 const { supabaseServiceClient } = require('../config/supabase');
 const { isAdminMiddleware } = require('../middleware/isAdmin');
+const { adminRateLimiter } = require('../middleware/adminRateLimiter');
+const { csrfProtection, getCSRFToken, addCSRFTokenToResponse } = require('../middleware/csrfProtection');
+const { responseCache, invalidateCache } = require('../middleware/responseCache');
 const { logger } = require('../utils/logger');
+const { securityAuditLogger } = require('../services/securityAuditLogger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
 const CostControlService = require('../services/costControl');
@@ -11,17 +15,31 @@ const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 const planLimitsService = require('../services/planLimitsService');
+const { VALID_PLANS, PLAN_IDS, isValidPlan, normalizePlanId } = require('../config/planMappings');
 
 const router = express.Router();
 
-// Aplicar middleware de admin a todas las rutas
+// Apply admin authentication, rate limiting, CSRF protection, and caching to all routes
+// Issue #261 - Security hardening and performance optimization for admin endpoints
 router.use(isAdminMiddleware);
+router.use(adminRateLimiter);
+router.use(csrfProtection);
+router.use(addCSRFTokenToResponse); // Add CSRF token to response headers for convenience
+router.use(responseCache); // Response caching for GET requests
+router.use(invalidateCache); // Cache invalidation for state-changing operations
 
 // Revenue dashboard routes (admin only)
 router.use('/revenue', revenueRoutes);
 
 // Feature flags and kill switch routes (admin only)
 router.use('/', featureFlagsRoutes);
+
+/**
+ * GET /api/admin/csrf-token
+ * Get CSRF token for authenticated admin users
+ * Issue #261 - CSRF protection for admin endpoints
+ */
+router.get('/csrf-token', getCSRFToken);
 
 /**
  * GET /api/admin/dashboard
@@ -56,6 +74,30 @@ router.get('/dashboard', async (req, res) => {
  * GET /api/admin/users
  * Obtener lista de usuarios con filtros avanzados para backoffice
  * Issue #235: Implements comprehensive user search and filtering
+ * Issue #261: Enhanced with detailed JSDoc documentation
+ * 
+ * @description Retrieves paginated list of users with their social integrations, usage statistics, and account status.
+ * Supports advanced filtering by email, plan, activity status, and search terms.
+ * 
+ * @param {number} [req.query.limit=25] - Number of users to return per page
+ * @param {number} [req.query.offset=0] - Number of users to skip (for pagination)  
+ * @param {string} [req.query.search=''] - Search term to filter by email, user ID, or social handles
+ * @param {string} [req.query.plan=''] - Filter by user plan (free, pro, plus, etc.)
+ * @param {boolean} [req.query.active_only=false] - Only return active (non-suspended) users
+ * @param {number} [req.query.page=1] - Page number (alternative to offset)
+ * 
+ * @returns {Object} Response object containing:
+ *   - success: boolean
+ *   - data: Object with users array, pagination info, and total count
+ *   - users: Array of user objects with integrated social handles and usage stats
+ * 
+ * @throws {500} Internal server error if database query fails
+ * 
+ * @example
+ * GET /api/admin/users?limit=10&search=john&plan=pro&active_only=true
+ * 
+ * @performance Contains N+1 query issue - fetches social integrations per user in loop
+ * @todo Fix N+1 query by using JOIN or batch query for integrations
  */
 router.get('/users', async (req, res) => {
     try {
@@ -108,77 +150,93 @@ router.get('/users', async (req, res) => {
             throw new Error(`Error fetching users: ${error.message}`);
         }
 
-        // Get social handles/integrations for each user
-        const usersWithHandles = await Promise.all(
-            (users || []).map(async (user) => {
-                try {
-                    // Get user's social media integrations
-                    const { data: integrations } = await supabaseServiceClient
-                        .from('integration_configs')
-                        .select('platform, handle, enabled')
-                        .eq('organization_id', user.organizations?.[0]?.id)
-                        .eq('enabled', true);
+        // Fix N+1 query issue: Batch fetch all integrations for all users
+        const organizationIds = (users || [])
+            .map(user => user.organizations?.[0]?.id)
+            .filter(Boolean);
 
-                    // Format handles for display
-                    const handles = (integrations || []).map(integration => 
-                        `@${integration.handle || 'unknown'} (${integration.platform})`
-                    ).join(', ');
+        // Single query to get all integrations for all organizations
+        const { data: allIntegrations } = await supabaseServiceClient
+            .from('integration_configs')
+            .select('organization_id, platform, handle, enabled')
+            .in('organization_id', organizationIds)
+            .eq('enabled', true);
 
-                    // Calculate usage statistics
-                    const organization = user.organizations?.[0];
-                    const roastsUsed = organization?.monthly_responses_used || 0;
-                    const roastsLimit = organization?.monthly_responses_limit || 100;
-                    const analysisUsed = user.monthly_messages_sent || 0;
-                    
-                    // Get plan-specific analysis limit
-                    const planLimits = {
-                        basic: 100,
-                        pro: 1000, 
-                        creator_plus: 5000
-                    };
-                    const analysisLimit = planLimits[user.plan] || 100;
+        // Group integrations by organization_id for efficient lookup
+        const integrationsByOrgId = (allIntegrations || []).reduce((acc, integration) => {
+            if (!acc[integration.organization_id]) {
+                acc[integration.organization_id] = [];
+            }
+            acc[integration.organization_id].push(integration);
+            return acc;
+        }, {});
 
-                    return {
-                        id: user.id,
-                        email: user.email,
-                        name: user.name,
-                        plan: user.plan,
-                        handles: handles || 'No connections',
-                        usage: {
-                            roasts: `${roastsUsed}/${roastsLimit}`,
-                            analysis: `${analysisUsed}/${analysisLimit}`
-                        },
-                        active: user.active,
-                        suspended: user.suspended,
-                        is_admin: user.is_admin,
-                        created_at: user.created_at,
-                        last_activity_at: user.last_activity_at
-                    };
-                } catch (integrationError) {
-                    logger.warn('Error fetching integrations for user:', { 
-                        userId: user.id, 
-                        error: integrationError.message 
-                    });
-                    
-                    return {
-                        id: user.id,
-                        email: user.email,
-                        name: user.name,
-                        plan: user.plan,
-                        handles: 'Error loading',
-                        usage: {
-                            roasts: '0/0',
-                            analysis: '0/0'
-                        },
-                        active: user.active,
-                        suspended: user.suspended,
-                        is_admin: user.is_admin,
-                        created_at: user.created_at,
-                        last_activity_at: user.last_activity_at
-                    };
-                }
-            })
-        );
+        // Process users with their corresponding integrations
+        const usersWithHandles = (users || []).map((user) => {
+            try {
+                // Get integrations for this user's organization from the grouped data
+                const userIntegrations = integrationsByOrgId[user.organizations?.[0]?.id] || [];
+
+                // Format handles for display
+                const handles = userIntegrations.map(integration => 
+                    `@${integration.handle || 'unknown'} (${integration.platform})`
+                ).join(', ');
+
+                // Calculate usage statistics
+                const organization = user.organizations?.[0];
+                const roastsUsed = organization?.monthly_responses_used || 0;
+                const roastsLimit = organization?.monthly_responses_limit || 100;
+                const analysisUsed = user.monthly_messages_sent || 0;
+                
+                // Get plan-specific analysis limit using normalized plan
+                const normalizedUserPlan = normalizePlanId(user.plan);
+                const planLimits = {
+                    [PLAN_IDS.FREE]: 100,
+                    [PLAN_IDS.PRO]: 1000, 
+                    [PLAN_IDS.PLUS]: 5000
+                };
+                const analysisLimit = planLimits[normalizedUserPlan] || 100;
+
+                return {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    plan: user.plan,
+                    handles: handles || 'No connections',
+                    usage: {
+                        roasts: `${roastsUsed}/${roastsLimit}`,
+                        analysis: `${analysisUsed}/${analysisLimit}`
+                    },
+                    active: user.active,
+                    suspended: user.suspended,
+                    is_admin: user.is_admin,
+                    created_at: user.created_at,
+                    last_activity_at: user.last_activity_at
+                };
+            } catch (integrationError) {
+                logger.warn('Error processing user data:', { 
+                    userId: user.id, 
+                    error: integrationError.message 
+                });
+                
+                return {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    plan: user.plan,
+                    handles: 'Error loading',
+                    usage: {
+                        roasts: '0/0',
+                        analysis: '0/0'
+                    },
+                    active: user.active,
+                    suspended: user.suspended,
+                    is_admin: user.is_admin,
+                    created_at: user.created_at,
+                    last_activity_at: user.last_activity_at
+                };
+            }
+        });
 
         res.json({
             success: true,
@@ -388,21 +446,51 @@ router.post('/users/:userId/reactivate', async (req, res) => {
 /**
  * PATCH /api/admin/users/:userId/plan
  * Cambiar plan de usuario manualmente (Issue #235)
+ * Issue #261: Enhanced with detailed JSDoc documentation
+ * 
+ * @description Manually updates a user's subscription plan. This is an admin-only operation
+ * that bypasses normal billing processes. Updates both user and organization records,
+ * creates activity log entries, and normalizes plan IDs for consistency.
+ * 
+ * @param {string} req.params.userId - The UUID of the user whose plan should be changed
+ * @param {string} req.body.plan - The new plan ID (free, pro, plus, basic, creator_plus)
+ * @param {Object} req.user - The authenticated admin user object
+ * @param {string} req.user.email - Admin user's email for audit logging
+ * 
+ * @returns {Object} Response object containing:
+ *   - success: boolean
+ *   - data: Object with updated user data and success message
+ *   - user: Updated user object from database
+ *   - message: Descriptive success message
+ * 
+ * @throws {400} Bad request if plan is invalid or user already has the specified plan
+ * @throws {404} Not found if user doesn't exist
+ * @throws {500} Internal server error if database operations fail
+ * 
+ * @example
+ * PATCH /api/admin/users/123e4567-e89b-12d3-a456-426614174000/plan
+ * Body: { "plan": "pro" }
+ * 
+ * @security Requires admin authentication via isAdminMiddleware
+ * @audit Creates entry in user_activities table with admin details
+ * @sideeffects Updates user.plan, organization.plan_id, logs activity
  */
 router.patch('/users/:userId/plan', async (req, res) => {
     try {
         const { userId } = req.params;
         const { plan } = req.body;
 
-        // Validate plan
-        const validPlans = ['basic', 'pro', 'creator_plus'];
-        if (!plan || !validPlans.includes(plan)) {
+        // Validate plan using shared constants
+        if (!plan || !isValidPlan(plan, 'admin_assignable')) {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid plan',
-                message: 'Plan debe ser uno de: basic, pro, creator_plus'
+                message: `Plan debe ser uno de: ${VALID_PLANS.ADMIN_ASSIGNABLE.join(', ')}`
             });
         }
+
+        // Normalize plan ID for consistency
+        const normalizedPlan = normalizePlanId(plan);
 
         // Get current user to check if exists
         const { data: currentUser, error: fetchError } = await supabaseServiceClient
@@ -419,8 +507,9 @@ router.patch('/users/:userId/plan', async (req, res) => {
             });
         }
 
-        // Check if plan is different
-        if (currentUser.plan === plan) {
+        // Check if plan is different (compare normalized versions)
+        const currentNormalizedPlan = normalizePlanId(currentUser.plan);
+        if (currentNormalizedPlan === normalizedPlan) {
             return res.status(400).json({
                 success: false,
                 error: 'Plan unchanged',
@@ -432,7 +521,7 @@ router.patch('/users/:userId/plan', async (req, res) => {
         const { data: updatedUser, error: updateError } = await supabaseServiceClient
             .from('users')
             .update({ 
-                plan: plan,
+                plan: normalizedPlan,
                 updated_at: new Date().toISOString()
             })
             .eq('id', userId)
@@ -450,16 +539,10 @@ router.patch('/users/:userId/plan', async (req, res) => {
             .eq('owner_id', userId);
 
         if (organizations && organizations.length > 0) {
-            const orgPlanMap = {
-                'basic': 'free',
-                'pro': 'pro', 
-                'creator_plus': 'creator_plus'
-            };
-
             await supabaseServiceClient
                 .from('organizations')
                 .update({ 
-                    plan_id: orgPlanMap[plan],
+                    plan_id: normalizedPlan,
                     updated_at: new Date().toISOString()
                 })
                 .eq('owner_id', userId);
@@ -470,9 +553,23 @@ router.patch('/users/:userId/plan', async (req, res) => {
             targetUserId: userId,
             targetUserEmail: currentUser.email,
             oldPlan: currentUser.plan,
-            newPlan: plan,
+            oldPlanNormalized: currentNormalizedPlan,
+            newPlan: normalizedPlan,
+            originalInput: plan,
             performedBy: req.user.email,
             organizationsUpdated: organizations?.length || 0
+        });
+
+        // Security audit logging - Issue #261
+        await securityAuditLogger.logUserPlanChange({
+            actor_id: req.user.id,
+            actor_email: req.user.email,
+            target_id: userId,
+            target_email: currentUser.email,
+            old_plan: currentNormalizedPlan,
+            new_plan: normalizedPlan,
+            ip: req.ip || 'unknown',
+            userAgent: req.headers['user-agent'] || 'unknown'
         });
 
         // Create activity log entry
@@ -492,7 +589,7 @@ router.patch('/users/:userId/plan', async (req, res) => {
             success: true,
             data: {
                 user: updatedUser,
-                message: `Plan cambiado exitosamente de ${currentUser.plan} a ${plan}`
+                message: `Plan cambiado exitosamente de ${currentNormalizedPlan} a ${normalizedPlan}`
             }
         });
 
@@ -1400,14 +1497,16 @@ router.put('/plan-limits/:planId', async (req, res) => {
         const updates = req.body;
         const adminId = req.user.id;
         
-        // Validate plan ID
-        const validPlans = ['free', 'pro', 'creator_plus', 'custom'];
-        if (!validPlans.includes(planId)) {
+        // Validate plan ID using shared constants
+        if (!isValidPlan(planId, 'all')) {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid plan ID'
             });
         }
+
+        // Normalize plan ID for consistency
+        const normalizedPlanId = normalizePlanId(planId);
         
         // Validate updates
         const allowedFields = [
@@ -1428,10 +1527,11 @@ router.put('/plan-limits/:planId', async (req, res) => {
         }
         
         // Update plan limits
-        const updatedLimits = await planLimitsService.updatePlanLimits(planId, updates, adminId);
+        const updatedLimits = await planLimitsService.updatePlanLimits(normalizedPlanId, updates, adminId);
         
         logger.info('Plan limits updated', {
-            planId,
+            planId: normalizedPlanId,
+            originalPlanId: planId,
             updatedBy: adminId,
             changes: Object.keys(updates)
         });
@@ -1439,7 +1539,7 @@ router.put('/plan-limits/:planId', async (req, res) => {
         res.json({
             success: true,
             data: {
-                planId,
+                planId: normalizedPlanId,
                 limits: updatedLimits,
                 updated_at: new Date().toISOString(),
                 updated_by: adminId
