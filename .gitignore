@@ -19,6 +19,10 @@ frontend/build/
 .cache/
 .tmp/
 
+# Development process tracking
+.dev-ports
+.dev-status
+
 # OS / Editor files
 .DS_Store
 Thumbs.db

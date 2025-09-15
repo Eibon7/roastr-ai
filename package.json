@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "dev:full": "./dev-start.sh",
+    "dev:status": "node scripts/check-dev-status.js",
     "roast": "node src/cli.js",
     "start:api": "node src/server.js",
     "twitter": "node src/services/twitter.js",

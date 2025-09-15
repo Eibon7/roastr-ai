@@ -1,0 +1,28 @@
+# Roastr.ai Development Configuration
+# This file contains the current development settings
+
+# Active Development Branch
+ACTIVE_BRANCH=feat/disable-development-features
+
+# Development Ports
+FRONTEND_PORT=3001
+BACKEND_PORT=3000
+
+# Frontend URL (PRIMARY - always use this)
+FRONTEND_URL=http://localhost:3001
+
+# Backend URL
+BACKEND_URL=http://localhost:3000
+
+# Last Updated
+LAST_UPDATED=2025-01-15
+
+# Notes
+# - Always use port 3001 for frontend development
+# - Port 3002 may contain outdated versions
+# - Current active branch contains all latest features:
+#   * Sidebar redesign (red, 64px, icons only)
+#   * No topbar
+#   * Usage cards with dynamic responsive behavior
+#   * Feature flags for development features
+#   * Reduced right padding for better centering
