@@ -16,7 +16,7 @@ const UserDetail = () => {
     // Editable configuration state
     const [editableConfig, setEditableConfig] = useState({
         plan: '',
-        tone: 'balanceado',
+        tone: 'Balanceado',
         shieldEnabled: true,
         autoReplyEnabled: false,
         persona: {
@@ -83,7 +83,7 @@ const UserDetail = () => {
                     // Initialize editable configuration with current user data
                     setEditableConfig({
                         plan: data.data.user.plan || 'free',
-                        tone: data.data.user.tone || 'balanceado',
+                        tone: data.data.user.tone || 'Balanceado',
                         shieldEnabled: data.data.user.shield_enabled !== false,
                         autoReplyEnabled: data.data.user.auto_reply_enabled === true,
                         persona: {
@@ -690,11 +690,9 @@ const UserDetail = () => {
                                     value={editableConfig.tone}
                                     onChange={(e) => setEditableConfig({...editableConfig, tone: e.target.value})}
                                 >
-                                    <option value="flanders">Flanders</option>
-                                    <option value="ligero">Ligero</option>
-                                    <option value="balanceado">Balanceado</option>
-                                    <option value="canalla">Canalla</option>
-                                    <option value="18plus">+18</option>
+                                    <option value="Flanders">Flanders</option>
+                                    <option value="Balanceado">Balanceado</option>
+                                    <option value="Canalla">Canalla</option>
                                 </select>
                             </div>
                         </div>

@@ -3,6 +3,9 @@
  * Realistic dataset for multi-account social network management
  */
 
+// Import tone configuration from centralized config
+import { TONE_EXAMPLES, TONE_OPTIONS } from '../config/tones';
+
 export const MOCK_ACCOUNTS = [
   {
     id: 'acc_tw_1',
@@ -14,7 +17,7 @@ export const MOCK_ACCOUNTS = [
       autoApprove: true,
       shieldEnabled: true,
       shieldLevel: 95,
-      defaultTone: 'Comico',
+      defaultTone: 'Flanders',
     },
   },
   {
@@ -27,7 +30,7 @@ export const MOCK_ACCOUNTS = [
       autoApprove: false,
       shieldEnabled: true,
       shieldLevel: 98,
-      defaultTone: 'Afilado',
+      defaultTone: 'Canalla',
     },
   },
   {
@@ -40,7 +43,7 @@ export const MOCK_ACCOUNTS = [
       autoApprove: true,
       shieldEnabled: false,
       shieldLevel: 100,
-      defaultTone: 'Seco',
+      defaultTone: 'Balanceado',
     },
   },
 ];
@@ -137,25 +140,14 @@ export const MOCK_AVAILABLE_NETWORKS = [
   { network: 'linkedin', name: 'LinkedIn', connectedCount: 0 },
 ];
 
-export const TONE_EXAMPLES = {
-  'Comico': '"¡Vaya, qué comentario tan... creativo! 😄"',
-  'Sarcástico': '"Oh sí, brillante... como un eclipse."',
-  'Seco': '"No."',
-  'Afilado': '"Pincha, pero no sangra."',
-};
+// Re-export for backward compatibility
+export { TONE_EXAMPLES, TONE_OPTIONS };
 
 export const SHIELD_LEVELS = [
   { value: 90, label: '90% (Más laxo)' },
   { value: 95, label: '95%' },
   { value: 98, label: '98% (Más estricto)' },
   { value: 100, label: '100% (El más estricto)' },
-];
-
-export const TONE_OPTIONS = [
-  'Comico',
-  'Sarcástico', 
-  'Seco',
-  'Afilado'
 ];
 
 // Network icon mappings

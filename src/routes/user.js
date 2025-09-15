@@ -14,6 +14,7 @@ const encryptionService = require('../services/encryptionService');
 const EmbeddingsService = require('../services/embeddingsService');
 const PersonaInputSanitizer = require('../services/personaInputSanitizer');
 const transparencyService = require('../services/transparencyService');
+const { normalizeTone, isValidTone, VALID_TONES } = require('../config/tones');
 const {
   accountDeletionLimiter,
   dataExportLimiter,
@@ -456,13 +457,18 @@ router.patch('/accounts/:id/settings', authenticateToken, async (req, res) => {
         }
 
         if (validSettings.defaultTone !== undefined) {
-            const validTones = ['Flanders', 'Ligero', 'Balanceado', 'Canalla', '+18'];
-            if (!validTones.includes(validSettings.defaultTone)) {
+            // Normalize tone to canonical form (handles case variations)
+            const normalizedTone = normalizeTone(validSettings.defaultTone);
+            
+            if (!normalizedTone) {
                 return res.status(400).json({
                     success: false,
-                    error: `Invalid tone. Must be one of: ${validTones.join(', ')}`
+                    error: `Invalid tone. Must be one of: ${VALID_TONES.join(', ')}`
                 });
             }
+            
+            // Update the setting with normalized tone
+            validSettings.defaultTone = normalizedTone;
         }
 
         const result = await integrationsService.updateAccountSettings(userId, id, validSettings);
