@@ -411,7 +411,7 @@ const AdminUsersPage = () => {
         {/* Filters and Search */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
           <div className="px-4 py-5 sm:p-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
                 <input
@@ -433,15 +433,6 @@ const AdminUsersPage = () => {
                   <option value="basic">Free</option>
                   <option value="pro">Pro</option>
                   <option value="creator_plus">Creator Plus</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
-                <select className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
-                  <option value="">Todos</option>
-                  <option value="active">Activos</option>
-                  <option value="inactive">Inactivos</option>
-                  <option value="suspended">Suspendidos</option>
                 </select>
               </div>
               <div className="flex items-end">
