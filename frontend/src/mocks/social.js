@@ -140,9 +140,6 @@ export const MOCK_AVAILABLE_NETWORKS = [
   { network: 'linkedin', name: 'LinkedIn', connectedCount: 0 },
 ];
 
-// Re-export for backward compatibility
-export { TONE_EXAMPLES, TONE_OPTIONS };
-
 export const SHIELD_LEVELS = [
   { value: 90, label: '90% (Más laxo)' },
   { value: 95, label: '95%' },
@@ -150,6 +147,8 @@ export const SHIELD_LEVELS = [
   { value: 100, label: '100% (El más estricto)' },
 ];
 
+// Re-export for backward compatibility
+export { TONE_EXAMPLES, TONE_OPTIONS };
 // Network icon mappings
 export const NETWORK_ICONS = {
   twitter: '𝕏',
