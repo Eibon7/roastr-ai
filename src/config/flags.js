@@ -53,6 +53,9 @@ class FeatureFlags {
       ENABLE_MAGIC_LINK: this.parseFlag(process.env.ENABLE_MAGIC_LINK, true), // Default enabled
       ENABLE_PASSWORD_HISTORY: this.parseFlag(process.env.ENABLE_PASSWORD_HISTORY, true), // Default enabled  
       ENABLE_RATE_LIMIT: this.parseFlag(process.env.ENABLE_RATE_LIMIT, true), // Default enabled
+      ENABLE_CSRF_PROTECTION: this.parseFlag(process.env.ENABLE_CSRF_PROTECTION, true), // Default enabled - Issue #261
+      ENABLE_RESPONSE_CACHE: this.parseFlag(process.env.ENABLE_RESPONSE_CACHE, true), // Default enabled - Issue #261
+      DEBUG_CACHE: this.parseFlag(process.env.DEBUG_CACHE), // Default disabled
       
       // Style Profile Feature (basic style analysis)
       ENABLE_STYLE_PROFILE: this.parseFlag(process.env.ENABLE_STYLE_PROFILE, true), // Default enabled
