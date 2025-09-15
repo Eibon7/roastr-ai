@@ -140,11 +140,6 @@ export const MOCK_AVAILABLE_NETWORKS = [
   { network: 'linkedin', name: 'LinkedIn', connectedCount: 0 },
 ];
 
-export const TONE_EXAMPLES = {
-  'Flanders': '"¡Vaya, qué comentario tan... creativo! 😄"',
-  'Balanceado': '"Interesante perspectiva, aunque creo que se podría mejorar un poco."',
-  'Canalla': '"¿En serio? Ese comentario necesita una ambulancia porque acaba de sufrir un accidente cerebrovascular."',
-};
 export const SHIELD_LEVELS = [
   { value: 90, label: '90% (Más laxo)' },
   { value: 95, label: '95%' },

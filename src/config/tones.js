@@ -1,6 +1,6 @@
 /**
  * Centralized tone configuration
- * Single source of truth for response tone styles
+ * Single source of truth for response tone styles with case-insensitive validation
  */
 
 // Core tone definitions
