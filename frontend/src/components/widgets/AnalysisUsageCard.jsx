@@ -123,12 +123,12 @@ export default function AnalysisUsageCard({ user, className = '' }) {
   return (
     <div className={`usage-card-analysis flex items-center justify-between p-4 h-24 flex-shrink-0 ${isSidebarVisible ? 'w-96' : 'w-full'} ${className}`}>
       <div>
-        <h3 className="text-base font-bold text-gray-900 mb-1">Analysis usage</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="text-base font-bold mb-1">Analysis usage</h3>
+        <p className="text-sm opacity-70">
           {analysisUsed.toLocaleString()}/{analysisLimit === -1 ? '∞' : analysisLimit.toLocaleString()} comments
         </p>
       </div>
-      <div className="text-5xl font-bold text-gray-900">
+      <div className="text-5xl font-bold">
         {percentageUsed}%
       </div>
     </div>

@@ -9,6 +9,7 @@ const EntitlementsService = require('../services/entitlementsService');
 const StripeWebhookService = require('../services/stripeWebhookService');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
+const { getPlanFromStripeLookupKey, normalizePlanId, PLAN_IDS } = require('../config/planMappings');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const emailService = require('../services/emailService');
@@ -32,7 +33,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
   entitlementsService = new EntitlementsService();
   webhookService = new StripeWebhookService();
 } else {
-  console.log('⚠️ Stripe billing disabled - missing configuration keys');
+  logger.warn('⚠️ Stripe billing disabled - missing configuration keys');
   entitlementsService = new EntitlementsService(); // Always available for free plans
   webhookService = new StripeWebhookService(); // Always available for webhook processing
 }
@@ -49,9 +50,9 @@ const requireBilling = (req, res, next) => {
   next();
 };
 
-// Plan configuration
+// Plan configuration using shared constants
 const PLAN_CONFIG = {
-    free: {
+    [PLAN_IDS.FREE]: {
         name: 'Free',
         price: 0,
         currency: 'eur',
@@ -60,7 +61,7 @@ const PLAN_CONFIG = {
         maxPlatforms: 1,
         maxRoasts: 50
     },
-    starter: {
+    [PLAN_IDS.STARTER]: {
         name: 'Starter',
         price: 500, // €5.00 in cents
         currency: 'eur',
@@ -70,7 +71,7 @@ const PLAN_CONFIG = {
         maxRoasts: 100,
         lookupKey: process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly'
     },
-    pro: {
+    [PLAN_IDS.PRO]: {
         name: 'Pro',
         price: 1500, // €15.00 in cents
         currency: 'eur',
@@ -80,7 +81,7 @@ const PLAN_CONFIG = {
         maxRoasts: 1000,
         lookupKey: process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly'
     },
-    plus: {
+    [PLAN_IDS.PLUS]: {
         name: 'Plus',
         price: 5000, // €50.00 in cents
         currency: 'eur', 
@@ -145,12 +146,12 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         }
 
         // Free plan doesn't require Stripe
-        if (plan === 'free') {
+        if (plan === PLAN_IDS.FREE) {
             return res.json({
                 success: true,
                 data: {
                     message: 'Free plan activated',
-                    plan: 'free'
+                    plan: PLAN_IDS.FREE
                 }
             });
         }
@@ -204,7 +205,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
                 .upsert({
                     user_id: userId,
                     stripe_customer_id: customer.id,
-                    plan: 'free', // Keep as free until checkout completes
+                    plan: PLAN_IDS.FREE, // Keep as free until checkout completes
                     status: 'active'
                 });
         }
@@ -394,14 +395,14 @@ router.get('/subscription', authenticateToken, async (req, res) => {
         }
 
         // Get plan configuration
-        const planConfig = PLAN_CONFIG[subscription?.plan || 'free'];
+        const planConfig = PLAN_CONFIG[subscription?.plan || PLAN_IDS.FREE];
 
         res.json({
             success: true,
             data: {
                 subscription: subscription || {
                     user_id: userId,
-                    plan: 'free',
+                    plan: PLAN_IDS.FREE,
                     status: 'active',
                     stripe_customer_id: null,
                     stripe_subscription_id: null
@@ -661,16 +662,14 @@ async function queueBillingJob(jobType, webhookData) {
                     .single();
 
                 // Determine plan from subscription
-                let newPlan = 'free';
+                let newPlan = PLAN_IDS.FREE;
                 if (webhookData.items?.data?.length > 0) {
                     const price = webhookData.items.data[0].price;
                     const prices = await stripeWrapper.prices.list({ limit: 100 });
                     const priceData = prices.data.find(p => p.id === price.id);
                     
-                    if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
-                        newPlan = 'pro';
-                    } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly')) {
-                        newPlan = 'plus';
+                    if (priceData?.lookup_key) {
+                        newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.FREE;
                     }
                 }
 
@@ -768,16 +767,12 @@ async function handleCheckoutCompleted(session) {
     // Get the price ID from the subscription for entitlements update
     const priceId = subscription.items?.data?.[0]?.price?.id;
     
-    // Determine plan from price lookup key or metadata
-    let plan = 'free';
+    // Determine plan from price lookup key using shared mappings
+    let plan = PLAN_IDS.FREE;
     const lookupKey = session.metadata?.lookup_key;
     
-    if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
-        plan = 'pro';
-    } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly')) {
-        plan = 'plus';
-    } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly')) {
-        plan = 'starter';
+    if (lookupKey) {
+        plan = getPlanFromStripeLookupKey(lookupKey) || PLAN_IDS.FREE;
     }
 
     // Execute critical database operations in a transaction
@@ -819,7 +814,7 @@ async function handleCheckoutCompleted(session) {
     });
 
     // Send upgrade success email notification (non-critical, outside transaction)
-    if (plan !== 'free') {
+    if (plan !== PLAN_IDS.FREE) {
         try {
             // Get user email from customer
             const userEmail = customer.email;
@@ -878,19 +873,14 @@ async function handleSubscriptionUpdated(subscription) {
         const userId = userSub.user_id;
         const priceId = subscription.items?.data?.[0]?.price?.id;
 
-        // Determine plan from subscription items
-        let newPlan = 'free';
+        // Determine plan from subscription items using shared mappings
+        let newPlan = PLAN_IDS.FREE;
         if (priceId) {
-            // This is a simplified lookup - in production you'd get this from Stripe price metadata
             const prices = await stripeWrapper.prices.list({ limit: 100 });
             const priceData = prices.data.find(p => p.id === priceId);
             
-            if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
-                newPlan = 'pro';
-            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly')) {
-                newPlan = 'plus';
-            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly')) {
-                newPlan = 'starter';
+            if (priceData?.lookup_key) {
+                newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.FREE;
             }
         }
 
@@ -1203,8 +1193,8 @@ async function applyPlanLimits(userId, plan, status) {
             .update({
                 plan: plan,
                 // Reset monthly usage if upgrading to higher plan
-                monthly_messages_sent: plan !== 'free' ? 0 : undefined,
-                monthly_tokens_consumed: plan !== 'free' ? 0 : undefined,
+                monthly_messages_sent: plan !== PLAN_IDS.FREE ? 0 : undefined,
+                monthly_tokens_consumed: plan !== PLAN_IDS.FREE ? 0 : undefined,
                 updated_at: new Date().toISOString()
             })
             .eq('id', userId);

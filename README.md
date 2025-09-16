@@ -9,7 +9,14 @@
 
 Sistema multi-tenant de detección de toxicidad y generación de roasts automáticos para redes sociales.
 
-## 🚀 Quick Start (Mock Mode)
+## 🚀 Development Setup
+
+### ⚠️ Important: Development Ports
+- **Frontend**: http://localhost:3001 (PRIMARY - always use this)
+- **Backend**: http://localhost:3000
+- **Branch**: `feat/disable-development-features` (current active development)
+
+### Quick Start (Mock Mode)
 
 ```bash
 # Clonar y configurar

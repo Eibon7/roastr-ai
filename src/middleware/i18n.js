@@ -172,8 +172,14 @@ function getTranslations(req, res) {
 
 /**
  * API endpoint to set user language preference
+ * Validates language code, updates session and database
+ * @param {Object} req - Express request object
+ * @param {string} req.body.language - Language code to set
+ * @param {Object} req.user - Authenticated user object (optional)
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>} JSON response with success status
  */
-function setLanguage(req, res) {
+async function setLanguage(req, res) {
   const { language } = req.body;
   const currentLanguage = req.language || i18n.getDefaultLanguage();
 
@@ -207,10 +213,39 @@ function setLanguage(req, res) {
       req.session.language = language;
     }
 
-    // TODO: Save to user preferences in database if user is authenticated
+    // Save to user preferences in database if user is authenticated
     if (req.user) {
-      // This would be implemented based on your user model
-      // await userService.updateLanguagePreference(req.user.id, language);
+      try {
+        const { supabaseServiceClient } = require('../config/supabase');
+        
+        // Update user's language preference
+        const { error: updateError } = await supabaseServiceClient
+          .from('users')
+          .update({ 
+            language: language,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', req.user.id);
+        
+        if (updateError) {
+          logger.warn('Failed to save user language preference', {
+            userId: req.user.id,
+            language,
+            error: updateError.message
+          });
+        } else {
+          logger.debug('User language preference saved', {
+            userId: req.user.id,
+            language
+          });
+        }
+      } catch (dbError) {
+        logger.warn('Error saving language preference to database', {
+          userId: req.user.id,
+          language,
+          error: dbError.message
+        });
+      }
     }
 
     res.json({

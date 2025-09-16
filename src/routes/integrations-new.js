@@ -173,7 +173,7 @@ router.get('/platforms', (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting platforms:', error.message);
+    logger.error('❌ Error getting platforms:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get supported platforms'
@@ -211,7 +211,7 @@ router.get('/status', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting integration status:', error.message);
+    logger.error('❌ Error getting integration status:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get integration status'
@@ -266,7 +266,7 @@ router.post('/connect', authenticateToken, (req, res) => {
 
     userIntegrations.set(userId, userConnections);
 
-    console.log(`🔗 User ${userId} connected to ${platform}`);
+    logger.info(`🔗 User ${userId} connected to ${platform}`);
 
     res.json({
       success: true,
@@ -278,7 +278,7 @@ router.post('/connect', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error connecting platform:', error.message);
+    logger.error('❌ Error connecting platform:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not connect to platform'
