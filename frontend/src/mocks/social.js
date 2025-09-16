@@ -4,7 +4,7 @@
  */
 
 // Import tone configuration from centralized config
-import { TONE_EXAMPLES, TONE_OPTIONS } from '../config/tones.js';
+import { TONE_EXAMPLES, TONE_OPTIONS } from '../config/tones';
 
 export const MOCK_ACCOUNTS = [
   {

@@ -1,9 +1,9 @@
 /**
  * Centralized tone configuration
- * Single source of truth for response tone styles and backend validation
+ * Single source of truth for response tone styles
  */
 
-// Core tone definitions with examples and descriptions
+// Core tone definitions
 const TONE_DEFINITIONS = {
   FLANDERS: {
     id: 'Flanders',
@@ -25,49 +25,35 @@ const TONE_DEFINITIONS = {
   }
 };
 
-// Array of valid tone IDs (canonical form)
+// Array of valid tone IDs
 const VALID_TONES = Object.values(TONE_DEFINITIONS).map(tone => tone.id);
 
-// Case-insensitive tone mapping for validation and normalization
+// Mapping for case-insensitive validation
 const TONE_MAP = {
-  // Canonical forms (identity mapping)
-  'Flanders': 'Flanders',
-  'Balanceado': 'Balanceado',
-  'Canalla': 'Canalla',
-  
-  // Lowercase forms (from Admin UI and API)
+  // Lowercase mappings
   'flanders': 'Flanders',
   'balanceado': 'Balanceado',
   'canalla': 'Canalla',
-  
-  // Uppercase forms
+  // Uppercase mappings
   'FLANDERS': 'Flanders',
   'BALANCEADO': 'Balanceado',
-  'CANALLA': 'Canalla'
+  'CANALLA': 'Canalla',
+  // Canonical mappings (identity)
+  'Flanders': 'Flanders',
+  'Balanceado': 'Balanceado',
+  'Canalla': 'Canalla'
 };
 
 /**
  * Normalize tone to canonical form
- * Accepts various cases and returns standardized form
- * @param {string} tone - Input tone (any case)
- * @returns {string|null} - Canonical tone or null if invalid
+ * @param {string} tone - Tone in any case
+ * @returns {string|null} Canonical tone or null if invalid
  */
 function normalizeTone(tone) {
   if (!tone || typeof tone !== 'string') {
     return null;
   }
-  
-  // Direct lookup first
-  if (TONE_MAP[tone]) {
-    return TONE_MAP[tone];
-  }
-  
-  // Fallback to case-insensitive lookup
-  const normalizedKey = Object.keys(TONE_MAP).find(
-    key => key.toLowerCase() === tone.toLowerCase()
-  );
-  
-  return normalizedKey ? TONE_MAP[normalizedKey] : null;
+  return TONE_MAP[tone] || TONE_MAP[tone.toLowerCase()] || null;
 }
 
 /**
@@ -84,8 +70,8 @@ function isValidTone(tone, strict = false) {
 }
 
 /**
- * Get random tone from valid options
- * @returns {string} - Random valid canonical tone
+ * Get random tone
+ * @returns {string} Random canonical tone
  */
 function getRandomTone() {
   return VALID_TONES[Math.floor(Math.random() * VALID_TONES.length)];
