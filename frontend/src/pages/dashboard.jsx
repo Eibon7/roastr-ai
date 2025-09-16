@@ -23,7 +23,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import AccountModal from '../components/AccountModal';
-import { platformIcons, platformNames, allPlatforms, getPlatformIcon, getPlatformName } from '../config/platforms';
+import { allPlatforms, getPlatformIcon, getPlatformName } from '../config/platforms';
 
 export default function Dashboard() {
   const [adminMode, setAdminMode] = useState(false);
@@ -31,9 +31,7 @@ export default function Dashboard() {
   const [accounts, setAccounts] = useState(null);
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [connectingPlatform, setConnectingPlatform] = useState(null);
-  const [connectionStatus, setConnectionStatus] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [recentRoasts, setRecentRoasts] = useState([]);
