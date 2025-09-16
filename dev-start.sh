@@ -49,6 +49,21 @@ echo "   Frontend: http://localhost:${FRONTEND_PORT} (PRIMARY)"
 echo "   Backend:  http://localhost:${BACKEND_PORT}"
 echo ""
 
+# Cleanup function
+cleanup() {
+    echo ""
+    echo "🛑 Shutting down servers..."
+    if [ ! -z "$BACKEND_PID" ]; then
+        kill $BACKEND_PID 2>/dev/null || true
+    fi
+    lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
+    lsof -ti:${FRONTEND_PORT} | xargs kill -9 2>/dev/null || true
+    echo "✅ Cleanup complete"
+}
+
+# Set trap to cleanup on script exit (before starting processes)
+trap cleanup EXIT INT TERM
+
 # Kill any existing processes on these ports
 echo "🧹 Cleaning up existing processes..."
 lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
@@ -66,16 +81,3 @@ sleep 3
 echo "🚀 Starting frontend server..."
 cd frontend
 npm start
-
-# Cleanup function
-cleanup() {
-    echo ""
-    echo "🛑 Shutting down servers..."
-    kill $BACKEND_PID 2>/dev/null || true
-    lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
-    lsof -ti:${FRONTEND_PORT} | xargs kill -9 2>/dev/null || true
-    echo "✅ Cleanup complete"
-}
-
-# Set trap to cleanup on script exit
-trap cleanup EXIT
