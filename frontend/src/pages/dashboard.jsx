@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -9,14 +9,6 @@ import RoastUsageCard from '../components/widgets/RoastUsageCard';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { useSidebar } from '../contexts/SidebarContext';
 import {
-  Twitter,
-  Instagram,
-  Youtube,
-  Facebook,
-  MessageCircle,
-  Twitch,
-  Users,
-  PlayCircle,
   Plus,
   ExternalLink,
   AlertCircle,
@@ -31,6 +23,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import AccountModal from '../components/AccountModal';
+import { platformIcons, platformNames, allPlatforms, getPlatformIcon, getPlatformName } from '../config/platforms';
 
 export default function Dashboard() {
   const [adminMode, setAdminMode] = useState(false);
@@ -38,7 +31,9 @@ export default function Dashboard() {
   const [accounts, setAccounts] = useState(null);
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [connectingPlatform, setConnectingPlatform] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [recentRoasts, setRecentRoasts] = useState([]);
@@ -48,34 +43,7 @@ export default function Dashboard() {
   const { isEnabled, loading: flagsLoading } = useFeatureFlags();
   const { isSidebarVisible } = useSidebar();
 
-  // Platform icons mapping
-  const platformIcons = {
-    twitter: Twitter,
-    instagram: Instagram,
-    youtube: Youtube,
-    facebook: Facebook,
-    discord: MessageCircle,
-    twitch: Twitch,
-    reddit: Users,
-    tiktok: PlayCircle,
-    bluesky: Twitter // Using Twitter icon as placeholder for Bluesky
-  };
-
-  // Platform display names
-  const platformNames = {
-    twitter: 'X (Twitter)',
-    instagram: 'Instagram',
-    youtube: 'YouTube',
-    facebook: 'Facebook',
-    discord: 'Discord',
-    twitch: 'Twitch',
-    reddit: 'Reddit',
-    tiktok: 'TikTok',
-    bluesky: 'Bluesky'
-  };
-
   // Available platforms for connection (filtered by feature flags)
-  const allPlatforms = ['twitter','instagram','youtube','facebook','discord','twitch','reddit','tiktok','bluesky'];
   const availablePlatforms = React.useMemo(() => {
     if (flagsLoading) return allPlatforms; // avoid flicker while resolving flags
     return allPlatforms.filter((platform) => {
@@ -245,10 +213,10 @@ export default function Dashboard() {
     }
   };
 
-  const getTotalRoastsUsed = () => {
+  const totalRoastsUsed = useMemo(() => {
     if (!usage) return 0;
     return Object.values(usage.platformUsage || {}).reduce((total, platform) => total + (platform.roasts || 0), 0);
-  };
+  }, [usage]);
 
   const getTotalRoastsLimit = () => {
     return usage?.limit || 5000; // Default limit
@@ -525,7 +493,7 @@ export default function Dashboard() {
         <CardContent className="space-y-4">
           {accounts && accounts.length > 0 ? (
             accounts.map((account) => {
-              const IconComponent = platformIcons[account.platform] || AlertCircle;
+              const IconComponent = getPlatformIcon(account.platform);
               const platformUsage = usage?.platformUsage?.[account.platform] || {};
               
               return (
@@ -541,7 +509,7 @@ export default function Dashboard() {
                     <IconComponent className="h-8 w-8 text-muted-foreground" />
                     <div>
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-medium">{platformNames[account.platform]}</h3>
+                        <h3 className="font-medium">{getPlatformName(account.platform)}</h3>
                         {getStatusIcon(account.status)}
                       </div>
                       <p className="text-sm text-muted-foreground">
@@ -595,7 +563,7 @@ export default function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {availablePlatforms.map((platform) => {
-              const IconComponent = platformIcons[platform];
+              const IconComponent = getPlatformIcon(platform);
               const isAtLimit = isPlatformAtLimit(platform);
               const isConnecting = connectingPlatform === platform;
               
@@ -611,7 +579,7 @@ export default function Dashboard() {
                   <IconComponent className="h-5 w-5" />
                   <div className="text-left">
                     <div className="font-medium text-xs">
-                      {platformNames[platform]}
+                      {getPlatformName(platform)}
                     </div>
                     {isAtLimit ? (
                       <div className="text-xs text-muted-foreground">
@@ -676,7 +644,7 @@ export default function Dashboard() {
           ) : recentRoasts.length > 0 ? (
             <div className="space-y-4">
               {recentRoasts.map((roast) => {
-                const IconComponent = platformIcons[roast.platform] || AlertCircle;
+                const IconComponent = getPlatformIcon(roast.platform);
 
                 return (
                   <div
@@ -687,7 +655,7 @@ export default function Dashboard() {
                       <IconComponent className="h-8 w-8 text-muted-foreground" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-medium truncate">{platformNames[roast.platform]}</h4>
+                          <h4 className="font-medium truncate">{getPlatformName(roast.platform)}</h4>
                           <Badge
                             variant={roast.status === 'published' ? 'default' : 'secondary'}
                             className="text-xs"
