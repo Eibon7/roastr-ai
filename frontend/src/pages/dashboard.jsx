@@ -243,10 +243,10 @@ export default function Dashboard() {
     }
   };
 
-  const getTotalRoastsUsed = () => {
+  const totalRoastsUsed = useMemo(() => {
     if (!usage) return 0;
     return Object.values(usage.platformUsage || {}).reduce((total, platform) => total + (platform.roasts || 0), 0);
-  };
+  }, [usage]);
 
   const getTotalRoastsLimit = () => {
     return usage?.limit || 5000; // Default limit

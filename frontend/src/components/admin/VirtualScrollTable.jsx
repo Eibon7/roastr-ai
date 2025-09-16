@@ -6,7 +6,8 @@
  * Optimized for performance with large datasets
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import PropTypes from 'prop-types';
 
 /**
  * VirtualScrollTable Component
@@ -30,32 +31,87 @@ const VirtualScrollTable = ({
   threshold = 1000
 }) => {
   const [scrollTop, setScrollTop] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
   const containerRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
+  const lastScrollTop = useRef(0);
+  const observerRef = useRef(null);
 
-  // Handle scroll events with throttling for better performance
+  // Handle scroll events with optimized throttling for better performance
   const handleScroll = useCallback((e) => {
+    // Skip scroll handling if component is not visible
+    if (!isVisible) return;
+
     const newScrollTop = e.target.scrollTop;
+    
+    // Skip updates if scroll position hasn't changed significantly
+    if (Math.abs(newScrollTop - lastScrollTop.current) < rowHeight / 2) {
+      return;
+    }
+
+    lastScrollTop.current = newScrollTop;
     
     // Immediate update for smooth scrolling
     setScrollTop(newScrollTop);
     
     // Clear existing timeout
     if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
+      cancelAnimationFrame(scrollTimeoutRef.current);
     }
 
-    // Debounce for expensive operations if needed
-    scrollTimeoutRef.current = setTimeout(() => {
+    // Use requestAnimationFrame for smooth scrolling
+    scrollTimeoutRef.current = requestAnimationFrame(() => {
       // Any additional expensive operations can go here
-    }, 100);
+    });
+  }, [rowHeight, isVisible]);
+
+  // Set up intersection observer to track visibility
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+
+    observerRef.current.observe(containerRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
   }, []);
+
+  // Memoize virtual scrolling calculations for performance
+  const virtualScrollData = useMemo(() => {
+    const totalHeight = data.length * rowHeight;
+    const viewportHeight = visibleRows * rowHeight;
+    const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
+    const endIndex = Math.min(
+      data.length,
+      Math.ceil((scrollTop + viewportHeight) / rowHeight) + buffer
+    );
+    const visibleData = data.slice(startIndex, endIndex);
+    const offsetY = startIndex * rowHeight;
+
+    return {
+      totalHeight,
+      viewportHeight,
+      startIndex,
+      endIndex,
+      visibleData,
+      offsetY
+    };
+  }, [data, rowHeight, visibleRows, scrollTop, buffer]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+        cancelAnimationFrame(scrollTimeoutRef.current);
       }
     };
   }, []);
@@ -74,16 +130,7 @@ const VirtualScrollTable = ({
     );
   }
 
-  // Calculate virtual scrolling parameters
-  const totalHeight = data.length * rowHeight;
-  const viewportHeight = visibleRows * rowHeight;
-  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
-  const endIndex = Math.min(
-    data.length,
-    Math.ceil((scrollTop + viewportHeight) / rowHeight) + buffer
-  );
-  const visibleData = data.slice(startIndex, endIndex);
-  const offsetY = startIndex * rowHeight;
+  const { totalHeight, viewportHeight, startIndex, endIndex, visibleData, offsetY } = virtualScrollData;
 
   return (
     <div className={className}>
@@ -115,7 +162,10 @@ const VirtualScrollTable = ({
       <div 
         ref={containerRef}
         className="overflow-auto border border-gray-200 dark:border-gray-700 border-t-0 rounded-b-lg"
-        style={{ height: `${viewportHeight}px` }}
+        style={{ 
+          height: `${viewportHeight}px`,
+          overflowAnchor: 'none' // Prevent scroll anchoring
+        }}
         onScroll={handleScroll}
       >
         {/* Total height container for scrollbar */}
@@ -127,14 +177,25 @@ const VirtualScrollTable = ({
               position: 'absolute',
               top: 0,
               left: 0,
-              right: 0
+              right: 0,
+              willChange: 'transform' // Optimize for frequent transforms
             }}
           >
             <table className="min-w-full">
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {visibleData.map((item, index) => 
-                  renderRow(item, startIndex + index)
-                )}
+                {visibleData.map((item, index) => {
+                  const globalIndex = startIndex + index;
+                  // Optimized key generation for better React reconciliation
+                  const itemKey = item.id || `${globalIndex}-${item.email || item.name || index}`;
+                  
+                  return React.cloneElement(
+                    renderRow(item, globalIndex),
+                    { 
+                      key: itemKey,
+                      'data-index': globalIndex // For debugging and testing
+                    }
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -147,6 +208,27 @@ const VirtualScrollTable = ({
       </div>
     </div>
   );
+};
+
+// PropTypes for type validation
+VirtualScrollTable.propTypes = {
+  data: PropTypes.array.isRequired,
+  rowHeight: PropTypes.number,
+  visibleRows: PropTypes.number,
+  buffer: PropTypes.number,
+  renderRow: PropTypes.func.isRequired,
+  renderHeader: PropTypes.func,
+  className: PropTypes.string,
+  threshold: PropTypes.number
+};
+
+VirtualScrollTable.defaultProps = {
+  rowHeight: 64,
+  visibleRows: 15,
+  buffer: 5,
+  className: '',
+  threshold: 1000,
+  renderHeader: null
 };
 
 export default VirtualScrollTable;

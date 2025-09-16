@@ -11,57 +11,7 @@ const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 const planLimitsService = require('../services/planLimitsService');
-
-// Define plan validation constants and functions
-const PLAN_IDS = {
-    FREE: 'free',
-    PRO: 'pro',
-    PLUS: 'plus',
-    CREATOR_PLUS: 'creator_plus',
-    BASIC: 'basic'
-};
-
-const VALID_PLANS = {
-    ALL: ['free', 'basic', 'pro', 'plus', 'creator_plus'],
-    ADMIN_ASSIGNABLE: ['free', 'basic', 'pro', 'plus', 'creator_plus']
-};
-
-// Plan validation function
-function isValidPlan(plan, type = 'all') {
-    if (type === 'admin_assignable') {
-        return VALID_PLANS.ADMIN_ASSIGNABLE.includes(plan);
-    }
-    return VALID_PLANS.ALL.includes(plan);
-}
-
-// Plan normalization function
-function normalizePlanId(plan) {
-    if (!plan) return PLAN_IDS.FREE;
-    
-    const normalized = plan.toLowerCase().trim();
-    
-    // Handle variations
-    switch (normalized) {
-        case 'free':
-        case 'gratuito':
-            return PLAN_IDS.FREE;
-        case 'pro':
-        case 'professional':
-            return PLAN_IDS.PRO;
-        case 'plus':
-        case 'premium':
-            return PLAN_IDS.PLUS;
-        case 'creator_plus':
-        case 'creator':
-        case 'creatorplus':
-            return PLAN_IDS.CREATOR_PLUS;
-        case 'basic':
-        case 'basico':
-            return PLAN_IDS.BASIC;
-        default:
-            return PLAN_IDS.FREE;
-    }
-}
+const { VALID_PLANS, PLAN_IDS, isValidPlan, normalizePlanId } = require('../config/planMappings');
 
 const router = express.Router();
 

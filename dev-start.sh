@@ -2,6 +2,7 @@
 
 # Roastr.ai Development Startup Script
 # This script ensures you're always on the correct branch and port
+# Uses .dev-config as single source of truth for development settings
 
 # Exit on any error
 set -e
@@ -22,6 +23,17 @@ trap 'handle_error $LINENO' ERR
 echo "🚀 Starting Roastr.ai Development Environment"
 echo "=============================================="
 
+# Load development configuration
+if [ -f .dev-config ]; then
+    echo "📄 Loading development configuration from .dev-config"
+    source .dev-config
+else
+    echo "❌ .dev-config file not found! Using fallback values."
+    ACTIVE_BRANCH="main"
+    FRONTEND_PORT=3001
+    BACKEND_PORT=3000
+fi
+
 # Check if we're in a git repository
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "❌ Error: Not in a git repository"
@@ -36,7 +48,7 @@ if [ -z "$CURRENT_BRANCH" ]; then
     exit 1
 fi
 
-TARGET_BRANCH="feat/disable-development-features"
+TARGET_BRANCH="${ACTIVE_BRANCH}"
 
 echo "📍 Current branch: $CURRENT_BRANCH"
 
@@ -80,26 +92,53 @@ if [ ! -f "frontend/package.json" ]; then
     exit 1
 fi
 
-echo ""
-echo "🔧 Starting development servers..."
-echo "   Frontend: http://localhost:3001 (PRIMARY)"
-echo "   Backend:  http://localhost:3000"
-echo ""
-
-# Kill any existing processes on these ports
-echo "🧹 Cleaning up existing processes..."
-if command -v lsof >/dev/null 2>&1; then
-    lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-    lsof -ti:3001 | xargs kill -9 2>/dev/null || true
-else
-    echo "⚠️  Warning: lsof not available, cannot clean up existing processes"
-fi
-
 # Check if npm is available
 if ! command -v npm >/dev/null 2>&1; then
     echo "❌ Error: npm is not installed or not in PATH"
     echo "💡 Please install Node.js and npm first"
     exit 1
+fi
+
+echo ""
+echo "🔧 Starting development servers..."
+echo "   Frontend: http://localhost:${FRONTEND_PORT} (PRIMARY)"
+echo "   Backend:  http://localhost:${BACKEND_PORT}"
+echo ""
+
+# Cleanup function
+cleanup() {
+    echo ""
+    echo "🛑 Shutting down servers..."
+    
+    # Kill backend process if it exists
+    if [ ! -z "$BACKEND_PID" ] && kill -0 $BACKEND_PID 2>/dev/null; then
+        echo "🔴 Stopping backend server (PID: $BACKEND_PID)..."
+        kill $BACKEND_PID 2>/dev/null || true
+        sleep 1
+        # Force kill if still running
+        kill -9 $BACKEND_PID 2>/dev/null || true
+    fi
+    
+    # Kill any remaining processes on these ports
+    if command -v lsof >/dev/null 2>&1; then
+        echo "🧹 Cleaning up any remaining processes..."
+        lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
+        lsof -ti:${FRONTEND_PORT} | xargs kill -9 2>/dev/null || true
+    fi
+    
+    echo "✅ Cleanup complete"
+}
+
+# Set trap to cleanup on script exit
+trap cleanup EXIT INT TERM
+
+# Kill any existing processes on these ports
+echo "🧹 Cleaning up existing processes..."
+if command -v lsof >/dev/null 2>&1; then
+    lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
+    lsof -ti:${FRONTEND_PORT} | xargs kill -9 2>/dev/null || true
+else
+    echo "⚠️  Warning: lsof not available, cannot clean up existing processes"
 fi
 
 # Start backend in background
@@ -131,30 +170,3 @@ if ! npm start; then
     echo "❌ Error: Failed to start frontend server"
     exit 1
 fi
-
-# Cleanup function
-cleanup() {
-    echo ""
-    echo "🛑 Shutting down servers..."
-    
-    # Kill backend process if it exists
-    if [ ! -z "$BACKEND_PID" ] && kill -0 $BACKEND_PID 2>/dev/null; then
-        echo "🔴 Stopping backend server (PID: $BACKEND_PID)..."
-        kill $BACKEND_PID 2>/dev/null || true
-        sleep 1
-        # Force kill if still running
-        kill -9 $BACKEND_PID 2>/dev/null || true
-    fi
-    
-    # Kill any remaining processes on these ports
-    if command -v lsof >/dev/null 2>&1; then
-        echo "🧹 Cleaning up any remaining processes..."
-        lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-        lsof -ti:3001 | xargs kill -9 2>/dev/null || true
-    fi
-    
-    echo "✅ Cleanup complete"
-}
-
-# Set trap to cleanup on script exit
-trap cleanup EXIT

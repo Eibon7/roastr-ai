@@ -537,6 +537,8 @@ const AdminUsersPage = () => {
     </tr>
   ), [actionLoading, currentUser, getPlanBadgeColor, handlePlanChangeClick, handleViewUserDashboard, handleSuspendClick]);
 
+  // Virtual scrolling functions already defined above
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">

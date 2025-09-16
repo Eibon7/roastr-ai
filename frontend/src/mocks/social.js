@@ -149,6 +149,7 @@ export const SHIELD_LEVELS = [
 
 // Re-export for backward compatibility
 export { TONE_EXAMPLES, TONE_OPTIONS };
+
 // Network icon mappings
 export const NETWORK_ICONS = {
   twitter: '𝕏',
