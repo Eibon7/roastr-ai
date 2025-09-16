@@ -33,7 +33,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
   entitlementsService = new EntitlementsService();
   webhookService = new StripeWebhookService();
 } else {
-  console.log('⚠️ Stripe billing disabled - missing configuration keys');
+  logger.warn('⚠️ Stripe billing disabled - missing configuration keys');
   entitlementsService = new EntitlementsService(); // Always available for free plans
   webhookService = new StripeWebhookService(); // Always available for webhook processing
 }

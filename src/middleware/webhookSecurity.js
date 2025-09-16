@@ -42,11 +42,13 @@ const WEBHOOK_CONSTANTS = {
 const webhookRateLimit = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute window
     max: 100, // Max 100 webhooks per minute per IP
-    keyGenerator: (req) => {
-        // Rate limit by IP and webhook source
+    keyGenerator: (req, options) => {
+        // Rate limit by IP and webhook source with IPv6 support
+        const { ipKeyGenerator } = options;
+        const ip = ipKeyGenerator(req);
         const source = req.headers['stripe-signature'] ? 'stripe' : 
                       req.headers['x-hub-signature-256'] ? 'github' : 'unknown';
-        return `webhook:${req.ip}:${source}`;
+        return `webhook:${ip}:${source}`;
     },
     handler: (req, res) => {
         logger.error('Webhook rate limit exceeded', {
