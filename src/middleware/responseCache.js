@@ -171,6 +171,16 @@ const responseCache = (options = {}) => {
       return next();
     }
 
+    // Skip caching for requests with CSRF tokens (security measure)
+    if (req.headers['x-csrf-token'] || req.body?._csrf || req.query._csrf) {
+      return next();
+    }
+
+    // Skip caching for requests with authentication headers
+    if (req.headers.authorization || req.headers['x-api-key']) {
+      return next();
+    }
+
     const cacheKey = responseCacheInstance.generateKey(req);
     const cachedResponse = responseCacheInstance.get(cacheKey);
 

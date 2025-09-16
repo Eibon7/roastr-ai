@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
+const crypto = require('crypto');
 
 class SecurityAuditLogger {
   constructor() {
@@ -21,22 +22,26 @@ class SecurityAuditLogger {
     }
 
     const timestamp = new Date().toISOString();
+    
+    // Sanitize PII from details to protect user privacy
+    const sanitizedDetails = this.sanitizePII({
+      ...details,
+      method: req?.method,
+      path: req?.path,
+      query: req?.query ? JSON.stringify(req.query) : null,
+      referrer: req?.get('Referer') || null
+    });
+
     const eventData = {
       event_type: eventType,
       timestamp,
-      ip_address: req?.ip || 'unknown',
-      user_agent: req?.get('User-Agent') || 'unknown',
+      ip_address: this.hashIP(req?.ip || 'unknown'), // Hash IP for privacy
+      user_agent: this.sanitizeUserAgent(req?.get('User-Agent') || 'unknown'),
       user_id: req?.user?.id || null,
       organization_id: req?.user?.organization_id || null,
       session_id: req?.sessionID || req?.session?.id || null,
       request_id: req?.id || null,
-      details: {
-        ...details,
-        method: req?.method,
-        path: req?.path,
-        query: req?.query ? JSON.stringify(req.query) : null,
-        referrer: req?.get('Referer') || null
-      },
+      details: sanitizedDetails,
       severity: this.getSeverityLevel(eventType),
       created_at: timestamp
     };
@@ -123,6 +128,50 @@ class SecurityAuditLogger {
       // Re-add events to buffer for retry
       this.logBuffer.unshift(...eventsToFlush);
     }
+  }
+
+  // PII protection methods
+  hashIP(ip) {
+    if (!ip || ip === 'unknown') return 'unknown';
+    // Hash IP address for privacy while maintaining uniqueness
+    return crypto.createHash('sha256').update(ip + process.env.SECURITY_SALT || 'default-salt').digest('hex').substring(0, 16);
+  }
+
+  sanitizeUserAgent(userAgent) {
+    if (!userAgent || userAgent === 'unknown') return 'unknown';
+    // Keep only browser family and OS, remove specific version info
+    const sanitized = userAgent.replace(/[\d\.]+/g, 'x.x');
+    return sanitized.length > 200 ? sanitized.substring(0, 200) + '...' : sanitized;
+  }
+
+  sanitizePII(details) {
+    const sensitiveKeys = ['email', 'password', 'token', 'ssn', 'phone', 'address', 'name'];
+    const sanitized = { ...details };
+
+    // Recursively sanitize nested objects
+    const sanitizeValue = (obj) => {
+      if (typeof obj === 'string') {
+        // Remove potential PII patterns
+        return obj
+          .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]') // Email
+          .replace(/\b\d{3}-?\d{3}-?\d{4}\b/g, '[PHONE]') // Phone
+          .replace(/\b\d{3}-?\d{2}-?\d{4}\b/g, '[SSN]') // SSN
+          .replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[CARD]'); // Credit card
+      } else if (typeof obj === 'object' && obj !== null) {
+        const result = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+            result[key] = '[REDACTED]';
+          } else {
+            result[key] = sanitizeValue(value);
+          }
+        }
+        return result;
+      }
+      return obj;
+    };
+
+    return sanitizeValue(sanitized);
   }
 
   // Convenience methods for common security events
