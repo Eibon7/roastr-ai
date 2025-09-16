@@ -26,18 +26,18 @@ import {
   Hash
 } from 'lucide-react';
 
-// Platform icons mapping with improved icons
+// Platform icons mapping with platform-specific icons
 export const platformIcons = {
   twitter: Twitter,
   instagram: Instagram,
   youtube: Youtube,
   facebook: Facebook,
-  discord: MessageCircle,
-  twitch: Video, // Better icon for Twitch
-  reddit: MessageSquare, // Better icon for Reddit
-  tiktok: PlayCircle,
-  bluesky: Hash, // Better icon for Bluesky (decentralized social)
-  linkedin: Users // Adding LinkedIn
+  discord: MessageCircle, // TODO: Add Discord-specific icon when available
+  twitch: Twitch, // Using platform-specific Twitch icon
+  reddit: MessageSquare, // TODO: Add Reddit-specific icon when available
+  tiktok: PlayCircle, // TODO: Add TikTok-specific icon when available
+  bluesky: Hash, // TODO: Add Bluesky-specific icon when available
+  linkedin: Users // Using Users icon for professional networking
 };
 
 // Platform display names with consistent branding

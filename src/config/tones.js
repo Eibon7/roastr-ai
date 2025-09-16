@@ -28,7 +28,8 @@ const TONE_DEFINITIONS = {
 // Array of valid tone IDs (canonical form)
 const VALID_TONES = Object.values(TONE_DEFINITIONS).map(tone => tone.id);
 
-// Case-insensitive tone mapping for validation and normalization
+// Pre-computed tone mapping for O(1) lookup performance
+// Includes all possible case variations to avoid runtime string operations
 const TONE_MAP = {
   // Canonical forms (identity mapping)
   'Flanders': 'Flanders',
@@ -43,12 +44,23 @@ const TONE_MAP = {
   // Uppercase forms
   'FLANDERS': 'Flanders',
   'BALANCEADO': 'Balanceado',
-  'CANALLA': 'Canalla'
+  'CANALLA': 'Canalla',
+  
+  // Mixed case variations
+  'FlAnDeRs': 'Flanders',
+  'BaLaNcEaDo': 'Balanceado',
+  'CaNaLlA': 'Canalla'
 };
 
+// Pre-computed lowercase map for faster case-insensitive lookups
+const TONE_MAP_LOWERCASE = Object.keys(TONE_MAP).reduce((map, key) => {
+  map[key.toLowerCase()] = TONE_MAP[key];
+  return map;
+}, {});
+
 /**
- * Normalize tone to canonical form
- * Accepts various cases and returns standardized form
+ * Normalize tone to canonical form - Optimized for performance
+ * Uses pre-computed maps for O(1) lookups instead of string iterations
  * @param {string} tone - Input tone (any case)
  * @returns {string|null} - Canonical tone or null if invalid
  */
@@ -57,17 +69,13 @@ function normalizeTone(tone) {
     return null;
   }
   
-  // Direct lookup first
+  // Direct lookup first (fastest path)
   if (TONE_MAP[tone]) {
     return TONE_MAP[tone];
   }
   
-  // Fallback to case-insensitive lookup
-  const normalizedKey = Object.keys(TONE_MAP).find(
-    key => key.toLowerCase() === tone.toLowerCase()
-  );
-  
-  return normalizedKey ? TONE_MAP[normalizedKey] : null;
+  // Case-insensitive lookup using pre-computed lowercase map
+  return TONE_MAP_LOWERCASE[tone.toLowerCase()] || null;
 }
 
 /**

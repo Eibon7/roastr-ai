@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
  * @param {Function} renderHeader - Function to render table header
  * @param {string} className - Additional CSS classes
  * @param {number} threshold - Minimum records to activate virtual scrolling
+ * @param {number} scrollDebounceMs - Configurable scroll debounce delay in milliseconds
  */
 const VirtualScrollTable = ({
   data = [],
@@ -28,7 +29,8 @@ const VirtualScrollTable = ({
   renderRow,
   renderHeader,
   className = '',
-  threshold = 1000
+  threshold = 1000,
+  scrollDebounceMs = 16 // ~60fps by default
 }) => {
   const [scrollTop, setScrollTop] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
@@ -37,7 +39,7 @@ const VirtualScrollTable = ({
   const lastScrollTop = useRef(0);
   const observerRef = useRef(null);
 
-  // Handle scroll events with optimized throttling for better performance
+  // Handle scroll events with configurable debouncing for better performance
   const handleScroll = useCallback((e) => {
     // Skip scroll handling if component is not visible
     if (!isVisible) return;
@@ -56,14 +58,14 @@ const VirtualScrollTable = ({
     
     // Clear existing timeout
     if (scrollTimeoutRef.current) {
-      cancelAnimationFrame(scrollTimeoutRef.current);
+      clearTimeout(scrollTimeoutRef.current);
     }
 
-    // Use requestAnimationFrame for smooth scrolling
-    scrollTimeoutRef.current = requestAnimationFrame(() => {
+    // Use configurable debounce delay for additional operations
+    scrollTimeoutRef.current = setTimeout(() => {
       // Any additional expensive operations can go here
-    });
-  }, [rowHeight, isVisible]);
+    }, scrollDebounceMs);
+  }, [rowHeight, isVisible, scrollDebounceMs]);
 
   // Set up intersection observer to track visibility
   useEffect(() => {
@@ -90,10 +92,11 @@ const VirtualScrollTable = ({
     const totalHeight = data.length * rowHeight;
     const viewportHeight = visibleRows * rowHeight;
     const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
+    // Fix off-by-one error: ensure endIndex doesn't exceed data.length - 1
     const endIndex = Math.min(
-      data.length,
+      data.length - 1,
       Math.ceil((scrollTop + viewportHeight) / rowHeight) + buffer
-    );
+    ) + 1; // Add 1 back for slice() which is exclusive
     const visibleData = data.slice(startIndex, endIndex);
     const offsetY = startIndex * rowHeight;
 
@@ -111,7 +114,7 @@ const VirtualScrollTable = ({
   useEffect(() => {
     return () => {
       if (scrollTimeoutRef.current) {
-        cancelAnimationFrame(scrollTimeoutRef.current);
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, []);
@@ -219,7 +222,8 @@ VirtualScrollTable.propTypes = {
   renderRow: PropTypes.func.isRequired,
   renderHeader: PropTypes.func,
   className: PropTypes.string,
-  threshold: PropTypes.number
+  threshold: PropTypes.number,
+  scrollDebounceMs: PropTypes.number
 };
 
 VirtualScrollTable.defaultProps = {
@@ -228,7 +232,8 @@ VirtualScrollTable.defaultProps = {
   buffer: 5,
   className: '',
   threshold: 1000,
-  renderHeader: null
+  renderHeader: null,
+  scrollDebounceMs: 16
 };
 
 export default VirtualScrollTable;
