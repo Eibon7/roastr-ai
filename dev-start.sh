@@ -2,13 +2,25 @@
 
 # Roastr.ai Development Startup Script
 # This script ensures you're always on the correct branch and port
+# Uses .dev-config as single source of truth for development settings
 
 echo "🚀 Starting Roastr.ai Development Environment"
 echo "=============================================="
 
+# Load development configuration
+if [ -f .dev-config ]; then
+    echo "📄 Loading development configuration from .dev-config"
+    source .dev-config
+else
+    echo "❌ .dev-config file not found! Using fallback values."
+    ACTIVE_BRANCH="main"
+    FRONTEND_PORT=3001
+    BACKEND_PORT=3000
+fi
+
 # Check current branch
 CURRENT_BRANCH=$(git branch --show-current)
-TARGET_BRANCH="feat/disable-development-features"
+TARGET_BRANCH="${ACTIVE_BRANCH}"
 
 echo "📍 Current branch: $CURRENT_BRANCH"
 
@@ -33,14 +45,14 @@ fi
 
 echo ""
 echo "🔧 Starting development servers..."
-echo "   Frontend: http://localhost:3001 (PRIMARY)"
-echo "   Backend:  http://localhost:3000"
+echo "   Frontend: http://localhost:${FRONTEND_PORT} (PRIMARY)"
+echo "   Backend:  http://localhost:${BACKEND_PORT}"
 echo ""
 
 # Kill any existing processes on these ports
 echo "🧹 Cleaning up existing processes..."
-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
+lsof -ti:${FRONTEND_PORT} | xargs kill -9 2>/dev/null || true
 
 # Start backend in background
 echo "🚀 Starting backend server..."
@@ -60,8 +72,8 @@ cleanup() {
     echo ""
     echo "🛑 Shutting down servers..."
     kill $BACKEND_PID 2>/dev/null || true
-    lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-    lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+    lsof -ti:${BACKEND_PORT} | xargs kill -9 2>/dev/null || true
+    lsof -ti:${FRONTEND_PORT} | xargs kill -9 2>/dev/null || true
     echo "✅ Cleanup complete"
 }
 
