@@ -101,12 +101,14 @@ const csrfProtection = (options = {}) => {
       const token = csrfProtectionInstance.generateToken();
       csrfProtectionInstance.storeToken(sessionId, token);
       
-      // Set token in cookie and make it available to templates
+      // Set token in cookie with hardened security settings
       res.cookie(csrfProtectionInstance.cookieName, token, {
-        httpOnly: false, // Allow JS access for AJAX requests
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: csrfProtectionInstance.maxTokenAge
+        httpOnly: false, // Allow JS access for AJAX requests (required for CSRF token)
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        sameSite: 'strict', // Strict same-site policy
+        maxAge: csrfProtectionInstance.maxTokenAge,
+        path: '/', // Explicit path
+        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined // Domain restriction in production
       });
       
       req.csrfToken = () => token;
