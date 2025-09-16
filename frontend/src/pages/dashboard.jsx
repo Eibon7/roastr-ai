@@ -51,7 +51,7 @@ export default function Dashboard() {
       if (platform === 'instagram' && !isEnabled('ENABLE_INSTAGRAM_UI')) return false;
       return true;
     });
-  }, [flagsLoading, isEnabled, allPlatforms]);
+  }, [flagsLoading, isEnabled]);
 
   // Check for admin mode on component mount - Issue #240
   useEffect(() => {
@@ -89,6 +89,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error fetching recent roasts:', error);
+      setError('No se pudieron cargar los roasts recientes. Por favor, actualiza la página.');
     } finally {
       setRoastsLoading(false);
     }
@@ -129,6 +130,7 @@ export default function Dashboard() {
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        setError('No se pudo cargar el panel. Por favor, actualiza la página.');
       } finally {
         setLoading(false);
       }
@@ -162,6 +164,15 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
+        // Show success message
+        setConnectionStatus({
+          type: 'success',
+          message: `${getPlatformName(platform)} conectado exitosamente`
+        });
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => setConnectionStatus(null), 5000);
+        
         // Refresh accounts data
         const accountsRes = await fetch('/api/user/integrations', {
           headers: {
@@ -174,10 +185,29 @@ export default function Dashboard() {
           setAccounts(accountsData.data || []);
         }
       } else {
-        console.error('Failed to connect platform');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || 'Error al conectar la plataforma';
+        
+        setConnectionStatus({
+          type: 'error',
+          message: `Error al conectar ${getPlatformName(platform)}: ${errorMessage}`
+        });
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => setConnectionStatus(null), 5000);
+        
+        console.error('Failed to connect platform:', errorData);
       }
     } catch (error) {
       console.error('Error connecting platform:', error);
+      
+      setConnectionStatus({
+        type: 'error',
+        message: `Error de conexión con ${getPlatformName(platform)}. Por favor, intenta de nuevo.`
+      });
+      
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => setConnectionStatus(null), 5000);
     } finally {
       setConnectingPlatform(null);
     }
@@ -361,6 +391,15 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
+        // Show success message
+        setConnectionStatus({
+          type: 'success',
+          message: 'Cuenta desconectada exitosamente'
+        });
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => setConnectionStatus(null), 5000);
+        
         // Refresh accounts data
         const accountsRes = await fetch('/api/user/integrations', {
           headers: {
@@ -374,9 +413,28 @@ export default function Dashboard() {
         }
         
         handleCloseModal();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || 'Error al desconectar la cuenta';
+        
+        setConnectionStatus({
+          type: 'error',
+          message: `Error al desconectar: ${errorMessage}`
+        });
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => setConnectionStatus(null), 5000);
       }
     } catch (error) {
       console.error('Error disconnecting account:', error);
+      
+      setConnectionStatus({
+        type: 'error',
+        message: 'Error de conexión al desconectar. Por favor, intenta de nuevo.'
+      });
+      
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => setConnectionStatus(null), 5000);
     }
   };
 
@@ -461,6 +519,78 @@ export default function Dashboard() {
             >
               ← Volver al Panel de Admin
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  {error}
+                </p>
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="bg-red-50 dark:bg-red-900/20 text-red-400 hover:text-red-500 focus:outline-none focus:text-red-500 transition ease-in-out duration-150"
+              >
+                <span className="sr-only">Cerrar</span>
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Connection Status */}
+      {connectionStatus && (
+        <div className={`border-l-4 p-4 mb-6 ${
+          connectionStatus.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
+            : 'bg-red-50 dark:bg-red-900/20 border-red-400'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                {connectionStatus.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-red-400" />
+                )}
+              </div>
+              <div className="ml-3">
+                <p className={`text-sm ${
+                  connectionStatus.type === 'success'
+                    ? 'text-green-700 dark:text-green-400'
+                    : 'text-red-700 dark:text-red-400'
+                }`}>
+                  {connectionStatus.message}
+                </p>
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setConnectionStatus(null)}
+                className={`text-${connectionStatus.type === 'success' ? 'green' : 'red'}-400 hover:text-${connectionStatus.type === 'success' ? 'green' : 'red'}-500 focus:outline-none transition ease-in-out duration-150`}
+              >
+                <span className="sr-only">Cerrar</span>
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}

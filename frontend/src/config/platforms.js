@@ -1,3 +1,17 @@
+/**
+ * Platform Configuration for Roastr.ai
+ * 
+ * This file contains all platform-specific configurations including:
+ * - Icons and visual representation
+ * - Display names and branding
+ * - Platform colors and themes
+ * - Character limits and constraints
+ * - Connection status and availability
+ * 
+ * @version 1.2.0
+ * @author Roastr.ai Team
+ */
+
 import {
   Twitter,
   Instagram,
@@ -6,23 +20,27 @@ import {
   MessageCircle,
   Twitch,
   Users,
-  PlayCircle
+  PlayCircle,
+  MessageSquare,
+  Video,
+  Hash
 } from 'lucide-react';
 
-// Platform icons mapping
+// Platform icons mapping with improved icons
 export const platformIcons = {
   twitter: Twitter,
   instagram: Instagram,
   youtube: Youtube,
   facebook: Facebook,
   discord: MessageCircle,
-  twitch: Twitch,
-  reddit: Users,
+  twitch: Video, // Better icon for Twitch
+  reddit: MessageSquare, // Better icon for Reddit
   tiktok: PlayCircle,
-  bluesky: Twitter // Using Twitter icon as placeholder for Bluesky
+  bluesky: Hash, // Better icon for Bluesky (decentralized social)
+  linkedin: Users // Adding LinkedIn
 };
 
-// Platform display names
+// Platform display names with consistent branding
 export const platformNames = {
   twitter: 'X (Twitter)',
   instagram: 'Instagram',
@@ -32,10 +50,53 @@ export const platformNames = {
   twitch: 'Twitch',
   reddit: 'Reddit',
   tiktok: 'TikTok',
-  bluesky: 'Bluesky'
+  bluesky: 'Bluesky',
+  linkedin: 'LinkedIn'
 };
 
-// Available platforms list
+// Platform brand colors for UI consistency
+export const platformColors = {
+  twitter: '#1DA1F2', // Classic Twitter blue
+  instagram: '#E4405F', // Instagram gradient primary
+  youtube: '#FF0000', // YouTube red
+  facebook: '#1877F2', // Facebook blue
+  discord: '#5865F2', // Discord blurple
+  twitch: '#9146FF', // Twitch purple
+  reddit: '#FF4500', // Reddit orange
+  tiktok: '#000000', // TikTok black
+  bluesky: '#0085ff', // Bluesky blue
+  linkedin: '#0077B5' // LinkedIn blue
+};
+
+// Platform-specific character limits for content optimization
+export const platformLimits = {
+  twitter: { post: 280, reply: 280 },
+  instagram: { post: 2200, reply: 2200 },
+  youtube: { comment: 10000 },
+  facebook: { post: 63206, reply: 8000 },
+  discord: { message: 2000 },
+  twitch: { chat: 500 },
+  reddit: { comment: 10000 },
+  tiktok: { comment: 150 },
+  bluesky: { post: 300 },
+  linkedin: { post: 3000, comment: 1250 }
+};
+
+// Platform descriptions for user guidance
+export const platformDescriptions = {
+  twitter: 'Microblogging platform perfect for quick, witty responses',
+  instagram: 'Visual social network focused on photos and stories',
+  youtube: 'Video platform with comment-based community interaction',
+  facebook: 'Social network with diverse content and community features',
+  discord: 'Chat platform popular with gaming and tech communities',
+  twitch: 'Live streaming platform with real-time chat engagement',
+  reddit: 'Forum-based platform with topic-specific communities',
+  tiktok: 'Short-form video platform with younger demographics',
+  bluesky: 'Decentralized social network similar to Twitter',
+  linkedin: 'Professional networking platform for business content'
+};
+
+// Available platforms list (ordered by popularity/priority)
 export const allPlatforms = [
   'twitter',
   'instagram', 
@@ -45,8 +106,12 @@ export const allPlatforms = [
   'twitch',
   'reddit',
   'tiktok',
-  'bluesky'
+  'bluesky',
+  'linkedin'
 ];
+
+// Premium platforms that require Pro+ plans
+export const premiumPlatforms = ['linkedin', 'bluesky'];
 
 // Get platform icon component
 export const getPlatformIcon = (platform) => {
@@ -57,3 +122,58 @@ export const getPlatformIcon = (platform) => {
 export const getPlatformName = (platform) => {
   return platformNames[platform] || platform;
 };
+
+// Get platform brand color
+export const getPlatformColor = (platform) => {
+  return platformColors[platform] || '#6B7280'; // Default gray
+};
+
+// Get platform character limit for specific content type
+export const getPlatformLimit = (platform, type = 'post') => {
+  const limits = platformLimits[platform];
+  if (!limits) return 280; // Default Twitter-like limit
+  return limits[type] || limits.post || limits.message || 280;
+};
+
+// Get platform description
+export const getPlatformDescription = (platform) => {
+  return platformDescriptions[platform] || 'Social media platform';
+};
+
+// Check if platform requires premium plan
+export const isPremiumPlatform = (platform) => {
+  return premiumPlatforms.includes(platform);
+};
+
+// Get platforms available for a specific plan
+export const getPlatformsForPlan = (plan) => {
+  const basePlatforms = ['twitter', 'instagram', 'youtube', 'facebook'];
+  const standardPlatforms = [...basePlatforms, 'discord', 'twitch', 'reddit'];
+  const premiumPlatformsAll = [...standardPlatforms, 'tiktok', 'bluesky', 'linkedin'];
+
+  switch (plan) {
+    case 'free':
+      return basePlatforms.slice(0, 2); // Only Twitter and Instagram
+    case 'starter':
+    case 'pro':
+      return standardPlatforms;
+    case 'plus':
+    case 'creator_plus':
+      return premiumPlatformsAll;
+    default:
+      return basePlatforms;
+  }
+};
+
+// Platform configuration object for easy access
+export const platformConfig = allPlatforms.reduce((config, platform) => {
+  config[platform] = {
+    name: getPlatformName(platform),
+    icon: getPlatformIcon(platform),
+    color: getPlatformColor(platform),
+    description: getPlatformDescription(platform),
+    limits: platformLimits[platform] || { post: 280 },
+    isPremium: isPremiumPlatform(platform)
+  };
+  return config;
+}, {});

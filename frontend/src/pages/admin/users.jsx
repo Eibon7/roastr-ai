@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../components/ThemeToggle';
 import SuspensionModal from '../../components/admin/SuspensionModal';
@@ -41,13 +41,13 @@ const AdminUsersPage = () => {
   const navigate = useNavigate();
 
   // Helper to show toast notifications
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ isVisible: true, message, type });
-  };
+  }, []);
 
-  const hideToast = () => {
+  const hideToast = useCallback(() => {
     setToast(prev => ({ ...prev, isVisible: false }));
-  };
+  }, []);
 
   // Check admin access and load users
   useEffect(() => {
@@ -93,7 +93,7 @@ const AdminUsersPage = () => {
     }
   }, [currentUser, searchTerm, selectedPlan, currentPage]);
 
-  const loadUsers = async (accessToken) => {
+  const loadUsers = useCallback(async (accessToken) => {
     try {
       setLoading(true);
       setAlert(null); // Clear any previous errors
@@ -152,18 +152,18 @@ const AdminUsersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, selectedPlan, navigate]);
 
   // Plan change functions - Issue #240
-  const handlePlanChangeClick = (user, newPlan) => {
+  const handlePlanChangeClick = useCallback((user, newPlan) => {
     setPlanChangeModal({
       isOpen: true,
       user: user,
       newPlan: newPlan
     });
-  };
+  }, []);
 
-  const handlePlanChangeConfirm = async () => {
+  const handlePlanChangeConfirm = useCallback(async () => {
     const { user, newPlan } = planChangeModal;
     if (!user || !newPlan) return;
 
@@ -194,36 +194,36 @@ const AdminUsersPage = () => {
       setActionLoading(prev => ({ ...prev, [`plan_${user.id}`]: false }));
       setPlanChangeModal({ isOpen: false, user: null, newPlan: null });
     }
-  };
+  }, [planChangeModal, showToast, loadUsers]);
 
-  const handlePlanChangeCancel = () => {
+  const handlePlanChangeCancel = useCallback(() => {
     setPlanChangeModal({ isOpen: false, user: null, newPlan: null });
-  };
+  }, []);
 
   // Navigation to superuser dashboard - Issue #240
-  const handleViewUserDashboard = (user) => {
+  const handleViewUserDashboard = useCallback((user) => {
     // Store the admin context for the superuser mode
     sessionStorage.setItem('adminMode', 'true');
     sessionStorage.setItem('adminModeUser', JSON.stringify(user));
     navigate(`/dashboard?userId=${user.id}&adminMode=true`);
-  };
+  }, [navigate]);
 
   // Search handlers - Issue #240
-  const handleSearchChange = (e) => {
+  const handleSearchChange = useCallback((e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1); // Reset to first page when searching
-  };
+  }, []);
 
-  const handlePlanFilterChange = (e) => {
+  const handlePlanFilterChange = useCallback((e) => {
     setSelectedPlan(e.target.value);
     setCurrentPage(1); // Reset to first page when filtering
-  };
+  }, []);
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = useCallback((newPage) => {
     setCurrentPage(newPage);
-  };
+  }, []);
 
-  const resetUserPassword = async (userId) => {
+  const resetUserPassword = useCallback(async (userId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`reset_${userId}`]: true }));
       
@@ -248,9 +248,9 @@ const AdminUsersPage = () => {
     } finally {
       setActionLoading(prev => ({ ...prev, [`reset_${userId}`]: false }));
     }
-  };
+  }, [showToast]);
 
-  const suspendUser = async (userId, reason = null) => {
+  const suspendUser = useCallback(async (userId, reason = null) => {
     try {
       setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: true }));
       
@@ -277,9 +277,9 @@ const AdminUsersPage = () => {
     } finally {
       setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: false }));
     }
-  };
+  }, [showToast, loadUsers]);
 
-  const unsuspendUser = async (userId) => {
+  const unsuspendUser = useCallback(async (userId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: true }));
       
@@ -305,18 +305,18 @@ const AdminUsersPage = () => {
     } finally {
       setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: false }));
     }
-  };
+  }, [showToast, loadUsers]);
 
-  const handleSuspendClick = (user) => {
+  const handleSuspendClick = useCallback((user) => {
     const action = user.suspended ? 'unsuspend' : 'suspend';
     setSuspensionModal({
       isOpen: true,
       user: user,
       action: action
     });
-  };
+  }, []);
 
-  const handleSuspensionConfirm = async (reason) => {
+  const handleSuspensionConfirm = useCallback(async (reason) => {
     const { user, action } = suspensionModal;
     
     if (action === 'suspend') {
@@ -330,26 +330,26 @@ const AdminUsersPage = () => {
       user: null,
       action: null
     });
-  };
+  }, [suspensionModal, suspendUser, unsuspendUser]);
 
-  const handleSuspensionCancel = () => {
+  const handleSuspensionCancel = useCallback(() => {
     setSuspensionModal({
       isOpen: false,
       user: null,
       action: null
     });
-  };
+  }, []);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       await authHelpers.signOut();
       navigate('/login');
     } catch (error) {
       console.error('Sign out error:', error);
     }
-  };
+  }, [navigate]);
 
-  const getPlanBadgeColor = (plan) => {
+  const getPlanBadgeColor = useMemo(() => (plan) => {
     const colors = {
       free: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
       pro: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
@@ -357,18 +357,18 @@ const AdminUsersPage = () => {
       custom: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
     };
     return colors[plan] || colors.free;
-  };
+  }, []);
 
-  const formatDate = (dateString) => {
+  const formatDate = useMemo(() => (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
-  };
+  }, []);
 
   // Render functions for virtual scrolling
-  const renderTableHeader = () => (
+  const renderTableHeader = useCallback(() => (
     <thead className="bg-gray-50 dark:bg-gray-700">
       <tr>
         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -391,9 +391,9 @@ const AdminUsersPage = () => {
         </th>
       </tr>
     </thead>
-  );
+  ), []);
 
-  const renderUserRow = (user, index) => (
+  const renderUserRow = useCallback((user, index) => (
     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
       {/* User Info */}
       <td className="px-6 py-4 whitespace-nowrap">
@@ -535,7 +535,7 @@ const AdminUsersPage = () => {
         </div>
       </td>
     </tr>
-  );
+  ), [actionLoading, currentUser, getPlanBadgeColor, handlePlanChangeClick, handleViewUserDashboard, handleSuspendClick]);
 
   if (loading) {
     return (

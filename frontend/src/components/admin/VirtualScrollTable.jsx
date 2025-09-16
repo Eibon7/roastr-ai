@@ -33,19 +33,22 @@ const VirtualScrollTable = ({
   const containerRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
 
-  // Handle scroll events with debouncing
+  // Handle scroll events with throttling for better performance
   const handleScroll = useCallback((e) => {
     const newScrollTop = e.target.scrollTop;
+    
+    // Immediate update for smooth scrolling
+    setScrollTop(newScrollTop);
     
     // Clear existing timeout
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
 
-    // Debounce scroll updates for performance
+    // Debounce for expensive operations if needed
     scrollTimeoutRef.current = setTimeout(() => {
-      setScrollTop(newScrollTop);
-    }, 10);
+      // Any additional expensive operations can go here
+    }, 100);
   }, []);
 
   // Cleanup timeout on unmount
@@ -101,22 +104,22 @@ const VirtualScrollTable = ({
         </div>
       </div>
 
+      {/* Fixed header outside scroll container */}
+      <div className="border border-gray-200 dark:border-gray-700 border-b-0 rounded-t-lg bg-gray-50 dark:bg-gray-700">
+        <table className="min-w-full">
+          {renderHeader && renderHeader()}
+        </table>
+      </div>
+
       {/* Virtual scroll container */}
       <div 
         ref={containerRef}
-        className="overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg"
+        className="overflow-auto border border-gray-200 dark:border-gray-700 border-t-0 rounded-b-lg"
         style={{ height: `${viewportHeight}px` }}
         onScroll={handleScroll}
       >
         {/* Total height container for scrollbar */}
         <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
-          {/* Fixed header */}
-          <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">
-            <table className="min-w-full">
-              {renderHeader && renderHeader()}
-            </table>
-          </div>
-
           {/* Virtual rows container */}
           <div 
             style={{ 
