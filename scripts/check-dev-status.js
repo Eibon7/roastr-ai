@@ -10,14 +10,16 @@ console.log('=====================================\n');
 // Check current branch
 try {
     const currentBranch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
-    const targetBranch = 'feat/disable-development-features';
     
     console.log(`📍 Current Branch: ${currentBranch}`);
     
-    if (currentBranch === targetBranch) {
-        console.log('✅ On correct development branch\n');
+    // Check if we're on main/master or a feature branch
+    if (currentBranch === 'main' || currentBranch === 'master') {
+        console.log('✅ On main branch\n');
+    } else if (currentBranch.startsWith('feat/') || currentBranch.startsWith('fix/') || currentBranch.startsWith('hotfix/')) {
+        console.log('✅ On feature/fix branch\n');
     } else {
-        console.log(`❌ Wrong branch! Expected: ${targetBranch}\n`);
+        console.log('ℹ️  On custom branch\n');
     }
 } catch (error) {
     console.log('❌ Could not determine current branch\n');
@@ -72,4 +74,4 @@ try {
 console.log('\n🚀 Quick Actions:');
 console.log('   Start development: npm run dev:full');
 console.log('   Check this status: node scripts/check-dev-status.js');
-console.log('   Switch branch: git checkout feat/disable-development-features');
+console.log('   Switch to main: git checkout main');
