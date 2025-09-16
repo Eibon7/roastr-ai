@@ -79,5 +79,15 @@ sleep 3
 
 # Start frontend
 echo "🚀 Starting frontend server..."
-cd frontend
+if ! cd frontend; then
+    echo "❌ Failed to change to frontend directory"
+    exit 1
+fi
+
+# Check if package.json exists
+if [ ! -f package.json ]; then
+    echo "❌ Frontend package.json not found"
+    exit 1
+fi
+
 npm start
