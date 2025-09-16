@@ -2,17 +2,24 @@ const rateLimit = require('express-rate-limit');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
+/**
+ * Creates an admin rate limiter with configurable options
+ * @param {Object} options - Configuration options
+ * @param {number} options.windowMs - Time window in milliseconds
+ * @param {number} options.max - Maximum requests per window
+ * @returns {Function} Express middleware function
+ */
 const createAdminRateLimiter = (options = {}) => {
-  // Disable rate limiting in test environment
+  // Disable rate limiting in test environment for testing purposes
   if (process.env.NODE_ENV === 'test' || !flags.isEnabled('ENABLE_RATE_LIMITING')) {
     logger.info('Admin rate limiting disabled (test environment or feature flag)');
     return (req, res, next) => next();
   }
 
-  // Configurable parameters with environment variable overrides
+  // Configurable parameters with environment variable overrides and validation
   const config = {
-    windowMs: parseInt(process.env.ADMIN_RATE_LIMIT_WINDOW_MS) || options.windowMs || 5 * 60 * 1000, // 5 minutes default
-    max: parseInt(process.env.ADMIN_RATE_LIMIT_MAX) || options.max || 50, // 50 requests default
+    windowMs: Math.max(1000, parseInt(process.env.ADMIN_RATE_LIMIT_WINDOW_MS) || options.windowMs || 5 * 60 * 1000), // Minimum 1 second
+    max: Math.max(1, parseInt(process.env.ADMIN_RATE_LIMIT_MAX) || options.max || 50), // Minimum 1 request
     ...options
   };
 

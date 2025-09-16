@@ -172,6 +172,12 @@ function getTranslations(req, res) {
 
 /**
  * API endpoint to set user language preference
+ * Validates language code, updates session and database
+ * @param {Object} req - Express request object
+ * @param {string} req.body.language - Language code to set
+ * @param {Object} req.user - Authenticated user object (optional)
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>} JSON response with success status
  */
 async function setLanguage(req, res) {
   const { language } = req.body;
