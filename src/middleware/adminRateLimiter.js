@@ -25,9 +25,13 @@ const createAdminRateLimiter = (options = {}) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => {
-      // Use user ID if authenticated, otherwise fall back to IP
-      return req.user?.id || req.ip;
+    keyGenerator: (req, options) => {
+      // Use user ID if authenticated, otherwise fall back to IP with IPv6 support
+      if (req.user?.id) {
+        return `user:${req.user.id}`;
+      }
+      const { ipKeyGenerator } = options;
+      return `ip:${ipKeyGenerator(req)}`;
     },
     handler: (req, res) => {
       logger.warn('Admin rate limit exceeded', {
