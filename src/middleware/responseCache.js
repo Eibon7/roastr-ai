@@ -250,8 +250,43 @@ const responseCache = (options = {}) => {
   };
 };
 
+/**
+ * Middleware to invalidate cache on state-changing operations
+ */
+const invalidateCache = (req, res, next) => {
+  // Only invalidate cache for state-changing operations
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    const originalJson = res.json;
+    const originalSend = res.send;
+    
+    // Intercept successful responses to clear relevant cache entries
+    res.json = function(body) {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        // Clear related cache entries based on path
+        if (req.path.startsWith('/api/admin')) {
+          responseCacheInstance.clear(); // For admin operations, clear all cache
+          logger.debug('Cache cleared due to admin operation', { path: req.path });
+        }
+      }
+      return originalJson.call(this, body);
+    };
+
+    res.send = function(body) {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        if (req.path.startsWith('/api/admin')) {
+          responseCacheInstance.clear();
+          logger.debug('Cache cleared due to admin operation', { path: req.path });
+        }
+      }
+      return originalSend.call(this, body);
+    };
+  }
+  next();
+};
+
 module.exports = {
   responseCache,
   ResponseCache,
-  responseCacheInstance
+  responseCacheInstance,
+  invalidateCache
 };

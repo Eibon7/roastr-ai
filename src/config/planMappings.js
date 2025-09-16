@@ -134,8 +134,12 @@ function isDowngrade(currentPlan, newPlan) {
   return comparePlans(currentPlan, newPlan) > 0;
 }
 
+// Array of all valid plan IDs
+const VALID_PLANS = Object.values(PLAN_IDS);
+
 module.exports = {
   PLAN_IDS,
+  VALID_PLANS,
   STRIPE_PLAN_MAPPINGS,
   PLAN_HIERARCHY,
   getPlanFromStripeLookupKey,

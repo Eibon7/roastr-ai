@@ -155,8 +155,36 @@ const csrfProtection = (options = {}) => {
   };
 };
 
+/**
+ * Middleware to get CSRF token for authenticated users
+ */
+const getCSRFToken = (req, res, next) => {
+  const sessionId = csrfProtectionInstance.getSessionId(req);
+  const token = csrfProtectionInstance.generateToken();
+  csrfProtectionInstance.storeToken(sessionId, token);
+  
+  res.json({ csrfToken: token });
+};
+
+/**
+ * Middleware to add CSRF token to response headers
+ */
+const addCSRFTokenToResponse = (req, res, next) => {
+  // Only add for safe methods if CSRF protection is enabled
+  if (req.method === 'GET' && flags.isEnabled('ENABLE_CSRF_PROTECTION')) {
+    const sessionId = csrfProtectionInstance.getSessionId(req);
+    const token = csrfProtectionInstance.generateToken();
+    csrfProtectionInstance.storeToken(sessionId, token);
+    
+    res.set('X-CSRF-Token', token);
+  }
+  next();
+};
+
 module.exports = {
   csrfProtection,
   CSRFProtection,
-  csrfProtectionInstance
+  csrfProtectionInstance,
+  getCSRFToken,
+  addCSRFTokenToResponse
 };
