@@ -147,12 +147,6 @@ export const SHIELD_LEVELS = [
   { value: 100, label: '100% (El más estricto)' },
 ];
 
-export const TONE_OPTIONS = [
-  'Flanders',
-  'Balanceado', 
-  'Canalla'
-];
-
 // Re-export for backward compatibility
 export { TONE_EXAMPLES, TONE_OPTIONS };
 // Network icon mappings
