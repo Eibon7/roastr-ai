@@ -17,9 +17,12 @@ const createAdminRateLimiter = (options = {}) => {
   }
 
   // Configurable parameters with environment variable overrides and validation
+  const parsedWindowMs = parseInt(process.env.ADMIN_RATE_LIMIT_WINDOW_MS, 10);
+  const parsedMax = parseInt(process.env.ADMIN_RATE_LIMIT_MAX, 10);
+
   const config = {
-    windowMs: Math.max(1000, parseInt(process.env.ADMIN_RATE_LIMIT_WINDOW_MS) || options.windowMs || 5 * 60 * 1000), // Minimum 1 second
-    max: Math.max(1, parseInt(process.env.ADMIN_RATE_LIMIT_MAX) || options.max || 50), // Minimum 1 request
+    windowMs: Math.max(1000, Number.isFinite(parsedWindowMs) ? parsedWindowMs : options.windowMs || 5 * 60 * 1000), // Minimum 1 second
+    max: Math.max(1, Number.isFinite(parsedMax) ? parsedMax : options.max || 50), // Minimum 1 request
     ...options
   };
 

@@ -583,7 +583,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setConnectionStatus(null)}
-                className={`text-${connectionStatus.type === 'success' ? 'green' : 'red'}-400 hover:text-${connectionStatus.type === 'success' ? 'green' : 'red'}-500 focus:outline-none transition ease-in-out duration-150`}
+                className={`${connectionStatus.type === 'success' ? 'text-green-400 hover:text-green-500' : 'text-red-400 hover:text-red-500'} focus:outline-none transition ease-in-out duration-150`}
               >
                 <span className="sr-only">Cerrar</span>
                 <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

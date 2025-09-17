@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Send, Sparkles, Eye, Save } from 'lucide-react';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { useToast } from '../hooks/use-toast';
 
 export default function Compose() {
   const [message, setMessage] = useState('');
@@ -17,6 +18,7 @@ export default function Compose() {
   const [analysisRemaining, setAnalysisRemaining] = useState(null);
   const [roastsRemaining, setRoastsRemaining] = useState(null);
   const [error, setError] = useState(null);
+  const { toast } = useToast();
 
   const handlePreview = async () => {
     if (!message.trim()) return;
@@ -183,7 +185,11 @@ export default function Compose() {
         setError(null);
         
         // Show success message
-        alert('Roast generated and ready to send!');
+        toast({
+          title: 'Success!',
+          description: 'Roast generated and ready to send!',
+          variant: 'success'
+        });
         
       } else {
         let errorData;

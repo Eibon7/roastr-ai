@@ -20,6 +20,9 @@ class ShieldDecisionEngine {
     
     this.logger = config.logger || logger;
     this.persistenceService = config.persistenceService || new ShieldPersistenceService({ supabase: this.supabase, logger: this.logger });
+
+    // Initialize idempotency secret with environment validation
+    this.idempotencySecret = this.initializeIdempotencySecret();
     
     // Configurable decision thresholds
     this.thresholds = {
@@ -665,25 +668,16 @@ class ShieldDecisionEngine {
    * Generate cache key for idempotency
    */
   generateCacheKey(organizationId, externalCommentId, platform = '', accountRef = '') {
-    // Use HMAC with secret to prevent cross-platform ID collisions
-    const secret = process.env.IDEMPOTENCY_SECRET;
-    
-    if (!secret) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error('IDEMPOTENCY_SECRET environment variable is required in production');
-      }
-      // In non-production, use a deterministic fallback with warning
-      if (this.logger) {
-        this.logger.warn('Using fallback cache key generation - set IDEMPOTENCY_SECRET for production');
-      }
-      const keyData = `${organizationId}:${platform}:${accountRef}:${externalCommentId}`;
+    const keyData = `${organizationId}:${platform}:${accountRef}:${externalCommentId}`;
+
+    if (!this.idempotencySecret) {
+      // Use fallback behavior for non-production or when secret is not set
       return crypto.createHash('sha256').update(keyData).digest('hex');
     }
-    
-    const keyData = `${organizationId}:${platform}:${accountRef}:${externalCommentId}`;
-    
+
+    // Use HMAC with secret to prevent cross-platform ID collisions
     return crypto
-      .createHmac('sha256', secret)
+      .createHmac('sha256', this.idempotencySecret)
       .update(keyData)
       .digest('hex');
   }
@@ -773,6 +767,27 @@ class ShieldDecisionEngine {
         return acc;
       }, {})
     });
+  }
+
+  /**
+   * Initialize idempotency secret with environment validation
+   */
+  initializeIdempotencySecret() {
+    const secret = process.env.IDEMPOTENCY_SECRET;
+
+    if (process.env.NODE_ENV === 'production' && !secret) {
+      throw new Error('IDEMPOTENCY_SECRET environment variable is required in production');
+    }
+
+    if (!secret) {
+      // In non-production, log warning and return null for fallback behavior
+      if (this.logger) {
+        this.logger.warn('IDEMPOTENCY_SECRET not set - using fallback cache key generation');
+      }
+      return null;
+    }
+
+    return secret;
   }
 }
 

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
+import { useI18n } from '../hooks/useI18n';
 
 const ThemeToggle = () => {
+  const { t } = useI18n();
   const [theme, setTheme] = useState(() => {
     // Check localStorage first, then default to system
     const savedTheme = localStorage.getItem('theme');
@@ -128,13 +130,13 @@ const ThemeToggle = () => {
   const getLabel = (themeName = theme) => {
     switch (themeName) {
       case 'light':
-        return 'Claro';
+        return t('theme.light') || 'Claro';
       case 'dark':
-        return 'Oscuro';
+        return t('theme.dark') || 'Oscuro';
       case 'system':
-        return 'Sistema';
+        return t('theme.system') || 'Sistema';
       default:
-        return 'Sistema';
+        return t('theme.system') || 'Sistema';
     }
   };
 
