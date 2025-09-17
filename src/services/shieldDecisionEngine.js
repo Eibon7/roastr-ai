@@ -56,12 +56,15 @@ class ShieldDecisionEngine {
       ]
     };
     
-    // Decision cache for idempotency
+    // Decision cache for idempotency with size management
     this.decisionCache = new Map();
+    this.cacheMaxSize = config.cacheMaxSize || 1000; // Prevent memory bloat
+    this.cacheEvictionBatchSize = config.cacheEvictionBatchSize || 100;
     
     this.logger.info('Shield Decision Engine initialized', {
       thresholds: this.thresholds,
-      aggressiveness: this.thresholds.aggressiveness
+      aggressiveness: this.thresholds.aggressiveness,
+      cacheMaxSize: this.cacheMaxSize
     });
   }
   
@@ -83,9 +86,9 @@ class ShieldDecisionEngine {
   }) {
     try {
       // Ensure idempotency - check if decision already made
-      const cacheKey = this.generateCacheKey(organizationId, externalCommentId);
+      const cacheKey = this.generateCacheKey(organizationId, externalCommentId, platform, accountRef);
       if (this.decisionCache.has(cacheKey)) {
-        this.logger.debug('Returning cached decision', { organizationId, externalCommentId });
+        this.logger.debug('Returning cached decision', { organizationId, externalCommentId, platform, accountRef });
         return this.decisionCache.get(cacheKey);
       }
       
@@ -124,8 +127,14 @@ class ShieldDecisionEngine {
         await this.recordDecision(processedInput, decision, offenderHistory);
       }
       
-      // Step 5: Cache decision for idempotency
+      // Step 5: Cache decision for idempotency with size management
       decision.processingTimeMs = Date.now() - startTime;
+      
+      // Check cache size and evict if necessary
+      if (this.decisionCache.size >= this.cacheMaxSize) {
+        this.evictOldestCacheEntries();
+      }
+      
       this.decisionCache.set(cacheKey, decision);
       
       this.logger.info('Decision made', {
@@ -133,7 +142,8 @@ class ShieldDecisionEngine {
         externalCommentId,
         action: decision.action,
         reason: decision.reason,
-        processingTimeMs: decision.processingTimeMs
+        processingTimeMs: decision.processingTimeMs,
+        cacheSize: this.decisionCache.size
       });
       
       return decision;
@@ -372,7 +382,20 @@ class ShieldDecisionEngine {
     if (userRedLines.keywords && userRedLines.keywords.length > 0) {
       const originalTextLower = (originalText || '').toLowerCase();
       for (const keyword of userRedLines.keywords) {
-        if (originalTextLower.includes(keyword.toLowerCase())) {
+        // Escape special regex characters
+        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // For keywords with special characters, use lookaround instead of \b
+        // as \b doesn't work well with non-word characters
+        const hasSpecialChars = /[^\w\s]/.test(keyword);
+        
+        const pattern = hasSpecialChars 
+          ? `(?<![\\w])${escapedKeyword}(?![\\w])`  // Negative lookahead/lookbehind
+          : `\\b${escapedKeyword}\\b`;              // Standard word boundary
+          
+        const regex = new RegExp(pattern, 'i');
+        
+        if (regex.test(originalText || '')) {
           return `keyword:${keyword}`;
         }
       }
@@ -495,15 +518,20 @@ class ShieldDecisionEngine {
   adjustThresholds(aggressiveness) {
     const baseThresholds = this.thresholds.toxicity;
     
-    // Aggressiveness 0.90 = more lenient (higher thresholds needed to trigger)
-    // Aggressiveness 1.00 = stricter (lower thresholds to trigger more easily)
-    const adjustment = (1.0 - aggressiveness) * 0.1; // 0 to 0.01 range
+    // Clamp aggressiveness to valid range [0.90, 1.00]
+    const clampedAggressiveness = Math.max(0.90, Math.min(1.00, aggressiveness));
+    
+    // Symmetric adjustment around 0.95
+    // 0.90 = more lenient (higher thresholds needed to trigger)
+    // 0.95 = baseline (no adjustment)
+    // 1.00 = stricter (lower thresholds to trigger more easily)
+    const adjustment = (0.95 - clampedAggressiveness) * 0.2; // -0.1 to +0.01 range
     
     return {
-      critical: Math.max(0.92, baseThresholds.critical + adjustment),
-      high: Math.max(0.87, baseThresholds.high + adjustment),
-      moderate: Math.max(0.82, baseThresholds.moderate + adjustment),
-      corrective: Math.max(0.77, baseThresholds.corrective + adjustment)
+      critical: Math.max(0.85, Math.min(1.0, baseThresholds.critical + adjustment)),
+      high: Math.max(0.80, Math.min(1.0, baseThresholds.high + adjustment)),
+      moderate: Math.max(0.75, Math.min(1.0, baseThresholds.moderate + adjustment)),
+      corrective: Math.max(0.70, Math.min(1.0, baseThresholds.corrective + adjustment))
     };
   }
   
@@ -633,11 +661,33 @@ class ShieldDecisionEngine {
   /**
    * Generate cache key for idempotency
    */
-  generateCacheKey(organizationId, externalCommentId) {
+  generateCacheKey(organizationId, externalCommentId, platform = '', accountRef = '') {
+    // Use HMAC with secret to prevent cross-platform ID collisions
+    const secret = process.env.IDEMPOTENCY_SECRET || 'default-idempotency-secret-please-change';
+    const keyData = `${organizationId}:${platform}:${accountRef}:${externalCommentId}`;
+    
     return crypto
-      .createHash('sha256')
-      .update(`${organizationId}:${externalCommentId}`)
+      .createHmac('sha256', secret)
+      .update(keyData)
       .digest('hex');
+  }
+  
+  /**
+   * Evict oldest cache entries when cache is full
+   */
+  evictOldestCacheEntries() {
+    const entriesToRemove = this.cacheEvictionBatchSize;
+    const keys = Array.from(this.decisionCache.keys());
+    
+    // Remove oldest entries (Map maintains insertion order)
+    for (let i = 0; i < entriesToRemove && i < keys.length; i++) {
+      this.decisionCache.delete(keys[i]);
+    }
+    
+    this.logger.debug('Evicted cache entries', {
+      evicted: Math.min(entriesToRemove, keys.length),
+      newSize: this.decisionCache.size
+    });
   }
   
   /**
@@ -667,22 +717,41 @@ class ShieldDecisionEngine {
    */
   updateConfiguration(newConfig) {
     if (newConfig.thresholds) {
-      this.thresholds = {
-        ...this.thresholds,
-        ...newConfig.thresholds,
-        toxicity: {
-          ...(this.thresholds.toxicity || {}),
-          ...(newConfig.thresholds.toxicity || {})
-        }
-      };
+      // Deep merge thresholds to prevent data loss
+      if (newConfig.thresholds.toxicity) {
+        this.thresholds.toxicity = {
+          ...this.thresholds.toxicity,
+          ...newConfig.thresholds.toxicity
+        };
+      }
+      
+      // Update other threshold properties
+      if (newConfig.thresholds.aggressiveness !== undefined) {
+        this.thresholds.aggressiveness = newConfig.thresholds.aggressiveness;
+      }
     }
     
     if (newConfig.correctiveMessages) {
-      this.correctiveMessages = { ...this.correctiveMessages, ...newConfig.correctiveMessages };
+      // Merge corrective messages, preserving existing pools
+      Object.keys(newConfig.correctiveMessages).forEach(key => {
+        if (Array.isArray(newConfig.correctiveMessages[key])) {
+          this.correctiveMessages[key] = newConfig.correctiveMessages[key];
+        }
+      });
+    }
+    
+    // Update cache settings if provided
+    if (newConfig.cacheMaxSize !== undefined) {
+      this.cacheMaxSize = newConfig.cacheMaxSize;
+    }
+    
+    if (newConfig.cacheEvictionBatchSize !== undefined) {
+      this.cacheEvictionBatchSize = newConfig.cacheEvictionBatchSize;
     }
     
     this.logger.info('Decision engine configuration updated', {
       newThresholds: this.thresholds,
+      cacheMaxSize: this.cacheMaxSize,
       messagePoolSizes: Object.keys(this.correctiveMessages).reduce((acc, key) => {
         acc[key] = this.correctiveMessages[key].length;
         return acc;

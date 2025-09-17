@@ -454,7 +454,9 @@ describe('ShieldDecisionEngine', () => {
       expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(1);
       expect(mockLogger.debug).toHaveBeenCalledWith('Returning cached decision', {
         organizationId: mockInput.organizationId,
-        externalCommentId: mockInput.externalCommentId
+        externalCommentId: mockInput.externalCommentId,
+        platform: mockInput.platform,
+        accountRef: mockInput.accountRef
       });
     });
 
@@ -773,6 +775,207 @@ describe('ShieldDecisionEngine', () => {
 
       expect(decision.action).toBe('shield_action_moderate');
       expect(decision.autoExecute).toBe(false); // Should be false due to autoApprove: true
+    });
+  });
+
+  describe('Cache Key Generation', () => {
+    test('should generate unique cache keys with platform and accountRef', () => {
+      const key1 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@account1');
+      const key2 = engine.generateCacheKey('org-123', 'comment-1', 'youtube', '@account1');
+      const key3 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@account2');
+      
+      expect(key1).not.toBe(key2); // Different platforms
+      expect(key1).not.toBe(key3); // Different accounts
+      expect(key2).not.toBe(key3); // Both different
+    });
+
+    test('should use HMAC for secure hashing', () => {
+      const key = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@account');
+      
+      expect(key).toMatch(/^[a-f0-9]{64}$/); // SHA256 hex format
+    });
+  });
+
+  describe('Cache Management', () => {
+    test('should evict oldest entries when cache is full', async () => {
+      // Set small cache size for testing
+      engine.cacheMaxSize = 3;
+      engine.cacheEvictionBatchSize = 1;
+
+      // Add 3 decisions to fill cache
+      for (let i = 1; i <= 3; i++) {
+        const input = {
+          ...mockInput,
+          externalCommentId: `comment-${i}`
+        };
+        
+        mockPersistenceService.getOffenderHistory.mockResolvedValue({
+          isRecidivist: false,
+          totalOffenses: 0
+        });
+        
+        await engine.makeDecision(input);
+      }
+      
+      expect(engine.decisionCache.size).toBe(3);
+      
+      // Add 4th decision - should trigger eviction
+      const newInput = {
+        ...mockInput,
+        externalCommentId: 'comment-4'
+      };
+      
+      await engine.makeDecision(newInput);
+      
+      expect(engine.decisionCache.size).toBe(3); // Still 3 after eviction
+      
+      // First comment should be evicted
+      const firstKey = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@testorg');
+      expect(engine.decisionCache.has(firstKey)).toBe(false);
+    });
+
+    test('should handle cache eviction batch size correctly', () => {
+      engine.cacheEvictionBatchSize = 5;
+      
+      // Fill cache with 10 entries
+      for (let i = 0; i < 10; i++) {
+        const key = `key-${i}`;
+        engine.decisionCache.set(key, { action: 'test' });
+      }
+      
+      engine.evictOldestCacheEntries();
+      
+      expect(engine.decisionCache.size).toBe(5); // 10 - 5 = 5
+      expect(engine.decisionCache.has('key-0')).toBe(false);
+      expect(engine.decisionCache.has('key-4')).toBe(false);
+      expect(engine.decisionCache.has('key-5')).toBe(true);
+    });
+  });
+
+  describe('Threshold Adjustment', () => {
+    test('should adjust thresholds symmetrically around 0.95', () => {
+      // Test with aggressiveness = 0.95 (baseline)
+      const baseline = engine.adjustThresholds(0.95);
+      expect(baseline.critical).toBe(0.98);
+      expect(baseline.high).toBe(0.95);
+      
+      // Test with aggressiveness = 0.90 (more lenient)
+      const lenient = engine.adjustThresholds(0.90);
+      expect(lenient.critical).toBeGreaterThan(baseline.critical);
+      expect(lenient.high).toBeGreaterThan(baseline.high);
+      
+      // Test with aggressiveness = 1.00 (stricter)  
+      const strict = engine.adjustThresholds(1.00);
+      expect(strict.critical).toBeLessThan(baseline.critical);
+      expect(strict.high).toBeLessThan(baseline.high);
+    });
+
+    test('should clamp aggressiveness values to valid range', () => {
+      const tooLow = engine.adjustThresholds(0.5);
+      const tooHigh = engine.adjustThresholds(1.5);
+      
+      // Should clamp to [0.90, 1.00] range
+      const minClamped = engine.adjustThresholds(0.90);
+      const maxClamped = engine.adjustThresholds(1.00);
+      
+      expect(tooLow).toEqual(minClamped);
+      expect(tooHigh).toEqual(maxClamped);
+    });
+
+    test('should cap thresholds within [0, 1] range', () => {
+      const extreme = engine.adjustThresholds(1.00);
+      
+      Object.values(extreme).forEach(threshold => {
+        expect(threshold).toBeGreaterThanOrEqual(0);
+        expect(threshold).toBeLessThanOrEqual(1);
+      });
+    });
+  });
+
+  describe('Keyword Matching', () => {
+    test('should match whole words only with word boundaries', () => {
+      const testCases = [
+        { text: 'You are an idiot', keyword: 'idiot', shouldMatch: true },
+        { text: 'This is idiotic', keyword: 'idiot', shouldMatch: false },
+        { text: 'idiots everywhere', keyword: 'idiot', shouldMatch: false },
+        { text: 'IDIOT!', keyword: 'idiot', shouldMatch: true },
+        { text: 'pre-idiot-post', keyword: 'idiot', shouldMatch: true }
+      ];
+
+      testCases.forEach(({ text, keyword, shouldMatch }) => {
+        const violation = engine.checkRedLineViolations(
+          ['INSULT'],
+          'insult',
+          { keywords: [keyword] },
+          text,
+          0.5
+        );
+        
+        if (shouldMatch) {
+          expect(violation).toBe(`keyword:${keyword}`);
+        } else {
+          expect(violation).toBeNull();
+        }
+      });
+    });
+
+    test('should handle special regex characters in keywords', () => {
+      const specialKeywords = ['test.', 'foo+bar', '[test]', 'a$b', '^start'];
+      
+      specialKeywords.forEach(keyword => {
+        const text = `This contains ${keyword} exactly`;
+        const violation = engine.checkRedLineViolations(
+          ['TOXICITY'],
+          'general',
+          { keywords: [keyword] },
+          text,
+          0.5
+        );
+        
+        expect(violation).toBe(`keyword:${keyword}`);
+      });
+    });
+  });
+
+  describe('Configuration Updates', () => {
+    test('should deep merge threshold updates without data loss', () => {
+      const initialThresholds = { ...engine.thresholds.toxicity };
+      
+      engine.updateConfiguration({
+        thresholds: {
+          toxicity: {
+            high: 0.92 // Only update high threshold
+          }
+        }
+      });
+      
+      expect(engine.thresholds.toxicity.high).toBe(0.92);
+      expect(engine.thresholds.toxicity.critical).toBe(initialThresholds.critical);
+      expect(engine.thresholds.toxicity.moderate).toBe(initialThresholds.moderate);
+      expect(engine.thresholds.toxicity.corrective).toBe(initialThresholds.corrective);
+    });
+
+    test('should update cache settings', () => {
+      engine.updateConfiguration({
+        cacheMaxSize: 2000,
+        cacheEvictionBatchSize: 200
+      });
+      
+      expect(engine.cacheMaxSize).toBe(2000);
+      expect(engine.cacheEvictionBatchSize).toBe(200);
+    });
+
+    test('should preserve existing corrective message pools', () => {
+      const originalGeneralMessages = [...engine.correctiveMessages.general];
+      
+      engine.updateConfiguration({
+        correctiveMessages: {
+          custom: ['New custom message']
+        }
+      });
+      
+      expect(engine.correctiveMessages.general).toEqual(originalGeneralMessages);
+      expect(engine.correctiveMessages.custom).toEqual(['New custom message']);
     });
   });
 });
