@@ -366,7 +366,7 @@ class ShieldPersistenceService {
       if (externalAuthorId) query = query.eq('external_author_id', externalAuthorId);
       if (actionTaken) query = query.eq('action_taken', actionTaken);
       if (actionStatus) query = query.eq('action_status', actionStatus);
-      if (minToxicityScore) query = query.gte('toxicity_score', minToxicityScore);
+      if (minToxicityScore !== null && minToxicityScore !== undefined) query = query.gte('toxicity_score', minToxicityScore);
       if (dateFrom) query = query.gte('created_at', dateFrom);
       if (dateTo) query = query.lte('created_at', dateTo);
       
@@ -441,7 +441,7 @@ class ShieldPersistenceService {
         }
       });
       
-      // Get recent retention log entries (organization-scoped if admin)
+      // Get recent retention log entries (admin-only, global scope)
       const { data: recentLogs, error: logsError } = await this.supabase
         .from('shield_retention_log')
         .select(`

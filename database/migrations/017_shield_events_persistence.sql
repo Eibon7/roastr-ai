@@ -166,7 +166,7 @@ CREATE INDEX idx_shield_events_action_status ON shield_events(action_status);
 
 -- GDPR retention indexes
 CREATE INDEX idx_shield_events_anonymized_at ON shield_events(anonymized_at) WHERE anonymized_at IS NULL;
-CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL AND scheduled_purge_at <= NOW();
+CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL;
 
 -- Offender profiles indexes
 CREATE INDEX idx_offender_profiles_org_platform ON offender_profiles(organization_id, platform);
@@ -366,9 +366,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger to update offender profiles
+-- Trigger to update offender profiles (only on action_status changes)
 CREATE TRIGGER shield_events_update_offender_profile
-    AFTER INSERT OR UPDATE ON shield_events
+    AFTER INSERT OR UPDATE OF action_status ON shield_events
     FOR EACH ROW
     EXECUTE FUNCTION update_offender_profile();
 

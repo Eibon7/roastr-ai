@@ -28,8 +28,8 @@ class GDPRRetentionWorker extends BaseWorker {
       throw new Error('SUPABASE_SERVICE_KEY is required for GDPR retention operations');
     }
     
-    // Verify HMAC pepper for secure anonymization
-    if (!process.env.GDPR_HMAC_PEPPER) {
+    // Verify HMAC pepper for secure anonymization (not required in dry-run mode)
+    if (!process.env.GDPR_HMAC_PEPPER && !options.dryRun) {
       throw new Error('GDPR_HMAC_PEPPER environment variable is required for secure anonymization');
     }
     
@@ -300,7 +300,7 @@ class GDPRRetentionWorker extends BaseWorker {
     
     try {
       if (this.dryRun) {
-        // Count records that would be purged (align with live purge filter)
+        // Count records that would be purged (exact same filter as live purge)
         const { count, error: countError } = await this.supabase
           .from('shield_events')
           .select('*', { count: 'exact', head: true })
@@ -308,8 +308,11 @@ class GDPRRetentionWorker extends BaseWorker {
         
         if (countError) throw countError;
         
-        this.log('info', 'DRY RUN: Would purge records', { count });
-        return { processed: count, purged: count, errors: 0 };
+        this.log('info', 'DRY RUN: Would purge records', { 
+          count, 
+          cutoffDate: cutoffDate.toISOString() 
+        });
+        return { processed: count || 0, purged: count || 0, errors: 0 };
       }
       
       // Delete records older than 90 days
