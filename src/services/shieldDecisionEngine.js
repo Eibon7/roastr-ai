@@ -83,7 +83,7 @@ class ShieldDecisionEngine {
   }) {
     try {
       // Ensure idempotency - check if decision already made
-      const cacheKey = this.generateCacheKey(organizationId, externalCommentId);
+      const cacheKey = this.generateCacheKey(organizationId, externalCommentId, platform);
       if (this.decisionCache.has(cacheKey)) {
         this.logger.debug('Returning cached decision', { organizationId, externalCommentId });
         return this.decisionCache.get(cacheKey);
@@ -352,18 +352,21 @@ class ShieldDecisionEngine {
   checkRedLineViolations(toxicityLabels, primaryCategory, userRedLines, originalText = '', toxicityScore = 0) {
     // Check category-specific red lines
     if (userRedLines.categories) {
-      for (const category of toxicityLabels) {
-        if (userRedLines.categories.includes(category)) {
-          return `category:${category}`;
+      const configured = userRedLines.categories.map(c => c.toLowerCase());
+      for (const label of toxicityLabels) {
+        if (configured.includes(String(label).toLowerCase())) {
+          return `category:${label}`;
         }
       }
     }
     
     // Check keyword-based red lines
     if (userRedLines.keywords && userRedLines.keywords.length > 0) {
-      const originalTextLower = (originalText || '').toLowerCase();
+      const text = originalText || '';
       for (const keyword of userRedLines.keywords) {
-        if (originalTextLower.includes(keyword.toLowerCase())) {
+        const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`\\b${escaped}\\b`, 'i');
+        if (re.test(text)) {
           return `keyword:${keyword}`;
         }
       }
@@ -508,7 +511,7 @@ class ShieldDecisionEngine {
     
     // Priority order for categories
     const categoryPriority = [
-      'threat', 'harassment', 'hate', 'severe_toxicity',
+      'threat', 'harassment', 'identity_attack', 'hate', 'severe_toxicity',
       'insult', 'profanity', 'toxicity', 'spam'
     ];
     
@@ -624,10 +627,11 @@ class ShieldDecisionEngine {
   /**
    * Generate cache key for idempotency
    */
-  generateCacheKey(organizationId, externalCommentId) {
+  generateCacheKey(organizationId, externalCommentId, platform = '') {
+    const secret = process.env.IDEMPOTENCY_SECRET || '';
     return crypto
       .createHash('sha256')
-      .update(`${organizationId}:${externalCommentId}`)
+      .update(`${secret}:${organizationId}:${platform}:${externalCommentId}`)
       .digest('hex');
   }
   

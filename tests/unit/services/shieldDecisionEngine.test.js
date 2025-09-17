@@ -209,7 +209,7 @@ describe('ShieldDecisionEngine', () => {
       expect(decision.suggestedActions).toContain('hide_comment');
     });
 
-    test('should escalate first-time offender to high action based on recidivism adjustment', async () => {
+    test('should escalate repeat offender near high threshold to critical', async () => {
       const moderateToxicityInput = {
         ...mockInput,
         toxicityAnalysis: {

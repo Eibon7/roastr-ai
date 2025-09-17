@@ -157,13 +157,18 @@ class ShieldAdapter {
    * @throws {Error} If validation fails
    */
   validateInput(input, requiredFields = []) {
+    if (input == null || typeof input !== 'object') {
+      throw new Error('Input must be an object');
+    }
+    
+    // Check if input is an instance of ModerationInput
     if (!(input instanceof ModerationInput)) {
       throw new Error('Input must be an instance of ModerationInput');
     }
-
+    
     for (const field of requiredFields) {
-      if (!input[field]) {
-        throw new Error(`Required field '${field}' is missing`);
+      if (!(field in input) || input[field] == null || input[field] === '') {
+        throw new Error(`Required field '${field}' is missing or empty`);
       }
     }
   }
@@ -218,25 +223,25 @@ class ShieldAdapter {
    */
   async handleRateLimit(apiCall, maxRetries = 3) {
     let lastError;
-    
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         return await apiCall();
       } catch (error) {
         lastError = error;
-        
-        // Check if it's a rate limit error
         if (this.isRateLimitError(error)) {
-          const delay = Math.min(1000 * Math.pow(2, attempt), 30000); // Max 30 seconds
-          await new Promise(resolve => setTimeout(resolve, delay));
+          const retryAfterMs =
+            (error?.response?.headers?.['retry-after']
+              ? Number(error.response.headers['retry-after']) * 1000
+              : null);
+          const base = retryAfterMs ?? Math.min(1000 * (2 ** attempt), 30000);
+          const jitter = Math.floor(base * 0.2 * Math.random());
+          await new Promise(r => setTimeout(r, base + jitter));
           continue;
         }
-        
         // If it's not a rate limit error, throw immediately
         throw error;
       }
     }
-    
     throw lastError;
   }
 
@@ -247,9 +252,11 @@ class ShieldAdapter {
    */
   isRateLimitError(error) {
     // Default implementation - should be overridden by specific adapters
-    return error.message.toLowerCase().includes('rate limit') || 
-           error.status === 429 ||
-           error.code === 429;
+    const msg = (error?.message || '').toLowerCase();
+    return msg.includes('rate limit') ||
+           error?.status === 429 ||
+           error?.code === 429 ||
+           error?.response?.status === 429;
   }
 
   /**
@@ -260,7 +267,10 @@ class ShieldAdapter {
    */
   log(level, message, meta = {}) {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [${level.toUpperCase()}] [${this.platform}] ${message}`, meta);
+    const logger = this.config?.logger || console;
+    logger[level] ? logger[level](
+      `[${timestamp}] [${this.platform}] ${message}`, meta
+    ) : logger.log(`[${timestamp}] [${this.platform}] ${message}`, meta);
   }
 }
 

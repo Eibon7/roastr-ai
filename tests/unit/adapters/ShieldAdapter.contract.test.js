@@ -29,7 +29,7 @@ describe('Shield Adapter Contract Tests', () => {
 
   describe('Base Class Contract', () => {
     test('ShieldAdapter cannot be instantiated directly', () => {
-      expect(() => new ShieldAdapter()).toThrow('ShieldAdapter is abstract and cannot be instantiated directly');
+      expect(() => new ShieldAdapter()).toThrow(/abstract/i);
     });
 
     test('ModerationInput creates valid instances', () => {

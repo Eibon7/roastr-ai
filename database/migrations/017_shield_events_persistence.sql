@@ -4,6 +4,9 @@
 -- This migration creates the core tables for Shield event persistence,
 -- offender tracking, and implements GDPR-compliant data retention.
 
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- ============================================================================
 -- SHIELD EVENTS TABLE
 -- ============================================================================
@@ -26,7 +29,7 @@ CREATE TABLE shield_events (
     external_author_username VARCHAR(255), -- Author username for display/logging
     
     -- Content analysis
-    original_text TEXT, -- ⚠️ GDPR: Only for Shield-moderated comments, anonimized at 80 days, purged at 90
+    original_text TEXT, -- ⚠️ GDPR: Only for Shield-moderated comments, anonymized at 80 days, purged at 90
     original_text_hash VARCHAR(64), -- SHA-256 hash for post-anonymization reference
     text_salt VARCHAR(32), -- Unique salt for hash generation
     toxicity_score DECIMAL(3,2) CHECK (toxicity_score >= 0 AND toxicity_score <= 1),
@@ -159,7 +162,7 @@ CREATE INDEX idx_shield_events_action_status ON shield_events(action_status);
 
 -- GDPR retention indexes
 CREATE INDEX idx_shield_events_anonymized_at ON shield_events(anonymized_at) WHERE anonymized_at IS NULL;
-CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL AND scheduled_purge_at <= NOW();
+CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL;
 
 -- Offender profiles indexes
 CREATE INDEX idx_offender_profiles_org_platform ON offender_profiles(organization_id, platform);
@@ -170,7 +173,7 @@ CREATE INDEX idx_offender_profiles_updated_at ON offender_profiles(updated_at);
 
 -- Retention log indexes
 CREATE INDEX idx_retention_log_batch_id ON shield_retention_log(batch_id);
-CREATE INDEX idx_retention_log_created_at ON shield_retention_log(started_at);
+CREATE INDEX idx_retention_log_started_at ON shield_retention_log(started_at);
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS)
@@ -286,13 +289,13 @@ BEGIN
     -- Calculate severity level
     UPDATE offender_profiles SET
         severity_level = CASE
-            WHEN current_count >= 10 OR max_toxicity_score >= 0.9 THEN 'critical'
-            WHEN current_count >= 5 OR max_toxicity_score >= 0.7 THEN 'high'
-            WHEN current_count >= 2 OR max_toxicity_score >= 0.5 THEN 'medium'
+            WHEN current_count >= 10 OR COALESCE(max_toxicity_score, 0) >= 0.9 THEN 'critical'
+            WHEN current_count >= 5 OR COALESCE(max_toxicity_score, 0) >= 0.7 THEN 'high'
+            WHEN current_count >= 2 OR COALESCE(max_toxicity_score, 0) >= 0.5 THEN 'medium'
             ELSE 'low'
         END,
         escalation_level = LEAST(5, FLOOR(current_count / 2)::INTEGER),
-        risk_score = LEAST(1.0, (current_count * 0.1 + max_toxicity_score) / 2)
+        risk_score = LEAST(1.0, (current_count * 0.1 + COALESCE(max_toxicity_score, 0)) / 2)
     WHERE organization_id = NEW.organization_id 
       AND platform = NEW.platform 
       AND external_author_id = NEW.external_author_id;
