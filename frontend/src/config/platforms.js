@@ -113,39 +113,68 @@ export const allPlatforms = [
 // Premium platforms that require Pro+ plans
 export const premiumPlatforms = ['linkedin', 'bluesky'];
 
-// Get platform icon component
+/**
+ * Get platform icon component
+ * @param {string} platform - Platform identifier (e.g., 'twitter', 'instagram')
+ * @returns {React.Component} - Lucide React icon component
+ */
 export const getPlatformIcon = (platform) => {
   return platformIcons[platform] || MessageCircle;
 };
 
-// Get platform display name
+/**
+ * Get platform display name
+ * @param {string} platform - Platform identifier
+ * @returns {string} - Human-readable platform name
+ */
 export const getPlatformName = (platform) => {
   return platformNames[platform] || platform;
 };
 
-// Get platform brand color
+/**
+ * Get platform brand color
+ * @param {string} platform - Platform identifier
+ * @returns {string} - Hex color code for platform branding
+ */
 export const getPlatformColor = (platform) => {
   return platformColors[platform] || '#6B7280'; // Default gray
 };
 
-// Get platform character limit for specific content type
+/**
+ * Get platform character limit for specific content type
+ * @param {string} platform - Platform identifier
+ * @param {string} type - Content type ('post', 'reply', 'comment', 'message')
+ * @returns {number} - Character limit for the platform and content type
+ */
 export const getPlatformLimit = (platform, type = 'post') => {
   const limits = platformLimits[platform];
   if (!limits) return 280; // Default Twitter-like limit
   return limits[type] || limits.post || limits.message || 280;
 };
 
-// Get platform description
+/**
+ * Get platform description
+ * @param {string} platform - Platform identifier
+ * @returns {string} - Platform description for user guidance
+ */
 export const getPlatformDescription = (platform) => {
   return platformDescriptions[platform] || 'Social media platform';
 };
 
-// Check if platform requires premium plan
+/**
+ * Check if platform requires premium plan
+ * @param {string} platform - Platform identifier
+ * @returns {boolean} - True if platform requires premium subscription
+ */
 export const isPremiumPlatform = (platform) => {
   return premiumPlatforms.includes(platform);
 };
 
-// Get platforms available for a specific plan
+/**
+ * Get platforms available for a specific plan
+ * @param {string} plan - Subscription plan ('free', 'starter', 'pro', 'plus', 'creator_plus')
+ * @returns {string[]} - Array of platform identifiers available for the plan
+ */
 export const getPlatformsForPlan = (plan) => {
   const basePlatforms = ['twitter', 'instagram', 'youtube', 'facebook'];
   const standardPlatforms = [...basePlatforms, 'discord', 'twitch', 'reddit'];

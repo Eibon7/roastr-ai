@@ -46,10 +46,22 @@ try {
     console.log('❌ Could not determine current branch\n');
 }
 
-// Check if ports are in use
+// Check if ports are in use with cross-platform compatibility
 function checkPort(port, service) {
     try {
-        execSync(`lsof -ti:${port}`, { stdio: 'ignore' });
+        // Use different commands based on platform
+        const platform = process.platform;
+        let command;
+        
+        if (platform === 'win32') {
+            // Windows: use netstat
+            command = `netstat -an | findstr :${port}`;
+        } else {
+            // Unix-like systems (macOS, Linux): use lsof
+            command = `lsof -ti:${port}`;
+        }
+        
+        execSync(command, { stdio: 'ignore' });
         console.log(`✅ ${service}: Port ${port} is in use`);
         return true;
     } catch (error) {
@@ -70,14 +82,29 @@ if (port3002) {
     console.log('⚠️  WARNING: Port 3002 is in use!');
     console.log('   This port may contain outdated code from previous development sessions.');
     console.log('   Always use the primary frontend port for development.');
-    console.log('   Consider stopping processes on port 3002: `lsof -ti:3002 | xargs kill`');
+    
+    // Provide platform-specific kill command
+    if (process.platform === 'win32') {
+        console.log('   Consider stopping processes on port 3002: `netstat -ano | findstr :3002` then `taskkill /PID <PID> /F`');
+    } else {
+        console.log('   Consider stopping processes on port 3002: `lsof -ti:3002 | xargs kill`');
+    }
 }
 
-// Check for other conflicting ports
+// Check for other conflicting ports with cross-platform compatibility
 const commonPorts = [3003, 3004, 3005];
 const conflictingPorts = commonPorts.filter(port => {
     try {
-        execSync(`lsof -ti:${port}`, { stdio: 'ignore' });
+        const platform = process.platform;
+        let command;
+        
+        if (platform === 'win32') {
+            command = `netstat -an | findstr :${port}`;
+        } else {
+            command = `lsof -ti:${port}`;
+        }
+        
+        execSync(command, { stdio: 'ignore' });
         return true;
     } catch {
         return false;
