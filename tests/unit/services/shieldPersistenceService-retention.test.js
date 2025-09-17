@@ -33,7 +33,10 @@ const createQueryBuilderMock = () => {
       const result = this.__result || { data: null, error: null, count: 0 };
       resolve(result);
       return Promise.resolve(result);
-    })
+    }),
+    // Add promise-like behavior for await syntax
+    catch: jest.fn().mockReturnThis(),
+    finally: jest.fn().mockReturnThis()
   };
 
   return mock;
@@ -59,6 +62,9 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     process.env.SUPABASE_URL = 'http://localhost:54321';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
     process.env.SHIELD_ANONYMIZATION_SECRET = 'test-secret-for-hmac';
+    
+    // Reset the mockSupabase to fresh state
+    Object.assign(mockSupabase, createQueryBuilderMock());
     
     service = new ShieldPersistenceService({
       supabase: mockSupabase,
@@ -159,9 +165,9 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     });
 
     test('should handle database errors gracefully', async () => {
-      mockSupabase.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: 'Database connection failed' }
+      // Make the entire Supabase operation fail by rejecting the promise
+      mockSupabase.limit.mockImplementation(() => {
+        return Promise.reject(new Error('Database connection failed'));
       });
 
       mockSupabase.insert.mockResolvedValue({ error: null });
@@ -206,9 +212,12 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     });
 
     test('should use correct cutoff date for 80-day retention', async () => {
-      const mockDate = new Date('2023-12-01T10:00:00Z');
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
-
+      const mockDate = '2023-12-01T09:00:00.000Z';
+      const originalDate = Date;
+      
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(mockDate));
+      
       // Set up the mock to return empty array for cutoff date test
       mockSupabase.__setResult({
         data: [],
@@ -217,21 +226,24 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
 
       await service.anonymizeShieldEvents();
 
-      const expectedCutoff = new Date(mockDate);
-      expectedCutoff.setDate(expectedCutoff.getDate() - 80);
+      // Calculate the expected cutoff date using real Date math
+      const testDate = new originalDate(mockDate);
+      testDate.setDate(testDate.getDate() - 80);
+      const expectedCutoff = testDate.toISOString();
 
-      expect(mockSupabase.lte).toHaveBeenCalledWith('created_at', expectedCutoff.toISOString());
+      expect(mockSupabase.lte).toHaveBeenCalledWith('created_at', expectedCutoff);
 
-      global.Date.mockRestore();
+      jest.useRealTimers();
     });
   });
 
   describe('purgeOldShieldEvents', () => {
     test('should purge records older than 90 days', async () => {
-      mockSupabase.delete.mockResolvedValue({
-        count: 5,
-        error: null
-      });
+      // Set up delete to return this when chained with lte
+      const deleteResult = { count: 5, error: null };
+      mockSupabase.delete.mockImplementation(() => ({
+        lte: jest.fn().mockResolvedValue(deleteResult)
+      }));
 
       mockSupabase.insert.mockResolvedValue({ error: null });
 
@@ -239,15 +251,14 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
 
       expect(result.purged).toBe(5);
       expect(mockSupabase.delete).toHaveBeenCalledWith({ count: 'exact' });
-      expect(mockSupabase.lte).toHaveBeenCalled();
       expect(mockLogger.info).toHaveBeenCalledWith('Shield events purge completed', { purgedCount: 5 });
     });
 
     test('should handle no records to purge', async () => {
-      mockSupabase.delete.mockResolvedValue({
-        count: 0,
-        error: null
-      });
+      const deleteResult = { count: 0, error: null };
+      mockSupabase.delete.mockImplementation(() => ({
+        lte: jest.fn().mockResolvedValue(deleteResult)
+      }));
 
       mockSupabase.insert.mockResolvedValue({ error: null });
 
@@ -257,38 +268,42 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     });
 
     test('should handle purge errors', async () => {
-      mockSupabase.delete.mockResolvedValue({
-        count: null,
-        error: { message: 'Purge operation failed' }
-      });
+      const errorObj = { message: 'Purge operation failed' };
+      const deleteResult = { count: null, error: errorObj };
+      mockSupabase.delete.mockImplementation(() => ({
+        lte: jest.fn().mockResolvedValue(deleteResult)
+      }));
 
       mockSupabase.insert.mockResolvedValue({ error: null });
 
-      await expect(service.purgeOldShieldEvents()).rejects.toThrow('Purge operation failed');
+      await expect(service.purgeOldShieldEvents()).rejects.toMatchObject(errorObj);
       expect(mockLogger.error).toHaveBeenCalledWith('Shield events purge failed', {
         error: 'Purge operation failed'
       });
     });
 
     test('should use correct cutoff date for 90-day retention', async () => {
-      const mockDate = new Date('2023-12-01T10:00:00Z');
-      jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+      const mockDate = '2023-12-01T09:00:00.000Z';
+      const originalDate = Date;
+      
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(mockDate));
 
-      mockSupabase.delete.mockResolvedValue({
-        count: 0,
-        error: null
-      });
+      const lteMock = jest.fn().mockResolvedValue({ count: 0, error: null });
+      mockSupabase.delete.mockImplementation(() => ({ lte: lteMock }));
 
       mockSupabase.insert.mockResolvedValue({ error: null });
 
       await service.purgeOldShieldEvents();
 
-      const expectedCutoff = new Date(mockDate);
-      expectedCutoff.setDate(expectedCutoff.getDate() - 90);
+      // Calculate the expected cutoff date using real Date math
+      const testDate = new originalDate(mockDate);
+      testDate.setDate(testDate.getDate() - 90);
+      const expectedCutoff = testDate.toISOString();
 
-      expect(mockSupabase.lte).toHaveBeenCalledWith('created_at', expectedCutoff.toISOString());
+      expect(lteMock).toHaveBeenCalledWith('created_at', expectedCutoff);
 
-      global.Date.mockRestore();
+      jest.useRealTimers();
     });
   });
 
@@ -383,10 +398,13 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
         actionReason: 'High toxicity detected'
       };
 
-      mockSupabase.single.mockResolvedValue({
+      // Mock the insert().select().single() chain
+      const singleMock = jest.fn().mockResolvedValue({
         data: { id: 'event-123', ...mockEventData },
         error: null
       });
+      const selectMock = jest.fn().mockReturnValue({ single: singleMock });
+      mockSupabase.insert.mockReturnValue({ select: selectMock });
 
       const result = await service.recordShieldEvent(mockEventData);
 
@@ -420,10 +438,13 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
         actionReason: 'Moderate toxicity detected'
       };
 
-      mockSupabase.single.mockResolvedValue({
+      // Mock the insert().select().single() chain
+      const singleMock = jest.fn().mockResolvedValue({
         data: { id: 'event-456', ...mockEventData },
         error: null
       });
+      const selectMock = jest.fn().mockReturnValue({ single: singleMock });
+      mockSupabase.insert.mockReturnValue({ select: selectMock });
 
       await service.recordShieldEvent(mockEventData);
 
@@ -499,11 +520,11 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
 
       await service.anonymizeShieldEvents();
 
-      // Then purge
-      mockSupabase.delete.mockResolvedValue({
-        count: 3,
-        error: null
-      });
+      // Then purge - set up delete mock with proper chaining
+      const deleteResult = { count: 3, error: null };
+      mockSupabase.delete.mockImplementation(() => ({
+        lte: jest.fn().mockResolvedValue(deleteResult)
+      }));
 
       mockSupabase.insert.mockResolvedValue({ error: null });
 

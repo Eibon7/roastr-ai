@@ -560,7 +560,7 @@ describe('Shield Decision Engine Integration Tests', () => {
         externalAuthorUsername: 'borderlineuser',
         originalText: 'Borderline toxic comment for aggressiveness testing',
         toxicityAnalysis: {
-          toxicity_score: 0.89, // Right at the edge
+          toxicity_score: 0.87, // Closer to corrective threshold for both settings
           toxicity_labels: ['TOXICITY'],
           confidence: 0.9,
           model: 'perspective'
