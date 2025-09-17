@@ -209,7 +209,7 @@ describe('ShieldDecisionEngine', () => {
       expect(decision.suggestedActions).toContain('hide_comment');
     });
 
-    test('should escalate first-time offender to high action based on recidivism adjustment', async () => {
+    test('should escalate repeat offender to critical based on recidivism adjustment', async () => {
       const moderateToxicityInput = {
         ...mockInput,
         toxicityAnalysis: {
@@ -475,6 +475,17 @@ describe('ShieldDecisionEngine', () => {
       expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(2);
     });
 
+    test('should not reuse cache across platforms for same externalCommentId', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({ isRecidivist: false });
+      const base = { ...mockInput, externalCommentId: 'same-id' };
+      const twitterDecision = await engine.makeDecision({ ...base, platform: 'twitter' });
+      const discordDecision = await engine.makeDecision({ ...base, platform: 'discord' });
+      
+      // Should be different decision objects (not cached)
+      expect(twitterDecision).not.toBe(discordDecision);
+      expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(2);
+    });
+
     test('should clear cache successfully', () => {
       engine.clearCache();
       expect(engine.decisionCache.size).toBe(0);
@@ -495,8 +506,12 @@ describe('ShieldDecisionEngine', () => {
       expect(strictThresholds.high).toBeLessThan(lenientThresholds.high);
     });
 
-    test('should respect minimum threshold values', () => {
-      const veryLenientThresholds = engine.adjustThresholds(0.80);
+    test('should respect minimum threshold values and clamp aggressiveness', () => {
+      const veryLenientThresholds = engine.adjustThresholds(0.80); // will clamp to 0.90
+      const clampedThresholds = engine.adjustThresholds(0.90);
+      
+      // Should be identical since 0.80 gets clamped to 0.90
+      expect(veryLenientThresholds).toEqual(clampedThresholds);
       
       expect(veryLenientThresholds.critical).toBeGreaterThanOrEqual(0.9);
       expect(veryLenientThresholds.high).toBeGreaterThanOrEqual(0.85);
@@ -606,6 +621,17 @@ describe('ShieldDecisionEngine', () => {
       );
 
       expect(violation).toBe('keyword:idiot');
+    });
+
+    test('should not flag partial-word matches for keywords', () => {
+      const violation = engine.checkRedLineViolations(
+        ['INSULT'],
+        'insult',
+        { keywords: ['idiot'] },
+        'This is idiotic behavior',
+        0.7
+      );
+      expect(violation).toBeNull();
     });
 
     test('should detect threshold-based red line violations', () => {

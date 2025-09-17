@@ -62,6 +62,13 @@ module.exports = {
       lines: 80,
       statements: 80
     },
+    // Decision engine under Shield requires higher coverage
+    "src/services/shieldDecisionEngine.js": {
+      branches: 70,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    },
     // Analyze toxicity worker requires coverage
     "src/workers/analyzeToxicity.js": {
       branches: 60,

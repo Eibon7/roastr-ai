@@ -222,6 +222,15 @@ class ShieldDecisionEngine {
       externalAuthorId
     } = input;
     
+    // Normalize offender history to prevent TypeErrors
+    const history = {
+      isRecidivist: false,
+      totalOffenses: 0,
+      escalationLevel: 0,
+      averageToxicity: 0,
+      ...(offenderHistory || {})
+    };
+    
     // Adjust thresholds based on user aggressiveness
     const adjustedThresholds = this.adjustThresholds(userAggressiveness);
     
@@ -234,7 +243,7 @@ class ShieldDecisionEngine {
         severity: 'critical',
         toxicityScore,
         primaryCategory,
-        escalationLevel: this.calculateEscalationLevel(offenderHistory),
+        escalationLevel: this.calculateEscalationLevel(history),
         requiresHumanReview: true,
         autoExecute: !autoApprove,
         metadata: { redLineViolation, userDefined: true }
@@ -242,7 +251,7 @@ class ShieldDecisionEngine {
     }
     
     // Apply escalation based on recidivism
-    const escalationAdjustment = this.calculateRecidivismAdjustment(offenderHistory);
+    const escalationAdjustment = this.calculateRecidivismAdjustment(history);
     const adjustedScore = Math.min(1.0, toxicityScore + escalationAdjustment);
     
     // Critical threshold - immediate severe action
@@ -253,14 +262,14 @@ class ShieldDecisionEngine {
         severity: 'critical',
         toxicityScore: adjustedScore,
         primaryCategory,
-        escalationLevel: this.calculateEscalationLevel(offenderHistory),
+        escalationLevel: this.calculateEscalationLevel(history),
         requiresHumanReview: true,
         autoExecute: !autoApprove,
         suggestedActions: ['block_user', 'report_content', 'escalate_to_human'],
         metadata: { 
           originalScore: toxicityScore, 
           escalationAdjustment,
-          isRepeatOffender: offenderHistory.isRecidivist
+          isRepeatOffender: !!history.isRecidivist
         }
       });
     }
@@ -273,14 +282,14 @@ class ShieldDecisionEngine {
         severity: 'high',
         toxicityScore: adjustedScore,
         primaryCategory,
-        escalationLevel: this.calculateEscalationLevel(offenderHistory),
+        escalationLevel: this.calculateEscalationLevel(history),
         requiresHumanReview: false,
         autoExecute: !autoApprove,
-        suggestedActions: this.getSuggestedActions('high', primaryCategory, offenderHistory),
+        suggestedActions: this.getSuggestedActions('high', primaryCategory, history),
         metadata: { 
           originalScore: toxicityScore, 
           escalationAdjustment,
-          isRepeatOffender: offenderHistory.isRecidivist
+          isRepeatOffender: !!history.isRecidivist
         }
       });
     }
@@ -307,7 +316,7 @@ class ShieldDecisionEngine {
     
     // Corrective threshold - first strike with guidance
     if (adjustedScore >= adjustedThresholds.corrective) {
-      const correctiveMessage = this.selectCorrectiveMessage(primaryCategory, offenderHistory);
+      const correctiveMessage = this.selectCorrectiveMessage(primaryCategory, history);
       
       return this.createDecision({
         action: 'corrective_zone',
@@ -323,7 +332,7 @@ class ShieldDecisionEngine {
         metadata: { 
           originalScore: toxicityScore,
           escalationAdjustment,
-          firstStrike: !offenderHistory.isRecidivist
+          firstStrike: !history.isRecidivist
         }
       });
     }
@@ -434,7 +443,7 @@ class ShieldDecisionEngine {
   /**
    * Get suggested actions based on severity and context
    */
-  getSuggestedActions(severity, primaryCategory, offenderHistory) {
+  getSuggestedActions(severity, primaryCategory, history) {
     const baseActions = {
       critical: ['block_user', 'report_content', 'escalate_to_human'],
       high: ['timeout_user', 'hide_comment', 'warn_user'],
@@ -450,7 +459,7 @@ class ShieldDecisionEngine {
     }
     
     // Add recidivism-based escalations
-    if (offenderHistory.isRecidivist && offenderHistory.totalOffenses >= 3) {
+    if (history.isRecidivist && history.totalOffenses >= 3) {
       if (!actions.includes('escalate_to_human')) {
         actions.push('escalate_to_human');
       }
@@ -462,7 +471,7 @@ class ShieldDecisionEngine {
   /**
    * Select appropriate corrective message
    */
-  selectCorrectiveMessage(primaryCategory, offenderHistory) {
+  selectCorrectiveMessage(primaryCategory, history) {
     // Choose message pool based on primary category
     let messagePool = this.correctiveMessages.general;
     
@@ -471,7 +480,7 @@ class ShieldDecisionEngine {
     }
     
     // For repeat offenders, use more direct messaging
-    if (offenderHistory.isRecidivist && offenderHistory.totalOffenses >= 2) {
+    if (history.isRecidivist && history.totalOffenses >= 2) {
       messagePool = this.correctiveMessages.harassment; // More firm tone
     }
     
@@ -593,10 +602,10 @@ class ShieldDecisionEngine {
           ...decision.metadata,
           decisionVersion: decision.version,
           offenderHistory: {
-            isRecidivist: offenderHistory.isRecidivist,
-            totalOffenses: offenderHistory.totalOffenses,
-            riskLevel: offenderHistory.riskLevel,
-            escalationLevel: offenderHistory.escalationLevel
+            isRecidivist: !!offenderHistory?.isRecidivist,
+            totalOffenses: offenderHistory?.totalOffenses || 0,
+            riskLevel: offenderHistory?.riskLevel || 'low',
+            escalationLevel: offenderHistory?.escalationLevel || 0
           }
         }
       };
@@ -658,7 +667,14 @@ class ShieldDecisionEngine {
    */
   updateConfiguration(newConfig) {
     if (newConfig.thresholds) {
-      this.thresholds = { ...this.thresholds, ...newConfig.thresholds };
+      this.thresholds = {
+        ...this.thresholds,
+        ...newConfig.thresholds,
+        toxicity: {
+          ...(this.thresholds.toxicity || {}),
+          ...(newConfig.thresholds.toxicity || {})
+        }
+      };
     }
     
     if (newConfig.correctiveMessages) {
