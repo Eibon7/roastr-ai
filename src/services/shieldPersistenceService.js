@@ -52,13 +52,15 @@ class ShieldPersistenceService {
     
     // Use HMAC-SHA256 with salt for secure hashing
     const secret = process.env.SHIELD_ANONYMIZATION_SECRET;
-    
+
     if (!secret) {
       if (process.env.NODE_ENV === 'production') {
         throw new Error('SHIELD_ANONYMIZATION_SECRET environment variable is required in production');
       }
-      // In non-production, use a deterministic fallback
-      const hash = crypto.createHash('sha256').update(originalText + salt).digest('hex');
+      // In non-production, use HMAC with deterministic fallback secret to match production behavior
+      const fallbackSecret = 'shield-dev-fallback-secret-do-not-use-in-production';
+      console.warn('⚠️  Using fallback secret for Shield anonymization in non-production environment');
+      const hash = crypto.createHmac('sha256', fallbackSecret).update(originalText + salt).digest('hex');
       return { hash, salt };
     }
     

@@ -12,6 +12,12 @@ class SecurityAuditLogger {
     this.maxRetries = 3;
     this.maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours
 
+    // Validate and store SECURITY_SALT at initialization to fail fast
+    this.securitySalt = process.env.SECURITY_SALT;
+    if (!this.securitySalt) {
+      throw new Error('SECURITY_SALT environment variable is required for security audit logging');
+    }
+
     // Start buffer flushing if enabled
     if (this.enabled) {
       this._flushIntervalId = setInterval(() => this.flushBuffer(), this.flushInterval);
@@ -178,14 +184,9 @@ class SecurityAuditLogger {
   hashIP(ip) {
     if (!ip || ip === 'unknown') return 'unknown';
 
-    // Validate SECURITY_SALT environment variable
-    const salt = process.env.SECURITY_SALT;
-    if (!salt) {
-      throw new Error('SECURITY_SALT environment variable is required for security audit logging');
-    }
-
+    // Use the pre-validated salt stored during initialization
     // Hash IP address for privacy while maintaining uniqueness
-    return crypto.createHash('sha256').update(ip + salt).digest('hex').substring(0, 16);
+    return crypto.createHash('sha256').update(ip + this.securitySalt).digest('hex').substring(0, 16);
   }
 
   sanitizeUserAgent(userAgent) {

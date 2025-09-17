@@ -103,9 +103,26 @@ class ModelAvailabilityService {
 
         try {
             logger.info('🔍 Checking OpenAI model availability...');
-            
-            // Get list of available models
-            const response = await this.openai.models.list();
+
+            // Get list of available models with timeout protection
+            const controller = new AbortController();
+            const timeoutMs = 10000; // 10 seconds timeout
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            let response;
+            try {
+                response = await this.openai.models.list({
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error(`OpenAI models.list() timed out after ${timeoutMs}ms`);
+                }
+                throw error;
+            }
+
             const availableModels = response.data.map(model => model.id);
             
             // Check specific models we're interested in

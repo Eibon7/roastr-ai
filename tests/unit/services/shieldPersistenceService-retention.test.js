@@ -9,31 +9,35 @@ const ShieldPersistenceService = require('../../../src/services/shieldPersistenc
 const crypto = require('crypto');
 
 // Create a more sophisticated Supabase mock that supports both chaining and promises
-const createQueryBuilderMock = () => ({
-  from: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  is: jest.fn().mockReturnThis(),
-  not: jest.fn().mockReturnThis(),
-  lte: jest.fn().mockReturnThis(),
-  gte: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  range: jest.fn().mockReturnThis(),
-  single: jest.fn().mockReturnThis(),
-  __setResult: function(result) {
-    this.__result = result;
-    return this;
-  },
-  then: jest.fn().mockImplementation(function(resolve) {
-    const result = this.__result || { data: null, error: null, count: 0 };
-    resolve(result);
-    return Promise.resolve(result);
-  })
-});
+const createQueryBuilderMock = () => {
+  const mock = {
+    from: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    insert: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
+    delete: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    is: jest.fn().mockReturnThis(),
+    not: jest.fn().mockReturnThis(),
+    lte: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    range: jest.fn().mockReturnThis(),
+    single: jest.fn().mockReturnThis(),
+    __setResult: function(result) {
+      this.__result = result;
+      return this;
+    },
+    then: jest.fn().mockImplementation(function(resolve) {
+      const result = this.__result || { data: null, error: null, count: 0 };
+      resolve(result);
+      return Promise.resolve(result);
+    })
+  };
+
+  return mock;
+};
 
 const mockSupabase = createQueryBuilderMock();
 
@@ -115,7 +119,8 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
         { id: 'event-2', original_text: 'Test comment 2' }
       ];
 
-      mockSupabase.single.mockResolvedValueOnce({
+      // Set up the mock to return the records when the query chain is executed
+      mockSupabase.__setResult({
         data: mockRecords,
         error: null
       });
@@ -140,7 +145,8 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     });
 
     test('should handle no records to anonymize', async () => {
-      mockSupabase.single.mockResolvedValueOnce({
+      // Set up the mock to return empty array when no records need anonymization
+      mockSupabase.__setResult({
         data: [],
         error: null
       });
@@ -172,7 +178,8 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
         { id: 'event-2', original_text: 'Test comment 2' }
       ];
 
-      mockSupabase.single.mockResolvedValueOnce({
+      // Set up the mock to return records for partial failure test
+      mockSupabase.__setResult({
         data: mockRecords,
         error: null
       });
@@ -202,7 +209,8 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
       const mockDate = new Date('2023-12-01T10:00:00Z');
       jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
 
-      mockSupabase.single.mockResolvedValueOnce({
+      // Set up the mock to return empty array for cutoff date test
+      mockSupabase.__setResult({
         data: [],
         error: null
       });
@@ -460,7 +468,8 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
         { id: 'event-2', original_text: 'Offensive comment 2' }
       ];
 
-      mockSupabase.single.mockResolvedValueOnce({
+      // Set up the mock to return records for integration test
+      mockSupabase.__setResult({
         data: mockRecords,
         error: null
       });
@@ -482,7 +491,8 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
 
     test('should handle full purge workflow after anonymization', async () => {
       // First anonymize
-      mockSupabase.single.mockResolvedValueOnce({
+      // Set up the mock to return empty array for purge workflow test
+      mockSupabase.__setResult({
         data: [],
         error: null
       });
