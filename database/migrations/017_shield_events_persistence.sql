@@ -166,9 +166,9 @@ CREATE INDEX idx_shield_events_toxicity_score ON shield_events(toxicity_score) W
 CREATE INDEX idx_shield_events_action_status ON shield_events(action_status);
 CREATE INDEX idx_shield_events_org_created ON shield_events(organization_id, created_at DESC);
 
--- GDPR retention indexes (enhanced with runtime checks)
+-- GDPR retention indexes (optimized for GDPR queries)
 CREATE INDEX idx_shield_events_anonymized_at ON shield_events(anonymized_at) WHERE anonymized_at IS NULL;
-CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL AND scheduled_purge_at <= NOW();
+CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL;
 
 -- Offender profiles indexes - improved composite indexes for better query performance
 CREATE INDEX idx_offender_profiles_org_platform_severity ON offender_profiles(organization_id, platform, severity_level);

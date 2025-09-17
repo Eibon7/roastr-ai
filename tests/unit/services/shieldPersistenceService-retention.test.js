@@ -8,9 +8,12 @@
 const ShieldPersistenceService = require('../../../src/services/shieldPersistenceService');
 const crypto = require('crypto');
 
-// Create a more sophisticated Supabase mock that supports both chaining and promises
+// Create a sophisticated Supabase mock with response queue system
 const createQueryBuilderMock = () => {
+  let responseQueue = [];
+  
   const mock = {
+    // Query builder methods (chainable)
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     insert: jest.fn().mockReturnThis(),
@@ -25,18 +28,51 @@ const createQueryBuilderMock = () => {
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
+    
+    // Response queue management
+    __queueResponse: function(result) {
+      responseQueue.push(result);
+      return this;
+    },
     __setResult: function(result) {
       this.__result = result;
       return this;
     },
-    then: jest.fn().mockImplementation(function(resolve) {
-      const result = this.__result || { data: null, error: null, count: 0 };
-      resolve(result);
-      return Promise.resolve(result);
+    __clearQueue: function() {
+      responseQueue = [];
+      return this;
+    },
+    
+    // Promise implementation for terminal operations
+    then: jest.fn().mockImplementation(function(resolve, reject) {
+      try {
+        // Use queued response if available, otherwise fallback to __result
+        const result = responseQueue.length > 0 
+          ? responseQueue.shift() 
+          : (this.__result || { data: null, error: null, count: 0 });
+        
+        if (resolve) {
+          return Promise.resolve(resolve(result));
+        }
+        return Promise.resolve(result);
+      } catch (error) {
+        if (reject) {
+          return Promise.reject(reject(error));
+        }
+        return Promise.reject(error);
+      }
     }),
-    // Add promise-like behavior for await syntax
-    catch: jest.fn().mockReturnThis(),
-    finally: jest.fn().mockReturnThis()
+    
+    // Promise-like methods
+    catch: jest.fn().mockImplementation(function(onRejected) {
+      return this.then(null, onRejected);
+    }),
+    finally: jest.fn().mockImplementation(function(onFinally) {
+      return this.then(
+        (value) => { onFinally(); return value; },
+        (reason) => { onFinally(); throw reason; }
+      );
+    })
   };
 
   return mock;

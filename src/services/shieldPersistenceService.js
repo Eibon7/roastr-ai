@@ -650,39 +650,56 @@ class ShieldPersistenceService {
       const day80Ago = new Date(now.getTime() - 80 * 24 * 60 * 60 * 1000);
       const day90Ago = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
       
-      // Count records by retention status (privacy-conscious: no text fields)
-      const { data: retentionStats, error: statsError } = await this.supabase
-        .from('shield_events')
-        .select(`
-          created_at,
-          anonymized_at
-        `, { count: 'exact' })
-        .eq('organization_id', organizationId);
+      // Optimize retention stats using server-side aggregation to avoid full-table scans
+      const [totalResult, needingPurgeResult, needingAnonymizationResult, anonymizedResult] = await Promise.all([
+        // Total count
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId),
+        
+        // Records needing purge (older than 90 days)
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId)
+          .lte('created_at', day90Ago.toISOString()),
+        
+        // Records needing anonymization (80+ days old, not anonymized, has original text)
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId)
+          .lte('created_at', day80Ago.toISOString())
+          .is('anonymized_at', null)
+          .not('original_text', 'is', null),
+        
+        // Records already anonymized
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId)
+          .not('anonymized_at', 'is', null)
+      ]);
       
-      if (statsError) throw statsError;
+      // Check for errors
+      if (totalResult.error) throw totalResult.error;
+      if (needingPurgeResult.error) throw needingPurgeResult.error;
+      if (needingAnonymizationResult.error) throw needingAnonymizationResult.error;
+      if (anonymizedResult.error) throw anonymizedResult.error;
+      
+      const total = totalResult.count || 0;
+      const needingPurge = needingPurgeResult.count || 0;
+      const needingAnonymization = needingAnonymizationResult.count || 0;
+      const anonymized = anonymizedResult.count || 0;
       
       const stats = {
-        total: retentionStats?.length || 0,
-        needingAnonymization: 0,
-        anonymized: 0,
-        needingPurge: 0,
-        withinRetention: 0
+        total,
+        needingAnonymization,
+        anonymized,
+        needingPurge,
+        withinRetention: Math.max(0, total - needingPurge - anonymized)
       };
-      
-      retentionStats?.forEach(record => {
-        const createdAt = new Date(record.created_at);
-        const daysSinceCreation = (now - createdAt) / (1000 * 60 * 60 * 24);
-        
-        if (daysSinceCreation >= 90) {
-          stats.needingPurge++;
-        } else if (daysSinceCreation >= 80 && !record.anonymized_at) {
-          stats.needingAnonymization++;
-        } else if (record.anonymized_at) {
-          stats.anonymized++;
-        } else {
-          stats.withinRetention++;
-        }
-      });
       
       // Get recent retention log entries (admin-only, global scope)
       const { data: recentLogs, error: logsError } = await this.supabase

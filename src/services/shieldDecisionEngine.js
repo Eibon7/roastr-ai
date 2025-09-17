@@ -59,7 +59,7 @@ class ShieldDecisionEngine {
       ]
     };
     
-    // Decision cache for idempotency with size management
+    // Decision cache for idempotency with LRU eviction
     this.decisionCache = new Map();
     this.cacheMaxSize = config.cacheMaxSize || 1000; // Prevent memory bloat
     this.cacheEvictionBatchSize = config.cacheEvictionBatchSize || 100;
@@ -91,8 +91,13 @@ class ShieldDecisionEngine {
       // Ensure idempotency - check if decision already made
       const cacheKey = this.generateCacheKey(organizationId, externalCommentId, platform, accountRef);
       if (this.decisionCache.has(cacheKey)) {
+        // LRU: Move to end by re-inserting (deleting and setting again)
+        const cachedDecision = this.decisionCache.get(cacheKey);
+        this.decisionCache.delete(cacheKey);
+        this.decisionCache.set(cacheKey, cachedDecision);
+        
         this.logger.debug('Returning cached decision', { organizationId, externalCommentId, platform, accountRef });
-        return this.decisionCache.get(cacheKey);
+        return cachedDecision;
       }
       
       const startTime = Date.now();
@@ -377,10 +382,16 @@ class ShieldDecisionEngine {
       // Normalize categories to lowercase for comparison
       const normalizedRedLineCategories = userRedLines.categories.map(cat => cat.toLowerCase());
       
+      // Check all toxicity labels
       for (const category of toxicityLabels) {
         if (normalizedRedLineCategories.includes(category.toLowerCase())) {
           return `category:${category}`;
         }
+      }
+      
+      // Also check primary category if provided
+      if (primaryCategory && normalizedRedLineCategories.includes(primaryCategory.toLowerCase())) {
+        return `category:${primaryCategory}`;
       }
     }
     
@@ -421,13 +432,26 @@ class ShieldDecisionEngine {
    * Calculate recidivism adjustment to toxicity score
    */
   calculateRecidivismAdjustment(offenderHistory) {
-    if (!offenderHistory.isRecidivist) {
+    // Defensive defaults for incomplete history objects
+    const history = {
+      isRecidivist: false,
+      totalOffenses: 0,
+      escalationLevel: 0,
+      averageToxicity: 0,
+      maxToxicity: 0,
+      riskLevel: 'low',
+      lastOffenseAt: null,
+      recentActionsSummary: {},
+      ...offenderHistory
+    };
+    
+    if (!history.isRecidivist) {
       return 0; // No adjustment for first-time offenders
     }
     
-    const totalOffenses = offenderHistory.totalOffenses || 0;
-    const escalationLevel = offenderHistory.escalationLevel || 0;
-    const avgToxicity = offenderHistory.averageToxicity || 0;
+    const totalOffenses = history.totalOffenses || 0;
+    const escalationLevel = history.escalationLevel || 0;
+    const avgToxicity = history.averageToxicity || 0;
     
     // Base adjustment: 0.02 per offense (max 0.08)
     let adjustment = Math.min(0.08, totalOffenses * 0.02);
@@ -447,12 +471,25 @@ class ShieldDecisionEngine {
    * Calculate escalation level for decision
    */
   calculateEscalationLevel(offenderHistory) {
-    if (!offenderHistory.isRecidivist) {
+    // Defensive defaults for incomplete history objects
+    const history = {
+      isRecidivist: false,
+      totalOffenses: 0,
+      escalationLevel: 0,
+      averageToxicity: 0,
+      maxToxicity: 0,
+      riskLevel: 'low',
+      lastOffenseAt: null,
+      recentActionsSummary: {},
+      ...offenderHistory
+    };
+    
+    if (!history.isRecidivist) {
       return 0;
     }
     
-    const totalOffenses = offenderHistory.totalOffenses || 0;
-    const existingLevel = offenderHistory.escalationLevel || 0;
+    const totalOffenses = history.totalOffenses || 0;
+    const existingLevel = history.escalationLevel || 0;
     
     // Escalation levels: 0-5
     // 0: First offense
@@ -487,8 +524,9 @@ class ShieldDecisionEngine {
       actions.unshift('report_content');
     }
     
-    // Add recidivism-based escalations
-    if (history.isRecidivist && history.totalOffenses >= 3) {
+    // Add recidivism-based escalations (with defensive defaults)
+    const historyDefaults = { isRecidivist: false, totalOffenses: 0, ...history };
+    if (historyDefaults.isRecidivist && historyDefaults.totalOffenses >= 3) {
       if (!actions.includes('escalate_to_human')) {
         actions.push('escalate_to_human');
       }
@@ -501,6 +539,13 @@ class ShieldDecisionEngine {
    * Select appropriate corrective message
    */
   selectCorrectiveMessage(primaryCategory, history) {
+    // Defensive defaults for incomplete history objects
+    const historyDefaults = { 
+      isRecidivist: false, 
+      totalOffenses: 0, 
+      ...history 
+    };
+    
     // Choose message pool based on primary category
     let messagePool = this.correctiveMessages.general;
     
@@ -509,8 +554,14 @@ class ShieldDecisionEngine {
     }
     
     // For repeat offenders, use more direct messaging
-    if (history.isRecidivist && history.totalOffenses >= 2) {
+    if (historyDefaults.isRecidivist && historyDefaults.totalOffenses >= 2) {
       messagePool = this.correctiveMessages.harassment; // More firm tone
+    }
+    
+    // Guard against empty message pools
+    if (!messagePool || messagePool.length === 0) {
+      this.logger.warn('Empty corrective message pool', { primaryCategory });
+      return 'Su comportamiento no es apropiado. Por favor, mantenga un tono respetuoso.';
     }
     
     // Select random message from pool
@@ -683,20 +734,22 @@ class ShieldDecisionEngine {
   }
   
   /**
-   * Evict oldest cache entries when cache is full
+   * Evict LRU (Least Recently Used) cache entries when cache is full
    */
   evictOldestCacheEntries() {
     const entriesToRemove = this.cacheEvictionBatchSize;
     const keys = Array.from(this.decisionCache.keys());
     
-    // Remove oldest entries (Map maintains insertion order)
+    // In Map, insertion order = last used order (due to LRU re-insertion)
+    // So first entries are least recently used
     for (let i = 0; i < entriesToRemove && i < keys.length; i++) {
       this.decisionCache.delete(keys[i]);
     }
     
-    this.logger.debug('Evicted cache entries', {
+    this.logger.debug('Evicted LRU cache entries', {
       evicted: Math.min(entriesToRemove, keys.length),
-      newSize: this.decisionCache.size
+      newSize: this.decisionCache.size,
+      cacheMaxSize: this.cacheMaxSize
     });
   }
   
@@ -723,22 +776,34 @@ class ShieldDecisionEngine {
   }
   
   /**
-   * Update configuration
+   * Deep merge objects to prevent data loss
+   */
+  deepMerge(target, source) {
+    if (!source || typeof source !== 'object') return target;
+    if (!target || typeof target !== 'object') return source;
+    
+    const result = { ...target };
+    
+    for (const key in source) {
+      if (source.hasOwnProperty(key)) {
+        if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
+          result[key] = this.deepMerge(result[key] || {}, source[key]);
+        } else {
+          result[key] = source[key];
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Update configuration with deep merge to prevent data loss
    */
   updateConfiguration(newConfig) {
     if (newConfig.thresholds) {
-      // Deep merge thresholds to prevent data loss
-      if (newConfig.thresholds.toxicity) {
-        this.thresholds.toxicity = {
-          ...this.thresholds.toxicity,
-          ...newConfig.thresholds.toxicity
-        };
-      }
-      
-      // Update other threshold properties
-      if (newConfig.thresholds.aggressiveness !== undefined) {
-        this.thresholds.aggressiveness = newConfig.thresholds.aggressiveness;
-      }
+      // Deep merge thresholds to prevent dropping existing keys
+      this.thresholds = this.deepMerge(this.thresholds, newConfig.thresholds);
     }
     
     if (newConfig.correctiveMessages) {
