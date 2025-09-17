@@ -369,10 +369,13 @@ class ShieldDecisionEngine {
    * Check user-defined red line violations
    */
   checkRedLineViolations(toxicityLabels, primaryCategory, userRedLines, originalText = '', toxicityScore = 0) {
-    // Check category-specific red lines
+    // Check category-specific red lines (case-insensitive)
     if (userRedLines.categories) {
+      // Normalize categories to lowercase for comparison
+      const normalizedRedLineCategories = userRedLines.categories.map(cat => cat.toLowerCase());
+      
       for (const category of toxicityLabels) {
-        if (userRedLines.categories.includes(category)) {
+        if (normalizedRedLineCategories.includes(category.toLowerCase())) {
           return `category:${category}`;
         }
       }
@@ -663,7 +666,20 @@ class ShieldDecisionEngine {
    */
   generateCacheKey(organizationId, externalCommentId, platform = '', accountRef = '') {
     // Use HMAC with secret to prevent cross-platform ID collisions
-    const secret = process.env.IDEMPOTENCY_SECRET || 'default-idempotency-secret-please-change';
+    const secret = process.env.IDEMPOTENCY_SECRET;
+    
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('IDEMPOTENCY_SECRET environment variable is required in production');
+      }
+      // In non-production, use a deterministic fallback with warning
+      if (this.logger) {
+        this.logger.warn('Using fallback cache key generation - set IDEMPOTENCY_SECRET for production');
+      }
+      const keyData = `${organizationId}:${platform}:${accountRef}:${externalCommentId}`;
+      return crypto.createHash('sha256').update(keyData).digest('hex');
+    }
+    
     const keyData = `${organizationId}:${platform}:${accountRef}:${externalCommentId}`;
     
     return crypto

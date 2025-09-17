@@ -8,6 +8,12 @@ process.env.ENABLE_MOCK_MODE = 'true';
 process.env.NODE_ENV = 'test';
 process.env.SKIP_E2E = 'true';
 
+// Set required environment variables for smoke tests
+process.env.SUPABASE_URL = 'http://localhost:54321';
+process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
+process.env.SUPABASE_ANON_KEY = 'test-anon-key';
+process.env.GDPR_HMAC_PEPPER = 'test-pepper-for-smoke-tests';
+
 // Initialize mock mode system
 const { mockMode } = require('../src/config/mockMode');
 

@@ -51,7 +51,17 @@ class ShieldPersistenceService {
     const salt = crypto.randomBytes(16).toString('hex');
     
     // Use HMAC-SHA256 with salt for secure hashing
-    const secret = process.env.SHIELD_ANONYMIZATION_SECRET || 'default-shield-secret-please-change';
+    const secret = process.env.SHIELD_ANONYMIZATION_SECRET;
+    
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('SHIELD_ANONYMIZATION_SECRET environment variable is required in production');
+      }
+      // In non-production, use a deterministic fallback
+      const hash = crypto.createHash('sha256').update(originalText + salt).digest('hex');
+      return { hash, salt };
+    }
+    
     const hmac = crypto.createHmac('sha256', secret);
     hmac.update(originalText + salt);
     const hash = hmac.digest('hex');
@@ -282,8 +292,7 @@ class ShieldPersistenceService {
   async updateShieldEventStatus(eventId, status, executedAt = null, actionDetails = null) {
     try {
       const updateData = {
-        action_status: status,
-        updated_at: new Date().toISOString()
+        action_status: status
       };
       
       if (executedAt) {

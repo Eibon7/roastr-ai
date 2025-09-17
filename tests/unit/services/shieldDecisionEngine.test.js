@@ -38,9 +38,14 @@ const mockPersistenceService = {
 describe('ShieldDecisionEngine', () => {
   let engine;
   let mockInput;
+  let originalEnv;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Save original environment and set test mode
+    originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
     
     engine = new ShieldDecisionEngine({
       supabase: mockSupabase,
@@ -80,6 +85,11 @@ describe('ShieldDecisionEngine', () => {
         source: 'test'
       }
     };
+  });
+
+  afterEach(() => {
+    // Restore original environment
+    process.env.NODE_ENV = originalEnv;
   });
 
   describe('constructor', () => {
@@ -611,6 +621,16 @@ describe('ShieldDecisionEngine', () => {
       );
 
       expect(violation).toBe('category:THREAT');
+    });
+
+    test('should detect category-based red line violations case-insensitively', () => {
+      const violation = engine.checkRedLineViolations(
+        ['threat', 'toxicity'],
+        'threat',
+        { categories: ['THREAT', 'HARASSMENT'] }
+      );
+
+      expect(violation).toBe('category:threat');
     });
 
     test('should detect keyword-based red line violations', () => {
