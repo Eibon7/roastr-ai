@@ -14,6 +14,12 @@ const PLAN_IDS = {
   CUSTOM: 'custom'
 };
 
+// Valid plan arrays for different contexts
+const VALID_PLANS = {
+  ALL: ['free', 'basic', 'starter', 'pro', 'plus', 'creator_plus', 'custom'],
+  ADMIN_ASSIGNABLE: ['free', 'basic', 'pro', 'plus', 'creator_plus']
+};
+
 // Stripe price lookup key to plan ID mapping
 const STRIPE_PLAN_MAPPINGS = {
   'plan_free': PLAN_IDS.FREE,
@@ -64,29 +70,42 @@ function normalizePlanId(planId) {
     return PLAN_IDS.FREE;
   }
   
-  const normalized = planId.toLowerCase();
+  const normalized = planId.toLowerCase().trim();
   
-  // Direct mapping
-  if (Object.values(PLAN_IDS).includes(normalized)) {
-    return normalized;
+  // Handle variations
+  switch (normalized) {
+    case 'free':
+    case 'gratuito':
+      return PLAN_IDS.FREE;
+    case 'pro':
+    case 'professional':
+      return PLAN_IDS.PRO;
+    case 'plus':
+    case 'premium':
+      return PLAN_IDS.PLUS;
+    case 'creator_plus':
+    case 'creator':
+    case 'creatorplus':
+      return PLAN_IDS.CREATOR_PLUS;
+    case 'basic':
+    case 'basico':
+      return PLAN_IDS.BASIC;
+    default:
+      return PLAN_IDS.FREE;
   }
-  
-  // Legacy mappings
-  const legacyMappings = {
-    'basic': PLAN_IDS.FREE,
-    'creator_plus': PLAN_IDS.PLUS
-  };
-  
-  return legacyMappings[normalized] || PLAN_IDS.FREE;
 }
 
 /**
  * Check if plan is valid
  * @param {string} planId - Plan ID to validate
+ * @param {string} type - Validation type ('all' or 'admin_assignable')
  * @returns {boolean} - True if valid
  */
-function isValidPlan(planId) {
-  return Object.values(PLAN_IDS).includes(normalizePlanId(planId));
+function isValidPlan(planId, type = 'all') {
+  if (type === 'admin_assignable') {
+    return VALID_PLANS.ADMIN_ASSIGNABLE.includes(planId);
+  }
+  return VALID_PLANS.ALL.includes(planId);
 }
 
 /**
@@ -136,6 +155,7 @@ function isDowngrade(currentPlan, newPlan) {
 
 module.exports = {
   PLAN_IDS,
+  VALID_PLANS,
   STRIPE_PLAN_MAPPINGS,
   PLAN_HIERARCHY,
   getPlanFromStripeLookupKey,

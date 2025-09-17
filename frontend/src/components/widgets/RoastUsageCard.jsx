@@ -124,7 +124,7 @@ export default function RoastUsageCard({ user, className = '' }) {
     <div className={`usage-card-roast flex items-center justify-between p-4 h-24 flex-shrink-0 ${isSidebarVisible ? 'w-96' : 'w-full'} ${className}`}>
       <div>
         <h3 className="text-base font-bold mb-1">Roast usage</h3>
-        <p className="text-sm opacity-70">
+        <p className="text-sm text-muted-foreground">
           {roastUsed.toLocaleString()}/{roastLimit === -1 ? '∞' : roastLimit.toLocaleString()} roasts
         </p>
       </div>
