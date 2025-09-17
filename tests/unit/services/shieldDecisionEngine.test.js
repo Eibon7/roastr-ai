@@ -1,0 +1,752 @@
+/**
+ * Unit Tests for Shield Decision Engine
+ * 
+ * Tests all decision branches, corrective zones, recidivism logic,
+ * idempotency mechanisms, and integration with persistence service.
+ */
+
+const ShieldDecisionEngine = require('../../../src/services/shieldDecisionEngine');
+
+// Mock Supabase
+const mockSupabase = {
+  from: jest.fn().mockReturnThis(),
+  select: jest.fn().mockReturnThis(),
+  insert: jest.fn().mockReturnThis(),
+  update: jest.fn().mockReturnThis(),
+  eq: jest.fn().mockReturnThis(),
+  gte: jest.fn().mockReturnThis(),
+  lte: jest.fn().mockReturnThis(),
+  order: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  single: jest.fn()
+};
+
+// Mock logger
+const mockLogger = {
+  info: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn()
+};
+
+// Mock persistence service
+const mockPersistenceService = {
+  getOffenderHistory: jest.fn(),
+  recordShieldEvent: jest.fn()
+};
+
+describe('ShieldDecisionEngine', () => {
+  let engine;
+  let mockInput;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    engine = new ShieldDecisionEngine({
+      supabase: mockSupabase,
+      logger: mockLogger,
+      persistenceService: mockPersistenceService,
+      criticalThreshold: 0.98,
+      highThreshold: 0.95,
+      moderateThreshold: 0.90,
+      correctiveThreshold: 0.85,
+      aggressiveness: 0.95
+    });
+    
+    // Clear cache between tests
+    engine.clearCache();
+    
+    mockInput = {
+      organizationId: 'org-123',
+      userId: 'user-456',
+      platform: 'twitter',
+      accountRef: '@testorg',
+      externalCommentId: 'comment-789',
+      externalAuthorId: 'author-123',
+      externalAuthorUsername: 'toxicuser',
+      originalText: 'This is a test comment',
+      toxicityAnalysis: {
+        toxicity_score: 0.7,
+        toxicity_labels: ['TOXICITY'],
+        confidence: 0.9,
+        model: 'perspective'
+      },
+      userConfiguration: {
+        aggressiveness: 0.95,
+        autoApprove: false,
+        redLines: {}
+      },
+      metadata: {
+        source: 'test'
+      }
+    };
+  });
+
+  describe('constructor', () => {
+    test('should initialize with default configuration', () => {
+      const defaultEngine = new ShieldDecisionEngine();
+      
+      expect(defaultEngine.thresholds.toxicity.critical).toBe(0.98);
+      expect(defaultEngine.thresholds.toxicity.high).toBe(0.95);
+      expect(defaultEngine.thresholds.toxicity.moderate).toBe(0.90);
+      expect(defaultEngine.thresholds.toxicity.corrective).toBe(0.85);
+      expect(defaultEngine.thresholds.aggressiveness).toBe(0.95);
+    });
+
+    test('should accept custom threshold configuration', () => {
+      const customEngine = new ShieldDecisionEngine({
+        criticalThreshold: 0.99,
+        highThreshold: 0.92,
+        moderateThreshold: 0.88,
+        correctiveThreshold: 0.80,
+        aggressiveness: 0.90
+      });
+      
+      expect(customEngine.thresholds.toxicity.critical).toBe(0.99);
+      expect(customEngine.thresholds.toxicity.high).toBe(0.92);
+      expect(customEngine.thresholds.toxicity.moderate).toBe(0.88);
+      expect(customEngine.thresholds.toxicity.corrective).toBe(0.80);
+      expect(customEngine.thresholds.aggressiveness).toBe(0.90);
+    });
+
+    test('should have corrective message pools for different categories', () => {
+      expect(engine.correctiveMessages.general).toBeDefined();
+      expect(engine.correctiveMessages.insult).toBeDefined();
+      expect(engine.correctiveMessages.harassment).toBeDefined();
+      expect(engine.correctiveMessages.threat).toBeDefined();
+      
+      expect(engine.correctiveMessages.general.length).toBeGreaterThan(0);
+      expect(engine.correctiveMessages.insult.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('makeDecision - Critical Threshold', () => {
+    test('should return critical action for extremely high toxicity (>= 98%)', async () => {
+      const highToxicityInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.99,
+          toxicity_labels: ['SEVERE_TOXICITY', 'THREAT'],
+          confidence: 0.95
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(highToxicityInput);
+
+      expect(decision.action).toBe('shield_action_critical');
+      expect(decision.severity).toBe('critical');
+      expect(decision.requiresHumanReview).toBe(true);
+      expect(decision.autoExecute).toBe(true); // !autoApprove = !false = true
+      expect(decision.suggestedActions).toContain('block_user');
+      expect(decision.suggestedActions).toContain('report_content');
+      expect(decision.reason).toBe('Critical toxicity detected');
+    });
+
+    test('should escalate new user to critical based on red line violation', async () => {
+      const redLineInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.75, // Below critical threshold
+          toxicity_labels: ['THREAT'],
+          confidence: 0.9
+        },
+        userConfiguration: {
+          ...mockInput.userConfiguration,
+          redLines: {
+            categories: ['THREAT']
+          }
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(redLineInput);
+
+      expect(decision.action).toBe('shield_action_critical');
+      expect(decision.reason).toContain('User red line violated');
+      expect(decision.metadata.redLineViolation).toBe('category:THREAT');
+      expect(decision.metadata.userDefined).toBe(true);
+    });
+  });
+
+  describe('makeDecision - High Threshold', () => {
+    test('should return moderate Shield action for high toxicity (95-98%)', async () => {
+      const highToxicityInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.96,
+          toxicity_labels: ['TOXICITY', 'INSULT'],
+          confidence: 0.9
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(highToxicityInput);
+
+      expect(decision.action).toBe('shield_action_moderate');
+      expect(decision.severity).toBe('high');
+      expect(decision.requiresHumanReview).toBe(false);
+      expect(decision.autoExecute).toBe(true);
+      expect(decision.suggestedActions).toContain('timeout_user');
+      expect(decision.suggestedActions).toContain('hide_comment');
+    });
+
+    test('should escalate first-time offender to high action based on recidivism adjustment', async () => {
+      const moderateToxicityInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.93, // Close to high threshold
+          toxicity_labels: ['TOXICITY'],
+          confidence: 0.9
+        }
+      };
+
+      // Mock repeat offender with moderate escalation (should push it over to critical)
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: true,
+        totalOffenses: 5,
+        riskLevel: 'high',
+        escalationLevel: 3,
+        averageToxicity: 0.85
+      });
+
+      const decision = await engine.makeDecision(moderateToxicityInput);
+
+      expect(decision.action).toBe('shield_action_critical'); // Escalated due to recidivism
+      expect(decision.metadata.isRepeatOffender).toBe(true);
+      expect(decision.metadata.escalationAdjustment).toBeGreaterThan(0);
+      expect(decision.escalationLevel).toBe(3);
+    });
+  });
+
+  describe('makeDecision - Roastable Content', () => {
+    test('should identify roastable content (90-95%)', async () => {
+      const roastableInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.92,
+          toxicity_labels: ['TOXICITY'],
+          confidence: 0.9
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(roastableInput);
+
+      expect(decision.action).toBe('roastable_comment');
+      expect(decision.severity).toBe('moderate');
+      expect(decision.requiresHumanReview).toBe(false);
+      expect(decision.autoExecute).toBe(true);
+      expect(decision.suggestedActions).toContain('generate_roast');
+      expect(decision.suggestedActions).toContain('monitor_user');
+      expect(decision.metadata.roastingEnabled).toBe(true);
+    });
+
+    test('should classify as roastable even with slight recidivism adjustment', async () => {
+      const borderlineInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.89, // Just below roastable
+          toxicity_labels: ['TOXICITY'],
+          confidence: 0.9
+        }
+      };
+
+      // Small recidivism history to push it over the threshold
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: true,
+        totalOffenses: 2,
+        riskLevel: 'medium',
+        escalationLevel: 1,
+        averageToxicity: 0.7
+      });
+
+      const decision = await engine.makeDecision(borderlineInput);
+
+      expect(decision.action).toBe('roastable_comment');
+      expect(decision.metadata.escalationAdjustment).toBeGreaterThan(0);
+      expect(decision.toxicityScore).toBeGreaterThanOrEqual(0.90);
+    });
+  });
+
+  describe('makeDecision - Corrective Zone', () => {
+    test('should trigger corrective zone for moderate toxicity (85-90%)', async () => {
+      const correctiveInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.87,
+          toxicity_labels: ['TOXICITY'],
+          confidence: 0.9
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(correctiveInput);
+
+      expect(decision.action).toBe('corrective_zone');
+      expect(decision.severity).toBe('low');
+      expect(decision.requiresHumanReview).toBe(false);
+      expect(decision.autoExecute).toBe(true);
+      expect(decision.suggestedActions).toContain('send_corrective_message');
+      expect(decision.suggestedActions).toContain('track_behavior');
+      expect(decision.correctiveMessage).toBeDefined();
+      expect(typeof decision.correctiveMessage).toBe('string');
+      expect(decision.metadata.firstStrike).toBe(true);
+    });
+
+    test('should select appropriate corrective message based on category', async () => {
+      const insultInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.86,
+          toxicity_labels: ['INSULT'],
+          confidence: 0.9
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(insultInput);
+
+      expect(decision.action).toBe('corrective_zone');
+      expect(decision.correctiveMessage).toBeDefined();
+      // Message should come from insult-specific pool
+      expect(engine.correctiveMessages.insult).toContain(decision.correctiveMessage);
+    });
+
+    test('should use firmer corrective message for repeat offenders', async () => {
+      const repeatOffenderInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.83, // Lower score to stay in corrective zone even with adjustment
+          toxicity_labels: ['TOXICITY'],
+          confidence: 0.9
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: true,
+        totalOffenses: 2, // Lower offense count
+        riskLevel: 'medium',
+        escalationLevel: 1
+      });
+
+      const decision = await engine.makeDecision(repeatOffenderInput);
+
+      expect(decision.action).toBe('corrective_zone');
+      expect(decision.metadata.firstStrike).toBe(false);
+      expect(decision.correctiveMessage).toBeDefined();
+      // Should use harassment pool for firmer tone
+      expect(engine.correctiveMessages.harassment).toContain(decision.correctiveMessage);
+    });
+  });
+
+  describe('makeDecision - Publish Normal', () => {
+    test('should publish normal content below all thresholds', async () => {
+      const normalInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.3,
+          toxicity_labels: [],
+          confidence: 0.9
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(normalInput);
+
+      expect(decision.action).toBe('publish_normal');
+      expect(decision.severity).toBe('none');
+      expect(decision.primaryCategory).toBe('none');
+      expect(decision.requiresHumanReview).toBe(false);
+      expect(decision.autoExecute).toBe(true);
+      expect(decision.suggestedActions).toEqual([]);
+    });
+
+    test('should publish normal even for repeat offender with very low toxicity', async () => {
+      const lowToxicityInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.2,
+          toxicity_labels: [],
+          confidence: 0.9
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: true,
+        totalOffenses: 5,
+        riskLevel: 'high',
+        escalationLevel: 3
+      });
+
+      const decision = await engine.makeDecision(lowToxicityInput);
+
+      expect(decision.action).toBe('publish_normal');
+      expect(decision.toxicityScore).toBeLessThan(0.85); // Even with adjustment
+    });
+  });
+
+  describe('Idempotency', () => {
+    test('should return cached decision for same comment', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      mockPersistenceService.recordShieldEvent.mockResolvedValue({
+        id: 'event-123'
+      });
+
+      // First call
+      const decision1 = await engine.makeDecision(mockInput);
+      
+      // Second call with same org + comment ID should return cached result
+      const decision2 = await engine.makeDecision({
+        ...mockInput,
+        originalText: 'Different text' // Should be ignored due to cache
+      });
+
+      expect(decision1).toBe(decision2); // Same object reference
+      expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(1);
+      expect(mockLogger.debug).toHaveBeenCalledWith('Returning cached decision', {
+        organizationId: mockInput.organizationId,
+        externalCommentId: mockInput.externalCommentId
+      });
+    });
+
+    test('should generate different cache keys for different comments', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const input1 = { ...mockInput, externalCommentId: 'comment-1' };
+      const input2 = { ...mockInput, externalCommentId: 'comment-2' };
+
+      await engine.makeDecision(input1);
+      await engine.makeDecision(input2);
+
+      expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(2);
+    });
+
+    test('should clear cache successfully', () => {
+      engine.clearCache();
+      expect(engine.decisionCache.size).toBe(0);
+      expect(mockLogger.debug).toHaveBeenCalledWith('Decision cache cleared');
+    });
+  });
+
+  describe('Threshold Adjustment', () => {
+    test('should adjust thresholds based on aggressiveness setting', () => {
+      // Test lower aggressiveness (more lenient = higher thresholds needed to trigger)
+      const lenientThresholds = engine.adjustThresholds(0.90);
+      expect(lenientThresholds.critical).toBeGreaterThan(engine.thresholds.toxicity.critical);
+      expect(lenientThresholds.high).toBeGreaterThan(engine.thresholds.toxicity.high);
+      
+      // Test higher aggressiveness (stricter = lower thresholds to trigger more easily) 
+      const strictThresholds = engine.adjustThresholds(1.0);
+      expect(strictThresholds.critical).toBeLessThan(lenientThresholds.critical);
+      expect(strictThresholds.high).toBeLessThan(lenientThresholds.high);
+    });
+
+    test('should respect minimum threshold values', () => {
+      const veryLenientThresholds = engine.adjustThresholds(0.80);
+      
+      expect(veryLenientThresholds.critical).toBeGreaterThanOrEqual(0.9);
+      expect(veryLenientThresholds.high).toBeGreaterThanOrEqual(0.85);
+      expect(veryLenientThresholds.moderate).toBeGreaterThanOrEqual(0.8);
+      expect(veryLenientThresholds.corrective).toBeGreaterThanOrEqual(0.7);
+    });
+  });
+
+  describe('Recidivism Calculations', () => {
+    test('should calculate no adjustment for first-time offenders', () => {
+      const noHistory = {
+        isRecidivist: false,
+        totalOffenses: 0,
+        escalationLevel: 0,
+        averageToxicity: 0
+      };
+
+      const adjustment = engine.calculateRecidivismAdjustment(noHistory);
+      expect(adjustment).toBe(0);
+    });
+
+    test('should calculate escalating adjustments for repeat offenders', () => {
+      const lightOffender = {
+        isRecidivist: true,
+        totalOffenses: 2,
+        escalationLevel: 1,
+        averageToxicity: 0.6
+      };
+
+      const heavyOffender = {
+        isRecidivist: true,
+        totalOffenses: 5,
+        escalationLevel: 3,
+        averageToxicity: 0.9
+      };
+
+      const lightAdjustment = engine.calculateRecidivismAdjustment(lightOffender);
+      const heavyAdjustment = engine.calculateRecidivismAdjustment(heavyOffender);
+
+      expect(lightAdjustment).toBeGreaterThan(0);
+      expect(heavyAdjustment).toBeGreaterThan(lightAdjustment);
+      expect(heavyAdjustment).toBeLessThanOrEqual(0.12); // Cap at 0.12
+    });
+
+    test('should calculate escalation levels correctly', () => {
+      const escalation0 = engine.calculateEscalationLevel({ isRecidivist: false, totalOffenses: 0 });
+      const escalation1 = engine.calculateEscalationLevel({ isRecidivist: true, totalOffenses: 2 });
+      const escalation3 = engine.calculateEscalationLevel({ isRecidivist: true, totalOffenses: 6 });
+      const escalation5 = engine.calculateEscalationLevel({ isRecidivist: true, totalOffenses: 12 });
+
+      expect(escalation0).toBe(0);
+      expect(escalation1).toBe(1);
+      expect(escalation3).toBe(3);
+      expect(escalation5).toBe(5);
+    });
+  });
+
+  describe('Category and Action Logic', () => {
+    test('should determine primary category correctly', () => {
+      expect(engine.determinePrimaryCategory(['TOXICITY', 'INSULT'])).toBe('insult');
+      expect(engine.determinePrimaryCategory(['THREAT', 'TOXICITY'])).toBe('threat');
+      expect(engine.determinePrimaryCategory(['SPAM'])).toBe('spam');
+      expect(engine.determinePrimaryCategory([])).toBe('general');
+      expect(engine.determinePrimaryCategory(null)).toBe('general');
+    });
+
+    test('should get appropriate suggested actions for severity levels', () => {
+      const criticalActions = engine.getSuggestedActions('critical', 'threat', { isRecidivist: false });
+      const highActions = engine.getSuggestedActions('high', 'insult', { isRecidivist: true, totalOffenses: 4 });
+
+      expect(criticalActions).toContain('block_user');
+      expect(criticalActions).toContain('report_content');
+      expect(criticalActions).toContain('escalate_to_human');
+
+      expect(highActions).toContain('timeout_user');
+      expect(highActions).toContain('hide_comment');
+      expect(highActions).toContain('escalate_to_human'); // Added due to recidivism
+    });
+
+    test('should add category-specific actions', () => {
+      const threatActions = engine.getSuggestedActions('high', 'threat', { isRecidivist: false });
+      const harassmentActions = engine.getSuggestedActions('high', 'harassment', { isRecidivist: false });
+
+      expect(threatActions).toContain('report_content');
+      expect(harassmentActions).toContain('report_content');
+    });
+  });
+
+  describe('Red Line Violations', () => {
+    test('should detect category-based red line violations', () => {
+      const violation = engine.checkRedLineViolations(
+        ['THREAT', 'TOXICITY'],
+        'threat',
+        { categories: ['THREAT'] }
+      );
+
+      expect(violation).toBe('category:THREAT');
+    });
+
+    test('should detect keyword-based red line violations', () => {
+      const violation = engine.checkRedLineViolations(
+        ['INSULT'],
+        'insult',
+        { keywords: ['idiot', 'stupid'] },
+        'You are such an idiot and stupid person',
+        0.8
+      );
+
+      expect(violation).toBe('keyword:idiot');
+    });
+
+    test('should detect threshold-based red line violations', () => {
+      const violation = engine.checkRedLineViolations(
+        ['TOXICITY'],
+        'toxicity',
+        { toxicityThreshold: 0.85 },
+        'toxic comment',
+        0.88
+      );
+
+      expect(violation).toBe('threshold:0.85');
+    });
+
+    test('should return null when no red lines are violated', () => {
+      const violation = engine.checkRedLineViolations(
+        ['TOXICITY'],
+        'toxicity',
+        { categories: ['THREAT'], keywords: ['badword'], toxicityThreshold: 0.95 },
+        'normal comment',
+        0.5
+      );
+
+      expect(violation).toBeNull();
+    });
+  });
+
+  describe('Error Handling', () => {
+    test('should handle missing required fields', async () => {
+      const invalidInput = {
+        organizationId: 'org-123'
+        // Missing other required fields
+      };
+
+      await expect(engine.makeDecision(invalidInput)).rejects.toThrow('Missing required decision input fields');
+    });
+
+    test('should handle invalid toxicity analysis', async () => {
+      const invalidToxicityInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          // Missing toxicity_score
+          toxicity_labels: ['TOXICITY']
+        }
+      };
+
+      await expect(engine.makeDecision(invalidToxicityInput)).rejects.toThrow('Invalid toxicity analysis data');
+    });
+
+    test('should handle persistence service errors gracefully', async () => {
+      mockPersistenceService.getOffenderHistory.mockRejectedValue(new Error('Database error'));
+
+      await expect(engine.makeDecision(mockInput)).rejects.toThrow('Database error');
+      expect(mockLogger.error).toHaveBeenCalledWith('Decision engine failed', {
+        organizationId: mockInput.organizationId,
+        externalCommentId: mockInput.externalCommentId,
+        error: 'Database error'
+      });
+    });
+
+    test('should not fail decision when recording fails', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      mockPersistenceService.recordShieldEvent.mockRejectedValue(new Error('Recording failed'));
+
+      const roastableInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.91,
+          toxicity_labels: ['TOXICITY'],
+          confidence: 0.9
+        }
+      };
+
+      const decision = await engine.makeDecision(roastableInput);
+
+      expect(decision.action).toBe('roastable_comment');
+      expect(mockLogger.error).toHaveBeenCalledWith('Failed to record decision', expect.any(Object));
+    });
+  });
+
+  describe('Configuration and Statistics', () => {
+    test('should return decision statistics', () => {
+      const stats = engine.getDecisionStats();
+
+      expect(stats.cacheSize).toBe(0);
+      expect(stats.thresholds).toBeDefined();
+      expect(stats.correctiveMessagePools).toBeDefined();
+      expect(stats.correctiveMessagePools.general).toBeGreaterThan(0);
+      expect(stats.correctiveMessagePools.insult).toBeGreaterThan(0);
+    });
+
+    test('should update configuration', () => {
+      const newConfig = {
+        thresholds: {
+          aggressiveness: 0.98
+        },
+        correctiveMessages: {
+          custom: ['Custom corrective message']
+        }
+      };
+
+      engine.updateConfiguration(newConfig);
+
+      expect(engine.thresholds.aggressiveness).toBe(0.98);
+      expect(engine.correctiveMessages.custom).toEqual(['Custom corrective message']);
+      expect(mockLogger.info).toHaveBeenCalledWith('Decision engine configuration updated', expect.any(Object));
+    });
+  });
+
+  describe('Auto-Approve Override', () => {
+    test('should respect auto-approve setting for auto-execute', async () => {
+      const autoApproveInput = {
+        ...mockInput,
+        toxicityAnalysis: {
+          toxicity_score: 0.96, // High toxicity
+          toxicity_labels: ['TOXICITY'],
+          confidence: 0.9
+        },
+        userConfiguration: {
+          ...mockInput.userConfiguration,
+          autoApprove: true // Should disable auto-execute
+        }
+      };
+
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0,
+        riskLevel: 'low',
+        escalationLevel: 0
+      });
+
+      const decision = await engine.makeDecision(autoApproveInput);
+
+      expect(decision.action).toBe('shield_action_moderate');
+      expect(decision.autoExecute).toBe(false); // Should be false due to autoApprove: true
+    });
+  });
+});
