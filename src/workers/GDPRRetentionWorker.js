@@ -5,7 +5,7 @@ const crypto = require('crypto');
  * GDPR Retention Worker
  * 
  * Handles GDPR-compliant data retention for Shield events:
- * - Day 80: Anonymize original_text → SHA-256 hash + salt
+ * - Day 80: Anonymize original_text → HMAC-SHA-256 hash + salt
  * - Day 90: Purge original_text completely
  * - Cleanup old offender profiles beyond 90 days
  */
@@ -18,8 +18,24 @@ class GDPRRetentionWorker extends BaseWorker {
       ...options
     });
     
+    // Verify Supabase client injection with service-role
+    if (!this.supabase) {
+      throw new Error('GDPRRetentionWorker requires a Supabase client with service-role permissions');
+    }
+    
+    // Verify service key is available for privileged operations
+    if (!process.env.SUPABASE_SERVICE_KEY) {
+      throw new Error('SUPABASE_SERVICE_KEY is required for GDPR retention operations');
+    }
+    
+    // Verify HMAC pepper for secure anonymization
+    if (!process.env.GDPR_HMAC_PEPPER) {
+      throw new Error('GDPR_HMAC_PEPPER environment variable is required for secure anonymization');
+    }
+    
     this.batchSize = options.batchSize || 1000;
     this.dryRun = options.dryRun || false;
+    this.hmacPepper = process.env.GDPR_HMAC_PEPPER;
     
     // Statistics tracking
     this.stats = {
@@ -220,12 +236,22 @@ class GDPRRetentionWorker extends BaseWorker {
           continue;
         }
         
-        // Generate salt and hash
+        // Generate salt and HMAC hash with server-side pepper
         const salt = crypto.randomBytes(16).toString('hex');
-        const hash = crypto
-          .createHash('sha256')
-          .update(record.original_text + salt)
-          .digest('hex');
+        let hash;
+        
+        try {
+          hash = crypto
+            .createHmac('sha256', this.hmacPepper)
+            .update(record.original_text + salt)
+            .digest('hex');
+        } catch (error) {
+          this.log('error', 'Failed to create HMAC hash', {
+            id: record.id,
+            error: error.message
+          });
+          throw new Error(`HMAC generation failed: ${error.message}`);
+        }
         
         // Update record
         const { error: updateError } = await this.supabase
@@ -274,12 +300,11 @@ class GDPRRetentionWorker extends BaseWorker {
     
     try {
       if (this.dryRun) {
-        // Count records that would be purged
+        // Count records that would be purged (align with live purge filter)
         const { count, error: countError } = await this.supabase
           .from('shield_events')
           .select('*', { count: 'exact', head: true })
-          .lt('created_at', cutoffDate.toISOString())
-          .not('original_text_hash', 'is', null);
+          .lt('created_at', cutoffDate.toISOString());
         
         if (countError) throw countError;
         

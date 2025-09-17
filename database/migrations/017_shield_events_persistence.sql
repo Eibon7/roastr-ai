@@ -5,12 +5,19 @@
 -- offender tracking, and implements GDPR-compliant data retention.
 
 -- ============================================================================
+-- ENSURE REQUIRED EXTENSIONS
+-- ============================================================================
+
+-- Ensure pgcrypto extension for gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ============================================================================
 -- SHIELD EVENTS TABLE
 -- ============================================================================
 
 -- Shield events table for tracking moderation actions
 CREATE TABLE shield_events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Multi-tenant support
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -66,7 +73,7 @@ CREATE TABLE shield_events (
 
 -- Offender profiles for tracking repeat offenders across platforms
 CREATE TABLE offender_profiles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Multi-tenant support
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -117,14 +124,14 @@ CREATE TABLE offender_profiles (
 
 -- Table to track GDPR retention operations for audit purposes
 CREATE TABLE shield_retention_log (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Operation details
     operation_type VARCHAR(20) NOT NULL, -- anonymize, purge, cleanup
     operation_status VARCHAR(20) NOT NULL, -- success, failed, partial
     
     -- Batch information
-    batch_id UUID DEFAULT uuid_generate_v4(), -- Groups related operations
+    batch_id UUID DEFAULT gen_random_uuid(), -- Groups related operations
     records_processed INTEGER DEFAULT 0,
     records_anonymized INTEGER DEFAULT 0,
     records_purged INTEGER DEFAULT 0,
@@ -182,8 +189,37 @@ ALTER TABLE offender_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shield_retention_log ENABLE ROW LEVEL SECURITY;
 
 -- Shield events RLS policies
-CREATE POLICY "shield_events_org_access" ON shield_events
-    FOR ALL TO authenticated
+CREATE POLICY "shield_events_org_select" ON shield_events
+    FOR SELECT TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "shield_events_org_insert" ON shield_events
+    FOR INSERT TO authenticated
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "shield_events_org_update" ON shield_events
+    FOR UPDATE TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ))
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "shield_events_org_delete" ON shield_events
+    FOR DELETE TO authenticated
     USING (organization_id IN (
         SELECT organization_id 
         FROM organization_members 
@@ -191,8 +227,37 @@ CREATE POLICY "shield_events_org_access" ON shield_events
     ));
 
 -- Offender profiles RLS policies
-CREATE POLICY "offender_profiles_org_access" ON offender_profiles
-    FOR ALL TO authenticated
+CREATE POLICY "offender_profiles_org_select" ON offender_profiles
+    FOR SELECT TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "offender_profiles_org_insert" ON offender_profiles
+    FOR INSERT TO authenticated
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "offender_profiles_org_update" ON offender_profiles
+    FOR UPDATE TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ))
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "offender_profiles_org_delete" ON offender_profiles
+    FOR DELETE TO authenticated
     USING (organization_id IN (
         SELECT organization_id 
         FROM organization_members 
@@ -313,7 +378,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only set purge schedule for records with original_text
     IF NEW.original_text IS NOT NULL THEN
-        NEW.scheduled_purge_at = NEW.created_at + INTERVAL '90 days';
+        NEW.scheduled_purge_at = COALESCE(NEW.created_at, NOW()) + INTERVAL '90 days';
     END IF;
     
     RETURN NEW;
