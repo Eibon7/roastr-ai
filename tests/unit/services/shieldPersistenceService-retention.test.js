@@ -8,8 +8,8 @@
 const ShieldPersistenceService = require('../../../src/services/shieldPersistenceService');
 const crypto = require('crypto');
 
-// Mock Supabase
-const mockSupabase = {
+// Create a more sophisticated Supabase mock that supports both chaining and promises
+const createQueryBuilderMock = () => ({
   from: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
   insert: jest.fn().mockReturnThis(),
@@ -19,9 +19,23 @@ const mockSupabase = {
   is: jest.fn().mockReturnThis(),
   not: jest.fn().mockReturnThis(),
   lte: jest.fn().mockReturnThis(),
+  gte: jest.fn().mockReturnThis(),
   limit: jest.fn().mockReturnThis(),
-  single: jest.fn()
-};
+  order: jest.fn().mockReturnThis(),
+  range: jest.fn().mockReturnThis(),
+  single: jest.fn().mockReturnThis(),
+  __setResult: function(result) {
+    this.__result = result;
+    return this;
+  },
+  then: jest.fn().mockImplementation(function(resolve) {
+    const result = this.__result || { data: null, error: null, count: 0 };
+    resolve(result);
+    return Promise.resolve(result);
+  })
+});
+
+const mockSupabase = createQueryBuilderMock();
 
 // Mock logger
 const mockLogger = {

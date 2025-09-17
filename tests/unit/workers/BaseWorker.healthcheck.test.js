@@ -24,6 +24,17 @@ jest.mock('@supabase/supabase-js', () => ({
   }))
 }));
 
+// Mock googleapis
+jest.mock('googleapis', () => ({
+  google: {
+    commentanalyzer: jest.fn(() => ({
+      comments: {
+        analyze: jest.fn()
+      }
+    }))
+  }
+}));
+
 jest.mock('../../../src/services/queueService', () => {
   return jest.fn().mockImplementation(() => ({
     initialize: jest.fn().mockResolvedValue(true),
@@ -396,6 +407,7 @@ describe('Worker Status API Routes', () => {
         overallStatus: 'healthy',
         healthyWorkers: 2,
         totalWorkers: 2,
+        uptime: 3600000, // 1 hour in milliseconds
         workers: {
           fetch_comments: { status: 'healthy' },
           analyze_toxicity: { status: 'healthy' }
@@ -410,7 +422,8 @@ describe('Worker Status API Routes', () => {
         workersCount: 2,
         totalJobsProcessed: 100,
         totalJobsFailed: 5,
-        currentJobsProcessing: 3
+        currentJobsProcessing: 3,
+        uptime: 3600000 // 1 hour in milliseconds
       })
     };
 
