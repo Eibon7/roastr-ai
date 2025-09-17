@@ -294,7 +294,8 @@ class ShieldPersistenceService {
   async updateShieldEventStatus(eventId, status, executedAt = null, actionDetails = null) {
     try {
       const updateData = {
-        action_status: status
+        action_status: status,
+        updated_at: new Date().toISOString()
       };
       
       if (executedAt) {
@@ -608,7 +609,7 @@ class ShieldPersistenceService {
       if (externalAuthorId) query = query.eq('external_author_id', externalAuthorId);
       if (actionTaken) query = query.eq('action_taken', actionTaken);
       if (actionStatus) query = query.eq('action_status', actionStatus);
-      if (minToxicityScore) query = query.gte('toxicity_score', minToxicityScore);
+      if (minToxicityScore !== null && minToxicityScore !== undefined) query = query.gte('toxicity_score', minToxicityScore);
       if (dateFrom) query = query.gte('created_at', dateFrom);
       if (dateTo) query = query.lte('created_at', dateTo);
       
@@ -638,21 +639,25 @@ class ShieldPersistenceService {
   /**
    * Get retention statistics
    */
-  async getRetentionStats() {
+  async getRetentionStats(organizationId) {
     try {
+      // Validate organizationId parameter
+      if (!organizationId) {
+        throw new Error('organizationId is required for retention stats');
+      }
+      
       const now = new Date();
       const day80Ago = new Date(now.getTime() - 80 * 24 * 60 * 60 * 1000);
       const day90Ago = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
       
-      // Count records by retention status
+      // Count records by retention status (privacy-conscious: no text fields)
       const { data: retentionStats, error: statsError } = await this.supabase
         .from('shield_events')
         .select(`
           created_at,
-          anonymized_at,
-          original_text,
-          original_text_hash
-        `);
+          anonymized_at
+        `, { count: 'exact' })
+        .eq('organization_id', organizationId);
       
       if (statsError) throw statsError;
       
@@ -679,10 +684,19 @@ class ShieldPersistenceService {
         }
       });
       
-      // Get recent retention log entries
+      // Get recent retention log entries (admin-only, global scope)
       const { data: recentLogs, error: logsError } = await this.supabase
         .from('shield_retention_log')
-        .select('*')
+        .select(`
+          operation_type,
+          operation_status,
+          records_processed,
+          records_anonymized,
+          records_purged,
+          started_at,
+          completed_at,
+          processing_time_ms
+        `, { count: 'exact' })
         .order('started_at', { ascending: false })
         .limit(10);
       

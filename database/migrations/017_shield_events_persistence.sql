@@ -5,6 +5,13 @@
 -- offender tracking, and implements GDPR-compliant data retention.
 
 -- ============================================================================
+-- ENSURE REQUIRED EXTENSIONS
+-- ============================================================================
+
+-- Ensure pgcrypto extension for gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ============================================================================
 -- SHIELD EVENTS TABLE
 -- ============================================================================
 
@@ -54,7 +61,7 @@ CREATE TABLE shield_events (
     anonymized_at TIMESTAMPTZ, -- When original_text was anonymized (day 80)
     scheduled_purge_at TIMESTAMPTZ, -- When record should be purged (day 90)
     
-    -- Constraints with CHECK validation
+    -- Constraints with CHECK validation (NOT DEFERRABLE for better performance)
     CONSTRAINT shield_events_platform_check CHECK (platform IN ('twitter', 'youtube', 'discord', 'twitch', 'facebook', 'instagram', 'tiktok', 'reddit', 'bluesky')) NOT DEFERRABLE,
     CONSTRAINT shield_events_action_status_check CHECK (action_status IN ('pending', 'executed', 'failed', 'reverted')) NOT DEFERRABLE,
     CONSTRAINT shield_events_toxicity_score_check CHECK (toxicity_score IS NULL OR (toxicity_score >= 0 AND toxicity_score <= 1)) NOT DEFERRABLE
@@ -105,7 +112,7 @@ CREATE TABLE offender_profiles (
     -- Ensure uniqueness per organization/platform/author
     UNIQUE(organization_id, platform, external_author_id),
     
-    -- Constraints with CHECK validation
+    -- Constraints with CHECK validation (NOT DEFERRABLE for better performance)
     CONSTRAINT offender_profiles_platform_check CHECK (platform IN ('twitter', 'youtube', 'discord', 'twitch', 'facebook', 'instagram', 'tiktok', 'reddit', 'bluesky')) NOT DEFERRABLE,
     CONSTRAINT offender_profiles_severity_check CHECK (severity_level IN ('low', 'medium', 'high', 'critical')) NOT DEFERRABLE,
     CONSTRAINT offender_profiles_escalation_check CHECK (escalation_level >= 0 AND escalation_level <= 5) NOT DEFERRABLE
@@ -142,7 +149,7 @@ CREATE TABLE shield_retention_log (
     -- Metadata
     metadata JSONB DEFAULT '{}',
     
-    -- Constraints with CHECK validation
+    -- Constraints with CHECK validation (NOT DEFERRABLE for better performance)
     CONSTRAINT retention_log_operation_type_check CHECK (operation_type IN ('anonymize', 'purge', 'cleanup')) NOT DEFERRABLE,
     CONSTRAINT retention_log_status_check CHECK (operation_status IN ('success', 'failed', 'partial')) NOT DEFERRABLE
 );
@@ -159,11 +166,11 @@ CREATE INDEX idx_shield_events_toxicity_score ON shield_events(toxicity_score) W
 CREATE INDEX idx_shield_events_action_status ON shield_events(action_status);
 CREATE INDEX idx_shield_events_org_created ON shield_events(organization_id, created_at DESC);
 
--- GDPR retention indexes
+-- GDPR retention indexes (enhanced with runtime checks)
 CREATE INDEX idx_shield_events_anonymized_at ON shield_events(anonymized_at) WHERE anonymized_at IS NULL;
 CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL AND scheduled_purge_at <= NOW();
 
--- Offender profiles indexes - improved composite indexes
+-- Offender profiles indexes - improved composite indexes for better query performance
 CREATE INDEX idx_offender_profiles_org_platform_severity ON offender_profiles(organization_id, platform, severity_level);
 CREATE INDEX idx_offender_profiles_platform_author ON offender_profiles(platform, external_author_id);
 CREATE INDEX idx_offender_profiles_last_offense_severity ON offender_profiles(last_offense_at DESC, severity_level);
@@ -184,18 +191,76 @@ ALTER TABLE shield_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE offender_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shield_retention_log ENABLE ROW LEVEL SECURITY;
 
--- Shield events RLS policies
-CREATE POLICY "shield_events_org_access" ON shield_events
-    FOR ALL TO authenticated
+-- Shield events RLS policies (granular policies for better security)
+CREATE POLICY "shield_events_org_select" ON shield_events
+    FOR SELECT TO authenticated
     USING (organization_id IN (
         SELECT organization_id 
         FROM organization_members 
         WHERE user_id = auth.uid()
     ));
 
--- Offender profiles RLS policies
-CREATE POLICY "offender_profiles_org_access" ON offender_profiles
-    FOR ALL TO authenticated
+CREATE POLICY "shield_events_org_insert" ON shield_events
+    FOR INSERT TO authenticated
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "shield_events_org_update" ON shield_events
+    FOR UPDATE TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ))
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "shield_events_org_delete" ON shield_events
+    FOR DELETE TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+-- Offender profiles RLS policies (granular policies for better security)
+CREATE POLICY "offender_profiles_org_select" ON offender_profiles
+    FOR SELECT TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "offender_profiles_org_insert" ON offender_profiles
+    FOR INSERT TO authenticated
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "offender_profiles_org_update" ON offender_profiles
+    FOR UPDATE TO authenticated
+    USING (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ))
+    WITH CHECK (organization_id IN (
+        SELECT organization_id 
+        FROM organization_members 
+        WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "offender_profiles_org_delete" ON offender_profiles
+    FOR DELETE TO authenticated
     USING (organization_id IN (
         SELECT organization_id 
         FROM organization_members 
@@ -286,7 +351,7 @@ BEGIN
       AND platform = NEW.platform 
       AND external_author_id = NEW.external_author_id;
     
-    -- Calculate severity level with null safety
+    -- Calculate severity level with null safety to prevent runtime errors
     UPDATE offender_profiles SET
         severity_level = CASE
             WHEN current_count >= 10 OR COALESCE(max_toxicity_score, 0) >= 0.9 THEN 'critical'
@@ -304,9 +369,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger to update offender profiles
+-- Trigger to update offender profiles (optimized for action_status changes)
 CREATE TRIGGER shield_events_update_offender_profile
-    AFTER INSERT OR UPDATE ON shield_events
+    AFTER INSERT OR UPDATE OF action_status ON shield_events
     FOR EACH ROW
     EXECUTE FUNCTION update_offender_profile();
 
@@ -316,7 +381,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only set purge schedule for records with original_text
     IF NEW.original_text IS NOT NULL THEN
-        NEW.scheduled_purge_at = NEW.created_at + INTERVAL '90 days';
+        NEW.scheduled_purge_at = COALESCE(NEW.created_at, NOW()) + INTERVAL '90 days';
     END IF;
     
     RETURN NEW;
