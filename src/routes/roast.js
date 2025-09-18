@@ -11,6 +11,7 @@ const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 const RoastGeneratorEnhanced = require('../services/roastGeneratorEnhanced');
 const RoastGeneratorMock = require('../services/roastGeneratorMock');
+const RoastEngine = require('../services/roastEngine');
 const { supabaseServiceClient } = require('../config/supabase');
 const { getPlanFeatures } = require('../services/planService');
 
@@ -20,6 +21,7 @@ const PerspectiveService = require('../services/perspectiveService');
 
 // Initialize services
 let roastGenerator;
+let roastEngine;
 let perspectiveService;
 
 // Initialize roast generator based on flags
@@ -34,6 +36,15 @@ if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
 } else {
     roastGenerator = new RoastGeneratorMock();
     logger.info('🎭 Mock roast generator initialized (ENABLE_REAL_OPENAI disabled)');
+}
+
+// Initialize roast engine (SPEC 7 - Issue #363)
+try {
+    roastEngine = new RoastEngine();
+    logger.info('🔥 Roast Engine initialized for SPEC 7 implementation');
+} catch (error) {
+    logger.error('❌ Failed to initialize Roast Engine:', error.message);
+    roastEngine = null;
 }
 
 // Initialize Perspective API service
@@ -762,6 +773,267 @@ router.get('/credits', authenticateToken, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to get credit status',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * POST /api/roast/engine
+ * Advanced roast generation using the new Roast Engine (SPEC 7 - Issue #363)
+ * Supports 1-2 versions, voice styles, auto-approve logic with transparency validation
+ * Requires authentication
+ */
+router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+        // Check if roast engine is available
+        if (!roastEngine) {
+            return res.status(503).json({
+                success: false,
+                error: 'Roast Engine not available',
+                fallback: 'Use /api/roast/generate endpoint instead',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Validate request
+        const validationErrors = validateRoastEngineRequest(req);
+        if (validationErrors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                details: validationErrors,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const { 
+            comment, 
+            style = 'balanceado', 
+            language = 'es',
+            autoApprove = false,
+            platform = 'twitter',
+            commentId = null
+        } = req.body;
+        
+        const userId = req.user.id;
+
+        // Get user plan info
+        const userPlan = await getUserPlanInfo(userId);
+
+        // Analyze content with Perspective API first
+        const contentAnalysis = await analyzeContent(comment);
+
+        // Check if content is safe for roasting
+        if (!contentAnalysis.safe) {
+            return res.status(400).json({
+                success: false,
+                error: 'Content not suitable for roasting',
+                details: {
+                    toxicityScore: contentAnalysis.toxicityScore,
+                    categories: contentAnalysis.categories,
+                    reason: 'Content exceeds toxicity threshold'
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Check user credits before generation
+        const creditCheck = await checkUserCredits(userId, userPlan.plan);
+        if (!creditCheck.hasCredits) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient credits',
+                details: {
+                    remaining: creditCheck.remaining,
+                    limit: creditCheck.limit,
+                    plan: userPlan.plan
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Prepare input for roast engine
+        const input = {
+            comment: comment,
+            toxicityScore: contentAnalysis.toxicityScore,
+            commentId: commentId
+        };
+
+        const options = {
+            userId: userId,
+            orgId: req.user.orgId || null,
+            style: style,
+            language: language,
+            autoApprove: autoApprove,
+            platform: platform,
+            plan: userPlan.plan
+        };
+
+        // Generate roast using the advanced engine
+        const result = await roastEngine.generateRoast(input, options);
+
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                error: result.error,
+                details: result.details,
+                retries: result.retries,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Consume credits after successful generation
+        await recordRoastUsage(userId, {
+            method: 'roast_engine',
+            style: style,
+            language: language,
+            autoApprove: autoApprove,
+            versionsGenerated: result.metadata.versionsGenerated,
+            tokensUsed: result.tokensUsed
+        });
+
+        const processingTime = Date.now() - startTime;
+
+        // Log successful generation
+        logger.info('🔥 Roast Engine generation completed', {
+            userId,
+            plan: userPlan.plan,
+            style,
+            language,
+            autoApprove,
+            versionsGenerated: result.metadata.versionsGenerated,
+            status: result.status,
+            processingTimeMs: processingTime
+        });
+
+        // Return successful response
+        res.json({
+            success: true,
+            data: {
+                roast: result.roast,
+                versions: result.versions,
+                style: result.style,
+                language: result.language,
+                status: result.status,
+                transparency: result.transparency,
+                metadata: {
+                    ...result.metadata,
+                    plan: userPlan.plan,
+                    toxicityScore: contentAnalysis.toxicityScore,
+                    safe: contentAnalysis.safe,
+                    processingTimeMs: processingTime
+                },
+                credits: {
+                    remaining: Math.max(0, creditCheck.remaining - 1),
+                    limit: creditCheck.limit,
+                    used: creditCheck.used + 1
+                }
+            },
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        const processingTime = Date.now() - startTime;
+        
+        logger.error('Roast Engine generation failed', {
+            userId: req.user?.id,
+            error: error.message,
+            stack: error.stack,
+            processingTimeMs: processingTime
+        });
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate roast with engine',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * Validate roast engine request parameters
+ */
+function validateRoastEngineRequest(req) {
+    const { comment, style, language, autoApprove, platform } = req.body;
+    const errors = [];
+
+    // Validate comment
+    if (!comment || typeof comment !== 'string') {
+        errors.push('Comment is required and must be a string');
+    } else if (comment.trim().length === 0) {
+        errors.push('Comment cannot be empty');
+    } else if (comment.length > 2000) {
+        errors.push('Comment must be less than 2000 characters');
+    }
+
+    // Validate style
+    const validStyles = {
+        es: ['flanders', 'balanceado', 'canalla'],
+        en: ['light', 'balanced', 'savage']
+    };
+    const lang = language || 'es';
+    if (style && !validStyles[lang]?.includes(style)) {
+        errors.push(`Style must be one of: ${validStyles[lang]?.join(', ') || 'flanders, balanceado, canalla'}`);
+    }
+
+    // Validate language
+    if (language && !['es', 'en'].includes(language)) {
+        errors.push('Language must be "es" or "en"');
+    }
+
+    // Validate autoApprove
+    if (autoApprove !== undefined && typeof autoApprove !== 'boolean') {
+        errors.push('autoApprove must be a boolean');
+    }
+
+    // Validate platform
+    const validPlatforms = ['twitter', 'facebook', 'instagram', 'youtube', 'tiktok', 'reddit', 'discord', 'twitch', 'bluesky'];
+    if (platform && !validPlatforms.includes(platform)) {
+        errors.push(`Platform must be one of: ${validPlatforms.join(', ')}`);
+    }
+
+    return errors;
+}
+
+/**
+ * GET /api/roast/styles
+ * Get available voice styles for a language
+ */
+router.get('/styles', authenticateToken, async (req, res) => {
+    try {
+        const language = req.query.language || 'es';
+        
+        if (!roastEngine) {
+            return res.status(503).json({
+                success: false,
+                error: 'Roast Engine not available',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const styles = roastEngine.getAvailableStyles(language);
+        
+        res.json({
+            success: true,
+            data: {
+                language: language,
+                styles: styles
+            },
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        logger.error('Failed to get roast styles', {
+            error: error.message
+        });
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get roast styles',
             timestamp: new Date().toISOString()
         });
     }
