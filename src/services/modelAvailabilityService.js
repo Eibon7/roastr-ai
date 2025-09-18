@@ -111,16 +111,15 @@ class ModelAvailabilityService {
 
             let response;
             try {
-                response = await this.openai.models.list({
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
+                // Pass AbortController signal via RequestOptions (2nd arg)
+                response = await this.openai.models.list({}, { signal: controller.signal });
             } catch (error) {
-                clearTimeout(timeoutId);
-                if (error.name === 'AbortError') {
+                if (error.name === 'AbortError' || /aborted/i.test(error.message || '')) {
                     throw new Error(`OpenAI models.list() timed out after ${timeoutMs}ms`);
                 }
                 throw error;
+            } finally {
+                clearTimeout(timeoutId);
             }
 
             const availableModels = response.data.map(model => model.id);

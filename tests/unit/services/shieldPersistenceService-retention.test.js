@@ -201,9 +201,9 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     });
 
     test('should handle database errors gracefully', async () => {
-      // Make the entire Supabase operation fail by rejecting the promise
-      mockSupabase.limit.mockImplementation(() => {
-        return Promise.reject(new Error('Database connection failed'));
+      mockSupabase.__setResult({
+        data: null,
+        error: { message: 'Database connection failed' }
       });
 
       mockSupabase.insert.mockResolvedValue({ error: null });
