@@ -63,6 +63,7 @@ const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
 const roastRoutes = require('./routes/roast');
+const settingsRoutes = require('./routes/settings');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -240,6 +241,9 @@ app.use('/api/notifications', notificationsRoutes);
 
 // Roast generation routes (authenticated)
 app.use('/api/roast', roastRoutes);
+
+// Settings routes (authenticated) - Issue #362
+app.use('/api/settings', settingsRoutes);
 
 // Model availability routes (authenticated, admin) - Issue #326
 const modelAvailabilityRoutes = require('./routes/modelAvailability');

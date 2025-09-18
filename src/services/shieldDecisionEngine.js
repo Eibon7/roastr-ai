@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { logger } = require('../utils/logger');
 const ShieldPersistenceService = require('./shieldPersistenceService');
+const ShieldSettingsService = require('./shieldSettingsService');
 const crypto = require('crypto');
 
 /**
@@ -20,6 +21,7 @@ class ShieldDecisionEngine {
     
     this.logger = config.logger || logger;
     this.persistenceService = config.persistenceService || new ShieldPersistenceService({ supabase: this.supabase, logger: this.logger });
+    this.settingsService = config.settingsService || new ShieldSettingsService({ supabase: this.supabase, logger: this.logger });
 
     // Initialize idempotency secret with environment validation
     this.idempotencySecret = this.initializeIdempotencySecret();
@@ -102,7 +104,10 @@ class ShieldDecisionEngine {
       
       const startTime = Date.now();
       
-      // Step 1: Input processing and validation
+      // Step 1: Load Shield settings from database
+      const shieldSettings = await this.loadShieldSettings(organizationId, platform);
+      
+      // Step 2: Input processing and validation
       const processedInput = await this.processInput({
         organizationId,
         userId,
@@ -117,25 +122,26 @@ class ShieldDecisionEngine {
         metadata
       });
       
-      // Step 2: Get offender history for recidivism analysis
+      // Step 3: Get offender history for recidivism analysis
       const offenderHistory = await this.persistenceService.getOffenderHistory(
         organizationId,
         platform,
         externalAuthorId
       );
       
-      // Step 3: Apply decision logic
+      // Step 4: Apply decision logic with database settings
       const decision = await this.applyDecisionLogic(
         processedInput,
-        offenderHistory
+        offenderHistory,
+        shieldSettings
       );
       
-      // Step 4: Record decision and update persistence layer
+      // Step 5: Record decision and update persistence layer
       if (decision.action !== 'publish_normal') {
         await this.recordDecision(processedInput, decision, offenderHistory);
       }
       
-      // Step 5: Cache decision for idempotency with size management
+      // Step 6: Cache decision for idempotency with size management
       decision.processingTimeMs = Date.now() - startTime;
       
       // Check cache size and evict if necessary
@@ -227,9 +233,9 @@ class ShieldDecisionEngine {
   }
   
   /**
-   * Apply core decision logic
+   * Apply core decision logic with database settings
    */
-  async applyDecisionLogic(input, offenderHistory) {
+  async applyDecisionLogic(input, offenderHistory, shieldSettings = null) {
     const {
       toxicityScore,
       toxicityLabels,
@@ -249,8 +255,10 @@ class ShieldDecisionEngine {
       ...(offenderHistory || {})
     };
     
-    // Adjust thresholds based on user aggressiveness
-    const adjustedThresholds = this.adjustThresholds(userAggressiveness);
+    // Use database settings if available, otherwise fall back to legacy user aggressiveness
+    const adjustedThresholds = shieldSettings 
+      ? this.getThresholdsFromSettings(shieldSettings)
+      : this.adjustThresholds(userAggressiveness);
     
     // Check user-defined red lines first
     const redLineViolation = this.checkRedLineViolations(toxicityLabels, primaryCategory, userRedLines, input.originalText, toxicityScore);
@@ -834,6 +842,54 @@ class ShieldDecisionEngine {
         return acc;
       }, {})
     });
+  }
+
+  /**
+   * Load Shield settings from database for organization and platform
+   */
+  async loadShieldSettings(organizationId, platform) {
+    try {
+      // Load effective settings (with inheritance) for the platform
+      const effectiveSettings = await this.settingsService.getEffectiveSettings(organizationId, platform);
+      
+      this.logger.debug('Loaded Shield settings from database', {
+        organizationId,
+        platform,
+        aggressiveness: effectiveSettings.aggressiveness,
+        shield_enabled: effectiveSettings.shield_enabled,
+        source: effectiveSettings.source
+      });
+      
+      return effectiveSettings;
+      
+    } catch (error) {
+      this.logger.warn('Failed to load Shield settings from database, using defaults', {
+        organizationId,
+        platform,
+        error: error.message
+      });
+      
+      // Return default settings as fallback
+      return this.settingsService.getDefaultOrganizationSettings();
+    }
+  }
+  
+  /**
+   * Get decision thresholds from Shield settings
+   */
+  getThresholdsFromSettings(shieldSettings) {
+    const tauRoastLower = shieldSettings.tau_roast_lower || 0.25;
+    const tauShield = shieldSettings.tau_shield || 0.70;
+    
+    // Calculate moderate threshold as midpoint between roast_lower and shield
+    const moderateThreshold = tauRoastLower + ((tauShield - tauRoastLower) * 0.6);
+    
+    return {
+      critical: shieldSettings.tau_critical || 0.90,
+      high: tauShield,
+      moderate: moderateThreshold,
+      corrective: tauRoastLower
+    };
   }
 
   /**
