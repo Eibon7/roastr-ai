@@ -28,12 +28,10 @@ class ShieldPersistenceService {
   validateEnvironment() {
     const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
     const missing = required.filter(env => !process.env[env]);
-    
+
     if (missing.length > 0) {
       const error = `Missing required environment variables: ${missing.join(', ')}`;
-      if (logger) {
-        logger.error('Shield Persistence Service validation failed', { missing });
-      }
+      (this.logger || logger)?.error('Shield Persistence Service validation failed', { missing });
       throw new Error(error);
     }
   }
@@ -719,7 +717,7 @@ class ShieldPersistenceService {
           completed_at,
           processing_time_ms
         `, { count: 'exact' })
-        .order('started_at', { ascending: false })
+        .order('completed_at', { ascending: false })
         .limit(10);
       
       if (logsError) throw logsError;
