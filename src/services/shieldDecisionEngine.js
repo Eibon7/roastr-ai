@@ -382,10 +382,12 @@ class ShieldDecisionEngine {
       // Normalize categories to lowercase for comparison
       const normalizedRedLineCategories = userRedLines.categories.map(cat => cat.toLowerCase());
       
-      // Check all toxicity labels
-      for (const category of toxicityLabels) {
-        if (normalizedRedLineCategories.includes(category.toLowerCase())) {
-          return `category:${category}`;
+      // Check all toxicity labels (with null safety)
+      if (toxicityLabels && Array.isArray(toxicityLabels)) {
+        for (const category of toxicityLabels) {
+          if (normalizedRedLineCategories.includes(category.toLowerCase())) {
+            return `category:${category}`;
+          }
         }
       }
       

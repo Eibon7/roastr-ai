@@ -57,10 +57,15 @@ class ShieldPersistenceService {
       if (process.env.NODE_ENV === 'production') {
         throw new Error('SHIELD_ANONYMIZATION_SECRET environment variable is required in production');
       }
-      // In non-production, use HMAC with deterministic fallback secret to match production behavior
-      const fallbackSecret = 'shield-dev-fallback-secret-do-not-use-in-production';
-      console.warn('⚠️  Using fallback secret for Shield anonymization in non-production environment');
-      const hash = crypto.createHmac('sha256', fallbackSecret).update(originalText + salt).digest('hex');
+      
+      // Generate a session-based fallback secret for non-production environments
+      // This ensures no hard-coded secrets while maintaining deterministic behavior within the same session
+      if (!this._sessionFallbackSecret) {
+        this._sessionFallbackSecret = crypto.randomBytes(32).toString('hex');
+        this.logger.warn('⚠️  Generated temporary fallback secret for Shield anonymization in non-production environment. Set SHIELD_ANONYMIZATION_SECRET for production.');
+      }
+      
+      const hash = crypto.createHmac('sha256', this._sessionFallbackSecret).update(originalText + salt).digest('hex');
       return { hash, salt };
     }
     

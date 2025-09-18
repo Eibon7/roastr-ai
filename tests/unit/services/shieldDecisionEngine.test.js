@@ -679,6 +679,143 @@ describe('ShieldDecisionEngine', () => {
 
       expect(violation).toBeNull();
     });
+
+    describe('Case-Insensitive Category Violations', () => {
+      test('should detect mixed case category labels against uppercase red lines', () => {
+        const testCases = [
+          { labels: ['Threat'], redLines: ['THREAT'], expected: 'category:Threat' },
+          { labels: ['harassment'], redLines: ['HARASSMENT'], expected: 'category:harassment' },
+          { labels: ['SEVERE_TOXICITY'], redLines: ['severe_toxicity'], expected: 'category:SEVERE_TOXICITY' },
+          { labels: ['InSuLt'], redLines: ['INSULT'], expected: 'category:InSuLt' }
+        ];
+
+        testCases.forEach(({ labels, redLines, expected }) => {
+          const violation = engine.checkRedLineViolations(
+            labels,
+            'general',
+            { categories: redLines }
+          );
+          expect(violation).toBe(expected);
+        });
+      });
+
+      test('should detect uppercase category labels against mixed case red lines', () => {
+        const testCases = [
+          { labels: ['THREAT'], redLines: ['Threat'], expected: 'category:THREAT' },
+          { labels: ['HARASSMENT'], redLines: ['harassment'], expected: 'category:HARASSMENT' },
+          { labels: ['TOXICITY'], redLines: ['ToXiCiTy'], expected: 'category:TOXICITY' }
+        ];
+
+        testCases.forEach(({ labels, redLines, expected }) => {
+          const violation = engine.checkRedLineViolations(
+            labels,
+            'general',
+            { categories: redLines }
+          );
+          expect(violation).toBe(expected);
+        });
+      });
+
+      test('should handle primary category case-insensitive matching', () => {
+        const testCases = [
+          { primary: 'threat', redLines: ['THREAT'], expected: 'category:threat' },
+          { primary: 'HARASSMENT', redLines: ['harassment'], expected: 'category:HARASSMENT' },
+          { primary: 'InSuLt', redLines: ['insult'], expected: 'category:InSuLt' },
+          { primary: 'SEVERE_TOXICITY', redLines: ['severe_toxicity'], expected: 'category:SEVERE_TOXICITY' }
+        ];
+
+        testCases.forEach(({ primary, redLines, expected }) => {
+          const violation = engine.checkRedLineViolations(
+            [], // Empty toxicity labels
+            primary,
+            { categories: redLines }
+          );
+          expect(violation).toBe(expected);
+        });
+      });
+
+      test('should prioritize toxicity labels over primary category when both match', () => {
+        const violation = engine.checkRedLineViolations(
+          ['harassment'],  // Label matches first
+          'threat',        // Primary also matches but should not be used
+          { categories: ['HARASSMENT', 'THREAT'] }
+        );
+
+        expect(violation).toBe('category:harassment');
+      });
+
+      test('should handle complex category names with underscores and case variations', () => {
+        const complexCases = [
+          { labels: ['severe_toxicity'], redLines: ['SEVERE_TOXICITY'], expected: 'category:severe_toxicity' },
+          { labels: ['SEVERE_TOXICITY'], redLines: ['severe_toxicity'], expected: 'category:SEVERE_TOXICITY' },
+          { labels: ['Severe_Toxicity'], redLines: ['severe_toxicity'], expected: 'category:Severe_Toxicity' },
+          { labels: ['IDENTITY_ATTACK'], redLines: ['identity_attack'], expected: 'category:IDENTITY_ATTACK' }
+        ];
+
+        complexCases.forEach(({ labels, redLines, expected }) => {
+          const violation = engine.checkRedLineViolations(
+            labels,
+            'general',
+            { categories: redLines }
+          );
+          expect(violation).toBe(expected);
+        });
+      });
+
+      test('should not match categories when case differs and normalization fails', () => {
+        // Test edge case where categories don't match due to special characters
+        const violation = engine.checkRedLineViolations(
+          ['threat-level-1'],
+          'general',
+          { categories: ['THREAT_LEVEL_1'] } // Underscore vs hyphen
+        );
+
+        expect(violation).toBeNull();
+      });
+
+      test('should handle empty and null category scenarios', () => {
+        const testCases = [
+          { labels: [], primary: null, redLines: ['THREAT'], expected: null },
+          { labels: null, primary: null, redLines: ['THREAT'], expected: null },
+          { labels: ['threat'], primary: null, redLines: [], expected: null },
+          { labels: ['threat'], primary: 'threat', redLines: null, expected: null }
+        ];
+
+        testCases.forEach(({ labels, primary, redLines, expected }) => {
+          const redLinesObj = redLines ? { categories: redLines } : {};
+          const violation = engine.checkRedLineViolations(
+            labels,
+            primary,
+            redLinesObj
+          );
+          expect(violation).toBe(expected);
+        });
+      });
+
+      test('should maintain original case in violation response', () => {
+        // When a violation is detected, the original case should be preserved
+        const upperCaseViolation = engine.checkRedLineViolations(
+          ['HARASSMENT'],
+          'general',
+          { categories: ['harassment'] }
+        );
+        expect(upperCaseViolation).toBe('category:HARASSMENT');
+
+        const lowerCaseViolation = engine.checkRedLineViolations(
+          ['harassment'],
+          'general',
+          { categories: ['HARASSMENT'] }
+        );
+        expect(lowerCaseViolation).toBe('category:harassment');
+
+        const mixedCaseViolation = engine.checkRedLineViolations(
+          ['HaRaSsMeNt'],
+          'general',
+          { categories: ['harassment'] }
+        );
+        expect(mixedCaseViolation).toBe('category:HaRaSsMeNt');
+      });
+    });
   });
 
   describe('Error Handling', () => {
@@ -996,6 +1133,135 @@ describe('ShieldDecisionEngine', () => {
       
       expect(engine.correctiveMessages.general).toEqual(originalGeneralMessages);
       expect(engine.correctiveMessages.custom).toEqual(['New custom message']);
+    });
+  });
+
+  describe('Cross-Platform Cache Isolation', () => {
+    test('should isolate cache between organizations with same comment ID', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
+        isRecidivist: false, 
+        totalOffenses: 0 
+      });
+
+      const org1Input = { ...mockInput, organizationId: 'org-1', externalCommentId: 'shared-id' };
+      const org2Input = { ...mockInput, organizationId: 'org-2', externalCommentId: 'shared-id' };
+
+      const org1Decision = await engine.makeDecision(org1Input);
+      const org2Decision = await engine.makeDecision(org2Input);
+
+      // Different organizations should never share cache
+      expect(org1Decision).not.toBe(org2Decision);
+      expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(2);
+    });
+
+    test('should isolate cache between account references with same comment ID', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
+        isRecidivist: false, 
+        totalOffenses: 0 
+      });
+
+      const account1Input = { ...mockInput, accountRef: '@account1', externalCommentId: 'shared-id' };
+      const account2Input = { ...mockInput, accountRef: '@account2', externalCommentId: 'shared-id' };
+
+      const account1Decision = await engine.makeDecision(account1Input);
+      const account2Decision = await engine.makeDecision(account2Input);
+
+      // Different account references should never share cache
+      expect(account1Decision).not.toBe(account2Decision);
+      expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(2);
+    });
+
+    test('should properly isolate cache across all platform combinations', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
+        isRecidivist: false, 
+        totalOffenses: 0 
+      });
+
+      const platforms = ['twitter', 'youtube', 'discord', 'facebook', 'instagram'];
+      const decisions = [];
+      const baseInput = { ...mockInput, externalCommentId: 'cross-platform-test' };
+
+      // Make decisions for all platforms
+      for (const platform of platforms) {
+        const platformInput = { ...baseInput, platform };
+        const decision = await engine.makeDecision(platformInput);
+        decisions.push(decision);
+      }
+
+      // Verify all decisions are unique (no cross-platform caching)
+      for (let i = 0; i < decisions.length; i++) {
+        for (let j = i + 1; j < decisions.length; j++) {
+          expect(decisions[i]).not.toBe(decisions[j]);
+        }
+      }
+
+      // Should have called getOffenderHistory once per platform
+      expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(platforms.length);
+    });
+
+    test('should generate unique cache keys for cross-platform scenarios', () => {
+      const baseData = { 
+        organizationId: 'org-123', 
+        externalCommentId: 'comment-123' 
+      };
+
+      const twitterKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'twitter', '@user');
+      const youtubeKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'youtube', '@user');
+      const discordKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'discord', '@user');
+      const facebookKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'facebook', '@user');
+      
+      const keys = [twitterKey, youtubeKey, discordKey, facebookKey];
+      
+      // All keys should be unique
+      const uniqueKeys = [...new Set(keys)];
+      expect(uniqueKeys).toHaveLength(keys.length);
+      
+      // All keys should be valid SHA256 hashes
+      keys.forEach(key => {
+        expect(key).toMatch(/^[a-f0-9]{64}$/);
+      });
+    });
+
+    test('should prevent cache pollution between platform/organization combinations', async () => {
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
+        isRecidivist: false, 
+        totalOffenses: 0 
+      });
+
+      // Fill cache with decisions from different platforms and organizations
+      const combinations = [
+        { organizationId: 'org-1', platform: 'twitter', externalCommentId: 'test-1' },
+        { organizationId: 'org-1', platform: 'youtube', externalCommentId: 'test-1' },
+        { organizationId: 'org-2', platform: 'twitter', externalCommentId: 'test-1' },
+        { organizationId: 'org-2', platform: 'youtube', externalCommentId: 'test-1' }
+      ];
+
+      const decisions = [];
+      for (const combo of combinations) {
+        const input = { ...mockInput, ...combo };
+        const decision = await engine.makeDecision(input);
+        decisions.push(decision);
+      }
+
+      // Verify each combination resulted in unique decisions
+      const uniqueDecisions = [...new Set(decisions)];
+      expect(uniqueDecisions).toHaveLength(combinations.length);
+
+      // Cache should contain all combinations
+      expect(engine.decisionCache.size).toBe(combinations.length);
+    });
+
+    test('should handle edge case of empty platform and accountRef', () => {
+      const key1 = engine.generateCacheKey('org-123', 'comment-1', '', '');
+      const key2 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@user');
+      const key3 = engine.generateCacheKey('org-123', 'comment-1', '', '@user');
+      const key4 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '');
+      
+      const keys = [key1, key2, key3, key4];
+      const uniqueKeys = [...new Set(keys)];
+      
+      // All combinations should generate unique keys
+      expect(uniqueKeys).toHaveLength(keys.length);
     });
   });
 });
