@@ -332,7 +332,7 @@ class ShieldActionExecutorService {
   }
   
   /**
-   * Execute specific adapter action
+   * Execute specific adapter action with consistent naming
    */
   async executeAdapterAction(adapter, action, moderationInput) {
     switch (action) {
@@ -356,6 +356,34 @@ class ShieldActionExecutorService {
     const fallbackAction = this.getFallbackAction(action, capabilities);
     
     if (!fallbackAction) {
+      // Enhanced audit logging for manual review path
+      const auditContext = {
+        organizationId: moderationInput.orgId,
+        platform: adapter.getPlatform(),
+        originalAction: action,
+        externalCommentId: moderationInput.commentId,
+        externalAuthorId: moderationInput.userId,
+        reason: moderationInput.reason,
+        capabilitiesCheck: capabilities,
+        timestamp: new Date().toISOString(),
+        requiresManualReview: true
+      };
+      
+      this.logger.warn('Action escalated to manual review - platform API limitation', auditContext);
+      
+      // Record manual review requirement in audit trail
+      try {
+        await this.recordManualReviewEscalation(moderationInput, action, adapter.getPlatform(), startTime);
+      } catch (auditError) {
+        this.logger.error('Failed to record manual review escalation', {
+          organizationId: moderationInput.orgId,
+          platform: adapter.getPlatform(),
+          action,
+          error: auditError.message
+        });
+        // Don't let audit logging failure prevent the manual review result
+      }
+      
       const result = {
         success: true,
         action,
@@ -365,37 +393,50 @@ class ShieldActionExecutorService {
           platform: adapter.getPlatform(),
           originalAction: action,
           reason: 'Action not supported by platform API',
-          manualInstructions: this.getManualInstructions(adapter.getPlatform(), action)
+          manualInstructions: this.getManualInstructions(adapter.getPlatform(), action),
+          auditTrail: {
+            escalatedAt: new Date().toISOString(),
+            escalationReason: 'platform_api_limitation',
+            capabilitiesChecked: capabilities
+          }
         },
         executionTime: Date.now() - startTime
       };
       
-      this.logger.info('Action requires manual review', {
-        platform: adapter.getPlatform(),
-        action,
-        fallback: result.fallback
-      });
+      // Update metrics for manual review path
+      this.updateMetrics(adapter.getPlatform(), action, true, false);
       
       return result;
     }
     
-    // Execute fallback action
-    this.logger.info('Executing fallback action', {
+    // Execute fallback action through resiliency patterns
+    this.logger.info('Executing fallback action through resiliency layer', {
       platform: adapter.getPlatform(),
       originalAction: action,
-      fallbackAction
+      fallbackAction,
+      organizationId: moderationInput.orgId
     });
     
-    const result = await this.executeAdapterAction(adapter, fallbackAction, moderationInput);
+    // Route fallback through the same resiliency patterns as primary actions
+    const result = await this.executeWithResiliency(
+      adapter.getPlatform(),
+      adapter,
+      fallbackAction,
+      moderationInput,
+      startTime
+    );
     
     // Mark as fallback (ensure result is a plain object we can modify)
     if (result && typeof result === 'object') {
       result.fallback = fallbackAction;
       result.originalAction = action;
+      result.details = result.details || {};
+      result.details.fallbackExecuted = true;
+      result.details.fallbackReason = 'original_action_unsupported';
     }
     
-    // Update metrics
-    this.updateMetrics(adapter.getPlatform(), action, true, true);
+    // Update metrics for fallback execution
+    this.updateMetrics(adapter.getPlatform(), action, result && result.success, true);
     
     return result;
   }
@@ -447,7 +488,7 @@ class ShieldActionExecutorService {
   }
   
   /**
-   * Record action in persistence layer
+   * Record action in persistence layer with GDPR-compliant conditional PII storage
    */
   async recordAction({
     organizationId,
@@ -463,6 +504,9 @@ class ShieldActionExecutorService {
     processingTimeMs
   }) {
     try {
+      // Determine if this action involves content that requires PII storage
+      const isContentBasedAction = this.isContentBasedAction(action, result);
+      
       const eventData = {
         organizationId,
         userId,
@@ -471,7 +515,8 @@ class ShieldActionExecutorService {
         externalCommentId,
         externalAuthorId,
         externalAuthorUsername,
-        originalText,
+        // GDPR compliance: Only store original text for content-based actions
+        originalText: isContentBasedAction ? originalText : null,
         toxicityScore: null, // Not available in this context
         toxicityLabels: [],
         actionTaken: result.fallback || action,
@@ -482,14 +527,20 @@ class ShieldActionExecutorService {
           fallbackUsed: !!result.fallback,
           requiresManualReview: result.requiresManualReview || false,
           platformDetails: result.details || {},
-          executionTime: result.executionTime || processingTimeMs
+          executionTime: result.executionTime || processingTimeMs,
+          contentBased: isContentBasedAction,
+          gdprCompliant: true
         },
         processedBy: 'shield_action_executor',
         processingTimeMs,
         metadata: {
           executor: 'ShieldActionExecutorService',
           version: '1.0',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          gdprCompliance: {
+            piiStored: isContentBasedAction,
+            reason: isContentBasedAction ? 'content_moderation' : 'user_action_only'
+          }
         }
       };
       
@@ -503,6 +554,87 @@ class ShieldActionExecutorService {
         error: error.message
       });
     }
+  }
+  
+  /**
+   * Record manual review escalation with enhanced audit logging
+   */
+  async recordManualReviewEscalation(moderationInput, action, platform, startTime) {
+    try {
+      const escalationData = {
+        organizationId: moderationInput.orgId,
+        userId: null, // Manual review doesn't have executing user
+        platform,
+        accountRef: null,
+        externalCommentId: moderationInput.commentId,
+        externalAuthorId: moderationInput.userId,
+        externalAuthorUsername: moderationInput.username,
+        originalText: null, // No PII storage for manual review escalations
+        toxicityScore: null,
+        toxicityLabels: [],
+        actionTaken: 'manual_review_required',
+        actionReason: `Action '${action}' escalated to manual review - platform API limitation`,
+        actionStatus: 'escalated',
+        actionDetails: {
+          originalAction: action,
+          escalationReason: 'platform_api_limitation',
+          requiresManualReview: true,
+          platformDetails: {
+            platform,
+            escalatedAt: new Date().toISOString(),
+            escalationType: 'api_limitation'
+          },
+          executionTime: Date.now() - startTime,
+          contentBased: false,
+          gdprCompliant: true
+        },
+        processedBy: 'shield_action_executor',
+        processingTimeMs: Date.now() - startTime,
+        metadata: {
+          executor: 'ShieldActionExecutorService',
+          escalationType: 'manual_review',
+          version: '1.0',
+          timestamp: new Date().toISOString(),
+          gdprCompliance: {
+            piiStored: false,
+            reason: 'escalation_only'
+          }
+        }
+      };
+      
+      await this.persistenceService.recordShieldEvent(escalationData);
+      
+      this.logger.info('Manual review escalation recorded', {
+        organizationId: moderationInput.orgId,
+        platform,
+        originalAction: action,
+        externalCommentId: moderationInput.commentId
+      });
+      
+    } catch (error) {
+      this.logger.error('Failed to record manual review escalation', {
+        organizationId: moderationInput.orgId,
+        platform,
+        action,
+        error: error.message
+      });
+      // Don't throw - this is audit logging and shouldn't prevent the manual review flow
+    }
+  }
+  
+  /**
+   * Determine if an action is content-based and requires PII storage for GDPR compliance
+   */
+  isContentBasedAction(action, result) {
+    // Content-based actions that require original text for moderation context
+    const contentBasedActions = ['hideComment', 'reportContent'];
+    
+    // Check if this is a content-based action or requires manual review of content
+    const isContentAction = contentBasedActions.includes(action);
+    const requiresContentReview = result?.requiresManualReview && 
+                                 result?.details?.escalationReason === 'content_violation';
+    
+    return isContentAction || requiresContentReview;
   }
   
   /**

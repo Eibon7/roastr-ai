@@ -166,13 +166,13 @@ describe('ShieldActionExecutorService', () => {
     });
     
     test('should handle unsupported action without fallback', async () => {
-      const reportUserInput = {
+      const blockUserInput = {
         ...validActionInput,
         platform: 'youtube',
-        action: 'reportUser'
+        action: 'blockUser'  // blockUser has no fallback and has YouTube Studio instructions
       };
       
-      const result = await executor.executeAction(reportUserInput);
+      const result = await executor.executeAction(blockUserInput);
       
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
@@ -390,7 +390,13 @@ describe('ShieldActionExecutorService', () => {
     });
     
     test('should handle multiple fallback levels', async () => {
-      // Mock YouTube adapter that only supports hideComment
+      // Mock YouTube adapter where reportUser -> hideComment fallback should work
+      const mockHideResult = new ModerationResult({
+        success: true,
+        action: 'hide_comment'
+      });
+      mockYouTubeAdapter.hideComment.mockResolvedValue(mockHideResult);
+      
       const reportUserInput = {
         organizationId: 'org-123',
         platform: 'youtube',
@@ -402,9 +408,10 @@ describe('ShieldActionExecutorService', () => {
       
       const result = await executor.executeAction(reportUserInput);
       
-      // Should fall back to manual review since YouTube has no fallback
-      expect(result.requiresManualReview).toBe(true);
-      expect(result.fallback).toBe('manual_review');
+      // Should fall back to hideComment since YouTube supports it
+      expect(result.fallback).toBe('hideComment');
+      expect(result.originalAction).toBe('reportUser');
+      expect(mockYouTubeAdapter.hideComment).toHaveBeenCalled();
     });
   });
   
