@@ -620,8 +620,9 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 
         // Update user preferences and mark onboarding as complete
         let updatedUser = null;
-        
+
         // Declare userClient in outer scope to avoid reference errors
+        // Provide a safe fallback no-op client when ENABLE_SUPABASE is false
         let userClient = null;
 
         // In mock mode, skip database operations and return success

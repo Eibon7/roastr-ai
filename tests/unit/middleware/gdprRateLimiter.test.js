@@ -6,6 +6,28 @@
 const request = require('supertest');
 const express = require('express');
 
+// Mock QueueService to prevent database connection issues
+jest.mock('../../../src/services/queueService', () => {
+    return jest.fn().mockImplementation(() => ({
+        initialize: jest.fn(),
+        addJob: jest.fn(),
+        getQueueStatus: jest.fn()
+    }));
+});
+
+// Mock Supabase client
+jest.mock('../../../src/config/supabase', () => ({
+    createClient: jest.fn(() => ({
+        from: jest.fn(() => ({
+            select: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                    single: jest.fn(() => Promise.resolve({ data: null, error: null }))
+                }))
+            }))
+        }))
+    }))
+}));
+
 describe('GDPR Rate Limiting Configuration', () => {
   it('should load all rate limiters without errors', () => {
     const limiters = require('../../../src/middleware/gdprRateLimiter');

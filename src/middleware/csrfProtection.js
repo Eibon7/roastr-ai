@@ -10,7 +10,14 @@ class CSRFProtection {
     this.headerName = 'x-csrf-token';
     
     // Clean up expired tokens every 30 minutes
-    setInterval(() => this.cleanupExpiredTokens(), 30 * 60 * 1000);
+    this._cleanupInterval = setInterval(() => this.cleanupExpiredTokens(), 30 * 60 * 1000);
+  }
+
+  cleanup() {
+    if (this._cleanupInterval) {
+      clearInterval(this._cleanupInterval);
+      this._cleanupInterval = null;
+    }
   }
 
   generateToken() {
@@ -37,10 +44,27 @@ class CSRFProtection {
       return false;
     }
 
-    return crypto.timingSafeEqual(
-      Buffer.from(stored.token, 'hex'),
-      Buffer.from(providedToken || '', 'hex')
-    );
+    // Validate and normalize inputs before converting to buffers
+    const normalizedProvidedToken = providedToken || '';
+
+    // Check if providedToken is a valid hex string of expected length
+    const expectedLength = stored.token.length;
+    const isValidHex = /^[0-9a-fA-F]*$/.test(normalizedProvidedToken) &&
+                       normalizedProvidedToken.length === expectedLength;
+
+    try {
+      const storedBuffer = Buffer.from(stored.token, 'hex');
+      const providedBuffer = isValidHex
+        ? Buffer.from(normalizedProvidedToken, 'hex')
+        : Buffer.alloc(storedBuffer.length, 0); // Zero-filled buffer of same length
+
+      return crypto.timingSafeEqual(storedBuffer, providedBuffer);
+    } catch (error) {
+      // Fallback to safe comparison with zero buffer
+      const storedBuffer = Buffer.from(stored.token, 'hex');
+      const zeroBuffer = Buffer.alloc(storedBuffer.length, 0);
+      return crypto.timingSafeEqual(storedBuffer, zeroBuffer);
+    }
   }
 
   cleanupExpiredTokens() {

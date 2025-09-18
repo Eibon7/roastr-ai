@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { logger } = require('../utils/logger');
+const crypto = require('crypto');
 
 /**
  * Shield Persistence Service
@@ -9,6 +10,9 @@ const { logger } = require('../utils/logger');
  */
 class ShieldPersistenceService {
   constructor(config = {}) {
+    // Validate environment variables for Supabase connection
+    this.validateEnvironment();
+    
     this.supabase = config.supabase || createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_KEY
@@ -16,6 +20,193 @@ class ShieldPersistenceService {
     
     this.logger = config.logger || logger;
     this.recidivismWindowDays = config.recidivismWindowDays || 90;
+  }
+  
+  /**
+   * Validate required environment variables
+   */
+  validateEnvironment() {
+    const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
+    const missing = required.filter(env => !process.env[env]);
+    
+    if (missing.length > 0) {
+      const error = `Missing required environment variables: ${missing.join(', ')}`;
+      if (logger) {
+        logger.error('Shield Persistence Service validation failed', { missing });
+      }
+      throw new Error(error);
+    }
+  }
+  
+  /**
+   * Generate HMAC-based hash for text anonymization
+   * Uses SHA-256 with a secret salt for secure anonymization
+   */
+  generateTextHash(originalText) {
+    if (!originalText || typeof originalText !== 'string') {
+      return { hash: null, salt: null };
+    }
+    
+    // Generate unique salt for this record
+    const salt = crypto.randomBytes(16).toString('hex');
+    
+    // Use HMAC-SHA256 with salt for secure hashing
+    const secret = process.env.SHIELD_ANONYMIZATION_SECRET;
+
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('SHIELD_ANONYMIZATION_SECRET environment variable is required in production');
+      }
+      
+      // Generate a session-based fallback secret for non-production environments
+      // This ensures no hard-coded secrets while maintaining deterministic behavior within the same session
+      if (!this._sessionFallbackSecret) {
+        this._sessionFallbackSecret = crypto.randomBytes(32).toString('hex');
+        this.logger.warn('⚠️  Generated temporary fallback secret for Shield anonymization in non-production environment. Set SHIELD_ANONYMIZATION_SECRET for production.');
+      }
+      
+      const hash = crypto.createHmac('sha256', this._sessionFallbackSecret).update(originalText + salt).digest('hex');
+      return { hash, salt };
+    }
+    
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(originalText + salt);
+    const hash = hmac.digest('hex');
+    
+    return { hash, salt };
+  }
+  
+  /**
+   * Anonymize text records for GDPR compliance
+   * Replaces original_text with hash and clears the original content
+   */
+  async anonymizeShieldEvents(batchSize = 100) {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 80); // 80 days ago
+      
+      this.logger.info('Starting Shield events anonymization', { cutoffDate, batchSize });
+      
+      // Find records that need anonymization
+      const { data: recordsToAnonymize, error: selectError } = await this.supabase
+        .from('shield_events')
+        .select('id, original_text')
+        .is('anonymized_at', null)
+        .not('original_text', 'is', null)
+        .lte('created_at', cutoffDate.toISOString())
+        .limit(batchSize);
+      
+      if (selectError) throw selectError;
+      
+      if (!recordsToAnonymize || recordsToAnonymize.length === 0) {
+        this.logger.info('No Shield events require anonymization');
+        return { processed: 0, errors: [] };
+      }
+      
+      const results = {
+        processed: 0,
+        errors: []
+      };
+      
+      // Process each record
+      for (const record of recordsToAnonymize) {
+        try {
+          const { hash, salt } = this.generateTextHash(record.original_text);
+          
+          // Update with hash and remove original text
+          const { error: updateError } = await this.supabase
+            .from('shield_events')
+            .update({
+              original_text: null,
+              original_text_hash: hash,
+              text_salt: salt,
+              anonymized_at: new Date().toISOString()
+            })
+            .eq('id', record.id);
+          
+          if (updateError) {
+            this.logger.error('Failed to anonymize Shield event', {
+              eventId: record.id,
+              error: updateError.message
+            });
+            results.errors.push({ id: record.id, error: updateError.message });
+          } else {
+            results.processed++;
+          }
+          
+        } catch (recordError) {
+          this.logger.error('Error processing Shield event for anonymization', {
+            eventId: record.id,
+            error: recordError.message
+          });
+          results.errors.push({ id: record.id, error: recordError.message });
+        }
+      }
+      
+      this.logger.info('Shield events anonymization completed', results);
+      
+      // Log the anonymization operation
+      await this.logRetentionOperation('anonymize', 'success', {
+        recordsProcessed: recordsToAnonymize.length,
+        recordsAnonymized: results.processed,
+        recordsFailed: results.errors.length,
+        cutoffDate: cutoffDate.toISOString()
+      });
+      
+      return results;
+      
+    } catch (error) {
+      this.logger.error('Shield events anonymization failed', {
+        error: error.message
+      });
+      
+      // Log failed operation
+      await this.logRetentionOperation('anonymize', 'failed', {
+        error: error.message
+      });
+      
+      throw error;
+    }
+  }
+  
+  /**
+   * Log retention operations for audit purposes
+   */
+  async logRetentionOperation(operationType, status, metadata = {}) {
+    try {
+      const logData = {
+        operation_type: operationType,
+        operation_status: status,
+        records_processed: metadata.recordsProcessed || 0,
+        records_anonymized: metadata.recordsAnonymized || 0,
+        records_purged: metadata.recordsPurged || 0,
+        records_failed: metadata.recordsFailed || 0,
+        completed_at: new Date().toISOString(),
+        metadata: {
+          ...metadata,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      const { error } = await this.supabase
+        .from('shield_retention_log')
+        .insert(logData);
+      
+      if (error) {
+        this.logger.error('Failed to log retention operation', {
+          operationType,
+          status,
+          error: error.message
+        });
+      }
+      
+    } catch (logError) {
+      this.logger.error('Error logging retention operation', {
+        operationType,
+        status,
+        error: logError.message
+      });
+    }
   }
   
   /**
@@ -41,6 +232,15 @@ class ShieldPersistenceService {
     metadata = {}
   }) {
     try {
+      // Generate hash for original text if provided (for future anonymization)
+      let textHash = null;
+      let textSalt = null;
+      if (originalText) {
+        const hashResult = this.generateTextHash(originalText);
+        textHash = hashResult.hash;
+        textSalt = hashResult.salt;
+      }
+      
       const eventData = {
         organization_id: organizationId,
         user_id: userId,
@@ -50,6 +250,8 @@ class ShieldPersistenceService {
         external_author_id: externalAuthorId,
         external_author_username: externalAuthorUsername,
         original_text: originalText, // Will trigger GDPR retention schedule
+        original_text_hash: textHash, // Pre-computed for faster anonymization
+        text_salt: textSalt,
         toxicity_score: toxicityScore,
         toxicity_labels: toxicityLabels,
         action_taken: actionTaken,
@@ -74,7 +276,8 @@ class ShieldPersistenceService {
         eventId: data.id,
         platform,
         actionTaken,
-        externalAuthorId
+        externalAuthorId,
+        hasOriginalText: !!originalText
       });
       
       return data;
@@ -131,6 +334,51 @@ class ShieldPersistenceService {
         status,
         error: error.message
       });
+      throw error;
+    }
+  }
+  
+  /**
+   * Purge Shield events older than 90 days for GDPR compliance
+   */
+  async purgeOldShieldEvents(batchSize = 100) {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 90); // 90 days ago
+      
+      this.logger.info('Starting Shield events purge', { cutoffDate, batchSize });
+      
+      // Delete records older than 90 days
+      const { count, error } = await this.supabase
+        .from('shield_events')
+        .delete({ count: 'exact' })
+        .lte('created_at', cutoffDate.toISOString());
+      
+      if (error) throw error;
+      
+      const purgedCount = count || 0;
+      
+      this.logger.info('Shield events purge completed', { purgedCount });
+      
+      // Log the purge operation
+      await this.logRetentionOperation('purge', 'success', {
+        recordsProcessed: purgedCount,
+        recordsPurged: purgedCount,
+        cutoffDate: cutoffDate.toISOString()
+      });
+      
+      return { purged: purgedCount };
+      
+    } catch (error) {
+      this.logger.error('Shield events purge failed', {
+        error: error.message
+      });
+      
+      // Log failed operation
+      await this.logRetentionOperation('purge', 'failed', {
+        error: error.message
+      });
+      
       throw error;
     }
   }
@@ -225,7 +473,7 @@ class ShieldPersistenceService {
       
       const { count, error } = await this.supabase
         .from('shield_events')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('organization_id', organizationId)
         .eq('platform', platform)
         .eq('external_author_id', externalAuthorId)
@@ -407,39 +655,56 @@ class ShieldPersistenceService {
       const day80Ago = new Date(now.getTime() - 80 * 24 * 60 * 60 * 1000);
       const day90Ago = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
       
-      // Count records by retention status (privacy-conscious: no text fields)
-      const { data: retentionStats, error: statsError } = await this.supabase
-        .from('shield_events')
-        .select(`
-          created_at,
-          anonymized_at
-        `, { count: 'exact' })
-        .eq('organization_id', organizationId);
+      // Optimize retention stats using server-side aggregation to avoid full-table scans
+      const [totalResult, needingPurgeResult, needingAnonymizationResult, anonymizedResult] = await Promise.all([
+        // Total count
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId),
+        
+        // Records needing purge (older than 90 days)
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId)
+          .lte('created_at', day90Ago.toISOString()),
+        
+        // Records needing anonymization (80+ days old, not anonymized, has original text)
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId)
+          .lte('created_at', day80Ago.toISOString())
+          .is('anonymized_at', null)
+          .not('original_text', 'is', null),
+        
+        // Records already anonymized
+        this.supabase
+          .from('shield_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organizationId)
+          .not('anonymized_at', 'is', null)
+      ]);
       
-      if (statsError) throw statsError;
+      // Check for errors
+      if (totalResult.error) throw totalResult.error;
+      if (needingPurgeResult.error) throw needingPurgeResult.error;
+      if (needingAnonymizationResult.error) throw needingAnonymizationResult.error;
+      if (anonymizedResult.error) throw anonymizedResult.error;
+      
+      const total = totalResult.count || 0;
+      const needingPurge = needingPurgeResult.count || 0;
+      const needingAnonymization = needingAnonymizationResult.count || 0;
+      const anonymized = anonymizedResult.count || 0;
       
       const stats = {
-        total: retentionStats?.length || 0,
-        needingAnonymization: 0,
-        anonymized: 0,
-        needingPurge: 0,
-        withinRetention: 0
+        total,
+        needingAnonymization,
+        anonymized,
+        needingPurge,
+        withinRetention: Math.max(0, total - needingPurge - anonymized)
       };
-      
-      retentionStats?.forEach(record => {
-        const createdAt = new Date(record.created_at);
-        const daysSinceCreation = (now - createdAt) / (1000 * 60 * 60 * 24);
-        
-        if (daysSinceCreation >= 90) {
-          stats.needingPurge++;
-        } else if (daysSinceCreation >= 80 && !record.anonymized_at) {
-          stats.needingAnonymization++;
-        } else if (record.anonymized_at) {
-          stats.anonymized++;
-        } else {
-          stats.withinRetention++;
-        }
-      });
       
       // Get recent retention log entries (admin-only, global scope)
       const { data: recentLogs, error: logsError } = await this.supabase

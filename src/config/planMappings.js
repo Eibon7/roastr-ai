@@ -77,6 +77,9 @@ function normalizePlanId(planId) {
     case 'free':
     case 'gratuito':
       return PLAN_IDS.FREE;
+    case 'starter':
+    case 'starter_plan':
+      return PLAN_IDS.STARTER;
     case 'pro':
     case 'professional':
       return PLAN_IDS.PRO;

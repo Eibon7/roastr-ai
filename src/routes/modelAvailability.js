@@ -13,14 +13,22 @@ const { getModelAvailabilityWorker } = require('../workers/ModelAvailabilityWork
 
 // Admin middleware (implement as needed for your auth system)
 const requireAdmin = (req, res, next) => {
-    // For now, just check if user exists - implement proper admin check
+    // Check if user exists
     if (!req.user) {
         return res.status(403).json({
             success: false,
             error: 'Admin access required'
         });
     }
-    // TODO: Add proper admin role check
+
+    // Check for admin role or flag
+    if (!req.user.isAdmin && req.user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            error: 'Admin access required'
+        });
+    }
+
     next();
 };
 

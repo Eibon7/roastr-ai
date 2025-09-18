@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { flags } = require('../config/flags');
+const { logger } = require('../utils/logger');
 
 // Mock data storage for user integrations
 const userIntegrations = new Map(); // userId -> { platform: { status, data, importedCount, etc. } }

@@ -71,18 +71,7 @@ export default function AnalysisUsageCard({ user, className = '' }) {
   const analysisLimit = planLimits?.analysis_limit_monthly || 100;
   const usagePercentage = analysisLimit > 0 ? Math.min(100, (analysisUsed / analysisLimit) * 100) : 0;
   
-  // Determine status color based on usage
-  const getStatusColor = () => {
-    if (usagePercentage >= 90) return 'text-red-600';
-    if (usagePercentage >= 75) return 'text-yellow-600';
-    return 'text-green-600';
-  };
 
-  const getProgressColor = () => {
-    if (usagePercentage >= 90) return 'bg-red-500';
-    if (usagePercentage >= 75) return 'bg-yellow-500';
-    return 'bg-blue-500';
-  };
 
   if (loading) {
     return (
@@ -111,12 +100,7 @@ export default function AnalysisUsageCard({ user, className = '' }) {
     );
   }
 
-  // Determine border color based on usage
-  const getBorderColor = () => {
-    if (usagePercentage >= 90) return 'border-l-red-400';
-    if (usagePercentage >= 75) return 'border-l-yellow-400';
-    return 'border-l-yellow-400'; // Default yellow for analysis
-  };
+
 
   const percentageUsed = analysisLimit > 0 ? Math.round((analysisUsed / analysisLimit) * 100) : 0;
 

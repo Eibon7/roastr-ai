@@ -61,10 +61,10 @@ CREATE TABLE shield_events (
     anonymized_at TIMESTAMPTZ, -- When original_text was anonymized (day 80)
     scheduled_purge_at TIMESTAMPTZ, -- When record should be purged (day 90)
     
-    -- Constraints
-    CONSTRAINT shield_events_platform_check CHECK (platform IN ('twitter', 'youtube', 'discord', 'twitch', 'facebook', 'instagram', 'tiktok', 'reddit', 'bluesky')),
-    CONSTRAINT shield_events_action_status_check CHECK (action_status IN ('pending', 'executed', 'failed', 'reverted')),
-    CONSTRAINT shield_events_toxicity_score_check CHECK (toxicity_score IS NULL OR (toxicity_score >= 0 AND toxicity_score <= 1))
+    -- Constraints with CHECK validation (NOT DEFERRABLE for better performance)
+    CONSTRAINT shield_events_platform_check CHECK (platform IN ('twitter', 'youtube', 'discord', 'twitch', 'facebook', 'instagram', 'tiktok', 'reddit', 'bluesky')) NOT DEFERRABLE,
+    CONSTRAINT shield_events_action_status_check CHECK (action_status IN ('pending', 'executed', 'failed', 'reverted')) NOT DEFERRABLE,
+    CONSTRAINT shield_events_toxicity_score_check CHECK (toxicity_score IS NULL OR (toxicity_score >= 0 AND toxicity_score <= 1)) NOT DEFERRABLE
 );
 
 -- ============================================================================
@@ -112,10 +112,10 @@ CREATE TABLE offender_profiles (
     -- Ensure uniqueness per organization/platform/author
     UNIQUE(organization_id, platform, external_author_id),
     
-    -- Constraints
-    CONSTRAINT offender_profiles_platform_check CHECK (platform IN ('twitter', 'youtube', 'discord', 'twitch', 'facebook', 'instagram', 'tiktok', 'reddit', 'bluesky')),
-    CONSTRAINT offender_profiles_severity_check CHECK (severity_level IN ('low', 'medium', 'high', 'critical')),
-    CONSTRAINT offender_profiles_escalation_check CHECK (escalation_level >= 0 AND escalation_level <= 5)
+    -- Constraints with CHECK validation (NOT DEFERRABLE for better performance)
+    CONSTRAINT offender_profiles_platform_check CHECK (platform IN ('twitter', 'youtube', 'discord', 'twitch', 'facebook', 'instagram', 'tiktok', 'reddit', 'bluesky')) NOT DEFERRABLE,
+    CONSTRAINT offender_profiles_severity_check CHECK (severity_level IN ('low', 'medium', 'high', 'critical')) NOT DEFERRABLE,
+    CONSTRAINT offender_profiles_escalation_check CHECK (escalation_level >= 0 AND escalation_level <= 5) NOT DEFERRABLE
 );
 
 -- ============================================================================
@@ -149,31 +149,34 @@ CREATE TABLE shield_retention_log (
     -- Metadata
     metadata JSONB DEFAULT '{}',
     
-    CONSTRAINT retention_log_operation_type_check CHECK (operation_type IN ('anonymize', 'purge', 'cleanup')),
-    CONSTRAINT retention_log_status_check CHECK (operation_status IN ('success', 'failed', 'partial'))
+    -- Constraints with CHECK validation (NOT DEFERRABLE for better performance)
+    CONSTRAINT retention_log_operation_type_check CHECK (operation_type IN ('anonymize', 'purge', 'cleanup')) NOT DEFERRABLE,
+    CONSTRAINT retention_log_status_check CHECK (operation_status IN ('success', 'failed', 'partial')) NOT DEFERRABLE
 );
 
 -- ============================================================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================================================
 
--- Shield events indexes
-CREATE INDEX idx_shield_events_org_platform ON shield_events(organization_id, platform);
-CREATE INDEX idx_shield_events_author_platform ON shield_events(external_author_id, platform);
+-- Shield events indexes - composite indexes for better performance
+CREATE INDEX idx_shield_events_org_platform_status ON shield_events(organization_id, platform, action_status);
+CREATE INDEX idx_shield_events_author_platform_created ON shield_events(external_author_id, platform, created_at DESC);
 CREATE INDEX idx_shield_events_created_at ON shield_events(created_at);
 CREATE INDEX idx_shield_events_toxicity_score ON shield_events(toxicity_score) WHERE toxicity_score IS NOT NULL;
 CREATE INDEX idx_shield_events_action_status ON shield_events(action_status);
+CREATE INDEX idx_shield_events_org_created ON shield_events(organization_id, created_at DESC);
 
--- GDPR retention indexes
+-- GDPR retention indexes (optimized for GDPR queries)
 CREATE INDEX idx_shield_events_anonymized_at ON shield_events(anonymized_at) WHERE anonymized_at IS NULL;
 CREATE INDEX idx_shield_events_scheduled_purge ON shield_events(scheduled_purge_at) WHERE scheduled_purge_at IS NOT NULL;
 
--- Offender profiles indexes
-CREATE INDEX idx_offender_profiles_org_platform ON offender_profiles(organization_id, platform);
+-- Offender profiles indexes - improved composite indexes for better query performance
+CREATE INDEX idx_offender_profiles_org_platform_severity ON offender_profiles(organization_id, platform, severity_level);
 CREATE INDEX idx_offender_profiles_platform_author ON offender_profiles(platform, external_author_id);
-CREATE INDEX idx_offender_profiles_last_offense ON offender_profiles(last_offense_at);
+CREATE INDEX idx_offender_profiles_last_offense_severity ON offender_profiles(last_offense_at DESC, severity_level);
 CREATE INDEX idx_offender_profiles_severity ON offender_profiles(severity_level);
 CREATE INDEX idx_offender_profiles_updated_at ON offender_profiles(updated_at);
+CREATE INDEX idx_offender_profiles_escalation_level ON offender_profiles(escalation_level) WHERE escalation_level > 0;
 
 -- Retention log indexes
 CREATE INDEX idx_retention_log_batch_id ON shield_retention_log(batch_id);
@@ -188,7 +191,7 @@ ALTER TABLE shield_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE offender_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shield_retention_log ENABLE ROW LEVEL SECURITY;
 
--- Shield events RLS policies
+-- Shield events RLS policies (granular policies for better security)
 CREATE POLICY "shield_events_org_select" ON shield_events
     FOR SELECT TO authenticated
     USING (organization_id IN (
@@ -226,7 +229,7 @@ CREATE POLICY "shield_events_org_delete" ON shield_events
         WHERE user_id = auth.uid()
     ));
 
--- Offender profiles RLS policies
+-- Offender profiles RLS policies (granular policies for better security)
 CREATE POLICY "offender_profiles_org_select" ON offender_profiles
     FOR SELECT TO authenticated
     USING (organization_id IN (
@@ -314,8 +317,8 @@ BEGIN
         1,
         NEW.created_at,
         NEW.created_at,
-        NEW.toxicity_score,
-        NEW.toxicity_score,
+        COALESCE(NEW.toxicity_score, 0),
+        COALESCE(NEW.toxicity_score, 0),
         jsonb_build_object(NEW.action_taken, 1),
         NEW.action_taken,
         NEW.executed_at,
@@ -325,9 +328,9 @@ BEGIN
         offense_count = offender_profiles.offense_count + 1,
         last_offense_at = NEW.created_at,
         external_author_username = NEW.external_author_username,
-        max_toxicity_score = GREATEST(offender_profiles.max_toxicity_score, NEW.toxicity_score),
+        max_toxicity_score = GREATEST(COALESCE(offender_profiles.max_toxicity_score, 0), COALESCE(NEW.toxicity_score, 0)),
         avg_toxicity_score = (
-            (offender_profiles.avg_toxicity_score * offender_profiles.offense_count + NEW.toxicity_score) / 
+            (COALESCE(offender_profiles.avg_toxicity_score, 0) * offender_profiles.offense_count + COALESCE(NEW.toxicity_score, 0)) / 
             (offender_profiles.offense_count + 1)
         ),
         actions_taken = (
@@ -348,16 +351,16 @@ BEGIN
       AND platform = NEW.platform 
       AND external_author_id = NEW.external_author_id;
     
-    -- Calculate severity level
+    -- Calculate severity level with null safety to prevent runtime errors
     UPDATE offender_profiles SET
         severity_level = CASE
-            WHEN current_count >= 10 OR max_toxicity_score >= 0.9 THEN 'critical'
-            WHEN current_count >= 5 OR max_toxicity_score >= 0.7 THEN 'high'
-            WHEN current_count >= 2 OR max_toxicity_score >= 0.5 THEN 'medium'
+            WHEN current_count >= 10 OR COALESCE(max_toxicity_score, 0) >= 0.9 THEN 'critical'
+            WHEN current_count >= 5 OR COALESCE(max_toxicity_score, 0) >= 0.7 THEN 'high'
+            WHEN current_count >= 2 OR COALESCE(max_toxicity_score, 0) >= 0.5 THEN 'medium'
             ELSE 'low'
         END,
-        escalation_level = LEAST(5, FLOOR(current_count / 2)::INTEGER),
-        risk_score = LEAST(1.0, (current_count * 0.1 + max_toxicity_score) / 2)
+        escalation_level = LEAST(5, FLOOR(COALESCE(current_count, 0) / 2)::INTEGER),
+        risk_score = LEAST(1.0, (COALESCE(current_count, 0) * 0.1 + COALESCE(max_toxicity_score, 0)) / 2)
     WHERE organization_id = NEW.organization_id 
       AND platform = NEW.platform 
       AND external_author_id = NEW.external_author_id;
@@ -366,7 +369,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger to update offender profiles (only on action_status changes)
+-- Trigger to update offender profiles (optimized for action_status changes)
 CREATE TRIGGER shield_events_update_offender_profile
     AFTER INSERT OR UPDATE OF action_status ON shield_events
     FOR EACH ROW

@@ -62,6 +62,13 @@ module.exports = {
       lines: 80,
       statements: 80
     },
+    // Decision engine under Shield requires higher coverage
+    "src/services/shieldDecisionEngine.js": {
+      branches: 70,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    },
     // Analyze toxicity worker requires coverage
     "src/workers/analyzeToxicity.js": {
       branches: 60,
@@ -79,7 +86,7 @@ module.exports = {
     {
       displayName: 'node-tests',
       testEnvironment: 'node',
-      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js'],
+      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/adapters/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
     },
     {

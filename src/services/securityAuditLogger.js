@@ -9,11 +9,28 @@ class SecurityAuditLogger {
     this.logBuffer = [];
     this.maxBufferSize = 100;
     this.flushInterval = 30 * 1000; // 30 seconds
-    
+    this.maxRetries = 3;
+    this.maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours
+
+    // Validate and store SECURITY_SALT at initialization to fail fast
+    this.securitySalt = process.env.SECURITY_SALT;
+    if (!this.securitySalt) {
+      throw new Error('SECURITY_SALT environment variable is required for security audit logging');
+    }
+
     // Start buffer flushing if enabled
     if (this.enabled) {
-      setInterval(() => this.flushBuffer(), this.flushInterval);
+      this._flushIntervalId = setInterval(() => this.flushBuffer(), this.flushInterval);
     }
+  }
+
+  cleanup() {
+    if (this._flushIntervalId) {
+      clearInterval(this._flushIntervalId);
+      this._flushIntervalId = null;
+    }
+    // Flush any remaining logs
+    this.flushBuffer();
   }
 
   async logSecurityEvent(eventType, details = {}, req = null) {
@@ -49,7 +66,9 @@ class SecurityAuditLogger {
     // Log immediately to application logs
     logger.warn('Security event detected', eventData);
 
-    // Add to buffer for database logging
+    // Add to buffer for database logging with retry metadata
+    eventData.retryCount = 0;
+    eventData.firstAttemptTimestamp = Date.now();
     this.logBuffer.push(eventData);
 
     // Flush immediately for high-severity events
@@ -108,33 +127,66 @@ class SecurityAuditLogger {
           .insert(eventsToFlush);
 
         if (error) {
-          logger.error('Failed to flush security audit logs to database', { 
+          logger.error('Failed to flush security audit logs to database', {
             error: error.message,
-            eventCount: eventsToFlush.length 
+            eventCount: eventsToFlush.length
           });
-          // Re-add events to buffer for retry
-          this.logBuffer.unshift(...eventsToFlush);
+          // Re-add events to buffer for retry with limits
+          this.requeueEventsWithLimits(eventsToFlush);
         } else {
-          logger.debug('Security audit logs flushed to database', { 
-            eventCount: eventsToFlush.length 
+          logger.debug('Security audit logs flushed to database', {
+            eventCount: eventsToFlush.length
           });
         }
       }
     } catch (error) {
-      logger.error('Error flushing security audit logs', { 
+      logger.error('Error flushing security audit logs', {
         error: error.message,
-        eventCount: eventsToFlush.length 
+        eventCount: eventsToFlush.length
       });
-      // Re-add events to buffer for retry
-      this.logBuffer.unshift(...eventsToFlush);
+      // Re-add events to buffer for retry with limits
+      this.requeueEventsWithLimits(eventsToFlush);
+    }
+  }
+
+  requeueEventsWithLimits(events) {
+    const now = Date.now();
+    const validEvents = events.filter(event => {
+      // Increment retry count
+      event.retryCount = (event.retryCount || 0) + 1;
+
+      // Check retry limits
+      const age = now - (event.firstAttemptTimestamp || now);
+      const exceedsRetries = event.retryCount > this.maxRetries;
+      const exceedsAge = age > this.maxAgeMs;
+
+      if (exceedsRetries || exceedsAge) {
+        logger.warn('Dropping security audit event due to retry limits', {
+          eventType: event.event_type,
+          retryCount: event.retryCount,
+          age: age,
+          exceedsRetries,
+          exceedsAge
+        });
+        return false;
+      }
+
+      return true;
+    });
+
+    // Re-add valid events to buffer
+    if (validEvents.length > 0) {
+      this.logBuffer.unshift(...validEvents);
     }
   }
 
   // PII protection methods
   hashIP(ip) {
     if (!ip || ip === 'unknown') return 'unknown';
+
+    // Use the pre-validated salt stored during initialization
     // Hash IP address for privacy while maintaining uniqueness
-    return crypto.createHash('sha256').update(ip + process.env.SECURITY_SALT || 'default-salt').digest('hex').substring(0, 16);
+    return crypto.createHash('sha256').update(ip + this.securitySalt).digest('hex').substring(0, 16);
   }
 
   sanitizeUserAgent(userAgent) {

@@ -143,11 +143,20 @@ fi
 
 # Start backend in background
 echo "🚀 Starting backend server..."
-if ! npm start &; then
-    echo "❌ Error: Failed to start backend server"
+# Redirect stdout/stderr to a log file and start in background
+npm start > backend.log 2>&1 &
+BACKEND_PID=$!
+
+# Wait a short moment and verify the process actually started
+sleep 2
+if ! kill -0 $BACKEND_PID 2>/dev/null; then
+    echo "❌ Error: Backend server failed to start"
+    echo "📋 Backend log output:"
+    tail -n 20 backend.log
     exit 1
 fi
-BACKEND_PID=$!
+
+echo "✅ Backend server started successfully (PID: $BACKEND_PID)"
 
 # Wait a moment for backend to start
 echo "⏳ Waiting for backend to initialize..."
