@@ -80,8 +80,8 @@ describe('Shield Action Executor Smoke Test', () => {
     expect(result).toBeDefined();
     expect(typeof result.success).toBe('boolean');
     expect(result.platform).toBe('twitter');
-    // Twitter doesn't support hideComment, so it should fallback to reportUser
-    expect(result.action).toBe('reportUser');
-    expect(result.fallback).toBe('reportUser');
+    // Twitter supports hideComment via hide replies API
+    expect(result.action).toBe('hide_comment');
+    expect(result.success).toBe(true);
   });
 });

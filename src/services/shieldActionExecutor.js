@@ -36,11 +36,7 @@ class ShieldActionExecutorService {
       ...config.retry
     };
     
-    // Platform adapters
-    this.adapters = new Map();
-    this.initializeAdapters(config.adapters || {});
-    
-    // Metrics tracking
+    // Metrics tracking - initialize before adapters
     this.metrics = {
       totalActions: 0,
       successfulActions: 0,
@@ -50,6 +46,10 @@ class ShieldActionExecutorService {
       byAction: {},
       circuitBreakerTrips: 0
     };
+    
+    // Platform adapters
+    this.adapters = new Map();
+    this.initializeAdapters(config.adapters || {});
     
     this.logger.info('Shield Action Executor initialized', {
       supportedPlatforms: Array.from(this.adapters.keys()),
@@ -173,20 +173,29 @@ class ShieldActionExecutorService {
         startTime
       );
       
-      // Record successful action
-      await this.recordAction({
-        organizationId,
-        userId,
-        platform,
-        accountRef,
-        externalCommentId,
-        externalAuthorId,
-        externalAuthorUsername,
-        originalText,
-        action,
-        result,
-        processingTimeMs: Date.now() - startTime
-      });
+      // Record successful action (don't let recording errors break the flow)
+      try {
+        await this.recordAction({
+          organizationId,
+          userId,
+          platform,
+          accountRef,
+          externalCommentId,
+          externalAuthorId,
+          externalAuthorUsername,
+          originalText,
+          action,
+          result,
+          processingTimeMs: Date.now() - startTime
+        });
+      } catch (recordError) {
+        this.logger.error('Failed to record successful action', {
+          organizationId,
+          platform,
+          action,
+          error: recordError.message
+        });
+      }
       
       // Update metrics
       this.updateMetrics(platform, action, true, false);
@@ -214,25 +223,35 @@ class ShieldActionExecutorService {
         processingTimeMs: Date.now() - startTime
       });
       
-      // Record failed action
-      await this.recordAction({
-        organizationId,
-        userId,
-        platform,
-        accountRef,
-        externalCommentId,
-        externalAuthorId,
-        externalAuthorUsername,
-        originalText,
-        action,
-        result: {
-          success: false,
+      // Record failed action (don't let recording errors mask the original error)
+      try {
+        await this.recordAction({
+          organizationId,
+          userId,
+          platform,
+          accountRef,
+          externalCommentId,
+          externalAuthorId,
+          externalAuthorUsername,
+          originalText,
           action,
-          error: error.message,
-          executionTime: Date.now() - startTime
-        },
-        processingTimeMs: Date.now() - startTime
-      });
+          result: {
+            success: false,
+            action,
+            error: error.message,
+            executionTime: Date.now() - startTime
+          },
+          processingTimeMs: Date.now() - startTime
+        });
+      } catch (recordError) {
+        this.logger.error('Failed to record failed action', {
+          organizationId,
+          platform,
+          action,
+          originalError: error.message,
+          recordError: recordError.message
+        });
+      }
       
       throw error;
     }
@@ -369,9 +388,11 @@ class ShieldActionExecutorService {
     
     const result = await this.executeAdapterAction(adapter, fallbackAction, moderationInput);
     
-    // Mark as fallback
-    result.fallback = fallbackAction;
-    result.originalAction = action;
+    // Mark as fallback (ensure result is a plain object we can modify)
+    if (result && typeof result === 'object') {
+      result.fallback = fallbackAction;
+      result.originalAction = action;
+    }
     
     // Update metrics
     this.updateMetrics(adapter.getPlatform(), action, true, true);

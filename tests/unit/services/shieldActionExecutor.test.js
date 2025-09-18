@@ -174,6 +174,7 @@ describe('ShieldActionExecutorService', () => {
       
       const result = await executor.executeAction(reportUserInput);
       
+      expect(result).toBeDefined();
       expect(result.success).toBe(true);
       expect(result.requiresManualReview).toBe(true);
       expect(result.fallback).toBe('manual_review');
