@@ -1,5 +1,5 @@
 const { logger } = require('../utils/logger');
-const { ModerationInput } = require('../adapters/ShieldAdapter');
+const { ModerationInput, ModerationResult } = require('../adapters/ShieldAdapter');
 const ShieldPersistenceService = require('./shieldPersistenceService');
 
 // Import platform adapters
@@ -311,11 +311,15 @@ class ShieldActionExecutorService {
           break;
         }
         
-        // Calculate delay with exponential backoff
-        const delay = Math.min(
+        // Calculate delay with exponential backoff and jitter to reduce thundering herd
+        const baseDelay = Math.min(
           this.retryConfig.baseDelay * Math.pow(2, attempt - 1),
           this.retryConfig.maxDelay
         );
+        
+        // Add jitter: random variation between 0.5x and 1.5x of base delay
+        const jitterFactor = 0.5 + Math.random(); // 0.5 to 1.5
+        const delay = Math.floor(baseDelay * jitterFactor);
         
         this.logger.debug('Retrying Shield action after delay', {
           platform,

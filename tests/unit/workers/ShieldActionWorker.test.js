@@ -49,75 +49,8 @@ jest.mock('../../../src/workers/BaseWorker', () => {
   };
 });
 
-// Mock Shield Service
-const mockShieldService = {
-  analyzeForShield: jest.fn(),
-  executeActions: jest.fn(),
-  getShieldConfig: jest.fn(),
-  shutdown: jest.fn()
-};
-
-jest.mock('../../../src/services/shieldService', () => {
-  return jest.fn().mockImplementation(() => mockShieldService);
-});
-
-// Mock external API libraries
-jest.mock('twitter-api-v2', () => ({
-  TwitterApi: jest.fn().mockImplementation(() => ({
-    v2: {
-      mutesAndBlocks: {
-        mute: jest.fn(),
-        block: jest.fn(),
-        unmute: jest.fn(),
-        unblock: jest.fn()
-      }
-    }
-  }))
-}));
-
-jest.mock('discord.js', () => ({
-  Client: jest.fn().mockImplementation(() => ({
-    login: jest.fn(),
-    destroy: jest.fn(),
-    guilds: {
-      cache: new Map()
-    }
-  })),
-  GatewayIntentBits: {
-    Guilds: 1,
-    GuildMessages: 2,
-    GuildModeration: 4
-  }
-}));
-
-jest.mock('@twurple/api', () => ({
-  ApiClient: jest.fn().mockImplementation(() => ({
-    moderation: {
-      banUser: jest.fn(),
-      timeoutUser: jest.fn()
-    }
-  }))
-}));
-
-jest.mock('@twurple/auth', () => ({
-  StaticAuthProvider: jest.fn()
-}));
-
-// Mock platform services for tests
-const mockTwitterService = {
-  sendDM: jest.fn(),
-  muteUser: jest.fn(),
-  blockUser: jest.fn(),
-  removeContent: jest.fn(),
-  initialize: jest.fn()
-};
-
-const mockYouTubeService = {
-  removeContent: jest.fn(),
-  muteUser: jest.fn(),
-  reportUser: jest.fn(),
-  initialize: jest.fn()
-};
+// The new ShieldActionWorker uses the ShieldActionExecutorService
+// No need for individual platform service mocks
 
 describe('ShieldActionWorker', () => {
   let worker;
@@ -150,517 +83,149 @@ describe('ShieldActionWorker', () => {
   });
 
   describe('processJob', () => {
-    test('should execute warning action', async () => {
+    test('should execute hideComment action', async () => {
       const job = {
         id: 'job-123',
-        comment_id: 'comment-789',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        platform_user_id: 'user-456',
-        platform_username: 'testuser',
-        action: 'reply_warning',
-        shield_mode: true
+        payload: {
+          organizationId: 'org-123',
+          userId: 'user-456',
+          platform: 'twitter',
+          accountRef: '@testorg',
+          externalCommentId: 'tweet-123',
+          externalAuthorId: 'user-456',
+          externalAuthorUsername: 'testuser',
+          action: 'hideComment',
+          reason: 'Toxic content detected'
+        }
       };
 
-      // Mock Twitter client
-      worker.platformClients.set('twitter', {
-        v2: {
-          reply: jest.fn().mockResolvedValue({
-            data: { id: 'tweet-123' }
-          })
-        }
-      });
-
-      // Mock database operations
-      mockSupabase.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: 'action-123' },
-              error: null
-            })
-          })
-        }),
-        upsert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: 'behavior-123' },
-              error: null
-            })
-          })
-        })
+      // Mock action executor
+      worker.actionExecutor.executeAction = jest.fn().mockResolvedValue({
+        success: true,
+        action: 'hideComment',
+        details: { platform: 'twitter' },
+        fallback: false,
+        requiresManualReview: false,
+        executionTime: 250
       });
 
       const result = await worker.processJob(job);
 
       expect(result.success).toBe(true);
-      expect(result.action).toBe('reply_warning');
+      expect(result.action).toBe('hideComment');
       expect(result.platform).toBe('twitter');
+      expect(worker.actionExecutor.executeAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-123',
+          platform: 'twitter',
+          action: 'hideComment'
+        })
+      );
     });
 
-    test('should execute temporary mute action', async () => {
+    test('should execute blockUser action', async () => {
       const job = {
         id: 'job-456',
-        comment_id: 'comment-123',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        platform_user_id: 'user-789',
-        platform_username: 'toxicuser',
-        action: 'mute_user',
-        duration: 24,
-        shield_mode: true
+        payload: {
+          organizationId: 'org-123',
+          userId: 'user-789',
+          platform: 'twitter',
+          accountRef: '@testorg',
+          externalCommentId: 'tweet-456',
+          externalAuthorId: 'user-789',
+          externalAuthorUsername: 'toxicuser',
+          action: 'blockUser',
+          reason: 'Repeated violations'
+        }
       };
 
-      // Mock Twitter client
-      worker.platformClients.set('twitter', {
-        v1: {
-          createMute: jest.fn().mockResolvedValue({
-            success: true
-          })
-        }
-      });
-
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: null
-          })
-        })
+      // Mock action executor
+      worker.actionExecutor.executeAction = jest.fn().mockResolvedValue({
+        success: true,
+        action: 'blockUser',
+        details: { platform: 'twitter', blockId: 'block-456' },
+        fallback: false,
+        requiresManualReview: false,
+        executionTime: 300
       });
 
       const result = await worker.processJob(job);
 
       expect(result.success).toBe(true);
-      expect(result.action_type).toBe('temporary_mute');
-      expect(result.details.mute_id).toBe('mute-456');
-      expect(result.details.expires_at).toBeDefined();
-
-      expect(mockTwitterService.muteUser).toHaveBeenCalledWith('user-789', {
-        duration_hours: 24,
-        reason: 'Toxic behavior'
-      });
+      expect(result.action).toBe('blockUser');
+      expect(result.platform).toBe('twitter');
+      expect(worker.actionExecutor.executeAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-123',
+          platform: 'twitter',
+          action: 'blockUser'
+        })
+      );
     });
 
-    test('should execute content removal action', async () => {
+    test('should handle action execution failure', async () => {
       const job = {
         id: 'job-789',
-        organization_id: 'org-123',
-        platform: 'youtube',
-        action_type: 'content_removal',
-        user_id: 'user-123',
-        comment_id: 'comment-456',
         payload: {
-          removal_reason: 'Violates community guidelines'
+          organizationId: 'org-123',
+          platform: 'twitter',
+          externalCommentId: 'tweet-789',
+          externalAuthorId: 'user-123',
+          action: 'hideComment',
+          reason: 'Test failure handling'
         }
       };
 
-      mockYouTubeService.removeContent.mockResolvedValue({
-        success: true,
-        removal_id: 'removal-789'
-      });
-
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: null
-          })
-        })
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(true);
-      expect(result.action_type).toBe('content_removal');
-      expect(result.details.removal_id).toBe('removal-789');
-
-      expect(mockYouTubeService.removeContent).toHaveBeenCalledWith('comment-456', {
-        reason: 'Violates community guidelines'
-      });
-    });
-
-    test('should execute permanent ban action', async () => {
-      const job = {
-        id: 'job-ban',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        action_type: 'permanent_ban',
-        user_id: 'user-toxic',
-        payload: {
-          ban_reason: 'Repeated severe violations',
-          evidence_urls: ['https://evidence1.com', 'https://evidence2.com']
-        }
-      };
-
-      mockTwitterService.blockUser.mockResolvedValue({
-        success: true,
-        block_id: 'block-permanent'
-      });
-
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: null
-          })
-        })
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(true);
-      expect(result.action_type).toBe('permanent_ban');
-      expect(result.details.block_id).toBe('block-permanent');
-
-      expect(mockTwitterService.blockUser).toHaveBeenCalledWith('user-toxic', {
-        reason: 'Repeated severe violations',
-        evidence_urls: ['https://evidence1.com', 'https://evidence2.com']
-      });
-    });
-
-    test('should execute escalate to human action', async () => {
-      const job = {
-        id: 'job-escalate',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        action_type: 'escalate_to_human',
-        user_id: 'user-complex',
-        comment_id: 'comment-complex',
-        payload: {
-          escalation_reason: 'Complex case requiring human review',
-          severity: 'high',
-          evidence: {
-            toxicity_score: 0.95,
-            categories: ['THREAT', 'HARASSMENT']
-          }
-        }
-      };
-
-      // Mock escalation notification (could be Slack, email, etc.)
-      const mockEscalationResult = {
-        success: true,
-        ticket_id: 'escalation-456',
-        assigned_to: 'moderator@company.com'
-      };
-
-      // Mock the escalation process
-      jest.spyOn(worker, 'createModerationTicket')
-        .mockResolvedValue(mockEscalationResult);
-
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: null
-          })
-        })
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(true);
-      expect(result.action_type).toBe('escalate_to_human');
-      expect(result.details.ticket_id).toBe('escalation-456');
-    });
-
-    test('should handle platform-specific action failures', async () => {
-      const job = {
-        id: 'job-fail',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        action_type: 'temporary_mute',
-        user_id: 'user-protected',
-        payload: { duration_hours: 24 }
-      };
-
-      mockTwitterService.muteUser.mockRejectedValue(
-        new Error('User not found or protected')
+      // Mock action executor to throw error
+      worker.actionExecutor.executeAction = jest.fn().mockRejectedValue(
+        new Error('Platform API error')
       );
 
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('User not found or protected');
-      expect(result.action_type).toBe('temporary_mute');
-    });
-
-    test('should handle unsupported platform', async () => {
-      const job = {
-        id: 'job-unsupported',
-        organization_id: 'org-123',
-        platform: 'unsupported_platform',
-        action_type: 'warning',
-        user_id: 'user-123'
-      };
-
-      await expect(worker.processJob(job)).rejects.toThrow(
-        'Unsupported platform: unsupported_platform'
-      );
-    });
-
-    test('should handle unsupported action type', async () => {
-      const job = {
-        id: 'job-bad-action',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        action_type: 'unsupported_action',
-        user_id: 'user-123'
-      };
-
-      await expect(worker.processJob(job)).rejects.toThrow(
-        'Unsupported action type: unsupported_action'
-      );
-    });
-  });
-
-  describe('executeWarning', () => {
-    test('should send warning DM', async () => {
-      const job = {
-        platform: 'twitter',
-        user_id: 'user-123'
-      };
-
-      const payload = {
-        warning_message: 'Please follow community guidelines'
-      };
-
-      mockTwitterService.sendDM.mockResolvedValue({
-        success: true,
-        message_id: 'dm-warning'
-      });
-
-      const result = await worker.executeWarning(job, payload);
-
-      expect(result.success).toBe(true);
-      expect(result.message_id).toBe('dm-warning');
-    });
-
-    test('should handle warning failure', async () => {
-      const job = { platform: 'twitter', user_id: 'user-invalid' };
-      const payload = { warning_message: 'Warning' };
-
-      mockTwitterService.sendDM.mockRejectedValue(
-        new Error('DM sending failed')
-      );
-
-      await expect(worker.executeWarning(job, payload)).rejects.toThrow(
-        'DM sending failed'
-      );
-    });
-  });
-
-  describe('executeMute', () => {
-    test('should mute user temporarily', async () => {
-      const job = { platform: 'youtube', user_id: 'user-456' };
-      const payload = { duration_hours: 48, reason: 'Harassment' };
-
-      mockYouTubeService.muteUser.mockResolvedValue({
-        success: true,
-        mute_id: 'mute-youtube',
-        expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
-      });
-
-      const result = await worker.executeMute(job, payload);
-
-      expect(result.success).toBe(true);
-      expect(result.mute_id).toBe('mute-youtube');
-      expect(result.expires_at).toBeDefined();
-    });
-  });
-
-  describe('executeContentRemoval', () => {
-    test('should remove toxic content', async () => {
-      const job = {
-        platform: 'twitter',
-        comment_id: 'comment-toxic'
-      };
-
-      const payload = {
-        removal_reason: 'Hate speech'
-      };
-
-      mockTwitterService.removeContent.mockResolvedValue({
-        success: true,
-        removal_id: 'removal-123'
-      });
-
-      const result = await worker.executeContentRemoval(job, payload);
-
-      expect(result.success).toBe(true);
-      expect(result.removal_id).toBe('removal-123');
-    });
-  });
-
-  describe('executeBlock', () => {
-    test('should block user permanently', async () => {
-      const job = { platform: 'twitter', user_id: 'user-toxic' };
-      const payload = { ban_reason: 'Repeated violations' };
-
-      mockTwitterService.blockUser.mockResolvedValue({
-        success: true,
-        block_id: 'block-permanent'
-      });
-
-      const result = await worker.executeBlock(job, payload);
-
-      expect(result.success).toBe(true);
-      expect(result.block_id).toBe('block-permanent');
-    });
-  });
-
-  describe('executeReport', () => {
-    test('should report user to platform', async () => {
-      const job = { platform: 'youtube', user_id: 'user-violator' };
-      const payload = {
-        report_reason: 'Harassment',
-        evidence_urls: ['https://evidence.com']
-      };
-
-      mockYouTubeService.reportUser.mockResolvedValue({
-        success: true,
-        report_id: 'report-789'
-      });
-
-      const result = await worker.executeReport(job, payload);
-
-      expect(result.success).toBe(true);
-      expect(result.report_id).toBe('report-789');
-    });
-  });
-
-  describe('createModerationTicket', () => {
-    test('should create escalation ticket for human review', async () => {
-      const job = {
-        organization_id: 'org-123',
-        platform: 'twitter',
-        user_id: 'user-complex',
-        comment_id: 'comment-complex'
-      };
-
-      const payload = {
-        escalation_reason: 'Edge case requiring human judgment',
-        severity: 'medium',
-        evidence: { toxicity_score: 0.65 }
-      };
-
-      // Mock ticket creation (this would integrate with ticketing system)
-      const result = await worker.createModerationTicket(job, payload);
-
-      expect(result.success).toBe(true);
-      expect(result.ticket_id).toBeDefined();
-      expect(result.priority).toBe('medium');
-    });
-  });
-
-  describe('updateActionStatus', () => {
-    test('should update action status in database', async () => {
-      const jobId = 'job-123';
-      const status = 'completed';
-      const details = { action_result: 'success' };
-
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: null
-          })
-        })
-      });
-
-      await worker.updateActionStatus(jobId, status, details);
-
-      expect(mockSupabase.from).toHaveBeenCalledWith('shield_actions');
-      expect(mockSupabase.from().update).toHaveBeenCalledWith({
-        status: 'completed',
-        executed_at: expect.any(String),
-        result_details: { action_result: 'success' }
-      });
-    });
-
-    test('should handle database update errors', async () => {
-      const jobId = 'job-error';
-      const status = 'failed';
-      const details = {};
-
-      mockSupabase.from.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: { message: 'Update failed' }
-          })
-        })
-      });
-
-      await expect(
-        worker.updateActionStatus(jobId, status, details)
-      ).rejects.toThrow('Update failed');
-    });
-  });
-
-  describe('error handling', () => {
-    test('should handle malformed job data', async () => {
-      const malformedJob = {
-        id: 'bad-job'
-        // Missing required fields
-      };
-
-      await expect(worker.processJob(malformedJob)).rejects.toThrow();
-    });
-
-    test('should handle platform API rate limits', async () => {
-      const job = {
-        id: 'job-rate-limit',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        action_type: 'temporary_mute',
-        user_id: 'user-123',
-        payload: { duration_hours: 24 }
-      };
-
-      mockTwitterService.muteUser.mockRejectedValue(
-        new Error('Rate limit exceeded')
-      );
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Rate limit exceeded');
-      expect(result.retry_recommended).toBe(true);
-    });
-
-    test('should handle authentication errors', async () => {
-      const job = {
-        id: 'job-auth-error',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        action_type: 'warning',
-        user_id: 'user-123',
-        payload: { warning_message: 'Test' }
-      };
-
-      mockTwitterService.sendDM.mockRejectedValue(
-        new Error('Authentication failed')
-      );
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Authentication failed');
-      expect(result.requires_attention).toBe(true);
-    });
-  });
-
-  describe('platform integration', () => {
-    test('should initialize all platform services', async () => {
-      // Test that the action executor has platform capabilities
-      const capabilities = worker.actionExecutor.getAdapterCapabilities();
+      await expect(worker.processJob(job)).rejects.toThrow('Platform API error');
       
-      expect(capabilities).toBeDefined();
-      expect(typeof capabilities).toBe('object');
-      expect(Object.keys(capabilities).length).toBeGreaterThan(0);
+      expect(worker.workerMetrics.failedActions).toBe(1);
     });
 
-    test('should handle platform initialization failures', async () => {
-      // Test that the action executor handles failures gracefully
-      const metrics = worker.actionExecutor.getMetrics();
+    test('should handle missing required parameters', async () => {
+      const job = {
+        id: 'job-invalid',
+        payload: {
+          // Missing required fields
+          platform: 'twitter'
+        }
+      };
+
+      await expect(worker.processJob(job)).rejects.toThrow('Missing required Shield action parameters');
+    });
+
+  });
+
+  describe('getSpecificHealthDetails', () => {
+    test('should return comprehensive health status', async () => {
+      const healthDetails = await worker.getSpecificHealthDetails();
       
-      expect(metrics).toBeDefined();
-      expect(typeof metrics.totalActions).toBe('number');
+      expect(healthDetails).toHaveProperty('workerMetrics');
+      expect(healthDetails).toHaveProperty('actionExecutor');
+      expect(healthDetails).toHaveProperty('platformCapabilities');
+      expect(healthDetails).toHaveProperty('persistence');
+      expect(healthDetails).toHaveProperty('costControl');
+      
+      expect(healthDetails.workerMetrics).toBe(worker.workerMetrics);
+      expect(healthDetails.persistence.connected).toBe(true);
+      expect(healthDetails.costControl.enabled).toBe(true);
+    });
+  });
+
+  describe('getWorkerMetrics', () => {
+    test('should return combined metrics', () => {
+      const metrics = worker.getWorkerMetrics();
+      
+      expect(metrics).toHaveProperty('totalProcessed');
+      expect(metrics).toHaveProperty('successfulActions');
+      expect(metrics).toHaveProperty('failedActions');
+      expect(metrics).toHaveProperty('fallbackActions');
+      expect(metrics).toHaveProperty('actionExecutorMetrics');
+      expect(metrics).toHaveProperty('circuitBreakerStatus');
     });
   });
 });

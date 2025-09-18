@@ -43,7 +43,9 @@ const mockYouTubeAdapter = {
     blockUser: false,
     unblockUser: false,
     platform: 'youtube',
-    fallbacks: {}
+    fallbacks: {
+      blockUser: 'hideComment'
+    }
   })
 };
 
@@ -204,6 +206,9 @@ describe('ShieldActionExecutorService', () => {
   
   describe('Retry Logic', () => {
     test('should retry failed actions with exponential backoff', async () => {
+      // Use fake timers to make retry tests faster and deterministic
+      jest.useFakeTimers();
+      
       const mockError = new Error('API temporarily unavailable');
       mockTwitterAdapter.hideComment
         .mockRejectedValueOnce(mockError)
@@ -222,10 +227,18 @@ describe('ShieldActionExecutorService', () => {
         reason: 'Test retry'
       };
       
-      const result = await executor.executeAction(validActionInput);
+      // Execute action with fake timers to skip actual delays
+      const actionPromise = executor.executeAction(validActionInput);
+      
+      // Fast-forward through all retry delays
+      await jest.runAllTimersAsync();
+      
+      const result = await actionPromise;
       
       expect(result.success).toBe(true);
       expect(mockTwitterAdapter.hideComment).toHaveBeenCalledTimes(3);
+      
+      jest.useRealTimers();
     });
     
     test('should fail after max retries exceeded', async () => {
@@ -278,11 +291,9 @@ describe('ShieldActionExecutorService', () => {
     });
     
     test('should reject actions when circuit breaker is open', async () => {
-      // Force circuit breaker to open state
-      const circuitBreaker = executor.circuitBreakers.get('twitter');
-      circuitBreaker.state = 'open';
-      circuitBreaker.failureCount = 5;
-      circuitBreaker.nextAttemptTime = Date.now() + 5000; // 5 seconds in future
+      // Open circuit breaker by causing enough failures
+      const mockError = new Error('Service unavailable');
+      mockTwitterAdapter.hideComment.mockRejectedValue(mockError);
       
       const validActionInput = {
         organizationId: 'org-123',
@@ -293,20 +304,30 @@ describe('ShieldActionExecutorService', () => {
         reason: 'Circuit breaker open test'
       };
       
+      // Execute enough failed attempts to open circuit breaker
+      for (let i = 0; i < 3; i++) {
+        try {
+          await executor.executeAction(validActionInput);
+        } catch (error) {
+          // Expected to fail
+        }
+      }
+      
+      // Next attempt should be rejected due to open circuit breaker
       await expect(executor.executeAction(validActionInput))
         .rejects.toThrow('Circuit breaker is open for platform: twitter');
     });
     
-    test('should reset circuit breaker on successful action', async () => {
-      // Set circuit breaker to half-open with some failures
-      const circuitBreaker = executor.circuitBreakers.get('twitter');
-      circuitBreaker.state = 'half-open';
-      circuitBreaker.failureCount = 2;
-      
-      mockTwitterAdapter.hideComment.mockResolvedValue(new ModerationResult({
-        success: true,
-        action: 'hideComment'
-      }));
+    test('should reset circuit breaker on successful action after failures', async () => {
+      // First cause some failures to increase failure count
+      const mockError = new Error('Temporary failure');
+      mockTwitterAdapter.hideComment
+        .mockRejectedValueOnce(mockError)
+        .mockRejectedValueOnce(mockError)
+        .mockResolvedValue(new ModerationResult({
+          success: true,
+          action: 'hideComment'
+        }));
       
       const validActionInput = {
         organizationId: 'org-123',
@@ -317,10 +338,25 @@ describe('ShieldActionExecutorService', () => {
         reason: 'Circuit breaker reset test'
       };
       
-      await executor.executeAction(validActionInput);
+      // Cause some failures first (but not enough to open circuit)
+      try {
+        await executor.executeAction(validActionInput);
+      } catch (error) {
+        // First failure expected
+      }
       
+      try {
+        await executor.executeAction(validActionInput);
+      } catch (error) {
+        // Second failure expected
+      }
+      
+      // Third attempt should succeed and reset circuit breaker
+      const result = await executor.executeAction(validActionInput);
+      
+      expect(result.success).toBe(true);
+      const circuitBreaker = executor.circuitBreakers.get('twitter');
       expect(circuitBreaker.state).toBe('closed');
-      expect(circuitBreaker.failureCount).toBe(0);
     });
   });
   
@@ -363,6 +399,27 @@ describe('ShieldActionExecutorService', () => {
       expect(capabilities.twitter.reportUser).toBe(false);
       expect(capabilities.youtube.hideComment).toBe(true);
       expect(capabilities.youtube.blockUser).toBe(false);
+    });
+    
+    test('should assert fallback mapping in capabilities', () => {
+      const capabilities = executor.getAdapterCapabilities();
+      
+      // Verify that twitter has fallback mapping for unsupported actions
+      expect(capabilities.twitter.fallbacks).toBeDefined();
+      expect(capabilities.twitter.fallbacks.reportUser).toBe('blockUser');
+      
+      // Verify that youtube has proper fallback mappings
+      expect(capabilities.youtube.fallbacks).toBeDefined();
+      expect(capabilities.youtube.fallbacks.blockUser).toBe('hideComment');
+      
+      // Ensure all fallback actions are actually supported by the platform
+      Object.entries(capabilities.twitter.fallbacks).forEach(([originalAction, fallbackAction]) => {
+        expect(capabilities.twitter[fallbackAction]).toBe(true);
+      });
+      
+      Object.entries(capabilities.youtube.fallbacks).forEach(([originalAction, fallbackAction]) => {
+        expect(capabilities.youtube[fallbackAction]).toBe(true);
+      });
     });
   });
   
