@@ -177,6 +177,7 @@
     "jest-junit": "^16.0.0",
     "jsdom": "^26.1.0",
     "nock": "^13.3.3",
+    "playwright": "^1.55.0",
     "supertest": "^7.1.4"
   }
 }

@@ -1,5 +1,47 @@
 # 📦 Changelog
 
+## [Unreleased]
+
+### ✨ Added
+- **Shield Settings Configuration (Issue #362)**: Complete shield threshold configuration system
+  - **Backend API**: GET/POST `/api/settings/shield` endpoints with organization and platform-specific settings
+  - **Database Schema**: New organization_settings and platform_settings tables with RLS
+  - **Aggressiveness Presets**: 90% (Conservative), 95% (Balanced), 98% (Aggressive), 100% (Maximum)
+  - **Technical Thresholds**: τ_roast_lower, τ_shield, τ_critical with validation rules
+  - **Validation**: Ensures 0 ≤ τ_roast_lower < τ_shield < τ_critical ≤ 1 constraints
+  - **ShieldDecisionEngine Integration**: Dynamic threshold loading from database settings
+
+### 🎨 Frontend Components
+- **InfoTooltip Component**: Accessible tooltip system with keyboard navigation and ARIA support
+- **ThresholdSlider Component**: Dual slider/input interface with real-time validation and percentage conversion
+- **ShieldSettings Component**: Complete configuration panel with preset management and validation feedback
+- **Real-time Validation**: Immediate error feedback for invalid threshold configurations
+- **Accessibility**: Full ARIA compliance, keyboard navigation, and screen reader support
+
+### 🧪 Testing
+- **Comprehensive Test Suite**: 74 tests covering unit, integration, and accessibility scenarios
+- **Component Testing**: InfoTooltip (13 tests), ThresholdSlider (20 tests), ShieldSettings (41 tests)
+- **Validation Testing**: All edge cases for threshold ordering and range constraints
+- **Performance Testing**: Rapid input handling and state synchronization validation
+- **Accessibility Testing**: Full keyboard navigation and screen reader compliance
+
+### 🔧 Fixed
+- **Playwright MCP Server**: Corregido el servidor MCP para cumplir con el protocolo JSON-RPC 2.0
+  - Implementada correcta inicialización y handshake del protocolo MCP
+  - Añadido soporte completo para métodos: `initialize`, `tools/list`, `tools/call`, `shutdown`
+  - Corregida estructura de respuestas JSON-RPC con campos requeridos
+  - Mejorado manejo de errores con códigos estándar JSON-RPC
+  - Añadidos logs detallados con prefijo `[MCP]` para debugging
+  - Validación de requests entrantes según especificación JSON-RPC 2.0
+
+### 📝 Documentación
+- **Shield Settings Documentation**: Complete implementation guide in spec.md
+- **Test Evidence**: Comprehensive test evidence report in docs/test-evidence/
+- **MCP Usage**: El servidor Playwright MCP ahora funciona correctamente con Claude
+  - Configuración en `~/.config/claude/mcp.json` apuntando a `playwright-mcp-server.js`
+  - Tools disponibles: `browse`, `screenshot`, `inspect`, `visual_test`, `multi_viewport_test`, `check_console`
+  - Cada tool incluye JSON Schema completo para validación de parámetros
+
 ## v0.8.0 – 2025-08-08
 
 **Descripción:** V1 Pilot Hardening - Sistema completo backend/infra listo con billing Stripe, integraciones mock, seguridad hardening, CI/CD, y feature flags. Todo backend operativo para launch del piloto.
