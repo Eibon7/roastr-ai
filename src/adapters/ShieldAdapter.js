@@ -42,6 +42,13 @@ class ModerationResult {
     this.executionTime = executionTime;
     this.timestamp = new Date().toISOString();
   }
+  
+  /**
+   * Get platform from details for easy access
+   */
+  get platform() {
+    return this.details.platform;
+  }
 }
 
 class CapabilityMap {
