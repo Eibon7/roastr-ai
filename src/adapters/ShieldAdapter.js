@@ -145,7 +145,6 @@ class ShieldAdapter {
    * Get the platform name
    * @returns {string}
    */
-   */
   getPlatform() {
     return this.platform;
   }
