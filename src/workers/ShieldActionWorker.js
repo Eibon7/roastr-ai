@@ -1,609 +1,260 @@
 const BaseWorker = require('./BaseWorker');
-const ShieldService = require('../services/shieldService');
+const ShieldActionExecutorService = require('../services/shieldActionExecutor');
+const ShieldPersistenceService = require('../services/shieldPersistenceService');
 const CostControlService = require('../services/costControl');
 
 /**
  * Shield Action Worker
  * 
- * Dedicated worker for executing Shield protection actions:
- * - Platform-specific moderation actions (mute, block, ban)
- * - Automated response to high-toxicity content
- * - User behavior escalation handling
- * - Integration with platform APIs for enforcement
+ * Background worker for executing Shield moderation actions across platforms.
+ * Uses the unified ShieldActionExecutorService with circuit breaker, retry logic,
+ * and fallback strategies as specified in Issue 361.
+ * 
+ * Processes jobs from the shield_action queue and executes:
+ * - hideComment: Hide/delete toxic comments
+ * - reportUser: Report users to platform moderation
+ * - blockUser: Block toxic users
+ * - unblockUser: Unblock users (reversal)
  */
 class ShieldActionWorker extends BaseWorker {
   constructor(options = {}) {
     super('shield_action', {
-      maxConcurrency: 2, // Limited concurrency for Shield actions
-      pollInterval: 1000, // Fast response for Shield
-      maxRetries: 3,
+      maxConcurrency: 3, // Moderate concurrency for Shield actions
+      pollInterval: 2000, // 2 second polling for Shield actions
+      maxRetries: 1, // Let ShieldActionExecutor handle retries
+      priority: 1, // High priority for Shield actions
       ...options
     });
     
-    this.shieldService = new ShieldService();
-    this.costControl = new CostControlService();
-    this.platformClients = new Map();
+    // Initialize services
+    this.actionExecutor = new ShieldActionExecutorService({
+      maxRetries: 3,
+      baseDelay: 500,
+      maxDelay: 30000,
+      failureThreshold: 5,
+      recoveryTimeout: 60000
+    });
     
-    // Initialize platform clients for Shield actions
-    this.initializePlatformClients();
+    this.persistenceService = new ShieldPersistenceService();
+    this.costControl = new CostControlService();
+    
+    // Worker metrics
+    this.workerMetrics = {
+      totalProcessed: 0,
+      successfulActions: 0,
+      failedActions: 0,
+      fallbackActions: 0,
+      averageProcessingTime: 0,
+      lastActionTime: null
+    };
   }
   
   /**
    * Get worker-specific health details
    */
   async getSpecificHealthDetails() {
-    const details = {
-      platformClients: {},
-      shieldStats: {
-        totalActions: this.totalActions || 0,
-        byType: this.actionsByType || {},
-        byPlatform: this.actionsByPlatform || {},
-        successRate: this.successRate || 'N/A',
-        lastAction: this.lastActionTime || null
+    const executorMetrics = this.actionExecutor.getMetrics();
+    const circuitBreakerStatus = this.actionExecutor.getCircuitBreakerStatus();
+    const adapterCapabilities = this.actionExecutor.getAdapterCapabilities();
+    
+    return {
+      workerMetrics: this.workerMetrics,
+      actionExecutor: {
+        metrics: executorMetrics,
+        circuitBreakers: circuitBreakerStatus,
+        supportedPlatforms: Object.keys(adapterCapabilities)
       },
-      escalations: {
-        total: this.totalEscalations || 0,
-        autoBlocks: this.autoBlocks || 0,
-        reportsFiled: this.reportsFiled || 0,
-        manualReviewQueue: this.manualReviewQueue || 0
+      platformCapabilities: adapterCapabilities,
+      persistence: {
+        connected: !!this.persistenceService,
+        status: 'operational'
       },
-      performance: {
-        avgActionTime: this.avgActionTime || 'N/A',
-        queuedActions: this.queuedActions || 0,
-        failedActions: this.failedActions || 0
+      costControl: {
+        enabled: !!this.costControl,
+        status: 'operational'
       }
     };
-    
-    // Check each platform client status
-    for (const [platform, client] of this.platformClients.entries()) {
-      details.platformClients[platform] = {
-        initialized: !!client,
-        status: client ? 'available' : 'not configured',
-        lastUsed: this[`last${platform}Use`] || null
-      };
-    }
-    
-    // Add Shield service status
-    details.shieldService = {
-      enabled: !!this.shieldService,
-      mode: this.shieldService?.mode || 'unknown',
-      ruleCount: this.shieldService?.ruleCount || 0
-    };
-    
-    return details;
-  }
-  
-  /**
-   * Initialize clients for different platforms
-   */
-  initializePlatformClients() {
-    // Twitter client for Shield actions
-    if (process.env.TWITTER_BEARER_TOKEN) {
-      const { TwitterApi } = require('twitter-api-v2');
-      this.platformClients.set('twitter', new TwitterApi(process.env.TWITTER_BEARER_TOKEN, {
-        appKey: process.env.TWITTER_APP_KEY,
-        appSecret: process.env.TWITTER_APP_SECRET,
-        accessToken: process.env.TWITTER_ACCESS_TOKEN,
-        accessSecret: process.env.TWITTER_ACCESS_SECRET
-      }));
-    }
-    
-    // Discord client for Shield actions
-    if (process.env.DISCORD_BOT_TOKEN) {
-      const { Client, GatewayIntentBits } = require('discord.js');
-      const discordClient = new Client({
-        intents: [
-          GatewayIntentBits.Guilds,
-          GatewayIntentBits.GuildMessages,
-          GatewayIntentBits.GuildModeration
-        ]
-      });
-      
-      // Store promise to login later when needed
-      this.platformClients.set('discord', discordClient);
-    }
-    
-    // Twitch client for Shield actions
-    if (process.env.TWITCH_CLIENT_ID && process.env.TWITCH_ACCESS_TOKEN) {
-      const { ApiClient } = require('@twurple/api');
-      const { StaticAuthProvider } = require('@twurple/auth');
-      
-      const authProvider = new StaticAuthProvider(
-        process.env.TWITCH_CLIENT_ID, 
-        process.env.TWITCH_ACCESS_TOKEN
-      );
-      
-      this.platformClients.set('twitch', new ApiClient({ authProvider }));
-    }
   }
   
   /**
    * Process Shield action job
+   * 
+   * Executes Shield moderation actions using the unified action executor.
+   * Job payload should contain:
+   * - organizationId: Organization ID
+   * - userId: User ID (optional)
+   * - platform: Platform name (twitter, youtube, discord, twitch)
+   * - accountRef: Platform account reference  
+   * - externalCommentId: Platform-specific comment/message ID
+   * - externalAuthorId: Platform-specific author ID
+   * - externalAuthorUsername: Author username
+   * - action: Action to execute (hideComment, reportUser, blockUser, unblockUser)
+   * - reason: Reason for action
+   * - originalText: Original comment text (optional, for GDPR)
+   * - metadata: Additional metadata
    */
   async processJob(job) {
-    const { 
-      comment_id,
-      organization_id, 
-      platform, 
-      platform_user_id,
-      platform_username,
-      action,
-      duration,
-      shield_mode 
-    } = job.payload || job;
+    const startTime = Date.now();
+    const payload = job.payload || job;
     
-    if (!shield_mode) {
-      throw new Error('Shield action job must be in Shield mode');
+    const {
+      organizationId,
+      userId = null,
+      platform,
+      accountRef,
+      externalCommentId,
+      externalAuthorId,
+      externalAuthorUsername,
+      action,
+      reason = 'Shield automated action',
+      originalText = null,
+      metadata = {}
+    } = payload;
+    
+    // Validate required fields
+    if (!organizationId || !platform || !externalCommentId || !externalAuthorId || !action) {
+      throw new Error('Missing required Shield action parameters');
     }
     
-    this.log('info', 'Processing Shield action', {
-      commentId: comment_id,
+    this.log('info', 'Processing Shield action job', {
+      organizationId,
       platform,
-      platformUserId: platform_user_id,
-      action,
-      duration
+      externalCommentId,
+      externalAuthorId,
+      action
     });
     
     try {
-      // Execute platform-specific action
-      const result = await this.executePlatformAction(
+      // Execute action using the unified executor
+      const result = await this.actionExecutor.executeAction({
+        organizationId,
+        userId,
+        platform,
+        accountRef,
+        externalCommentId,
+        externalAuthorId,
+        externalAuthorUsername,
+        action,
+        reason,
+        originalText,
+        metadata: {
+          ...metadata,
+          jobId: job.id,
+          workerId: this.workerId,
+          queueName: this.queueName
+        }
+      });
+      
+      // Record usage for cost control
+      await this.recordUsage(organizationId, platform, action, result, startTime);
+      
+      // Update worker metrics
+      this.updateWorkerMetrics(true, result.fallback, Date.now() - startTime);
+      
+      this.log('info', 'Shield action completed successfully', {
+        organizationId,
         platform,
         action,
-        platform_user_id,
-        platform_username,
-        duration,
-        comment_id
-      );
-      
-      // Record action in database
-      await this.recordShieldAction(
-        organization_id,
-        comment_id,
-        platform,
-        platform_user_id,
-        action,
-        result
-      );
-      
-      // Record usage for Shield action
-      await this.costControl.recordUsage(
-        organization_id,
-        platform,
-        'shield_action',
-        {
-          commentId: comment_id,
-          actionType: action,
-          platformUserId: platform_user_id,
-          duration: duration,
-          success: result.success,
-          executionTime: result.executionTime || 0,
-          escalationLevel: result.escalationLevel || 'standard'
-        },
-        null, // userId - not applicable for shield actions
-        1 // quantity
-      );
-      
-      // Update user behavior
-      await this.updateUserBehavior(
-        organization_id,
-        platform,
-        platform_user_id,
-        action,
-        result.success
-      );
+        success: result.success,
+        fallback: result.fallback,
+        requiresManualReview: result.requiresManualReview,
+        processingTimeMs: Date.now() - startTime
+      });
       
       return {
         success: true,
         summary: `Shield action executed: ${action} on ${platform}`,
         platform,
-        action,
-        result: result.success,
+        action: result.fallback || action,
+        originalAction: result.originalAction || action,
+        fallback: result.fallback,
+        requiresManualReview: result.requiresManualReview || false,
+        executionTime: result.executionTime,
         details: result.details
       };
       
     } catch (error) {
-      this.log('error', 'Shield action failed', {
-        commentId: comment_id,
-        platform,
-        action,
-        error: error.message
-      });
+      // Update worker metrics
+      this.updateWorkerMetrics(false, false, Date.now() - startTime);
       
-      // Record failed action
-      await this.recordShieldAction(
-        organization_id,
-        comment_id,
+      this.log('error', 'Shield action job failed', {
+        organizationId,
         platform,
-        platform_user_id,
+        externalCommentId,
         action,
-        { success: false, error: error.message }
-      );
+        error: error.message,
+        processingTimeMs: Date.now() - startTime
+      });
       
       throw error;
     }
   }
   
   /**
-   * Execute platform-specific Shield action
+   * Record usage for cost control
    */
-  async executePlatformAction(platform, action, userId, username, duration, commentId) {
-    const client = this.platformClients.get(platform);
-    
-    if (!client) {
-      throw new Error(`No ${platform} client configured for Shield actions`);
-    }
-    
-    switch (platform) {
-      case 'twitter':
-        return await this.executeTwitterAction(client, action, userId, username, duration);
-      case 'discord':
-        return await this.executeDiscordAction(client, action, userId, username, duration);
-      case 'twitch':
-        return await this.executeTwitchAction(client, action, userId, username, duration);
-      case 'youtube':
-        return await this.executeYouTubeAction(client, action, userId, username, commentId);
-      default:
-        throw new Error(`Shield actions not implemented for platform: ${platform}`);
-    }
-  }
-  
-  /**
-   * Execute Twitter Shield action
-   */
-  async executeTwitterAction(client, action, userId, username, duration) {
+  async recordUsage(organizationId, platform, action, result, startTime) {
     try {
-      switch (action) {
-        case 'reply_warning':
-          // Reply with warning message
-          const warningTweet = await client.v2.reply(
-            `@${username} This comment violates our community guidelines. Please keep discussions respectful.`,
-            commentId // This would need to be the original tweet ID
-          );
-          
-          return {
-            success: true,
-            details: { tweetId: warningTweet.data.id, type: 'warning_reply' }
-          };
-          
-        case 'mute_user':
-          // Mute user (requires elevated API access)
-          await client.v1.createMute(userId);
-          
-          return {
-            success: true,
-            details: { type: 'user_muted', duration, userId }
-          };
-          
-        case 'block_user':
-          // Block user
-          await client.v1.createBlock(userId);
-          
-          return {
-            success: true,
-            details: { type: 'user_blocked', userId }
-          };
-          
-        case 'report_user':
-          // Report user (this would typically be done through web interface)
-          // For now, we'll log it for manual review
-          return {
-            success: true,
-            details: { type: 'user_reported', requiresManualReview: true, userId }
-          };
-          
-        default:
-          throw new Error(`Unknown Twitter Shield action: ${action}`);
-      }
-      
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-        details: { platform: 'twitter', action, userId }
-      };
-    }
-  }
-  
-  /**
-   * Execute Discord Shield action
-   */
-  async executeDiscordAction(client, action, userId, username, duration) {
-    try {
-      // Ensure Discord client is logged in
-      if (!client.readyAt) {
-        await client.login(process.env.DISCORD_BOT_TOKEN);
-        await new Promise(resolve => client.once('ready', resolve));
-      }
-      
-      const guild = client.guilds.cache.first(); // Get the main guild
-      if (!guild) {
-        throw new Error('No Discord guild found');
-      }
-      
-      const member = await guild.members.fetch(userId);
-      if (!member) {
-        throw new Error(`User ${userId} not found in guild`);
-      }
-      
-      switch (action) {
-        case 'send_warning_dm':
-          // Send warning via DM
-          await member.send(
-            'Your recent message violates our community guidelines. Please keep discussions respectful.'
-          );
-          
-          return {
-            success: true,
-            details: { type: 'warning_dm_sent', userId }
-          };
-          
-        case 'timeout_user':
-          // Timeout user (Discord's built-in timeout)
-          const timeoutMs = this.parseDuration(duration);
-          await member.timeout(timeoutMs, 'Shield: Toxic behavior detected');
-          
-          return {
-            success: true,
-            details: { type: 'user_timeout', duration, userId }
-          };
-          
-        case 'remove_voice_permissions':
-          // Remove voice channel permissions
-          const voiceChannels = guild.channels.cache.filter(ch => ch.type === 'GUILD_VOICE');
-          
-          for (const [, channel] of voiceChannels) {
-            await channel.permissionOverwrites.create(userId, {
-              Speak: false,
-              Connect: false
-            });
-          }
-          
-          return {
-            success: true,
-            details: { type: 'voice_permissions_removed', userId }
-          };
-          
-        case 'kick_user':
-          // Kick user from server
-          await member.kick('Shield: Severe toxic behavior detected');
-          
-          return {
-            success: true,
-            details: { type: 'user_kicked', userId }
-          };
-          
-        case 'report_to_moderators':
-          // Send report to moderators channel
-          const modChannel = guild.channels.cache.find(ch => 
-            ch.name.includes('mod') && ch.type === 'GUILD_TEXT'
-          );
-          
-          if (modChannel) {
-            await modChannel.send(
-              `🚨 Shield Alert: User <@${userId}> flagged for toxic behavior. Manual review required.`
-            );
-          }
-          
-          return {
-            success: true,
-            details: { type: 'reported_to_moderators', userId }
-          };
-          
-        default:
-          throw new Error(`Unknown Discord Shield action: ${action}`);
-      }
-      
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-        details: { platform: 'discord', action, userId }
-      };
-    }
-  }
-  
-  /**
-   * Execute Twitch Shield action
-   */
-  async executeTwitchAction(client, action, userId, username, duration) {
-    try {
-      const channelId = process.env.TWITCH_CHANNEL_ID;
-      
-      if (!channelId) {
-        throw new Error('Twitch channel ID not configured');
-      }
-      
-      switch (action) {
-        case 'timeout_user':
-          // Timeout user in chat
-          const timeoutSeconds = this.parseDurationToSeconds(duration);
-          await client.moderation.banUser(channelId, {
-            userId: userId,
-            duration: timeoutSeconds,
-            reason: 'Shield: Toxic behavior detected'
-          });
-          
-          return {
-            success: true,
-            details: { type: 'user_timeout', duration, userId }
-          };
-          
-        case 'ban_user':
-          // Permanently ban user
-          await client.moderation.banUser(channelId, {
-            userId: userId,
-            reason: 'Shield: Severe toxic behavior'
-          });
-          
-          return {
-            success: true,
-            details: { type: 'user_banned', userId }
-          };
-          
-        case 'report_to_twitch':
-          // Create report to Twitch (limited API support)
-          return {
-            success: true,
-            details: { 
-              type: 'reported_to_twitch', 
-              requiresManualReview: true,
-              userId 
-            }
-          };
-          
-        default:
-          throw new Error(`Unknown Twitch Shield action: ${action}`);
-      }
-      
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-        details: { platform: 'twitch', action, userId }
-      };
-    }
-  }
-  
-  /**
-   * Execute YouTube Shield action
-   */
-  async executeYouTubeAction(client, action, userId, username, commentId) {
-    try {
-      // Note: YouTube API has limited moderation capabilities
-      
-      switch (action) {
-        case 'reply_warning':
-          // Reply with warning (if API access available)
-          return {
-            success: true,
-            details: { 
-              type: 'warning_reply_pending',
-              requiresManualReview: true,
-              commentId 
-            }
-          };
-          
-        case 'report_comment':
-          // Report comment to YouTube
-          return {
-            success: true,
-            details: { 
-              type: 'comment_reported',
-              requiresManualReview: true,
-              commentId 
-            }
-          };
-          
-        default:
-          return {
-            success: false,
-            error: `YouTube Shield action '${action}' requires manual execution`,
-            details: { platform: 'youtube', action, userId }
-          };
-      }
-      
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-        details: { platform: 'youtube', action, userId }
-      };
-    }
-  }
-  
-  /**
-   * Record Shield action in database
-   */
-  async recordShieldAction(organizationId, commentId, platform, userId, action, result) {
-    try {
-      await this.supabase
-        .from('app_logs')
-        .insert({
-          organization_id: organizationId,
-          level: result.success ? 'info' : 'error',
-          category: 'shield_action',
-          message: `Shield action ${result.success ? 'executed' : 'failed'}: ${action}`,
+      await this.costControl.recordUsage(
+        organizationId,
+        platform,
+        'shield_action',
+        {
+          action,
+          success: result.success,
+          fallback: result.fallback,
+          requiresManualReview: result.requiresManualReview || false,
+          executionTime: result.executionTime || (Date.now() - startTime),
           platform,
-          metadata: {
-            commentId,
-            userId,
-            action,
-            result,
-            executedAt: new Date().toISOString()
-          }
-        });
-        
+          timestamp: new Date().toISOString()
+        },
+        null, // userId - not applicable for shield actions
+        1 // quantity
+      );
     } catch (error) {
-      this.log('error', 'Failed to record Shield action', {
-        commentId,
-        error: error.message
-      });
-    }
-  }
-  
-  /**
-   * Update user behavior after Shield action
-   */
-  async updateUserBehavior(organizationId, platform, userId, action, success) {
-    if (!success) return;
-    
-    try {
-      const actionRecord = {
+      this.log('error', 'Failed to record Shield action usage', {
+        organizationId,
+        platform,
         action,
-        date: new Date().toISOString(),
-        success,
-        executedBy: 'shield_worker'
-      };
-      
-      const { error } = await this.supabase
-        .from('user_behaviors')
-        .upsert({
-          organization_id: organizationId,
-          platform,
-          platform_user_id: userId,
-          actions_taken: [actionRecord], // Will be merged with existing
-          is_blocked: ['block_user', 'ban_user', 'kick_user'].includes(action),
-          last_seen_at: new Date().toISOString()
-        }, {
-          onConflict: 'organization_id,platform,platform_user_id',
-          ignoreDuplicates: false
-        });
-      
-      if (error) throw error;
-      
-    } catch (error) {
-      this.log('error', 'Failed to update user behavior after Shield action', {
-        userId,
         error: error.message
       });
     }
   }
   
   /**
-   * Parse duration string to milliseconds
+   * Update worker metrics
    */
-  parseDuration(duration) {
-    if (!duration) return 600000; // 10 minutes default
+  updateWorkerMetrics(success, isFallback, processingTime) {
+    this.workerMetrics.totalProcessed++;
+    this.workerMetrics.lastActionTime = new Date().toISOString();
     
-    const match = duration.match(/^(\d+)([smhd])$/);
-    if (!match) return 600000;
+    if (success) {
+      this.workerMetrics.successfulActions++;
+    } else {
+      this.workerMetrics.failedActions++;
+    }
     
-    const [, amount, unit] = match;
-    const multipliers = {
-      s: 1000,
-      m: 60000,
-      h: 3600000,
-      d: 86400000
-    };
+    if (isFallback) {
+      this.workerMetrics.fallbackActions++;
+    }
     
-    return parseInt(amount) * (multipliers[unit] || 60000);
+    // Update average processing time
+    const currentAvg = this.workerMetrics.averageProcessingTime;
+    const totalProcessed = this.workerMetrics.totalProcessed;
+    
+    this.workerMetrics.averageProcessingTime = 
+      ((currentAvg * (totalProcessed - 1)) + processingTime) / totalProcessed;
   }
   
   /**
-   * Parse duration string to seconds
+   * Get worker metrics
    */
-  parseDurationToSeconds(duration) {
-    return Math.floor(this.parseDuration(duration) / 1000);
+  getWorkerMetrics() {
+    return {
+      ...this.workerMetrics,
+      actionExecutorMetrics: this.actionExecutor.getMetrics(),
+      circuitBreakerStatus: this.actionExecutor.getCircuitBreakerStatus()
+    };
   }
 }
 

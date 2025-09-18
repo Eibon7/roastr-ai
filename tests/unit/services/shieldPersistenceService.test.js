@@ -83,9 +83,24 @@ describe('ShieldPersistenceService', () => {
 
   describe('recordShieldEvent', () => {
     test('should record a shield event successfully', async () => {
+      // Mock what Supabase actually returns (snake_case format)
       const mockInsertedEvent = {
         id: 'event-123',
-        ...mockEventData,
+        organization_id: mockEventData.organizationId,
+        user_id: mockEventData.userId,
+        platform: mockEventData.platform,
+        account_ref: mockEventData.accountRef,
+        external_comment_id: mockEventData.externalCommentId,
+        external_author_id: mockEventData.externalAuthorId,
+        external_author_username: mockEventData.externalAuthorUsername,
+        original_text: mockEventData.originalText,
+        toxicity_score: mockEventData.toxicityScore,
+        toxicity_labels: mockEventData.toxicityLabels,
+        action_taken: mockEventData.actionTaken,
+        action_reason: mockEventData.actionReason,
+        action_status: mockEventData.actionStatus,
+        processed_by: mockEventData.processedBy,
+        processing_time_ms: mockEventData.processingTimeMs,
         created_at: '2024-01-15T10:00:00Z'
       };
 
@@ -138,9 +153,24 @@ describe('ShieldPersistenceService', () => {
         originalText: null // No text for non-Shield moderated content
       };
 
+      // Mock what Supabase actually returns (snake_case format)
       const mockInsertedEvent = {
         id: 'event-124',
-        ...eventWithoutText,
+        organization_id: eventWithoutText.organizationId,
+        user_id: eventWithoutText.userId,
+        platform: eventWithoutText.platform,
+        account_ref: eventWithoutText.accountRef,
+        external_comment_id: eventWithoutText.externalCommentId,
+        external_author_id: eventWithoutText.externalAuthorId,
+        external_author_username: eventWithoutText.externalAuthorUsername,
+        original_text: null,
+        toxicity_score: eventWithoutText.toxicityScore,
+        toxicity_labels: eventWithoutText.toxicityLabels,
+        action_taken: eventWithoutText.actionTaken,
+        action_reason: eventWithoutText.actionReason,
+        action_status: eventWithoutText.actionStatus,
+        processed_by: eventWithoutText.processedBy,
+        processing_time_ms: eventWithoutText.processingTimeMs,
         created_at: '2024-01-15T10:00:00Z'
       };
 
@@ -331,6 +361,7 @@ describe('ShieldPersistenceService', () => {
   describe('isRepeatOffender', () => {
     test('should identify repeat offender correctly', async () => {
       // Override the chain for this specific test
+      // biome-ignore lint/suspicious/noThenProperty: Mock object for testing
       mockSupabase.select.mockReturnValueOnce({
         count: 3,
         error: null

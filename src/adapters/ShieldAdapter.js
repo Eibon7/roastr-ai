@@ -5,7 +5,6 @@
  * shield adapters must implement. It provides a consistent interface
  * for the Shield system to interact with different social media platforms.
  */
-
 class ModerationInput {
   constructor({
     platform,
@@ -42,6 +41,13 @@ class ModerationResult {
     this.requiresManualReview = requiresManualReview;
     this.executionTime = executionTime;
     this.timestamp = new Date().toISOString();
+  }
+  
+  /**
+   * Get platform from details for easy access
+   */
+  get platform() {
+    return this.details.platform;
   }
 }
 
