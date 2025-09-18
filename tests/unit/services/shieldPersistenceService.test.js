@@ -331,6 +331,7 @@ describe('ShieldPersistenceService', () => {
   describe('isRepeatOffender', () => {
     test('should identify repeat offender correctly', async () => {
       // Override the chain for this specific test
+      // biome-ignore lint/suspicious/noThenProperty: Mock object for testing
       mockSupabase.select.mockReturnValueOnce({
         count: 3,
         error: null

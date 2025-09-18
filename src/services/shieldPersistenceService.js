@@ -477,8 +477,12 @@ class ShieldPersistenceService {
     const summary = {};
     
     events.forEach(event => {
-      if (event.action_status === 'executed') {
-        summary[event.action_taken] = (summary[event.action_taken] || 0) + 1;
+      // Handle both snake_case and camelCase formats
+      const actionStatus = event.action_status || event.actionStatus;
+      const actionTaken = event.action_taken || event.actionTaken;
+      
+      if (actionStatus === 'executed') {
+        summary[actionTaken] = (summary[actionTaken] || 0) + 1;
       }
     });
     
@@ -498,11 +502,15 @@ class ShieldPersistenceService {
     };
     
     events.forEach(event => {
-      summary.byAction[event.action_taken] = (summary.byAction[event.action_taken] || 0) + 1;
-      summary.byStatus[event.action_status] = (summary.byStatus[event.action_status] || 0) + 1;
+      // Handle both snake_case and camelCase formats
+      const actionTaken = event.action_taken || event.actionTaken;
+      const actionStatus = event.action_status || event.actionStatus;
       
-      if (event.action_status === 'executed') summary.executed++;
-      if (event.action_status === 'failed') summary.failed++;
+      summary.byAction[actionTaken] = (summary.byAction[actionTaken] || 0) + 1;
+      summary.byStatus[actionStatus] = (summary.byStatus[actionStatus] || 0) + 1;
+      
+      if (actionStatus === 'executed') summary.executed++;
+      if (actionStatus === 'failed') summary.failed++;
     });
     
     return summary;
@@ -512,7 +520,10 @@ class ShieldPersistenceService {
    * Helper: Calculate average toxicity
    */
   calculateAverageToxicity(events) {
-    const scores = events.filter(e => e.toxicity_score !== null).map(e => e.toxicity_score);
+    // Handle both snake_case and camelCase formats
+    const scores = events
+      .filter(e => (e.toxicity_score || e.toxicityScore) !== null)
+      .map(e => e.toxicity_score || e.toxicityScore);
     return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
   }
   
@@ -523,8 +534,10 @@ class ShieldPersistenceService {
     const distribution = { low: 0, medium: 0, high: 0, critical: 0 };
     
     offenders.forEach(offender => {
-      if (distribution.hasOwnProperty(offender.severity_level)) {
-        distribution[offender.severity_level]++;
+      // Handle both snake_case and camelCase formats
+      const severityLevel = offender.severity_level || offender.severityLevel;
+      if (severityLevel && distribution.hasOwnProperty(severityLevel)) {
+        distribution[severityLevel]++;
       }
     });
     

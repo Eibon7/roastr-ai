@@ -403,8 +403,20 @@ class ShieldActionExecutorService {
         executionTime: Date.now() - startTime
       };
       
-      // Update metrics for manual review path
-      this.updateMetrics(adapter.getPlatform(), action, true, false);
+      // Update metrics for manual review path (count as successful fallback)
+      this.updateMetrics(adapter.getPlatform(), action, true, true);
+      
+      // Log manual review action specifically 
+      this.logger.info('Shield action requires manual review', {
+        organizationId: moderationInput.orgId,
+        platform: adapter.getPlatform(),
+        action,
+        externalCommentId: moderationInput.commentId,
+        externalAuthorId: moderationInput.userId,
+        reason: 'Platform API limitation - no automated action available',
+        manualInstructions: this.getManualInstructions(adapter.getPlatform(), action),
+        escalationContext: auditContext
+      });
       
       return result;
     }

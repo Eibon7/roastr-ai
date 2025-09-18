@@ -306,7 +306,7 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
   });
   
   describe('GDPR Compliance Integration', () => {
-    test('should handle original text according to GDPR requirements', async () => {
+    test('should store original text for content-based actions per GDPR requirements', async () => {
       const actionInput = {
         organizationId: 'org-gdpr-test',
         platform: 'twitter',
@@ -319,16 +319,26 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
       
       await executor.executeAction(actionInput);
       
-      // Verify original text is only stored for Shield actions
+      // Verify original text is stored for content-based actions with proper GDPR metadata
       expect(executor.persistenceService.recordShieldEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           originalText: 'Personal information that needs GDPR protection',
-          actionTaken: 'hideComment'
+          actionTaken: 'hideComment',
+          actionDetails: expect.objectContaining({
+            contentBased: true,
+            gdprCompliant: true
+          }),
+          metadata: expect.objectContaining({
+            gdprCompliance: expect.objectContaining({
+              piiStored: true,
+              reason: 'content_moderation'
+            })
+          })
         })
       );
     });
     
-    test('should not store original text for non-Shield actions', async () => {
+    test('should not store original text for non-content actions', async () => {
       const actionInput = {
         organizationId: 'org-gdpr-test',
         platform: 'twitter',
@@ -341,11 +351,15 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
       
       await executor.executeAction(actionInput);
       
-      // For blockUser action, original text should be null for GDPR compliance
+      // For blockUser action (non-content based), original text should be null for GDPR compliance
       expect(executor.persistenceService.recordShieldEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          originalText: 'This text should not be stored for blocking action',
-          actionTaken: 'blockUser'
+          originalText: null,  // Should be null for non-content actions
+          actionTaken: 'blockUser',
+          actionDetails: expect.objectContaining({
+            contentBased: false,
+            gdprCompliant: true
+          })
         })
       );
     });
