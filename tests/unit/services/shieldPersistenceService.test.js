@@ -7,8 +7,8 @@
 
 const ShieldPersistenceService = require('../../../src/services/shieldPersistenceService');
 
-// Create a more sophisticated Supabase mock that supports both chaining and promises
-const createQueryBuilderMock = () => ({
+// Mock Supabase
+const mockSupabase = {
   from: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
   insert: jest.fn().mockReturnThis(),
@@ -24,24 +24,15 @@ const createQueryBuilderMock = () => ({
   limit: jest.fn().mockReturnThis(),
   range: jest.fn().mockReturnThis(),
   single: jest.fn(),
-  rpc: jest.fn(),
-  then: jest.fn().mockImplementation(resolve => {
-    // When .then() is called, resolve with a default mock response
-    resolve({ data: null, error: null, count: 0 });
-    return Promise.resolve({ data: null, error: null, count: 0 });
-  }),
-  catch: jest.fn()
-});
-
-// Mock Supabase with proper thenable support
-const mockSupabase = createQueryBuilderMock();
+  rpc: jest.fn()
+};
 
 // Helper to reset the mock chain
 const resetSupabaseChain = () => {
-  // Recreate the entire mock to ensure clean state
-  const newMock = createQueryBuilderMock();
-  Object.keys(newMock).forEach(key => {
-    mockSupabase[key] = newMock[key];
+  Object.keys(mockSupabase).forEach(key => {
+    if (typeof mockSupabase[key] === 'function' && key !== 'single' && key !== 'rpc') {
+      mockSupabase[key].mockReturnThis();
+    }
   });
 };
 
@@ -150,7 +141,6 @@ describe('ShieldPersistenceService', () => {
       const mockInsertedEvent = {
         id: 'event-124',
         ...eventWithoutText,
-        original_text: null,
         created_at: '2024-01-15T10:00:00Z'
       };
 
@@ -340,8 +330,8 @@ describe('ShieldPersistenceService', () => {
 
   describe('isRepeatOffender', () => {
     test('should identify repeat offender correctly', async () => {
-      // Mock the full query chain ending with a promise
-      mockSupabase.gte.mockResolvedValueOnce({
+      // Override the chain for this specific test
+      mockSupabase.select.mockReturnValueOnce({
         count: 3,
         error: null
       });
@@ -360,7 +350,7 @@ describe('ShieldPersistenceService', () => {
     });
 
     test('should identify non-repeat offender', async () => {
-      mockSupabase.gte.mockResolvedValueOnce({
+      mockSupabase.select.mockResolvedValue({
         count: 1,
         error: null
       });
@@ -377,7 +367,7 @@ describe('ShieldPersistenceService', () => {
 
     test('should handle database errors in repeat offender check', async () => {
       const dbError = new Error('Query failed');
-      mockSupabase.gte.mockResolvedValueOnce({
+      mockSupabase.select.mockResolvedValue({
         count: null,
         error: dbError
       });
@@ -435,14 +425,14 @@ describe('ShieldPersistenceService', () => {
         }
       ];
 
-      // Mock events query (ends with .gte)
-      mockSupabase.gte.mockResolvedValueOnce({
+      // Mock events query
+      mockSupabase.select.mockResolvedValueOnce({
         data: mockEvents,
         error: null
       });
 
-      // Mock top offenders query (ends with .limit)
-      mockSupabase.limit.mockResolvedValueOnce({
+      // Mock top offenders query
+      mockSupabase.select.mockResolvedValueOnce({
         data: mockTopOffenders,
         error: null
       });
@@ -566,19 +556,19 @@ describe('ShieldPersistenceService', () => {
         }
       ];
 
-      // Mock retention data query (ends with .eq)
-      mockSupabase.eq.mockResolvedValueOnce({
+      // Mock retention data query
+      mockSupabase.select.mockResolvedValueOnce({
         data: mockRetentionData,
         error: null
       });
 
-      // Mock retention logs query (ends with .limit)
-      mockSupabase.limit.mockResolvedValueOnce({
+      // Mock retention logs query
+      mockSupabase.select.mockResolvedValueOnce({
         data: mockRecentLogs,
         error: null
       });
 
-      const stats = await service.getRetentionStats(mockOrganizationId);
+      const stats = await service.getRetentionStats();
 
       expect(stats.total).toBe(3);
       expect(stats.needingAnonymization).toBe(1); // 85 days old, not anonymized
