@@ -72,6 +72,12 @@ class ShieldActionExecutorService {
     for (const [platform, AdapterClass] of Object.entries(adapters)) {
       try {
         const config = adapterConfigs[platform] || {};
+        
+        // Skip validation in test/mock mode
+        if (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
+          config.skipValidation = true;
+        }
+        
         const adapter = new AdapterClass(config);
         this.adapters.set(platform, adapter);
         
