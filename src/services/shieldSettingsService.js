@@ -16,6 +16,10 @@ class ShieldSettingsService {
     
     this.logger = config.logger || logger;
     
+    // Cache for effective settings (TTL: 5 minutes)
+    this.cache = new Map();
+    this.cacheTTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+    
     // Aggressiveness level mappings
     this.aggressivenessLevels = {
       90: {
@@ -52,10 +56,50 @@ class ShieldSettingsService {
   }
   
   /**
+   * Cache management methods
+   */
+  _getCacheKey(organizationId, platform = null) {
+    return platform ? `${organizationId}:${platform}` : organizationId;
+  }
+  
+  _getCached(key) {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+      return cached.data;
+    }
+    return null;
+  }
+  
+  _setCached(key, data) {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+  
+  _clearCache(organizationId, platform = null) {
+    const key = this._getCacheKey(organizationId, platform);
+    this.cache.delete(key);
+    
+    // Clear organization cache when any platform is updated
+    if (platform) {
+      this.cache.delete(organizationId);
+    }
+  }
+  
+  /**
    * Get organization Shield settings
    */
   async getOrganizationSettings(organizationId) {
     try {
+      // Check cache first
+      const cacheKey = this._getCacheKey(organizationId);
+      const cached = this._getCached(cacheKey);
+      if (cached) {
+        this.logger.debug('Returning cached organization settings', { organizationId });
+        return cached;
+      }
+      
       const { data, error } = await this.supabase
         .from('organization_settings')
         .select('*')
@@ -81,6 +125,9 @@ class ShieldSettingsService {
         organizationId,
         aggressiveness: data.aggressiveness
       });
+      
+      // Cache the result
+      this._setCached(cacheKey, enrichedSettings);
       
       return enrichedSettings;
       
@@ -137,10 +184,15 @@ class ShieldSettingsService {
         shield_enabled: settings.shield_enabled
       });
       
-      return {
+      // Clear cache after update
+      this._clearCache(organizationId);
+      
+      const result = {
         ...data,
         aggressiveness_details: this.aggressivenessLevels[data.aggressiveness]
       };
+      
+      return result;
       
     } catch (error) {
       this.logger.error('Failed to update organization settings', {

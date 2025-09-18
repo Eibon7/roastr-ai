@@ -119,10 +119,22 @@ CREATE POLICY org_settings_isolation ON organization_settings FOR ALL USING (
         LEFT JOIN organization_members om ON o.id = om.organization_id 
         WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
     )
+) WITH CHECK (
+    organization_id IN (
+        SELECT o.id FROM organizations o 
+        LEFT JOIN organization_members om ON o.id = om.organization_id 
+        WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
+    )
 );
 
 -- RLS Policies for platform_settings
 CREATE POLICY platform_settings_isolation ON platform_settings FOR ALL USING (
+    organization_id IN (
+        SELECT o.id FROM organizations o 
+        LEFT JOIN organization_members om ON o.id = om.organization_id 
+        WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
+    )
+) WITH CHECK (
     organization_id IN (
         SELECT o.id FROM organizations o 
         LEFT JOIN organization_members om ON o.id = om.organization_id 
@@ -142,6 +154,54 @@ CREATE TRIGGER update_organization_settings_updated_at
 CREATE TRIGGER update_platform_settings_updated_at 
     BEFORE UPDATE ON platform_settings 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to validate effective thresholds
+CREATE OR REPLACE FUNCTION validate_effective_thresholds()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Validate threshold ordering: tau_roast_lower < tau_shield < tau_critical
+    IF NEW.tau_roast_lower IS NOT NULL AND NEW.tau_shield IS NOT NULL AND 
+       NEW.tau_roast_lower >= NEW.tau_shield THEN
+        RAISE EXCEPTION 'Shield threshold (%.2f) must be greater than roast threshold (%.2f)', 
+            NEW.tau_shield, NEW.tau_roast_lower;
+    END IF;
+    
+    IF NEW.tau_shield IS NOT NULL AND NEW.tau_critical IS NOT NULL AND 
+       NEW.tau_shield >= NEW.tau_critical THEN
+        RAISE EXCEPTION 'Critical threshold (%.2f) must be greater than shield threshold (%.2f)', 
+            NEW.tau_critical, NEW.tau_shield;
+    END IF;
+    
+    -- Validate threshold ranges (0-1)
+    IF NEW.tau_roast_lower IS NOT NULL AND (NEW.tau_roast_lower < 0 OR NEW.tau_roast_lower > 1) THEN
+        RAISE EXCEPTION 'Roast threshold must be between 0 and 1, got %.2f', NEW.tau_roast_lower;
+    END IF;
+    
+    IF NEW.tau_shield IS NOT NULL AND (NEW.tau_shield < 0 OR NEW.tau_shield > 1) THEN
+        RAISE EXCEPTION 'Shield threshold must be between 0 and 1, got %.2f', NEW.tau_shield;
+    END IF;
+    
+    IF NEW.tau_critical IS NOT NULL AND (NEW.tau_critical < 0 OR NEW.tau_critical > 1) THEN
+        RAISE EXCEPTION 'Critical threshold must be between 0 and 1, got %.2f', NEW.tau_critical;
+    END IF;
+    
+    -- Validate aggressiveness values
+    IF NEW.aggressiveness IS NOT NULL AND NEW.aggressiveness NOT IN (90, 95, 98, 100) THEN
+        RAISE EXCEPTION 'Aggressiveness must be one of: 90, 95, 98, 100. Got %', NEW.aggressiveness;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply validation trigger to both tables
+CREATE TRIGGER validate_organization_settings_thresholds 
+    BEFORE INSERT OR UPDATE ON organization_settings 
+    FOR EACH ROW EXECUTE FUNCTION validate_effective_thresholds();
+
+CREATE TRIGGER validate_platform_settings_thresholds 
+    BEFORE INSERT OR UPDATE ON platform_settings 
+    FOR EACH ROW EXECUTE FUNCTION validate_effective_thresholds();
 
 -- ============================================================================
 -- DEFAULT ORGANIZATION SETTINGS

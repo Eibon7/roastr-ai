@@ -88,7 +88,8 @@ const InfoTooltip = ({
             max-w-xs whitespace-normal break-words
             ${positionClasses[position]}
           `}
-          dangerouslySetInnerHTML={{ __html: content }}
+        >
+          {content}
         />
       )}
     </div>

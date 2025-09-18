@@ -10,6 +10,35 @@ const router = express.Router();
 const shieldSettingsService = new ShieldSettingsService();
 
 /**
+ * Normalize incoming payload keys to handle frontend variations
+ * Maps τ_* to tau_* and enabled to shield_enabled
+ */
+function normalizePayloadKeys(payload) {
+  const normalized = { ...payload };
+  
+  // Handle tau key variations (τ_* → tau_*)
+  if (normalized['τ_roast_lower'] !== undefined) {
+    normalized.tau_roast_lower = normalized['τ_roast_lower'];
+    delete normalized['τ_roast_lower'];
+  }
+  if (normalized['τ_shield'] !== undefined) {
+    normalized.tau_shield = normalized['τ_shield'];
+    delete normalized['τ_shield'];
+  }
+  if (normalized['τ_critical'] !== undefined) {
+    normalized.tau_critical = normalized['τ_critical'];
+    delete normalized['τ_critical'];
+  }
+  
+  // Handle enabled key variations (enabled → shield_enabled)
+  if (normalized.enabled !== undefined && normalized.shield_enabled === undefined) {
+    normalized.shield_enabled = normalized.enabled;
+  }
+  
+  return normalized;
+}
+
+/**
  * Shield Settings Routes for Issue #362
  * 
  * Provides REST API endpoints for managing Shield configuration at
@@ -80,6 +109,9 @@ router.post('/shield',
         });
       }
       
+      // Normalize payload keys to handle frontend variations
+      const normalizedBody = normalizePayloadKeys(req.body);
+      
       const {
         aggressiveness,
         tau_roast_lower,
@@ -88,7 +120,7 @@ router.post('/shield',
         shield_enabled,
         auto_approve_shield_actions,
         corrective_messages_enabled
-      } = req.body;
+      } = normalizedBody;
       
       // Validate required fields
       if (aggressiveness === undefined) {
@@ -274,6 +306,9 @@ router.post('/shield/platform/:platform',
         });
       }
       
+      // Normalize payload keys to handle frontend variations
+      const normalizedBody = normalizePayloadKeys(req.body);
+      
       const {
         aggressiveness,
         tau_roast_lower,
@@ -285,7 +320,7 @@ router.post('/shield/platform/:platform',
         response_frequency,
         trigger_words,
         max_responses_per_hour
-      } = req.body;
+      } = normalizedBody;
       
       const settings = {
         aggressiveness,
