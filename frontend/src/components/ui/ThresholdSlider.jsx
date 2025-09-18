@@ -53,7 +53,15 @@ const ThresholdSlider = ({
   const handleInputBlur = () => {
     // Ensure we have a valid number on blur
     if (percentValue === '' || isNaN(percentValue)) {
-      setPercentValue(Math.round(value * 100))
+      const fallbackValue = Math.round(value * 100)
+      setPercentValue(fallbackValue)
+    } else {
+      // Clamp to valid range on blur
+      const clampedPercent = Math.max(min * 100, Math.min(max * 100, Number(percentValue)))
+      if (clampedPercent !== Number(percentValue)) {
+        setPercentValue(clampedPercent)
+        onChange(clampedPercent / 100)
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
-const { planRestrictions } = require('../middleware/planRestrictions');
+const { requirePlan } = require('../middleware/requirePlan');
 const ShieldSettingsService = require('../services/shieldSettingsService');
 const { logger } = require('../utils/logger');
 
@@ -68,7 +68,7 @@ router.get('/shield', authenticateToken, async (req, res) => {
  */
 router.post('/shield', 
   authenticateToken, 
-  planRestrictions(['pro', 'creator_plus', 'custom']), // Shield settings require Pro+ plan
+  requirePlan(['pro', 'creator_plus', 'custom']), // Shield settings require Pro+ plan
   async (req, res) => {
     try {
       const { organizationId, id: userId } = req.user;
@@ -252,7 +252,7 @@ router.get('/shield/platform/:platform', authenticateToken, async (req, res) => 
  */
 router.post('/shield/platform/:platform', 
   authenticateToken, 
-  planRestrictions(['pro', 'creator_plus', 'custom']),
+  requirePlan(['pro', 'creator_plus', 'custom']),
   async (req, res) => {
     try {
       const { organizationId, id: userId } = req.user;
@@ -352,7 +352,7 @@ router.post('/shield/platform/:platform',
  */
 router.delete('/shield/platform/:platform', 
   authenticateToken, 
-  planRestrictions(['pro', 'creator_plus', 'custom']),
+  requirePlan(['pro', 'creator_plus', 'custom']),
   async (req, res) => {
     try {
       const { organizationId, id: userId } = req.user;

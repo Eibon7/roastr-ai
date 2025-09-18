@@ -300,3 +300,42 @@ const prompt = await promptTemplate.buildPrompt({
 - **Duplicate Prevention**: Tracks processed tweets in `data/processed_tweets.json`
 - **Rate Limiting**: Adds delays between responses to respect API limits
 - **Error Handling**: Graceful failure handling and detailed logging
+
+## Orquestación y Reglas
+
+### Función de Orquestador
+
+- **Actuar como orquestador del resto de subagentes**: Coordinar y supervisar las tareas de todos los agentes especializados del sistema.
+- **Mantener un archivo de contexto global spec.md actualizado**: Gestionar un documento central que refleje el estado actual de la especificación del sistema.
+- **Cuando un subagente cree un *.md táctico** (ej: shield.md, ui.md...): debe añadir un bloque en spec.md dentro de la sección correspondiente para mantener la coherencia documental.
+- **Invocar siempre al Test Engineer Agent** tras cambios en src/ o en documentos de diseño (ux.md, ui.md, ui-whimsy.md) para generar tests + evidencias visuales con Playwright.
+
+### Configuración MCP Playwright
+
+- **Para cualquier cambio de frontend**, el orquestador debe:
+  - Ejecutar Playwright MCP para validación visual automatizada
+  - Capturar screenshots de las páginas afectadas en múltiples viewports
+  - Revisar consola del navegador y logs de red para detectar errores
+  - Guardar un reporte completo en `docs/ui-review.md` con evidencias visuales
+  - Verificar que la implementación coincide con las especificaciones de diseño
+- **Comando de verificación MCP**: `/mcp list` para confirmar que Playwright está operativo
+- **Ejecución de validación**: `/mcp exec playwright` para realizar capturas y análisis visual
+
+### Reglas de PR
+
+- **Cada feature/tarea nueva = nueva PR**: No mezclar funcionalidades diferentes en una misma Pull Request.
+- **No mezclar en PRs ya abiertas salvo fix de review**: Mantener el scope limitado de cada PR una vez abierta.
+- **Si detectas commits fuera de scope → detener y abrir nueva PR**: Evitar la deriva del alcance durante el desarrollo.
+- **Documentar estas reglas también en la plantilla de PR**: Asegurar que todos los colaboradores conozcan las normas.
+
+### Reglas de Commits y Tests
+
+- **Commit sin tests no permitido**: Todo código nuevo debe incluir pruebas correspondientes.
+- **Si se detecta código nuevo sin tests asociados → coordinar con Test Engineer** para generar los tests antes de cerrar la tarea.
+- **Cambios en UI/frontend deben incluir evidencias visuales**: capturas + report.md en docs/test-evidence/ para validar la implementación visual.
+
+### Tareas al Cerrar
+
+- **Actualizar siempre spec.md con el nuevo estado del sistema**: Reflejar los cambios realizados en la documentación central.
+- **Incluir mapa de cobertura de tests + referencia a evidencias visuales**: Documentar qué se ha probado y cómo.
+- **Dejar un changelog detallado en la PR**: código, tests, evidencias para facilitar el review y futuro mantenimiento.

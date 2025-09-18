@@ -4,19 +4,19 @@ import InfoTooltip from './ui/InfoTooltip'
 
 const PRESETS = {
   lenient: {
-    τ_roast_lower: 0.35,
-    τ_shield: 0.80,
-    τ_critical: 0.95
+    tau_roast_lower: 0.35,
+    tau_shield: 0.80,
+    tau_critical: 0.95
   },
   balanced: {
-    τ_roast_lower: 0.25,
-    τ_shield: 0.70,
-    τ_critical: 0.90
+    tau_roast_lower: 0.25,
+    tau_shield: 0.70,
+    tau_critical: 0.90
   },
   strict: {
-    τ_roast_lower: 0.15,
-    τ_shield: 0.50,
-    τ_critical: 0.80
+    tau_roast_lower: 0.15,
+    tau_shield: 0.50,
+    tau_critical: 0.80
   }
 }
 
@@ -34,24 +34,24 @@ const ShieldSettings = ({
   const validateSettings = (currentSettings) => {
     const errors = []
     
-    const { τ_roast_lower, τ_shield, τ_critical } = currentSettings
+    const { tau_roast_lower, tau_shield, tau_critical } = currentSettings
 
     // Check range constraints
-    if (τ_roast_lower < 0 || τ_roast_lower > 1) {
+    if (tau_roast_lower < 0 || tau_roast_lower > 1) {
       errors.push('Roast threshold must be between 0 and 1')
     }
-    if (τ_shield < 0 || τ_shield > 1) {
+    if (tau_shield < 0 || tau_shield > 1) {
       errors.push('Shield threshold must be between 0 and 1')
     }
-    if (τ_critical < 0 || τ_critical > 1) {
+    if (tau_critical < 0 || tau_critical > 1) {
       errors.push('Critical threshold must be between 0 and 1')
     }
 
     // Check ordering constraints
-    if (τ_shield <= τ_roast_lower) {
+    if (tau_shield <= tau_roast_lower) {
       errors.push('Shield threshold must be greater than roast threshold')
     }
-    if (τ_critical <= τ_shield) {
+    if (tau_critical <= tau_shield) {
       errors.push('Critical threshold must be greater than shield threshold')
     }
 
@@ -61,7 +61,8 @@ const ShieldSettings = ({
   const handleEnabledChange = (e) => {
     onChange({
       ...settings,
-      enabled: e.target.checked
+      enabled: e.target.checked,
+      shield_enabled: e.target.checked // Support both key variations
     })
   }
 
@@ -112,7 +113,7 @@ const ShieldSettings = ({
         <input
           type="checkbox"
           id="shield-enabled"
-          checked={settings.enabled}
+          checked={settings.enabled || settings.shield_enabled}
           onChange={handleEnabledChange}
           disabled={disabled}
           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
@@ -130,7 +131,7 @@ const ShieldSettings = ({
       </div>
 
       {/* Preset Configuration */}
-      <fieldset disabled={disabled || !settings.enabled} className="space-y-3">
+      <fieldset disabled={disabled || !(settings.enabled || settings.shield_enabled)} className="space-y-3">
         <legend className="text-sm font-medium text-gray-700">Preset Configuration</legend>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -146,7 +147,7 @@ const ShieldSettings = ({
                 value={preset.id}
                 checked={settings.preset === preset.id}
                 onChange={() => handlePresetChange(preset.id)}
-                disabled={disabled || !settings.enabled}
+                disabled={disabled || !(settings.enabled || settings.shield_enabled)}
                 className="sr-only"
               />
               <div className={`text-sm font-medium ${settings.preset === preset.id ? 'text-blue-700' : 'text-gray-900'}`}>
@@ -177,8 +178,8 @@ const ShieldSettings = ({
         <div className="grid gap-6 md:grid-cols-3">
           <ThresholdSlider
             label="Roast Generation Threshold"
-            value={settings.τ_roast_lower}
-            onChange={(value) => handleThresholdChange('τ_roast_lower', value)}
+            value={settings.tau_roast_lower}
+            onChange={(value) => handleThresholdChange('tau_roast_lower', value)}
             disabled={disabled || !settings.enabled}
             help="Minimum toxicity level required to generate a roast response"
             error={validationErrors.find(error => error.includes('Roast threshold'))}
@@ -186,8 +187,8 @@ const ShieldSettings = ({
 
           <ThresholdSlider
             label="Shield Activation Threshold"
-            value={settings.τ_shield}
-            onChange={(value) => handleThresholdChange('τ_shield', value)}
+            value={settings.tau_shield}
+            onChange={(value) => handleThresholdChange('tau_shield', value)}
             disabled={disabled || !settings.enabled}
             help="Toxicity level at which Shield begins moderation actions"
             error={validationErrors.find(error => error.includes('Shield threshold'))}
@@ -195,8 +196,8 @@ const ShieldSettings = ({
 
           <ThresholdSlider
             label="Critical Action Threshold"
-            value={settings.τ_critical}
-            onChange={(value) => handleThresholdChange('τ_critical', value)}
+            value={settings.tau_critical}
+            onChange={(value) => handleThresholdChange('tau_critical', value)}
             disabled={disabled || !settings.enabled}
             help="Toxicity level for immediate critical actions (blocking, reporting)"
             error={validationErrors.find(error => error.includes('Critical threshold'))}
@@ -241,18 +242,18 @@ const ShieldSettings = ({
           {/* Threshold markers */}
           <div 
             className="absolute top-0 h-full w-0.5 bg-blue-600"
-            style={{ left: `${settings.τ_roast_lower * 100}%` }}
-            title={`Roast: ${Math.round(settings.τ_roast_lower * 100)}%`}
+            style={{ left: `${settings.tau_roast_lower * 100}%` }}
+            title={`Roast: ${Math.round(settings.tau_roast_lower * 100)}%`}
           />
           <div 
             className="absolute top-0 h-full w-0.5 bg-orange-600"
-            style={{ left: `${settings.τ_shield * 100}%` }}
-            title={`Shield: ${Math.round(settings.τ_shield * 100)}%`}
+            style={{ left: `${settings.tau_shield * 100}%` }}
+            title={`Shield: ${Math.round(settings.tau_shield * 100)}%`}
           />
           <div 
             className="absolute top-0 h-full w-0.5 bg-red-600"
-            style={{ left: `${settings.τ_critical * 100}%` }}
-            title={`Critical: ${Math.round(settings.τ_critical * 100)}%`}
+            style={{ left: `${settings.tau_critical * 100}%` }}
+            title={`Critical: ${Math.round(settings.tau_critical * 100)}%`}
           />
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-1">

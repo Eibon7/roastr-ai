@@ -55,8 +55,10 @@ class AlertingService {
       }
     };
     
-    // Clean up old alert history every hour
-    this.cleanupInterval = setInterval(() => this.cleanupAlertHistory(), 3600000);
+    // Clean up old alert history every hour (disabled in test environment)
+    if (process.env.NODE_ENV !== 'test') {
+      this.cleanupInterval = setInterval(() => this.cleanupAlertHistory(), 3600000);
+    }
     
     this.log('info', 'Alerting Service initialized', {
       enabled: this.config.enabled,

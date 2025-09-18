@@ -49,6 +49,9 @@ const InfoTooltip = ({
       e.preventDefault()
       setIsVisible(!isVisible)
     }
+    if (e.key === 'Escape') {
+      setIsVisible(false)
+    }
   }
 
   if (!content) return children

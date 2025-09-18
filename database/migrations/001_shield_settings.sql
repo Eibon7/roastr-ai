@@ -1,6 +1,9 @@
 -- Shield Settings Configuration Migration
 -- Adds organization_settings and platform_settings tables for Issue #362
 
+-- Enable uuid-ossp extension for uuid_generate_v4() function
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- ============================================================================
 -- ORGANIZATION SHIELD SETTINGS
 -- ============================================================================
