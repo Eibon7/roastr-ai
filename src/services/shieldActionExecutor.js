@@ -511,6 +511,17 @@ class ShieldActionExecutorService {
       circuitBreaker.nextAttemptTime = Date.now() + this.circuitBreakerConfig.recoveryTimeout;
       
       this.metrics.circuitBreakerTrips++;
+      
+      // Ensure platform metrics exist before incrementing
+      if (!this.metrics.byPlatform[platform]) {
+        this.metrics.byPlatform[platform] = {
+          total: 0,
+          successful: 0,
+          failed: 0,
+          fallbacks: 0,
+          circuitBreakerTrips: 0
+        };
+      }
       this.metrics.byPlatform[platform].circuitBreakerTrips++;
       
       this.logger.warn('Circuit breaker opened', {
@@ -546,17 +557,25 @@ class ShieldActionExecutorService {
       this.metrics.fallbackActions++;
     }
     
-    // Platform metrics
-    if (this.metrics.byPlatform[platform]) {
-      this.metrics.byPlatform[platform].total++;
-      if (success) {
-        this.metrics.byPlatform[platform].successful++;
-      } else {
-        this.metrics.byPlatform[platform].failed++;
-      }
-      if (isFallback) {
-        this.metrics.byPlatform[platform].fallbacks++;
-      }
+    // Platform metrics - ensure they exist
+    if (!this.metrics.byPlatform[platform]) {
+      this.metrics.byPlatform[platform] = {
+        total: 0,
+        successful: 0,
+        failed: 0,
+        fallbacks: 0,
+        circuitBreakerTrips: 0
+      };
+    }
+    
+    this.metrics.byPlatform[platform].total++;
+    if (success) {
+      this.metrics.byPlatform[platform].successful++;
+    } else {
+      this.metrics.byPlatform[platform].failed++;
+    }
+    if (isFallback) {
+      this.metrics.byPlatform[platform].fallbacks++;
     }
     
     // Action metrics
