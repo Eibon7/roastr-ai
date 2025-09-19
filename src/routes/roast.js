@@ -9,6 +9,18 @@ const router = express.Router();
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+// CodeRabbit Round 6: Optional Sentry integration for error capture
+let Sentry;
+try {
+    Sentry = require('@sentry/node');
+} catch (e) {
+    // Sentry not available, use fallback
+    Sentry = {
+        captureMessage: (message, options) => {
+            logger.warn('Sentry not available, logging instead:', { message, options });
+        }
+    };
+}
 const { 
     VALIDATION_CONSTANTS,
     isValidStyle,
@@ -952,18 +964,35 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
             processingTimeMs: processingTime
         });
 
-        // Validate transparency for auto-approved roasts (critical guard)
+        // Validate transparency for auto-approved roasts (critical guard) - CodeRabbit Round 6: Enhanced error handling
         if (autoApprove && result.status === 'auto_approved' && !result?.transparency?.applied) {
-            logger.error('❌ Critical: Auto-approved roast without transparency', {
+            const transparencyError = {
                 userId,
                 roastId: result.metadata?.id,
-                status: result.status
+                status: result.status,
+                autoApprove,
+                transparencyApplied: result?.transparency?.applied
+            };
+            
+            logger.error('❌ Critical: Auto-approved roast without transparency', transparencyError);
+            
+            // CodeRabbit Round 6: Capture to Sentry for monitoring
+            Sentry.captureMessage('Auto-approved roast without transparency disclaimer', {
+                level: 'error',
+                extra: transparencyError,
+                tags: {
+                    feature: 'roast_engine',
+                    severity: 'critical',
+                    type: 'transparency_validation_failure'
+                }
             });
             
-            return res.status(500).json({
+            // CodeRabbit Round 6: Return 400 instead of 500 (client error, not server error)
+            return res.status(400).json({
                 success: false,
                 error: 'Transparency validation failed',
                 details: 'Auto-approved roast must have transparency disclaimer',
+                code: 'TRANSPARENCY_REQUIRED',
                 timestamp: new Date().toISOString()
             });
         }
@@ -1018,7 +1047,9 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
  * Validate roast engine request parameters with improved normalization
  */
 function validateRoastEngineRequest(req) {
-    const { comment, style, language, autoApprove, platform, orgId } = req.body;
+    // CodeRabbit Round 6: Remove orgId from request body validation (security fix)
+    // orgId should come from req.user.orgId only, not user input
+    const { comment, style, language, autoApprove, platform } = req.body;
     const errors = [];
 
     // Validate comment (enhanced for CodeRabbit Round 5)
@@ -1039,8 +1070,8 @@ function validateRoastEngineRequest(req) {
         errors.push(`Style must be one of: ${validStyles.join(', ')} for language '${normalizedLanguage}'`);
     }
 
-    // Validate language (enhanced with BCP-47 support)
-    if (language && !isValidLanguage(language)) {
+    // Validate language (enhanced with BCP-47 support) - CodeRabbit Round 6: Use normalized value
+    if (language && !isValidLanguage(normalizedLanguage)) {
         errors.push(`Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')} (BCP-47 codes like 'en-US' are normalized)`);
     }
 
@@ -1049,25 +1080,65 @@ function validateRoastEngineRequest(req) {
         errors.push('autoApprove must be a boolean');
     }
 
-    // Validate platform (enhanced with alias support)
+    // Validate platform (enhanced with alias support) - CodeRabbit Round 6: Use normalized value
     const normalizedPlatform = normalizePlatform(platform);
-    if (platform && !isValidPlatform(platform)) {
+    if (platform && !isValidPlatform(normalizedPlatform)) {
         errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')} (aliases like 'X' → 'twitter' are supported)`);
     }
 
-    // Enhanced orgId validation for multi-tenant security (CodeRabbit Round 5)
-    if (orgId !== undefined) {
-        if (orgId !== null && typeof orgId !== 'string') {
-            errors.push('orgId must be a string or null');
-        } else if (typeof orgId === 'string' && orgId.trim().length === 0) {
-            errors.push('orgId cannot be empty string (use null for no organization)');
-        } else if (typeof orgId === 'string' && !/^[a-zA-Z0-9-_]+$/.test(orgId)) {
-            errors.push('orgId must contain only alphanumeric characters, hyphens, and underscores');
-        }
-    }
+    // CodeRabbit Round 6: Removed orgId validation from request body
+    // orgId is now only validated from req.user.orgId for security
 
     return errors;
 }
+
+/**
+ * GET /api/roast/validation
+ * Get validation constants for client-side validation
+ * Public endpoint referenced in error fallbacks (CodeRabbit Round 6)
+ */
+router.get('/validation', async (req, res) => {
+    try {
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        
+        res.json({
+            success: true,
+            data: {
+                constants: {
+                    MAX_COMMENT_LENGTH: VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH,
+                    MIN_COMMENT_LENGTH: VALIDATION_CONSTANTS.MIN_COMMENT_LENGTH,
+                    VALID_LANGUAGES: VALIDATION_CONSTANTS.VALID_LANGUAGES,
+                    VALID_PLATFORMS: VALIDATION_CONSTANTS.VALID_PLATFORMS,
+                    VALID_STYLES: VALIDATION_CONSTANTS.VALID_STYLES,
+                    MIN_INTENSITY: VALIDATION_CONSTANTS.MIN_INTENSITY,
+                    MAX_INTENSITY: VALIDATION_CONSTANTS.MAX_INTENSITY
+                },
+                helpers: {
+                    getValidStylesForLanguage: {
+                        description: 'Get valid styles for a specific language',
+                        example: 'Call with language parameter'
+                    },
+                    platformAliases: {
+                        'x': 'twitter',
+                        'x.com': 'twitter',
+                        'twitter.com': 'twitter'
+                    }
+                }
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        logger.error('Failed to get validation constants', {
+            error: error.message
+        });
+        
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve validation constants',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
 
 /**
  * GET /api/roast/styles
@@ -1096,9 +1167,9 @@ router.get('/styles', publicRateLimit, optionalAuth, async (req, res) => {
 
         const styles = roastEngine.getAvailableStyles(language);
         
-        // Enhanced caching headers with language-aware caching (CodeRabbit Round 5)
+        // Enhanced caching headers (CodeRabbit Round 6: Remove ineffective Vary header)
         res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-        res.set('Vary', 'Accept-Language'); // Enable language-aware caching
+        // Note: Vary: Accept-Language removed as language is in query params, not headers
         
         res.json({
             success: true,

@@ -7,14 +7,14 @@ CREATE TABLE IF NOT EXISTS roasts_metadata (
     id VARCHAR(255) PRIMARY KEY,
     user_id UUID NOT NULL,
     org_id UUID,
-    platform VARCHAR(50) NOT NULL,
+    platform VARCHAR(50) NOT NULL CHECK (platform IN ('twitter', 'facebook', 'instagram', 'youtube', 'tiktok', 'reddit', 'discord', 'twitch', 'bluesky')), -- CodeRabbit Round 6: Add platform constraint
     comment_id VARCHAR(255),
     style VARCHAR(50) NOT NULL,
     language VARCHAR(10) NOT NULL DEFAULT 'es' CHECK (language IN ('es', 'en')),
     versions_count INTEGER NOT NULL DEFAULT 1 CHECK (versions_count IN (1, 2)),
     auto_approve BOOLEAN NOT NULL DEFAULT false,
     transparency_applied BOOLEAN NOT NULL DEFAULT false,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, auto_approved, approved, declined
+    status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'auto_approved', 'approved', 'declined')), -- CodeRabbit Round 6: Add status constraint
     tokens_used INTEGER DEFAULT 0,
     method VARCHAR(100), -- generation method used
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -43,11 +43,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for roasts_metadata
+-- Create trigger for roasts_metadata (CodeRabbit Round 6: Schema-qualified function)
 CREATE TRIGGER update_roasts_metadata_updated_at
     BEFORE UPDATE ON roasts_metadata
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Create function to get user roast configuration
 CREATE OR REPLACE FUNCTION get_user_roast_config(user_uuid UUID)
@@ -76,6 +76,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Ensure pgcrypto extension for UUID generation (CodeRabbit Round 6: Add missing dependency)
+CREate EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Create roast style preferences table if not exists
 CREATE TABLE IF NOT EXISTS roastr_style_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -89,6 +92,12 @@ CREATE TABLE IF NOT EXISTS roastr_style_preferences (
     UNIQUE(user_id)
 );
 
+-- Create trigger for roastr_style_preferences updated_at (CodeRabbit Round 6)
+CREATE TRIGGER update_roastr_style_preferences_updated_at
+    BEFORE UPDATE ON roastr_style_preferences
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_updated_at_column();
+
 -- Create index for roast style preferences
 CREATE INDEX IF NOT EXISTS idx_roastr_style_preferences_user_id ON roastr_style_preferences(user_id);
 
@@ -101,11 +110,12 @@ CREATE POLICY "Users can only access their own roast metadata"
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
--- Service role can access all roast metadata
+-- Service role can access all roast metadata (CodeRabbit Round 6: Add explicit WITH CHECK)
 CREATE POLICY "Service role can access all roast metadata"
     ON roasts_metadata FOR ALL
     TO service_role
-    USING (true);
+    USING (true)
+    WITH CHECK (true);
 
 -- Enable RLS on roastr_style_preferences table
 ALTER TABLE roastr_style_preferences ENABLE ROW LEVEL SECURITY;
@@ -116,11 +126,12 @@ CREATE POLICY "Users can only access their own style preferences"
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
--- Service role can access all style preferences
+-- Service role can access all style preferences (CodeRabbit Round 6: Add explicit WITH CHECK)
 CREATE POLICY "Service role can access all style preferences"
     ON roastr_style_preferences FOR ALL
     TO service_role
-    USING (true);
+    USING (true)
+    WITH CHECK (true);
 
 -- Function to clean up old roast metadata (90 days retention)
 CREATE OR REPLACE FUNCTION cleanup_old_roast_metadata()
