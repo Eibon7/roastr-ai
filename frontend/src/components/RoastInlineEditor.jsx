@@ -36,7 +36,7 @@ export default function RoastInlineEditor({
   const [error, setError] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Character limits by platform
+  // Character limits by platform (normalized platform names)
   const characterLimits = useMemo(() => ({
     twitter: 280,
     instagram: 2200,
@@ -51,12 +51,13 @@ export default function RoastInlineEditor({
 
   // Unicode-aware character counting for consistency with backend
   const getGraphemeLength = useCallback((text) => {
-    if (!text) return 0;
+    if (!text || typeof text !== 'string') return 0;
     
     // Use Intl.Segmenter for accurate grapheme counting if available
+    // Use undefined locale for better Unicode support as per CodeRabbit feedback
     if (typeof Intl !== 'undefined' && Intl.Segmenter) {
       try {
-        const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
         return Array.from(segmenter.segment(text)).length;
       } catch (error) {
         // Fallback if Intl.Segmenter fails
@@ -72,7 +73,18 @@ export default function RoastInlineEditor({
     }
   }, []);
 
-  const currentLimit = characterLimits[platform] || 280;
+  // Platform normalization for consistency with backend
+  const normalizePlatform = useCallback((platform) => {
+    const platformMap = {
+      'x': 'twitter',
+      'x.com': 'twitter'
+    };
+    const normalized = platform?.toLowerCase()?.trim();
+    return platformMap[normalized] || normalized || 'twitter';
+  }, []);
+
+  const normalizedPlatform = normalizePlatform(platform);
+  const currentLimit = characterLimits[normalizedPlatform] || 280;
   const graphemeLength = getGraphemeLength(editedText);
   const remainingChars = currentLimit - graphemeLength;
 
@@ -94,7 +106,7 @@ export default function RoastInlineEditor({
         setError(null); // Clear errors when text changes
       }
     }
-  }, [roast, validation]);
+  }, [roast, validation, getGraphemeLength]);
 
   // Validate edited text with backend
   const validateText = useCallback(async () => {
@@ -117,7 +129,7 @@ export default function RoastInlineEditor({
         },
         body: JSON.stringify({
           text: editedText,
-          platform: platform
+          platform: normalizedPlatform
         })
       });
 
@@ -169,7 +181,7 @@ export default function RoastInlineEditor({
     } finally {
       setIsValidating(false);
     }
-  }, [editedText, roastId, platform, onValidate]);
+  }, [editedText, roastId, normalizedPlatform, onValidate]);
 
   // Handle save
   const handleSave = useCallback(() => {
@@ -218,7 +230,7 @@ export default function RoastInlineEditor({
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="outline" className="text-xs">
-                {platform}
+                {normalizedPlatform}
               </Badge>
               <Button
                 variant="outline"
@@ -255,7 +267,7 @@ export default function RoastInlineEditor({
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="text-xs">
-              {platform}
+              {normalizedPlatform}
             </Badge>
             {validation && (
               <Badge variant={getValidationColor()} className="text-xs">
@@ -278,7 +290,7 @@ export default function RoastInlineEditor({
             placeholder="Edita tu roast aquí..."
             className="min-h-24 resize-none"
             maxLength={currentLimit + 100} // Allow slight overflow for warning
-            aria-label={`Editar contenido del roast para ${platform}`}
+            aria-label={`Editar contenido del roast para ${normalizedPlatform}`}
             aria-describedby="char-count validation-status validation-errors"
             aria-invalid={validation && !validation.valid ? 'true' : 'false'}
             aria-required="true"
@@ -309,9 +321,9 @@ export default function RoastInlineEditor({
             <AlertDescription>
               <div className="space-y-1">
                 <p className="font-medium">Problemas encontrados:</p>
-                <ul className="list-disc list-inside space-y-1" role="list">
+                <ul className="list-disc list-inside space-y-1">
                   {validation.errors.map((error, index) => (
-                    <li key={index} className="text-sm" role="listitem">{error.message}</li>
+                    <li key={index} className="text-sm">{error.message}</li>
                   ))}
                 </ul>
               </div>

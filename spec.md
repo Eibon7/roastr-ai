@@ -1,5 +1,40 @@
 # **🧠 Flujo de comentarios en Roastr**
 
+## **CodeRabbit Round 3 Improvements - SPEC 8 Issue #364**
+**Fecha**: 2025-09-19
+
+### 🚀 **Performance Optimizations Applied**
+- **Pre-compiled Regex Patterns**: Hoisted regex patterns to constructor for better performance and memory efficiency
+- **UTF-8 Byte Length Calculation**: Added accurate UTF-8 byte length calculation using TextEncoder
+- **Unicode Handling Enhancement**: Improved Intl.Segmenter usage with undefined locale for better Unicode support
+- **Memory Management**: Optimized pattern reuse and resource cleanup
+
+### 🌍 **Unicode & Platform Support Enhanced**
+- **Grapheme-Aware Counting**: Consistent character counting between frontend and backend using Intl.Segmenter
+- **Platform Normalization**: Comprehensive X → twitter, x.com → twitter mapping with case-insensitive handling
+- **Enhanced Metadata**: Added codeUnitLength, byteLengthUtf8 fields alongside existing textLength
+- **Edge Case Handling**: Robust null/undefined input validation and graceful error handling
+
+### ♿ **Accessibility Improvements**
+- **ARIA Enhancement**: Comprehensive ARIA labels, describedby attributes, and live regions
+- **Screen Reader Support**: Proper error announcements and keyboard navigation preservation
+- **Save Button Gating**: Validation required before save with clear accessibility feedback
+- **Platform Display**: Normalized platform names shown consistently in UI
+
+### 🧪 **Comprehensive Testing (120+ test cases)**
+- **Backend Tests (46+ cases)**: Performance, UTF-8 calculation, Unicode handling, metadata validation, edge cases
+- **Frontend Tests (38+ cases)**: Platform normalization, character counting, accessibility, error handling
+- **Integration Tests (25+ cases)**: End-to-end consistency, performance under load, memory management
+- **Performance Benchmarks**: Validation < 10ms, large content < 200ms, memory < 50MB increase
+
+### 📊 **Test Coverage Evidence**
+📁 **Detailed Report**: [docs/test-evidence/2025-09-19/round3-improvements-test-report.md](docs/test-evidence/2025-09-19/round3-improvements-test-report.md)
+
+**Test Files Created:**
+- `tests/unit/services/styleValidator-round3-improvements.test.js`
+- `tests/unit/components/RoastInlineEditor-round3-improvements.test.jsx`
+- `tests/integration/round3-unicode-performance.test.js`
+
 ---
 
 # **📑 Spec – Flujo de comentarios Roastr (actualizado)**

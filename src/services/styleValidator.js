@@ -8,6 +8,29 @@ const { VALIDATION_CONSTANTS } = require('../config/validationConstants');
 
 class StyleValidator {
     constructor() {
+        // Pre-compiled regex patterns for performance optimization
+        this.regexPatterns = {
+            repetitivePattern: /(.)\1{4,}/,
+            wordRepetition: /\b(\w+)\s+\1\s+\1/i,
+            insultPatterns: [
+                /\b(idiota|estúpido|imbécil|tonto|gilipollas|cabrón|hijo de puta|puta|zorra|maricón|gay|negro|sudaca|moro)\b/giu,
+                /\b(stupid|idiot|moron|asshole|bitch|fuck you|retard|gay|fag|nigger|spic)\b/giu,
+                /\b(kill yourself|die|suicide|death|murder)\b/giu
+            ],
+            disclaimerPatterns: [
+                /powered\s+by\s+roastr/i,
+                /roastr\.ai/i,
+                /generado\s+por\s+ia/i,
+                /generated\s+by\s+ai/i,
+                /\[roastr\]/i,
+                /\#roastr/i
+            ],
+            explicitPatterns: [
+                /\b(sex|porno|porn|masturbat|orgasm|penis|vagina|tits|dick|cock|pussy|cum|xxx)\b/iu,
+                /\b(sexo|porno|masturbación|pene|vagina|tetas|verga|coño|correrse|xxx)\b/iu
+            ]
+        };
+
         // Validation rules configuration
         this.rules = {
             // Text cannot be empty or only whitespace
@@ -35,11 +58,9 @@ class StyleValidator {
                 name: 'NO_SPAM',
                 message: 'El Roast no puede ser spam o repetición de caracteres',
                 check: (text) => {
-                    // Check for repetitive patterns
-                    const repetitivePattern = /(.)\1{4,}/; // Same character 5+ times
-                    const wordRepetition = /\b(\w+)\s+\1\s+\1/i; // Same word 3+ times
-                    
-                    return !repetitivePattern.test(text) && !wordRepetition.test(text);
+                    // Use pre-compiled patterns for better performance
+                    return !this.regexPatterns.repetitivePattern.test(text) && 
+                           !this.regexPatterns.wordRepetition.test(text);
                 }
             },
             
@@ -48,12 +69,8 @@ class StyleValidator {
                 name: 'NO_ADDED_INSULTS',
                 message: 'No puedes añadir insultos o ataques personales al Roast',
                 check: (text, platform, originalText = null) => {
-                    // Common insult patterns with global flag for comprehensive matching
-                    const insultPatterns = [
-                        /\b(idiota|estúpido|imbécil|tonto|gilipollas|cabrón|hijo de puta|puta|zorra|maricón|gay|negro|sudaca|moro)\b/gi,
-                        /\b(stupid|idiot|moron|asshole|bitch|fuck you|retard|gay|fag|nigger|spic)\b/gi,
-                        /\b(kill yourself|die|suicide|death|murder)\b/gi
-                    ];
+                    // Use pre-compiled patterns for better performance
+                    const insultPatterns = this.regexPatterns.insultPatterns;
                     
                     // If we have original text, check if new insults were added
                     if (originalText && typeof originalText === 'string') {
@@ -97,16 +114,8 @@ class StyleValidator {
                 name: 'NO_FAKE_DISCLAIMERS',
                 message: 'No puedes incluir etiquetas o disclaimers falsos de Roastr',
                 check: (text) => {
-                    const disclaimerPatterns = [
-                        /powered\s+by\s+roastr/i,
-                        /roastr\.ai/i,
-                        /generado\s+por\s+ia/i,
-                        /generated\s+by\s+ai/i,
-                        /\[roastr\]/i,
-                        /\#roastr/i
-                    ];
-                    
-                    return !disclaimerPatterns.some(pattern => pattern.test(text));
+                    // Use pre-compiled patterns for better performance
+                    return !this.regexPatterns.disclaimerPatterns.some(pattern => pattern.test(text));
                 }
             },
             
@@ -115,12 +124,8 @@ class StyleValidator {
                 name: 'NO_EXPLICIT_CONTENT',
                 message: 'El Roast contiene contenido explícito o inapropiado',
                 check: (text) => {
-                    const explicitPatterns = [
-                        /\b(sex|porno|porn|masturbat|orgasm|penis|vagina|tits|dick|cock|pussy|cum|xxx)\b/i,
-                        /\b(sexo|porno|masturbación|pene|vagina|tetas|verga|coño|correrse|xxx)\b/i
-                    ];
-                    
-                    return !explicitPatterns.some(pattern => pattern.test(text));
+                    // Use pre-compiled patterns for better performance
+                    return !this.regexPatterns.explicitPatterns.some(pattern => pattern.test(text));
                 }
             }
         };
@@ -165,9 +170,10 @@ class StyleValidator {
         if (!text || typeof text !== 'string') return 0;
 
         // Use Intl.Segmenter for accurate grapheme counting if available
+        // Use undefined locale for better Unicode support as suggested by CodeRabbit
         if (typeof Intl !== 'undefined' && Intl.Segmenter) {
             try {
-                const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+                const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
                 return Array.from(segmenter.segment(text)).length;
             } catch (error) {
                 // Fallback if Intl.Segmenter fails
@@ -184,6 +190,21 @@ class StyleValidator {
     }
 
     /**
+     * Get UTF-8 byte length for accurate byte calculations
+     */
+    getByteLengthUtf8(text) {
+        if (!text || typeof text !== 'string') return 0;
+        
+        try {
+            // Use TextEncoder for accurate UTF-8 byte length
+            return new TextEncoder().encode(text).length;
+        } catch (error) {
+            // Fallback to UTF-16 length * 2 (rough approximation)
+            return text.length * 2;
+        }
+    }
+
+    /**
      * Validate edited roast text
      * @param {string} text - The edited roast text
      * @param {string} platform - The target platform
@@ -194,6 +215,7 @@ class StyleValidator {
         const startTime = Date.now();
         const normalizedPlatform = this.normalizePlatform(platform);
         const graphemeLength = this.getGraphemeLength(text);
+        const utf8ByteLength = this.getByteLengthUtf8(text);
         
         const result = {
             valid: true,
@@ -201,7 +223,9 @@ class StyleValidator {
             warnings: [],
             metadata: {
                 textLength: graphemeLength, // Use grapheme-aware length
-                byteLengthUtf16: text?.length || 0, // Keep original length for reference
+                codeUnitLength: text?.length || 0, // UTF-16 code units (original length)
+                byteLengthUtf8: utf8ByteLength, // Accurate UTF-8 byte length
+                byteLengthUtf16: text?.length || 0, // Keep for backward compatibility
                 platform: normalizedPlatform,
                 validationTime: null
             }
@@ -259,7 +283,8 @@ class StyleValidator {
                     logger.error(`Style validation rule ${ruleName} failed`, {
                         error: ruleError.message,
                         textLength: graphemeLength,
-                        byteLengthUtf16: text?.length || 0,
+                        codeUnitLength: text?.length || 0,
+                        byteLengthUtf8: utf8ByteLength,
                         platform: normalizedPlatform,
                         ruleName: ruleName
                     });
@@ -280,7 +305,8 @@ class StyleValidator {
                 errorsCount: result.errors.length,
                 warningsCount: result.warnings.length,
                 textLength: result.metadata.textLength,
-                byteLengthUtf16: result.metadata.byteLengthUtf16,
+                codeUnitLength: result.metadata.codeUnitLength,
+                byteLengthUtf8: result.metadata.byteLengthUtf8,
                 platform: result.metadata.platform,
                 validationTimeMs: result.metadata.validationTime
             });
@@ -293,7 +319,8 @@ class StyleValidator {
                 error: error.message,
                 stack: error.stack,
                 textLength: graphemeLength,
-                byteLengthUtf16: text?.length || 0,
+                codeUnitLength: text?.length || 0,
+                byteLengthUtf8: utf8ByteLength,
                 platform: normalizedPlatform
             });
 
@@ -306,7 +333,9 @@ class StyleValidator {
                 warnings: [],
                 metadata: {
                     textLength: graphemeLength,
-                    byteLengthUtf16: text?.length || 0,
+                    codeUnitLength: text?.length || 0,
+                    byteLengthUtf8: utf8ByteLength,
+                    byteLengthUtf16: text?.length || 0, // Keep for backward compatibility
                     platform: normalizedPlatform,
                     validationTime: Date.now() - startTime,
                     error: error.message
