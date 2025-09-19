@@ -49,8 +49,32 @@ export default function RoastInlineEditor({
     bluesky: 300
   }), []);
 
+  // Unicode-aware character counting for consistency with backend
+  const getGraphemeLength = useCallback((text) => {
+    if (!text) return 0;
+    
+    // Use Intl.Segmenter for accurate grapheme counting if available
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      try {
+        const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+        return Array.from(segmenter.segment(text)).length;
+      } catch (error) {
+        // Fallback if Intl.Segmenter fails
+      }
+    }
+    
+    // Fallback to Array.from for basic Unicode support
+    try {
+      return Array.from(text).length;
+    } catch (error) {
+      // Final fallback to basic length
+      return text.length;
+    }
+  }, []);
+
   const currentLimit = characterLimits[platform] || 280;
-  const remainingChars = currentLimit - editedText.length;
+  const graphemeLength = getGraphemeLength(editedText);
+  const remainingChars = currentLimit - graphemeLength;
 
   // Handle text changes
   const handleTextChange = useCallback((e) => {
@@ -58,9 +82,17 @@ export default function RoastInlineEditor({
     setEditedText(newText);
     setHasUnsavedChanges(newText !== roast);
     
-    // Clear previous validation if text changed significantly
-    if (validation && Math.abs(newText.length - (validation.metadata?.textLength || 0)) > 10) {
-      setValidation(null);
+    // Clear previous validation if text changed significantly (deterministic clearing)
+    if (validation) {
+      const originalLength = validation.metadata?.textLength || 0;
+      const newGraphemeLength = getGraphemeLength(newText);
+      const lengthDiff = Math.abs(newGraphemeLength - originalLength);
+      
+      // Clear validation if text length changed by more than 5 characters
+      if (lengthDiff > 5) {
+        setValidation(null);
+        setError(null); // Clear errors when text changes
+      }
     }
   }, [roast, validation]);
 
@@ -205,7 +237,7 @@ export default function RoastInlineEditor({
             <p className="text-sm whitespace-pre-wrap">{roast}</p>
           </div>
           <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-            <span>{roast?.length || 0} caracteres</span>
+            <span>{getGraphemeLength(roast)} caracteres</span>
             <span>Límite: {currentLimit}</span>
           </div>
         </CardContent>
@@ -246,14 +278,16 @@ export default function RoastInlineEditor({
             placeholder="Edita tu roast aquí..."
             className="min-h-24 resize-none"
             maxLength={currentLimit + 100} // Allow slight overflow for warning
-            aria-label="Editar contenido del roast"
-            aria-describedby="char-count validation-status"
+            aria-label={`Editar contenido del roast para ${platform}`}
+            aria-describedby="char-count validation-status validation-errors"
+            aria-invalid={validation && !validation.valid ? 'true' : 'false'}
+            aria-required="true"
           />
           
           {/* Character Counter */}
           <div className="flex items-center justify-between text-xs">
             <span id="char-count" className={getCharCountColor()}>
-              {editedText.length} / {currentLimit} caracteres
+              {graphemeLength} / {currentLimit} caracteres
               {remainingChars < 0 && (
                 <span className="text-red-500 ml-1">
                   (¡{Math.abs(remainingChars)} sobre el límite!)
@@ -270,14 +304,14 @@ export default function RoastInlineEditor({
 
         {/* Validation Errors */}
         {validation && !validation.valid && validation.errors.length > 0 && (
-          <Alert variant="destructive">
-            <XCircle className="h-4 w-4" />
+          <Alert variant="destructive" id="validation-errors" role="alert" aria-live="polite">
+            <XCircle className="h-4 w-4" aria-hidden="true" />
             <AlertDescription>
               <div className="space-y-1">
                 <p className="font-medium">Problemas encontrados:</p>
-                <ul className="list-disc list-inside space-y-1">
+                <ul className="list-disc list-inside space-y-1" role="list">
                   {validation.errors.map((error, index) => (
-                    <li key={index} className="text-sm">{error.message}</li>
+                    <li key={index} className="text-sm" role="listitem">{error.message}</li>
                   ))}
                 </ul>
               </div>
@@ -375,8 +409,20 @@ export default function RoastInlineEditor({
             <Button
               size="sm"
               onClick={handleSave}
-              disabled={!hasUnsavedChanges || remainingChars < 0}
+              disabled={
+                !hasUnsavedChanges || 
+                remainingChars < 0 || 
+                (validation && !validation.valid) ||
+                (!validation && hasUnsavedChanges) // Require validation before save
+              }
               className="flex items-center space-x-1"
+              aria-label={
+                validation && !validation.valid 
+                  ? "No se puede guardar: corrije los errores de validación"
+                  : !validation && hasUnsavedChanges
+                  ? "Valida los cambios antes de guardar"
+                  : "Guardar cambios"
+              }
             >
               <Save className="h-4 w-4" />
               <span>Guardar</span>
@@ -386,7 +432,12 @@ export default function RoastInlineEditor({
 
         {/* Helper Text */}
         <div className="text-xs text-muted-foreground">
-          <p>💡 <strong>Tip:</strong> Valida tus cambios antes de guardar para asegurar que cumplan con las reglas de estilo de Roastr.</p>
+          <p>💡 <strong>Tip:</strong> Debes validar tus cambios antes de poder guardar. La validación asegura que cumplan con las reglas de estilo de Roastr.</p>
+          {(!validation && hasUnsavedChanges) && (
+            <p className="mt-1 text-amber-600">
+              ⚠️ <strong>Validación requerida:</strong> Haz clic en "Validar" para habilitar el botón "Guardar".
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -17,14 +17,16 @@ class StyleValidator {
                 check: (text) => text && text.trim().length > 0
             },
             
-            // Check character limits by platform
+            // Check character limits by platform with grapheme-aware counting
             characterLimit: {
                 name: 'CHARACTER_LIMIT',
                 getMessage: (limit) => `Tu Roast supera el límite de ${limit} caracteres permitido en esta red social`,
                 check: (text, platform) => {
+                    const normalizedPlatform = this.normalizePlatform(platform);
                     const limits = this.getCharacterLimits();
-                    const limit = limits[platform] || limits.default;
-                    return text.length <= limit;
+                    const limit = limits[normalizedPlatform] || limits.default;
+                    const graphemeLength = this.getGraphemeLength(text);
+                    return graphemeLength <= limit;
                 }
             },
             
@@ -41,41 +43,52 @@ class StyleValidator {
                 }
             },
             
-            // No added insults beyond original roast
+            // No added insults beyond original roast - improved detection with global regex
             noAddedInsults: {
                 name: 'NO_ADDED_INSULTS',
                 message: 'No puedes añadir insultos o ataques personales al Roast',
                 check: (text, platform, originalText = null) => {
-                    // Common insult patterns (basic detection)
+                    // Common insult patterns with global flag for comprehensive matching
                     const insultPatterns = [
-                        /\b(idiota|estúpido|imbécil|tonto|gilipollas|cabrón|hijo de puta|puta|zorra|maricón|gay|negro|sudaca|moro)\b/i,
-                        /\b(stupid|idiot|moron|asshole|bitch|fuck you|retard|gay|fag|nigger|spic)\b/i,
-                        /\b(kill yourself|die|suicide|death|murder)\b/i
+                        /\b(idiota|estúpido|imbécil|tonto|gilipollas|cabrón|hijo de puta|puta|zorra|maricón|gay|negro|sudaca|moro)\b/gi,
+                        /\b(stupid|idiot|moron|asshole|bitch|fuck you|retard|gay|fag|nigger|spic)\b/gi,
+                        /\b(kill yourself|die|suicide|death|murder)\b/gi
                     ];
                     
                     // If we have original text, check if new insults were added
                     if (originalText && typeof originalText === 'string') {
-                        const newInsults = [];
-                        const originalInsults = [];
+                        const newInsults = new Set();
+                        const originalInsults = new Set();
                         
-                        // Find insults in both texts
+                        // Find ALL insult matches in both texts using global regex
                         insultPatterns.forEach(pattern => {
-                            const textMatches = text.match(pattern) || [];
-                            const originalMatches = originalText.match(pattern) || [];
+                            // Reset regex lastIndex for global patterns
+                            pattern.lastIndex = 0;
+                            const textMatches = [...text.matchAll(pattern)];
                             
-                            textMatches.forEach(match => {
-                                if (!originalMatches.includes(match)) {
-                                    newInsults.push(match);
-                                }
-                            });
+                            pattern.lastIndex = 0;
+                            const originalMatches = [...originalText.matchAll(pattern)];
+                            
+                            // Add all matches to sets for comparison
+                            textMatches.forEach(match => newInsults.add(match[0].toLowerCase()));
+                            originalMatches.forEach(match => originalInsults.add(match[0].toLowerCase()));
                         });
                         
-                        // Only flag if new insults were added
-                        return newInsults.length === 0;
+                        // Check if any new insults were added (not present in original)
+                        for (const insult of newInsults) {
+                            if (!originalInsults.has(insult)) {
+                                return false; // New insult detected
+                            }
+                        }
+                        
+                        return true; // No new insults added
                     }
                     
                     // If no original text, apply standard insult detection
-                    return !insultPatterns.some(pattern => pattern.test(text));
+                    return !insultPatterns.some(pattern => {
+                        pattern.lastIndex = 0; // Reset for global patterns
+                        return pattern.test(text);
+                    });
                 }
             },
             
@@ -114,11 +127,12 @@ class StyleValidator {
     }
 
     /**
-     * Get character limits by platform
+     * Get character limits by platform with normalization
      */
     getCharacterLimits() {
         return {
             twitter: 280,
+            x: 280, // X platform alias for Twitter
             instagram: 2200,
             facebook: 63206,
             youtube: 10000,
@@ -132,6 +146,44 @@ class StyleValidator {
     }
 
     /**
+     * Normalize platform name (e.g., "X" → "twitter")
+     */
+    normalizePlatform(platform) {
+        const platformMap = {
+            'x': 'twitter',
+            'x.com': 'twitter'
+        };
+        
+        const normalized = platform?.toLowerCase()?.trim();
+        return platformMap[normalized] || normalized || 'twitter';
+    }
+
+    /**
+     * Get grapheme-aware character count for proper Unicode support
+     */
+    getGraphemeLength(text) {
+        if (!text || typeof text !== 'string') return 0;
+
+        // Use Intl.Segmenter for accurate grapheme counting if available
+        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+            try {
+                const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+                return Array.from(segmenter.segment(text)).length;
+            } catch (error) {
+                // Fallback if Intl.Segmenter fails
+            }
+        }
+
+        // Fallback to Array.from for basic Unicode support
+        try {
+            return Array.from(text).length;
+        } catch (error) {
+            // Final fallback to basic length
+            return text.length;
+        }
+    }
+
+    /**
      * Validate edited roast text
      * @param {string} text - The edited roast text
      * @param {string} platform - The target platform
@@ -140,13 +192,17 @@ class StyleValidator {
      */
     validate(text, platform = 'twitter', originalText = null) {
         const startTime = Date.now();
+        const normalizedPlatform = this.normalizePlatform(platform);
+        const graphemeLength = this.getGraphemeLength(text);
+        
         const result = {
             valid: true,
             errors: [],
             warnings: [],
             metadata: {
-                textLength: text?.length || 0,
-                platform,
+                textLength: graphemeLength, // Use grapheme-aware length
+                byteLengthUtf16: text?.length || 0, // Keep original length for reference
+                platform: normalizedPlatform,
                 validationTime: null
             }
         };
@@ -168,17 +224,17 @@ class StyleValidator {
                     let passed = false;
                     
                     if (ruleName === 'characterLimit') {
-                        passed = rule.check(text, platform);
+                        passed = rule.check(text, normalizedPlatform);
                         if (!passed) {
                             const limits = this.getCharacterLimits();
-                            const limit = limits[platform] || limits.default;
+                            const limit = limits[normalizedPlatform] || limits.default;
                             result.errors.push({
                                 rule: rule.name,
                                 message: rule.getMessage(limit)
                             });
                         }
                     } else if (ruleName === 'noAddedInsults') {
-                        passed = rule.check(text, platform, originalText);
+                        passed = rule.check(text, normalizedPlatform, originalText);
                         if (!passed) {
                             result.errors.push({
                                 rule: rule.name,
@@ -199,10 +255,12 @@ class StyleValidator {
                         result.valid = false;
                     }
                 } catch (ruleError) {
+                    // GDPR-compliant logging: metadata only, no text content
                     logger.error(`Style validation rule ${ruleName} failed`, {
                         error: ruleError.message,
-                        textLength: text?.length || 0,
-                        platform: platform,
+                        textLength: graphemeLength,
+                        byteLengthUtf16: text?.length || 0,
+                        platform: normalizedPlatform,
                         ruleName: ruleName
                     });
                     
@@ -216,23 +274,27 @@ class StyleValidator {
 
             result.metadata.validationTime = Date.now() - startTime;
 
+            // GDPR-compliant logging: metadata only, no text content
             logger.info('Style validation completed', {
                 valid: result.valid,
                 errorsCount: result.errors.length,
                 warningsCount: result.warnings.length,
                 textLength: result.metadata.textLength,
-                platform,
+                byteLengthUtf16: result.metadata.byteLengthUtf16,
+                platform: result.metadata.platform,
                 validationTimeMs: result.metadata.validationTime
             });
 
             return result;
 
         } catch (error) {
+            // GDPR-compliant error logging: metadata only, no text content
             logger.error('Style validation failed', {
                 error: error.message,
                 stack: error.stack,
-                textLength: text?.length || 0,
-                platform
+                textLength: graphemeLength,
+                byteLengthUtf16: text?.length || 0,
+                platform: normalizedPlatform
             });
 
             return {
@@ -243,8 +305,9 @@ class StyleValidator {
                 }],
                 warnings: [],
                 metadata: {
-                    textLength: text?.length || 0,
-                    platform,
+                    textLength: graphemeLength,
+                    byteLengthUtf16: text?.length || 0,
+                    platform: normalizedPlatform,
                     validationTime: Date.now() - startTime,
                     error: error.message
                 }
