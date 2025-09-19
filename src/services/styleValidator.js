@@ -22,8 +22,8 @@ class StyleValidator {
                 /roastr\.ai/i,
                 /generado\s+por\s+ia/i,
                 /generated\s+by\s+ai/i,
-                /\[roastr\]/i,
-                /\#roastr/i
+                /\[roastr\]/i
+                // Removed /#roastr/i to prevent blocking legitimate hashtags
             ],
             explicitPatterns: [
                 /\b(sex|porno|porn|masturbat|orgasm|penis|vagina|tits|dick|cock|pussy|cum|xxx)\b/iu,
@@ -196,11 +196,16 @@ class StyleValidator {
         if (!text || typeof text !== 'string') return 0;
         
         try {
-            // Use TextEncoder for accurate UTF-8 byte length
-            return new TextEncoder().encode(text).length;
+            // Use Buffer.byteLength() for more accurate UTF-8 byte calculation (CodeRabbit Round 4)
+            return Buffer.byteLength(text, 'utf8');
         } catch (error) {
-            // Fallback to UTF-16 length * 2 (rough approximation)
-            return text.length * 2;
+            // Fallback to TextEncoder if Buffer is not available
+            try {
+                return new TextEncoder().encode(text).length;
+            } catch (fallbackError) {
+                // Final fallback to UTF-16 length * 2 (rough approximation)
+                return text.length * 2;
+            }
         }
     }
 

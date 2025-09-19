@@ -83,6 +83,19 @@ export default function RoastInlineEditor({
     return platformMap[normalized] || normalized || 'twitter';
   }, []);
 
+  // UTF-8 byte length calculation for consistency with backend (CodeRabbit Round 4)
+  const getByteLengthUtf8 = useCallback((text) => {
+    if (!text || typeof text !== 'string') return 0;
+    
+    try {
+      // Use TextEncoder for UTF-8 byte calculation in browser environment
+      return new TextEncoder().encode(text).length;
+    } catch (error) {
+      // Fallback to estimated UTF-16 length * 2
+      return text.length * 2;
+    }
+  }, []);
+
   const normalizedPlatform = normalizePlatform(platform);
   const currentLimit = characterLimits[normalizedPlatform] || 280;
   const graphemeLength = getGraphemeLength(editedText);
