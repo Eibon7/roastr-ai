@@ -244,14 +244,14 @@ class RoastEngine {
                 return this.getDefaultConfiguration();
             }
 
-            // Normalize database response from snake_case to camelCase
+            // Normalize database response from snake_case to camelCase with nullish coalescing
             const config = data[0];
             return {
-                plan: config.plan,
-                autoApprove: config.auto_approve,
-                defaultStyle: config.default_style,
-                language: config.language,
-                transparencyMode: config.transparency_mode,
+                plan: config.plan ?? 'free',
+                autoApprove: config.auto_approve ?? false,
+                defaultStyle: config.default_style ?? 'balanceado',
+                language: config.language ?? 'es',
+                transparencyMode: config.transparency_mode ?? 'signature',
                 userId
             };
         } catch (error) {

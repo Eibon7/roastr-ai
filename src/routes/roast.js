@@ -840,16 +840,26 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
             });
         }
 
-        // Check user credits before generation
-        const creditCheck = await checkUserCredits(userId, userPlan.plan);
-        if (!creditCheck.hasCredits) {
+        // Atomically consume credits before generation (prevents race conditions)
+        const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
+            method: 'roast_engine',
+            style: style,
+            language: language,
+            autoApprove: autoApprove,
+            platform: platform,
+            toxicityScore: contentAnalysis.toxicityScore
+        });
+        
+        if (!creditResult.success) {
             return res.status(402).json({
                 success: false,
                 error: 'Insufficient credits',
                 details: {
-                    remaining: creditCheck.remaining,
-                    limit: creditCheck.limit,
-                    plan: userPlan.plan
+                    remaining: creditResult.remaining,
+                    limit: creditResult.limit,
+                    used: creditResult.used,
+                    plan: userPlan.plan,
+                    error: creditResult.error
                 },
                 timestamp: new Date().toISOString()
             });
@@ -885,15 +895,8 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
             });
         }
 
-        // Consume credits after successful generation
-        await recordRoastUsage(userId, {
-            method: 'roast_engine',
-            style: style,
-            language: language,
-            autoApprove: autoApprove,
-            versionsGenerated: result.metadata.versionsGenerated,
-            tokensUsed: result.tokensUsed
-        });
+        // Credits already consumed atomically before generation
+        // Update usage metadata can be done asynchronously if needed
 
         const processingTime = Date.now() - startTime;
 
@@ -908,6 +911,22 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
             status: result.status,
             processingTimeMs: processingTime
         });
+
+        // Validate transparency for auto-approved roasts (critical guard)
+        if (autoApprove && result.status === 'auto_approved' && !result?.transparency?.applied) {
+            logger.error('❌ Critical: Auto-approved roast without transparency', {
+                userId,
+                roastId: result.metadata?.id,
+                status: result.status
+            });
+            
+            return res.status(500).json({
+                success: false,
+                error: 'Transparency validation failed',
+                details: 'Auto-approved roast must have transparency disclaimer',
+                timestamp: new Date().toISOString()
+            });
+        }
 
         // Return successful response
         res.json({
@@ -927,9 +946,10 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
                     processingTimeMs: processingTime
                 },
                 credits: {
-                    remaining: Math.max(0, creditCheck.remaining - 1),
-                    limit: creditCheck.limit,
-                    used: creditCheck.used + 1
+                    remaining: creditResult.remaining,
+                    limit: creditResult.limit,
+                    used: creditResult.used,
+                    unlimited: creditResult.unlimited
                 }
             },
             timestamp: new Date().toISOString()
