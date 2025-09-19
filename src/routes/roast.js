@@ -1002,8 +1002,9 @@ function validateRoastEngineRequest(req) {
 /**
  * GET /api/roast/styles
  * Get available voice styles for a language
+ * Public endpoint for UI integration
  */
-router.get('/styles', authenticateToken, async (req, res) => {
+router.get('/styles', optionalAuth, async (req, res) => {
     try {
         const language = req.query.language || 'es';
         
@@ -1016,6 +1017,9 @@ router.get('/styles', authenticateToken, async (req, res) => {
         }
 
         const styles = roastEngine.getAvailableStyles(language);
+        
+        // Add caching headers for public endpoint
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
         
         res.json({
             success: true,

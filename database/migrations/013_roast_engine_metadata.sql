@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS roasts_metadata (
     platform VARCHAR(50) NOT NULL,
     comment_id VARCHAR(255),
     style VARCHAR(50) NOT NULL,
-    language VARCHAR(10) NOT NULL DEFAULT 'es',
-    versions_count INTEGER NOT NULL DEFAULT 1,
+    language VARCHAR(10) NOT NULL DEFAULT 'es' CHECK (language IN ('es', 'en')),
+    versions_count INTEGER NOT NULL DEFAULT 1 CHECK (versions_count IN (1, 2)),
     auto_approve BOOLEAN NOT NULL DEFAULT false,
     transparency_applied BOOLEAN NOT NULL DEFAULT false,
     status VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, auto_approved, approved, declined
@@ -24,9 +24,25 @@ CREATE TABLE IF NOT EXISTS roasts_metadata (
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_user_id ON roasts_metadata(user_id);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_created_at ON roasts_metadata(created_at);
+CREATE INDEX IF NOT EXISTS idx_roasts_metadata_user_created ON roasts_metadata(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_status ON roasts_metadata(status);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_platform ON roasts_metadata(platform);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_auto_approve ON roasts_metadata(auto_approve);
+
+-- Create function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for roasts_metadata
+CREATE TRIGGER update_roasts_metadata_updated_at
+    BEFORE UPDATE ON roasts_metadata
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create function to get user roast configuration
 CREATE OR REPLACE FUNCTION get_user_roast_config(user_uuid UUID)
@@ -41,13 +57,13 @@ BEGIN
     RETURN QUERY
     SELECT 
         COALESCE(us.plan, 'free')::VARCHAR(50) as plan,
-        COALESCE(rp.auto_approve, false) as auto_approve,
-        COALESCE(rp.default_style, 'balanceado')::VARCHAR(50) as default_style,
-        COALESCE(rp.language, 'es')::VARCHAR(10) as language,
-        COALESCE(rp.transparency_mode, 'signature')::VARCHAR(50) as transparency_mode
+        COALESCE(rsp.auto_approve, false) as auto_approve,
+        COALESCE(rsp.default_style, 'balanceado')::VARCHAR(50) as default_style,
+        COALESCE(rsp.language, 'es')::VARCHAR(10) as language,
+        COALESCE(rsp.transparency_mode, 'signature')::VARCHAR(50) as transparency_mode
     FROM users u
     LEFT JOIN user_subscriptions us ON u.id = us.user_id
-    LEFT JOIN roastr_personas rp ON u.id = rp.user_id
+    LEFT JOIN roastr_style_preferences rsp ON u.id = rsp.user_id
     WHERE u.id = user_uuid;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -244,8 +244,14 @@ class RoastEngine {
                 return this.getDefaultConfiguration();
             }
 
+            // Normalize database response from snake_case to camelCase
+            const config = data[0];
             return {
-                ...data[0],
+                plan: config.plan,
+                autoApprove: config.auto_approve,
+                defaultStyle: config.default_style,
+                language: config.language,
+                transparencyMode: config.transparency_mode,
                 userId
             };
         } catch (error) {
@@ -316,18 +322,15 @@ class RoastEngine {
                 language: language
             };
         } else {
-            // Generate multiple versions (2)
-            logger.info('🔄 Generating 2 roast versions');
+            // Generate multiple versions (2) in parallel for better performance
+            logger.info('🔄 Generating 2 roast versions in parallel');
             
-            const versions = [];
-            let totalTokens = 0;
-            
-            for (let i = 1; i <= 2; i++) {
-                // Slight variation in generation for different versions
+            // Create generation promises for parallel execution
+            const versionPromises = [1, 2].map(async (versionNumber) => {
                 const versionConfig = {
                     ...generationConfig,
-                    temperature: i === 1 ? 0.8 : 0.9, // Slightly different creativity
-                    versionNumber: i
+                    temperature: versionNumber === 1 ? 0.8 : 0.9, // Slightly different creativity
+                    versionNumber: versionNumber
                 };
 
                 const roastResult = await this.roastGenerator.generateRoast(
@@ -337,16 +340,18 @@ class RoastEngine {
                     versionConfig
                 );
 
-                versions.push({
-                    id: i,
+                return {
+                    id: versionNumber,
                     text: roastResult.roast,
                     style: style,
                     styleConfig: styleConfig,
-                    tokensUsed: roastResult.tokensUsed
-                });
+                    tokensUsed: roastResult.tokensUsed || 0
+                };
+            });
 
-                totalTokens += roastResult.tokensUsed || 0;
-            }
+            // Wait for all versions to complete
+            const versions = await Promise.all(versionPromises);
+            const totalTokens = versions.reduce((sum, version) => sum + version.tokensUsed, 0);
 
             return {
                 roast: versions[0].text, // Primary version
@@ -406,11 +411,34 @@ class RoastEngine {
 
                 // Log error to Sentry (in production)
                 if (process.env.NODE_ENV === 'production') {
-                    // This would integrate with Sentry in production
-                    console.error('SENTRY_LOG: Transparency validation failed', {
-                        userId: options.userId,
-                        reason: transparencyValidation.reason
-                    });
+                    // Check if Sentry is available
+                    try {
+                        if (typeof window !== 'undefined' && window.Sentry) {
+                            window.Sentry.captureMessage('Transparency validation failed', {
+                                level: 'error',
+                                extra: {
+                                    userId: options.userId,
+                                    reason: transparencyValidation.reason
+                                }
+                            });
+                        } else if (typeof global !== 'undefined' && global.Sentry) {
+                            global.Sentry.captureMessage('Transparency validation failed', {
+                                level: 'error',
+                                extra: {
+                                    userId: options.userId,
+                                    reason: transparencyValidation.reason
+                                }
+                            });
+                        } else {
+                            // Fallback logging for production
+                            console.error('SENTRY_LOG: Transparency validation failed', {
+                                userId: options.userId,
+                                reason: transparencyValidation.reason
+                            });
+                        }
+                    } catch (sentryError) {
+                        console.error('Failed to log to Sentry:', sentryError);
+                    }
                 }
 
                 throw new Error(`Transparency validation failed: ${transparencyValidation.reason}`);
@@ -529,10 +557,27 @@ class RoastEngine {
                 createdAt: new Date().toISOString()
             };
 
-            // Store metadata in database
+            // Store metadata in database (normalize field names)
+            const dbMetadata = {
+                id: metadata.id,
+                user_id: metadata.userId,
+                org_id: metadata.orgId,
+                platform: metadata.platform,
+                comment_id: metadata.commentId,
+                style: metadata.style,
+                language: metadata.language,
+                versions_count: metadata.versionsCount,
+                auto_approve: metadata.autoApprove,
+                transparency_applied: metadata.transparencyApplied,
+                status: metadata.status,
+                tokens_used: metadata.tokensUsed,
+                method: metadata.method,
+                created_at: metadata.createdAt
+            };
+
             const { error } = await supabaseServiceClient
                 .from('roasts_metadata')
-                .insert(metadata);
+                .insert(dbMetadata);
 
             if (error) {
                 logger.error('Error persisting roast metadata:', error);

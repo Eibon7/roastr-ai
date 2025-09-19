@@ -36,6 +36,7 @@ class FeatureFlags {
       // AI Service Features
       ENABLE_REAL_OPENAI: !!process.env.OPENAI_API_KEY,
       ENABLE_REAL_PERSPECTIVE: !!process.env.PERSPECTIVE_API_KEY,
+      ENABLE_PERSPECTIVE_API: !!process.env.PERSPECTIVE_API_KEY, // Alias for compatibility
       
       // Email Features
       ENABLE_EMAIL_NOTIFICATIONS: !!process.env.SENDGRID_API_KEY,
