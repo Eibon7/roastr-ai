@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS roasts_metadata (
     auto_approve BOOLEAN NOT NULL DEFAULT false,
     transparency_applied BOOLEAN NOT NULL DEFAULT false,
     status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'auto_approved', 'approved', 'declined')), -- CodeRabbit Round 6: Add status constraint
-    tokens_used INTEGER DEFAULT 0,
+    tokens_used INTEGER DEFAULT 0 CHECK (tokens_used >= 0), -- CodeRabbit Round 7: Add non-negative constraint
     method VARCHAR(100), -- generation method used
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -31,10 +31,9 @@ CREATE INDEX IF NOT EXISTS idx_roasts_metadata_status ON roasts_metadata(status)
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_platform ON roasts_metadata(platform);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_auto_approve ON roasts_metadata(auto_approve);
 
--- Create function to update updated_at timestamp (CodeRabbit Round 5: schema-qualified and security enhanced)
+-- Create function to update updated_at timestamp (CodeRabbit Round 7: Remove unnecessary SECURITY DEFINER from simple trigger)
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER
-SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
@@ -76,17 +75,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Ensure pgcrypto extension for UUID generation (CodeRabbit Round 6: Add missing dependency)
-CREate EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Ensure pgcrypto extension for UUID generation (CodeRabbit Round 7: Fix extension - gen_random_uuid() requires pgcrypto)
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Create roast style preferences table if not exists
 CREATE TABLE IF NOT EXISTS roastr_style_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     auto_approve BOOLEAN NOT NULL DEFAULT false,
-    default_style VARCHAR(50) NOT NULL DEFAULT 'balanceado',
-    language VARCHAR(10) NOT NULL DEFAULT 'es',
-    transparency_mode VARCHAR(50) NOT NULL DEFAULT 'signature',
+    default_style VARCHAR(50) NOT NULL DEFAULT 'balanceado' CHECK (default_style IN ('flanders', 'balanceado', 'canalla', 'light', 'balanced', 'savage')), -- CodeRabbit Round 7: Add style constraint
+    language VARCHAR(10) NOT NULL DEFAULT 'es' CHECK (language IN ('es', 'en')), -- CodeRabbit Round 7: Add language constraint
+    transparency_mode VARCHAR(50) NOT NULL DEFAULT 'signature' CHECK (transparency_mode IN ('signature', 'disclaimer', 'both', 'none')), -- CodeRabbit Round 7: Add transparency mode constraint
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id)

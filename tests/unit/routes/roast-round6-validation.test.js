@@ -53,14 +53,25 @@ describe('Roast Routes Round 6 Validation Fixes', () => {
             isEnabled: jest.fn(() => true)
         };
 
-        // Mock Supabase
+        // Mock Supabase (CodeRabbit Round 7: Fix RPC mock structure)
+        const mockRpcResponse = {
+            data: {
+                success: true,
+                remaining: 99,
+                limit: 100,
+                used: 1,
+                error: null
+            },
+            error: null
+        };
+        
         require('../../../src/config/supabase').supabaseServiceClient = {
             from: jest.fn().mockReturnThis(),
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             single: jest.fn().mockResolvedValue({ data: null, error: null }),
             insert: jest.fn().mockResolvedValue({ data: null, error: null }),
-            rpc: jest.fn().mockResolvedValue({ data: null, error: null })
+            rpc: jest.fn().mockResolvedValue(mockRpcResponse)
         };
 
         // Mock roast engine

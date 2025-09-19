@@ -685,16 +685,17 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
         // Atomically consume credits (check and record in single operation)
         const creditResult = await consumeRoastCredits(userId, userPlan.plan, usageMetadata);
 
-        if (!creditResult.success) {
+        // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
+        if (!creditResult || creditResult.success !== true) {
             return res.status(402).json({
                 success: false,
                 error: 'Insufficient credits',
                 details: {
-                    remaining: creditResult.remaining,
-                    limit: creditResult.limit,
-                    used: creditResult.used,
-                    plan: userPlan.plan,
-                    error: creditResult.error
+                    remaining: creditResult?.remaining ?? 0,
+                    limit: creditResult?.limit ?? 0,
+                    used: creditResult?.used ?? 0,
+                    plan: userPlan?.plan ?? 'free',
+                    error: creditResult?.error ?? 'Credit consumption failed'
                 },
                 timestamp: new Date().toISOString()
             });
@@ -892,16 +893,17 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
             toxicityScore: contentAnalysis.toxicityScore
         });
         
-        if (!creditResult.success) {
+        // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
+        if (!creditResult || creditResult.success !== true) {
             return res.status(402).json({
                 success: false,
                 error: 'Insufficient credits',
                 details: {
-                    remaining: creditResult.remaining,
-                    limit: creditResult.limit,
-                    used: creditResult.used,
-                    plan: userPlan.plan,
-                    error: creditResult.error
+                    remaining: creditResult?.remaining ?? 0,
+                    limit: creditResult?.limit ?? 0,
+                    used: creditResult?.used ?? 0,
+                    plan: userPlan?.plan ?? 'free',
+                    error: creditResult?.error ?? 'Credit consumption failed'
                 },
                 timestamp: new Date().toISOString()
             });
