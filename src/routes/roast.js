@@ -9,8 +9,31 @@ const router = express.Router();
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+// CodeRabbit Round 6: Optional Sentry integration for error capture
+let Sentry;
+try {
+    Sentry = require('@sentry/node');
+} catch (e) {
+    // Sentry not available, use fallback
+    Sentry = {
+        captureMessage: (message, options) => {
+            logger.warn('Sentry not available, logging instead:', { message, options });
+        }
+    };
+}
+const { 
+    VALIDATION_CONSTANTS,
+    isValidStyle,
+    isValidLanguage,
+    isValidPlatform,
+    normalizeLanguage,
+    normalizeStyle,
+    normalizePlatform,
+    getValidStylesForLanguage
+} = require('../config/validationConstants');
 const RoastGeneratorEnhanced = require('../services/roastGeneratorEnhanced');
 const RoastGeneratorMock = require('../services/roastGeneratorMock');
+const RoastEngine = require('../services/roastEngine');
 const { supabaseServiceClient } = require('../config/supabase');
 const { getPlanFeatures } = require('../services/planService');
 
@@ -20,6 +43,7 @@ const PerspectiveService = require('../services/perspectiveService');
 
 // Initialize services
 let roastGenerator;
+let roastEngine;
 let perspectiveService;
 
 // Initialize roast generator based on flags
@@ -34,6 +58,21 @@ if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
 } else {
     roastGenerator = new RoastGeneratorMock();
     logger.info('🎭 Mock roast generator initialized (ENABLE_REAL_OPENAI disabled)');
+}
+
+// Initialize roast engine (SPEC 7 - Issue #363) with feature flag guard
+if (flags.isEnabled('ENABLE_ROAST_ENGINE')) {
+    try {
+        roastEngine = new RoastEngine();
+        logger.info('🔥 Roast Engine initialized for SPEC 7 implementation');
+    } catch (error) {
+        logger.error('❌ Failed to initialize Roast Engine:', error.message);
+        logger.warn('🛡️ Falling back to standard roast generation');
+        roastEngine = null;
+    }
+} else {
+    logger.info('🔧 Roast Engine disabled via feature flag');
+    roastEngine = null;
 }
 
 // Initialize Perspective API service
@@ -53,6 +92,23 @@ if (flags.isEnabled('ENABLE_PERSPECTIVE_API')) {
 // Apply rate limiting to roast endpoints
 const roastRateLimit = createRoastRateLimiter();
 
+// Create lighter rate limit for public endpoints
+const publicRateLimit = require('express-rate-limit')({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per 15 minutes per IP
+    message: {
+        success: false,
+        error: 'Too many requests, please try again later.',
+        retryAfter: '15 minutes'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting in test environment
+        return process.env.NODE_ENV === 'test';
+    }
+});
+
 /**
  * Validate roast request parameters (Enhanced for Issue #326)
  */
@@ -65,23 +121,21 @@ function validateRoastRequest(req) {
         errors.push('Text is required and must be a string');
     } else if (text.trim().length === 0) {
         errors.push('Text cannot be empty');
-    } else if (text.length > 2000) {
-        errors.push('Text must be less than 2000 characters');
+    } else if (text.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
+        errors.push(`Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
     }
 
-    // Validate optional parameters
-    const validTones = ['sarcastic', 'witty', 'clever', 'playful', 'savage'];
-    if (tone && !validTones.includes(tone)) {
-        errors.push(`Tone must be one of: ${validTones.join(', ')}`);
+    // Validate optional parameters using constants
+    if (tone && !VALIDATION_CONSTANTS.VALID_TONES.includes(tone)) {
+        errors.push(`Tone must be one of: ${VALIDATION_CONSTANTS.VALID_TONES.join(', ')}`);
     }
 
-    const validHumorTypes = ['witty', 'clever', 'sarcastic', 'playful', 'observational'];
-    if (humorType && !validHumorTypes.includes(humorType)) {
-        errors.push(`Humor type must be one of: ${validHumorTypes.join(', ')}`);
+    if (humorType && !VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.includes(humorType)) {
+        errors.push(`Humor type must be one of: ${VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.join(', ')}`);
     }
 
-    if (intensity && (typeof intensity !== 'number' || intensity < 1 || intensity > 5)) {
-        errors.push('Intensity must be a number between 1 and 5');
+    if (intensity && (typeof intensity !== 'number' || intensity < VALIDATION_CONSTANTS.MIN_INTENSITY || intensity > VALIDATION_CONSTANTS.MAX_INTENSITY)) {
+        errors.push(`Intensity must be a number between ${VALIDATION_CONSTANTS.MIN_INTENSITY} and ${VALIDATION_CONSTANTS.MAX_INTENSITY}`);
     }
 
     // Validate new parameters for Issue #326
@@ -93,9 +147,8 @@ function validateRoastRequest(req) {
         errors.push('Persona must be a string');
     }
 
-    const validPlatforms = ['twitter', 'facebook', 'instagram', 'youtube', 'tiktok', 'reddit', 'discord', 'twitch', 'bluesky'];
-    if (platform && !validPlatforms.includes(platform)) {
-        errors.push(`Platform must be one of: ${validPlatforms.join(', ')}`);
+    if (platform && !isValidPlatform(platform)) {
+        errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`);
     }
 
     return errors;
@@ -632,16 +685,17 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
         // Atomically consume credits (check and record in single operation)
         const creditResult = await consumeRoastCredits(userId, userPlan.plan, usageMetadata);
 
-        if (!creditResult.success) {
+        // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
+        if (!creditResult || creditResult.success !== true) {
             return res.status(402).json({
                 success: false,
                 error: 'Insufficient credits',
                 details: {
-                    remaining: creditResult.remaining,
-                    limit: creditResult.limit,
-                    used: creditResult.used,
-                    plan: userPlan.plan,
-                    error: creditResult.error
+                    remaining: creditResult?.remaining ?? 0,
+                    limit: creditResult?.limit ?? 0,
+                    used: creditResult?.used ?? 0,
+                    plan: userPlan?.plan ?? 'free',
+                    error: creditResult?.error ?? 'Credit consumption failed'
                 },
                 timestamp: new Date().toISOString()
             });
@@ -762,6 +816,382 @@ router.get('/credits', authenticateToken, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to get credit status',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * POST /api/roast/engine
+ * Advanced roast generation using the new Roast Engine (SPEC 7 - Issue #363)
+ * Supports 1-2 versions, voice styles, auto-approve logic with transparency validation
+ * Requires authentication
+ */
+router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+        // Check if roast engine is available
+        if (!roastEngine) {
+            return res.status(503).json({
+                success: false,
+                error: 'Roast Engine not available',
+                fallback: 'Use /api/roast/generate endpoint instead',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Validate request
+        const validationErrors = validateRoastEngineRequest(req);
+        if (validationErrors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                details: validationErrors,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const { 
+            comment, 
+            style = 'balanceado', 
+            language = 'es',
+            autoApprove = false,
+            platform = 'twitter',
+            commentId = null
+        } = req.body;
+        
+        const userId = req.user.id;
+
+        // Get user plan info
+        const userPlan = await getUserPlanInfo(userId);
+
+        // Analyze content with Perspective API first
+        const contentAnalysis = await analyzeContent(comment);
+
+        // Check if content is safe for roasting
+        if (!contentAnalysis.safe) {
+            return res.status(400).json({
+                success: false,
+                error: 'Content not suitable for roasting',
+                details: {
+                    toxicityScore: contentAnalysis.toxicityScore,
+                    categories: contentAnalysis.categories,
+                    reason: 'Content exceeds toxicity threshold'
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Atomically consume credits before generation (prevents race conditions)
+        const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
+            method: 'roast_engine',
+            style: style,
+            language: language,
+            autoApprove: autoApprove,
+            platform: platform,
+            toxicityScore: contentAnalysis.toxicityScore
+        });
+        
+        // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
+        if (!creditResult || creditResult.success !== true) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient credits',
+                details: {
+                    remaining: creditResult?.remaining ?? 0,
+                    limit: creditResult?.limit ?? 0,
+                    used: creditResult?.used ?? 0,
+                    plan: userPlan?.plan ?? 'free',
+                    error: creditResult?.error ?? 'Credit consumption failed'
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Prepare input for roast engine
+        const input = {
+            comment: comment,
+            toxicityScore: contentAnalysis.toxicityScore,
+            commentId: commentId
+        };
+
+        // Validate orgId for multi-tenant safety
+        const orgId = req.user.orgId || null;
+        if (orgId && typeof orgId !== 'string') {
+            logger.warn('Invalid orgId format detected', {
+                userId: userId,
+                orgId: orgId,
+                orgIdType: typeof orgId
+            });
+        }
+
+        const options = {
+            userId: userId,
+            orgId: orgId,
+            style: normalizeStyle(style) || VALIDATION_CONSTANTS.DEFAULTS.STYLE,
+            language: normalizeLanguage(language),
+            autoApprove: autoApprove,
+            platform: normalizePlatform(platform),
+            plan: userPlan.plan
+        };
+
+        // Generate roast using the advanced engine
+        const result = await roastEngine.generateRoast(input, options);
+
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                error: result.error,
+                details: result.details,
+                retries: result.retries,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Credits already consumed atomically before generation
+        // Update usage metadata can be done asynchronously if needed
+
+        const processingTime = Date.now() - startTime;
+
+        // Log successful generation
+        logger.info('🔥 Roast Engine generation completed', {
+            userId,
+            plan: userPlan.plan,
+            style,
+            language,
+            autoApprove,
+            versionsGenerated: result.metadata.versionsGenerated,
+            status: result.status,
+            processingTimeMs: processingTime
+        });
+
+        // Validate transparency for auto-approved roasts (critical guard) - CodeRabbit Round 6: Enhanced error handling
+        if (autoApprove && result.status === 'auto_approved' && !result?.transparency?.applied) {
+            const transparencyError = {
+                userId,
+                roastId: result.metadata?.id,
+                status: result.status,
+                autoApprove,
+                transparencyApplied: result?.transparency?.applied
+            };
+            
+            logger.error('❌ Critical: Auto-approved roast without transparency', transparencyError);
+            
+            // CodeRabbit Round 6: Capture to Sentry for monitoring
+            Sentry.captureMessage('Auto-approved roast without transparency disclaimer', {
+                level: 'error',
+                extra: transparencyError,
+                tags: {
+                    feature: 'roast_engine',
+                    severity: 'critical',
+                    type: 'transparency_validation_failure'
+                }
+            });
+            
+            // CodeRabbit Round 6: Return 400 instead of 500 (client error, not server error)
+            return res.status(400).json({
+                success: false,
+                error: 'Transparency validation failed',
+                details: 'Auto-approved roast must have transparency disclaimer',
+                code: 'TRANSPARENCY_REQUIRED',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Return successful response
+        res.json({
+            success: true,
+            data: {
+                roast: result.roast,
+                versions: result.versions,
+                style: result.style,
+                language: result.language,
+                status: result.status,
+                transparency: result.transparency,
+                metadata: {
+                    ...result.metadata,
+                    plan: userPlan.plan,
+                    toxicityScore: contentAnalysis.toxicityScore,
+                    safe: contentAnalysis.safe,
+                    processingTimeMs: processingTime
+                },
+                credits: {
+                    remaining: creditResult.remaining,
+                    limit: creditResult.limit,
+                    used: creditResult.used,
+                    unlimited: creditResult.unlimited
+                }
+            },
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        const processingTime = Date.now() - startTime;
+        
+        logger.error('Roast Engine generation failed', {
+            userId: req.user?.id,
+            error: error.message,
+            stack: error.stack,
+            processingTimeMs: processingTime
+        });
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate roast with engine',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * Validate roast engine request parameters with improved normalization
+ */
+function validateRoastEngineRequest(req) {
+    // CodeRabbit Round 6: Remove orgId from request body validation (security fix)
+    // orgId should come from req.user.orgId only, not user input
+    const { comment, style, language, autoApprove, platform } = req.body;
+    const errors = [];
+
+    // Validate comment (enhanced for CodeRabbit Round 5)
+    if (!comment || typeof comment !== 'string') {
+        errors.push('Comment is required and must be a string');
+    } else if (comment.trim().length === 0) {
+        errors.push('Comment cannot be empty or whitespace only');
+    } else if (comment.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
+        errors.push(`Comment must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
+    }
+
+    // Normalize and validate style (enhanced normalization)
+    const normalizedLanguage = normalizeLanguage(language);
+    const normalizedStyle = normalizeStyle(style);
+    
+    if (style && !isValidStyle(normalizedStyle, normalizedLanguage)) {
+        const validStyles = getValidStylesForLanguage(normalizedLanguage);
+        errors.push(`Style must be one of: ${validStyles.join(', ')} for language '${normalizedLanguage}'`);
+    }
+
+    // Validate language (enhanced with BCP-47 support) - CodeRabbit Round 6: Use normalized value
+    if (language && !isValidLanguage(normalizedLanguage)) {
+        errors.push(`Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')} (BCP-47 codes like 'en-US' are normalized)`);
+    }
+
+    // Validate autoApprove
+    if (autoApprove !== undefined && typeof autoApprove !== 'boolean') {
+        errors.push('autoApprove must be a boolean');
+    }
+
+    // Validate platform (enhanced with alias support) - CodeRabbit Round 6: Use normalized value
+    const normalizedPlatform = normalizePlatform(platform);
+    if (platform && !isValidPlatform(normalizedPlatform)) {
+        errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')} (aliases like 'X' → 'twitter' are supported)`);
+    }
+
+    // CodeRabbit Round 6: Removed orgId validation from request body
+    // orgId is now only validated from req.user.orgId for security
+
+    return errors;
+}
+
+/**
+ * GET /api/roast/validation
+ * Get validation constants for client-side validation
+ * Public endpoint referenced in error fallbacks (CodeRabbit Round 6)
+ */
+router.get('/validation', async (req, res) => {
+    try {
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        
+        res.json({
+            success: true,
+            data: {
+                constants: {
+                    MAX_COMMENT_LENGTH: VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH,
+                    MIN_COMMENT_LENGTH: VALIDATION_CONSTANTS.MIN_COMMENT_LENGTH,
+                    VALID_LANGUAGES: VALIDATION_CONSTANTS.VALID_LANGUAGES,
+                    VALID_PLATFORMS: VALIDATION_CONSTANTS.VALID_PLATFORMS,
+                    VALID_STYLES: VALIDATION_CONSTANTS.VALID_STYLES,
+                    MIN_INTENSITY: VALIDATION_CONSTANTS.MIN_INTENSITY,
+                    MAX_INTENSITY: VALIDATION_CONSTANTS.MAX_INTENSITY
+                },
+                helpers: {
+                    getValidStylesForLanguage: {
+                        description: 'Get valid styles for a specific language',
+                        example: 'Call with language parameter'
+                    },
+                    platformAliases: {
+                        'x': 'twitter',
+                        'x.com': 'twitter',
+                        'twitter.com': 'twitter'
+                    }
+                }
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        logger.error('Failed to get validation constants', {
+            error: error.message
+        });
+        
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve validation constants',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * GET /api/roast/styles
+ * Get available voice styles for a language
+ * Public endpoint for UI integration with rate limiting
+ */
+router.get('/styles', publicRateLimit, optionalAuth, async (req, res) => {
+    try {
+        // Enhanced language normalization (CodeRabbit Round 5)
+        const rawLanguage = req.query.language || 'es';
+        const language = normalizeLanguage(rawLanguage);
+        
+        if (!roastEngine) {
+            // Graceful fallback when roast engine is disabled (CodeRabbit Round 5)
+            return res.status(503).json({
+                success: false,
+                error: 'Roast Engine temporarily unavailable',
+                fallback: {
+                    message: 'Use validation constants for style information',
+                    availableLanguages: VALIDATION_CONSTANTS.VALID_LANGUAGES,
+                    validationEndpoint: '/api/roast/validation'
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const styles = roastEngine.getAvailableStyles(language);
+        
+        // Enhanced caching headers (CodeRabbit Round 6: Remove ineffective Vary header)
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        // Note: Vary: Accept-Language removed as language is in query params, not headers
+        
+        res.json({
+            success: true,
+            data: {
+                language: language,
+                originalLanguage: rawLanguage, // Show normalization result
+                styles: styles,
+                normalized: rawLanguage !== language ? true : undefined
+            },
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        logger.error('Failed to get roast styles', {
+            error: error.message
+        });
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get roast styles',
             timestamp: new Date().toISOString()
         });
     }

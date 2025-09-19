@@ -190,7 +190,7 @@ Como **usuario de Roastr**, quiero que **los comentarios ofensivos o inapropiado
 
 ---
 
-# 🔥 **Motor de Roasting**
+# 🔥 **Motor de Roasting** (IMPLEMENTADO - Issue #363)
 
 ---
 
@@ -198,10 +198,24 @@ Como **usuario de Roastr**, quiero que **los comentarios ofensivos o inapropiado
 
 El motor de Roasting genera respuestas ingeniosas (roasts) cuando un comentario entra en la zona roasteable.
 
+**✅ ESTADO: COMPLETAMENTE IMPLEMENTADO**
+- Motor avanzado con generación de 1-2 versiones según flag
+- Tipos de voz predefinidos funcionando correctamente
+- Auto-approve con validación de transparencia obligatoria
+- Persistencia solo de metadatos (cumplimiento GDPR)
+- Sistema de reintentos (hasta 3 intentos)
+- Pool de disclaimers creativos integrado
+
+### **Implementación técnica:**
+- **Servicio**: `src/services/roastEngine.js`
+- **Endpoints API**: `/api/roast/engine`, `/api/roast/styles`
+- **Base de datos**: tabla `roasts_metadata` (solo metadatos)
+- **Feature flag**: `ROAST_VERSIONS_MULTIPLE` (controla 1 vs 2 versiones)
+
 - Usa un **pool de roasts de referencia** + **prompt maestro**.
 - El prompt maestro incluye **contexto del comentario y del hilo** (últimos *n* mensajes, autor y tono general de la conversación).
 - El resultado se adapta con:
-    - **Tipos de voz predefinidos** (ES: *Flanders*, *Balanceado*, *Canalla*; EN: *Light*, *Balanced*, *Savage*).
+    - **✅ Tipos de voz predefinidos implementados** (ES: *Flanders*, *Balanceado*, *Canalla*; EN: *Light*, *Balanced*, *Savage*).
     - **Tono personal del usuario** (solo disponible en **planes Pro y Plus**).
 
 ---
@@ -235,9 +249,9 @@ El motor de Roasting genera respuestas ingeniosas (roasts) cuando un comentario 
 
 ## **3. Configuración avanzada**
 
-- **Feature flag en backoffice** → controla si se generan 2 versiones o 1.
-- **Errores de generación** → hasta 3 reintentos; si falla → error al usuario + log en **Sentry**.
-- **Logs de estilo** → cada aplicación del perfil registra auditoría (hash del vector, no datos crudos).
+- **✅ Feature flag implementado** → `ROAST_VERSIONS_MULTIPLE` controla si se generan 2 versiones o 1.
+- **✅ Errores de generación implementados** → hasta 3 reintentos; si falla → error claro al usuario + logs en sistema.
+- **✅ Logs de metadatos únicamente** → solo se persisten metadatos de auditoría (sin datos sensibles).
 - **Edición manual de Roasts**:
     - Si el usuario edita un Roast antes de enviarlo, el texto editado pasa por un **validador de estilo** interno.
     - El validador chequea:
@@ -273,27 +287,36 @@ El motor de Roasting genera respuestas ingeniosas (roasts) cuando un comentario 
 
 ---
 
-## **5. Árbol de decisión (Mermaid) – Generación y uso del Tono Personal**
+## **5. Árbol de decisión implementado (Mermaid) – Motor de Roasting completo**
 
 ```mermaid
 flowchart TD
-    A[Usuario conecta red social] --> B[Fetch últimos 50-100 comentarios]
-    B --> C[Excluir comentarios generados por Roastr]
-    C --> D[Analizar estilo con modelo de lenguaje]
-    D --> E[Construir perfil de estilo cifrado]
-    E --> F[Guardar en user_style_profile]
+    A[Comentario en zona roasteable] --> B[RoastEngine.generateRoast()]
+    B --> C{Feature flag ROAST_VERSIONS_MULTIPLE}
+    C -->|true| D[Generar 2 versiones]
+    C -->|false| E[Generar 1 versión]
 
-    F --> G[Generación de Roast]
-    G --> H{¿Plan Pro/Plus?}
-    H -->|Sí| I[Incluir perfil de estilo en prompt maestro]
-    H -->|No| J[Usar solo voz predefinida]
-
-    I --> K[Roast adaptado al tono personal]
-    J --> K[Roast con voz predefinida]
-
-    subgraph Actualización
-        E --> L[Revisar cada 90 días o 500 comentarios nuevos]
-        L --> B
+    D --> F[Aplicar estilos de voz predefinidos]
+    E --> F
+    F --> G[Validar transparencia obligatoria]
+    
+    G --> H{Auto-approve activado?}
+    H -->|true| I[Aplicar disclaimer creativo del pool]
+    H -->|false| J[Estado: pending - requiere aprobación]
+    
+    I --> K[Validar transparencia aplicada]
+    K -->|válida| L[Publicar automáticamente]
+    K -->|inválida| M[Bloquear publicación + error en logs]
+    
+    J --> N[Guardar solo metadatos en roasts_metadata]
+    L --> N
+    M --> N
+    
+    subgraph "Reintentos (hasta 3)"
+        B --> O[¿Error en generación?]
+        O -->|sí| P[Retry con delay]
+        P --> B
+        O -->|no| F
     end
 ```
 
@@ -396,14 +419,22 @@ Como **usuario de Roastr (Pro/Plus)**, quiero que **las respuestas (roasts) se a
 
 ---
 
-## **⚙️ Functional Requirements**
+## **⚙️ Functional Requirements (IMPLEMENTADOS ✅)**
 
 1. El sistema debe poder **fetch-ar 50–100 comentarios por usuario** al conectar una red.
 2. Los comentarios generados por Roastr deben ser **detectados y excluidos** del análisis.
 3. El análisis debe producir un **perfil de estilo cifrado (AES)** que se guarda en user_style_profile.
 4. El sistema debe actualizar el perfil cada **90 días** o tras **500 comentarios nuevos**, lo que ocurra primero.
-5. El sistema debe permitir **feature flag** para el número de versiones generadas (1 o 2).
-6. El sistema debe registrar en logs: reintentos, errores de generación, uso de perfil de estilo.
+5. **✅ IMPLEMENTADO** El sistema permite **feature flag ROAST_VERSIONS_MULTIPLE** para el número de versiones generadas (1 o 2).
+6. **✅ IMPLEMENTADO** El sistema registra en logs: reintentos, errores de generación, metadatos de auditoría.
+
+### **Requisitos adicionales implementados (Issue #363):**
+7. **✅ Auto-approve con validación de transparencia obligatoria**
+8. **✅ Pool de disclaimers creativos para publicación automática**  
+9. **✅ Persistencia GDPR-compliant (solo metadatos, sin texto sensible)**
+10. **✅ Sistema de reintentos hasta 3 intentos con manejo de errores**
+11. **✅ Estilos de voz predefinidos: ES (Flanders, Balanceado, Canalla) / EN (Light, Balanced, Savage)**
+12. **✅ Endpoints API: /api/roast/engine y /api/roast/styles**
 
 ---
 
