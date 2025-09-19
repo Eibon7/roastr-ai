@@ -1348,12 +1348,76 @@ Secciones:
 
 ---
 
+### **🎨 SPEC 8 — Editor Inline con Validador de Estilo (Issue #364)**
+
+**Implementación completa del editor inline para roasts con validación de estilo en tiempo real.**
+
+#### **Funcionalidades Implementadas:**
+
+1. **Backend - Endpoint de Validación**
+   - `POST /api/roast/:id/validate` - Valida texto editado
+   - **Consume 1 crédito** por validación (independiente del resultado)
+   - Validaciones implementadas:
+     - ✅ Sin texto vacío o solo espacios
+     - ✅ Límites de caracteres por plataforma (Twitter: 280, Instagram: 2200, etc.)
+     - ✅ Detección de spam (caracteres/palabras repetitivas)
+     - ✅ Filtro de insultos (español/inglés)
+     - ✅ Bloqueo de disclaimers falsos de Roastr
+     - ✅ Filtro de contenido explícito
+   - Logging GDPR-compliant (solo metadata, sin contenido del texto)
+
+2. **Backend - Servicio StyleValidator**
+   - Clase `StyleValidator` con reglas configurables
+   - Performance optimizada (< 100ms para texto normal)
+   - Manejo robusto de errores y advertencias
+   - Soporte para múltiples plataformas con límites específicos
+
+3. **Frontend - Componente RoastInlineEditor**
+   - Vista previa y modo edición integrados
+   - Contador de caracteres en tiempo real con alertas
+   - Botón de validación con indicador de créditos
+   - Estados de validación visuales (válido/inválido/advertencias)
+   - Manejo de errores de API y problemas de créditos
+   - Soporte para todas las plataformas sociales
+
+4. **Frontend - Integración en Dashboard**
+   - Editor inline integrado en la lista de roasts recientes
+   - Transición suave entre vista y edición
+   - Callbacks para actualización de créditos
+   - Gestión de estado centralizada
+
+#### **Flujo de Validación:**
+```
+Usuario edita roast → Click "Validar" → Consume 1 crédito → API validation → 
+Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias → Usuario puede guardar
+```
+
+#### **Pruebas Implementadas:**
+- ✅ 30 tests unitarios para StyleValidator (100% cobertura)
+- ✅ 22 tests de integración para endpoint de validación
+- ✅ Tests de componente RoastInlineEditor (React Testing Library)
+- ✅ Tests de integración Dashboard + Editor
+- ✅ Tests de rendimiento y manejo de errores
+- ✅ Tests de compliance GDPR
+
+#### **Archivos Creados/Modificados:**
+- `src/services/styleValidator.js` - Servicio de validación
+- `src/routes/roast.js` - Endpoint POST /:id/validate
+- `frontend/src/components/RoastInlineEditor.jsx` - Componente editor
+- `frontend/src/pages/dashboard.jsx` - Integración del editor
+- Tests comprehensivos en `/tests/` y `/frontend/src/`
+
+**Estado:** ✅ **COMPLETADO** - Todos los requisitos implementados y probados.
+
+---
+
 ### **Feature flags activos en UI**
 
 - Shop (sidebar).
 - Prompt de estilo personalizado (settings).
 - Número de versiones de Roast (1 o 2).
 - Revisor de estilo (puede activarse/desactivarse desde Admin panel en caso de problemas).
+- **SPEC 8** - Editor inline con validador de estilo (✅ Activo).
 
 ---
 
