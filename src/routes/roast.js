@@ -1018,30 +1018,30 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
  * Validate roast engine request parameters with improved normalization
  */
 function validateRoastEngineRequest(req) {
-    const { comment, style, language, autoApprove, platform } = req.body;
+    const { comment, style, language, autoApprove, platform, orgId } = req.body;
     const errors = [];
 
-    // Validate comment
+    // Validate comment (enhanced for CodeRabbit Round 5)
     if (!comment || typeof comment !== 'string') {
         errors.push('Comment is required and must be a string');
     } else if (comment.trim().length === 0) {
-        errors.push('Comment cannot be empty');
+        errors.push('Comment cannot be empty or whitespace only');
     } else if (comment.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
         errors.push(`Comment must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
     }
 
-    // Normalize and validate style
+    // Normalize and validate style (enhanced normalization)
     const normalizedLanguage = normalizeLanguage(language);
     const normalizedStyle = normalizeStyle(style);
     
     if (style && !isValidStyle(normalizedStyle, normalizedLanguage)) {
         const validStyles = getValidStylesForLanguage(normalizedLanguage);
-        errors.push(`Style must be one of: ${validStyles.join(', ')}`);
+        errors.push(`Style must be one of: ${validStyles.join(', ')} for language '${normalizedLanguage}'`);
     }
 
-    // Validate language
+    // Validate language (enhanced with BCP-47 support)
     if (language && !isValidLanguage(language)) {
-        errors.push(`Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')}`);
+        errors.push(`Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')} (BCP-47 codes like 'en-US' are normalized)`);
     }
 
     // Validate autoApprove
@@ -1049,9 +1049,21 @@ function validateRoastEngineRequest(req) {
         errors.push('autoApprove must be a boolean');
     }
 
-    // Validate platform
+    // Validate platform (enhanced with alias support)
+    const normalizedPlatform = normalizePlatform(platform);
     if (platform && !isValidPlatform(platform)) {
-        errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`);
+        errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')} (aliases like 'X' → 'twitter' are supported)`);
+    }
+
+    // Enhanced orgId validation for multi-tenant security (CodeRabbit Round 5)
+    if (orgId !== undefined) {
+        if (orgId !== null && typeof orgId !== 'string') {
+            errors.push('orgId must be a string or null');
+        } else if (typeof orgId === 'string' && orgId.trim().length === 0) {
+            errors.push('orgId cannot be empty string (use null for no organization)');
+        } else if (typeof orgId === 'string' && !/^[a-zA-Z0-9-_]+$/.test(orgId)) {
+            errors.push('orgId must contain only alphanumeric characters, hyphens, and underscores');
+        }
     }
 
     return errors;
@@ -1064,26 +1076,37 @@ function validateRoastEngineRequest(req) {
  */
 router.get('/styles', publicRateLimit, optionalAuth, async (req, res) => {
     try {
-        const language = req.query.language || 'es';
+        // Enhanced language normalization (CodeRabbit Round 5)
+        const rawLanguage = req.query.language || 'es';
+        const language = normalizeLanguage(rawLanguage);
         
         if (!roastEngine) {
+            // Graceful fallback when roast engine is disabled (CodeRabbit Round 5)
             return res.status(503).json({
                 success: false,
-                error: 'Roast Engine not available',
+                error: 'Roast Engine temporarily unavailable',
+                fallback: {
+                    message: 'Use validation constants for style information',
+                    availableLanguages: VALIDATION_CONSTANTS.VALID_LANGUAGES,
+                    validationEndpoint: '/api/roast/validation'
+                },
                 timestamp: new Date().toISOString()
             });
         }
 
         const styles = roastEngine.getAvailableStyles(language);
         
-        // Add caching headers for public endpoint
+        // Enhanced caching headers with language-aware caching (CodeRabbit Round 5)
         res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        res.set('Vary', 'Accept-Language'); // Enable language-aware caching
         
         res.json({
             success: true,
             data: {
                 language: language,
-                styles: styles
+                originalLanguage: rawLanguage, // Show normalization result
+                styles: styles,
+                normalized: rawLanguage !== language ? true : undefined
             },
             timestamp: new Date().toISOString()
         });

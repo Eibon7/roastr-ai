@@ -21,17 +21,22 @@ CREATE TABLE IF NOT EXISTS roasts_metadata (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for performance
+-- Create indexes for performance (CodeRabbit Round 5: added org_id index for multi-tenant queries)
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_user_id ON roasts_metadata(user_id);
+CREATE INDEX IF NOT EXISTS idx_roasts_metadata_org_id ON roasts_metadata(org_id);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_created_at ON roasts_metadata(created_at);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_user_created ON roasts_metadata(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_roasts_metadata_org_user ON roasts_metadata(org_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_status ON roasts_metadata(status);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_platform ON roasts_metadata(platform);
 CREATE INDEX IF NOT EXISTS idx_roasts_metadata_auto_approve ON roasts_metadata(auto_approve);
 
--- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+-- Create function to update updated_at timestamp (CodeRabbit Round 5: schema-qualified and security enhanced)
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
@@ -90,10 +95,11 @@ CREATE INDEX IF NOT EXISTS idx_roastr_style_preferences_user_id ON roastr_style_
 -- Enable RLS on roasts_metadata table
 ALTER TABLE roasts_metadata ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies for roasts_metadata
+-- Create RLS policies for roasts_metadata (WITH CHECK added for CodeRabbit Round 5)
 CREATE POLICY "Users can only access their own roast metadata"
     ON roasts_metadata FOR ALL
-    USING (user_id = auth.uid());
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
 
 -- Service role can access all roast metadata
 CREATE POLICY "Service role can access all roast metadata"
@@ -104,10 +110,11 @@ CREATE POLICY "Service role can access all roast metadata"
 -- Enable RLS on roastr_style_preferences table
 ALTER TABLE roastr_style_preferences ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies for roastr_style_preferences
+-- Create RLS policies for roastr_style_preferences (WITH CHECK added for CodeRabbit Round 5)
 CREATE POLICY "Users can only access their own style preferences"
     ON roastr_style_preferences FOR ALL
-    USING (user_id = auth.uid());
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
 
 -- Service role can access all style preferences
 CREATE POLICY "Service role can access all style preferences"
