@@ -1,4 +1,4 @@
-const { describe, it, expect, beforeEach, jest } = require('@jest/globals');
+const { describe, it, expect, beforeEach } = require('@jest/globals');
 const StyleValidator = require('../../../src/services/styleValidator');
 
 describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
@@ -76,8 +76,8 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
       
       // Expected UTF-8 bytes: 'Hello ' (6) + '世界' (6) + ' ' (1) + '🌍' (4) = 17
       expect(result.metadata.byteLengthUtf8).toBe(17);
-      expect(result.metadata.textLength).toBe(9); // 9 grapheme clusters
-      expect(result.metadata.codeUnitLength).toBe(10); // 10 UTF-16 code units
+      expect(result.metadata.textLength).toBe(10); // 10 grapheme clusters (actual count)
+      expect(result.metadata.codeUnitLength).toBe(11); // 11 UTF-16 code units (actual count)
     });
 
     it('should handle complex emoji sequences with accurate byte calculation', () => {
@@ -121,7 +121,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
     it('should fallback gracefully if Buffer.byteLength() throws error', () => {
       // Mock Buffer.byteLength to throw an error
       const originalByteLength = Buffer.byteLength;
-      Buffer.byteLength = jest.fn().mockImplementation(() => {
+      Buffer.byteLength = (() => {
         throw new Error('Buffer not available');
       });
 
@@ -140,7 +140,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
       const originalByteLength = Buffer.byteLength;
       const originalTextEncoder = global.TextEncoder;
       
-      Buffer.byteLength = jest.fn().mockImplementation(() => {
+      Buffer.byteLength = (() => {
         throw new Error('Buffer not available');
       });
       
@@ -193,20 +193,26 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
       const sensitiveText = 'This contains personal information';
       
       // Mock logger to capture calls
-      const loggerSpy = jest.spyOn(require('../../../src/utils/logger').logger, 'info');
+      const loggerSpy = {
+        info: jest.fn(),
+        mock: { calls: [] }
+      };
+      const originalLogger = require('../../../src/utils/logger').logger.info;
+      require('../../../src/utils/logger').logger.info = loggerSpy.info;
       
       validator.validate(sensitiveText, 'twitter');
       
       // Verify logger was called but without sensitive text
-      expect(loggerSpy).toHaveBeenCalled();
-      const logCalls = loggerSpy.mock.calls;
+      expect(loggerSpy.info).toHaveBeenCalled();
+      const logCalls = loggerSpy.info.mock.calls;
       logCalls.forEach(call => {
         const logMessage = JSON.stringify(call);
         expect(logMessage).not.toContain('personal information');
         expect(logMessage).not.toContain(sensitiveText);
       });
       
-      loggerSpy.mockRestore();
+      // Restore original logger
+      require('../../../src/utils/logger').logger.info = originalLogger;
     });
   });
 
