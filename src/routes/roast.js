@@ -1231,6 +1231,28 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res)
         // Get user plan info
         const userPlan = await getUserPlanInfo(userId);
 
+        // SECURITY: Verify roast ownership to prevent IDOR attacks
+        const { data: roastOwnership, error: ownershipError } = await supabaseServiceClient
+            .from('roasts')
+            .select('user_id, content')
+            .eq('id', roastId)
+            .eq('user_id', userId)
+            .single();
+
+        if (ownershipError || !roastOwnership) {
+            logger.warn('Attempted access to unauthorized roast', {
+                userId,
+                roastId,
+                error: ownershipError?.message
+            });
+            
+            return res.status(404).json({
+                success: false,
+                error: 'Roast not found or access denied',
+                timestamp: new Date().toISOString()
+            });
+        }
+
         // CRITICAL: Consume 1 credit BEFORE validation (as per SPEC 8 requirements)
         // This ensures credit consumption regardless of validation result
         const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
@@ -1260,8 +1282,8 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res)
         const StyleValidator = require('../services/styleValidator');
         const validator = new StyleValidator();
 
-        // Perform validation
-        const validationResult = validator.validate(text, platform);
+        // Perform validation with original text for comparison
+        const validationResult = validator.validate(text, platform, roastOwnership.content);
 
         const processingTime = Date.now() - startTime;
 
@@ -1282,7 +1304,7 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res)
 
         // Record validation usage for analytics (GDPR-compliant)
         try {
-            await recordAnalysisUsage(userId, {
+            await recordRoastUsage(userId, {
                 type: 'style_validation',
                 roastId: roastId,
                 platform: platform,

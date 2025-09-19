@@ -103,17 +103,28 @@ export default function RoastInlineEditor({
         if (response.status === 402) {
           setError({
             type: 'credits',
-            message: 'Insufficient credits for validation'
+            message: errorData.error || 'Insufficient credits for validation',
+            details: errorData.details
           });
         } else if (response.status === 401) {
           setError({
             type: 'auth',
-            message: 'Please log in to validate roasts'
+            message: 'Authentication required'
+          });
+        } else if (response.status === 404) {
+          setError({
+            type: 'notfound',
+            message: 'Roast not found or access denied'
+          });
+        } else if (response.status === 400) {
+          setError({
+            type: 'validation',
+            message: errorData.error || 'Invalid request'
           });
         } else {
           setError({
             type: 'server',
-            message: errorData.error || 'Validation failed'
+            message: errorData.error || `Server error (${response.status})`
           });
         }
       }
@@ -235,11 +246,13 @@ export default function RoastInlineEditor({
             placeholder="Edita tu roast aquí..."
             className="min-h-24 resize-none"
             maxLength={currentLimit + 100} // Allow slight overflow for warning
+            aria-label="Editar contenido del roast"
+            aria-describedby="char-count validation-status"
           />
           
           {/* Character Counter */}
           <div className="flex items-center justify-between text-xs">
-            <span className={getCharCountColor()}>
+            <span id="char-count" className={getCharCountColor()}>
               {editedText.length} / {currentLimit} caracteres
               {remainingChars < 0 && (
                 <span className="text-red-500 ml-1">
@@ -291,13 +304,15 @@ export default function RoastInlineEditor({
 
         {/* Error Messages */}
         {error && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" id="validation-status" role="alert">
             <XCircle className="h-4 w-4" />
             <AlertDescription>
               <div className="space-y-1">
                 <p className="font-medium">
                   {error.type === 'credits' && 'Sin Créditos'}
                   {error.type === 'auth' && 'Error de Autenticación'}
+                  {error.type === 'notfound' && 'Roast No Encontrado'}
+                  {error.type === 'validation' && 'Error de Validación'}
                   {error.type === 'server' && 'Error del Servidor'}
                   {error.type === 'network' && 'Error de Red'}
                 </p>
@@ -306,7 +321,17 @@ export default function RoastInlineEditor({
                   <div className="flex items-center space-x-1 mt-2 text-xs">
                     <CreditCard className="h-3 w-3" />
                     <span>La validación consume 1 crédito por uso</span>
+                    {error.details && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({error.details.remaining}/{error.details.limit} créditos restantes)
+                      </span>
+                    )}
                   </div>
+                )}
+                {error.type === 'notfound' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Verifica que el roast te pertenece y que tienes permisos para editarlo.
+                  </p>
                 )}
               </div>
             </AlertDescription>

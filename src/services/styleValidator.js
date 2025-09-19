@@ -45,7 +45,7 @@ class StyleValidator {
             noAddedInsults: {
                 name: 'NO_ADDED_INSULTS',
                 message: 'No puedes añadir insultos o ataques personales al Roast',
-                check: (text) => {
+                check: (text, platform, originalText = null) => {
                     // Common insult patterns (basic detection)
                     const insultPatterns = [
                         /\b(idiota|estúpido|imbécil|tonto|gilipollas|cabrón|hijo de puta|puta|zorra|maricón|gay|negro|sudaca|moro)\b/i,
@@ -53,6 +53,28 @@ class StyleValidator {
                         /\b(kill yourself|die|suicide|death|murder)\b/i
                     ];
                     
+                    // If we have original text, check if new insults were added
+                    if (originalText && typeof originalText === 'string') {
+                        const newInsults = [];
+                        const originalInsults = [];
+                        
+                        // Find insults in both texts
+                        insultPatterns.forEach(pattern => {
+                            const textMatches = text.match(pattern) || [];
+                            const originalMatches = originalText.match(pattern) || [];
+                            
+                            textMatches.forEach(match => {
+                                if (!originalMatches.includes(match)) {
+                                    newInsults.push(match);
+                                }
+                            });
+                        });
+                        
+                        // Only flag if new insults were added
+                        return newInsults.length === 0;
+                    }
+                    
+                    // If no original text, apply standard insult detection
                     return !insultPatterns.some(pattern => pattern.test(text));
                 }
             },
@@ -155,6 +177,14 @@ class StyleValidator {
                                 message: rule.getMessage(limit)
                             });
                         }
+                    } else if (ruleName === 'noAddedInsults') {
+                        passed = rule.check(text, platform, originalText);
+                        if (!passed) {
+                            result.errors.push({
+                                rule: rule.name,
+                                message: rule.message
+                            });
+                        }
                     } else {
                         passed = rule.check(text);
                         if (!passed) {
@@ -171,7 +201,9 @@ class StyleValidator {
                 } catch (ruleError) {
                     logger.error(`Style validation rule ${ruleName} failed`, {
                         error: ruleError.message,
-                        text: text.substring(0, 100) + '...' // Log first 100 chars only
+                        textLength: text?.length || 0,
+                        platform: platform,
+                        ruleName: ruleName
                     });
                     
                     // Don't fail validation for rule errors, but log them

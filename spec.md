@@ -1392,6 +1392,34 @@ Usuario edita roast → Click "Validar" → Consume 1 crédito → API validatio
 Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias → Usuario puede guardar
 ```
 
+#### **Mejoras de Seguridad (CodeRabbit Review):**
+1. **GDPR Compliance Reforzado**
+   - ✅ Eliminado logging de texto sensible en styleValidator.js
+   - ✅ Solo metadata en logs (longitud, plataforma, tiempo de procesamiento)
+   - ✅ Sin persistencia de contenido sensible en DOM frontend
+
+2. **Verificación de Propiedad (Anti-IDOR)**
+   - ✅ Verificación obligatoria de propiedad del roast antes de validar
+   - ✅ Consulta a base de datos para confirmar userId = owner
+   - ✅ Respuestas 404/403 apropiadas para acceso no autorizado
+   - ✅ Logging de intentos de acceso no autorizado
+
+3. **Validación Mejorada de Insultos**
+   - ✅ Comparación contra texto original para detectar nuevos insultos
+   - ✅ Permite edición de roasts que ya contenían insultos originalmente
+   - ✅ Solo bloquea adición de nuevos insultos, no edición de existentes
+
+4. **Tracking de Uso Corregido**
+   - ✅ Cambio de `recordAnalysisUsage` a `recordRoastUsage`
+   - ✅ Previene consumo incorrecto de créditos de análisis
+   - ✅ Tracking apropiado para validaciones de estilo
+
+5. **Error Handling Frontend Mejorado**
+   - ✅ Manejo específico para errores 404 (roast no encontrado)
+   - ✅ Manejo específico para errores 400 (validación fallida)
+   - ✅ Mejoras de accesibilidad (ARIA, focus management)
+   - ✅ Mensajes de error más informativos con detalles de créditos
+
 #### **Pruebas Implementadas:**
 - ✅ 30 tests unitarios para StyleValidator (100% cobertura)
 - ✅ 22 tests de integración para endpoint de validación
@@ -1399,6 +1427,10 @@ Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias → Usuario puede gua
 - ✅ Tests de integración Dashboard + Editor
 - ✅ Tests de rendimiento y manejo de errores
 - ✅ Tests de compliance GDPR
+- ✅ **29 tests adicionales** para cambios de CodeRabbit Review:
+  - 8 tests para validación mejorada de insultos con originalText
+  - 9 tests para verificación de propiedad y seguridad IDOR
+  - 12 tests para error handling frontend y accesibilidad
 
 #### **Archivos Creados/Modificados:**
 - `src/services/styleValidator.js` - Servicio de validación
