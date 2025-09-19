@@ -75,7 +75,8 @@ class FeatureFlags {
       ENABLE_SHOP: this.parseFlag(process.env.ENABLE_SHOP), // Default disabled unless explicitly enabled
 
       // Roast Engine Features (SPEC 7 - Issue #363)
-      ROAST_VERSIONS_MULTIPLE: this.parseFlag(process.env.ROAST_VERSIONS_MULTIPLE, true) // Default: generate 2 versions, set to false for 1 version
+      ROAST_VERSIONS_MULTIPLE: this.parseFlag(process.env.ROAST_VERSIONS_MULTIPLE, true), // Default: generate 2 versions, set to false for 1 version
+      ENABLE_ROAST_ENGINE: this.parseFlag(process.env.ENABLE_ROAST_ENGINE, true) // Default: enabled, can be disabled for maintenance
     };
   }
 
@@ -267,7 +268,8 @@ class FeatureFlags {
         shop: this.flags.ENABLE_SHOP ? 'enabled' : 'disabled',
         facebookUI: this.flags.ENABLE_FACEBOOK_UI ? 'enabled' : 'disabled',
         instagramUI: this.flags.ENABLE_INSTAGRAM_UI ? 'enabled' : 'disabled',
-        roastVersionsMultiple: this.flags.ROAST_VERSIONS_MULTIPLE ? 'enabled' : 'disabled'
+        roastVersionsMultiple: this.flags.ROAST_VERSIONS_MULTIPLE ? 'enabled' : 'disabled',
+        roastEngine: this.flags.ENABLE_ROAST_ENGINE ? 'enabled' : 'disabled'
       }
     };
   }

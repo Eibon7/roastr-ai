@@ -15,6 +15,7 @@ const { flags } = require('../config/flags');
 const { supabaseServiceClient } = require('../config/supabase');
 const RoastGeneratorEnhanced = require('./roastGeneratorEnhanced');
 const transparencyService = require('./transparencyService');
+const { VALIDATION_CONSTANTS, isValidStyle } = require('../config/validationConstants');
 
 class RoastEngine {
     constructor() {
@@ -210,22 +211,15 @@ class RoastEngine {
             throw new Error('User ID is required');
         }
 
-        if (input.comment.length > 2000) {
-            throw new Error('Comment exceeds maximum length of 2000 characters');
+        if (input.comment.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
+            throw new Error(`Comment exceeds maximum length of ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
         }
 
-        if (options.style && !this.isValidStyle(options.style, options.language || 'es')) {
+        if (options.style && !isValidStyle(options.style, options.language || 'es')) {
             throw new Error(`Invalid style: ${options.style}`);
         }
     }
 
-    /**
-     * Check if style is valid for given language
-     */
-    isValidStyle(style, language) {
-        const styles = this.voiceStyles[language] || this.voiceStyles.es;
-        return Object.keys(styles).includes(style);
-    }
 
     /**
      * Get user configuration from database

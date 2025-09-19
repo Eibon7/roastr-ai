@@ -54,6 +54,9 @@ RETURNS TABLE (
     transparency_mode VARCHAR(50)
 ) AS $$
 BEGIN
+    -- Security: Restrict search_path to prevent injection
+    PERFORM set_config('search_path', 'public', true);
+    
     RETURN QUERY
     SELECT 
         COALESCE(us.plan, 'free')::VARCHAR(50) as plan,
@@ -118,6 +121,9 @@ RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER;
 BEGIN
+    -- Security: Restrict search_path to prevent injection
+    PERFORM set_config('search_path', 'public', true);
+    
     DELETE FROM roasts_metadata
     WHERE created_at < NOW() - INTERVAL '90 days';
     
@@ -138,6 +144,9 @@ RETURNS TABLE (
     total_tokens INTEGER
 ) AS $$
 BEGIN
+    -- Security: Restrict search_path to prevent injection
+    PERFORM set_config('search_path', 'public', true);
+    
     RETURN QUERY
     SELECT 
         COUNT(*)::INTEGER as total_roasts,
@@ -166,3 +175,13 @@ COMMENT ON TABLE roastr_style_preferences IS 'User preferences for roast generat
 COMMENT ON FUNCTION get_user_roast_config(UUID) IS 'Get complete roast configuration for a user';
 COMMENT ON FUNCTION cleanup_old_roast_metadata() IS 'Clean up roast metadata older than 90 days (GDPR compliance)';
 COMMENT ON FUNCTION get_user_roast_stats(UUID, INTEGER) IS 'Get roast generation statistics for a user';
+
+-- Revoke public access and grant only to service roles for security
+REVOKE ALL ON FUNCTION get_user_roast_config(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION cleanup_old_roast_metadata() FROM PUBLIC;
+REVOKE ALL ON FUNCTION get_user_roast_stats(UUID, INTEGER) FROM PUBLIC;
+
+-- Grant execute permissions only to service roles
+GRANT EXECUTE ON FUNCTION get_user_roast_config(UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION cleanup_old_roast_metadata() TO service_role;
+GRANT EXECUTE ON FUNCTION get_user_roast_stats(UUID, INTEGER) TO service_role;

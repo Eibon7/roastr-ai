@@ -9,6 +9,16 @@ const router = express.Router();
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const { 
+    VALIDATION_CONSTANTS,
+    isValidStyle,
+    isValidLanguage,
+    isValidPlatform,
+    normalizeLanguage,
+    normalizeStyle,
+    normalizePlatform,
+    getValidStylesForLanguage
+} = require('../config/validationConstants');
 const RoastGeneratorEnhanced = require('../services/roastGeneratorEnhanced');
 const RoastGeneratorMock = require('../services/roastGeneratorMock');
 const RoastEngine = require('../services/roastEngine');
@@ -38,12 +48,18 @@ if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
     logger.info('🎭 Mock roast generator initialized (ENABLE_REAL_OPENAI disabled)');
 }
 
-// Initialize roast engine (SPEC 7 - Issue #363)
-try {
-    roastEngine = new RoastEngine();
-    logger.info('🔥 Roast Engine initialized for SPEC 7 implementation');
-} catch (error) {
-    logger.error('❌ Failed to initialize Roast Engine:', error.message);
+// Initialize roast engine (SPEC 7 - Issue #363) with feature flag guard
+if (flags.isEnabled('ENABLE_ROAST_ENGINE')) {
+    try {
+        roastEngine = new RoastEngine();
+        logger.info('🔥 Roast Engine initialized for SPEC 7 implementation');
+    } catch (error) {
+        logger.error('❌ Failed to initialize Roast Engine:', error.message);
+        logger.warn('🛡️ Falling back to standard roast generation');
+        roastEngine = null;
+    }
+} else {
+    logger.info('🔧 Roast Engine disabled via feature flag');
     roastEngine = null;
 }
 
@@ -64,6 +80,23 @@ if (flags.isEnabled('ENABLE_PERSPECTIVE_API')) {
 // Apply rate limiting to roast endpoints
 const roastRateLimit = createRoastRateLimiter();
 
+// Create lighter rate limit for public endpoints
+const publicRateLimit = require('express-rate-limit')({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per 15 minutes per IP
+    message: {
+        success: false,
+        error: 'Too many requests, please try again later.',
+        retryAfter: '15 minutes'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting in test environment
+        return process.env.NODE_ENV === 'test';
+    }
+});
+
 /**
  * Validate roast request parameters (Enhanced for Issue #326)
  */
@@ -76,23 +109,21 @@ function validateRoastRequest(req) {
         errors.push('Text is required and must be a string');
     } else if (text.trim().length === 0) {
         errors.push('Text cannot be empty');
-    } else if (text.length > 2000) {
-        errors.push('Text must be less than 2000 characters');
+    } else if (text.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
+        errors.push(`Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
     }
 
-    // Validate optional parameters
-    const validTones = ['sarcastic', 'witty', 'clever', 'playful', 'savage'];
-    if (tone && !validTones.includes(tone)) {
-        errors.push(`Tone must be one of: ${validTones.join(', ')}`);
+    // Validate optional parameters using constants
+    if (tone && !VALIDATION_CONSTANTS.VALID_TONES.includes(tone)) {
+        errors.push(`Tone must be one of: ${VALIDATION_CONSTANTS.VALID_TONES.join(', ')}`);
     }
 
-    const validHumorTypes = ['witty', 'clever', 'sarcastic', 'playful', 'observational'];
-    if (humorType && !validHumorTypes.includes(humorType)) {
-        errors.push(`Humor type must be one of: ${validHumorTypes.join(', ')}`);
+    if (humorType && !VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.includes(humorType)) {
+        errors.push(`Humor type must be one of: ${VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.join(', ')}`);
     }
 
-    if (intensity && (typeof intensity !== 'number' || intensity < 1 || intensity > 5)) {
-        errors.push('Intensity must be a number between 1 and 5');
+    if (intensity && (typeof intensity !== 'number' || intensity < VALIDATION_CONSTANTS.MIN_INTENSITY || intensity > VALIDATION_CONSTANTS.MAX_INTENSITY)) {
+        errors.push(`Intensity must be a number between ${VALIDATION_CONSTANTS.MIN_INTENSITY} and ${VALIDATION_CONSTANTS.MAX_INTENSITY}`);
     }
 
     // Validate new parameters for Issue #326
@@ -104,9 +135,8 @@ function validateRoastRequest(req) {
         errors.push('Persona must be a string');
     }
 
-    const validPlatforms = ['twitter', 'facebook', 'instagram', 'youtube', 'tiktok', 'reddit', 'discord', 'twitch', 'bluesky'];
-    if (platform && !validPlatforms.includes(platform)) {
-        errors.push(`Platform must be one of: ${validPlatforms.join(', ')}`);
+    if (platform && !isValidPlatform(platform)) {
+        errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`);
     }
 
     return errors;
@@ -872,13 +902,23 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
             commentId: commentId
         };
 
+        // Validate orgId for multi-tenant safety
+        const orgId = req.user.orgId || null;
+        if (orgId && typeof orgId !== 'string') {
+            logger.warn('Invalid orgId format detected', {
+                userId: userId,
+                orgId: orgId,
+                orgIdType: typeof orgId
+            });
+        }
+
         const options = {
             userId: userId,
-            orgId: req.user.orgId || null,
-            style: style,
-            language: language,
+            orgId: orgId,
+            style: normalizeStyle(style) || VALIDATION_CONSTANTS.DEFAULTS.STYLE,
+            language: normalizeLanguage(language),
             autoApprove: autoApprove,
-            platform: platform,
+            platform: normalizePlatform(platform),
             plan: userPlan.plan
         };
 
@@ -975,7 +1015,7 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
 });
 
 /**
- * Validate roast engine request parameters
+ * Validate roast engine request parameters with improved normalization
  */
 function validateRoastEngineRequest(req) {
     const { comment, style, language, autoApprove, platform } = req.body;
@@ -986,23 +1026,22 @@ function validateRoastEngineRequest(req) {
         errors.push('Comment is required and must be a string');
     } else if (comment.trim().length === 0) {
         errors.push('Comment cannot be empty');
-    } else if (comment.length > 2000) {
-        errors.push('Comment must be less than 2000 characters');
+    } else if (comment.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
+        errors.push(`Comment must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
     }
 
-    // Validate style
-    const validStyles = {
-        es: ['flanders', 'balanceado', 'canalla'],
-        en: ['light', 'balanced', 'savage']
-    };
-    const lang = language || 'es';
-    if (style && !validStyles[lang]?.includes(style)) {
-        errors.push(`Style must be one of: ${validStyles[lang]?.join(', ') || 'flanders, balanceado, canalla'}`);
+    // Normalize and validate style
+    const normalizedLanguage = normalizeLanguage(language);
+    const normalizedStyle = normalizeStyle(style);
+    
+    if (style && !isValidStyle(normalizedStyle, normalizedLanguage)) {
+        const validStyles = getValidStylesForLanguage(normalizedLanguage);
+        errors.push(`Style must be one of: ${validStyles.join(', ')}`);
     }
 
     // Validate language
-    if (language && !['es', 'en'].includes(language)) {
-        errors.push('Language must be "es" or "en"');
+    if (language && !isValidLanguage(language)) {
+        errors.push(`Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')}`);
     }
 
     // Validate autoApprove
@@ -1011,9 +1050,8 @@ function validateRoastEngineRequest(req) {
     }
 
     // Validate platform
-    const validPlatforms = ['twitter', 'facebook', 'instagram', 'youtube', 'tiktok', 'reddit', 'discord', 'twitch', 'bluesky'];
-    if (platform && !validPlatforms.includes(platform)) {
-        errors.push(`Platform must be one of: ${validPlatforms.join(', ')}`);
+    if (platform && !isValidPlatform(platform)) {
+        errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`);
     }
 
     return errors;
@@ -1022,9 +1060,9 @@ function validateRoastEngineRequest(req) {
 /**
  * GET /api/roast/styles
  * Get available voice styles for a language
- * Public endpoint for UI integration
+ * Public endpoint for UI integration with rate limiting
  */
-router.get('/styles', optionalAuth, async (req, res) => {
+router.get('/styles', publicRateLimit, optionalAuth, async (req, res) => {
     try {
         const language = req.query.language || 'es';
         
