@@ -188,8 +188,11 @@ app.use('/api/auth', authRateLimit);
 // Apply billing-specific rate limiting  
 app.use('/api/billing', billingRateLimit);
 
-// Servir archivos estáticos de la carpeta public
-app.use(express.static(path.join(__dirname, '../public')));
+// Servir archivos estáticos de la carpeta public (legacy files)
+app.use('/public', express.static(path.join(__dirname, '../public')));
+
+// Servir archivos estáticos del frontend React
+app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 // Auth routes
 app.use('/api/auth', authRoutes);
@@ -394,12 +397,12 @@ try {
 // Instancia del servicio de CSV roasts
 const csvRoastService = new CsvRoastService();
 
-// Ruta principal: redirigir a auth.html
+// Ruta principal: servir React app
 app.get('/', (req, res) => {
-  res.redirect('/auth.html');
+  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
 });
 
-// Mantener acceso directo a index.html si es necesario
+// Mantener acceso directo a index.html si es necesario (legacy)
 app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
@@ -706,6 +709,11 @@ app.use((req, res) => {
 let server;
 
 // Only start server if this file is run directly (not imported by tests)
+// Catch-all handler: send back React app's index.html file for all routes not handled above
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+});
+
 if (require.main === module) {
   // Start Model Availability Worker (Issue #326)
   try {
