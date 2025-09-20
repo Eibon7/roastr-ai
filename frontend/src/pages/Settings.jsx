@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -25,10 +25,13 @@ import {
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import AjustesSettings from '../components/AjustesSettings';
+import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
   const { userData: user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('account');
+  const notificationTimeoutRef = useRef(null);
   // Granular loading states for independent operations
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
@@ -53,18 +56,35 @@ const Settings = () => {
   const handleNotification = (message, type = 'success') => {
     setActiveNotification({ message, type, id: Date.now() });
     
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
+    // Clear any existing timeout
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+    }
+    
+    // Auto-hide after 5 seconds with proper cleanup
+    notificationTimeoutRef.current = setTimeout(() => {
       setActiveNotification(null);
     }, 5000);
   };
 
   const dismissNotification = () => {
+    // Clear timeout when manually dismissing
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
     setActiveNotification(null);
   };
 
   useEffect(() => {
     loadBillingInfo();
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+    };
   }, []);
 
   const loadBillingInfo = async () => {
@@ -76,14 +96,64 @@ const Settings = () => {
     }
   };
 
+  const validatePassword = (password) => {
+    const errors = [];
+    
+    if (password.length < 8) {
+      errors.push('At least 8 characters');
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      errors.push('One uppercase letter');
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      errors.push('One lowercase letter');
+    }
+    
+    if (!/[0-9]/.test(password)) {
+      errors.push('One number');
+    }
+    
+    if (!/[!@#$%^&*()_+\-=\[\]{}|;':".,<>?`~]/.test(password)) {
+      errors.push('One special character');
+    }
+    
+    return errors;
+  };
+
+  const getPasswordStrength = (password) => {
+    const errors = validatePassword(password);
+    const score = 5 - errors.length;
+    
+    if (score <= 1) return { strength: 'weak', color: 'bg-red-500', text: 'Weak' };
+    if (score <= 3) return { strength: 'medium', color: 'bg-yellow-500', text: 'Medium' };
+    return { strength: 'strong', color: 'bg-green-500', text: 'Strong' };
+  };
+
   const handlePasswordChange = async () => {
+    // Pre-validate current password
+    if (!passwords.current.trim()) {
+      handleNotification('Current password is required', 'error');
+      return;
+    }
+    
+    // Pre-validate new password
+    const validationErrors = validatePassword(passwords.new);
+    if (validationErrors.length > 0) {
+      handleNotification(`Password must contain: ${validationErrors.join(', ')}`, 'error');
+      return;
+    }
+    
+    // Check password confirmation
     if (passwords.new !== passwords.confirm) {
       handleNotification('New passwords do not match', 'error');
       return;
     }
     
-    if (passwords.new.length < 8) {
-      handleNotification('Password must be at least 8 characters', 'error');
+    // Check if new password is different from current
+    if (passwords.current === passwords.new) {
+      handleNotification('New password must be different from current password', 'error');
       return;
     }
 
@@ -97,7 +167,8 @@ const Settings = () => {
       setPasswords({ current: '', new: '', confirm: '' });
       handleNotification('Password changed successfully', 'success');
     } catch (error) {
-      handleNotification('Failed to change password', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to change password';
+      handleNotification(errorMessage, 'error');
     } finally {
       setPasswordLoading(false);
     }
@@ -125,8 +196,8 @@ const Settings = () => {
       setDeleteLoading(true);
       await apiClient.post('/auth/delete-account');
       handleNotification('Account deletion initiated', 'success');
-      // Redirect to logout or landing page
-      window.location.href = '/';
+      // Navigate to logout or landing page
+      navigate('/');
     } catch (error) {
       handleNotification('Failed to delete account', 'error');
     } finally {
@@ -258,6 +329,7 @@ const Settings = () => {
                       size="sm"
                       className="absolute right-2 top-1/2 -translate-y-1/2"
                       onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                      aria-label={showPasswords.current ? "Hide current password" : "Show current password"}
                     >
                       {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
@@ -280,10 +352,45 @@ const Settings = () => {
                       size="sm"
                       className="absolute right-2 top-1/2 -translate-y-1/2"
                       onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                      aria-label={showPasswords.new ? "Hide new password" : "Show new password"}
                     >
                       {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
                   </div>
+                  {/* Password Strength Indicator */}
+                  {passwords.new && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Password strength:</span>
+                        <span className={`text-sm font-medium ${
+                          getPasswordStrength(passwords.new).strength === 'weak' ? 'text-red-600' :
+                          getPasswordStrength(passwords.new).strength === 'medium' ? 'text-yellow-600' :
+                          'text-green-600'
+                        }`}>
+                          {getPasswordStrength(passwords.new).text}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrength(passwords.new).color}`}
+                          style={{ 
+                            width: `${getPasswordStrength(passwords.new).strength === 'weak' ? '33' : 
+                                     getPasswordStrength(passwords.new).strength === 'medium' ? '66' : '100'}%` 
+                          }}
+                        />
+                      </div>
+                      {validatePassword(passwords.new).length > 0 && (
+                        <ul className="text-sm text-gray-600">
+                          {validatePassword(passwords.new).map((error, i) => (
+                            <li key={i} className="flex items-center gap-1">
+                              <span className="text-red-500">•</span>
+                              {error}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -302,6 +409,7 @@ const Settings = () => {
                       size="sm"
                       className="absolute right-2 top-1/2 -translate-y-1/2"
                       onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                      aria-label={showPasswords.confirm ? "Hide confirmation password" : "Show confirmation password"}
                     >
                       {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
@@ -479,11 +587,11 @@ const Settings = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" className="flex-1" onClick={() => window.location.href = '/billing'}>
+                    <Button variant="outline" className="flex-1" onClick={() => navigate('/billing')}>
                       View Full Billing
                     </Button>
                     {user?.plan === 'free' && (
-                      <Button className="flex-1" onClick={() => window.location.href = '/pricing'}>
+                      <Button className="flex-1" onClick={() => navigate('/pricing')}>
                         Upgrade Plan
                       </Button>
                     )}
@@ -535,7 +643,7 @@ const Settings = () => {
                     {(user?.plan?.toLowerCase() || 'free') === plan.name.toLowerCase() ? (
                       <Badge className="mt-2 w-full justify-center">Current</Badge>
                     ) : (
-                      <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => window.location.href = '/pricing'}>
+                      <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => navigate('/pricing')}>
                         {plan.name === 'Free' ? 'Downgrade' : 'Upgrade'}
                       </Button>
                     )}

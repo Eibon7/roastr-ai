@@ -706,37 +706,53 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 // ROAST ENDPOINTS - Now handled by /api/roast routes
 // ============================================================================
 
-// Add error handling middleware (must be last)
-app.use(errorHandler);
-
-// 404 handler for unknown routes
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Not Found',
-    code: 'ROUTE_NOT_FOUND'
-  });
-});
-
 // Export app for testing
 let server;
 
 if (require.main === module) {
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
-  // Improved SPA routing with regex to exclude API routes
-  app.get(/^(?!\/api|\/static|\/webhook|\/uploads).*$/, (req, res, next) => {
+  // Improved SPA routing with regex to exclude more paths for better performance
+  app.get(/^(?!\/api|\/static|\/webhook|\/uploads|\/health|\/favicon\.ico|\/manifest\.json|\/robots\.txt).*$/, (req, res, next) => {
     const hasFileExtension = /\.[^.]+$/.test(req.path) && !req.path.endsWith('.html');
     if (hasFileExtension) {
       return next();
     }
+    
+    // Enhanced error handling for file serving
     res.sendFile(path.join(__dirname, '../frontend/build/index.html'), (err) => {
       if (err) {
-        console.error('Error serving SPA:', { error: err.message, path: req.path });
+        console.error('Error serving SPA:', { 
+          error: err.message, 
+          path: req.path, 
+          statusCode: err.status || 500,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Provide fallback response if index.html fails to serve
+        if (err.code === 'ENOENT') {
+          return res.status(404).json({
+            success: false,
+            error: 'SPA index.html not found',
+            code: 'SPA_NOT_FOUND'
+          });
+        }
+        
         next(err);
       }
     });
   });
+
+  // 404 handler for unknown routes (moved after SPA catch-all)
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Not Found',
+      code: 'ROUTE_NOT_FOUND',
+      path: req.path
+    });
+  });
+
   // Start Model Availability Worker (Issue #326)
   try {
     const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
