@@ -187,11 +187,11 @@ Como **usuario de Roastr**, quiero que **los comentarios ofensivos o inapropiado
     - Ejemplo: un troll que insulta a 5 usuarios acumula 5 strikes en 90 días.
 6. **Comentarios editados tras el análisis**
     - Cada red social define un **periodo de gracia** para editar:
-        - **X (Twitter)** → 30 minutos.
-        - **Instagram** → inmediato, sin límite oficial, pero se registra timestamp.
+        - **X (Twitter)** → Edición es función de X Premium; ventana = 1 hora (no 30 minutos). La API expone metadatos/historial de edición.
+        - **Instagram** → Los comentarios NO pueden editarse; usuarios deben eliminar y republicar.
         - **Facebook** → permite edición sin límite de tiempo visible, pero las APIs capturan versión original.
-        - **YouTube** → los comentarios no pueden editarse, solo eliminarse.
-    - **Regla**: Roastr aplica regla estándar de **retrasar publicación del Roast** según el periodo de gracia (30 min para Twitter, 15 min fallback si no hay datos).
+        - **YouTube** → Los autores SÍ pueden editar sus comentarios; aparecen como "(edited)" con historial disponible.
+    - **Regla**: Roastr debe usar timestamps editable-until de la API de cada plataforma; si no hay info de API, usar fallback conservador de **15 minutos** para el delay de publicación.
 7. **Insulto dirigido a un tercero (@usuario2)**
     - El insulto se procesa en contexto de @usuario2.
     - Si @usuario2 es cliente → Shield/Roast aplicados en su cuenta.
