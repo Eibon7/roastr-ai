@@ -361,6 +361,7 @@ const Settings = () => {
                       value={passwords.new}
                       onChange={(e) => setPasswords(prev => ({ ...prev, new: e.target.value }))}
                       placeholder="Enter new password"
+                      aria-describedby={validatePassword(passwords.new).length > 0 ? "password-requirements" : undefined}
                     />
                     <Button
                       type="button"
@@ -436,7 +437,6 @@ const Settings = () => {
                   onClick={handlePasswordChange}
                   disabled={passwordLoading || !isPasswordFormValid()}
                   className="w-full sm:w-auto"
-                  aria-describedby={validatePassword(passwords.new).length > 0 ? "password-requirements" : undefined}
                 >
                   {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Change Password

@@ -192,8 +192,18 @@ app.use('/api/billing', billingRateLimit);
 app.use('/public', express.static(path.join(__dirname, '../public'), {
   index: false, // Prevent directory indexing
   dotfiles: 'ignore', // Ignore hidden files
+  maxAge: process.env.NODE_ENV === 'production' ? '1d' : '0', // Cache for 1 day in production
   setHeaders: (res, path) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    // Add appropriate cache headers for different file types
+    if (path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
   }
 }));
 
@@ -723,7 +733,7 @@ if (require.main === module) {
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
   // Improved SPA routing with regex to exclude more paths for better performance
-  app.get(/^(?!\/api|\/static|\/webhook|\/uploads|\/health|\/favicon\.ico|\/manifest\.json|\/robots\.txt).*$/, (req, res, next) => {
+  app.get(/^(?!\/api|\/static|\/webhook|\/uploads|\/health|\/public|\/favicon\.ico|\/manifest\.json|\/robots\.txt).*$/, (req, res, next) => {
     const hasFileExtension = /\.[^.]+$/.test(req.path) && !req.path.endsWith('.html');
     if (hasFileExtension) {
       return next();
