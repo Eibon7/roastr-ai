@@ -20,6 +20,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Shared fallback flags constant used across all fallback scenarios
 const FALLBACK_FLAGS = {
   ENABLE_SHOP: false,
+  shop_enabled: false, // Alternative name used in spec requirements
   ENABLE_STYLE_PROFILE: true,
   ENABLE_RQC: parseDevelopmentFlag(false, isProduction), // Disabled by default - under development
   ENABLE_SHIELD: false,
@@ -35,6 +36,7 @@ const MOCK_FLAGS = {
   ENABLE_RQC: parseDevelopmentFlag(false, isProduction), // Keep disabled even in mock mode - under development
   ENABLE_SHIELD: true,
   ENABLE_BILLING: true,
+  shop_enabled: true, // Enable shop in mock mode for testing
   ENABLE_CUSTOM_PROMPT: parseDevelopmentFlag(false, isProduction), // Keep disabled even in mock mode - under development
   ENABLE_FACEBOOK_UI: parseDevelopmentFlag(false, isProduction), // Keep disabled even in mock mode - under development
   ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(false, isProduction), // Keep disabled even in mock mode - under development

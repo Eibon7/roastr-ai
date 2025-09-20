@@ -1,1902 +1,680 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import React, { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Settings as SettingsIcon, User, Shield, Bell, Palette, Save, Mail, Download, AlertTriangle, CheckCircle, XCircle, Circle, Check, X, Heart, Eye, EyeOff, LogOut, Trash2 } from 'lucide-react';
+import { Label } from '../components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
+import { 
+  User, 
+  Settings as SettingsIcon, 
+  CreditCard, 
+  Download, 
+  Trash2, 
+  Eye, 
+  EyeOff, 
+  Shield,
+  Brain,
+  Target,
+  Zap,
+  Crown,
+  AlertTriangle,
+  Loader2,
+  Check
+} from 'lucide-react';
 import { apiClient } from '../lib/api';
-import { authHelpers } from '../lib/supabaseClient';
-import EnhancedPasswordInput from '../components/EnhancedPasswordInput';
+import { useAuth } from '../contexts/AuthContext';
 import AjustesSettings from '../components/AjustesSettings';
-import TransparencySettings from '../components/TransparencySettings';
-import ShopSettings from '../components/ShopSettings';
-import ThemeToggle from '../components/ThemeToggle';
-import { validatePassword, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/passwordValidator';
-import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { useNavigate } from 'react-router-dom';
 
-// Password requirement component for visual feedback (legacy support)
-const PasswordRequirement = ({ met, text }) => (
-  <div className="flex items-center space-x-2">
-    {met ? (
-      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-    ) : (
-      <Circle className="w-3 h-3 text-gray-400 flex-shrink-0" />
-    )}
-    <span className={`text-xs ${met ? 'text-green-600' : 'text-gray-500'}`}>
-      {text}
-    </span>
-  </div>
-);
-
-export default function Settings() {
-  const { isEnabled: isFeatureEnabled } = useFeatureFlags();
+const Settings = () => {
+  const { userData: user } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('account');
+  const notificationTimeoutRef = useRef(null);
+  // Granular loading states for independent operations
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [billingInfo, setBillingInfo] = useState(null);
+  const [activeNotification, setActiveNotification] = useState(null);
   
-  const [settings, setSettings] = useState({
-    roastTone: 'balanced',
-    responseFrequency: 'normal',
-    toxicityThreshold: 'medium',
-    notifications: {
-      email: true,
-      mentions: true,
-      responses: false,
-      billing: true
-    },
-    shieldEnabled: true,
-    darkMode: false
+  // Account tab states
+  const [passwords, setPasswords] = useState({
+    current: '',
+    new: '',
+    confirm: ''
   });
-  
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  
-  // Account management state
-  const [emailForm, setEmailForm] = useState({
-    currentEmail: '',
-    newEmail: '',
-    isSubmitting: false,
-    showForm: false
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
   });
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-    isSubmitting: false,
-    showForm: false,
-    validation: {
-      isValid: false,
-      errors: [],
-      strength: 0
-    }
-  });
-  const [notifications, setNotifications] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  // Password reset state (Issue #258)
-  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
-
-  // Data export state (Issue #258)
-  const [showDataExportModal, setShowDataExportModal] = useState(false);
-  const [dataExportLoading, setDataExportLoading] = useState(false);
-
-  // Data export rate limiting state
-  const [lastDataExportAttempt, setLastDataExportAttempt] = useState(() => {
-    try {
-      const stored = localStorage.getItem('lastDataExportAttempt');
-      return stored ? parseInt(stored, 10) : 0;
-    } catch (_) {
-      return 0;
-    }
-  });
-  const DATA_EXPORT_COOLDOWN_MS = 300000; // 5 minutes
-
-  // Password reset rate limiting state
-  const [lastPasswordResetAttempt, setLastPasswordResetAttempt] = useState(0);
-  const RESET_COOLDOWN_MS = 60000; // 60 seconds
-
-  // Roastr Persona state
-  const [roastrPersona, setRoastrPersona] = useState({
-    loQueMeDefine: '',
-    isVisible: false,
-    hasContent: false,
-    isLoading: true,
-    isSaving: false,
-    showForm: false,
-    // Intolerance fields
-    loQueNoTolero: '',
-    isIntoleranceVisible: false,
-    hasIntoleranceContent: false,
-    showIntoleranceForm: false,
-    // Tolerance fields (lo que me da igual)
-    loQueMeDaIgual: '',
-    isToleranceVisible: false,
-    hasToleranceContent: false,
-    showToleranceForm: false
-  });
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const session = await authHelpers.getCurrentSession();
-        if (session?.access_token) {
-          const userData = await authHelpers.getUserFromAPI(session.access_token);
-          setUser(userData);
-          
-          setEmailForm(prev => ({
-            ...prev,
-            currentEmail: userData.email || ''
-          }));
-        } else {
-          throw new Error('No valid session found');
-        }
-        
-        // In real implementation, load user settings from API
-        
-        // Load Roastr Persona data
-        try {
-          const roastrPersonaResult = await apiClient.get('/user/roastr-persona');
-          if (roastrPersonaResult.success) {
-            setRoastrPersona(prev => ({
-              ...prev,
-              loQueMeDefine: roastrPersonaResult.data.loQueMeDefine || '',
-              isVisible: roastrPersonaResult.data.isVisible || false,
-              hasContent: roastrPersonaResult.data.hasContent || false,
-              // Intolerance fields
-              loQueNoTolero: roastrPersonaResult.data.loQueNoTolero || '',
-              isIntoleranceVisible: roastrPersonaResult.data.isIntoleranceVisible || false,
-              hasIntoleranceContent: roastrPersonaResult.data.hasIntoleranceContent || false,
-              // Tolerance fields (lo que me da igual)
-              loQueMeDaIgual: roastrPersonaResult.data.loQueMeDaIgual || '',
-              isToleranceVisible: roastrPersonaResult.data.isToleranceVisible || false,
-              hasToleranceContent: roastrPersonaResult.data.hasToleranceContent || false,
-              isLoading: false
-            }));
-          }
-        } catch (roastrPersonaError) {
-          console.error('Failed to load Roastr Persona:', roastrPersonaError);
-          setRoastrPersona(prev => ({ ...prev, isLoading: false }));
-        }
-
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-        addNotification('Error al cargar datos del usuario', 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, []);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      // In real implementation, save settings to API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Settings saved:', settings);
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const updateSetting = (path, value) => {
-    setSettings(prev => {
-      const newSettings = { ...prev };
-      const keys = path.split('.');
-      let current = newSettings;
-      
-      for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]];
-      }
-      current[keys[keys.length - 1]] = value;
-      
-      return newSettings;
-    });
-  };
-
-  // Notification management
-  const addNotification = (message, type = 'info') => {
-    const id = Date.now();
-    const notification = { id, message, type };
-    setNotifications(prev => [...prev, notification]);
+  const handleNotification = (message, type = 'success') => {
+    setActiveNotification({ message, type, id: Date.now() });
     
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
+    // Clear any existing timeout
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+    }
+    
+    // Auto-hide after 5 seconds with proper cleanup
+    notificationTimeoutRef.current = setTimeout(() => {
+      setActiveNotification(null);
     }, 5000);
   };
 
-  // Email change handling
-  const handleEmailChange = async (e) => {
-    e.preventDefault();
+  const dismissNotification = () => {
+    // Clear timeout when manually dismissing
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
+    setActiveNotification(null);
+  };
+
+  useEffect(() => {
+    loadBillingInfo();
     
-    if (!emailForm.newEmail || emailForm.newEmail === emailForm.currentEmail) {
-      addNotification('Introduce un email diferente al actual', 'error');
+    // Cleanup timeout on unmount
+    return () => {
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const loadBillingInfo = async () => {
+    try {
+      const billing = await apiClient.get('/billing/info');
+      setBillingInfo(billing.data);
+    } catch (error) {
+      console.warn('Could not load billing info:', error);
+    }
+  };
+
+  const validatePassword = (password) => {
+    const errors = [];
+    
+    if (password.length < 8) {
+      errors.push('At least 8 characters');
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      errors.push('One uppercase letter');
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      errors.push('One lowercase letter');
+    }
+    
+    if (!/[0-9]/.test(password)) {
+      errors.push('One number');
+    }
+    
+    if (!/[!@#$%^&*()_+\-=[\]{}|;':".,<>?`~]/.test(password)) {
+      errors.push('One special character');
+    }
+    
+    return errors;
+  };
+
+  const getPasswordStrength = (password) => {
+    const errors = validatePassword(password);
+    const score = 5 - errors.length;
+    
+    if (score <= 1) return { strength: 'weak', color: 'bg-red-500', text: 'Weak' };
+    if (score <= 3) return { strength: 'medium', color: 'bg-yellow-500', text: 'Medium' };
+    return { strength: 'strong', color: 'bg-green-500', text: 'Strong' };
+  };
+
+  // Enhanced button validation state
+  const isPasswordFormValid = () => {
+    return passwords.current.trim() && 
+           passwords.new.trim() && 
+           passwords.confirm.trim() &&
+           passwords.new === passwords.confirm &&
+           validatePassword(passwords.new).length === 0 &&
+           passwords.current !== passwords.new;
+  };
+
+  const handlePasswordChange = async () => {
+    // Pre-validate current password
+    if (!passwords.current.trim()) {
+      handleNotification('Current password is required', 'error');
       return;
     }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailForm.newEmail)) {
-      addNotification('Formato de email inválido', 'error');
+    
+    // Pre-validate new password
+    const validationErrors = validatePassword(passwords.new);
+    if (validationErrors.length > 0) {
+      handleNotification(`Password must contain: ${validationErrors.join(', ')}`, 'error');
+      return;
+    }
+    
+    // Check password confirmation
+    if (passwords.new !== passwords.confirm) {
+      handleNotification('New passwords do not match', 'error');
+      return;
+    }
+    
+    // Check if new password is different from current
+    if (passwords.current === passwords.new) {
+      handleNotification('New password must be different from current password', 'error');
       return;
     }
 
     try {
-      setEmailForm(prev => ({ ...prev, isSubmitting: true }));
-      
-      const result = await apiClient.post('/auth/change-email', {
-        currentEmail: emailForm.currentEmail,
-        newEmail: emailForm.newEmail
+      setPasswordLoading(true);
+      await apiClient.post('/auth/change-password', {
+        currentPassword: passwords.current,
+        newPassword: passwords.new
       });
-
-      if (result.success) {
-        addNotification(result.message, 'success');
-        setEmailForm(prev => ({
-          ...prev,
-          showForm: false,
-          newEmail: ''
-        }));
-      } else {
-        addNotification(result.error || 'Error al cambiar email', 'error');
-      }
       
+      setPasswords({ current: '', new: '', confirm: '' });
+      handleNotification('Password changed successfully', 'success');
     } catch (error) {
-      console.error('Email change error:', error);
-      addNotification(error.message || 'Error al cambiar email', 'error');
+      const errorMessage = error.response?.data?.error || 'Failed to change password';
+      handleNotification(errorMessage, 'error');
     } finally {
-      setEmailForm(prev => ({ ...prev, isSubmitting: false }));
+      setPasswordLoading(false);
     }
   };
 
-  // Enhanced password validation (Issue #133) - Using centralized validator
-  const validatePasswordStrength = (password) => {
-    const validation = validatePassword(password);
-    if (!validation.isValid) {
-      return { valid: false, message: validation.errors.join('. ') };
+  const handleDataExport = async () => {
+    try {
+      setExportLoading(true);
+      await apiClient.post('/auth/export-data');
+      handleNotification('Data export initiated. You will receive an email when ready.', 'success');
+    } catch (error) {
+      handleNotification('Failed to initiate data export', 'error');
+    } finally {
+      setExportLoading(false);
     }
-    return { valid: true };
   };
 
-  // Get password criteria status based on centralized validation
-  const getPasswordCriteria = (password) => {
-    return {
-      length: password.length >= 8,
-      noSpaces: !/\s/.test(password) || password.length === 0,
-      lowercase: /[a-z]/.test(password),
-      number: /\d/.test(password),
-      uppercaseOrSpecial: /[A-Z]/.test(password) || /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
-      different: password !== passwordForm.currentPassword && password.length > 0
+  const handleAccountDeletion = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      handleNotification('Please type DELETE to confirm', 'error');
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      await apiClient.post('/auth/delete-account');
+      handleNotification('Account deletion initiated', 'success');
+      // Navigate to logout or landing page
+      navigate('/');
+    } catch (error) {
+      handleNotification('Failed to delete account', 'error');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const getPlanColor = (plan) => {
+    const colors = {
+      free: 'bg-gray-100 text-gray-800',
+      starter: 'bg-blue-100 text-blue-800',
+      pro: 'bg-purple-100 text-purple-800',
+      plus: 'bg-yellow-100 text-yellow-800'
     };
+    return colors[plan?.toLowerCase()] || colors.free;
   };
 
-  // Validate password in real-time (legacy support with new validation)
-  const validateNewPassword = (password) => {
-    const validation = validatePassword(password);
-    const strength = getPasswordStrength(password);
-    
-    setPasswordForm(prev => ({
-      ...prev,
-      validation: {
-        isValid: validation.isValid,
-        errors: validation.errors,
-        strength: strength
-      }
-    }));
-    
-    return validation;
-  };
-
-  // Password change handling with enhanced validation (Issue #89 + #133)
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-      addNotification('Todos los campos de contraseña son obligatorios', 'error');
-      return;
-    }
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      addNotification('Las nuevas contraseñas no coinciden', 'error');
-      return;
-    }
-
-    if (passwordForm.currentPassword === passwordForm.newPassword) {
-      addNotification('La nueva contraseña debe ser diferente a la actual', 'error');
-      return;
-    }
-
-    // Enhanced password strength validation
-    const validation = validatePasswordStrength(passwordForm.newPassword);
-    if (!validation.valid) {
-      addNotification(validation.message, 'error');
-      return;
-    }
-
-    try {
-      setPasswordForm(prev => ({ ...prev, isSubmitting: true }));
-      
-      const result = await apiClient.post('/auth/change-password', {
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword
-      });
-
-      if (result.success) {
-        addNotification('Contraseña cambiada exitosamente. Por favor usa tu nueva contraseña en futuros inicios de sesión.', 'success');
-        setPasswordForm(prev => ({
-          ...prev,
-          showForm: false,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }));
-      } else {
-        // Check if this is a rate limit error (Issue #133)
-        if (result.code === 'PASSWORD_CHANGE_RATE_LIMITED') {
-          addNotification(
-            `Por seguridad, los cambios de contraseña están temporalmente bloqueados. Por favor intenta nuevamente en ${result.retryAfter || 60} minutos.`,
-            'error'
-          );
-        } else if (result.code === 'PASSWORD_RECENTLY_USED') {
-          addNotification(
-            'No puedes reutilizar una contraseña reciente. Por favor elige una contraseña diferente.',
-            'error'
-          );
-        } else {
-          addNotification(result.error || 'Error al cambiar contraseña', 'error');
-        }
-      }
-      
-    } catch (error) {
-      console.error('Password change error:', error);
-      // Check for rate limit error in catch block
-      if (error.response?.status === 429) {
-        const retryAfter = error.response?.data?.retryAfter || 60;
-        addNotification(
-          `Has alcanzado el límite de intentos de cambio de contraseña. Por favor espera ${retryAfter} minutos antes de intentar nuevamente.`,
-          'error'
-        );
-      } else {
-        addNotification(error.message || 'Error al cambiar contraseña', 'error');
-      }
-    } finally {
-      setPasswordForm(prev => ({ ...prev, isSubmitting: false }));
+  const getPlanIcon = (plan) => {
+    switch (plan?.toLowerCase()) {
+      case 'starter': return <Zap className="w-4 h-4" />;
+      case 'pro': return <Target className="w-4 h-4" />;
+      case 'plus': return <Crown className="w-4 h-4" />;
+      default: return <Shield className="w-4 h-4" />;
     }
   };
 
-
-
-  // Password reset handling (Issue #258)
-  const handlePasswordReset = async () => {
-    // Check rate limiting first
-    const now = Date.now();
-    if (now - lastPasswordResetAttempt < RESET_COOLDOWN_MS) {
-      const remainingSeconds = Math.ceil((RESET_COOLDOWN_MS - (now - lastPasswordResetAttempt)) / 1000);
-      addNotification(`Por favor espera ${remainingSeconds} segundos antes de solicitar otro enlace de cambio de contraseña`, 'warning');
-      return;
-    }
-
-    // Guard: Verify user and email exist before making API call
-    if (!user || !user.email) {
-      addNotification('No se pudo obtener tu dirección de email. Por favor, recarga la página e inténtalo de nuevo.', 'error');
-      return;
-    }
-
-    try {
-      setPasswordResetLoading(true);
-
-      const result = await apiClient.post('/auth/reset-password', {
-        email: user.email
-      });
-
-      if (result.success) {
-        // Only set cooldown after successful API request
-        setLastPasswordResetAttempt(now);
-        addNotification('Se ha enviado un enlace de cambio de contraseña a tu email', 'success');
-      } else {
-        throw new Error(result.error || 'Error al enviar el enlace de cambio de contraseña');
-      }
-    } catch (error) {
-      console.error('Password reset error:', error);
-      addNotification('Error al enviar el enlace de cambio de contraseña', 'error');
-    } finally {
-      setPasswordResetLoading(false);
-    }
-  };
-
-  // Data export request handling (Issue #258)
-  const handleDataExportRequest = async () => {
-    // Check client-side rate limiting
-    const now = Date.now();
-    const timeSinceLastAttempt = now - lastDataExportAttempt;
-
-    if (timeSinceLastAttempt < DATA_EXPORT_COOLDOWN_MS) {
-      const remainingTime = Math.ceil((DATA_EXPORT_COOLDOWN_MS - timeSinceLastAttempt) / 60000);
-      addNotification(`Debes esperar ${remainingTime} minuto(s) antes de solicitar otra exportación`, 'warning');
-      return;
-    }
-
-    try {
-      setDataExportLoading(true);
-      setLastDataExportAttempt(now);
-
-      // Store timestamp in localStorage for persistence
-      localStorage.setItem('lastDataExportAttempt', now.toString());
-
-      const result = await apiClient.post('/user/data-export');
-
-      if (result.success) {
-        // Only update timestamp on success
-        setLastDataExportAttempt(now);
-        localStorage.setItem('lastDataExportAttempt', now.toString());
-
-        addNotification('Se ha enviado un enlace de descarga a tu email', 'success');
-        setShowDataExportModal(false);
-      } else {
-        throw new Error(result.error || 'Error al solicitar la exportación de datos');
-      }
-    } catch (error) {
-      console.error('Data export request error:', error);
-
-      // Handle rate limiting response from server
-      if (error.response?.status === 429) {
-        const retryAfter = error.response?.headers?.['retry-after'];
-
-        if (retryAfter) {
-          let retryTimestamp;
-
-          // Handle numeric seconds format
-          if (/^\d+$/.test(retryAfter)) {
-            retryTimestamp = now + (parseInt(retryAfter, 10) * 1000);
-          } else {
-            // Handle HTTP-date format
-            const retryDate = new Date(retryAfter);
-            if (!isNaN(retryDate.getTime())) {
-              retryTimestamp = retryDate.getTime();
-            } else {
-              // Fallback if header is invalid
-              retryTimestamp = now;
-            }
-          }
-
-          setLastDataExportAttempt(retryTimestamp);
-          localStorage.setItem('lastDataExportAttempt', retryTimestamp.toString());
-        }
-
-        addNotification('Has alcanzado el límite de solicitudes. Inténtalo más tarde.', 'warning');
-      } else {
-        // For other failures, don't update the timestamp
-        addNotification('Error al solicitar la exportación de datos', 'error');
-      }
-    } finally {
-      setDataExportLoading(false);
-    }
-  };
-
-  // Utility function to sanitize input text
-  const sanitizeInput = (text) => {
-    if (!text || typeof text !== 'string') return '';
-
-    return text
-      .trim()
-      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-      .replace(/[<>]/g, '') // Remove potential HTML tags
-      .substring(0, 300); // Ensure max length
-  };
-
-  // Logout handler
-  const handleLogout = async () => {
-    try {
-      // First, sign out from Supabase client session
-      await authHelpers.signOut();
-
-      // Optionally call backend logout endpoint to clear server-side sessions
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      } catch (backendError) {
-        // Backend logout is optional, don't fail if it errors
-        console.error('Backend logout failed:', backendError);
-      }
-
-      // Clear any remaining localStorage keys
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      // Redirect to login
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Error during logout:', error);
-      // Even if signOut fails, clear localStorage and redirect
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-  };
-
-  // Roastr Persona handlers
-  const handleSaveRoastrPersona = async (fieldType = 'identity') => {
-    const isIdentity = fieldType === 'identity';
-    const isIntolerance = fieldType === 'intolerance';
-    const isTolerance = fieldType === 'tolerance';
-    
-    let text;
-    if (isIdentity) {
-      text = sanitizeInput(roastrPersona.loQueMeDefine);
-    } else if (isIntolerance) {
-      text = sanitizeInput(roastrPersona.loQueNoTolero);
-    } else if (isTolerance) {
-      text = sanitizeInput(roastrPersona.loQueMeDaIgual);
-    }
-
-    if (text.length === 0) {
-      addNotification('El campo no puede estar vacío', 'error');
-      return;
-    }
-
-    try {
-      setRoastrPersona(prev => ({ ...prev, isSaving: true }));
-
-      const payload = {};
-      if (isIdentity) {
-        payload.loQueMeDefine = text;
-        payload.isVisible = roastrPersona.isVisible;
-      } else if (isIntolerance) {
-        payload.loQueNoTolero = text;
-        payload.isIntoleranceVisible = roastrPersona.isIntoleranceVisible;
-      } else if (isTolerance) {
-        payload.loQueMeDaIgual = text;
-        payload.isToleranceVisible = roastrPersona.isToleranceVisible;
-      }
-      
-      const resp = await apiClient.post('/user/roastr-persona', payload);
-
-      if (resp?.success) {
-        setRoastrPersona(prev => ({
-          ...prev,
-          hasContent: !!resp.data?.hasContent,
-          hasIntoleranceContent: !!resp.data?.hasIntoleranceContent,
-          hasToleranceContent: !!resp.data?.hasToleranceContent,
-          loQueMeDefine: isIdentity ? text : prev.loQueMeDefine,
-          loQueNoTolero: isIntolerance ? text : prev.loQueNoTolero,
-          loQueMeDaIgual: isTolerance ? text : prev.loQueMeDaIgual,
-          showForm: isIdentity ? false : prev.showForm,
-          showIntoleranceForm: isIntolerance ? false : prev.showIntoleranceForm,
-          showToleranceForm: isTolerance ? false : prev.showToleranceForm
-        }));
-
-        let successMessage;
-        if (isIdentity) {
-          successMessage = 'Definición personal actualizada correctamente';
-        } else if (isIntolerance) {
-          successMessage = 'Preferencias de contenido actualizadas correctamente';
-        } else if (isTolerance) {
-          successMessage = 'Tolerancias personales actualizadas correctamente';
-        }
-
-        addNotification(successMessage, 'success');
-      } else {
-        // Check if the error is due to security rejection
-        const errorMessage = resp?.data?.error || resp?.error || 'Error al guardar Roastr Persona';
-        const isSecurityRejection = resp?.data?.rejectedForSecurity === true || resp?.rejectedForSecurity === true;
-
-        addNotification(errorMessage, 'error');
-
-        // If it's a security rejection, also clear the field to prevent confusion
-        if (isSecurityRejection) {
-          if (isIdentity) {
-            setRoastrPersona(prev => ({ ...prev, loQueMeDefine: '' }));
-          } else if (isIntolerance) {
-            setRoastrPersona(prev => ({ ...prev, loQueNoTolero: '' }));
-          } else if (isTolerance) {
-            setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
-          }
-        }
-      }
-
-    } catch (error) {
-      const apiMessage = error.response?.data?.message || error.response?.data?.error;
-      console.error('Roastr Persona save error:', apiMessage || error.message);
-      const errorMessage = apiMessage || error.message || 'Error al guardar Roastr Persona';
-
-      // Check if it's a security-related error from the response
-      if (error.response?.data?.rejectedForSecurity) {
-        const securityMessage = error.response.data.error || errorMessage;
-        addNotification(securityMessage, 'error');
-
-        // Clear the field that was rejected
-        if (isIdentity) {
-          setRoastrPersona(prev => ({ ...prev, loQueMeDefine: '' }));
-        } else if (isIntolerance) {
-          setRoastrPersona(prev => ({ ...prev, loQueNoTolero: '' }));
-        } else if (isTolerance) {
-          setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: '' }));
-        }
-      } else {
-        addNotification(errorMessage, 'error');
-      }
-
-    } finally {
-      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
-    }
-  };
-
-  const handleDeleteRoastrPersona = async (fieldType = 'all') => {
-    const confirmMessages = {
-      'identity': '¿Estás seguro de que quieres eliminar tu definición personal? Esta acción no se puede deshacer.',
-      'intolerance': '¿Estás seguro de que quieres eliminar tus preferencias de contenido? Esta acción no se puede deshacer.',
-      'tolerance': '¿Estás seguro de que quieres eliminar tus tolerancias personales? Esta acción no se puede deshacer.',
-      'all': '¿Estás seguro de que quieres eliminar completamente tu Roastr Persona? Esta acción no se puede deshacer.'
-    };
-
-    if (!window.confirm(confirmMessages[fieldType])) {
-      return;
-    }
-
-    try {
-      setRoastrPersona(prev => ({ ...prev, isSaving: true }));
-      
-      const result = await apiClient.delete(`/user/roastr-persona?field=${fieldType}`);
-
-      if (result.success) {
-        setRoastrPersona(prev => {
-          const updates = { ...prev };
-          
-          if (fieldType === 'identity' || fieldType === 'all') {
-            updates.loQueMeDefine = '';
-            updates.isVisible = false;
-            updates.hasContent = false;
-            updates.showForm = false;
-          }
-          
-          if (fieldType === 'intolerance' || fieldType === 'all') {
-            updates.loQueNoTolero = '';
-            updates.isIntoleranceVisible = false;
-            updates.hasIntoleranceContent = false;
-            updates.showIntoleranceForm = false;
-          }
-          
-          if (fieldType === 'tolerance' || fieldType === 'all') {
-            updates.loQueMeDaIgual = '';
-            updates.isToleranceVisible = false;
-            updates.hasToleranceContent = false;
-            updates.showToleranceForm = false;
-          }
-          
-          return updates;
-        });
-        
-        const successMessages = {
-          'identity': 'Definición personal eliminada',
-          'intolerance': 'Preferencias de contenido eliminadas',
-          'tolerance': 'Tolerancias personales eliminadas',
-          'all': 'Roastr Persona eliminada completamente'
-        };
-        
-        addNotification(successMessages[fieldType], 'success');
-      } else {
-        addNotification(result.error || 'Error al eliminar Roastr Persona', 'error');
-      }
-      
-    } catch (error) {
-      console.error('Roastr Persona delete error:', error);
-      addNotification(error.message || 'Error al eliminar Roastr Persona', 'error');
-    } finally {
-      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
-    }
-  };
-
-  // Account deletion component
-  const AccountDeletionButton = ({ user, onDeleteRequested, onError }) => {
-    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [confirmEmail, setConfirmEmail] = useState('');
-    const [isDeleting, setIsDeleting] = useState(false);
-    
-    const handleDeleteRequest = async () => {
-      if (!confirmEmail || confirmEmail !== user?.email) {
-        onError('Debes introducir tu email para confirmar la eliminación');
-        return;
-      }
-
-      try {
-        setIsDeleting(true);
-        
-        const result = await apiClient.post('/auth/delete-account', {
-          confirmEmail: confirmEmail
-        });
-
-        if (result.success) {
-          onDeleteRequested(result.message);
-          setShowConfirmDialog(false);
-          setConfirmEmail('');
-          
-          // Refresh user data to show deletion status
-          const session = await authHelpers.getCurrentSession();
-          if (session?.access_token) {
-            const userData = await authHelpers.getUserFromAPI(session.access_token);
-            setUser(userData);
-          }
-        } else {
-          onError(result.error || 'Error al programar eliminación de cuenta');
-        }
-      } catch (error) {
-        onError(error.message || 'Error al programar eliminación de cuenta');
-      } finally {
-        setIsDeleting(false);
-      }
-    };
-
-    const handleCancelDeletion = async () => {
-      try {
-        setIsDeleting(true);
-        
-        const result = await apiClient.post('/auth/cancel-account-deletion');
-
-        if (result.success) {
-          addNotification(result.message, 'success');
-          
-          // Refresh user data
-          const session = await authHelpers.getCurrentSession();
-          if (session?.access_token) {
-            const userData = await authHelpers.getUserFromAPI(session.access_token);
-            setUser(userData);
-          }
-        } else {
-          onError(result.error || 'Error al cancelar eliminación');
-        }
-      } catch (error) {
-        onError(error.message || 'Error al cancelar eliminación');
-      } finally {
-        setIsDeleting(false);
-      }
-    };
-
-    // Check if account deletion is already scheduled
-    const isDeletionScheduled = user?.deletion_scheduled_at;
-    const deletionDate = isDeletionScheduled ? new Date(user.deletion_scheduled_at) : null;
-    const isGracePeriodActive = deletionDate && deletionDate.getTime() > Date.now();
-
-    if (isDeletionScheduled && isGracePeriodActive) {
-      const daysRemaining = Math.ceil((deletionDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-      
-      return (
-        <div className="space-y-3">
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="flex">
-              <AlertTriangle className="w-5 h-5 text-orange-400 mt-0.5 mr-3" />
-              <div>
-                <div className="font-medium text-orange-800">Eliminación programada</div>
-                <div className="text-sm text-orange-700 mt-1">
-                  Tu cuenta se eliminará automáticamente en <strong>{daysRemaining} días</strong> 
-                  ({deletionDate.toLocaleDateString('es-ES')}).
-                </div>
-              </div>
-            </div>
-          </div>
-          <Button 
-            variant="outline"
-            size="sm" 
-            onClick={handleCancelDeletion}
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Cancelando...' : 'Cancelar eliminación'}
-          </Button>
-        </div>
-      );
-    }
-
+  if ((passwordLoading || exportLoading || deleteLoading) && !user) {
     return (
-      <>
-        <Button 
-          variant="destructive" 
-          size="sm"
-          onClick={() => setShowConfirmDialog(true)}
-        >
-          Delete Account
-        </Button>
-
-        {showConfirmDialog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Confirmar eliminación de cuenta
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex">
-                    <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 mr-3" />
-                    <div>
-                      <div className="text-sm text-red-800">
-                        Esta acción programará la eliminación de tu cuenta en 30 días. 
-                        Durante este período podrás cancelar la eliminación.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Para confirmar, escribe tu email: <strong>{user?.email}</strong>
-                  </label>
-                  <Input
-                    type="email"
-                    value={confirmEmail}
-                    onChange={(e) => setConfirmEmail(e.target.value)}
-                    placeholder={user?.email}
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="flex space-x-3 justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowConfirmDialog(false);
-                      setConfirmEmail('');
-                    }}
-                    disabled={isDeleting}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteRequest}
-                    disabled={isDeleting || confirmEmail !== user?.email}
-                  >
-                    {isDeleting ? 'Programando...' : 'Programar eliminación'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Notifications */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {notifications.map(notification => (
-          <div
-            key={notification.id}
-            className={`p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 ${
-              notification.type === 'success' 
-                ? 'bg-green-100 text-green-800 border-green-200' 
-                : notification.type === 'error'
-                ? 'bg-red-100 text-red-800 border-red-200'
-                : 'bg-blue-100 text-blue-800 border-blue-200'
-            } border`}
-          >
-            <div className="flex justify-between items-start">
-              <p className="text-sm font-medium">{notification.message}</p>
-              <button
-                onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
-                className="ml-2 text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
-            Customize your roast bot behavior and preferences
-          </p>
-        </div>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-
-      {/* Profile Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <User className="h-5 w-5" />
-            <span>Profile</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              {emailForm.showForm ? (
-                <form onSubmit={handleEmailChange} className="space-y-3">
-                  <Input 
-                    type="email" 
-                    value={emailForm.currentEmail} 
-                    disabled
-                    className="bg-muted"
-                  />
-                  <Input
-                    type="email"
-                    value={emailForm.newEmail}
-                    onChange={(e) => setEmailForm(prev => ({ ...prev, newEmail: e.target.value }))}
-                    placeholder="nuevo@email.com"
-                    required
-                  />
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex">
-                      <Mail className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
-                      <p className="text-xs text-blue-800">
-                        Recibirás un email de confirmación en tu nueva dirección para completar el cambio.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      type="submit" 
-                      size="sm" 
-                      disabled={emailForm.isSubmitting || !emailForm.newEmail}
-                    >
-                      {emailForm.isSubmitting ? 'Enviando...' : 'Cambiar email'}
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setEmailForm(prev => ({ ...prev, showForm: false, newEmail: '' }));
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </form>
-              ) : (
-                <div>
-                  <Input 
-                    type="email" 
-                    value={user?.email || ''} 
-                    disabled
-                    className="bg-muted mb-2"
-                  />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {user?.email_confirmed ? (
-                        <>
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                          <span className="text-xs text-green-600">Verificado</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2" />
-                          <span className="text-xs text-yellow-600">Pendiente de verificación</span>
-                        </>
-                      )}
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setEmailForm(prev => ({ ...prev, showForm: true }))}
-                    >
-                      Cambiar
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Plan</label>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="capitalize">
-                  {user?.plan || 'free'}
-                </Badge>
-                <Button variant="link" size="sm">
-                  Upgrade Plan
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Password Change Section - Issue #258 */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <label className="block text-sm font-medium mb-2">Contraseña</label>
-            <div>
-              <Input
-                type="password"
-                value="••••••••••••"
-                disabled
-                className="bg-muted mb-2"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePasswordReset}
-                disabled={passwordResetLoading}
-              >
-                {passwordResetLoading ? 'Enviando...' : 'Cambiar contraseña'}
-              </Button>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                <div className="flex">
-                  <Mail className="w-4 h-4 text-blue-400 mt-0.5 mr-2" />
-                  <p className="text-xs text-blue-800">
-                    Al hacer clic en "Cambiar contraseña", recibirás un email con un enlace seguro para restablecer tu contraseña.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Data Export Section - Issue #258 */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <label className="block text-sm font-medium mb-2">Descargar mis datos</label>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Descarga una copia de todos tus datos personales almacenados en Roastr (cumplimiento RGPD).
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDataExportModal(true)}
-                className="flex items-center space-x-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Solicitar descarga</span>
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* AI Transparency Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Eye className="h-5 w-5" />
-            <span>Transparencia de IA</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-800 mb-2">
-              <strong>¿Por qué es necesario?</strong>
-            </div>
-            <div className="text-sm text-blue-700">
-              Por cumplimiento de las políticas de OpenAI y redes sociales, necesitamos identificar que algunas respuestas son generadas por IA.
-              Elige la opción que mejor se adapte a tu estilo.
-            </div>
-          </div>
-          
-          <TransparencySettings />
-        </CardContent>
-      </Card>
-
-      {/* Shop - Solo mostrar si el feature flag está habilitado */}
-      {isFeatureEnabled('ENABLE_SHOP') && (
-        <ShopSettings
-          user={user}
-          onNotification={addNotification}
-        />
-      )}
-
-      {/* Roastr Persona */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Heart className="h-5 w-5" />
-            <span>Roastr Persona - Lo que me define</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-800 mb-2">
-              <strong>¿Qué es esto?</strong>
-            </div>
-            <div className="text-sm text-blue-700">
-              Define aspectos esenciales de tu identidad (ej: "mujer trans", "vegano", "gamer", "político de izquierdas") 
-              para que Roastr pueda personalizar la detección de comentarios ofensivos dirigidos específicamente hacia ti.
-            </div>
-          </div>
-
-          {roastrPersona.isLoading ? (
-            <div className="text-center py-4">
-              <div className="text-muted-foreground">Cargando...</div>
-            </div>
-          ) : (
-            <>
-              {roastrPersona.showForm ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Lo que me define (máx. 300 caracteres)
-                    </label>
-                    <textarea
-                      value={roastrPersona.loQueMeDefine}
-                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueMeDefine: e.target.value }))}
-                      placeholder="Escribe temas o aspectos que forman parte de quién eres (ej: mujer trans, vegano, gamer, político de izquierdas)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      rows={4}
-                      maxLength={300}
-                    />
-                    <div className="flex justify-between items-center mt-2">
-                      <div className="text-xs text-muted-foreground">
-                        {roastrPersona.loQueMeDefine.length}/300 caracteres
-                      </div>
-                      <div className={`text-xs ${roastrPersona.loQueMeDefine.length > 300 ? 'text-red-500' : 'text-green-500'}`}>
-                        {roastrPersona.loQueMeDefine.length <= 300 ? '✓' : '⚠ Excede el límite'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="flex items-start">
-                      <div className="flex items-center">
-                        <EyeOff className="w-4 h-4 text-orange-500 mr-2" />
-                      </div>
-                      <div className="text-sm text-orange-800">
-                        <div className="font-medium mb-1">Privacidad garantizada</div>
-                        <div>
-                          • Esta información nunca se muestra públicamente<br/>
-                          • Solo se usa para mejorar la detección de ataques personales<br/>
-                          • Se almacena de forma cifrada en nuestra base de datos<br/>
-                          • Puedes eliminarla en cualquier momento
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <Button 
-                      onClick={() => handleSaveRoastrPersona('identity')}
-                      disabled={roastrPersona.isSaving || roastrPersona.loQueMeDefine.length > 300}
-                      size="sm"
-                    >
-                      {roastrPersona.isSaving ? 'Guardando...' : 'Guardar'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setRoastrPersona(prev => ({ ...prev, showForm: false }))}
-                      disabled={roastrPersona.isSaving}
-                    >
-                      Cancelar
-                    </Button>
-                    {roastrPersona.hasContent && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteRoastrPersona('identity')}
-                        disabled={roastrPersona.isSaving}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {roastrPersona.hasContent ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                        <div>
-                          <div className="font-medium text-green-800">Definición personal configurada</div>
-                          <div className="text-sm text-green-700 mt-1">
-                            Has definido aspectos de tu identidad para una detección más personalizada.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center">
-                        <Circle className="w-5 h-5 text-gray-400 mr-3" />
-                        <div>
-                          <div className="font-medium text-gray-800">Sin definición personal</div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            Configura tu identidad para mejorar la detección de ataques personales.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex space-x-3">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setRoastrPersona(prev => ({ ...prev, showForm: true }))}
-                    >
-                      {roastrPersona.hasContent ? 'Editar' : 'Configurar'}
-                    </Button>
-                    {roastrPersona.hasContent && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteRoastrPersona('identity')}
-                        disabled={roastrPersona.isSaving}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Roastr Persona - Lo que no tolero */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-red-500" />
-            <span>Roastr Persona - Lo que no tolero</span>
-            <Badge variant="outline" className="text-red-600 border-red-200">Bloqueo Automático</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="text-sm text-red-800 mb-2">
-              <strong>🚫 Protección automática</strong>
-            </div>
-            <div className="text-sm text-red-700">
-              Define palabras, temas o ataques que nunca quieres ver en tus comentarios. 
-              Cualquier comentario que coincida con estos términos será <strong>bloqueado automáticamente</strong> 
-              sin pasar por el sistema de roasts.
-            </div>
-          </div>
-
-          {roastrPersona.isLoading ? (
-            <div className="text-center py-4">
-              <div className="text-muted-foreground">Cargando...</div>
-            </div>
-          ) : (
-            <>
-              {roastrPersona.showIntoleranceForm ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Lo que no tolero (máx. 300 caracteres)
-                    </label>
-                    <textarea
-                      value={roastrPersona.loQueNoTolero}
-                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueNoTolero: e.target.value }))}
-                      placeholder="Escribe palabras, temas o ataques que nunca quieres ver (ej: insultos raciales, comentarios sobre peso, odio hacia veganos)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-                      rows={4}
-                      maxLength={300}
-                    />
-                    <div className="flex justify-between items-center mt-2">
-                      <div className="text-xs text-muted-foreground">
-                        {roastrPersona.loQueNoTolero.length}/300 caracteres
-                      </div>
-                      <div className={`text-xs ${roastrPersona.loQueNoTolero.length > 300 ? 'text-red-500' : 'text-green-500'}`}>
-                        {roastrPersona.loQueNoTolero.length <= 300 ? '✓' : '⚠ Excede el límite'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="flex items-start">
-                      <div className="flex items-center">
-                        <EyeOff className="w-4 h-4 text-orange-500 mr-2" />
-                      </div>
-                      <div className="text-sm text-orange-800">
-                        <div className="font-medium mb-1">Máxima privacidad y seguridad</div>
-                        <div>
-                          • Esta información nunca se muestra públicamente<br/>
-                          • Se usa para bloqueo automático e inmediato de contenido<br/>
-                          • Se almacena de forma cifrada en nuestra base de datos<br/>
-                          • Los comentarios coincidentes nunca llegan a tu bandeja<br/>
-                          • Puedes eliminarla en cualquier momento
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-start">
-                      <div className="flex items-center">
-                        <AlertTriangle className="w-4 h-4 text-red-500 mr-2" />
-                      </div>
-                      <div className="text-sm text-red-800">
-                        <div className="font-medium mb-1">🛡️ Funcionamiento del bloqueo automático</div>
-                        <div>
-                          • Los comentarios se analizan <strong>antes</strong> de cualquier procesamiento<br/>
-                          • Las coincidencias activan bloqueo inmediato (prioridad máxima)<br/>
-                          • No se generan roasts para contenido bloqueado<br/>
-                          • Sistema más potente que Shield (actúa primero)
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <Button 
-                      onClick={() => handleSaveRoastrPersona('intolerance')}
-                      disabled={roastrPersona.isSaving || roastrPersona.loQueNoTolero.length > 300}
-                      size="sm"
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      {roastrPersona.isSaving ? 'Guardando...' : 'Guardar Protección'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setRoastrPersona(prev => ({ ...prev, showIntoleranceForm: false }))}
-                      disabled={roastrPersona.isSaving}
-                    >
-                      Cancelar
-                    </Button>
-                    {roastrPersona.hasIntoleranceContent && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteRoastrPersona('intolerance')}
-                        disabled={roastrPersona.isSaving}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {roastrPersona.hasIntoleranceContent ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 text-green-500 mr-3" />
-                        <div>
-                          <div className="font-medium text-green-800">Protección automática activada</div>
-                          <div className="text-sm text-green-700 mt-1">
-                            Has configurado contenido que será bloqueado automáticamente antes de llegar a tu bandeja.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center">
-                        <Circle className="w-5 h-5 text-gray-400 mr-3" />
-                        <div>
-                          <div className="font-medium text-gray-800">Sin protección automática</div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            Configura contenido que nunca quieres ver para máxima protección.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex space-x-3">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setRoastrPersona(prev => ({ ...prev, showIntoleranceForm: true }))}
-                      className="border-red-200 text-red-700 hover:bg-red-50"
-                    >
-                      {roastrPersona.hasIntoleranceContent ? 'Editar Protección' : 'Configurar Protección'}
-                    </Button>
-                    {roastrPersona.hasIntoleranceContent && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteRoastrPersona('intolerance')}
-                        disabled={roastrPersona.isSaving}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Roastr Persona - Lo que me da igual */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Circle className="h-5 w-5 text-blue-500" />
-            <span>Roastr Persona - Lo que me da igual</span>
-            <Badge variant="outline" className="text-blue-600 border-blue-200">Reducir Falsos Positivos</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-800 mb-2">
-              <strong>Personaliza tu experiencia</strong>
-            </div>
-            <div className="text-sm text-blue-700">
-              Especifica temas o comentarios que otros podrían considerar ofensivos, pero que para ti son inofensivos 
-              (ej: "bromas sobre calvos", "insultos genéricos como tonto"). Esto evita que se bloqueen o roasteen 
-              comentarios que realmente no te molestan.
-            </div>
-            <div className="text-xs text-blue-600 mt-2 font-medium">
-              ⚠️ Importante: Si algo aparece tanto en "Lo que no tolero" como aquí, siempre se priorizará el bloqueo por seguridad.
-            </div>
-          </div>
-
-          {roastrPersona.isLoading ? (
-            <div className="text-center py-4">
-              <div className="text-muted-foreground">Cargando...</div>
-            </div>
-          ) : (
-            <>
-              {roastrPersona.showToleranceForm ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Lo que me da igual (máx. 300 caracteres)
-                    </label>
-                    <textarea
-                      value={roastrPersona.loQueMeDaIgual}
-                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: e.target.value }))}
-                      placeholder="Escribe temas que otros considerarían ofensivos, pero que para ti no lo son (ej: bromas sobre calvos, insultos genéricos como tonto)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      rows={4}
-                      maxLength={300}
-                    />
-                    <div className="flex justify-between items-center mt-2">
-                      <div className="text-xs text-muted-foreground">
-                        {roastrPersona.loQueMeDaIgual.length}/300 caracteres
-                      </div>
-                      <div className={`text-xs ${roastrPersona.loQueMeDaIgual.length > 300 ? 'text-red-500' : 'text-green-500'}`}>
-                        {roastrPersona.loQueMeDaIgual.length <= 300 ? '✓' : '⚠ Excede el límite'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="toleranceVisible"
-                      checked={roastrPersona.isToleranceVisible}
-                      onChange={(e) => setRoastrPersona(prev => ({ ...prev, isToleranceVisible: e.target.checked }))}
-                      className="rounded"
-                    />
-                    <label htmlFor="toleranceVisible" className="text-sm text-muted-foreground">
-                      Hacer visible en mi perfil (recomendado: mantener privado)
-                    </label>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => setRoastrPersona(prev => ({ 
-                        ...prev, 
-                        showToleranceForm: false,
-                        loQueMeDaIgual: prev.hasToleranceContent ? prev.loQueMeDaIgual : ''
-                      }))}
-                      disabled={roastrPersona.isSaving}
-                      size="sm"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={() => handleSaveRoastrPersona('tolerance')}
-                      disabled={roastrPersona.isSaving || roastrPersona.loQueMeDaIgual.length > 300}
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {roastrPersona.isSaving ? 'Guardando...' : 'Guardar Tolerancias'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {roastrPersona.hasToleranceContent ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-green-800">
-                            ✅ Tolerancias personales definidas
-                          </div>
-                          <div className="text-sm text-green-700">
-                            Has configurado temas que consideras inofensivos para ti
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => setRoastrPersona(prev => ({ ...prev, showToleranceForm: true }))}
-                            disabled={roastrPersona.isSaving}
-                            size="sm"
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleDeleteRoastrPersona('tolerance')}
-                            disabled={roastrPersona.isSaving}
-                            size="sm"
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            Eliminar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Circle className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        Define tus tolerancias personales
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
-                        Especifica qué comentarios o temas consideras inofensivos para ti, 
-                        aunque otros los consideren ofensivos. Esto reduce los falsos positivos.
-                      </p>
-                      <Button
-                        onClick={() => setRoastrPersona(prev => ({ ...prev, showToleranceForm: true }))}
-                        disabled={roastrPersona.isSaving}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        Definir Tolerancias
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Roast Behavior */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <SettingsIcon className="h-5 w-5" />
-            <span>Roast Behavior</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Roast Tone</label>
-              <Select 
-                value={settings.roastTone} 
-                onValueChange={(value) => updateSetting('roastTone', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gentle">Gentle</SelectItem>
-                  <SelectItem value="balanced">Balanced</SelectItem>
-                  <SelectItem value="savage">Savage</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="text-xs text-muted-foreground mt-1">
-                Controls how aggressive your roasts are
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Response Frequency</label>
-              <Select 
-                value={settings.responseFrequency} 
-                onValueChange={(value) => updateSetting('responseFrequency', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low (30%)</SelectItem>
-                  <SelectItem value="normal">Normal (60%)</SelectItem>
-                  <SelectItem value="high">High (90%)</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="text-xs text-muted-foreground mt-1">
-                How often to respond to mentions
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Toxicity Threshold</label>
-            <Select 
-              value={settings.toxicityThreshold} 
-              onValueChange={(value) => updateSetting('toxicityThreshold', value)}
-            >
-              <SelectTrigger className="md:w-1/2">
-                <SelectValue placeholder="Select threshold" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low (Block only severe)</SelectItem>
-                <SelectItem value="medium">Medium (Balanced filtering)</SelectItem>
-                <SelectItem value="high">High (Block most toxic)</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="text-xs text-muted-foreground mt-1">
-              Minimum toxicity level before blocking responses
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Shield Protection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5" />
-              <span>Shield Protection</span>
-            </div>
-            {user?.plan === 'free' && (
-              <Badge variant="outline">Pro Feature</Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Notification - Enhanced accessibility */}
+      {activeNotification && (
+        <div 
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border ${
+            activeNotification.type === 'error' 
+              ? 'bg-red-50 border-red-200 text-red-800' 
+              : activeNotification.type === 'warning'
+              ? 'bg-amber-50 border-amber-200 text-amber-800'
+              : 'bg-green-50 border-green-200 text-green-800'
+          }`}
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">Enable Shield</div>
-              <div className="text-sm text-muted-foreground">
-                Automatically block, mute, or report toxic accounts
-              </div>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.shieldEnabled && user?.plan !== 'free'}
-                onChange={(e) => updateSetting('shieldEnabled', e.target.checked)}
-                disabled={user?.plan === 'free'}
-                className="sr-only"
-              />
-              <div className={`w-11 h-6 rounded-full transition-colors ${
-                settings.shieldEnabled && user?.plan !== 'free' 
-                  ? 'bg-primary' 
-                  : 'bg-gray-200 dark:bg-gray-700'
-              }`}>
-                <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                  settings.shieldEnabled && user?.plan !== 'free' 
-                    ? 'translate-x-5' 
-                    : 'translate-x-0.5'
-                } mt-0.5`} />
-              </div>
-            </label>
-          </div>
-
-          {user?.plan === 'free' && (
-            <div className="p-3 bg-muted rounded-lg">
-              <div className="text-sm">
-                <strong>Upgrade to Pro</strong> to enable Shield protection and automatically protect against toxic interactions.
-              </div>
-              <Button variant="outline" size="sm" className="mt-2">
-                Upgrade Now
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Bell className="h-5 w-5" />
-            <span>Notifications</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            {[
-              { key: 'email', label: 'Email Notifications', description: 'General updates and alerts' },
-              { key: 'mentions', label: 'New Mentions', description: 'When someone mentions you' },
-              { key: 'responses', label: 'Response Sent', description: 'When bot responds to someone' },
-              { key: 'billing', label: 'Billing Updates', description: 'Payment and subscription changes' }
-            ].map((notification) => (
-              <div key={notification.key} className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{notification.label}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {notification.description}
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.notifications[notification.key]}
-                    onChange={(e) => updateSetting(`notifications.${notification.key}`, e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div className={`w-11 h-6 rounded-full transition-colors ${
-                    settings.notifications[notification.key] 
-                      ? 'bg-primary' 
-                      : 'bg-gray-200 dark:bg-gray-700'
-                  }`}>
-                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                      settings.notifications[notification.key] 
-                        ? 'translate-x-5' 
-                        : 'translate-x-0.5'
-                    } mt-0.5`} />
-                  </div>
-                </label>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Appearance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Palette className="h-5 w-5" />
-            <span>Estilo de la interfaz</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <div className="font-medium mb-2">Tema de la aplicación</div>
-              <div className="text-sm text-muted-foreground mb-3">
-                Elige el tema de la interfaz que prefieras. El modo "Sistema" se adapta automáticamente a las preferencias de tu dispositivo.
-              </div>
-              <ThemeToggle />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Data Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Download className="h-5 w-5" />
-            <span>Data Management</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium text-blue-600 mb-2">Export Your Data</div>
-                <div className="text-sm text-muted-foreground">
-                  Download all your personal data in JSON format (GDPR compliance)
-                </div>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setShowDataExportModal(true)}>
-                <Download className="h-4 w-4 mr-2" />
-                Export Data
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Ajustes Section */}
-      <AjustesSettings
-        user={user}
-        onNotification={addNotification}
-      />
-
-      {/* Logout Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <LogOut className="h-5 w-5" />
-            <span>Cerrar sesión</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <div className="font-medium mb-2">Cerrar sesión en este dispositivo</div>
-            <div className="text-sm text-muted-foreground mb-3">
-              Cierra tu sesión actual y regresa a la página de login.
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="w-full sm:w-auto"
+            <span className="text-sm font-medium">{activeNotification.message}</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={dismissNotification}
+              className="ml-2 h-4 w-4 p-0"
+              aria-label="Close notification"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar sesión
+              ×
             </Button>
           </div>
-        </CardContent>
-      </Card>
-      {/* Danger Zone */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-red-600">
-            <AlertTriangle className="h-5 w-5" />
-            <span>Danger Zone</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div className="font-medium text-red-600 mb-2">Delete Account</div>
-            <div className="text-sm text-muted-foreground mb-3">
-              Permanently delete your account and all associated data. This action cannot be undone.
-            </div>
-            <AccountDeletionButton 
-              user={user}
-              onDeleteRequested={() => addNotification('Eliminación de cuenta programada. Tienes 30 días para cancelar.', 'success')}
-              onError={(error) => addNotification(error, 'error')}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Data Export Modal - Issue #258 */}
-      {showDataExportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Descargar mis datos
-            </h3>
-            <div className="space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <div className="flex">
-                  <Mail className="w-5 h-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
-                      Recibirás un correo con un enlace para descargar tus datos de Roastr
-                    </p>
-                    <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                      <li>• El enlace será válido por 24 horas</li>
-                      <li>• El archivo incluirá todos tus datos personales</li>
-                      <li>• Formato: ZIP con archivos JSON y CSV</li>
-                      <li>• Cumplimiento RGPD - Artículo 15</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                <div className="flex">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
-                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                    Por seguridad, el enlace de descarga expirará automáticamente en 24 horas.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex space-x-3 mt-6">
-              <Button
-                onClick={handleDataExportRequest}
-                disabled={dataExportLoading}
-                className="flex-1"
-              >
-                {dataExportLoading ? 'Procesando...' : 'Solicitar descarga'}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowDataExportModal(false)}
-                disabled={dataExportLoading}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
         </div>
       )}
+
+      <div className="flex items-center gap-3 mb-6">
+        <SettingsIcon className="w-8 h-8 text-blue-600" />
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600">Manage your account, preferences, and billing</p>
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="account" className="flex items-center gap-2">
+            <User className="w-4 h-4" />
+            Account
+          </TabsTrigger>
+          <TabsTrigger value="adjustments" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            Adjustments
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            Billing
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Account Tab */}
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Account Information
+              </CardTitle>
+              <CardDescription>
+                Manage your account details and security settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Email Display */}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={user?.email || ''}
+                  disabled
+                  className="bg-gray-50"
+                />
+                <p className="text-sm text-gray-500">
+                  Email changes require contacting support
+                </p>
+              </div>
+
+              {/* Password Change */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Change Password</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="current-password">Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="current-password"
+                      type={showPasswords.current ? "text" : "password"}
+                      value={passwords.current}
+                      onChange={(e) => setPasswords(prev => ({ ...prev, current: e.target.value }))}
+                      placeholder="Enter current password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                      aria-label={showPasswords.current ? "Hide current password" : "Show current password"}
+                    >
+                      {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showPasswords.new ? "text" : "password"}
+                      value={passwords.new}
+                      onChange={(e) => setPasswords(prev => ({ ...prev, new: e.target.value }))}
+                      placeholder="Enter new password"
+                      aria-describedby={validatePassword(passwords.new).length > 0 ? "password-requirements" : undefined}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                      aria-label={showPasswords.new ? "Hide new password" : "Show new password"}
+                    >
+                      {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  {/* Password Strength Indicator */}
+                  {passwords.new && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Password strength:</span>
+                        <span className={`text-sm font-medium ${
+                          getPasswordStrength(passwords.new).strength === 'weak' ? 'text-red-600' :
+                          getPasswordStrength(passwords.new).strength === 'medium' ? 'text-yellow-600' :
+                          'text-green-600'
+                        }`}>
+                          {getPasswordStrength(passwords.new).text}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrength(passwords.new).color}`}
+                          style={{ 
+                            width: `${getPasswordStrength(passwords.new).strength === 'weak' ? '33' : 
+                                     getPasswordStrength(passwords.new).strength === 'medium' ? '66' : '100'}%` 
+                          }}
+                        />
+                      </div>
+                      {validatePassword(passwords.new).length > 0 && (
+                        <ul id="password-requirements" className="text-sm text-gray-600">
+                          {validatePassword(passwords.new).map((error, i) => (
+                            <li key={i} className="flex items-center gap-1">
+                              <span className="text-red-500">•</span>
+                              {error}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm-password"
+                      type={showPasswords.confirm ? "text" : "password"}
+                      value={passwords.confirm}
+                      onChange={(e) => setPasswords(prev => ({ ...prev, confirm: e.target.value }))}
+                      placeholder="Confirm new password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                      aria-label={showPasswords.confirm ? "Hide confirmation password" : "Show confirmation password"}
+                    >
+                      {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handlePasswordChange}
+                  disabled={passwordLoading || !isPasswordFormValid()}
+                  className="w-full sm:w-auto"
+                >
+                  {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Change Password
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* GDPR Data Export */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                Data Export
+              </CardTitle>
+              <CardDescription>
+                Download all your data in compliance with GDPR
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleDataExport} disabled={exportLoading} variant="outline">
+                {exportLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
+                Request Data Export
+              </Button>
+              <p className="text-sm text-gray-500 mt-2">
+                You'll receive an email with a download link when your data is ready
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Account Deletion */}
+          <Card className="border-red-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="w-5 h-5" />
+                Delete Account
+              </CardTitle>
+              <CardDescription>
+                Permanently delete your account and all associated data
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!showDeleteConfirm ? (
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-2"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  Delete Account
+                </Button>
+              ) : (
+                <div className="space-y-4 p-4 border border-red-200 rounded-lg bg-red-50">
+                  <p className="text-sm text-red-800 font-medium">
+                    ⚠️ This action cannot be undone. All your data will be permanently deleted.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="delete-confirm">Type "DELETE" to confirm:</Label>
+                    <Input
+                      id="delete-confirm"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="DELETE"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleAccountDeletion}
+                      disabled={deleteLoading || deleteConfirmText !== 'DELETE'}
+                    >
+                      {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      Delete Forever
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setDeleteConfirmText('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Adjustments Tab - Use existing AjustesSettings component */}
+        <TabsContent value="adjustments" className="space-y-6">
+          <AjustesSettings 
+            user={user} 
+            onNotification={handleNotification}
+          />
+        </TabsContent>
+
+        {/* Billing Tab */}
+        <TabsContent value="billing" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Current Plan
+              </CardTitle>
+              <CardDescription>
+                Your subscription and usage overview
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {billingInfo ? (
+                <>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {getPlanIcon(user?.plan || 'free')}
+                      <div>
+                        <h3 className="font-semibold capitalize">{user?.plan || 'Free'} Plan</h3>
+                        <p className="text-sm text-gray-600">
+                          {user?.plan === 'free' ? 'Free' : user?.plan === 'starter' ? '€5/month' : user?.plan === 'pro' ? '€15/month' : '€50/month'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className={getPlanColor(user?.plan || 'free')}>
+                      Active
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-sm text-gray-600">Roasts Generated</h4>
+                      <p className="text-2xl font-bold">
+                        {billingInfo?.usage?.roastsUsed ?? 0}
+                        <span className="text-sm text-gray-500 font-normal">
+                          /{billingInfo?.limits?.roastsPerMonth ?? (user?.plan === 'free' ? '5' : user?.plan === 'starter' ? '50' : user?.plan === 'pro' ? '200' : '∞')}
+                        </span>
+                      </p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          style={{
+                            width: `${billingInfo?.usage?.roastsUsed && billingInfo?.limits?.roastsPerMonth ? 
+                              Math.min((billingInfo.usage.roastsUsed / billingInfo.limits.roastsPerMonth) * 100, 100) : 0}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-sm text-gray-600">API Calls</h4>
+                      <p className="text-2xl font-bold">
+                        {billingInfo?.usage?.apiCalls ?? 0}
+                        <span className="text-sm text-gray-500 font-normal">
+                          /{billingInfo?.limits?.apiCallsPerMonth ?? (user?.plan === 'free' ? '10' : user?.plan === 'starter' ? '100' : user?.plan === 'pro' ? '500' : '∞')}
+                        </span>
+                      </p>
+                    </div>
+                    
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-sm text-gray-600">This Month</h4>
+                      <p className="text-2xl font-bold">
+                        €{user?.plan === 'free' ? '0.00' : user?.plan === 'starter' ? '5.00' : user?.plan === 'pro' ? '15.00' : '50.00'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => navigate('/billing')}>
+                      View Full Billing
+                    </Button>
+                    {user?.plan === 'free' && (
+                      <Button className="flex-1" onClick={() => navigate('/pricing')}>
+                        Upgrade Plan
+                      </Button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600">Loading billing information...</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quick Plan Comparison */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Plans</CardTitle>
+              <CardDescription>
+                Choose the plan that fits your needs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[
+                  { name: 'Free', price: '€0', features: ['5 roasts/day', 'Basic AI'] },
+                  { name: 'Starter', price: '€5', features: ['50 roasts/day', 'Enhanced AI', '2 platforms'] },
+                  { name: 'Pro', price: '€15', features: ['200 roasts/day', 'Premium AI', '5 platforms'] },
+                  { name: 'Plus', price: '€50', features: ['Unlimited roasts', 'Custom AI', 'All platforms'] }
+                ].map((plan) => (
+                  <div 
+                    key={plan.name} 
+                    className={`p-4 border rounded-lg ${
+                      (user?.plan?.toLowerCase() || 'free') === plan.name.toLowerCase() 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200'
+                    }`}
+                  >
+                    <h3 className="font-semibold">{plan.name}</h3>
+                    <p className="text-2xl font-bold text-blue-600">{plan.price}</p>
+                    <ul className="text-sm text-gray-600 mt-2 space-y-1">
+                      {plan.features.map((feature, i) => (
+                        <li key={i} className="flex items-center gap-1">
+                          <Check className="w-3 h-3 text-green-500" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    {(user?.plan?.toLowerCase() || 'free') === plan.name.toLowerCase() ? (
+                      <Badge className="mt-2 w-full justify-center">Current</Badge>
+                    ) : (
+                      <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => navigate('/pricing')}>
+                        {plan.name === 'Free' ? 'Downgrade' : 'Upgrade'}
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
+};
+
+Settings.displayName = 'Settings';
+
+export default Settings;
