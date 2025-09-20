@@ -1392,9 +1392,21 @@ Secciones:
 1. **Backend - Endpoint de Validación**
    - `POST /api/roast/:id/validate` - Valida texto editado
    - **Consume 1 crédito** por validación (independiente del resultado)
+   - **Rate limiting**: 30 validaciones por usuario por hora
+   - **Throttling**: 5 validaciones por minuto por usuario
+   - **Plan limits**: Free (10/día), Starter (50/día), Pro (200/día), Plus (ilimitado)
    - Validaciones implementadas:
      - ✅ Sin texto vacío o solo espacios
-     - ✅ Límites de caracteres por plataforma (Twitter: 280, Instagram: 2200, etc.)
+     - ✅ Límites de caracteres por plataforma:
+       - Twitter/X: 280 caracteres (API v2 ref)
+       - Instagram: 2200 caracteres (posts/stories)
+       - Facebook: 63,206 caracteres (Graph API limit)
+       - YouTube: 10,000 caracteres (comments API)
+       - TikTok: 2200 caracteres (video descriptions)
+       - Discord: 2000 caracteres (message limit)
+       - Reddit: 40,000 caracteres (post body limit)
+       - Twitch: 500 caracteres (chat messages)
+       - Bluesky: 300 caracteres (AT Protocol spec)
      - ✅ Detección de spam (caracteres/palabras repetitivas)
      - ✅ Filtro de insultos (español/inglés)
      - ✅ Bloqueo de disclaimers falsos de Roastr
@@ -1403,7 +1415,11 @@ Secciones:
 
 2. **Backend - Servicio StyleValidator**
    - Clase `StyleValidator` con reglas configurables
-   - Performance optimizada (< 100ms para texto normal)
+   - Performance optimizada:
+     - P95: < 50ms para texto ≤ 280 caracteres
+     - P99: < 150ms para texto ≤ 2200 caracteres (Instagram limit)
+     - Input size support: hasta 10,000 caracteres max
+     - Regex pre-compilation para optimización de velocidad
    - Manejo robusto de errores y advertencias
    - Soporte para múltiples plataformas con límites específicos
 
@@ -1422,9 +1438,13 @@ Secciones:
    - Gestión de estado centralizada
 
 #### **Flujo de Validación:**
-```text
-Usuario edita roast → Click "Validar" → Consume 1 crédito → API validation → 
-Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias → Usuario puede guardar
+```mermaid
+graph LR
+    A[Usuario edita roast] --> B[Click "Validar"]
+    B --> C[Consume 1 crédito]
+    C --> D[API validation]
+    D --> E[Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias]
+    E --> F[Usuario puede guardar]
 ```
 
 #### **Mejoras de Seguridad (CodeRabbit Review):**
@@ -1441,6 +1461,8 @@ Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias → Usuario puede gua
 
 3. **Validación Mejorada de Insultos**
    - ✅ Comparación contra texto original para detectar nuevos insultos
+   - ✅ **Seguridad IDOR**: originalText obtenido del servidor via roastId, nunca del cliente
+   - ✅ Verificación de propiedad antes de acceder al texto original
    - ✅ Permite edición de roasts que ya contenían insultos originalmente
    - ✅ Solo bloquea adición de nuevos insultos, no edición de existentes
 
@@ -1450,8 +1472,15 @@ Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias → Usuario puede gua
    - ✅ Tracking apropiado para validaciones de estilo
 
 5. **Error Handling Frontend Mejorado**
-   - ✅ Manejo específico para errores 404 (roast no encontrado)
-   - ✅ Manejo específico para errores 400 (validación fallida)
+   - ✅ **Taxonomía de Errores con Códigos:**
+     - `404 ROAST_NOT_FOUND` (roast no encontrado) - No consume créditos
+     - `403 ROAST_NOT_OWNED` (acceso no autorizado) - No consume créditos  
+     - `400 VALIDATION_FAILED` (validación fallida) - Consume 1 crédito
+     - `400 INVALID_INPUT` (entrada inválida) - No consume créditos
+     - `429 RATE_LIMIT_EXCEEDED` (rate limit) - No consume créditos
+     - `402 INSUFFICIENT_CREDITS` (sin créditos) - No consume créditos
+     - `500 INTERNAL_ERROR` (error servidor) - No consume créditos
+   - ✅ **Credit Consumption Policy**: Solo validaciones exitosas y fallidas consumen créditos
    - ✅ Mejoras de accesibilidad (ARIA, focus management)
    - ✅ Mensajes de error más informativos con detalles de créditos
 
@@ -1788,11 +1817,11 @@ flowchart TD
 ### **6. Mensajes genéricos del sistema**
 
 - ❌ *Error inesperado*:
-    - "Ha ocurrido un error inesperado. Nuestro equipo ya ha sido notificado."
+  - "Ha ocurrido un error inesperado. Nuestro equipo ya ha sido notificado."
 - ⚠️ *Acción no permitida*:
-    - "No tienes permisos para realizar esta acción."
+  - "No tienes permisos para realizar esta acción."
 - ✅ *Guardado exitoso*:
-    - "Cambios guardados correctamente."
+  - "Cambios guardados correctamente."
 
 ---
 
@@ -1852,7 +1881,7 @@ Round 4 test evidence: `/Users/emiliopostigo/roastr-ai/docs/test-evidence/2025-0
 ### **Status: Round 5 Requirements Already Implemented ✅**
 
 **Analysis Date**: 2025-09-19  
-**Review URL**: https://github.com/Eibon7/roastr-ai/pull/381#pullrequestreview-3245851366
+**Review URL**: <https://github.com/Eibon7/roastr-ai/pull/381#pullrequestreview-3245851366>
 
 After comprehensive analysis of the Round 5 CodeRabbit feedback, all suggested improvements were found to be **already implemented** in previous rounds:
 
