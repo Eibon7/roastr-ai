@@ -260,6 +260,11 @@ export default function Dashboard() {
   };
 
   const handleSaveEditedRoast = async (roastId, editedText, validation) => {
+    if (!validation || validation.valid !== true) {
+      setConnectionStatus({ type: 'error', message: 'Valida el contenido antes de guardar' });
+      setTimeout(() => setConnectionStatus(null), 3000);
+      return;
+    }
     try {
       const response = await fetch(`/api/user/roasts/${roastId}`, {
         method: 'PATCH',
@@ -868,6 +873,7 @@ export default function Dashboard() {
                         </div>
                         <div className="flex items-center space-x-2 ml-4">
                           <Button
+                            aria-label="Editar roast"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditRoast(roast.id)}
@@ -876,6 +882,7 @@ export default function Dashboard() {
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
+                            aria-label="Regenerar roast"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRegenerateRoast(roast.id)}
@@ -885,6 +892,7 @@ export default function Dashboard() {
                           </Button>
                           {roast.status !== 'published' && (
                             <Button
+                              aria-label="Publicar roast"
                               variant="ghost"
                               size="sm"
                               onClick={() => handlePublishRoast(roast.id)}
@@ -894,6 +902,7 @@ export default function Dashboard() {
                             </Button>
                           )}
                           <Button
+                            aria-label="Descartar roast"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDiscardRoast(roast.id)}

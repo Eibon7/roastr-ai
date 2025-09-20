@@ -1208,7 +1208,15 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res)
     
     try {
         const { id: roastId } = req.params;
-        const { text, platform = 'twitter' } = req.body;
+        const { text, platform: rawPlatform = 'twitter' } = req.body;
+        const platform = normalizePlatform(rawPlatform);
+        if (!isValidPlatform(platform)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid platform', 
+                timestamp: new Date().toISOString() 
+            });
+        }
         const userId = req.user.id;
 
         // Validate request parameters

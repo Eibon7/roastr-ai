@@ -4,7 +4,6 @@
  */
 
 const { logger } = require('../utils/logger');
-const { VALIDATION_CONSTANTS } = require('../config/validationConstants');
 
 class StyleValidator {
     constructor() {
@@ -18,12 +17,10 @@ class StyleValidator {
                 /\b(kill yourself|die|suicide|death|murder)\b/giu
             ],
             disclaimerPatterns: [
-                /powered\s+by\s+roastr/i,
-                /roastr\.ai/i,
-                /generado\s+por\s+ia/i,
-                /generated\s+by\s+ai/i,
-                /\[roastr\]/i
-                // Removed /#roastr/i to prevent blocking legitimate hashtags
+                /\b(powered\s+by\s+roastr(?:\.ai)?|by\s+roastr(?:\.ai)?)\b/i,
+                /\b(generad[oa]\s+por\s+ia|generated\s+by\s+ai)\b/i,
+                /\[(?:roastr|ai)\]/i
+                // Improved specificity to avoid blocking legitimate mentions like "visita roastr.ai"
             ],
             explicitPatterns: [
                 /\b(sex|porno|porn|masturbat|orgasm|penis|vagina|tits|dick|cock|pussy|cum|xxx)\b/iu,
@@ -373,11 +370,10 @@ class StyleValidator {
             { text: 'a'.repeat(300), platform: 'twitter', shouldPass: false }, // Too long
         ];
 
-        const results = testCases.map(testCase => ({
-            ...testCase,
-            result: this.validate(testCase.text, testCase.platform),
-            passed: this.validate(testCase.text, testCase.platform).valid === testCase.shouldPass
-        }));
+        const results = testCases.map(testCase => {
+            const result = this.validate(testCase.text, testCase.platform);
+            return { ...testCase, result, passed: result.valid === testCase.shouldPass };
+        });
 
         logger.info('Style validator test results', {
             totalTests: results.length,

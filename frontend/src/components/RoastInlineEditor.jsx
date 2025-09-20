@@ -35,6 +35,7 @@ export default function RoastInlineEditor({
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastValidatedText, setLastValidatedText] = useState(null);
 
   // Character limits by platform (normalized platform names)
   const characterLimits = useMemo(() => ({
@@ -149,6 +150,7 @@ export default function RoastInlineEditor({
       if (response.ok) {
         const data = await response.json();
         setValidation(data.data.validation);
+        setLastValidatedText(editedText); // Track what text was validated
         
         // Call external validation callback if provided
         if (onValidate) {
@@ -438,7 +440,8 @@ export default function RoastInlineEditor({
                 !hasUnsavedChanges || 
                 remainingChars < 0 || 
                 (validation && !validation.valid) ||
-                (!validation && hasUnsavedChanges) // Require validation before save
+                (!validation && hasUnsavedChanges) || // Require validation before save
+                (validation && lastValidatedText !== editedText) // Ensure current text is validated
               }
               className="flex items-center space-x-1"
               aria-label={

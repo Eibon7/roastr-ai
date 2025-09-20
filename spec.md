@@ -1422,7 +1422,7 @@ Secciones:
    - Gestión de estado centralizada
 
 #### **Flujo de Validación:**
-```
+```text
 Usuario edita roast → Click "Validar" → Consume 1 crédito → API validation → 
 Resultado: ✅ Válido | ❌ Errores | ⚠️ Advertencias → Usuario puede guardar
 ```
