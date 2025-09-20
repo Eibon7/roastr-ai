@@ -1197,4 +1197,184 @@ router.get('/styles', publicRateLimit, optionalAuth, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/roast/:id/validate
+ * Validates edited roast content for SPEC 8 - Issue #364
+ * Consumes 1 credit per validation regardless of result
+ * Requires authentication
+ */
+router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+        const { id: roastId } = req.params;
+        const { text, platform: rawPlatform = 'twitter' } = req.body;
+        const platform = normalizePlatform(rawPlatform);
+        if (!isValidPlatform(platform)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid platform', 
+                timestamp: new Date().toISOString() 
+            });
+        }
+        const userId = req.user.id;
+
+        // Validate request parameters
+        if (!text || typeof text !== 'string') {
+            return res.status(400).json({
+                success: false,
+                error: 'Text is required and must be a string',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        if (!roastId || typeof roastId !== 'string') {
+            return res.status(400).json({
+                success: false,
+                error: 'Roast ID is required',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Get user plan info
+        const userPlan = await getUserPlanInfo(userId);
+
+        // SECURITY: Verify roast ownership to prevent IDOR attacks
+        const { data: roastOwnership, error: ownershipError } = await supabaseServiceClient
+            .from('roasts')
+            .select('user_id, content')
+            .eq('id', roastId)
+            .eq('user_id', userId)
+            .single();
+
+        if (ownershipError || !roastOwnership) {
+            logger.warn('Attempted access to unauthorized roast', {
+                userId,
+                roastId,
+                error: ownershipError?.message
+            });
+            
+            return res.status(404).json({
+                success: false,
+                error: 'Roast not found or access denied',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // CRITICAL: Consume 1 credit BEFORE validation (as per SPEC 8 requirements)
+        // This ensures credit consumption regardless of validation result
+        const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
+            method: 'style_validation',
+            roastId: roastId,
+            platform: platform,
+            textLength: text.length,
+            timestamp: new Date().toISOString()
+        });
+
+        if (!creditResult || creditResult.success !== true) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient credits for validation',
+                details: {
+                    remaining: creditResult?.remaining ?? 0,
+                    limit: creditResult?.limit ?? 0,
+                    used: creditResult?.used ?? 0,
+                    plan: userPlan?.plan ?? 'free',
+                    error: creditResult?.error ?? 'Credit consumption failed'
+                },
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Import and initialize the StyleValidator
+        const StyleValidator = require('../services/styleValidator');
+        const validator = new StyleValidator();
+
+        // Perform validation with original text for comparison
+        const validationResult = validator.validate(text, platform, roastOwnership.content);
+
+        const processingTime = Date.now() - startTime;
+
+        // Log validation activity (GDPR-compliant metadata only)
+        logger.info('Style validation completed', {
+            userId,
+            roastId,
+            plan: userPlan.plan,
+            platform,
+            valid: validationResult.valid,
+            errorsCount: validationResult.errors.length,
+            warningsCount: validationResult.warnings.length,
+            textLength: text.length,
+            processingTimeMs: processingTime,
+            creditsConsumed: 1,
+            creditsRemaining: creditResult.remaining
+        });
+
+        // Record validation usage for analytics (GDPR-compliant)
+        try {
+            await recordRoastUsage(userId, {
+                type: 'style_validation',
+                roastId: roastId,
+                platform: platform,
+                textLength: text.length,
+                valid: validationResult.valid,
+                errorsCount: validationResult.errors.length,
+                warningsCount: validationResult.warnings.length,
+                processingTimeMs: processingTime
+            });
+        } catch (usageError) {
+            logger.warn('Failed to record validation usage', {
+                userId,
+                roastId,
+                error: usageError.message
+            });
+            // Don't fail the request if usage recording fails
+        }
+
+        // Return validation result
+        res.json({
+            success: true,
+            data: {
+                roastId: roastId,
+                platform: platform,
+                validation: {
+                    valid: validationResult.valid,
+                    errors: validationResult.errors,
+                    warnings: validationResult.warnings,
+                    metadata: {
+                        ...validationResult.metadata,
+                        processingTimeMs: processingTime
+                    }
+                },
+                credits: {
+                    remaining: creditResult.remaining,
+                    limit: creditResult.limit,
+                    used: creditResult.used,
+                    unlimited: creditResult.unlimited,
+                    consumed: 1 // Always 1 for validation
+                }
+            },
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        const processingTime = Date.now() - startTime;
+        
+        logger.error('Style validation endpoint failed', {
+            userId: req.user?.id,
+            roastId: req.params?.id,
+            error: error.message,
+            stack: error.stack,
+            processingTimeMs: processingTime
+        });
+
+        res.status(500).json({
+            success: false,
+            error: 'Validation service temporarily unavailable',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 module.exports = router;

@@ -23,6 +23,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import AccountModal from '../components/AccountModal';
+import RoastInlineEditor from '../components/RoastInlineEditor';
 import { platformIcons, platformNames, allPlatforms, getPlatformIcon, getPlatformName } from '../config/platforms';
 
 export default function Dashboard() {
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [recentRoasts, setRecentRoasts] = useState([]);
   const [roastsLoading, setRoastsLoading] = useState(false);
+  const [editingRoastId, setEditingRoastId] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { isEnabled, loading: flagsLoading } = useFeatureFlags();
@@ -254,8 +256,69 @@ export default function Dashboard() {
 
   // Roast action handlers
   const handleEditRoast = async (roastId) => {
-    // TODO: Implement edit roast functionality
-    console.log('Edit roast:', roastId);
+    setEditingRoastId(editingRoastId === roastId ? null : roastId);
+  };
+
+  const handleSaveEditedRoast = async (roastId, editedText, validation) => {
+    if (!validation || validation.valid !== true) {
+      setConnectionStatus({ type: 'error', message: 'Valida el contenido antes de guardar' });
+      setTimeout(() => setConnectionStatus(null), 3000);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/user/roasts/${roastId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: editedText,
+          validation: validation
+        })
+      });
+
+      if (response.ok) {
+        await fetchRecentRoasts(); // Refresh roasts
+        setEditingRoastId(null);
+        
+        // Show success message
+        setConnectionStatus({
+          type: 'success',
+          message: 'Roast actualizado exitosamente'
+        });
+        setTimeout(() => setConnectionStatus(null), 3000);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setConnectionStatus({
+          type: 'error',
+          message: errorData.error || 'Error al guardar el roast'
+        });
+        setTimeout(() => setConnectionStatus(null), 5000);
+      }
+    } catch (error) {
+      console.error('Error saving edited roast:', error);
+      setConnectionStatus({
+        type: 'error',
+        message: 'Error de conexión al guardar'
+      });
+      setTimeout(() => setConnectionStatus(null), 5000);
+    }
+  };
+
+  const handleCancelEditRoast = () => {
+    setEditingRoastId(null);
+  };
+
+  const handleValidationResult = (validation, credits) => {
+    // Update usage data with new credit info if provided
+    if (credits && usage) {
+      setUsage(prev => ({
+        ...prev,
+        roastsRemaining: credits.remaining,
+        roastsLimit: credits.limit
+      }));
+    }
   };
 
   const handleRegenerateRoast = async (roastId) => {
@@ -775,75 +838,94 @@ export default function Dashboard() {
             <div className="space-y-4">
               {recentRoasts.map((roast) => {
                 const IconComponent = getPlatformIcon(roast.platform);
+                const isEditing = editingRoastId === roast.id;
 
                 return (
-                  <div
-                    key={roast.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4 flex-1">
-                      <IconComponent className="h-8 w-8 text-muted-foreground" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-medium truncate">{getPlatformName(roast.platform)}</h4>
-                          <Badge
-                            variant={roast.status === 'published' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {roast.status === 'published' ? 'Publicado' :
-                             roast.status === 'pending' ? 'Pendiente' : 'Borrador'}
-                          </Badge>
+                  <div key={roast.id} className="space-y-4">
+                    {/* Regular Roast Display */}
+                    {!isEditing && (
+                      <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center space-x-4 flex-1">
+                          <IconComponent className="h-8 w-8 text-muted-foreground" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h4 className="font-medium truncate">{getPlatformName(roast.platform)}</h4>
+                              <Badge
+                                variant={roast.status === 'published' ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {roast.status === 'published' ? 'Publicado' :
+                                 roast.status === 'pending' ? 'Pendiente' : 'Borrador'}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {roast.content || 'Sin contenido'}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(roast.created_at).toLocaleDateString('es-ES', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {roast.content || 'Sin contenido'}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(roast.created_at).toLocaleDateString('es-ES', {
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            aria-label="Editar roast"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditRoast(roast.id)}
+                            title="Editar roast"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            aria-label="Regenerar roast"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRegenerateRoast(roast.id)}
+                            title="Regenerar roast"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          {roast.status !== 'published' && (
+                            <Button
+                              aria-label="Publicar roast"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePublishRoast(roast.id)}
+                              title="Publicar roast"
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            aria-label="Descartar roast"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDiscardRoast(roast.id)}
+                            title="Descartar roast"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditRoast(roast.id)}
-                        title="Editar roast"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRegenerateRoast(roast.id)}
-                        title="Regenerar roast"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                      {roast.status !== 'published' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePublishRoast(roast.id)}
-                          title="Publicar roast"
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDiscardRoast(roast.id)}
-                        title="Descartar roast"
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    )}
+
+                    {/* Inline Editor */}
+                    {isEditing && (
+                      <RoastInlineEditor
+                        roast={roast.content}
+                        roastId={roast.id}
+                        platform={roast.platform}
+                        onSave={(editedText, validation) => handleSaveEditedRoast(roast.id, editedText, validation)}
+                        onCancel={handleCancelEditRoast}
+                        onValidate={handleValidationResult}
+                      />
+                    )}
                   </div>
                 );
               })}
