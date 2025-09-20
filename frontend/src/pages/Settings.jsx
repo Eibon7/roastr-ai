@@ -115,7 +115,7 @@ const Settings = () => {
       errors.push('One number');
     }
     
-    if (!/[!@#$%^&*()_+\-=\[\]{}|;':".,<>?`~]/.test(password)) {
+    if (!/[!@#$%^&*()_+\-=[\]{}|;':".,<>?`~]/.test(password)) {
       errors.push('One special character');
     }
     
