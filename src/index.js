@@ -188,15 +188,25 @@ app.use('/api/auth', authRateLimit);
 // Apply billing-specific rate limiting  
 app.use('/api/billing', billingRateLimit);
 
-// Servir archivos estáticos de la carpeta public (legacy files)
-app.use('/public', express.static(path.join(__dirname, '../public')));
+// Servir archivos estáticos de la carpeta public (legacy files) con seguridad mejorada
+app.use('/public', express.static(path.join(__dirname, '../public'), {
+  index: false, // Prevent directory indexing
+  dotfiles: 'ignore', // Ignore hidden files
+  setHeaders: (res, path) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  }
+}));
 
-// Servir archivos estáticos del frontend React con caching mejorado
+// Servir archivos estáticos del frontend React con caching mejorado y prevención de indexing
 app.use(express.static(path.join(__dirname, '../frontend/build'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
   immutable: process.env.NODE_ENV === 'production',
-  index: false,
+  index: false, // Prevent directory indexing
+  dotfiles: 'ignore', // Ignore hidden files
   setHeaders: (res, path) => {
+    // Prevent directory indexing at header level
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
     if (path.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');

@@ -131,6 +131,16 @@ const Settings = () => {
     return { strength: 'strong', color: 'bg-green-500', text: 'Strong' };
   };
 
+  // Enhanced button validation state
+  const isPasswordFormValid = () => {
+    return passwords.current.trim() && 
+           passwords.new.trim() && 
+           passwords.confirm.trim() &&
+           passwords.new === passwords.confirm &&
+           validatePassword(passwords.new).length === 0 &&
+           passwords.current !== passwords.new;
+  };
+
   const handlePasswordChange = async () => {
     // Pre-validate current password
     if (!passwords.current.trim()) {
@@ -234,15 +244,20 @@ const Settings = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Notification */}
+      {/* Notification - Enhanced accessibility */}
       {activeNotification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border ${
-          activeNotification.type === 'error' 
-            ? 'bg-red-50 border-red-200 text-red-800' 
-            : activeNotification.type === 'warning'
-            ? 'bg-amber-50 border-amber-200 text-amber-800'
-            : 'bg-green-50 border-green-200 text-green-800'
-        }`}>
+        <div 
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border ${
+            activeNotification.type === 'error' 
+              ? 'bg-red-50 border-red-200 text-red-800' 
+              : activeNotification.type === 'warning'
+              ? 'bg-amber-50 border-amber-200 text-amber-800'
+              : 'bg-green-50 border-green-200 text-green-800'
+          }`}
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{activeNotification.message}</span>
             <Button 
@@ -250,6 +265,7 @@ const Settings = () => {
               size="sm" 
               onClick={dismissNotification}
               className="ml-2 h-4 w-4 p-0"
+              aria-label="Close notification"
             >
               ×
             </Button>
@@ -380,7 +396,7 @@ const Settings = () => {
                         />
                       </div>
                       {validatePassword(passwords.new).length > 0 && (
-                        <ul className="text-sm text-gray-600">
+                        <ul id="password-requirements" className="text-sm text-gray-600">
                           {validatePassword(passwords.new).map((error, i) => (
                             <li key={i} className="flex items-center gap-1">
                               <span className="text-red-500">•</span>
@@ -418,8 +434,9 @@ const Settings = () => {
 
                 <Button 
                   onClick={handlePasswordChange}
-                  disabled={passwordLoading || !passwords.current || !passwords.new || !passwords.confirm}
+                  disabled={passwordLoading || !isPasswordFormValid()}
                   className="w-full sm:w-auto"
+                  aria-describedby={validatePassword(passwords.new).length > 0 ? "password-requirements" : undefined}
                 >
                   {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Change Password
@@ -657,5 +674,7 @@ const Settings = () => {
     </div>
   );
 };
+
+Settings.displayName = 'Settings';
 
 export default Settings;
