@@ -281,6 +281,10 @@ app.use('/api/roast', roastRoutes);
 // Settings routes (authenticated) - Issue #362
 app.use('/api/settings', settingsRoutes);
 
+// Tier validation routes (authenticated) - Issue #368
+const tierValidationRoutes = require('./routes/tierValidation');
+app.use('/api/tier-validation', tierValidationRoutes);
+
 // Model availability routes (authenticated, admin) - Issue #326
 const modelAvailabilityRoutes = require('./routes/modelAvailability');
 app.use('/api/model-availability', modelAvailabilityRoutes);

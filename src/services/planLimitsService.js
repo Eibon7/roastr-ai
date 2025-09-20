@@ -260,71 +260,76 @@ class PlanLimitsService {
      * @private
      */
     getDefaultLimits(planId) {
+        // SPEC 10 - Updated tier limits exactly as specified
         const defaults = {
             free: {
-                maxRoasts: 10,
-                monthlyResponsesLimit: 10,
-                monthlyAnalysisLimit: 1000,
-                maxPlatforms: 2,
-                integrationsLimit: 2,
-                shieldEnabled: false,
-                customPrompts: false,
+                maxRoasts: 10, // 10 roasts per month
+                monthlyResponsesLimit: 10, // 10 roasts per month
+                monthlyAnalysisLimit: 100, // 100 analysis per month
+                maxPlatforms: 1, // 1 account per social network
+                integrationsLimit: 1, // 1 account per social network
+                shieldEnabled: false, // No Shield
+                customPrompts: false, // No Original Tone
                 prioritySupport: false,
                 apiAccess: false,
                 analyticsEnabled: false,
-                customTones: false,
+                customTones: false, // No Original Tone
                 dedicatedSupport: false,
+                embeddedJudge: false, // No Embedded Judge
                 monthlyTokensLimit: 50000,
                 dailyApiCallsLimit: 100,
                 ai_model: 'gpt-3.5-turbo'
             },
             starter: {
-                maxRoasts: 10,
-                monthlyResponsesLimit: 10,
-                monthlyAnalysisLimit: 1000,
-                maxPlatforms: 2,
-                integrationsLimit: 2,
-                shieldEnabled: true,
-                customPrompts: false,
+                maxRoasts: 100, // 100 roasts per month
+                monthlyResponsesLimit: 100, // 100 roasts per month
+                monthlyAnalysisLimit: 1000, // 1,000 analysis per month
+                maxPlatforms: 1, // 1 account per social network
+                integrationsLimit: 1, // 1 account per social network
+                shieldEnabled: true, // Shield ON
+                customPrompts: false, // No Original Tone
                 prioritySupport: false,
                 apiAccess: false,
                 analyticsEnabled: false,
-                customTones: false,
+                customTones: false, // No Original Tone
                 dedicatedSupport: false,
+                embeddedJudge: false, // No Embedded Judge
                 monthlyTokensLimit: 100000,
                 dailyApiCallsLimit: 500,
                 ai_model: 'gpt-4o'
             },
             pro: {
-                maxRoasts: 1000,
-                monthlyResponsesLimit: 1000,
-                monthlyAnalysisLimit: 10000,
-                maxPlatforms: 5,
-                integrationsLimit: 5,
-                shieldEnabled: true,
-                customPrompts: false,
+                maxRoasts: 1000, // 1,000 roasts per month
+                monthlyResponsesLimit: 1000, // 1,000 roasts per month
+                monthlyAnalysisLimit: 10000, // 10,000 analysis per month
+                maxPlatforms: 2, // 2 accounts per social network
+                integrationsLimit: 2, // 2 accounts per social network
+                shieldEnabled: true, // Shield + Original Tone
+                customPrompts: true, // Original Tone ON
                 prioritySupport: true,
                 apiAccess: false,
                 analyticsEnabled: true,
-                customTones: true,
+                customTones: true, // Original Tone ON
                 dedicatedSupport: false,
+                embeddedJudge: false, // No Embedded Judge
                 monthlyTokensLimit: 500000,
                 dailyApiCallsLimit: 5000,
                 ai_model: 'gpt-4o'
             },
             plus: {
-                maxRoasts: 5000,
-                monthlyResponsesLimit: 5000,
-                monthlyAnalysisLimit: 100000,
-                maxPlatforms: 10,
-                integrationsLimit: 10,
-                shieldEnabled: true,
-                customPrompts: true,
+                maxRoasts: 5000, // 5,000 roasts per month
+                monthlyResponsesLimit: 5000, // 5,000 roasts per month
+                monthlyAnalysisLimit: 100000, // 100,000 analysis per month
+                maxPlatforms: 2, // 2 accounts per social network
+                integrationsLimit: 2, // 2 accounts per social network
+                shieldEnabled: true, // Shield + Original Tone + Embedded Judge
+                customPrompts: true, // Original Tone ON
                 prioritySupport: true,
                 apiAccess: true,
                 analyticsEnabled: true,
-                customTones: true,
+                customTones: true, // Original Tone ON
                 dedicatedSupport: true,
+                embeddedJudge: true, // Embedded Judge ON (flag post-MVP)
                 monthlyTokensLimit: 2000000,
                 dailyApiCallsLimit: 20000,
                 ai_model: 'gpt-4o',
@@ -343,6 +348,7 @@ class PlanLimitsService {
                 analyticsEnabled: true,
                 customTones: true,
                 dedicatedSupport: true,
+                embeddedJudge: true,
                 monthlyTokensLimit: -1,
                 dailyApiCallsLimit: -1,
                 ai_model: 'gpt-4o',
