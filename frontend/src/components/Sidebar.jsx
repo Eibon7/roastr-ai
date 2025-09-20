@@ -31,7 +31,7 @@ const conditionalNavItems = [
     name: 'Shop',
     path: '/shop',
     icon: ShoppingBag,
-    requiresFlag: 'ENABLE_SHOP'
+    requiresFlag: ['ENABLE_SHOP', 'shop_enabled'] // Support both flag names
   }
 ];
 
@@ -43,9 +43,16 @@ export default function Sidebar() {
   // Build navigation items based on feature flags
   const navItems = [
     ...baseNavItems,
-    ...conditionalNavItems.filter(item =>
-      !item.requiresFlag || isEnabled(item.requiresFlag)
-    )
+    ...conditionalNavItems.filter(item => {
+      if (!item.requiresFlag) return true;
+      
+      // Support both single flag name and array of flag names
+      if (Array.isArray(item.requiresFlag)) {
+        return item.requiresFlag.some(flag => isEnabled(flag));
+      }
+      
+      return isEnabled(item.requiresFlag);
+    })
   ];
 
   return (

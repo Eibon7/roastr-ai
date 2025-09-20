@@ -62,5 +62,10 @@
     "jest-junit": "^16.0.0",
     "postcss": "^8.5.6"
   },
-  "proxy": "http://localhost:3000"
+  "proxy": "http://localhost:3000",
+  "description": "",
+  "main": "craco.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
