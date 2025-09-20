@@ -708,13 +708,12 @@ app.use((req, res) => {
 // Export app for testing
 let server;
 
-// Only start server if this file is run directly (not imported by tests)
-// Catch-all handler: send back React app's index.html file for all routes not handled above
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
-});
-
 if (require.main === module) {
+  // Add catch-all handler only when running as main module (not in tests)
+  // This prevents path-to-regexp issues during test imports
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+  });
   // Start Model Availability Worker (Issue #326)
   try {
     const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
