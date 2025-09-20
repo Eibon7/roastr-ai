@@ -29,7 +29,10 @@ import AjustesSettings from '../components/AjustesSettings';
 const Settings = () => {
   const { userData: user } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
-  const [loading, setLoading] = useState(false);
+  // Granular loading states for independent operations
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [billingInfo, setBillingInfo] = useState(null);
   const [activeNotification, setActiveNotification] = useState(null);
   
@@ -85,7 +88,7 @@ const Settings = () => {
     }
 
     try {
-      setLoading(true);
+      setPasswordLoading(true);
       await apiClient.post('/auth/change-password', {
         currentPassword: passwords.current,
         newPassword: passwords.new
@@ -96,19 +99,19 @@ const Settings = () => {
     } catch (error) {
       handleNotification('Failed to change password', 'error');
     } finally {
-      setLoading(false);
+      setPasswordLoading(false);
     }
   };
 
   const handleDataExport = async () => {
     try {
-      setLoading(true);
+      setExportLoading(true);
       await apiClient.post('/auth/export-data');
       handleNotification('Data export initiated. You will receive an email when ready.', 'success');
     } catch (error) {
       handleNotification('Failed to initiate data export', 'error');
     } finally {
-      setLoading(false);
+      setExportLoading(false);
     }
   };
 
@@ -119,7 +122,7 @@ const Settings = () => {
     }
 
     try {
-      setLoading(true);
+      setDeleteLoading(true);
       await apiClient.post('/auth/delete-account');
       handleNotification('Account deletion initiated', 'success');
       // Redirect to logout or landing page
@@ -127,7 +130,7 @@ const Settings = () => {
     } catch (error) {
       handleNotification('Failed to delete account', 'error');
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -150,7 +153,7 @@ const Settings = () => {
     }
   };
 
-  if (loading && !user) {
+  if ((passwordLoading || exportLoading || deleteLoading) && !user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -307,10 +310,10 @@ const Settings = () => {
 
                 <Button 
                   onClick={handlePasswordChange}
-                  disabled={loading || !passwords.current || !passwords.new || !passwords.confirm}
+                  disabled={passwordLoading || !passwords.current || !passwords.new || !passwords.confirm}
                   className="w-full sm:w-auto"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Change Password
                 </Button>
               </div>
@@ -329,8 +332,8 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={handleDataExport} disabled={loading} variant="outline">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
+              <Button onClick={handleDataExport} disabled={exportLoading} variant="outline">
+                {exportLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
                 Request Data Export
               </Button>
               <p className="text-sm text-gray-500 mt-2">
@@ -378,9 +381,9 @@ const Settings = () => {
                     <Button 
                       variant="destructive" 
                       onClick={handleAccountDeletion}
-                      disabled={loading || deleteConfirmText !== 'DELETE'}
+                      disabled={deleteLoading || deleteConfirmText !== 'DELETE'}
                     >
-                      {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       Delete Forever
                     </Button>
                     <Button 
@@ -441,19 +444,28 @@ const Settings = () => {
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-medium text-sm text-gray-600">Roasts Generated</h4>
                       <p className="text-2xl font-bold">
-                        {Math.floor(Math.random() * 50)}
+                        {billingInfo?.usage?.roastsUsed ?? 0}
                         <span className="text-sm text-gray-500 font-normal">
-                          /{user?.plan === 'free' ? '5' : user?.plan === 'starter' ? '50' : user?.plan === 'pro' ? '200' : '∞'}
+                          /{billingInfo?.limits?.roastsPerMonth ?? (user?.plan === 'free' ? '5' : user?.plan === 'starter' ? '50' : user?.plan === 'pro' ? '200' : '∞')}
                         </span>
                       </p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          style={{
+                            width: `${billingInfo?.usage?.roastsUsed && billingInfo?.limits?.roastsPerMonth ? 
+                              Math.min((billingInfo.usage.roastsUsed / billingInfo.limits.roastsPerMonth) * 100, 100) : 0}%`
+                          }}
+                        />
+                      </div>
                     </div>
                     
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-medium text-sm text-gray-600">API Calls</h4>
                       <p className="text-2xl font-bold">
-                        {Math.floor(Math.random() * 100)}
+                        {billingInfo?.usage?.apiCalls ?? 0}
                         <span className="text-sm text-gray-500 font-normal">
-                          /{user?.plan === 'free' ? '10' : user?.plan === 'starter' ? '100' : user?.plan === 'pro' ? '500' : '∞'}
+                          /{billingInfo?.limits?.apiCallsPerMonth ?? (user?.plan === 'free' ? '10' : user?.plan === 'starter' ? '100' : user?.plan === 'pro' ? '500' : '∞')}
                         </span>
                       </p>
                     </div>

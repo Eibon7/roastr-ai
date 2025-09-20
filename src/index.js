@@ -173,8 +173,8 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Apply general rate limiting
-app.use(generalRateLimit);
+// Apply general rate limiting only to API routes
+app.use('/api', generalRateLimit);
 
 // Stripe webhook endpoint (needs raw body, before JSON parsing)
 app.use('/webhooks/stripe', billingRoutes);
@@ -191,8 +191,21 @@ app.use('/api/billing', billingRateLimit);
 // Servir archivos estáticos de la carpeta public (legacy files)
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
-// Servir archivos estáticos del frontend React
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+// Servir archivos estáticos del frontend React con caching mejorado
+app.use(express.static(path.join(__dirname, '../frontend/build'), {
+  maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
+  immutable: process.env.NODE_ENV === 'production',
+  index: false,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    } else if (path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 // Auth routes
 app.use('/api/auth', authRoutes);
@@ -711,8 +724,18 @@ let server;
 if (require.main === module) {
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+  // Improved SPA routing with regex to exclude API routes
+  app.get(/^(?!\/api|\/static|\/webhook|\/uploads).*$/, (req, res, next) => {
+    const hasFileExtension = /\.[^.]+$/.test(req.path) && !req.path.endsWith('.html');
+    if (hasFileExtension) {
+      return next();
+    }
+    res.sendFile(path.join(__dirname, '../frontend/build/index.html'), (err) => {
+      if (err) {
+        console.error('Error serving SPA:', { error: err.message, path: req.path });
+        next(err);
+      }
+    });
   });
   // Start Model Availability Worker (Issue #326)
   try {
