@@ -62,9 +62,42 @@ router.get('/events', async (req, res) => {
       platform = 'all'
     } = req.query;
 
-    // Validate pagination parameters
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Max 100 items per page
+    // Whitelist filters to prevent unexpected queries
+    const validCategories = ['all', 'toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'];
+    const validTimeRanges = ['7d', '30d', '90d', 'all'];
+    const validPlatforms = ['all', 'twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+    
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Invalid category filter', code: 'INVALID_CATEGORY' }
+      });
+    }
+    
+    if (!validTimeRanges.includes(timeRange)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Invalid time range filter', code: 'INVALID_TIME_RANGE' }
+      });
+    }
+    
+    if (!validPlatforms.includes(platform)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Invalid platform filter', code: 'INVALID_PLATFORM' }
+      });
+    }
+
+    // Validate pagination parameters (ensure numeric inputs)
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20)); // Max 100 items per page
+    
+    if (isNaN(pageNum) || isNaN(limitNum)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Invalid pagination parameters', code: 'INVALID_PAGINATION' }
+      });
+    }
     
     // Calculate date range
     let startDate = null;
@@ -92,13 +125,13 @@ router.get('/events', async (req, res) => {
       .select(`
         id,
         action_type,
-        content,
+        content_hash,
+        content_snippet,
         platform,
         reason,
         created_at,
         reverted_at,
-        metadata,
-        organization_id
+        metadata
       `, { count: 'exact' })
       .eq('organization_id', req.user.organizationId)
       .order('created_at', { ascending: false });
@@ -195,7 +228,7 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
     // First, verify the action exists and belongs to the user's organization
     const { data: existingAction, error: fetchError } = await supabaseServiceClient
       .from('shield_actions')
-      .select('id, action_type, content, platform, reverted_at, organization_id')
+      .select('id, action_type, content_hash, content_snippet, platform, reverted_at, metadata')
       .eq('id', id)
       .eq('organization_id', req.user.organizationId)
       .single();
@@ -344,11 +377,12 @@ router.get('/stats', async (req, res) => {
       throw error;
     }
 
-    // Calculate statistics
+    // Calculate statistics (harden for null data)
+    const safeData = data || [];
     const stats = {
-      total: data.length,
-      reverted: data.filter(action => action.reverted_at).length,
-      active: data.filter(action => !action.reverted_at).length,
+      total: safeData.length,
+      reverted: safeData.filter(action => action && action.reverted_at).length,
+      active: safeData.filter(action => action && !action.reverted_at).length,
       byActionType: {},
       byPlatform: {},
       byReason: {},
@@ -357,19 +391,23 @@ router.get('/stats', async (req, res) => {
       generatedAt: new Date().toISOString()
     };
 
-    // Group by action type
-    data.forEach(action => {
-      stats.byActionType[action.action_type] = (stats.byActionType[action.action_type] || 0) + 1;
+    // Group by action type (safe iteration)
+    safeData.forEach(action => {
+      if (action && action.action_type) {
+        stats.byActionType[action.action_type] = (stats.byActionType[action.action_type] || 0) + 1;
+      }
     });
 
-    // Group by platform
-    data.forEach(action => {
-      stats.byPlatform[action.platform] = (stats.byPlatform[action.platform] || 0) + 1;
+    // Group by platform (safe iteration)
+    safeData.forEach(action => {
+      if (action && action.platform) {
+        stats.byPlatform[action.platform] = (stats.byPlatform[action.platform] || 0) + 1;
+      }
     });
 
-    // Group by reason
-    data.forEach(action => {
-      if (action.reason) {
+    // Group by reason (safe iteration)
+    safeData.forEach(action => {
+      if (action && action.reason) {
         stats.byReason[action.reason] = (stats.byReason[action.reason] || 0) + 1;
       }
     });

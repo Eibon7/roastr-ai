@@ -5,9 +5,10 @@
 -- Create shield_actions table
 CREATE TABLE IF NOT EXISTS shield_actions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    organization_id UUID NOT NULL,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     action_type VARCHAR(50) NOT NULL,
-    content TEXT NOT NULL,
+    content_hash VARCHAR(64) NOT NULL, -- Store hash instead of full content for GDPR
+    content_snippet TEXT, -- Store only first 100 chars for UI display
     platform VARCHAR(50) NOT NULL,
     reason VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -64,13 +65,13 @@ CREATE TABLE IF NOT EXISTS feature_flags (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Insert ENABLE_SHIELD_UI feature flag
+-- Insert ENABLE_SHIELD_UI feature flag (default OFF for safety)
 INSERT INTO feature_flags (flag_name, enabled, description)
-VALUES ('ENABLE_SHIELD_UI', true, 'Enable Shield UI interface for viewing and managing moderation actions')
+VALUES ('ENABLE_SHIELD_UI', false, 'Enable Shield UI interface for viewing and managing moderation actions')
 ON CONFLICT (flag_name) DO NOTHING;
 
--- Create updated_at trigger for shield_actions
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Create updated_at trigger for shield_actions (scoped to prevent collisions)
+CREATE OR REPLACE FUNCTION shield_actions_update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
@@ -86,14 +87,15 @@ DROP TRIGGER IF EXISTS update_shield_actions_updated_at ON shield_actions;
 CREATE TRIGGER update_shield_actions_updated_at
     BEFORE UPDATE ON shield_actions
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+    EXECUTE FUNCTION shield_actions_update_updated_at_column();
 
 -- Add comments for documentation
 COMMENT ON TABLE shield_actions IS 'Stores automated Shield moderation actions taken on user content across platforms';
 COMMENT ON COLUMN shield_actions.id IS 'Unique identifier for the shield action';
 COMMENT ON COLUMN shield_actions.organization_id IS 'Organization that owns this action (for multi-tenant isolation)';
 COMMENT ON COLUMN shield_actions.action_type IS 'Type of action taken: block, mute, flag, or report';
-COMMENT ON COLUMN shield_actions.content IS 'The original content that triggered the action';
+COMMENT ON COLUMN shield_actions.content_hash IS 'SHA-256 hash of the original content for GDPR compliance';
+COMMENT ON COLUMN shield_actions.content_snippet IS 'First 100 characters of content for UI display';
 COMMENT ON COLUMN shield_actions.platform IS 'Social media platform where the action was taken';
 COMMENT ON COLUMN shield_actions.reason IS 'Categorization of why the action was taken';
 COMMENT ON COLUMN shield_actions.created_at IS 'When the action was originally taken';

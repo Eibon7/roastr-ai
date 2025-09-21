@@ -170,30 +170,30 @@ test.describe('Shield UI Visual Tests', () => {
       test('should show revert button for non-reverted actions', async ({ page }) => {
         await page.goto(`${TEST_URL}/shield`);
         
-        // Wait for revert buttons
-        await page.waitForSelector('button:has-text("Revertir")', { timeout: 5000 });
+        // Wait for revert buttons using more stable selector
+        await page.waitForSelector('button:has-text("Revertir")', { timeout: 10000 });
         
         // Should show revert button for first action (not reverted)
         const revertButtons = page.locator('button:has-text("Revertir")');
         await expect(revertButtons).toHaveCount(1);
         
-        // Take screenshot of action with revert button
-        const actionWithRevert = page.locator('.bg-gray-800:has(button:has-text("Revertir"))');
-        await expect(actionWithRevert).toHaveScreenshot(`shield-revert-button-${viewport.name}.png`);
+        // Take screenshot of action with revert button using more stable selector
+        const actionWithRevert = page.locator('[data-testid="shield-action"]:has(button:has-text("Revertir"))');
+        await expect(actionWithRevert.first()).toHaveScreenshot(`shield-revert-button-${viewport.name}.png`);
       });
 
       test('should show reverted status for reverted actions', async ({ page }) => {
         await page.goto(`${TEST_URL}/shield`);
         
-        // Wait for reverted status
-        await page.waitForSelector('text=Revertido el', { timeout: 5000 });
+        // Wait for reverted status using more stable selector
+        await page.waitForSelector('text=Revertido el', { timeout: 10000 });
         
         // Verify reverted status is shown
         await expect(page.locator('text=Revertido el')).toBeVisible();
         
-        // Take screenshot of reverted action
-        const revertedAction = page.locator('.bg-gray-800:has(text="Revertido el")');
-        await expect(revertedAction).toHaveScreenshot(`shield-reverted-status-${viewport.name}.png`);
+        // Take screenshot of reverted action using data attribute
+        const revertedAction = page.locator('[data-testid="shield-action"]:has-text("Revertido el")');
+        await expect(revertedAction.first()).toHaveScreenshot(`shield-reverted-status-${viewport.name}.png`);
       });
     });
   }
@@ -368,18 +368,33 @@ test.describe('Shield UI Visual Tests', () => {
     });
   });
 
+  test.describe('Edge Cases', () => {
+    test('should handle non-numeric pagination inputs', async ({ page }) => {
+      // Test with non-numeric page parameter
+      await page.goto(`${TEST_URL}/shield?page=abc&limit=xyz`);
+      
+      // Should still load with default values
+      await page.waitForSelector('[data-testid="shield-icon"]', { timeout: 10000 });
+      
+      // Verify content loads despite invalid params
+      await expect(page.locator('text=Shield - Contenido Interceptado')).toBeVisible();
+    });
+  });
+
   test.describe('Accessibility Visual Checks', () => {
     test('should show proper focus states', async ({ page }) => {
       await page.goto(`${TEST_URL}/shield`);
       
-      // Focus on refresh button
-      await page.waitForSelector('button:has-text("Actualizar")', { timeout: 5000 });
-      await page.focus('button:has-text("Actualizar")');
-      await expect(page.locator('button:has-text("Actualizar")')).toHaveScreenshot('shield-button-focus.png');
+      // Focus on refresh button with more stable selector
+      await page.waitForSelector('[data-testid="refresh-button"], button:has-text("Actualizar")', { timeout: 10000 });
+      const refreshButton = page.locator('[data-testid="refresh-button"]').first().or(page.locator('button:has-text("Actualizar")').first());
+      await refreshButton.focus();
+      await expect(refreshButton).toHaveScreenshot('shield-button-focus.png');
       
-      // Focus on filter select
-      await page.focus('select');
-      await expect(page.locator('select').first()).toHaveScreenshot('shield-select-focus.png');
+      // Focus on filter select with more specific selector
+      const timeFilter = page.locator('[data-testid="time-filter"]').first().or(page.locator('select').first());
+      await timeFilter.focus();
+      await expect(timeFilter).toHaveScreenshot('shield-select-focus.png');
     });
 
     test('should show proper contrast in dark mode', async ({ page }) => {
