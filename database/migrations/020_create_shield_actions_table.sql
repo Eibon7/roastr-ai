@@ -16,287 +16,10 @@ CREATE TABLE shield_actions (
     content_snippet TEXT, -- Store only first 100 chars for UI display
     platform VARCHAR(50) NOT NULL,
     reason VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    reverted_at TIMESTAMP WITH TIME ZONE NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    metadata JSONB DEFAULT '{}',
-    
-    -- Enhanced constraints with temporal integrity validation
-    CONSTRAINT shield_actions_org_id_check CHECK (organization_id IS NOT NULL),
-    CONSTRAINT shield_actions_action_type_check CHECK (action_type IN ('block', 'mute', 'flag', 'report')),
-    CONSTRAINT shield_actions_platform_check CHECK (platform IN ('twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky')),
-    CONSTRAINT shield_actions_reason_check CHECK (reason IN ('toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate')),
-    
-    -- Temporal integrity constraints (CodeRabbit Round 2 enhancement)
-    CONSTRAINT shield_actions_temporal_integrity CHECK (
-        created_at <= COALESCE(reverted_at, NOW() + INTERVAL '1 hour') AND
-        created_at <= COALESCE(updated_at, NOW() + INTERVAL '1 hour') AND
-        COALESCE(reverted_at, '1970-01-01') >= created_at
-    ),
-    
-    -- Content snippet length validation
-    CONSTRAINT shield_actions_snippet_length CHECK (LENGTH(content_snippet) <= 100),
-    
-    -- Hash format validation (64-character hex)
-    CONSTRAINT shield_actions_hash_format CHECK (content_hash ~ '^[a-fA-F0-9]{64}$')
-);
-
--- Enhanced indexes with partial indexing for performance (CodeRabbit Round 2)
-CREATE INDEX idx_shield_actions_org_id ON shield_actions(organization_id);
-CREATE INDEX idx_shield_actions_created_at ON shield_actions(created_at DESC);
-CREATE INDEX idx_shield_actions_platform ON shield_actions(platform);
-CREATE INDEX idx_shield_actions_reason ON shield_actions(reason);
-
--- Partial indexes for active (non-reverted) actions only - major performance improvement
-CREATE INDEX idx_shield_actions_active ON shield_actions(organization_id, created_at DESC) WHERE reverted_at IS NULL;
-CREATE INDEX idx_shield_actions_active_platform ON shield_actions(organization_id, platform) WHERE reverted_at IS NULL;
-CREATE INDEX idx_shield_actions_active_reason ON shield_actions(organization_id, reason) WHERE reverted_at IS NULL;
-
--- Composite indexes for common filter combinations
-CREATE INDEX idx_shield_actions_org_created ON shield_actions(organization_id, created_at DESC);
-CREATE INDEX idx_shield_actions_org_reason ON shield_actions(organization_id, reason);
-CREATE INDEX idx_shield_actions_org_platform_reason ON shield_actions(organization_id, platform, reason);
-
--- Hash-based index for content deduplication
-CREATE INDEX idx_shield_actions_content_hash ON shield_actions(content_hash);
-
--- Enable Row Level Security
-ALTER TABLE shield_actions ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Organizations can only access their own shield actions" ON shield_actions;
-DROP POLICY IF EXISTS "Organizations can only insert their own shield actions" ON shield_actions;
-DROP POLICY IF EXISTS "Organizations can only update their own shield actions" ON shield_actions;
-
--- Enhanced RLS policies with attack vector prevention (CodeRabbit Round 2)
-CREATE POLICY "Organizations can only access their own shield actions"
-ON shield_actions FOR SELECT
-USING (
-    organization_id = (SELECT auth.jwt() ->> 'org_id')::UUID
-    AND organization_id IS NOT NULL -- Prevent null organization access
-);
-
-CREATE POLICY "Organizations can only insert their own shield actions"
-ON shield_actions FOR INSERT
-WITH CHECK (
-    organization_id = (SELECT auth.jwt() ->> 'org_id')::UUID
-    AND organization_id IS NOT NULL -- Prevent null organization insertion
-    AND created_at <= NOW() + INTERVAL '1 minute' -- Prevent future-dated entries
-);
-
-CREATE POLICY "Organizations can only update their own shield actions"
-ON shield_actions FOR UPDATE
-USING (
-    organization_id = (SELECT auth.jwt() ->> 'org_id')::UUID
-    AND organization_id IS NOT NULL
-)
-WITH CHECK (
-    organization_id = (SELECT auth.jwt() ->> 'org_id')::UUID
-    AND organization_id IS NOT NULL
-    AND updated_at >= created_at -- Ensure updated_at is after created_at
-);
-
--- Enhanced organization-scoped feature flags (CodeRabbit Round 2)
-CREATE TABLE IF NOT EXISTS organization_feature_flags (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    flag_name VARCHAR(100) NOT NULL,
-    enabled BOOLEAN DEFAULT false,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
-    -- Unique constraint per organization
-    CONSTRAINT unique_org_feature_flag UNIQUE(organization_id, flag_name),
-    
-    -- Validation constraints
-    CONSTRAINT feature_flag_name_format CHECK (flag_name ~ '^[A-Z_][A-Z0-9_]*$'),
-    CONSTRAINT feature_flag_org_not_null CHECK (organization_id IS NOT NULL)
-);
-
--- Indexes for organization feature flags
-CREATE INDEX idx_org_feature_flags_org_id ON organization_feature_flags(organization_id);
-CREATE INDEX idx_org_feature_flags_name ON organization_feature_flags(flag_name);
-CREATE INDEX idx_org_feature_flags_enabled ON organization_feature_flags(enabled) WHERE enabled = true;
-
--- Enable RLS for organization feature flags
-ALTER TABLE organization_feature_flags ENABLE ROW LEVEL SECURITY;
-
--- RLS policies for organization feature flags
-CREATE POLICY "Organizations can only access their own feature flags"
-ON organization_feature_flags FOR ALL
-USING (organization_id = (SELECT auth.jwt() ->> 'org_id')::UUID)
-WITH CHECK (organization_id = (SELECT auth.jwt() ->> 'org_id')::UUID);
-
--- GDPR compliance functions (CodeRabbit Round 2)
-CREATE OR REPLACE FUNCTION hash_content_for_gdpr(content TEXT)
-RETURNS VARCHAR(64)
-LANGUAGE plpgsql
-IMMUTABLE
-SECURITY DEFINER
-AS $$
-BEGIN
-    -- Return SHA-256 hash for GDPR compliance
-    RETURN encode(digest(content, 'sha256'), 'hex');
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION create_content_snippet(content TEXT)
-RETURNS TEXT
-LANGUAGE plpgsql
-IMMUTABLE
-SECURITY DEFINER
-AS $$
-BEGIN
-    -- Return first 100 characters for UI display
-    IF LENGTH(content) <= 100 THEN
-        RETURN content;
-    ELSE
-        RETURN SUBSTRING(content FROM 1 FOR 97) || '...';
-    END IF;
-END;
-$$;
-
--- Audit trigger for shield actions (CodeRabbit Round 2)
-CREATE OR REPLACE FUNCTION shield_actions_audit_trigger()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-    -- Update timestamp on any change
-    NEW.updated_at = NOW();
-    
-    -- Validate temporal consistency
-    IF NEW.reverted_at IS NOT NULL AND NEW.reverted_at < NEW.created_at THEN
-        RAISE EXCEPTION 'reverted_at cannot be before created_at';
-    END IF;
-    
-    -- Log security-relevant changes
-    IF TG_OP = 'UPDATE' AND OLD.reverted_at IS NULL AND NEW.reverted_at IS NOT NULL THEN
-        INSERT INTO audit_log (table_name, record_id, action, old_values, new_values, user_id, organization_id)
-        VALUES (
-            'shield_actions',
-            NEW.id,
-            'REVERT',
-            jsonb_build_object('reverted_at', OLD.reverted_at),
-            jsonb_build_object('reverted_at', NEW.reverted_at),
-            (SELECT auth.jwt() ->> 'sub')::UUID,
-            NEW.organization_id
-        );
-    END IF;
-    
-    RETURN NEW;
-END;
-$$;
-
--- Create audit trigger
-DROP TRIGGER IF EXISTS shield_actions_audit ON shield_actions;
-CREATE TRIGGER shield_actions_audit
-    BEFORE UPDATE ON shield_actions
-    FOR EACH ROW
-    EXECUTE FUNCTION shield_actions_audit_trigger();
-
--- Create updated_at trigger
-CREATE OR REPLACE FUNCTION shield_actions_update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS update_shield_actions_updated_at ON shield_actions;
-CREATE TRIGGER update_shield_actions_updated_at
-    BEFORE UPDATE ON shield_actions
-    FOR EACH ROW
-    EXECUTE FUNCTION shield_actions_update_updated_at_column();
-
--- Insert default organization feature flags for Shield UI
-INSERT INTO organization_feature_flags (organization_id, flag_name, enabled, description)
-SELECT 
-    id, 
-    'ENABLE_SHIELD_UI', 
-    false, 
-    'Enable Shield UI interface for viewing and managing moderation actions'
-FROM organizations
-ON CONFLICT (organization_id, flag_name) DO NOTHING;
-
--- Performance monitoring view (CodeRabbit Round 2)
-CREATE OR REPLACE VIEW shield_performance_metrics AS
-SELECT 
-    organization_id,
-    COUNT(*) as total_actions,
-    COUNT(*) FILTER (WHERE reverted_at IS NULL) as active_actions,
-    COUNT(*) FILTER (WHERE reverted_at IS NOT NULL) as reverted_actions,
-    COUNT(DISTINCT platform) as platforms_used,
-    COUNT(DISTINCT reason) as reasons_used,
-    AVG(EXTRACT(EPOCH FROM (COALESCE(reverted_at, NOW()) - created_at))) as avg_action_duration_seconds,
-    MIN(created_at) as first_action,
-    MAX(created_at) as last_action
-FROM shield_actions
-GROUP BY organization_id;
-
--- Grant appropriate permissions
-GRANT SELECT ON shield_performance_metrics TO authenticated;
-
--- Enhanced comments for documentation (CodeRabbit Round 2)
-COMMENT ON TABLE shield_actions IS 'Enhanced Shield automated moderation actions with temporal integrity and security constraints';
-COMMENT ON COLUMN shield_actions.id IS 'Unique identifier for the shield action';
-COMMENT ON COLUMN shield_actions.organization_id IS 'Organization that owns this action (for multi-tenant isolation)';
-COMMENT ON COLUMN shield_actions.action_type IS 'Type of action taken: block, mute, flag, or report';
-COMMENT ON COLUMN shield_actions.content_hash IS 'SHA-256 hash of the original content for GDPR compliance';
-COMMENT ON COLUMN shield_actions.content_snippet IS 'First 100 characters of content for UI display (max 100 chars)';
-COMMENT ON COLUMN shield_actions.platform IS 'Social media platform where the action was taken';
-COMMENT ON COLUMN shield_actions.reason IS 'Categorization of why the action was taken';
-COMMENT ON COLUMN shield_actions.created_at IS 'When the action was originally taken (cannot be in future)';
-COMMENT ON COLUMN shield_actions.reverted_at IS 'When the action was reverted (must be after created_at)';
-COMMENT ON COLUMN shield_actions.updated_at IS 'When the record was last updated (auto-managed)';
-COMMENT ON COLUMN shield_actions.metadata IS 'Additional data about the action (JSON format)';
-
-COMMENT ON TABLE organization_feature_flags IS 'Organization-scoped feature flags for multi-tenant feature management';
-COMMENT ON FUNCTION hash_content_for_gdpr(TEXT) IS 'GDPR-compliant content hashing function';
-COMMENT ON FUNCTION create_content_snippet(TEXT) IS 'Creates safe content snippets for UI display';
-COMMENT ON VIEW shield_performance_metrics IS 'Performance and usage metrics for Shield actions per organization';
-
--- Security notes (CodeRabbit Round 2)
--- 1. Temporal integrity constraints prevent data inconsistencies
--- 2. Partial indexes improve query performance for active records
--- 3. Organization-scoped feature flags enable granular feature control
--- 4. GDPR compliance functions ensure data privacy
--- 5. Audit triggers provide security event logging
--- 6. RLS policies prevent cross-organization data access
--- 7. Content hash validation prevents malformed data insertion
--- Created: 2025-01-21
--- Description: Add simplified Shield UI table with CodeRabbit Round 2 improvements
--- 
--- This creates a simplified shield_actions table specifically for the Shield UI
--- interface, separate from the main shield_events table used by the worker system.
-
--- ============================================================================
--- ENSURE REQUIRED EXTENSIONS
--- ============================================================================
-
--- Ensure pgcrypto extension for gen_random_uuid()
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- ============================================================================
--- SHIELD ACTIONS TABLE (UI-focused)
--- ============================================================================
-
--- Create shield_actions table for UI display
-CREATE TABLE IF NOT EXISTS shield_actions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    action_type VARCHAR(50) NOT NULL,
-    content_hash VARCHAR(64) NOT NULL, -- Store hash instead of full content for GDPR
-    content_snippet TEXT CHECK (LENGTH(content_snippet) <= 100), -- Store only first 100 chars for UI display
-    platform VARCHAR(50) NOT NULL,
-    reason VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 6: NOT NULL enforced
     reverted_at TIMESTAMP WITH TIME ZONE NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 6: NOT NULL enforced
-    metadata JSONB DEFAULT '{}' CHECK (jsonb_typeof(metadata) = 'object'), -- Validate metadata is object
+    metadata JSONB DEFAULT '{}',
     
     -- Enhanced temporal integrity constraints (CodeRabbit Round 6)
     CONSTRAINT shield_actions_temporal_integrity CHECK (
@@ -316,7 +39,10 @@ CREATE TABLE IF NOT EXISTS shield_actions (
     CONSTRAINT shield_actions_platform_check CHECK (platform IN ('twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky')),
     CONSTRAINT shield_actions_reason_check CHECK (reason IN ('toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate')),
     CONSTRAINT shield_actions_content_hash_check CHECK (LENGTH(content_hash) >= 32),
-    CONSTRAINT shield_actions_content_snippet_length CHECK (content_snippet IS NULL OR LENGTH(content_snippet) <= 100)
+    CONSTRAINT shield_actions_content_snippet_length CHECK (content_snippet IS NULL OR LENGTH(content_snippet) <= 100),
+    
+    -- Metadata validation (CodeRabbit Round 6)
+    CONSTRAINT shield_actions_metadata_object CHECK (jsonb_typeof(metadata) = 'object')
 );
 
 -- ============================================================================
@@ -346,8 +72,9 @@ CREATE INDEX IF NOT EXISTS idx_shield_actions_org_platform ON shield_actions(org
 -- Additional performance indexes for timestamp queries (Round 4 feedback)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_timestamps ON shield_actions(created_at DESC, updated_at DESC) WHERE reverted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_shield_actions_org_time_range ON shield_actions(organization_id, created_at DESC, action_type);
-CREATE INDEX IF NOT EXISTS idx_shield_actions_recent_active ON shield_actions(organization_id, created_at DESC) 
-    WHERE reverted_at IS NULL AND created_at >= NOW() - INTERVAL '30 days';
+
+-- Hash-based index for content deduplication
+CREATE INDEX IF NOT EXISTS idx_shield_actions_content_hash ON shield_actions(content_hash);
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS) - Enhanced (CodeRabbit feedback)
@@ -446,9 +173,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Add updated_at column if it doesn't exist
--- Note: column already exists from table definition above
 
 -- Create trigger for updated_at
 DROP TRIGGER IF EXISTS update_shield_actions_updated_at ON shield_actions;
@@ -582,3 +306,17 @@ COMMENT ON COLUMN shield_actions.metadata IS 'Additional data about the action (
 -- Add table-level comment for GDPR compliance
 COMMENT ON CONSTRAINT shield_actions_temporal_integrity ON shield_actions IS 'Ensures temporal integrity: created_at <= reverted_at, created_at <= updated_at';
 COMMENT ON CONSTRAINT shield_actions_content_snippet_length ON shield_actions IS 'GDPR compliance: content snippet limited to 100 characters for UI display';
+
+-- ============================================================================
+-- AUDIT AND SECURITY NOTES
+-- ============================================================================
+
+-- Security notes (CodeRabbit Round 6)
+-- 1. Enhanced temporal integrity constraints with 5-minute clock skew tolerance
+-- 2. Performance-optimized partial indexes for active/reverted actions
+-- 3. Organization-scoped feature flags for granular control
+-- 4. GDPR compliance functions with automated data lifecycle management
+-- 5. Enhanced audit triggers for security event logging
+-- 6. Stronger RLS policies using organization_members lookup
+-- 7. Content hash validation and metadata type enforcement
+-- 8. Comprehensive constraint validation for data integrity
