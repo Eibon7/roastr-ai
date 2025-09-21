@@ -19,6 +19,9 @@ class TierValidationService {
         // Cache for performance
         this.usageCache = new Map();
         this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+        
+        // CodeRabbit Round 3 - Supported platforms for validation
+        this.SUPPORTED_PLATFORMS = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
     }
 
     /**
@@ -68,11 +71,18 @@ class TierValidationService {
                 };
             }
             
-            // Default to allowing the action on error to avoid blocking users
+            // CodeRabbit Round 3 - Fail-closed security model with environment override
+            const failOpen = process.env.TIER_VALIDATION_FAIL_OPEN === 'true';
+            if (failOpen) {
+                logger.warn('Tier validation failing open due to TIER_VALIDATION_FAIL_OPEN=true');
+                return { allowed: true, reason: 'Validation error - failing open (configured)', fallback: true };
+            }
+            
+            // Default fail-closed behavior for security
             return { 
-                allowed: true, 
-                error: 'Validation service temporarily unavailable',
-                fallback: true 
+                allowed: false, 
+                reason: 'Validation error - failing closed for security',
+                error: 'Validation service temporarily unavailable'
             };
         }
     }
@@ -106,18 +116,27 @@ class TierValidationService {
      */
     checkActionLimits(action, tierLimits, currentUsage, options) {
         switch (action) {
-            case 'analysis':
+            case 'analysis': {
                 return this.checkAnalysisLimits(tierLimits, currentUsage);
+            }
             
-            case 'roast':
+            case 'roast': {
                 return this.checkRoastLimits(tierLimits, currentUsage);
+            }
             
-            case 'platform_add':
+            case 'platform_add': {
                 const { platform } = options;
                 return this.checkPlatformLimits(tierLimits, currentUsage, platform);
+            }
             
-            default:
-                return { allowed: true, reason: 'Unknown action type' };
+            default: {
+                // CodeRabbit Round 3 - Deny unknown action types for security
+                return { 
+                    allowed: false, 
+                    reason: 'unknown_action_type',
+                    message: `Action type '${action}' is not supported`
+                };
+            }
         }
     }
 
@@ -174,8 +193,27 @@ class TierValidationService {
      * @private
      */
     checkPlatformLimits(tierLimits, currentUsage, platform) {
+        // CodeRabbit Round 3 - Enhanced platform validation
+        if (!platform || typeof platform !== 'string') {
+            return {
+                allowed: false,
+                reason: 'invalid_platform_parameter',
+                message: 'Platform parameter is required and must be a valid string'
+            };
+        }
+
+        const normalizedPlatform = platform.toLowerCase().trim();
+        if (!this.SUPPORTED_PLATFORMS.includes(normalizedPlatform)) {
+            return {
+                allowed: false,
+                reason: 'unsupported_platform',
+                message: `Platform '${platform}' is not supported. Supported platforms: ${this.SUPPORTED_PLATFORMS.join(', ')}`,
+                supportedPlatforms: this.SUPPORTED_PLATFORMS
+            };
+        }
+
         const platformLimit = tierLimits.integrationsLimit;
-        const currentAccounts = currentUsage.platformAccounts?.[platform] || 0;
+        const currentAccounts = currentUsage.platformAccounts?.[normalizedPlatform] || 0;
 
         if (platformLimit === -1) {
             return { allowed: true }; // Unlimited
@@ -185,7 +223,7 @@ class TierValidationService {
             return {
                 allowed: false,
                 reason: 'platform_account_limit_exceeded',
-                message: this.getPlatformLimitMessage(platform, platformLimit, currentAccounts),
+                message: this.getPlatformLimitMessage(normalizedPlatform, platformLimit, currentAccounts),
                 upgradeRequired: this.getUpgradeRecommendation('platform', platformLimit)
             };
         }
@@ -500,21 +538,28 @@ class TierValidationService {
     }
 
     /**
-     * Reset usage counters (for upgrades)
+     * Reset usage counters (for upgrades) - CodeRabbit Round 3: Non-destructive resets
      * @private
      */
     async resetUsageCounters(userId) {
-        const cycleStart = new Date().toISOString();
+        const resetTimestamp = new Date().toISOString();
         
-        // Reset in analysis_usage table
+        // CodeRabbit Round 3 - Non-destructive usage reset using reset markers
         await supabaseServiceClient
-            .from('analysis_usage')
-            .update({ quantity: 0, updated_at: cycleStart })
-            .eq('user_id', userId)
-            .gte('created_at', this.getMonthStart().toISOString());
+            .from('usage_resets')
+            .insert({
+                user_id: userId,
+                reset_type: 'tier_upgrade',
+                reset_timestamp: resetTimestamp,
+                reason: 'Tier upgrade - usage limits reset immediately'
+            });
 
-        // Note: roast count comes from user_activities which we don't reset
-        // but we track cycle start for counting
+        // Note: Historical data is preserved - usage counting will consider reset markers
+        logger.info('Non-destructive usage reset applied', {
+            userId,
+            resetTimestamp,
+            resetType: 'tier_upgrade'
+        });
     }
 
     /**

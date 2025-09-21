@@ -32,6 +32,14 @@ CREATE INDEX idx_analysis_usage_user_cycle ON analysis_usage(user_id, billing_cy
 CREATE INDEX idx_analysis_usage_created_at ON analysis_usage(created_at);
 CREATE INDEX idx_analysis_usage_platform ON analysis_usage(platform, created_at);
 
+-- CodeRabbit Round 3 - Unique constraint to prevent race conditions
+CREATE UNIQUE INDEX idx_analysis_usage_unique_constraint ON analysis_usage(
+    user_id, 
+    billing_cycle_start, 
+    analysis_type, 
+    COALESCE(platform, '')
+);
+
 -- ============================================================================
 -- USAGE RESETS TABLE (CodeRabbit Round 2 - Non-destructive resets)
 -- ============================================================================
@@ -220,44 +228,32 @@ BEGIN
         v_cycle_end := (DATE_TRUNC('month', NOW()) + INTERVAL '1 month')::DATE;
     END IF;
     
-    -- Atomic upsert operation
-    BEGIN
-        -- Try to update existing record for this cycle
-        UPDATE analysis_usage 
-        SET 
-            quantity = quantity + p_quantity,
-            updated_at = NOW()
-        WHERE user_id = p_user_id 
-            AND billing_cycle_start = v_cycle_start
-            AND analysis_type = p_analysis_type
-            AND (platform = v_platform_validated OR (platform IS NULL AND v_platform_validated IS NULL))
-        RETURNING id INTO v_existing_id;
+    -- CodeRabbit Round 3 - Atomic upsert operation with ON CONFLICT
+    INSERT INTO analysis_usage (
+        user_id, 
+        quantity, 
+        analysis_type, 
+        platform,
+        billing_cycle_start, 
+        billing_cycle_end
+    ) VALUES (
+        p_user_id, 
+        p_quantity, 
+        p_analysis_type, 
+        v_platform_validated,
+        v_cycle_start, 
+        v_cycle_end
+    )
+    ON CONFLICT (user_id, billing_cycle_start, analysis_type, COALESCE(platform, ''))
+    DO UPDATE SET 
+        quantity = analysis_usage.quantity + p_quantity,
+        updated_at = NOW();
         
-        -- Insert new record if none exists
-        IF v_existing_id IS NULL THEN
-            INSERT INTO analysis_usage (
-                user_id, 
-                quantity, 
-                analysis_type, 
-                platform,
-                billing_cycle_start, 
-                billing_cycle_end
-            ) VALUES (
-                p_user_id, 
-                p_quantity, 
-                p_analysis_type, 
-                v_platform_validated,
-                v_cycle_start, 
-                v_cycle_end
-            );
-        END IF;
-        
-        RETURN TRUE;
-        
-    EXCEPTION
-        WHEN OTHERS THEN
-            RAISE EXCEPTION 'Failed to record analysis usage: %', SQLERRM;
-    END;
+    RETURN TRUE;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Failed to record analysis usage: %', SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
 
