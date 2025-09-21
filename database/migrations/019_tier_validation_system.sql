@@ -1,5 +1,5 @@
--- Migration: Tier Validation System - SPEC 10
--- Implements usage tracking and plan change management for tier limits
+-- Migration: Tier Validation System - SPEC 10 (CodeRabbit Round 2 Enhanced)
+-- Implements usage tracking and plan change management for tier limits with atomic operations
 
 -- ============================================================================
 -- ANALYSIS USAGE TRACKING TABLE
@@ -31,6 +31,30 @@ CREATE TABLE IF NOT EXISTS analysis_usage (
 CREATE INDEX idx_analysis_usage_user_cycle ON analysis_usage(user_id, billing_cycle_start, billing_cycle_end);
 CREATE INDEX idx_analysis_usage_created_at ON analysis_usage(created_at);
 CREATE INDEX idx_analysis_usage_platform ON analysis_usage(platform, created_at);
+
+-- ============================================================================
+-- USAGE RESETS TABLE (CodeRabbit Round 2 - Non-destructive resets)
+-- ============================================================================
+
+-- Table to track usage resets for tier upgrades (preserves historical data)
+CREATE TABLE IF NOT EXISTS usage_resets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- Reset details
+    reset_type VARCHAR(50) NOT NULL CHECK (reset_type IN ('tier_upgrade', 'manual_admin', 'billing_cycle')),
+    reset_timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    reason TEXT,
+    
+    -- Metadata
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID REFERENCES users(id)
+);
+
+-- Indexes for performance
+CREATE INDEX idx_usage_resets_user_timestamp ON usage_resets(user_id, reset_timestamp DESC);
+CREATE INDEX idx_usage_resets_type ON usage_resets(reset_type, reset_timestamp DESC);
 
 -- ============================================================================
 -- PENDING PLAN CHANGES TABLE
@@ -68,7 +92,7 @@ CREATE INDEX idx_pending_plan_changes_processing ON pending_plan_changes(process
 -- TIER USAGE SUMMARY VIEW
 -- ============================================================================
 
--- View for easy tier usage reporting
+-- View for easy tier usage reporting (considers reset markers)
 CREATE OR REPLACE VIEW tier_usage_summary AS
 SELECT 
     u.id as user_id,
@@ -80,7 +104,10 @@ SELECT
     COALESCE(s.current_period_start, DATE_TRUNC('month', NOW())) as cycle_start,
     COALESCE(s.current_period_end, DATE_TRUNC('month', NOW()) + INTERVAL '1 month') as cycle_end,
     
-    -- Usage counts
+    -- Latest reset timestamp (for non-destructive counting)
+    COALESCE(latest_reset.reset_timestamp, s.current_period_start, DATE_TRUNC('month', NOW())) as effective_cycle_start,
+    
+    -- Usage counts (from effective cycle start)
     COALESCE(roast_usage.roast_count, 0) as roasts_this_cycle,
     COALESCE(analysis_usage.analysis_count, 0) as analysis_this_cycle,
     COALESCE(platform_usage.platform_count, 0) as active_platforms,
@@ -110,25 +137,35 @@ FROM users u
 LEFT JOIN user_subscriptions s ON u.id = s.user_id
 LEFT JOIN plan_limits pl ON COALESCE(s.plan, 'free') = pl.plan_id
 LEFT JOIN (
-    -- Roast usage in current cycle
+    -- Latest reset marker per user
+    SELECT DISTINCT ON (user_id) 
+        user_id,
+        reset_timestamp
+    FROM usage_resets 
+    ORDER BY user_id, reset_timestamp DESC
+) latest_reset ON u.id = latest_reset.user_id
+LEFT JOIN (
+    -- Roast usage from effective cycle start
     SELECT 
         user_id,
         COUNT(*) as roast_count
     FROM user_activities 
     WHERE activity_type = 'roast_generated'
         AND created_at >= COALESCE(
+            (SELECT reset_timestamp FROM usage_resets WHERE user_id = user_activities.user_id ORDER BY reset_timestamp DESC LIMIT 1),
             (SELECT current_period_start FROM user_subscriptions WHERE user_id = user_activities.user_id),
             DATE_TRUNC('month', NOW())
         )
     GROUP BY user_id
 ) roast_usage ON u.id = roast_usage.user_id
 LEFT JOIN (
-    -- Analysis usage in current cycle
+    -- Analysis usage from effective cycle start
     SELECT 
         user_id,
         SUM(quantity) as analysis_count
     FROM analysis_usage
     WHERE created_at >= COALESCE(
+        (SELECT reset_timestamp FROM usage_resets WHERE user_id = analysis_usage.user_id ORDER BY reset_timestamp DESC LIMIT 1),
         (SELECT current_period_start FROM user_subscriptions WHERE user_id = analysis_usage.user_id),
         DATE_TRUNC('month', NOW())
     )
@@ -145,10 +182,10 @@ LEFT JOIN (
 ) platform_usage ON u.id = platform_usage.user_id;
 
 -- ============================================================================
--- FUNCTIONS FOR TIER VALIDATION
+-- FUNCTIONS FOR TIER VALIDATION (CodeRabbit Round 2 - Atomic operations)
 -- ============================================================================
 
--- Function to record analysis usage
+-- Function to record analysis usage (atomic)
 CREATE OR REPLACE FUNCTION record_analysis_usage(
     p_user_id UUID,
     p_quantity INTEGER DEFAULT 1,
@@ -159,7 +196,16 @@ DECLARE
     v_cycle_start DATE;
     v_cycle_end DATE;
     v_existing_id UUID;
+    v_platform_validated VARCHAR(50);
 BEGIN
+    -- CodeRabbit Round 2 - Platform validation
+    IF p_platform IS NOT NULL THEN
+        v_platform_validated := LOWER(TRIM(p_platform));
+        IF v_platform_validated NOT IN ('twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky') THEN
+            RAISE EXCEPTION 'Unsupported platform: %. Supported platforms: twitter, youtube, instagram, facebook, discord, twitch, reddit, tiktok, bluesky', p_platform;
+        END IF;
+    END IF;
+
     -- Get user's billing cycle
     SELECT 
         COALESCE(current_period_start::DATE, DATE_TRUNC('month', NOW())::DATE),
@@ -174,41 +220,48 @@ BEGIN
         v_cycle_end := (DATE_TRUNC('month', NOW()) + INTERVAL '1 month')::DATE;
     END IF;
     
-    -- Try to update existing record for this cycle
-    UPDATE analysis_usage 
-    SET 
-        quantity = quantity + p_quantity,
-        updated_at = NOW()
-    WHERE user_id = p_user_id 
-        AND billing_cycle_start = v_cycle_start
-        AND analysis_type = p_analysis_type
-        AND (platform = p_platform OR (platform IS NULL AND p_platform IS NULL))
-    RETURNING id INTO v_existing_id;
-    
-    -- Insert new record if none exists
-    IF v_existing_id IS NULL THEN
-        INSERT INTO analysis_usage (
-            user_id, 
-            quantity, 
-            analysis_type, 
-            platform,
-            billing_cycle_start, 
-            billing_cycle_end
-        ) VALUES (
-            p_user_id, 
-            p_quantity, 
-            p_analysis_type, 
-            p_platform,
-            v_cycle_start, 
-            v_cycle_end
-        );
-    END IF;
-    
-    RETURN TRUE;
+    -- Atomic upsert operation
+    BEGIN
+        -- Try to update existing record for this cycle
+        UPDATE analysis_usage 
+        SET 
+            quantity = quantity + p_quantity,
+            updated_at = NOW()
+        WHERE user_id = p_user_id 
+            AND billing_cycle_start = v_cycle_start
+            AND analysis_type = p_analysis_type
+            AND (platform = v_platform_validated OR (platform IS NULL AND v_platform_validated IS NULL))
+        RETURNING id INTO v_existing_id;
+        
+        -- Insert new record if none exists
+        IF v_existing_id IS NULL THEN
+            INSERT INTO analysis_usage (
+                user_id, 
+                quantity, 
+                analysis_type, 
+                platform,
+                billing_cycle_start, 
+                billing_cycle_end
+            ) VALUES (
+                p_user_id, 
+                p_quantity, 
+                p_analysis_type, 
+                v_platform_validated,
+                v_cycle_start, 
+                v_cycle_end
+            );
+        END IF;
+        
+        RETURN TRUE;
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE EXCEPTION 'Failed to record analysis usage: %', SQLERRM;
+    END;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to check tier limits
+-- Function to check tier limits (atomic with proper error handling)
 CREATE OR REPLACE FUNCTION check_tier_limit(
     p_user_id UUID,
     p_limit_type VARCHAR(50),
@@ -220,7 +273,17 @@ DECLARE
     v_current_usage INTEGER;
     v_limit INTEGER;
     v_cycle_start TIMESTAMPTZ;
+    v_reset_timestamp TIMESTAMPTZ;
 BEGIN
+    -- Input validation
+    IF p_user_id IS NULL THEN
+        RAISE EXCEPTION 'User ID cannot be null';
+    END IF;
+    
+    IF p_limit_type NOT IN ('analysis', 'roast', 'platform') THEN
+        RAISE EXCEPTION 'Invalid limit type: %. Valid types: analysis, roast, platform', p_limit_type;
+    END IF;
+
     -- Get user plan
     SELECT COALESCE(plan, 'free') INTO v_user_plan
     FROM user_subscriptions 
@@ -235,15 +298,16 @@ BEGIN
     FROM plan_limits pl
     WHERE plan_id = v_user_plan;
     
-    -- Get billing cycle start
-    SELECT COALESCE(current_period_start, DATE_TRUNC('month', NOW()))
-    INTO v_cycle_start
-    FROM user_subscriptions 
-    WHERE user_id = p_user_id;
-    
-    IF v_cycle_start IS NULL THEN
-        v_cycle_start := DATE_TRUNC('month', NOW());
+    IF v_plan_limits IS NULL THEN
+        RAISE EXCEPTION 'Plan limits not found for plan: %', v_user_plan;
     END IF;
+    
+    -- Get effective cycle start (considering resets)
+    SELECT COALESCE(
+        (SELECT reset_timestamp FROM usage_resets WHERE user_id = p_user_id ORDER BY reset_timestamp DESC LIMIT 1),
+        (SELECT current_period_start FROM user_subscriptions WHERE user_id = p_user_id),
+        DATE_TRUNC('month', NOW())
+    ) INTO v_cycle_start;
     
     -- Check specific limit type
     CASE p_limit_type
@@ -271,7 +335,7 @@ BEGIN
                 
         ELSE
             RETURN jsonb_build_object(
-                'allowed', true,
+                'allowed', false,
                 'reason', 'unknown_limit_type'
             );
     END CASE;
@@ -281,7 +345,8 @@ BEGIN
         RETURN jsonb_build_object(
             'allowed', true,
             'current_usage', v_current_usage,
-            'limit', 'unlimited'
+            'limit', 'unlimited',
+            'plan', v_user_plan
         );
     END IF;
     
@@ -307,7 +372,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
--- Function to process pending plan changes
+-- Function to process pending plan changes (atomic)
 CREATE OR REPLACE FUNCTION process_pending_plan_changes()
 RETURNS INTEGER AS $$
 DECLARE
@@ -320,45 +385,66 @@ BEGIN
         WHERE NOT processed 
             AND effective_date <= NOW()
         ORDER BY effective_date ASC
+        FOR UPDATE -- Lock rows to prevent race conditions
     LOOP
-        -- Update user subscription
-        UPDATE user_subscriptions 
-        SET 
-            plan = v_change.new_plan,
-            updated_at = NOW()
-        WHERE user_id = v_change.user_id;
-        
-        -- Mark as processed
-        UPDATE pending_plan_changes 
-        SET 
-            processed = TRUE,
-            processed_at = NOW()
-        WHERE id = v_change.id;
-        
-        v_processed_count := v_processed_count + 1;
-        
-        -- Log the change
-        INSERT INTO user_activities (
-            user_id,
-            activity_type,
-            details
-        ) VALUES (
-            v_change.user_id,
-            'plan_change_processed',
-            jsonb_build_object(
-                'old_plan', v_change.current_plan,
-                'new_plan', v_change.new_plan,
-                'change_type', v_change.change_type,
-                'scheduled_date', v_change.effective_date
-            )
-        );
+        BEGIN
+            -- Update user subscription
+            UPDATE user_subscriptions 
+            SET 
+                plan = v_change.new_plan,
+                updated_at = NOW()
+            WHERE user_id = v_change.user_id;
+            
+            -- Mark as processed
+            UPDATE pending_plan_changes 
+            SET 
+                processed = TRUE,
+                processed_at = NOW()
+            WHERE id = v_change.id;
+            
+            v_processed_count := v_processed_count + 1;
+            
+            -- Log the change
+            INSERT INTO user_activities (
+                user_id,
+                activity_type,
+                details
+            ) VALUES (
+                v_change.user_id,
+                'plan_change_processed',
+                jsonb_build_object(
+                    'old_plan', v_change.current_plan,
+                    'new_plan', v_change.new_plan,
+                    'change_type', v_change.change_type,
+                    'scheduled_date', v_change.effective_date
+                )
+            );
+            
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Log error but continue processing other changes
+                INSERT INTO user_activities (
+                    user_id,
+                    activity_type,
+                    details
+                ) VALUES (
+                    v_change.user_id,
+                    'plan_change_failed',
+                    jsonb_build_object(
+                        'error', SQLERRM,
+                        'change_id', v_change.id,
+                        'old_plan', v_change.current_plan,
+                        'new_plan', v_change.new_plan
+                    )
+                );
+        END;
     END LOOP;
     
     RETURN v_processed_count;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to process immediate tier upgrade
+-- Function to process immediate tier upgrade (CodeRabbit Round 2 - Atomic operations)
 CREATE OR REPLACE FUNCTION process_tier_upgrade(
     p_user_id UUID,
     p_new_tier VARCHAR(50),
@@ -368,50 +454,88 @@ CREATE OR REPLACE FUNCTION process_tier_upgrade(
 ) RETURNS JSONB AS $$
 DECLARE
     v_result JSONB;
+    v_reset_id UUID;
 BEGIN
-    -- Update user subscription immediately
-    UPDATE user_subscriptions 
-    SET 
-        plan = p_new_tier,
-        updated_at = NOW()
-    WHERE user_id = p_user_id;
-    
-    -- Reset usage counters for current billing cycle
-    UPDATE analysis_usage 
-    SET 
-        quantity = 0,
-        updated_at = NOW()
-    WHERE user_id = p_user_id 
-        AND billing_cycle_start <= CURRENT_DATE
-        AND billing_cycle_end >= CURRENT_DATE;
-    
-    -- Log the upgrade
-    INSERT INTO user_activities (
-        user_id,
-        activity_type,
-        details
-    ) VALUES (
-        p_user_id,
-        'tier_upgrade_processed',
-        jsonb_build_object(
+    -- CodeRabbit Round 2 - Atomic transaction with proper error handling
+    BEGIN
+        -- Validate inputs
+        IF p_user_id IS NULL THEN
+            RAISE EXCEPTION 'User ID cannot be null';
+        END IF;
+        
+        IF p_new_tier IS NULL OR p_current_tier IS NULL THEN
+            RAISE EXCEPTION 'Tier values cannot be null';
+        END IF;
+        
+        -- Update user subscription immediately (atomic operation)
+        UPDATE user_subscriptions 
+        SET 
+            plan = p_new_tier,
+            updated_at = NOW()
+        WHERE user_id = p_user_id;
+        
+        -- Check if update affected any rows
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'User subscription not found for user_id: %', p_user_id;
+        END IF;
+        
+        -- CodeRabbit Round 2 - Non-destructive usage reset using reset markers
+        INSERT INTO usage_resets (
+            user_id,
+            reset_type,
+            reset_timestamp,
+            reason,
+            metadata,
+            created_by
+        ) VALUES (
+            p_user_id,
+            'tier_upgrade',
+            NOW(),
+            'Tier upgrade from ' || p_current_tier || ' to ' || p_new_tier,
+            jsonb_build_object(
+                'old_tier', p_current_tier,
+                'new_tier', p_new_tier,
+                'triggered_by', p_triggered_by,
+                'metadata', p_metadata::jsonb
+            ),
+            p_user_id
+        ) RETURNING id INTO v_reset_id;
+        
+        -- Log the upgrade (atomic with above operations)
+        INSERT INTO user_activities (
+            user_id,
+            activity_type,
+            details
+        ) VALUES (
+            p_user_id,
+            'tier_upgrade_processed',
+            jsonb_build_object(
+                'old_tier', p_current_tier,
+                'new_tier', p_new_tier,
+                'triggered_by', p_triggered_by,
+                'metadata', p_metadata::jsonb,
+                'processed_at', NOW(),
+                'usage_reset_id', v_reset_id,
+                'reset_method', 'non_destructive'
+            )
+        );
+        
+        v_result := jsonb_build_object(
+            'success', true,
             'old_tier', p_current_tier,
             'new_tier', p_new_tier,
-            'triggered_by', p_triggered_by,
-            'metadata', p_metadata::jsonb,
             'processed_at', NOW(),
-            'usage_reset', true
-        )
-    );
-    
-    v_result := jsonb_build_object(
-        'success', true,
-        'old_tier', p_current_tier,
-        'new_tier', p_new_tier,
-        'processed_at', NOW(),
-        'usage_reset', true
-    );
-    
-    RETURN v_result;
+            'usage_reset_id', v_reset_id,
+            'reset_method', 'non_destructive'
+        );
+        
+        RETURN v_result;
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- Atomic rollback on any error
+            RAISE EXCEPTION 'Tier upgrade failed: %', SQLERRM;
+    END;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -430,6 +554,25 @@ CREATE POLICY "analysis_usage_user_policy" ON analysis_usage
 
 -- Admins can see all usage
 CREATE POLICY "analysis_usage_admin_policy" ON analysis_usage
+    FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE id = auth.uid() 
+            AND is_admin = true
+        )
+    );
+
+-- Enable RLS on usage_resets
+ALTER TABLE usage_resets ENABLE ROW LEVEL SECURITY;
+
+-- Users can only see their own resets
+CREATE POLICY "usage_resets_user_policy" ON usage_resets
+    FOR SELECT
+    USING (user_id = auth.uid());
+
+-- Admins can manage all resets
+CREATE POLICY "usage_resets_admin_policy" ON usage_resets
     FOR ALL
     USING (
         EXISTS (
@@ -459,32 +602,14 @@ CREATE POLICY "pending_plan_changes_admin_policy" ON pending_plan_changes
     );
 
 -- ============================================================================
--- SCHEDULED JOBS (commented for manual setup)
--- ============================================================================
-
--- Note: These would typically be set up as cron jobs or scheduled functions
--- SELECT cron.schedule('process-plan-changes', '0 0 * * *', 'SELECT process_pending_plan_changes()');
-
--- ============================================================================
--- SAMPLE DATA FOR TESTING
--- ============================================================================
-
--- Insert sample analysis usage (only in development)
-DO $$
-BEGIN
-    IF current_setting('app.environment', true) = 'development' THEN
-        -- Sample usage data would go here
-        RAISE NOTICE 'Sample data not inserted in production';
-    END IF;
-END $$;
-
--- ============================================================================
 -- COMMENTS FOR DOCUMENTATION  
 -- ============================================================================
 
 COMMENT ON TABLE analysis_usage IS 'Tracks analysis usage per user per billing cycle for tier limit enforcement';
+COMMENT ON TABLE usage_resets IS 'Non-destructive usage reset markers for tier upgrades (preserves historical data)';
 COMMENT ON TABLE pending_plan_changes IS 'Manages deferred plan changes (downgrades) that apply at next billing cycle';
-COMMENT ON VIEW tier_usage_summary IS 'Complete view of user tier limits and current usage for reporting';
-COMMENT ON FUNCTION record_analysis_usage IS 'Records analysis usage for tier limit tracking';
-COMMENT ON FUNCTION check_tier_limit IS 'Validates if user can perform action based on tier limits';
-COMMENT ON FUNCTION process_pending_plan_changes IS 'Processes pending plan changes that are due to take effect';
+COMMENT ON VIEW tier_usage_summary IS 'Complete view of user tier limits and current usage for reporting (considers reset markers)';
+COMMENT ON FUNCTION record_analysis_usage IS 'Records analysis usage for tier limit tracking with platform validation';
+COMMENT ON FUNCTION check_tier_limit IS 'Validates if user can perform action based on tier limits (atomic, fail-safe)';
+COMMENT ON FUNCTION process_pending_plan_changes IS 'Processes pending plan changes that are due to take effect (atomic with error handling)';
+COMMENT ON FUNCTION process_tier_upgrade IS 'Processes immediate tier upgrades with non-destructive reset markers (atomic)';
