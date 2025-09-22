@@ -293,18 +293,18 @@ CREATE TABLE IF NOT EXISTS shield_actions (
     content_snippet TEXT CHECK (LENGTH(content_snippet) <= 100), -- Store only first 100 chars for UI display
     platform VARCHAR(50) NOT NULL,
     reason VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 5: NOT NULL
     reverted_at TIMESTAMP WITH TIME ZONE NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 5: NOT NULL
     metadata JSONB DEFAULT '{}' CHECK (jsonb_typeof(metadata) = 'object'), -- Validate metadata is object
     
-    -- Enhanced temporal integrity constraints (CodeRabbit Round 4 feedback)
+    -- Enhanced temporal integrity constraints with clock skew tolerance (CodeRabbit Round 5)
     CONSTRAINT shield_actions_temporal_integrity CHECK (
         created_at IS NOT NULL AND
         updated_at IS NOT NULL AND
-        created_at <= updated_at AND
+        created_at <= COALESCE(updated_at, NOW() + INTERVAL '5 minutes') AND
         (reverted_at IS NULL OR reverted_at >= created_at) AND
-        created_at <= NOW() + INTERVAL '5 minutes' AND -- Allow small clock skew
+        created_at <= NOW() + INTERVAL '5 minutes' AND
         updated_at <= NOW() + INTERVAL '5 minutes'
     ),
     
@@ -327,9 +327,10 @@ CREATE INDEX IF NOT EXISTS idx_shield_actions_created_at ON shield_actions(creat
 CREATE INDEX IF NOT EXISTS idx_shield_actions_platform ON shield_actions(platform);
 CREATE INDEX IF NOT EXISTS idx_shield_actions_reason ON shield_actions(reason);
 
--- Partial indexes for active actions (CodeRabbit feedback)
+-- Partial indexes for active actions (CodeRabbit Round 5 enhanced)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_active ON shield_actions(organization_id, created_at DESC) WHERE reverted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_shield_actions_reverted ON shield_actions(reverted_at DESC) WHERE reverted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_shield_actions_recent_active ON shield_actions(organization_id, action_type, created_at DESC) WHERE reverted_at IS NULL AND created_at > NOW() - INTERVAL '30 days';
 
 -- Composite indexes for common filter combinations (CodeRabbit Round 4 enhanced)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_org_created ON shield_actions(organization_id, created_at DESC);

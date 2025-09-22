@@ -10,6 +10,7 @@
 
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
@@ -49,7 +50,42 @@ router.use(authenticateToken);
 router.use(generalShieldLimit);
 
 // ============================================================================
-// INPUT VALIDATION HELPERS (CodeRabbit Round 4 feedback)
+// GDPR COMPLIANCE HELPERS (CodeRabbit Round 5)
+// ============================================================================
+
+/**
+ * Generate GDPR-compliant content hash
+ * @param {string} content - Content to hash
+ * @returns {string} SHA-256 hash for GDPR compliance
+ */
+function generateContentHash(content) {
+  if (!content || typeof content !== 'string') {
+    return crypto.createHash('sha256').update('').digest('hex');
+  }
+  return crypto.createHash('sha256').update(content.trim()).digest('hex');
+}
+
+/**
+ * Create minimal content snippet for UI display (GDPR data minimization)
+ * @param {string} content - Original content
+ * @param {number} maxLength - Maximum length for snippet (default 100)
+ * @returns {string} Truncated content snippet
+ */
+function createContentSnippet(content, maxLength = 100) {
+  if (!content || typeof content !== 'string') {
+    return '[No content available]';
+  }
+  
+  const trimmed = content.trim();
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+  
+  return trimmed.substring(0, maxLength - 3) + '...';
+}
+
+// ============================================================================
+// INPUT VALIDATION HELPERS (CodeRabbit feedback)
 // ============================================================================
 
 // Whitelisted filter parameters to prevent unexpected queries
@@ -59,12 +95,12 @@ const VALID_PLATFORMS = ['all', 'twitter', 'youtube', 'instagram', 'facebook', '
 const VALID_ACTION_TYPES = ['all', 'block', 'mute', 'flag', 'report'];
 
 /**
- * Enhanced validation and sanitization for query parameters (CodeRabbit Round 4)
+ * Validate and sanitize query parameters with enhanced null safety (CodeRabbit Round 5)
  * @param {Object} query - Request query parameters
  * @returns {Object} Validated parameters
  */
 function validateQueryParameters(query = {}) {
-  // Ensure query is an object and not null/undefined
+  // Enhanced null safety for query object
   const safeQuery = (query && typeof query === 'object') ? query : {};
   
   const {
@@ -76,21 +112,28 @@ function validateQueryParameters(query = {}) {
     actionType = 'all'
   } = safeQuery;
 
-  // Enhanced pagination validation with type checking (Round 4)
+  // Enhanced numeric validation for pagination (CodeRabbit Round 5)
   let pageNum = 1;
   let limitNum = 20;
   
-  // Strict numeric validation for pagination
+  // Strict numeric validation for page
   if (typeof page === 'number' && Number.isInteger(page) && page > 0) {
     pageNum = Math.min(1000, page); // Cap at 1000 pages
   } else if (typeof page === 'string' && /^\d+$/.test(page.trim())) {
-    pageNum = Math.min(1000, Math.max(1, parseInt(page.trim(), 10)));
+    const parsedPage = parseInt(page.trim(), 10);
+    if (parsedPage > 0) {
+      pageNum = Math.min(1000, parsedPage);
+    }
   }
   
+  // Strict numeric validation for limit
   if (typeof limit === 'number' && Number.isInteger(limit) && limit > 0) {
-    limitNum = Math.min(100, limit); // Cap at 100 items
+    limitNum = Math.min(100, Math.max(1, limit));
   } else if (typeof limit === 'string' && /^\d+$/.test(limit.trim())) {
-    limitNum = Math.min(100, Math.max(1, parseInt(limit.trim(), 10)));
+    const parsedLimit = parseInt(limit.trim(), 10);
+    if (parsedLimit > 0) {
+      limitNum = Math.min(100, Math.max(1, parsedLimit));
+    }
   }
 
   // Enhanced filter validation with type checking (Round 4)
@@ -294,7 +337,7 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
-    // Enhanced validation for action ID (CodeRabbit Round 4)
+    // Enhanced UUID format validation (CodeRabbit Round 5)
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
       return res.status(400).json({
         success: false,
@@ -305,18 +348,16 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
         }
       });
     }
-
-    // Additional UUID format validation (Round 4)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const trimmedId = id.trim();
     
-    if (!uuidRegex.test(trimmedId)) {
+    // Validate UUID format (RFC 4122 compliant)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id.trim())) {
       return res.status(400).json({
         success: false,
         error: {
-          message: 'Invalid action ID format',
+          message: 'Invalid UUID format for action ID',
           code: 'INVALID_UUID_FORMAT',
-          details: 'Action ID must be a valid UUID'
+          details: 'Action ID must be a valid UUID (RFC 4122 compliant)'
         }
       });
     }
@@ -374,29 +415,28 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
       });
     }
 
-    // Safe metadata handling to prevent TypeError (CodeRabbit Round 4)
+    // Update the action with revert information with enhanced metadata safety (CodeRabbit Round 5)
     let baseMetadata = {};
     try {
-      // Safely handle metadata that might be null, undefined, or invalid JSON
-      if (existingAction?.metadata && typeof existingAction.metadata === 'object') {
-        baseMetadata = { ...existingAction.metadata };
+      // Safe metadata extraction with type checking
+      if (existingAction?.metadata && typeof existingAction.metadata === 'object' && existingAction.metadata !== null) {
+        baseMetadata = Array.isArray(existingAction.metadata) ? {} : { ...existingAction.metadata };
       }
     } catch (error) {
-      logger.warn('Invalid metadata found in shield action', { 
-        actionId: id,
-        metadataType: typeof existingAction?.metadata,
+      logger.warn('Failed to parse existing metadata, using empty object', { 
+        actionId: id, 
         error: error.message 
       });
       baseMetadata = {};
     }
-
+    
     const revertMetadata = {
       ...baseMetadata,
       reverted: true,
-      revertedBy: req.user?.id || 'unknown',
-      revertReason: (typeof reason === 'string' && reason.trim()) ? reason.trim() : 'Manual revert via UI',
+      revertedBy: req.user?.id,
+      revertReason: reason?.trim() || 'Manual revert via UI',
       revertedAt: new Date().toISOString(),
-      revertSource: 'shield_ui'
+      revertContext: 'shield_ui'
     };
 
     // Update the action with enhanced revert information

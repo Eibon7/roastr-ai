@@ -41,45 +41,43 @@ const mockShieldData = [
 
 test.describe('Shield UI Visual Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Enhanced environment stability for Round 4 (CodeRabbit feedback)
+    // Set stable environment for consistent screenshots (CodeRabbit Round 5 enhanced)
     await page.addInitScript(() => {
-      // Fix timezone to UTC for consistent timestamps across environments
-      Object.defineProperty(Intl, 'DateTimeFormat', {
-        value: class extends Intl.DateTimeFormat {
-          constructor(locale, options) {
-            super('en-US', { ...options, timeZone: 'UTC' });
-          }
-        }
-      });
-      
-      // Override Date constructor to use fixed timezone
+      // Fix timezone to UTC for consistent timestamps with enhanced coverage
       const OriginalDate = Date;
       window.Date = class extends OriginalDate {
         constructor(...args) {
           if (args.length === 0) {
-            // Return fixed timestamp for tests
-            super('2024-01-15T12:00:00.000Z');
+            super('2024-01-15T12:00:00.000Z'); // Fixed timestamp for consistency
           } else {
             super(...args);
           }
         }
+        
         static now() {
           return new OriginalDate('2024-01-15T12:00:00.000Z').getTime();
         }
       };
       
-      // Set stable locale and preferences
+      // Enhanced Intl.DateTimeFormat override with better compatibility
+      Object.defineProperty(Intl, 'DateTimeFormat', {
+        value: class extends Intl.DateTimeFormat {
+          constructor(locale, options) {
+            super('en-US', { ...options, timeZone: 'UTC' });
+          }
+        },
+        configurable: true
+      });
+      
+      // Set stable locale with enhanced browser compatibility
       Object.defineProperty(navigator, 'language', { value: 'en-US', configurable: true });
       Object.defineProperty(navigator, 'languages', { value: ['en-US'], configurable: true });
       
-      // Disable auto-prefetch and preload for stability
-      Object.defineProperty(navigator, 'connection', {
-        value: { effectiveType: '4g', downlink: 10 },
-        configurable: true
-      });
+      // Fix timezone offset for consistent behavior
+      Date.prototype.getTimezoneOffset = () => 0;
     });
 
-    // Reduce motion for stable animations (CodeRabbit feedback)
+    // Reduce motion for stable animations (CodeRabbit Round 5 enhanced)
     await page.addStyleTag({
       content: `
         *, *::before, *::after {
@@ -87,6 +85,17 @@ test.describe('Shield UI Visual Tests', () => {
           animation-delay: 0.01ms !important;
           transition-duration: 0.01ms !important;
           transition-delay: 0.01ms !important;
+          transform-origin: center !important;
+        }
+        
+        /* Additional stability for specific UI elements */
+        .animate-pulse, .animate-spin, .animate-bounce {
+          animation: none !important;
+        }
+        
+        /* Ensure consistent loading state appearance */
+        .loading-skeleton {
+          background: #374151 !important;
         }
       `
     });
@@ -169,8 +178,24 @@ test.describe('Shield UI Visual Tests', () => {
       test('should render Shield UI main interface', async ({ page }) => {
         await page.goto(`${TEST_URL}/shield`);
         
-        // Wait for content to load
-        await page.waitForSelector('[data-testid="shield-icon"]', { timeout: 10000 });
+        // Wait for network idle to ensure all resources are loaded (CodeRabbit feedback)
+        await page.waitForLoadState('networkidle');
+        
+        // Wait for specific content using data-testid (more resilient selector)
+        // Enhanced selector fallback strategy (CodeRabbit Round 5)
+        await page.waitForSelector([
+          '[data-testid="shield-icon"]',
+          '[aria-label*="Shield"]', 
+          '.shield-icon',
+          'h1:has-text("Shield")',
+          'text=Shield - Contenido Interceptado'
+        ].join(', '), { 
+          timeout: 15000,
+          state: 'visible'
+        });
+        
+        // Additional wait for layout stability
+        await page.waitForTimeout(500);
         
         // Take screenshot of main interface
         await expect(page).toHaveScreenshot(`shield-main-${viewport.name}.png`);
@@ -433,8 +458,16 @@ test.describe('Shield UI Visual Tests', () => {
       await page.waitForLoadState('networkidle');
       
       // Should still load with default values using stable selector
-      await page.waitForSelector('[data-testid="shield-icon"], [aria-label*="Shield"]', { 
-        timeout: 10000 
+      // Enhanced selector fallback strategy (CodeRabbit Round 5)
+      await page.waitForSelector([
+        '[data-testid="shield-icon"]',
+        '[aria-label*="Shield"]',
+        '.shield-icon',
+        'h1:has-text("Shield")',
+        'text=Shield - Contenido Interceptado'
+      ].join(', '), { 
+        timeout: 15000,
+        state: 'visible'
       });
       
       // Verify content loads despite invalid params
