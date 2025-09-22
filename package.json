@@ -109,7 +109,7 @@
   "dependencies": {
     "@atproto/api": "^0.16.3",
     "@sendgrid/mail": "^8.1.5",
-    "@supabase/supabase-js": "^2.56.0",
+    "@supabase/supabase-js": "^2.57.4",
     "@twurple/api": "^7.1.0",
     "@twurple/auth": "^7.1.0",
     "@twurple/chat": "^7.1.0",
