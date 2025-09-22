@@ -293,16 +293,19 @@ CREATE TABLE IF NOT EXISTS shield_actions (
     content_snippet TEXT CHECK (LENGTH(content_snippet) <= 100), -- Store only first 100 chars for UI display
     platform VARCHAR(50) NOT NULL,
     reason VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     reverted_at TIMESTAMP WITH TIME ZONE NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     metadata JSONB DEFAULT '{}' CHECK (jsonb_typeof(metadata) = 'object'), -- Validate metadata is object
     
-    -- Temporal integrity constraints for timestamps (CodeRabbit feedback)
+    -- Enhanced temporal integrity constraints (CodeRabbit Round 4 feedback)
     CONSTRAINT shield_actions_temporal_integrity CHECK (
-        created_at <= COALESCE(reverted_at, NOW() + INTERVAL '1 hour') AND
-        created_at <= COALESCE(updated_at, NOW() + INTERVAL '1 hour') AND
-        COALESCE(reverted_at, '1970-01-01') >= created_at
+        created_at IS NOT NULL AND
+        updated_at IS NOT NULL AND
+        created_at <= updated_at AND
+        (reverted_at IS NULL OR reverted_at >= created_at) AND
+        created_at <= NOW() + INTERVAL '5 minutes' AND -- Allow small clock skew
+        updated_at <= NOW() + INTERVAL '5 minutes'
     ),
     
     -- Enhanced constraints
@@ -328,10 +331,16 @@ CREATE INDEX IF NOT EXISTS idx_shield_actions_reason ON shield_actions(reason);
 CREATE INDEX IF NOT EXISTS idx_shield_actions_active ON shield_actions(organization_id, created_at DESC) WHERE reverted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_shield_actions_reverted ON shield_actions(reverted_at DESC) WHERE reverted_at IS NOT NULL;
 
--- Composite indexes for common filter combinations
+-- Composite indexes for common filter combinations (CodeRabbit Round 4 enhanced)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_org_created ON shield_actions(organization_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_shield_actions_org_reason ON shield_actions(organization_id, reason);
 CREATE INDEX IF NOT EXISTS idx_shield_actions_org_platform ON shield_actions(organization_id, platform);
+
+-- Additional performance indexes for timestamp queries (Round 4 feedback)
+CREATE INDEX IF NOT EXISTS idx_shield_actions_timestamps ON shield_actions(created_at DESC, updated_at DESC) WHERE reverted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_shield_actions_org_time_range ON shield_actions(organization_id, created_at DESC, action_type);
+CREATE INDEX IF NOT EXISTS idx_shield_actions_recent_active ON shield_actions(organization_id, created_at DESC) 
+    WHERE reverted_at IS NULL AND created_at >= NOW() - INTERVAL '30 days';
 
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS) - Enhanced (CodeRabbit feedback)
@@ -406,8 +415,8 @@ CREATE TABLE IF NOT EXISTS feature_flags (
     flag_name VARCHAR(100) NOT NULL,
     enabled BOOLEAN DEFAULT false, -- Default OFF for safety (CodeRabbit feedback)
     description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     
     -- Unique constraint per organization or globally if org is NULL
     UNIQUE(COALESCE(organization_id, '00000000-0000-0000-0000-000000000000'::UUID), flag_name)

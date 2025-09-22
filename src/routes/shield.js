@@ -48,76 +48,156 @@ router.use(authenticateToken);
 // Apply general rate limiting
 router.use(generalShieldLimit);
 
+// ============================================================================
+// INPUT VALIDATION HELPERS (CodeRabbit Round 4 feedback)
+// ============================================================================
+
+// Whitelisted filter parameters to prevent unexpected queries
+const VALID_CATEGORIES = ['all', 'toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'];
+const VALID_TIME_RANGES = ['7d', '30d', '90d', 'all'];
+const VALID_PLATFORMS = ['all', 'twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+const VALID_ACTION_TYPES = ['all', 'block', 'mute', 'flag', 'report'];
+
+/**
+ * Enhanced validation and sanitization for query parameters (CodeRabbit Round 4)
+ * @param {Object} query - Request query parameters
+ * @returns {Object} Validated parameters
+ */
+function validateQueryParameters(query = {}) {
+  // Ensure query is an object and not null/undefined
+  const safeQuery = (query && typeof query === 'object') ? query : {};
+  
+  const {
+    page = 1,
+    limit = 20,
+    category = 'all',
+    timeRange = '30d',
+    platform = 'all',
+    actionType = 'all'
+  } = safeQuery;
+
+  // Enhanced pagination validation with type checking (Round 4)
+  let pageNum = 1;
+  let limitNum = 20;
+  
+  // Strict numeric validation for pagination
+  if (typeof page === 'number' && Number.isInteger(page) && page > 0) {
+    pageNum = Math.min(1000, page); // Cap at 1000 pages
+  } else if (typeof page === 'string' && /^\d+$/.test(page.trim())) {
+    pageNum = Math.min(1000, Math.max(1, parseInt(page.trim(), 10)));
+  }
+  
+  if (typeof limit === 'number' && Number.isInteger(limit) && limit > 0) {
+    limitNum = Math.min(100, limit); // Cap at 100 items
+  } else if (typeof limit === 'string' && /^\d+$/.test(limit.trim())) {
+    limitNum = Math.min(100, Math.max(1, parseInt(limit.trim(), 10)));
+  }
+
+  // Enhanced filter validation with type checking (Round 4)
+  const validatedCategory = (typeof category === 'string' && VALID_CATEGORIES.includes(category.toLowerCase())) 
+    ? category.toLowerCase() : 'all';
+  const validatedTimeRange = (typeof timeRange === 'string' && VALID_TIME_RANGES.includes(timeRange.toLowerCase())) 
+    ? timeRange.toLowerCase() : '30d';
+  const validatedPlatform = (typeof platform === 'string' && VALID_PLATFORMS.includes(platform.toLowerCase())) 
+    ? platform.toLowerCase() : 'all';
+  const validatedActionType = (typeof actionType === 'string' && VALID_ACTION_TYPES.includes(actionType.toLowerCase())) 
+    ? actionType.toLowerCase() : 'all';
+
+  return {
+    pageNum,
+    limitNum,
+    category: validatedCategory,
+    timeRange: validatedTimeRange,
+    platform: validatedPlatform,
+    actionType: validatedActionType,
+    isValid: true // Always valid after sanitization
+  };
+}
+
+/**
+ * Calculate date range based on time range parameter
+ * @param {string} timeRange - Time range parameter
+ * @returns {Date|null} Start date or null for 'all'
+ */
+function calculateDateRange(timeRange) {
+  const now = new Date();
+  
+  switch (timeRange) {
+    case '7d':
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case '30d':
+      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    case '90d':
+      return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    case 'all':
+    default:
+      return null;
+  }
+}
+
+/**
+ * Sanitize response data to remove sensitive information (CodeRabbit feedback)
+ * @param {Object|Array} data - Response data to sanitize
+ * @returns {Object|Array} Sanitized data without organization_id
+ */
+function sanitizeResponseData(data) {
+  if (!data) return data;
+
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeResponseData(item));
+  }
+
+  if (typeof data === 'object') {
+    const { organization_id, ...sanitizedItem } = data;
+    return sanitizedItem;
+  }
+
+  return data;
+}
 /**
  * GET /api/shield/events
  * Get paginated shield events with filtering
  */
 router.get('/events', async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      category = 'all', 
-      timeRange = '30d',
-      platform = 'all'
-    } = req.query;
+    // Enhanced input validation and sanitization (CodeRabbit Round 4)
+    let validated;
+    try {
+      validated = validateQueryParameters(req.query);
+    } catch (error) {
+      logger.warn('Query parameter validation error', { 
+        query: req.query, 
+        error: error.message,
+        userId: req.user?.id 
+      });
+      
+      return res.status(400).json({
+        success: false,
+        error: { 
+          message: 'Invalid query parameters', 
+          code: 'INVALID_QUERY_PARAMS',
+          details: 'Query parameters could not be processed'
+        }
+      });
+    }
+    
+    // Additional validation for edge cases (Round 4)
+    if (!validated || typeof validated !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: { 
+          message: 'Parameter validation failed', 
+          code: 'VALIDATION_FAILED',
+          details: 'Could not validate request parameters'
+        }
+      });
+    }
 
-    // Whitelist filters to prevent unexpected queries
-    const validCategories = ['all', 'toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'];
-    const validTimeRanges = ['7d', '30d', '90d', 'all'];
-    const validPlatforms = ['all', 'twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+    // Extract validated parameters (Round 4 enhancement)
+    const { pageNum, limitNum, category, timeRange, platform, actionType } = validated;
     
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Invalid category filter', code: 'INVALID_CATEGORY' }
-      });
-    }
-    
-    if (!validTimeRanges.includes(timeRange)) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Invalid time range filter', code: 'INVALID_TIME_RANGE' }
-      });
-    }
-    
-    if (!validPlatforms.includes(platform)) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Invalid platform filter', code: 'INVALID_PLATFORM' }
-      });
-    }
-
-    // Validate pagination parameters (ensure numeric inputs)
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20)); // Max 100 items per page
-    
-    if (isNaN(pageNum) || isNaN(limitNum)) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Invalid pagination parameters', code: 'INVALID_PAGINATION' }
-      });
-    }
-    
-    // Calculate date range
-    let startDate = null;
-    const now = new Date();
-    
-    switch (timeRange) {
-      case '7d':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case '30d':
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case '90d':
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case 'all':
-      default:
-        startDate = null;
-        break;
-    }
+    // Calculate date range using helper function
+    const startDate = calculateDateRange(timeRange);
 
     // Build query with organization isolation (RLS)
     let query = supabaseServiceClient
@@ -214,13 +294,41 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
-    // Validate action ID
-    if (!id || typeof id !== 'string') {
+    // Enhanced validation for action ID (CodeRabbit Round 4)
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
       return res.status(400).json({
         success: false,
         error: {
           message: 'Invalid action ID provided',
-          code: 'INVALID_ACTION_ID'
+          code: 'INVALID_ACTION_ID',
+          details: 'Action ID must be a non-empty string'
+        }
+      });
+    }
+
+    // Additional UUID format validation (Round 4)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const trimmedId = id.trim();
+    
+    if (!uuidRegex.test(trimmedId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: 'Invalid action ID format',
+          code: 'INVALID_UUID_FORMAT',
+          details: 'Action ID must be a valid UUID'
+        }
+      });
+    }
+
+    // Validate reason if provided
+    if (reason && (typeof reason !== 'string' || reason.trim().length === 0)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: 'Invalid revert reason provided',
+          code: 'INVALID_REASON',
+          details: 'Reason must be a non-empty string if provided'
         }
       });
     }
@@ -266,17 +374,37 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
       });
     }
 
-    // Update the action with revert information
+    // Safe metadata handling to prevent TypeError (CodeRabbit Round 4)
+    let baseMetadata = {};
+    try {
+      // Safely handle metadata that might be null, undefined, or invalid JSON
+      if (existingAction?.metadata && typeof existingAction.metadata === 'object') {
+        baseMetadata = { ...existingAction.metadata };
+      }
+    } catch (error) {
+      logger.warn('Invalid metadata found in shield action', { 
+        actionId: id,
+        metadataType: typeof existingAction?.metadata,
+        error: error.message 
+      });
+      baseMetadata = {};
+    }
+
+    const revertMetadata = {
+      ...baseMetadata,
+      reverted: true,
+      revertedBy: req.user?.id || 'unknown',
+      revertReason: (typeof reason === 'string' && reason.trim()) ? reason.trim() : 'Manual revert via UI',
+      revertedAt: new Date().toISOString(),
+      revertSource: 'shield_ui'
+    };
+
+    // Update the action with enhanced revert information
     const { data: updatedAction, error: updateError } = await supabaseServiceClient
       .from('shield_actions')
       .update({ 
         reverted_at: new Date().toISOString(),
-        metadata: {
-          ...existingAction.metadata,
-          reverted: true,
-          revertedBy: req.user.id,
-          revertReason: reason || 'Manual revert via UI'
-        }
+        metadata: revertMetadata
       })
       .eq('id', id)
       .eq('organization_id', req.user.organizationId)
