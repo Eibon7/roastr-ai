@@ -281,6 +281,10 @@ app.use('/api/roast', roastRoutes);
 // Settings routes (authenticated) - Issue #362
 app.use('/api/settings', settingsRoutes);
 
+// Monitoring routes (authenticated) - Issue #396
+const monitoringRoutes = require('./routes/monitoring');
+app.use('/api/monitoring', monitoringRoutes);
+
 // Model availability routes (authenticated, admin) - Issue #326
 const modelAvailabilityRoutes = require('./routes/modelAvailability');
 app.use('/api/model-availability', modelAvailabilityRoutes);
