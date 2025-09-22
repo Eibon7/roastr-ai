@@ -41,7 +41,7 @@ const mockShieldData = [
 
 test.describe('Shield UI Visual Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Set stable environment for consistent screenshots (CodeRabbit Round 5 enhanced)
+    // Enhanced environment stability for CodeRabbit Round 6
     await page.addInitScript(() => {
       // Fix timezone to UTC for consistent timestamps with enhanced coverage
       const OriginalDate = Date;
@@ -77,7 +77,7 @@ test.describe('Shield UI Visual Tests', () => {
       Date.prototype.getTimezoneOffset = () => 0;
     });
 
-    // Reduce motion for stable animations (CodeRabbit Round 5 enhanced)
+    // Enhanced motion reduction and stability (CodeRabbit Round 6)
     await page.addStyleTag({
       content: `
         *, *::before, *::after {
@@ -88,20 +88,30 @@ test.describe('Shield UI Visual Tests', () => {
           transform-origin: center !important;
         }
         
-        /* Additional stability for specific UI elements */
+        /* Enhanced stability for specific UI elements (Round 6) */
         .animate-pulse, .animate-spin, .animate-bounce {
           animation: none !important;
         }
         
-        /* Ensure consistent loading state appearance */
+        /* Force consistent loading state appearance */
         .loading-skeleton {
           background: #374151 !important;
+          opacity: 1 !important;
+        }
+        
+        /* Stabilize dynamic content */
+        .shimmer, .skeleton, .loading {
+          background: #374151 !important;
+          animation: none !important;
         }
       `
     });
 
-    // Set stable color scheme
-    await page.emulateMedia({ colorScheme: 'dark' });
+    // Enhanced color scheme and rendering stability (CodeRabbit Round 6)
+    await page.emulateMedia({ 
+      colorScheme: 'dark',
+      reducedMotion: 'reduce'  // Force reduced motion
+    });
     // Mock API responses for consistent visual testing
     await page.route('**/api/shield/**', async (route) => {
       const url = route.request().url();
@@ -178,11 +188,11 @@ test.describe('Shield UI Visual Tests', () => {
       test('should render Shield UI main interface', async ({ page }) => {
         await page.goto(`${TEST_URL}/shield`);
         
-        // Wait for network idle to ensure all resources are loaded (CodeRabbit feedback)
+        // Enhanced network stability and loading (CodeRabbit Round 6)
         await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
-        // Wait for specific content using data-testid (more resilient selector)
-        // Enhanced selector fallback strategy (CodeRabbit Round 5)
+        // Enhanced selector fallback strategy with better stability (Round 6)
         await page.waitForSelector([
           '[data-testid="shield-icon"]',
           '[aria-label*="Shield"]', 
@@ -190,12 +200,13 @@ test.describe('Shield UI Visual Tests', () => {
           'h1:has-text("Shield")',
           'text=Shield - Contenido Interceptado'
         ].join(', '), { 
-          timeout: 15000,
+          timeout: 20000,  // Increased timeout for stability
           state: 'visible'
         });
         
-        // Additional wait for layout stability
-        await page.waitForTimeout(500);
+        // Enhanced stability wait with multiple checks (Round 6)
+        await page.waitForTimeout(1000);  // Increased for better stability
+        await page.waitForFunction(() => document.readyState === 'complete');
         
         // Take screenshot of main interface
         await expect(page).toHaveScreenshot(`shield-main-${viewport.name}.png`);

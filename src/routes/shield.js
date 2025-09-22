@@ -95,9 +95,9 @@ const VALID_PLATFORMS = ['all', 'twitter', 'youtube', 'instagram', 'facebook', '
 const VALID_ACTION_TYPES = ['all', 'block', 'mute', 'flag', 'report'];
 
 /**
- * Validate and sanitize query parameters with enhanced null safety (CodeRabbit Round 5)
+ * Validate and sanitize query parameters with enhanced security (CodeRabbit Round 6)
  * @param {Object} query - Request query parameters
- * @returns {Object} Validated parameters
+ * @returns {Object} Validated parameters with comprehensive error handling
  */
 function validateQueryParameters(query = {}) {
   // Enhanced null safety for query object
@@ -179,9 +179,9 @@ function calculateDateRange(timeRange) {
 }
 
 /**
- * Sanitize response data to remove sensitive information (CodeRabbit feedback)
+ * Sanitize response data to remove sensitive information (CodeRabbit Round 6 enhanced)
  * @param {Object|Array} data - Response data to sanitize
- * @returns {Object|Array} Sanitized data without organization_id
+ * @returns {Object|Array} Sanitized data without sensitive fields
  */
 function sanitizeResponseData(data) {
   if (!data) return data;
@@ -190,9 +190,22 @@ function sanitizeResponseData(data) {
     return data.map(item => sanitizeResponseData(item));
   }
 
-  if (typeof data === 'object') {
-    const { organization_id, ...sanitizedItem } = data;
-    return sanitizedItem;
+  if (typeof data === 'object' && data !== null) {
+    // Enhanced: Remove multiple sensitive fields
+    const { 
+      organization_id, 
+      content_hash, // Remove hash for additional privacy
+      metadata, // Remove metadata to prevent information leakage
+      ...sanitizedItem 
+    } = data;
+    
+    // Keep only content_snippet for UI display
+    return {
+      ...sanitizedItem,
+      // Only include safe metadata fields if needed
+      metadata: metadata && typeof metadata === 'object' ? 
+        { reverted: metadata.reverted || false } : {}
+    };
   }
 
   return data;
@@ -290,10 +303,13 @@ router.get('/events', async (req, res) => {
 
     const totalPages = Math.ceil((count || 0) / limitNum);
 
+    // Enhanced response sanitization (CodeRabbit Round 6)
+    const sanitizedEvents = sanitizeResponseData(data || []);
+    
     res.json({
       success: true,
       data: {
-        events: data || [],
+        events: sanitizedEvents,
         pagination: {
           page: pageNum,
           limit: limitNum,

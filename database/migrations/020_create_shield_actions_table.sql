@@ -1,7 +1,7 @@
--- Migration: Enhanced Shield Actions Table (CodeRabbit Round 2)
+-- Migration: Enhanced Shield Actions Table (CodeRabbit Round 6)
 -- Created: 2025-01-25
--- Description: Apply CodeRabbit Round 2 security enhancements for Issue #365
--- Features: Temporal integrity constraints, partial indexes, organization-scoped feature flags
+-- Description: Apply CodeRabbit Round 6 security and performance enhancements for Issue #365
+-- Features: Enhanced temporal integrity, performance indexes, GDPR compliance, security hardening
 
 -- Drop existing table if recreating with enhancements
 -- Note: In production, this should be done with careful data migration
@@ -293,19 +293,21 @@ CREATE TABLE IF NOT EXISTS shield_actions (
     content_snippet TEXT CHECK (LENGTH(content_snippet) <= 100), -- Store only first 100 chars for UI display
     platform VARCHAR(50) NOT NULL,
     reason VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 5: NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 6: NOT NULL enforced
     reverted_at TIMESTAMP WITH TIME ZONE NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 5: NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 6: NOT NULL enforced
     metadata JSONB DEFAULT '{}' CHECK (jsonb_typeof(metadata) = 'object'), -- Validate metadata is object
     
-    -- Enhanced temporal integrity constraints with clock skew tolerance (CodeRabbit Round 5)
+    -- Enhanced temporal integrity constraints (CodeRabbit Round 6)
     CONSTRAINT shield_actions_temporal_integrity CHECK (
         created_at IS NOT NULL AND
         updated_at IS NOT NULL AND
         created_at <= COALESCE(updated_at, NOW() + INTERVAL '5 minutes') AND
         (reverted_at IS NULL OR reverted_at >= created_at) AND
         created_at <= NOW() + INTERVAL '5 minutes' AND
-        updated_at <= NOW() + INTERVAL '5 minutes'
+        updated_at <= NOW() + INTERVAL '5 minutes' AND
+        -- Enhanced: Ensure revert order is logical
+        (reverted_at IS NULL OR reverted_at <= NOW() + INTERVAL '5 minutes')
     ),
     
     -- Enhanced constraints
@@ -327,10 +329,14 @@ CREATE INDEX IF NOT EXISTS idx_shield_actions_created_at ON shield_actions(creat
 CREATE INDEX IF NOT EXISTS idx_shield_actions_platform ON shield_actions(platform);
 CREATE INDEX IF NOT EXISTS idx_shield_actions_reason ON shield_actions(reason);
 
--- Partial indexes for active actions (CodeRabbit Round 5 enhanced)
+-- Enhanced partial indexes for performance optimization (CodeRabbit Round 6)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_active ON shield_actions(organization_id, created_at DESC) WHERE reverted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_shield_actions_reverted ON shield_actions(reverted_at DESC) WHERE reverted_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_shield_actions_recent_active ON shield_actions(organization_id, action_type, created_at DESC) WHERE reverted_at IS NULL AND created_at > NOW() - INTERVAL '30 days';
+
+-- Performance-optimized composite indexes (CodeRabbit Round 6)
+CREATE INDEX IF NOT EXISTS idx_shield_actions_org_platform_active ON shield_actions(organization_id, platform, created_at DESC) WHERE reverted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_shield_actions_org_reason_active ON shield_actions(organization_id, reason, created_at DESC) WHERE reverted_at IS NULL;
 
 -- Composite indexes for common filter combinations (CodeRabbit Round 4 enhanced)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_org_created ON shield_actions(organization_id, created_at DESC);
