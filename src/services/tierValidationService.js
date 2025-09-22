@@ -47,6 +47,18 @@ class TierValidationService {
         
         // CodeRabbit Round 3 - Supported platforms for validation
         this.SUPPORTED_PLATFORMS = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+        
+        // Centralized pricing configuration (CodeRabbit Round 5)
+        this.TIER_PRICING = {
+            currency: '€',
+            monthly: {
+                free: 0,
+                starter: 5,
+                pro: 15,
+                plus: 50
+            },
+            formatPrice: (amount) => amount === 0 ? 'Gratis' : `€${amount}/mes`
+        };
     }
 
     /**
@@ -490,7 +502,7 @@ class TierValidationService {
         const userTier = await this.getUserTierWithUTC(userId);
         
         // Compute effective cycle start using UTC (CodeRabbit Round 4)
-        const effectiveCycleStart = this.computeEffectiveCycleStart(userTier, userId);
+        const effectiveCycleStart = await this.computeEffectiveCycleStart(userTier, userId);
         
         // Get usage from database with optimized queries
         const usage = await this.fetchUsageFromDatabaseOptimized(userId, effectiveCycleStart);
@@ -552,7 +564,19 @@ class TierValidationService {
      * Get start of next billing cycle with UTC (CodeRabbit Round 4)
      * @private
      */
-    getNextCycleStartUTC() {
+    // Enhanced UTC date handling (CodeRabbit Round 5)
+    getNextCycleStartUTC(periodEndIso) {
+        if (periodEndIso) {
+            const periodEnd = new Date(periodEndIso);
+            // Calculate next day at 00:00:00 UTC
+            const nextDay = new Date(Date.UTC(
+                periodEnd.getUTCFullYear(),
+                periodEnd.getUTCMonth(),
+                periodEnd.getUTCDate() + 1
+            ));
+            return nextDay.toISOString();
+        }
+        // Default behavior - next month start
         const now = new Date();
         const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
         return nextMonth.toISOString();
@@ -594,11 +618,29 @@ class TierValidationService {
      * Sanitize usage data for client response
      * @private
      */
+    // Enhanced usage response (CodeRabbit Round 5)
     sanitizeUsageForResponse(usage) {
+        if (!usage) {
+            return {
+                roastsThisMonth: 0,
+                analysisThisMonth: 0,
+                platformAccountsByPlatform: {},
+                totalActivePlatformAccounts: 0,
+                platformAccounts: 0 // Legacy field for backward compatibility
+            };
+        }
+
+        const platformAccounts = (usage.platformAccounts && typeof usage.platformAccounts === 'object' && !Array.isArray(usage.platformAccounts)) 
+            ? usage.platformAccounts 
+            : {};
+        const totalActivePlatformAccounts = Object.values(platformAccounts).reduce((sum, count) => sum + count, 0);
+
         return {
-            roastsThisMonth: usage.roastsThisMonth,
-            analysisThisMonth: usage.analysisThisMonth,
-            platformAccounts: Object.keys(usage.platformAccounts || {}).length
+            roastsThisMonth: usage.roastsThisMonth || 0,
+            analysisThisMonth: usage.analysisThisMonth || 0,
+            platformAccountsByPlatform: platformAccounts,
+            totalActivePlatformAccounts,
+            platformAccounts: Object.keys(platformAccounts).length // Legacy field for backward compatibility
         };
     }
 
@@ -639,25 +681,50 @@ class TierValidationService {
      * Compute effective cycle start considering resets and upgrades (CodeRabbit Round 4)
      * @private
      */
-    computeEffectiveCycleStart(userTier, userId) {
+    // Effective cycle start with upgrade resets (CodeRabbit Round 5)
+    async computeEffectiveCycleStart(userTier, userId) {
         // Use billing period start if available, otherwise month start
-        let cycleStart = userTier.periodStart ? 
+        const billingPeriodStart = userTier.periodStart ? 
             new Date(userTier.periodStart) : 
             this.getMonthStartUTC();
 
-        // TODO: Consider usage reset markers for tier upgrades
-        // This would query usage_resets table to find most recent reset
+        try {
+            // Check for usage reset markers for tier upgrades
+            const { data: resetData, error } = await supabaseServiceClient
+                .from('usage_resets')
+                .select('reset_timestamp')
+                .eq('user_id', userId)
+                .order('reset_timestamp', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (!error && resetData && resetData.reset_timestamp) {
+                const resetTimestamp = new Date(resetData.reset_timestamp);
+                // Use the most recent reset if it's after the billing period start
+                return resetTimestamp > billingPeriodStart ? resetTimestamp : billingPeriodStart;
+            }
+        } catch (error) {
+            // If error querying resets, fall back to billing period start
+            logger.warn('Error checking usage resets, falling back to billing period start', { userId, error: error.message });
+        }
         
-        return cycleStart;
+        return billingPeriodStart;
     }
 
     /**
      * Normalize plan values to prevent downstream errors (CodeRabbit Round 4)
      * @private
      */
+    // Enhanced plan normalization (CodeRabbit Round 5)
     normalizePlanValue(plan) {
         const validPlans = ['free', 'starter', 'pro', 'plus'];
-        const normalized = (plan || 'free').toLowerCase().trim();
+        
+        // Handle null, undefined, or non-string values
+        if (!plan || typeof plan !== 'string') {
+            return 'free';
+        }
+        
+        const normalized = plan.toLowerCase().trim();
         return validPlans.includes(normalized) ? normalized : 'free';
     }
 
@@ -1075,63 +1142,6 @@ class TierValidationService {
     }
 
     /**
-     * Handle tier downgrade with enhanced billing period handling (CodeRabbit Round 5)
-     * @param {string} userId - User ID
-     * @param {string} newPlan - New plan ID
-     * @param {string} oldPlan - Previous plan ID
-     * @param {Object} metadata - Additional metadata
-     * @returns {Promise<Object>} Downgrade result
-     */
-    async handleTierDowngradeEnhanced(userId, newPlan, oldPlan, metadata) {
-        try {
-            // Get current billing period end
-            const { data: tierData, error: tierError } = await supabaseServiceClient
-                .from('user_subscriptions')
-                .select('current_period_end')
-                .eq('user_id', userId)
-                .single();
-
-            if (tierError) {
-                throw tierError;
-            }
-
-            // Schedule the downgrade for the end of the billing period
-            const downgradeSchedule = {
-                user_id: userId,
-                scheduled_plan: newPlan,
-                current_plan: oldPlan,
-                effective_date: tierData.current_period_end,
-                created_at: new Date().toISOString(),
-                metadata: {
-                    ...metadata,
-                    type: 'tier_downgrade',
-                    service_version: 'tier_validation_v1'
-                }
-            };
-
-            const { data, error } = await supabaseServiceClient
-                .from('tier_change_schedule')
-                .upsert(downgradeSchedule);
-
-            if (error) {
-                throw error;
-            }
-
-            return {
-                success: true,
-                billingPeriodEnd: tierData.current_period_end,
-                effectiveDate: tierData.current_period_end,
-                newPlan,
-                oldPlan
-            };
-
-        } catch (error) {
-            logger.error('Error in handleTierDowngradeEnhanced:', error);
-            throw error;
-        }
-    }
-
-    /**
      * Record usage action atomically (CodeRabbit Round 5)
      * @param {string} userId - User ID
      * @param {string} actionType - Action type
@@ -1141,33 +1151,32 @@ class TierValidationService {
     async recordUsageActionAtomic(userId, actionType, metadata = {}) {
         try {
             const { data, error } = await supabaseServiceClient
-                .from('user_activity_log')
+                .from('user_activity')
                 .insert({
                     user_id: userId,
                     activity_type: actionType,
+                    created_at: new Date().toISOString(),
                     metadata: {
                         ...metadata,
                         service_version: 'tier_validation_v1',
-                        timestamp: new Date().toISOString()
-                    },
-                    created_at: new Date().toISOString()
+                        recorded_at: new Date().toISOString()
+                    }
                 });
 
             if (error) {
-                logger.error('Error recording usage action:', error);
+                logger.error('Failed to record usage action atomically', { userId, actionType, error: error.message });
                 return false;
             }
 
             return true;
-
         } catch (error) {
-            logger.error('Error in recordUsageActionAtomic:', error);
+            logger.error('Error in atomic usage recording', { userId, actionType, error: error.message });
             return false;
         }
     }
 
     /**
-     * Record multiple usage actions in batch (CodeRabbit Round 5)
+     * Record batch usage actions atomically (CodeRabbit Round 5)
      * @param {string} userId - User ID
      * @param {Array} actions - Array of action objects
      * @returns {Promise<Object>} Batch result
@@ -1177,38 +1186,33 @@ class TierValidationService {
             return { success: 0, failed: 0 };
         }
 
-        let successCount = 0;
-        let failedCount = 0;
+        const batchInserts = actions.map(action => ({
+            user_id: userId,
+            activity_type: action.actionType,
+            created_at: new Date().toISOString(),
+            metadata: {
+                ...action.metadata,
+                service_version: 'tier_validation_v1',
+                batch_id: `batch_${Date.now()}`,
+                recorded_at: new Date().toISOString()
+            }
+        }));
 
         try {
-            const records = actions.map(action => ({
-                user_id: userId,
-                activity_type: action.actionType,
-                metadata: {
-                    ...action.metadata,
-                    service_version: 'tier_validation_v1',
-                    timestamp: new Date().toISOString()
-                },
-                created_at: new Date().toISOString()
-            }));
-
             const { data, error } = await supabaseServiceClient
-                .from('user_activity_log')
-                .insert(records);
+                .from('user_activity')
+                .insert(batchInserts);
 
             if (error) {
-                logger.error('Error in batch recording:', error);
-                failedCount = actions.length;
-            } else {
-                successCount = actions.length;
+                logger.error('Failed to record batch usage actions', { userId, batchSize: actions.length, error: error.message });
+                return { success: 0, failed: actions.length };
             }
 
+            return { success: actions.length, failed: 0 };
         } catch (error) {
-            logger.error('Error in recordUsageActionsBatch:', error);
-            failedCount = actions.length;
+            logger.error('Error in batch usage recording', { userId, batchSize: actions.length, error: error.message });
+            return { success: 0, failed: actions.length };
         }
-
-        return { success: successCount, failed: failedCount };
     }
 
     /**
@@ -1259,6 +1263,61 @@ class TierValidationService {
         this.usageCache.set(`tier_${userId}`, tierData);
         if (!this.lastCacheRefresh) {
             this.lastCacheRefresh = Date.now();
+        }
+    }
+
+    /**
+     * Enhanced tier downgrade handling (CodeRabbit Round 5)
+     * @param {string} userId - User ID
+     * @param {string} newPlan - New plan ID
+     * @param {string} currentPlan - Current plan ID
+     * @param {Object} options - Options object
+     * @returns {Promise<Object>} Downgrade result
+     */
+    async handleTierDowngradeEnhanced(userId, newPlan, currentPlan, options = {}) {
+        try {
+            // Get actual billing period end date
+            const { data: userTier, error: tierError } = await supabaseServiceClient
+                .from('user_subscriptions')
+                .select('current_period_end')
+                .eq('user_id', userId)
+                .single();
+
+            if (tierError) {
+                throw new Error(`Failed to get user tier data: ${tierError.message}`);
+            }
+
+            const billingPeriodEnd = userTier.current_period_end || userTier.periodEnd;
+            
+            // Schedule downgrade for end of billing period
+            const { data, error } = await supabaseServiceClient
+                .from('scheduled_plan_changes')
+                .upsert({
+                    user_id: userId,
+                    current_plan: currentPlan,
+                    new_plan: newPlan,
+                    effective_date: billingPeriodEnd,
+                    change_type: 'downgrade',
+                    created_at: new Date().toISOString(),
+                    metadata: {
+                        triggered_by: 'tier_validation_service',
+                        ...options.metadata
+                    }
+                });
+
+            if (error) {
+                throw new Error(`Failed to schedule tier downgrade: ${error.message}`);
+            }
+
+            return { 
+                success: true, 
+                billingPeriodEnd,
+                effectiveDate: billingPeriodEnd,
+                changeType: 'downgrade'
+            };
+        } catch (error) {
+            logger.error('Error in enhanced tier downgrade', { userId, newPlan, currentPlan, error: error.message });
+            throw error;
         }
     }
 
@@ -1316,6 +1375,57 @@ class TierValidationService {
             totalActivePlatformAccounts: totalActiveAccounts,
             platformAccounts: uniquePlatforms // Legacy field for backward compatibility
         };
+    }
+
+    /**
+     * Cache management methods (CodeRabbit Round 5)
+     * @private
+     */
+    getCachedUserTier(userId) {
+        if (this.lastCacheRefresh && 
+            Date.now() - this.lastCacheRefresh > this.cacheTimeout) {
+            this.usageCache.clear();
+            this.lastCacheRefresh = null;
+        }
+
+        return this.usageCache.get(`tier_${userId}`);
+    }
+
+    setCachedUserTier(userId, tierData) {
+        this.usageCache.set(`tier_${userId}`, tierData);
+        if (!this.lastCacheRefresh) {
+            this.lastCacheRefresh = Date.now();
+        }
+    }
+
+    /**
+     * Normalize plan value to valid plan ID (CodeRabbit Round 5)
+     * @private
+     */
+    normalizePlan(plan) {
+        const validPlans = ['free', 'starter', 'pro', 'plus'];
+        if (typeof plan === 'string' && validPlans.includes(plan.toLowerCase())) {
+            return plan.toLowerCase();
+        }
+        return 'free'; // Default to free for invalid plans
+    }
+
+    /**
+     * Get required plans for a specific feature
+     * @private
+     */
+    getRequiredPlansForFeature(feature) {
+        const featureRequirements = {
+            'shield': ['starter', 'pro', 'plus'],
+            'custom_tones': ['pro', 'plus'],
+            'original_tone': ['pro', 'plus'],
+            'embedded_judge': ['plus'],
+            'analytics': ['pro', 'plus'],
+            'api_access': ['plus'],
+            'priority_support': ['pro', 'plus']
+        };
+
+        return featureRequirements[feature] || [];
     }
 
     /**
