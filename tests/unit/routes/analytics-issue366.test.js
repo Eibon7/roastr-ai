@@ -11,7 +11,7 @@ const mockSupabaseServiceClient = {
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
-    not: jest.fn().mockReturnThis(),
+    not: jest.fn().mockResolvedValue({ count: 24, error: null }),
     single: jest.fn(),
 };
 
@@ -94,8 +94,10 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
 
     test('should return analytics summary successfully using count property', async () => {
         // Mock successful database queries - returning count instead of data
-        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: 42, error: null })
-                                    .mockResolvedValueOnce({ count: 24, error: null });
+        // First call (comments query)
+        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: 42, error: null });
+        // Second call (responses query) 
+        mockSupabaseServiceClient.not.mockResolvedValueOnce({ count: 24, error: null });
 
         const response = await request(app)
             .get('/api/analytics/summary')
@@ -122,7 +124,7 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
 
     test('should handle database errors gracefully', async () => {
         // Mock database error
-        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ 
+        mockSupabaseServiceClient.eq.mockResolvedValue({ 
             count: null, 
             error: new Error('Database connection failed') 
         });
@@ -142,8 +144,8 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
 
     test('should return zero values when no data exists', async () => {
         // Mock empty results
-        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: 0, error: null })
-                                    .mockResolvedValueOnce({ count: 0, error: null });
+        mockSupabaseServiceClient.eq.mockResolvedValue({ count: 0, error: null });
+        mockSupabaseServiceClient.not.mockResolvedValue({ count: 0, error: null });
 
         const response = await request(app)
             .get('/api/analytics/summary')
@@ -162,8 +164,8 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
             next();
         });
 
-        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: 100, error: null })
-                                    .mockResolvedValueOnce({ count: 50, error: null });
+        mockSupabaseServiceClient.eq.mockResolvedValue({ count: 100, error: null });
+        mockSupabaseServiceClient.not.mockResolvedValue({ count: 50, error: null });
 
         const response = await request(app)
             .get('/api/analytics/summary')
@@ -179,8 +181,8 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
 
     test('should handle null count values gracefully', async () => {
         // Mock null count responses
-        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: null, error: null })
-                                    .mockResolvedValueOnce({ count: null, error: null });
+        mockSupabaseServiceClient.eq.mockResolvedValue({ count: null, error: null });
+        mockSupabaseServiceClient.not.mockResolvedValue({ count: null, error: null });
 
         const response = await request(app)
             .get('/api/analytics/summary')

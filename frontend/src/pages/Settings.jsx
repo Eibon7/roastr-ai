@@ -26,6 +26,8 @@ import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import AjustesSettings from '../components/AjustesSettings';
 import { useNavigate } from 'react-router-dom';
+import { isFeatureEnabled } from '../utils/featureFlags';
+import { getTierLimits, validateConnectionLimit, getConnectionWarning } from '../utils/tierLimits';
 
 const Settings = () => {
   const { userData: user } = useAuth();
@@ -38,6 +40,11 @@ const Settings = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [billingInfo, setBillingInfo] = useState(null);
   const [activeNotification, setActiveNotification] = useState(null);
+  
+  // Connection limits and Shield UI states
+  const [connections, setConnections] = useState([]);
+  const [shieldSettings, setShieldSettings] = useState(null);
+  const [shieldExpanded, setShieldExpanded] = useState(false);
   
   // Account tab states
   const [passwords, setPasswords] = useState({
@@ -78,6 +85,8 @@ const Settings = () => {
 
   useEffect(() => {
     loadBillingInfo();
+    loadConnections();
+    loadShieldSettings();
     
     // Cleanup timeout on unmount
     return () => {
@@ -93,6 +102,24 @@ const Settings = () => {
       setBillingInfo(billing.data);
     } catch (error) {
       console.warn('Could not load billing info:', error);
+    }
+  };
+
+  const loadConnections = async () => {
+    try {
+      const response = await apiClient.get('/user/connections');
+      setConnections(response.data?.connections || []);
+    } catch (error) {
+      console.warn('Could not load connections:', error);
+    }
+  };
+
+  const loadShieldSettings = async () => {
+    try {
+      const response = await apiClient.get('/shield/settings');
+      setShieldSettings(response.data);
+    } catch (error) {
+      console.warn('Could not load Shield settings:', error);
     }
   };
 
@@ -282,7 +309,7 @@ const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="account" className="flex items-center gap-2">
             <User className="w-4 h-4" />
             Account
@@ -290,6 +317,10 @@ const Settings = () => {
           <TabsTrigger value="adjustments" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
             Adjustments
+          </TabsTrigger>
+          <TabsTrigger value="connections" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Connections
           </TabsTrigger>
           <TabsTrigger value="billing" className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
@@ -570,6 +601,254 @@ const Settings = () => {
             user={user} 
             onNotification={handleNotification}
           />
+        </TabsContent>
+
+        {/* Connections Tab - Network Connection Limits & Shield */}
+        <TabsContent value="connections" className="space-y-6">
+          {/* Network Connection Limits */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Límites de Conexión de Red
+              </CardTitle>
+              <CardDescription>
+                Gestiona las conexiones de tus redes sociales según tu plan
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {(() => {
+                const currentPlan = user?.plan || 'free';
+                const tierLimits = getTierLimits(currentPlan);
+                const connectionValidation = validateConnectionLimit(connections.length, currentPlan);
+                const warning = getConnectionWarning(connections.length, currentPlan);
+                
+                return (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium text-sm text-gray-600">Plan Actual</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          {getPlanIcon(currentPlan)}
+                          <span className="text-lg font-semibold capitalize">{currentPlan}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium text-sm text-gray-600">Conexiones Activas</h4>
+                        <p className="text-2xl font-bold">
+                          {connections.length}
+                          <span className="text-sm text-gray-500 font-normal">
+                            /{tierLimits.social_connections}
+                          </span>
+                        </p>
+                      </div>
+                      
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium text-sm text-gray-600">Estado</h4>
+                        <Badge className={connectionValidation.allowed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {connectionValidation.allowed ? 'Disponible' : 'Límite alcanzado'}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {warning && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-amber-900">Advertencia de Límite</h4>
+                            <p className="text-sm text-amber-700 mt-1">{warning}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!connectionValidation.allowed && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-red-900">Límite Alcanzado</h4>
+                            <p className="text-sm text-red-700 mt-1">
+                              {connectionValidation.message}
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="mt-2"
+                              onClick={() => navigate('/pricing')}
+                            >
+                              Actualizar Plan
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Conexiones Configuradas</h4>
+                      {connections.length > 0 ? (
+                        <div className="space-y-2">
+                          {connections.map((connection, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <span className="text-sm font-medium text-blue-800">
+                                    {connection.platform?.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="font-medium capitalize">{connection.platform}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {connection.enabled ? 'Activa' : 'Inactiva'}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge className={connection.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                {connection.enabled ? 'Conectada' : 'Pausada'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                          <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">No hay conexiones configuradas</p>
+                          <Button 
+                            variant="outline" 
+                            className="mt-2"
+                            onClick={() => navigate('/integrations')}
+                          >
+                            Configurar Conexiones
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Shield Configuration - Collapsible Section (Feature Flagged) */}
+          {isFeatureEnabled('ENABLE_SHIELD_UI') && getTierLimits(user?.plan || 'free').shield_enabled && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    <div>
+                      <CardTitle>Configuración Shield</CardTitle>
+                      <CardDescription>
+                        Sistema de moderación automática para contenido tóxico
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShieldExpanded(!shieldExpanded)}
+                    className="flex items-center gap-2"
+                  >
+                    {shieldExpanded ? 'Colapsar' : 'Expandir'}
+                    <div className={`transform transition-transform ${shieldExpanded ? 'rotate-180' : ''}`}>
+                      ▼
+                    </div>
+                  </Button>
+                </div>
+              </CardHeader>
+              
+              {shieldExpanded && (
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-sm text-gray-600">Estado Shield</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className={`w-3 h-3 rounded-full ${shieldSettings?.enabled ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className="font-semibold">
+                          {shieldSettings?.enabled ? 'Activado' : 'Desactivado'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium text-sm text-gray-600">Nivel de Agresividad</h4>
+                      <p className="text-lg font-semibold">
+                        {shieldSettings?.aggressiveness || 95}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                          Shield Automático
+                        </h4>
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                          Shield monitorea automáticamente el contenido tóxico y toma acciones preventivas 
+                          según el nivel de agresividad configurado.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => navigate('/shield/settings')}
+                    >
+                      Configuración Avanzada
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate('/shield/logs')}
+                    >
+                      Ver Logs
+                    </Button>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          )}
+
+          {/* Plan Restriction Notice for Shield */}
+          {isFeatureEnabled('ENABLE_SHIELD_UI') && !getTierLimits(user?.plan || 'free').shield_enabled && (
+            <Card className="border-amber-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-600">
+                  <Crown className="w-5 h-5" />
+                  Shield Disponible en Planes Premium
+                </CardTitle>
+                <CardDescription>
+                  Actualiza tu plan para acceder a la moderación automática Shield
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Shield className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-amber-900">¿Qué es Shield?</h4>
+                        <p className="text-sm text-amber-700 mt-1">
+                          Shield es nuestro sistema de moderación automática que detecta y gestiona 
+                          contenido tóxico en tiempo real, manteniendo tus redes sociales seguras.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button onClick={() => navigate('/pricing')} className="w-full">
+                    Ver Planes Premium
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Billing Tab */}
