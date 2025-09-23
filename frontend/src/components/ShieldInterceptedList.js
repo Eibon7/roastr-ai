@@ -224,7 +224,12 @@ const ShieldInterceptedList = ({
 
       {/* List */}
       {loading && (
-        <div className="text-center py-8">
+        <div 
+          className="text-center py-8"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] mb-4">
             <span className="sr-only">Cargando...</span>
           </div>

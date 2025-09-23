@@ -23,7 +23,13 @@ describe('Shield Action Executor Smoke Test', () => {
       baseDelay: 100,
       maxDelay: 1000,
       failureThreshold: 3,
-      recoveryTimeout: 5000
+      recoveryTimeout: 5000,
+      adapters: {
+        twitter: {
+          failureRate: 0, // Disable random failures for tests
+          mockLatency: { min: 10, max: 20 } // Reduce latency for faster tests
+        }
+      }
     });
   });
 

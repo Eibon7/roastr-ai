@@ -30,6 +30,7 @@ const AccountModal = ({
   const [roasts, setRoasts] = useState(initialRoasts || []);
   const [intercepted, setIntercepted] = useState(initialIntercepted || []);
   const [loading, setLoading] = useState(true);
+  const [shieldLoading, setShieldLoading] = useState(false);
 
   const networkIcon = NETWORK_ICONS[account.network || account.platform] || '📱';
   const networkColor = NETWORK_COLORS[account.network || account.platform] || 'bg-gray-600 text-white';
@@ -67,19 +68,7 @@ const AccountModal = ({
         }
 
         // Fetch real Shield intercepted events
-        const shieldResponse = await fetch(`/api/shield/events?timeRange=30d&limit=50&platform=${account.platform}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (shieldResponse.ok) {
-          const shieldData = await shieldResponse.json();
-          setIntercepted(shieldData.data?.events || []);
-        } else {
-          console.warn('Failed to fetch shield events, using empty array');
-          setIntercepted([]);
-        }
+        await fetchShieldEvents();
 
       } catch (error) {
         console.error('Error fetching account data:', error);
@@ -213,8 +202,70 @@ const AccountModal = ({
     );
   }, [handleAsyncAction]);
 
+  const handleDisconnect = () => {
+    handleAsyncAction(
+      'disconnect',
+      async () => {
+        await onDisconnectAccount(account.id);
+        setShowDisconnectConfirm(false);
+        onClose();
+      },
+      'Cuenta desconectada correctamente'
+    );
+  };
+
+  // Fetch Shield events function
+  const fetchShieldEvents = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Build query parameters safely using URLSearchParams
+      const params = new URLSearchParams({
+        timeRange: '30d',
+        limit: '50'
+      });
+
+      // Check for platform value from multiple sources
+      const platform = account.platform || account.network || accountDetails?.platform;
+      
+      // Only add platform parameter if a valid value exists
+      if (platform && platform !== 'undefined') {
+        params.append('platform', platform);
+      }
+
+      const shieldResponse = await fetch(`/api/shield/events?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (shieldResponse.ok) {
+        const shieldData = await shieldResponse.json();
+        setIntercepted(shieldData.data?.events || []);
+      } else {
+        console.warn('Failed to fetch shield events, using empty array');
+        setIntercepted([]);
+      }
+    } catch (error) {
+      console.error('Error fetching Shield events:', error);
+      setIntercepted([]);
+    }
+  };
+
+  // Refresh Shield events handler
+  const handleRefreshShieldEvents = async () => {
+    setShieldLoading(true);
+    try {
+      await fetchShieldEvents();
+    } catch (error) {
+      console.error('Failed to refresh Shield events:', error);
+    } finally {
+      setShieldLoading(false);
+    }
+  };
+
   // Shield revert action handler
-  const handleRevertShieldAction = useCallback(async (actionId, reason = '') => {
+  const handleRevertShieldAction = async (actionId, reason = '') => {
     const response = await fetch(`/api/shield/revert/${actionId}`, {
       method: 'POST',
       headers: {
@@ -230,37 +281,6 @@ const AccountModal = ({
     }
 
     return response.json();
-  }, []);
-
-  // Refresh Shield events
-  const handleRefreshShieldEvents = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/shield/events?timeRange=30d&limit=50&platform=${account.platform}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setIntercepted(data.data?.events || []);
-      }
-    } catch (error) {
-      console.error('Failed to refresh Shield events:', error);
-    }
-  }, [account.platform]);
-
-  const handleDisconnect = () => {
-    handleAsyncAction(
-      'disconnect',
-      async () => {
-        await onDisconnectAccount(account.id);
-        setShowDisconnectConfirm(false);
-        onClose();
-      },
-      'Cuenta desconectada correctamente'
-    );
   };
 
   const tabs = [
@@ -585,7 +605,7 @@ const AccountModal = ({
                     <ShieldInterceptedList 
                       interceptedItems={intercepted}
                       onRevertAction={handleRevertShieldAction}
-                      loading={loading}
+                      loading={loading || shieldLoading}
                       onRefresh={handleRefreshShieldEvents}
                     />
                   </div>

@@ -79,7 +79,7 @@ class FeatureFlags {
       ENABLE_ROAST_ENGINE: this.parseFlag(process.env.ENABLE_ROAST_ENGINE, true), // Default: enabled, can be disabled for maintenance
 
       // Shield UI Features (Issue #365)
-      ENABLE_SHIELD_UI: this.parseFlag(process.env.ENABLE_SHIELD_UI, true) // Default: enabled, allows Shield UI access for Pro+ plans
+      ENABLE_SHIELD_UI: this.parseFlag(process.env.ENABLE_SHIELD_UI, false) // Default: disabled for safer rollout, allows Shield UI access for Pro+ plans when enabled
     };
   }
 
