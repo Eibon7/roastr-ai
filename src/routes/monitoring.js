@@ -4,7 +4,7 @@
  */
 
 const express = require('express');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const tierValidationMonitoringService = require('../services/tierValidationMonitoringService');
 const planLimitsService = require('../services/planLimitsService');
 const { logger } = require('../utils/logger');
@@ -15,23 +15,61 @@ const router = express.Router();
 router.use(authenticateToken);
 
 /**
+ * Helper function to compute plan limits health status
+ */
+async function getPlanLimitsHealth() {
+    try {
+        // Test basic plan limits functionality
+        const testPlanLimits = await planLimitsService.getPlanLimits('free');
+        
+        const health = {
+            status: 'healthy',
+            cacheSize: planLimitsService.cache?.size || 0,
+            lastRefresh: planLimitsService.lastCacheRefresh,
+            testResult: !!testPlanLimits
+        };
+        
+        // Check if basic functionality works
+        if (!testPlanLimits || !testPlanLimits.maxRoasts) {
+            health.status = 'degraded';
+            health.issue = 'Plan limits data missing or invalid';
+        }
+        
+        // Check cache freshness (if cache exists but is stale)
+        if (health.lastRefresh && Date.now() - health.lastRefresh > 10 * 60 * 1000) { // 10 minutes
+            health.status = health.status === 'healthy' ? 'degraded' : health.status;
+            health.cacheWarning = 'Cache may be stale';
+        }
+        
+        return health;
+    } catch (error) {
+        logger.error('Error checking plan limits health:', error);
+        return {
+            status: 'unhealthy',
+            error: error.message,
+            cacheSize: 0,
+            lastRefresh: null,
+            testResult: false
+        };
+    }
+}
+
+/**
  * GET /api/monitoring/health
  * Get tier validation system health status
  */
 router.get('/health', async (req, res) => {
     try {
         const tierHealth = tierValidationMonitoringService.getHealthStatus();
-        const planLimitsHealth = {
-            cacheSize: planLimitsService.cache?.size || 0,
-            lastRefresh: planLimitsService.lastCacheRefresh
-        };
+        const planLimitsHealth = await getPlanLimitsHealth();
         
         const overallHealth = {
             ...tierHealth,
             components: {
                 tierValidation: tierHealth.status,
-                planLimits: 'healthy'
-            }
+                planLimits: planLimitsHealth.status
+            },
+            planLimitsDetails: planLimitsHealth
         };
         
         // Set appropriate HTTP status based on health
@@ -127,7 +165,7 @@ router.get('/cache', async (req, res) => {
  * POST /api/monitoring/cache/clear
  * Clear all caches (admin operation)
  */
-router.post('/cache/clear', async (req, res) => {
+router.post('/cache/clear', requireAdmin, async (req, res) => {
     try {
         // Clear all caches
         tierValidationMonitoringService.clearCache();
@@ -192,7 +230,7 @@ router.get('/alerts/config', async (req, res) => {
  * PUT /api/monitoring/alerts/config
  * Update alert thresholds (admin only)
  */
-router.put('/alerts/config', async (req, res) => {
+router.put('/alerts/config', requireAdmin, async (req, res) => {
     try {
         const { thresholds } = req.body;
         
@@ -264,7 +302,7 @@ router.put('/alerts/config', async (req, res) => {
  * POST /api/monitoring/alerts/test
  * Send a test alert (admin only)
  */
-router.post('/alerts/test', async (req, res) => {
+router.post('/alerts/test', requireAdmin, async (req, res) => {
     try {
         const { severity = 'info', title = 'Test Alert', message = 'This is a test alert from monitoring system' } = req.body;
         

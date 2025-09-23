@@ -104,6 +104,7 @@ class TierValidationMonitoringService {
     checkAlertThresholds() {
         const errorRate = this.calculateErrorRate();
         const errorsInLastHour = this.getErrorsInLastHour();
+        const validationsInLastMinute = this.getValidationsInLastMinute();
         
         // Warning threshold (5%)
         if (errorRate >= this.alertThresholds.errorRatePercentage) {
@@ -122,6 +123,12 @@ class TierValidationMonitoringService {
             this.sendAlert('critical', 'Tier Validation Error Count High', 
                 `Errors in last hour: ${errorsInLastHour} (threshold: ${this.alertThresholds.maxErrorsPerHour})`);
         }
+        
+        // Validations per minute threshold
+        if (validationsInLastMinute >= this.alertThresholds.maxValidationsPerMinute) {
+            this.sendAlert('warning', 'Tier Validation Rate High', 
+                `Validations in last minute: ${validationsInLastMinute} (threshold: ${this.alertThresholds.maxValidationsPerMinute})`);
+        }
     }
 
     /**
@@ -139,6 +146,16 @@ class TierValidationMonitoringService {
         const oneHourAgo = Date.now() - (60 * 60 * 1000);
         return this.metrics.performanceMetrics.filter(
             metric => metric.error && metric.timestamp > oneHourAgo
+        ).length;
+    }
+
+    /**
+     * Get validation count in the last minute (sliding window)
+     */
+    getValidationsInLastMinute() {
+        const oneMinuteAgo = Date.now() - (60 * 1000);
+        return this.metrics.performanceMetrics.filter(
+            metric => metric.timestamp > oneMinuteAgo
         ).length;
     }
 
@@ -201,16 +218,21 @@ class TierValidationMonitoringService {
      */
     async sendWebhookAlert(alertData) {
         try {
-            // Use dynamic import or require for node-fetch
-            const fetch = globalThis.fetch || require('node-fetch');
+            // Use dynamic import for node-fetch
+            const fetch = await import('node-fetch').then(mod => mod.default);
             
-            await fetch(this.externalAlerts.webhookUrl, {
+            const response = await fetch(this.externalAlerts.webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(alertData)
+                body: JSON.stringify(alertData),
+                timeout: 5000 // 5-second timeout
             });
+            
+            if (!response.ok) {
+                logger.warn(`Webhook alert failed with status ${response.status}: ${response.statusText}`);
+            }
         } catch (error) {
-            logger.error('Failed to send webhook alert:', error);
+            logger.warn('Failed to send webhook alert:', error.message);
         }
     }
 
@@ -219,7 +241,8 @@ class TierValidationMonitoringService {
      */
     async sendSlackAlert(alertData) {
         try {
-            const fetch = globalThis.fetch || require('node-fetch');
+            // Use dynamic import for node-fetch
+            const fetch = await import('node-fetch').then(mod => mod.default);
             
             const slackMessage = {
                 text: `🚨 ${alertData.title}`,
@@ -243,13 +266,18 @@ class TierValidationMonitoringService {
                 ]
             };
             
-            await fetch(this.externalAlerts.slackWebhook, {
+            const response = await fetch(this.externalAlerts.slackWebhook, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(slackMessage)
+                body: JSON.stringify(slackMessage),
+                timeout: 5000 // 5-second timeout
             });
+            
+            if (!response.ok) {
+                logger.warn(`Slack alert failed with status ${response.status}: ${response.statusText}`);
+            }
         } catch (error) {
-            logger.error('Failed to send Slack alert:', error);
+            logger.warn('Failed to send Slack alert:', error.message);
         }
     }
 
@@ -302,7 +330,8 @@ class TierValidationMonitoringService {
             cacheHitRate: this.getCacheHitRate(),
             averagePerformance: this.getAveragePerformance(),
             cacheSize: this.cache.size,
-            errorsInLastHour: this.getErrorsInLastHour()
+            errorsInLastHour: this.getErrorsInLastHour(),
+            validationsInLastMinute: this.getValidationsInLastMinute()
         };
     }
 
