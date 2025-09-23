@@ -41,6 +41,7 @@ const CsvRoastService = require('./services/csvRoastService');
 const IntegrationManager = require('./integrations/integrationManager');
 const ReincidenceDetector = require('./services/reincidenceDetector');
 const advancedLogger = require('./utils/advancedLogger');
+const { logger } = require('./utils/logger');
 const monitoringService = require('./services/monitoringService');
 const alertingService = require('./services/alertingService');
 
@@ -284,6 +285,10 @@ app.use('/api/settings', settingsRoutes);
 // Monitoring routes (authenticated) - Issue #396
 const monitoringRoutes = require('./routes/monitoring');
 app.use('/api/monitoring', monitoringRoutes);
+
+// Tier validation routes (authenticated) - Issue #368
+const tierValidationRoutes = require('./routes/tierValidation');
+app.use('/api/tier-validation', tierValidationRoutes);
 
 // Model availability routes (authenticated, admin) - Issue #326
 const modelAvailabilityRoutes = require('./routes/modelAvailability');

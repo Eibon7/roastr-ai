@@ -7,12 +7,18 @@
 const { supabaseServiceClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const { 
+    DEFAULT_TIER_LIMITS, 
+    SECURITY_CONFIG, 
+    VALIDATION_HELPERS,
+    CACHE_CONFIG 
+} = require('../config/tierConfig');
 
 class PlanLimitsService {
     constructor() {
         // Cache plan limits to reduce database queries
         this.cache = new Map();
-        this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+        this.cacheTimeout = CACHE_CONFIG.timeouts.limits;
         this.lastCacheRefresh = null;
     }
 
@@ -38,8 +44,38 @@ class PlanLimitsService {
 
             if (error) {
                 logger.error('Failed to fetch plan limits:', error);
-                // Fall back to free plan limits if error
-                return this.getDefaultLimits(planId);
+                
+                // Enhanced fail-closed security (CodeRabbit Round 7)
+                const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
+                                           process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
+                
+                if (isProductionOrSecure) {
+                    logger.error('Plan limits fetch failed - failing closed for security', {
+                        planId,
+                        error: error.message,
+                        timestamp: new Date().toISOString()
+                    });
+                    return this.getDefaultLimits('free'); // Always use free plan limits for security
+                }
+                
+                // Only allow fail-open in development with explicit flag
+                const allowFailOpen = process.env.NODE_ENV !== 'production' && 
+                                     process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
+                
+                if (allowFailOpen) {
+                    logger.warn('Plan limits fetch failed, using defaults (development only)', {
+                        planId,
+                        warning: 'This should never happen in production'
+                    });
+                    return this.getDefaultLimits(planId);
+                }
+                
+                // Default fail-closed behavior
+                logger.error('Plan limits fetch failed - failing closed for security (default)', {
+                    planId,
+                    error: error.message
+                });
+                return this.getDefaultLimits('free');
             }
 
             // Transform database fields to match existing interface
@@ -68,7 +104,39 @@ class PlanLimitsService {
 
         } catch (error) {
             logger.error('Error in getPlanLimits:', error);
-            return this.getDefaultLimits(planId);
+            
+            // Enhanced fail-closed security (CodeRabbit Round 7)
+            const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
+                                       process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
+            
+            if (isProductionOrSecure) {
+                logger.error('Plan limits service error - failing closed for security', {
+                    planId,
+                    error: error.message,
+                    stack: error.stack,
+                    timestamp: new Date().toISOString()
+                });
+                return this.getDefaultLimits('free');
+            }
+            
+            // Only allow fail-open in development with explicit flag
+            const allowFailOpen = process.env.NODE_ENV !== 'production' && 
+                                 process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
+            
+            if (allowFailOpen) {
+                logger.warn('Plan limits service error, using defaults (development only)', {
+                    planId,
+                    warning: 'This should never happen in production'
+                });
+                return this.getDefaultLimits(planId);
+            }
+            
+            // Default fail-closed behavior
+            logger.error('Plan limits service error - failing closed for security (default)', {
+                planId,
+                error: error.message
+            });
+            return this.getDefaultLimits('free');
         }
     }
 
@@ -85,7 +153,35 @@ class PlanLimitsService {
 
             if (error) {
                 logger.error('Failed to fetch all plan limits:', error);
-                return this.getDefaultAllLimits();
+                
+                // Enhanced fail-closed security (CodeRabbit Round 7)
+                const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
+                                           process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
+                
+                if (isProductionOrSecure) {
+                    logger.error('All plan limits fetch failed - failing closed for security', {
+                        error: error.message,
+                        timestamp: new Date().toISOString()
+                    });
+                    return { free: this.getDefaultLimits('free') };
+                }
+                
+                // Only allow fail-open in development with explicit flag
+                const allowFailOpen = process.env.NODE_ENV !== 'production' && 
+                                     process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
+                
+                if (allowFailOpen) {
+                    logger.warn('All plan limits fetch failed, using defaults (development only)', {
+                        warning: 'This should never happen in production'
+                    });
+                    return this.getDefaultAllLimits();
+                }
+                
+                // Default fail-closed behavior
+                logger.error('All plan limits fetch failed - failing closed for security (default)', {
+                    error: error.message
+                });
+                return { free: this.getDefaultLimits('free') };
             }
 
             // Transform to object keyed by plan_id
@@ -114,7 +210,36 @@ class PlanLimitsService {
 
         } catch (error) {
             logger.error('Error in getAllPlanLimits:', error);
-            return this.getDefaultAllLimits();
+            
+            // Enhanced fail-closed security (CodeRabbit Round 7)
+            const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
+                                       process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
+            
+            if (isProductionOrSecure) {
+                logger.error('All plan limits service error - failing closed for security', {
+                    error: error.message,
+                    stack: error.stack,
+                    timestamp: new Date().toISOString()
+                });
+                return { free: this.getDefaultLimits('free') };
+            }
+            
+            // Only allow fail-open in development with explicit flag
+            const allowFailOpen = process.env.NODE_ENV !== 'production' && 
+                                 process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
+            
+            if (allowFailOpen) {
+                logger.warn('All plan limits service error, using defaults (development only)', {
+                    warning: 'This should never happen in production'
+                });
+                return this.getDefaultAllLimits();
+            }
+            
+            // Default fail-closed behavior
+            logger.error('All plan limits service error - failing closed for security (default)', {
+                error: error.message
+            });
+            return { free: this.getDefaultLimits('free') };
         }
     }
 
@@ -224,8 +349,44 @@ class PlanLimitsService {
 
         } catch (error) {
             logger.error('Error checking limit:', error);
-            // Default to not exceeded on error
-            return false;
+            
+            // Enhanced fail-closed security (CodeRabbit Round 7)
+            const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
+                                       process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
+            
+            if (isProductionOrSecure) {
+                logger.error('Plan limits check failed - failing closed for security', {
+                    planId,
+                    limitType,
+                    currentUsage,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+                return true; // Deny action for security
+            }
+            
+            // Only allow fail-open in development with explicit flag
+            const allowFailOpen = process.env.NODE_ENV !== 'production' && 
+                                 process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
+            
+            if (allowFailOpen) {
+                logger.warn('Plan limits check failed, allowing (development only)', {
+                    planId,
+                    limitType,
+                    currentUsage,
+                    warning: 'This should never happen in production'
+                });
+                return false; // Allow action in development
+            }
+            
+            // Default fail-closed behavior
+            logger.error('Plan limits check failed - failing closed for security (default)', {
+                planId,
+                limitType,
+                currentUsage,
+                error: error.message
+            });
+            return true; // Deny action for security
         }
     }
 
@@ -256,115 +417,19 @@ class PlanLimitsService {
     }
 
     /**
-     * Get default limits (fallback for errors)
+     * Get default limits (fallback for errors) - uses centralized configuration
      * @private
      */
     getDefaultLimits(planId) {
-        const defaults = {
-            free: {
-                maxRoasts: 10,
-                monthlyResponsesLimit: 10,
-                monthlyAnalysisLimit: 1000,
-                maxPlatforms: 2,
-                integrationsLimit: 2,
-                shieldEnabled: false,
-                customPrompts: false,
-                prioritySupport: false,
-                apiAccess: false,
-                analyticsEnabled: false,
-                customTones: false,
-                dedicatedSupport: false,
-                monthlyTokensLimit: 50000,
-                dailyApiCallsLimit: 100,
-                ai_model: 'gpt-3.5-turbo'
-            },
-            starter: {
-                maxRoasts: 10,
-                monthlyResponsesLimit: 10,
-                monthlyAnalysisLimit: 1000,
-                maxPlatforms: 2,
-                integrationsLimit: 2,
-                shieldEnabled: true,
-                customPrompts: false,
-                prioritySupport: false,
-                apiAccess: false,
-                analyticsEnabled: false,
-                customTones: false,
-                dedicatedSupport: false,
-                monthlyTokensLimit: 100000,
-                dailyApiCallsLimit: 500,
-                ai_model: 'gpt-4o'
-            },
-            pro: {
-                maxRoasts: 1000,
-                monthlyResponsesLimit: 1000,
-                monthlyAnalysisLimit: 10000,
-                maxPlatforms: 5,
-                integrationsLimit: 5,
-                shieldEnabled: true,
-                customPrompts: false,
-                prioritySupport: true,
-                apiAccess: false,
-                analyticsEnabled: true,
-                customTones: true,
-                dedicatedSupport: false,
-                monthlyTokensLimit: 500000,
-                dailyApiCallsLimit: 5000,
-                ai_model: 'gpt-4o'
-            },
-            plus: {
-                maxRoasts: 5000,
-                monthlyResponsesLimit: 5000,
-                monthlyAnalysisLimit: 100000,
-                maxPlatforms: 10,
-                integrationsLimit: 10,
-                shieldEnabled: true,
-                customPrompts: true,
-                prioritySupport: true,
-                apiAccess: true,
-                analyticsEnabled: true,
-                customTones: true,
-                dedicatedSupport: true,
-                monthlyTokensLimit: 2000000,
-                dailyApiCallsLimit: 20000,
-                ai_model: 'gpt-4o',
-                rqc_embedded: true
-            },
-            custom: {
-                maxRoasts: -1,
-                monthlyResponsesLimit: -1,
-                monthlyAnalysisLimit: -1,
-                maxPlatforms: -1,
-                integrationsLimit: -1,
-                shieldEnabled: true,
-                customPrompts: true,
-                prioritySupport: true,
-                apiAccess: true,
-                analyticsEnabled: true,
-                customTones: true,
-                dedicatedSupport: true,
-                monthlyTokensLimit: -1,
-                dailyApiCallsLimit: -1,
-                ai_model: 'gpt-4o',
-                enterprise: true
-            }
-        };
-
-        return defaults[planId] || defaults.free;
+        return DEFAULT_TIER_LIMITS[planId] || DEFAULT_TIER_LIMITS.free;
     }
 
     /**
-     * Get default limits for all plans
+     * Get default limits for all plans - uses centralized configuration
      * @private
      */
     getDefaultAllLimits() {
-        return {
-            free: this.getDefaultLimits('free'),
-            starter: this.getDefaultLimits('starter'),
-            pro: this.getDefaultLimits('pro'),
-            plus: this.getDefaultLimits('plus'),
-            custom: this.getDefaultLimits('custom')
-        };
+        return DEFAULT_TIER_LIMITS;
     }
 
     /**
