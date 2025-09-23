@@ -28,7 +28,20 @@ describe('Shield Action Executor Smoke Test', () => {
         twitter: {
           failureRate: 0, // Disable random failures for tests
           mockLatency: { min: 10, max: 20 } // Reduce latency for faster tests
+        },
+        youtube: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        },
+        discord: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        },
+        twitch: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
         }
+        // Note: reddit, instagram, facebook adapters not implemented in ShieldActionExecutorService
       }
     });
   });
@@ -82,6 +95,15 @@ describe('Shield Action Executor Smoke Test', () => {
     };
 
     const result = await actionExecutor.executeAction(mockAction);
+    
+    // Debug output for CI troubleshooting
+    console.log('🔍 Debug Info:');
+    console.log('  Action sent:', mockAction.action);
+    console.log('  Result received:', JSON.stringify(result, null, 2));
+    console.log('  Expected action:', 'hide_comment');
+    console.log('  Actual action:', result?.action);
+    console.log('  Platform:', result?.platform);
+    console.log('  Success:', result?.success);
     
     expect(result).toBeDefined();
     expect(typeof result.success).toBe('boolean');
