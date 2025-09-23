@@ -13,29 +13,37 @@ const { supabaseServiceClient } = require('../config/supabase');
 const planLimitsService = require('./planLimitsService');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const {
+    TIER_PRICING,
+    UPGRADE_CONFIG,
+    WARNING_THRESHOLDS,
+    CACHE_CONFIG,
+    SUPPORTED_PLATFORMS,
+    FEATURE_MAPPINGS,
+    SECURITY_CONFIG,
+    VALIDATION_HELPERS,
+    getUpgradeRecommendation,
+    getPlanBenefits,
+    getRequiredPlansForFeature,
+    isSupportedPlatform
+} = require('../config/tierConfig');
 
 class TierValidationService {
     constructor() {
-        // Enhanced cache for performance (CodeRabbit Round 4)
+        // Enhanced cache for performance (CodeRabbit Round 6)
         this.usageCache = new Map();
-        this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+        this.cacheTimeout = CACHE_CONFIG.timeouts.usage;
         this.requestScopedCache = new Map(); // Request-scoped validation cache
         
-        // Configurable thresholds and pricing (CodeRabbit Round 4)
-        this.warningThresholds = {
-            analysis: 0.8, // 80% warning threshold
-            roast: 0.8,
-            platform: 0.8
-        };
+        // Use centralized configuration (CodeRabbit Round 6)
+        this.warningThresholds = WARNING_THRESHOLDS;
+        this.upgradeConfig = UPGRADE_CONFIG;
+        this.tierPricing = TIER_PRICING;
+        this.securityConfig = SECURITY_CONFIG;
         
-        this.upgradeConfig = {
-            plans: {
-                free: { nextPlan: 'starter', price: '€5/mes' },
-                starter: { nextPlan: 'pro', price: '€15/mes' },
-                pro: { nextPlan: 'plus', price: '€50/mes' },
-                plus: { nextPlan: null, price: null }
-            }
-        };
+        // Cache invalidation tracking for usage recording (CodeRabbit Round 6)
+        this.pendingCacheInvalidations = new Set();
+        this.cacheInvalidationTimer = null;
         
         // Metrics tracking (CodeRabbit Round 4)
         this.metrics = {
@@ -45,20 +53,8 @@ class TierValidationService {
             errors: 0
         };
         
-        // CodeRabbit Round 3 - Supported platforms for validation
-        this.SUPPORTED_PLATFORMS = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
-        
-        // Centralized pricing configuration (CodeRabbit Round 5)
-        this.TIER_PRICING = {
-            currency: '€',
-            monthly: {
-                free: 0,
-                starter: 5,
-                pro: 15,
-                plus: 50
-            },
-            formatPrice: (amount) => amount === 0 ? 'Gratis' : `€${amount}/mes`
-        };
+        // Use centralized platform configuration (CodeRabbit Round 7)
+        this.SUPPORTED_PLATFORMS = SUPPORTED_PLATFORMS;
     }
 
     /**
@@ -80,20 +76,36 @@ class TierValidationService {
         try {
             this.metrics.validationCalls++;
             
-            // Parallelize data fetching for better performance (CodeRabbit Round 4)
-            const [userTier, currentUsage, tierLimits] = await Promise.all([
-                this.getUserTierWithUTC(userId),
-                this.getCurrentUsageWithUTC(userId),
-                planLimitsService.getPlanLimits(this.normalizePlanValue(await this.getUserTier(userId).then(t => t.plan)))
+            // Parallelize data fetching for better performance (CodeRabbit Round 7)
+            // First get user tier, then use it for other parallel calls
+            const userTier = await this.getUserTierWithUTC(userId);
+            
+            // Now parallelize remaining calls that don't depend on each other
+            const [currentUsage, tierLimits] = await Promise.all([
+                this.getUserUsageDirectly(userId, userTier),
+                planLimitsService.getPlanLimits(this.normalizePlanValue(userTier.plan))
             ]);
 
             // Enhanced metrics and logging (CodeRabbit Round 4)
             const validation = this.checkActionLimitsEnhanced(action, tierLimits, currentUsage, options);
             
-            // Database error detection (CodeRabbit Round 4)
+            // Enhanced database error detection with fail-closed security (CodeRabbit Round 7)
             if (this.detectDatabaseErrors(userTier, currentUsage, tierLimits)) {
                 this.metrics.errors++;
-                throw new Error('Database error detected during validation');
+                logger.error('Database validation error - failing closed', {
+                    userId,
+                    action,
+                    userTierValid: !!userTier?.plan,
+                    currentUsageValid: !!currentUsage && !currentUsage.error,
+                    tierLimitsValid: !!tierLimits
+                });
+                // Fail closed for security - deny the action
+                return {
+                    allowed: false,
+                    reason: 'validation_database_error',
+                    message: 'Unable to validate action due to database inconsistency',
+                    failedClosed: true
+                };
             }
 
             const result = {
@@ -140,36 +152,64 @@ class TierValidationService {
             });
             
             // CodeRabbit Round 4 - Enhanced fail-closed security model with database error detection
-            // Check for specific database errors that should always fail closed
-            if (error.code === 'ETIMEDOUT' || 
-                error.code === 'ECONNREFUSED' || 
+            // Enhanced fail-closed security model (CodeRabbit Round 7)
+            const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
+                                       process.env[SECURITY_CONFIG.failClosed.environmentVar] === 'true';
+            
+            // Always fail closed for critical database/connection errors
+            if (SECURITY_CONFIG.errorCodes.database.includes(error.code) || 
                 error.message?.includes('Connection') ||
-                error.message?.includes('timeout')) {
-                return {
-                    allowed: false,
-                    reason: 'Validation error - failing closed for security (database error)',
-                    message: 'Unable to validate action at this time'
-                };
-            }
-            const failOpen = process.env.TIER_VALIDATION_FAIL_OPEN === 'true';
-            if (failOpen) {
-                logger.warn('Tier validation failing open due to TIER_VALIDATION_FAIL_OPEN=true', {
+                error.message?.includes('timeout') ||
+                error.message?.includes('database') ||
+                (SECURITY_CONFIG.failClosed.forceInProduction && isProductionOrSecure)) {
+                
+                logger.error('Tier validation failing closed for security', {
                     userId,
                     action,
-                    requestId
+                    requestId,
+                    errorType: error.code || 'unknown',
+                    isProduction: process.env.NODE_ENV === 'production',
+                    forceFailClosed: process.env.TIER_VALIDATION_FAIL_CLOSED === 'true'
                 });
-                return { allowed: true, reason: 'Validation error - failing open (configured)', fallback: true };
+                
+                return {
+                    allowed: false,
+                    reason: 'validation_error_fail_closed',
+                    message: 'Unable to validate action at this time - access denied for security',
+                    failedClosed: true,
+                    retryAfter: 300 // Suggest retry after 5 minutes
+                };
+            }
+            
+            // Only allow fail-open in development with explicit flag
+            const allowFailOpen = process.env.NODE_ENV !== 'production' && 
+                                 process.env[SECURITY_CONFIG.failClosed.developmentOverride] === 'true';
+            
+            if (allowFailOpen) {
+                logger.warn('Tier validation failing open (development only)', {
+                    userId,
+                    action,
+                    requestId,
+                    warning: 'This should never happen in production'
+                });
+                return { 
+                    allowed: true, 
+                    reason: 'validation_error_fail_open_dev', 
+                    fallback: true,
+                    developmentOnly: true
+                };
             }
             
             // Default fail-closed behavior for security
             return { 
                 allowed: false, 
-                reason: 'Validation error - failing closed for security',
-                error: 'Validation service temporarily unavailable'
+                reason: 'validation_error_fail_closed_default',
+                message: 'Validation service temporarily unavailable - access denied',
+                failedClosed: true
             };
         } finally {
             // Cleanup request-scoped cache after a delay
-            setTimeout(() => this.cleanupRequestCache(requestId), 30000);
+            setTimeout(() => this.cleanupRequestCache(requestId), CACHE_CONFIG.cleanup.intervalMs);
         }
     }
 
@@ -187,11 +227,19 @@ class TierValidationService {
             return this.checkFeatureAccess(feature, tierLimits, userTier.plan);
 
         } catch (error) {
-            logger.error('Error validating tier feature:', error);
-            // Default to not available on error for security
+            logger.error('Error validating tier feature - failing closed for security:', {
+                error: error.message,
+                userId,
+                feature,
+                stack: error.stack
+            });
+            
+            // Always fail closed for feature validation (security-first)
             return { 
                 available: false, 
-                reason: 'Feature validation temporarily unavailable' 
+                reason: 'feature_validation_error_fail_closed',
+                message: 'Feature validation temporarily unavailable - access denied for security',
+                failedClosed: true
             };
         }
     }
@@ -289,12 +337,12 @@ class TierValidationService {
         }
 
         const normalizedPlatform = platform.toLowerCase().trim();
-        if (!this.SUPPORTED_PLATFORMS.includes(normalizedPlatform)) {
+        if (!VALIDATION_HELPERS.isValidPlatform(normalizedPlatform)) {
             return {
                 allowed: false,
                 reason: 'unsupported_platform',
-                message: `Platform '${platform}' is not supported. Supported platforms: ${this.SUPPORTED_PLATFORMS.join(', ')}`,
-                supportedPlatforms: this.SUPPORTED_PLATFORMS
+                message: `Platform '${platform}' is not supported. Supported platforms: ${SUPPORTED_PLATFORMS.join(', ')}`,
+                supportedPlatforms: SUPPORTED_PLATFORMS
             };
         }
 
@@ -322,18 +370,8 @@ class TierValidationService {
      * @private
      */
     checkFeatureAccess(feature, tierLimits, tierPlan) {
-        // Feature mappings for validation
-        const featureMap = {
-            'shield': 'shieldEnabled',
-            'custom_tones': 'customTones', 
-            'original_tone': 'customPrompts',
-            'embedded_judge': 'embeddedJudge',
-            'analytics': 'analyticsEnabled',
-            'api_access': 'apiAccess',
-            'priority_support': 'prioritySupport'
-        };
-
-        const featureProperty = featureMap[feature];
+        // Use centralized feature mappings (CodeRabbit Round 7)
+        const featureProperty = VALIDATION_HELPERS.getFeatureProperty(feature);
         
         if (!featureProperty) {
             // Fail-closed for unknown features (CodeRabbit Round 5 improvement)
@@ -354,7 +392,7 @@ class TierValidationService {
                 reason: 'tier_limitation',
                 message: `Feature '${feature}' requires a higher tier plan`,
                 currentPlan: tierPlan,
-                requiredPlans: this.getRequiredPlansForFeature(feature)
+                requiredPlans: VALIDATION_HELPERS.getRequiredPlans(feature)
             };
         }
     }
@@ -385,7 +423,7 @@ class TierValidationService {
             }
 
             // Enhanced plan normalization (CodeRabbit Round 5 improvement)  
-            const normalizedPlan = this.normalizePlan(data.plan);
+            const normalizedPlan = this.normalizePlanValue(data.plan);
             
             const userTier = {
                 plan: normalizedPlan,
@@ -406,42 +444,30 @@ class TierValidationService {
         }
     }
 
-    /**
-     * Get user's current tier information with UTC handling (CodeRabbit Round 4)
-     * @private
-     */
-    async getUserTierWithUTC(userId) {
-        const { data: subscription, error } = await supabaseServiceClient
-            .from('user_subscriptions')
-            .select('plan, status, current_period_start, current_period_end')
-            .eq('user_id', userId)
-            .single();
 
-        if (error || !subscription) {
-            return {
-                plan: 'free',
-                status: 'active',
-                isActive: true,
-                periodStart: null,
-                periodEnd: null
-            };
+    /**
+     * Get user usage directly with provided tier data (prevents circular dependency)
+     * @param {string} userId - User ID
+     * @param {Object} userTier - User tier information
+     * @returns {Promise<Object>} Usage data
+     */
+    async getUserUsageDirectly(userId, userTier) {
+        // Check cache first
+        const cached = this.getCachedUsage(userId);
+        if (cached) {
+            return cached;
         }
 
-        // UTC date handling (CodeRabbit Round 4)
-        const now = new Date();
-        const periodEnd = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+        // Compute effective cycle start using UTC (CodeRabbit Round 4)
+        const effectiveCycleStart = await this.computeEffectiveCycleStart(userTier, userId);
         
-        const isActive = subscription.status === 'active' || 
-                        subscription.status === 'trialing' ||
-                        (subscription.status === 'past_due' && periodEnd && periodEnd > now);
-
-        return {
-            plan: this.normalizePlanValue(subscription.plan),
-            status: subscription.status,
-            isActive,
-            periodStart: subscription.current_period_start,
-            periodEnd: subscription.current_period_end
-        };
+        // Get usage from database with optimized queries
+        const usage = await this.fetchUsageFromDatabaseOptimized(userId, effectiveCycleStart);
+        
+        // Cache the result with atomic operation
+        this.setCachedUsageAtomic(userId, usage);
+        
+        return usage;
     }
 
     /**
@@ -607,6 +633,11 @@ class TierValidationService {
      * @private
      */
     getCachedUsage(userId) {
+        // Don't return cached data if invalidation is pending
+        if (this.pendingCacheInvalidations.has(userId)) {
+            return null;
+        }
+        
         const cached = this.usageCache.get(userId);
         if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
             return cached.data;
@@ -661,16 +692,11 @@ class TierValidationService {
     }
 
     /**
-     * Get upgrade recommendation based on usage pattern
+     * Get upgrade recommendation based on usage pattern (uses centralized config)
      * @private
      */
     getUpgradeRecommendation(usageType, currentLimit) {
-        if (usageType === 'analysis' && currentLimit <= 100) return 'starter';
-        if (usageType === 'analysis' && currentLimit <= 1000) return 'pro';
-        if (usageType === 'roast' && currentLimit <= 10) return 'starter';
-        if (usageType === 'roast' && currentLimit <= 100) return 'pro';
-        if (usageType === 'platform' && currentLimit <= 1) return 'pro';
-        return 'plus';
+        return getUpgradeRecommendation(usageType, currentLimit);
     }
 
     // ============================================================================
@@ -717,15 +743,7 @@ class TierValidationService {
      */
     // Enhanced plan normalization (CodeRabbit Round 5)
     normalizePlanValue(plan) {
-        const validPlans = ['free', 'starter', 'pro', 'plus'];
-        
-        // Handle null, undefined, or non-string values
-        if (!plan || typeof plan !== 'string') {
-            return 'free';
-        }
-        
-        const normalized = plan.toLowerCase().trim();
-        return validPlans.includes(normalized) ? normalized : 'free';
+        return VALIDATION_HELPERS.normalizePlan(plan);
     }
 
     /**
@@ -769,17 +787,11 @@ class TierValidationService {
     }
 
     /**
-     * Get plan benefits for upgrade recommendations (CodeRabbit Round 4)
+     * Get plan benefits for upgrade recommendations (uses centralized config)
      * @private
      */
     getPlanBenefits(plan) {
-        const benefits = {
-            free: ['100 análisis', '10 roasts', '1 cuenta por red'],
-            starter: ['1,000 análisis', '100 roasts', '1 cuenta por red', 'Shield activado'],
-            pro: ['10,000 análisis', '1,000 roasts', '2 cuentas por red', 'Shield + Original Tone'],
-            plus: ['100,000 análisis', '5,000 roasts', '2 cuentas por red', 'Shield + Original Tone + Embedded Judge']
-        };
-        return benefits[plan] || benefits.free;
+        return getPlanBenefits(plan);
     }
 
     // ============================================================================
@@ -875,11 +887,18 @@ class TierValidationService {
     }
 
     /**
-     * Invalidate cache for user after actions that affect usage (CodeRabbit Round 4)
+     * Invalidate cache for user after actions that affect usage (CodeRabbit Round 7)
+     * Enhanced to handle all cache entries and prevent race conditions
      * @private
      */
     invalidateUserCache(userId) {
+        // Track invalidation to prevent race conditions
+        this.pendingCacheInvalidations.add(userId);
+        
+        // Clear all cache entries for this user
         this.usageCache.delete(userId);
+        this.usageCache.delete(`tier_${userId}`);
+        this.usageCache.delete(`usage_${userId}`);
         
         // Also cleanup any request-scoped cache entries for this user
         for (const [key] of this.requestScopedCache) {
@@ -887,6 +906,17 @@ class TierValidationService {
                 this.requestScopedCache.delete(key);
             }
         }
+        
+        // Remove from pending after a brief delay to prevent immediate re-cache
+        setTimeout(() => {
+            this.pendingCacheInvalidations.delete(userId);
+        }, CACHE_CONFIG.invalidation.delayMs);
+        
+        logger.debug('User cache invalidated', { 
+            userId, 
+            timestamp: new Date().toISOString(),
+            cacheSize: this.usageCache.size
+        });
     }
 
     /**
@@ -922,11 +952,15 @@ class TierValidationService {
 
             // Reset usage counters with atomic operation
             await this.resetUsageCountersAtomic(userId);
+            
+            // Additional cache invalidation to ensure fresh data
+            this.invalidateUserCache(userId);
 
             return { 
                 success: true, 
                 message: 'Límites reseteados inmediatamente tras upgrade',
-                effectiveImmediately: true
+                effectiveImmediately: true,
+                cacheInvalidated: true
             };
 
         } catch (error) {
@@ -950,8 +984,8 @@ class TierValidationService {
                 timestamp: new Date().toISOString()
             });
 
-            // Store pending change with atomic upsert
-            await supabaseServiceClient
+            // Store pending change with atomic upsert (prevent duplicates)
+            const { data: upsertData, error: upsertError } = await supabaseServiceClient
                 .from('pending_plan_changes')
                 .upsert({
                     user_id: userId,
@@ -962,8 +996,13 @@ class TierValidationService {
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 }, {
-                    onConflict: 'user_id,effective_date'
+                    onConflict: 'user_id,effective_date',
+                    ignoreDuplicates: false // Update existing records
                 });
+                
+            if (upsertError) {
+                throw new Error(`Atomic upsert failed for downgrade: ${upsertError.message}`);
+            }
 
             return { 
                 success: true, 
@@ -985,8 +1024,8 @@ class TierValidationService {
     async resetUsageCountersAtomic(userId) {
         const resetTimestamp = new Date().toISOString();
         
-        // Use atomic upsert pattern for usage resets
-        await supabaseServiceClient
+        // Use atomic upsert pattern for usage resets (prevent duplicates)
+        const { data: resetData, error: resetError } = await supabaseServiceClient
             .from('usage_resets')
             .upsert({
                 user_id: userId,
@@ -995,8 +1034,13 @@ class TierValidationService {
                 reason: 'Tier upgrade - usage limits reset immediately',
                 created_at: resetTimestamp
             }, {
-                onConflict: 'user_id,reset_type'
+                onConflict: 'user_id,reset_type',
+                ignoreDuplicates: false // Allow updating existing resets
             });
+            
+        if (resetError) {
+            throw new Error(`Atomic upsert failed for usage reset: ${resetError.message}`);
+        }
 
         logger.info('Atomic usage reset applied', {
             userId,
@@ -1083,100 +1127,69 @@ class TierValidationService {
         };
     }
 
-    /**
-     * Get next cycle start in UTC (CodeRabbit Round 5)
-     * @param {string} periodEndIso - Optional period end ISO string
-     * @returns {string} Next cycle start ISO string
-     */
-    getNextCycleStartUTC(periodEndIso) {
-        if (periodEndIso) {
-            // Calculate from provided period end - return next day
-            const periodEnd = new Date(periodEndIso);
-            const nextDay = new Date(periodEnd.getTime() + 24 * 60 * 60 * 1000);
-            // Set to start of day
-            nextDay.setUTCHours(0, 0, 0, 0);
-            return nextDay.toISOString();
-        } else {
-            // Calculate from current date - next month
-            const now = new Date();
-            const nextMonth = now.getUTCMonth() + 1;
-            const year = nextMonth > 11 ? now.getUTCFullYear() + 1 : now.getUTCFullYear();
-            const month = nextMonth > 11 ? 0 : nextMonth;
 
-            const nextCycleStart = new Date(Date.UTC(year, month, 1));
-            return nextCycleStart.toISOString();
-        }
-    }
 
     /**
-     * Compute effective cycle start accounting for upgrade resets (CodeRabbit Round 5)
-     * @param {Object} userTier - User tier data
-     * @param {string} userId - User ID
-     * @returns {Promise<Date>} Effective cycle start date
-     */
-    async computeEffectiveCycleStart(userTier, userId) {
-        try {
-            // Check if there's an upgrade reset marker
-            const { data, error } = await supabaseServiceClient
-                .from('tier_reset_markers')
-                .select('reset_timestamp')
-                .eq('user_id', userId)
-                .single();
-
-            if (error || !data) {
-                // No reset marker, use billing period start
-                return new Date(userTier.periodStart);
-            }
-
-            const resetDate = new Date(data.reset_timestamp);
-            const billingStart = new Date(userTier.periodStart);
-
-            // Use the later of the two dates
-            return resetDate > billingStart ? resetDate : billingStart;
-
-        } catch (error) {
-            logger.error('Error computing effective cycle start:', error);
-            // Fallback to billing period start
-            return new Date(userTier.periodStart);
-        }
-    }
-
-    /**
-     * Record usage action atomically (CodeRabbit Round 5)
+     * Record usage action atomically with cache invalidation (CodeRabbit Round 7)
      * @param {string} userId - User ID
      * @param {string} actionType - Action type
      * @param {Object} metadata - Additional metadata
      * @returns {Promise<boolean>} Success status
      */
     async recordUsageActionAtomic(userId, actionType, metadata = {}) {
-        try {
+        return this.withRetry(async () => {
+            // Use atomic UPSERT pattern for usage recording to prevent duplicates
+            const recordTimestamp = new Date().toISOString();
+            
             const { data, error } = await supabaseServiceClient
-                .from('user_activity')
-                .insert({
+                .from('user_activities')
+                .upsert({
                     user_id: userId,
                     activity_type: actionType,
-                    created_at: new Date().toISOString(),
+                    created_at: recordTimestamp,
                     metadata: {
                         ...metadata,
                         service_version: 'tier_validation_v1',
-                        recorded_at: new Date().toISOString()
+                        recorded_at: recordTimestamp
                     }
+                }, {
+                    onConflict: 'user_id,activity_type,created_at',
+                    ignoreDuplicates: true
                 });
 
             if (error) {
-                logger.error('Failed to record usage action atomically', { userId, actionType, error: error.message });
-                return false;
+                logger.error('Failed to record usage action atomically', { 
+                    userId, 
+                    actionType, 
+                    error: error.message,
+                    timestamp: recordTimestamp
+                });
+                throw new Error(`Database operation failed: ${error.message}`);
             }
 
+            // Critical: Invalidate cache immediately after recording usage
+            this.invalidateUserCache(userId);
+            
+            logger.debug('Usage recorded and cache invalidated', {
+                userId,
+                actionType,
+                timestamp: recordTimestamp
+            });
+
             return true;
-        } catch (error) {
-            logger.error('Error in atomic usage recording', { userId, actionType, error: error.message });
+        }, `recordUsageActionAtomic(${userId}, ${actionType})`).catch(error => {
+            logger.error('Error in atomic usage recording after retries', { 
+                userId, 
+                actionType, 
+                error: error.message,
+                stack: error.stack
+            });
             return false;
-        }
+        });
     }
 
     /**
-     * Record batch usage actions atomically (CodeRabbit Round 5)
+     * Record batch usage actions atomically with cache invalidation (CodeRabbit Round 7)
      * @param {string} userId - User ID
      * @param {Array} actions - Array of action objects
      * @returns {Promise<Object>} Batch result
@@ -1186,83 +1199,61 @@ class TierValidationService {
             return { success: 0, failed: 0 };
         }
 
-        const batchInserts = actions.map(action => ({
+        const batchTimestamp = new Date().toISOString();
+        const batchId = `batch_${Date.now()}`;
+        
+        const batchInserts = actions.map((action, index) => ({
             user_id: userId,
             activity_type: action.actionType,
-            created_at: new Date().toISOString(),
+            created_at: batchTimestamp,
             metadata: {
                 ...action.metadata,
                 service_version: 'tier_validation_v1',
-                batch_id: `batch_${Date.now()}`,
-                recorded_at: new Date().toISOString()
+                batch_id: batchId,
+                batch_index: index,
+                recorded_at: batchTimestamp
             }
         }));
 
         try {
+            // Use atomic UPSERT pattern for batch operations
             const { data, error } = await supabaseServiceClient
-                .from('user_activity')
-                .insert(batchInserts);
+                .from('user_activities')
+                .upsert(batchInserts, {
+                    onConflict: 'user_id,activity_type,created_at',
+                    ignoreDuplicates: true
+                });
 
             if (error) {
-                logger.error('Failed to record batch usage actions', { userId, batchSize: actions.length, error: error.message });
+                logger.error('Failed to record batch usage actions', { 
+                    userId, 
+                    batchSize: actions.length, 
+                    batchId,
+                    error: error.message 
+                });
                 return { success: 0, failed: actions.length };
             }
 
+            // Critical: Invalidate cache immediately after batch recording
+            this.invalidateUserCache(userId);
+            
+            logger.debug('Batch usage recorded and cache invalidated', {
+                userId,
+                batchSize: actions.length,
+                batchId,
+                timestamp: batchTimestamp
+            });
+
             return { success: actions.length, failed: 0 };
         } catch (error) {
-            logger.error('Error in batch usage recording', { userId, batchSize: actions.length, error: error.message });
+            logger.error('Error in batch usage recording', { 
+                userId, 
+                batchSize: actions.length, 
+                batchId,
+                error: error.message,
+                stack: error.stack
+            });
             return { success: 0, failed: actions.length };
-        }
-    }
-
-    /**
-     * Normalize plan value to valid plan ID (CodeRabbit Round 5)
-     * @private
-     */
-    normalizePlan(plan) {
-        const validPlans = ['free', 'starter', 'pro', 'plus'];
-        if (typeof plan === 'string' && validPlans.includes(plan.toLowerCase())) {
-            return plan.toLowerCase();
-        }
-        return 'free'; // Default to free for invalid plans
-    }
-
-    /**
-     * Get required plans for a specific feature
-     * @private
-     */
-    getRequiredPlansForFeature(feature) {
-        const featureRequirements = {
-            'shield': ['starter', 'pro', 'plus'],
-            'custom_tones': ['pro', 'plus'],
-            'original_tone': ['pro', 'plus'],
-            'embedded_judge': ['plus'],
-            'analytics': ['pro', 'plus'],
-            'api_access': ['plus'],
-            'priority_support': ['pro', 'plus']
-        };
-
-        return featureRequirements[feature] || [];
-    }
-
-    /**
-     * Cache management methods (CodeRabbit Round 5)
-     * @private
-     */
-    getCachedUserTier(userId) {
-        if (this.lastCacheRefresh && 
-            Date.now() - this.lastCacheRefresh > this.cacheTimeout) {
-            this.usageCache.clear();
-            this.lastCacheRefresh = null;
-        }
-
-        return this.usageCache.get(`tier_${userId}`);
-    }
-
-    setCachedUserTier(userId, tierData) {
-        this.usageCache.set(`tier_${userId}`, tierData);
-        if (!this.lastCacheRefresh) {
-            this.lastCacheRefresh = Date.now();
         }
     }
 
@@ -1289,7 +1280,7 @@ class TierValidationService {
 
             const billingPeriodEnd = userTier.current_period_end || userTier.periodEnd;
             
-            // Schedule downgrade for end of billing period
+            // Schedule downgrade for end of billing period with atomic operation
             const { data, error } = await supabaseServiceClient
                 .from('scheduled_plan_changes')
                 .upsert({
@@ -1303,6 +1294,9 @@ class TierValidationService {
                         triggered_by: 'tier_validation_service',
                         ...options.metadata
                     }
+                }, {
+                    onConflict: 'user_id,effective_date',
+                    ignoreDuplicates: false // Allow updating existing scheduled changes
                 });
 
             if (error) {
@@ -1342,73 +1336,6 @@ class TierValidationService {
         };
     }
 
-    /**
-     * Sanitize usage data for API response (CodeRabbit Round 5)
-     * @param {Object} usage - Raw usage data
-     * @returns {Object} Sanitized usage data
-     */
-    sanitizeUsageForResponse(usage) {
-        if (!usage) {
-            return {
-                roastsThisMonth: 0,
-                analysisThisMonth: 0,
-                platformAccountsByPlatform: {},
-                totalActivePlatformAccounts: 0,
-                platformAccounts: 0
-            };
-        }
-
-        // Handle invalid platformAccounts data gracefully
-        let platformAccounts = {};
-        if (usage.platformAccounts && typeof usage.platformAccounts === 'object' && !Array.isArray(usage.platformAccounts)) {
-            platformAccounts = usage.platformAccounts;
-        }
-
-        const totalActiveAccounts = Object.values(platformAccounts)
-            .reduce((sum, count) => sum + (Number(count) || 0), 0);
-        const uniquePlatforms = Object.keys(platformAccounts).length;
-
-        return {
-            roastsThisMonth: Number(usage.roastsThisMonth) || 0,
-            analysisThisMonth: Number(usage.analysisThisMonth) || 0,
-            platformAccountsByPlatform: platformAccounts,
-            totalActivePlatformAccounts: totalActiveAccounts,
-            platformAccounts: uniquePlatforms // Legacy field for backward compatibility
-        };
-    }
-
-    /**
-     * Cache management methods (CodeRabbit Round 5)
-     * @private
-     */
-    getCachedUserTier(userId) {
-        if (this.lastCacheRefresh && 
-            Date.now() - this.lastCacheRefresh > this.cacheTimeout) {
-            this.usageCache.clear();
-            this.lastCacheRefresh = null;
-        }
-
-        return this.usageCache.get(`tier_${userId}`);
-    }
-
-    setCachedUserTier(userId, tierData) {
-        this.usageCache.set(`tier_${userId}`, tierData);
-        if (!this.lastCacheRefresh) {
-            this.lastCacheRefresh = Date.now();
-        }
-    }
-
-    /**
-     * Normalize plan value to valid plan ID (CodeRabbit Round 5)
-     * @private
-     */
-    normalizePlan(plan) {
-        const validPlans = ['free', 'starter', 'pro', 'plus'];
-        if (typeof plan === 'string' && validPlans.includes(plan.toLowerCase())) {
-            return plan.toLowerCase();
-        }
-        return 'free'; // Default to free for invalid plans
-    }
 
     /**
      * Get required plans for a specific feature
@@ -1429,12 +1356,89 @@ class TierValidationService {
     }
 
     /**
-     * Clear cache (useful for testing)
+     * Cache management methods (CodeRabbit Round 5)
+     * @private
+     */
+    getCachedUserTier(userId) {
+        // Don't return cached data if invalidation is pending
+        if (this.pendingCacheInvalidations.has(userId)) {
+            return null;
+        }
+        
+        if (this.lastCacheRefresh && 
+            Date.now() - this.lastCacheRefresh > this.cacheTimeout) {
+            this.usageCache.clear();
+            this.lastCacheRefresh = null;
+        }
+
+        return this.usageCache.get(`tier_${userId}`);
+    }
+
+    setCachedUserTier(userId, tierData) {
+        // Don't cache if invalidation is pending
+        if (this.pendingCacheInvalidations.has(userId)) {
+            return;
+        }
+        
+        this.usageCache.set(`tier_${userId}`, tierData);
+        if (!this.lastCacheRefresh) {
+            this.lastCacheRefresh = Date.now();
+        }
+    }
+
+    /**
+     * Clear cache (useful for testing and manual invalidation)
      */
     clearCache() {
         this.usageCache.clear();
         this.requestScopedCache.clear();
+        this.pendingCacheInvalidations.clear();
         this.lastCacheRefresh = null;
+        
+        logger.debug('All caches cleared manually', {
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    /**
+     * Retry database operations with exponential backoff (CodeRabbit Round 7)
+     * @param {Function} operation - Database operation to retry
+     * @param {string} operationName - Name of operation for logging
+     * @returns {Promise} Operation result
+     */
+    async withRetry(operation, operationName) {
+        const { maxRetries, baseDelayMs, backoffMultiplier } = SECURITY_CONFIG.retryPolicy;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                return await operation();
+            } catch (error) {
+                const isLastAttempt = attempt === maxRetries;
+                const isRetryableError = SECURITY_CONFIG.errorCodes.database.includes(error.code) ||
+                                       error.message?.includes('timeout') ||
+                                       error.message?.includes('connection');
+                
+                if (isLastAttempt || !isRetryableError) {
+                    logger.error(`${operationName} failed after ${attempt} attempts`, {
+                        error: error.message,
+                        attempt,
+                        maxRetries,
+                        isRetryableError
+                    });
+                    throw error;
+                }
+                
+                const delayMs = baseDelayMs * Math.pow(backoffMultiplier, attempt - 1);
+                logger.warn(`${operationName} failed, retrying in ${delayMs}ms`, {
+                    error: error.message,
+                    attempt,
+                    maxRetries,
+                    delayMs
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
     }
 }
 

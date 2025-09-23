@@ -1483,7 +1483,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €15
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 2
-- **Límites**: 10.000 análisis, 1000 roasts
+- **Límites**: 10,000 análisis, 1,000 roasts
 - **Cuentas por red social**: hasta **2 de la misma red social**
 - **Funciones incluidas**:
     - Comment analysis
@@ -1875,7 +1875,7 @@ Esto cubre los tres puntos críticos donde el plan del usuario cambia el flujo:
 
 1. **Conexión de cuentas** (1 vs 2 por red social).
 2. **Generación de Roasts** (límites y acceso a tono personal/prompt).
-3. **Uso del Shield** (básico en Free/Starter, configurable en Pro/Plus).
+3. **Uso del Shield** (disponible en Starter+, configurable en Pro/Plus).
 
 ---
 

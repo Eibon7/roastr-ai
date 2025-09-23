@@ -11,10 +11,73 @@ const tierValidationService = require('../services/tierValidationService');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { generalRateLimit } = require('../middleware/security');
+const { supabaseServiceClient } = require('../config/supabase');
 
 // Apply authentication and rate limiting to all routes
 router.use(authenticateToken);
 router.use(generalRateLimit);
+
+/**
+ * Helper function to validate organization membership
+ * @param {string} userId - User ID from auth token
+ * @param {string} organizationId - Organization ID from request (optional)
+ * @returns {Promise<{success: boolean, organizationId?: string, error?: string}>}
+ */
+async function validateOrganizationAccess(userId, organizationId = null) {
+    try {
+        // If no organizationId provided, get user's primary organization
+        if (!organizationId) {
+            const { data: membership, error } = await supabaseServiceClient
+                .from('organization_members')
+                .select('organization_id')
+                .eq('user_id', userId)
+                .eq('status', 'active')
+                .order('created_at', { ascending: true })
+                .limit(1)
+                .single();
+            
+            if (error || !membership) {
+                return { 
+                    success: false, 
+                    error: 'No active organization membership found' 
+                };
+            }
+            
+            return { 
+                success: true, 
+                organizationId: membership.organization_id 
+            };
+        }
+        
+        // Validate user belongs to specified organization
+        const { data: membership, error } = await supabaseServiceClient
+            .from('organization_members')
+            .select('organization_id')
+            .eq('user_id', userId)
+            .eq('organization_id', organizationId)
+            .eq('status', 'active')
+            .single();
+        
+        if (error || !membership) {
+            return { 
+                success: false, 
+                error: 'User does not have access to specified organization' 
+            };
+        }
+        
+        return { 
+            success: true, 
+            organizationId: organizationId 
+        };
+        
+    } catch (error) {
+        logger.error('Error validating organization access:', error);
+        return { 
+            success: false, 
+            error: 'Internal error validating organization access' 
+        };
+    }
+}
 
 /**
  * POST /api/tier-validation/action
@@ -22,7 +85,7 @@ router.use(generalRateLimit);
  */
 router.post('/action', async (req, res) => {
     try {
-        const { action, options = {} } = req.body;
+        const { action, options = {}, organizationId } = req.body;
         const userId = req.user.id;
 
         if (!action) {
@@ -32,14 +95,30 @@ router.post('/action', async (req, res) => {
             });
         }
 
-        const validation = await tierValidationService.validateAction(userId, action, options);
+        // Validate organization access
+        const orgValidation = await validateOrganizationAccess(userId, organizationId);
+        if (!orgValidation.success) {
+            return res.status(403).json({
+                success: false,
+                error: orgValidation.error,
+                code: 'ORGANIZATION_ACCESS_DENIED'
+            });
+        }
+
+        const validation = await tierValidationService.validateAction(userId, action, {
+            ...options,
+            organizationId: orgValidation.organizationId
+        });
 
         // Return appropriate status code based on validation result
         const statusCode = validation.allowed ? 200 : 403;
 
         res.status(statusCode).json({
             success: validation.allowed,
-            data: validation
+            data: {
+                ...validation,
+                organizationId: orgValidation.organizationId
+            }
         });
 
     } catch (error) {
@@ -57,7 +136,7 @@ router.post('/action', async (req, res) => {
  */
 router.post('/feature', async (req, res) => {
     try {
-        const { feature } = req.body;
+        const { feature, organizationId } = req.body;
         const userId = req.user.id;
 
         if (!feature) {
@@ -67,14 +146,29 @@ router.post('/feature', async (req, res) => {
             });
         }
 
-        const validation = await tierValidationService.validateFeature(userId, feature);
+        // Validate organization access
+        const orgValidation = await validateOrganizationAccess(userId, organizationId);
+        if (!orgValidation.success) {
+            return res.status(403).json({
+                success: false,
+                error: orgValidation.error,
+                code: 'ORGANIZATION_ACCESS_DENIED'
+            });
+        }
+
+        const validation = await tierValidationService.validateFeature(userId, feature, {
+            organizationId: orgValidation.organizationId
+        });
 
         // Return appropriate status code based on validation result
         const statusCode = validation.available ? 200 : 403;
 
         res.status(statusCode).json({
             success: validation.available,
-            data: validation
+            data: {
+                ...validation,
+                organizationId: orgValidation.organizationId
+            }
         });
 
     } catch (error) {
@@ -93,10 +187,21 @@ router.post('/feature', async (req, res) => {
 router.get('/tier', async (req, res) => {
     try {
         const userId = req.user.id;
+        const { organizationId } = req.query;
+
+        // Validate organization access
+        const orgValidation = await validateOrganizationAccess(userId, organizationId);
+        if (!orgValidation.success) {
+            return res.status(403).json({
+                success: false,
+                error: orgValidation.error,
+                code: 'ORGANIZATION_ACCESS_DENIED'
+            });
+        }
 
         const userTier = await tierValidationService.getUserTierWithUTC(userId);
         const currentUsage = await tierValidationService.getCurrentUsage ? 
-            await tierValidationService.getCurrentUsage(userId) : 
+            await tierValidationService.getCurrentUsage(userId, { organizationId: orgValidation.organizationId }) : 
             await tierValidationService.getUserUsage(userId, userTier);
 
         // Sanitize usage data for response
@@ -106,7 +211,8 @@ router.get('/tier', async (req, res) => {
             success: true,
             data: {
                 tier: userTier,
-                usage: sanitizedUsage
+                usage: sanitizedUsage,
+                organizationId: orgValidation.organizationId
             }
         });
 
@@ -125,7 +231,7 @@ router.get('/tier', async (req, res) => {
  */
 router.post('/upgrade', async (req, res) => {
     try {
-        const { newTier, oldTier, metadata = {} } = req.body;
+        const { newTier, oldTier, metadata = {}, organizationId } = req.body;
         const userId = req.user.id;
 
         if (!newTier || !oldTier) {
@@ -135,11 +241,30 @@ router.post('/upgrade', async (req, res) => {
             });
         }
 
-        const result = await tierValidationService.handleTierUpgrade(userId, newTier, oldTier, metadata);
+        // Validate organization access
+        const orgValidation = await validateOrganizationAccess(userId, organizationId);
+        if (!orgValidation.success) {
+            return res.status(403).json({
+                success: false,
+                error: orgValidation.error,
+                code: 'ORGANIZATION_ACCESS_DENIED'
+            });
+        }
+
+        const result = await tierValidationService.handleTierUpgrade(userId, newTier, oldTier, {
+            ...metadata,
+            organizationId: orgValidation.organizationId
+        });
+        
+        // Cache invalidation is handled automatically in handleTierUpgrade
+        // No additional invalidation needed here
 
         res.json({
             success: true,
-            data: result
+            data: {
+                ...result,
+                organizationId: orgValidation.organizationId
+            }
         });
 
     } catch (error) {
@@ -157,7 +282,7 @@ router.post('/upgrade', async (req, res) => {
  */
 router.post('/downgrade', async (req, res) => {
     try {
-        const { newTier, oldTier, metadata = {} } = req.body;
+        const { newTier, oldTier, metadata = {}, organizationId } = req.body;
         const userId = req.user.id;
 
         if (!newTier || !oldTier) {
@@ -167,13 +292,32 @@ router.post('/downgrade', async (req, res) => {
             });
         }
 
+        // Validate organization access
+        const orgValidation = await validateOrganizationAccess(userId, organizationId);
+        if (!orgValidation.success) {
+            return res.status(403).json({
+                success: false,
+                error: orgValidation.error,
+                code: 'ORGANIZATION_ACCESS_DENIED'
+            });
+        }
+
         const result = await tierValidationService.handleTierDowngradeEnhanced ? 
-            await tierValidationService.handleTierDowngradeEnhanced(userId, newTier, oldTier, metadata) :
-            await tierValidationService.handleTierDowngrade(userId, newTier, oldTier, metadata);
+            await tierValidationService.handleTierDowngradeEnhanced(userId, newTier, oldTier, {
+                ...metadata,
+                organizationId: orgValidation.organizationId
+            }) :
+            await tierValidationService.handleTierDowngrade(userId, newTier, oldTier, {
+                ...metadata,
+                organizationId: orgValidation.organizationId
+            });
 
         res.json({
             success: true,
-            data: result
+            data: {
+                ...result,
+                organizationId: orgValidation.organizationId
+            }
         });
 
     } catch (error) {
@@ -191,7 +335,7 @@ router.post('/downgrade', async (req, res) => {
  */
 router.post('/record-usage', async (req, res) => {
     try {
-        const { actionType, metadata = {} } = req.body;
+        const { actionType, metadata = {}, organizationId } = req.body;
         const userId = req.user.id;
 
         if (!actionType) {
@@ -201,11 +345,31 @@ router.post('/record-usage', async (req, res) => {
             });
         }
 
-        const recorded = await tierValidationService.recordUsageActionAtomic(userId, actionType, metadata);
+        // Validate organization access
+        const orgValidation = await validateOrganizationAccess(userId, organizationId);
+        if (!orgValidation.success) {
+            return res.status(403).json({
+                success: false,
+                error: orgValidation.error,
+                code: 'ORGANIZATION_ACCESS_DENIED'
+            });
+        }
+
+        const recorded = await tierValidationService.recordUsageActionAtomic(userId, actionType, {
+            ...metadata,
+            organizationId: orgValidation.organizationId
+        });
+        
+        // Cache invalidation is handled automatically in recordUsageActionAtomic
+        // No additional invalidation needed here
 
         res.json({
             success: recorded,
-            data: { recorded }
+            data: { 
+                recorded,
+                organizationId: orgValidation.organizationId,
+                cacheInvalidated: recorded // Cache is invalidated when recording succeeds
+            }
         });
 
     } catch (error) {
@@ -223,7 +387,7 @@ router.post('/record-usage', async (req, res) => {
  */
 router.post('/record-usage-batch', async (req, res) => {
     try {
-        const { actions } = req.body;
+        const { actions, organizationId } = req.body;
         const userId = req.user.id;
 
         if (!Array.isArray(actions)) {
@@ -233,11 +397,37 @@ router.post('/record-usage-batch', async (req, res) => {
             });
         }
 
-        const result = await tierValidationService.recordUsageActionsBatch(userId, actions);
+        // Validate organization access
+        const orgValidation = await validateOrganizationAccess(userId, organizationId);
+        if (!orgValidation.success) {
+            return res.status(403).json({
+                success: false,
+                error: orgValidation.error,
+                code: 'ORGANIZATION_ACCESS_DENIED'
+            });
+        }
+
+        // Add organizationId to all actions
+        const actionsWithOrg = actions.map(action => ({
+            ...action,
+            metadata: {
+                ...action.metadata,
+                organizationId: orgValidation.organizationId
+            }
+        }));
+
+        const result = await tierValidationService.recordUsageActionsBatch(userId, actionsWithOrg);
+        
+        // Cache invalidation is handled automatically in recordUsageActionsBatch
+        // No additional invalidation needed here
 
         res.json({
             success: result.success > 0,
-            data: result
+            data: {
+                ...result,
+                organizationId: orgValidation.organizationId,
+                cacheInvalidated: result.success > 0 // Cache is invalidated when at least one record succeeds
+            }
         });
 
     } catch (error) {
@@ -255,7 +445,8 @@ router.post('/record-usage-batch', async (req, res) => {
  */
 router.post('/check-feature', async (req, res) => {
     try {
-        const { feature, tierLimits, planId } = req.body;
+        const { feature, tierLimits, planId, organizationId } = req.body;
+        const userId = req.user.id;
 
         if (!feature || !tierLimits || !planId) {
             return res.status(400).json({
@@ -264,11 +455,28 @@ router.post('/check-feature', async (req, res) => {
             });
         }
 
+        // Optional organization validation for enhanced security
+        let validatedOrgId = null;
+        if (organizationId) {
+            const orgValidation = await validateOrganizationAccess(userId, organizationId);
+            if (!orgValidation.success) {
+                return res.status(403).json({
+                    success: false,
+                    error: orgValidation.error,
+                    code: 'ORGANIZATION_ACCESS_DENIED'
+                });
+            }
+            validatedOrgId = orgValidation.organizationId;
+        }
+
         const result = tierValidationService.checkFeatureAccess(feature, tierLimits, planId);
 
         res.json({
             success: true,
-            data: result
+            data: {
+                ...result,
+                organizationId: validatedOrgId
+            }
         });
 
     } catch (error) {
