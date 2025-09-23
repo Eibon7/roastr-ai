@@ -109,7 +109,7 @@
   "dependencies": {
     "@atproto/api": "^0.16.3",
     "@sendgrid/mail": "^8.1.5",
-    "@supabase/supabase-js": "^2.56.0",
+    "@supabase/supabase-js": "^2.57.4",
     "@twurple/api": "^7.1.0",
     "@twurple/auth": "^7.1.0",
     "@twurple/chat": "^7.1.0",
@@ -147,7 +147,7 @@
     "redis": "^5.8.2",
     "snoowrap": "^1.16.0",
     "stripe": "^18.4.0",
-    "tailwindcss": "^4.1.12",
+    "tailwindcss": "^4.1.13",
     "twitter-api-v2": "^1.24.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
