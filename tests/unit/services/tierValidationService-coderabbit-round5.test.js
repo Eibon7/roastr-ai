@@ -25,6 +25,8 @@ jest.mock('../../../src/config/supabase', () => ({
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     gte: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
     single: jest.fn(),
     upsert: jest.fn(),
     insert: jest.fn()
@@ -304,7 +306,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
   describe('6. Enhanced tier downgrade', () => {
     it('should use actual billing period end date', async () => {
       const userTier = {
-        periodEnd: '2024-06-30T23:59:59Z'
+        current_period_end: '2024-06-30T23:59:59Z'
       };
 
       mockSupabaseClient.single.mockResolvedValueOnce({
