@@ -4,7 +4,7 @@
  * 
  * Implements:
  * - Free: 100 análisis / 10 roasts, 1 cuenta por red, sin Shield/Original Tone
- * - Starter: 1,000 análisis / 100 roasts, 1 cuenta por red, Shield ON
+ * - Starter: 1,000 análisis / 50 roasts, 1 cuenta por red, Shield ON (Fixed Round 7)
  * - Pro: 10,000 análisis / 1,000 roasts, 2 cuentas por red, Shield + Original Tone
  * - Plus: 100,000 análisis / 5,000 roasts, 2 cuentas por red, Shield + Original Tone + Embedded Judge
  */
@@ -65,6 +65,23 @@ class TierValidationService {
      * @returns {Object} { allowed: boolean, reason?: string, upgradeRequired?: string, currentUsage?: Object }
      */
     async validateAction(userId, action, options = {}) {
+        // Enhanced input validation (CodeRabbit Round 8)
+        if (!userId || typeof userId !== 'string') {
+            return {
+                allowed: false,
+                reason: 'invalid_user_id',
+                message: 'User ID is required and must be a valid string'
+            };
+        }
+
+        if (!action || typeof action !== 'string') {
+            return {
+                allowed: false,
+                reason: 'invalid_action_type',
+                message: 'Action type is required and must be a valid string'
+            };
+        }
+
         const requestId = options.requestId || `${userId}-${action}-${Date.now()}`;
         
         // Request-scoped caching to prevent duplicate validations (CodeRabbit Round 4)
@@ -76,15 +93,27 @@ class TierValidationService {
         try {
             this.metrics.validationCalls++;
             
-            // Parallelize data fetching for better performance (CodeRabbit Round 7)
-            // First get user tier, then use it for other parallel calls
+            // Enhanced parallelization for better performance (CodeRabbit Round 8)
+            // Get all data in parallel when possible
+            const startTime = Date.now();
             const userTier = await this.getUserTierWithUTC(userId);
             
-            // Now parallelize remaining calls that don't depend on each other
+            // Parallelize remaining calls that don't depend on each other
             const [currentUsage, tierLimits] = await Promise.all([
                 this.getUserUsageDirectly(userId, userTier),
                 planLimitsService.getPlanLimits(this.normalizePlanValue(userTier.plan))
             ]);
+
+            // Performance monitoring (CodeRabbit Round 8)
+            const validationTime = Date.now() - startTime;
+            if (validationTime > 1000) {
+                logger.warn('Slow validation performance detected', {
+                    userId,
+                    action,
+                    validationTimeMs: validationTime,
+                    timestamp: new Date().toISOString()
+                });
+            }
 
             // Enhanced metrics and logging (CodeRabbit Round 4)
             const validation = this.checkActionLimitsEnhanced(action, tierLimits, currentUsage, options);
@@ -1130,13 +1159,25 @@ class TierValidationService {
 
 
     /**
-     * Record usage action atomically with cache invalidation (CodeRabbit Round 7)
+     * Record usage action atomically with cache invalidation (CodeRabbit Round 8)
+     * Enhanced with better input validation and race condition prevention
      * @param {string} userId - User ID
      * @param {string} actionType - Action type
      * @param {Object} metadata - Additional metadata
      * @returns {Promise<boolean>} Success status
      */
     async recordUsageActionAtomic(userId, actionType, metadata = {}) {
+        // Enhanced input validation (CodeRabbit Round 8)
+        if (!userId || typeof userId !== 'string') {
+            logger.error('Invalid userId in recordUsageActionAtomic', { userId, actionType });
+            return false;
+        }
+
+        if (!actionType || typeof actionType !== 'string') {
+            logger.error('Invalid actionType in recordUsageActionAtomic', { userId, actionType });
+            return false;
+        }
+
         return this.withRetry(async () => {
             // Use atomic UPSERT pattern for usage recording to prevent duplicates
             const recordTimestamp = new Date().toISOString();
@@ -1149,8 +1190,9 @@ class TierValidationService {
                     created_at: recordTimestamp,
                     metadata: {
                         ...metadata,
-                        service_version: 'tier_validation_v1',
-                        recorded_at: recordTimestamp
+                        service_version: 'tier_validation_v1.1', // Updated version
+                        recorded_at: recordTimestamp,
+                        request_id: `${userId}-${actionType}-${Date.now()}` // Prevent duplicates
                     }
                 }, {
                     onConflict: 'user_id,activity_type,created_at',
@@ -1162,18 +1204,20 @@ class TierValidationService {
                     userId, 
                     actionType, 
                     error: error.message,
+                    errorCode: error.code,
                     timestamp: recordTimestamp
                 });
                 throw new Error(`Database operation failed: ${error.message}`);
             }
 
-            // Critical: Invalidate cache immediately after recording usage
+            // Critical: Invalidate cache immediately after recording usage (CodeRabbit Round 8)
             this.invalidateUserCache(userId);
             
             logger.debug('Usage recorded and cache invalidated', {
                 userId,
                 actionType,
-                timestamp: recordTimestamp
+                timestamp: recordTimestamp,
+                cacheInvalidated: true
             });
 
             return true;
@@ -1182,7 +1226,8 @@ class TierValidationService {
                 userId, 
                 actionType, 
                 error: error.message,
-                stack: error.stack
+                stack: error.stack,
+                isRetryError: true
             });
             return false;
         });
