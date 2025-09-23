@@ -23,7 +23,37 @@ describe('Shield Action Executor Smoke Test', () => {
       baseDelay: 100,
       maxDelay: 1000,
       failureThreshold: 3,
-      recoveryTimeout: 5000
+      recoveryTimeout: 5000,
+      adapters: {
+        twitter: {
+          failureRate: 0, // Disable random failures for tests
+          mockLatency: { min: 10, max: 20 } // Reduce latency for faster tests
+        },
+        youtube: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        },
+        discord: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        },
+        twitch: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        },
+        reddit: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        },
+        instagram: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        },
+        facebook: {
+          failureRate: 0,
+          mockLatency: { min: 10, max: 20 }
+        }
+      }
     });
   });
 
