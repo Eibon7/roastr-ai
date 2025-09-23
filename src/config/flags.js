@@ -74,8 +74,8 @@ class FeatureFlags {
       ENABLE_FACEBOOK_UI: this.parseDevelopmentFlag(process.env.ENABLE_FACEBOOK_UI, isProduction), // Default disabled - under development
       ENABLE_INSTAGRAM_UI: this.parseDevelopmentFlag(process.env.ENABLE_INSTAGRAM_UI, isProduction), // Default disabled - under development
 
-      // Shop Feature
-      ENABLE_SHOP: this.parseFlag(process.env.ENABLE_SHOP), // Default disabled unless explicitly enabled
+      // Shop Feature (Issue #366 CodeRabbit fix - standardized naming)
+      ENABLE_SHOP: this.parseFlag(process.env.SHOP_ENABLED), // Default disabled unless explicitly enabled
 
       // Roast Engine Features (SPEC 7 - Issue #363)
       ROAST_VERSIONS_MULTIPLE: this.parseFlag(process.env.ROAST_VERSIONS_MULTIPLE, true), // Default: generate 2 versions, set to false for 1 version

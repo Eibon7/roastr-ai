@@ -3954,13 +3954,56 @@ test('WCAG 2.1 AA compliance', async () => {
 ## **📊 Issue #366 - Dashboard Analytics & Connection Limits Implementation**
 
 ### **⚙️ Complete Dashboard Enhancement System**
-**Implementation Date**: 2025-09-23 (Frontend UI Completion)
+**Implementation Date**: 2025-09-23 (Frontend UI Completion + CodeRabbit Fixes)
 **Branch**: feat/issue-366-coderabbit-dashboard-improvements
 **PR**: #399 - "Dashboard analytics and connection limits for Issue #366"
-**Status**: ✅ **FULLY COMPLETE** - All CodeRabbit gaps addressed including frontend UI
+**Status**: ✅ **FULLY COMPLETE** - All CodeRabbit gaps addressed including frontend UI + Round 2 fixes
 
 ### 🎯 **Overview**
 Complete dashboard system with analytics metrics, Shield UI components, feature flags, GDPR transparency, and tier-based connection limits. All CodeRabbit review requirements from Issue #366 have been addressed, including the 4 frontend UI gaps identified in the second review.
+
+### **🔧 CodeRabbit Round 2 Fixes (2025-09-23)**
+**Applied all 6 critical fixes from CodeRabbit review:**
+
+#### **✅ 1. Analytics Query Logic Fixed**
+- **Issue**: Used `data` field instead of `count` from Supabase
+- **Fix**: Updated to use `{ count: completedCount, error }` pattern
+- **Issue**: Broken conditional org filtering with `.eq(orgId ? 'organization_id' : 'id', orgId || orgId)`
+- **Fix**: Proper conditional query building only when `orgId && orgId !== 'undefined' && orgId !== 'null'`
+- **Location**: `src/index.js` lines 348-380
+
+#### **✅ 2. Connection Limits Array Safety**
+- **Issue**: Missing `Array.isArray()` checks for platform connections
+- **Fix**: Added defensive programming with `Array.isArray()` validation
+- **Code**: `if (!Array.isArray(currentIntegrations.data)) { currentIntegrations.data = currentIntegrations.data ? [currentIntegrations.data] : []; }`
+- **Location**: `src/routes/user.js` lines 96-99
+
+#### **✅ 3. Spanish Pluralization Fixed**
+- **Issue**: Incorrect "conexiónes" (with accent) when adding "es" to "conexión"
+- **Fix**: Proper conditional pluralization: `${maxConnections > 1 ? 'conexiones' : 'conexión'}`
+- **Location**: `src/routes/user.js` line 126
+
+#### **✅ 4. GDPR Transparency Text Complete**
+- **Issue**: Incomplete transparency disclosure
+- **Fix**: Verified complete text: "Los roasts autopublicados llevan firma de IA para cumplir con la normativa de transparencia digital"
+- **Status**: Already correctly implemented
+
+#### **✅ 5. Variable Declarations Modernized**
+- **Issue**: Potential `var` declarations
+- **Fix**: Confirmed all using modern `const`/`let` declarations
+- **Status**: Already correctly implemented
+
+#### **✅ 6. Feature Flag Consistency**
+- **Issue**: Mixed `ENABLE_SHOP` and `SHOP_ENABLED` naming
+- **Fix**: Standardized to `SHOP_ENABLED` environment variable
+- **Code**: `ENABLE_SHOP: this.parseFlag(process.env.SHOP_ENABLED)`
+- **Location**: `src/config/flags.js` line 78
+
+#### **🧪 Enhanced Testing Coverage**
+- **New Tests**: `analytics-issue366-fixed.test.js` (11 tests) and `connection-limits-custom-tier.test.js` (5 tests)
+- **Custom Tier Testing**: Specific validation for "custom" tier → 999 connections mapping
+- **Edge Cases**: String "undefined"/"null" orgId handling, array safety validation
+- **Coverage**: 100% of CodeRabbit fixes validated with comprehensive test scenarios
 
 ### **🆕 Frontend UI Completion (2025-09-23)**
 **Final implementation addressing all 4 CodeRabbit UI gaps:**

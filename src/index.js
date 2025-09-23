@@ -345,59 +345,49 @@ app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
     // Get org_id from token (if available) or use default for backoffice
     const orgId = req.user?.org_id || null;
     
-    // Query for completed analyses (comments that have been processed)
-    const { data: completedAnalyses, error: analysesError } = await supabaseServiceClient
+    // Build query for completed analyses with conditional org filtering
+    let commentsQuery = supabaseServiceClient
       .from('comments')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'processed')
-      .eq(orgId ? 'organization_id' : 'id', orgId || orgId); // Handle null org_id case
-      
-    if (analysesError && !orgId) {
-      // For backoffice/admin view, get all analyses
-      const { data: allAnalyses, error: allAnalysesError } = await supabaseServiceClient
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'processed');
-        
-      if (allAnalysesError) throw allAnalysesError;
-      var completedCount = allAnalyses || 0;
-    } else if (analysesError) {
+      .eq('status', 'processed');
+    
+    // Only apply org filtering when orgId is truthy and valid (Issue #366 CodeRabbit fix)
+    if (orgId && orgId !== 'undefined' && orgId !== 'null') {
+      commentsQuery = commentsQuery.eq('organization_id', orgId);
+    }
+    
+    const { count: completedCount, error: analysesError } = await commentsQuery;
+    
+    if (analysesError) {
       throw analysesError;
-    } else {
-      var completedCount = completedAnalyses || 0;
     }
 
-    // Query for sent roasts (responses that have been posted)
-    const { data: sentRoasts, error: roastsError } = await supabaseServiceClient
+    // Build query for sent roasts with conditional org filtering
+    let responsesQuery = supabaseServiceClient
       .from('responses')
       .select('id', { count: 'exact', head: true })
-      .not('posted_at', 'is', null)
-      .eq(orgId ? 'organization_id' : 'id', orgId || orgId); // Handle null org_id case
-      
-    if (roastsError && !orgId) {
-      // For backoffice/admin view, get all roasts
-      const { data: allRoasts, error: allRoastsError } = await supabaseServiceClient
-        .from('responses')
-        .select('id', { count: 'exact', head: true })
-        .not('posted_at', 'is', null);
-        
-      if (allRoastsError) throw allRoastsError;
-      var sentCount = allRoasts || 0;
-    } else if (roastsError) {
+      .not('posted_at', 'is', null);
+    
+    // Only apply org filtering when orgId is truthy and valid (Issue #366 CodeRabbit fix)
+    if (orgId && orgId !== 'undefined' && orgId !== 'null') {
+      responsesQuery = responsesQuery.eq('organization_id', orgId);
+    }
+    
+    const { count: sentCount, error: roastsError } = await responsesQuery;
+    
+    if (roastsError) {
       throw roastsError;
-    } else {
-      var sentCount = sentRoasts || 0;
     }
 
     res.json({
       success: true,
       data: {
-        completed_analyses: completedCount,
-        sent_roasts: sentCount
+        completed_analyses: completedCount || 0,
+        sent_roasts: sentCount || 0
       },
       meta: {
         timestamp: new Date().toISOString(),
-        organization_id: orgId || 'global'
+        organization_id: (orgId && orgId !== 'undefined' && orgId !== 'null') ? orgId : 'global'
       }
     });
     
