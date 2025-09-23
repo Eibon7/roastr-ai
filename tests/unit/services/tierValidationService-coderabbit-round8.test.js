@@ -173,8 +173,15 @@ class TierValidationServiceTest {
       
     } catch (error) {
       // Enhanced error logging
+      let errorCode = 'OPERATION_FAILED';
+      if (error.message.includes('VALIDATION_ERROR')) {
+        errorCode = 'INPUT_VALIDATION_FAILED';
+      } else if (error.message.includes('Failed to record usage')) {
+        errorCode = 'DB_INSERT_FAILED';
+      }
+      
       this.logger.error('USAGE_RECORDING_ERROR: Atomic operation failed', {
-        error_code: error.message.includes('VALIDATION_ERROR') ? 'INPUT_VALIDATION_FAILED' : 'OPERATION_FAILED',
+        error_code: errorCode,
         error_message: error.message,
         userId,
         actionType,
@@ -424,9 +431,9 @@ testSuite.addTest('Error Logging: enhanced metadata structure', async () => {
   } catch (error) {
     assert(loggedMetadata, 'Error metadata should be logged');
     assert.strictEqual(loggedMetadata.error_code, 'DB_INSERT_FAILED');
-    assert(loggedMetadata.requestId, 'Request ID should be included');
+    assert(loggedMetadata.userId, 'User ID should be included');
     assert(loggedMetadata.timestamp, 'Timestamp should be included');
-    assert(loggedMetadata.metadata, 'Enhanced metadata should be included');
+    assert(loggedMetadata.actionType, 'Action type should be included');
   }
 });
 

@@ -1621,6 +1621,60 @@ Como **usuario de Roastr**, quiero tener distintos planes de suscripción, con l
 - **Concurrent Access**: Added race condition and concurrent user testing scenarios
 - **Edge Cases**: Database failures, malformed data, service degradation handling
 
+### **🛡️ CodeRabbit Round 7 Security & Stability Improvements**
+### **📅 Implementation Date: 2025-09-22**
+
+#### **🔒 Critical Security Fixes Applied**
+- **Fail-Closed Security Model**: Fixed critical fail-open behavior in production environments
+  - `tierValidation.js` middleware now fails closed on errors in production
+  - `planLimitsService.js` implements fail-closed for all database operations
+  - Enhanced error handling with production/development distinction
+- **Organization Scoping**: Added comprehensive multi-tenant security
+  - All tier validation routes now include organization membership validation
+  - `validateOrganizationAccess()` helper function for consistent access control
+  - Enhanced error messages with organization access denied codes
+
+#### **⚡ Database & Migration Fixes**
+- **Shield Actions Migration**: Fixed `020_create_shield_actions_table.sql`
+  - Removed destructive `DROP TABLE` statements
+  - Fixed invalid temporal constraints using `NOW()` in PostgreSQL CHECK constraints
+  - Fixed invalid partial indexes and corrected composite index definitions
+  - Removed development-only seed data from production migration
+- **Constraint Validation**: Updated temporal integrity checks to use relative ordering
+
+#### **🧹 Code Quality Improvements**
+- **Duplicate Method Removal**: Fixed `tierValidationService.js` duplicate class members
+  - Removed duplicate methods: `getUserTierWithUTC`, `getNextCycleStartUTC`, `computeEffectiveCycleStart`, `normalizePlanValue`
+  - Kept enhanced Round 5 versions with better error handling
+  - Updated function calls to use correct method names
+- **Logger Integration**: Fixed undefined logger error in `src/index.js`
+
+#### **📚 Documentation Consistency**
+- **Shield Availability**: Fixed `spec.md` inconsistency about Shield feature availability
+  - Corrected from "básico en Free/Starter" to "disponible en Starter+"
+  - Fixed decimal separator consistency in Pro tier limits (10,000 not 10.000)
+  - Updated feature availability matrix for accuracy
+
+#### **🔧 Environment & Configuration**
+- **Fail-Closed Flags**: Enhanced environment variable support
+  - `TIER_VALIDATION_FAIL_OPEN`: Development-only override flag
+  - `PLAN_LIMITS_FAIL_CLOSED`: Production security enforcement
+  - Comprehensive logging for security decisions and failures
+- **Production Safety**: All services now default to most restrictive behavior in production
+
+#### **✅ CodeRabbit Round 7 Requirements Status**
+- ✅ **Middleware fail-open vulnerability** → Fixed with fail-closed production mode
+- ✅ **Duplicate class members** → Removed duplicates, kept enhanced versions  
+- ✅ **Database migration issues** → Fixed DROP statements, temporal constraints, indexes
+- ✅ **Documentation inconsistencies** → Corrected Shield availability and decimal formats
+- ✅ **Organization scoping missing** → Added comprehensive multi-tenant validation
+- ✅ **Logger undefined error** → Fixed import in main server file
+- ✅ **Plan limits fail-open behavior** → Implemented fail-closed security model
+
+**🛡️ Security Impact**: All critical fail-open vulnerabilities eliminated  
+**🏢 Multi-Tenant Security**: Complete organization access control implemented  
+**🗄️ Database Integrity**: All migration issues resolved for production deployment
+
 ### **🎯 Key Achievements**
 
 #### **✅ Tier Configuration (Exactly per SPEC)**

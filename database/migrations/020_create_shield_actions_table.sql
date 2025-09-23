@@ -3,12 +3,11 @@
 -- Description: Apply CodeRabbit Round 6 security and performance enhancements for Issue #365
 -- Features: Enhanced temporal integrity, performance indexes, GDPR compliance, security hardening
 
--- Drop existing table if recreating with enhancements
--- Note: In production, this should be done with careful data migration
-DROP TABLE IF EXISTS shield_actions CASCADE;
+-- Do not drop existing table; evolve schema with IF NOT EXISTS / ALTER statements.
+-- Note: In production, evolve schema incrementally without data loss
 
 -- Create enhanced shield_actions table with temporal integrity
-CREATE TABLE shield_actions (
+CREATE TABLE IF NOT EXISTS shield_actions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     action_type VARCHAR(50) NOT NULL,
@@ -21,16 +20,12 @@ CREATE TABLE shield_actions (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), -- CodeRabbit Round 6: NOT NULL enforced
     metadata JSONB DEFAULT '{}',
     
-    -- Enhanced temporal integrity constraints (CodeRabbit Round 6)
+    -- Enhanced temporal integrity constraints (CodeRabbit Round 6 - Fixed)
     CONSTRAINT shield_actions_temporal_integrity CHECK (
-        created_at IS NOT NULL AND
-        updated_at IS NOT NULL AND
-        created_at <= COALESCE(updated_at, NOW() + INTERVAL '5 minutes') AND
-        (reverted_at IS NULL OR reverted_at >= created_at) AND
-        created_at <= NOW() + INTERVAL '5 minutes' AND
-        updated_at <= NOW() + INTERVAL '5 minutes' AND
-        -- Enhanced: Ensure revert order is logical
-        (reverted_at IS NULL OR reverted_at <= NOW() + INTERVAL '5 minutes')
+        created_at IS NOT NULL
+        AND updated_at IS NOT NULL
+        AND created_at <= updated_at
+        AND (reverted_at IS NULL OR reverted_at >= GREATEST(created_at, updated_at))
     ),
     
     -- Enhanced constraints
@@ -58,7 +53,8 @@ CREATE INDEX IF NOT EXISTS idx_shield_actions_reason ON shield_actions(reason);
 -- Enhanced partial indexes for performance optimization (CodeRabbit Round 6)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_active ON shield_actions(organization_id, created_at DESC) WHERE reverted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_shield_actions_reverted ON shield_actions(reverted_at DESC) WHERE reverted_at IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_shield_actions_recent_active ON shield_actions(organization_id, action_type, created_at DESC) WHERE reverted_at IS NULL AND created_at > NOW() - INTERVAL '30 days';
+-- Removed: use a BRIN/BTree on created_at and filter by time at query time.
+-- CREATE INDEX IF NOT EXISTS idx_shield_actions_recent_active ON shield_actions(organization_id, action_type, created_at DESC) WHERE reverted_at IS NULL AND created_at > NOW() - INTERVAL '30 days';
 
 -- Performance-optimized composite indexes (CodeRabbit Round 6)
 CREATE INDEX IF NOT EXISTS idx_shield_actions_org_platform_active ON shield_actions(organization_id, platform, created_at DESC) WHERE reverted_at IS NULL;
@@ -152,14 +148,23 @@ CREATE TABLE IF NOT EXISTS feature_flags (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     
-    -- Unique constraint per organization or globally if org is NULL
-    UNIQUE(COALESCE(organization_id, '00000000-0000-0000-0000-000000000000'::UUID), flag_name)
+    -- Uniqueness handled by partial unique indexes below
 );
+
+-- Insert ENABLE_SHIELD_UI feature flag (default OFF for safety)
+-- Create partial unique indexes for feature flags
+CREATE UNIQUE INDEX IF NOT EXISTS ux_feature_flags_org_flag
+  ON feature_flags (organization_id, flag_name)
+  WHERE organization_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_feature_flags_global_flag
+  ON feature_flags (flag_name)
+  WHERE organization_id IS NULL;
 
 -- Insert ENABLE_SHIELD_UI feature flag (default OFF for safety)
 INSERT INTO feature_flags (organization_id, flag_name, enabled, description)
 VALUES (NULL, 'ENABLE_SHIELD_UI', false, 'Enable Shield UI interface for viewing and managing moderation actions')
-ON CONFLICT (COALESCE(organization_id, '00000000-0000-0000-0000-000000000000'::UUID), flag_name) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- TRIGGERS AND FUNCTIONS (CodeRabbit feedback)
@@ -227,64 +232,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- SAMPLE DATA FOR TESTING (Development only)
 -- ============================================================================
 
--- Insert sample data only in development environment
-DO $$
-BEGIN
-    -- Check if we're in a development environment
-    IF current_setting('server_version_num')::integer >= 120000 THEN
-        -- Insert sample shield actions for testing (if no data exists)
-        INSERT INTO shield_actions (
-            organization_id, 
-            action_type, 
-            content_hash, 
-            content_snippet, 
-            platform, 
-            reason, 
-            created_at,
-            reverted_at,
-            metadata
-        ) 
-        SELECT 
-            o.id,
-            'block',
-            encode(sha256('This is offensive content that was automatically blocked by Shield'), 'hex'),
-            'This is offensive content that was automatically blocked by Shield',
-            'twitter',
-            'toxic',
-            NOW() - INTERVAL '2 days',
-            NULL,
-            '{}'::jsonb
-        FROM organizations o
-        WHERE NOT EXISTS (SELECT 1 FROM shield_actions WHERE organization_id = o.id)
-        LIMIT 1;
-        
-        -- Add a reverted action example
-        INSERT INTO shield_actions (
-            organization_id, 
-            action_type, 
-            content_hash, 
-            content_snippet, 
-            platform, 
-            reason, 
-            created_at,
-            reverted_at,
-            metadata
-        ) 
-        SELECT 
-            o.id,
-            'mute',
-            encode(sha256('Another problematic comment that was muted'), 'hex'),
-            'Another problematic comment that was muted',
-            'youtube',
-            'harassment',
-            NOW() - INTERVAL '1 day',
-            NOW() - INTERVAL '12 hours',
-            '{"reverted": true, "revertReason": "False positive"}'::jsonb
-        FROM organizations o
-        WHERE EXISTS (SELECT 1 FROM shield_actions WHERE organization_id = o.id AND action_type = 'block')
-        LIMIT 1;
-    END IF;
-END $$;
+-- Note: Sample data should be inserted via separate scripts or fixtures,
+-- not in migrations. Migrations should only contain schema changes for production safety.
+-- Use test fixtures or setup scripts for development data instead.
 
 -- ============================================================================
 -- COMMENTS FOR DOCUMENTATION (CodeRabbit feedback)

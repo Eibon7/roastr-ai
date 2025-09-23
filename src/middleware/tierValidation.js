@@ -52,14 +52,17 @@ function validateTierLimit(action, options = {}) {
         } catch (error) {
             logger.error('Tier validation middleware error:', error);
             
-            // In case of error, allow the action to prevent blocking users
-            // but log the error for investigation
-            req.tierValidation = { 
-                allowed: true, 
-                fallback: true,
-                error: error.message 
-            };
-            next();
+            const failOpen = process.env.NODE_ENV !== 'production' &&
+                             process.env.TIER_VALIDATION_FAIL_OPEN === 'true';
+            if (failOpen) {
+                req.tierValidation = { allowed: true, fallback: true, error: error.message };
+                return next();
+            }
+            return res.status(503).json({
+                success: false,
+                error: 'Tier validation temporarily unavailable',
+                code: 'TIER_VALIDATION_ERROR'
+            });
         }
     };
 }
@@ -194,7 +197,17 @@ const tierMiddleware = {
 
             } catch (error) {
                 logger.error('Multiple tier validation error:', error);
-                next(); // Allow on error
+                
+                const failOpen = process.env.NODE_ENV !== 'production' &&
+                                 process.env.TIER_VALIDATION_FAIL_OPEN === 'true';
+                if (failOpen) {
+                    return next();
+                }
+                return res.status(503).json({
+                    success: false,
+                    error: 'Tier validation temporarily unavailable',
+                    code: 'TIER_VALIDATION_ERROR'
+                });
             }
         };
     }
