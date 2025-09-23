@@ -123,7 +123,7 @@ const PLAN_BENEFITS = {
     ],
     starter: [
         '1,000 análisis por mes',
-        '100 roasts por mes', 
+        '50 roasts por mes', 
         '1 cuenta por red social',
         'Shield habilitado'
     ],
@@ -179,8 +179,8 @@ const DEFAULT_TIER_LIMITS = {
         ai_model: 'gpt-3.5-turbo'
     },
     starter: {
-        maxRoasts: 100,
-        monthlyResponsesLimit: 100,
+        maxRoasts: 50,
+        monthlyResponsesLimit: 50,
         monthlyAnalysisLimit: 1000,
         maxPlatforms: 1,
         integrationsLimit: 1,
