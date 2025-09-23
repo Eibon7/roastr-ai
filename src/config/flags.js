@@ -48,6 +48,9 @@ class FeatureFlags {
       ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG), // Disabled by default, requires explicit environment variable
       VERBOSE_LOGS: this.parseFlag(process.env.VERBOSE_LOGS),
       MOCK_MODE: mockMode.isMockMode,
+      
+      // UI Feature Flags (Issue #366)  
+      SHOP_ENABLED: this.parseFlag(process.env.SHOP_ENABLED, false), // Shop feature toggle
       ENABLE_MOCK_PERSISTENCE: this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
       
       // Auth Features

@@ -337,6 +337,83 @@ app.get('/api/metrics', authenticateToken, async (req, res) => {
   }
 });
 
+// Analytics summary endpoint (Issue #366)
+app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
+  try {
+    const { supabaseServiceClient } = require('./config/supabase');
+    
+    // Get org_id from token (if available) or use default for backoffice
+    const orgId = req.user?.org_id || null;
+    
+    // Query for completed analyses (comments that have been processed)
+    const { data: completedAnalyses, error: analysesError } = await supabaseServiceClient
+      .from('comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'processed')
+      .eq(orgId ? 'organization_id' : 'id', orgId || orgId); // Handle null org_id case
+      
+    if (analysesError && !orgId) {
+      // For backoffice/admin view, get all analyses
+      const { data: allAnalyses, error: allAnalysesError } = await supabaseServiceClient
+        .from('comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'processed');
+        
+      if (allAnalysesError) throw allAnalysesError;
+      var completedCount = allAnalyses || 0;
+    } else if (analysesError) {
+      throw analysesError;
+    } else {
+      var completedCount = completedAnalyses || 0;
+    }
+
+    // Query for sent roasts (responses that have been posted)
+    const { data: sentRoasts, error: roastsError } = await supabaseServiceClient
+      .from('responses')
+      .select('id', { count: 'exact', head: true })
+      .not('posted_at', 'is', null)
+      .eq(orgId ? 'organization_id' : 'id', orgId || orgId); // Handle null org_id case
+      
+    if (roastsError && !orgId) {
+      // For backoffice/admin view, get all roasts
+      const { data: allRoasts, error: allRoastsError } = await supabaseServiceClient
+        .from('responses')
+        .select('id', { count: 'exact', head: true })
+        .not('posted_at', 'is', null);
+        
+      if (allRoastsError) throw allRoastsError;
+      var sentCount = allRoasts || 0;
+    } else if (roastsError) {
+      throw roastsError;
+    } else {
+      var sentCount = sentRoasts || 0;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        completed_analyses: completedCount,
+        sent_roasts: sentCount
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        organization_id: orgId || 'global'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Analytics summary error:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to retrieve analytics summary',
+        details: error.message
+      }
+    });
+  }
+});
+
 // Test monitoring system endpoint (authenticated) - disabled in production unless explicitly enabled
 if (process.env.NODE_ENV !== 'production' || flags.isEnabled('ENABLE_DEBUG_LOGS')) {
 app.post('/api/monitoring/test', authenticateToken, async (req, res) => {

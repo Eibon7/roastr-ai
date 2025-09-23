@@ -467,6 +467,43 @@ const Settings = () => {
             </CardContent>
           </Card>
 
+          {/* GDPR Transparency (Issue #366) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Transparencia GDPR
+              </CardTitle>
+              <CardDescription>
+                Información sobre el tratamiento automatizado de contenido
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                        Generación Automática de Contenido
+                      </h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        Los roasts autopublicados llevan firma de IA para cumplir con la normativa de transparencia digital.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  <p>
+                    De acuerdo con el RGPD y las normativas de transparencia digital, 
+                    todos los contenidos generados automáticamente por IA incluyen 
+                    marcadores identificativos apropiados.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Account Deletion */}
           <Card className="border-red-200">
             <CardHeader>

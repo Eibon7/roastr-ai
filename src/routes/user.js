@@ -90,6 +90,37 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
             });
         }
 
+        // Check connection limits based on tier (Issue #366)
+        const currentIntegrations = await integrationsService.getUserIntegrations(userId);
+        const connectedCount = currentIntegrations.data?.filter(integration => integration.connected).length || 0;
+        
+        // Get user's plan from token or fetch from database
+        const userPlan = req.user?.plan || 'free';
+        let maxConnections;
+        
+        switch (userPlan.toLowerCase()) {
+            case 'free':
+                maxConnections = 1;
+                break;
+            case 'pro':
+            case 'creator_plus':
+            case 'custom':
+                maxConnections = userPlan === 'free' ? 1 : (userPlan === 'pro' ? 5 : 999);
+                break;
+            default:
+                maxConnections = 1; // Default to free plan limits
+        }
+        
+        if (connectedCount >= maxConnections) {
+            return res.status(403).json({
+                success: false,
+                error: `Plan ${userPlan} permite máximo ${maxConnections} conexión${maxConnections > 1 ? 'es' : ''}. Actualiza tu plan para conectar más plataformas.`,
+                code: 'CONNECTION_LIMIT_EXCEEDED',
+                currentConnections: connectedCount,
+                maxConnections: maxConnections
+            });
+        }
+
         // Use mock integrations service
         const result = await integrationsService.connectIntegration(userId, platform);
         
