@@ -44,31 +44,29 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
                 
                 const orgId = req.user?.org_id || null;
                 
-                // Query for completed analyses
-                const { data: completedAnalyses, error: analysesError } = await supabaseServiceClient
+                // Query for completed analyses - using count instead of data
+                const { count: completedCount, error: analysesError } = await supabaseServiceClient
                     .from('comments')
                     .select('id', { count: 'exact', head: true })
                     .eq('status', 'processed')
-                    .eq(orgId ? 'organization_id' : 'id', orgId || orgId);
+                    .eq('organization_id', orgId);
                     
                 if (analysesError) throw analysesError;
-                const completedCount = completedAnalyses || 0;
 
-                // Query for sent roasts
-                const { data: sentRoasts, error: roastsError } = await supabaseServiceClient
+                // Query for sent roasts - using count instead of data
+                const { count: sentCount, error: roastsError } = await supabaseServiceClient
                     .from('responses')
                     .select('id', { count: 'exact', head: true })
                     .not('posted_at', 'is', null)
-                    .eq(orgId ? 'organization_id' : 'id', orgId || orgId);
+                    .eq('organization_id', orgId);
                     
                 if (roastsError) throw roastsError;
-                const sentCount = sentRoasts || 0;
 
                 res.json({
                     success: true,
                     data: {
-                        completed_analyses: completedCount,
-                        sent_roasts: sentCount
+                        completed_analyses: completedCount || 0,
+                        sent_roasts: sentCount || 0
                     },
                     meta: {
                         timestamp: new Date().toISOString(),
@@ -94,10 +92,10 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
         jest.clearAllMocks();
     });
 
-    test('should return analytics summary successfully', async () => {
-        // Mock successful database queries
-        mockSupabaseServiceClient.select.mockResolvedValueOnce({ data: 42, error: null })
-                                           .mockResolvedValueOnce({ data: 24, error: null });
+    test('should return analytics summary successfully using count property', async () => {
+        // Mock successful database queries - returning count instead of data
+        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: 42, error: null })
+                                    .mockResolvedValueOnce({ count: 24, error: null });
 
         const response = await request(app)
             .get('/api/analytics/summary')
@@ -124,8 +122,8 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
 
     test('should handle database errors gracefully', async () => {
         // Mock database error
-        mockSupabaseServiceClient.select.mockResolvedValueOnce({ 
-            data: null, 
+        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ 
+            count: null, 
             error: new Error('Database connection failed') 
         });
 
@@ -144,8 +142,8 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
 
     test('should return zero values when no data exists', async () => {
         // Mock empty results
-        mockSupabaseServiceClient.select.mockResolvedValueOnce({ data: 0, error: null })
-                                           .mockResolvedValueOnce({ data: 0, error: null });
+        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: 0, error: null })
+                                    .mockResolvedValueOnce({ count: 0, error: null });
 
         const response = await request(app)
             .get('/api/analytics/summary')
@@ -164,8 +162,8 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
             next();
         });
 
-        mockSupabaseServiceClient.select.mockResolvedValueOnce({ data: 100, error: null })
-                                           .mockResolvedValueOnce({ data: 50, error: null });
+        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: 100, error: null })
+                                    .mockResolvedValueOnce({ count: 50, error: null });
 
         const response = await request(app)
             .get('/api/analytics/summary')
@@ -178,71 +176,20 @@ describe('Analytics Summary Endpoint - Issue #366', () => {
 
         expect(response.body.meta.organization_id).toBe('global');
     });
-});
 
-describe('Connection Limits Validation - Issue #366', () => {
-    test('should validate Free plan connection limits', () => {
-        const userPlan = 'free';
-        let maxConnections;
-        
-        switch (userPlan.toLowerCase()) {
-            case 'free':
-                maxConnections = 1;
-                break;
-            case 'pro':
-            case 'creator_plus':
-            case 'custom':
-                maxConnections = userPlan === 'pro' ? 5 : 999;
-                break;
-            default:
-                maxConnections = 1;
-        }
-        
-        expect(maxConnections).toBe(1);
-    });
+    test('should handle null count values gracefully', async () => {
+        // Mock null count responses
+        mockSupabaseServiceClient.eq.mockResolvedValueOnce({ count: null, error: null })
+                                    .mockResolvedValueOnce({ count: null, error: null });
 
-    test('should validate Pro plan connection limits', () => {
-        const userPlan = 'pro';
-        let maxConnections;
-        
-        switch (userPlan.toLowerCase()) {
-            case 'free':
-                maxConnections = 1;
-                break;
-            case 'pro':
-                maxConnections = 5;
-                break;
-            case 'creator_plus':
-            case 'custom':
-                maxConnections = 999;
-                break;
-            default:
-                maxConnections = 1;
-        }
-        
-        expect(maxConnections).toBe(5);
-    });
+        const response = await request(app)
+            .get('/api/analytics/summary')
+            .expect(200);
 
-    test('should validate Creator Plus plan connection limits', () => {
-        const userPlan = 'creator_plus';
-        let maxConnections;
-        
-        switch (userPlan.toLowerCase()) {
-            case 'free':
-                maxConnections = 1;
-                break;
-            case 'pro':
-                maxConnections = 5;
-                break;
-            case 'creator_plus':
-            case 'custom':
-                maxConnections = 999;
-                break;
-            default:
-                maxConnections = 1;
-        }
-        
-        expect(maxConnections).toBe(999);
+        expect(response.body.data).toEqual({
+            completed_analyses: 0,
+            sent_roasts: 0
+        });
     });
 });
 
@@ -280,5 +227,22 @@ describe('Feature Flags Integration - Issue #366', () => {
         process.env.ENABLE_SHIELD_UI = 'false';
         const shieldUIDisabled = parseFlag(process.env.ENABLE_SHIELD_UI, false);
         expect(shieldUIDisabled).toBe(false);
+    });
+});
+
+describe('GDPR Transparency Text - Issue #366', () => {
+    test('should contain required transparency text', () => {
+        const transparencyText = 'Los roasts autopublicados llevan firma de IA para cumplir con la normativa de transparencia digital.';
+        
+        expect(transparencyText).toContain('Los roasts autopublicados llevan firma de IA');
+        expect(transparencyText).toContain('transparencia digital');
+    });
+
+    test('should provide GDPR compliance information', () => {
+        const gdprText = 'De acuerdo con el RGPD y las normativas de transparencia digital, todos los contenidos generados automáticamente por IA incluyen marcadores identificativos apropiados.';
+        
+        expect(gdprText).toContain('RGPD');
+        expect(gdprText).toContain('contenidos generados automáticamente por IA');
+        expect(gdprText).toContain('marcadores identificativos');
     });
 });

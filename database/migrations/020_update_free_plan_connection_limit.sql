@@ -1,15 +1,16 @@
 -- Update Free plan connection limits (Issue #366)
--- CodeRabbit requirement: Free=1, Pro+=2
+-- Enforced limits: Free=1, Pro=5, Creator Plus=999, Custom=999
 
 -- Update Free plan to have only 1 connection
 UPDATE plans 
 SET integrations_limit = 1 
 WHERE id = 'free';
 
--- Ensure Pro plans have at least 2 connections (already set correctly)
--- Pro: 5 connections (>= 2) ✓
--- Creator Plus: 999 connections (>= 2) ✓
--- Custom: 999 connections (>= 2) ✓
+-- Current plan limits (verified correct):
+-- Free: 1 connection (updated above) ✓
+-- Pro: 5 connections (already set correctly) ✓
+-- Creator Plus: 999 connections (already set correctly) ✓
+-- Custom: 999 connections (already set correctly) ✓
 
 -- Add index for performance
 CREATE INDEX IF NOT EXISTS idx_plans_integrations_limit ON plans(integrations_limit);

@@ -1,6 +1,6 @@
 /**
  * Connection Limits Tests - Issue #366
- * Testing tier-based connection limits (Free=1, Pro+=2)
+ * Testing tier-based connection limits (Free=1, Pro=5, Creator Plus=999)
  */
 
 describe('Connection Limits by Tier - Issue #366', () => {
@@ -33,6 +33,14 @@ describe('Connection Limits by Tier - Issue #366', () => {
         };
     };
 
+    // Test array safety validation - Issue #366 CodeRabbit feedback
+    const validateConnectionsArray = (connections) => {
+        if (!Array.isArray(connections)) {
+            return [];
+        }
+        return connections.filter(conn => conn && typeof conn === 'object');
+    };
+
     describe('Free Plan Limits', () => {
         test('should allow 0 connections for free plan', () => {
             const result = checkConnectionLimit(0, 'free');
@@ -59,7 +67,7 @@ describe('Connection Limits by Tier - Issue #366', () => {
             const result = checkConnectionLimit(5, 'pro');
             expect(result.allowed).toBe(false);
             expect(result.maxConnections).toBe(5);
-            expect(result.message).toContain('Plan pro permite máximo 5 conexión');
+            expect(result.message).toContain('Plan pro permite máximo 5 conexiónes');
         });
     });
 
@@ -104,6 +112,99 @@ describe('Connection Limits by Tier - Issue #366', () => {
             expect(getMaxConnections('FREE')).toBe(1);
             expect(getMaxConnections('Pro')).toBe(5);
             expect(getMaxConnections('CREATOR_PLUS')).toBe(999);
+        });
+    });
+
+    describe('Array Safety Validation - CodeRabbit Fix', () => {
+        test('should safely handle null connections array', () => {
+            const result = validateConnectionsArray(null);
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(0);
+        });
+
+        test('should safely handle undefined connections array', () => {
+            const result = validateConnectionsArray(undefined);
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(0);
+        });
+
+        test('should safely handle non-array input', () => {
+            const result = validateConnectionsArray('not-an-array');
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(0);
+        });
+
+        test('should filter out invalid connections from array', () => {
+            const connections = [
+                { platform: 'twitter', enabled: true },
+                null,
+                undefined,
+                'invalid',
+                { platform: 'youtube', enabled: false }
+            ];
+            
+            const result = validateConnectionsArray(connections);
+            expect(result.length).toBe(2);
+            expect(result[0].platform).toBe('twitter');
+            expect(result[1].platform).toBe('youtube');
+        });
+
+        test('should preserve valid connections', () => {
+            const connections = [
+                { platform: 'twitter', enabled: true },
+                { platform: 'youtube', enabled: false },
+                { platform: 'instagram', enabled: true }
+            ];
+            
+            const result = validateConnectionsArray(connections);
+            expect(result.length).toBe(3);
+            expect(result).toEqual(connections);
+        });
+    });
+
+    describe('Plan Limits Integration', () => {
+        test('should validate Free plan connection limits with array safety', () => {
+            const connections = [
+                { platform: 'twitter', enabled: true }
+            ];
+            
+            const validConnections = validateConnectionsArray(connections);
+            const result = checkConnectionLimit(validConnections.length, 'free');
+            
+            expect(result.allowed).toBe(false); // 1 connection = at limit
+            expect(result.maxConnections).toBe(1);
+        });
+
+        test('should validate Pro plan connection limits with array safety', () => {
+            const connections = [
+                { platform: 'twitter', enabled: true },
+                { platform: 'youtube', enabled: true },
+                { platform: 'instagram', enabled: true },
+                null, // This should be filtered out
+                { platform: 'facebook', enabled: true }
+            ];
+            
+            const validConnections = validateConnectionsArray(connections);
+            const result = checkConnectionLimit(validConnections.length, 'pro');
+            
+            expect(validConnections.length).toBe(4); // null filtered out
+            expect(result.allowed).toBe(true); // 4 < 5
+            expect(result.maxConnections).toBe(5);
+        });
+
+        test('should validate Creator Plus plan allows many connections', () => {
+            // Create a large array of connections
+            const connections = Array.from({ length: 50 }, (_, i) => ({
+                platform: `platform-${i}`,
+                enabled: true
+            }));
+            
+            const validConnections = validateConnectionsArray(connections);
+            const result = checkConnectionLimit(validConnections.length, 'creator_plus');
+            
+            expect(validConnections.length).toBe(50);
+            expect(result.allowed).toBe(true);
+            expect(result.maxConnections).toBe(999);
         });
     });
 });
@@ -190,23 +291,5 @@ describe('Analytics Metrics Logic - Issue #366', () => {
             expect(completedAnalyses).toBe(15);
             expect(sentRoasts).toBe(0);
         });
-    });
-});
-
-describe('GDPR Transparency Text - Issue #366', () => {
-    
-    test('should contain required transparency text', () => {
-        const transparencyText = 'Los roasts autopublicados llevan firma de IA para cumplir con la normativa de transparencia digital.';
-        
-        expect(transparencyText).toContain('Los roasts autopublicados llevan firma de IA');
-        expect(transparencyText).toContain('transparencia digital');
-    });
-
-    test('should provide GDPR compliance information', () => {
-        const gdprText = 'De acuerdo con el RGPD y las normativas de transparencia digital, todos los contenidos generados automáticamente por IA incluyen marcadores identificativos apropiados.';
-        
-        expect(gdprText).toContain('RGPD');
-        expect(gdprText).toContain('contenidos generados automáticamente por IA');
-        expect(gdprText).toContain('marcadores identificativos');
     });
 });
