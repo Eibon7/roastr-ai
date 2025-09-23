@@ -66,16 +66,20 @@ const AccountModal = ({
           setRoasts(roastsData.data || []);
         }
 
-        // Mock intercepted comments for now
-        setIntercepted([
-          {
-            id: 'intercepted_1',
-            comment: 'Comentario tóxico interceptado',
-            action: 'Bloquear',
-            timestamp: new Date().toISOString(),
-            severity: 'high'
+        // Fetch real Shield intercepted events
+        const shieldResponse = await fetch(`/api/shield/events?timeRange=30d&limit=50&platform=${account.platform}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
-        ]);
+        });
+        
+        if (shieldResponse.ok) {
+          const shieldData = await shieldResponse.json();
+          setIntercepted(shieldData.data?.events || []);
+        } else {
+          console.warn('Failed to fetch shield events, using empty array');
+          setIntercepted([]);
+        }
 
       } catch (error) {
         console.error('Error fetching account data:', error);
@@ -208,6 +212,44 @@ const AccountModal = ({
       'Roast descartado correctamente'
     );
   }, [handleAsyncAction]);
+
+  // Shield revert action handler
+  const handleRevertShieldAction = useCallback(async (actionId, reason = '') => {
+    const response = await fetch(`/api/shield/revert/${actionId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ reason })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to revert Shield action');
+    }
+
+    return response.json();
+  }, []);
+
+  // Refresh Shield events
+  const handleRefreshShieldEvents = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/shield/events?timeRange=30d&limit=50&platform=${account.platform}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setIntercepted(data.data?.events || []);
+      }
+    } catch (error) {
+      console.error('Failed to refresh Shield events:', error);
+    }
+  }, [account.platform]);
 
   const handleDisconnect = () => {
     handleAsyncAction(
@@ -540,7 +582,12 @@ const AccountModal = ({
 
                 {shieldExpanded && accountDetails?.settings?.shieldEnabled && (
                   <div className="mt-4">
-                    <ShieldInterceptedList interceptedItems={intercepted} />
+                    <ShieldInterceptedList 
+                      interceptedItems={intercepted}
+                      onRevertAction={handleRevertShieldAction}
+                      loading={loading}
+                      onRefresh={handleRefreshShieldEvents}
+                    />
                   </div>
                 )}
               </div>

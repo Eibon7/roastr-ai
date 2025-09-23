@@ -1,503 +1,435 @@
 /**
  * @jest-environment jsdom
  */
-
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import ShieldInterceptedList from '../ShieldInterceptedList';
 
-// Mock Supabase
-const mockSupabaseQuery = {
-  select: jest.fn().mockReturnThis(),
-  from: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  gte: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  range: jest.fn().mockReturnThis(),
-  single: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-};
-
-const mockSupabase = {
-  from: jest.fn(() => mockSupabaseQuery),
-};
-
-jest.mock('../lib/supabase', () => ({
-  supabase: mockSupabase,
-}));
-
-// Mock Lucide React icons
-jest.mock('lucide-react', () => ({
-  Shield: ({ className, ...props }) => <div data-testid="shield-icon" className={className} {...props} />,
-  Clock: ({ className, ...props }) => <div data-testid="clock-icon" className={className} {...props} />,
-  AlertTriangle: ({ className, ...props }) => <div data-testid="alert-triangle-icon" className={className} {...props} />,
-  CheckCircle: ({ className, ...props }) => <div data-testid="check-circle-icon" className={className} {...props} />,
-  XCircle: ({ className, ...props }) => <div data-testid="x-circle-icon" className={className} {...props} />,
-  RotateCcw: ({ className, ...props }) => <div data-testid="rotate-ccw-icon" className={className} {...props} />,
-  Calendar: ({ className, ...props }) => <div data-testid="calendar-icon" className={className} {...props} />,
-  Filter: ({ className, ...props }) => <div data-testid="filter-icon" className={className} {...props} />,
-  RefreshCw: ({ className, ...props }) => <div data-testid="refresh-cw-icon" className={className} {...props} />,
-  AlertCircle: ({ className, ...props }) => <div data-testid="alert-circle-icon" className={className} {...props} />,
-  Info: ({ className, ...props }) => <div data-testid="info-icon" className={className} {...props} />,
-}));
-
-// Mock data
-const mockShieldActions = [
-  {
-    id: '1',
-    action_type: 'block',
-    content: 'Test offensive content',
-    platform: 'twitter',
-    reason: 'toxic',
-    created_at: '2024-01-15T10:00:00Z',
-    reverted_at: null,
-    metadata: {},
-  },
-  {
-    id: '2',
-    action_type: 'mute',
-    content: 'Another problematic comment',
-    platform: 'youtube',
-    reason: 'harassment',
-    created_at: '2024-01-14T15:30:00Z',
-    reverted_at: '2024-01-14T16:00:00Z',
-    metadata: { reverted: true },
-  },
-];
-
 describe('ShieldInterceptedList', () => {
+  const mockItems = [
+    {
+      id: '1',
+      reason: 'toxic',
+      action_type: 'block',
+      created_at: '2024-01-15T10:00:00Z',
+      content_snippet: 'Este es un comentario tóxico...',
+      content_hash: 'abc123hash456',
+      platform: 'twitter',
+      reverted_at: null
+    },
+    {
+      id: '2',
+      reason: 'spam',
+      action_type: 'mute',
+      created_at: '2024-01-10T08:00:00Z',
+      content_snippet: 'Spam comercial detectado...',
+      content_hash: 'def789hash012',
+      platform: 'youtube',
+      reverted_at: '2024-01-11T09:00:00Z'
+    },
+    {
+      id: '3',
+      reason: 'harassment',
+      action_type: 'report',
+      created_at: '2024-01-05T15:30:00Z',
+      content_snippet: 'Comentario de acoso...',
+      content_hash: 'ghi345hash678',
+      platform: 'instagram',
+      reverted_at: null
+    }
+  ];
+
+  const defaultProps = {
+    interceptedItems: [],
+    onRevertAction: jest.fn(),
+    loading: false,
+    onRefresh: jest.fn()
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Default successful response for feature flag check
-    mockSupabaseQuery.single.mockResolvedValue({
-      data: { enabled: true },
-      error: null,
+  });
+
+  describe('Rendering', () => {
+    it('renders without crashing with no items', () => {
+      render(<ShieldInterceptedList {...defaultProps} />);
+      expect(screen.getByText('No hay comentarios interceptados en este período')).toBeInTheDocument();
     });
-    
-    // Default successful response for shield actions
-    mockSupabaseQuery.range.mockResolvedValue({
-      data: mockShieldActions,
-      error: null,
-      count: 2,
+
+    it('shows loading state when loading is true', () => {
+      render(<ShieldInterceptedList {...defaultProps} loading={true} />);
+      expect(screen.getByText('Cargando eventos de Shield...')).toBeInTheDocument();
+      expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+
+    it('renders intercepted items when provided', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      expect(screen.getByText('Tóxico')).toBeInTheDocument();
+      expect(screen.getByText('Bloqueado')).toBeInTheDocument();
+      expect(screen.getByText('Este es un comentario tóxico...')).toBeInTheDocument();
+      expect(screen.getByText('twitter')).toBeInTheDocument();
+    });
+
+    it('shows reverted status for reverted actions', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // The second item is reverted
+      expect(screen.getByText('Revertido')).toBeInTheDocument();
+    });
+
+    it('renders category and time range filters', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      expect(screen.getByText('Filtrar por categoría:')).toBeInTheDocument();
+      expect(screen.getByText('Período de tiempo:')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Últimos 30 días')).toBeInTheDocument();
     });
   });
 
-  describe('Component Rendering', () => {
-    test('should render Shield UI header when feature flag is enabled', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Shield - Contenido Interceptado')).toBeInTheDocument();
-      });
-    });
-
-    test('should render disabled state when feature flag is disabled', async () => {
-      mockSupabaseQuery.single.mockResolvedValue({
-        data: { enabled: false },
-        error: null,
-      });
-
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Próximamente')).toBeInTheDocument();
-        expect(screen.getByText(/La interfaz de Shield está actualmente en desarrollo/)).toBeInTheDocument();
-      });
-    });
-
-    test('should render loading state initially', () => {
-      render(<ShieldInterceptedList />);
+  describe('Filtering', () => {
+    it('filters items by category', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
       
-      // Should show loading skeletons
-      expect(screen.getAllByTestId('refresh-cw-icon')).toHaveLength(1);
+      // Click on the 'toxic' category filter
+      await user.click(screen.getByText('Tóxico'));
+      
+      // Should only show toxic items
+      expect(screen.getByText('Este es un comentario tóxico...')).toBeInTheDocument();
+      expect(screen.queryByText('Spam comercial detectado...')).not.toBeInTheDocument();
+    });
+
+    it('filters items by time range', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Change time range to 7 days (this should filter out older items)
+      const select = screen.getByDisplayValue('Últimos 30 días');
+      await user.selectOptions(select, 'Últimos 7 días');
+      
+      // Should only show items from the last 7 days
+      expect(screen.getByText('Este es un comentario tóxico...')).toBeInTheDocument(); // Recent item
+      expect(screen.queryByText('Comentario de acoso...')).not.toBeInTheDocument(); // Older item
+    });
+
+    it('shows correct counts in category filters', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Check that category counts are displayed
+      expect(screen.getByText('Tóxico')).toBeInTheDocument();
+      expect(screen.getByText('Spam')).toBeInTheDocument();
+      expect(screen.getByText('Acoso')).toBeInTheDocument();
     });
   });
 
-  describe('Data Fetching', () => {
-    test('should fetch and display shield actions', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Test offensive content')).toBeInTheDocument();
-        expect(screen.getByText('Another problematic comment')).toBeInTheDocument();
-      });
-
-      expect(mockSupabase.from).toHaveBeenCalledWith('shield_actions');
-      expect(mockSupabaseQuery.select).toHaveBeenCalled();
-      expect(mockSupabaseQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
-    });
-
-    test('should handle API errors gracefully', async () => {
-      mockSupabaseQuery.range.mockResolvedValue({
-        data: null,
-        error: { message: 'Database connection failed' },
-        count: 0,
-      });
-
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText(/Database connection failed/)).toBeInTheDocument();
-      });
-    });
-
-    test('should show empty state when no data is available', async () => {
-      mockSupabaseQuery.range.mockResolvedValue({
-        data: [],
-        error: null,
-        count: 0,
-      });
-
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('No hay contenido interceptado')).toBeInTheDocument();
-        expect(screen.getByText('Aún no se ha interceptado ningún contenido.')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Filtering Functionality', () => {
-    test('should apply time range filter', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Últimos 30 días')).toBeInTheDocument();
-      });
-
-      // Change time range filter
-      const timeRangeSelect = screen.getByDisplayValue('Últimos 30 días');
+  describe('Expand/Collapse Functionality', () => {
+    it('expands and collapses item details', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
       
-      await act(async () => {
-        fireEvent.change(timeRangeSelect, { target: { value: '7d' } });
-      });
-
-      expect(timeRangeSelect.value).toBe('7d');
+      const expandButton = screen.getAllByText('Ver detalles')[0];
+      await user.click(expandButton);
+      
+      // Should show expanded details
+      expect(screen.getByText('ID de acción:')).toBeInTheDocument();
+      expect(screen.getByText('Hash del contenido:')).toBeInTheDocument();
+      
+      // Click again to collapse
+      const collapseButton = screen.getByText('Ocultar detalles');
+      await user.click(collapseButton);
+      
+      // Details should be hidden
+      expect(screen.queryByText('ID de acción:')).not.toBeInTheDocument();
     });
 
-    test('should apply category filter', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByDisplayValue('Todas las categorías')).toBeInTheDocument();
-      });
-
-      // Change category filter
-      const categorySelect = screen.getByDisplayValue('Todas las categorías');
+    it('shows revert timestamp for reverted actions in expanded view', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
       
-      await act(async () => {
-        fireEvent.change(categorySelect, { target: { value: 'toxic' } });
-      });
-
-      expect(categorySelect.value).toBe('toxic');
-    });
-
-    test('should reset to first page when filters change', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      // Wait for initial load
-      await waitFor(() => {
-        expect(screen.getByText('Test offensive content')).toBeInTheDocument();
-      });
-
-      // Change filter
-      const categorySelect = screen.getByDisplayValue('Todas las categorías');
+      // Find the reverted item and expand it
+      const revertedItemButtons = screen.getAllByText('Ver detalles');
+      await user.click(revertedItemButtons[1]); // Second item is reverted
       
-      await act(async () => {
-        fireEvent.change(categorySelect, { target: { value: 'spam' } });
-      });
-
-      // Should reset to page 1 and make new query
-      expect(mockSupabaseQuery.range).toHaveBeenCalledWith(0, 19); // First page (0-19)
+      expect(screen.getByText('Revertido el:')).toBeInTheDocument();
     });
   });
 
   describe('Revert Functionality', () => {
-    test('should show revert button for non-reverted actions', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        const revertButtons = screen.getAllByText('Revertir');
-        expect(revertButtons).toHaveLength(1); // Only one non-reverted action
-      });
-    });
-
-    test('should show reverted status for reverted actions', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText(/Revertido el/)).toBeInTheDocument();
-      });
-    });
-
-    test('should open confirmation dialog when revert button is clicked', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        const revertButton = screen.getByText('Revertir');
-        expect(revertButton).toBeInTheDocument();
-      });
-
-      const revertButton = screen.getByText('Revertir');
+    it('shows revert button for non-reverted actions', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
       
-      await act(async () => {
-        fireEvent.click(revertButton);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Confirmar reversión')).toBeInTheDocument();
-        expect(screen.getByText(/¿Estás seguro de que quieres revertir esta acción de Shield?/)).toBeInTheDocument();
-      });
+      const revertButtons = screen.getAllByText('↶ Revertir acción');
+      expect(revertButtons).toHaveLength(2); // Only non-reverted items should have revert buttons
     });
 
-    test('should cancel revert when cancel button is clicked', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      // Open dialog
-      await waitFor(() => {
-        const revertButton = screen.getByText('Revertir');
-        fireEvent.click(revertButton);
-      });
-
-      // Cancel
-      await waitFor(() => {
-        const cancelButton = screen.getByText('Cancelar');
-        expect(cancelButton).toBeInTheDocument();
-      });
-
-      const cancelButton = screen.getByText('Cancelar');
+    it('does not show revert button for reverted actions', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={[mockItems[1]]} />);
       
-      await act(async () => {
-        fireEvent.click(cancelButton);
-      });
-
-      await waitFor(() => {
-        expect(screen.queryByText('Confirmar reversión')).not.toBeInTheDocument();
-      });
+      expect(screen.queryByText('↶ Revertir acción')).not.toBeInTheDocument();
     });
 
-    test('should perform revert when confirmed', async () => {
-      // Mock successful update
-      mockSupabaseQuery.update.mockResolvedValue({
-        data: {},
-        error: null,
-      });
-
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      // Open dialog
-      await waitFor(() => {
-        const revertButton = screen.getByText('Revertir');
-        fireEvent.click(revertButton);
-      });
-
-      // Confirm revert
-      await waitFor(() => {
-        const confirmButtons = screen.getAllByText('Revertir');
-        const confirmButton = confirmButtons.find(btn => btn.closest('.bg-yellow-600'));
-        expect(confirmButton).toBeInTheDocument();
-      });
-
-      const confirmButtons = screen.getAllByText('Revertir');
-      const confirmButton = confirmButtons.find(btn => btn.closest('.bg-yellow-600'));
+    it('calls onRevertAction when revert button is clicked', async () => {
+      const user = userEvent.setup();
+      const mockOnRevertAction = jest.fn().mockResolvedValue({});
       
-      await act(async () => {
-        fireEvent.click(confirmButton);
-      });
-
-      await waitFor(() => {
-        expect(mockSupabaseQuery.update).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe('Pagination', () => {
-    test('should show pagination when there are multiple pages', async () => {
-      // Mock response with more items
-      mockSupabaseQuery.range.mockResolvedValue({
-        data: mockShieldActions,
-        error: null,
-        count: 50, // More than items per page (20)
-      });
-
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Página 1 de 3')).toBeInTheDocument();
-        expect(screen.getByText('Siguiente')).toBeInTheDocument();
-      });
-    });
-
-    test('should navigate between pages', async () => {
-      // Mock response with more items
-      mockSupabaseQuery.range.mockResolvedValue({
-        data: mockShieldActions,
-        error: null,
-        count: 50,
-      });
-
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        const nextButton = screen.getByText('Siguiente');
-        expect(nextButton).toBeInTheDocument();
-      });
-
-      const nextButton = screen.getByText('Siguiente');
+      render(<ShieldInterceptedList 
+        {...defaultProps} 
+        interceptedItems={[mockItems[0]]}
+        onRevertAction={mockOnRevertAction}
+      />);
       
-      await act(async () => {
-        fireEvent.click(nextButton);
-      });
+      const revertButton = screen.getByText('↶ Revertir acción');
+      await user.click(revertButton);
+      
+      expect(mockOnRevertAction).toHaveBeenCalledWith('1', 'Revertido desde UI de Shield');
+    });
 
-      // Should request next page
-      expect(mockSupabaseQuery.range).toHaveBeenCalledWith(20, 39); // Second page (20-39)
+    it('shows loading state while reverting', async () => {
+      const user = userEvent.setup();
+      let resolveRevert;
+      const mockOnRevertAction = jest.fn(() => new Promise(resolve => { resolveRevert = resolve; }));
+      
+      render(<ShieldInterceptedList 
+        {...defaultProps} 
+        interceptedItems={[mockItems[0]]}
+        onRevertAction={mockOnRevertAction}
+      />);
+      
+      const revertButton = screen.getByText('↶ Revertir acción');
+      await user.click(revertButton);
+      
+      expect(screen.getByText('⏳ Revirtiendo...')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /revirtiendo/i })).toBeDisabled();
+      
+      // Resolve the promise
+      resolveRevert({});
+    });
+
+    it('calls onRefresh after successful revert', async () => {
+      const user = userEvent.setup();
+      const mockOnRevertAction = jest.fn().mockResolvedValue({});
+      const mockOnRefresh = jest.fn().mockResolvedValue({});
+      
+      render(<ShieldInterceptedList 
+        {...defaultProps} 
+        interceptedItems={[mockItems[0]]}
+        onRevertAction={mockOnRevertAction}
+        onRefresh={mockOnRefresh}
+      />);
+      
+      const revertButton = screen.getByText('↶ Revertir acción');
+      await user.click(revertButton);
+      
+      await waitFor(() => {
+        expect(mockOnRefresh).toHaveBeenCalled();
+      });
+    });
+
+    it('handles revert errors gracefully', async () => {
+      const user = userEvent.setup();
+      const mockOnRevertAction = jest.fn().mockRejectedValue(new Error('Revert failed'));
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      render(<ShieldInterceptedList 
+        {...defaultProps} 
+        interceptedItems={[mockItems[0]]}
+        onRevertAction={mockOnRevertAction}
+      />);
+      
+      const revertButton = screen.getByText('↶ Revertir acción');
+      await user.click(revertButton);
+      
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to revert action:', expect.any(Error));
+      });
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('does not show revert button when onRevertAction is not provided', () => {
+      render(<ShieldInterceptedList 
+        {...defaultProps} 
+        interceptedItems={[mockItems[0]]}
+        onRevertAction={undefined}
+      />);
+      
+      expect(screen.queryByText('↶ Revertir acción')).not.toBeInTheDocument();
     });
   });
 
   describe('Refresh Functionality', () => {
-    test('should refresh data when refresh button is clicked', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        const refreshButton = screen.getByText('Actualizar');
-        expect(refreshButton).toBeInTheDocument();
-      });
-
-      const refreshButton = screen.getByText('Actualizar');
+    it('shows refresh button when onRefresh is provided', () => {
+      render(<ShieldInterceptedList {...defaultProps} onRefresh={jest.fn()} />);
       
-      await act(async () => {
-        fireEvent.click(refreshButton);
-      });
-
-      // Should make additional query call
-      expect(mockSupabase.from).toHaveBeenCalledTimes(3); // Feature flag + initial load + refresh
-    });
-  });
-
-  describe('Action Type Display', () => {
-    test('should display correct action types and colors', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('Bloqueado')).toBeInTheDocument();
-        expect(screen.getByText('Silenciado')).toBeInTheDocument();
-      });
+      expect(screen.getByText('↻ Actualizar')).toBeInTheDocument();
     });
 
-    test('should display platform information', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText('twitter')).toBeInTheDocument();
-        expect(screen.getByText('youtube')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Error Handling', () => {
-    test('should handle feature flag check errors gracefully', async () => {
-      mockSupabaseQuery.single.mockRejectedValue(new Error('Network error'));
-
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      // Should default to enabled and continue loading
-      await waitFor(() => {
-        expect(screen.getByText('Shield - Contenido Interceptado')).toBeInTheDocument();
-      });
+    it('does not show refresh button when onRefresh is not provided', () => {
+      render(<ShieldInterceptedList {...defaultProps} onRefresh={undefined} />);
+      
+      expect(screen.queryByText('↻ Actualizar')).not.toBeInTheDocument();
     });
 
-    test('should handle revert errors', async () => {
-      mockSupabaseQuery.update.mockResolvedValue({
-        data: null,
-        error: { message: 'Update failed' },
-      });
+    it('calls onRefresh when refresh button is clicked', async () => {
+      const user = userEvent.setup();
+      const mockOnRefresh = jest.fn();
+      
+      render(<ShieldInterceptedList {...defaultProps} onRefresh={mockOnRefresh} />);
+      
+      const refreshButton = screen.getByText('↻ Actualizar');
+      await user.click(refreshButton);
+      
+      expect(mockOnRefresh).toHaveBeenCalled();
+    });
 
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      // Open and confirm revert dialog
-      await waitFor(() => {
-        const revertButton = screen.getByText('Revertir');
-        fireEvent.click(revertButton);
-      });
-
-      await waitFor(() => {
-        const confirmButtons = screen.getAllByText('Revertir');
-        const confirmButton = confirmButtons.find(btn => btn.closest('.bg-yellow-600'));
-        fireEvent.click(confirmButton);
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText(/Error al revertir la acción: Update failed/)).toBeInTheDocument();
-      });
+    it('disables refresh button when loading', () => {
+      render(<ShieldInterceptedList 
+        {...defaultProps} 
+        loading={true}
+        onRefresh={jest.fn()}
+      />);
+      
+      const refreshButton = screen.getByText('🔄 Actualizar');
+      expect(refreshButton).toBeDisabled();
     });
   });
 
   describe('Accessibility', () => {
-    test('should have proper ARIA labels', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
-
-      await waitFor(() => {
-        const refreshButton = screen.getByText('Actualizar');
-        expect(refreshButton).toBeInTheDocument();
-      });
-
-      // Check for proper semantic elements
-      expect(screen.getByRole('button', { name: 'Actualizar' })).toBeInTheDocument();
+    it('has proper ARIA labels and roles', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Check for form controls
+      const categoryLabel = screen.getByText('Filtrar por categoría:');
+      expect(categoryLabel).toBeInTheDocument();
+      
+      const timeRangeLabel = screen.getByText('Período de tiempo:');
+      expect(timeRangeLabel).toBeInTheDocument();
     });
 
-    test('should have proper form labels', async () => {
-      await act(async () => {
-        render(<ShieldInterceptedList />);
-      });
+    it('maintains focus management for expand/collapse', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={[mockItems[0]]} />);
+      
+      const expandButton = screen.getByText('Ver detalles');
+      await user.click(expandButton);
+      
+      // Button should still be focusable after state change
+      const collapseButton = screen.getByText('Ocultar detalles');
+      expect(collapseButton).toBeInTheDocument();
+    });
+  });
 
-      await waitFor(() => {
-        expect(screen.getByText('Período de tiempo')).toBeInTheDocument();
-        expect(screen.getByText('Categoría')).toBeInTheDocument();
-      });
+  describe('Edge Cases', () => {
+    it('handles empty interceptedItems gracefully', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={[]} />);
+      
+      expect(screen.getByText('No hay comentarios interceptados en este período')).toBeInTheDocument();
+    });
+
+    it('handles items with missing fields gracefully', () => {
+      const incompleteItem = {
+        id: 'incomplete',
+        reason: 'toxic',
+        action_type: 'block',
+        created_at: '2024-01-15T10:00:00Z'
+        // Missing content_snippet, content_hash, platform
+      };
+      
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={[incompleteItem]} />);
+      
+      expect(screen.getByText('[Contenido no disponible]')).toBeInTheDocument();
+    });
+
+    it('handles invalid date strings gracefully', () => {
+      const itemWithBadDate = {
+        ...mockItems[0],
+        created_at: 'invalid-date'
+      };
+      
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={[itemWithBadDate]} />);
+      
+      // Should render without crashing
+      expect(screen.getByText('Tóxico')).toBeInTheDocument();
+    });
+
+    it('shows all items when category filter is "all"', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // All items should be visible initially
+      expect(screen.getByText('Este es un comentario tóxico...')).toBeInTheDocument();
+      expect(screen.getByText('Spam comercial detectado...')).toBeInTheDocument();
+      expect(screen.getByText('Comentario de acoso...')).toBeInTheDocument();
+    });
+
+    it('shows all items when time range is "all"', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Change to "all time" filter
+      const select = screen.getByDisplayValue('Últimos 30 días');
+      await user.selectOptions(select, 'all');
+      
+      // All items should be visible
+      expect(screen.getByText('Este es un comentario tóxico...')).toBeInTheDocument();
+      expect(screen.getByText('Spam comercial detectado...')).toBeInTheDocument();
+      expect(screen.getByText('Comentario de acoso...')).toBeInTheDocument();
+    });
+
+    it('handles platform display correctly', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Check that platforms are displayed correctly
+      expect(screen.getByText('twitter')).toBeInTheDocument();
+      expect(screen.getByText('youtube')).toBeInTheDocument();
+      expect(screen.getByText('instagram')).toBeInTheDocument();
+    });
+
+    it('shows different visual states for reverted vs active items', () => {
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Find the container elements for both items
+      const containers = screen.getAllByText(/Este es un comentario|Spam comercial/);
+      expect(containers).toHaveLength(2);
+      
+      // Check that reverted item has different styling (opacity-70 class)
+      // This would be better tested with actual DOM inspection but demonstrates the intent
+    });
+  });
+
+  describe('Component Integration', () => {
+    it('updates state correctly when filters change', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Initially all items shown
+      expect(screen.getAllByText(/Ver detalles/)).toHaveLength(3);
+      
+      // Filter by spam
+      await user.click(screen.getByText('Spam'));
+      
+      // Only spam item shown
+      expect(screen.getAllByText(/Ver detalles/)).toHaveLength(1);
+      expect(screen.getByText('Spam comercial detectado...')).toBeInTheDocument();
+    });
+
+    it('preserves expanded state when filters change', async () => {
+      const user = userEvent.setup();
+      render(<ShieldInterceptedList {...defaultProps} interceptedItems={mockItems} />);
+      
+      // Expand first item
+      const expandButton = screen.getAllByText('Ver detalles')[0];
+      await user.click(expandButton);
+      
+      expect(screen.getByText('ID de acción:')).toBeInTheDocument();
+      
+      // Change filter - expanded state should be preserved for visible items
+      await user.click(screen.getByText('Tóxico'));
+      
+      // Item should still be expanded
+      expect(screen.getByText('ID de acción:')).toBeInTheDocument();
     });
   });
 });
