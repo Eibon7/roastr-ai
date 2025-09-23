@@ -40,19 +40,8 @@ describe('Shield Action Executor Smoke Test', () => {
         twitch: {
           failureRate: 0,
           mockLatency: { min: 10, max: 20 }
-        },
-        reddit: {
-          failureRate: 0,
-          mockLatency: { min: 10, max: 20 }
-        },
-        instagram: {
-          failureRate: 0,
-          mockLatency: { min: 10, max: 20 }
-        },
-        facebook: {
-          failureRate: 0,
-          mockLatency: { min: 10, max: 20 }
         }
+        // Note: reddit, instagram, facebook adapters not implemented in ShieldActionExecutorService
       }
     });
   });
