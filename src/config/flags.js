@@ -76,7 +76,10 @@ class FeatureFlags {
 
       // Roast Engine Features (SPEC 7 - Issue #363)
       ROAST_VERSIONS_MULTIPLE: this.parseFlag(process.env.ROAST_VERSIONS_MULTIPLE, true), // Default: generate 2 versions, set to false for 1 version
-      ENABLE_ROAST_ENGINE: this.parseFlag(process.env.ENABLE_ROAST_ENGINE, true) // Default: enabled, can be disabled for maintenance
+      ENABLE_ROAST_ENGINE: this.parseFlag(process.env.ENABLE_ROAST_ENGINE, true), // Default: enabled, can be disabled for maintenance
+
+      // Shield UI Features (Issue #365)
+      ENABLE_SHIELD_UI: this.parseFlag(process.env.ENABLE_SHIELD_UI, false) // Default: disabled for safer rollout, allows Shield UI access for Pro+ plans when enabled
     };
   }
 
@@ -269,7 +272,8 @@ class FeatureFlags {
         facebookUI: this.flags.ENABLE_FACEBOOK_UI ? 'enabled' : 'disabled',
         instagramUI: this.flags.ENABLE_INSTAGRAM_UI ? 'enabled' : 'disabled',
         roastVersionsMultiple: this.flags.ROAST_VERSIONS_MULTIPLE ? 'enabled' : 'disabled',
-        roastEngine: this.flags.ENABLE_ROAST_ENGINE ? 'enabled' : 'disabled'
+        roastEngine: this.flags.ENABLE_ROAST_ENGINE ? 'enabled' : 'disabled',
+        shieldUI: this.flags.ENABLE_SHIELD_UI ? 'enabled' : 'disabled'
       }
     };
   }

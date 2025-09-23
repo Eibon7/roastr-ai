@@ -30,6 +30,7 @@ const AccountModal = ({
   const [roasts, setRoasts] = useState(initialRoasts || []);
   const [intercepted, setIntercepted] = useState(initialIntercepted || []);
   const [loading, setLoading] = useState(true);
+  const [shieldLoading, setShieldLoading] = useState(false);
 
   const networkIcon = NETWORK_ICONS[account.network || account.platform] || '📱';
   const networkColor = NETWORK_COLORS[account.network || account.platform] || 'bg-gray-600 text-white';
@@ -66,16 +67,8 @@ const AccountModal = ({
           setRoasts(roastsData.data || []);
         }
 
-        // Mock intercepted comments for now
-        setIntercepted([
-          {
-            id: 'intercepted_1',
-            comment: 'Comentario tóxico interceptado',
-            action: 'Bloquear',
-            timestamp: new Date().toISOString(),
-            severity: 'high'
-          }
-        ]);
+        // Fetch real Shield intercepted events
+        await fetchShieldEvents();
 
       } catch (error) {
         console.error('Error fetching account data:', error);
@@ -219,6 +212,75 @@ const AccountModal = ({
       },
       'Cuenta desconectada correctamente'
     );
+  };
+
+  // Fetch Shield events function
+  const fetchShieldEvents = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Build query parameters safely using URLSearchParams
+      const params = new URLSearchParams({
+        timeRange: '30d',
+        limit: '50'
+      });
+
+      // Check for platform value from multiple sources
+      const platform = account.platform || account.network || accountDetails?.platform;
+      
+      // Only add platform parameter if a valid value exists
+      if (platform && platform !== 'undefined') {
+        params.append('platform', platform);
+      }
+
+      const shieldResponse = await fetch(`/api/shield/events?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (shieldResponse.ok) {
+        const shieldData = await shieldResponse.json();
+        setIntercepted(shieldData.data?.events || []);
+      } else {
+        console.warn('Failed to fetch shield events, using empty array');
+        setIntercepted([]);
+      }
+    } catch (error) {
+      console.error('Error fetching Shield events:', error);
+      setIntercepted([]);
+    }
+  };
+
+  // Refresh Shield events handler
+  const handleRefreshShieldEvents = async () => {
+    setShieldLoading(true);
+    try {
+      await fetchShieldEvents();
+    } catch (error) {
+      console.error('Failed to refresh Shield events:', error);
+    } finally {
+      setShieldLoading(false);
+    }
+  };
+
+  // Shield revert action handler
+  const handleRevertShieldAction = async (actionId, reason = '') => {
+    const response = await fetch(`/api/shield/revert/${actionId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ reason })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to revert Shield action');
+    }
+
+    return response.json();
   };
 
   const tabs = [
@@ -540,7 +602,12 @@ const AccountModal = ({
 
                 {shieldExpanded && accountDetails?.settings?.shieldEnabled && (
                   <div className="mt-4">
-                    <ShieldInterceptedList interceptedItems={intercepted} />
+                    <ShieldInterceptedList 
+                      interceptedItems={intercepted}
+                      onRevertAction={handleRevertShieldAction}
+                      loading={loading || shieldLoading}
+                      onRefresh={handleRefreshShieldEvents}
+                    />
                   </div>
                 )}
               </div>
