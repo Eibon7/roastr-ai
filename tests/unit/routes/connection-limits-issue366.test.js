@@ -67,7 +67,7 @@ describe('Connection Limits by Tier - Issue #366', () => {
             const result = checkConnectionLimit(5, 'pro');
             expect(result.allowed).toBe(false);
             expect(result.maxConnections).toBe(5);
-            expect(result.message).toContain('Plan pro permite máximo 5 conexiónes');
+            expect(result.message).toContain('Plan pro permite máximo 5 conexiones');
         });
     });
 
@@ -82,6 +82,26 @@ describe('Connection Limits by Tier - Issue #366', () => {
             const result = checkConnectionLimit(998, 'creator_plus');
             expect(result.allowed).toBe(true);
             expect(result.maxConnections).toBe(999);
+        });
+    });
+
+    describe('Custom Plan Limits', () => {
+        test('should allow many connections for custom plan', () => {
+            const result = checkConnectionLimit(500, 'custom');
+            expect(result.allowed).toBe(true);
+            expect(result.maxConnections).toBe(999);
+        });
+
+        test('should effectively be unlimited for custom plan', () => {
+            const result = checkConnectionLimit(998, 'custom');
+            expect(result.allowed).toBe(true);
+            expect(result.maxConnections).toBe(999);
+        });
+
+        test('should handle case variations for custom plan', () => {
+            expect(getMaxConnections('CUSTOM')).toBe(999);
+            expect(getMaxConnections('Custom')).toBe(999);
+            expect(getMaxConnections('custom')).toBe(999);
         });
     });
 
