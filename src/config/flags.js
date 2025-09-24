@@ -50,7 +50,7 @@ class FeatureFlags {
       MOCK_MODE: mockMode.isMockMode,
       
       // UI Feature Flags (Issue #366)  
-      SHOP_ENABLED: this.parseFlag(process.env.SHOP_ENABLED, false), // Shop feature toggle
+      // Removed SHOP_ENABLED duplicate - standardized to ENABLE_SHOP below
       ENABLE_MOCK_PERSISTENCE: this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
       
       // Auth Features
