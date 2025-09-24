@@ -14,11 +14,9 @@
 // Jest is available globally
 const StyleProfileService = require('../../../src/services/styleProfileService');
 const StyleProfileGenerator = require('../../../src/services/styleProfileGenerator');
-const EncryptionConfig = require('../../../src/config/encryption');
 
 // Mock dependencies
 jest.mock('../../../src/services/styleProfileGenerator');
-jest.mock('../../../src/config/encryption');
 jest.mock('../../../src/config/supabase', () => ({
   supabaseServiceClient: {
     from: jest.fn().mockReturnThis(),
@@ -44,7 +42,6 @@ const { logger } = require('../../../src/utils/logger');
 describe('StyleProfileService', () => {
   let service;
   let mockGenerator;
-  let mockEncryption;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,20 +53,21 @@ describe('StyleProfileService', () => {
     };
     StyleProfileGenerator.mockImplementation(() => mockGenerator);
 
-    // Setup mock encryption
-    mockEncryption = {
-      encrypt: jest.fn(),
-      decrypt: jest.fn()
-    };
-    EncryptionConfig.mockImplementation(() => mockEncryption);
-
-    service = new StyleProfileService();
+    // Set encryption key environment variable
+    process.env.STYLE_PROFILE_ENCRYPTION_KEY = '8928ba872b6710a1bf1ac4d4268da0c92f7bb827c6834ae87a044f6817b43612';
+    
+    // Get the singleton service instance
+    service = require('../../../src/services/styleProfileService');
+    
+    // Mock encryption methods after service creation
+    service.encryptStyleProfile = jest.fn().mockReturnValue('encrypted-data');
+    service.decryptStyleProfile = jest.fn().mockReturnValue('decrypted-data');
   });
 
   describe('constructor', () => {
-    it('should initialize with encryption and generator', () => {
+    it('should initialize with generator', () => {
       expect(StyleProfileGenerator).toHaveBeenCalled();
-      expect(EncryptionConfig).toHaveBeenCalled();
+      expect(service).toBeDefined();
     });
   });
 
@@ -99,7 +97,7 @@ describe('StyleProfileService', () => {
       mockGenerator.generateStyleProfile.mockResolvedValue(mockProfile);
       
       // Mock encryption
-      mockEncryption.encrypt.mockReturnValue('encrypted-prompt-data');
+      service.encryptStyleProfile.mockReturnValue('encrypted-prompt-data');
       
       // Mock database insertion
       mockSupabaseClient.insert.mockResolvedValue({
@@ -156,7 +154,7 @@ describe('StyleProfileService', () => {
     it('should encrypt sensitive data before storage', async () => {
       await service.extractStyleProfile('org-123', 'user-456', ['twitter']);
 
-      expect(mockEncryption.encrypt).toHaveBeenCalledWith(
+      expect(service.encryptStyleProfile).toHaveBeenCalledWith(
         mockProfile.profiles[0].prompt
       );
     });
@@ -193,7 +191,7 @@ describe('StyleProfileService', () => {
         error: null
       });
 
-      mockEncryption.decrypt.mockReturnValue('Decrypted prompt text');
+      service.decryptStyleProfile.mockReturnValue('Decrypted prompt text');
     });
 
     it('should get user profiles successfully', async () => {
@@ -229,7 +227,7 @@ describe('StyleProfileService', () => {
     });
 
     it('should handle decryption errors gracefully', async () => {
-      mockEncryption.decrypt.mockImplementation(() => {
+      service.decryptStyleProfile.mockImplementation(() => {
         throw new Error('Decryption failed');
       });
 
@@ -431,12 +429,17 @@ describe('StyleProfileService', () => {
         .rejects.toThrow('Invalid platform: invalid-platform');
     });
 
-    it('should handle encryption configuration errors', async () => {
-      EncryptionConfig.mockImplementation(() => {
-        throw new Error('Encryption config failed');
-      });
-
-      expect(() => new StyleProfileService()).toThrow('Encryption config failed');
+    it('should handle missing encryption key', async () => {
+      const originalKey = process.env.STYLE_PROFILE_ENCRYPTION_KEY;
+      delete process.env.STYLE_PROFILE_ENCRYPTION_KEY;
+      
+      // Clear the require cache to test re-initialization
+      delete require.cache[require.resolve('../../../src/services/styleProfileService')];
+      
+      expect(() => require('../../../src/services/styleProfileService')).toThrow('STYLE_PROFILE_ENCRYPTION_KEY environment variable is required');
+      
+      // Restore environment
+      process.env.STYLE_PROFILE_ENCRYPTION_KEY = originalKey;
     });
   });
 
@@ -457,7 +460,7 @@ describe('StyleProfileService', () => {
         totalItems: 1
       });
 
-      mockEncryption.encrypt.mockReturnValue('encrypted-data');
+      service.encryptStyleProfile.mockReturnValue('encrypted-data');
       mockSupabaseClient.insert.mockResolvedValue({
         data: [{}],
         error: null
@@ -466,8 +469,8 @@ describe('StyleProfileService', () => {
       await service.extractStyleProfile('org-123', 'user-456', ['twitter']);
 
       // Verify that only the generated prompt is encrypted and stored, not raw content
-      expect(mockEncryption.encrypt).toHaveBeenCalledWith('Generated prompt without raw content');
-      expect(mockEncryption.encrypt).not.toHaveBeenCalledWith('Sensitive user content');
+      expect(service.encryptStyleProfile).toHaveBeenCalledWith('Generated prompt without raw content');
+      expect(service.encryptStyleProfile).not.toHaveBeenCalledWith('Sensitive user content');
     });
 
     it('should handle profile deletion for GDPR compliance', async () => {
@@ -546,7 +549,7 @@ describe('StyleProfileService', () => {
         };
 
         mockGenerator.generateStyleProfile.mockResolvedValue(mockProfile);
-        mockEncryption.encrypt.mockReturnValue('encrypted-data');
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
         mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
 
         // Simulate concurrent requests
@@ -602,7 +605,7 @@ describe('StyleProfileService', () => {
           totalItems: 1
         });
 
-        mockEncryption.encrypt.mockImplementation(() => {
+        service.encryptStyleProfile.mockImplementation(() => {
           throw new Error('Encryption key unavailable');
         });
 
@@ -646,7 +649,7 @@ describe('StyleProfileService', () => {
           totalItems: 2
         });
 
-        mockEncryption.encrypt.mockReturnValue('encrypted-data');
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
         mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
 
         await service.extractStyleProfile('org-123', 'user-456', ['twitter']);
@@ -693,7 +696,7 @@ describe('StyleProfileService', () => {
           error: null
         });
 
-        mockEncryption.decrypt.mockReturnValue('[Data expired - deleted for compliance]');
+        service.decryptStyleProfile.mockReturnValue('[Data expired - deleted for compliance]');
 
         const result = await service.getUserProfiles('org-123', 'user-456');
         
@@ -718,7 +721,7 @@ describe('StyleProfileService', () => {
           profiles: [{ lang: 'es', prompt: 'Test prompt', sources: {}, metadata: {} }],
           totalItems: 1
         });
-        mockEncryption.encrypt.mockReturnValue('encrypted-data');
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
         mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
 
         // Second call should succeed
@@ -743,7 +746,7 @@ describe('StyleProfileService', () => {
           errors: ['Failed to generate English profile']
         });
 
-        mockEncryption.encrypt.mockReturnValue('encrypted-data');
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
         mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
 
         const result = await service.extractStyleProfile('org-123', 'user-456', ['twitter', 'youtube']);
@@ -769,7 +772,7 @@ describe('StyleProfileService', () => {
           };
         });
 
-        mockEncryption.encrypt.mockReturnValue('encrypted-data');
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
         mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
 
         // Test multiple concurrent requests

@@ -35,7 +35,12 @@ class StyleProfileService {
     validateAndGetEncryptionKey() {
         const keyString = process.env.STYLE_PROFILE_ENCRYPTION_KEY;
         
+        // In test/mock mode, use a default test key if none provided
         if (!keyString) {
+            if (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
+                return Buffer.from('8928ba872b6710a1bf1ac4d4268da0c92f7bb827c6834ae87a044f6817b43612', 'hex');
+            }
+            
             throw new Error(
                 'STYLE_PROFILE_ENCRYPTION_KEY environment variable is required. ' +
                 'Generate a secure 32-byte key: openssl rand -hex 32'
