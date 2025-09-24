@@ -334,6 +334,13 @@ const prompt = await promptTemplate.buildPrompt({
 - **Si se detecta código nuevo sin tests asociados → coordinar con Test Engineer** para generar los tests antes de cerrar la tarea.
 - **Cambios en UI/frontend deben incluir evidencias visuales**: capturas + report.md en docs/test-evidence/ para validar la implementación visual.
 
+### Planning Mode
+
+- **Antes de implementar cualquier feature/tarea, genera siempre un plan en modo texto (planning mode)**.
+- **El plan debe describir**: pasos de diseño, subagentes a usar, archivos afectados, criterios de validación.
+- **Guarda el plan en `docs/plan/<issue>.md`**.
+- **Solo después de que el plan esté guardado y validado, procede a la implementación**.
+
 ### Tareas al Cerrar
 
 - **Actualizar siempre spec.md con el nuevo estado del sistema**: Reflejar los cambios realizados en la documentación central.

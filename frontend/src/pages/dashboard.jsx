@@ -40,6 +40,11 @@ export default function Dashboard() {
   const [recentRoasts, setRecentRoasts] = useState([]);
   const [roastsLoading, setRoastsLoading] = useState(false);
   const [editingRoastId, setEditingRoastId] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [shieldExpanded, setShieldExpanded] = useState(false);
+  const [shieldData, setShieldData] = useState(null);
+  const [shieldLoading, setShieldLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { isEnabled, loading: flagsLoading } = useFeatureFlags();
@@ -97,6 +102,28 @@ export default function Dashboard() {
     }
   };
 
+  // Fetch Shield intercepted items (Issue #366)
+  const fetchShieldData = async () => {
+    try {
+      setShieldLoading(true);
+      const response = await fetch('/api/shield/intercepted?limit=5', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setShieldData(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching Shield data:', error);
+      // Don't fail the entire dashboard if Shield fails
+    } finally {
+      setShieldLoading(false);
+    }
+  };
+
   // Fetch user accounts and usage data
   useEffect(() => {
     const fetchData = async () => {
@@ -129,6 +156,26 @@ export default function Dashboard() {
 
         // Fetch recent roasts
         await fetchRecentRoasts();
+
+        // Fetch analytics summary (Issue #366)
+        try {
+          setAnalyticsLoading(true);
+          const analyticsRes = await fetch('/api/analytics/summary', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+
+          if (analyticsRes.ok) {
+            const analyticsData = await analyticsRes.json();
+            setAnalytics(analyticsData.data || {});
+          }
+        } catch (analyticsError) {
+          console.error('Error fetching analytics:', analyticsError);
+          // Don't fail the entire dashboard if analytics fails
+        } finally {
+          setAnalyticsLoading(false);
+        }
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -672,6 +719,152 @@ export default function Dashboard() {
         <AnalysisUsageCard user={adminModeUser || { plan: 'pro' }} />
         <RoastUsageCard user={adminModeUser || { plan: 'pro' }} />
       </div>
+
+      {/* Analytics Metrics (Issue #366) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+              Análisis completados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {analyticsLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-3xl font-bold text-green-600">
+                {analytics?.completed_analyses ?? 0}
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground mt-1">
+              Total de análisis de toxicidad procesados
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Send className="h-5 w-5 text-blue-500 mr-2" />
+              Roasts enviados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {analyticsLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-3xl font-bold text-blue-600">
+                {analytics?.sent_roasts ?? 0}
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground mt-1">
+              Total de roasts generados y publicados
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Shield Section (Issue #366) */}
+      {isEnabled('ENABLE_SHIELD_UI') && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShieldExpanded(!shieldExpanded)}
+            >
+              <div className="flex items-center">
+                <Shield className="h-5 w-5 text-orange-500 mr-2" />
+                Shield - Protección Automática
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-orange-600">
+                  {shieldData?.length || 0} interceptados
+                </Badge>
+                <button className="p-1 hover:bg-gray-100 rounded">
+                  {shieldExpanded ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          
+          {shieldExpanded && (
+            <CardContent>
+              {shieldLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ) : shieldData && shieldData.length > 0 ? (
+                <div className="space-y-4">
+                  {shieldData.map((item, index) => (
+                    <div key={index} className="border-l-4 border-orange-400 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-r-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {item.platform || 'Twitter'}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {item.timestamp || 'Hace 1 hora'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                            {item.content || 'Comentario tóxico interceptado por Shield'}
+                          </p>
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <span>Toxicidad: {item.toxicity_score || '85%'}</span>
+                            <span>Acción: {item.action || 'Bloqueado'}</span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" className="text-green-600">
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-600">
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="pt-4 border-t">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        if (!shieldLoading) fetchShieldData();
+                      }}
+                      disabled={shieldLoading}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${shieldLoading ? 'animate-spin' : ''}`} />
+                      Actualizar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="font-medium mb-2">Shield está activo</h3>
+                  <p className="text-sm text-muted-foreground">
+                    No hay comentarios tóxicos interceptados recientemente
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       {/* Connected Accounts */}
       <Card>

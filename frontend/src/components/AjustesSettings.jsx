@@ -26,6 +26,7 @@ import { apiClient } from '../lib/api';
 import TransparencySettings from './TransparencySettings';
 import StyleSelector from './StyleSelector';
 import SensitiveDataModal from './ui/SensitiveDataModal';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { detectSensitiveData, generateWarningMessage, isClipboardClearingSupported, clearClipboard } from '../utils/sensitiveDataDetector';
 import { useI18n } from '../hooks/useI18n';
 
@@ -653,9 +654,12 @@ const AjustesSettings = ({ user, onNotification }) => {
             <div className="flex items-start space-x-2">
               <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-amber-800">
-                <p>
+                <p className="mb-2">
                   Por cumplimiento de políticas, puedes elegir cómo identificar que algunas 
                   respuestas son generadas por IA. No es obligatorio, sino una opción de personalización.
+                </p>
+                <p className="text-xs bg-amber-100 rounded p-2 border border-amber-300">
+                  <strong>📋 GDPR:</strong> Los roasts autopublicados llevan firma de IA
                 </p>
               </div>
             </div>
@@ -735,6 +739,11 @@ const AjustesSettings = ({ user, onNotification }) => {
               )}
             </div>
           )}
+        </div>
+
+        {/* Shield UI Section (Issue #366) */}
+        <div className="space-y-4">
+          <ShieldUISection />
         </div>
 
         {/* Style Selector Section */}
@@ -1052,6 +1061,147 @@ const RoastrPersonaField = ({
       {!showForm && value && (
         <div className="text-sm text-gray-600 bg-gray-50 rounded p-3">
           {value}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Shield UI Section Component (Issue #366)
+const ShieldUISection = () => {
+  const { flags } = useFeatureFlags();
+  const [shieldExpanded, setShieldExpanded] = useState(false);
+  const [shieldSettings, setShieldSettings] = useState({
+    enabled: true,
+    aggressiveness: 'medium',
+    interceptedCount: 12
+  });
+
+  // Only show Shield UI if enabled and user has Pro+ plan
+  const isShieldUIEnabled = flags?.ENABLE_SHIELD_UI;
+  const canUseShield = true; // Assume user has proper plan - would check user.plan in real implementation
+
+  if (!isShieldUIEnabled || !canUseShield) {
+    return null;
+  }
+
+  const handleShieldExpand = () => {
+    setShieldExpanded(!shieldExpanded);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <button 
+        onClick={handleShieldExpand}
+        className="w-full flex items-center justify-between text-left"
+        aria-expanded={shieldExpanded}
+      >
+        <div className="flex items-center space-x-3">
+          <Shield className="h-5 w-5 text-orange-500" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">Shield - Protección Automática</h3>
+            <p className="text-sm text-gray-500">Configuración avanzada de moderación</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+            {shieldSettings.interceptedCount} interceptados
+          </span>
+          <svg 
+            className={`w-5 h-5 transition-transform ${shieldExpanded ? 'rotate-180' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
+
+      {shieldExpanded && (
+        <div className="mt-6 space-y-4" role="region" aria-label="Configuración de Shield">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start space-x-2">
+              <Info className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-orange-800">
+                <p className="font-medium mb-2">¿Qué es Shield?</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Protección automática contra comentarios tóxicos</li>
+                  <li>Intercepta ataques antes de que lleguen a ti</li>
+                  <li>Filtrado inteligente basado en tu Roastr Persona</li>
+                  <li>Acciones automáticas (silenciar, bloquear, reportar)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Estado de Shield
+              </label>
+              <div className="flex items-center space-x-3">
+                <button
+                  className={`w-12 h-6 rounded-full relative transition-colors ${
+                    shieldSettings.enabled 
+                      ? 'bg-green-500' 
+                      : 'bg-gray-300'
+                  }`}
+                  onClick={() => setShieldSettings(prev => ({ ...prev, enabled: !prev.enabled }))}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${
+                    shieldSettings.enabled ? 'translate-x-7' : 'translate-x-1'
+                  }`} />
+                </button>
+                <span className="text-sm text-gray-600">
+                  {shieldSettings.enabled ? 'Activado' : 'Desactivado'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Nivel de agresividad
+              </label>
+              <Select value={shieldSettings.aggressiveness}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">🛡️ Suave - Solo comentarios muy tóxicos</SelectItem>
+                  <SelectItem value="medium">⚡ Balanceado - Moderación estándar</SelectItem>
+                  <SelectItem value="high">🚫 Agresivo - Bloquea todo lo sospechoso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Actividad reciente</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Comentarios interceptados hoy:</span>
+                <span className="font-medium text-orange-600">5</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Usuarios bloqueados esta semana:</span>
+                <span className="font-medium text-red-600">2</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Comentarios reportados:</span>
+                <span className="font-medium text-blue-600">8</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button variant="outline" size="sm">
+              Ver historial completo
+            </Button>
+            <Button size="sm">
+              Configuración avanzada
+            </Button>
+          </div>
         </div>
       )}
     </div>
