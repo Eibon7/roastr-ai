@@ -8,17 +8,17 @@ const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
 /**
- * @route POST /api/style-profile/extract
+ * @route POST /api/style-profile-extraction/extract
  * @desc Extract style profile for a user's social media account
  * @access Private (Pro/Plus only)
  */
 router.post('/extract', authenticateToken, requirePlan(['pro', 'plus']), async (req, res) => {
     try {
         // Check if feature is enabled
-        if (!flags.isEnabled('original_tone')) {
+        if (!flags.isEnabled('ENABLE_ORIGINAL_TONE')) {
             return res.status(403).json({
                 success: false,
-                error: 'Style profile feature is not enabled'
+                error: 'Style profile extraction feature is not enabled'
             });
         }
 
@@ -69,7 +69,7 @@ router.post('/extract', authenticateToken, requirePlan(['pro', 'plus']), async (
 });
 
 /**
- * @route GET /api/style-profile/status
+ * @route GET /api/style-profile-extraction/status
  * @desc Get style profile status for a user's accounts
  * @access Private (Pro/Plus only)
  */
@@ -115,7 +115,7 @@ router.get('/status', authenticateToken, requirePlan(['pro', 'plus']), async (re
 });
 
 /**
- * @route POST /api/style-profile/refresh
+ * @route POST /api/style-profile-extraction/refresh
  * @desc Force refresh of style profile
  * @access Private (Pro/Plus only)
  */

@@ -20,11 +20,44 @@ const { flags } = require('../config/flags');
 class StyleProfileService {
     constructor() {
         this.ALGORITHM = 'aes-256-gcm';
-        this.ENCRYPTION_KEY = process.env.STYLE_PROFILE_ENCRYPTION_KEY || crypto.randomBytes(32);
+        this.ENCRYPTION_KEY = this.validateAndGetEncryptionKey();
         this.COMMENTS_TO_FETCH = 100;
         this.MIN_COMMENTS_REQUIRED = 50;
         this.REFRESH_DAYS = 90;
         this.REFRESH_COMMENT_COUNT = 500;
+    }
+
+    /**
+     * Validate and get encryption key with strict requirements
+     * @returns {Buffer} Validated encryption key
+     * @throws {Error} If key is missing or invalid
+     */
+    validateAndGetEncryptionKey() {
+        const keyString = process.env.STYLE_PROFILE_ENCRYPTION_KEY;
+        
+        if (!keyString) {
+            throw new Error(
+                'STYLE_PROFILE_ENCRYPTION_KEY environment variable is required. ' +
+                'Generate a secure 32-byte key: openssl rand -hex 32'
+            );
+        }
+
+        // Validate hex format and length (64 hex chars = 32 bytes)
+        if (!/^[0-9a-fA-F]{64}$/.test(keyString)) {
+            throw new Error(
+                'STYLE_PROFILE_ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes). ' +
+                'Current length: ' + keyString.length + '. ' +
+                'Generate a secure key: openssl rand -hex 32'
+            );
+        }
+
+        try {
+            return Buffer.from(keyString, 'hex');
+        } catch (error) {
+            throw new Error(
+                'Failed to parse STYLE_PROFILE_ENCRYPTION_KEY as hexadecimal: ' + error.message
+            );
+        }
     }
 
     /**
@@ -54,8 +87,8 @@ class StyleProfileService {
             // Generate style embedding
             const styleEmbedding = await this.generateStyleEmbedding(comments);
 
-            // Encrypt and store
-            const encryptedProfile = await this.encryptStyleProfile(styleEmbedding);
+            // Encrypt and store (with AAD for security)
+            const encryptedProfile = await this.encryptStyleProfile(styleEmbedding, userId, platform);
             await this.storeStyleProfile(userId, platform, encryptedProfile);
 
             // Log metadata only
@@ -191,13 +224,24 @@ class StyleProfileService {
     }
 
     /**
-     * Encrypt style profile using AES-256-GCM
+     * Encrypt style profile using AES-256-GCM with Additional Authenticated Data (AAD)
      * @param {Object} styleProfile - Style profile to encrypt
+     * @param {string} userId - User ID for AAD context
+     * @param {string} platform - Platform for AAD context
      * @returns {Promise<Object>} Encrypted profile with IV and auth tag
      */
-    async encryptStyleProfile(styleProfile) {
+    async encryptStyleProfile(styleProfile, userId, platform) {
+        // Validate inputs
+        if (!userId || !platform) {
+            throw new Error('userId and platform are required for secure encryption');
+        }
+
         const iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv(this.ALGORITHM, this.ENCRYPTION_KEY, iv);
+        
+        // Create Additional Authenticated Data (AAD) to prevent ciphertext swapping
+        const aad = Buffer.from(`${userId}:${platform}:style_profile`, 'utf8');
+        cipher.setAAD(aad);
         
         const profileString = JSON.stringify(styleProfile);
         let encrypted = cipher.update(profileString, 'utf8', 'hex');
@@ -205,31 +249,74 @@ class StyleProfileService {
         
         const authTag = cipher.getAuthTag();
 
+        logger.debug('Style profile encrypted with AAD', {
+            userId: userId.substring(0, 8) + '...',
+            platform,
+            aadLength: aad.length
+        });
+
         return {
             encrypted,
             iv: iv.toString('hex'),
-            authTag: authTag.toString('hex')
+            authTag: authTag.toString('hex'),
+            aad: aad.toString('base64') // Store AAD for decryption
         };
     }
 
     /**
-     * Decrypt style profile
+     * Decrypt style profile with AAD verification
      * @param {Object} encryptedData - Encrypted profile data
+     * @param {string} userId - User ID for AAD verification
+     * @param {string} platform - Platform for AAD verification
      * @returns {Promise<Object>} Decrypted style profile
      */
-    async decryptStyleProfile(encryptedData) {
+    async decryptStyleProfile(encryptedData, userId, platform) {
+        // Validate inputs
+        if (!userId || !platform) {
+            throw new Error('userId and platform are required for secure decryption');
+        }
+
+        if (!encryptedData.encrypted || !encryptedData.iv || !encryptedData.authTag) {
+            throw new Error('Invalid encrypted data: missing required fields');
+        }
+
         const decipher = crypto.createDecipheriv(
             this.ALGORITHM,
             this.ENCRYPTION_KEY,
             Buffer.from(encryptedData.iv, 'hex')
         );
         
+        // Set AAD for verification (prevents ciphertext swapping attacks)
+        let aad;
+        if (encryptedData.aad) {
+            // Use stored AAD (new format)
+            aad = Buffer.from(encryptedData.aad, 'base64');
+        } else {
+            // Reconstruct AAD for backward compatibility (old format)
+            aad = Buffer.from(`${userId}:${platform}:style_profile`, 'utf8');
+            logger.warn('Using reconstructed AAD for legacy encrypted data', {
+                userId: userId.substring(0, 8) + '...',
+                platform
+            });
+        }
+        decipher.setAAD(aad);
+        
         decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));
         
-        let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
-        decrypted += decipher.final('utf8');
-        
-        return JSON.parse(decrypted);
+        try {
+            let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
+            decrypted += decipher.final('utf8');
+            
+            return JSON.parse(decrypted);
+        } catch (error) {
+            logger.error('Style profile decryption failed', {
+                error: error.message,
+                userId: userId.substring(0, 8) + '...',
+                platform,
+                hasAAD: !!encryptedData.aad
+            });
+            throw new Error('Failed to decrypt style profile: data may be corrupted or tampered with');
+        }
     }
 
     /**
@@ -239,21 +326,38 @@ class StyleProfileService {
      * @param {Object} encryptedProfile - Encrypted profile data
      */
     async storeStyleProfile(userId, platform, encryptedProfile) {
+        // Validate required fields
+        if (!encryptedProfile.encrypted || !encryptedProfile.iv || !encryptedProfile.authTag) {
+            throw new Error('Invalid encrypted profile: missing required fields');
+        }
+
+        const profileData = {
+            user_id: userId,
+            platform: platform,
+            encrypted_profile: encryptedProfile.encrypted,
+            iv: encryptedProfile.iv,
+            auth_tag: encryptedProfile.authTag,
+            last_refresh: new Date().toISOString(),
+            comment_count_since_refresh: 0
+        };
+
+        // Include AAD if present (new secure format)
+        if (encryptedProfile.aad) {
+            profileData.aad = encryptedProfile.aad;
+        }
+
         const { error } = await supabaseServiceClient
             .from('user_style_profile')
-            .upsert({
-                user_id: userId,
-                platform: platform,
-                encrypted_profile: encryptedProfile.encrypted,
-                iv: encryptedProfile.iv,
-                auth_tag: encryptedProfile.authTag,
-                last_refresh: new Date().toISOString(),
-                comment_count_since_refresh: 0
-            }, {
+            .upsert(profileData, {
                 onConflict: 'user_id,platform'
             });
 
         if (error) {
+            logger.error('Failed to store style profile', {
+                error: error.message,
+                userId: userId.substring(0, 8) + '...',
+                platform
+            });
             throw new Error(`Failed to store style profile: ${error.message}`);
         }
     }
@@ -307,6 +411,43 @@ class StyleProfileService {
         }
 
         return data.plan;
+    }
+
+    /**
+     * Get and decrypt style profile for use in roast generation
+     * @param {string} userId - User ID
+     * @param {string} platform - Platform name
+     * @returns {Promise<Object|null>} Decrypted style profile or null
+     */
+    async getStyleProfile(userId, platform) {
+        try {
+            const { data, error } = await supabaseServiceClient
+                .from('user_style_profile')
+                .select('encrypted_profile, iv, auth_tag, aad')
+                .eq('user_id', userId)
+                .eq('platform', platform)
+                .single();
+
+            if (error || !data) {
+                return null;
+            }
+
+            const encryptedData = {
+                encrypted: data.encrypted_profile,
+                iv: data.iv,
+                authTag: data.auth_tag,
+                aad: data.aad // May be null for legacy data
+            };
+
+            return await this.decryptStyleProfile(encryptedData, userId, platform);
+        } catch (error) {
+            logger.error('Failed to retrieve style profile', {
+                error: error.message,
+                userId: userId.substring(0, 8) + '...',
+                platform
+            });
+            return null;
+        }
     }
 
     /**

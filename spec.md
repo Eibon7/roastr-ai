@@ -1763,7 +1763,7 @@ POST /api/tone/custom
   "error": "Original Tone está disponible desde el plan Pro",
   "code": "original_tone_requires_pro_or_higher",
   "details": {
-    "feature": "original_tone",
+    "feature": "ENABLE_ORIGINAL_TONE",
     "upgradeRequired": "pro"
   }
 }
@@ -4232,10 +4232,10 @@ USING (user_id = auth.uid());
 ```
 
 #### **API Endpoints**
-- **POST /api/style-profile/extract** - Trigger profile extraction
-- **GET /api/style-profile/status** - Check profile status and freshness
-- **POST /api/style-profile/refresh** - Manual profile refresh
-- **GET /api/style-profile/data** - Retrieve decrypted profile data
+- **POST /api/style-profile-extraction/extract** - Trigger profile extraction
+- **GET /api/style-profile-extraction/status** - Check profile status and freshness
+- **POST /api/style-profile-extraction/refresh** - Manual profile refresh
+- **GET /api/style-profile-extraction/data** - Retrieve decrypted profile data
 - **DELETE /api/style-profile/delete** - Complete profile deletion (GDPR)
 
 ### **🎨 Frontend Implementation**
