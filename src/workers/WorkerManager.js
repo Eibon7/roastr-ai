@@ -3,6 +3,7 @@ const AnalyzeToxicityWorker = require('./AnalyzeToxicityWorker');
 const GenerateReplyWorker = require('./GenerateReplyWorker');
 const ShieldActionWorker = require('./ShieldActionWorker');
 const BillingWorker = require('./BillingWorker');
+const StyleProfileWorker = require('./StyleProfileWorker');
 
 /**
  * Worker Manager for Roastr.ai Multi-Tenant Architecture
@@ -13,6 +14,7 @@ const BillingWorker = require('./BillingWorker');
  * - GenerateReplyWorker: Creates roast responses
  * - ShieldActionWorker: Executes Shield protection actions
  * - BillingWorker: Processes billing events and notifications
+ * - StyleProfileWorker: Extracts and refreshes user style profiles (Pro/Plus)
  * 
  * Features:
  * - Graceful startup and shutdown
@@ -40,7 +42,8 @@ class WorkerManager {
       'analyze_toxicity': AnalyzeToxicityWorker,
       'generate_reply': GenerateReplyWorker,
       'shield_action': ShieldActionWorker,
-      'billing': BillingWorker
+      'billing': BillingWorker,
+      'style_profile': StyleProfileWorker
     };
     
     this.log('info', 'Worker Manager initialized', {

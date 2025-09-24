@@ -71,6 +71,9 @@ class FeatureFlags {
       ENABLE_FACEBOOK_UI: this.parseDevelopmentFlag(process.env.ENABLE_FACEBOOK_UI, isProduction), // Default disabled - under development
       ENABLE_INSTAGRAM_UI: this.parseDevelopmentFlag(process.env.ENABLE_INSTAGRAM_UI, isProduction), // Default disabled - under development
 
+      // Style Profile Extraction Feature (Issue #369 - SPEC 9)
+      original_tone: this.parseFlag(process.env.ENABLE_ORIGINAL_TONE, false), // Default disabled, Pro/Plus feature
+
       // Shop Feature
       ENABLE_SHOP: this.parseFlag(process.env.ENABLE_SHOP), // Default disabled unless explicitly enabled
 
@@ -271,6 +274,7 @@ class FeatureFlags {
         shop: this.flags.ENABLE_SHOP ? 'enabled' : 'disabled',
         facebookUI: this.flags.ENABLE_FACEBOOK_UI ? 'enabled' : 'disabled',
         instagramUI: this.flags.ENABLE_INSTAGRAM_UI ? 'enabled' : 'disabled',
+        originalTone: this.flags.original_tone ? 'enabled' : 'disabled',
         roastVersionsMultiple: this.flags.ROAST_VERSIONS_MULTIPLE ? 'enabled' : 'disabled',
         roastEngine: this.flags.ENABLE_ROAST_ENGINE ? 'enabled' : 'disabled',
         shieldUI: this.flags.ENABLE_SHIELD_UI ? 'enabled' : 'disabled'

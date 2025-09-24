@@ -38,7 +38,7 @@ args.forEach(arg => {
 
 // Load configuration
 let config = {
-  enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply'],
+  enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'style_profile'],
   workerConfig: {
     fetch_comments: {
       maxConcurrency: 5,
@@ -51,6 +51,10 @@ let config = {
     generate_reply: {
       maxConcurrency: 2,
       pollInterval: 2000
+    },
+    style_profile: {
+      maxConcurrency: 2,
+      pollInterval: 5000 // Less frequent polling as it's not time-critical
     }
   },
   healthCheckInterval: 30000
