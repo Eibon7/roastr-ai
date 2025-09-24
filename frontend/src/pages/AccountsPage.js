@@ -171,11 +171,11 @@ const AccountsPage = () => {
                 </h3>
                 <div className="text-sm text-blue-800">
                   <p className="mb-2">
-                    <strong>Tu plan actual ({userData?.plan || 'free'}):</strong> {getConnectionLimits().maxConnections} conexión{getConnectionLimits().maxConnections !== 1 ? 'es' : ''} por red social
+                    <strong>Tu plan actual ({userData?.plan || 'free'}):</strong> {getConnectionLimits().maxConnections} conexión{getConnectionLimits().maxConnections !== 1 ? 'es' : ''} total
                   </p>
                   <div className="text-xs space-y-1">
-                    <p>• <strong>Plan Free:</strong> 1 conexión por red social</p>
-                    <p>• <strong>Plan Pro y superiores:</strong> 2 conexiones por red social</p>
+                    <p>• <strong>Plan Free:</strong> 1 conexión total</p>
+                    <p>• <strong>Plan Pro y superiores:</strong> 2 conexiones totales</p>
                   </div>
                   {getConnectionLimits().planTier === 'free' && (
                     <p className="text-xs mt-2 text-blue-700">
@@ -195,7 +195,7 @@ const AccountsPage = () => {
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {availableNetworks.map(({ network, name, connectedCount, canConnect, limitReached }) => {
+            {availableNetworks.map(({ network, name, connectedCount, canConnect, limitReached, totalConnections }) => {
               const networkIcon = NETWORK_ICONS[network] || '📱';
               const networkColor = NETWORK_COLORS[network] || 'bg-gray-600 text-white';
               const { maxConnections, planTier } = getConnectionLimits();
@@ -212,7 +212,7 @@ const AccountsPage = () => {
                     }`}
                     title={
                       !canConnect 
-                        ? `Límite alcanzado: ${maxConnections} conexión${maxConnections !== 1 ? 'es' : ''} por red social (Plan ${planTier})` 
+                        ? `Límite alcanzado: máximo ${maxConnections} conexión${maxConnections !== 1 ? 'es' : ''} totales (Plan ${planTier})` 
                         : `Conectar ${name}`
                     }
                   >
@@ -223,7 +223,7 @@ const AccountsPage = () => {
                       {name}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      {connectedCount}/{maxConnections} conectada{connectedCount !== 1 ? 's' : ''}
+                      {totalConnections}/{maxConnections} cuentas totales
                     </p>
                     {!canConnect && (
                       <p className="text-xs text-red-500 dark:text-red-400">

@@ -654,9 +654,12 @@ const AjustesSettings = ({ user, onNotification }) => {
             <div className="flex items-start space-x-2">
               <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-amber-800">
-                <p>
+                <p className="mb-2">
                   Por cumplimiento de políticas, puedes elegir cómo identificar que algunas 
                   respuestas son generadas por IA. No es obligatorio, sino una opción de personalización.
+                </p>
+                <p className="text-xs bg-amber-100 rounded p-2 border border-amber-300">
+                  <strong>📋 GDPR:</strong> Los roasts autopublicados llevan firma de IA
                 </p>
               </div>
             </div>

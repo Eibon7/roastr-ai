@@ -42,21 +42,23 @@ export const useSocialAccounts = () => {
     return { maxConnections, planTier };
   }, [userData]);
 
-  // Get available networks with current connection count and limits validation
+  // Get available networks with global connection count and limits validation
   const availableNetworks = useMemo(() => {
     const { maxConnections } = getConnectionLimits();
+    const totalConnections = accounts.length; // Global count across all platforms
     
     return MOCK_AVAILABLE_NETWORKS.map(network => {
       const connectedCount = accounts.filter(acc => acc.network === network.network).length;
-      const canConnect = connectedCount < maxConnections;
-      const limitReached = connectedCount >= maxConnections;
+      const canConnect = totalConnections < maxConnections; // Global limit check
+      const limitReached = totalConnections >= maxConnections;
       
       return {
         ...network,
         connectedCount,
         canConnect,
         maxConnections,
-        limitReached
+        limitReached,
+        totalConnections // For display purposes
       };
     });
   }, [accounts, getConnectionLimits]);
