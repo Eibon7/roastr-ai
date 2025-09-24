@@ -32,13 +32,36 @@ export const useSocialAccounts = () => {
     return interceptedData[accountId] || [];
   }, [interceptedData]);
 
-  // Get available networks with current connection count
+  // Mock user data for plan calculations (Issue #366)
+  const userData = { plan: 'free', isAdminMode: false };
+
+  // Connection limits calculation (Issue #366 CodeRabbit feedback)
+  const getConnectionLimits = useCallback(() => {
+    const planTier = (userData.isAdminMode ? (userData.adminModeUser?.plan || '') : (userData?.plan || '')).toLowerCase();
+    const maxConnections = planTier === 'free' ? 1 : 2;
+    return { maxConnections, planTier };
+  }, [userData]);
+
+  // Get available networks with global connection count and limits validation
   const availableNetworks = useMemo(() => {
-    return MOCK_AVAILABLE_NETWORKS.map(network => ({
-      ...network,
-      connectedCount: accounts.filter(acc => acc.network === network.network).length
-    }));
-  }, [accounts]);
+    const { maxConnections } = getConnectionLimits();
+    const totalConnections = accounts.length; // Global count across all platforms
+    
+    return MOCK_AVAILABLE_NETWORKS.map(network => {
+      const connectedCount = accounts.filter(acc => acc.network === network.network).length;
+      const canConnect = totalConnections < maxConnections; // Global limit check
+      const limitReached = totalConnections >= maxConnections;
+      
+      return {
+        ...network,
+        connectedCount,
+        canConnect,
+        maxConnections,
+        limitReached,
+        totalConnections // For display purposes
+      };
+    });
+  }, [accounts, getConnectionLimits]);
 
   // Mutators - With API integration and optimistic UI
   
@@ -240,11 +263,13 @@ export const useSocialAccounts = () => {
     // Data
     accounts,
     availableNetworks,
+    userData,
     
     // Getters
     getAccountById,
     roastsByAccount,
     interceptedByAccount,
+    getConnectionLimits,
     
     // Stats
     totalAccounts,

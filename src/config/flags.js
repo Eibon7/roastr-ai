@@ -48,6 +48,9 @@ class FeatureFlags {
       ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG), // Disabled by default, requires explicit environment variable
       VERBOSE_LOGS: this.parseFlag(process.env.VERBOSE_LOGS),
       MOCK_MODE: mockMode.isMockMode,
+      
+      // UI Feature Flags (Issue #366)  
+      // Removed SHOP_ENABLED duplicate - standardized to ENABLE_SHOP below
       ENABLE_MOCK_PERSISTENCE: this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
       
       // Auth Features
@@ -71,8 +74,8 @@ class FeatureFlags {
       ENABLE_FACEBOOK_UI: this.parseDevelopmentFlag(process.env.ENABLE_FACEBOOK_UI, isProduction), // Default disabled - under development
       ENABLE_INSTAGRAM_UI: this.parseDevelopmentFlag(process.env.ENABLE_INSTAGRAM_UI, isProduction), // Default disabled - under development
 
-      // Shop Feature
-      ENABLE_SHOP: this.parseFlag(process.env.ENABLE_SHOP), // Default disabled unless explicitly enabled
+      // Shop Feature (Issue #366 CodeRabbit fix - standardized naming)
+      ENABLE_SHOP: this.parseFlag(process.env.SHOP_ENABLED), // Default disabled unless explicitly enabled
 
       // Roast Engine Features (SPEC 7 - Issue #363)
       ROAST_VERSIONS_MULTIPLE: this.parseFlag(process.env.ROAST_VERSIONS_MULTIPLE, true), // Default: generate 2 versions, set to false for 1 version

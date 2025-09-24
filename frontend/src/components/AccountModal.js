@@ -6,6 +6,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import ShieldInterceptedList from './ShieldInterceptedList';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { NETWORK_ICONS, NETWORK_COLORS, TONE_EXAMPLES, SHIELD_LEVELS, TONE_OPTIONS } from '../mocks/social';
 
 const AccountModal = ({
@@ -22,6 +23,7 @@ const AccountModal = ({
   onDisconnectAccount,
   onClose
 }) => {
+  const { flags } = useFeatureFlags();
   const [activeTab, setActiveTab] = useState('roasts');
   const [shieldExpanded, setShieldExpanded] = useState(false);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
@@ -283,9 +285,10 @@ const AccountModal = ({
     return response.json();
   };
 
+  // Define tabs conditionally based on feature flags (Issue #366)
   const tabs = [
     { id: 'roasts', name: 'Últimos roasts', icon: '💬' },
-    { id: 'shield', name: 'Shield', icon: '🛡️' },
+    ...(flags?.ENABLE_SHIELD_UI ? [{ id: 'shield', name: 'Shield', icon: '🛡️' }] : []),
     { id: 'settings', name: 'Settings', icon: '⚙️' },
   ];
 

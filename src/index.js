@@ -337,6 +337,73 @@ app.get('/api/metrics', authenticateToken, async (req, res) => {
   }
 });
 
+// Analytics summary endpoint (Issue #366)
+app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
+  try {
+    const { supabaseServiceClient } = require('./config/supabase');
+    
+    // Get org_id from token (if available) or use default for backoffice
+    const orgId = req.user?.org_id || null;
+    
+    // Build query for completed analyses with conditional org filtering
+    let commentsQuery = supabaseServiceClient
+      .from('comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'processed');
+    
+    // Only apply org filtering when orgId is truthy and valid (Issue #366 CodeRabbit fix)
+    if (orgId && orgId !== 'undefined' && orgId !== 'null') {
+      commentsQuery = commentsQuery.eq('organization_id', orgId);
+    }
+    
+    const { count: completedCount, error: analysesError } = await commentsQuery;
+    
+    if (analysesError) {
+      throw analysesError;
+    }
+
+    // Build query for sent roasts with conditional org filtering
+    let responsesQuery = supabaseServiceClient
+      .from('responses')
+      .select('id', { count: 'exact', head: true })
+      .not('posted_at', 'is', null);
+    
+    // Only apply org filtering when orgId is truthy and valid (Issue #366 CodeRabbit fix)
+    if (orgId && orgId !== 'undefined' && orgId !== 'null') {
+      responsesQuery = responsesQuery.eq('organization_id', orgId);
+    }
+    
+    const { count: sentCount, error: roastsError } = await responsesQuery;
+    
+    if (roastsError) {
+      throw roastsError;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        completed_analyses: completedCount || 0,
+        sent_roasts: sentCount || 0
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        organization_id: (orgId && orgId !== 'undefined' && orgId !== 'null') ? orgId : 'global'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Analytics summary error:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to retrieve analytics summary',
+        details: error.message
+      }
+    });
+  }
+});
+
 // Test monitoring system endpoint (authenticated) - disabled in production unless explicitly enabled
 if (process.env.NODE_ENV !== 'production' || flags.isEnabled('ENABLE_DEBUG_LOGS')) {
 app.post('/api/monitoring/test', authenticateToken, async (req, res) => {
