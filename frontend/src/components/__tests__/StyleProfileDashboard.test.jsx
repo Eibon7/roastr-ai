@@ -240,7 +240,9 @@ describe('StyleProfileDashboard', () => {
         );
       });
 
-      expect(screen.getByText('📝 Perfil en ES')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('📝 Perfil en ES')).toBeInTheDocument();
+      });
     });
 
     it('should show loading state while fetching profiles', () => {
