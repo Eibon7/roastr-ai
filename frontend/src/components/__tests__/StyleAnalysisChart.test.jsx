@@ -45,7 +45,7 @@ describe('StyleAnalysisChart', () => {
       expect(screen.getByText('📊 Análisis de estilo')).toBeInTheDocument();
       expect(screen.getByText('Tono dominante')).toBeInTheDocument();
       expect(screen.getByText('Estilo de escritura')).toBeInTheDocument();
-      expect(screen.getByText('Longitud promedio')).toBeInTheDocument();
+      expect(screen.getByText('📏 Longitud promedio')).toBeInTheDocument();
     });
 
     it('should display English labels when language is set to en', () => {
@@ -54,7 +54,7 @@ describe('StyleAnalysisChart', () => {
       expect(screen.getByText('📊 Style Analysis')).toBeInTheDocument();
       expect(screen.getByText('Dominant tone')).toBeInTheDocument();
       expect(screen.getByText('Writing style')).toBeInTheDocument();
-      expect(screen.getByText('Average length')).toBeInTheDocument();
+      expect(screen.getByText('📏 Average length')).toBeInTheDocument();
     });
   });
 
@@ -236,7 +236,7 @@ describe('StyleAnalysisChart', () => {
       render(<StyleAnalysisChart metadata={incompleteMetadata} />);
 
       expect(screen.getByText('0.00')).toBeInTheDocument(); // Default emojiUsage
-      expect(screen.getByText('0%')).toBeInTheDocument(); // Default questionRate and exclamationRate
+      expect(screen.getAllByText('0%')).toHaveLength(2); // Default questionRate and exclamationRate
     });
 
     it('should handle unknown tone gracefully', () => {

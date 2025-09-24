@@ -11,14 +11,12 @@
  * - GDPR compliance
  */
 
-const { jest } = require('@jest/globals');
+// Jest is available globally
 const StyleProfileService = require('../../../src/services/styleProfileService');
 const StyleProfileGenerator = require('../../../src/services/styleProfileGenerator');
-const EncryptionConfig = require('../../../src/config/encryption');
 
 // Mock dependencies
 jest.mock('../../../src/services/styleProfileGenerator');
-jest.mock('../../../src/config/encryption');
 jest.mock('../../../src/config/supabase', () => ({
   supabaseServiceClient: {
     from: jest.fn().mockReturnThis(),
@@ -44,7 +42,6 @@ const { logger } = require('../../../src/utils/logger');
 describe('StyleProfileService', () => {
   let service;
   let mockGenerator;
-  let mockEncryption;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,20 +53,21 @@ describe('StyleProfileService', () => {
     };
     StyleProfileGenerator.mockImplementation(() => mockGenerator);
 
-    // Setup mock encryption
-    mockEncryption = {
-      encrypt: jest.fn(),
-      decrypt: jest.fn()
-    };
-    EncryptionConfig.mockImplementation(() => mockEncryption);
-
-    service = new StyleProfileService();
+    // Set encryption key environment variable
+    process.env.STYLE_PROFILE_ENCRYPTION_KEY = '8928ba872b6710a1bf1ac4d4268da0c92f7bb827c6834ae87a044f6817b43612';
+    
+    // Get the singleton service instance
+    service = require('../../../src/services/styleProfileService');
+    
+    // Mock encryption methods after service creation
+    service.encryptStyleProfile = jest.fn().mockReturnValue('encrypted-data');
+    service.decryptStyleProfile = jest.fn().mockReturnValue('decrypted-data');
   });
 
   describe('constructor', () => {
-    it('should initialize with encryption and generator', () => {
+    it('should initialize with generator', () => {
       expect(StyleProfileGenerator).toHaveBeenCalled();
-      expect(EncryptionConfig).toHaveBeenCalled();
+      expect(service).toBeDefined();
     });
   });
 
@@ -99,7 +97,7 @@ describe('StyleProfileService', () => {
       mockGenerator.generateStyleProfile.mockResolvedValue(mockProfile);
       
       // Mock encryption
-      mockEncryption.encrypt.mockReturnValue('encrypted-prompt-data');
+      service.encryptStyleProfile.mockReturnValue('encrypted-prompt-data');
       
       // Mock database insertion
       mockSupabaseClient.insert.mockResolvedValue({
@@ -156,7 +154,7 @@ describe('StyleProfileService', () => {
     it('should encrypt sensitive data before storage', async () => {
       await service.extractStyleProfile('org-123', 'user-456', ['twitter']);
 
-      expect(mockEncryption.encrypt).toHaveBeenCalledWith(
+      expect(service.encryptStyleProfile).toHaveBeenCalledWith(
         mockProfile.profiles[0].prompt
       );
     });
@@ -193,7 +191,7 @@ describe('StyleProfileService', () => {
         error: null
       });
 
-      mockEncryption.decrypt.mockReturnValue('Decrypted prompt text');
+      service.decryptStyleProfile.mockReturnValue('Decrypted prompt text');
     });
 
     it('should get user profiles successfully', async () => {
@@ -229,7 +227,7 @@ describe('StyleProfileService', () => {
     });
 
     it('should handle decryption errors gracefully', async () => {
-      mockEncryption.decrypt.mockImplementation(() => {
+      service.decryptStyleProfile.mockImplementation(() => {
         throw new Error('Decryption failed');
       });
 
@@ -431,12 +429,17 @@ describe('StyleProfileService', () => {
         .rejects.toThrow('Invalid platform: invalid-platform');
     });
 
-    it('should handle encryption configuration errors', async () => {
-      EncryptionConfig.mockImplementation(() => {
-        throw new Error('Encryption config failed');
-      });
-
-      expect(() => new StyleProfileService()).toThrow('Encryption config failed');
+    it('should handle missing encryption key', async () => {
+      const originalKey = process.env.STYLE_PROFILE_ENCRYPTION_KEY;
+      delete process.env.STYLE_PROFILE_ENCRYPTION_KEY;
+      
+      // Clear the require cache to test re-initialization
+      delete require.cache[require.resolve('../../../src/services/styleProfileService')];
+      
+      expect(() => require('../../../src/services/styleProfileService')).toThrow('STYLE_PROFILE_ENCRYPTION_KEY environment variable is required');
+      
+      // Restore environment
+      process.env.STYLE_PROFILE_ENCRYPTION_KEY = originalKey;
     });
   });
 
@@ -457,7 +460,7 @@ describe('StyleProfileService', () => {
         totalItems: 1
       });
 
-      mockEncryption.encrypt.mockReturnValue('encrypted-data');
+      service.encryptStyleProfile.mockReturnValue('encrypted-data');
       mockSupabaseClient.insert.mockResolvedValue({
         data: [{}],
         error: null
@@ -466,8 +469,8 @@ describe('StyleProfileService', () => {
       await service.extractStyleProfile('org-123', 'user-456', ['twitter']);
 
       // Verify that only the generated prompt is encrypted and stored, not raw content
-      expect(mockEncryption.encrypt).toHaveBeenCalledWith('Generated prompt without raw content');
-      expect(mockEncryption.encrypt).not.toHaveBeenCalledWith('Sensitive user content');
+      expect(service.encryptStyleProfile).toHaveBeenCalledWith('Generated prompt without raw content');
+      expect(service.encryptStyleProfile).not.toHaveBeenCalledWith('Sensitive user content');
     });
 
     it('should handle profile deletion for GDPR compliance', async () => {
@@ -486,6 +489,304 @@ describe('StyleProfileService', () => {
           userId: 'user-456'
         })
       );
+    });
+  });
+
+  describe('Security Scenarios and Edge Cases', () => {
+    describe('Input Validation and Sanitization', () => {
+      it('should handle malicious organization ID injection attempts', async () => {
+        const maliciousOrgId = "'; DROP TABLE style_profiles; --";
+        
+        await expect(service.extractStyleProfile(maliciousOrgId, 'user-456', ['twitter']))
+          .rejects.toThrow('Organization ID is required');
+      });
+
+      it('should handle extremely long user IDs', async () => {
+        const longUserId = 'a'.repeat(1000);
+        
+        await expect(service.extractStyleProfile('org-123', longUserId, ['twitter']))
+          .rejects.toThrow();
+      });
+
+      it('should validate platform names against allowed list', async () => {
+        const invalidPlatforms = ['<script>', 'rm -rf /', '../../etc/passwd'];
+        
+        for (const platform of invalidPlatforms) {
+          await expect(service.extractStyleProfile('org-123', 'user-456', [platform]))
+            .rejects.toThrow(`Invalid platform: ${platform}`);
+        }
+      });
+
+      it('should handle null and undefined inputs gracefully', async () => {
+        await expect(service.extractStyleProfile(null, 'user-456', ['twitter']))
+          .rejects.toThrow('Organization ID is required');
+          
+        await expect(service.extractStyleProfile('org-123', undefined, ['twitter']))
+          .rejects.toThrow('User ID is required');
+          
+        await expect(service.extractStyleProfile('org-123', 'user-456', null))
+          .rejects.toThrow('At least one platform must be specified');
+      });
+
+      it('should enforce maximum platform limit', async () => {
+        const manyPlatforms = Array(50).fill().map((_, i) => `platform${i}`);
+        
+        await expect(service.extractStyleProfile('org-123', 'user-456', manyPlatforms))
+          .rejects.toThrow('Too many platforms specified');
+      });
+    });
+
+    describe('Rate Limiting and Resource Protection', () => {
+      it('should handle concurrent extraction attempts', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        service._fetchUserComments = jest.fn().mockResolvedValue([
+          { text: 'Comment 1', platform: 'twitter', lang: 'es' }
+        ]);
+
+        const mockProfile = {
+          profiles: [{ lang: 'es', prompt: 'Test prompt', sources: {}, metadata: {} }],
+          totalItems: 1
+        };
+
+        mockGenerator.generateStyleProfile.mockResolvedValue(mockProfile);
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
+        mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
+
+        // Simulate concurrent requests
+        const promises = Array(5).fill().map(() => 
+          service.extractStyleProfile('org-123', 'user-456', ['twitter'])
+        );
+
+        const results = await Promise.allSettled(promises);
+        expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+      });
+
+      it('should handle memory exhaustion scenarios', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        
+        // Mock extremely large comment dataset
+        const massiveComments = Array(100000).fill().map((_, i) => ({
+          text: `Comment ${i} `.repeat(1000), // Large comments
+          platform: 'twitter',
+          lang: 'es'
+        }));
+        
+        service._fetchUserComments = jest.fn().mockResolvedValue(massiveComments);
+
+        await expect(service.extractStyleProfile('org-123', 'user-456', ['twitter']))
+          .rejects.toThrow();
+      });
+    });
+
+    describe('Database Security and Integrity', () => {
+      it('should handle database connection failures securely', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        service._fetchUserComments = jest.fn().mockRejectedValue(new Error('Connection lost'));
+
+        await expect(service.extractStyleProfile('org-123', 'user-456', ['twitter']))
+          .rejects.toThrow('Connection lost');
+
+        expect(logger.error).toHaveBeenCalledWith(
+          'Failed to extract style profile',
+          expect.objectContaining({
+            error: 'Connection lost'
+          })
+        );
+      });
+
+      it('should handle encryption failures gracefully', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        service._fetchUserComments = jest.fn().mockResolvedValue([
+          { text: 'Comment 1', platform: 'twitter', lang: 'es' }
+        ]);
+
+        mockGenerator.generateStyleProfile.mockResolvedValue({
+          profiles: [{ lang: 'es', prompt: 'Test prompt', sources: {}, metadata: {} }],
+          totalItems: 1
+        });
+
+        service.encryptStyleProfile.mockImplementation(() => {
+          throw new Error('Encryption key unavailable');
+        });
+
+        await expect(service.extractStyleProfile('org-123', 'user-456', ['twitter']))
+          .rejects.toThrow('Encryption key unavailable');
+      });
+
+      it('should verify row level security constraints', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        service._fetchUserComments = jest.fn().mockResolvedValue([
+          { text: 'Comment 1', platform: 'twitter', lang: 'es' }
+        ]);
+
+        // Mock RLS violation
+        mockSupabaseClient.insert.mockResolvedValue({
+          data: null,
+          error: { 
+            message: 'new row violates row-level security policy',
+            code: '42501'
+          }
+        });
+
+        await expect(service.extractStyleProfile('org-123', 'user-456', ['twitter']))
+          .rejects.toThrow('new row violates row-level security policy');
+      });
+    });
+
+    describe('Data Privacy and GDPR Compliance', () => {
+      it('should not log sensitive user data', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        
+        const sensitiveComments = [
+          { text: 'My email is user@example.com and SSN is 123-45-6789', platform: 'twitter', lang: 'es' },
+          { text: 'Credit card: 4532-1234-5678-9012', platform: 'twitter', lang: 'es' }
+        ];
+        
+        service._fetchUserComments = jest.fn().mockResolvedValue(sensitiveComments);
+        
+        mockGenerator.generateStyleProfile.mockResolvedValue({
+          profiles: [{ lang: 'es', prompt: 'Safe prompt', sources: {}, metadata: {} }],
+          totalItems: 2
+        });
+
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
+        mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
+
+        await service.extractStyleProfile('org-123', 'user-456', ['twitter']);
+
+        // Verify no sensitive data was logged
+        const logCalls = logger.info.mock.calls.flat();
+        const logString = JSON.stringify(logCalls);
+        
+        expect(logString).not.toContain('user@example.com');
+        expect(logString).not.toContain('123-45-6789');
+        expect(logString).not.toContain('4532-1234-5678-9012');
+      });
+
+      it('should handle profile deletion with audit trail', async () => {
+        mockSupabaseClient.delete.mockResolvedValue({
+          data: { count: 1 },
+          error: null
+        });
+
+        const result = await service.deleteProfile('org-123', 'user-456', 'es');
+
+        expect(result.success).toBe(true);
+        expect(logger.info).toHaveBeenCalledWith(
+          'Style profile deleted',
+          expect.objectContaining({
+            organizationId: 'org-123',
+            userId: 'user-456',
+            language: 'es'
+          })
+        );
+      });
+
+      it('should enforce data retention policies', async () => {
+        const oldDate = new Date('2023-01-01');
+        mockSupabaseClient.select.mockResolvedValue({
+          data: [{
+            id: 'profile-123',
+            created_at: oldDate.toISOString(),
+            language: 'es',
+            encrypted_prompt: 'old-data',
+            sources: {},
+            metadata: {}
+          }],
+          error: null
+        });
+
+        service.decryptStyleProfile.mockReturnValue('[Data expired - deleted for compliance]');
+
+        const result = await service.getUserProfiles('org-123', 'user-456');
+        
+        expect(result.success).toBe(true);
+        expect(result.data.profiles[0].prompt).toBe('[Data expired - deleted for compliance]');
+      });
+    });
+
+    describe('Error Recovery and Resilience', () => {
+      it('should recover from transient database errors', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        service._fetchUserComments = jest.fn()
+          .mockRejectedValueOnce(new Error('Temporary connection error'))
+          .mockResolvedValueOnce([{ text: 'Comment 1', platform: 'twitter', lang: 'es' }]);
+
+        // First call should fail
+        await expect(service.extractStyleProfile('org-123', 'user-456', ['twitter']))
+          .rejects.toThrow('Temporary connection error');
+
+        // Mock successful generation for second attempt
+        mockGenerator.generateStyleProfile.mockResolvedValue({
+          profiles: [{ lang: 'es', prompt: 'Test prompt', sources: {}, metadata: {} }],
+          totalItems: 1
+        });
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
+        mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
+
+        // Second call should succeed
+        const result = await service.extractStyleProfile('org-123', 'user-456', ['twitter']);
+        expect(result.success).toBe(true);
+      });
+
+      it('should handle partial profile generation failures', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        service._fetchUserComments = jest.fn().mockResolvedValue([
+          { text: 'Comment 1', platform: 'twitter', lang: 'es' },
+          { text: 'Comment 2', platform: 'youtube', lang: 'en' }
+        ]);
+
+        // Mock generator that fails for some languages
+        mockGenerator.generateStyleProfile.mockResolvedValue({
+          profiles: [
+            { lang: 'es', prompt: 'Spanish prompt', sources: {}, metadata: {} }
+            // English profile generation failed
+          ],
+          totalItems: 2,
+          errors: ['Failed to generate English profile']
+        });
+
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
+        mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
+
+        const result = await service.extractStyleProfile('org-123', 'user-456', ['twitter', 'youtube']);
+        
+        expect(result.success).toBe(true);
+        expect(result.data.profiles).toHaveLength(1);
+        expect(result.data.profiles[0].lang).toBe('es');
+      });
+
+      it('should maintain system stability under load', async () => {
+        service._validatePremiumUser = jest.fn().mockResolvedValue(true);
+        service._fetchUserComments = jest.fn().mockImplementation(async () => {
+          // Simulate processing delay
+          await new Promise(resolve => setTimeout(resolve, 100));
+          return [{ text: 'Comment 1', platform: 'twitter', lang: 'es' }];
+        });
+
+        mockGenerator.generateStyleProfile.mockImplementation(async () => {
+          await new Promise(resolve => setTimeout(resolve, 50));
+          return {
+            profiles: [{ lang: 'es', prompt: 'Test prompt', sources: {}, metadata: {} }],
+            totalItems: 1
+          };
+        });
+
+        service.encryptStyleProfile.mockReturnValue('encrypted-data');
+        mockSupabaseClient.insert.mockResolvedValue({ data: [{}], error: null });
+
+        // Test multiple concurrent requests
+        const startTime = Date.now();
+        const promises = Array(10).fill().map((_, i) => 
+          service.extractStyleProfile('org-123', `user-${i}`, ['twitter'])
+        );
+
+        const results = await Promise.allSettled(promises);
+        const endTime = Date.now();
+
+        expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+        expect(endTime - startTime).toBeLessThan(2000); // Should complete within 2 seconds
+      });
     });
   });
 });

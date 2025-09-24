@@ -78,7 +78,7 @@ const tierMessages = {
             not_available: "Shield está disponible desde el plan Starter. Mejora tu plan para activar la protección automática.",
             upgrade_cta: "Mejora a Starter por €5/mes para activar Shield."
         },
-        original_tone: {
+        ENABLE_ORIGINAL_TONE: {
             not_available: "Original Tone está disponible desde el plan Pro. Mejora tu plan para personalizar completamente tus roasts.",
             upgrade_cta: "Mejora a Pro por €15/mes para activar Original Tone."
         },

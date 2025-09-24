@@ -245,7 +245,7 @@ class TierValidationService {
     /**
      * Check if a feature is available for the user's tier
      * @param {string} userId - User ID  
-     * @param {string} feature - Feature name (shield, original_tone, embedded_judge)
+     * @param {string} feature - Feature name (shield, ENABLE_ORIGINAL_TONE, embedded_judge)
      * @returns {Object} { available: boolean, reason?: string }
      */
     async validateFeature(userId, feature) {
@@ -1390,7 +1390,7 @@ class TierValidationService {
         const featureRequirements = {
             'shield': ['starter', 'pro', 'plus'],
             'custom_tones': ['pro', 'plus'],
-            'original_tone': ['pro', 'plus'],
+            'ENABLE_ORIGINAL_TONE': ['pro', 'plus'],
             'embedded_judge': ['plus'],
             'analytics': ['pro', 'plus'],
             'api_access': ['plus'],

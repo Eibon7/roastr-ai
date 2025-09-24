@@ -69,7 +69,7 @@ function validateTierLimit(action, options = {}) {
 
 /**
  * Middleware to validate feature access
- * @param {string} feature - Feature name (shield, original_tone, embedded_judge)
+ * @param {string} feature - Feature name (shield, ENABLE_ORIGINAL_TONE, embedded_judge)
  */
 function validateFeatureAccess(feature) {
     return async (req, res, next) => {
@@ -142,7 +142,7 @@ const tierMiddleware = {
     /**
      * Validate Original Tone feature access (Pro+)
      */
-    requireOriginalTone: () => validateFeatureAccess('original_tone'),
+    requireOriginalTone: () => validateFeatureAccess('ENABLE_ORIGINAL_TONE'),
 
     /**
      * Validate Embedded Judge feature access (Plus only)

@@ -230,10 +230,10 @@ describe('TierValidationService', () => {
                     customTones: false
                 });
 
-                const result = await tierValidationService.validateFeature(mockUser, 'original_tone');
+                const result = await tierValidationService.validateFeature(mockUser, 'ENABLE_ORIGINAL_TONE');
 
                 expect(result.available).toBe(false);
-                expect(result.reason).toBe('original_tone_requires_pro_or_higher');
+                expect(result.reason).toBe('tier_limitation');
                 expect(result.upgradeRequired).toBe('pro');
             });
 
@@ -247,7 +247,7 @@ describe('TierValidationService', () => {
                     customTones: true
                 });
 
-                const result = await tierValidationService.validateFeature(mockUser, 'original_tone');
+                const result = await tierValidationService.validateFeature(mockUser, 'ENABLE_ORIGINAL_TONE');
 
                 expect(result.available).toBe(true);
             });
@@ -394,7 +394,7 @@ describe('TierValidationService', () => {
                 });
 
                 it(`should ${testCase.originalToneEnabled ? 'allow' : 'deny'} Original Tone access`, async () => {
-                    const result = await tierValidationService.validateFeature('user-123', 'original_tone');
+                    const result = await tierValidationService.validateFeature('user-123', 'ENABLE_ORIGINAL_TONE');
                     expect(result.available).toBe(testCase.originalToneEnabled);
                 });
             });

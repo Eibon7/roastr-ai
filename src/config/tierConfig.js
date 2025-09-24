@@ -102,7 +102,7 @@ const SUPPORTED_PLATFORMS = [
 const FEATURE_MAPPINGS = {
     'shield': 'shieldEnabled',
     'custom_tones': 'customTones',
-    'original_tone': 'customTones',
+    'ENABLE_ORIGINAL_TONE': 'customTones',
     'embedded_judge': 'embeddedJudge',
     'analytics': 'analyticsEnabled',
     'api_access': 'apiAccess',
@@ -147,7 +147,7 @@ const PLAN_BENEFITS = {
 const FEATURE_REQUIREMENTS = {
     'shield': ['starter', 'pro', 'plus'],
     'custom_tones': ['pro', 'plus'],
-    'original_tone': ['pro', 'plus'],
+    'ENABLE_ORIGINAL_TONE': ['pro', 'plus'],
     'embedded_judge': ['plus'],
     'analytics': ['pro', 'plus'],
     'api_access': ['plus'],

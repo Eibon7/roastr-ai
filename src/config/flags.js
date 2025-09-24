@@ -74,8 +74,11 @@ class FeatureFlags {
       ENABLE_FACEBOOK_UI: this.parseDevelopmentFlag(process.env.ENABLE_FACEBOOK_UI, isProduction), // Default disabled - under development
       ENABLE_INSTAGRAM_UI: this.parseDevelopmentFlag(process.env.ENABLE_INSTAGRAM_UI, isProduction), // Default disabled - under development
 
-      // Shop Feature (Issue #366 CodeRabbit fix - standardized naming)
-      ENABLE_SHOP: this.parseFlag(process.env.SHOP_ENABLED), // Default disabled unless explicitly enabled
+      // Style Profile Extraction Feature (Issue #369 - SPEC 9)
+      ENABLE_ORIGINAL_TONE: this.parseFlag(process.env.ENABLE_ORIGINAL_TONE, false), // Default disabled, Pro/Plus feature
+
+      // Shop Feature (Issue #366 CodeRabbit fix - standardized naming with backward compatibility)
+      ENABLE_SHOP: this.parseFlag(process.env.ENABLE_SHOP || process.env.SHOP_ENABLED), // Default disabled unless explicitly enabled, supports both naming conventions
 
       // Roast Engine Features (SPEC 7 - Issue #363)
       ROAST_VERSIONS_MULTIPLE: this.parseFlag(process.env.ROAST_VERSIONS_MULTIPLE, true), // Default: generate 2 versions, set to false for 1 version
@@ -274,6 +277,7 @@ class FeatureFlags {
         shop: this.flags.ENABLE_SHOP ? 'enabled' : 'disabled',
         facebookUI: this.flags.ENABLE_FACEBOOK_UI ? 'enabled' : 'disabled',
         instagramUI: this.flags.ENABLE_INSTAGRAM_UI ? 'enabled' : 'disabled',
+        originalTone: this.flags.ENABLE_ORIGINAL_TONE ? 'enabled' : 'disabled',
         roastVersionsMultiple: this.flags.ROAST_VERSIONS_MULTIPLE ? 'enabled' : 'disabled',
         roastEngine: this.flags.ENABLE_ROAST_ENGINE ? 'enabled' : 'disabled',
         shieldUI: this.flags.ENABLE_SHIELD_UI ? 'enabled' : 'disabled'
