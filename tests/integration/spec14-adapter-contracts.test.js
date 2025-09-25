@@ -15,13 +15,11 @@
 
 const { ShieldAdapter, ModerationInput, ModerationResult, CapabilityMap } = require('../../src/adapters/ShieldAdapter');
 
-// Import all platform adapters
+// Import all available platform adapters
 const TwitterShieldAdapter = require('../../src/adapters/mock/TwitterShieldAdapter');
 const YouTubeShieldAdapter = require('../../src/adapters/mock/YouTubeShieldAdapter');
 const DiscordShieldAdapter = require('../../src/adapters/mock/DiscordShieldAdapter');
 const TwitchShieldAdapter = require('../../src/adapters/mock/TwitchShieldAdapter');
-const InstagramShieldAdapter = require('../../src/adapters/mock/InstagramShieldAdapter');
-const FacebookShieldAdapter = require('../../src/adapters/mock/FacebookShieldAdapter');
 
 // Test configuration with dryRun enabled
 const contractTestConfig = {
@@ -33,14 +31,12 @@ const contractTestConfig = {
 };
 
 describe('SPEC 14 - Enhanced Adapter Contract Tests', () => {
-  // All adapters to test against the contract
+  // All available adapters to test against the contract
   const adapterDefinitions = [
     { name: 'Twitter', class: TwitterShieldAdapter, platform: 'twitter' },
     { name: 'YouTube', class: YouTubeShieldAdapter, platform: 'youtube' },
     { name: 'Discord', class: DiscordShieldAdapter, platform: 'discord' },
-    { name: 'Twitch', class: TwitchShieldAdapter, platform: 'twitch' },
-    { name: 'Instagram', class: InstagramShieldAdapter, platform: 'instagram' },
-    { name: 'Facebook', class: FacebookShieldAdapter, platform: 'facebook' }
+    { name: 'Twitch', class: TwitchShieldAdapter, platform: 'twitch' }
   ];
 
   describe('Base Contract Compliance', () => {

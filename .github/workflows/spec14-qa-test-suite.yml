@@ -219,7 +219,7 @@ jobs:
         
         ENABLE_MOCK_MODE=true npm run test -- \
           --coverage \
-          --testPathPattern="spec14" \
+          --testPathPatterns="spec14" \
           --collectCoverageFrom="src/adapters/**/*.js" \
           --collectCoverageFrom="src/services/shield*.js" \
           --collectCoverageFrom="src/workers/Shield*.js" \
