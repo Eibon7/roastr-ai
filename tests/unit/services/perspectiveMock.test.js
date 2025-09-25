@@ -127,8 +127,8 @@ describe('Perspective Mock Service Tests', () => {
             await perspectiveMock.analyzeToxicity('test');
             const endTime = Date.now();
             
-            // Should resolve very quickly (under 50ms)
-            expect(endTime - startTime).toBeLessThan(50);
+            // Should resolve very quickly (under 200ms, CI-friendly)
+            expect(endTime - startTime).toBeLessThan(200);
         });
 
         it('should handle concurrent calls', async () => {

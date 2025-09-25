@@ -290,6 +290,54 @@ class AdminApiService {
     });
     return response.data;
   }
+
+  // ============================================================================
+  // BACKOFFICE SETTINGS - Issue #371: SPEC 15
+  // ============================================================================
+
+  /**
+   * Get global Shield thresholds
+   */
+  async getGlobalThresholds() {
+    const response = await apiClient.get('/admin/backoffice/thresholds');
+    return response.data;
+  }
+
+  /**
+   * Update global Shield thresholds
+   */
+  async updateGlobalThresholds(thresholds) {
+    const response = await apiClient.put('/admin/backoffice/thresholds', thresholds);
+    return response.data;
+  }
+
+  /**
+   * Run platform API healthcheck
+   */
+  async runHealthcheck(platforms = []) {
+    const response = await apiClient.post('/admin/backoffice/healthcheck', { platforms });
+    return response.data;
+  }
+
+  /**
+   * Get latest healthcheck status
+   */
+  async getHealthcheckStatus() {
+    const response = await apiClient.get('/admin/backoffice/healthcheck/status');
+    return response.data;
+  }
+
+  /**
+   * Export audit logs as CSV or JSON
+   */
+  async exportBackofficeAuditLogs(options = {}) {
+    const { format = 'csv', days = 30, ...filters } = options;
+    const response = await apiClient.get('/admin/backoffice/audit/export', {
+      params: { format, days, ...filters },
+      responseType: format === 'csv' ? 'blob' : 'json'
+    });
+    return response;
+  }
 }
 
 // Export singleton instance
