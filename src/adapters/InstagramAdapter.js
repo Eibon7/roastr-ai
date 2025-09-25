@@ -1,5 +1,6 @@
 const logger = require('../utils/logger');
 const instagramService = require('../integrations/instagram/instagramService');
+const { sanitizeForLogging } = require('../utils/parameterSanitizer');
 
 /**
  * Instagram Shield Adapter
@@ -39,12 +40,12 @@ class InstagramAdapter {
    */
   async hideComment({ commentId, mediaId, organizationId }) {
     try {
-      logger.info('Hiding Instagram comment', { 
+      logger.info('Hiding Instagram comment', sanitizeForLogging({ 
         commentId, 
         mediaId, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       // Instagram Basic Display API doesn't support hiding comments
       // This would require Instagram Business API with proper permissions
@@ -53,6 +54,11 @@ class InstagramAdapter {
         mediaId,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Instagram service returned invalid response');
+      }
 
       logger.info('Instagram comment hidden successfully', { 
         commentId, 
@@ -97,12 +103,12 @@ class InstagramAdapter {
    */
   async reportUser({ userId, reason, organizationId }) {
     try {
-      logger.info('Reporting Instagram user', { 
+      logger.info('Reporting Instagram user', sanitizeForLogging({ 
         userId, 
         reason, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       // Instagram API doesn't provide programmatic user reporting
       // This would typically redirect to Instagram's reporting interface
@@ -111,6 +117,11 @@ class InstagramAdapter {
         reason,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Instagram service returned invalid response');
+      }
 
       logger.info('Instagram user reported successfully', { 
         userId, 
@@ -157,13 +168,13 @@ class InstagramAdapter {
    */
   async reportContent({ contentId, contentType, reason, organizationId }) {
     try {
-      logger.info('Reporting Instagram content', { 
+      logger.info('Reporting Instagram content', sanitizeForLogging({ 
         contentId, 
         contentType,
         reason, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       // Instagram API doesn't provide programmatic content reporting
       // This would typically redirect to Instagram's reporting interface
@@ -173,6 +184,11 @@ class InstagramAdapter {
         reason,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Instagram service returned invalid response');
+      }
 
       logger.info('Instagram content reported successfully', { 
         contentId, 
@@ -220,11 +236,11 @@ class InstagramAdapter {
    */
   async executeAction(action, params) {
     try {
-      logger.info('Executing Instagram Shield action', { 
+      logger.info('Executing Instagram Shield action', sanitizeForLogging({ 
         action, 
         params,
         platform: this.platform 
-      });
+      }));
 
       if (!this.capabilities.includes(action)) {
         throw new Error(`Action '${action}' not supported by ${this.platform} adapter`);
@@ -242,12 +258,12 @@ class InstagramAdapter {
       }
 
     } catch (error) {
-      logger.error('Failed to execute Instagram Shield action', { 
+      logger.error('Failed to execute Instagram Shield action', sanitizeForLogging({ 
         action, 
         params,
         error: error.message,
         stack: error.stack
-      });
+      }));
 
       return {
         success: false,

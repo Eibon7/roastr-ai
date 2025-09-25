@@ -1,5 +1,6 @@
 const logger = require('../utils/logger');
 const facebookService = require('../integrations/facebook/facebookService');
+const { sanitizeForLogging } = require('../utils/parameterSanitizer');
 
 /**
  * Facebook Shield Adapter
@@ -42,18 +43,23 @@ class FacebookAdapter {
    */
   async hideComment({ commentId, postId, organizationId }) {
     try {
-      logger.info('Hiding Facebook comment', { 
+      logger.info('Hiding Facebook comment', sanitizeForLogging({ 
         commentId, 
         postId, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       const result = await facebookService.hideComment({
         commentId,
         postId,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Facebook service returned invalid response');
+      }
 
       logger.info('Facebook comment hidden successfully', { 
         commentId, 
@@ -98,18 +104,23 @@ class FacebookAdapter {
    */
   async deleteComment({ commentId, postId, organizationId }) {
     try {
-      logger.info('Deleting Facebook comment', { 
+      logger.info('Deleting Facebook comment', sanitizeForLogging({ 
         commentId, 
         postId, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       const result = await facebookService.deleteComment({
         commentId,
         postId,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Facebook service returned invalid response');
+      }
 
       logger.info('Facebook comment deleted successfully', { 
         commentId, 
@@ -154,18 +165,23 @@ class FacebookAdapter {
    */
   async reportUser({ userId, reason, organizationId }) {
     try {
-      logger.info('Reporting Facebook user', { 
+      logger.info('Reporting Facebook user', sanitizeForLogging({ 
         userId, 
         reason, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       const result = await facebookService.reportUser({
         userId,
         reason,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Facebook service returned invalid response');
+      }
 
       logger.info('Facebook user reported successfully', { 
         userId, 
@@ -210,16 +226,21 @@ class FacebookAdapter {
    */
   async blockUser({ userId, organizationId }) {
     try {
-      logger.info('Blocking Facebook user', { 
+      logger.info('Blocking Facebook user', sanitizeForLogging({ 
         userId, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       const result = await facebookService.blockUser({
         userId,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Facebook service returned invalid response');
+      }
 
       logger.info('Facebook user blocked successfully', { 
         userId, 
@@ -260,16 +281,21 @@ class FacebookAdapter {
    */
   async unblockUser({ userId, organizationId }) {
     try {
-      logger.info('Unblocking Facebook user', { 
+      logger.info('Unblocking Facebook user', sanitizeForLogging({ 
         userId, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       const result = await facebookService.unblockUser({
         userId,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Facebook service returned invalid response');
+      }
 
       logger.info('Facebook user unblocked successfully', { 
         userId, 
@@ -312,13 +338,13 @@ class FacebookAdapter {
    */
   async reportContent({ contentId, contentType, reason, organizationId }) {
     try {
-      logger.info('Reporting Facebook content', { 
+      logger.info('Reporting Facebook content', sanitizeForLogging({ 
         contentId, 
         contentType,
         reason, 
         organizationId,
         platform: this.platform 
-      });
+      }));
 
       const result = await facebookService.reportContent({
         contentId,
@@ -326,6 +352,11 @@ class FacebookAdapter {
         reason,
         organizationId
       });
+
+      // Validate service response
+      if (!result || result.error) {
+        throw new Error(result?.error || 'Facebook service returned invalid response');
+      }
 
       logger.info('Facebook content reported successfully', { 
         contentId, 
@@ -373,11 +404,11 @@ class FacebookAdapter {
    */
   async executeAction(action, params) {
     try {
-      logger.info('Executing Facebook Shield action', { 
+      logger.info('Executing Facebook Shield action', sanitizeForLogging({ 
         action, 
         params,
         platform: this.platform 
-      });
+      }));
 
       if (!this.capabilities.includes(action)) {
         throw new Error(`Action '${action}' not supported by ${this.platform} adapter`);
@@ -401,12 +432,12 @@ class FacebookAdapter {
       }
 
     } catch (error) {
-      logger.error('Failed to execute Facebook Shield action', { 
+      logger.error('Failed to execute Facebook Shield action', sanitizeForLogging({ 
         action, 
         params,
         error: error.message,
         stack: error.stack
-      });
+      }));
 
       return {
         success: false,

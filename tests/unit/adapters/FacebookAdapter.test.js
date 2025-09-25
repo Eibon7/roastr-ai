@@ -3,7 +3,14 @@ const facebookService = require('../../../src/integrations/facebook/facebookServ
 const logger = require('../../../src/utils/logger');
 
 // Mock dependencies
-jest.mock('../../../src/integrations/facebook/facebookService');
+jest.mock('../../../src/integrations/facebook/facebookService', () => ({
+  hideComment: jest.fn(),
+  deleteComment: jest.fn(),
+  reportUser: jest.fn(),
+  blockUser: jest.fn(),
+  unblockUser: jest.fn(),
+  reportContent: jest.fn()
+}));
 jest.mock('../../../src/utils/logger');
 
 describe('FacebookAdapter', () => {
@@ -11,8 +18,8 @@ describe('FacebookAdapter', () => {
   const mockConfig = { apiVersion: 'v18.0' };
 
   beforeEach(() => {
-    adapter = new FacebookAdapter(mockConfig);
     jest.clearAllMocks();
+    adapter = new FacebookAdapter(mockConfig);
   });
 
   describe('Constructor', () => {

@@ -3,7 +3,11 @@ const instagramService = require('../../../src/integrations/instagram/instagramS
 const logger = require('../../../src/utils/logger');
 
 // Mock dependencies
-jest.mock('../../../src/integrations/instagram/instagramService');
+jest.mock('../../../src/integrations/instagram/instagramService', () => ({
+  hideComment: jest.fn(),
+  reportUser: jest.fn(),
+  reportContent: jest.fn()
+}));
 jest.mock('../../../src/utils/logger');
 
 describe('InstagramAdapter', () => {
@@ -11,8 +15,8 @@ describe('InstagramAdapter', () => {
   const mockConfig = { apiVersion: 'v1.0' };
 
   beforeEach(() => {
-    adapter = new InstagramAdapter(mockConfig);
     jest.clearAllMocks();
+    adapter = new InstagramAdapter(mockConfig);
   });
 
   describe('Constructor', () => {
