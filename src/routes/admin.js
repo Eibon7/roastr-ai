@@ -1827,4 +1827,140 @@ router.get('/users/:userId/activity', async (req, res) => {
     }
 });
 
+/**
+ * PUT /api/admin/backoffice/thresholds
+ * Update global Shield thresholds for backoffice configuration
+ * SPEC 15 - Backoffice MVP
+ */
+router.put('/backoffice/thresholds', async (req, res) => {
+    try {
+        const { tau_roast_lower, tau_shield, tau_critical, aggressiveness } = req.body;
+
+        // Validate tau_roast_lower
+        if (typeof tau_roast_lower !== 'number' || tau_roast_lower < 0 || tau_roast_lower > 1) {
+            return res.status(400).json({
+                success: false,
+                error: 'tau_roast_lower must be a number between 0 and 1',
+            });
+        }
+
+        // Validate tau_shield
+        if (typeof tau_shield !== 'number' || tau_shield < 0 || tau_shield > 1) {
+            return res.status(400).json({
+                success: false,
+                error: 'tau_shield must be a number between 0 and 1',
+            });
+        }
+
+        // Validate tau_critical
+        if (typeof tau_critical !== 'number' || tau_critical < 0 || tau_critical > 1) {
+            return res.status(400).json({
+                success: false,
+                error: 'tau_critical must be a number between 0 and 1',
+            });
+        }
+
+        // Validate aggressiveness
+        const validAggressiveness = [90, 95, 98, 100];
+        if (!validAggressiveness.includes(aggressiveness)) {
+            return res.status(400).json({
+                success: false,
+                error: 'aggressiveness must be one of: 90, 95, 98, 100',
+            });
+        }
+
+        // Validate threshold hierarchy: tau_roast_lower < tau_shield < tau_critical
+        if (tau_roast_lower >= tau_shield) {
+            return res.status(400).json({
+                success: false,
+                error: 'tau_roast_lower must be less than tau_shield',
+            });
+        }
+
+        if (tau_shield >= tau_critical) {
+            return res.status(400).json({
+                success: false,
+                error: 'tau_shield must be less than tau_critical',
+            });
+        }
+
+        // Update global shield settings in database
+        const { data: updatedSettings, error: updateError } = await supabaseServiceClient
+            .from('global_shield_settings')
+            .update({
+                tau_roast_lower,
+                tau_shield,
+                tau_critical,
+                aggressiveness,
+                updated_at: new Date().toISOString(),
+                updated_by: req.user.id
+            })
+            .eq('id', 1) // Assuming single global configuration row
+            .select()
+            .single();
+
+        if (updateError) {
+            // If row doesn't exist, insert new one
+            if (updateError.code === 'PGRST116') {
+                const { data: insertedSettings, error: insertError } = await supabaseServiceClient
+                    .from('global_shield_settings')
+                    .insert({
+                        id: 1,
+                        tau_roast_lower,
+                        tau_shield,
+                        tau_critical,
+                        aggressiveness,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        updated_by: req.user.id
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    throw new Error(`Error inserting global shield settings: ${insertError.message}`);
+                }
+
+                logger.info('Global shield thresholds created by admin', {
+                    tau_roast_lower,
+                    tau_shield,
+                    tau_critical,
+                    aggressiveness,
+                    createdBy: req.user.email
+                });
+
+                return res.json({
+                    success: true,
+                    message: 'Thresholds created successfully',
+                    data: insertedSettings
+                });
+            } else {
+                throw new Error(`Error updating global shield settings: ${updateError.message}`);
+            }
+        }
+
+        logger.info('Global shield thresholds updated by admin', {
+            tau_roast_lower,
+            tau_shield,
+            tau_critical,
+            aggressiveness,
+            updatedBy: req.user.email
+        });
+
+        res.json({
+            success: true,
+            message: 'Thresholds updated successfully',
+            data: updatedSettings
+        });
+
+    } catch (error) {
+        logger.error('Update backoffice thresholds endpoint error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update thresholds',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;
