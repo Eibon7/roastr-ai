@@ -169,7 +169,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
 
     test('should allow higher monthly limits for starter plan', async () => {
       const comment = fixtures.comments.intermediate;
-      const starterPlanLimit = 200; // Assume 200/month for starter
+      const starterPlanLimit = 500; // Updated to match current starter plan limits
 
       // Simulate user already at 150 roasts
       await request(app)
@@ -421,7 +421,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
       await request(app)
         .patch('/api/user/usage')
         .set('Authorization', `Bearer ${starterAuthToken}`)
-        .send({ roasts_this_month: 160 }) // 80% of 200
+        .send({ roasts_this_month: 400 }) // 80% of 500
         .expect(200);
 
       const warningResponse = await request(app)
