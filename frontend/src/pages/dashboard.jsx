@@ -266,8 +266,12 @@ export default function Dashboard() {
     return accounts?.filter(account => account.platform === platform) || [];
   };
 
-  const isPlatformAtLimit = (platform) => {
-    return getConnectedAccountsForPlatform(platform).length >= 2;
+  // Global connection limits per plan (Issue #401)
+  const isAtGlobalLimit = () => {
+    const planTier = (adminModeUser?.plan || usage?.plan || 'free').toLowerCase();
+    const totalConnected = accounts?.length || 0;
+    const maxConnections = planTier === 'free' ? 1 : 2;
+    return totalConnected >= maxConnections;
   };
 
   const getStatusIcon = (status) => {
@@ -950,7 +954,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {availablePlatforms.map((platform) => {
               const IconComponent = getPlatformIcon(platform);
-              const isAtLimit = isPlatformAtLimit(platform);
+              const isAtLimit = isAtGlobalLimit();
               const isConnecting = connectingPlatform === platform;
               
               return (
@@ -960,7 +964,7 @@ export default function Dashboard() {
                   className="flex items-center space-x-2 h-auto p-4"
                   disabled={isAtLimit || isConnecting}
                   onClick={() => handleConnectPlatform(platform)}
-                  title={isAtLimit ? "Límite alcanzado (máximo 2 cuentas por plataforma)" : ""}
+                  title={isAtLimit ? `Límite alcanzado (plan ${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase()} permite ${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '1' : '2'} conexión${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '' : 'es'} total${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '' : 'es'})` : ""}
                 >
                   <IconComponent className="h-5 w-5" />
                   <div className="text-left">
@@ -973,7 +977,7 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        {getConnectedAccountsForPlatform(platform).length}/2 conectadas
+                        {accounts?.length || 0}/{(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '1' : '2'} conexiones
                       </div>
                     )}
                   </div>
