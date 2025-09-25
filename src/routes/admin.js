@@ -7,6 +7,7 @@ const authService = require('../services/authService');
 const CostControlService = require('../services/costControl');
 const revenueRoutes = require('./revenue');
 const featureFlagsRoutes = require('./admin/featureFlags');
+const backofficeSettingsRoutes = require('./admin/backofficeSettings');
 const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
@@ -24,6 +25,9 @@ router.use('/revenue', revenueRoutes);
 
 // Feature flags and kill switch routes (admin only)
 router.use('/', featureFlagsRoutes);
+
+// Backoffice settings routes (admin only) - Issue #371: SPEC 15
+router.use('/backoffice', backofficeSettingsRoutes);
 
 // CSRF token endpoint removed - middleware not available
 

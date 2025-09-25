@@ -11,6 +11,9 @@ logs/
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
+roastr-bot/.env
+roastr-bot/.env.*
+!roastr-bot/.env.example
 
 # Build and cache
 dist/
