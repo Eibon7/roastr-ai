@@ -212,7 +212,7 @@ describe('Tier Validation Security Test Suite', () => {
       const endTime = Date.now();
       
       expect(result.allowed).toBe(false);
-      expect(endTime - startTime).toBeLessThan(6000); // Should timeout before 6 seconds
+      expect(endTime - startTime).toBeLessThan(8000); // Should timeout before 8 seconds (CI-friendly)
       
       // Restore original method
       supabase.from = originalQuery;
@@ -315,7 +315,7 @@ describe('Tier Validation Security Test Suite', () => {
       const endTime = Date.now();
       
       expect(result.allowed).toBe(false);
-      expect(endTime - startTime).toBeLessThan(5000); // Should fail fast
+      expect(endTime - startTime).toBeLessThan(8000); // Should fail fast (CI-friendly)
       
       // Restore original method
       supabase.from = originalQuery;

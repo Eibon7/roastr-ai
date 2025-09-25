@@ -105,17 +105,19 @@ class TestValidator {
     }
 
     // Check for development performance thresholds that may be too tight for CI
+    // Only flag performance-related assertions, not business logic limits
     const performanceChecks = [
-      { pattern: /\.toBeLessThan\((\d+)\)/, unit: 'ms' },
+      { pattern: /(time|Time|duration|Duration|ms|millisecond|performance).*\.toBeLessThan\((\d+)\)/g, unit: 'ms' },
       { pattern: /expect.*\.toBeSpeedyGonzales/g, unit: 'perf' },
-      { pattern: /responseTime.*<.*(\d+)/g, unit: 'ms' }
+      { pattern: /responseTime.*<.*(\d+)/g, unit: 'ms' },
+      { pattern: /\.toBeLessThan\((\d+)\).*\/\/.*[Tt]ime|ms|performance|speed|fast/g, unit: 'ms' }
     ];
 
     performanceChecks.forEach(check => {
-      const matches = content.match(check.pattern);
-      if (matches) {
+      const matches = Array.from(content.matchAll(check.pattern));
+      if (matches.length > 0) {
         matches.forEach(match => {
-          const numberMatch = match.match(/(\d+)/);
+          const numberMatch = match[0].match(/(\d+)/);
           if (numberMatch) {
             const threshold = parseInt(numberMatch[1]);
             if (threshold < 100 && check.unit === 'ms') {
