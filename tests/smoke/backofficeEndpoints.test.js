@@ -586,6 +586,5 @@ describe('Backoffice Endpoints Smoke Tests', () => {
         expect(response.status).not.toBe(403);
       }
     }, 20000);
->>>>>>> faf03733f5c6042dcb1f3768d650be8ee86c5080
   });
 });
