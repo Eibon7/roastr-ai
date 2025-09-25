@@ -52,14 +52,23 @@ jest.mock('../../src/config/supabase', () => ({
   }
 }));
 
-jest.mock('../../src/middleware/isAdmin', () => ({
-  isAdminMiddleware: jest.fn((req, res, next) => {
+jest.mock('../../src/middleware/auth', () => ({
+  requireAdmin: jest.fn((req, res, next) => {
     req.user = { 
       id: 'admin-test-123', 
       email: 'admin@test.roastr.ai', 
       is_admin: true,
       name: 'Test Admin'
     };
+    req.accessToken = 'mock-admin-token';
+    next();
+  }),
+  authenticateToken: jest.fn((req, res, next) => {
+    req.user = { 
+      id: 'admin-test-123', 
+      email: 'admin@test.roastr.ai'
+    };
+    req.accessToken = 'mock-admin-token';
     next();
   })
 }));
