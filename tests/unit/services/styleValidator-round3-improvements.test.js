@@ -48,6 +48,11 @@ describe('StyleValidator - Round 3 Improvements', () => {
       const text = 'Hello World';
       const result = validator.validate(text, 'twitter');
       
+      // Verify all metadata properties exist before testing values
+      expect(result.metadata).toHaveProperty('byteLengthUtf8');
+      expect(result.metadata).toHaveProperty('textLength');
+      expect(result.metadata).toHaveProperty('codeUnitLength');
+      
       expect(result.metadata.byteLengthUtf8).toBe(11); // ASCII: 1 byte per character
       expect(result.metadata.textLength).toBe(11);
       expect(result.metadata.codeUnitLength).toBe(11);

@@ -245,6 +245,13 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
       const finalMemory = process.memoryUsage();
       const memoryIncrease = finalMemory.heapUsed - initialMemory.heapUsed;
       
+      // Track memory metrics for analysis
+      performanceMetrics.memoryUsage.push({
+        initial: initialMemory.heapUsed,
+        final: finalMemory.heapUsed,
+        increase: memoryIncrease
+      });
+      
       // Memory increase should be reasonable (less than 50MB for this test)
       expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
     });

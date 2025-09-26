@@ -33,7 +33,7 @@ const ENV_PRESETS = {
     SUPABASE_SERVICE_KEY: 'test-service-key',
     SUPABASE_ANON_KEY: 'test-anon-key',
     OPENAI_API_KEY: 'sk-test-openai-key',
-    STRIPE_SECRET_KEY: 'sk_test_stripe',
+    STRIPE_SECRET_KEY: process.env.TEST_STRIPE_SECRET_KEY || 'sk_test_stripe',
     PERSPECTIVE_API_KEY: 'test-perspective-key'
   },
   
@@ -58,8 +58,8 @@ const ENV_PRESETS = {
     SUPABASE_SERVICE_KEY: 'mock-service-key',
     SUPABASE_ANON_KEY: 'mock-anon-key',
     OPENAI_API_KEY: 'mock-openai-key-sk-test123456789',
-    STRIPE_SECRET_KEY: 'sk_test_mock',
-    STRIPE_WEBHOOK_SECRET: 'whsec_mock',
+    STRIPE_SECRET_KEY: process.env.TEST_STRIPE_SECRET_KEY || 'sk_test_mock',
+    STRIPE_WEBHOOK_SECRET: process.env.TEST_STRIPE_WEBHOOK_SECRET || 'whsec_mock',
     PERSPECTIVE_API_KEY: 'mock-perspective-key'
   }
 };
@@ -142,8 +142,8 @@ const mockApiConfigs = {
   },
   
   stripe: {
-    STRIPE_SECRET_KEY: 'sk_test_mock123456789',
-    STRIPE_WEBHOOK_SECRET: 'whsec_mock123456789',
+    STRIPE_SECRET_KEY: process.env.TEST_STRIPE_SECRET_KEY || 'sk_test_mock123456789',
+    STRIPE_WEBHOOK_SECRET: process.env.TEST_STRIPE_WEBHOOK_SECRET || 'whsec_mock123456789',
     STRIPE_SUCCESS_URL: 'http://localhost:3000/success',
     STRIPE_CANCEL_URL: 'http://localhost:3000/cancel'
   }
