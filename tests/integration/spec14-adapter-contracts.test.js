@@ -357,7 +357,7 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
         let adapter;
 
         beforeEach(() => {
-          adapter = new AdapterClass());
+          adapter = new AdapterClass();
         });
 
         it('should handle null parameters gracefully', async () => {
@@ -413,8 +413,8 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
   describe('Platform Matrix Validation', () => {
     it('capabilities match documented platform matrix', () => {
       const officialMatrix = {
-        instagram: { hideComment: true, reportUser: true, blockUser: true, unblockUser: false },
-        facebook: { hideComment: true, reportUser: true, blockUser: false, unblockUser: false }
+        instagram: { hideComment: true, reportUser: true, reportContent: true },
+        facebook: { hideComment: true, reportUser: true, reportContent: true, blockUser: true, unblockUser: true, deleteComment: true }
       };
 
       standardAdapters.forEach(({ class: AdapterClass, platform }) => {

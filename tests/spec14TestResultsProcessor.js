@@ -114,7 +114,7 @@ function processResults(results) {
           test.fullName.toLowerCase().includes(req.toLowerCase())
         )
       ),
-      failed_tests: categoryTests
+      failed_test_details: categoryTests
         .filter(t => t.status === 'failed')
         .map(t => ({
           title: t.title,

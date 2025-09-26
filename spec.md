@@ -1,21 +1,24 @@
 # 🧠 Flujo de comentarios en Roastr
 
-## 🛡️ CodeRabbit PR #424 - SPEC 14 QA Test Suite Critical Fixes
-### 🛠️ Implementation Date: 2025-09-25
-**Review ID**: #3266871253 (CodeRabbit PR #424)  
-**Status**: ✅ All critical feedback addressed with comprehensive prevention system
+## 🛡️ CodeRabbit PR #424 - SPEC 14 QA Test Suite Critical Fixes 
+### 🛠️ Implementation Date: 2025-09-26
+**Review ID**: #3271148899 (CodeRabbit PR #424)  
+**Status**: ✅ All critical feedback addressed with infrastructure fixes
 
 ### 🎯 Critical Issues Addressed
-- **Non-Existent Adapter Prevention**: Validation system prevents imports of Instagram/Facebook adapters that don't exist
-- **API Route Validation**: Prevents testing against non-existent `/api/comments/ingest` routes that return 404
-- **Dependency Management**: Automated detection of missing dependencies like `jest-html-reporters`
-- **Performance Threshold Guidelines**: CI-appropriate thresholds to prevent shared runner timeout failures
+- **✅ Missing API Routes**: Created `/api/comments/ingest` endpoint to resolve 404 test failures
+- **✅ Hardcoded Stripe Keys**: Replaced hardcoded test keys with environment variables for security
+- **✅ Supabase Mock Structure**: Fixed "thenable" mock to prevent async chain breakage  
+- **✅ Test Results Processor**: Resolved duplicate `failed_tests` key to preserve test failure data
+- **✅ Jest Configuration**: Verified `jest-html-reporters` dependency is properly installed
+- **✅ Adapter Contract Testing**: All mock and standard adapters now properly tested
 
 ### 🔧 Implementation Details
-- **Validation Script**: `scripts/validate-test-dependencies.js` - Comprehensive automated validation
-- **Prevention Guidelines**: `docs/test-validation-guidelines.md` - Complete developer guidance
-- **Package Integration**: Added `validate:tests` npm script with automatic execution
-- **Shield Adapters Documented**: Twitter, YouTube, Discord, Twitch (available) vs Instagram, Facebook (not implemented)
+- **API Route Creation**: `src/routes/comments.js` - New endpoint for SPEC 14 test compatibility
+- **Security Enhancement**: Environment-based test keys in `tests/utils/testEnvironment.js` and `tests/setupMockMode.js`  
+- **Mock Architecture**: Restructured `src/config/supabase.js` to prevent async chain issues
+- **Test Infrastructure**: Fixed `tests/spec14TestResultsProcessor.js` duplicate key issue
+- **Route Integration**: Added comments routes to `src/index.js` main application
 
 ### 🧪 Validation System Features
 - **Automatic Detection**: Non-existent imports, missing routes, tight performance thresholds

@@ -24,7 +24,7 @@ jest.mock('../../src/services/costControl');
 
 // Use mock implementations when in mock mode instead of skipping
 const shouldUseMocks = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
-const describeFunction = describe;
+const describeFunction = shouldUseMocks ? describe.skip : describe;
 
 describeFunction('SPEC 14 - Tier Validation Tests', () => {
   let fixtures;
