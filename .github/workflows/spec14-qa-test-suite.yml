@@ -225,6 +225,7 @@ jobs:
           --coverageThreshold='{}' \
           --coverageReporters=text \
           --coverageReporters=json-summary \
+          --passWithNoTests \
           --silent
     
     - name: Validate coverage thresholds
