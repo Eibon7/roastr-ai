@@ -27,7 +27,7 @@ module.exports = {
     '!src/**/test-*.js'
   ],
   coverageDirectory: 'coverage/testing-mvp',
-  coverageReporters: ['text', 'html', 'json-summary'],
+  coverageReporters: ['text', 'html', 'json', 'json-summary'],
   coverageThreshold: {
     global: {
       branches: 70,
@@ -71,18 +71,48 @@ module.exports = {
   projects: [
     {
       displayName: 'unit',
+      testEnvironment: 'node',
       testMatch: ['**/tests/unit/**/*.test.js'],
-      testTimeout: 10000
+      testTimeout: 10000,
+      setupFilesAfterEnv: ['<rootDir>/tests/helpers/test-setup.js'],
+      setupFiles: ['<rootDir>/tests/helpers/env-setup.js'],
+      collectCoverageFrom: [
+        'src/**/*.js',
+        '!src/public/**',
+        '!src/**/*.test.js',
+        '!src/**/test-*.js'
+      ],
+      coverageDirectory: 'coverage/testing-mvp/unit'
     },
     {
       displayName: 'integration', 
+      testEnvironment: 'node',
       testMatch: ['**/tests/integration/**/*.test.js'],
-      testTimeout: 45000
+      testTimeout: 45000,
+      setupFilesAfterEnv: ['<rootDir>/tests/helpers/test-setup.js'],
+      setupFiles: ['<rootDir>/tests/helpers/env-setup.js'],
+      collectCoverageFrom: [
+        'src/**/*.js',
+        '!src/public/**',
+        '!src/**/*.test.js',
+        '!src/**/test-*.js'
+      ],
+      coverageDirectory: 'coverage/testing-mvp/integration'
     },
     {
       displayName: 'e2e',
+      testEnvironment: 'node',
       testMatch: ['**/tests/e2e/**/*.test.js'],
-      testTimeout: 60000
+      testTimeout: 60000,
+      setupFilesAfterEnv: ['<rootDir>/tests/helpers/test-setup.js'],
+      setupFiles: ['<rootDir>/tests/helpers/env-setup.js'],
+      collectCoverageFrom: [
+        'src/**/*.js',
+        '!src/public/**',
+        '!src/**/*.test.js',
+        '!src/**/test-*.js'
+      ],
+      coverageDirectory: 'coverage/testing-mvp/e2e'
     }
   ],
   

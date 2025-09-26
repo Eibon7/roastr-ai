@@ -5,6 +5,7 @@
 
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const { randomUUID } = require('crypto');
 
 // Test environment configuration
 const TEST_CONFIG = {
@@ -72,7 +73,7 @@ function createTestDbClient() {
  * Clean test database
  */
 async function cleanTestDatabase() {
-  if (!TEST_CONFIG.mock.enabled) {
+  if (process.env.ENABLE_MOCK_MODE !== 'true') {
     console.warn('Skipping database cleanup - mock mode disabled');
     return;
   }
@@ -111,40 +112,47 @@ function waitForAsync(ms = 1000) {
 
 /**
  * Generate test data helpers
+ * Uses UUID to prevent ID collisions in concurrent tests
  */
 const TestData = {
   organization: (overrides = {}) => ({
-    id: `test-org-${Date.now()}`,
+    id: `test-org-${randomUUID()}`,
     name: 'Test Organization',
     plan: 'pro',
     created_at: new Date().toISOString(),
     ...overrides
   }),
   
-  user: (orgId, overrides = {}) => ({
-    id: `test-user-${Date.now()}`,
-    email: `test-${Date.now()}@example.com`,
-    organization_id: orgId,
-    role: 'admin',
-    created_at: new Date().toISOString(),
-    ...overrides
-  }),
+  user: (orgId, overrides = {}) => {
+    const uuid = randomUUID();
+    return {
+      id: `test-user-${uuid}`,
+      email: `test-${uuid}@example.com`,
+      organization_id: orgId,
+      role: 'admin',
+      created_at: new Date().toISOString(),
+      ...overrides
+    };
+  },
   
-  comment: (orgId, overrides = {}) => ({
-    id: `test-comment-${Date.now()}`,
-    organization_id: orgId,
-    platform: 'twitter',
-    external_id: `ext-${Date.now()}`,
-    text: 'This is a test comment',
-    author_username: 'testuser',
-    toxicity_score: 0.3,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-    ...overrides
-  }),
+  comment: (orgId, overrides = {}) => {
+    const uuid = randomUUID();
+    return {
+      id: `test-comment-${uuid}`,
+      organization_id: orgId,
+      platform: 'twitter',
+      external_id: `ext-${uuid}`,
+      text: 'This is a test comment',
+      author_username: 'testuser',
+      toxicity_score: 0.3,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      ...overrides
+    };
+  },
   
   roast: (commentId, orgId, overrides = {}) => ({
-    id: `test-roast-${Date.now()}`,
+    id: `test-roast-${randomUUID()}`,
     comment_id: commentId,
     organization_id: orgId,
     text: 'This is a test roast response',

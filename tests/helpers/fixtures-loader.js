@@ -5,6 +5,34 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const { randomUUID } = require('crypto');
+
+/**
+ * Deep clone function to prevent fixture mutations between tests
+ * Handles objects, arrays, dates, and primitive values
+ */
+function deepClone(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  if (obj instanceof Date) {
+    return new Date(obj.getTime());
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepClone(item));
+  }
+  
+  const cloned = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      cloned[key] = deepClone(obj[key]);
+    }
+  }
+  
+  return cloned;
+}
 
 /**
  * Comment fixtures for different testing scenarios
@@ -180,20 +208,21 @@ const USER_FIXTURES = {
 
 /**
  * Load fixtures by category
+ * Returns deep cloned data to prevent test mutations
  */
 async function loadFixtures(category, language = 'spanish') {
   switch (category) {
     case 'comments':
-      return COMMENT_FIXTURES[language] || COMMENT_FIXTURES.spanish;
+      return deepClone(COMMENT_FIXTURES[language] || COMMENT_FIXTURES.spanish);
       
     case 'users':
-      return USER_FIXTURES;
+      return deepClone(USER_FIXTURES);
       
     case 'all':
-      return {
+      return deepClone({
         comments: COMMENT_FIXTURES,
         users: USER_FIXTURES
-      };
+      });
       
     default:
       throw new Error(`Unknown fixture category: ${category}`);
@@ -202,9 +231,10 @@ async function loadFixtures(category, language = 'spanish') {
 
 /**
  * Generate test comments from fixtures
+ * Returns cloned data to prevent mutations
  */
 function generateTestComments(orgId, language = 'spanish', count = 10) {
-  const fixtures = COMMENT_FIXTURES[language] || COMMENT_FIXTURES.spanish;
+  const fixtures = deepClone(COMMENT_FIXTURES[language] || COMMENT_FIXTURES.spanish);
   const comments = [];
   
   // Get all comment types
@@ -218,11 +248,12 @@ function generateTestComments(orgId, language = 'spanish', count = 10) {
   // Generate requested number of comments
   for (let i = 0; i < count; i++) {
     const fixture = allComments[i % allComments.length];
+    const uuid = randomUUID();
     comments.push({
-      id: `test-comment-${orgId}-${i + 1}`,
+      id: `test-comment-${uuid}`,
       organization_id: orgId,
       platform: 'twitter',
-      external_id: `ext-${Date.now()}-${i}`,
+      external_id: `ext-${uuid}`,
       text: fixture.text,
       category: fixture.category,
       toxicity_score: fixture.toxicity_score,
@@ -256,7 +287,8 @@ function createTestScenario(name, options = {}) {
   
   // Create organizations
   for (let i = 1; i <= orgCount; i++) {
-    const orgId = `test-org-${name}-${i}`;
+    const orgUuid = randomUUID();
+    const orgId = `test-org-${orgUuid}`;
     scenario.organizations.push({
       id: orgId,
       name: `Test Org ${i} for ${name}`,
@@ -271,9 +303,10 @@ function createTestScenario(name, options = {}) {
     
     // Create users for each org
     if (includeUsers) {
+      const userUuid = randomUUID();
       scenario.users.push({
-        id: `test-user-${name}-${i}`,
-        email: `admin${i}@${name}.test`,
+        id: `test-user-${userUuid}`,
+        email: `admin${userUuid}@${name}.test`,
         organization_id: orgId,
         role: 'admin',
         created_at: new Date().toISOString()
@@ -285,7 +318,7 @@ function createTestScenario(name, options = {}) {
     scenario.comments.push(...comments);
   }
   
-  return scenario;
+  return deepClone(scenario);
 }
 
 /**

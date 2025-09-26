@@ -72,7 +72,7 @@ tests/
 ├── e2e/
 │   ├── manual-flow.test.js (#404)
 │   ├── automatic-flow.test.js (#405)
-│   ├── demo-mode.test.js (#416)
+│   ├── demo-flow.test.js (#416)
 │   └── ui-resilience.test.js (#419)
 ├── integration/
 │   ├── ingestor.test.js (#406)
