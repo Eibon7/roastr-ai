@@ -104,19 +104,38 @@ jest.mock('@supabase/supabase-js', () => ({
 }));
 
 // Mock Redis/Queue service
-jest.mock('../src/services/queueService', () => ({
-  addJob: jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'queued' }),
-  getJob: jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'completed' }),
-  getJobStatus: jest.fn().mockResolvedValue('completed'),
-  removeJob: jest.fn().mockResolvedValue(true),
-  getQueueStatus: jest.fn().mockResolvedValue({
+jest.mock('../src/services/queueService', () => {
+  class MockQueueService {
+    constructor() {}
+    
+    addJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'queued' })
+    getJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'completed' })
+    getJobStatus = jest.fn().mockResolvedValue('completed')
+    removeJob = jest.fn().mockResolvedValue(true)
+    getQueueStatus = jest.fn().mockResolvedValue({
+      waiting: 0,
+      active: 0,
+      completed: 1,
+      failed: 0
+    })
+    isHealthy = jest.fn().mockResolvedValue(true)
+  }
+  
+  // Also export static methods for backward compatibility
+  MockQueueService.addJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'queued' });
+  MockQueueService.getJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'completed' });
+  MockQueueService.getJobStatus = jest.fn().mockResolvedValue('completed');
+  MockQueueService.removeJob = jest.fn().mockResolvedValue(true);
+  MockQueueService.getQueueStatus = jest.fn().mockResolvedValue({
     waiting: 0,
     active: 0,
     completed: 1,
     failed: 0
-  }),
-  isHealthy: jest.fn().mockResolvedValue(true)
-}));
+  });
+  MockQueueService.isHealthy = jest.fn().mockResolvedValue(true);
+  
+  return MockQueueService;
+});
 
 // Mock Twitter API
 jest.mock('twitter-api-v2', () => ({

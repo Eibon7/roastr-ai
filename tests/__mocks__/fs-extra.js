@@ -37,6 +37,8 @@ const mockFsExtra = {
   
   ensureFile: jest.fn().mockResolvedValue(undefined),
   
+  ensureDir: jest.fn().mockResolvedValue(undefined),
+  
   pathExists: jest.fn().mockImplementation(async (path) => {
     return mockFileSystem.has(path);
   }),

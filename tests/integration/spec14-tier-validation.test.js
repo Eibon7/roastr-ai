@@ -16,7 +16,7 @@
  */
 
 const request = require('supertest');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const { createSyntheticFixtures } = require('../helpers/syntheticFixtures');
 
 // Mock billing services to prevent real charges
@@ -57,7 +57,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     process.env.ENABLE_BILLING = 'true';
   });
 
-  describe('Free Plan Limits', () => {
+  describeFunction('Free Plan Limits', () => {
     const freeUser = testUsers?.free;
     const freeAuthToken = fixtures?.auth?.freeUserToken;
 
@@ -163,7 +163,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Starter Plan Features', () => {
+  describeFunction('Starter Plan Features', () => {
     const starterUser = testUsers?.starter;
     const starterAuthToken = 'test.starter.token'; // Mock token
 
@@ -230,7 +230,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Pro Plan Features', () => {
+  describeFunction('Pro Plan Features', () => {
     const proUser = testUsers?.pro;
     const proAuthToken = fixtures?.auth?.proUserToken;
 
@@ -308,7 +308,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Plus Plan Features', () => {
+  describeFunction('Plus Plan Features', () => {
     const plusUser = testUsers?.plus;
     const plusAuthToken = fixtures?.auth?.plusUserToken;
 
@@ -355,7 +355,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Plan Transition Testing', () => {
+  describeFunction('Plan Transition Testing', () => {
     test('should handle plan upgrades correctly', async () => {
       const freeAuthToken = fixtures.auth.freeUserToken;
 
@@ -413,7 +413,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Usage Warnings and Limits', () => {
+  describeFunction('Usage Warnings and Limits', () => {
     test('should warn users approaching plan limits', async () => {
       const starterAuthToken = 'test.starter.token';
 
@@ -472,7 +472,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Plan-Specific Pricing', () => {
+  describeFunction('Plan-Specific Pricing', () => {
     test('should return correct pricing for each plan', async () => {
       const pricingResponse = await request(app)
         .get('/api/billing/pricing')
@@ -535,7 +535,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Feature Flag Integration', () => {
+  describeFunction('Feature Flag Integration', () => {
     test('should respect feature flags for plan-specific features', async () => {
       // Test with feature flags disabled
       process.env.ENABLE_ADVANCED_ANALYTICS = 'false';
@@ -564,7 +564,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Billing Integration', () => {
+  describeFunction('Billing Integration', () => {
     test('should integrate properly with Stripe billing system', async () => {
       const freeAuthToken = fixtures.auth.freeUserToken;
 
@@ -619,7 +619,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Edge Cases and Error Handling', () => {
+  describeFunction('Edge Cases and Error Handling', () => {
     test('should handle invalid plan transitions gracefully', async () => {
       const proAuthToken = fixtures.auth.proUserToken;
 
@@ -654,7 +654,7 @@ describeFunction('SPEC 14 - Tier Validation Tests', () => {
     });
   });
 
-  describe('Usage Reset and Billing Cycles', () => {
+  describeFunction('Usage Reset and Billing Cycles', () => {
     test('should reset usage counters at beginning of billing cycle', async () => {
       const proAuthToken = fixtures.auth.proUserToken;
 
