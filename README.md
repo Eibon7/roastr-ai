@@ -289,3 +289,4 @@ Ver comandos disponibles con detalles completos en [CLAUDE.md](./CLAUDE.md).
 ## Contribución
 
 Para desarrolladores, ver la documentación técnica completa y changelog en [CHANGELOG.md](./CHANGELOG.md).
+# Documentation updated viernes, 26 de septiembre de 2025, 18:44:18 CEST
