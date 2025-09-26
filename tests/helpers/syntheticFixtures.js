@@ -56,18 +56,18 @@ function generateSyntheticCommentText(category) {
       "Esperaba algo más de esta herramienta"
     ],
     intermediate: [
-      "Esto es una completa pérdida de tiempo",
+      "Esto es una completa pérdida de tiempo intermedio",
       "Qué aplicación más inútil y mal hecha",
-      "No entiendo cómo alguien puede usar esto",
+      "No entiendo cómo alguien puede usar esto intermedio",
       "Parece hecha por amateurs sin experiencia",
-      "Es lo más aburrido que he visto en años"
+      "Es lo más aburrido que he visto en años intermedio"
     ],
     critical: [
-      "Esta basura debería ser eliminada inmediatamente",
-      "Los desarrolladores son unos incompetentes totales",
-      "Deberían prohibir esta porquería de aplicación",
-      "Es la peor aplicación que existe en el universo",
-      "Quien hizo esto merece ser despedido ya mismo"
+      "Esta basura crítico debería ser eliminada inmediatamente",
+      "Los desarrolladores son unos incompetentes totales crítico",
+      "Deberían prohibir esta porquería de aplicación crítico",
+      "Es la peor aplicación crítico que existe en el universo",
+      "Quien hizo esto crítico merece ser despedido ya mismo"
     ],
     corrective: [
       "No me gusta nada de esto y no sirve",
