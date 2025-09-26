@@ -2,6 +2,7 @@ const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
 const RoastPromptTemplate = require('../services/roastPromptTemplate');
 const transparencyService = require('../services/transparencyService');
+const AutoApprovalService = require('../services/autoApprovalService');
 const { mockMode } = require('../config/mockMode');
 const { shouldBlockAutopost } = require('../middleware/killSwitch');
 const { PLATFORM_LIMITS } = require('../config/constants');
@@ -28,6 +29,7 @@ class GenerateReplyWorker extends BaseWorker {
     
     this.costControl = new CostControlService();
     this.promptTemplate = new RoastPromptTemplate();
+    this.autoApprovalService = new AutoApprovalService();
     
     // Initialize OpenAI client
     this.initializeOpenAI();
@@ -217,6 +219,45 @@ class GenerateReplyWorker extends BaseWorker {
     );
     const generationTime = Date.now() - startTime;
     
+    // Check for auto-approval mode (Issue #405)
+    const mode = job.payload.mode || 'manual'; // Default to manual mode
+    const autoApproval = job.payload.autoApproval || false;
+    
+    let autoApprovalResult = null;
+    if (mode === 'auto' && autoApproval) {
+      this.log('info', 'Processing auto-approval for generated response', {
+        comment_id,
+        organization_id,
+        mode,
+        autoApproval
+      });
+      
+      // Create variant object for auto-approval processing
+      const variant = {
+        id: `var_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        text: response.text,
+        style: integrationConfig.tone,
+        score: response.score || 0.8, // Default score if not provided
+        service: response.service,
+        tokensUsed: response.tokensUsed,
+        generationTime
+      };
+      
+      // Process auto-approval
+      autoApprovalResult = await this.autoApprovalService.processAutoApproval(
+        comment,
+        variant,
+        organization_id
+      );
+      
+      this.log('info', 'Auto-approval processing completed', {
+        comment_id,
+        organization_id,
+        approved: autoApprovalResult.approved,
+        reason: autoApprovalResult.reason || 'success'
+      });
+    }
+    
     // Store response in database
     const storedResponse = await this.storeResponse(
       comment_id,
@@ -247,20 +288,53 @@ class GenerateReplyWorker extends BaseWorker {
       1 // quantity
     );
     
-    // Queue posting job (if auto-posting is enabled)
-    if (integrationConfig.config.auto_post !== false) {
+    // Handle auto-posting based on auto-approval result
+    if (autoApprovalResult && autoApprovalResult.approved && autoApprovalResult.autoPublish) {
+      // Auto-approved content should be auto-posted
+      this.log('info', 'Queueing auto-publication for auto-approved response', {
+        comment_id,
+        organization_id,
+        responseId: storedResponse.id
+      });
+      await this.queuePostingJob(organization_id, storedResponse, platform, {
+        autoApproved: true,
+        approvalRecord: autoApprovalResult.approvalRecord
+      });
+    } else if (!autoApprovalResult && integrationConfig.config.auto_post !== false) {
+      // Standard manual flow auto-posting
       await this.queuePostingJob(organization_id, storedResponse, platform);
     }
     
-    return {
+    // Build response summary
+    const responseData = {
       success: true,
       summary: `Generated ${response.service} response: "${response.text.substring(0, 50)}..."`,
       responseId: storedResponse.id,
       responseText: response.text,
       service: response.service,
       generationTime,
-      tokensUsed: response.tokensUsed || this.estimateTokens(response.text)
+      tokensUsed: response.tokensUsed || this.estimateTokens(response.text),
+      mode
     };
+    
+    // Add auto-approval specific data for auto mode
+    if (mode === 'auto' && autoApprovalResult) {
+      responseData.autoApproval = {
+        approved: autoApprovalResult.approved,
+        reason: autoApprovalResult.reason,
+        autoPublish: autoApprovalResult.autoPublish,
+        variant: autoApprovalResult.variant,
+        securityResults: autoApprovalResult.securityResults
+      };
+      
+      // For auto mode, return the variant info instead of standard response
+      if (autoApprovalResult.approved) {
+        responseData.variant = autoApprovalResult.variant;
+        responseData.summary = `Auto-approved ${response.service} response: "${autoApprovalResult.variant.text.substring(0, 50)}..."`;
+      }
+    }
+    
+    return responseData;
   }
   
   /**
