@@ -81,13 +81,34 @@ async function cleanTestDatabase() {
   const client = createTestDbClient();
   
   try {
-    // Clean test data in reverse dependency order
+    // Clean test data in reverse dependency order to prevent foreign key violations
+    // Child tables first, then parent tables
     const tables = [
+      // Leaf tables (no dependencies on them)
+      'queue_jobs',
+      'usage_logs',
+      'shield_actions',
+      'roast_generations',
+      'user_sessions',
+      
+      // Tables dependent on comments
+      'toxicity_analysis',
       'roasts',
+      
+      // Comments table (depends on organizations and users)
       'comments',
+      
+      // Organization-dependent tables
+      'organization_users',
+      'organization_usage',
+      'api_keys',
       'social_accounts',
-      'organizations',
-      'users'
+      
+      // Users table (referenced by many other tables)
+      'users',
+      
+      // Organizations table (root parent table)
+      'organizations'
     ];
     
     for (const table of tables) {

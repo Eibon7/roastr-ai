@@ -82,7 +82,28 @@ module.exports = {
         '!src/**/*.test.js',
         '!src/**/test-*.js'
       ],
-      coverageDirectory: 'coverage/testing-mvp/unit'
+      coverageDirectory: 'coverage/testing-mvp/unit',
+      coverageReporters: ['text', 'html', 'json', 'json-summary'],
+      coverageThreshold: {
+        global: {
+          branches: 70,
+          functions: 75,
+          lines: 80,
+          statements: 80
+        },
+        'src/services/': {
+          branches: 80,
+          functions: 85,
+          lines: 90,
+          statements: 90
+        },
+        'src/workers/': {
+          branches: 75,
+          functions: 80,
+          lines: 85,
+          statements: 85
+        }
+      }
     },
     {
       displayName: 'integration', 
@@ -97,7 +118,28 @@ module.exports = {
         '!src/**/*.test.js',
         '!src/**/test-*.js'
       ],
-      coverageDirectory: 'coverage/testing-mvp/integration'
+      coverageDirectory: 'coverage/testing-mvp/integration',
+      coverageReporters: ['text', 'html', 'json', 'json-summary'],
+      coverageThreshold: {
+        global: {
+          branches: 70,
+          functions: 75,
+          lines: 80,
+          statements: 80
+        },
+        'src/services/': {
+          branches: 80,
+          functions: 85,
+          lines: 90,
+          statements: 90
+        },
+        'src/workers/': {
+          branches: 75,
+          functions: 80,
+          lines: 85,
+          statements: 85
+        }
+      }
     },
     {
       displayName: 'e2e',
@@ -112,7 +154,28 @@ module.exports = {
         '!src/**/*.test.js',
         '!src/**/test-*.js'
       ],
-      coverageDirectory: 'coverage/testing-mvp/e2e'
+      coverageDirectory: 'coverage/testing-mvp/e2e',
+      coverageReporters: ['text', 'html', 'json', 'json-summary'],
+      coverageThreshold: {
+        global: {
+          branches: 70,
+          functions: 75,
+          lines: 80,
+          statements: 80
+        },
+        'src/services/': {
+          branches: 80,
+          functions: 85,
+          lines: 90,
+          statements: 90
+        },
+        'src/workers/': {
+          branches: 75,
+          functions: 80,
+          lines: 85,
+          statements: 85
+        }
+      }
     }
   ],
   
