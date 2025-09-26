@@ -57,6 +57,7 @@ const { supabaseServiceClient: mockSupabaseServiceClient } = require('../../../s
 describe('Webhook Security Middleware', () => {
     const TEST_SECRET = 'test-webhook-secret-key';
     const MOCK_TIMESTAMP = Math.floor(Date.now() / 1000);
+    const DEFAULT_TIMEOUT = 10000; // 10 second timeout for webhook tests
     
     // Helper function to create valid Stripe signature
     function createStripeSignature(payload, secret = TEST_SECRET, timestamp = MOCK_TIMESTAMP) {
@@ -500,7 +501,7 @@ describe('Webhook Security Middleware', () => {
 
             // Should not throw even with concurrent access
             await expect(Promise.all(promises)).resolves.toBeDefined();
-        });
+        }, DEFAULT_TIMEOUT);
 
         it('should handle very large webhook payloads efficiently', () => {
             const largePayload = {

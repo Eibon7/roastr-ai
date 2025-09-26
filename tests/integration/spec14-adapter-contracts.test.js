@@ -1,21 +1,179 @@
+/**
+ * SPEC 14 - Enhanced Contract Tests for Shield Adapters
+ * 
+ * Comprehensive contract validation ensuring all adapters implement
+ * the exact same interface with consistent behavior across platforms.
+ * 
+ * Tests verify:
+ * - Method signatures (hideComment, reportUser, blockUser, unblockUser, capabilities)
+ * - Return value structures
+ * - Error handling consistency
+ * - Platform capabilities matrices
+ * - Rate limiting behavior
+ * - Idempotency guarantees
+ */
+
+// Import platform adapters - both mock and real adapters
 const InstagramAdapter = require('../../src/adapters/InstagramAdapter');
 const FacebookAdapter = require('../../src/adapters/FacebookAdapter');
 
-/**
- * SPEC 14 - QA Test Suite Integral
- * Contract Tests for Shield Adapters
- * 
- * These tests ensure all adapters implement the same interface
- * and follow consistent patterns for Shield moderation actions.
- */
-describe('SPEC 14 - Shield Adapter Contracts', () => {
-  const adapters = [
-    { name: 'InstagramAdapter', class: InstagramAdapter, platform: 'instagram' },
-    { name: 'FacebookAdapter', class: FacebookAdapter, platform: 'facebook' }
-  ];
+// Mock Shield adapters (when available)
+let mockAdapters = [];
+let ShieldAdapter, ModerationInput, ModerationResult, CapabilityMap;
+try {
+  ({ ShieldAdapter, ModerationInput, ModerationResult, CapabilityMap } = require('../../src/adapters/ShieldAdapter'));
+  const TwitterShieldAdapter = require('../../src/adapters/mock/TwitterShieldAdapter');
+  const YouTubeShieldAdapter = require('../../src/adapters/mock/YouTubeShieldAdapter');
+  const DiscordShieldAdapter = require('../../src/adapters/mock/DiscordShieldAdapter');
+  const TwitchShieldAdapter = require('../../src/adapters/mock/TwitchShieldAdapter');
 
-  describe('Interface Contract', () => {
-    adapters.forEach(({ name, class: AdapterClass, platform }) => {
+  mockAdapters = [
+    { name: 'Twitter', class: TwitterShieldAdapter, platform: 'twitter', type: 'mock' },
+    { name: 'YouTube', class: YouTubeShieldAdapter, platform: 'youtube', type: 'mock' },
+    { name: 'Discord', class: DiscordShieldAdapter, platform: 'discord', type: 'mock' },
+    { name: 'Twitch', class: TwitchShieldAdapter, platform: 'twitch', type: 'mock' }
+  ];
+} catch (e) {
+  // Mock adapters not available
+}
+
+// Standard adapters
+const standardAdapters = [
+  { name: 'InstagramAdapter', class: InstagramAdapter, platform: 'instagram', type: 'standard' },
+  { name: 'FacebookAdapter', class: FacebookAdapter, platform: 'facebook', type: 'standard' }
+];
+
+// Combine all available adapters
+const allAdapters = [...mockAdapters, ...standardAdapters];
+
+describe('SPEC 14 - Shield Adapter Contracts', () => {
+  // Test configuration for mock adapters
+  const contractTestConfig = {
+    skipValidation: true,
+    dryRun: true,
+    mockLatency: { min: 1, max: 5 },
+    failureRate: 0,
+    maxRetries: 2
+  };
+
+  // Test mock adapters (if available)
+  if (mockAdapters.length > 0) {
+    describe('Mock Shield Adapter Contracts', () => {
+      let mockAdapterInstances;
+
+      beforeAll(async () => {
+        mockAdapterInstances = [];
+        for (const { class: AdapterClass, platform } of mockAdapters) {
+          const adapter = new AdapterClass(contractTestConfig);
+          await adapter.initialize();
+          mockAdapterInstances.push({ adapter, platform });
+        }
+      });
+
+      test('all mock adapters extend ShieldAdapter base class', async () => {
+        for (const { adapter, platform } of mockAdapterInstances) {
+          expect(adapter).toBeInstanceOf(ShieldAdapter);
+          expect(adapter.getPlatform()).toBe(platform);
+        }
+      });
+
+      test('all mock adapters implement required methods with correct signatures', () => {
+        const requiredMethods = [
+          { name: 'hideComment', params: 1, async: true },
+          { name: 'reportUser', params: 1, async: true },
+          { name: 'blockUser', params: 1, async: true },
+          { name: 'unblockUser', params: 1, async: true },
+          { name: 'capabilities', params: 0, async: false },
+          { name: 'initialize', params: 0, async: true },
+          { name: 'isReady', params: 0, async: false },
+          { name: 'getPlatform', params: 0, async: false }
+        ];
+
+        mockAdapterInstances.forEach(({ adapter }) => {
+          requiredMethods.forEach(({ name: methodName, params, async }) => {
+            expect(typeof adapter[methodName]).toBe('function');
+            expect(adapter[methodName].length).toBe(params);
+            
+            if (async) {
+              expect(adapter[methodName].constructor.name).toBe('AsyncFunction');
+            }
+          });
+        });
+      });
+
+      test('mock adapter capabilities match platform matrix', () => {
+        const officialMatrix = {
+          twitter: { hideComment: true, reportUser: false, blockUser: true, unblockUser: true },
+          youtube: { hideComment: true, reportUser: false, blockUser: false, unblockUser: false },
+          discord: { hideComment: true, reportUser: false, blockUser: true, unblockUser: true },
+          twitch: { hideComment: false, reportUser: false, blockUser: true, unblockUser: true }
+        };
+
+        mockAdapterInstances.forEach(({ adapter, platform }) => {
+          const capabilities = adapter.capabilities();
+          const expected = officialMatrix[platform];
+          
+          if (expected) {
+            Object.entries(expected).forEach(([capability, expectedValue]) => {
+              expect(capabilities[capability]).toBe(expectedValue);
+            });
+          }
+        });
+      });
+
+      // Test method contracts for mock adapters
+      ['hideComment', 'reportUser', 'blockUser', 'unblockUser'].forEach(methodName => {
+        describe(`${methodName} contract`, () => {
+          test('accepts valid ModerationInput and returns ModerationResult', async () => {
+            const validInput = new ModerationInput({
+              platform: 'test',
+              commentId: 'test_comment_123',
+              userId: 'test_user_456',
+              username: 'testuser',
+              reason: 'Contract test validation',
+              orgId: 'test_org_789',
+              metadata: { test: true }
+            });
+
+            for (const { adapter, platform } of mockAdapterInstances) {
+              validInput.platform = platform;
+              
+              const result = await adapter[methodName](validInput);
+              
+              expect(result).toBeInstanceOf(ModerationResult);
+              expect(typeof result.success).toBe('boolean');
+              expect(typeof result.action).toBe('string');
+              expect(typeof result.executionTime).toBe('number');
+              expect(result.timestamp).toBeDefined();
+              expect(result.details).toBeDefined();
+              expect(result.details.platform).toBe(platform);
+            }
+          });
+
+          test('rejects invalid input consistently', async () => {
+            const invalidInputs = [
+              null,
+              undefined,
+              {},
+              { platform: 'test' },
+              new ModerationInput({ platform: 'test' }),
+              'invalid_string'
+            ];
+
+            for (const { adapter } of mockAdapterInstances) {
+              for (const invalidInput of invalidInputs) {
+                await expect(adapter[methodName](invalidInput)).rejects.toThrow();
+              }
+            }
+          });
+        });
+      });
+    });
+  }
+
+  // Test standard adapters
+  describe('Standard Adapter Interface Contract', () => {
+    standardAdapters.forEach(({ name, class: AdapterClass, platform }) => {
       describe(`${name}`, () => {
         let adapter;
 
@@ -48,12 +206,10 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
         it('should check action support correctly', () => {
           const capabilities = adapter.getCapabilities();
           
-          // Test supported actions
           capabilities.forEach(capability => {
             expect(adapter.supportsAction(capability)).toBe(true);
           });
 
-          // Test unsupported action
           expect(adapter.supportsAction('nonExistentAction')).toBe(false);
         });
 
@@ -77,29 +233,32 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
 
   describe('Capability Standards', () => {
     const commonCapabilities = ['hideComment', 'reportUser', 'reportContent'];
-    const extendedCapabilities = ['blockUser', 'unblockUser', 'deleteComment'];
 
     it('should have consistent capability naming', () => {
-      adapters.forEach(({ name, class: AdapterClass }) => {
-        const adapter = new AdapterClass();
-        const capabilities = adapter.getCapabilities();
+      allAdapters.forEach(({ name, class: AdapterClass, type }) => {
+        const adapter = new AdapterClass(type === 'mock' ? contractTestConfig : undefined);
+        const capabilities = type === 'mock' ? adapter.capabilities() : adapter.getCapabilities();
         
-        capabilities.forEach(capability => {
-          // Capability names should be camelCase (allows digits)
-          expect(capability).toMatch(/^[a-z][a-zA-Z0-9]*$/);
-          
-          // Should not contain spaces or special characters
-          expect(capability).not.toMatch(/[\s-_]/);
-        });
+        if (Array.isArray(capabilities)) {
+          capabilities.forEach(capability => {
+            expect(capability).toMatch(/^[a-z][a-zA-Z0-9]*$/);
+            expect(capability).not.toMatch(/[\s-_]/);
+          });
+        } else {
+          // Mock adapters return CapabilityMap objects
+          const capabilityKeys = ['hideComment', 'reportUser', 'blockUser', 'unblockUser'];
+          capabilityKeys.forEach(key => {
+            expect(capabilities[key] !== undefined).toBe(true);
+          });
+        }
       });
     });
 
     it('should support basic moderation capabilities', () => {
-      adapters.forEach(({ name, class: AdapterClass }) => {
+      standardAdapters.forEach(({ name, class: AdapterClass }) => {
         const adapter = new AdapterClass();
         const capabilities = adapter.getCapabilities();
         
-        // All adapters should support at least some common capabilities
         const hasCommonCapability = commonCapabilities.some(cap => 
           capabilities.includes(cap)
         );
@@ -132,7 +291,7 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
   });
 
   describe('Action Execution Contract', () => {
-    adapters.forEach(({ name, class: AdapterClass, platform }) => {
+    standardAdapters.forEach(({ name, class: AdapterClass, platform }) => {
       describe(`${name} executeAction`, () => {
         let adapter;
 
@@ -141,8 +300,6 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
         });
 
         it('should return consistent result structure for supported actions', async () => {
-          // This test verifies the structure is consistent without making actual API calls
-          // We'll test with an unsupported action to ensure error structure is consistent
           const result = await adapter.executeAction('unsupportedTestAction', { test: 'params' });
           
           expect(typeof result).toBe('object');
@@ -167,7 +324,7 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
   });
 
   describe('Constructor Contract', () => {
-    adapters.forEach(({ name, class: AdapterClass, platform }) => {
+    standardAdapters.forEach(({ name, class: AdapterClass, platform }) => {
       describe(`${name} constructor`, () => {
         it('should accept config parameter', () => {
           const config = { apiVersion: '1.0', testMode: true };
@@ -195,7 +352,7 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
   });
 
   describe('Error Handling Contract', () => {
-    adapters.forEach(({ name, class: AdapterClass, platform }) => {
+    standardAdapters.forEach(({ name, class: AdapterClass, platform }) => {
       describe(`${name} error handling`, () => {
         let adapter;
 
@@ -231,27 +388,47 @@ describe('SPEC 14 - Shield Adapter Contracts', () => {
 
   describe('Integration Requirements', () => {
     it('should have consistent import structure', () => {
-      // Test that all adapters can be imported correctly
       expect(InstagramAdapter).toBeDefined();
       expect(FacebookAdapter).toBeDefined();
 
-      // Test that they are constructable
       expect(() => new InstagramAdapter()).not.toThrow();
       expect(() => new FacebookAdapter()).not.toThrow();
     });
 
     it('should be ready for Shield service integration', () => {
-      const adapters = [
+      const testAdapters = [
         new InstagramAdapter(),
         new FacebookAdapter()
       ];
 
-      adapters.forEach(adapter => {
-        // Each adapter should be ready for Shield service integration
+      testAdapters.forEach(adapter => {
         expect(typeof adapter.executeAction).toBe('function');
         expect(typeof adapter.getCapabilities).toBe('function');
         expect(typeof adapter.supportsAction).toBe('function');
         expect(adapter.platform).toBeTruthy();
+      });
+    });
+  });
+
+  describe('Platform Matrix Validation', () => {
+    it('capabilities match documented platform matrix', () => {
+      const officialMatrix = {
+        instagram: { hideComment: true, reportUser: true, reportContent: true },
+        facebook: { hideComment: true, reportUser: true, reportContent: true, blockUser: true, unblockUser: true, deleteComment: true }
+      };
+
+      standardAdapters.forEach(({ class: AdapterClass, platform }) => {
+        const adapter = new AdapterClass();
+        const capabilities = adapter.getCapabilities();
+        const expectedCapabilities = officialMatrix[platform];
+        
+        if (expectedCapabilities) {
+          Object.entries(expectedCapabilities).forEach(([capability, expected]) => {
+            if (expected) {
+              expect(capabilities).toContain(capability);
+            }
+          });
+        }
       });
     });
   });
