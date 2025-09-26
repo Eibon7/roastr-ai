@@ -102,7 +102,14 @@
     "ci:test:workers": "cross-env ENABLE_MOCK_MODE=true jest --testPathPatterns=\"(^|/)workers(/|$)\" --ci --runInBand",
     "ci:test:billing": "cross-env ENABLE_MOCK_MODE=true jest --testPathPatterns=\"(^|/)billing(/|$)\" --ci --runInBand",
     "coverage:generate": "cross-env ENABLE_MOCK_MODE=true jest --coverage --silent",
-    "coverage:check": "cross-env ENABLE_MOCK_MODE=true jest --coverage --passWithNoTests"
+    "coverage:check": "cross-env ENABLE_MOCK_MODE=true jest --coverage --passWithNoTests",
+    "test:mvp": "jest --config=jest.testing-mvp.config.js",
+    "test:mvp:e2e": "jest --config=jest.testing-mvp.config.js --selectProjects e2e",
+    "test:mvp:integration": "jest --config=jest.testing-mvp.config.js --selectProjects integration", 
+    "test:mvp:unit": "jest --config=jest.testing-mvp.config.js --selectProjects unit",
+    "test:mvp:coverage": "jest --config=jest.testing-mvp.config.js --coverage",
+    "test:mvp:watch": "jest --config=jest.testing-mvp.config.js --watch",
+    "test:mvp:ci": "jest --config=jest.testing-mvp.config.js --ci --runInBand --coverage"
   },
   "repository": {
     "type": "git",

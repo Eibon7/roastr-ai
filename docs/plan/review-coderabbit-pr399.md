@@ -102,7 +102,7 @@
 
 ## Archivos Afectados
 
-```
+```text
 src/index.js                                    - CRÍTICO
 tests/unit/routes/connection-limits-issue366.test.js - MENOR
 CHANGELOG_ISSUE_366.md                          - MENOR  

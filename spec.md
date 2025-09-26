@@ -1,5 +1,120 @@
 # 🧠 Flujo de comentarios en Roastr
 
+## 🔧 CodeRabbit PR #426 - Testing MVP Infrastructure Improvements
+### 🛠️ Implementation Date: 2025-01-27
+**Review ID**: #3269664077 (CodeRabbit PR #426)  
+**Status**: ✅ All critical testing infrastructure issues resolved
+
+### 🎯 Critical Infrastructure Fixes
+- **Jest Configuration**: Fixed projects array dropping shared setup files and coverage rules
+- **Coverage Reporters**: Added JSON reporter for Codecov artifact generation
+- **Fixtures Deep Cloning**: Implemented deep cloning to prevent test mutations between executions
+- **Dynamic Mock Flags**: Updated database cleanup to use live environment flags
+- **UUID Generation**: Replaced Date.now() with randomUUID() to prevent ID collisions
+
+### 🔧 Implementation Details
+- **Jest Config**: Added complete setup files and coverage config to each project entry
+- **Deep Clone Function**: Comprehensive object cloning for arrays, dates, and nested objects
+- **Test Factories**: UUID-based ID generation for organizations, users, comments, and roasts
+- **Documentation**: Updated file references for consistency (demo-mode.test.js → demo-flow.test.js)
+
+### 🧪 Testing Infrastructure Enhancements
+- **Mutation Prevention**: All fixture loaders return deep cloned data
+- **Concurrent Safety**: UUID-based IDs prevent collisions in parallel test execution
+- **Live Configuration**: Dynamic mock mode checking from environment variables
+- **Coverage Reporting**: JSON format enabled for CI/CD integration
+
+### ✅ Files Modified
+- `jest.testing-mvp.config.js` - Fixed projects config and added JSON reporter
+- `tests/helpers/fixtures-loader.js` - Implemented deep cloning and UUID generation
+- `tests/helpers/test-setup.js` - Dynamic flags and UUID-based test data factories
+- `docs/plan/issue-403.md` - Updated documentation references
+
+### 📊 Validation Tests Added
+- `tests/unit/helpers/fixtures-loader.test.js` - Deep cloning validation
+- `tests/unit/helpers/test-setup.test.js` - UUID generation validation
+- All tests passing with proper coverage report generation
+
+**Result**: Testing MVP infrastructure now reliable, mutation-free, and CI-ready with proper coverage reporting.
+
+## 🔧 CodeRabbit PR #426 - Round 2 Infrastructure Enhancements
+### 🛠️ Implementation Date: 2025-09-26
+**Review ID**: #3273172985 (CodeRabbit PR #426 Round 2)  
+**Status**: ✅ All critical infrastructure issues resolved with enhanced pipeline testing
+
+### 🎯 Critical Infrastructure Improvements
+- **Database Cleanup Order**: Fixed foreign key constraint violations by reordering table deletions
+- **Jest Configuration Enhancement**: Added coverage thresholds and reporters to each project entry
+- **Pipeline Reality Testing**: Enhanced demo flow E2E test to use actual workers instead of mocked expectations
+- **UUID Migration**: Replaced Date.now() with randomUUID() for true uniqueness in test traceability
+
+### 🔧 Implementation Details
+- **Database Cleanup**: Reordered 16 tables in dependency order (child tables first, then parent tables)
+- **Jest Projects Config**: Added complete coverage configuration to unit, integration, and e2e projects
+- **Real Worker Integration**: Demo flow test now invokes actual FetchCommentsWorker, AnalyzeToxicityWorker, GenerateReplyWorker
+- **Queue System Testing**: Added real QueueService integration for publication phase validation
+
+### 🧪 Enhanced Testing Infrastructure
+- **Foreign Key Safety**: Database cleanup now respects foreign key constraints without violations
+- **Coverage Isolation**: Each project (unit/integration/e2e) has independent coverage thresholds and reporting
+- **Pipeline Validation**: E2E tests exercise real worker classes and queue processing logic
+- **Traceability Improvement**: UUID-based tracking prevents ID collisions in concurrent test execution
+
+### ✅ Files Modified
+- `tests/helpers/test-setup.js` - Fixed table deletion order for foreign key compliance
+- `jest.testing-mvp.config.js` - Enhanced project configurations with complete coverage settings
+- `tests/e2e/demo-flow.test.js` - Replaced hardcoded expectations with real worker invocations
+- `tests/unit/helpers/database-cleanup.test.js` - New validation test for database cleanup order
+- `tests/unit/config/jest-config-validation.test.js` - New validation test for Jest configuration
+
+### 📊 Pipeline Testing Enhancements
+- **Real Worker Invocation**: Tests instantiate and call actual FetchCommentsWorker, AnalyzeToxicityWorker, GenerateReplyWorker
+- **Queue Integration**: Publication phase uses real QueueService for job creation
+- **Error Resilience**: Tests gracefully handle worker dependencies while validating structure in mock mode
+- **End-to-End Flow**: Complete pipeline validation from ingest through publication
+
+**Result**: Testing infrastructure now provides realistic pipeline validation with proper foreign key handling and comprehensive coverage reporting.
+
+## 🔧 CodeRabbit PR #426 - Round 3 Dynamic Environment Fixes
+### 🛠️ Implementation Date: 2025-09-26
+**Review ID**: #3273870936 (CodeRabbit PR #426 Round 3)  
+**Status**: ✅ All dynamic environment flag and documentation issues resolved
+
+### 🎯 Critical Environment Flag Fixes
+- **Dynamic Mock Mode Detection**: Converted static `TEST_CONFIG.mock.enabled` to dynamic getter
+- **Real-time Environment Checking**: Database cleanup now respects live environment variable changes
+- **Markdown Linting Compliance**: Added language hints to all code blocks in documentation
+- **UUID Implementation Consistency**: Verified and enhanced UUID generation across test utilities
+
+### 🔧 Implementation Details
+- **Dynamic Getter**: `TEST_CONFIG.mock.enabled` now uses getter function for real-time environment checking
+- **Environment Variable Flexibility**: Mock mode detection changes immediately when `ENABLE_MOCK_MODE` is modified
+- **Documentation Standards**: All markdown code blocks now include proper language specifications (javascript, bash, yaml, text)
+- **Test Helper Consistency**: Updated `generateTestId()` in testUtils.js to use `randomUUID()` instead of `Date.now()`
+
+### 🧪 Dynamic Testing Enhancements
+- **Live Configuration**: Mock mode can be toggled during test execution for dynamic testing scenarios
+- **Environment Validation**: Added comprehensive tests for dynamic environment flag behavior
+- **Documentation Quality**: Resolved all markdown linter warnings with proper language hints
+- **UUID Migration**: Complete migration from timestamp-based to UUID-based ID generation
+
+### ✅ Files Modified
+- `tests/helpers/test-setup.js` - Converted static mock config to dynamic getter
+- `tests/helpers/testUtils.js` - Updated generateTestId() to use UUID
+- `docs/plan/issue-403.md` - Added language hint to file structure code block
+- `docs/plan/review-coderabbit-pr399.md` - Added language hint to affected files list
+- `tests/unit/helpers/dynamic-environment-flag.test.js` - New validation test for dynamic behavior
+
+### 📊 Environment Flag Testing
+- **Real-time Detection**: Tests validate that environment changes are reflected immediately
+- **Getter Validation**: Verified that `enabled` property uses getter function instead of static value
+- **Module Load Prevention**: Ensured environment variables are not captured at module load time
+- **Backward Compatibility**: All existing tests continue to work with dynamic configuration
+
+**Result**: Testing infrastructure now supports dynamic environment configuration with real-time flag detection and complete documentation compliance.
+
+---
+
 ## 🛡️ CodeRabbit PR #424 - SPEC 14 QA Test Suite Critical Fixes 
 ### 🛠️ Implementation Date: 2025-09-26
 **Review ID**: #3271148899 (CodeRabbit PR #424)  
