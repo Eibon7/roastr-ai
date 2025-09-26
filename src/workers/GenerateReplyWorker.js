@@ -232,12 +232,13 @@ class GenerateReplyWorker extends BaseWorker {
         autoApproval
       });
       
-      // Create variant object for auto-approval processing
+      // SECURITY FIX: Enhanced variant scoring for auto-approval
+      // Create variant object for auto-approval processing with proper toxicity handling
       const variant = {
         id: `var_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         text: response.text,
         style: integrationConfig.tone,
-        score: response.score || 0.8, // Default score if not provided
+        score: this.normalizeToxicityScore(response.score, toxicity_score), // Enhanced score handling
         service: response.service,
         tokensUsed: response.tokensUsed,
         generationTime
@@ -290,15 +291,33 @@ class GenerateReplyWorker extends BaseWorker {
     
     // Handle auto-posting based on auto-approval result
     if (autoApprovalResult && autoApprovalResult.approved && autoApprovalResult.autoPublish) {
-      // Auto-approved content should be auto-posted
+      // SECURITY FIX: Ensure published content matches approved variant exactly
+      // Auto-approved content should be auto-posted, but we must validate transparency consistency
       this.log('info', 'Queueing auto-publication for auto-approved response', {
         comment_id,
         organization_id,
-        responseId: storedResponse.id
+        responseId: storedResponse.id,
+        transparencyApplied: autoApprovalResult.variant ? 
+          autoApprovalResult.variant.text !== response.text : false
       });
+      
+      // Validate that stored response matches the approved variant text
+      const approvedText = autoApprovalResult.variant?.text || response.text;
+      if (storedResponse.response_text !== approvedText) {
+        this.log('error', 'CRITICAL: Auto-publication blocked - content mismatch', {
+          comment_id,
+          organization_id,
+          storedText: storedResponse.response_text,
+          approvedText: approvedText,
+          responseId: storedResponse.id
+        });
+        throw new Error('Content mismatch between stored response and approved variant');
+      }
+      
       await this.queuePostingJob(organization_id, storedResponse, platform, {
         autoApproved: true,
-        approvalRecord: autoApprovalResult.approvalRecord
+        approvalRecord: autoApprovalResult.approvalRecord,
+        contentValidated: true
       });
     } else if (!autoApprovalResult && integrationConfig.config.auto_post !== false) {
       // Standard manual flow auto-posting
@@ -1030,6 +1049,89 @@ class GenerateReplyWorker extends BaseWorker {
     // More accurate estimation for OpenAI models
     // ~4 characters per token for English, ~6 for other languages
     return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * SECURITY FIX: Normalize toxicity score for auto-approval processing
+   * @param {any} responseScore - Score from AI response generation
+   * @param {any} originalScore - Original comment toxicity score
+   * @returns {number} Normalized score between 0-1, with fallback logic
+   */
+  normalizeToxicityScore(responseScore, originalScore) {
+    try {
+      // First try to use the response score if valid
+      let score = this.parseScore(responseScore);
+      
+      // If response score is invalid, use original comment score as baseline
+      if (score === null) {
+        score = this.parseScore(originalScore);
+      }
+      
+      // If both are invalid, use conservative fallback
+      if (score === null) {
+        this.log('warn', 'No valid toxicity scores available, using conservative fallback', {
+          responseScore,
+          originalScore
+        });
+        return 0.8; // Conservative score for auto-approval consideration
+      }
+      
+      // For auto-approval, be slightly more conservative than original
+      // If it's a roast response, it might be slightly more "toxic" by design
+      const adjustedScore = Math.min(score + 0.1, 1.0);
+      
+      this.log('debug', 'Normalized toxicity score for auto-approval', {
+        responseScore,
+        originalScore,
+        finalScore: adjustedScore
+      });
+      
+      return adjustedScore;
+      
+    } catch (error) {
+      this.log('error', 'Error normalizing toxicity score, using conservative fallback', {
+        responseScore,
+        originalScore,
+        error: error.message
+      });
+      return 0.8; // Conservative fallback
+    }
+  }
+
+  /**
+   * Parse and validate a toxicity score
+   * @param {any} score - Raw score value
+   * @returns {number|null} Parsed score between 0-1, or null if invalid
+   */
+  parseScore(score) {
+    // Handle null/undefined
+    if (score === null || score === undefined) {
+      return null;
+    }
+
+    // Convert string numbers
+    if (typeof score === 'string') {
+      const parsed = parseFloat(score);
+      if (isNaN(parsed)) return null;
+      score = parsed;
+    }
+
+    // Must be a number
+    if (typeof score !== 'number' || isNaN(score)) {
+      return null;
+    }
+
+    // Handle different scales (some APIs return 0-100 instead of 0-1)
+    if (score > 1 && score <= 100) {
+      score = score / 100;
+    }
+
+    // Must be within valid range
+    if (score < 0 || score > 1) {
+      return null;
+    }
+
+    return score;
   }
 }
 

@@ -115,8 +115,11 @@ class AutoApprovalService {
       // 1. Content filtering check
       validations.contentFilter = await this.validateContent(generatedVariant.text);
 
-      // 2. Toxicity threshold check
-      validations.toxicityThreshold = generatedVariant.score <= this.config.maxToxicityScore;
+      // 2. Toxicity threshold check with proper null/undefined handling
+      validations.toxicityThreshold = this.validateToxicityScore(
+        generatedVariant.score, 
+        comment.toxicity_score
+      );
 
       // 3. Platform compliance check
       validations.platformCompliance = await this.validatePlatformCompliance(
@@ -276,6 +279,115 @@ class AutoApprovalService {
   }
 
   /**
+   * SECURITY FIX: Validate toxicity score with proper null/undefined handling
+   * @param {number|null|undefined} variantScore - Generated variant toxicity score
+   * @param {number|null|undefined} originalScore - Original comment toxicity score
+   * @returns {boolean} Whether toxicity score is acceptable for auto-approval
+   */
+  validateToxicityScore(variantScore, originalScore) {
+    try {
+      // Handle null/undefined scores properly
+      const safeVariantScore = this.normalizeToxicityScore(variantScore);
+      const safeOriginalScore = this.normalizeToxicityScore(originalScore);
+
+      logger.debug('Toxicity score validation', {
+        variantScore,
+        originalScore,
+        safeVariantScore,
+        safeOriginalScore,
+        threshold: this.config.maxToxicityScore
+      });
+
+      // CRITICAL: If we can't determine toxicity scores, fail closed
+      if (safeVariantScore === null || safeOriginalScore === null) {
+        logger.warn('Unable to determine toxicity scores - failing closed', {
+          variantScore,
+          originalScore,
+          safeVariantScore,
+          safeOriginalScore
+        });
+        return false;
+      }
+
+      // Primary check: variant must be below threshold
+      if (safeVariantScore > this.config.maxToxicityScore) {
+        logger.info('Variant toxicity score exceeds threshold', {
+          variantScore: safeVariantScore,
+          threshold: this.config.maxToxicityScore
+        });
+        return false;
+      }
+
+      // Secondary check: variant shouldn't be significantly more toxic than original
+      // Allow some increase for roast humor, but not excessive toxicity
+      const toxicityIncrease = safeVariantScore - safeOriginalScore;
+      const maxAllowedIncrease = 0.3; // Allow 30% increase for humor
+
+      if (toxicityIncrease > maxAllowedIncrease) {
+        logger.info('Variant toxicity increase too high compared to original', {
+          originalScore: safeOriginalScore,
+          variantScore: safeVariantScore,
+          increase: toxicityIncrease,
+          maxAllowed: maxAllowedIncrease
+        });
+        return false;
+      }
+
+      logger.debug('Toxicity validation passed', {
+        variantScore: safeVariantScore,
+        originalScore: safeOriginalScore,
+        increase: toxicityIncrease
+      });
+
+      return true;
+
+    } catch (error) {
+      logger.error('Error validating toxicity score - failing closed', {
+        variantScore,
+        originalScore,
+        error: error.message
+      });
+      return false; // Fail closed on any error
+    }
+  }
+
+  /**
+   * Normalize toxicity score to handle various input formats
+   * @param {any} score - Raw toxicity score
+   * @returns {number|null} Normalized score between 0-1, or null if invalid
+   */
+  normalizeToxicityScore(score) {
+    // Handle null/undefined
+    if (score === null || score === undefined) {
+      return null;
+    }
+
+    // Convert string numbers
+    if (typeof score === 'string') {
+      const parsed = parseFloat(score);
+      if (isNaN(parsed)) return null;
+      score = parsed;
+    }
+
+    // Must be a number
+    if (typeof score !== 'number' || isNaN(score)) {
+      return null;
+    }
+
+    // Handle different scales (some APIs return 0-100 instead of 0-1)
+    if (score > 1 && score <= 100) {
+      score = score / 100;
+    }
+
+    // Must be within valid range
+    if (score < 0 || score > 1) {
+      return null;
+    }
+
+    return score;
+  }
+
+  /**
    * Validate platform compliance
    * @param {string} content - Content to validate
    * @param {string} platform - Target platform
@@ -301,36 +413,93 @@ class AutoApprovalService {
    */
   async validateOrganizationPolicy(variant, organizationId) {
     try {
-      // Get organization-specific policies
-      const { data: policies } = await supabaseServiceClient
+      // SECURITY FIX: Enhanced error handling for policy validation
+      // Get organization-specific policies with explicit error handling
+      const { data: policies, error: policiesError } = await supabaseServiceClient
         .from('organization_policies')
         .select('*')
         .eq('organization_id', organizationId);
 
+      // CRITICAL: Handle query errors explicitly to prevent policy bypass
+      if (policiesError) {
+        logger.error('CRITICAL: Organization policy query failed - failing closed', {
+          organizationId,
+          variantId: variant?.id || 'unknown',
+          error: policiesError.message,
+          stack: policiesError.stack || 'No stack available'
+        });
+        return false; // FAIL CLOSED - cannot validate policies, so reject
+      }
+
+      // If no policies exist, that's a legitimate case - allow
       if (!policies || policies.length === 0) {
+        logger.debug('No organization policies found, allowing by default', {
+          organizationId,
+          variantId: variant?.id || 'unknown'
+        });
         return true; // No specific policies, allow
       }
 
-      // Check against each policy
+      logger.info('Validating against organization policies', {
+        organizationId,
+        variantId: variant?.id || 'unknown',
+        policiesCount: policies.length
+      });
+
+      // Check against each policy with enhanced validation
       for (const policy of policies) {
+        if (!policy || typeof policy !== 'object') {
+          logger.warn('Invalid policy object found, skipping', {
+            organizationId,
+            policy: policy
+          });
+          continue;
+        }
+
         if (policy.type === 'content_filter' && policy.enabled) {
           const prohibited = policy.prohibited_words || [];
-          const hasProhibited = prohibited.some(word => 
-            variant.text.toLowerCase().includes(word.toLowerCase())
-          );
-          if (hasProhibited) return false;
+          if (!Array.isArray(prohibited)) {
+            logger.warn('Invalid prohibited_words format in policy, skipping', {
+              organizationId,
+              policyId: policy.id,
+              prohibitedWordsType: typeof prohibited
+            });
+            continue;
+          }
+
+          const hasProhibited = prohibited.some(word => {
+            if (typeof word !== 'string' || !variant?.text) return false;
+            return variant.text.toLowerCase().includes(word.toLowerCase());
+          });
+          
+          if (hasProhibited) {
+            logger.info('Content blocked by organization policy', {
+              organizationId,
+              variantId: variant?.id || 'unknown',
+              policyId: policy.id,
+              policyType: policy.type
+            });
+            return false;
+          }
         }
       }
 
+      logger.info('Content passed all organization policy checks', {
+        organizationId,
+        variantId: variant?.id || 'unknown',
+        policiesChecked: policies.length
+      });
       return true;
 
     } catch (error) {
-      logger.error('Error validating organization policy', {
+      // CRITICAL: Any unexpected error should fail closed
+      logger.error('CRITICAL: Unexpected error validating organization policy - failing closed', {
         organizationId,
-        variantId: variant.id,
-        error: error.message
+        variantId: variant?.id || 'unknown',
+        error: error.message,
+        stack: error.stack || 'No stack available'
       });
-      return false; // Fail safe - reject if we can't validate
+      return false; // FAIL CLOSED - reject if we can't validate safely
     }
   }
 
@@ -345,45 +514,95 @@ class AutoApprovalService {
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-      // Count auto-approvals in the last hour
-      const { count: hourlyCount } = await supabaseServiceClient
+      // SECURITY FIX: Enhanced rate limit checking with explicit error handling
+      // Count auto-approvals in the last hour with explicit error handling
+      const { count: hourlyCount, error: hourlyError } = await supabaseServiceClient
         .from('roast_approvals')
         .select('*', { count: 'exact' })
         .eq('organization_id', organizationId)
         .eq('auto_approved', true)
         .gte('approved_at', oneHourAgo.toISOString());
 
-      // Count auto-approvals in the last day
-      const { count: dailyCount } = await supabaseServiceClient
+      // CRITICAL: If we can't check hourly limits, fail closed
+      if (hourlyError) {
+        logger.error('CRITICAL: Hourly rate limit check failed - failing closed', {
+          organizationId,
+          error: hourlyError.message,
+          stack: hourlyError.stack || 'No stack available'
+        });
+        return { 
+          allowed: false, 
+          error: 'rate_limit_check_failed',
+          reason: 'Cannot verify hourly rate limits - security measure'
+        };
+      }
+
+      // Count auto-approvals in the last day with explicit error handling
+      const { count: dailyCount, error: dailyError } = await supabaseServiceClient
         .from('roast_approvals')
         .select('*', { count: 'exact' })
         .eq('organization_id', organizationId)
         .eq('auto_approved', true)
         .gte('approved_at', oneDayAgo.toISOString());
 
-      const hourlyAllowed = (hourlyCount || 0) < this.config.maxAutoApprovalsPerHour;
-      const dailyAllowed = (dailyCount || 0) < this.config.maxAutoApprovalsPerDay;
+      // CRITICAL: If we can't check daily limits, fail closed
+      if (dailyError) {
+        logger.error('CRITICAL: Daily rate limit check failed - failing closed', {
+          organizationId,
+          error: dailyError.message,
+          stack: dailyError.stack || 'No stack available'
+        });
+        return { 
+          allowed: false, 
+          error: 'rate_limit_check_failed',
+          reason: 'Cannot verify daily rate limits - security measure'
+        };
+      }
+
+      // Validate counts are numbers (handle potential null/undefined/NaN)
+      const safeHourlyCount = typeof hourlyCount === 'number' && !isNaN(hourlyCount) ? hourlyCount : 0;
+      const safeDailyCount = typeof dailyCount === 'number' && !isNaN(dailyCount) ? dailyCount : 0;
+
+      const hourlyAllowed = safeHourlyCount < this.config.maxAutoApprovalsPerHour;
+      const dailyAllowed = safeDailyCount < this.config.maxAutoApprovalsPerDay;
+
+      logger.info('Rate limit check completed successfully', {
+        organizationId,
+        hourlyCount: safeHourlyCount,
+        dailyCount: safeDailyCount,
+        hourlyLimit: this.config.maxAutoApprovalsPerHour,
+        dailyLimit: this.config.maxAutoApprovalsPerDay,
+        hourlyAllowed,
+        dailyAllowed,
+        overallAllowed: hourlyAllowed && dailyAllowed
+      });
 
       return {
         allowed: hourlyAllowed && dailyAllowed,
         hourly: {
-          count: hourlyCount || 0,
+          count: safeHourlyCount,
           limit: this.config.maxAutoApprovalsPerHour,
           allowed: hourlyAllowed
         },
         daily: {
-          count: dailyCount || 0,
+          count: safeDailyCount,
           limit: this.config.maxAutoApprovalsPerDay,
           allowed: dailyAllowed
         }
       };
 
     } catch (error) {
-      logger.error('Error checking rate limits', {
+      // CRITICAL: Any unexpected error should fail closed
+      logger.error('CRITICAL: Unexpected error checking rate limits - failing closed', {
         organizationId,
-        error: error.message
+        error: error.message,
+        stack: error.stack || 'No stack available'
       });
-      return { allowed: false, error: error.message };
+      return { 
+        allowed: false, 
+        error: 'rate_limit_check_failed',
+        reason: 'Unexpected error during rate limit validation'
+      };
     }
   }
 
