@@ -67,7 +67,7 @@ Establecer una suite completa de testing para el MVP de Roastr AI que valide tod
 
 ## Estructura de Archivos
 
-```
+```text
 tests/
 ├── e2e/
 │   ├── manual-flow.test.js (#404)

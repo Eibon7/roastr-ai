@@ -15,7 +15,10 @@ const TEST_CONFIG = {
     anonKey: process.env.SUPABASE_ANON_KEY || 'dummy-anon-key'
   },
   mock: {
-    enabled: process.env.ENABLE_MOCK_MODE === 'true',
+    // Dynamic getter to check environment variable in real-time
+    get enabled() {
+      return process.env.ENABLE_MOCK_MODE === 'true';
+    },
     openaiApiKey: 'mock-openai-key',
     perspectiveApiKey: 'mock-perspective-key'
   },
