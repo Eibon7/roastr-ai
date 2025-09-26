@@ -21,9 +21,9 @@ jest.mock('../../src/services/perspective');
 jest.mock('../../src/services/twitter');
 jest.mock('../../src/adapters/mock/TwitterShieldAdapter');
 
-// Skip these tests in mock mode as they require full E2E integration setup
-const shouldSkipE2ETests = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
-const describeFunction = shouldSkipE2ETests ? describe.skip : describe;
+// Use mock services when in mock mode instead of skipping
+const shouldUseMocks = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
+const describeFunction = describe;
 
 describeFunction('SPEC 14 - Integral Test Suite (E2E)', () => {
   let fixtures;
