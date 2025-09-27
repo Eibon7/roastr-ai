@@ -20,8 +20,8 @@ process.env.SUPABASE_ANON_KEY = 'mock-anon-key-for-testing';
 // Mock external API keys to prevent real API calls
 process.env.OPENAI_API_KEY = 'mock-openai-key-sk-test123456789';
 process.env.PERSPECTIVE_API_KEY = 'mock-perspective-key';
-process.env.STRIPE_SECRET_KEY = 'sk_test_mock123456789';
-process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock123456789';
+process.env.STRIPE_SECRET_KEY = process.env.TEST_STRIPE_SECRET_KEY || 'sk_test_mock123456789';
+process.env.STRIPE_WEBHOOK_SECRET = process.env.TEST_STRIPE_WEBHOOK_SECRET || 'whsec_mock123456789';
 process.env.STRIPE_SUCCESS_URL = 'http://localhost:3000/success';
 process.env.STRIPE_CANCEL_URL = 'http://localhost:3000/cancel';
 process.env.STRIPE_PORTAL_RETURN_URL = 'http://localhost:3000/dashboard';

@@ -2,6 +2,8 @@
  * Utilidades compartidas para tests de Roastr.ai
  */
 
+const { randomUUID } = require('crypto');
+
 /**
  * Shared plan limits constants to ensure consistency across all test utilities
  */
@@ -132,7 +134,7 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 /**
  * Generar ID único para tests
  */
-const generateTestId = () => `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const generateTestId = () => `test_${randomUUID()}`;
 
 /**
  * Verificar estructura de respuesta de API

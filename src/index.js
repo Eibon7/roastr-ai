@@ -66,6 +66,7 @@ const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
 const roastRoutes = require('./routes/roast');
 const settingsRoutes = require('./routes/settings');
+const commentsRoutes = require('./routes/comments');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -285,6 +286,9 @@ app.use('/api/roast', roastRoutes);
 
 // Settings routes (authenticated) - Issue #362
 app.use('/api/settings', settingsRoutes);
+
+// Comments ingestion routes (for SPEC 14 testing)
+app.use('/api/comments', commentsRoutes);
 
 // Monitoring routes (authenticated) - Issue #396
 const monitoringRoutes = require('./routes/monitoring');

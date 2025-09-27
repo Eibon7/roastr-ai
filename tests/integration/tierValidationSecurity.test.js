@@ -6,6 +6,31 @@
 const { describe, test, expect, beforeEach, afterEach, beforeAll, afterAll } = require('@jest/globals');
 const CostControlService = require('../../src/services/costControl');
 
+// Mock Supabase for integration tests
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({
+    from: jest.fn().mockReturnValue({
+      insert: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: { 
+              id: 'mock-org-id',
+              name: 'Mock Organization',
+              subscription_tier: 'starter',
+              monthly_cost_limit: 100,
+              monthly_usage: 0
+            },
+            error: null
+          })
+        })
+      }),
+      delete: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({ error: null })
+      })
+    })
+  }))
+}));
+
 // Mock external dependencies
 jest.mock('../../src/utils/logger');
 
@@ -47,7 +72,6 @@ jest.mock('@supabase/supabase-js', () => ({
 
 // Skip these tests in mock mode as they require real database integration
 const shouldSkipIntegrationTests = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
-
 const describeFunction = shouldSkipIntegrationTests ? describe.skip : describe;
 
 describeFunction('Tier Validation Security Test Suite', () => {
@@ -57,10 +81,10 @@ describeFunction('Tier Validation Security Test Suite', () => {
   
   // Test data for different scenarios
   const testOrganizations = {
-    free: { id: 'mock-free-org', subscription_tier: 'free', monthly_cost_limit: 0 },
-    starter: { id: 'mock-starter-org', subscription_tier: 'starter', monthly_cost_limit: 100 },
-    pro: { id: 'mock-pro-org', subscription_tier: 'pro', monthly_cost_limit: 500 },
-    plus: { id: 'mock-plus-org', subscription_tier: 'plus', monthly_cost_limit: 1000 }
+    free: { id: 'mock-org-free', subscription_tier: 'free', monthly_cost_limit: 2.0 },
+    starter: { id: 'mock-org-starter', subscription_tier: 'starter', monthly_cost_limit: 5.0 },
+    pro: { id: 'mock-org-pro', subscription_tier: 'pro', monthly_cost_limit: 15.0 },
+    plus: { id: 'mock-org-plus', subscription_tier: 'plus', monthly_cost_limit: 50.0 }
   };
 
   beforeAll(async () => {
