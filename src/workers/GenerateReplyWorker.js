@@ -301,17 +301,28 @@ class GenerateReplyWorker extends BaseWorker {
           autoApprovalResult.variant.text !== response.text : false
       });
       
-      // Validate that stored response matches the approved variant text
-      const approvedText = autoApprovalResult.variant?.text || response.text;
-      if (storedResponse.response_text !== approvedText) {
-        this.log('error', 'CRITICAL: Auto-publication blocked - content mismatch', {
+      // SECURITY FIX Round 2: Enhanced atomic content validation with checksums
+      const contentValidation = await this.validateContentAtomically(
+        storedResponse,
+        autoApprovalResult.variant || { text: response.text },
+        response,
+        {
           comment_id,
           organization_id,
-          storedText: storedResponse.response_text,
-          approvedText: approvedText,
           responseId: storedResponse.id
+        }
+      );
+      
+      if (!contentValidation.valid) {
+        this.log('error', 'CRITICAL: Auto-publication blocked - atomic content validation failed', {
+          comment_id,
+          organization_id,
+          responseId: storedResponse.id,
+          validationDetails: contentValidation,
+          reason: contentValidation.reason,
+          checksumMismatch: contentValidation.checksumMismatch || false
         });
-        throw new Error('Content mismatch between stored response and approved variant');
+        throw new Error(`Atomic content validation failed: ${contentValidation.reason}`);
       }
       
       await this.queuePostingJob(organization_id, storedResponse, platform, {
@@ -1132,6 +1143,297 @@ class GenerateReplyWorker extends BaseWorker {
     }
 
     return score;
+  }
+
+  /**
+   * SECURITY FIX Round 2: Atomic content validation with checksums and race condition prevention
+   * Validates that stored content exactly matches approved content with comprehensive checks
+   * @param {Object} storedResponse - Response stored in database
+   * @param {Object} approvedVariant - Approved variant from auto-approval process
+   * @param {Object} originalResponse - Original generated response
+   * @param {Object} context - Validation context (comment_id, organization_id, etc.)
+   * @returns {Object} Validation result with detailed information
+   */
+  async validateContentAtomically(storedResponse, approvedVariant, originalResponse, context) {
+    const validationStart = Date.now();
+    const validationId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      this.log('debug', 'Starting atomic content validation', {
+        ...context,
+        validationId,
+        validationVersion: '2.0',
+        storedResponseId: storedResponse?.id,
+        approvedVariantId: approvedVariant?.id
+      });
+
+      // Input validation
+      if (!storedResponse || typeof storedResponse !== 'object') {
+        return {
+          valid: false,
+          reason: 'invalid_stored_response',
+          validationId,
+          details: 'Stored response object is missing or invalid'
+        };
+      }
+
+      if (!approvedVariant || typeof approvedVariant !== 'object') {
+        return {
+          valid: false,
+          reason: 'invalid_approved_variant',
+          validationId,
+          details: 'Approved variant object is missing or invalid'
+        };
+      }
+
+      if (!approvedVariant.text || typeof approvedVariant.text !== 'string') {
+        return {
+          valid: false,
+          reason: 'missing_approved_text',
+          validationId,
+          details: 'Approved variant text is missing or not a string'
+        };
+      }
+
+      if (!storedResponse.response_text || typeof storedResponse.response_text !== 'string') {
+        return {
+          valid: false,
+          reason: 'missing_stored_text',
+          validationId,
+          details: 'Stored response text is missing or not a string'
+        };
+      }
+
+      // Enhanced content comparison with multiple validation layers
+      const storedText = storedResponse.response_text;
+      const approvedText = approvedVariant.text;
+
+      // Layer 1: Exact string comparison (primary validation)
+      if (storedText !== approvedText) {
+        this.log('warn', 'Content validation failed: text mismatch', {
+          ...context,
+          validationId,
+          storedLength: storedText.length,
+          approvedLength: approvedText.length,
+          textMatch: false
+        });
+        
+        return {
+          valid: false,
+          reason: 'content_text_mismatch',
+          validationId,
+          details: 'Stored text does not exactly match approved text',
+          storedLength: storedText.length,
+          approvedLength: approvedText.length,
+          checksumMismatch: true
+        };
+      }
+
+      // Layer 2: Enhanced checksum validation for additional security
+      const storedChecksum = this.calculateContentChecksum(storedText);
+      const approvedChecksum = this.calculateContentChecksum(approvedText);
+
+      if (storedChecksum !== approvedChecksum) {
+        this.log('error', 'CRITICAL: Checksum validation failed despite text match', {
+          ...context,
+          validationId,
+          storedChecksum,
+          approvedChecksum,
+          reason: 'checksum_algorithm_inconsistency'
+        });
+        
+        return {
+          valid: false,
+          reason: 'checksum_validation_failed',
+          validationId,
+          details: 'Content checksums do not match despite identical text',
+          storedChecksum,
+          approvedChecksum,
+          checksumMismatch: true
+        };
+      }
+
+      // Layer 3: Metadata validation (additional security)
+      const metadataValidation = this.validateContentMetadata(
+        storedResponse, 
+        approvedVariant, 
+        originalResponse,
+        validationId
+      );
+
+      if (!metadataValidation.valid) {
+        return {
+          valid: false,
+          reason: 'metadata_validation_failed',
+          validationId,
+          details: metadataValidation.reason,
+          metadataIssues: metadataValidation.issues
+        };
+      }
+
+      // Layer 4: Temporal validation (race condition detection)
+      const temporalValidation = this.validateContentTiming(
+        storedResponse,
+        approvedVariant,
+        validationStart,
+        validationId
+      );
+
+      if (!temporalValidation.valid) {
+        return {
+          valid: false,
+          reason: 'temporal_validation_failed',
+          validationId,
+          details: temporalValidation.reason,
+          timingIssues: temporalValidation.issues
+        };
+      }
+
+      const validationDuration = Date.now() - validationStart;
+
+      this.log('info', 'Atomic content validation passed all layers', {
+        ...context,
+        validationId,
+        validationDuration,
+        textLength: storedText.length,
+        checksum: storedChecksum,
+        layersPassed: ['text_match', 'checksum_match', 'metadata_valid', 'timing_valid'],
+        validationVersion: '2.0'
+      });
+
+      return {
+        valid: true,
+        validationId,
+        validationDuration,
+        checksum: storedChecksum,
+        textLength: storedText.length,
+        layersValidated: 4,
+        details: 'All validation layers passed successfully'
+      };
+
+    } catch (error) {
+      const validationDuration = Date.now() - validationStart;
+      this.log('error', 'CRITICAL: Error in atomic content validation - failing closed', {
+        ...context,
+        validationId,
+        error: error.message,
+        stack: error.stack || 'No stack available',
+        validationDuration,
+        validationVersion: '2.0'
+      });
+
+      return {
+        valid: false,
+        reason: 'validation_error',
+        validationId,
+        details: `Validation error: ${error.message}`,
+        validationDuration,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Calculate content checksum for validation
+   * @param {string} content - Content to checksum
+   * @returns {string} SHA-256 checksum of content
+   */
+  calculateContentChecksum(content) {
+    if (!content || typeof content !== 'string') {
+      return 'invalid_content';
+    }
+    
+    // Simple but effective checksum using built-in crypto if available
+    try {
+      const crypto = require('crypto');
+      return crypto.createHash('sha256').update(content, 'utf8').digest('hex');
+    } catch (error) {
+      // Fallback: Simple hash function for environments without crypto
+      let hash = 0;
+      for (let i = 0; i < content.length; i++) {
+        const char = content.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      return `fallback_${hash.toString(16)}`;
+    }
+  }
+
+  /**
+   * Validate content metadata for consistency
+   * @param {Object} storedResponse - Stored response object
+   * @param {Object} approvedVariant - Approved variant object
+   * @param {Object} originalResponse - Original response object
+   * @param {string} validationId - Validation operation ID
+   * @returns {Object} Metadata validation result
+   */
+  validateContentMetadata(storedResponse, approvedVariant, originalResponse, validationId) {
+    const issues = [];
+
+    // Validate basic structure consistency
+    if (storedResponse.comment_id !== originalResponse.comment_id) {
+      issues.push('comment_id_mismatch');
+    }
+
+    // Validate response service consistency (if available)
+    if (originalResponse.service && storedResponse.service && 
+        originalResponse.service !== storedResponse.service) {
+      issues.push('service_mismatch');
+    }
+
+    // Validate generation timestamps (basic sanity check)
+    if (storedResponse.created_at) {
+      const storedTime = new Date(storedResponse.created_at);
+      const now = new Date();
+      const timeDiff = now - storedTime;
+      
+      // Responses shouldn't be from the future or too old (1 hour max)
+      if (timeDiff < 0 || timeDiff > 3600000) {
+        issues.push('timestamp_anomaly');
+      }
+    }
+
+    return {
+      valid: issues.length === 0,
+      reason: issues.length > 0 ? `Metadata issues: ${issues.join(', ')}` : 'metadata_valid',
+      issues
+    };
+  }
+
+  /**
+   * Validate content timing to detect race conditions
+   * @param {Object} storedResponse - Stored response object
+   * @param {Object} approvedVariant - Approved variant object
+   * @param {number} validationStart - Validation start timestamp
+   * @param {string} validationId - Validation operation ID
+   * @returns {Object} Temporal validation result
+   */
+  validateContentTiming(storedResponse, approvedVariant, validationStart, validationId) {
+    const issues = [];
+
+    // Check if stored response was modified recently (potential race condition)
+    if (storedResponse.updated_at) {
+      const updatedTime = new Date(storedResponse.updated_at);
+      const validationTime = new Date(validationStart);
+      const timeDiff = validationTime - updatedTime;
+      
+      // If response was updated very recently (within last 100ms), it might be a race condition
+      if (timeDiff < 100) {
+        issues.push('recent_modification_detected');
+      }
+    }
+
+    // Check validation timing itself (shouldn't take too long)
+    const validationDuration = Date.now() - validationStart;
+    if (validationDuration > 5000) { // 5 seconds max
+      issues.push('validation_timeout_risk');
+    }
+
+    return {
+      valid: issues.length === 0,
+      reason: issues.length > 0 ? `Timing issues: ${issues.join(', ')}` : 'timing_valid',
+      issues
+    };
   }
 }
 

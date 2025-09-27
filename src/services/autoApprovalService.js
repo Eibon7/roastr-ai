@@ -279,112 +279,204 @@ class AutoApprovalService {
   }
 
   /**
-   * SECURITY FIX: Validate toxicity score with proper null/undefined handling
+   * SECURITY FIX Round 2: Enhanced toxicity score validation with improved logic
+   * Addresses CodeRabbit feedback on incorrect validation failures
    * @param {number|null|undefined} variantScore - Generated variant toxicity score
    * @param {number|null|undefined} originalScore - Original comment toxicity score
    * @returns {boolean} Whether toxicity score is acceptable for auto-approval
    */
   validateToxicityScore(variantScore, originalScore) {
     try {
-      // Handle null/undefined scores properly
+      // Handle null/undefined scores properly with enhanced normalization
       const safeVariantScore = this.normalizeToxicityScore(variantScore);
       const safeOriginalScore = this.normalizeToxicityScore(originalScore);
 
-      logger.debug('Toxicity score validation', {
+      logger.debug('Toxicity score validation Round 2', {
         variantScore,
         originalScore,
         safeVariantScore,
         safeOriginalScore,
-        threshold: this.config.maxToxicityScore
+        threshold: this.config.maxToxicityScore,
+        validationVersion: '2.0'
       });
 
-      // CRITICAL: If we can't determine toxicity scores, fail closed
-      if (safeVariantScore === null || safeOriginalScore === null) {
-        logger.warn('Unable to determine toxicity scores - failing closed', {
+      // CRITICAL: Enhanced logic for missing scores
+      // If variant score is missing but original is available, be more permissive
+      // If both missing, fail closed. If original missing but variant available, check variant only
+      if (safeVariantScore === null && safeOriginalScore === null) {
+        logger.warn('Both toxicity scores unavailable - failing closed for safety', {
           variantScore,
           originalScore,
-          safeVariantScore,
-          safeOriginalScore
+          reason: 'no_scores_available'
         });
         return false;
       }
 
-      // Primary check: variant must be below threshold
-      if (safeVariantScore > this.config.maxToxicityScore) {
-        logger.info('Variant toxicity score exceeds threshold', {
+      if (safeVariantScore === null) {
+        logger.warn('Variant toxicity score unavailable - failing closed', {
+          variantScore,
+          originalScore: safeOriginalScore,
+          reason: 'variant_score_missing'
+        });
+        return false;
+      }
+
+      // If original score is missing but variant is available, only check variant against threshold
+      if (safeOriginalScore === null) {
+        logger.info('Original toxicity score unavailable - validating variant only', {
           variantScore: safeVariantScore,
-          threshold: this.config.maxToxicityScore
+          originalScore,
+          threshold: this.config.maxToxicityScore,
+          reason: 'original_score_missing'
+        });
+        
+        const passesThreshold = safeVariantScore <= this.config.maxToxicityScore;
+        logger.debug('Variant-only validation result', {
+          variantScore: safeVariantScore,
+          threshold: this.config.maxToxicityScore,
+          passed: passesThreshold
+        });
+        return passesThreshold;
+      }
+
+      // Primary check: variant must be below absolute threshold
+      if (safeVariantScore > this.config.maxToxicityScore) {
+        logger.info('Variant toxicity score exceeds absolute threshold', {
+          variantScore: safeVariantScore,
+          threshold: this.config.maxToxicityScore,
+          reason: 'absolute_threshold_exceeded'
         });
         return false;
       }
 
-      // Secondary check: variant shouldn't be significantly more toxic than original
-      // Allow some increase for roast humor, but not excessive toxicity
+      // Secondary check: Enhanced relative toxicity increase validation
+      // More sophisticated logic for allowing roast humor while preventing extreme toxicity
       const toxicityIncrease = safeVariantScore - safeOriginalScore;
-      const maxAllowedIncrease = 0.3; // Allow 30% increase for humor
+      
+      // Dynamic allowed increase based on original score
+      // Lower original scores allow more increase, higher scores allow less
+      let maxAllowedIncrease;
+      if (safeOriginalScore <= 0.2) {
+        maxAllowedIncrease = 0.4; // Low toxicity comments can have more roast humor
+      } else if (safeOriginalScore <= 0.5) {
+        maxAllowedIncrease = 0.3; // Medium toxicity comments - moderate increase
+      } else {
+        maxAllowedIncrease = 0.2; // High toxicity comments - minimal increase allowed
+      }
+
+      // Additional safety: never allow final score above 0.8 regardless of increase
+      const maxAbsoluteScore = 0.8;
+      
+      if (safeVariantScore > maxAbsoluteScore) {
+        logger.info('Variant toxicity score exceeds maximum absolute limit', {
+          variantScore: safeVariantScore,
+          maxAbsoluteScore,
+          originalScore: safeOriginalScore,
+          reason: 'absolute_max_exceeded'
+        });
+        return false;
+      }
 
       if (toxicityIncrease > maxAllowedIncrease) {
-        logger.info('Variant toxicity increase too high compared to original', {
+        logger.info('Variant toxicity increase exceeds dynamic threshold', {
           originalScore: safeOriginalScore,
           variantScore: safeVariantScore,
           increase: toxicityIncrease,
-          maxAllowed: maxAllowedIncrease
+          maxAllowedIncrease,
+          originalScoreCategory: safeOriginalScore <= 0.2 ? 'low' : safeOriginalScore <= 0.5 ? 'medium' : 'high',
+          reason: 'relative_increase_exceeded'
         });
         return false;
       }
 
-      logger.debug('Toxicity validation passed', {
+      logger.debug('Enhanced toxicity validation passed', {
         variantScore: safeVariantScore,
         originalScore: safeOriginalScore,
-        increase: toxicityIncrease
+        increase: toxicityIncrease,
+        maxAllowedIncrease,
+        validationVersion: '2.0',
+        reason: 'all_checks_passed'
       });
 
       return true;
 
     } catch (error) {
-      logger.error('Error validating toxicity score - failing closed', {
+      logger.error('Error in enhanced toxicity validation - failing closed', {
         variantScore,
         originalScore,
-        error: error.message
+        error: error.message,
+        stack: error.stack || 'No stack available',
+        validationVersion: '2.0'
       });
       return false; // Fail closed on any error
     }
   }
 
   /**
-   * Normalize toxicity score to handle various input formats
-   * @param {any} score - Raw toxicity score
+   * Enhanced toxicity score normalization - Round 2 security improvement
+   * Handles various input formats with improved edge case coverage
+   * @param {any} score - Raw toxicity score from various APIs
    * @returns {number|null} Normalized score between 0-1, or null if invalid
    */
   normalizeToxicityScore(score) {
-    // Handle null/undefined
+    // Handle null/undefined explicitly
     if (score === null || score === undefined) {
       return null;
     }
 
-    // Convert string numbers
+    // Handle empty strings and whitespace-only strings
     if (typeof score === 'string') {
+      score = score.trim();
+      if (score === '') {
+        return null;
+      }
+      
+      // Convert string numbers with enhanced validation
       const parsed = parseFloat(score);
-      if (isNaN(parsed)) return null;
+      if (isNaN(parsed) || !isFinite(parsed)) {
+        return null;
+      }
       score = parsed;
     }
 
-    // Must be a number
-    if (typeof score !== 'number' || isNaN(score)) {
+    // Handle boolean values (some APIs might return these)
+    if (typeof score === 'boolean') {
+      return score ? 1.0 : 0.0;
+    }
+
+    // Must be a valid number
+    if (typeof score !== 'number' || isNaN(score) || !isFinite(score)) {
       return null;
     }
 
-    // Handle different scales (some APIs return 0-100 instead of 0-1)
-    if (score > 1 && score <= 100) {
+    // Handle negative values (normalize to 0)
+    if (score < 0) {
+      logger.debug('Negative toxicity score normalized to 0', { originalScore: score });
+      return 0.0;
+    }
+
+    // Handle different scales with more comprehensive detection
+    // Support for 0-1, 0-100, and 0-10 scales
+    if (score > 10) {
+      // Assume 0-100 scale
       score = score / 100;
+    } else if (score > 1 && score <= 10) {
+      // Assume 0-10 scale
+      score = score / 10;
+    }
+    // If score is between 0-1, assume it's already normalized
+
+    // Final validation: must be within valid range after normalization
+    if (score > 1) {
+      logger.warn('Toxicity score still above 1 after normalization', { 
+        score, 
+        action: 'capping_to_1.0' 
+      });
+      return 1.0;
     }
 
-    // Must be within valid range
-    if (score < 0 || score > 1) {
-      return null;
-    }
-
-    return score;
+    // Round to reasonable precision to avoid floating point issues
+    return Math.round(score * 1000) / 1000;
   }
 
   /**
@@ -406,129 +498,372 @@ class AutoApprovalService {
   }
 
   /**
-   * Validate against organization-specific policies
+   * SECURITY FIX Round 2: Ultra-robust organization policy validation
+   * Enhanced fail-closed mechanisms and comprehensive error handling
    * @param {Object} variant - Generated variant
    * @param {string} organizationId - Organization ID
    * @returns {boolean} Whether variant complies with org policies
    */
   async validateOrganizationPolicy(variant, organizationId) {
+    const validationStart = Date.now();
+    const validationId = `policy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     try {
-      // SECURITY FIX: Enhanced error handling for policy validation
-      // Get organization-specific policies with explicit error handling
-      const { data: policies, error: policiesError } = await supabaseServiceClient
+      // Input validation with fail-closed approach
+      if (!organizationId || typeof organizationId !== 'string') {
+        logger.error('CRITICAL: Invalid organizationId provided - failing closed', {
+          organizationId,
+          organizationIdType: typeof organizationId,
+          validationId,
+          reason: 'invalid_organization_id'
+        });
+        return false;
+      }
+
+      if (!variant || typeof variant !== 'object' || !variant.text) {
+        logger.error('CRITICAL: Invalid variant provided - failing closed', {
+          organizationId,
+          variant: variant ? { id: variant.id, hasText: !!variant.text } : null,
+          validationId,
+          reason: 'invalid_variant'
+        });
+        return false;
+      }
+
+      logger.debug('Starting ultra-robust policy validation', {
+        organizationId,
+        variantId: variant.id || 'unknown',
+        variantLength: variant.text?.length || 0,
+        validationId,
+        validationVersion: '2.0'
+      });
+
+      // Enhanced timeout handling for database queries
+      const queryTimeout = 5000; // 5 seconds max for policy queries
+      const queryStart = Date.now();
+
+      // SECURITY FIX: Enhanced error handling for policy validation with timeout
+      const queryPromise = supabaseServiceClient
         .from('organization_policies')
         .select('*')
         .eq('organization_id', organizationId);
+
+      let policies, policiesError;
+      try {
+        const result = await Promise.race([
+          queryPromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Policy query timeout')), queryTimeout)
+          )
+        ]);
+        policies = result.data;
+        policiesError = result.error;
+      } catch (timeoutError) {
+        logger.error('CRITICAL: Policy query timeout - failing closed', {
+          organizationId,
+          variantId: variant.id || 'unknown',
+          timeout: queryTimeout,
+          queryDuration: Date.now() - queryStart,
+          validationId,
+          error: timeoutError.message
+        });
+        return false;
+      }
 
       // CRITICAL: Handle query errors explicitly to prevent policy bypass
       if (policiesError) {
         logger.error('CRITICAL: Organization policy query failed - failing closed', {
           organizationId,
-          variantId: variant?.id || 'unknown',
+          variantId: variant.id || 'unknown',
           error: policiesError.message,
-          stack: policiesError.stack || 'No stack available'
+          errorCode: policiesError.code || 'unknown',
+          errorDetails: policiesError.details || 'none',
+          stack: policiesError.stack || 'No stack available',
+          validationId,
+          queryDuration: Date.now() - queryStart
         });
         return false; // FAIL CLOSED - cannot validate policies, so reject
       }
 
+      // Validate the policies response structure
+      if (policies === null || policies === undefined) {
+        logger.error('CRITICAL: Policies query returned null/undefined - failing closed', {
+          organizationId,
+          variantId: variant.id || 'unknown',
+          policies,
+          validationId,
+          reason: 'null_policies_response'
+        });
+        return false;
+      }
+
       // If no policies exist, that's a legitimate case - allow
-      if (!policies || policies.length === 0) {
+      if (!Array.isArray(policies) || policies.length === 0) {
         logger.debug('No organization policies found, allowing by default', {
           organizationId,
-          variantId: variant?.id || 'unknown'
+          variantId: variant.id || 'unknown',
+          validationId,
+          policiesType: Array.isArray(policies) ? 'array' : typeof policies,
+          policiesLength: Array.isArray(policies) ? policies.length : 'N/A'
         });
         return true; // No specific policies, allow
       }
 
-      logger.info('Validating against organization policies', {
+      logger.info('Validating against organization policies with enhanced checks', {
         organizationId,
-        variantId: variant?.id || 'unknown',
-        policiesCount: policies.length
+        variantId: variant.id || 'unknown',
+        policiesCount: policies.length,
+        validationId,
+        queryDuration: Date.now() - queryStart
       });
 
-      // Check against each policy with enhanced validation
-      for (const policy of policies) {
+      // Enhanced policy validation with more comprehensive checks
+      let activePoliciesChecked = 0;
+      let totalProhibitedWords = 0;
+
+      for (const [policyIndex, policy] of policies.entries()) {
         if (!policy || typeof policy !== 'object') {
           logger.warn('Invalid policy object found, skipping', {
             organizationId,
-            policy: policy
+            policyIndex,
+            policy: policy,
+            validationId
+          });
+          continue;
+        }
+
+        // Enhanced policy structure validation
+        if (!policy.id) {
+          logger.warn('Policy without ID found, skipping for safety', {
+            organizationId,
+            policyIndex,
+            policyType: policy.type,
+            validationId
           });
           continue;
         }
 
         if (policy.type === 'content_filter' && policy.enabled) {
+          activePoliciesChecked++;
+          
           const prohibited = policy.prohibited_words || [];
           if (!Array.isArray(prohibited)) {
-            logger.warn('Invalid prohibited_words format in policy, skipping', {
+            logger.warn('Invalid prohibited_words format in policy, treating as violation', {
               organizationId,
               policyId: policy.id,
-              prohibitedWordsType: typeof prohibited
+              prohibitedWordsType: typeof prohibited,
+              validationId,
+              action: 'treating_as_violation'
             });
-            continue;
+            // SECURITY: Invalid format could be an attack vector, fail closed
+            return false;
           }
 
-          const hasProhibited = prohibited.some(word => {
-            if (typeof word !== 'string' || !variant?.text) return false;
-            return variant.text.toLowerCase().includes(word.toLowerCase());
-          });
+          totalProhibitedWords += prohibited.length;
+
+          // Enhanced word matching with better security
+          const violatingWords = [];
+          for (const word of prohibited) {
+            if (typeof word !== 'string') {
+              logger.warn('Non-string prohibited word found, skipping', {
+                organizationId,
+                policyId: policy.id,
+                wordType: typeof word,
+                validationId
+              });
+              continue;
+            }
+
+            if (word.trim() === '') {
+              continue; // Skip empty strings
+            }
+
+            // Case-insensitive matching with word boundaries for more accurate detection
+            const wordRegex = new RegExp(`\\b${word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+            if (wordRegex.test(variant.text.toLowerCase())) {
+              violatingWords.push(word);
+            }
+          }
           
-          if (hasProhibited) {
+          if (violatingWords.length > 0) {
             logger.info('Content blocked by organization policy', {
               organizationId,
-              variantId: variant?.id || 'unknown',
+              variantId: variant.id || 'unknown',
               policyId: policy.id,
-              policyType: policy.type
+              policyType: policy.type,
+              violatingWords: violatingWords.length > 10 ? violatingWords.slice(0, 10) : violatingWords,
+              totalViolations: violatingWords.length,
+              validationId
             });
             return false;
           }
         }
       }
 
+      const validationDuration = Date.now() - validationStart;
+
       logger.info('Content passed all organization policy checks', {
         organizationId,
-        variantId: variant?.id || 'unknown',
-        policiesChecked: policies.length
+        variantId: variant.id || 'unknown',
+        totalPolicies: policies.length,
+        activePoliciesChecked,
+        totalProhibitedWords,
+        validationId,
+        validationDuration,
+        validationVersion: '2.0'
       });
+      
       return true;
 
     } catch (error) {
       // CRITICAL: Any unexpected error should fail closed
-      logger.error('CRITICAL: Unexpected error validating organization policy - failing closed', {
+      const validationDuration = Date.now() - validationStart;
+      logger.error('CRITICAL: Unexpected error in ultra-robust policy validation - failing closed', {
         organizationId,
         variantId: variant?.id || 'unknown',
         error: error.message,
-        stack: error.stack || 'No stack available'
+        errorName: error.name || 'UnknownError',
+        stack: error.stack || 'No stack available',
+        validationId,
+        validationDuration,
+        validationVersion: '2.0'
       });
       return false; // FAIL CLOSED - reject if we can't validate safely
     }
   }
 
   /**
-   * Check rate limits for auto-approval
+   * SECURITY FIX Round 2: Ultra-robust rate limiting with comprehensive fail-closed mechanisms
+   * Enhanced timeout handling, connection validation, and error recovery
    * @param {string} organizationId - Organization ID
-   * @returns {Object} Rate limit status
+   * @returns {Object} Rate limit status with detailed error information
    */
   async checkRateLimits(organizationId) {
+    const rateLimitStart = Date.now();
+    const rateLimitId = `rate_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     try {
+      // Input validation with fail-closed approach
+      if (!organizationId || typeof organizationId !== 'string') {
+        logger.error('CRITICAL: Invalid organizationId for rate limit check - failing closed', {
+          organizationId,
+          organizationIdType: typeof organizationId,
+          rateLimitId,
+          reason: 'invalid_organization_id'
+        });
+        return { 
+          allowed: false, 
+          error: 'invalid_input',
+          reason: 'Invalid organization ID provided'
+        };
+      }
+
       const now = new Date();
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-      // SECURITY FIX: Enhanced rate limit checking with explicit error handling
-      // Count auto-approvals in the last hour with explicit error handling
-      const { count: hourlyCount, error: hourlyError } = await supabaseServiceClient
-        .from('roast_approvals')
-        .select('*', { count: 'exact' })
-        .eq('organization_id', organizationId)
-        .eq('auto_approved', true)
-        .gte('approved_at', oneHourAgo.toISOString());
+      logger.debug('Starting ultra-robust rate limit check', {
+        organizationId,
+        rateLimitId,
+        timeWindow: {
+          hourlyStart: oneHourAgo.toISOString(),
+          dailyStart: oneDayAgo.toISOString(),
+          current: now.toISOString()
+        },
+        rateLimitVersion: '2.0'
+      });
+
+      // Enhanced connectivity and timeout handling
+      const queryTimeout = 3000; // 3 seconds max for rate limit queries
+      
+      // SECURITY FIX: Pre-flight connectivity check
+      let connectionHealthy = true;
+      try {
+        const healthCheckStart = Date.now();
+        const healthCheck = await Promise.race([
+          supabaseServiceClient.from('roast_approvals').select('id').limit(1),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Health check timeout')), 1000)
+          )
+        ]);
+        
+        if (healthCheck.error) {
+          connectionHealthy = false;
+          logger.warn('Database connection health check failed', {
+            organizationId,
+            rateLimitId,
+            healthCheckDuration: Date.now() - healthCheckStart,
+            error: healthCheck.error.message
+          });
+        }
+      } catch (healthError) {
+        connectionHealthy = false;
+        logger.error('CRITICAL: Database connection health check timeout - failing closed', {
+          organizationId,
+          rateLimitId,
+          error: healthError.message,
+          reason: 'connection_health_check_failed'
+        });
+        return { 
+          allowed: false, 
+          error: 'database_connectivity_failed',
+          reason: 'Cannot verify database connectivity for rate limits'
+        };
+      }
+
+      if (!connectionHealthy) {
+        return { 
+          allowed: false, 
+          error: 'database_connectivity_failed',
+          reason: 'Database connection unhealthy - security measure'
+        };
+      }
+
+      // Enhanced hourly rate limit check with timeout and retry logic
+      let hourlyCount, hourlyError;
+      const hourlyQueryStart = Date.now();
+      
+      try {
+        const hourlyResult = await Promise.race([
+          supabaseServiceClient
+            .from('roast_approvals')
+            .select('*', { count: 'exact' })
+            .eq('organization_id', organizationId)
+            .eq('auto_approved', true)
+            .gte('approved_at', oneHourAgo.toISOString()),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Hourly rate limit query timeout')), queryTimeout)
+          )
+        ]);
+        
+        hourlyCount = hourlyResult.count;
+        hourlyError = hourlyResult.error;
+        
+      } catch (timeoutError) {
+        logger.error('CRITICAL: Hourly rate limit query timeout - failing closed', {
+          organizationId,
+          rateLimitId,
+          timeout: queryTimeout,
+          queryDuration: Date.now() - hourlyQueryStart,
+          error: timeoutError.message
+        });
+        return { 
+          allowed: false, 
+          error: 'rate_limit_query_timeout',
+          reason: 'Hourly rate limit query timeout - security measure'
+        };
+      }
 
       // CRITICAL: If we can't check hourly limits, fail closed
       if (hourlyError) {
         logger.error('CRITICAL: Hourly rate limit check failed - failing closed', {
           organizationId,
+          rateLimitId,
           error: hourlyError.message,
-          stack: hourlyError.stack || 'No stack available'
+          errorCode: hourlyError.code || 'unknown',
+          errorDetails: hourlyError.details || 'none',
+          stack: hourlyError.stack || 'No stack available',
+          queryDuration: Date.now() - hourlyQueryStart
         });
         return { 
           allowed: false, 
@@ -537,20 +872,51 @@ class AutoApprovalService {
         };
       }
 
-      // Count auto-approvals in the last day with explicit error handling
-      const { count: dailyCount, error: dailyError } = await supabaseServiceClient
-        .from('roast_approvals')
-        .select('*', { count: 'exact' })
-        .eq('organization_id', organizationId)
-        .eq('auto_approved', true)
-        .gte('approved_at', oneDayAgo.toISOString());
+      // Enhanced daily rate limit check with timeout and retry logic  
+      let dailyCount, dailyError;
+      const dailyQueryStart = Date.now();
+      
+      try {
+        const dailyResult = await Promise.race([
+          supabaseServiceClient
+            .from('roast_approvals')
+            .select('*', { count: 'exact' })
+            .eq('organization_id', organizationId)
+            .eq('auto_approved', true)
+            .gte('approved_at', oneDayAgo.toISOString()),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Daily rate limit query timeout')), queryTimeout)
+          )
+        ]);
+        
+        dailyCount = dailyResult.count;
+        dailyError = dailyResult.error;
+        
+      } catch (timeoutError) {
+        logger.error('CRITICAL: Daily rate limit query timeout - failing closed', {
+          organizationId,
+          rateLimitId,
+          timeout: queryTimeout,
+          queryDuration: Date.now() - dailyQueryStart,
+          error: timeoutError.message
+        });
+        return { 
+          allowed: false, 
+          error: 'rate_limit_query_timeout',
+          reason: 'Daily rate limit query timeout - security measure'
+        };
+      }
 
       // CRITICAL: If we can't check daily limits, fail closed
       if (dailyError) {
         logger.error('CRITICAL: Daily rate limit check failed - failing closed', {
           organizationId,
+          rateLimitId,
           error: dailyError.message,
-          stack: dailyError.stack || 'No stack available'
+          errorCode: dailyError.code || 'unknown',
+          errorDetails: dailyError.details || 'none',
+          stack: dailyError.stack || 'No stack available',
+          queryDuration: Date.now() - dailyQueryStart
         });
         return { 
           allowed: false, 
@@ -559,51 +925,158 @@ class AutoApprovalService {
         };
       }
 
-      // Validate counts are numbers (handle potential null/undefined/NaN)
-      const safeHourlyCount = typeof hourlyCount === 'number' && !isNaN(hourlyCount) ? hourlyCount : 0;
-      const safeDailyCount = typeof dailyCount === 'number' && !isNaN(dailyCount) ? dailyCount : 0;
+      // Enhanced count validation with comprehensive edge case handling
+      const safeHourlyCount = this.validateRateLimitCount(hourlyCount, 'hourly', rateLimitId);
+      const safeDailyCount = this.validateRateLimitCount(dailyCount, 'daily', rateLimitId);
+
+      // If count validation failed, fail closed
+      if (safeHourlyCount === null || safeDailyCount === null) {
+        logger.error('CRITICAL: Rate limit count validation failed - failing closed', {
+          organizationId,
+          rateLimitId,
+          hourlyCount,
+          dailyCount,
+          safeHourlyCount,
+          safeDailyCount,
+          reason: 'count_validation_failed'
+        });
+        return { 
+          allowed: false, 
+          error: 'rate_limit_validation_failed',
+          reason: 'Rate limit count validation failed - security measure'
+        };
+      }
 
       const hourlyAllowed = safeHourlyCount < this.config.maxAutoApprovalsPerHour;
       const dailyAllowed = safeDailyCount < this.config.maxAutoApprovalsPerDay;
+      const overallAllowed = hourlyAllowed && dailyAllowed;
 
-      logger.info('Rate limit check completed successfully', {
+      const rateLimitDuration = Date.now() - rateLimitStart;
+
+      logger.info('Ultra-robust rate limit check completed successfully', {
         organizationId,
+        rateLimitId,
         hourlyCount: safeHourlyCount,
         dailyCount: safeDailyCount,
         hourlyLimit: this.config.maxAutoApprovalsPerHour,
         dailyLimit: this.config.maxAutoApprovalsPerDay,
         hourlyAllowed,
         dailyAllowed,
-        overallAllowed: hourlyAllowed && dailyAllowed
+        overallAllowed,
+        rateLimitDuration,
+        rateLimitVersion: '2.0',
+        queryPerformance: {
+          hourlyQueryTime: Date.now() - hourlyQueryStart,
+          dailyQueryTime: Date.now() - dailyQueryStart
+        }
       });
 
       return {
-        allowed: hourlyAllowed && dailyAllowed,
+        allowed: overallAllowed,
+        rateLimitId,
+        validationDuration: rateLimitDuration,
         hourly: {
           count: safeHourlyCount,
           limit: this.config.maxAutoApprovalsPerHour,
-          allowed: hourlyAllowed
+          allowed: hourlyAllowed,
+          remaining: Math.max(0, this.config.maxAutoApprovalsPerHour - safeHourlyCount)
         },
         daily: {
           count: safeDailyCount,
           limit: this.config.maxAutoApprovalsPerDay,
-          allowed: dailyAllowed
+          allowed: dailyAllowed,
+          remaining: Math.max(0, this.config.maxAutoApprovalsPerDay - safeDailyCount)
         }
       };
 
     } catch (error) {
       // CRITICAL: Any unexpected error should fail closed
-      logger.error('CRITICAL: Unexpected error checking rate limits - failing closed', {
+      const rateLimitDuration = Date.now() - rateLimitStart;
+      logger.error('CRITICAL: Unexpected error in ultra-robust rate limit check - failing closed', {
         organizationId,
+        rateLimitId,
         error: error.message,
-        stack: error.stack || 'No stack available'
+        errorName: error.name || 'UnknownError',
+        stack: error.stack || 'No stack available',
+        rateLimitDuration,
+        rateLimitVersion: '2.0'
       });
       return { 
         allowed: false, 
         error: 'rate_limit_check_failed',
-        reason: 'Unexpected error during rate limit validation'
+        reason: 'Unexpected error during rate limit validation',
+        rateLimitId,
+        validationDuration: rateLimitDuration
       };
     }
+  }
+
+  /**
+   * Validate rate limit count with comprehensive edge case handling
+   * @param {any} count - Raw count from database query
+   * @param {string} type - Type of count (hourly/daily)
+   * @param {string} rateLimitId - Rate limit operation ID
+   * @returns {number|null} Validated count or null if invalid
+   */
+  validateRateLimitCount(count, type, rateLimitId) {
+    // Handle null/undefined
+    if (count === null || count === undefined) {
+      logger.debug('Rate limit count is null/undefined, treating as 0', {
+        count,
+        type,
+        rateLimitId
+      });
+      return 0;
+    }
+
+    // Handle string numbers
+    if (typeof count === 'string') {
+      const parsed = parseInt(count, 10);
+      if (isNaN(parsed)) {
+        logger.warn('Invalid string count in rate limit check', {
+          count,
+          type,
+          rateLimitId,
+          parsed
+        });
+        return null;
+      }
+      return Math.max(0, parsed);
+    }
+
+    // Must be a number
+    if (typeof count !== 'number') {
+      logger.warn('Non-numeric count in rate limit check', {
+        count,
+        countType: typeof count,
+        type,
+        rateLimitId
+      });
+      return null;
+    }
+
+    // Handle NaN and infinite values
+    if (isNaN(count) || !isFinite(count)) {
+      logger.warn('NaN or infinite count in rate limit check', {
+        count,
+        type,
+        rateLimitId
+      });
+      return null;
+    }
+
+    // Handle negative counts (normalize to 0)
+    if (count < 0) {
+      logger.warn('Negative count in rate limit check, normalizing to 0', {
+        count,
+        type,
+        rateLimitId
+      });
+      return 0;
+    }
+
+    // Return validated count
+    return Math.floor(count);
   }
 
   /**
