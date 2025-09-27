@@ -7,29 +7,47 @@ const { describe, test, expect, beforeEach, afterEach, beforeAll, afterAll } = r
 const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('../../src/services/costControl');
 
-// Mock Supabase for integration tests
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    from: jest.fn().mockReturnValue({
-      insert: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { 
-              id: 'mock-org-id',
-              name: 'Mock Organization',
-              subscription_tier: 'starter',
-              monthly_cost_limit: 100,
-              monthly_usage: 0
-            },
-            error: null
-          })
+// Consolidated and improved Supabase mock with proper method chaining support
+const createMockSupabaseClient = () => ({
+  from: jest.fn().mockReturnValue({
+    insert: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({
+          data: { 
+            id: 'mock-org-id',
+            name: 'Mock Organization',
+            subscription_tier: 'starter',
+            monthly_cost_limit: 100,
+            monthly_usage: 0
+          },
+          error: null
         })
-      }),
-      delete: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null })
       })
+    }),
+    delete: jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ error: null })
+    }),
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({
+          data: { 
+            id: 'mock-org-id',
+            subscription_tier: 'starter',
+            monthly_usage: 0
+          },
+          error: null
+        })
+      })
+    }),
+    update: jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ error: null })
     })
-  }))
+  })
+});
+
+// Mock Supabase with improved chaining support
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => createMockSupabaseClient())
 }));
 
 // Mock external dependencies
@@ -83,6 +101,9 @@ describeFunction('Tier Validation Security Test Suite', () => {
   });
 
   beforeEach(async () => {
+    // Setup fake timers for timeout tests
+    jest.useFakeTimers();
+    
     // Reset usage for all test organizations
     for (const org of Object.values(testOrganizations)) {
       if (org) {
@@ -95,6 +116,11 @@ describeFunction('Tier Validation Security Test Suite', () => {
           .eq('id', org.id);
       }
     }
+  });
+
+  afterEach(() => {
+    // Cleanup fake timers
+    jest.useRealTimers();
   });
 
   describe('1. Race Condition Testing', () => {

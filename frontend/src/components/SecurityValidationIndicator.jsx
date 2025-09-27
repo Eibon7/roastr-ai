@@ -1,445 +1,312 @@
 /**
- * SecurityValidationIndicator Component
- * Issue #405 - Shows detailed security validation results
- * CodeRabbit Round 2 Fix: Enhanced error states and informative indicators
+ * Security Validation Indicator Component - ROUND 4 Enhancement
+ * Shows security validation progress with proper cleanup and error handling
  */
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Progress } from './ui/progress';
-import { 
-  Shield, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle,
-  FileText,
-  Globe,
-  Building,
-  Zap,
-  Clock,
-  AlertTriangle,
-  Info
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
-const SecurityValidationIndicator = ({ commentId, status, metadata }) => {
-  const [validations, setValidations] = useState({
-    contentFilter: { 
-      status: 'pending', 
-      message: 'Checking content appropriateness...',
-      details: null,
-      timestamp: null 
-    },
-    toxicityThreshold: { 
-      status: 'pending', 
-      message: 'Analyzing toxicity levels...',
-      details: null,
-      timestamp: null 
-    },
-    platformCompliance: { 
-      status: 'pending', 
-      message: 'Verifying platform rules...',
-      details: null,
-      timestamp: null 
-    },
-    organizationPolicy: { 
-      status: 'pending', 
-      message: 'Checking organization policies...',
-      details: null,
-      timestamp: null 
-    },
-    shieldApproval: { 
-      status: 'pending', 
-      message: 'Running Shield analysis...',
-      details: null,
-      timestamp: null 
-    }
-  });
-
-  const [overallStatus, setOverallStatus] = useState('validating');
+const SecurityValidationIndicator = ({ 
+  validationSteps = [],
+  currentStep = 0,
+  onValidationComplete,
+  onValidationError,
+  className = '',
+  style = {},
+  autoRefresh = false,
+  refreshInterval = 5000
+}) => {
   const [progress, setProgress] = useState(0);
-  const [errorDetails, setErrorDetails] = useState(null);
-  const [retryCount, setRetryCount] = useState(0);
+  const [error, setError] = useState(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResults, setValidationResults] = useState(new Map());
+  
+  // ROUND 4 FIX: Use refs to track timers for proper cleanup
+  const refreshTimerRef = useRef(null);
+  const progressTimerRef = useRef(null);
+  const validationTimeoutRef = useRef(null);
 
-  const validationIcons = {
-    contentFilter: FileText,
-    toxicityThreshold: AlertCircle,
-    platformCompliance: Globe,
-    organizationPolicy: Building,
-    shieldApproval: Shield
-  };
-
-  const validationLabels = {
-    contentFilter: 'Content Filter',
-    toxicityThreshold: 'Toxicity Check',
-    platformCompliance: 'Platform Rules',
-    organizationPolicy: 'Organization Policy',
-    shieldApproval: 'Shield Protection'
-  };
-
-  useEffect(() => {
-    if (status === 'security_validation') {
-      runValidations();
-    } else if (status === 'failed_security') {
-      showFailedValidations();
-    } else if (status === 'published_successfully') {
-      showPassedValidations();
-    }
-  }, [status, commentId]);
-
-  const runValidations = async () => {
-    const validationSteps = Object.keys(validations);
-    let completed = 0;
-
-    for (const step of validationSteps) {
-      // Simulate validation delay
-      await new Promise(resolve => setTimeout(resolve, 400));
-      
-      // In development/mock mode, simulate results
-      const passed = Math.random() > 0.1; // 90% pass rate
-      
-      setValidations(prev => ({
-        ...prev,
-        [step]: {
-          status: passed ? 'passed' : 'failed',
-          message: passed 
-            ? `${validationLabels[step]} passed successfully`
-            : `${validationLabels[step]} validation failed`
-        }
-      }));
-
-      completed++;
-      setProgress((completed / validationSteps.length) * 100);
+  // ROUND 4 FIX: Memoized validation progress
+  const validationProgress = useMemo(() => {
+    if (!Array.isArray(validationSteps) || validationSteps.length === 0) {
+      return { completed: 0, total: 0, percentage: 0 };
     }
 
-    // Determine overall status
-    const allPassed = Object.values(validations).every(v => v.status === 'passed');
-    setOverallStatus(allPassed ? 'passed' : 'failed');
-  };
+    const completed = Math.min(currentStep, validationSteps.length);
+    const total = validationSteps.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-  const showFailedValidations = () => {
-    setValidations({
-      contentFilter: { status: 'passed', message: 'Content filter passed' },
-      toxicityThreshold: { status: 'failed', message: 'Toxicity level exceeds threshold' },
-      platformCompliance: { status: 'passed', message: 'Platform rules verified' },
-      organizationPolicy: { status: 'passed', message: 'Organization policy compliant' },
-      shieldApproval: { status: 'failed', message: 'Shield detected potential issues' }
-    });
-    setOverallStatus('failed');
-    setProgress(100);
-  };
+    return { completed, total, percentage };
+  }, [validationSteps, currentStep]);
 
-  const showPassedValidations = () => {
-    const allPassed = {};
-    Object.keys(validations).forEach(key => {
-      allPassed[key] = { 
-        status: 'passed', 
-        message: `${validationLabels[key]} passed successfully` 
+  // ROUND 4 FIX: Memoized step status
+  const stepStatuses = useMemo(() => {
+    return validationSteps.map((step, index) => {
+      const isCompleted = index < currentStep;
+      const isCurrent = index === currentStep;
+      const isPending = index > currentStep;
+      const hasError = validationResults.has(index) && validationResults.get(index).error;
+
+      return {
+        ...step,
+        index,
+        isCompleted,
+        isCurrent,
+        isPending,
+        hasError,
+        result: validationResults.get(index)
       };
     });
-    setValidations(allPassed);
-    setOverallStatus('passed');
-    setProgress(100);
-  };
+  }, [validationSteps, currentStep, validationResults]);
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case 'failed':
-        return <XCircle className="w-5 h-5 text-red-500" />;
-      case 'error':
-        return <AlertTriangle className="w-5 h-5 text-orange-500" />;
-      case 'timeout':
-        return <Clock className="w-5 h-5 text-yellow-500" />;
-      case 'retrying':
-        return <div className="w-5 h-5 rounded-full border-2 border-blue-300 border-t-blue-600 animate-spin" />;
-      default:
-        return <div className="w-5 h-5 rounded-full border-2 border-gray-300 animate-spin" />;
+  // ROUND 4 FIX: Auto-refresh with proper cleanup
+  useEffect(() => {
+    if (autoRefresh && refreshInterval > 0 && isValidating) {
+      refreshTimerRef.current = setInterval(() => {
+        // Trigger refresh of validation status
+        if (onValidationComplete) {
+          // In real implementation, this would check validation status
+          setProgress(prev => Math.min(prev + 10, 100));
+        }
+      }, refreshInterval);
+
+      return () => {
+        if (refreshTimerRef.current) {
+          clearInterval(refreshTimerRef.current);
+          refreshTimerRef.current = null;
+        }
+      };
     }
-  };
+  }, [autoRefresh, refreshInterval, isValidating, onValidationComplete]);
 
-  const getOverallStatusConfig = () => {
-    switch (overallStatus) {
-      case 'passed':
-        return {
-          color: 'bg-green-100 text-green-700',
-          icon: <CheckCircle2 className="w-4 h-4" />,
-          text: 'All Validations Passed'
-        };
-      case 'failed':
-        return {
-          color: 'bg-red-100 text-red-700',
-          icon: <XCircle className="w-4 h-4" />,
-          text: 'Validation Failed'
-        };
-      case 'error':
-        return {
-          color: 'bg-orange-100 text-orange-700',
-          icon: <AlertTriangle className="w-4 h-4" />,
-          text: 'Validation Error'
-        };
-      case 'timeout':
-        return {
-          color: 'bg-yellow-100 text-yellow-700',
-          icon: <Clock className="w-4 h-4" />,
-          text: 'Validation Timeout'
-        };
-      case 'retrying':
-        return {
-          color: 'bg-blue-100 text-blue-700',
-          icon: <div className="w-4 h-4 rounded-full border-2 border-blue-300 border-t-blue-600 animate-spin" />,
-          text: `Retrying... (${retryCount}/3)`
-        };
-      default:
-        return {
-          color: 'bg-blue-100 text-blue-700',
-          icon: <Shield className="w-4 h-4" />,
-          text: 'Validating Security'
-        };
+  // ROUND 4 FIX: Progress animation with cleanup
+  useEffect(() => {
+    const targetProgress = validationProgress.percentage;
+    
+    if (targetProgress !== progress) {
+      setIsValidating(true);
+      
+      const animateProgress = () => {
+        setProgress(currentProgress => {
+          const diff = targetProgress - currentProgress;
+          if (Math.abs(diff) < 1) {
+            setIsValidating(false);
+            return targetProgress;
+          }
+          
+          const step = diff > 0 ? Math.max(1, diff * 0.1) : Math.min(-1, diff * 0.1);
+          return currentProgress + step;
+        });
+      };
+
+      progressTimerRef.current = setInterval(animateProgress, 50);
+
+      return () => {
+        if (progressTimerRef.current) {
+          clearInterval(progressTimerRef.current);
+          progressTimerRef.current = null;
+        }
+      };
     }
-  };
+  }, [validationProgress.percentage, progress]);
 
-  const statusConfig = getOverallStatusConfig();
+  // ROUND 4 FIX: Validation timeout with cleanup
+  useEffect(() => {
+    if (isValidating && validationSteps.length > 0) {
+      // Set a timeout for the validation process
+      validationTimeoutRef.current = setTimeout(() => {
+        setError('Validation timeout - taking longer than expected');
+        setIsValidating(false);
+        if (onValidationError) {
+          onValidationError(new Error('Validation timeout'));
+        }
+      }, 30000); // 30 second timeout
+
+      return () => {
+        if (validationTimeoutRef.current) {
+          clearTimeout(validationTimeoutRef.current);
+          validationTimeoutRef.current = null;
+        }
+      };
+    }
+  }, [isValidating, validationSteps.length, onValidationError]);
+
+  // ROUND 4 FIX: Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+      }
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+      }
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // ROUND 4 FIX: Handle step completion
+  const handleStepComplete = useCallback((stepIndex, result) => {
+    setValidationResults(prev => {
+      const newResults = new Map(prev);
+      newResults.set(stepIndex, result);
+      return newResults;
+    });
+
+    if (result.error) {
+      setError(result.error);
+      if (onValidationError) {
+        onValidationError(new Error(result.error));
+      }
+    }
+  }, [onValidationError]);
+
+  // ROUND 4 FIX: Handle retry
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setValidationResults(new Map());
+    setProgress(0);
+    setIsValidating(true);
+  }, []);
+
+  // ROUND 4 FIX: Get step icon based on status
+  const getStepIcon = useCallback((step) => {
+    if (step.hasError) return '❌';
+    if (step.isCompleted) return '✅';
+    if (step.isCurrent && isValidating) return '⏳';
+    if (step.isCurrent) return '🔄';
+    return '⭕';
+  }, [isValidating]);
+
+  // ROUND 4 FIX: Get step status text
+  const getStepStatusText = useCallback((step) => {
+    if (step.hasError) return 'Failed';
+    if (step.isCompleted) return 'Completed';
+    if (step.isCurrent && isValidating) return 'In Progress';
+    if (step.isCurrent) return 'Current';
+    return 'Pending';
+  }, [isValidating]);
+
+  if (!validationSteps || validationSteps.length === 0) {
+    return null;
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Shield className="w-5 h-5 text-purple-500" />
-            Security Validations
-          </CardTitle>
-          <Badge className={statusConfig.color}>
-            {statusConfig.icon}
-            <span className="ml-1">{statusConfig.text}</span>
-          </Badge>
+    <div
+      className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}
+      style={style}
+      data-testid="security-validation-indicator"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Security Validation
+        </h3>
+        <div className="text-sm text-gray-500">
+          {validationProgress.completed} of {validationProgress.total} steps
         </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* Progress Bar */}
-        {overallStatus === 'validating' && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Validating security requirements...</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-        )}
+      </div>
 
-        {/* Individual Validations */}
-        <div className="space-y-3">
-          {Object.entries(validations).map(([key, validation]) => {
-            const Icon = validationIcons[key];
-            return (
-              <div 
-                key={key} 
-                className={`p-3 rounded-lg border transition-all ${
-                  validation.status === 'passed' 
-                    ? 'border-green-200 bg-green-50' 
-                    : validation.status === 'failed'
-                    ? 'border-red-200 bg-red-50'
-                    : 'border-gray-200 bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${
-                      validation.status === 'passed' 
-                        ? 'text-green-600' 
-                        : validation.status === 'failed'
-                        ? 'text-red-600'
-                        : validation.status === 'error'
-                        ? 'text-orange-600'
-                        : validation.status === 'timeout'
-                        ? 'text-yellow-600'
-                        : 'text-gray-400'
-                    }`} />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm">{validationLabels[key]}</p>
-                        {validation.timestamp && (
-                          <span className="text-xs text-gray-400">
-                            {new Date(validation.timestamp).toLocaleTimeString()}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 mt-0.5">{validation.message}</p>
-                      
-                      {/* Enhanced details display */}
-                      {validation.details && (
-                        <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
-                          {validation.status === 'failed' && (
-                            <div className="text-red-600">
-                              <strong>Failure Reason:</strong> {validation.details.reason || 'Unknown error'}
-                              {validation.details.code && (
-                                <span className="ml-2 font-mono">({validation.details.code})</span>
-                              )}
-                            </div>
-                          )}
-                          {validation.status === 'error' && (
-                            <div className="text-orange-600">
-                              <strong>System Error:</strong> {validation.details.error || 'Connection failed'}
-                              {validation.details.retryable && (
-                                <span className="ml-2 text-blue-600">• Retrying automatically</span>
-                              )}
-                            </div>
-                          )}
-                          {validation.status === 'passed' && validation.details && (
-                            <div className="text-green-600">
-                              {validation.details.score && (
-                                <span>Score: {validation.details.score}</span>
-                              )}
-                              {validation.details.confidence && (
-                                <span className="ml-2">Confidence: {validation.details.confidence}%</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {getStatusIcon(validation.status)}
-                </div>
-              </div>
-            );
-          })}
+      {/* Progress Bar */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-gray-700">Overall Progress</span>
+          <span className="text-sm font-medium text-gray-900">
+            {Math.round(progress)}%
+          </span>
         </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all duration-300 ease-out ${
+              error ? 'bg-red-500' : 'bg-blue-500'
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
 
-        {/* Enhanced Summary Messages */}
-        {overallStatus === 'failed' && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
-            <div className="flex items-start gap-2">
-              <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-red-700 font-medium">
-                  Security validation failed
-                </p>
-                <p className="text-xs text-red-600 mt-1">
-                  The roast requires manual review before publication. Review failed validations above for details.
-                </p>
-                {errorDetails && (
-                  <div className="mt-2 p-2 bg-red-100 rounded border border-red-200">
-                    <p className="text-xs text-red-700">
-                      <strong>System Details:</strong> {errorDetails}
-                    </p>
-                  </div>
-                )}
-              </div>
+      {/* Error Display */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-red-500 mr-2">⚠️</span>
+              <span className="text-sm text-red-700">{error}</span>
             </div>
+            <button
+              onClick={handleRetry}
+              className="text-sm text-red-600 hover:text-red-800 underline"
+              data-testid="retry-validation"
+            >
+              Retry
+            </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {overallStatus === 'error' && (
-          <div className="mt-4 p-3 rounded-lg bg-orange-50 border border-orange-200">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-orange-700 font-medium">
-                  Validation system error
-                </p>
-                <p className="text-xs text-orange-600 mt-1">
-                  Unable to complete security validation due to system issues. Please try again.
-                </p>
-                <button 
-                  className="mt-2 px-3 py-1 bg-orange-100 hover:bg-orange-200 text-orange-700 text-xs rounded border border-orange-300 transition-colors"
-                  onClick={() => {
-                    setOverallStatus('validating');
-                    setRetryCount(prev => prev + 1);
-                    runValidations();
-                  }}
-                >
-                  Retry Validation
-                </button>
+      {/* Validation Steps */}
+      <div className="space-y-3">
+        {stepStatuses.map((step) => (
+          <div
+            key={step.index}
+            className={`flex items-center p-3 rounded-lg transition-colors duration-200 ${
+              step.isCurrent 
+                ? 'bg-blue-50 border border-blue-200' 
+                : step.isCompleted 
+                ? 'bg-green-50 border border-green-200'
+                : step.hasError
+                ? 'bg-red-50 border border-red-200'
+                : 'bg-gray-50 border border-gray-200'
+            }`}
+            data-testid={`validation-step-${step.index}`}
+          >
+            <span className="text-lg mr-3" role="img" aria-label={getStepStatusText(step)}>
+              {getStepIcon(step)}
+            </span>
+            
+            <div className="flex-1">
+              <div className="text-sm font-medium text-gray-900">
+                {step.name || `Step ${step.index + 1}`}
               </div>
-            </div>
-          </div>
-        )}
-
-        {overallStatus === 'timeout' && (
-          <div className="mt-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-            <div className="flex items-start gap-2">
-              <Clock className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-yellow-700 font-medium">
-                  Validation timeout
-                </p>
-                <p className="text-xs text-yellow-600 mt-1">
-                  Security validation is taking longer than expected. This may indicate system load or connectivity issues.
-                </p>
-                <button 
-                  className="mt-2 px-3 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xs rounded border border-yellow-300 transition-colors"
-                  onClick={() => {
-                    setOverallStatus('validating');
-                    setRetryCount(prev => prev + 1);
-                    runValidations();
-                  }}
-                >
-                  Retry Validation
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {overallStatus === 'passed' && (
-          <div className="mt-4 p-3 rounded-lg bg-green-50 border border-green-200">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-green-600" />
-              <div>
-                <p className="text-sm text-green-700 font-medium">
-                  All security validations passed!
-                </p>
-                <p className="text-xs text-green-600 mt-0.5">
-                  Proceeding with auto-approval. The roast meets all security requirements.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {overallStatus === 'retrying' && (
-          <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full border-2 border-blue-300 border-t-blue-600 animate-spin" />
-              <div>
-                <p className="text-sm text-blue-700 font-medium">
-                  Retrying validation (attempt {retryCount}/3)
-                </p>
-                <p className="text-xs text-blue-600 mt-0.5">
-                  Re-running security checks after previous attempt failed.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Metadata display for debugging */}
-        {metadata && (
-          <div className="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-gray-700 font-medium">Validation Details</p>
-                <div className="text-xs text-gray-600 mt-1 space-y-1">
-                  {metadata.validationId && (
-                    <div>ID: <span className="font-mono">{metadata.validationId}</span></div>
-                  )}
-                  {metadata.duration && (
-                    <div>Duration: {metadata.duration}ms</div>
-                  )}
-                  {metadata.orgId && (
-                    <div>Organization: <span className="font-mono">{metadata.orgId}</span></div>
-                  )}
+              {step.description && (
+                <div className="text-xs text-gray-600 mt-1">
+                  {step.description}
                 </div>
-              </div>
+              )}
+              {step.result && step.result.details && (
+                <div className="text-xs text-gray-500 mt-1">
+                  {step.result.details}
+                </div>
+              )}
+            </div>
+            
+            <div className={`text-xs px-2 py-1 rounded-full ${
+              step.hasError 
+                ? 'bg-red-100 text-red-700'
+                : step.isCompleted 
+                ? 'bg-green-100 text-green-700'
+                : step.isCurrent 
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-600'
+            }`}>
+              {getStepStatusText(step)}
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+
+      {/* Footer Actions */}
+      {validationProgress.completed === validationProgress.total && !error && (
+        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <span className="text-green-500 mr-2">✅</span>
+            <span className="text-sm text-green-700 font-medium">
+              All security validations completed successfully
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
