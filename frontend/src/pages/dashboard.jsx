@@ -270,6 +270,48 @@ export default function Dashboard() {
     return getConnectedAccountsForPlatform(platform).length >= 2;
   };
 
+  // Global connection limits by tier with explicit mapping (CodeRabbit Round 3)
+  const TIER_MAX_CONNECTIONS = {
+    free: 1,
+    pro: 2,
+    plus: 2,
+    creator: 2,
+    creator_plus: 2,
+    starter: 2 // Added for compatibility
+  };
+
+  // Compute global connection limits using useMemo for performance
+  const { planTier, maxGlobalConnections, isAtGlobalLimit, globalConnectionText, globalTooltipText } = useMemo(() => {
+    // Always compute current account count from actual data
+    const totalConnected = accounts?.length || 0;
+    
+    // Determine plan tier - fallback to 'free' if data is loading
+    const tier = (adminModeUser?.plan || usage?.plan || 'free').toLowerCase();
+    const maxConn = TIER_MAX_CONNECTIONS[tier] ?? 2; // Fallback for unknown tiers
+    
+    // Only mark as at limit when we have actual data and are at/over the limit
+    const atGlobalLimit = totalConnected >= maxConn;
+    
+    // Handle loading state gracefully without blocking UI
+    const isDataLoading = !adminModeUser && !usage;
+    
+    return {
+      planTier: tier,
+      maxGlobalConnections: maxConn,
+      isAtGlobalLimit: atGlobalLimit, // Fixed: Don't mark limit reached during loading
+      globalConnectionText: isDataLoading 
+        ? `${totalConnected} conexiones conectadas` 
+        : `${totalConnected}/${maxConn} conexiones utilizadas`,
+      globalTooltipText: isDataLoading
+        ? 'Cargando información del plan...'
+        : atGlobalLimit
+          ? (tier === 'free' 
+              ? 'Mejora a Pro para conectar más cuentas' 
+              : 'Has alcanzado el límite de tu plan')
+          : `Puedes conectar ${maxConn - totalConnected} cuenta${maxConn - totalConnected !== 1 ? 's' : ''} más`
+    };
+  }, [adminModeUser, usage, accounts]);
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'active':
@@ -947,27 +989,76 @@ export default function Dashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Global Connection Limits Status */}
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {globalConnectionText}
+                </span>
+                {isAtGlobalLimit && (
+                  <span 
+                    aria-label="Advertencia: Límite global de conexiones alcanzado" 
+                    role="img"
+                    className="text-amber-500"
+                  >
+                    ⚠️
+                  </span>
+                )}
+              </div>
+              <Badge variant={isAtGlobalLimit ? "destructive" : "outline"} className="text-xs">
+                Plan {planTier}
+              </Badge>
+            </div>
+            {isAtGlobalLimit && (
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                {globalTooltipText}
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {availablePlatforms.map((platform) => {
               const IconComponent = getPlatformIcon(platform);
-              const isAtLimit = isPlatformAtLimit(platform);
+              const isPlatformLimit = isPlatformAtLimit(platform);
               const isConnecting = connectingPlatform === platform;
+              const isDisabled = isAtGlobalLimit || isPlatformLimit || isConnecting;
+              
+              // Determine disable reason for accessibility
+              const disableReason = isAtGlobalLimit 
+                ? "Límite global alcanzado para tu plan"
+                : isPlatformLimit 
+                  ? "Límite alcanzado (máximo 2 cuentas por plataforma)"
+                  : "";
               
               return (
                 <Button
                   key={platform}
                   variant="outline"
                   className="flex items-center space-x-2 h-auto p-4"
-                  disabled={isAtLimit || isConnecting}
+                  disabled={isDisabled}
+                  aria-disabled={isDisabled}
+                  data-testid={`connect-${platform}-button`}
                   onClick={() => handleConnectPlatform(platform)}
-                  title={isAtLimit ? "Límite alcanzado (máximo 2 cuentas por plataforma)" : ""}
+                  title={isDisabled ? disableReason : `Conectar cuenta de ${getPlatformName(platform)}`}
                 >
                   <IconComponent className="h-5 w-5" />
                   <div className="text-left">
                     <div className="font-medium text-xs">
                       {getPlatformName(platform)}
                     </div>
-                    {isAtLimit ? (
+                    {isAtGlobalLimit ? (
+                      <div className="text-xs text-muted-foreground flex items-center space-x-1">
+                        <span>Límite global</span>
+                        <span 
+                          aria-label="Límite global alcanzado" 
+                          role="img"
+                          className="text-amber-500"
+                        >
+                          ⚠️
+                        </span>
+                      </div>
+                    ) : isPlatformLimit ? (
                       <div className="text-xs text-muted-foreground">
                         Límite alcanzado
                       </div>
@@ -978,7 +1069,10 @@ export default function Dashboard() {
                     )}
                   </div>
                   {isConnecting && (
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                    <div 
+                      className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+                      aria-label="Conectando..."
+                    />
                   )}
                 </Button>
               );
