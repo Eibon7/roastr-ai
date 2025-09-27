@@ -6185,3 +6185,83 @@ const result = await Promise.race([
 - Enhanced UI components with rich security feedback
 - 70+ new security tests covering all edge cases
 - Production-ready with comprehensive monitoring
+
+---
+
+## Issue #401 - CodeRabbit Review Fixes Implementation
+
+### Overview
+Implementation of CodeRabbit feedback from PR #429 focusing on connection limits optimization, GDPR text cleanup, and test robustness improvements. This addresses global plan-based connection limits (Free: 1, Pro+: 2), removes duplicate content, and enhances test quality.
+
+### Key Changes Applied
+
+#### 1. Dashboard Connection Limits Optimization
+**File**: `src/components/Dashboard.jsx`
+- **Performance Enhancement**: Replaced three separate functions with single `useMemo` hook
+- **Precomputed Values**: `planTier`, `maxConnections`, `isAtLimit`, `connectionText`, `tooltipText`
+- **Null Safety**: Comprehensive null checks with `!userProfile || !Array.isArray(connections)`
+- **Connection Logic**: Free tier = 1 connection, Pro+ tiers = 2 connections
+- **Memoization Benefits**: Reduced re-renders and eliminated redundant calculations
+
+#### 2. GDPR Text Cleanup
+**File**: `frontend/src/components/AjustesSettings.jsx`
+- **Duplicate Removal**: Eliminated duplicate GDPR/transparency paragraphs
+- **Text Preservation**: Maintained correct text "Los roasts autopublicados llevan firma de IA"
+- **Content Consolidation**: Streamlined GDPR section while preserving all compliance features
+
+#### 3. Test Robustness Improvements
+**File**: `tests/integration/tierValidationSecurity.test.js`
+- **Fake Timers**: Added `jest.useFakeTimers()` for timeout tests
+- **Enhanced Mocking**: Improved Supabase client mocking with proper method chaining
+- **Mock Consolidation**: Unified mock definitions with `createMockSupabaseClient()`
+- **Timeout Testing**: Used `jest.advanceTimersByTime()` for reliable timeout simulation
+
+#### 4. Connection Limits Logic Clarification
+**Global vs Platform Limits**:
+- **Global Limits**: Plan-based restrictions across all platforms (Free: 1 total, Pro+: 2 total)
+- **Platform Limits**: Per-platform restrictions (2 connections per individual platform)
+- **Validation Logic**: Buttons disabled when global limit reached AND platform not connected
+- **User Experience**: Clear messaging about both types of limitations
+
+### Technical Implementation Details
+
+#### Performance Optimization
+```javascript
+// Before: Three separate function calls per render
+const isAtGlobalLimit = () => { /* calculations */ };
+const getConnectionLimitText = () => { /* calculations */ };
+const getUpgradeTooltip = () => { /* calculations */ };
+
+// After: Single memoized computation
+const { planTier, maxConnections, isAtLimit, connectionText, tooltipText } = useMemo(() => {
+  // All calculations in one place with proper null safety
+}, [userProfile, connections]);
+```
+
+#### Test Improvements
+```javascript
+// Enhanced timeout testing with fake timers
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
+
+// Reliable timeout simulation
+jest.advanceTimersByTime(8000);
+```
+
+### Quality Assurance
+- **No Functional Changes**: All existing functionality preserved
+- **Performance Benefits**: Reduced re-renders and memory usage
+- **Enhanced Robustness**: Better error handling and null safety
+- **Test Reliability**: Fake timers eliminate timing-dependent test failures
+- **Code Maintainability**: Consolidated logic and cleaner structure
+
+### Documentation Updates
+- **spec.md**: Added Issue #401 documentation section
+- **Planning**: Comprehensive implementation plan at `docs/plan/review-429.md`
+- **Test Coverage**: Enhanced test robustness and reliability
+
+**CodeRabbit Feedback Status: 100% Addressed ✅**
+- All performance optimization requests implemented
+- GDPR content cleanup completed
+- Test improvements with fake timers applied
+- Documentation clarity enhanced
