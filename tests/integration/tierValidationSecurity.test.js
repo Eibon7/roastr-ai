@@ -255,28 +255,37 @@ describeFunction('Tier Validation Security Test Suite', () => {
     });
 
     test('should fail closed on timeout', async () => {
-      // Mock slow database response
+      // Mock slow database response using fake timers
       const originalQuery = supabase.from;
+      let timeoutId;
+      
       supabase.from = jest.fn().mockImplementation(() => ({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockImplementation(() => 
-              new Promise(resolve => setTimeout(resolve, 10000)) // 10 second delay
+              new Promise(resolve => {
+                timeoutId = setTimeout(resolve, 10000); // 10 second delay
+              })
             )
           })
         })
       }));
       
-      const startTime = Date.now();
-      const result = await costControl.validateAction('timeout-test', 'generate_roast', {
+      // Start the validation action
+      const validationPromise = costControl.validateAction('timeout-test', 'generate_roast', {
         platform: 'twitter'
       });
-      const endTime = Date.now();
+      
+      // Fast-forward time to trigger timeout
+      jest.advanceTimersByTime(8000);
+      
+      const result = await validationPromise;
       
       expect(result.allowed).toBe(false);
-      expect(endTime - startTime).toBeLessThan(8000); // Should timeout before 8 seconds (CI-friendly)
+      expect(result.reason).toMatch(/timeout|error/i);
       
-      // Restore original method
+      // Cleanup
+      if (timeoutId) clearTimeout(timeoutId);
       supabase.from = originalQuery;
     });
   });

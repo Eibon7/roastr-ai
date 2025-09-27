@@ -266,13 +266,34 @@ export default function Dashboard() {
     return accounts?.filter(account => account.platform === platform) || [];
   };
 
-  // Global connection limits per plan (Issue #401)
-  const isAtGlobalLimit = () => {
-    const planTier = (adminModeUser?.plan || usage?.plan || 'free').toLowerCase();
+  // Precompute plan tier and connection limits using useMemo for better performance (Issue #401)
+  const { planTier, maxConnections, isAtGlobalLimit, connectionText, tooltipText } = useMemo(() => {
+    // Add null checks to prevent errors
+    if (!adminModeUser && !usage) {
+      return {
+        planTier: 'free',
+        maxConnections: 1,
+        isAtGlobalLimit: true,
+        connectionText: '0/1 connections used',
+        tooltipText: 'Loading...'
+      };
+    }
+
+    const tier = (adminModeUser?.plan || usage?.plan || 'free').toLowerCase();
+    const maxConn = tier === 'free' ? 1 : 2;
     const totalConnected = accounts?.length || 0;
-    const maxConnections = planTier === 'free' ? 1 : 2;
-    return totalConnected >= maxConnections;
-  };
+    const atLimit = totalConnected >= maxConn;
+
+    return {
+      planTier: tier,
+      maxConnections: maxConn,
+      isAtGlobalLimit: atLimit,
+      connectionText: `${totalConnected}/${maxConn} connections used`,
+      tooltipText: tier === 'free' 
+        ? 'Upgrade to Pro for more connections'
+        : 'Maximum connections reached for your plan'
+    };
+  }, [adminModeUser, usage, accounts]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -945,16 +966,25 @@ export default function Dashboard() {
       {/* Connect New Accounts */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Plus className="h-5 w-5" />
-            <span>Conectar otras cuentas</span>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Plus className="h-5 w-5" />
+              <span>Conectar otras cuentas</span>
+            </div>
+            <div className="text-sm text-muted-foreground font-normal">
+              {connectionText}
+              {isAtGlobalLimit && (
+                <span className="ml-2 text-orange-600" title={tooltipText}>
+                  ⚠️
+                </span>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {availablePlatforms.map((platform) => {
               const IconComponent = getPlatformIcon(platform);
-              const isAtLimit = isAtGlobalLimit();
               const isConnecting = connectingPlatform === platform;
               
               return (
@@ -962,22 +992,22 @@ export default function Dashboard() {
                   key={platform}
                   variant="outline"
                   className="flex items-center space-x-2 h-auto p-4"
-                  disabled={isAtLimit || isConnecting}
+                  disabled={isAtGlobalLimit || isConnecting}
                   onClick={() => handleConnectPlatform(platform)}
-                  title={isAtLimit ? `Límite alcanzado (plan ${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase()} permite ${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '1' : '2'} conexión${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '' : 'es'} total${(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '' : 'es'})` : ""}
+                  title={isAtGlobalLimit ? tooltipText : ""}
                 >
                   <IconComponent className="h-5 w-5" />
                   <div className="text-left">
                     <div className="font-medium text-xs">
                       {getPlatformName(platform)}
                     </div>
-                    {isAtLimit ? (
+                    {isAtGlobalLimit ? (
                       <div className="text-xs text-muted-foreground">
                         Límite alcanzado
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        {accounts?.length || 0}/{(adminModeUser?.plan || usage?.plan || 'free').toLowerCase() === 'free' ? '1' : '2'} conexiones
+                        {connectionText.replace('connections used', 'conexiones')}
                       </div>
                     )}
                   </div>
