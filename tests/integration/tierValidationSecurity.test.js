@@ -6,68 +6,48 @@
 const { describe, test, expect, beforeEach, afterEach, beforeAll, afterAll } = require('@jest/globals');
 const CostControlService = require('../../src/services/costControl');
 
-// Mock Supabase for integration tests
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    from: jest.fn().mockReturnValue({
-      insert: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { 
-              id: 'mock-org-id',
-              name: 'Mock Organization',
-              subscription_tier: 'starter',
-              monthly_cost_limit: 100,
-              monthly_usage: 0
-            },
-            error: null
-          })
-        })
-      }),
-      delete: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null })
-      })
-    })
-  }))
-}));
-
 // Mock external dependencies
 jest.mock('../../src/utils/logger');
 
-// Mock Supabase for integration tests
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => ({
-    from: jest.fn().mockReturnValue({
-      insert: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { 
-              id: 'mock-org-id',
-              name: 'Mock Organization',
-              subscription_tier: 'starter',
-              monthly_cost_limit: 100,
-              monthly_usage: 0
-            },
-            error: null
-          })
-        })
-      }),
-      delete: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null })
-      }),
+// Enhanced Supabase mock with better method chaining for integration tests
+const createMockSupabaseClient = () => ({
+  from: jest.fn().mockReturnValue({
+    insert: jest.fn().mockReturnValue({
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { 
-              id: 'mock-org-id',
-              subscription_tier: 'starter'
-            },
-            error: null
-          })
+        single: jest.fn().mockResolvedValue({
+          data: { 
+            id: 'mock-org-id',
+            name: 'Mock Organization',
+            subscription_tier: 'starter',
+            monthly_cost_limit: 100,
+            monthly_usage: 0
+          },
+          error: null
         })
       })
+    }),
+    delete: jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ error: null })
+    }),
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({
+          data: { 
+            id: 'mock-org-id',
+            subscription_tier: 'starter'
+          },
+          error: null
+        })
+      })
+    }),
+    update: jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ error: null })
     })
-  }))
+  })
+});
+
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => createMockSupabaseClient())
 }));
 
 // Skip these tests in mock mode as they require real database integration
@@ -116,6 +96,9 @@ describeFunction('Tier Validation Security Test Suite', () => {
   });
 
   beforeEach(async () => {
+    // Setup fake timers for deterministic timeout testing
+    jest.useFakeTimers();
+    
     // Reset usage for all test organizations
     for (const org of Object.values(testOrganizations)) {
       if (org) {
@@ -128,6 +111,11 @@ describeFunction('Tier Validation Security Test Suite', () => {
           .eq('id', org.id);
       }
     }
+  });
+
+  afterEach(() => {
+    // Restore real timers after each test
+    jest.useRealTimers();
   });
 
   describe('1. Race Condition Testing', () => {

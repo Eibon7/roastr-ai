@@ -661,9 +661,6 @@ const AjustesSettings = ({ user, onNotification }) => {
                 <p className="text-xs bg-amber-100 rounded p-2 border border-amber-300">
                   <strong>📋 GDPR:</strong> Los roasts autopublicados llevan firma de IA
                 </p>
-                <p className="text-xs text-amber-800 mt-2">
-                  Los roasts autopublicados llevan firma de IA.
-                </p>
               </div>
             </div>
           </div>

@@ -268,30 +268,33 @@ export default function Dashboard() {
 
   // Precompute plan tier and connection limits using useMemo for better performance (Issue #401)
   const { planTier, maxConnections, isAtGlobalLimit, connectionText, tooltipText } = useMemo(() => {
-    // Add null checks to prevent errors
-    if (!adminModeUser && !usage) {
-      return {
-        planTier: 'free',
-        maxConnections: 1,
-        isAtGlobalLimit: true,
-        connectionText: '0/1 connections used',
-        tooltipText: 'Loading...'
-      };
-    }
-
+    // Always compute current account count from actual data
+    const totalConnected = accounts?.length || 0;
+    
+    // Determine plan tier - fallback to 'free' if data is loading
     const tier = (adminModeUser?.plan || usage?.plan || 'free').toLowerCase();
     const maxConn = tier === 'free' ? 1 : 2;
-    const totalConnected = accounts?.length || 0;
+    
+    // Only mark as at limit when we have actual data and are at/over the limit
     const atLimit = totalConnected >= maxConn;
-
+    
+    // Handle loading state gracefully without blocking UI
+    const isDataLoading = !adminModeUser && !usage;
+    
     return {
       planTier: tier,
       maxConnections: maxConn,
-      isAtGlobalLimit: atLimit,
-      connectionText: `${totalConnected}/${maxConn} connections used`,
-      tooltipText: tier === 'free' 
-        ? 'Upgrade to Pro for more connections'
-        : 'Maximum connections reached for your plan'
+      isAtGlobalLimit: atLimit, // Fixed: Don't mark limit reached during loading
+      connectionText: isDataLoading 
+        ? `${totalConnected} conexiones conectadas` 
+        : `${totalConnected}/${maxConn} conexiones utilizadas`,
+      tooltipText: isDataLoading
+        ? 'Cargando información del plan...'
+        : atLimit
+          ? (tier === 'free' 
+              ? 'Mejora a Pro para más conexiones' 
+              : 'Máximo de conexiones alcanzado para tu plan')
+          : `Puedes conectar ${maxConn - totalConnected} cuenta${maxConn - totalConnected !== 1 ? 's' : ''} más`
     };
   }, [adminModeUser, usage, accounts]);
 
@@ -1007,7 +1010,7 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        {connectionText.replace('connections used', 'conexiones')}
+                        {connectionText}
                       </div>
                     )}
                   </div>

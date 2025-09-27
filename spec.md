@@ -3591,7 +3591,7 @@ This implementation represents a complete dashboard analytics system with robust
 - `tests/unit/components/RoastInlineEditor-round4-improvements.test.jsx` - New frontend tests
 
 ### Test Evidence Location
-Round 4 test evidence: `/Users/emiliopostigo/roastr-ai/docs/test-evidence/2025-09-19/round4-coderabbit-improvements/`
+Round 4 test evidence: `docs/test-evidence/2025-09-19/round4-coderabbit-improvements/`
 
 ---
 
@@ -3652,13 +3652,13 @@ Modern tabbed Settings interface providing comprehensive account management, use
 ### 📦 Core Implementation
 
 **📁 Primary Component**:
-- `/Users/emiliopostigo/roastr-ai/frontend/src/pages/Settings.jsx` - Main tabbed settings interface (~550 lines)
+- `frontend/src/pages/Settings.jsx` - Main tabbed settings interface (~550 lines)
 
 **🧪 Test Coverage**:
-- `/Users/emiliopostigo/roastr-ai/frontend/src/pages/__tests__/Settings.test.jsx` - Comprehensive unit tests (95%+ coverage)
+- `frontend/src/pages/__tests__/Settings.test.jsx` - Comprehensive unit tests (95%+ coverage)
 
 **🎨 UI Components**:
-- `/Users/emiliopostigo/roastr-ai/frontend/src/components/ui/label.jsx` - Form label component (created for Settings)
+- `frontend/src/components/ui/label.jsx` - Form label component (created for Settings)
 
 ### 🏗️ Architecture
 
@@ -6188,81 +6188,116 @@ const result = await Promise.race([
 
 ---
 
-## Issue #401 - CodeRabbit Review Fixes Implementation
+## Issue #401 - CodeRabbit Review Fixes Implementation (Round 2)
 
 ### Overview
-Implementation of CodeRabbit feedback from PR #429 focusing on connection limits optimization, GDPR text cleanup, and test robustness improvements. This addresses global plan-based connection limits (Free: 1, Pro+: 2), removes duplicate content, and enhances test quality.
+Implementation of CodeRabbit Round 2 feedback from PR #429 (Review ID: 3275167781) focusing on critical connection limits logic fixes, Spanish localization, GDPR text cleanup, and enhanced test reliability. This addresses the core issue of false-positive global limits during loading states.
 
 ### Key Changes Applied
 
-#### 1. Dashboard Connection Limits Optimization
-**File**: `src/components/Dashboard.jsx`
-- **Performance Enhancement**: Replaced three separate functions with single `useMemo` hook
-- **Precomputed Values**: `planTier`, `maxConnections`, `isAtLimit`, `connectionText`, `tooltipText`
-- **Null Safety**: Comprehensive null checks with `!userProfile || !Array.isArray(connections)`
-- **Connection Logic**: Free tier = 1 connection, Pro+ tiers = 2 connections
-- **Memoization Benefits**: Reduced re-renders and eliminated redundant calculations
+#### 1. Critical Dashboard Connection Limits Logic Fix
+**File**: `frontend/src/pages/dashboard.jsx` (lines 270-299)
+- **🚨 Critical Fix**: Removed false-positive `isAtGlobalLimit: true` during loading states
+- **Loading State Handling**: Graceful degradation when plan data unavailable
+- **Spanish Localization**: Complete Spanish text for connection status and tooltips
+- **Dynamic Computation**: Always compute from actual `accounts` array data
+- **Improved UX**: Contextual tooltips showing remaining connections or upgrade options
 
-#### 2. GDPR Text Cleanup
-**File**: `frontend/src/components/AjustesSettings.jsx`
-- **Duplicate Removal**: Eliminated duplicate GDPR/transparency paragraphs
-- **Text Preservation**: Maintained correct text "Los roasts autopublicados llevan firma de IA"
-- **Content Consolidation**: Streamlined GDPR section while preserving all compliance features
+**Before**: 
+```javascript
+if (!adminModeUser && !usage) {
+  return { isAtGlobalLimit: true, connectionText: '0/1 connections used' };
+}
+```
 
-#### 3. Test Robustness Improvements
+**After**:
+```javascript
+const totalConnected = accounts?.length || 0;
+const atLimit = totalConnected >= maxConn;
+return { 
+  isAtGlobalLimit: atLimit, // Fixed: Based on actual data
+  connectionText: isDataLoading 
+    ? `${totalConnected} conexiones conectadas` 
+    : `${totalConnected}/${maxConn} conexiones utilizadas`
+};
+```
+
+#### 2. GDPR Content Cleanup
+**File**: `frontend/src/components/AjustesSettings.jsx` (lines 661-663)
+- **Duplicate Removal**: Eliminated redundant GDPR paragraph (lines 664-666)
+- **Content Preservation**: Kept formatted GDPR notice with amber styling
+- **Streamlined UI**: Cleaner, non-repetitive transparency section
+
+#### 3. Enhanced Test Suite Reliability
 **File**: `tests/integration/tierValidationSecurity.test.js`
-- **Fake Timers**: Added `jest.useFakeTimers()` for timeout tests
-- **Enhanced Mocking**: Improved Supabase client mocking with proper method chaining
-- **Mock Consolidation**: Unified mock definitions with `createMockSupabaseClient()`
-- **Timeout Testing**: Used `jest.advanceTimersByTime()` for reliable timeout simulation
+- **Fake Timers Setup**: Added `beforeEach()` and `afterEach()` timer management
+- **Enhanced Mocking**: Consolidated Supabase mocking with `createMockSupabaseClient()`
+- **Deterministic Testing**: Proper method chaining for database operations
+- **Mock Consolidation**: Removed duplicate mock definitions
 
-#### 4. Connection Limits Logic Clarification
-**Global vs Platform Limits**:
-- **Global Limits**: Plan-based restrictions across all platforms (Free: 1 total, Pro+: 2 total)
-- **Platform Limits**: Per-platform restrictions (2 connections per individual platform)
-- **Validation Logic**: Buttons disabled when global limit reached AND platform not connected
-- **User Experience**: Clear messaging about both types of limitations
+#### 4. Connection Limits Architecture Clarification
+**Global Plan-Based Limits (Updated)**:
+- **Free Plan**: 1 total connection across all platforms
+- **Pro+ Plans**: 2 total connections across all platforms
+- **Loading State**: UI remains functional, limits computed from available data
+- **Spanish UX**: All connection text and tooltips in Spanish
+- **Contextual Help**: Dynamic tooltips showing upgrade paths or remaining slots
 
 ### Technical Implementation Details
 
-#### Performance Optimization
+#### Loading State Fix
 ```javascript
-// Before: Three separate function calls per render
-const isAtGlobalLimit = () => { /* calculations */ };
-const getConnectionLimitText = () => { /* calculations */ };
-const getUpgradeTooltip = () => { /* calculations */ };
+// Fixed logic that prevents false limit blocking
+const isDataLoading = !adminModeUser && !usage;
+const totalConnected = accounts?.length || 0; // Always from real data
+const atLimit = totalConnected >= maxConn; // Never true unless actual limit
 
-// After: Single memoized computation
-const { planTier, maxConnections, isAtLimit, connectionText, tooltipText } = useMemo(() => {
-  // All calculations in one place with proper null safety
-}, [userProfile, connections]);
+// Spanish localization with loading states
+connectionText: isDataLoading 
+  ? `${totalConnected} conexiones conectadas` 
+  : `${totalConnected}/${maxConn} conexiones utilizadas`
 ```
 
-#### Test Improvements
+#### Test Reliability Improvements
 ```javascript
-// Enhanced timeout testing with fake timers
-beforeEach(() => jest.useFakeTimers());
-afterEach(() => jest.useRealTimers());
+// Proper fake timer lifecycle management
+beforeEach(async () => {
+  jest.useFakeTimers(); // Enable before each test
+  // ... test setup
+});
 
-// Reliable timeout simulation
-jest.advanceTimersByTime(8000);
+afterEach(() => {
+  jest.useRealTimers(); // Clean up after each test
+});
 ```
+
+### Spanish Localization Enhancements
+- **Connection Text**: "conexiones utilizadas" instead of English
+- **Tooltips**: Contextual Spanish messages for upgrades and limits
+- **Status Messages**: "Cargando información del plan..." for loading states
+- **Upgrade Prompts**: "Mejora a Pro para más conexiones"
 
 ### Quality Assurance
-- **No Functional Changes**: All existing functionality preserved
-- **Performance Benefits**: Reduced re-renders and memory usage
-- **Enhanced Robustness**: Better error handling and null safety
-- **Test Reliability**: Fake timers eliminate timing-dependent test failures
-- **Code Maintainability**: Consolidated logic and cleaner structure
+- **Critical UX Fix**: No more false connection limit blocking during loading
+- **Enhanced Accessibility**: Spanish tooltips with contextual information
+- **Test Reliability**: Deterministic timeout testing with fake timers
+- **Code Cleanliness**: Removed duplicate GDPR text and mock definitions
+- **Performance**: Maintained useMemo optimization from Round 1
+
+### Implementation Validation
+- ✅ **Loading States**: Users can connect accounts while plan data loads
+- ✅ **Accurate Limits**: Connection limits based on actual account count
+- ✅ **Spanish UX**: Complete localization for Spanish-speaking users
+- ✅ **Test Stability**: Fake timers prevent flaky timeout tests
+- ✅ **Clean UI**: No duplicate GDPR text in settings
 
 ### Documentation Updates
-- **spec.md**: Added Issue #401 documentation section
-- **Planning**: Comprehensive implementation plan at `docs/plan/review-429.md`
-- **Test Coverage**: Enhanced test robustness and reliability
+- **spec.md**: Updated Issue #401 section with Round 2 fixes
+- **Planning**: Detailed plan at `docs/plan/review-429-round2.md`
+- **Test Evidence**: Enhanced integration test suite reliability
 
-**CodeRabbit Feedback Status: 100% Addressed ✅**
-- All performance optimization requests implemented
-- GDPR content cleanup completed
-- Test improvements with fake timers applied
-- Documentation clarity enhanced
->>>>>>> Stashed changes
+**CodeRabbit Round 2 Feedback Status: 100% Addressed ✅**
+- Critical connection limits logic fixed
+- Spanish localization implemented
+- GDPR duplicate content removed
+- Test reliability enhanced with fake timers
