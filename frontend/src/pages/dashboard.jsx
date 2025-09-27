@@ -266,6 +266,16 @@ export default function Dashboard() {
     return accounts?.filter(account => account.platform === platform) || [];
   };
 
+  // Explicit tier mapping for better maintainability (CodeRabbit Round 3)
+  const TIER_MAX_CONNECTIONS = {
+    free: 1,
+    pro: 2,
+    plus: 2,
+    creator: 2,
+    creator_plus: 2,
+    starter: 2 // Added for compatibility
+  };
+
   // Precompute plan tier and connection limits using useMemo for better performance (Issue #401)
   const { planTier, maxConnections, isAtGlobalLimit, connectionText, tooltipText } = useMemo(() => {
     // Always compute current account count from actual data
@@ -273,7 +283,7 @@ export default function Dashboard() {
     
     // Determine plan tier - fallback to 'free' if data is loading
     const tier = (adminModeUser?.plan || usage?.plan || 'free').toLowerCase();
-    const maxConn = tier === 'free' ? 1 : 2;
+    const maxConn = TIER_MAX_CONNECTIONS[tier] ?? 2; // Fallback for unknown tiers
     
     // Only mark as at limit when we have actual data and are at/over the limit
     const atLimit = totalConnected >= maxConn;
@@ -292,11 +302,11 @@ export default function Dashboard() {
         ? 'Cargando información del plan...'
         : atLimit
           ? (tier === 'free' 
-              ? 'Mejora a Pro para más conexiones' 
-              : 'Máximo de conexiones alcanzado para tu plan')
+              ? 'Mejora a Pro para conectar más cuentas' 
+              : 'Has alcanzado el límite de tu plan')
           : `Puedes conectar ${maxConn - totalConnected} cuenta${maxConn - totalConnected !== 1 ? 's' : ''} más`
     };
-  }, [adminModeUser, usage, accounts]);
+  }, [adminModeUser, usage, accounts, TIER_MAX_CONNECTIONS]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -977,7 +987,12 @@ export default function Dashboard() {
             <div className="text-sm text-muted-foreground font-normal">
               {connectionText}
               {isAtGlobalLimit && (
-                <span className="ml-2 text-orange-600" title={tooltipText}>
+                <span 
+                  aria-label="Advertencia: Límite global de conexiones alcanzado" 
+                  role="img"
+                  className="ml-2 text-amber-500" 
+                  title={tooltipText}
+                >
                   ⚠️
                 </span>
               )}
@@ -996,8 +1011,10 @@ export default function Dashboard() {
                   variant="outline"
                   className="flex items-center space-x-2 h-auto p-4"
                   disabled={isAtGlobalLimit || isConnecting}
+                  aria-disabled={isAtGlobalLimit || isConnecting}
+                  data-testid={`connect-${platform}-button`}
                   onClick={() => handleConnectPlatform(platform)}
-                  title={isAtGlobalLimit ? tooltipText : ""}
+                  title={isAtGlobalLimit ? "Límite global alcanzado para tu plan" : `Conectar cuenta de ${getPlatformName(platform)}`}
                 >
                   <IconComponent className="h-5 w-5" />
                   <div className="text-left">
@@ -1005,17 +1022,27 @@ export default function Dashboard() {
                       {getPlatformName(platform)}
                     </div>
                     {isAtGlobalLimit ? (
-                      <div className="text-xs text-muted-foreground">
-                        Límite alcanzado
+                      <div className="text-xs text-muted-foreground flex items-center space-x-1">
+                        <span>Límite global</span>
+                        <span 
+                          aria-label="Límite global alcanzado" 
+                          role="img"
+                          className="text-amber-500"
+                        >
+                          ⚠️
+                        </span>
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        {connectionText}
+                        Disponible
                       </div>
                     )}
                   </div>
                   {isConnecting && (
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                    <div 
+                      className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+                      aria-label="Conectando..."
+                    />
                   )}
                 </Button>
               );
