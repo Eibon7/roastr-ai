@@ -14,6 +14,11 @@ class IngestorTestUtils {
     this.setupComplete = false;
     this.mockStoredComments = [];
     this.mockStoredJobs = [];
+    
+    // Set up global mock storage for stateful testing
+    if (typeof global !== 'undefined') {
+      global.mockCommentStorage = global.mockCommentStorage || [];
+    }
   }
 
   /**
@@ -216,8 +221,9 @@ class IngestorTestUtils {
     const { mockMode } = require('../../src/config/mockMode');
     
     if (mockMode.isMockMode) {
-      // Return mock data based on organization
-      return this.mockStoredComments || [];
+      // Return mock data from global storage
+      const storage = global.mockCommentStorage || [];
+      return storage.filter(comment => comment.organization_id === organizationId);
     }
 
     const { data, error } = await this.supabase
@@ -275,7 +281,8 @@ class IngestorTestUtils {
     const { mockMode } = require('../../src/config/mockMode');
     
     if (mockMode.isMockMode) {
-      return this.mockStoredComments.filter(c => 
+      const storage = global.mockCommentStorage || [];
+      return storage.filter(c => 
         c.organization_id === organizationId && 
         c.platform_comment_id === platformCommentId
       ).length;
@@ -377,6 +384,19 @@ class IngestorTestUtils {
    * Clean up test data from database
    */
   async cleanupTestData() {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      // Clear global mock storage
+      if (typeof global !== 'undefined') {
+        global.mockCommentStorage = [];
+        global.mockJobStorage = [];
+        global.mockOrgStorage = [];
+        global.mockConfigStorage = [];
+      }
+      return;
+    }
+    
     if (!this.supabase) return;
 
     try {

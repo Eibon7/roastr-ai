@@ -21,7 +21,8 @@ jest.mock('../../../src/config/supabase', () => ({
     single: jest.fn(),
     gte: jest.fn().mockReturnThis(),
     count: jest.fn(),
-    insert: jest.fn().mockReturnThis()
+    insert: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis()
   }
 }));
 
@@ -45,6 +46,16 @@ jest.mock('../../../src/services/transparencyService', () => ({
   applyTransparency: jest.fn()
 }));
 
+jest.mock('../../../src/services/planLimitsService', () => ({
+  getPlanLimits: jest.fn().mockResolvedValue({
+    features: { autoApproval: true }
+  }),
+  getDailyAutoApprovalLimits: jest.fn().mockResolvedValue({
+    hourly: 50,
+    daily: 200
+  })
+}));
+
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const { logger } = require('../../../src/utils/logger');
 const transparencyService = require('../../../src/services/transparencyService');
@@ -62,7 +73,8 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockReturnThis(),
       gte: jest.fn().mockReturnThis(),
-      count: jest.fn().mockReturnThis()
+      count: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis()
     });
   });
 

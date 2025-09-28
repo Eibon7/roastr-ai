@@ -531,7 +531,6 @@ class GenerateReplyWorker extends BaseWorker {
     });
     throw jobError;
   }
-  }
   
   /**
    * Get comment from database
