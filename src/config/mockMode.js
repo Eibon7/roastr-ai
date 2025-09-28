@@ -72,18 +72,21 @@ class MockModeManager {
         }
       },
       from: (table) => {
-        const queries = {}; // Store query conditions
+        let currentQueries = {}; // Single queries object per table query
         
         const chainable = {
           select: (columns = '*') => {
-            queries.select = columns;
+            currentQueries.select = columns;
             return chainable;
           },
           eq: (column, value) => {
-            queries[column] = value;
+            currentQueries[column] = value;
             return chainable;
           },
           single: () => {
+            // Make a copy of queries for this specific call to avoid pollution
+            const queries = { ...currentQueries };
+            
             if (table === 'integration_configs') {
               return Promise.resolve({
                 data: {
