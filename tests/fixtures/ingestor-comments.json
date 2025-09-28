@@ -1,0 +1,191 @@
+{
+  "duplicateComments": [
+    {
+      "platform_comment_id": "duplicate_123",
+      "platform_user_id": "user_456",
+      "platform_username": "testuser1",
+      "original_text": "This is a duplicate comment for testing",
+      "platform": "twitter",
+      "metadata": {
+        "created_at": "2024-01-15T10:00:00Z",
+        "test_scenario": "deduplication"
+      }
+    },
+    {
+      "platform_comment_id": "duplicate_123",
+      "platform_user_id": "user_456", 
+      "platform_username": "testuser1",
+      "original_text": "This is a duplicate comment for testing",
+      "platform": "twitter",
+      "metadata": {
+        "created_at": "2024-01-15T10:01:00Z",
+        "test_scenario": "deduplication"
+      }
+    }
+  ],
+  "orderedComments": [
+    {
+      "platform_comment_id": "ordered_001",
+      "platform_user_id": "user_001",
+      "platform_username": "user1",
+      "original_text": "First comment in order",
+      "platform": "twitter",
+      "created_at": "2024-01-15T10:00:00Z",
+      "metadata": { "order": 1 }
+    },
+    {
+      "platform_comment_id": "ordered_002", 
+      "platform_user_id": "user_002",
+      "platform_username": "user2",
+      "original_text": "Second comment in order",
+      "platform": "twitter",
+      "created_at": "2024-01-15T10:01:00Z",
+      "metadata": { "order": 2 }
+    },
+    {
+      "platform_comment_id": "ordered_003",
+      "platform_user_id": "user_003", 
+      "platform_username": "user3",
+      "original_text": "Third comment in order",
+      "platform": "twitter",
+      "created_at": "2024-01-15T10:02:00Z",
+      "metadata": { "order": 3 }
+    }
+  ],
+  "retryComments": [
+    {
+      "platform_comment_id": "retry_network_fail",
+      "platform_user_id": "user_retry_1",
+      "platform_username": "retryuser1",
+      "original_text": "Comment that will cause network error",
+      "platform": "twitter",
+      "metadata": {
+        "test_scenario": "network_failure",
+        "should_retry": true
+      }
+    },
+    {
+      "platform_comment_id": "retry_auth_fail",
+      "platform_user_id": "user_retry_2", 
+      "platform_username": "retryuser2",
+      "original_text": "Comment that will cause auth error",
+      "platform": "twitter",
+      "metadata": {
+        "test_scenario": "auth_failure",
+        "should_retry": false
+      }
+    }
+  ],
+  "acknowledgmentComments": [
+    {
+      "platform_comment_id": "ack_success",
+      "platform_user_id": "user_ack_1",
+      "platform_username": "ackuser1", 
+      "original_text": "Comment that will be acknowledged successfully",
+      "platform": "twitter",
+      "metadata": {
+        "test_scenario": "successful_ack"
+      }
+    },
+    {
+      "platform_comment_id": "ack_failure",
+      "platform_user_id": "user_ack_2",
+      "platform_username": "ackuser2",
+      "original_text": "Comment that will fail acknowledgment",
+      "platform": "twitter", 
+      "metadata": {
+        "test_scenario": "failed_ack"
+      }
+    }
+  ],
+  "backoffComments": [
+    {
+      "platform_comment_id": "backoff_test_1",
+      "platform_user_id": "user_backoff_1",
+      "platform_username": "backoffuser1",
+      "original_text": "First comment for backoff testing",
+      "platform": "twitter",
+      "metadata": {
+        "test_scenario": "exponential_backoff",
+        "retry_attempt": 1
+      }
+    },
+    {
+      "platform_comment_id": "backoff_test_2", 
+      "platform_user_id": "user_backoff_2",
+      "platform_username": "backoffuser2",
+      "original_text": "Second comment for backoff testing",
+      "platform": "twitter",
+      "metadata": {
+        "test_scenario": "exponential_backoff",
+        "retry_attempt": 2
+      }
+    }
+  ],
+  "organizations": [
+    {
+      "id": "test-org-dedup",
+      "name": "Test Organization - Deduplication",
+      "plan": "pro",
+      "settings": {
+        "auto_approval": false,
+        "enable_deduplication": true
+      },
+      "created_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "test-org-order",
+      "name": "Test Organization - Order Processing", 
+      "plan": "free",
+      "settings": {
+        "auto_approval": false,
+        "preserve_order": true
+      },
+      "created_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "test-org-retry",
+      "name": "Test Organization - Retry Testing",
+      "plan": "pro", 
+      "settings": {
+        "auto_approval": false,
+        "max_retries": 3
+      },
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "integrationConfigs": [
+    {
+      "id": "config-twitter-dedup",
+      "organization_id": "test-org-dedup",
+      "platform": "twitter",
+      "enabled": true,
+      "config": {
+        "monitor_mentions": true,
+        "fetch_replies": true,
+        "rate_limit": 100
+      }
+    },
+    {
+      "id": "config-twitter-order",
+      "organization_id": "test-org-order", 
+      "platform": "twitter",
+      "enabled": true,
+      "config": {
+        "monitor_mentions": true,
+        "preserve_order": true
+      }
+    },
+    {
+      "id": "config-twitter-retry",
+      "organization_id": "test-org-retry",
+      "platform": "twitter",
+      "enabled": true,
+      "config": {
+        "monitor_mentions": true,
+        "retry_on_failure": true,
+        "max_retries": 3
+      }
+    }
+  ]
+}
