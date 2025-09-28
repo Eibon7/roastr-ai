@@ -1193,19 +1193,33 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Queue posting job
+   * Queue posting job with optional auto-approval metadata
+   * ROUND 6 FIX: Enhanced to preserve GDPR-safe auto-approval metadata
    */
-  async queuePostingJob(organizationId, response, platform) {
+  async queuePostingJob(organizationId, response, platform, autoApprovalMetadata = null) {
+    // GDPR-Safe metadata: Only include essential, non-personal data
+    const gdprSafeMetadata = autoApprovalMetadata ? {
+      autoApproved: autoApprovalMetadata.autoApproved || false,
+      contentValidated: autoApprovalMetadata.contentValidated || false,
+      approvalTimestamp: new Date().toISOString(),
+      approvalRecordId: autoApprovalMetadata.approvalRecord?.id || null,
+      // GDPR compliance: No personal text content stored
+      validationId: autoApprovalMetadata.validationId || null,
+      securityPassed: autoApprovalMetadata.securityPassed || false
+    } : null;
+
     const postJob = {
       organization_id: organizationId,
       job_type: 'post_response',
-      priority: 4, // Normal priority for posting
+      priority: autoApprovalMetadata?.autoApproved ? 3 : 4, // Higher priority for auto-approved content
       payload: {
         response_id: response.id,
         organization_id: organizationId,
         platform,
         response_text: response.response_text,
-        comment_id: response.comment_id
+        comment_id: response.comment_id,
+        // ROUND 6 FIX: Include GDPR-safe auto-approval metadata
+        autoApprovalMetadata: gdprSafeMetadata
       },
       max_attempts: 3
     };
@@ -1223,7 +1237,10 @@ class GenerateReplyWorker extends BaseWorker {
       
       this.log('info', 'Queued posting job', {
         responseId: response.id,
-        platform
+        platform,
+        autoApproved: gdprSafeMetadata?.autoApproved || false,
+        priority: postJob.priority,
+        hasMetadata: !!gdprSafeMetadata
       });
       
     } catch (error) {
