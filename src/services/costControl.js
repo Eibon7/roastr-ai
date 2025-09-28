@@ -1,11 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 const planLimitsService = require('./planLimitsService');
+const { mockMode } = require('../config/mockMode');
 
 class CostControlService {
   constructor() {
-    this.supabaseUrl = process.env.SUPABASE_URL;
-    this.supabaseKey = process.env.SUPABASE_ANON_KEY;
-    this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+    if (mockMode.isMockMode) {
+      this.supabase = mockMode.generateMockSupabaseClient();
+    } else {
+      this.supabaseUrl = process.env.SUPABASE_URL;
+      this.supabaseKey = process.env.SUPABASE_ANON_KEY;
+      this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+    }
     
     // Keep basic plan metadata (not limits)
     this.plans = {

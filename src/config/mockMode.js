@@ -64,27 +64,130 @@ class MockModeManager {
           return { data: { subscription: { unsubscribe: () => {} } } };
         }
       },
-      from: (table) => ({
-        select: () => ({
-          eq: () => Promise.resolve({
-            data: [{ id: 1, name: 'Mock Data', created_at: new Date().toISOString() }],
-            error: null
+      from: (table) => {
+        const chainable = {
+          select: (columns = '*') => chainable,
+          eq: (column, value) => chainable,
+          single: () => {
+            if (table === 'integration_configs') {
+              return Promise.resolve({
+                data: {
+                  id: 'mock-config-id',
+                  organization_id: 'test-org-dedup',
+                  platform: 'twitter',
+                  enabled: true,
+                  config: { monitor_mentions: true }
+                },
+                error: null
+              });
+            }
+            if (table === 'organizations') {
+              return Promise.resolve({
+                data: { id: 'test-org', name: 'Test Organization' },
+                error: null
+              });
+            }
+            return Promise.resolve({
+              data: { id: 1, name: 'Mock Data', created_at: new Date().toISOString() },
+              error: null
+            });
+          },
+          limit: (count) => chainable,
+          order: (column, options) => chainable,
+          upsert: (data, options) => Promise.resolve({ data, error: null }),
+          insert: (data) => {
+            const insertChainable = {
+              select: (columns = '*') => insertChainable,
+              single: () => Promise.resolve({
+                data: Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 },
+                error: null
+              }),
+              // Support direct promise resolution for .select() without .single()
+              then: (resolve) => {
+                resolve({
+                  data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1 })) : [{ ...data, id: 1 }],
+                  error: null
+                });
+              }
+            };
+            
+            return insertChainable;
+          },
+          update: (data) => ({
+            eq: (column, value) => Promise.resolve({
+              data: [{ id: 1, ...data, updated_at: new Date().toISOString() }],
+              error: null
+            })
+          }),
+          delete: () => ({
+            eq: (column, value) => Promise.resolve({ data: null, error: null }),
+            like: (column, pattern) => Promise.resolve({ data: null, error: null })
           })
-        }),
-        insert: () => Promise.resolve({
-          data: [{ id: 1, name: 'Mock Insert', created_at: new Date().toISOString() }],
+        };
+
+        // Handle direct promise resolution for some methods
+        Object.assign(chainable, {
+          then: (resolve) => {
+            if (table === 'comments') {
+              resolve({
+                data: [],
+                error: null
+              });
+            } else {
+              resolve({
+                data: [{ id: 1, name: 'Mock Data', created_at: new Date().toISOString() }],
+                error: null
+              });
+            }
+          }
+        });
+
+        return chainable;
+      },
+      rpc: (functionName, params = {}) => {
+        // Mock database function calls
+        if (functionName === 'can_perform_operation') {
+          return Promise.resolve({
+            data: {
+              allowed: true,
+              reason: 'within_limits',
+              current_usage: 10,
+              monthly_limit: 1000,
+              remaining: 990,
+              percentage_used: 1,
+              limit_exceeded: false
+            },
+            error: null
+          });
+        }
+        
+        if (functionName === 'record_usage') {
+          return Promise.resolve({
+            data: {
+              success: true,
+              usage_recorded: true,
+              current_usage: 11,
+              monthly_limit: 1000,
+              percentage_used: 1.1,
+              limit_exceeded: false
+            },
+            error: null
+          });
+        }
+        
+        if (functionName === 'increment_usage') {
+          return Promise.resolve({
+            data: { success: true },
+            error: null
+          });
+        }
+        
+        // Default mock response for other functions
+        return Promise.resolve({
+          data: { success: true, mock: true },
           error: null
-        }),
-        update: () => ({
-          eq: () => Promise.resolve({
-            data: [{ id: 1, name: 'Mock Update', updated_at: new Date().toISOString() }],
-            error: null
-          })
-        }),
-        delete: () => ({
-          eq: () => Promise.resolve({ data: null, error: null })
-        })
-      })
+        });
+      }
     };
   }
 
