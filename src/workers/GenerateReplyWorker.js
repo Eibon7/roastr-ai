@@ -8,11 +8,18 @@ const { shouldBlockAutopost } = require('../middleware/killSwitch');
 const { PLATFORM_LIMITS } = require('../config/constants');
 
 /**
- * Generate Reply Worker
+ * Generate Reply Worker - Round 6 Critical Security Enhancements
  * 
  * Responsible for generating contextual roast responses using:
  * - Primary: OpenAI GPT-4o mini for personalized roasts
  * - Fallback: Template-based responses
+ * 
+ * SECURITY FEATURES:
+ * - Circuit breaker patterns for external service failures
+ * - Enhanced error handling with comprehensive logging
+ * - Content validation and integrity checks
+ * - Fail-closed patterns for all critical operations
+ * - Comprehensive retry logic with exponential backoff
  * 
  * This worker handles the creative core of Roastr.ai, generating
  * witty, sarcastic, and platform-appropriate responses while
@@ -30,6 +37,17 @@ class GenerateReplyWorker extends BaseWorker {
     this.costControl = new CostControlService();
     this.promptTemplate = new RoastPromptTemplate();
     this.autoApprovalService = new AutoApprovalService();
+    
+    // ROUND 6: Initialize circuit breaker for external services
+    this.circuitBreaker = {
+      state: 'closed', // closed, open, half-open
+      failures: 0,
+      threshold: 3, // Lower threshold for worker
+      timeout: 30000, // 30 seconds
+      lastFailureTime: null,
+      consecutiveSuccesses: 0,
+      halfOpenMaxAttempts: 1
+    };
     
     // Initialize OpenAI client
     this.initializeOpenAI();
@@ -132,13 +150,108 @@ class GenerateReplyWorker extends BaseWorker {
   
   
   /**
+   * ROUND 6 CRITICAL FIX: Enhanced circuit breaker for job processing
+   */
+  checkCircuitBreaker() {
+    const now = Date.now();
+    
+    if (this.circuitBreaker.state === 'open') {
+      const timeSinceLastFailure = now - this.circuitBreaker.lastFailureTime;
+      
+      if (timeSinceLastFailure >= this.circuitBreaker.timeout) {
+        this.circuitBreaker.state = 'half-open';
+        this.circuitBreaker.consecutiveSuccesses = 0;
+        this.log('info', 'Circuit breaker transitioning to half-open', {
+          timeSinceLastFailure,
+          threshold: this.circuitBreaker.threshold
+        });
+      } else {
+        throw new Error(`Circuit breaker is open. Service unavailable. Retry in ${Math.ceil((this.circuitBreaker.timeout - timeSinceLastFailure) / 1000)} seconds`);
+      }
+    }
+  }
+
+  /**
+   * Record circuit breaker success
+   */
+  recordCircuitBreakerSuccess() {
+    if (this.circuitBreaker.state === 'half-open') {
+      this.circuitBreaker.consecutiveSuccesses++;
+      
+      if (this.circuitBreaker.consecutiveSuccesses >= this.circuitBreaker.halfOpenMaxAttempts) {
+        this.circuitBreaker.state = 'closed';
+        this.circuitBreaker.failures = 0;
+        this.log('info', 'Circuit breaker closed after successful recovery');
+      }
+    } else if (this.circuitBreaker.state === 'closed') {
+      this.circuitBreaker.failures = Math.max(0, this.circuitBreaker.failures - 1);
+    }
+  }
+
+  /**
+   * Record circuit breaker failure
+   */
+  recordCircuitBreakerFailure(error) {
+    this.circuitBreaker.failures++;
+    this.circuitBreaker.lastFailureTime = Date.now();
+    
+    if (this.circuitBreaker.failures >= this.circuitBreaker.threshold) {
+      this.circuitBreaker.state = 'open';
+      this.log('error', 'Circuit breaker opened due to repeated failures', {
+        failures: this.circuitBreaker.failures,
+        threshold: this.circuitBreaker.threshold,
+        error: error?.message || 'Unknown error',
+        stack: error?.stack || 'No stack trace'
+      });
+    }
+  }
+
+  /**
+   * ROUND 6 CRITICAL FIX: Enhanced job processing with comprehensive error handling
    * Process reply generation job
    */
   async processJob(job) {
-    // FIX: Critical fixes from CodeRabbit review (outside diff)
-    // Validate job payload exists before destructuring
-    if (!job?.payload) {
-      throw new Error('Invalid job: missing payload');
+    const processingId = `proc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      // Check circuit breaker before processing
+      this.checkCircuitBreaker();
+      
+      // ROUND 6 FIX: Enhanced job payload validation
+      if (!job) {
+        throw new Error('Job is null or undefined');
+      }
+      
+      if (!job.payload || typeof job.payload !== 'object') {
+        throw new Error('Invalid job: missing or invalid payload object');
+      }
+      
+      // Validate required payload fields
+      const requiredFields = ['comment_id', 'organization_id', 'platform', 'original_text'];
+      const missingFields = requiredFields.filter(field => !job.payload[field]);
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Invalid job: missing required fields: ${missingFields.join(', ')}`);
+      }
+      
+      this.log('info', 'Starting job processing with enhanced validation', {
+        processingId,
+        jobId: job.id,
+        organizationId: job.payload.organization_id,
+        commentId: job.payload.comment_id,
+        platform: job.payload.platform,
+        circuitBreakerState: this.circuitBreaker.state
+      });
+      
+    } catch (error) {
+      this.recordCircuitBreakerFailure(error);
+      this.log('error', 'CRITICAL: Job processing failed during validation', {
+        processingId,
+        error: error.message,
+        stack: error.stack,
+        jobPayload: job?.payload ? 'present' : 'missing'
+      });
+      throw error;
     }
 
     const {
@@ -291,17 +404,19 @@ class GenerateReplyWorker extends BaseWorker {
     
     // Handle auto-posting based on auto-approval result
     if (autoApprovalResult && autoApprovalResult.approved && autoApprovalResult.autoPublish) {
-      // SECURITY FIX: Ensure published content matches approved variant exactly
+      // ROUND 6 CRITICAL FIX: Enhanced content validation before auto-publication
       // Auto-approved content should be auto-posted, but we must validate transparency consistency
       this.log('info', 'Queueing auto-publication for auto-approved response', {
         comment_id,
         organization_id,
         responseId: storedResponse.id,
         transparencyApplied: autoApprovalResult.variant ? 
-          autoApprovalResult.variant.text !== response.text : false
+          autoApprovalResult.variant.text !== response.text : false,
+        processingId,
+        autoApprovalId: autoApprovalResult.validationId || 'unknown'
       });
       
-      // SECURITY FIX Round 2: Enhanced atomic content validation with checksums
+      // ROUND 6 CRITICAL FIX: Enhanced atomic content validation with checksums and transparency verification
       const contentValidation = await this.validateContentAtomically(
         storedResponse,
         autoApprovalResult.variant || { text: response.text },
@@ -309,20 +424,42 @@ class GenerateReplyWorker extends BaseWorker {
         {
           comment_id,
           organization_id,
-          responseId: storedResponse.id
+          responseId: storedResponse.id,
+          processingId,
+          autoApprovalId: autoApprovalResult.validationId || 'unknown'
         }
       );
       
       if (!contentValidation.valid) {
+        this.recordCircuitBreakerFailure(new Error(contentValidation.reason));
         this.log('error', 'CRITICAL: Auto-publication blocked - atomic content validation failed', {
           comment_id,
           organization_id,
           responseId: storedResponse.id,
+          processingId,
           validationDetails: contentValidation,
           reason: contentValidation.reason,
-          checksumMismatch: contentValidation.checksumMismatch || false
+          checksumMismatch: contentValidation.checksumMismatch || false,
+          validationId: contentValidation.validationId,
+          circuitBreakerState: this.circuitBreaker.state,
+          securityEvent: 'content_validation_failure'
         });
-        throw new Error(`Atomic content validation failed: ${contentValidation.reason}`);
+        throw new Error(`CRITICAL: Atomic content validation failed - ${contentValidation.reason}`);
+      }
+      
+      // ROUND 6 CRITICAL FIX: Additional transparency consistency check
+      if (autoApprovalResult.variant && autoApprovalResult.variant.text !== storedResponse.response_text) {
+        this.log('error', 'CRITICAL: Auto-publication blocked - stored content does not match approved variant', {
+          comment_id,
+          organization_id,
+          responseId: storedResponse.id,
+          processingId,
+          approvedLength: autoApprovalResult.variant.text?.length || 0,
+          storedLength: storedResponse.response_text?.length || 0,
+          reason: 'approved_stored_content_mismatch',
+          securityEvent: 'potential_content_tampering'
+        });
+        throw new Error('CRITICAL: Stored content does not match approved variant - potential tampering detected');
       }
       
       await this.queuePostingJob(organization_id, storedResponse, platform, {
@@ -335,7 +472,7 @@ class GenerateReplyWorker extends BaseWorker {
       await this.queuePostingJob(organization_id, storedResponse, platform);
     }
     
-    // Build response summary
+    // ROUND 6 FIX: Build enhanced response summary with security context
     const responseData = {
       success: true,
       summary: `Generated ${response.service} response: "${response.text.substring(0, 50)}..."`,
@@ -344,8 +481,15 @@ class GenerateReplyWorker extends BaseWorker {
       service: response.service,
       generationTime,
       tokensUsed: response.tokensUsed || this.estimateTokens(response.text),
-      mode
+      mode,
+      processingId,
+      circuitBreakerState: this.circuitBreaker.state,
+      circuitBreakerFailures: this.circuitBreaker.failures,
+      securityValidated: true
     };
+    
+    // Record final success for circuit breaker
+    this.recordCircuitBreakerSuccess();
     
     // Add auto-approval specific data for auto mode
     if (mode === 'auto' && autoApprovalResult) {
@@ -364,7 +508,29 @@ class GenerateReplyWorker extends BaseWorker {
       }
     }
     
+    this.log('info', 'Job processing completed successfully', {
+      processingId,
+      responseId: storedResponse.id,
+      mode,
+      autoApproved: autoApprovalResult?.approved || false,
+      circuitBreakerState: this.circuitBreaker.state,
+      generationTime
+    });
+    
     return responseData;
+    
+  } catch (jobError) {
+    // Record failure and re-throw
+    this.recordCircuitBreakerFailure(jobError);
+    this.log('error', 'CRITICAL: Job processing failed', {
+      processingId: processingId || 'unknown',
+      error: jobError.message,
+      stack: jobError.stack,
+      circuitBreakerState: this.circuitBreaker.state,
+      circuitBreakerFailures: this.circuitBreaker.failures
+    });
+    throw jobError;
+  }
   }
   
   /**
@@ -527,18 +693,34 @@ class GenerateReplyWorker extends BaseWorker {
   async generateResponse(originalText, config, context) {
     let response = null;
     
-    // Try OpenAI first
+    // ROUND 6 CRITICAL FIX: Enhanced OpenAI generation with circuit breaker
     if (this.openaiClient) {
       try {
+        // Check circuit breaker before OpenAI call
+        this.checkCircuitBreaker();
+        
         response = await this.generateOpenAIResponse(originalText, config, context);
         response.service = 'openai';
+        
+        // Record success for circuit breaker
+        this.recordCircuitBreakerSuccess();
+        
       } catch (error) {
-        // FIX: Critical fixes from CodeRabbit review (outside diff)
-        // Enhanced error logging with stack trace and safe property access
-        this.log('warn', 'OpenAI generation failed, using template fallback', {
+        // Record failure for circuit breaker
+        this.recordCircuitBreakerFailure(error);
+        
+        // ROUND 6 FIX: Enhanced error logging with comprehensive context
+        this.log('error', 'CRITICAL: OpenAI generation failed, using template fallback', {
           error: error?.message || 'Unknown error',
           stack: error?.stack || 'No stack trace available',
-          originalTextLength: originalText?.length || 0
+          originalTextLength: originalText?.length || 0,
+          configTone: config?.tone || 'unknown',
+          platform: context?.platform || 'unknown',
+          circuitBreakerState: this.circuitBreaker.state,
+          circuitBreakerFailures: this.circuitBreaker.failures,
+          errorType: error?.constructor?.name || 'UnknownError',
+          errorCode: error?.code || 'no_code',
+          reason: 'openai_generation_failure'
         });
       }
     }

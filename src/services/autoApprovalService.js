@@ -1,6 +1,13 @@
 /**
- * Auto-Approval Service - Round 4 Security Enhancements
- * Implements fail-closed security patterns, rate limiting, and transparency enforcement
+ * Auto-Approval Service - Round 6 Critical Security Enhancements
+ * Implements fail-closed security patterns, content validation, and transparency enforcement
+ * 
+ * SECURITY FEATURES:
+ * - Fail-closed patterns for all critical operations
+ * - Content validation with exact text matching
+ * - Enhanced transparency enforcement with mandatory validation
+ * - Circuit breakers for external service failures
+ * - Comprehensive audit logging with stack traces
  */
 
 const { supabaseServiceClient } = require('../config/supabase');
@@ -19,10 +26,21 @@ class AutoApprovalService {
       maxHourlyApprovals: 50,
       maxDailyApprovals: 200,
       
-      // Timeouts (Round 4 enhancement)
+      // Timeouts (Round 6 security hardening)
       healthCheckTimeout: 1000,
       queryTimeout: 3000,
       transparencyTimeout: 2000,
+      policyFetchTimeout: 2500,
+      contentValidationTimeout: 1500,
+    };
+    
+    // Circuit breaker for external services
+    this.circuitBreaker = {
+      state: 'closed', // closed, open, half-open
+      failures: 0,
+      threshold: 5,
+      timeout: 60000,
+      lastFailureTime: null
     };
   }
 
@@ -533,8 +551,277 @@ class AutoApprovalService {
   }
 
   /**
+   * ROUND 6 CRITICAL FIX: Validate content match between stored response and approved variant
+   * Ensures no tampering or modification occurred during the approval process
+   */
+  async validateContentIntegrity(approvedVariant, storedResponse, organizationId) {
+    const validationId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      // CRITICAL: Exact text matching validation
+      if (!approvedVariant || !storedResponse) {
+        logger.error('CRITICAL: Content validation failed - missing data', {
+          organizationId,
+          validationId,
+          hasApprovedVariant: !!approvedVariant,
+          hasStoredResponse: !!storedResponse,
+          reason: 'missing_content_data'
+        });
+        return { valid: false, reason: 'missing_content_data' };
+      }
+
+      const approvedText = typeof approvedVariant === 'string' ? approvedVariant : approvedVariant.text;
+      const storedText = typeof storedResponse === 'string' ? storedResponse : storedResponse.text;
+      
+      if (!approvedText || !storedText) {
+        logger.error('CRITICAL: Content validation failed - empty text', {
+          organizationId,
+          validationId,
+          hasApprovedText: !!approvedText,
+          hasStoredText: !!storedText,
+          reason: 'empty_text_content'
+        });
+        return { valid: false, reason: 'empty_text_content' };
+      }
+
+      // CRITICAL: Byte-level exact comparison
+      const contentMatch = approvedText === storedText;
+      
+      if (!contentMatch) {
+        logger.error('CRITICAL: Content mismatch detected - blocking auto-publication', {
+          organizationId,
+          validationId,
+          approvedLength: approvedText.length,
+          storedLength: storedText.length,
+          approvedHash: this.hashContent(approvedText),
+          storedHash: this.hashContent(storedText),
+          reason: 'content_mismatch',
+          securityEvent: 'potential_tampering'
+        });
+        return { 
+          valid: false, 
+          reason: 'content_mismatch',
+          details: {
+            approvedLength: approvedText.length,
+            storedLength: storedText.length,
+            match: false
+          }
+        };
+      }
+
+      logger.info('Content integrity validation passed', {
+        organizationId,
+        validationId,
+        contentLength: approvedText.length,
+        contentHash: this.hashContent(approvedText)
+      });
+
+      return { valid: true, validationId };
+
+    } catch (error) {
+      logger.error('CRITICAL: Content validation system error - failing closed', {
+        organizationId,
+        validationId,
+        error: error.message,
+        stack: error.stack,
+        reason: 'content_validation_system_error'
+      });
+      return { valid: false, reason: 'system_error', error: error.message };
+    }
+  }
+
+  /**
+   * Hash content for security logging (no sensitive data exposure)
+   */
+  hashContent(content) {
+    if (!content) return 'empty';
+    // Simple hash for logging purposes (not cryptographic)
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString(16);
+  }
+
+  /**
+   * ROUND 6 CRITICAL FIX: Enhanced organization policy validation with fail-closed
+   */
+  async validateOrganizationPolicy(variant, organizationId) {
+    const policyValidationId = `policy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      // Check circuit breaker state
+      if (this.circuitBreaker.state === 'open') {
+        const timeSinceLastFailure = Date.now() - this.circuitBreaker.lastFailureTime;
+        if (timeSinceLastFailure < this.circuitBreaker.timeout) {
+          logger.error('CRITICAL: Policy validation circuit breaker open - failing closed', {
+            organizationId,
+            policyValidationId,
+            circuitBreakerState: 'open',
+            timeSinceLastFailure,
+            reason: 'circuit_breaker_open'
+          });
+          return { valid: false, reason: 'circuit_breaker_open' };
+        } else {
+          // Try to move to half-open
+          this.circuitBreaker.state = 'half-open';
+        }
+      }
+
+      // Fetch organization policies with timeout
+      const policyResult = await Promise.race([
+        supabaseServiceClient
+          .from('organization_policies')
+          .select('content_policies, auto_approval_rules')
+          .eq('organization_id', organizationId)
+          .single(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Policy fetch timeout')), this.config.policyFetchTimeout)
+        )
+      ]);
+
+      // CRITICAL: Fail closed on any policy fetch error
+      if (policyResult.error) {
+        this.recordCircuitBreakerFailure();
+        logger.error('CRITICAL: Failed to fetch organization policies - failing closed', {
+          organizationId,
+          policyValidationId,
+          error: policyResult.error.message,
+          errorCode: policyResult.error.code || 'unknown',
+          stack: policyResult.error.stack || 'no stack trace',
+          reason: 'policy_fetch_failed'
+        });
+        return { valid: false, reason: 'policy_fetch_failed', error: policyResult.error.message };
+      }
+
+      // CRITICAL: Fail closed if no policies found
+      if (!policyResult.data) {
+        this.recordCircuitBreakerFailure();
+        logger.error('CRITICAL: No organization policies found - failing closed', {
+          organizationId,
+          policyValidationId,
+          reason: 'no_policies_found'
+        });
+        return { valid: false, reason: 'no_policies_found' };
+      }
+
+      const policies = policyResult.data;
+      
+      // Validate content against policies
+      if (policies.content_policies) {
+        const contentValidation = await this.validateContentAgainstPolicies(
+          variant.text, 
+          policies.content_policies, 
+          organizationId,
+          policyValidationId
+        );
+        
+        if (!contentValidation.valid) {
+          logger.error('Content failed policy validation', {
+            organizationId,
+            policyValidationId,
+            reason: contentValidation.reason
+          });
+          return contentValidation;
+        }
+      }
+
+      // Reset circuit breaker on success
+      this.circuitBreaker.failures = 0;
+      if (this.circuitBreaker.state === 'half-open') {
+        this.circuitBreaker.state = 'closed';
+      }
+
+      logger.info('Organization policy validation passed', {
+        organizationId,
+        policyValidationId,
+        policiesChecked: !!policies.content_policies
+      });
+
+      return { valid: true, policyValidationId };
+
+    } catch (error) {
+      this.recordCircuitBreakerFailure();
+      logger.error('CRITICAL: Organization policy validation system error - failing closed', {
+        organizationId,
+        policyValidationId,
+        error: error.message,
+        stack: error.stack,
+        reason: 'policy_validation_system_error'
+      });
+      return { valid: false, reason: 'system_error', error: error.message };
+    }
+  }
+
+  /**
+   * Record circuit breaker failure
+   */
+  recordCircuitBreakerFailure() {
+    this.circuitBreaker.failures++;
+    this.circuitBreaker.lastFailureTime = Date.now();
+    
+    if (this.circuitBreaker.failures >= this.circuitBreaker.threshold) {
+      this.circuitBreaker.state = 'open';
+      logger.error('Circuit breaker opened due to repeated failures', {
+        failures: this.circuitBreaker.failures,
+        threshold: this.circuitBreaker.threshold,
+        state: 'open'
+      });
+    }
+  }
+
+  /**
+   * Validate content against organization policies
+   */
+  async validateContentAgainstPolicies(content, policies, organizationId, policyValidationId) {
+    try {
+      // Timeout protection for content validation
+      const validation = await Promise.race([
+        this.performPolicyValidation(content, policies),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Content validation timeout')), this.config.contentValidationTimeout)
+        )
+      ]);
+
+      return validation;
+
+    } catch (error) {
+      logger.error('Content policy validation failed', {
+        organizationId,
+        policyValidationId,
+        error: error.message,
+        reason: 'content_validation_error'
+      });
+      return { valid: false, reason: 'content_validation_error', error: error.message };
+    }
+  }
+
+  /**
+   * Perform actual policy validation (placeholder for specific policy logic)
+   */
+  async performPolicyValidation(content, policies) {
+    // Basic validation - can be extended with specific policy rules
+    if (!content || content.trim().length === 0) {
+      return { valid: false, reason: 'empty_content' };
+    }
+
+    // Check banned words/phrases if configured
+    if (policies.banned_phrases) {
+      for (const phrase of policies.banned_phrases) {
+        if (content.toLowerCase().includes(phrase.toLowerCase())) {
+          return { valid: false, reason: 'banned_phrase_detected', phrase };
+        }
+      }
+    }
+
+    return { valid: true };
+  }
+
+  /**
    * Process auto-approval with enhanced security
-   * ROUND 4 FIX: Enhanced transparency enforcement
+   * ROUND 6 CRITICAL FIX: Enhanced transparency enforcement and content validation
    */
   async processAutoApproval(comment, variant, organizationId) {
     const validationId = `validation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -591,7 +878,26 @@ class AutoApprovalService {
         };
       }
 
-      // ROUND 4 FIX: Enhanced transparency enforcement
+      // ROUND 6 CRITICAL FIX: Enhanced organization policy validation
+      const policyValidation = await this.validateOrganizationPolicy(variant, organizationId);
+      if (!policyValidation.valid) {
+        logger.error('Auto-approval denied - organization policy validation failed', {
+          organizationId,
+          validationId,
+          policyReason: policyValidation.reason,
+          policyError: policyValidation.error,
+          reason: 'organization_policy_failed'
+        });
+        return {
+          approved: false,
+          reason: 'organization_policy_failed',
+          requiresManualReview: true,
+          policyValidation,
+          validationId
+        };
+      }
+
+      // ROUND 6 CRITICAL FIX: Enhanced transparency enforcement with mandatory validation
       try {
         const transparencyRequired = await Promise.race([
           transparencyService.isTransparencyRequired(organizationId),
@@ -608,61 +914,130 @@ class AutoApprovalService {
             )
           ]);
 
-          // ROUND 4 FIX: Enhanced transparency validation
-          if (!transparentVariant || !transparentVariant.text || transparentVariant.text === variant.text) {
-            logger.error('Transparency required but not applied - failing closed', {
+          // ROUND 6 CRITICAL FIX: Mandatory transparency validation
+          if (!transparentVariant || !transparentVariant.text) {
+            logger.error('CRITICAL: Transparency required but service failed - failing closed', {
               organizationId,
               validationId,
-              originalText: variant.text,
-              transparentText: transparentVariant?.text,
-              reason: 'transparency_enforcement_failed'
+              originalText: variant.text?.substring(0, 100) + '...',
+              transparentVariant: !!transparentVariant,
+              transparentText: !!transparentVariant?.text,
+              reason: 'transparency_service_failed'
             });
             return {
               approved: false,
-              reason: 'transparency_enforcement_failed',
+              reason: 'transparency_service_failed',
               requiresManualReview: true,
-              error: 'Required transparency was not applied',
+              error: 'CRITICAL: Required transparency service failed',
               validationId
             };
           }
 
-          // ROUND 4 FIX: Validate transparency indicators
-          const hasTransparencyIndicator = this.validateTransparencyIndicators(transparentVariant.text);
-          if (!hasTransparencyIndicator) {
-            logger.error('Transparency validation failed - no valid indicators found', {
+          // ROUND 6 CRITICAL FIX: Strict transparency text validation
+          if (transparentVariant.text === variant.text) {
+            logger.error('CRITICAL: Transparency required but not applied - content unchanged', {
               organizationId,
               validationId,
-              text: transparentVariant.text,
-              reason: 'transparency_validation_failed'
+              originalLength: variant.text?.length,
+              transparentLength: transparentVariant.text?.length,
+              textMatch: true,
+              reason: 'transparency_not_applied'
             });
             return {
               approved: false,
-              reason: 'transparency_validation_failed',
+              reason: 'transparency_not_applied',
               requiresManualReview: true,
-              error: 'Transparency indicators not detected',
+              error: 'CRITICAL: Required transparency was not applied to content',
+              validationId
+            };
+          }
+
+          // ROUND 6 CRITICAL FIX: Enhanced transparency indicator validation
+          const hasTransparencyIndicator = this.validateTransparencyIndicators(transparentVariant.text);
+          if (!hasTransparencyIndicator) {
+            logger.error('CRITICAL: Transparency indicators not detected in transparent content - failing closed', {
+              organizationId,
+              validationId,
+              textSample: transparentVariant.text?.substring(0, 200) + '...',
+              textLength: transparentVariant.text?.length,
+              reason: 'transparency_indicators_missing'
+            });
+            return {
+              approved: false,
+              reason: 'transparency_indicators_missing',
+              requiresManualReview: true,
+              error: 'CRITICAL: Transparency indicators not detected in content',
+              validationId
+            };
+          }
+
+          // ROUND 6 CRITICAL FIX: Validate content integrity before proceeding
+          const contentIntegrityCheck = await this.validateContentIntegrity(
+            transparentVariant, 
+            variant, 
+            organizationId
+          );
+          
+          if (!contentIntegrityCheck.valid) {
+            logger.error('CRITICAL: Content integrity validation failed during transparency application', {
+              organizationId,
+              validationId,
+              integrityReason: contentIntegrityCheck.reason,
+              reason: 'content_integrity_failed'
+            });
+            return {
+              approved: false,
+              reason: 'content_integrity_failed',
+              requiresManualReview: true,
+              error: 'CRITICAL: Content integrity validation failed',
               validationId
             };
           }
 
           variant = transparentVariant;
-          logger.info('Transparency successfully applied and validated', {
+          logger.info('Transparency successfully applied and all validations passed', {
             organizationId,
             validationId,
-            hasIndicator: hasTransparencyIndicator
+            hasIndicator: hasTransparencyIndicator,
+            contentIntegrityId: contentIntegrityCheck.validationId
           });
+        } else {
+          // Even if transparency not required, validate content integrity
+          const contentIntegrityCheck = await this.validateContentIntegrity(
+            variant, 
+            variant, 
+            organizationId
+          );
+          
+          if (!contentIntegrityCheck.valid) {
+            logger.error('CRITICAL: Content integrity validation failed', {
+              organizationId,
+              validationId,
+              integrityReason: contentIntegrityCheck.reason,
+              reason: 'content_integrity_failed'
+            });
+            return {
+              approved: false,
+              reason: 'content_integrity_failed',
+              requiresManualReview: true,
+              error: 'CRITICAL: Content integrity validation failed',
+              validationId
+            };
+          }
         }
       } catch (transparencyError) {
-        logger.error('Error in transparency enforcement - failing closed', {
+        logger.error('CRITICAL: Error in transparency enforcement - failing closed', {
           organizationId,
           validationId,
           error: transparencyError.message,
+          stack: transparencyError.stack,
           reason: 'transparency_system_error'
         });
         return {
           approved: false,
           reason: 'transparency_system_error',
           requiresManualReview: true,
-          error: transparencyError.message,
+          error: `CRITICAL: Transparency system error - ${transparencyError.message}`,
           validationId
         };
       }

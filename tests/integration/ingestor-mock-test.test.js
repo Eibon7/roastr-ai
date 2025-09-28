@@ -55,31 +55,37 @@ describe('Ingestor Mock Mode Test', () => {
       return storedComments.filter(c => c.organization_id === orgId);
     };
 
-    await worker.start();
+    try {
+      await worker.start();
 
-    // Process the job
-    const job = {
-      organization_id: organizationId,
-      platform: 'twitter',
-      integration_config_id: integrationConfigId,
-      payload: { since_id: '0' }
-    };
+      // Process the job
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
 
-    const result = await worker.processJob(job);
+      const result = await worker.processJob(job);
 
-    await worker.stop();
+      await worker.stop();
 
-    // Verify the result
-    expect(result.success).toBe(true);
-    expect(result.commentsCount).toBe(1);
+      // Verify the result
+      expect(result.success).toBe(true);
+      expect(result.commentsCount).toBe(1);
 
-    // Verify deduplication by processing same job again
-    await worker.start();
-    const result2 = await worker.processJob(job);
-    await worker.stop();
+      // Verify deduplication by processing same job again
+      await worker.start();
+      const result2 = await worker.processJob(job);
+      await worker.stop();
 
-    // Should not add duplicate
-    expect(result2.success).toBe(true);
-    expect(result2.commentsCount).toBe(0); // No new comments added
+      // Should not add duplicate
+      expect(result2.success).toBe(true);
+      expect(result2.commentsCount).toBe(0); // No new comments added
+    } catch (error) {
+      console.error('Test error:', error);
+      console.error('Stack:', error.stack);
+      throw error;
+    }
   });
 });
