@@ -87,6 +87,28 @@ class MockModeManager {
                 error: null
               });
             }
+            
+            if (table === 'comments') {
+              // Check if comment exists in global storage
+              const storage = global.mockCommentStorage || [];
+              const existing = storage.find(comment => 
+                comment.organization_id === queries.organization_id &&
+                comment.platform === queries.platform &&
+                comment.platform_comment_id === queries.platform_comment_id
+              );
+              
+              if (existing) {
+                return Promise.resolve({
+                  data: existing,
+                  error: null
+                });
+              } else {
+                return Promise.resolve({
+                  data: null,
+                  error: { code: 'PGRST116', message: 'No rows found' }
+                });
+              }
+            }
             return Promise.resolve({
               data: { id: 1, name: 'Mock Data', created_at: new Date().toISOString() },
               error: null
@@ -96,11 +118,34 @@ class MockModeManager {
           order: (column, options) => chainable,
           upsert: (data, options) => Promise.resolve({ data, error: null }),
           insert: (data) => {
-            const insertChainable = {
-              select: (columns = '*') => insertChainable,
-              single: () => Promise.resolve({
-                data: Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 },
-                error: null
+            // Store data in global storage if it's comments
+            if (table === 'comments') {
+              const storage = global.mockCommentStorage || [];
+              const newComment = {
+                ...data,
+                id: storage.length + 1,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+              storage.push(newComment);
+              global.mockCommentStorage = storage;
+            }
+            
+            const chainableInsert = {
+              select: (columns = '*') => ({
+                single: () => {
+                  const result = Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 };
+                  return Promise.resolve({
+                    data: result,
+                    error: null
+                  });
+                },
+                then: (resolve) => {
+                  resolve({
+                    data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1 })) : [{ ...data, id: 1 }],
+                    error: null
+                  });
+                }
               }),
               // Support direct promise resolution for .select() without .single()
               then: (resolve) => {
@@ -111,7 +156,7 @@ class MockModeManager {
               }
             };
             
-            return insertChainable;
+            return chainableInsert;
           },
           update: (data) => ({
             eq: (column, value) => Promise.resolve({
