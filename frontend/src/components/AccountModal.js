@@ -23,7 +23,7 @@ const AccountModal = ({
   onDisconnectAccount,
   onClose
 }) => {
-  const { flags } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlags();
   const [activeTab, setActiveTab] = useState('roasts');
   const [shieldExpanded, setShieldExpanded] = useState(false);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
@@ -285,10 +285,11 @@ const AccountModal = ({
     return response.json();
   };
 
-  // Define tabs conditionally based on feature flags (Issue #366)
+  // Define tabs conditionally based on feature flags (Issue #401)
+  const enableShield = isEnabled('ENABLE_SHIELD_UI');
   const tabs = [
     { id: 'roasts', name: 'Últimos roasts', icon: '💬' },
-    ...(flags?.ENABLE_SHIELD_UI ? [{ id: 'shield', name: 'Shield', icon: '🛡️' }] : []),
+    ...(enableShield ? [{ id: 'shield', name: 'Shield', icon: '🛡️' }] : []),
     { id: 'settings', name: 'Settings', icon: '⚙️' },
   ];
 
