@@ -64,27 +64,78 @@ class MockModeManager {
           return { data: { subscription: { unsubscribe: () => {} } } };
         }
       },
-      from: (table) => ({
-        select: () => ({
-          eq: () => Promise.resolve({
-            data: [{ id: 1, name: 'Mock Data', created_at: new Date().toISOString() }],
-            error: null
+      from: (table) => {
+        const chainable = {
+          select: (columns = '*') => chainable,
+          eq: (column, value) => chainable,
+          single: () => {
+            if (table === 'integration_configs') {
+              return Promise.resolve({
+                data: {
+                  id: 'mock-config-id',
+                  organization_id: 'test-org-dedup',
+                  platform: 'twitter',
+                  enabled: true,
+                  config: { monitor_mentions: true }
+                },
+                error: null
+              });
+            }
+            if (table === 'organizations') {
+              return Promise.resolve({
+                data: { id: 'test-org', name: 'Test Organization' },
+                error: null
+              });
+            }
+            return Promise.resolve({
+              data: { id: 1, name: 'Mock Data', created_at: new Date().toISOString() },
+              error: null
+            });
+          },
+          limit: (count) => chainable,
+          order: (column, options) => chainable,
+          upsert: (data, options) => Promise.resolve({ data, error: null }),
+          insert: (data) => ({
+            select: () => Promise.resolve({
+              data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1 })) : [{ ...data, id: 1 }],
+              error: null
+            }),
+            single: () => Promise.resolve({
+              data: Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 },
+              error: null
+            })
+          }),
+          update: (data) => ({
+            eq: (column, value) => Promise.resolve({
+              data: [{ id: 1, ...data, updated_at: new Date().toISOString() }],
+              error: null
+            })
+          }),
+          delete: () => ({
+            eq: (column, value) => Promise.resolve({ data: null, error: null }),
+            like: (column, pattern) => Promise.resolve({ data: null, error: null })
           })
-        }),
-        insert: () => Promise.resolve({
-          data: [{ id: 1, name: 'Mock Insert', created_at: new Date().toISOString() }],
-          error: null
-        }),
-        update: () => ({
-          eq: () => Promise.resolve({
-            data: [{ id: 1, name: 'Mock Update', updated_at: new Date().toISOString() }],
-            error: null
-          })
-        }),
-        delete: () => ({
-          eq: () => Promise.resolve({ data: null, error: null })
-        })
-      })
+        };
+
+        // Handle direct promise resolution for some methods
+        Object.assign(chainable, {
+          then: (resolve) => {
+            if (table === 'comments') {
+              resolve({
+                data: [],
+                error: null
+              });
+            } else {
+              resolve({
+                data: [{ id: 1, name: 'Mock Data', created_at: new Date().toISOString() }],
+                error: null
+              });
+            }
+          }
+        });
+
+        return chainable;
+      }
     };
   }
 
