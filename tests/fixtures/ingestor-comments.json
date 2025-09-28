@@ -1,0 +1,188 @@
+{
+  "duplicateComments": [
+    {
+      "platform": "twitter",
+      "platform_comment_id": "1234567890",
+      "platform_user_id": "user123",
+      "platform_username": "testuser1",
+      "original_text": "This is a test comment for deduplication",
+      "metadata": {
+        "created_at": "2024-01-01T12:00:00Z",
+        "public_metrics": {
+          "like_count": 5,
+          "reply_count": 2
+        }
+      }
+    },
+    {
+      "platform": "twitter",
+      "platform_comment_id": "1234567890",
+      "platform_user_id": "user123",
+      "platform_username": "testuser1",
+      "original_text": "This is a test comment for deduplication",
+      "metadata": {
+        "created_at": "2024-01-01T12:00:00Z",
+        "public_metrics": {
+          "like_count": 5,
+          "reply_count": 2
+        }
+      }
+    }
+  ],
+  "orderedComments": [
+    {
+      "platform": "twitter",
+      "platform_comment_id": "order_test_1",
+      "platform_user_id": "user1",
+      "platform_username": "orderuser1",
+      "original_text": "First comment in order",
+      "metadata": {
+        "created_at": "2024-01-01T12:00:00Z",
+        "sequence": 1
+      }
+    },
+    {
+      "platform": "twitter",
+      "platform_comment_id": "order_test_2",
+      "platform_user_id": "user2",
+      "platform_username": "orderuser2",
+      "original_text": "Second comment in order",
+      "metadata": {
+        "created_at": "2024-01-01T12:01:00Z",
+        "sequence": 2
+      }
+    },
+    {
+      "platform": "twitter",
+      "platform_comment_id": "order_test_3",
+      "platform_user_id": "user3",
+      "platform_username": "orderuser3",
+      "original_text": "Third comment in order",
+      "metadata": {
+        "created_at": "2024-01-01T12:02:00Z",
+        "sequence": 3
+      }
+    }
+  ],
+  "retryComments": [
+    {
+      "platform": "youtube",
+      "platform_comment_id": "retry_test_transient",
+      "platform_user_id": "retryuser1",
+      "platform_username": "retryuser1",
+      "original_text": "Comment that will cause transient failures",
+      "metadata": {
+        "videoId": "test_video_1",
+        "publishedAt": "2024-01-01T12:00:00Z",
+        "testScenario": "transient_failure"
+      }
+    },
+    {
+      "platform": "youtube",
+      "platform_comment_id": "retry_test_permanent",
+      "platform_user_id": "retryuser2",
+      "platform_username": "retryuser2",
+      "original_text": "Comment that will cause permanent failures",
+      "metadata": {
+        "videoId": "test_video_2",
+        "publishedAt": "2024-01-01T12:00:00Z",
+        "testScenario": "permanent_failure"
+      }
+    }
+  ],
+  "acknowledgmentComments": [
+    {
+      "platform": "twitter",
+      "platform_comment_id": "ack_test_success",
+      "platform_user_id": "ackuser1",
+      "platform_username": "ackuser1",
+      "original_text": "Comment that should be acknowledged successfully",
+      "metadata": {
+        "created_at": "2024-01-01T12:00:00Z",
+        "testScenario": "success"
+      }
+    },
+    {
+      "platform": "twitter",
+      "platform_comment_id": "ack_test_retry",
+      "platform_user_id": "ackuser2",
+      "platform_username": "ackuser2",
+      "original_text": "Comment that should retry then acknowledge",
+      "metadata": {
+        "created_at": "2024-01-01T12:00:00Z",
+        "testScenario": "retry_then_success"
+      }
+    }
+  ],
+  "backoffComments": [
+    {
+      "platform": "instagram",
+      "platform_comment_id": "backoff_test_1",
+      "platform_user_id": "backoffuser1",
+      "platform_username": "backoffuser1",
+      "original_text": "Comment for testing exponential backoff timing",
+      "metadata": {
+        "created_at": "2024-01-01T12:00:00Z",
+        "testScenario": "exponential_backoff",
+        "expectedRetries": 3
+      }
+    }
+  ],
+  "organizations": [
+    {
+      "id": "test-org-dedup",
+      "name": "Test Organization for Deduplication",
+      "plan": "pro"
+    },
+    {
+      "id": "test-org-order",
+      "name": "Test Organization for Order",
+      "plan": "pro"
+    },
+    {
+      "id": "test-org-retry",
+      "name": "Test Organization for Retry",
+      "plan": "pro"
+    }
+  ],
+  "integrationConfigs": [
+    {
+      "id": "config-twitter-dedup",
+      "organization_id": "test-org-dedup",
+      "platform": "twitter",
+      "enabled": true,
+      "config": {
+        "monitor_mentions": true,
+        "auto_reply": false
+      }
+    },
+    {
+      "id": "config-twitter-order",
+      "organization_id": "test-org-order",
+      "platform": "twitter",
+      "enabled": true,
+      "config": {
+        "monitor_mentions": true,
+        "auto_reply": false
+      }
+    },
+    {
+      "id": "config-youtube-retry",
+      "organization_id": "test-org-retry",
+      "platform": "youtube",
+      "enabled": true,
+      "config": {
+        "monitored_videos": ["test_video_1", "test_video_2"]
+      }
+    },
+    {
+      "id": "config-instagram-backoff",
+      "organization_id": "test-org-retry",
+      "platform": "instagram",
+      "enabled": true,
+      "config": {
+        "monitor_posts": true
+      }
+    }
+  ]
+}
