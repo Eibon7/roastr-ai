@@ -12,6 +12,8 @@ class IngestorTestUtils {
     this.queueService = null;
     this.workers = [];
     this.setupComplete = false;
+    this.mockStoredComments = [];
+    this.mockStoredJobs = [];
   }
 
   /**
@@ -20,19 +22,49 @@ class IngestorTestUtils {
   async setup() {
     if (this.setupComplete) return;
 
-    // Initialize Supabase client
-    const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321';
-    const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+    // Check if we're in mock mode
+    const { mockMode } = require('../../src/config/mockMode');
     
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase credentials required for integration tests');
+    if (mockMode.isMockMode) {
+      // Use mock clients in mock mode
+      this.supabase = mockMode.generateMockSupabaseClient();
+      this.queueService = {
+        initialize: async () => {},
+        addJob: async (jobType, payload, options = {}) => ({
+          id: `mock_job_${Date.now()}`,
+          job_type: jobType,
+          organization_id: payload.organization_id,
+          priority: options.priority || 5,
+          payload,
+          max_attempts: options.maxAttempts || 3,
+          created_at: new Date().toISOString()
+        }),
+        getNextJob: async () => null,
+        completeJob: async () => {},
+        failJob: async () => {},
+        getQueueStats: async () => ({
+          timestamp: new Date().toISOString(),
+          redis: false,
+          database: true,
+          databaseStats: { byStatus: { pending: 0, completed: 5, failed: 0 } }
+        }),
+        shutdown: async () => {}
+      };
+    } else {
+      // Initialize Supabase client for real integration tests
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase credentials required for integration tests');
+      }
+
+      this.supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Initialize queue service
+      this.queueService = new QueueService();
+      await this.queueService.initialize();
     }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Initialize queue service
-    this.queueService = new QueueService();
-    await this.queueService.initialize();
 
     this.setupComplete = true;
   }
@@ -79,6 +111,13 @@ class IngestorTestUtils {
    * Setup test organizations and integration configs
    */
   async setupTestOrganizations(fixtures) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      // In mock mode, just return success
+      return;
+    }
+
     const { organizations, integrationConfigs } = fixtures;
 
     // Insert test organizations
@@ -108,6 +147,25 @@ class IngestorTestUtils {
    * Insert test comments directly to database
    */
   async insertTestComments(organizationId, integrationConfigId, comments) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      // In mock mode, return fake data
+      return comments.map((comment, index) => ({
+        id: `mock_comment_${index}`,
+        organization_id: organizationId,
+        integration_config_id: integrationConfigId,
+        platform: comment.platform,
+        platform_comment_id: comment.platform_comment_id,
+        platform_user_id: comment.platform_user_id,
+        platform_username: comment.platform_username,
+        original_text: comment.original_text,
+        metadata: comment.metadata,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }));
+    }
+
     const commentsToInsert = comments.map(comment => ({
       organization_id: organizationId,
       integration_config_id: integrationConfigId,
@@ -155,6 +213,13 @@ class IngestorTestUtils {
    * Get comments from database by organization
    */
   async getCommentsByOrganization(organizationId) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      // Return mock data based on organization
+      return this.mockStoredComments || [];
+    }
+
     const { data, error } = await this.supabase
       .from('comments')
       .select('*')
@@ -207,6 +272,15 @@ class IngestorTestUtils {
    * Count comments by organization and platform_comment_id
    */
   async countCommentsByPlatformId(organizationId, platformCommentId) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      return this.mockStoredComments.filter(c => 
+        c.organization_id === organizationId && 
+        c.platform_comment_id === platformCommentId
+      ).length;
+    }
+
     const { count, error } = await this.supabase
       .from('comments')
       .select('*', { count: 'exact', head: true })
