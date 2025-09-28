@@ -22,7 +22,16 @@ class AutoApprovalService {
       maxToxicityScore: 0.6, // Reduced from 0.7
       maxToxicityIncrease: 0.15,
       
-      // Rate limiting (per hour/day)
+      // Plan-specific daily auto-approval caps (CodeRabbit Round 8 fix)
+      planLimits: {
+        free: { hourly: 10, daily: 25 },
+        starter: { hourly: 25, daily: 100 },
+        pro: { hourly: 50, daily: 200 },
+        plus: { hourly: 100, daily: 500 },
+        enterprise: { hourly: 200, daily: 1000 }
+      },
+      
+      // Fallback limits (legacy)
       maxHourlyApprovals: 50,
       maxDailyApprovals: 200,
       
@@ -371,10 +380,10 @@ class AutoApprovalService {
       const hourlyCount = this.validateCount(hourlyResult.count, 'hourly', organizationId, rateLimitId);
       const dailyCount = this.validateCount(dailyResult.count, 'daily', organizationId, rateLimitId);
 
-      // ROUND 4 FIX: Get plan-specific limits
-      const planLimits = await planLimitsService.getDailyAutoApprovalLimits(organizationId);
-      const maxHourly = Math.min(this.config.maxHourlyApprovals, planLimits.hourly);
-      const maxDaily = Math.min(this.config.maxDailyApprovals, planLimits.daily);
+      // ROUND 8 CRITICAL FIX: Get plan-specific limits with enhanced validation
+      const planLimits = await this.getPlanSpecificLimits(organizationId);
+      const maxHourly = planLimits.hourly;
+      const maxDaily = planLimits.daily;
 
       const allowed = hourlyCount < maxHourly && dailyCount < maxDaily;
 
@@ -457,6 +466,57 @@ class AutoApprovalService {
     }
 
     return Math.max(0, Math.floor(count));
+  }
+
+  /**
+   * ROUND 8 CRITICAL FIX: Get plan-specific auto-approval limits
+   * Implements proper plan-based rate limiting as requested by CodeRabbit
+   */
+  async getPlanSpecificLimits(organizationId) {
+    const validationId = `plan_limits_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      // Get organization plan from planLimitsService
+      const planData = await planLimitsService.getUserPlan(organizationId);
+      const userPlan = planData?.plan || 'free';
+      
+      // Get plan-specific limits from config
+      const planLimits = this.config.planLimits[userPlan] || this.config.planLimits.free;
+      
+      logger.info('Plan-specific limits retrieved', {
+        organizationId,
+        validationId,
+        userPlan,
+        hourlyLimit: planLimits.hourly,
+        dailyLimit: planLimits.daily
+      });
+      
+      return {
+        hourly: planLimits.hourly,
+        daily: planLimits.daily,
+        plan: userPlan,
+        validationId
+      };
+      
+    } catch (error) {
+      // CRITICAL: Fail closed if cannot determine plan
+      logger.error('CRITICAL: Cannot determine plan limits - failing closed to free plan limits', {
+        organizationId,
+        validationId,
+        error: error.message,
+        stack: error.stack,
+        reason: 'plan_detection_failed'
+      });
+      
+      // Fail to most restrictive plan (free)
+      return {
+        hourly: this.config.planLimits.free.hourly,
+        daily: this.config.planLimits.free.daily,
+        plan: 'free_fallback',
+        validationId,
+        error: 'plan_detection_failed'
+      };
+    }
   }
 
   /**

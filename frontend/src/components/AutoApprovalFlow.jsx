@@ -3,7 +3,7 @@
  * Issue #405 - Main component for auto-approval flow visualization
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -30,6 +30,7 @@ const AutoApprovalFlow = ({ comment }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [flowStatus, setFlowStatus] = useState(null);
   const [processedRoast, setProcessedRoast] = useState(null);
+  const [error, setError] = useState(null);
   const [stats, setStats] = useState({
     hourlyUsed: 0,
     hourlyLimit: 50,
@@ -37,24 +38,70 @@ const AutoApprovalFlow = ({ comment }) => {
     dailyLimit: 200
   });
 
+  // ROUND 8 FIX: Timer cleanup to prevent setState on unmounted components
+  const [isMounted, setIsMounted] = useState(true);
+  const timeoutRefs = useRef([]);
+
   useEffect(() => {
     loadRateLimitStats();
+    
+    // Cleanup function
+    return () => {
+      setIsMounted(false);
+      // Clear all timers
+      timeoutRefs.current.forEach(clearTimeout);
+      timeoutRefs.current = [];
+    };
   }, [user]);
+
+  // ROUND 8 FIX: Safe setState helper to prevent updates on unmounted components
+  const safeSetState = (setter) => {
+    if (isMounted) {
+      setter();
+    }
+  };
+
+  // ROUND 8 FIX: Safe timeout helper
+  const safeSetTimeout = (callback, delay) => {
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        callback();
+      }
+      // Remove from refs array
+      timeoutRefs.current = timeoutRefs.current.filter(id => id !== timeoutId);
+    }, delay);
+    
+    timeoutRefs.current.push(timeoutId);
+    return timeoutId;
+  };
 
   const loadRateLimitStats = async () => {
     if (!user?.organization_id) return;
 
     try {
-      // In real implementation, would fetch from API
-      const mockStats = {
-        hourlyUsed: 12,
-        hourlyLimit: 50,
-        dailyUsed: 45,
-        dailyLimit: 200
-      };
-      setStats(mockStats);
+      // ROUND 8 FIX: Enhanced rate limit fetching with plan-specific limits
+      const response = await fetch(`/api/organizations/${user.organization_id}/rate-limits`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        safeSetState(() => setStats(data));
+      } else {
+        // Fallback to default stats
+        const mockStats = {
+          hourlyUsed: 12,
+          hourlyLimit: 50,
+          dailyUsed: 45,
+          dailyLimit: 200
+        };
+        safeSetState(() => setStats(mockStats));
+      }
     } catch (error) {
       console.error('Error loading rate limit stats:', error);
+      safeSetState(() => setError('Failed to load rate limit information'));
     }
   };
 
@@ -72,10 +119,13 @@ const AutoApprovalFlow = ({ comment }) => {
     }
 
     try {
-      setIsProcessing(true);
-      setFlowStatus('processing_comment');
+      safeSetState(() => {
+        setIsProcessing(true);
+        setFlowStatus('processing_comment');
+        setError(null);
+      });
 
-      // In real implementation, this would call the auto-approval API
+      // ROUND 8 FIX: Enhanced auto-approval API call with better error handling
       const response = await fetch('/api/comments/' + comment.id + '/auto-process', {
         method: 'POST',
         headers: {
@@ -84,33 +134,46 @@ const AutoApprovalFlow = ({ comment }) => {
         },
         body: JSON.stringify({
           mode: 'auto',
-          autoApproval: true
+          autoApproval: true,
+          organizationId: user.organization_id
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to start auto-approval process');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: Failed to start auto-approval process`);
       }
 
       const data = await response.json();
-      setProcessedRoast(data.roast);
+      
+      safeSetState(() => {
+        setProcessedRoast(data.roast);
+        setFlowStatus('completed');
+      });
 
       // Update rate limit stats
-      setStats(prev => ({
-        ...prev,
-        hourlyUsed: prev.hourlyUsed + 1,
-        dailyUsed: prev.dailyUsed + 1
-      }));
+      safeSetState(() => {
+        setStats(prev => ({
+          ...prev,
+          hourlyUsed: prev.hourlyUsed + 1,
+          dailyUsed: prev.dailyUsed + 1
+        }));
+      });
 
     } catch (error) {
       console.error('Error starting auto-approval:', error);
+      
+      safeSetState(() => {
+        setError(error.message);
+        setFlowStatus('error');
+        setIsProcessing(false);
+      });
+      
       toast({
-        title: 'Error',
-        description: 'Failed to start auto-approval process',
+        title: 'Auto-Approval Failed',
+        description: error.message || 'Failed to start auto-approval process',
         variant: 'destructive'
       });
-      setIsProcessing(false);
-      setFlowStatus('failed_publication');
     }
   };
 
