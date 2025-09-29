@@ -11,12 +11,17 @@
 - **Dual Validation System**: Exact string matching + SHA-256 checksum verification for content integrity
 - **Fail-Closed Pattern**: Critical errors in checksum generation block auto-publication immediately
 - **Security Logging**: Comprehensive audit trail with validation IDs and truncated checksums for security monitoring
-- **Method**: `generateContentChecksum()` and `validateContentIntegrityUltra()` in AutoApprovalService
+- **Methods (AutoApprovalService)**: `generateContentChecksum()`, `validateContentIntegrityUltra()`, `timeoutPromise()`, `safeParseNumber()` (verified names match source)
 
 #### 2. ⏱️ Timeout-Aware Promise Protection
 - **Promise.race() Patterns**: Fail-closed timeout protection for all organization policy validation
 - **Timeout Metadata**: Error objects include operation context, timeout duration, and organization ID
-- **Conservative Timeouts**: Multiple operation-specific timeouts (1s health checks, 2.5s policy fetch, 3s queries, 2s transparency, 1.5s content validation) prevent indefinite hangs during database issues
+- **Conservative Timeouts** (config-driven):
+  - DB health-check: 1s (`this.config.healthCheckTimeout`)
+  - Policy fetch: 2.5s (`this.config.policyFetchTimeout`)
+  - Org queries: 3s (`this.config.queryTimeout`)
+  - Transparency: 2s (`this.config.transparencyTimeout`)
+  - Content validation: 1.5s (`this.config.contentValidationTimeout`)
 - **Method**: `timeoutPromise()` with comprehensive error handling and logging
 
 #### 3. 🧮 Safe Number Parsing with Conservative Fallbacks
@@ -3786,7 +3791,7 @@ This implementation represents a complete dashboard analytics system with robust
 - `tests/unit/components/RoastInlineEditor-round4-improvements.test.jsx` - New frontend tests
 
 ### Test Evidence Location
-Round 4 test evidence: `/Users/emiliopostigo/roastr-ai/docs/test-evidence/2025-09-19/round4-coderabbit-improvements/`
+Round 4 test evidence: `docs/test-evidence/2025-09-19/round4-coderabbit-improvements/`
 
 ---
 
@@ -3847,13 +3852,13 @@ Modern tabbed Settings interface providing comprehensive account management, use
 ### 📦 Core Implementation
 
 **📁 Primary Component**:
-- `/Users/emiliopostigo/roastr-ai/frontend/src/pages/Settings.jsx` - Main tabbed settings interface (~550 lines)
+- `frontend/src/pages/Settings.jsx` - Main tabbed settings interface (~550 lines)
 
 **🧪 Test Coverage**:
-- `/Users/emiliopostigo/roastr-ai/frontend/src/pages/__tests__/Settings.test.jsx` - Comprehensive unit tests (95%+ coverage)
+- `frontend/src/pages/__tests__/Settings.test.jsx` - Comprehensive unit tests (95%+ coverage)
 
 **🎨 UI Components**:
-- `/Users/emiliopostigo/roastr-ai/frontend/src/components/ui/label.jsx` - Form label component (created for Settings)
+- `frontend/src/components/ui/label.jsx` - Form label component (created for Settings)
 
 ### 🏗️ Architecture
 
@@ -6019,7 +6024,8 @@ Comprehensive UI implementation for the auto-approval flow system, providing a s
 
 ### 🏗️ Architecture
 
-**Auto-Approval Flow Distinction**:
+#### Auto-Approval Flow Distinction
+
 | Feature | Manual Flow | Auto-Approval Flow |
 |---------|-------------|-------------------|
 | Variants Generated | 2 initial + 1 after selection | 1 variant only |
@@ -6349,7 +6355,7 @@ const result = await Promise.race([
 
 **Validation Performance**:
 - Content validation: <100ms for 100KB content
-- Policy lookup: 5s timeout protection
+- Policy lookup: 2.5s (`this.config.policyFetchTimeout`)
 - Rate limit checks: 3s timeout with health check
 - Checksum generation: <10ms for typical roasts
 
