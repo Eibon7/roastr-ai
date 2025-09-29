@@ -12,7 +12,7 @@
 
 const { supabaseServiceClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
-const transparencyService = require('./transparencyService');
+const transparencyServiceDefault = require('./transparencyService');
 const planLimitsService = require('./planLimitsService');
 const crypto = require('crypto');
 
@@ -20,6 +20,8 @@ class AutoApprovalService {
   constructor(config = {}) {
     // Initialize shield service dependency
     this.shieldService = config.shieldService || this.initializeDefaultShieldService();
+    // Initialize transparency service dependency (CodeRabbit Round 13 DI consistency)
+    this.transparencyService = config.transparencyService || transparencyServiceDefault;
     this.config = {
       // Conservative toxicity thresholds (Round 3 fix)
       maxToxicityScore: 0.6, // Reduced from 0.7
@@ -226,12 +228,12 @@ class AutoApprovalService {
       let connectionHealthy = true;
       
       try {
-        const healthCheck = await Promise.race([
+        const healthCheck = await this.timeoutPromise(
           supabaseServiceClient.from('organizations').select('id').limit(1),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Health check timeout')), this.config.healthCheckTimeout)
-          )
-        ]);
+          this.config.healthCheckTimeout,
+          'eligibility_health_check',
+          organizationId
+        );
         
         if (healthCheck.error) {
           connectionHealthy = false;
@@ -420,7 +422,8 @@ class AutoApprovalService {
    * SECURITY: Fail-closed during database errors
    */
   async checkRateLimits(organizationId) {
-    const rateLimitId = `rate_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const { randomUUID } = require('crypto');
+    const rateLimitId = `rate_${randomUUID()}`;
     
     // ROUND 4 FIX: Enhanced input validation
     if (!organizationId || typeof organizationId !== 'string' || organizationId.trim() === '') {
@@ -437,12 +440,12 @@ class AutoApprovalService {
       let connectionHealthy = true;
       try {
         const healthCheckStart = Date.now();
-        const healthCheck = await Promise.race([
+        const healthCheck = await this.timeoutPromise(
           supabaseServiceClient.from('roast_approvals').select('id').limit(1),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Health check timeout')), this.config.healthCheckTimeout)
-          )
-        ]);
+          this.config.healthCheckTimeout,
+          'rate_limit_health_check',
+          organizationId
+        );
         
         // CRITICAL: Any error in health check means fail closed
         if (healthCheck.error) {
@@ -495,26 +498,26 @@ class AutoApprovalService {
 
       // Get hourly and daily counts with timeout protection
       const [hourlyResult, dailyResult] = await Promise.all([
-        Promise.race([
+        this.timeoutPromise(
           supabaseServiceClient
             .from('roast_approvals')
             .select('id', { count: 'exact' })
             .eq('organization_id', organizationId)
             .gte('created_at', hourAgo.toISOString()),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Hourly count query timeout')), this.config.queryTimeout)
-          )
-        ]),
-        Promise.race([
+          this.config.queryTimeout,
+          'hourly_count_query',
+          organizationId
+        ),
+        this.timeoutPromise(
           supabaseServiceClient
             .from('roast_approvals')
             .select('id', { count: 'exact' })
             .eq('organization_id', organizationId)
             .gte('created_at', dayAgo.toISOString()),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Daily count query timeout')), this.config.queryTimeout)
-          )
-        ])
+          this.config.queryTimeout,
+          'daily_count_query',
+          organizationId
+        )
       ]);
 
       // ROUND 4 FIX: Enhanced error handling for rate limit queries
@@ -1271,7 +1274,7 @@ class AutoApprovalService {
       // ROUND 6 CRITICAL FIX: Enhanced transparency enforcement with mandatory validation
       try {
         const transparencyRequired = await Promise.race([
-          transparencyService.isTransparencyRequired(organizationId),
+          this.transparencyService.isTransparencyRequired(organizationId),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Transparency check timeout')), this.config.transparencyTimeout)
           )
@@ -1279,7 +1282,7 @@ class AutoApprovalService {
 
         if (transparencyRequired) {
           const transparentVariant = await Promise.race([
-            transparencyService.applyTransparency(variant, organizationId),
+            this.transparencyService.applyTransparency(variant, organizationId),
             new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Transparency application timeout')), this.config.transparencyTimeout)
             )
