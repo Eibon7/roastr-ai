@@ -6026,6 +6026,7 @@ Comprehensive UI implementation for the auto-approval flow system, providing a s
 
 #### Auto-Approval Flow Distinction
 
+
 | Feature | Manual Flow | Auto-Approval Flow |
 |---------|-------------|-------------------|
 | Variants Generated | 2 initial + 1 after selection | 1 variant only |
