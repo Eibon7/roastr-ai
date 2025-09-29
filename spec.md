@@ -6729,7 +6729,7 @@ const job = {
 - Aligned test queries with unique constraint: `(organization_id, platform, platform_comment_id)`
 
 ### 🧪 Test Evidence - Complete Deduplication Success
-```
+```text
 PASS tests/integration/ingestor-deduplication.test.js
   Ingestor Deduplication Integration Tests
     Comment ID Deduplication
