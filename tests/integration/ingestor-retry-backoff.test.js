@@ -46,10 +46,12 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['test_video_1'] }
+        payload: {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          video_ids: ['test_video_1']
+        }
       };
 
       // Process job - should eventually succeed after retries
@@ -93,10 +95,12 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['test_video_1'] }
+        payload: {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          video_ids: ['test_video_1']
+        }
       };
 
       // Should eventually fail after max retries
@@ -178,10 +182,12 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'instagram',
-        integration_config_id: integrationConfigId,
-        payload: { monitor_posts: true }
+        payload: {
+          organization_id: organizationId,
+          platform: 'instagram',
+          integration_config_id: integrationConfigId,
+          monitor_posts: true
+        }
       };
 
       const result = await worker.processJob(job);
@@ -243,10 +249,13 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
 
       // Test transient error
       const transientJob = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { test_case: 'transient', video_ids: ['test_video_1'] }
+        payload: {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          test_case: 'transient',
+          video_ids: ['test_video_1']
+        }
       };
 
       const transientResult = await worker.processJob(transientJob);
@@ -262,10 +271,13 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
 
       // Test permanent error
       const permanentJob = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { test_case: 'permanent', video_ids: ['test_video_2'] }
+        payload: {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          test_case: 'permanent',
+          video_ids: ['test_video_2']
+        }
       };
 
       await expect(worker.processJob(permanentJob)).rejects.toThrow('401 Unauthorized');
@@ -306,10 +318,12 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          since_id: '0'
+        }
       };
 
       const result = await worker.processJob(job);
@@ -359,10 +373,12 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['test_video_1'] }
+        payload: {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          video_ids: ['test_video_1']
+        }
       };
 
       const result = await worker.processJob(job);
@@ -412,10 +428,12 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['test_video_1'] }
+        payload: {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          video_ids: ['test_video_1']
+        }
       };
 
       const result = await worker.processJob(job);

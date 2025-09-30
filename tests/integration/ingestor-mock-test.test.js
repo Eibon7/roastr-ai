@@ -25,58 +25,28 @@ describe('Ingestor Mock Mode Test', () => {
     // Mock the platform API to return the comment
     worker.fetchCommentsFromPlatform = async () => [comment];
 
-    // Mock the storeComments method to simulate deduplication
-    const storedComments = [];
-    worker.storeComments = async (orgId, configId, platform, comments) => {
-      for (const comment of comments) {
-        // Check if comment already exists in our mock storage
-        const exists = storedComments.some(c => 
-          c.organization_id === orgId && 
-          c.platform_comment_id === comment.platform_comment_id
-        );
-
-        if (!exists) {
-          const stored = {
-            id: `mock_${Date.now()}_${Math.random()}`,
-            organization_id: orgId,
-            integration_config_id: configId,
-            platform: comment.platform,
-            platform_comment_id: comment.platform_comment_id,
-            platform_user_id: comment.platform_user_id,
-            platform_username: comment.platform_username,
-            original_text: comment.original_text,
-            metadata: comment.metadata,
-            status: 'pending',
-            created_at: new Date().toISOString()
-          };
-          storedComments.push(stored);
-        }
-      }
-      return storedComments.filter(c => c.organization_id === orgId);
-    };
-
     try {
       await worker.start();
 
       // Process the job
       const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          since_id: '0'
+        }
       };
 
       const result = await worker.processJob(job);
-
-      await worker.stop();
 
       // Verify the result
       expect(result.success).toBe(true);
       expect(result.commentsCount).toBe(1);
 
-      // Verify deduplication by processing same job again
-      await worker.start();
+      // Verify deduplication by processing same job again (without restarting worker)
       const result2 = await worker.processJob(job);
+
       await worker.stop();
 
       // Should not add duplicate

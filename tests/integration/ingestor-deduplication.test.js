@@ -37,10 +37,10 @@ describe('Ingestor Deduplication Integration Tests', () => {
 
       // Create a fetch job
       const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
         payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
           since_id: '0'
         }
       };
@@ -94,10 +94,12 @@ describe('Ingestor Deduplication Integration Tests', () => {
 
       // Process job again
       const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          since_id: '0'
+        }
       };
 
       const result = await worker.processJob(job);
@@ -160,10 +162,12 @@ describe('Ingestor Deduplication Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          since_id: '0'
+        }
       };
 
       // Should not throw despite receiving duplicates
@@ -190,10 +194,12 @@ describe('Ingestor Deduplication Integration Tests', () => {
       await worker.start();
 
       const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          since_id: '0'
+        }
       };
 
       // Process first time
@@ -254,10 +260,12 @@ describe('Ingestor Deduplication Integration Tests', () => {
       const startTime = Date.now();
       
       const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          since_id: '0'
+        }
       };
 
       const result = await worker.processJob(job);

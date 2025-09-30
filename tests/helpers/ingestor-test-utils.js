@@ -35,24 +35,54 @@ class IngestorTestUtils {
       this.supabase = mockMode.generateMockSupabaseClient();
       this.queueService = {
         initialize: async () => {},
-        addJob: async (jobType, payload, options = {}) => ({
-          id: `mock_job_${Date.now()}`,
-          job_type: jobType,
-          organization_id: payload.organization_id,
-          priority: options.priority || 5,
-          payload,
-          max_attempts: options.maxAttempts || 3,
-          created_at: new Date().toISOString()
-        }),
-        getNextJob: async () => null,
-        completeJob: async () => {},
-        failJob: async () => {},
-        getQueueStats: async () => ({
-          timestamp: new Date().toISOString(),
-          redis: false,
-          database: true,
-          databaseStats: { byStatus: { pending: 0, completed: 5, failed: 0 } }
-        }),
+        addJob: async (jobType, payload, options = {}) => {
+          const job = {
+            id: `mock_job_${Date.now()}_${Math.random()}`,
+            job_type: jobType,
+            organization_id: payload.organization_id,
+            priority: options.priority || 5,
+            payload,
+            max_attempts: options.maxAttempts || 3,
+            status: 'pending',
+            created_at: new Date().toISOString(),
+            completed_at: null,
+            error_message: null
+          };
+          this.mockStoredJobs.push(job);
+          return job;
+        },
+        getNextJob: async () => {
+          const pendingJobs = this.mockStoredJobs.filter(job => job.status === 'pending');
+          return pendingJobs.length > 0 ? pendingJobs[0] : null;
+        },
+        completeJob: async (job, result = {}) => {
+          const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
+          if (existingJob) {
+            existingJob.status = 'completed';
+            existingJob.completed_at = new Date().toISOString();
+            existingJob.result = result;
+          }
+        },
+        failJob: async (job, error) => {
+          const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
+          if (existingJob) {
+            existingJob.status = 'failed';
+            existingJob.completed_at = new Date().toISOString();
+            existingJob.error_message = error.message || error.toString();
+          }
+        },
+        getQueueStats: async () => {
+          const completed = this.mockStoredJobs.filter(j => j.status === 'completed').length;
+          const failed = this.mockStoredJobs.filter(j => j.status === 'failed').length;
+          const pending = this.mockStoredJobs.filter(j => j.status === 'pending').length;
+          
+          return {
+            timestamp: new Date().toISOString(),
+            redis: false,
+            database: true,
+            databaseStats: { byStatus: { pending, completed, failed } }
+          };
+        },
         shutdown: async () => {}
       };
     } else {
@@ -155,9 +185,10 @@ class IngestorTestUtils {
     const { mockMode } = require('../../src/config/mockMode');
     
     if (mockMode.isMockMode) {
-      // In mock mode, return fake data
-      return comments.map((comment, index) => ({
-        id: `mock_comment_${index}`,
+      // In mock mode, store data in global storage and return it
+      const storage = global.mockCommentStorage || [];
+      const insertedComments = comments.map((comment, index) => ({
+        id: `mock_comment_${storage.length + index}`,
         organization_id: organizationId,
         integration_config_id: integrationConfigId,
         platform: comment.platform,
@@ -169,6 +200,12 @@ class IngestorTestUtils {
         status: 'pending',
         created_at: new Date().toISOString()
       }));
+      
+      // Add to global storage for persistence in mock mode
+      storage.push(...insertedComments);
+      global.mockCommentStorage = storage;
+      
+      return insertedComments;
     }
 
     const commentsToInsert = comments.map(comment => ({
@@ -243,6 +280,18 @@ class IngestorTestUtils {
    * Get jobs from queue by type
    */
   async getJobsByType(jobType) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      // Return mock job data with proper structure
+      return this.mockStoredJobs.filter(job => job.job_type === jobType).map(job => ({
+        ...job,
+        status: job.status || 'completed',
+        completed_at: job.completed_at || new Date().toISOString(),
+        error_message: job.error_message || null
+      }));
+    }
+
     const { data, error } = await this.supabase
       .from('job_queue')
       .select('*')
@@ -260,6 +309,17 @@ class IngestorTestUtils {
    * Check if comment exists in database by platform_comment_id
    */
   async commentExists(organizationId, platformCommentId) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      const storage = global.mockCommentStorage || [];
+      const exists = storage.some(comment => 
+        comment.organization_id === organizationId &&
+        comment.platform_comment_id === platformCommentId
+      );
+      return exists;
+    }
+
     const { data, error } = await this.supabase
       .from('comments')
       .select('id')

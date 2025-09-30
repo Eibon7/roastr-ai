@@ -108,24 +108,30 @@ describe('Ingestor Processing Order Integration Tests', () => {
 
       // Process batches in sequence
       const job1 = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { comments: batch1 }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comments: batch1
+        }
       };
 
       const job2 = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { comments: batch2 }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comments: batch2
+        }
       };
 
       const job3 = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { comments: batch3 }
+        payload: {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comments: batch3
+        }
       };
 
       await worker.processJob(job1);

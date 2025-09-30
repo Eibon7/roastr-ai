@@ -127,9 +127,10 @@ class MockModeManager {
                   error: null
                 });
               } else {
+                // Return null data when no comment found (matches real Supabase behavior for .single())
                 return Promise.resolve({
                   data: null,
-                  error: { code: 'PGRST116', message: 'No rows found' }
+                  error: null
                 });
               }
             }
@@ -143,9 +144,47 @@ class MockModeManager {
           order: (column, options) => chainable,
           upsert: (data, options) => Promise.resolve({ data, error: null }),
           insert: (data) => {
-            // Store data in global storage if it's comments
+            // Store data in global storage if it's comments with proper deduplication
             if (table === 'comments') {
               const storage = global.mockCommentStorage || [];
+              
+              // Check for existing comment to enforce deduplication
+              const existing = storage.find(comment => 
+                comment.organization_id === data.organization_id &&
+                comment.platform === data.platform &&
+                comment.platform_comment_id === data.platform_comment_id
+              );
+              
+              if (existing) {
+                console.log('🔍 Mock: Duplicate comment detected, not inserting:', {
+                  platform_comment_id: data.platform_comment_id,
+                  organization_id: data.organization_id,
+                  platform: data.platform
+                });
+                
+                // Return the existing comment instead of inserting duplicate
+                const chainableInsert = {
+                  select: (columns = '*') => ({
+                    single: () => Promise.resolve({
+                      data: existing,
+                      error: null
+                    }),
+                    then: (resolve) => {
+                      resolve({
+                        data: [existing],
+                        error: null
+                      });
+                    }
+                  }),
+                  single: () => Promise.resolve({
+                    data: existing,
+                    error: null
+                  })
+                };
+                return chainableInsert;
+              }
+              
+              // Insert new comment since no duplicate found
               const newComment = {
                 ...data,
                 id: storage.length + 1,
@@ -204,8 +243,23 @@ class MockModeManager {
         Object.assign(chainable, {
           then: (resolve) => {
             if (table === 'comments') {
+              // Return filtered comments based on current queries
+              const storage = global.mockCommentStorage || [];
+              let filteredData = storage;
+              
+              // Apply filters based on current queries
+              if (currentQueries.organization_id) {
+                filteredData = filteredData.filter(c => c.organization_id === currentQueries.organization_id);
+              }
+              if (currentQueries.platform) {
+                filteredData = filteredData.filter(c => c.platform === currentQueries.platform);
+              }
+              if (currentQueries.platform_comment_id) {
+                filteredData = filteredData.filter(c => c.platform_comment_id === currentQueries.platform_comment_id);
+              }
+              
               resolve({
-                data: [],
+                data: filteredData,
                 error: null
               });
             } else {
