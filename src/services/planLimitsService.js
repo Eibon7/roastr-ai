@@ -440,6 +440,258 @@ class PlanLimitsService {
         this.lastCacheRefresh = null;
         logger.debug('Plan limits cache cleared');
     }
+
+    // ROUND 4 FIX: Plan-specific auto-approval capabilities
+    /**
+     * Get daily auto-approval limits for an organization
+     * ROUND 4 FIX: Thread plan-specific limits through rate limit checks
+     */
+    async getDailyAutoApprovalLimits(organizationId) {
+        try {
+            // Get organization plan
+            const orgResult = await supabaseServiceClient
+                .from('organizations')
+                .select('plan')
+                .eq('id', organizationId)
+                .single();
+
+            if (orgResult.error || !orgResult.data) {
+                logger.error('Failed to get organization plan for auto-approval limits', {
+                    organizationId,
+                    error: orgResult.error?.message,
+                    reason: 'organization_query_failed'
+                });
+                // Fail closed - return most restrictive limits
+                return {
+                    daily: 0,
+                    hourly: 0,
+                    plan: 'free',
+                    features: { autoApproval: false }
+                };
+            }
+
+            const plan = orgResult.data.plan;
+            const limits = await this.getPlanLimits(plan);
+
+            // ROUND 4 FIX: Map plan limits to auto-approval specific limits
+            const autoApprovalLimits = this.getAutoApprovalLimitsForPlan(plan, limits);
+
+            logger.debug('Retrieved auto-approval limits for organization', {
+                organizationId,
+                plan,
+                limits: {
+                    daily: autoApprovalLimits.daily,
+                    hourly: autoApprovalLimits.hourly,
+                    autoApproval: autoApprovalLimits.features.autoApproval
+                }
+            });
+
+            return {
+                daily: autoApprovalLimits.daily,
+                hourly: autoApprovalLimits.hourly,
+                plan,
+                features: autoApprovalLimits.features
+            };
+
+        } catch (error) {
+            logger.error('Error getting daily auto-approval limits - defaulting to free', {
+                organizationId,
+                error: error.message,
+                reason: 'system_error'
+            });
+            
+            // Fail closed - return most restrictive limits
+            return {
+                daily: 0,
+                hourly: 0,
+                plan: 'free',
+                features: { autoApproval: false }
+            };
+        }
+    }
+
+    /**
+     * ROUND 4 FIX: Get auto-approval specific limits based on plan
+     * @private
+     */
+    getAutoApprovalLimitsForPlan(plan, planLimits) {
+        // ROUND 4 FIX: Plan-specific auto-approval caps
+        const autoApprovalMappings = {
+            free: {
+                features: { autoApproval: false },
+                daily: 0,
+                hourly: 0
+            },
+            starter: {
+                features: { autoApproval: true },
+                daily: Math.min(50, planLimits.dailyApiCallsLimit || 50),
+                hourly: Math.min(10, Math.floor((planLimits.dailyApiCallsLimit || 50) / 24))
+            },
+            pro: {
+                features: { autoApproval: true },
+                daily: Math.min(200, planLimits.dailyApiCallsLimit || 200),
+                hourly: Math.min(30, Math.floor((planLimits.dailyApiCallsLimit || 200) / 24))
+            },
+            plus: {
+                features: { autoApproval: true },
+                daily: Math.min(500, planLimits.dailyApiCallsLimit || 500),
+                hourly: Math.min(50, Math.floor((planLimits.dailyApiCallsLimit || 500) / 24))
+            },
+            creator_plus: {
+                features: { autoApproval: true },
+                daily: Math.min(1000, planLimits.dailyApiCallsLimit || 1000),
+                hourly: Math.min(100, Math.floor((planLimits.dailyApiCallsLimit || 1000) / 24))
+            }
+        };
+
+        const normalizedPlan = this.normalizePlan(plan);
+        return autoApprovalMappings[normalizedPlan] || autoApprovalMappings.free;
+    }
+
+    /**
+     * ROUND 4 FIX: Check if plan supports auto-approval
+     */
+    async supportsAutoApproval(organizationId) {
+        try {
+            const limits = await this.getDailyAutoApprovalLimits(organizationId);
+            return limits.features.autoApproval;
+        } catch (error) {
+            logger.error('Error checking auto-approval support - failing closed', {
+                organizationId,
+                error: error.message
+            });
+            return false;
+        }
+    }
+
+    /**
+     * ROUND 4 FIX: Get current auto-approval usage for an organization
+     */
+    async getCurrentAutoApprovalUsage(organizationId) {
+        try {
+            const now = new Date();
+            const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+            const [dailyResult, hourlyResult] = await Promise.all([
+                supabaseServiceClient
+                    .from('roast_approvals')
+                    .select('id', { count: 'exact' })
+                    .eq('organization_id', organizationId)
+                    .gte('created_at', dayAgo.toISOString()),
+                supabaseServiceClient
+                    .from('roast_approvals')
+                    .select('id', { count: 'exact' })
+                    .eq('organization_id', organizationId)
+                    .gte('created_at', hourAgo.toISOString())
+            ]);
+
+            if (dailyResult.error || hourlyResult.error) {
+                logger.error('Error getting current auto-approval usage', {
+                    organizationId,
+                    dailyError: dailyResult.error?.message,
+                    hourlyError: hourlyResult.error?.message
+                });
+                throw new Error('Failed to get auto-approval usage data');
+            }
+
+            return {
+                daily: dailyResult.count || 0,
+                hourly: hourlyResult.count || 0,
+                timestamp: now.toISOString()
+            };
+
+        } catch (error) {
+            logger.error('Error getting current auto-approval usage', {
+                organizationId,
+                error: error.message
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * ROUND 4 FIX: Check if organization can auto-approve more content
+     */
+    async canAutoApprove(organizationId) {
+        try {
+            const [limits, usage] = await Promise.all([
+                this.getDailyAutoApprovalLimits(organizationId),
+                this.getCurrentAutoApprovalUsage(organizationId)
+            ]);
+
+            // Check if plan supports auto-approval
+            if (!limits.features.autoApproval) {
+                return {
+                    allowed: false,
+                    reason: 'plan_does_not_support_auto_approval',
+                    plan: limits.plan
+                };
+            }
+
+            // Check daily limits
+            if (usage.daily >= limits.daily) {
+                return {
+                    allowed: false,
+                    reason: 'daily_limit_exceeded',
+                    usage: usage.daily,
+                    limit: limits.daily,
+                    plan: limits.plan
+                };
+            }
+
+            // Check hourly limits
+            if (usage.hourly >= limits.hourly) {
+                return {
+                    allowed: false,
+                    reason: 'hourly_limit_exceeded',
+                    usage: usage.hourly,
+                    limit: limits.hourly,
+                    plan: limits.plan
+                };
+            }
+
+            return {
+                allowed: true,
+                usage,
+                limits,
+                plan: limits.plan
+            };
+
+        } catch (error) {
+            logger.error('Error checking if can auto-approve - failing closed', {
+                organizationId,
+                error: error.message
+            });
+            return {
+                allowed: false,
+                reason: 'system_error',
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * ROUND 4 FIX: Normalize plan name for consistent lookups
+     * @private
+     */
+    normalizePlan(plan) {
+        if (!plan || typeof plan !== 'string') {
+            return 'free';
+        }
+
+        const normalized = plan.toLowerCase().trim();
+        
+        // Handle plan aliases
+        const planAliases = {
+            'basic': 'starter',
+            'premium': 'pro',
+            'enterprise': 'plus',
+            'creator': 'creator_plus'
+        };
+
+        return planAliases[normalized] || normalized;
+    }
 }
 
 // Export singleton instance

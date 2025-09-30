@@ -11,7 +11,7 @@
 ## Test Suite Breakdown
 
 ### 1. AutoApprovalService Security Tests
-**File**: `/tests/unit/services/autoApprovalService-security.test.js`  
+**File**: `/tests/unit/services/autoApprovalService-round3-security.test.js`  
 **Test Count**: 23 comprehensive security tests  
 **Coverage Areas**:
 - Fail-closed error handling (6 tests)
@@ -22,7 +22,7 @@
 - Error logging and security monitoring (2 tests)
 
 ### 2. Transparency Enforcement Integration Tests
-**File**: `/tests/integration/transparencyEnforcement-security.test.js`  
+**File**: `/tests/integration/transparencyEnforcement-round3-security.test.js`  
 **Test Count**: 16 integration tests  
 **Coverage Areas**:
 - GDPR transparency compliance (4 tests)
@@ -149,10 +149,10 @@
 ### Test Execution Recommendations
 ```bash
 # Run security test suite
-npm test tests/unit/services/autoApprovalService-security.test.js
+npm test tests/unit/services/autoApprovalService-round3-security.test.js
 
 # Run transparency integration tests
-npm test tests/integration/transparencyEnforcement-security.test.js
+npm test tests/integration/transparencyEnforcement-round3-security.test.js
 
 # Run full test suite with coverage
 npm run test:coverage

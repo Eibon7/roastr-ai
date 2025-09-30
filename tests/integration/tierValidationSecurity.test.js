@@ -4,12 +4,10 @@
  */
 
 const { describe, test, expect, beforeEach, afterEach, beforeAll, afterAll } = require('@jest/globals');
+const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('../../src/services/costControl');
 
-// Mock external dependencies
-jest.mock('../../src/utils/logger');
-
-// Enhanced Supabase mock with better method chaining for integration tests
+// Consolidated and improved Supabase mock with proper method chaining support
 const createMockSupabaseClient = () => ({
   from: jest.fn().mockReturnValue({
     insert: jest.fn().mockReturnValue({
@@ -34,7 +32,8 @@ const createMockSupabaseClient = () => ({
         single: jest.fn().mockResolvedValue({
           data: { 
             id: 'mock-org-id',
-            subscription_tier: 'starter'
+            subscription_tier: 'starter',
+            monthly_usage: 0
           },
           error: null
         })
@@ -46,9 +45,13 @@ const createMockSupabaseClient = () => ({
   })
 });
 
+// Mock Supabase with improved chaining support
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => createMockSupabaseClient())
 }));
+
+// Mock external dependencies
+jest.mock('../../src/utils/logger');
 
 // Skip these tests in mock mode as they require real database integration
 const shouldSkipIntegrationTests = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
@@ -68,22 +71,24 @@ describeFunction('Tier Validation Security Test Suite', () => {
   };
 
   beforeAll(async () => {
-    if (shouldSkipIntegrationTests) {
-      // Use mock data for testing
-      costControl = new CostControlService();
-      return;
-    }
-
-    // Import after mocking
-    const { createClient } = require('@supabase/supabase-js');
-    
-    // Initialize Supabase client (mocked)
+    // Initialize Supabase client
     supabase = createClient(
-      process.env.SUPABASE_URL || 'http://localhost:54321/mock',
-      process.env.SUPABASE_SERVICE_KEY || 'mock-service-key'
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
     );
     
     costControl = new CostControlService();
+    
+    // Create test organizations for each tier
+    for (const tier of Object.keys(testOrganizations)) {
+      const org = await createTestOrganization({
+        name: `Test Org ${tier.toUpperCase()}`,
+        subscription_tier: tier,
+        monthly_cost_limit: getTierLimit(tier),
+        monthly_usage: 0
+      });
+      testOrganizations[tier] = org;
+    }
   });
 
   afterAll(async () => {
@@ -96,7 +101,7 @@ describeFunction('Tier Validation Security Test Suite', () => {
   });
 
   beforeEach(async () => {
-    // Setup fake timers for deterministic timeout testing
+    // Setup fake timers for timeout tests
     jest.useFakeTimers();
     
     // Reset usage for all test organizations
@@ -114,7 +119,7 @@ describeFunction('Tier Validation Security Test Suite', () => {
   });
 
   afterEach(() => {
-    // Restore real timers after each test
+    // Cleanup fake timers
     jest.useRealTimers();
   });
 

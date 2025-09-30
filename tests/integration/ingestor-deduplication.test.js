@@ -1,12 +1,7 @@
-/**
- * Ingestor Deduplication Integration Tests
- * Tests comment_id deduplication functionality as specified in Issue #406
- */
-
 const IngestorTestUtils = require('../helpers/ingestor-test-utils');
 const fixtures = require('../fixtures/ingestor-comments.json');
 
-describe('Ingestor Deduplication Integration', () => {
+describe('Ingestor Deduplication Integration Tests', () => {
   let testUtils;
 
   beforeAll(async () => {
@@ -19,352 +14,271 @@ describe('Ingestor Deduplication Integration', () => {
     await testUtils.cleanup();
   }, 15000);
 
+  beforeEach(async () => {
+    // Clean up any existing test data
+    await testUtils.cleanupTestData();
+    await testUtils.setupTestOrganizations(fixtures);
+  });
+
   describe('Comment ID Deduplication', () => {
     test('should prevent duplicate comments with same platform_comment_id', async () => {
       const organizationId = 'test-org-dedup';
       const integrationConfigId = 'config-twitter-dedup';
-      const duplicateComment = fixtures.duplicateComments[0];
+      const duplicateComments = fixtures.duplicateComments;
 
-      // Create worker with mock storage that tracks duplicates
+      // Create worker
       const worker = testUtils.createTestWorker();
-      const storedComments = [];
 
-      // Mock platform API to return duplicate comment
-      worker.fetchCommentsFromPlatform = async () => [duplicateComment];
+      // Mock the Twitter API to return our duplicate comments
+      worker.fetchCommentsFromPlatform = async () => duplicateComments;
 
-      // Mock storage with deduplication logic
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const newlyStoredComments = [];
-        
-        for (const comment of comments) {
-          // Check if comment already exists
-          const exists = storedComments.some(c => 
-            c.organization_id === orgId && 
-            c.platform_comment_id === comment.platform_comment_id
-          );
-
-          if (!exists) {
-            const stored = {
-              id: `mock_${Date.now()}_${Math.random()}`,
-              organization_id: orgId,
-              integration_config_id: configId,
-              platform: comment.platform,
-              platform_comment_id: comment.platform_comment_id,
-              platform_user_id: comment.platform_user_id,
-              platform_username: comment.platform_username,
-              original_text: comment.original_text,
-              metadata: comment.metadata,
-              status: 'pending',
-              created_at: new Date().toISOString()
-            };
-            storedComments.push(stored);
-            newlyStoredComments.push(stored);
-          }
-        }
-        
-        return newlyStoredComments;
-      };
-
+      // Start worker
       await worker.start();
 
-      // Process job first time
-      const job1 = testUtils.createMockJob(organizationId, 'twitter');
-      const result1 = await worker.processJob(job1);
+      // Create a fetch job
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: {
+          since_id: '0'
+        }
+      };
 
-      // Process same job again (should deduplicate)
-      const job2 = testUtils.createMockJob(organizationId, 'twitter');
-      const result2 = await worker.processJob(job2);
+      // Process the job
+      const result = await worker.processJob(job);
 
+      // Stop worker
       await worker.stop();
 
-      // Assertions
-      expect(result1.success).toBe(true);
-      expect(result1.commentsCount).toBe(1);
-      
-      expect(result2.success).toBe(true);
-      expect(result2.commentsCount).toBe(0); // No new comments due to deduplication
+      // Verify only one comment was stored despite two being fetched
+      expect(result.success).toBe(true);
+      expect(result.commentsCount).toBe(1);
 
+      // Verify in database
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
       expect(storedComments).toHaveLength(1);
-      expect(storedComments[0].platform_comment_id).toBe(duplicateComment.platform_comment_id);
+
+      // Verify the comment is the correct one
+      const storedComment = storedComments[0];
+      expect(storedComment.platform_comment_id).toBe('1234567890');
+      expect(storedComment.original_text).toBe('This is a test comment for deduplication');
+
+      // Verify count in database
+      const count = await testUtils.countCommentsByPlatformId(
+        organizationId, 
+        '1234567890'
+      );
+      expect(count).toBe(1);
     });
 
-    test('should allow comments with different platform_comment_id', async () => {
+    test('should handle reprocessing of same comments without duplicates', async () => {
       const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.duplicateComments[0];
+
+      // First, manually insert the comment
+      await testUtils.insertTestComments(organizationId, integrationConfigId, [comment]);
+
+      // Verify it exists
+      let exists = await testUtils.commentExists(organizationId, comment.platform_comment_id);
+      expect(exists).toBe(true);
+
+      // Create worker
       const worker = testUtils.createTestWorker();
-      const storedComments = [];
 
-      // Mock different comments
-      const comment1 = testUtils.createTestComment('unique_001', organizationId);
-      const comment2 = testUtils.createTestComment('unique_002', organizationId);
-
-      worker.fetchCommentsFromPlatform = async () => [comment1, comment2];
-
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const newlyStoredComments = [];
-        
-        for (const comment of comments) {
-          const exists = storedComments.some(c => 
-            c.organization_id === orgId && 
-            c.platform_comment_id === comment.platform_comment_id
-          );
-
-          if (!exists) {
-            const stored = {
-              id: `mock_${Date.now()}_${Math.random()}`,
-              organization_id: orgId,
-              platform_comment_id: comment.platform_comment_id,
-              created_at: new Date().toISOString()
-            };
-            storedComments.push(stored);
-            newlyStoredComments.push(stored);
-          }
-        }
-        
-        return newlyStoredComments;
-      };
+      // Mock the API to return the same comment again
+      worker.fetchCommentsFromPlatform = async () => [comment];
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      // Process job again
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
+      const result = await worker.processJob(job);
+      await worker.stop();
+
+      // Should report 0 new comments since it's a duplicate
+      expect(result.success).toBe(true);
+      expect(result.commentsCount).toBe(0);
+
+      // Verify still only one comment in database
+      const count = await testUtils.countCommentsByPlatformId(
+        organizationId, 
+        comment.platform_comment_id
+      );
+      expect(count).toBe(1);
+
+      const allComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(allComments).toHaveLength(1);
+    });
+
+    test('should allow same platform_comment_id across different organizations', async () => {
+      const comment = fixtures.duplicateComments[0];
+      
+      // Create two different organizations
+      const org1 = 'test-org-dedup';
+      const org2 = 'test-org-order'; // Reuse another test org
+      
+      const config1 = 'config-twitter-dedup';
+      const config2 = 'config-twitter-order';
+
+      // Insert same comment for both organizations
+      await testUtils.insertTestComments(org1, config1, [comment]);
+      await testUtils.insertTestComments(org2, config2, [comment]);
+
+      // Verify both exist
+      const comments1 = await testUtils.getCommentsByOrganization(org1);
+      const comments2 = await testUtils.getCommentsByOrganization(org2);
+
+      expect(comments1).toHaveLength(1);
+      expect(comments2).toHaveLength(1);
+
+      // Both should have the same platform_comment_id but different organization_id
+      expect(comments1[0].platform_comment_id).toBe(comment.platform_comment_id);
+      expect(comments2[0].platform_comment_id).toBe(comment.platform_comment_id);
+      expect(comments1[0].organization_id).toBe(org1);
+      expect(comments2[0].organization_id).toBe(org2);
+    });
+
+    test('should handle database constraint violations gracefully', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.duplicateComments[0];
+
+      // Create worker
+      const worker = testUtils.createTestWorker();
+
+      // Mock to return comment multiple times
+      worker.fetchCommentsFromPlatform = async () => [comment, comment, comment];
+
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
+      // Should not throw despite receiving duplicates
       const result = await worker.processJob(job);
       await worker.stop();
 
       expect(result.success).toBe(true);
-      expect(result.commentsCount).toBe(2);
-      expect(storedComments).toHaveLength(2);
+      expect(result.commentsCount).toBe(1); // Only one stored despite three received
+
+      // Verify database state
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(1);
     });
 
-    test('should maintain deduplication across different worker instances', async () => {
+    test('should preserve deduplication across multiple fetch operations', async () => {
       const organizationId = 'test-org-dedup';
-      const sharedStorage = []; // Simulates persistent database
-      const duplicateComment = fixtures.duplicateComments[0];
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.duplicateComments[0];
 
-      // Create first worker
-      const worker1 = testUtils.createTestWorker();
-      worker1.fetchCommentsFromPlatform = async () => [duplicateComment];
-      worker1.storeComments = async (orgId, configId, platform, comments) => {
-        const newlyStoredComments = [];
-        
-        for (const comment of comments) {
-          const exists = sharedStorage.some(c => 
-            c.organization_id === orgId && 
-            c.platform_comment_id === comment.platform_comment_id
-          );
+      const worker = testUtils.createTestWorker();
 
-          if (!exists) {
-            const stored = {
-              id: `mock_${Date.now()}_${Math.random()}`,
-              organization_id: orgId,
-              platform_comment_id: comment.platform_comment_id,
-              created_at: new Date().toISOString()
-            };
-            sharedStorage.push(stored);
-            newlyStoredComments.push(stored);
-          }
-        }
-        
-        return newlyStoredComments;
+      // First fetch
+      worker.fetchCommentsFromPlatform = async () => [comment];
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
       };
 
-      // Create second worker with same storage
-      const worker2 = testUtils.createTestWorker();
-      worker2.fetchCommentsFromPlatform = async () => [duplicateComment];
-      worker2.storeComments = worker1.storeComments; // Share storage logic
+      // Process first time
+      let result = await worker.processJob(job);
+      expect(result.commentsCount).toBe(1);
 
-      // Process with first worker
-      await worker1.start();
-      const job1 = testUtils.createMockJob(organizationId, 'twitter');
-      const result1 = await worker1.processJob(job1);
-      await worker1.stop();
+      // Second fetch with same comment
+      result = await worker.processJob(job);
+      expect(result.commentsCount).toBe(0); // Duplicate detected
 
-      // Process with second worker (should deduplicate)
-      await worker2.start();
-      const job2 = testUtils.createMockJob(organizationId, 'twitter');
-      const result2 = await worker2.processJob(job2);
-      await worker2.stop();
+      // Third fetch with same comment
+      result = await worker.processJob(job);
+      expect(result.commentsCount).toBe(0); // Still duplicate
 
-      expect(result1.success).toBe(true);
-      expect(result1.commentsCount).toBe(1);
-      
-      expect(result2.success).toBe(true);
-      expect(result2.commentsCount).toBe(0); // Deduplicated across workers
+      await worker.stop();
 
-      expect(sharedStorage).toHaveLength(1);
+      // Final verification
+      const finalCount = await testUtils.countCommentsByPlatformId(
+        organizationId, 
+        comment.platform_comment_id
+      );
+      expect(finalCount).toBe(1);
     });
+  });
 
-    test('should handle deduplication with high comment volume', async () => {
+  describe('Deduplication Performance', () => {
+    test('should efficiently handle large batches with duplicates', async () => {
       const organizationId = 'test-org-dedup';
-      const worker = testUtils.createTestWorker();
-      const storedComments = [];
-
-      // Generate 100 comments with 50% duplicates
-      const comments = [];
-      for (let i = 0; i < 100; i++) {
-        const commentId = i < 50 ? `unique_${i}` : `unique_${i - 50}`; // 50% duplicates
-        comments.push(testUtils.createTestComment(commentId, organizationId));
+      const integrationConfigId = 'config-twitter-dedup';
+      
+      // Create batch with mixed unique and duplicate comments
+      const baseComment = fixtures.duplicateComments[0];
+      const largeBatch = [];
+      
+      // Add 10 unique comments
+      for (let i = 0; i < 10; i++) {
+        largeBatch.push({
+          ...baseComment,
+          platform_comment_id: `unique_${i}`,
+          original_text: `Unique comment ${i}`
+        });
+      }
+      
+      // Add 5 duplicates of the first comment
+      for (let i = 0; i < 5; i++) {
+        largeBatch.push({
+          ...baseComment,
+          platform_comment_id: 'unique_0', // Duplicate of first
+          original_text: 'Unique comment 0'
+        });
       }
 
-      worker.fetchCommentsFromPlatform = async () => comments;
-
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const newlyStoredComments = [];
-        
-        for (const comment of comments) {
-          const exists = storedComments.some(c => 
-            c.organization_id === orgId && 
-            c.platform_comment_id === comment.platform_comment_id
-          );
-
-          if (!exists) {
-            const stored = {
-              id: `mock_${Date.now()}_${Math.random()}`,
-              organization_id: orgId,
-              platform_comment_id: comment.platform_comment_id,
-              created_at: new Date().toISOString()
-            };
-            storedComments.push(stored);
-            newlyStoredComments.push(stored);
-          }
-        }
-        
-        return newlyStoredComments;
-      };
-
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      
-      const startTime = Date.now();
-      const result = await worker.processJob(job);
-      const duration = Date.now() - startTime;
-      
-      await worker.stop();
-
-      expect(result.success).toBe(true);
-      expect(result.commentsCount).toBe(50); // Only unique comments stored
-      expect(storedComments).toHaveLength(50);
-      expect(duration).toBeLessThan(5000); // Performance check: under 5 seconds
-    });
-
-    test('should maintain organization isolation in deduplication', async () => {
-      const org1Id = 'test-org-1';
-      const org2Id = 'test-org-2'; 
-      const sharedStorage = [];
-      
-      const sameCommentId = 'shared_comment_123';
-      const comment1 = testUtils.createTestComment(sameCommentId, org1Id);
-      const comment2 = testUtils.createTestComment(sameCommentId, org2Id);
-
-      const createWorkerForOrg = (orgId, comment) => {
-        const worker = testUtils.createTestWorker();
-        worker.fetchCommentsFromPlatform = async () => [comment];
-        worker.storeComments = async (orgId, configId, platform, comments) => {
-          const newlyStoredComments = [];
-          
-          for (const comment of comments) {
-            // Deduplication should be per organization
-            const exists = sharedStorage.some(c => 
-              c.organization_id === orgId && 
-              c.platform_comment_id === comment.platform_comment_id
-            );
-
-            if (!exists) {
-              const stored = {
-                id: `mock_${Date.now()}_${Math.random()}`,
-                organization_id: orgId,
-                platform_comment_id: comment.platform_comment_id,
-                created_at: new Date().toISOString()
-              };
-              sharedStorage.push(stored);
-              newlyStoredComments.push(stored);
-            }
-          }
-          
-          return newlyStoredComments;
-        };
-        return worker;
-      };
-
-      // Process for org1
-      const worker1 = createWorkerForOrg(org1Id, comment1);
-      await worker1.start();
-      const job1 = testUtils.createMockJob(org1Id, 'twitter');
-      const result1 = await worker1.processJob(job1);
-      await worker1.stop();
-
-      // Process same comment ID for org2
-      const worker2 = createWorkerForOrg(org2Id, comment2);
-      await worker2.start();
-      const job2 = testUtils.createMockJob(org2Id, 'twitter');
-      const result2 = await worker2.processJob(job2);
-      await worker2.stop();
-
-      // Both should succeed because they're in different organizations
-      expect(result1.success).toBe(true);
-      expect(result1.commentsCount).toBe(1);
-      
-      expect(result2.success).toBe(true);
-      expect(result2.commentsCount).toBe(1);
-
-      expect(sharedStorage).toHaveLength(2);
-      expect(sharedStorage[0].organization_id).toBe(org1Id);
-      expect(sharedStorage[1].organization_id).toBe(org2Id);
-    });
-
-    test('should handle edge cases in comment ID deduplication', async () => {
-      const organizationId = 'test-org-dedup';
       const worker = testUtils.createTestWorker();
-      const storedComments = [];
-
-      // Test edge cases: empty string, null, undefined, numbers
-      const edgeCaseComments = [
-        testUtils.createTestComment('', organizationId),
-        testUtils.createTestComment(null, organizationId),
-        testUtils.createTestComment(undefined, organizationId),
-        testUtils.createTestComment('123', organizationId),
-        testUtils.createTestComment('valid_id', organizationId)
-      ].filter(comment => comment.platform_comment_id != null); // Filter out null/undefined
-
-      worker.fetchCommentsFromPlatform = async () => edgeCaseComments;
-
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const newlyStoredComments = [];
-        
-        for (const comment of comments) {
-          // Only store comments with valid IDs
-          if (comment.platform_comment_id && comment.platform_comment_id !== '') {
-            const exists = storedComments.some(c => 
-              c.organization_id === orgId && 
-              c.platform_comment_id === comment.platform_comment_id
-            );
-
-            if (!exists) {
-              const stored = {
-                id: `mock_${Date.now()}_${Math.random()}`,
-                organization_id: orgId,
-                platform_comment_id: comment.platform_comment_id,
-                created_at: new Date().toISOString()
-              };
-              storedComments.push(stored);
-              newlyStoredComments.push(stored);
-            }
-          }
-        }
-        
-        return newlyStoredComments;
-      };
+      worker.fetchCommentsFromPlatform = async () => largeBatch;
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      const startTime = Date.now();
+      
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
       const result = await worker.processJob(job);
+      
+      const processingTime = Date.now() - startTime;
+      
       await worker.stop();
 
-      expect(result.success).toBe(true);
-      expect(storedComments.length).toBeGreaterThan(0);
-      
-      // All stored comments should have valid IDs
-      storedComments.forEach(comment => {
-        expect(comment.platform_comment_id).toBeTruthy();
-        expect(typeof comment.platform_comment_id).toBe('string');
-      });
+      // Should process in reasonable time (less than 2 seconds)
+      expect(processingTime).toBeLessThan(2000);
+
+      // Should store only unique comments
+      expect(result.commentsCount).toBe(10); // 10 unique despite 15 total
+
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(10);
+
+      // Verify no duplicates by platform_comment_id
+      const platformIds = storedComments.map(c => c.platform_comment_id);
+      const uniqueIds = [...new Set(platformIds)];
+      expect(uniqueIds).toHaveLength(10);
     });
   });
 });

@@ -1,12 +1,7 @@
-/**
- * Ingestor Order Processing Integration Tests
- * Tests FIFO processing order preservation as specified in Issue #406
- */
-
 const IngestorTestUtils = require('../helpers/ingestor-test-utils');
 const fixtures = require('../fixtures/ingestor-comments.json');
 
-describe('Ingestor Order Processing Integration', () => {
+describe('Ingestor Processing Order Integration Tests', () => {
   let testUtils;
 
   beforeAll(async () => {
@@ -19,473 +14,558 @@ describe('Ingestor Order Processing Integration', () => {
     await testUtils.cleanup();
   }, 15000);
 
+  beforeEach(async () => {
+    await testUtils.cleanupTestData();
+    await testUtils.setupTestOrganizations(fixtures);
+  });
+
   describe('FIFO Processing Order', () => {
-    test('should process comments in first-in-first-out order', async () => {
+    test('should process jobs in first-in-first-out order', async () => {
       const organizationId = 'test-org-order';
-      const worker = testUtils.createTestWorker();
-      const processingOrder = [];
+      const integrationConfigId = 'config-twitter-order';
       const orderedComments = fixtures.orderedComments;
 
-      // Mock platform API to return ordered comments
-      worker.fetchCommentsFromPlatform = async () => orderedComments;
+      // Create jobs in specific order
+      const jobPayloads = orderedComments.map(comment => ({
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: comment,
+        sequence: comment.metadata.sequence
+      }));
 
-      // Override storage to track processing order
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const storedComments = [];
-        
-        for (const comment of comments) {
-          const processingTimestamp = Date.now();
-          const stored = {
-            id: `stored_${processingTimestamp}_${Math.random()}`,
-            organization_id: orgId,
-            platform_comment_id: comment.platform_comment_id,
-            original_text: comment.original_text,
-            processing_order: comment.metadata.order,
-            processed_at: new Date(processingTimestamp).toISOString()
-          };
-          
-          processingOrder.push({
-            commentId: comment.platform_comment_id,
-            expectedOrder: comment.metadata.order,
-            actualProcessingTime: processingTimestamp
-          });
-          
-          storedComments.push(stored);
-          
-          // Add small delay to simulate processing time
-          await testUtils.wait(10);
-        }
-        
-        return storedComments;
-      };
+      const jobs = await testUtils.createTestJobs('fetch_comments', jobPayloads, {
+        priority: 5 // Same priority to ensure FIFO within priority level
+      });
 
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
-      await worker.stop();
+      // Verify jobs were created in order
+      expect(jobs).toHaveLength(orderedComments.length);
 
-      expect(result.success).toBe(true);
-      expect(result.commentsCount).toBe(3);
-      expect(processingOrder).toHaveLength(3);
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 1 // Force sequential processing
+      });
 
-      // Verify FIFO order preservation
-      for (let i = 1; i < processingOrder.length; i++) {
-        const current = processingOrder[i];
-        const previous = processingOrder[i - 1];
-        
-        // Current comment should be processed after previous
-        expect(current.actualProcessingTime).toBeGreaterThan(previous.actualProcessingTime);
-        
-        // Expected order should match processing sequence
-        expect(current.expectedOrder).toBe(previous.expectedOrder + 1);
-      }
-
-      // Verify the exact order matches expected sequence
-      const expectedSequence = [1, 2, 3];
-      const actualSequence = processingOrder.map(p => p.expectedOrder);
-      expect(actualSequence).toEqual(expectedSequence);
-    });
-
-    test('should maintain FIFO order across multiple job batches', async () => {
-      const organizationId = 'test-org-order';
-      const worker = testUtils.createTestWorker();
-      const globalProcessingOrder = [];
-
-      // Create three batches of comments with different timestamps
-      const batch1 = [
-        testUtils.createTestComment('batch1_001', organizationId, { order: 1, batch: 1 }),
-        testUtils.createTestComment('batch1_002', organizationId, { order: 2, batch: 1 })
-      ];
-
-      const batch2 = [
-        testUtils.createTestComment('batch2_003', organizationId, { order: 3, batch: 2 }),
-        testUtils.createTestComment('batch2_004', organizationId, { order: 4, batch: 2 })
-      ];
-
-      const batch3 = [
-        testUtils.createTestComment('batch3_005', organizationId, { order: 5, batch: 3 })
-      ];
-
-      let currentBatch = 1;
-      const batches = [batch1, batch2, batch3];
-
-      worker.fetchCommentsFromPlatform = async () => {
-        const batch = batches[currentBatch - 1] || [];
-        currentBatch++;
-        return batch;
-      };
-
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const storedComments = [];
-        
-        for (const comment of comments) {
-          const processingTimestamp = Date.now();
-          globalProcessingOrder.push({
-            commentId: comment.platform_comment_id,
-            order: comment.metadata.order,
-            batch: comment.metadata.batch,
-            processedAt: processingTimestamp
-          });
-          
-          storedComments.push({
-            id: `stored_${processingTimestamp}`,
-            platform_comment_id: comment.platform_comment_id,
-            processed_at: new Date(processingTimestamp).toISOString()
-          });
-          
-          // Simulate processing delay
-          await testUtils.wait(5);
-        }
-        
-        return storedComments;
+      const processedOrder = [];
+      
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const comment = payload.comment_data;
+        processedOrder.push({
+          platform_comment_id: comment.platform_comment_id,
+          sequence: comment.metadata.sequence
+        });
+        return [comment];
       };
 
       await worker.start();
 
-      // Process three jobs sequentially
-      const job1 = testUtils.createMockJob(organizationId, 'twitter');
-      const result1 = await worker.processJob(job1);
-
-      const job2 = testUtils.createMockJob(organizationId, 'twitter');
-      const result2 = await worker.processJob(job2);
-
-      const job3 = testUtils.createMockJob(organizationId, 'twitter');
-      const result3 = await worker.processJob(job3);
+      // Process all jobs
+      for (const job of jobs) {
+        await worker.processJob(job);
+      }
 
       await worker.stop();
 
-      // Verify all jobs succeeded
-      expect(result1.success).toBe(true);
-      expect(result2.success).toBe(true);
-      expect(result3.success).toBe(true);
-
-      expect(globalProcessingOrder).toHaveLength(5);
-
-      // Verify global FIFO order across batches
-      for (let i = 1; i < globalProcessingOrder.length; i++) {
-        const current = globalProcessingOrder[i];
-        const previous = globalProcessingOrder[i - 1];
-        
-        // Each comment should be processed after the previous one
-        expect(current.processedAt).toBeGreaterThan(previous.processedAt);
-        
-        // Order should be sequential
-        expect(current.order).toBe(previous.order + 1);
+      // Verify processing order matches creation order
+      expect(processedOrder).toHaveLength(orderedComments.length);
+      
+      for (let i = 0; i < processedOrder.length; i++) {
+        expect(processedOrder[i].sequence).toBe(i + 1);
+        expect(processedOrder[i].platform_comment_id).toBe(`order_test_${i + 1}`);
       }
 
-      // Verify batch sequence is maintained
-      const batchSequence = globalProcessingOrder.map(p => p.batch);
-      expect(batchSequence).toEqual([1, 1, 2, 2, 3]);
+      // Verify database storage order
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(orderedComments.length);
+
+      // Should be stored in processing order
+      for (let i = 0; i < storedComments.length; i++) {
+        expect(storedComments[i].platform_comment_id).toBe(`order_test_${i + 1}`);
+      }
     });
 
-    test('should handle priority-based ordering within FIFO', async () => {
+    test('should maintain order across multiple fetch operations', async () => {
       const organizationId = 'test-org-order';
-      const worker = testUtils.createTestWorker();
-      const processingOrder = [];
+      const integrationConfigId = 'config-twitter-order';
+      
+      // Create three separate fetch operations
+      const batch1 = [fixtures.orderedComments[0]];
+      const batch2 = [fixtures.orderedComments[1]];
+      const batch3 = [fixtures.orderedComments[2]];
 
-      // Create comments with different priorities
-      const comments = [
-        testUtils.createTestComment('normal_001', organizationId, { priority: 'normal', expectedOrder: 2 }),
-        testUtils.createTestComment('high_001', organizationId, { priority: 'high', expectedOrder: 1 }),
-        testUtils.createTestComment('normal_002', organizationId, { priority: 'normal', expectedOrder: 3 }),
-        testUtils.createTestComment('high_002', organizationId, { priority: 'high', expectedOrder: 4 }) // FIFO within priority
-      ];
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 1
+      });
 
-      worker.fetchCommentsFromPlatform = async () => comments;
+      const allProcessedComments = [];
 
-      // Mock processing with priority-aware FIFO
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        // Sort by priority (high first), then maintain original order within priority
-        const sortedComments = [...comments].sort((a, b) => {
-          if (a.metadata.priority === b.metadata.priority) {
-            return 0; // Maintain original order within same priority
-          }
-          return a.metadata.priority === 'high' ? -1 : 1;
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const comments = payload.comments || [];
+        allProcessedComments.push(...comments);
+        return comments;
+      };
+
+      await worker.start();
+
+      // Process batches in sequence
+      const job1 = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { comments: batch1 }
+      };
+
+      const job2 = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { comments: batch2 }
+      };
+
+      const job3 = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { comments: batch3 }
+      };
+
+      await worker.processJob(job1);
+      await worker.processJob(job2);
+      await worker.processJob(job3);
+
+      await worker.stop();
+
+      // Verify processing order maintained across batches
+      expect(allProcessedComments).toHaveLength(3);
+      
+      for (let i = 0; i < allProcessedComments.length; i++) {
+        expect(allProcessedComments[i].metadata.sequence).toBe(i + 1);
+      }
+
+      // Verify database order
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(3);
+
+      const sortedByCreated = storedComments.sort((a, b) => 
+        new Date(a.created_at) - new Date(b.created_at)
+      );
+
+      for (let i = 0; i < sortedByCreated.length; i++) {
+        expect(sortedByCreated[i].platform_comment_id).toBe(`order_test_${i + 1}`);
+      }
+    });
+
+    test('should respect priority-based ordering', async () => {
+      const organizationId = 'test-org-order';
+      const integrationConfigId = 'config-twitter-order';
+
+      // Create jobs with different priorities
+      const highPriorityComment = {
+        ...fixtures.orderedComments[0],
+        platform_comment_id: 'high_priority_1',
+        original_text: 'High priority comment'
+      };
+
+      const lowPriorityComment = {
+        ...fixtures.orderedComments[1],
+        platform_comment_id: 'low_priority_1',
+        original_text: 'Low priority comment'
+      };
+
+      const normalPriorityComment = {
+        ...fixtures.orderedComments[2],
+        platform_comment_id: 'normal_priority_1',
+        original_text: 'Normal priority comment'
+      };
+
+      // Create jobs in reverse priority order to test reordering
+      const lowPriorityJobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: lowPriorityComment
+      }], { priority: 5 }); // Low priority (higher number)
+
+      const normalPriorityJobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: normalPriorityComment
+      }], { priority: 3 }); // Normal priority
+
+      const highPriorityJobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: highPriorityComment
+      }], { priority: 1 }); // High priority (lower number)
+
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 1
+      });
+
+      const processedOrder = [];
+
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const comment = payload.comment_data;
+        processedOrder.push(comment.platform_comment_id);
+        return [comment];
+      };
+
+      await worker.start();
+
+      // Process by getting jobs from queue (should respect priority)
+      let job;
+      while ((job = await worker.getNextJob()) !== null) {
+        await worker.processJob(job);
+      }
+
+      await worker.stop();
+
+      // Should process in priority order: high, normal, low
+      expect(processedOrder).toEqual([
+        'high_priority_1',
+        'normal_priority_1',
+        'low_priority_1'
+      ]);
+    });
+  });
+
+  describe('Order Preservation with Retries', () => {
+    test('should maintain order when jobs require retries', async () => {
+      const organizationId = 'test-org-order';
+      const integrationConfigId = 'config-twitter-order';
+
+      // Create three jobs where middle one will fail initially
+      const jobs = [];
+      for (let i = 0; i < 3; i++) {
+        const comment = {
+          ...fixtures.orderedComments[i],
+          platform_comment_id: `retry_order_${i + 1}`
+        };
+
+        const jobData = [{
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment,
+          shouldFail: i === 1 // Middle job fails initially
+        }];
+
+        const createdJobs = await testUtils.createTestJobs('fetch_comments', jobData, {
+          priority: 5,
+          maxAttempts: 3
         });
 
-        const storedComments = [];
+        jobs.push(createdJobs[0]);
+      }
+
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 1,
+        maxRetries: 3,
+        retryDelay: 50
+      });
+
+      const processedOrder = [];
+      const attemptCounts = {};
+
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const comment = payload.comment_data;
+        const commentId = comment.platform_comment_id;
         
-        for (const comment of sortedComments) {
-          const processingTimestamp = Date.now();
-          processingOrder.push({
-            commentId: comment.platform_comment_id,
-            priority: comment.metadata.priority,
-            expectedOrder: comment.metadata.expectedOrder,
-            processedAt: processingTimestamp
-          });
-          
-          storedComments.push({
-            id: `stored_${processingTimestamp}`,
-            platform_comment_id: comment.platform_comment_id,
-            priority: comment.metadata.priority
-          });
-          
-          await testUtils.wait(5);
+        attemptCounts[commentId] = (attemptCounts[commentId] || 0) + 1;
+
+        // Middle job fails on first attempt
+        if (payload.shouldFail && attemptCounts[commentId] === 1) {
+          throw new Error(`Simulated failure for ${commentId}`);
         }
-        
-        return storedComments;
+
+        processedOrder.push(commentId);
+        return [comment];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
-      await worker.stop();
 
-      expect(result.success).toBe(true);
-      expect(processingOrder).toHaveLength(4);
-
-      // Verify priority-based FIFO order
-      const actualOrder = processingOrder.map(p => p.expectedOrder);
-      expect(actualOrder).toEqual([1, 4, 2, 3]); // High priority first, then FIFO within priorities
-    });
-
-    test('should preserve order with concurrent workers', async () => {
-      const organizationId = 'test-org-order';
-      const sharedProcessingLog = [];
-      const concurrentComments = [];
-
-      // Generate comments for concurrent processing
-      for (let i = 1; i <= 10; i++) {
-        concurrentComments.push(
-          testUtils.createTestComment(`concurrent_${i.toString().padStart(3, '0')}`, organizationId, { order: i })
-        );
+      // Process all jobs (including retries)
+      for (const job of jobs) {
+        try {
+          await worker.processJob(job);
+        } catch (error) {
+          // Expected for failing job on first attempt
+        }
       }
 
-      const createWorkerWithSharedLog = (workerId) => {
-        const worker = testUtils.createTestWorker();
-        worker.id = workerId;
-        
-        worker.fetchCommentsFromPlatform = async () => {
-          // Each worker gets a subset of comments
-          const startIndex = workerId === 'worker1' ? 0 : 5;
-          const endIndex = workerId === 'worker1' ? 5 : 10;
-          return concurrentComments.slice(startIndex, endIndex);
-        };
+      await worker.stop();
 
-        worker.storeComments = async (orgId, configId, platform, comments) => {
-          const storedComments = [];
-          
-          for (const comment of comments) {
-            const processingTimestamp = Date.now();
-            
-            // Thread-safe logging (simplified for test)
-            sharedProcessingLog.push({
-              workerId,
-              commentId: comment.platform_comment_id,
-              order: comment.metadata.order,
-              processedAt: processingTimestamp
-            });
-            
-            storedComments.push({
-              id: `stored_${workerId}_${processingTimestamp}`,
-              platform_comment_id: comment.platform_comment_id,
-              worker_id: workerId
-            });
-            
-            await testUtils.wait(Math.random() * 20); // Random processing delay
-          }
-          
-          return storedComments;
-        };
-        
-        return worker;
-      };
-
-      // Create two concurrent workers
-      const worker1 = createWorkerWithSharedLog('worker1');
-      const worker2 = createWorkerWithSharedLog('worker2');
-
-      await Promise.all([worker1.start(), worker2.start()]);
-
-      // Process jobs concurrently
-      const job1 = testUtils.createMockJob(organizationId, 'twitter');
-      const job2 = testUtils.createMockJob(organizationId, 'twitter');
-
-      const [result1, result2] = await Promise.all([
-        worker1.processJob(job1),
-        worker2.processJob(job2)
+      // Should eventually process all in order
+      expect(processedOrder).toEqual([
+        'retry_order_1',
+        'retry_order_2', // Succeeded on retry
+        'retry_order_3'
       ]);
 
-      await Promise.all([worker1.stop(), worker2.stop()]);
-
-      expect(result1.success).toBe(true);
-      expect(result2.success).toBe(true);
-      expect(sharedProcessingLog).toHaveLength(10);
-
-      // Sort by processing time to verify temporal order
-      const sortedByTime = [...sharedProcessingLog].sort((a, b) => a.processedAt - b.processedAt);
-
-      // Within each worker, order should be preserved
-      const worker1Logs = sortedByTime.filter(log => log.workerId === 'worker1');
-      const worker2Logs = sortedByTime.filter(log => log.workerId === 'worker2');
-
-      // Verify FIFO within each worker
-      for (let i = 1; i < worker1Logs.length; i++) {
-        expect(worker1Logs[i].order).toBeGreaterThan(worker1Logs[i - 1].order);
-      }
-
-      for (let i = 1; i < worker2Logs.length; i++) {
-        expect(worker2Logs[i].order).toBeGreaterThan(worker2Logs[i - 1].order);
-      }
+      // Verify retry happened
+      expect(attemptCounts['retry_order_2']).toBe(2); // Failed once, succeeded on retry
+      expect(attemptCounts['retry_order_1']).toBe(1); // Succeeded first time
+      expect(attemptCounts['retry_order_3']).toBe(1); // Succeeded first time
     });
 
-    test('should handle ordering with failed comments', async () => {
+    test('should not block processing when one job permanently fails', async () => {
       const organizationId = 'test-org-order';
-      const worker = testUtils.createTestWorker();
-      const processingLog = [];
+      const integrationConfigId = 'config-twitter-order';
 
-      // Create comments where some will fail processing
-      const comments = [
-        testUtils.createTestComment('success_001', organizationId, { order: 1, shouldFail: false }),
-        testUtils.createTestComment('fail_002', organizationId, { order: 2, shouldFail: true }),
-        testUtils.createTestComment('success_003', organizationId, { order: 3, shouldFail: false }),
-        testUtils.createTestComment('fail_004', organizationId, { order: 4, shouldFail: true }),
-        testUtils.createTestComment('success_005', organizationId, { order: 5, shouldFail: false })
-      ];
+      // Create jobs where middle one will permanently fail
+      const jobs = [];
+      for (let i = 0; i < 3; i++) {
+        const comment = {
+          ...fixtures.orderedComments[i],
+          platform_comment_id: `permanent_fail_${i + 1}`
+        };
 
-      worker.fetchCommentsFromPlatform = async () => comments;
+        const jobData = [{
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment,
+          shouldPermanentlyFail: i === 1
+        }];
 
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const storedComments = [];
-        const failedComments = [];
+        const createdJobs = await testUtils.createTestJobs('fetch_comments', jobData, {
+          priority: 5,
+          maxAttempts: 2
+        });
+
+        jobs.push(createdJobs[0]);
+      }
+
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 1,
+        maxRetries: 2,
+        retryDelay: 50
+      });
+
+      const processedOrder = [];
+
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const comment = payload.comment_data;
         
-        for (const comment of comments) {
-          const processingTimestamp = Date.now();
-          
-          processingLog.push({
-            commentId: comment.platform_comment_id,
-            order: comment.metadata.order,
-            shouldFail: comment.metadata.shouldFail,
-            processedAt: processingTimestamp
-          });
-
-          if (comment.metadata.shouldFail) {
-            failedComments.push({
-              comment,
-              error: 'Simulated processing failure',
-              processedAt: processingTimestamp
-            });
-          } else {
-            storedComments.push({
-              id: `stored_${processingTimestamp}`,
-              platform_comment_id: comment.platform_comment_id,
-              order: comment.metadata.order,
-              stored_at: new Date(processingTimestamp).toISOString()
-            });
-          }
-          
-          await testUtils.wait(5);
+        if (payload.shouldPermanentlyFail) {
+          throw new Error(`Permanent failure for ${comment.platform_comment_id}`);
         }
-        
-        return storedComments;
+
+        processedOrder.push(comment.platform_comment_id);
+        return [comment];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
+
+      // Process all jobs
+      const results = [];
+      for (const job of jobs) {
+        try {
+          const result = await worker.processJob(job);
+          results.push({ success: true, result });
+        } catch (error) {
+          results.push({ success: false, error: error.message });
+        }
+      }
+
       await worker.stop();
 
-      expect(result.success).toBe(true);
-      expect(processingLog).toHaveLength(5);
+      // First and third should succeed, middle should fail
+      expect(results[0].success).toBe(true);
+      expect(results[1].success).toBe(false);
+      expect(results[2].success).toBe(true);
 
-      // Verify all comments were processed in order, regardless of success/failure
-      for (let i = 1; i < processingLog.length; i++) {
-        const current = processingLog[i];
-        const previous = processingLog[i - 1];
-        
-        expect(current.processedAt).toBeGreaterThan(previous.processedAt);
-        expect(current.order).toBe(previous.order + 1);
+      // Only successful jobs should be in processed order
+      expect(processedOrder).toEqual([
+        'permanent_fail_1',
+        'permanent_fail_3'
+      ]);
+
+      // Verify database contains only successful comments
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(2);
+      
+      const commentIds = storedComments.map(c => c.platform_comment_id);
+      expect(commentIds).toContain('permanent_fail_1');
+      expect(commentIds).toContain('permanent_fail_3');
+      expect(commentIds).not.toContain('permanent_fail_2');
+    });
+  });
+
+  describe('Concurrent Processing Order', () => {
+    test('should maintain order within priority levels during concurrent processing', async () => {
+      const organizationId = 'test-org-order';
+      const integrationConfigId = 'config-twitter-order';
+
+      // Create multiple jobs at same priority level
+      const concurrentJobs = [];
+      for (let i = 0; i < 5; i++) {
+        const comment = {
+          ...fixtures.orderedComments[0],
+          platform_comment_id: `concurrent_${i + 1}`,
+          original_text: `Concurrent comment ${i + 1}`,
+          metadata: { ...fixtures.orderedComments[0].metadata, sequence: i + 1 }
+        };
+
+        const jobData = [{
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }];
+
+        const jobs = await testUtils.createTestJobs('fetch_comments', jobData, {
+          priority: 5 // Same priority
+        });
+
+        concurrentJobs.push(jobs[0]);
       }
 
-      // Verify processing order was maintained despite failures
-      const orderSequence = processingLog.map(log => log.order);
-      expect(orderSequence).toEqual([1, 2, 3, 4, 5]);
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 3 // Allow concurrent processing
+      });
+
+      const processedComments = [];
+      const processingStartTimes = {};
+
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const comment = payload.comment_data;
+        const commentId = comment.platform_comment_id;
+        
+        processingStartTimes[commentId] = Date.now();
+        
+        // Simulate variable processing time
+        await testUtils.sleep(Math.random() * 100);
+        
+        processedComments.push({
+          id: commentId,
+          sequence: comment.metadata.sequence,
+          startTime: processingStartTimes[commentId]
+        });
+
+        return [comment];
+      };
+
+      await worker.start();
+
+      // Process all jobs concurrently
+      const promises = concurrentJobs.map(job => worker.processJob(job));
+      await Promise.all(promises);
+
+      await worker.stop();
+
+      // All should be processed
+      expect(processedComments).toHaveLength(5);
+
+      // Sort by start time to see actual processing order
+      const sortedByStartTime = processedComments.sort((a, b) => a.startTime - b.startTime);
+
+      // Should start processing in FIFO order (even if they finish out of order)
+      for (let i = 0; i < sortedByStartTime.length - 1; i++) {
+        expect(sortedByStartTime[i].startTime).toBeLessThanOrEqual(sortedByStartTime[i + 1].startTime);
+      }
+
+      // Verify all comments were stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(5);
     });
 
-    test('should maintain order consistency across worker restarts', async () => {
+    test('should preserve order across different priority levels with concurrency', async () => {
       const organizationId = 'test-org-order';
-      const persistentOrderLog = []; // Simulates persistent order tracking
+      const integrationConfigId = 'config-twitter-order';
 
-      const comments = [
-        testUtils.createTestComment('restart_001', organizationId, { order: 1 }),
-        testUtils.createTestComment('restart_002', organizationId, { order: 2 }),
-        testUtils.createTestComment('restart_003', organizationId, { order: 3 })
-      ];
+      // Create jobs at different priority levels
+      const priorityJobs = [];
 
-      // First worker processes partial batch
-      const worker1 = testUtils.createTestWorker();
-      worker1.fetchCommentsFromPlatform = async () => [comments[0], comments[1]];
-      worker1.storeComments = async (orgId, configId, platform, comments) => {
-        const storedComments = [];
-        
-        for (const comment of comments) {
-          const processingTimestamp = Date.now();
-          persistentOrderLog.push({
-            commentId: comment.platform_comment_id,
-            order: comment.metadata.order,
-            workerId: 'worker1',
-            processedAt: processingTimestamp
-          });
-          
-          storedComments.push({
-            id: `stored_w1_${processingTimestamp}`,
-            platform_comment_id: comment.platform_comment_id
-          });
-          
-          await testUtils.wait(10);
-        }
-        
-        return storedComments;
-      };
+      // Low priority jobs (created first)
+      for (let i = 0; i < 2; i++) {
+        const comment = {
+          ...fixtures.orderedComments[0],
+          platform_comment_id: `low_${i + 1}`,
+          original_text: `Low priority ${i + 1}`
+        };
 
-      // Process with first worker
-      await worker1.start();
-      const job1 = testUtils.createMockJob(organizationId, 'twitter');
-      const result1 = await worker1.processJob(job1);
-      await worker1.stop();
+        const jobs = await testUtils.createTestJobs('fetch_comments', [{
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }], { priority: 5 });
 
-      // Second worker (simulates restart) processes remaining comments
-      const worker2 = testUtils.createTestWorker();
-      worker2.fetchCommentsFromPlatform = async () => [comments[2]];
-      worker2.storeComments = async (orgId, configId, platform, comments) => {
-        const storedComments = [];
-        
-        for (const comment of comments) {
-          const processingTimestamp = Date.now();
-          persistentOrderLog.push({
-            commentId: comment.platform_comment_id,
-            order: comment.metadata.order,
-            workerId: 'worker2',
-            processedAt: processingTimestamp
-          });
-          
-          storedComments.push({
-            id: `stored_w2_${processingTimestamp}`,
-            platform_comment_id: comment.platform_comment_id
-          });
-        }
-        
-        return storedComments;
-      };
-
-      // Process with second worker
-      await worker2.start();
-      const job2 = testUtils.createMockJob(organizationId, 'twitter');
-      const result2 = await worker2.processJob(job2);
-      await worker2.stop();
-
-      expect(result1.success).toBe(true);
-      expect(result2.success).toBe(true);
-      expect(persistentOrderLog).toHaveLength(3);
-
-      // Verify order consistency across worker restarts
-      const orderSequence = persistentOrderLog.map(log => log.order);
-      expect(orderSequence).toEqual([1, 2, 3]);
-
-      // Verify temporal order is maintained
-      for (let i = 1; i < persistentOrderLog.length; i++) {
-        expect(persistentOrderLog[i].processedAt).toBeGreaterThan(persistentOrderLog[i - 1].processedAt);
+        priorityJobs.push({ job: jobs[0], priority: 5, id: `low_${i + 1}` });
       }
+
+      // High priority jobs (created after low priority)
+      for (let i = 0; i < 2; i++) {
+        const comment = {
+          ...fixtures.orderedComments[0],
+          platform_comment_id: `high_${i + 1}`,
+          original_text: `High priority ${i + 1}`
+        };
+
+        const jobs = await testUtils.createTestJobs('fetch_comments', [{
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }], { priority: 1 });
+
+        priorityJobs.push({ job: jobs[0], priority: 1, id: `high_${i + 1}` });
+      }
+
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 2
+      });
+
+      const processedOrder = [];
+
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const comment = payload.comment_data;
+        processedOrder.push(comment.platform_comment_id);
+        
+        // Simulate processing time
+        await testUtils.sleep(50);
+        
+        return [comment];
+      };
+
+      await worker.start();
+
+      // Get and process jobs based on priority
+      const processedJobs = [];
+      let job;
+      while ((job = await worker.getNextJob()) !== null) {
+        const result = await worker.processJob(job);
+        processedJobs.push(result);
+      }
+
+      await worker.stop();
+
+      // High priority jobs should be processed before low priority
+      // Order within each priority level should be maintained
+      expect(processedOrder.slice(0, 2)).toEqual(['high_1', 'high_2']);
+      expect(processedOrder.slice(2, 4)).toEqual(['low_1', 'low_2']);
+    });
+  });
+
+  describe('Order Validation Utilities', () => {
+    test('should validate job order using helper assertion', async () => {
+      const expectedOrder = ['order_test_1', 'order_test_2', 'order_test_3'];
+      const actualJobs = fixtures.orderedComments.map(comment => ({
+        platform_comment_id: comment.platform_comment_id
+      }));
+
+      // Should not throw for correct order
+      expect(() => {
+        testUtils.assertJobOrder(actualJobs, expectedOrder);
+      }).not.toThrow();
+
+      // Should throw for incorrect order
+      const incorrectJobs = [actualJobs[1], actualJobs[0], actualJobs[2]]; // Swapped first two
+      expect(() => {
+        testUtils.assertJobOrder(incorrectJobs, expectedOrder);
+      }).toThrow('Job order assertion failed');
     });
   });
 });

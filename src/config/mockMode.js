@@ -44,6 +44,13 @@ class MockModeManager {
 
   // API Mock Generators
   generateMockSupabaseClient() {
+    // Initialize global mock storage for stateful operations
+    if (typeof global !== 'undefined') {
+      global.mockCommentStorage = global.mockCommentStorage || [];
+      global.mockJobStorage = global.mockJobStorage || [];
+      global.mockOrgStorage = global.mockOrgStorage || [];
+      global.mockConfigStorage = global.mockConfigStorage || [];
+    }
     return {
       auth: {
         signInWithPassword: () => Promise.resolve({
@@ -65,27 +72,34 @@ class MockModeManager {
         }
       },
       from: (table) => {
-        const currentQueries = {}; // Store query filters
+        let currentQueries = {}; // Single queries object per table query
         
         const chainable = {
-          select: (columns = '*') => chainable,
+          select: (columns = '*') => {
+            currentQueries.select = columns;
+            return chainable;
+          },
           eq: (column, value) => {
             currentQueries[column] = value;
             return chainable;
           },
           single: () => {
+            // Make a copy of queries for this specific call to avoid pollution
+            const queries = { ...currentQueries };
+            
             if (table === 'integration_configs') {
               return Promise.resolve({
                 data: {
-                  id: 'mock-config-id',
-                  organization_id: 'test-org-dedup',
-                  platform: 'twitter',
+                  id: queries.id || 'mock-config-id',
+                  organization_id: queries.organization_id || 'test-org-dedup',
+                  platform: queries.platform || 'twitter',
                   enabled: true,
                   config: { monitor_mentions: true }
                 },
                 error: null
               });
             }
+            
             if (table === 'organizations') {
               return Promise.resolve({
                 data: { id: 'test-org', name: 'Test Organization' },
@@ -96,11 +110,16 @@ class MockModeManager {
             if (table === 'comments') {
               // Check if comment exists in global storage
               const storage = global.mockCommentStorage || [];
+              console.log('🔍 Mock: Checking for existing comment with queries:', queries);
+              console.log('🔍 Mock: Current storage has', storage.length, 'comments');
+              
               const existing = storage.find(comment => 
-                comment.organization_id === currentQueries.organization_id &&
-                comment.platform === currentQueries.platform &&
-                comment.platform_comment_id === currentQueries.platform_comment_id
+                comment.organization_id === queries.organization_id &&
+                comment.platform === queries.platform &&
+                comment.platform_comment_id === queries.platform_comment_id
               );
+              
+              console.log('🔍 Mock: Found existing comment:', !!existing);
               
               if (existing) {
                 return Promise.resolve({
@@ -114,6 +133,7 @@ class MockModeManager {
                 });
               }
             }
+            
             return Promise.resolve({
               data: { id: 1, name: 'Mock Data', created_at: new Date().toISOString() },
               error: null
@@ -126,50 +146,20 @@ class MockModeManager {
             // Store data in global storage if it's comments
             if (table === 'comments') {
               const storage = global.mockCommentStorage || [];
-              
-              // Check for duplicates by platform_comment_id and organization_id
-              const existing = storage.find(comment => 
-                comment.organization_id === data.organization_id &&
-                comment.platform === data.platform &&
-                comment.platform_comment_id === data.platform_comment_id
-              );
-              
-              if (existing) {
-                console.log('🔍 Mock: Duplicate comment detected, throwing constraint violation:', {
-                  platform_comment_id: data.platform_comment_id,
-                  organization_id: data.organization_id,
-                  platform: data.platform
-                });
-                // Simulate database constraint violation error
-                const constraintError = {
-                  code: '23505', // PostgreSQL unique constraint violation
-                  message: 'duplicate key value violates unique constraint "comments_organization_id_platform_platform_comment_id_key"',
-                  details: 'Key (organization_id, platform, platform_comment_id) already exists'
-                };
-                
-                const chainableInsertDuplicate = {
-                  select: (columns = '*') => ({
-                    single: () => Promise.resolve({
-                      data: null,
-                      error: constraintError
-                    })
-                  }),
-                  single: () => Promise.resolve({
-                    data: null,
-                    error: constraintError
-                  })
-                };
-                return chainableInsertDuplicate;
-              }
-              
               const newComment = {
                 ...data,
                 id: storage.length + 1,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               };
+              console.log('🔍 Mock: Inserting new comment:', {
+                platform_comment_id: newComment.platform_comment_id,
+                organization_id: newComment.organization_id,
+                platform: newComment.platform
+              });
               storage.push(newComment);
               global.mockCommentStorage = storage;
+              console.log('🔍 Mock: Storage now has', storage.length, 'comments');
             }
             
             const chainableInsert = {
@@ -188,15 +178,14 @@ class MockModeManager {
                   });
                 }
               }),
-              // Support direct promise resolution for .select() without .single()
-              then: (resolve) => {
-                resolve({
-                  data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1 })) : [{ ...data, id: 1 }],
+              single: () => {
+                const result = Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 };
+                return Promise.resolve({
+                  data: result,
                   error: null
                 });
               }
             };
-            
             return chainableInsert;
           },
           update: (data) => ({
@@ -211,40 +200,12 @@ class MockModeManager {
           })
         };
 
-        // Handle direct promise resolution for some methods - only if used as promise
-        const enhanceWithThen = (obj) => {
-          // Only add then when actually used as promise
-          return {
-            ...obj,
-            then: (resolve) => {
+        // Handle direct promise resolution for some methods
+        Object.assign(chainable, {
+          then: (resolve) => {
             if (table === 'comments') {
-              const storage = global.mockCommentStorage || [];
-              // Make a copy of queries for this specific call
-              const queries = { ...currentQueries };
-              
-              // Apply filters if specified
-              let filteredData = storage;
-              
-              if (queries.organization_id) {
-                filteredData = filteredData.filter(comment => 
-                  comment.organization_id === queries.organization_id
-                );
-              }
-              
-              if (queries.platform) {
-                filteredData = filteredData.filter(comment => 
-                  comment.platform === queries.platform
-                );
-              }
-              
-              if (queries.platform_comment_id) {
-                filteredData = filteredData.filter(comment => 
-                  comment.platform_comment_id === queries.platform_comment_id
-                );
-              }
-              
               resolve({
-                data: filteredData,
+                data: [],
                 error: null
               });
             } else {
@@ -253,33 +214,22 @@ class MockModeManager {
                 error: null
               });
             }
-            }
-          };
-        };
-
-        // Return chainable directly for normal operations, but allow promise conversion
-        return new Proxy(chainable, {
-          get(target, prop) {
-            if (prop === 'then') {
-              // Only when then is accessed, convert to promise-like object
-              return enhanceWithThen(target).then;
-            }
-            return target[prop];
           }
         });
+
+        return chainable;
       },
+      
+      // RPC method for database functions (required by CostControlService)
       rpc: (functionName, params = {}) => {
-        // Mock database function calls
         if (functionName === 'can_perform_operation') {
           return Promise.resolve({
-            data: {
-              allowed: true,
-              reason: 'within_limits',
-              current_usage: 10,
-              monthly_limit: 1000,
-              remaining: 990,
-              percentage_used: 1,
-              limit_exceeded: false
+            data: { 
+              allowed: true, 
+              reason: 'mock_allowed',
+              current_usage: 0,
+              limit: 1000,
+              remaining: 1000
             },
             error: null
           });
@@ -287,13 +237,10 @@ class MockModeManager {
         
         if (functionName === 'record_usage') {
           return Promise.resolve({
-            data: {
-              success: true,
-              usage_recorded: true,
-              current_usage: 11,
-              monthly_limit: 1000,
-              percentage_used: 1.1,
-              limit_exceeded: false
+            data: { 
+              usage_recorded: true, 
+              current_usage: params.amount || 1,
+              total_usage: (params.amount || 1) * 2 
             },
             error: null
           });
@@ -301,14 +248,18 @@ class MockModeManager {
         
         if (functionName === 'increment_usage') {
           return Promise.resolve({
-            data: { success: true },
+            data: { 
+              usage_incremented: true,
+              new_count: (params.increment || 1) + 5,
+              limit_reached: false
+            },
             error: null
           });
         }
         
-        // Default mock response for other functions
+        // Default RPC response for unknown functions
         return Promise.resolve({
-          data: { success: true, mock: true },
+          data: { mock_rpc_result: true, function: functionName },
           error: null
         });
       }

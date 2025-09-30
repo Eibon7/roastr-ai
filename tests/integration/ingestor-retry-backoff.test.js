@@ -1,12 +1,7 @@
-/**
- * Ingestor Retry and Exponential Backoff Integration Tests
- * Tests retry logic with exponential backoff as specified in Issue #406
- */
-
 const IngestorTestUtils = require('../helpers/ingestor-test-utils');
 const fixtures = require('../fixtures/ingestor-comments.json');
 
-describe('Ingestor Retry and Exponential Backoff Integration', () => {
+describe('Ingestor Retry and Backoff Integration Tests', () => {
   let testUtils;
 
   beforeAll(async () => {
@@ -19,411 +14,426 @@ describe('Ingestor Retry and Exponential Backoff Integration', () => {
     await testUtils.cleanup();
   }, 15000);
 
-  describe('Exponential Backoff Logic', () => {
+  beforeEach(async () => {
+    await testUtils.cleanupTestData();
+    await testUtils.setupTestOrganizations(fixtures);
+  });
+
+  describe('Exponential Backoff Retry Logic', () => {
     test('should implement exponential backoff with correct timing', async () => {
       const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+      const comment = fixtures.retryComments[0]; // transient failure comment
+
       const worker = testUtils.createTestWorker({
         maxRetries: 3,
-        retryDelay: 100 // Start with 100ms
+        retryDelay: 100 // Start with 100ms base delay
       });
 
-      const retryAttempts = [];
+      // Track retry timing
+      const timingTracker = await testUtils.measureRetryTiming(worker, 3);
+
+      // Mock transient failures for first 2 attempts, succeed on 3rd
       let attemptCount = 0;
-
-      // Mock API to fail consistently, forcing retries
       worker.fetchCommentsFromPlatform = async () => {
-        const timestamp = Date.now();
         attemptCount++;
-        
-        retryAttempts.push({
-          attempt: attemptCount,
-          timestamp: timestamp
-        });
-
-        if (attemptCount < 4) {
-          throw new Error(`Simulated API failure - attempt ${attemptCount}`);
+        if (attemptCount <= 2) {
+          throw new Error(`Transient failure #${attemptCount}`);
         }
-        
-        // Success on 4th attempt
-        return fixtures.retryComments.slice(0, 1);
+        return [comment];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      
-      const startTime = Date.now();
-      const result = await worker.processJob(job);
-      const totalDuration = Date.now() - startTime;
 
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['test_video_1'] }
+      };
+
+      // Process job - should eventually succeed after retries
+      const result = await worker.processJob(job);
       await worker.stop();
 
       expect(result.success).toBe(true);
-      expect(retryAttempts).toHaveLength(4); // Initial + 3 retries
+      expect(result.commentsCount).toBe(1);
 
       // Verify exponential backoff timing
-      if (retryAttempts.length >= 2) {
-        const intervals = [];
-        for (let i = 1; i < retryAttempts.length; i++) {
-          intervals.push(retryAttempts[i].timestamp - retryAttempts[i - 1].timestamp);
-        }
+      const intervals = timingTracker.getIntervals();
+      expect(intervals).toHaveLength(2); // 2 retry intervals
 
-        // Expected delays: 100ms, 200ms, 400ms (exponential)
-        await testUtils.assertExponentialBackoff(intervals, 100, 0.3); // 30% tolerance
-      }
+      // Allow 20% tolerance for timing variations
+      testUtils.assertExponentialBackoff(intervals, 100, 0.2);
 
-      // Total duration should reflect backoff delays
-      expect(totalDuration).toBeGreaterThan(700); // Minimum expected delay
-      expect(totalDuration).toBeLessThan(2000); // Should not take too long
+      // First retry should be ~100ms, second should be ~200ms
+      expect(intervals[0]).toBeGreaterThan(80);
+      expect(intervals[0]).toBeLessThan(120);
+      expect(intervals[1]).toBeGreaterThan(160);
+      expect(intervals[1]).toBeLessThan(240);
     });
 
-    test('should respect maximum retry limit', async () => {
+    test('should respect maximum retry attempts', async () => {
       const organizationId = 'test-org-retry';
-      const maxRetries = 2;
+      const integrationConfigId = 'config-youtube-retry';
+      const comment = fixtures.retryComments[0];
+
       const worker = testUtils.createTestWorker({
-        maxRetries: maxRetries,
+        maxRetries: 2, // Only 2 retries allowed
         retryDelay: 50
       });
 
+      // Always fail
       let attemptCount = 0;
-      const attempts = [];
-
-      // Mock API to always fail
       worker.fetchCommentsFromPlatform = async () => {
         attemptCount++;
-        const timestamp = Date.now();
-        attempts.push({ attempt: attemptCount, timestamp });
-        throw new Error(`Persistent API failure - attempt ${attemptCount}`);
+        throw new Error(`Persistent failure #${attemptCount}`);
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['test_video_1'] }
+      };
+
+      // Should eventually fail after max retries
+      await expect(worker.processJob(job)).rejects.toThrow('Persistent failure');
+      await worker.stop();
+
+      // Should have attempted exactly 3 times (initial + 2 retries)
+      expect(attemptCount).toBe(3);
+    });
+
+    test('should handle queue-level retry with exponential backoff', async () => {
+      const organizationId = 'test-org-retry';
+      const comment = fixtures.retryComments[0];
+
+      // Create job that will fail
+      const failingPayload = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: 'config-youtube-retry',
+        comment_data: comment
+      };
+
+      // Add job to queue
+      const jobs = await testUtils.createTestJobs('fetch_comments', [failingPayload], {
+        maxAttempts: 3,
+        priority: 3
+      });
+
+      expect(jobs).toHaveLength(1);
+      const job = jobs[0];
+
+      // Simulate failure with exponential backoff
+      const startTime = Date.now();
+      
+      // First failure
+      await testUtils.queueService.failJob(job, new Error('Simulated failure 1'));
+      
+      // Check retry was scheduled with delay
+      await testUtils.sleep(50); // Brief wait for processing
+      
+      const stats = await testUtils.getQueueStats('fetch_comments');
+      expect(stats.databaseStats?.byStatus?.pending).toBeGreaterThan(0);
+
+      // Wait and verify backoff timing
+      await testUtils.sleep(200); // Wait for potential retry
+
+      const endTime = Date.now();
+      const totalTime = endTime - startTime;
+      
+      // Should have taken at least the retry delay into account
+      expect(totalTime).toBeGreaterThan(100); // At least base delay
+    });
+
+    test('should use different backoff multipliers correctly', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-instagram-backoff';
+      const comment = fixtures.backoffComments[0];
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 4,
+        retryDelay: 50 // 50ms base
+      });
+
+      const retryTimes = [];
+      let attemptCount = 0;
+
+      // Mock failures and track timing
+      worker.fetchCommentsFromPlatform = async () => {
+        const currentTime = Date.now();
+        retryTimes.push(currentTime);
+        attemptCount++;
+        
+        if (attemptCount <= 4) {
+          throw new Error(`Backoff test failure #${attemptCount}`);
+        }
+        return [comment];
+      };
+
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'instagram',
+        integration_config_id: integrationConfigId,
+        payload: { monitor_posts: true }
+      };
+
       const result = await worker.processJob(job);
       await worker.stop();
 
-      expect(result.success).toBe(false);
-      expect(attempts).toHaveLength(maxRetries + 1); // Initial attempt + retries
-      expect(result.error).toContain('Persistent API failure');
+      expect(result.success).toBe(true);
+      expect(attemptCount).toBe(5); // 4 failures + 1 success
+
+      // Calculate intervals between retries
+      const intervals = [];
+      for (let i = 1; i < retryTimes.length; i++) {
+        intervals.push(retryTimes[i] - retryTimes[i - 1]);
+      }
+
+      expect(intervals).toHaveLength(4);
+
+      // Verify exponential progression: 50ms, 100ms, 200ms, 400ms
+      const expectedDelays = [50, 100, 200, 400];
+      const tolerance = 0.3; // 30% tolerance for test timing variations
+
+      for (let i = 0; i < intervals.length; i++) {
+        const expected = expectedDelays[i];
+        const actual = intervals[i];
+        const minAcceptable = expected * (1 - tolerance);
+        const maxAcceptable = expected * (1 + tolerance);
+
+        expect(actual).toBeGreaterThanOrEqual(minAcceptable);
+        expect(actual).toBeLessThanOrEqual(maxAcceptable);
+      }
+    });
+  });
+
+  describe('Retry Strategy Differentiation', () => {
+    test('should distinguish between transient and permanent errors', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 3,
+        retryDelay: 50
+      });
+
+      // Test transient error (should retry)
+      let transientAttempts = 0;
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        transientAttempts++;
+        if (payload.test_case === 'transient') {
+          if (transientAttempts < 3) {
+            throw new Error('ECONNRESET'); // Network error - should retry
+          }
+          return [fixtures.retryComments[0]];
+        }
+        if (payload.test_case === 'permanent') {
+          throw new Error('Invalid authentication credentials'); // Auth error - should not retry
+        }
+      };
+
+      await worker.start();
+
+      // Test transient error
+      const transientJob = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { test_case: 'transient', video_ids: ['test_video_1'] }
+      };
+
+      const transientResult = await worker.processJob(transientJob);
+      expect(transientResult.success).toBe(true);
+      expect(transientAttempts).toBe(3); // Should have retried
+
+      // Reset for permanent error test
+      let permanentAttempts = 0;
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        permanentAttempts++;
+        throw new Error('401 Unauthorized - Invalid API key'); // Should not retry
+      };
+
+      // Test permanent error
+      const permanentJob = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { test_case: 'permanent', video_ids: ['test_video_2'] }
+      };
+
+      await expect(worker.processJob(permanentJob)).rejects.toThrow('401 Unauthorized');
+      
+      // Should have only attempted once for permanent error
+      expect(permanentAttempts).toBe(1);
+
+      await worker.stop();
     });
 
-    test('should handle successful retry after transient failures', async () => {
+    test('should handle rate limiting with appropriate backoff', async () => {
       const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.duplicateComments[0];
+
       const worker = testUtils.createTestWorker({
         maxRetries: 3,
         retryDelay: 100
       });
 
-      let attemptCount = 0;
-      const retryLog = [];
+      let rateLimitAttempts = 0;
+      const rateLimitStartTime = Date.now();
+      const rateLimitTimes = [];
 
-      // Mock API with transient failures
       worker.fetchCommentsFromPlatform = async () => {
-        attemptCount++;
-        const timestamp = Date.now();
+        rateLimitAttempts++;
+        rateLimitTimes.push(Date.now());
         
-        retryLog.push({
-          attempt: attemptCount,
-          timestamp: timestamp,
-          willSucceed: attemptCount === 3
-        });
-
-        if (attemptCount < 3) {
-          // Simulate transient network errors
-          throw new Error(`Network timeout - attempt ${attemptCount}`);
-        }
-
-        // Success on 3rd attempt
-        return fixtures.retryComments.slice(0, 2);
-      };
-
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
-      await worker.stop();
-
-      expect(result.success).toBe(true);
-      expect(result.commentsCount).toBe(2);
-      expect(retryLog).toHaveLength(3);
-      expect(retryLog[2].willSucceed).toBe(true);
-
-      // Verify backoff intervals
-      if (retryLog.length >= 3) {
-        const interval1 = retryLog[1].timestamp - retryLog[0].timestamp;
-        const interval2 = retryLog[2].timestamp - retryLog[1].timestamp;
-        
-        expect(interval1).toBeGreaterThan(80); // ~100ms with tolerance
-        expect(interval2).toBeGreaterThan(180); // ~200ms with tolerance
-        expect(interval2).toBeGreaterThan(interval1); // Exponential increase
-      }
-    });
-
-    test('should implement backoff with jitter to prevent thundering herd', async () => {
-      const organizationId = 'test-org-retry';
-      const numWorkers = 3;
-      const workers = [];
-      const allRetryTimestamps = [];
-
-      // Create multiple workers with same retry configuration
-      for (let i = 0; i < numWorkers; i++) {
-        const worker = testUtils.createTestWorker({
-          maxRetries: 2,
-          retryDelay: 100,
-          jitter: true // Enable jitter
-        });
-
-        let workerAttemptCount = 0;
-        worker.fetchCommentsFromPlatform = async () => {
-          workerAttemptCount++;
-          const timestamp = Date.now();
-          
-          allRetryTimestamps.push({
-            workerId: i,
-            attempt: workerAttemptCount,
-            timestamp: timestamp
-          });
-
-          if (workerAttemptCount < 3) {
-            throw new Error(`Worker ${i} - attempt ${workerAttemptCount} failed`);
-          }
-          
-          return fixtures.retryComments.slice(0, 1);
-        };
-
-        workers.push(worker);
-      }
-
-      // Start all workers concurrently
-      await Promise.all(workers.map(w => w.start()));
-
-      // Process jobs simultaneously
-      const jobs = workers.map(() => testUtils.createMockJob(organizationId, 'twitter'));
-      const results = await Promise.all(
-        workers.map((worker, i) => worker.processJob(jobs[i]))
-      );
-
-      // Stop all workers
-      await Promise.all(workers.map(w => w.stop()));
-
-      // All should succeed eventually
-      results.forEach(result => {
-        expect(result.success).toBe(true);
-      });
-
-      expect(allRetryTimestamps.length).toBeGreaterThan(6); // At least 3 attempts per worker
-
-      // Check for jitter - retry timestamps shouldn't be identical
-      const secondAttempts = allRetryTimestamps.filter(r => r.attempt === 2);
-      if (secondAttempts.length >= 2) {
-        const timestamps = secondAttempts.map(r => r.timestamp);
-        const uniqueTimestamps = [...new Set(timestamps)];
-        
-        // With jitter, timestamps should vary
-        expect(uniqueTimestamps.length).toBeGreaterThan(1);
-      }
-    });
-
-    test('should handle different error types with appropriate retry behavior', async () => {
-      const organizationId = 'test-org-retry';
-      const worker = testUtils.createTestWorker({
-        maxRetries: 3,
-        retryDelay: 50
-      });
-
-      const errorLog = [];
-      let attemptCount = 0;
-
-      // Mock API with different error types
-      worker.fetchCommentsFromPlatform = async () => {
-        attemptCount++;
-        const timestamp = Date.now();
-
-        if (attemptCount === 1) {
+        if (rateLimitAttempts <= 2) {
           const error = new Error('Rate limit exceeded');
           error.status = 429;
-          errorLog.push({ attempt: attemptCount, error: error.message, retryable: true, timestamp });
-          throw error;
-        } else if (attemptCount === 2) {
-          const error = new Error('Internal server error');
-          error.status = 500;
-          errorLog.push({ attempt: attemptCount, error: error.message, retryable: true, timestamp });
-          throw error;
-        } else if (attemptCount === 3) {
-          const error = new Error('Service temporarily unavailable');
-          error.status = 503;
-          errorLog.push({ attempt: attemptCount, error: error.message, retryable: true, timestamp });
+          error.headers = { 'retry-after': '1' }; // 1 second
           throw error;
         }
-
-        // Success on 4th attempt
-        errorLog.push({ attempt: attemptCount, error: null, retryable: false, timestamp });
-        return fixtures.retryComments.slice(0, 1);
+        return [comment];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
       const result = await worker.processJob(job);
       await worker.stop();
 
       expect(result.success).toBe(true);
-      expect(errorLog).toHaveLength(4);
+      expect(rateLimitAttempts).toBe(3);
 
-      // Verify that retryable errors were retried
-      const retryableErrors = errorLog.filter(log => log.retryable);
-      expect(retryableErrors).toHaveLength(3);
-
-      // Verify exponential backoff was applied
-      for (let i = 1; i < errorLog.length - 1; i++) {
-        const interval = errorLog[i].timestamp - errorLog[i - 1].timestamp;
-        expect(interval).toBeGreaterThan(30); // At least some delay
+      // Verify rate limit backoff timing
+      const intervals = [];
+      for (let i = 1; i < rateLimitTimes.length; i++) {
+        intervals.push(rateLimitTimes[i] - rateLimitTimes[i - 1]);
       }
-    });
 
-    test('should not retry non-retryable errors', async () => {
+      // Should respect rate limit backoff (at least 100ms base delay)
+      intervals.forEach(interval => {
+        expect(interval).toBeGreaterThan(80); // Allow some timing variance
+      });
+    });
+  });
+
+  describe('Backoff Configuration', () => {
+    test('should respect custom retry delay configuration', async () => {
       const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+      const comment = fixtures.retryComments[0];
+
+      const customDelay = 200; // 200ms base delay
       const worker = testUtils.createTestWorker({
-        maxRetries: 3,
-        retryDelay: 100
+        maxRetries: 2,
+        retryDelay: customDelay
       });
 
+      const retryTimes = [];
       let attemptCount = 0;
-      const attempts = [];
 
-      // Mock API with non-retryable error
       worker.fetchCommentsFromPlatform = async () => {
+        retryTimes.push(Date.now());
         attemptCount++;
-        attempts.push({
-          attempt: attemptCount,
-          timestamp: Date.now()
-        });
-
-        // Simulate 401 Unauthorized - should not retry
-        const error = new Error('Invalid API credentials');
-        error.status = 401;
-        throw error;
+        
+        if (attemptCount <= 2) {
+          throw new Error(`Custom delay test #${attemptCount}`);
+        }
+        return [comment];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['test_video_1'] }
+      };
+
       const result = await worker.processJob(job);
       await worker.stop();
 
-      expect(result.success).toBe(false);
-      expect(attempts).toHaveLength(1); // Should not retry non-retryable errors
-      expect(result.error).toContain('Invalid API credentials');
+      expect(result.success).toBe(true);
+
+      // Calculate intervals
+      const intervals = [];
+      for (let i = 1; i < retryTimes.length; i++) {
+        intervals.push(retryTimes[i] - retryTimes[i - 1]);
+      }
+
+      // Should use custom delay: 200ms, 400ms
+      expect(intervals[0]).toBeGreaterThan(160); // 200ms - 20% tolerance
+      expect(intervals[0]).toBeLessThan(240); // 200ms + 20% tolerance
+      
+      if (intervals[1]) {
+        expect(intervals[1]).toBeGreaterThan(320); // 400ms - 20% tolerance
+        expect(intervals[1]).toBeLessThan(480); // 400ms + 20% tolerance
+      }
     });
 
-    test('should handle concurrent retry operations without interference', async () => {
+    test('should handle maximum backoff limits', async () => {
       const organizationId = 'test-org-retry';
-      const numConcurrentJobs = 3;
+      const integrationConfigId = 'config-youtube-retry';
+
       const worker = testUtils.createTestWorker({
-        maxRetries: 2,
+        maxRetries: 10,
         retryDelay: 100,
-        maxConcurrency: numConcurrentJobs
+        maxRetryDelay: 500 // Cap at 500ms
       });
 
-      const jobResults = [];
-      let globalAttemptCount = 0;
+      const retryTimes = [];
+      let attemptCount = 0;
 
-      // Mock API with per-job retry behavior
-      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
-        globalAttemptCount++;
-        const jobId = payload.jobId || 'unknown';
-        
-        // Each job gets its own attempt counter
-        if (!worker.jobAttempts) worker.jobAttempts = {};
-        if (!worker.jobAttempts[jobId]) worker.jobAttempts[jobId] = 0;
-        
-        worker.jobAttempts[jobId]++;
-        const jobAttemptCount = worker.jobAttempts[jobId];
-
-        if (jobAttemptCount < 3) {
-          throw new Error(`Job ${jobId} - attempt ${jobAttemptCount} failed`);
-        }
-
-        // Success on 3rd attempt for each job
-        return fixtures.retryComments.slice(0, 1);
-      };
-
-      await worker.start();
-
-      // Create and process multiple jobs concurrently
-      const jobs = [];
-      for (let i = 0; i < numConcurrentJobs; i++) {
-        const job = testUtils.createMockJob(organizationId, 'twitter');
-        job.payload.jobId = `job_${i}`;
-        jobs.push(job);
-      }
-
-      const startTime = Date.now();
-      const results = await Promise.all(
-        jobs.map(job => worker.processJob(job))
-      );
-      const totalDuration = Date.now() - startTime;
-
-      await worker.stop();
-
-      // All jobs should succeed
-      results.forEach((result, index) => {
-        expect(result.success).toBe(true);
-        jobResults.push({
-          jobId: `job_${index}`,
-          success: result.success,
-          commentsCount: result.commentsCount
-        });
-      });
-
-      expect(jobResults).toHaveLength(numConcurrentJobs);
-      expect(globalAttemptCount).toBe(numConcurrentJobs * 3); // 3 attempts per job
-
-      // Concurrent processing should be faster than sequential
-      expect(totalDuration).toBeLessThan(1500); // Should complete within reasonable time
-    });
-
-    test('should implement circuit breaker pattern for persistent failures', async () => {
-      const organizationId = 'test-org-retry';
-      const worker = testUtils.createTestWorker({
-        maxRetries: 2,
-        retryDelay: 50,
-        circuitBreakerThreshold: 3 // Trip after 3 consecutive failures
-      });
-
-      const failureLog = [];
-      let totalAttempts = 0;
-
-      // Mock API that always fails
       worker.fetchCommentsFromPlatform = async () => {
-        totalAttempts++;
-        failureLog.push({
-          attempt: totalAttempts,
-          timestamp: Date.now()
-        });
-        throw new Error(`Persistent service failure - attempt ${totalAttempts}`);
+        retryTimes.push(Date.now());
+        attemptCount++;
+        
+        if (attemptCount <= 8) {
+          throw new Error(`Max backoff test #${attemptCount}`);
+        }
+        return [fixtures.retryComments[0]];
       };
 
       await worker.start();
 
-      // Process multiple jobs to trigger circuit breaker
-      const jobs = [
-        testUtils.createMockJob(organizationId, 'twitter'),
-        testUtils.createMockJob(organizationId, 'twitter'),
-        testUtils.createMockJob(organizationId, 'twitter')
-      ];
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['test_video_1'] }
+      };
 
-      const results = [];
-      for (const job of jobs) {
-        const result = await worker.processJob(job);
-        results.push(result);
-      }
-
+      const result = await worker.processJob(job);
       await worker.stop();
 
-      // All jobs should fail
-      results.forEach(result => {
-        expect(result.success).toBe(false);
-      });
+      expect(result.success).toBe(true);
 
-      // Circuit breaker should prevent excessive retries after threshold
-      expect(totalAttempts).toBeLessThan(15); // Should be much less than 3 jobs * 3 attempts each
-      expect(failureLog.length).toBe(totalAttempts);
+      // Calculate intervals
+      const intervals = [];
+      for (let i = 1; i < retryTimes.length; i++) {
+        intervals.push(retryTimes[i] - retryTimes[i - 1]);
+      }
+
+      // Later intervals should not exceed maxRetryDelay
+      const laterIntervals = intervals.slice(2); // After first few exponential increases
+      laterIntervals.forEach(interval => {
+        expect(interval).toBeLessThanOrEqual(600); // 500ms + some tolerance
+      });
     });
   });
 });

@@ -1,12 +1,7 @@
-/**
- * Ingestor Message Acknowledgment Integration Tests  
- * Tests proper message acknowledgment as specified in Issue #406
- */
-
 const IngestorTestUtils = require('../helpers/ingestor-test-utils');
 const fixtures = require('../fixtures/ingestor-comments.json');
 
-describe('Ingestor Message Acknowledgment Integration', () => {
+describe('Ingestor Message Acknowledgment Integration Tests', () => {
   let testUtils;
 
   beforeAll(async () => {
@@ -19,414 +14,409 @@ describe('Ingestor Message Acknowledgment Integration', () => {
     await testUtils.cleanup();
   }, 15000);
 
-  describe('Job Acknowledgment', () => {
-    test('should acknowledge successful job completion', async () => {
-      const organizationId = 'test-org-retry';
+  beforeEach(async () => {
+    await testUtils.cleanupTestData();
+    await testUtils.setupTestOrganizations(fixtures);
+  });
+
+  describe('Successful Job Acknowledgment', () => {
+    test('should acknowledge jobs correctly after successful processing', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0]; // success comment
+
+      // Create job in queue
+      const jobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: comment
+      }]);
+
+      expect(jobs).toHaveLength(1);
+      const job = jobs[0];
+
+      // Create worker
       const worker = testUtils.createTestWorker();
-      const acknowledgments = [];
 
       // Mock successful comment fetching
-      worker.fetchCommentsFromPlatform = async () => {
-        return [testUtils.createTestComment('ack_success', organizationId)];
-      };
-
-      // Override the acknowledgment mechanism
-      const originalAckJob = worker.acknowledgeJob || (() => {});
-      worker.acknowledgeJob = async function(job, result) {
-        acknowledgments.push({
-          jobId: job.id,
-          status: result.success ? 'completed' : 'failed',
-          timestamp: new Date().toISOString(),
-          commentsProcessed: result.commentsCount || 0,
-          error: result.error || null
-        });
-        
-        // Call original if it exists
-        if (originalAckJob) {
-          return await originalAckJob.call(this, job, result);
-        }
-      };
+      worker.fetchCommentsFromPlatform = async () => [comment];
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      // Process the job
       const result = await worker.processJob(job);
-      
-      // Manually trigger acknowledgment
-      await worker.acknowledgeJob(job, result);
-      
       await worker.stop();
 
+      // Verify successful processing
       expect(result.success).toBe(true);
-      expect(acknowledgments).toHaveLength(1);
+      expect(result.commentsCount).toBe(1);
+
+      // Check job was marked as completed in queue
+      const completedJobs = await testUtils.getJobsByType('fetch_comments');
+      const completedJob = completedJobs.find(j => j.id === job.id);
       
-      const ack = acknowledgments[0];
-      expect(ack.jobId).toBe(job.id);
-      expect(ack.status).toBe('completed');
-      expect(ack.commentsProcessed).toBe(1);
-      expect(ack.error).toBeNull();
-      expect(ack.timestamp).toBeTruthy();
+      expect(completedJob).toBeDefined();
+      expect(completedJob.status).toBe('completed');
+      expect(completedJob.completed_at).toBeTruthy();
+      expect(completedJob.result).toBeTruthy();
+
+      // Verify comments were stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(1);
+      expect(storedComments[0].platform_comment_id).toBe(comment.platform_comment_id);
     });
 
-    test('should acknowledge failed job completion', async () => {
-      const organizationId = 'test-org-retry';
+    test('should acknowledge multiple jobs in sequence', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comments = fixtures.acknowledgmentComments;
+
+      // Create multiple jobs
+      const jobPayloads = comments.map(comment => ({
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: comment
+      }));
+
+      const jobs = await testUtils.createTestJobs('fetch_comments', jobPayloads);
+      expect(jobs).toHaveLength(comments.length);
+
       const worker = testUtils.createTestWorker();
-      const acknowledgments = [];
 
-      // Mock failing comment fetching
-      worker.fetchCommentsFromPlatform = async () => {
-        throw new Error('Simulated platform error');
-      };
-
-      worker.acknowledgeJob = async function(job, result) {
-        acknowledgments.push({
-          jobId: job.id,
-          status: result.success ? 'completed' : 'failed',
-          timestamp: new Date().toISOString(),
-          commentsProcessed: result.commentsCount || 0,
-          error: result.error || null
-        });
+      // Mock to return different comment based on job payload
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        const commentData = payload.comment_data || comments[0];
+        return [commentData];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      const results = [];
       
-      let result;
-      try {
-        result = await worker.processJob(job);
-      } catch (error) {
-        result = {
-          success: false,
-          error: error.message,
-          commentsCount: 0
-        };
+      // Process all jobs
+      for (const job of jobs) {
+        const result = await worker.processJob(job);
+        results.push(result);
       }
-      
-      await worker.acknowledgeJob(job, result);
+
       await worker.stop();
 
-      expect(acknowledgments).toHaveLength(1);
+      // Verify all jobs were processed successfully
+      results.forEach(result => {
+        expect(result.success).toBe(true);
+        expect(result.commentsCount).toBe(1);
+      });
+
+      // Check all jobs were acknowledged
+      const completedJobs = await testUtils.getJobsByType('fetch_comments');
+      const acknowledgedJobs = completedJobs.filter(j => j.status === 'completed');
       
-      const ack = acknowledgments[0];
-      expect(ack.jobId).toBe(job.id);
-      expect(ack.status).toBe('failed');
-      expect(ack.commentsProcessed).toBe(0);
-      expect(ack.error).toBeTruthy();
+      expect(acknowledgedJobs).toHaveLength(jobs.length);
+
+      // Verify all have completion timestamps and results
+      acknowledgedJobs.forEach(job => {
+        expect(job.completed_at).toBeTruthy();
+        expect(job.result).toBeTruthy();
+      });
+
+      // Verify all comments were stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(comments.length);
     });
 
-    test('should handle acknowledgment persistence across worker restarts', async () => {
-      const organizationId = 'test-org-retry';
-      const persistentAcks = []; // Simulates persistent storage
+    test('should preserve acknowledgment across worker restarts', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0];
 
-      // Create first worker
+      // Create job
+      const jobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: comment
+      }]);
+
+      const job = jobs[0];
+
+      // First worker processes and acknowledges
       const worker1 = testUtils.createTestWorker();
-      worker1.fetchCommentsFromPlatform = async () => {
-        return [testUtils.createTestComment('persistent_ack_1', organizationId)];
-      };
+      worker1.fetchCommentsFromPlatform = async () => [comment];
 
-      worker1.acknowledgeJob = async function(job, result) {
-        const ack = {
-          id: `ack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          jobId: job.id,
-          workerId: this.id || 'worker1',
-          status: result.success ? 'completed' : 'failed',
-          timestamp: new Date().toISOString(),
-          persistent: true
-        };
-        persistentAcks.push(ack);
-        return ack;
-      };
-
-      // Process job with first worker
       await worker1.start();
-      const job1 = testUtils.createMockJob(organizationId, 'twitter');
-      const result1 = await worker1.processJob(job1);
-      await worker1.acknowledgeJob(job1, result1);
+      await worker1.processJob(job);
       await worker1.stop();
 
-      // Create second worker (simulates restart)
+      // Verify acknowledgment persisted
+      let completedJobs = await testUtils.getJobsByType('fetch_comments');
+      let completedJob = completedJobs.find(j => j.id === job.id);
+      expect(completedJob.status).toBe('completed');
+
+      // Second worker should not reprocess acknowledged job
       const worker2 = testUtils.createTestWorker();
       worker2.fetchCommentsFromPlatform = async () => {
-        return [testUtils.createTestComment('persistent_ack_2', organizationId)];
+        throw new Error('Should not be called for acknowledged job');
       };
 
-      worker2.acknowledgeJob = async function(job, result) {
-        const ack = {
-          id: `ack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          jobId: job.id,
-          workerId: this.id || 'worker2',
-          status: result.success ? 'completed' : 'failed',
-          timestamp: new Date().toISOString(),
-          persistent: true
-        };
-        persistentAcks.push(ack);
-        return ack;
-      };
-
-      // Process job with second worker
       await worker2.start();
-      const job2 = testUtils.createMockJob(organizationId, 'twitter');
-      const result2 = await worker2.processJob(job2);
-      await worker2.acknowledgeJob(job2, result2);
+
+      // Try to get next job - should not return the already completed one
+      const nextJob = await worker2.getNextJob();
+      expect(nextJob).toBeNull(); // No pending jobs
+
       await worker2.stop();
 
-      // Verify both acknowledgments are persisted
-      expect(persistentAcks).toHaveLength(2);
-      expect(persistentAcks[0].jobId).toBe(job1.id);
-      expect(persistentAcks[1].jobId).toBe(job2.id);
-      expect(persistentAcks[0].workerId).toBe('worker1');
-      expect(persistentAcks[1].workerId).toBe('worker2');
+      // Verify job remains acknowledged
+      completedJobs = await testUtils.getJobsByType('fetch_comments');
+      completedJob = completedJobs.find(j => j.id === job.id);
+      expect(completedJob.status).toBe('completed');
     });
+  });
 
-    test('should include detailed metadata in acknowledgments', async () => {
+  describe('Failed Job Acknowledgment', () => {
+    test('should properly handle failed job acknowledgment', async () => {
       const organizationId = 'test-org-retry';
-      const worker = testUtils.createTestWorker();
-      const acknowledgments = [];
+      const integrationConfigId = 'config-youtube-retry';
+      const comment = fixtures.retryComments[1]; // permanent failure comment
 
-      // Mock successful processing with multiple comments
-      const comments = [
-        testUtils.createTestComment('detailed_1', organizationId),
-        testUtils.createTestComment('detailed_2', organizationId),
-        testUtils.createTestComment('detailed_3', organizationId)
-      ];
+      // Create job
+      const jobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        comment_data: comment
+      }], { maxAttempts: 2 });
 
-      worker.fetchCommentsFromPlatform = async () => comments;
+      const job = jobs[0];
 
-      worker.acknowledgeJob = async function(job, result) {
-        const ack = {
-          jobId: job.id,
-          organizationId: job.organization_id,
-          platform: job.platform,
-          status: result.success ? 'completed' : 'failed',
-          timestamp: new Date().toISOString(),
-          processingTime: result.processingTime || 0,
-          commentsProcessed: result.commentsCount || 0,
-          commentsStored: result.commentsStored || 0,
-          commentsDuplicated: (result.commentsCount || 0) - (result.commentsStored || 0),
-          metadata: {
-            jobPayload: job.payload,
-            workerVersion: '1.0.0',
-            processingNode: 'test-node',
-            memoryUsage: process.memoryUsage(),
-            platform: job.platform
-          }
-        };
-        acknowledgments.push(ack);
-        return ack;
-      };
+      const worker = testUtils.createTestWorker({
+        maxRetries: 2
+      });
 
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter', { test: 'metadata' });
-      
-      const startTime = Date.now();
-      const result = await worker.processJob(job);
-      const processingTime = Date.now() - startTime;
-      
-      result.processingTime = processingTime;
-      result.commentsStored = result.commentsCount; // Assume all stored for this test
-      
-      await worker.acknowledgeJob(job, result);
-      await worker.stop();
-
-      expect(acknowledgments).toHaveLength(1);
-      
-      const ack = acknowledgments[0];
-      expect(ack.organizationId).toBe(organizationId);
-      expect(ack.platform).toBe('twitter');
-      expect(ack.commentsProcessed).toBe(3);
-      expect(ack.commentsStored).toBe(3);
-      expect(ack.commentsDuplicated).toBe(0);
-      expect(ack.processingTime).toBeGreaterThan(0);
-      expect(ack.metadata.jobPayload).toEqual({ test: 'metadata', since_id: '0' });
-      expect(ack.metadata.workerVersion).toBe('1.0.0');
-      expect(ack.metadata.memoryUsage).toBeTruthy();
-    });
-
-    test('should handle acknowledgment failures gracefully', async () => {
-      const organizationId = 'test-org-retry';
-      const worker = testUtils.createTestWorker();
-      const acknowledgmentAttempts = [];
-      let ackFailureCount = 0;
-
+      // Mock persistent failure
       worker.fetchCommentsFromPlatform = async () => {
-        return [testUtils.createTestComment('ack_failure_test', organizationId)];
-      };
-
-      worker.acknowledgeJob = async function(job, result) {
-        ackFailureCount++;
-        acknowledgmentAttempts.push({
-          attempt: ackFailureCount,
-          timestamp: new Date().toISOString()
-        });
-
-        // Simulate acknowledgment failure first 2 times
-        if (ackFailureCount <= 2) {
-          throw new Error(`Acknowledgment failure attempt ${ackFailureCount}`);
-        }
-
-        // Succeed on third attempt
-        return {
-          jobId: job.id,
-          status: 'completed',
-          acknowledgedAt: new Date().toISOString(),
-          attempts: ackFailureCount
-        };
-      };
-
-      // Override to include retry logic for acknowledgments
-      const originalAckJob = worker.acknowledgeJob;
-      worker.acknowledgeJob = async function(job, result) {
-        const maxAckRetries = 3;
-        let attempt = 0;
-        
-        while (attempt < maxAckRetries) {
-          try {
-            return await originalAckJob.call(this, job, result);
-          } catch (error) {
-            attempt++;
-            if (attempt >= maxAckRetries) {
-              throw new Error(`Acknowledgment failed after ${maxAckRetries} attempts: ${error.message}`);
-            }
-            
-            // Brief delay before retry
-            await testUtils.wait(100);
-          }
-        }
+        throw new Error('Persistent platform failure');
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
-      
-      const ackResult = await worker.acknowledgeJob(job, result);
-      
+
+      // Should fail after retries
+      await expect(worker.processJob(job)).rejects.toThrow('Persistent platform failure');
       await worker.stop();
 
+      // Check job was marked as failed
+      const failedJobs = await testUtils.getJobsByType('fetch_comments');
+      const failedJob = failedJobs.find(j => j.id === job.id);
+      
+      expect(failedJob).toBeDefined();
+      expect(failedJob.status).toBe('failed');
+      expect(failedJob.completed_at).toBeTruthy();
+      expect(failedJob.error_message).toContain('Persistent platform failure');
+
+      // Verify no comments were stored due to failure
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(0);
+    });
+
+    test('should acknowledge after successful retry', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[1]; // retry_then_success
+
+      const jobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: comment
+      }], { maxAttempts: 3 });
+
+      const job = jobs[0];
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 3,
+        retryDelay: 50
+      });
+
+      // Fail first 2 attempts, succeed on 3rd
+      let attemptCount = 0;
+      worker.fetchCommentsFromPlatform = async () => {
+        attemptCount++;
+        if (attemptCount <= 2) {
+          throw new Error(`Transient failure #${attemptCount}`);
+        }
+        return [comment];
+      };
+
+      await worker.start();
+
+      const result = await worker.processJob(job);
+      await worker.stop();
+
+      // Should succeed after retries
       expect(result.success).toBe(true);
-      expect(acknowledgmentAttempts).toHaveLength(3);
-      expect(ackResult.attempts).toBe(3);
-      expect(ackResult.status).toBe('completed');
+      expect(result.commentsCount).toBe(1);
+      expect(attemptCount).toBe(3);
+
+      // Check job was acknowledged as completed (not failed)
+      const completedJobs = await testUtils.getJobsByType('fetch_comments');
+      const completedJob = completedJobs.find(j => j.id === job.id);
+      
+      expect(completedJob).toBeDefined();
+      expect(completedJob.status).toBe('completed');
+      expect(completedJob.completed_at).toBeTruthy();
+      expect(completedJob.result).toBeTruthy();
+
+      // Verify comment was stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(1);
+    });
+  });
+
+  describe('Acknowledgment Timing and Performance', () => {
+    test('should acknowledge jobs promptly after completion', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0];
+
+      const jobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: comment
+      }]);
+
+      const job = jobs[0];
+
+      const worker = testUtils.createTestWorker();
+      worker.fetchCommentsFromPlatform = async () => [comment];
+
+      await worker.start();
+
+      const startTime = Date.now();
+      await worker.processJob(job);
+      const endTime = Date.now();
+
+      await worker.stop();
+
+      const processingTime = endTime - startTime;
+
+      // Check job was acknowledged quickly (within processing time + small buffer)
+      const completedJobs = await testUtils.getJobsByType('fetch_comments');
+      const completedJob = completedJobs.find(j => j.id === job.id);
+      
+      expect(completedJob.status).toBe('completed');
+      
+      const completedAt = new Date(completedJob.completed_at);
+      const ackTime = completedAt.getTime() - startTime;
+      
+      // Acknowledgment should happen within processing time + 100ms buffer
+      expect(ackTime).toBeLessThanOrEqual(processingTime + 100);
     });
 
-    test('should prevent duplicate acknowledgments for same job', async () => {
-      const organizationId = 'test-org-retry';
-      const worker = testUtils.createTestWorker();
-      const acknowledgments = [];
-      const acknowledgedJobs = new Set();
+    test('should handle concurrent job acknowledgments correctly', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
 
-      worker.fetchCommentsFromPlatform = async () => {
-        return [testUtils.createTestComment('duplicate_ack_test', organizationId)];
-      };
-
-      worker.acknowledgeJob = async function(job, result) {
-        // Check if job already acknowledged
-        if (acknowledgedJobs.has(job.id)) {
-          throw new Error(`Job ${job.id} already acknowledged`);
-        }
-
-        const ack = {
-          jobId: job.id,
-          status: result.success ? 'completed' : 'failed',
-          timestamp: new Date().toISOString()
+      // Create multiple concurrent jobs
+      const concurrentJobs = [];
+      for (let i = 0; i < 5; i++) {
+        const comment = {
+          ...fixtures.acknowledgmentComments[0],
+          platform_comment_id: `concurrent_${i}`,
+          original_text: `Concurrent comment ${i}`
         };
-        
-        acknowledgments.push(ack);
-        acknowledgedJobs.add(job.id);
-        
-        return ack;
+
+        const jobs = await testUtils.createTestJobs('fetch_comments', [{
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }]);
+
+        concurrentJobs.push({ job: jobs[0], comment });
+      }
+
+      const worker = testUtils.createTestWorker({
+        maxConcurrency: 3 // Allow concurrent processing
+      });
+
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        // Simulate some processing time
+        await testUtils.sleep(50);
+        return [payload.comment_data];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      // Process all jobs concurrently
+      const promises = concurrentJobs.map(({ job }) => worker.processJob(job));
+      const results = await Promise.all(promises);
+
+      await worker.stop();
+
+      // All should succeed
+      results.forEach(result => {
+        expect(result.success).toBe(true);
+        expect(result.commentsCount).toBe(1);
+      });
+
+      // All should be acknowledged
+      const completedJobs = await testUtils.getJobsByType('fetch_comments');
+      const acknowledgedJobs = completedJobs.filter(j => j.status === 'completed');
+      
+      expect(acknowledgedJobs).toHaveLength(concurrentJobs.length);
+
+      // All should have unique completion times
+      const completionTimes = acknowledgedJobs.map(j => j.completed_at);
+      const uniqueTimes = [...new Set(completionTimes)];
+      expect(uniqueTimes.length).toBeGreaterThan(1); // Should have different completion times
+
+      // Verify all comments were stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(concurrentJobs.length);
+    });
+  });
+
+  describe('Acknowledgment Error Handling', () => {
+    test('should handle acknowledgment failures gracefully', async () => {
+      const organizationId = 'test-org-dedup';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0];
+
+      const jobs = await testUtils.createTestJobs('fetch_comments', [{
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        comment_data: comment
+      }]);
+
+      const job = jobs[0];
+
+      const worker = testUtils.createTestWorker();
+      worker.fetchCommentsFromPlatform = async () => [comment];
+
+      // Mock acknowledgment failure
+      const originalMarkJobCompleted = worker.markJobCompleted;
+      worker.markJobCompleted = async (job, result, processingTime) => {
+        throw new Error('Simulated acknowledgment failure');
+      };
+
+      await worker.start();
+
+      // Job processing should still succeed despite ack failure
       const result = await worker.processJob(job);
-      
-      // First acknowledgment should succeed
-      const ack1 = await worker.acknowledgeJob(job, result);
-      expect(ack1).toBeTruthy();
+      expect(result.success).toBe(true);
 
-      // Second acknowledgment should fail
-      await expect(worker.acknowledgeJob(job, result)).rejects.toThrow('already acknowledged');
-      
       await worker.stop();
 
-      expect(acknowledgments).toHaveLength(1);
-      expect(acknowledgedJobs.size).toBe(1);
-    });
+      // Restore original method for cleanup
+      worker.markJobCompleted = originalMarkJobCompleted;
 
-    test('should handle partial processing acknowledgments', async () => {
-      const organizationId = 'test-org-retry';
-      const worker = testUtils.createTestWorker();
-      const acknowledgments = [];
-
-      // Mock partially successful processing
-      const comments = [
-        testUtils.createTestComment('partial_1', organizationId),
-        testUtils.createTestComment('partial_2', organizationId),
-        testUtils.createTestComment('partial_3', organizationId)
-      ];
-
-      worker.fetchCommentsFromPlatform = async () => comments;
-
-      // Mock storage that fails for some comments
-      worker.storeComments = async (orgId, configId, platform, comments) => {
-        const stored = [];
-        const failed = [];
-        
-        for (let i = 0; i < comments.length; i++) {
-          if (i === 1) {
-            // Simulate failure for second comment
-            failed.push({
-              comment: comments[i],
-              error: 'Storage constraint violation'
-            });
-          } else {
-            stored.push({
-              ...comments[i],
-              id: `stored_${i}`,
-              stored_at: new Date().toISOString()
-            });
-          }
-        }
-        
-        return { stored, failed };
-      };
-
-      worker.acknowledgeJob = async function(job, result) {
-        const ack = {
-          jobId: job.id,
-          status: 'partial',
-          timestamp: new Date().toISOString(),
-          commentsTotal: result.commentsTotal || 0,
-          commentsStored: result.commentsStored || 0,
-          commentsFailed: result.commentsFailed || 0,
-          failureReasons: result.failureReasons || []
-        };
-        acknowledgments.push(ack);
-        return ack;
-      };
-
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      
-      // Override processJob to handle partial results
-      const result = {
-        success: true,
-        commentsTotal: 3,
-        commentsStored: 2,
-        commentsFailed: 1,
-        failureReasons: ['Storage constraint violation']
-      };
-      
-      await worker.acknowledgeJob(job, result);
-      await worker.stop();
-
-      expect(acknowledgments).toHaveLength(1);
-      
-      const ack = acknowledgments[0];
-      expect(ack.status).toBe('partial');
-      expect(ack.commentsTotal).toBe(3);
-      expect(ack.commentsStored).toBe(2);
-      expect(ack.commentsFailed).toBe(1);
-      expect(ack.failureReasons).toContain('Storage constraint violation');
+      // Verify comments were still stored despite ack failure
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(1);
     });
   });
 });

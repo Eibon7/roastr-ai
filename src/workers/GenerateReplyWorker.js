@@ -467,7 +467,7 @@ class GenerateReplyWorker extends BaseWorker {
         approvalRecord: autoApprovalResult.approvalRecord,
         contentValidated: true
       });
-    } else if (!autoApprovalResult && integrationConfig?.config?.auto_post !== false) {
+    } else if (!autoApprovalResult && integrationConfig.config.auto_post !== false) {
       // Standard manual flow auto-posting
       await this.queuePostingJob(organization_id, storedResponse, platform);
     }
@@ -1193,11 +1193,8 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Queue posting job with auto-approval metadata support
-   * @param {string} organizationId - Organization ID
-   * @param {Object} response - Response object
-   * @param {string} platform - Platform name
-   * @param {Object} autoApprovalMetadata - Auto-approval metadata (optional)
+   * Queue posting job with optional auto-approval metadata
+   * ROUND 6 FIX: Enhanced to preserve GDPR-safe auto-approval metadata
    */
   async queuePostingJob(organizationId, response, platform, autoApprovalMetadata = null) {
     // GDPR-Safe metadata: Only include essential, non-personal data
@@ -1205,21 +1202,23 @@ class GenerateReplyWorker extends BaseWorker {
       autoApproved: autoApprovalMetadata.autoApproved || false,
       contentValidated: autoApprovalMetadata.contentValidated || false,
       approvalTimestamp: new Date().toISOString(),
-      // Do NOT include: personal identifiers, email, specific user data
-      approvalRecordId: autoApprovalMetadata.approvalRecord?.id || null
+      approvalRecordId: autoApprovalMetadata.approvalRecord?.id || null,
+      // GDPR compliance: No personal text content stored
+      validationId: autoApprovalMetadata.validationId || null,
+      securityPassed: autoApprovalMetadata.securityPassed || false
     } : null;
 
     const postJob = {
       organization_id: organizationId,
       job_type: 'post_response',
-      priority: autoApprovalMetadata?.autoApproved ? 3 : 4, // Higher priority for auto-approved
+      priority: autoApprovalMetadata?.autoApproved ? 3 : 4, // Higher priority for auto-approved content
       payload: {
         response_id: response.id,
         organization_id: organizationId,
         platform,
         response_text: response.response_text,
         comment_id: response.comment_id,
-        // Add GDPR-safe auto-approval metadata
+        // ROUND 6 FIX: Include GDPR-safe auto-approval metadata
         autoApprovalMetadata: gdprSafeMetadata
       },
       max_attempts: 3
@@ -1238,7 +1237,10 @@ class GenerateReplyWorker extends BaseWorker {
       
       this.log('info', 'Queued posting job', {
         responseId: response.id,
-        platform
+        platform,
+        autoApproved: gdprSafeMetadata?.autoApproved || false,
+        priority: postJob.priority,
+        hasMetadata: !!gdprSafeMetadata
       });
       
     } catch (error) {

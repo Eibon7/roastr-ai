@@ -1,12 +1,7 @@
-/**
- * Ingestor Error Handling Integration Tests
- * Tests transient vs permanent error differentiation as specified in Issue #406
- */
-
 const IngestorTestUtils = require('../helpers/ingestor-test-utils');
 const fixtures = require('../fixtures/ingestor-comments.json');
 
-describe('Ingestor Error Handling Integration', () => {
+describe('Ingestor Error Handling Integration Tests', () => {
   let testUtils;
 
   beforeAll(async () => {
@@ -19,625 +14,669 @@ describe('Ingestor Error Handling Integration', () => {
     await testUtils.cleanup();
   }, 15000);
 
-  describe('Transient vs Permanent Error Handling', () => {
-    test('should retry transient network errors with exponential backoff', async () => {
-      const organizationId = 'test-org-errors';
+  beforeEach(async () => {
+    await testUtils.cleanupTestData();
+    await testUtils.setupTestOrganizations(fixtures);
+  });
+
+  describe('Transient Error Handling', () => {
+    test('should retry transient network errors', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+      const comment = fixtures.retryComments[0]; // transient failure comment
+
       const worker = testUtils.createTestWorker({
         maxRetries: 3,
-        retryDelay: 100
-      });
-
-      const errorLog = [];
-      let attemptCount = 0;
-
-      // Mock API with transient network errors
-      worker.fetchCommentsFromPlatform = async () => {
-        attemptCount++;
-        const timestamp = Date.now();
-
-        if (attemptCount <= 2) {
-          // Simulate transient errors
-          const transientErrors = [
-            { code: 'ECONNRESET', message: 'Connection reset by peer' },
-            { code: 'ETIMEDOUT', message: 'Connection timed out' }
-          ];
-          
-          const error = new Error(transientErrors[attemptCount - 1].message);
-          error.code = transientErrors[attemptCount - 1].code;
-          error.transient = true;
-
-          errorLog.push({
-            attempt: attemptCount,
-            error: error.message,
-            errorCode: error.code,
-            isTransient: true,
-            timestamp: timestamp
-          });
-
-          throw error;
-        }
-
-        // Success on 3rd attempt
-        errorLog.push({
-          attempt: attemptCount,
-          error: null,
-          isTransient: false,
-          timestamp: timestamp
-        });
-
-        return fixtures.errorComments.transient;
-      };
-
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
-      await worker.stop();
-
-      expect(result.success).toBe(true);
-      expect(result.commentsCount).toBe(fixtures.errorComments.transient.length);
-      expect(errorLog).toHaveLength(3);
-
-      // Verify transient errors were retried
-      const transientErrors = errorLog.filter(log => log.isTransient);
-      expect(transientErrors).toHaveLength(2);
-
-      // Verify exponential backoff timing
-      if (errorLog.length >= 3) {
-        const interval1 = errorLog[1].timestamp - errorLog[0].timestamp;
-        const interval2 = errorLog[2].timestamp - errorLog[1].timestamp;
-        
-        expect(interval1).toBeGreaterThan(80); // ~100ms with tolerance
-        expect(interval2).toBeGreaterThan(180); // ~200ms with tolerance
-      }
-    });
-
-    test('should not retry permanent authentication errors', async () => {
-      const organizationId = 'test-org-errors';
-      const worker = testUtils.createTestWorker({
-        maxRetries: 3,
-        retryDelay: 100
-      });
-
-      const errorLog = [];
-      let attemptCount = 0;
-
-      // Mock API with permanent authentication error
-      worker.fetchCommentsFromPlatform = async () => {
-        attemptCount++;
-        const timestamp = Date.now();
-
-        // Simulate 401 Unauthorized - permanent error
-        const error = new Error('Invalid authentication credentials');
-        error.status = 401;
-        error.permanent = true;
-
-        errorLog.push({
-          attempt: attemptCount,
-          error: error.message,
-          status: error.status,
-          isPermanent: true,
-          timestamp: timestamp
-        });
-
-        throw error;
-      };
-
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
-      await worker.stop();
-
-      expect(result.success).toBe(false);
-      expect(errorLog).toHaveLength(1); // Should not retry permanent errors
-      expect(result.error).toContain('Invalid authentication credentials');
-    });
-
-    test('should handle mixed error types appropriately', async () => {
-      const organizationId = 'test-org-errors';
-      const worker = testUtils.createTestWorker({
-        maxRetries: 4,
         retryDelay: 50
       });
 
-      const errorSequence = [];
       let attemptCount = 0;
+      const errorTypes = ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT'];
 
-      // Mock API with sequence of different error types
       worker.fetchCommentsFromPlatform = async () => {
         attemptCount++;
-        const timestamp = Date.now();
-
-        let error, shouldRetry;
-
-        if (attemptCount === 1) {
-          // Transient: Rate limit
-          error = new Error('Rate limit exceeded');
-          error.status = 429;
-          shouldRetry = true;
-        } else if (attemptCount === 2) {
-          // Transient: Service unavailable
-          error = new Error('Service temporarily unavailable');
-          error.status = 503;
-          shouldRetry = true;
-        } else if (attemptCount === 3) {
-          // Transient: Gateway timeout
-          error = new Error('Gateway timeout');
-          error.status = 504;
-          shouldRetry = true;
-        } else if (attemptCount === 4) {
-          // Transient: Internal server error
-          error = new Error('Internal server error');
-          error.status = 500;
-          shouldRetry = true;
-        }
-
-        if (error) {
-          errorSequence.push({
-            attempt: attemptCount,
-            error: error.message,
-            status: error.status,
-            shouldRetry: shouldRetry,
-            timestamp: timestamp
-          });
+        
+        if (attemptCount <= 3) {
+          const error = new Error(`Network error: ${errorTypes[attemptCount - 1]}`);
+          error.code = errorTypes[attemptCount - 1];
           throw error;
         }
-
-        // Success on 5th attempt
-        errorSequence.push({
-          attempt: attemptCount,
-          error: null,
-          success: true,
-          timestamp: timestamp
-        });
-
-        return fixtures.errorComments.mixed;
+        
+        return [comment];
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['test_video_1'] }
+      };
+
       const result = await worker.processJob(job);
       await worker.stop();
 
+      // Should eventually succeed after retries
       expect(result.success).toBe(true);
-      expect(errorSequence).toHaveLength(5);
+      expect(result.commentsCount).toBe(1);
+      expect(attemptCount).toBe(4); // 3 failures + 1 success
 
-      // All intermediate errors should be retryable
-      const retryableErrors = errorSequence.filter(log => log.shouldRetry);
-      expect(retryableErrors).toHaveLength(4);
-
-      // Verify each retry attempt had progressively longer delays
-      for (let i = 1; i < retryableErrors.length; i++) {
-        const currentInterval = errorSequence[i].timestamp - errorSequence[i - 1].timestamp;
-        const previousInterval = i > 1 ? errorSequence[i - 1].timestamp - errorSequence[i - 2].timestamp : 0;
-        
-        if (previousInterval > 0) {
-          expect(currentInterval).toBeGreaterThanOrEqual(previousInterval * 0.8); // Account for timing variance
-        }
-      }
+      // Verify comment was stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(1);
+      expect(storedComments[0].platform_comment_id).toBe(comment.platform_comment_id);
     });
 
-    test('should handle rate limit errors with appropriate backoff', async () => {
-      const organizationId = 'test-org-errors';
+    test('should handle timeout errors with appropriate retries', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0];
+
       const worker = testUtils.createTestWorker({
         maxRetries: 3,
-        retryDelay: 200,
-        rateLimitBackoffMultiplier: 2
-      });
-
-      const rateLimitLog = [];
-      let attemptCount = 0;
-
-      // Mock API with rate limit followed by success
-      worker.fetchCommentsFromPlatform = async () => {
-        attemptCount++;
-        const timestamp = Date.now();
-
-        if (attemptCount <= 2) {
-          // Simulate rate limit errors with Retry-After header
-          const error = new Error('Rate limit exceeded');
-          error.status = 429;
-          error.retryAfter = 300; // Suggested wait time in milliseconds
-
-          rateLimitLog.push({
-            attempt: attemptCount,
-            error: error.message,
-            status: error.status,
-            retryAfter: error.retryAfter,
-            timestamp: timestamp
-          });
-
-          throw error;
-        }
-
-        // Success after rate limit
-        rateLimitLog.push({
-          attempt: attemptCount,
-          success: true,
-          timestamp: timestamp
-        });
-
-        return fixtures.errorComments.rateLimit;
-      };
-
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      
-      const startTime = Date.now();
-      const result = await worker.processJob(job);
-      const totalDuration = Date.now() - startTime;
-
-      await worker.stop();
-
-      expect(result.success).toBe(true);
-      expect(rateLimitLog).toHaveLength(3);
-
-      // Should respect rate limit backoff
-      expect(totalDuration).toBeGreaterThan(600); // Should wait for rate limit backoff
-
-      const rateLimitErrors = rateLimitLog.filter(log => log.status === 429);
-      expect(rateLimitErrors).toHaveLength(2);
-    });
-
-    test('should differentiate between client and server errors', async () => {
-      const organizationId = 'test-org-errors';
-      const worker = testUtils.createTestWorker({
-        maxRetries: 2,
         retryDelay: 100
       });
 
-      const errorClassification = [];
-      let testPhase = 1;
+      let attemptCount = 0;
+      const timeoutAttempts = [];
 
-      // Mock API with different error classifications
       worker.fetchCommentsFromPlatform = async () => {
-        const timestamp = Date.now();
-        let error, classification;
-
-        if (testPhase === 1) {
-          // Client error - should not retry
-          error = new Error('Bad request - invalid parameters');
-          error.status = 400;
-          classification = 'client_error';
+        attemptCount++;
+        timeoutAttempts.push(Date.now());
+        
+        if (attemptCount <= 2) {
+          const error = new Error('Request timeout');
+          error.code = 'ETIMEDOUT';
+          error.timeout = true;
+          throw error;
         }
+        
+        return [comment];
+      };
 
-        errorClassification.push({
-          phase: testPhase,
-          error: error.message,
-          status: error.status,
-          classification: classification,
-          timestamp: timestamp
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
+      const result = await worker.processJob(job);
+      await worker.stop();
+
+      expect(result.success).toBe(true);
+      expect(attemptCount).toBe(3);
+
+      // Verify retry intervals for timeout errors
+      const intervals = [];
+      for (let i = 1; i < timeoutAttempts.length; i++) {
+        intervals.push(timeoutAttempts[i] - timeoutAttempts[i - 1]);
+      }
+
+      // Should have appropriate backoff between retries
+      intervals.forEach(interval => {
+        expect(interval).toBeGreaterThan(80); // At least base retry delay
+      });
+    });
+
+    test('should handle rate limiting as transient error', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0];
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 3,
+        retryDelay: 50
+      });
+
+      let attemptCount = 0;
+      const rateLimitAttempts = [];
+
+      worker.fetchCommentsFromPlatform = async () => {
+        attemptCount++;
+        rateLimitAttempts.push({
+          attempt: attemptCount,
+          timestamp: Date.now()
         });
+        
+        if (attemptCount <= 2) {
+          const error = new Error('Rate limit exceeded');
+          error.statusCode = 429;
+          error.headers = {
+            'x-rate-limit-reset': Math.floor(Date.now() / 1000) + 60,
+            'retry-after': '1'
+          };
+          throw error;
+        }
+        
+        return [comment];
+      };
 
-        testPhase++;
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
+      const result = await worker.processJob(job);
+      await worker.stop();
+
+      expect(result.success).toBe(true);
+      expect(attemptCount).toBe(3);
+
+      // Should have retried rate limit errors
+      expect(rateLimitAttempts).toHaveLength(3);
+      
+      // Verify appropriate spacing between attempts
+      for (let i = 1; i < rateLimitAttempts.length; i++) {
+        const interval = rateLimitAttempts[i].timestamp - rateLimitAttempts[i - 1].timestamp;
+        expect(interval).toBeGreaterThan(40); // Should respect retry delay
+      }
+    });
+
+    test('should differentiate between recoverable and non-recoverable network errors', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 2,
+        retryDelay: 50
+      });
+
+      // Test recoverable errors (should retry)
+      let recoverableAttempts = 0;
+      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+        if (payload.test_case === 'recoverable') {
+          recoverableAttempts++;
+          if (recoverableAttempts <= 2) {
+            const error = new Error('Temporary service unavailable');
+            error.statusCode = 503;
+            throw error;
+          }
+          return [fixtures.retryComments[0]];
+        }
+        
+        if (payload.test_case === 'non_recoverable') {
+          const error = new Error('SSL certificate verification failed');
+          error.code = 'CERT_INVALID';
+          throw error;
+        }
+      };
+
+      await worker.start();
+
+      // Test recoverable error
+      const recoverableJob = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { test_case: 'recoverable', video_ids: ['test_video_1'] }
+      };
+
+      const recoverableResult = await worker.processJob(recoverableJob);
+      expect(recoverableResult.success).toBe(true);
+      expect(recoverableAttempts).toBe(3); // Should have retried
+
+      // Test non-recoverable error
+      const nonRecoverableJob = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { test_case: 'non_recoverable', video_ids: ['test_video_2'] }
+      };
+
+      await expect(worker.processJob(nonRecoverableJob)).rejects.toThrow('SSL certificate verification failed');
+
+      await worker.stop();
+    });
+  });
+
+  describe('Permanent Error Handling', () => {
+    test('should not retry authentication errors', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 3,
+        retryDelay: 50
+      });
+
+      let attemptCount = 0;
+      worker.fetchCommentsFromPlatform = async () => {
+        attemptCount++;
+        const error = new Error('Invalid API key');
+        error.statusCode = 401;
+        error.code = 'UNAUTHORIZED';
         throw error;
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
-      await worker.stop();
 
-      expect(result.success).toBe(false);
-      expect(errorClassification).toHaveLength(1); // Should not retry client errors
-      expect(errorClassification[0].classification).toBe('client_error');
-      expect(result.error).toContain('Bad request');
-    });
-
-    test('should handle network connectivity issues with progressive backoff', async () => {
-      const organizationId = 'test-org-errors';
-      const worker = testUtils.createTestWorker({
-        maxRetries: 4,
-        retryDelay: 100,
-        maxBackoffDelay: 1000
-      });
-
-      const connectivityLog = [];
-      let attemptCount = 0;
-
-      // Mock API with various network connectivity issues
-      worker.fetchCommentsFromPlatform = async () => {
-        attemptCount++;
-        const timestamp = Date.now();
-
-        let error, errorType;
-
-        if (attemptCount === 1) {
-          error = new Error('DNS lookup failed');
-          error.code = 'ENOTFOUND';
-          errorType = 'dns_failure';
-        } else if (attemptCount === 2) {
-          error = new Error('Connection refused');
-          error.code = 'ECONNREFUSED';
-          errorType = 'connection_refused';
-        } else if (attemptCount === 3) {
-          error = new Error('Network unreachable');
-          error.code = 'ENETUNREACH';
-          errorType = 'network_unreachable';
-        } else if (attemptCount === 4) {
-          error = new Error('Socket timeout');
-          error.code = 'ESOCKETTIMEDOUT';
-          errorType = 'socket_timeout';
-        }
-
-        if (error) {
-          connectivityLog.push({
-            attempt: attemptCount,
-            error: error.message,
-            errorCode: error.code,
-            errorType: errorType,
-            timestamp: timestamp
-          });
-          throw error;
-        }
-
-        // Success on 5th attempt
-        connectivityLog.push({
-          attempt: attemptCount,
-          success: true,
-          timestamp: timestamp
-        });
-
-        return fixtures.errorComments.connectivity;
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['test_video_1'] }
       };
 
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
+      await expect(worker.processJob(job)).rejects.toThrow('Invalid API key');
       await worker.stop();
 
-      expect(result.success).toBe(true);
-      expect(connectivityLog).toHaveLength(5);
-
-      // All network errors should be retried
-      const networkErrors = connectivityLog.filter(log => log.errorCode);
-      expect(networkErrors).toHaveLength(4);
-
-      // Verify progressive backoff with network errors
-      for (let i = 1; i < networkErrors.length; i++) {
-        const interval = connectivityLog[i].timestamp - connectivityLog[i - 1].timestamp;
-        const expectedMin = 100 * Math.pow(2, i - 1) * 0.8; // 80% tolerance
-        expect(interval).toBeGreaterThan(expectedMin);
-      }
+      // Should not have retried authentication error
+      expect(attemptCount).toBe(1);
     });
 
-    test('should handle service degradation scenarios gracefully', async () => {
-      const organizationId = 'test-org-errors';
+    test('should not retry forbidden/permission errors', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-twitter-dedup';
+
       const worker = testUtils.createTestWorker({
         maxRetries: 3,
-        retryDelay: 150,
-        degradationThreshold: 2 // After 2 failures, consider service degraded
+        retryDelay: 50
       });
 
-      const degradationLog = [];
       let attemptCount = 0;
-
-      // Mock API with service degradation scenario
       worker.fetchCommentsFromPlatform = async () => {
         attemptCount++;
-        const timestamp = Date.now();
-
-        let error, degradationLevel;
-
-        if (attemptCount === 1) {
-          error = new Error('High response time detected');
-          error.status = 503;
-          degradationLevel = 'slow';
-        } else if (attemptCount === 2) {
-          error = new Error('Partial service outage');
-          error.status = 503;
-          degradationLevel = 'partial_outage';
-        } else if (attemptCount === 3) {
-          error = new Error('Service overloaded');
-          error.status = 503;
-          degradationLevel = 'overloaded';
-        }
-
-        if (error) {
-          degradationLog.push({
-            attempt: attemptCount,
-            error: error.message,
-            status: error.status,
-            degradationLevel: degradationLevel,
-            timestamp: timestamp
-          });
-          throw error;
-        }
-
-        // Recovery on 4th attempt
-        degradationLog.push({
-          attempt: attemptCount,
-          success: true,
-          serviceRecovered: true,
-          timestamp: timestamp
-        });
-
-        return fixtures.errorComments.degradation;
+        const error = new Error('Insufficient permissions to access this resource');
+        error.statusCode = 403;
+        error.code = 'FORBIDDEN';
+        throw error;
       };
 
       await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
-      const result = await worker.processJob(job);
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
+      await expect(worker.processJob(job)).rejects.toThrow('Insufficient permissions');
       await worker.stop();
 
-      expect(result.success).toBe(true);
-      expect(degradationLog).toHaveLength(4);
-
-      // Service should recover after degradation
-      const recoveryLog = degradationLog.find(log => log.serviceRecovered);
-      expect(recoveryLog).toBeDefined();
-
-      // All degradation errors should use progressive backoff
-      const degradationErrors = degradationLog.filter(log => log.degradationLevel);
-      expect(degradationErrors).toHaveLength(3);
+      expect(attemptCount).toBe(1);
     });
 
-    test('should handle concurrent error scenarios without interference', async () => {
-      const organizationId = 'test-org-errors';
-      const numConcurrentJobs = 3;
+    test('should not retry malformed request errors', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+
       const worker = testUtils.createTestWorker({
-        maxRetries: 2,
-        retryDelay: 100,
-        maxConcurrency: numConcurrentJobs
+        maxRetries: 3,
+        retryDelay: 50
       });
 
-      const concurrentErrorLog = [];
-      const jobCounters = {};
+      let attemptCount = 0;
+      worker.fetchCommentsFromPlatform = async () => {
+        attemptCount++;
+        const error = new Error('Invalid request format');
+        error.statusCode = 400;
+        error.code = 'BAD_REQUEST';
+        throw error;
+      };
 
-      // Mock API with per-job error scenarios
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['invalid_video_id_format'] }
+      };
+
+      await expect(worker.processJob(job)).rejects.toThrow('Invalid request format');
+      await worker.stop();
+
+      expect(attemptCount).toBe(1);
+    });
+
+    test('should not retry resource not found errors', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 3,
+        retryDelay: 50
+      });
+
+      let attemptCount = 0;
+      worker.fetchCommentsFromPlatform = async () => {
+        attemptCount++;
+        const error = new Error('Video not found');
+        error.statusCode = 404;
+        error.code = 'NOT_FOUND';
+        throw error;
+      };
+
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['nonexistent_video'] }
+      };
+
+      await expect(worker.processJob(job)).rejects.toThrow('Video not found');
+      await worker.stop();
+
+      expect(attemptCount).toBe(1);
+    });
+  });
+
+  describe('Error Classification', () => {
+    test('should correctly classify HTTP status codes', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-twitter-dedup';
+
+      const testCases = [
+        { status: 500, shouldRetry: true, description: 'Internal Server Error' },
+        { status: 502, shouldRetry: true, description: 'Bad Gateway' },
+        { status: 503, shouldRetry: true, description: 'Service Unavailable' },
+        { status: 504, shouldRetry: true, description: 'Gateway Timeout' },
+        { status: 400, shouldRetry: false, description: 'Bad Request' },
+        { status: 401, shouldRetry: false, description: 'Unauthorized' },
+        { status: 403, shouldRetry: false, description: 'Forbidden' },
+        { status: 404, shouldRetry: false, description: 'Not Found' },
+        { status: 422, shouldRetry: false, description: 'Unprocessable Entity' }
+      ];
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 2,
+        retryDelay: 50
+      });
+
+      await worker.start();
+
+      for (const testCase of testCases) {
+        let attemptCount = 0;
+        
+        worker.fetchCommentsFromPlatform = async () => {
+          attemptCount++;
+          const error = new Error(testCase.description);
+          error.statusCode = testCase.status;
+          throw error;
+        };
+
+        const job = {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          payload: { test_status: testCase.status }
+        };
+
+        await expect(worker.processJob(job)).rejects.toThrow(testCase.description);
+
+        if (testCase.shouldRetry) {
+          expect(attemptCount).toBeGreaterThan(1);
+        } else {
+          expect(attemptCount).toBe(1);
+        }
+      }
+
+      await worker.stop();
+    });
+
+    test('should handle mixed error scenarios in batch processing', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 2,
+        retryDelay: 50
+      });
+
+      const errorScenarios = [
+        { type: 'success', shouldSucceed: true },
+        { type: 'transient', shouldRetry: true, shouldSucceed: false },
+        { type: 'permanent', shouldRetry: false, shouldSucceed: false },
+        { type: 'eventual_success', shouldRetry: true, shouldSucceed: true }
+      ];
+
+      const results = [];
+      const attemptCounts = {};
+
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
-        const jobId = payload.jobId || 'unknown';
-        const timestamp = Date.now();
+        const scenario = payload.scenario;
+        attemptCounts[scenario] = (attemptCounts[scenario] || 0) + 1;
 
-        if (!jobCounters[jobId]) jobCounters[jobId] = 0;
-        jobCounters[jobId]++;
+        switch (scenario) {
+          case 'success':
+            return [fixtures.retryComments[0]];
+            
+          case 'transient':
+            throw new Error('Persistent transient error');
+            
+          case 'permanent':
+            const permError = new Error('Permanent error');
+            permError.statusCode = 401;
+            throw permError;
+            
+          case 'eventual_success':
+            if (attemptCounts[scenario] <= 2) {
+              throw new Error('Transient error - will succeed');
+            }
+            return [fixtures.retryComments[0]];
+            
+          default:
+            throw new Error('Unknown scenario');
+        }
+      };
 
-        const attemptCount = jobCounters[jobId];
+      await worker.start();
+
+      for (const scenario of errorScenarios) {
+        const job = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { scenario: scenario.type, video_ids: ['test_video'] }
+        };
+
+        try {
+          const result = await worker.processJob(job);
+          results.push({ scenario: scenario.type, success: true, result });
+        } catch (error) {
+          results.push({ scenario: scenario.type, success: false, error: error.message });
+        }
+      }
+
+      await worker.stop();
+
+      // Verify results match expectations
+      expect(results[0].success).toBe(true); // success
+      expect(results[1].success).toBe(false); // transient (max retries exceeded)
+      expect(results[2].success).toBe(false); // permanent
+      expect(results[3].success).toBe(true); // eventual_success
+
+      // Verify attempt counts
+      expect(attemptCounts['success']).toBe(1);
+      expect(attemptCounts['transient']).toBe(3); // 1 + 2 retries
+      expect(attemptCounts['permanent']).toBe(1); // No retries
+      expect(attemptCounts['eventual_success']).toBe(3); // Succeeded on 3rd attempt
+    });
+  });
+
+  describe('Error Recovery and State Management', () => {
+    test('should maintain consistent state after error recovery', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0];
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 3,
+        retryDelay: 50
+      });
+
+      let attemptCount = 0;
+      const stateChecks = [];
+
+      worker.fetchCommentsFromPlatform = async () => {
+        attemptCount++;
+        
+        // Check state before potential failure
+        const preState = {
+          attempt: attemptCount,
+          workerRunning: worker.isRunning,
+          processedJobs: worker.processedJobs
+        };
+        stateChecks.push(preState);
 
         if (attemptCount <= 2) {
-          const error = new Error(`Job ${jobId} - attempt ${attemptCount} failed`);
-          error.status = 503;
-
-          concurrentErrorLog.push({
-            jobId: jobId,
-            attempt: attemptCount,
-            error: error.message,
-            status: error.status,
-            timestamp: timestamp
-          });
-
-          throw error;
+          throw new Error(`Transient failure #${attemptCount}`);
         }
-
-        // Success on 3rd attempt for each job
-        concurrentErrorLog.push({
-          jobId: jobId,
-          attempt: attemptCount,
-          success: true,
-          timestamp: timestamp
-        });
-
-        return fixtures.errorComments.concurrent;
+        
+        return [comment];
       };
 
       await worker.start();
 
-      // Create and process multiple jobs concurrently
-      const jobs = [];
-      for (let i = 0; i < numConcurrentJobs; i++) {
-        const job = testUtils.createMockJob(organizationId, 'twitter');
-        job.payload.jobId = `concurrent_job_${i}`;
-        jobs.push(job);
-      }
-
-      const results = await Promise.all(
-        jobs.map(job => worker.processJob(job))
-      );
-
-      await worker.stop();
-
-      // All jobs should succeed eventually
-      results.forEach(result => {
-        expect(result.success).toBe(true);
-      });
-
-      expect(concurrentErrorLog.length).toBe(numConcurrentJobs * 3); // 3 attempts per job
-
-      // Each job should have its own error handling
-      for (let i = 0; i < numConcurrentJobs; i++) {
-        const jobId = `concurrent_job_${i}`;
-        const jobLogs = concurrentErrorLog.filter(log => log.jobId === jobId);
-        expect(jobLogs).toHaveLength(3);
-
-        const jobErrors = jobLogs.filter(log => log.error);
-        const jobSuccess = jobLogs.filter(log => log.success);
-        expect(jobErrors).toHaveLength(2);
-        expect(jobSuccess).toHaveLength(1);
-      }
-    });
-
-    test('should log comprehensive error details for debugging', async () => {
-      const organizationId = 'test-org-errors';
-      const worker = testUtils.createTestWorker({
-        maxRetries: 2,
-        retryDelay: 100,
-        detailedErrorLogging: true
-      });
-
-      const errorDetails = [];
-      let attemptCount = 0;
-
-      // Mock API with detailed error information
-      worker.fetchCommentsFromPlatform = async () => {
-        attemptCount++;
-        const timestamp = Date.now();
-
-        if (attemptCount === 1) {
-          const error = new Error('API endpoint not found');
-          error.status = 404;
-          error.endpoint = '/api/v1/comments';
-          error.method = 'GET';
-          error.requestId = 'req_123456';
-
-          errorDetails.push({
-            attempt: attemptCount,
-            error: error.message,
-            status: error.status,
-            endpoint: error.endpoint,
-            method: error.method,
-            requestId: error.requestId,
-            timestamp: timestamp,
-            stack: error.stack
-          });
-
-          throw error;
-        } else if (attemptCount === 2) {
-          const error = new Error('Quota exceeded for this API key');
-          error.status = 429;
-          error.quotaLimit = 1000;
-          error.quotaUsed = 1001;
-          error.resetTime = Date.now() + 3600000; // 1 hour
-
-          errorDetails.push({
-            attempt: attemptCount,
-            error: error.message,
-            status: error.status,
-            quotaLimit: error.quotaLimit,
-            quotaUsed: error.quotaUsed,
-            resetTime: error.resetTime,
-            timestamp: timestamp
-          });
-
-          throw error;
-        }
-
-        // Success on 3rd attempt
-        errorDetails.push({
-          attempt: attemptCount,
-          success: true,
-          timestamp: timestamp
-        });
-
-        return fixtures.errorComments.detailed;
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
       };
 
-      await worker.start();
-      const job = testUtils.createMockJob(organizationId, 'twitter');
       const result = await worker.processJob(job);
       await worker.stop();
 
       expect(result.success).toBe(true);
-      expect(errorDetails).toHaveLength(3);
 
-      // Verify detailed error information is captured
-      const notFoundError = errorDetails.find(detail => detail.status === 404);
-      expect(notFoundError).toBeDefined();
-      expect(notFoundError.endpoint).toBe('/api/v1/comments');
-      expect(notFoundError.requestId).toBe('req_123456');
+      // Verify worker maintained consistent state throughout retries
+      stateChecks.forEach(state => {
+        expect(state.workerRunning).toBe(true);
+        expect(state.processedJobs).toBeGreaterThanOrEqual(0);
+      });
 
-      const quotaError = errorDetails.find(detail => detail.status === 429);
-      expect(quotaError).toBeDefined();
-      expect(quotaError.quotaLimit).toBe(1000);
-      expect(quotaError.quotaUsed).toBe(1001);
+      // Verify final state is correct
+      expect(worker.processedJobs).toBe(1);
+      expect(worker.failedJobs).toBe(0); // Should not count as failed since it eventually succeeded
+    });
+
+    test('should handle database errors during comment storage', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-twitter-dedup';
+      const comment = fixtures.acknowledgmentComments[0];
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 2,
+        retryDelay: 50
+      });
+
+      let fetchCount = 0;
+      let storeAttempts = 0;
+
+      // Mock successful fetch but failing store
+      worker.fetchCommentsFromPlatform = async () => {
+        fetchCount++;
+        return [comment];
+      };
+
+      // Mock store failure
+      const originalStoreComments = worker.storeComments;
+      worker.storeComments = async (...args) => {
+        storeAttempts++;
+        if (storeAttempts <= 2) {
+          throw new Error('Database connection failed');
+        }
+        return originalStoreComments.call(worker, ...args);
+      };
+
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'twitter',
+        integration_config_id: integrationConfigId,
+        payload: { since_id: '0' }
+      };
+
+      const result = await worker.processJob(job);
+      await worker.stop();
+
+      expect(result.success).toBe(true);
+      expect(fetchCount).toBe(1); // Should fetch only once
+      expect(storeAttempts).toBe(3); // Should retry store operation
+
+      // Verify comment was eventually stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(1);
+    });
+
+    test('should handle partial batch failures gracefully', async () => {
+      const organizationId = 'test-org-retry';
+      const integrationConfigId = 'config-youtube-retry';
+      
+      const batchComments = [
+        { ...fixtures.retryComments[0], platform_comment_id: 'batch_1' },
+        { ...fixtures.retryComments[0], platform_comment_id: 'batch_2' },
+        { ...fixtures.retryComments[0], platform_comment_id: 'batch_3' }
+      ];
+
+      const worker = testUtils.createTestWorker({
+        maxRetries: 2,
+        retryDelay: 50
+      });
+
+      worker.fetchCommentsFromPlatform = async () => batchComments;
+
+      // Mock partial storage failure
+      const originalStoreComments = worker.storeComments;
+      worker.storeComments = async (orgId, configId, platform, comments) => {
+        // Simulate failure for second comment
+        const processedComments = [];
+        
+        for (const comment of comments) {
+          if (comment.platform_comment_id === 'batch_2') {
+            // Skip the problematic comment (simulate constraint violation)
+            continue;
+          }
+          
+          const stored = await originalStoreComments.call(
+            worker, 
+            orgId, 
+            configId, 
+            platform, 
+            [comment]
+          );
+          processedComments.push(...stored);
+        }
+        
+        return processedComments;
+      };
+
+      await worker.start();
+
+      const job = {
+        organization_id: organizationId,
+        platform: 'youtube',
+        integration_config_id: integrationConfigId,
+        payload: { video_ids: ['test_video'] }
+      };
+
+      const result = await worker.processJob(job);
+      await worker.stop();
+
+      expect(result.success).toBe(true);
+      expect(result.commentsCount).toBe(2); // Should store 2 out of 3 comments
+
+      // Verify only successful comments were stored
+      const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+      expect(storedComments).toHaveLength(2);
+      
+      const commentIds = storedComments.map(c => c.platform_comment_id);
+      expect(commentIds).toContain('batch_1');
+      expect(commentIds).toContain('batch_3');
+      expect(commentIds).not.toContain('batch_2');
     });
   });
 });

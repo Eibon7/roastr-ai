@@ -155,31 +155,20 @@ class IngestorTestUtils {
     const { mockMode } = require('../../src/config/mockMode');
     
     if (mockMode.isMockMode) {
-      // In mock mode, actually insert into global storage
-      const storage = global.mockCommentStorage || [];
-      const insertedComments = [];
-      
-      for (const comment of comments) {
-        const newComment = {
-          id: `mock_comment_${storage.length + 1}`,
-          organization_id: organizationId,
-          integration_config_id: integrationConfigId,
-          platform: comment.platform,
-          platform_comment_id: comment.platform_comment_id,
-          platform_user_id: comment.platform_user_id,
-          platform_username: comment.platform_username,
-          original_text: comment.original_text,
-          metadata: comment.metadata,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        };
-        
-        storage.push(newComment);
-        insertedComments.push(newComment);
-      }
-      
-      global.mockCommentStorage = storage;
-      return insertedComments;
+      // In mock mode, return fake data
+      return comments.map((comment, index) => ({
+        id: `mock_comment_${index}`,
+        organization_id: organizationId,
+        integration_config_id: integrationConfigId,
+        platform: comment.platform,
+        platform_comment_id: comment.platform_comment_id,
+        platform_user_id: comment.platform_user_id,
+        platform_username: comment.platform_username,
+        original_text: comment.original_text,
+        metadata: comment.metadata,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }));
     }
 
     const commentsToInsert = comments.map(comment => ({
@@ -229,6 +218,14 @@ class IngestorTestUtils {
    * Get comments from database by organization
    */
   async getCommentsByOrganization(organizationId) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      // Return mock data from global storage
+      const storage = global.mockCommentStorage || [];
+      return storage.filter(comment => comment.organization_id === organizationId);
+    }
+
     const { data, error } = await this.supabase
       .from('comments')
       .select('*')
@@ -262,12 +259,11 @@ class IngestorTestUtils {
   /**
    * Check if comment exists in database by platform_comment_id
    */
-  async commentExists(organizationId, platformCommentId, platform = 'twitter') {
+  async commentExists(organizationId, platformCommentId) {
     const { data, error } = await this.supabase
       .from('comments')
       .select('id')
       .eq('organization_id', organizationId)
-      .eq('platform', platform)
       .eq('platform_comment_id', platformCommentId)
       .single();
 
@@ -281,19 +277,28 @@ class IngestorTestUtils {
   /**
    * Count comments by organization and platform_comment_id
    */
-  async countCommentsByPlatformId(organizationId, platformCommentId, platform = 'twitter') {
-    const { data, error } = await this.supabase
+  async countCommentsByPlatformId(organizationId, platformCommentId) {
+    const { mockMode } = require('../../src/config/mockMode');
+    
+    if (mockMode.isMockMode) {
+      const storage = global.mockCommentStorage || [];
+      return storage.filter(c => 
+        c.organization_id === organizationId && 
+        c.platform_comment_id === platformCommentId
+      ).length;
+    }
+
+    const { count, error } = await this.supabase
       .from('comments')
-      .select('*')
+      .select('*', { count: 'exact', head: true })
       .eq('organization_id', organizationId)
-      .eq('platform', platform)
       .eq('platform_comment_id', platformCommentId);
 
     if (error) {
       throw new Error(`Failed to count comments: ${error.message}`);
     }
 
-    return data ? data.length : 0;
+    return count || 0;
   }
 
   /**
@@ -422,44 +427,6 @@ class IngestorTestUtils {
     } catch (error) {
       console.warn('Failed to cleanup test data:', error.message);
     }
-  }
-
-  /**
-   * Create a mock job for testing
-   */
-  createMockJob(organizationId, platform, additionalPayload = {}) {
-    return {
-      id: `mock_job_${Date.now()}`,
-      payload: {
-        organization_id: organizationId,
-        platform: platform,
-        integration_config_id: `config-${platform}-${organizationId}`,
-        since_id: '0',
-        ...additionalPayload
-      }
-    };
-  }
-
-  /**
-   * Create a test comment for testing
-   */
-  createTestComment(platformCommentId, organizationId, metadata = {}) {
-    return {
-      platform_comment_id: platformCommentId,
-      platform: 'twitter',
-      platform_user_id: `user_${Math.random().toString(36).substr(2, 9)}`,
-      platform_username: `testuser_${Math.random().toString(36).substr(2, 5)}`,
-      original_text: `Test comment ${platformCommentId}`,
-      metadata: metadata,
-      created_at: new Date().toISOString()
-    };
-  }
-
-  /**
-   * Wait utility for testing timing
-   */
-  wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**

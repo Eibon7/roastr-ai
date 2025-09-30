@@ -26,11 +26,8 @@ describe('Ingestor Mock Mode Test', () => {
     worker.fetchCommentsFromPlatform = async () => [comment];
 
     // Mock the storeComments method to simulate deduplication
-    // Use a persistent array outside the function to maintain state
     const storedComments = [];
     worker.storeComments = async (orgId, configId, platform, comments) => {
-      const newlyStoredComments = [];
-      
       for (const comment of comments) {
         // Check if comment already exists in our mock storage
         const exists = storedComments.some(c => 
@@ -53,12 +50,9 @@ describe('Ingestor Mock Mode Test', () => {
             created_at: new Date().toISOString()
           };
           storedComments.push(stored);
-          newlyStoredComments.push(stored);
         }
       }
-      
-      // Return only the newly stored comments (empty array if duplicates)
-      return newlyStoredComments;
+      return storedComments.filter(c => c.organization_id === orgId);
     };
 
     try {
