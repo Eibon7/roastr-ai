@@ -65,9 +65,14 @@ class MockModeManager {
         }
       },
       from: (table) => {
+        const currentQueries = {}; // Store query filters
+        
         const chainable = {
           select: (columns = '*') => chainable,
-          eq: (column, value) => chainable,
+          eq: (column, value) => {
+            currentQueries[column] = value;
+            return chainable;
+          },
           single: () => {
             if (table === 'integration_configs') {
               return Promise.resolve({
@@ -92,9 +97,9 @@ class MockModeManager {
               // Check if comment exists in global storage
               const storage = global.mockCommentStorage || [];
               const existing = storage.find(comment => 
-                comment.organization_id === queries.organization_id &&
-                comment.platform === queries.platform &&
-                comment.platform_comment_id === queries.platform_comment_id
+                comment.organization_id === currentQueries.organization_id &&
+                comment.platform === currentQueries.platform &&
+                comment.platform_comment_id === currentQueries.platform_comment_id
               );
               
               if (existing) {
@@ -121,6 +126,42 @@ class MockModeManager {
             // Store data in global storage if it's comments
             if (table === 'comments') {
               const storage = global.mockCommentStorage || [];
+              
+              // Check for duplicates by platform_comment_id and organization_id
+              const existing = storage.find(comment => 
+                comment.organization_id === data.organization_id &&
+                comment.platform === data.platform &&
+                comment.platform_comment_id === data.platform_comment_id
+              );
+              
+              if (existing) {
+                console.log('🔍 Mock: Duplicate comment detected, throwing constraint violation:', {
+                  platform_comment_id: data.platform_comment_id,
+                  organization_id: data.organization_id,
+                  platform: data.platform
+                });
+                // Simulate database constraint violation error
+                const constraintError = {
+                  code: '23505', // PostgreSQL unique constraint violation
+                  message: 'duplicate key value violates unique constraint "comments_organization_id_platform_platform_comment_id_key"',
+                  details: 'Key (organization_id, platform, platform_comment_id) already exists'
+                };
+                
+                const chainableInsertDuplicate = {
+                  select: (columns = '*') => ({
+                    single: () => Promise.resolve({
+                      data: null,
+                      error: constraintError
+                    })
+                  }),
+                  single: () => Promise.resolve({
+                    data: null,
+                    error: constraintError
+                  })
+                };
+                return chainableInsertDuplicate;
+              }
+              
               const newComment = {
                 ...data,
                 id: storage.length + 1,
@@ -170,12 +211,40 @@ class MockModeManager {
           })
         };
 
-        // Handle direct promise resolution for some methods
-        Object.assign(chainable, {
-          then: (resolve) => {
+        // Handle direct promise resolution for some methods - only if used as promise
+        const enhanceWithThen = (obj) => {
+          // Only add then when actually used as promise
+          return {
+            ...obj,
+            then: (resolve) => {
             if (table === 'comments') {
+              const storage = global.mockCommentStorage || [];
+              // Make a copy of queries for this specific call
+              const queries = { ...currentQueries };
+              
+              // Apply filters if specified
+              let filteredData = storage;
+              
+              if (queries.organization_id) {
+                filteredData = filteredData.filter(comment => 
+                  comment.organization_id === queries.organization_id
+                );
+              }
+              
+              if (queries.platform) {
+                filteredData = filteredData.filter(comment => 
+                  comment.platform === queries.platform
+                );
+              }
+              
+              if (queries.platform_comment_id) {
+                filteredData = filteredData.filter(comment => 
+                  comment.platform_comment_id === queries.platform_comment_id
+                );
+              }
+              
               resolve({
-                data: [],
+                data: filteredData,
                 error: null
               });
             } else {
@@ -184,10 +253,20 @@ class MockModeManager {
                 error: null
               });
             }
+            }
+          };
+        };
+
+        // Return chainable directly for normal operations, but allow promise conversion
+        return new Proxy(chainable, {
+          get(target, prop) {
+            if (prop === 'then') {
+              // Only when then is accessed, convert to promise-like object
+              return enhanceWithThen(target).then;
+            }
+            return target[prop];
           }
         });
-
-        return chainable;
       },
       rpc: (functionName, params = {}) => {
         // Mock database function calls

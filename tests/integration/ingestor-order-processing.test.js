@@ -377,7 +377,7 @@ describe('Ingestor Order Processing Integration', () => {
           await testUtils.wait(5);
         }
         
-        return { stored: storedComments, failed: failedComments };
+        return storedComments;
       };
 
       await worker.start();
