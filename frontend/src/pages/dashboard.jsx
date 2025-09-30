@@ -266,7 +266,11 @@ export default function Dashboard() {
     return accounts?.filter(account => account.platform === platform) || [];
   };
 
-  // Explicit tier mapping for better maintainability (CodeRabbit Round 3)
+  const isPlatformAtLimit = (platform) => {
+    return getConnectedAccountsForPlatform(platform).length >= 2;
+  };
+
+  // Global connection limits by tier with explicit mapping (CodeRabbit Round 3)
   const TIER_MAX_CONNECTIONS = {
     free: 1,
     pro: 2,
@@ -276,8 +280,8 @@ export default function Dashboard() {
     starter: 2 // Added for compatibility
   };
 
-  // Precompute plan tier and connection limits using useMemo for better performance (Issue #401)
-  const { planTier, maxConnections, isAtGlobalLimit, connectionText, tooltipText } = useMemo(() => {
+  // Compute global connection limits using useMemo for performance
+  const { planTier, maxGlobalConnections, isAtGlobalLimit, globalConnectionText, globalTooltipText } = useMemo(() => {
     // Always compute current account count from actual data
     const totalConnected = accounts?.length || 0;
     
@@ -286,27 +290,27 @@ export default function Dashboard() {
     const maxConn = TIER_MAX_CONNECTIONS[tier] ?? 2; // Fallback for unknown tiers
     
     // Only mark as at limit when we have actual data and are at/over the limit
-    const atLimit = totalConnected >= maxConn;
+    const atGlobalLimit = totalConnected >= maxConn;
     
     // Handle loading state gracefully without blocking UI
     const isDataLoading = !adminModeUser && !usage;
     
     return {
       planTier: tier,
-      maxConnections: maxConn,
-      isAtGlobalLimit: atLimit, // Fixed: Don't mark limit reached during loading
-      connectionText: isDataLoading 
+      maxGlobalConnections: maxConn,
+      isAtGlobalLimit: atGlobalLimit, // Fixed: Don't mark limit reached during loading
+      globalConnectionText: isDataLoading 
         ? `${totalConnected} conexiones conectadas` 
         : `${totalConnected}/${maxConn} conexiones utilizadas`,
-      tooltipText: isDataLoading
+      globalTooltipText: isDataLoading
         ? 'Cargando información del plan...'
-        : atLimit
+        : atGlobalLimit
           ? (tier === 'free' 
               ? 'Mejora a Pro para conectar más cuentas' 
               : 'Has alcanzado el límite de tu plan')
           : `Puedes conectar ${maxConn - totalConnected} cuenta${maxConn - totalConnected !== 1 ? 's' : ''} más`
     };
-  }, [adminModeUser, usage, accounts, TIER_MAX_CONNECTIONS]);
+  }, [adminModeUser, usage, accounts]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -979,42 +983,64 @@ export default function Dashboard() {
       {/* Connect New Accounts */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Plus className="h-5 w-5" />
-              <span>Conectar otras cuentas</span>
-            </div>
-            <div className="text-sm text-muted-foreground font-normal">
-              {connectionText}
-              {isAtGlobalLimit && (
-                <span 
-                  aria-label="Advertencia: Límite global de conexiones alcanzado" 
-                  role="img"
-                  className="ml-2 text-amber-500" 
-                  title={tooltipText}
-                >
-                  ⚠️
-                </span>
-              )}
-            </div>
+          <CardTitle className="flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>Conectar otras cuentas</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Global Connection Limits Status */}
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {globalConnectionText}
+                </span>
+                {isAtGlobalLimit && (
+                  <span 
+                    aria-label="Advertencia: Límite global de conexiones alcanzado" 
+                    role="img"
+                    className="text-amber-500"
+                  >
+                    ⚠️
+                  </span>
+                )}
+              </div>
+              <Badge variant={isAtGlobalLimit ? "destructive" : "outline"} className="text-xs">
+                Plan {planTier}
+              </Badge>
+            </div>
+            {isAtGlobalLimit && (
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                {globalTooltipText}
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {availablePlatforms.map((platform) => {
               const IconComponent = getPlatformIcon(platform);
+              const isPlatformLimit = isPlatformAtLimit(platform);
               const isConnecting = connectingPlatform === platform;
+              const isDisabled = isAtGlobalLimit || isPlatformLimit || isConnecting;
+              
+              // Determine disable reason for accessibility
+              const disableReason = isAtGlobalLimit 
+                ? "Límite global alcanzado para tu plan"
+                : isPlatformLimit 
+                  ? "Límite alcanzado (máximo 2 cuentas por plataforma)"
+                  : "";
               
               return (
                 <Button
                   key={platform}
                   variant="outline"
                   className="flex items-center space-x-2 h-auto p-4"
-                  disabled={isAtGlobalLimit || isConnecting}
-                  aria-disabled={isAtGlobalLimit || isConnecting}
+                  disabled={isDisabled}
+                  aria-disabled={isDisabled}
                   data-testid={`connect-${platform}-button`}
                   onClick={() => handleConnectPlatform(platform)}
-                  title={isAtGlobalLimit ? "Límite global alcanzado para tu plan" : `Conectar cuenta de ${getPlatformName(platform)}`}
+                  title={isDisabled ? disableReason : `Conectar cuenta de ${getPlatformName(platform)}`}
                 >
                   <IconComponent className="h-5 w-5" />
                   <div className="text-left">
@@ -1032,9 +1058,13 @@ export default function Dashboard() {
                           ⚠️
                         </span>
                       </div>
+                    ) : isPlatformLimit ? (
+                      <div className="text-xs text-muted-foreground">
+                        Límite alcanzado
+                      </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
-                        Disponible
+                        {getConnectedAccountsForPlatform(platform).length}/2 conectadas
                       </div>
                     )}
                   </div>

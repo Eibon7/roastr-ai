@@ -1,107 +1,148 @@
-# CodeRabbit Review Implementation Plan - PR #429 Round 1
+# Plan de Implementación - CodeRabbit Review PR #429
 
-## Review ID: 3275034864
-**Date**: 2025-09-27
-**PR**: https://github.com/Eibon7/roastr-ai/pull/429
+## Objetivo
+Aplicar feedback de CodeRabbit para mejorar la calidad del código, tests y documentación en PR #429 (Issue #401 - Connection limits y feature flags).
 
-## CodeRabbit Feedback Summary
+## Comentarios de CodeRabbit a Abordar
 
-### 1. Dashboard.jsx Connection Limit Logic
-**Issue**: The connection limit logic needs performance optimization and proper state management
-- **Memory optimization**: Use `useMemo` for expensive calculations
-- **State handling**: Improve connection limit computation
-- **Global vs Platform limits**: Clarify the distinction between global and per-platform limits
+### 1. PR Title y Description
+- **Issue**: Título muy largo, falta estructura estándar
+- **Acción**: Acortar título, reestructurar descripción según template del repositorio
+- **Prioridad**: Media
 
-**Required Changes**:
+### 2. Dashboard.jsx - Refactoring Connection Logic
+- **Issue**: Lógica de límites de conexión puede optimizarse
+- **Acción**: 
+  - Precomputar plan tier y max connections
+  - Simplificar tooltip y counter text
+  - Añadir null check antes de habilitar botón de conexión
+- **Prioridad**: Alta
+
+### 3. AjustesSettings.jsx - Duplicated GDPR Text
+- **Issue**: Párrafo GDPR/transparency duplicado
+- **Acción**: Eliminar texto duplicado
+- **Prioridad**: Media
+
+### 4. spec.md - Connection Limits Description
+- **Issue**: Descripción de lógica de límites globales vs plataforma necesita clarificación
+- **Acción**: Actualizar documentación para clarificar diferencia
+- **Prioridad**: Media
+
+### 5. Test Files - Mejoras de Robustez
+- **Issue**: Tests de timeout necesitan fake timers, mocking de Supabase mejorable
+- **Acción**:
+  - Usar jest fake timers para tests de timeout
+  - Mejorar mocking de Supabase para soportar method chaining
+  - Consolidar definiciones de mocks
+- **Prioridad**: Alta
+
+### 6. Documentation Coverage
+- **Issue**: 0% docstring coverage
+- **Acción**: Generar docstrings para funciones principales
+- **Prioridad**: Baja
+
+## Subagentes a Usar
+
+### UI Designer
+- Revisar optimizaciones en Dashboard.jsx
+- Validar cambios no afecten UX
+
+### Front-end Dev
+- Implementar refactoring de connection logic
+- Eliminar duplicaciones en AjustesSettings.jsx
+- Aplicar null checks y optimizaciones
+
+### Test Engineer
+- Mejorar robustez de tests con fake timers
+- Consolidar mocks de Supabase
+- Generar tests adicionales si es necesario
+
+### GitHub Guardian
+- Actualizar PR title y description
+- Asegurar commit y push correctos
+
+## Archivos Afectados
+
+### Código Principal
+- `frontend/src/pages/dashboard.jsx` - Refactoring connection logic
+- `frontend/src/components/AjustesSettings.jsx` - Remove GDPR duplication
+- `spec.md` - Update connection limits documentation
+
+### Tests
+- `tests/integration/tierValidationSecurity.test.js` - Improve mocking and fake timers
+- Potenciales nuevos tests unitarios
+
+### Documentación
+- PR title y description en GitHub
+- Docstrings en funciones principales
+
+## Criterios de Validación
+
+### Funcionalidad
+- [ ] Connection limits funcionan correctamente (Free=1, Pro+=2)
+- [ ] Feature flags condicionales funcionan
+- [ ] No hay regresiones en UI
+
+### Calidad de Código
+- [ ] Lógica más clara y optimizada
+- [ ] No hay duplicaciones
+- [ ] Null checks apropiados
+
+### Tests
+- [ ] Tests de timeout usan fake timers
+- [ ] Mocking de Supabase robusto
+- [ ] Todos los tests pasan
+
+### Documentación
+- [ ] spec.md actualizado correctamente
+- [ ] PR description sigue template
+- [ ] Docstrings generados
+
+## Orden de Implementación
+
+1. **Planning** (actual) - Crear este documento
+2. **Code Changes** - Aplicar cambios de código principales
+3. **Test Improvements** - Mejorar robustez de tests
+4. **Documentation** - Actualizar spec.md y docstrings
+5. **PR Updates** - Mejorar title y description
+6. **Validation** - Ejecutar tests y validar funcionalidad
+7. **Commit & Push** - Subir cambios a PR
+
+## Notas Técnicas
+
+### Dashboard.jsx Optimizations
 ```javascript
-const { maxConnections, isAtLimit, connectionText } = useMemo(() => {
-  const tierLimits = { free: 1, pro: 2, plus: 2 };
-  const maxConn = tierLimits[tier] || 2;
-  return {
-    maxConnections: maxConn,
-    isAtLimit: accounts.length >= maxConn,
-    connectionText: `${accounts.length}/${maxConn} conexiones utilizadas`
-  };
-}, [tier, accounts]);
+// Antes
+const isAtGlobalLimit = () => { /* logic */ };
+
+// Después (propuesto)
+const planTier = useMemo(() => (adminModeUser?.plan || usage?.plan || 'free').toLowerCase(), [adminModeUser, usage]);
+const maxConnections = useMemo(() => planTier === 'free' ? 1 : 2, [planTier]);
+const isAtGlobalLimit = useMemo(() => (accounts?.length || 0) >= maxConnections, [accounts, maxConnections]);
 ```
 
-### 2. AjustesSettings.jsx Duplicate GDPR Text
-**Issue**: Duplicate GDPR disclaimer text appears twice
-- **Text Duplication**: "Los roasts autopublicados llevan firma de IA" appears in two places
-- **UI Cleanup**: Remove redundant paragraph while keeping the amber-styled notice
+### Test Improvements
+```javascript
+// Usar fake timers para tests de timeout
+beforeEach(() => {
+  jest.useFakeTimers();
+});
 
-### 3. spec.md Documentation Updates
-**Issue**: Missing documentation for connection limits implementation
-- **Connection Limits**: Document the global vs platform connection limits
-- **Implementation Details**: Add Issue #401 implementation notes
-- **User Experience**: Document the improved UX flow
+afterEach(() => {
+  jest.useRealTimers();
+});
+```
 
-### 4. Test Coverage Improvements
-**Issue**: Enhanced test coverage for connection limit scenarios
-- **Edge Cases**: Test loading states, error conditions
-- **Tier Limits**: Test different plan tiers and their limits
-- **UI Interactions**: Test button states and user feedback
+## Estimación de Tiempo
+- Code changes: 30 min
+- Test improvements: 20 min 
+- Documentation: 15 min
+- PR updates: 10 min
+- Validation: 15 min
+- **Total**: ~90 minutos
 
-## Implementation Plan
-
-### Phase 1: Dashboard Performance Optimization
-**Files to modify**: 
-- `frontend/src/pages/dashboard.jsx` (lines ~270-300)
-
-**Changes**:
-1. Add `useMemo` for connection limit calculations
-2. Optimize tier limit lookup
-3. Improve loading state handling
-4. Add proper error boundaries
-
-### Phase 2: GDPR Text Cleanup
-**Files to modify**: 
-- `frontend/src/components/AjustesSettings.jsx`
-
-**Changes**:
-1. Remove duplicate GDPR text paragraph
-2. Keep the amber-styled notice intact
-3. Ensure accessibility is maintained
-
-### Phase 3: Documentation Updates
-**Files to modify**: 
-- `spec.md`
-
-**Changes**:
-1. Add Issue #401 implementation section
-2. Document connection limits (global: 1 for free, 2 for paid)
-3. Explain the UX improvements
-4. Add technical implementation notes
-
-### Phase 4: Test Enhancement
-**Files to modify**: 
-- `tests/integration/tierValidationSecurity.test.js`
-
-**Changes**:
-1. Add connection limit test scenarios
-2. Test tier-based restrictions
-3. Improve mock data coverage
-4. Add performance regression tests
-
-## Success Criteria
-
-- [ ] Dashboard uses `useMemo` for connection calculations
-- [ ] No duplicate GDPR text in AjustesSettings
-- [ ] spec.md includes Issue #401 documentation
-- [ ] Enhanced test coverage for connection limits
-- [ ] No performance regressions
-- [ ] All CodeRabbit feedback addressed
-
-## Files Affected
-
-- `frontend/src/pages/dashboard.jsx`
-- `frontend/src/components/AjustesSettings.jsx` 
-- `spec.md`
-- `tests/integration/tierValidationSecurity.test.js`
-
-## Risk Assessment
-
-**Low Risk**: Documentation updates, GDPR text cleanup
-**Medium Risk**: Dashboard performance changes (need careful testing)
-
-**Mitigation**: Thorough testing with different tier types and loading states.
+## Riesgos y Mitigaciones
+- **Riesgo**: Cambios de optimización rompan funcionalidad
+- **Mitigación**: Tests exhaustivos antes de commit
+- **Riesgo**: Fake timers interfieran con otros tests
+- **Mitigación**: Limpiar timers en afterEach

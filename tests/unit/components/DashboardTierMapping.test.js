@@ -274,7 +274,7 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
           data: {
             accounts: [
               { id: 1, platform: 'twitter' },
-              { id: 2, platform: 'instagram' } // 2 accounts, but different platforms
+              { id: 2, platform: 'twitter' } // 2 Twitter accounts = platform limit
             ],
             usage: { plan: 'pro' } // Global limit of 2, not reached
           }
@@ -286,12 +286,13 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
 
       await screen.findByText(/Conectar otras cuentas/i);
       
-      // Should show available connections 
-      expect(screen.getByText(/2\/2 conexiones utilizadas/i)).toBeInTheDocument();
+      // Twitter should show platform limit
+      const twitterButton = screen.getByTestId('connect-twitter-button');
+      expect(twitterButton).toHaveAttribute('title', 'Límite alcanzado (máximo 2 cuentas por plataforma)');
       
-      // Should show global limit reached
-      const warningIcon = screen.getByLabelText(/Advertencia.*Límite global/i);
-      expect(warningIcon).toBeInTheDocument();
+      // Other platforms should still be available
+      const instagramButton = screen.getByTestId('connect-instagram-button');
+      expect(instagramButton).not.toBeDisabled();
     });
   });
 });
