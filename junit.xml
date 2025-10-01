@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="17" failures="0" errors="0" time="1.841">
-  <testsuite name="API Health Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-09-24T18:10:19" time="1.766" tests="11">
-    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /health should return 200" time="0.03">
+<testsuites name="jest tests" tests="17" failures="0" errors="0" time="2.569">
+  <testsuite name="API Health Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-09-28T13:03:14" time="2.477" tests="11">
+    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /health should return 200" time="0.033">
     </testcase>
-    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /api/health should be accessible" time="0.009">
+    <testcase classname="API Health Smoke Tests Health Check Endpoints" name="GET /api/health should be accessible" time="0.008">
     </testcase>
-    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/register should be accessible" time="0.017">
+    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/register should be accessible" time="0.019">
     </testcase>
-    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/login should be accessible" time="0.006">
+    <testcase classname="API Health Smoke Tests Auth Endpoints Accessibility" name="POST /api/auth/login should be accessible" time="0.004">
     </testcase>
-    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="GET /api/billing/plans should be accessible" time="0.006">
+    <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="GET /api/billing/plans should be accessible" time="0.007">
     </testcase>
     <testcase classname="API Health Smoke Tests Billing Endpoints Accessibility" name="POST /api/billing/create-checkout-session endpoint exists" time="0.005">
     </testcase>
-    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="GET /api/user/integrations endpoint exists" time="0.005">
+    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="GET /api/user/integrations endpoint exists" time="0.004">
     </testcase>
-    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="POST /api/user/integrations/connect endpoint exists" time="0.004">
+    <testcase classname="API Health Smoke Tests Integration Endpoints Accessibility" name="POST /api/user/integrations/connect endpoint exists" time="0.005">
     </testcase>
-    <testcase classname="API Health Smoke Tests Error Handling" name="Non-existent endpoints should return proper error" time="0.007">
+    <testcase classname="API Health Smoke Tests Error Handling" name="Non-existent endpoints should return proper error" time="0.008">
     </testcase>
-    <testcase classname="API Health Smoke Tests Error Handling" name="Wrong HTTP method should return proper error" time="0.006">
+    <testcase classname="API Health Smoke Tests Error Handling" name="Wrong HTTP method should return proper error" time="0.005">
     </testcase>
-    <testcase classname="API Health Smoke Tests Security Headers" name="Should include security headers" time="0.004">
+    <testcase classname="API Health Smoke Tests Security Headers" name="Should include security headers" time="0.005">
     </testcase>
   </testsuite>
-  <testsuite name="Feature Flags Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-09-24T18:10:21" time="0.018" tests="6">
-    <testcase classname="Feature Flags Smoke Tests" name="Feature flags should initialize without errors" time="0">
+  <testsuite name="Feature Flags Smoke Tests" errors="0" failures="0" skipped="0" timestamp="2025-09-28T13:03:17" time="0.022" tests="6">
+    <testcase classname="Feature Flags Smoke Tests" name="Feature flags should initialize without errors" time="0.001">
     </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should be able to check flag status" time="0.001">
+    <testcase classname="Feature Flags Smoke Tests" name="Should be able to check flag status" time="0">
     </testcase>
     <testcase classname="Feature Flags Smoke Tests" name="Should return service status" time="0">
     </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should return all flags" time="0.001">
+    <testcase classname="Feature Flags Smoke Tests" name="Should return all flags" time="0.003">
     </testcase>
-    <testcase classname="Feature Flags Smoke Tests" name="Should handle unknown flags gracefully" time="0">
+    <testcase classname="Feature Flags Smoke Tests" name="Should handle unknown flags gracefully" time="0.001">
     </testcase>
     <testcase classname="Feature Flags Smoke Tests" name="Feature flags should be consistent" time="0">
     </testcase>

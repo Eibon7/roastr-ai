@@ -42,11 +42,15 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       // Mock successful comment fetching
       worker.fetchCommentsFromPlatform = async () => [comment];
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      // Process the job
-      const result = await worker.processJob(job);
-      await worker.stop();
+        // Process the job
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       // Verify successful processing
       expect(result.success).toBe(true);
@@ -91,17 +95,18 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
         return [commentData];
       };
 
-      await worker.start();
-
       const results = [];
-      
-      // Process all jobs
-      for (const job of jobs) {
-        const result = await worker.processJob(job);
-        results.push(result);
+      try {
+        await worker.start();
+        
+        // Process all jobs
+        for (const job of jobs) {
+          const result = await worker.processJob(job);
+          results.push(result);
+        }
+      } finally {
+        await worker.stop();
       }
-
-      await worker.stop();
 
       // Verify all jobs were processed successfully
       results.forEach(result => {
@@ -145,9 +150,12 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const worker1 = testUtils.createTestWorker();
       worker1.fetchCommentsFromPlatform = async () => [comment];
 
-      await worker1.start();
-      await worker1.processJob(job);
-      await worker1.stop();
+      try {
+        await worker1.start();
+        await worker1.processJob(job);
+      } finally {
+        await worker1.stop();
+      }
 
       // Verify acknowledgment persisted
       let completedJobs = await testUtils.getJobsByType('fetch_comments');
@@ -160,13 +168,17 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
         throw new Error('Should not be called for acknowledged job');
       };
 
-      await worker2.start();
+      let nextJob;
+      try {
+        await worker2.start();
 
-      // Try to get next job - should not return the already completed one
-      const nextJob = await worker2.getNextJob();
+        // Try to get next job - should not return the already completed one
+        nextJob = await worker2.getNextJob();
+      } finally {
+        await worker2.stop();
+      }
+
       expect(nextJob).toBeNull(); // No pending jobs
-
-      await worker2.stop();
 
       // Verify job remains acknowledged
       completedJobs = await testUtils.getJobsByType('fetch_comments');
@@ -200,11 +212,14 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
         throw new Error('Persistent platform failure');
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Should fail after retries
-      await expect(worker.processJob(job)).rejects.toThrow('Persistent platform failure');
-      await worker.stop();
+        // Should fail after retries
+        await expect(worker.processJob(job)).rejects.toThrow('Persistent platform failure');
+      } finally {
+        await worker.stop();
+      }
 
       // Check job was marked as failed
       const failedJobs = await testUtils.getJobsByType('fetch_comments');
@@ -249,10 +264,14 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       // Should succeed after retries
       expect(result.success).toBe(true);
@@ -292,13 +311,16 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const worker = testUtils.createTestWorker();
       worker.fetchCommentsFromPlatform = async () => [comment];
 
-      await worker.start();
+      let startTime, endTime;
+      try {
+        await worker.start();
 
-      const startTime = Date.now();
-      await worker.processJob(job);
-      const endTime = Date.now();
-
-      await worker.stop();
+        startTime = Date.now();
+        await worker.processJob(job);
+        endTime = Date.now();
+      } finally {
+        await worker.stop();
+      }
 
       const processingTime = endTime - startTime;
 
@@ -348,13 +370,16 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
         return [payload.comment_data];
       };
 
-      await worker.start();
+      let results;
+      try {
+        await worker.start();
 
-      // Process all jobs concurrently
-      const promises = concurrentJobs.map(({ job }) => worker.processJob(job));
-      const results = await Promise.all(promises);
-
-      await worker.stop();
+        // Process all jobs concurrently
+        const promises = concurrentJobs.map(({ job }) => worker.processJob(job));
+        results = await Promise.all(promises);
+      } finally {
+        await worker.stop();
+      }
 
       // All should succeed
       results.forEach(result => {
@@ -403,13 +428,16 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
         throw new Error('Simulated acknowledgment failure');
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      // Job processing should still succeed despite ack failure
-      const result = await worker.processJob(job);
-      expect(result.success).toBe(true);
-
-      await worker.stop();
+        // Job processing should still succeed despite ack failure
+        result = await worker.processJob(job);
+        expect(result.success).toBe(true);
+      } finally {
+        await worker.stop();
+      }
 
       // Restore original method for cleanup
       worker.markJobCompleted = originalMarkJobCompleted;

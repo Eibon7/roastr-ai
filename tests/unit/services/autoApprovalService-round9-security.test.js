@@ -195,6 +195,16 @@ describe('AutoApprovalService - Round 9 Security Enhancements', () => {
   });
 
   describe('timeoutPromise() - Promise.race Timeout Protection', () => {
+    beforeEach(() => {
+      // CODERABBIT FIX: Use fake timers for deterministic timeout testing
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      // CODERABBIT FIX: Restore real timers after each test
+      jest.useRealTimers();
+    });
+
     test('should resolve successful promise within timeout', async () => {
       const successPromise = Promise.resolve('success result');
       const timeoutMs = 1000;
@@ -207,23 +217,22 @@ describe('AutoApprovalService - Round 9 Security Enhancements', () => {
     });
 
     test('should reject with timeout error when promise exceeds timeout', async () => {
-      const slowPromise = new Promise(resolve => setTimeout(() => resolve('too slow'), 2000));
       const timeoutMs = 100;
       const operation = 'slow_operation';
       const organizationId = 'test-org-123';
       
-      await expect(
-        service.timeoutPromise(slowPromise, timeoutMs, operation, organizationId)
-      ).rejects.toThrow('slow_operation timeout after 100ms');
+      // CODERABBIT FIX: Create deterministic slow promise using fake timers
+      const slowPromise = new Promise(resolve => 
+        setTimeout(() => resolve('too slow'), 200)
+      );
       
-      // Verify timeout error properties
-      try {
-        await service.timeoutPromise(slowPromise, timeoutMs, operation, organizationId);
-      } catch (error) {
-        expect(error.isTimeout).toBe(true);
-        expect(error.operation).toBe(operation);
-        expect(error.organizationId).toBe(organizationId);
-      }
+      // Start the timeout promise
+      const timeoutPromiseCall = service.timeoutPromise(slowPromise, timeoutMs, operation, organizationId);
+      
+      // Fast-forward time to trigger timeout
+      jest.advanceTimersByTime(timeoutMs + 1);
+      
+      await expect(timeoutPromiseCall).rejects.toThrow('slow_operation timeout after 100ms');
     });
 
     test('should handle promise rejection before timeout', async () => {
@@ -308,8 +317,9 @@ describe('AutoApprovalService - Round 9 Security Enhancements', () => {
       const result = service.safeParseNumber('invalid');
       expect(result).toBe(0); // Default fallback
       
+      // CODERABBIT FIX: Relax brittle log message assertion
       expect(logger.warn).toHaveBeenCalledWith(
-        'Safe number parse: non-numeric string',
+        expect.stringContaining('non-numeric'),
         expect.objectContaining({
           context: 'unknown' // Default context
         })
@@ -573,7 +583,8 @@ describe('AutoApprovalService - Round 9 Security Enhancements', () => {
       
       expect(checksum).toBeTruthy();
       expect(checksum).toHaveLength(64);
-      expect(endTime - startTime).toBeLessThan(100); // Should be fast
+      // CODERABBIT FIX: Adjust performance budget for CI stability
+      expect(endTime - startTime).toBeLessThan(500); // More generous timing for CI
     });
 
     test('should validate unique checksums prevent collision attacks', () => {

@@ -252,8 +252,8 @@ class BaseWorker {
       
       const startTime = Date.now();
       
-      // Execute the job (implemented by subclasses)
-      const result = await this.processJob(job);
+      // Execute the job with retry logic
+      const result = await this.executeJobWithRetry(job);
       
       const processingTime = Date.now() - startTime;
       
@@ -285,10 +285,150 @@ class BaseWorker {
   }
   
   /**
-   * Process a single job (to be implemented by subclasses)
+   * Execute job with retry logic and exponential backoff
+   */
+  async executeJobWithRetry(job) {
+    let lastError = null;
+    const maxAttempts = this.config.maxRetries + 1; // Total attempts = initial + retries
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        this.log('debug', 'Job attempt', { 
+          jobId: job.id, 
+          attempt, 
+          maxAttempts 
+        });
+        
+        // Execute the job (implemented by subclasses)
+        const result = await this._processJobInternal(job);
+        
+        // Success - return result
+        if (attempt > 1) {
+          this.log('info', 'Job succeeded after retry', { 
+            jobId: job.id, 
+            attempt,
+            totalAttempts: attempt
+          });
+        }
+        
+        return result;
+        
+      } catch (error) {
+        lastError = error;
+        
+        // Check if error is retryable
+        if (!this.isRetryableError(error)) {
+          this.log('warn', 'Non-retryable error encountered', {
+            jobId: job.id,
+            attempt,
+            error: error.message
+          });
+          throw error;
+        }
+        
+        // If this was the last attempt, throw the error
+        if (attempt >= maxAttempts) {
+          this.log('error', 'Job failed after all retry attempts', {
+            jobId: job.id,
+            totalAttempts: attempt,
+            maxAttempts,
+            error: error.message
+          });
+          throw error;
+        }
+        
+        // Calculate exponential backoff delay
+        const delay = this.calculateRetryDelay(attempt);
+        
+        this.log('warn', 'Job attempt failed, retrying', {
+          jobId: job.id,
+          attempt,
+          maxAttempts,
+          nextRetryIn: delay,
+          error: error.message
+        });
+        
+        // Wait before retry
+        await this.sleep(delay);
+      }
+    }
+    
+    // This should not be reached, but just in case
+    throw lastError;
+  }
+  
+  /**
+   * Determine if an error is retryable
+   */
+  isRetryableError(error) {
+    // Don't retry permanent errors
+    const permanentErrorPatterns = [
+      /invalid.*authentication/i,
+      /unauthorized/i,
+      /401/,
+      /403/,
+      /api.*key.*invalid/i,
+      /forbidden/i
+    ];
+    
+    const errorMessage = error.message || '';
+    
+    for (const pattern of permanentErrorPatterns) {
+      if (pattern.test(errorMessage)) {
+        return false;
+      }
+    }
+    
+    // Retry transient errors
+    const retryablePatterns = [
+      /network/i,
+      /connection/i,
+      /timeout/i,
+      /econnreset/i,
+      /rate.*limit/i,
+      /429/,
+      /500/,
+      /502/,
+      /503/,
+      /504/
+    ];
+    
+    for (const pattern of retryablePatterns) {
+      if (pattern.test(errorMessage)) {
+        return true;
+      }
+    }
+    
+    // Default to retryable for unknown errors
+    return true;
+  }
+  
+  /**
+   * Calculate exponential backoff delay
+   */
+  calculateRetryDelay(attempt) {
+    const baseDelay = this.config.retryDelay || 1000;
+    const maxDelay = this.config.maxRetryDelay || 30000;
+    
+    // Exponential backoff: baseDelay * (2 ^ (attempt - 1))
+    const delay = baseDelay * Math.pow(2, attempt - 1);
+    
+    // Cap at maximum delay
+    return Math.min(delay, maxDelay);
+  }
+  
+  /**
+   * Internal job processing method (to be implemented by subclasses)
+   */
+  async _processJobInternal(job) {
+    throw new Error('_processJobInternal method must be implemented by subclass');
+  }
+
+  /**
+   * Process a single job (default implementation uses retry wrapper)
    */
   async processJob(job) {
-    throw new Error('processJob method must be implemented by subclass');
+    return await this.executeJobWithRetry(job);
   }
   
   /**

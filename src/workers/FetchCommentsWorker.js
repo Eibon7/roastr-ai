@@ -108,9 +108,16 @@ class FetchCommentsWorker extends BaseWorker {
   }
   
   /**
-   * Process fetch job
+   * Process fetch job with retry wrapper
    */
   async processJob(job) {
+    return await this.executeJobWithRetry(job);
+  }
+
+  /**
+   * Internal process fetch job (called by retry wrapper)
+   */
+  async _processJobInternal(job) {
     const { organization_id, platform, integration_config_id, payload } = job.payload || job;
     
     // Check cost control limits with enhanced tracking

@@ -45,17 +45,22 @@ describe('Ingestor Error Handling Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['test_video_1'] }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { video_ids: ['test_video_1'] }
+        };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       // Should eventually succeed after retries
       expect(result.success).toBe(true);
@@ -95,17 +100,22 @@ describe('Ingestor Error Handling Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          payload: { since_id: '0' }
+        };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
       expect(attemptCount).toBe(3);
@@ -155,17 +165,22 @@ describe('Ingestor Error Handling Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          payload: { since_id: '0' }
+        };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
       expect(attemptCount).toBe(3);
@@ -209,31 +224,34 @@ describe('Ingestor Error Handling Integration Tests', () => {
         }
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Test recoverable error
-      const recoverableJob = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { test_case: 'recoverable', video_ids: ['test_video_1'] }
-      };
+        // Test recoverable error
+        const recoverableJob = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { test_case: 'recoverable', video_ids: ['test_video_1'] }
+        };
 
-      const recoverableResult = await worker.processJob(recoverableJob);
-      expect(recoverableResult.success).toBe(true);
-      expect(recoverableAttempts).toBe(3); // Should have retried
+        const recoverableResult = await worker.processJob(recoverableJob);
+        expect(recoverableResult.success).toBe(true);
+        expect(recoverableAttempts).toBe(3); // Should have retried
 
-      // Test non-recoverable error
-      const nonRecoverableJob = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { test_case: 'non_recoverable', video_ids: ['test_video_2'] }
-      };
+        // Test non-recoverable error
+        const nonRecoverableJob = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { test_case: 'non_recoverable', video_ids: ['test_video_2'] }
+        };
 
-      await expect(worker.processJob(nonRecoverableJob)).rejects.toThrow('SSL certificate verification failed');
-
-      await worker.stop();
+        await expect(worker.processJob(nonRecoverableJob)).rejects.toThrow('SSL certificate verification failed');
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
     });
   });
 
@@ -256,17 +274,21 @@ describe('Ingestor Error Handling Integration Tests', () => {
         throw error;
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['test_video_1'] }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { video_ids: ['test_video_1'] }
+        };
 
-      await expect(worker.processJob(job)).rejects.toThrow('Invalid API key');
-      await worker.stop();
+        await expect(worker.processJob(job)).rejects.toThrow('Invalid API key');
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       // Should not have retried authentication error
       expect(attemptCount).toBe(1);
@@ -290,17 +312,21 @@ describe('Ingestor Error Handling Integration Tests', () => {
         throw error;
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          payload: { since_id: '0' }
+        };
 
-      await expect(worker.processJob(job)).rejects.toThrow('Insufficient permissions');
-      await worker.stop();
+        await expect(worker.processJob(job)).rejects.toThrow('Insufficient permissions');
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(attemptCount).toBe(1);
     });
@@ -323,17 +349,21 @@ describe('Ingestor Error Handling Integration Tests', () => {
         throw error;
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['invalid_video_id_format'] }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { video_ids: ['invalid_video_id_format'] }
+        };
 
-      await expect(worker.processJob(job)).rejects.toThrow('Invalid request format');
-      await worker.stop();
+        await expect(worker.processJob(job)).rejects.toThrow('Invalid request format');
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(attemptCount).toBe(1);
     });
@@ -356,17 +386,21 @@ describe('Ingestor Error Handling Integration Tests', () => {
         throw error;
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['nonexistent_video'] }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { video_ids: ['nonexistent_video'] }
+        };
 
-      await expect(worker.processJob(job)).rejects.toThrow('Video not found');
-      await worker.stop();
+        await expect(worker.processJob(job)).rejects.toThrow('Video not found');
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(attemptCount).toBe(1);
     });
@@ -394,35 +428,38 @@ describe('Ingestor Error Handling Integration Tests', () => {
         retryDelay: 50
       });
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      for (const testCase of testCases) {
-        let attemptCount = 0;
-        
-        worker.fetchCommentsFromPlatform = async () => {
-          attemptCount++;
-          const error = new Error(testCase.description);
-          error.statusCode = testCase.status;
-          throw error;
-        };
+        for (const testCase of testCases) {
+          let attemptCount = 0;
+          
+          worker.fetchCommentsFromPlatform = async () => {
+            attemptCount++;
+            const error = new Error(testCase.description);
+            error.statusCode = testCase.status;
+            throw error;
+          };
 
-        const job = {
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          payload: { test_status: testCase.status }
-        };
+          const job = {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            payload: { test_status: testCase.status }
+          };
 
-        await expect(worker.processJob(job)).rejects.toThrow(testCase.description);
+          await expect(worker.processJob(job)).rejects.toThrow(testCase.description);
 
-        if (testCase.shouldRetry) {
-          expect(attemptCount).toBeGreaterThan(1);
-        } else {
-          expect(attemptCount).toBe(1);
+          if (testCase.shouldRetry) {
+            expect(attemptCount).toBeGreaterThan(1);
+          } else {
+            expect(attemptCount).toBe(1);
+          }
         }
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
       }
-
-      await worker.stop();
     });
 
     test('should handle mixed error scenarios in batch processing', async () => {
@@ -471,25 +508,28 @@ describe('Ingestor Error Handling Integration Tests', () => {
         }
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      for (const scenario of errorScenarios) {
-        const job = {
-          organization_id: organizationId,
-          platform: 'youtube',
-          integration_config_id: integrationConfigId,
-          payload: { scenario: scenario.type, video_ids: ['test_video'] }
-        };
+        for (const scenario of errorScenarios) {
+          const job = {
+            organization_id: organizationId,
+            platform: 'youtube',
+            integration_config_id: integrationConfigId,
+            payload: { scenario: scenario.type, video_ids: ['test_video'] }
+          };
 
-        try {
-          const result = await worker.processJob(job);
-          results.push({ scenario: scenario.type, success: true, result });
-        } catch (error) {
-          results.push({ scenario: scenario.type, success: false, error: error.message });
+          try {
+            const result = await worker.processJob(job);
+            results.push({ scenario: scenario.type, success: true, result });
+          } catch (error) {
+            results.push({ scenario: scenario.type, success: false, error: error.message });
+          }
         }
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
       }
-
-      await worker.stop();
 
       // Verify results match expectations
       expect(results[0].success).toBe(true); // success
@@ -537,17 +577,22 @@ describe('Ingestor Error Handling Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          payload: { since_id: '0' }
+        };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
 
@@ -591,17 +636,22 @@ describe('Ingestor Error Handling Integration Tests', () => {
         return originalStoreComments.call(worker, ...args);
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        payload: { since_id: '0' }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          payload: { since_id: '0' }
+        };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
       expect(fetchCount).toBe(1); // Should fetch only once
@@ -654,17 +704,22 @@ describe('Ingestor Error Handling Integration Tests', () => {
         return processedComments;
       };
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      const job = {
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        payload: { video_ids: ['test_video'] }
-      };
+        const job = {
+          organization_id: organizationId,
+          platform: 'youtube',
+          integration_config_id: integrationConfigId,
+          payload: { video_ids: ['test_video'] }
+        };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
       expect(result.commentsCount).toBe(2); // Should store 2 out of 3 comments
