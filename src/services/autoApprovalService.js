@@ -441,7 +441,7 @@ class AutoApprovalService {
       try {
         const healthCheckStart = Date.now();
         const healthCheck = await this.timeoutPromise(
-          supabaseServiceClient.from('roast_approvals').select('id').limit(1),
+          supabaseServiceClient.from('auto_approval_requests').select('id').limit(1),
           this.config.healthCheckTimeout,
           'rate_limit_health_check',
           organizationId
@@ -500,7 +500,7 @@ class AutoApprovalService {
       const [hourlyResult, dailyResult] = await Promise.all([
         this.timeoutPromise(
           supabaseServiceClient
-            .from('roast_approvals')
+            .from('auto_approval_requests')
             .select('id', { count: 'exact' })
             .eq('organization_id', organizationId)
             .gte('created_at', hourAgo.toISOString()),
@@ -510,7 +510,7 @@ class AutoApprovalService {
         ),
         this.timeoutPromise(
           supabaseServiceClient
-            .from('roast_approvals')
+            .from('auto_approval_requests')
             .select('id', { count: 'exact' })
             .eq('organization_id', organizationId)
             .gte('created_at', dayAgo.toISOString()),

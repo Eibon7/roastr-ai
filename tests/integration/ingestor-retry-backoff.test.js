@@ -43,8 +43,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
-
       const job = {
         payload: {
           organization_id: organizationId,
@@ -54,9 +52,15 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      // Process job - should eventually succeed after retries
-      const result = await worker.processJob(job);
-      await worker.stop();
+      let result;
+      try {
+        await worker.start();
+
+        // Process job - should eventually succeed after retries
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
       expect(result.commentsCount).toBe(1);
@@ -92,8 +96,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         throw new Error(`Persistent failure #${attemptCount}`);
       };
 
-      await worker.start();
-
       const job = {
         payload: {
           organization_id: organizationId,
@@ -103,9 +105,14 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      // Should eventually fail after max retries
-      await expect(worker.processJob(job)).rejects.toThrow('Persistent failure');
-      await worker.stop();
+      try {
+        await worker.start();
+
+        // Should eventually fail after max retries
+        await expect(worker.processJob(job)).rejects.toThrow('Persistent failure');
+      } finally {
+        await worker.stop();
+      }
 
       // Should have attempted exactly 3 times (initial + 2 retries)
       expect(attemptCount).toBe(3);
@@ -179,8 +186,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
-
       const job = {
         payload: {
           organization_id: organizationId,
@@ -190,8 +195,14 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+      let result;
+      try {
+        await worker.start();
+
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
       expect(attemptCount).toBe(5); // 4 failures + 1 success
@@ -245,8 +256,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      await worker.start();
-
       // Test transient error
       const transientJob = {
         payload: {
@@ -256,17 +265,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
           test_case: 'transient',
           video_ids: ['test_video_1']
         }
-      };
-
-      const transientResult = await worker.processJob(transientJob);
-      expect(transientResult.success).toBe(true);
-      expect(transientAttempts).toBe(3); // Should have retried
-
-      // Reset for permanent error test
-      let permanentAttempts = 0;
-      worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
-        permanentAttempts++;
-        throw new Error('401 Unauthorized - Invalid API key'); // Should not retry
       };
 
       // Test permanent error
@@ -280,12 +278,27 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      await expect(worker.processJob(permanentJob)).rejects.toThrow('401 Unauthorized');
-      
-      // Should have only attempted once for permanent error
-      expect(permanentAttempts).toBe(1);
+      let transientResult, permanentAttempts = 0;
+      try {
+        await worker.start();
 
-      await worker.stop();
+        transientResult = await worker.processJob(transientJob);
+        expect(transientResult.success).toBe(true);
+        expect(transientAttempts).toBe(3); // Should have retried
+
+        // Reset for permanent error test
+        worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
+          permanentAttempts++;
+          throw new Error('401 Unauthorized - Invalid API key'); // Should not retry
+        };
+
+        await expect(worker.processJob(permanentJob)).rejects.toThrow('401 Unauthorized');
+        
+        // Should have only attempted once for permanent error
+        expect(permanentAttempts).toBe(1);
+      } finally {
+        await worker.stop();
+      }
     });
 
     test('should handle rate limiting with appropriate backoff', async () => {
@@ -315,8 +328,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
-
       const job = {
         payload: {
           organization_id: organizationId,
@@ -326,8 +337,14 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+      let result;
+      try {
+        await worker.start();
+
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
       expect(rateLimitAttempts).toBe(3);
@@ -370,8 +387,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
-
       const job = {
         payload: {
           organization_id: organizationId,
@@ -381,8 +396,14 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+      let result;
+      try {
+        await worker.start();
+
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
 
@@ -425,8 +446,6 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         return [fixtures.retryComments[0]];
       };
 
-      await worker.start();
-
       const job = {
         payload: {
           organization_id: organizationId,
@@ -436,8 +455,14 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+      let result;
+      try {
+        await worker.start();
+
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       expect(result.success).toBe(true);
 

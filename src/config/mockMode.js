@@ -5,12 +5,21 @@
  * Switch: ENABLE_MOCK_MODE=true/false
  */
 
+/**
+ * MockModeManager handles switching between real and mock APIs
+ * Automatically detects when to use mock mode based on environment
+ * and missing API credentials
+ */
 class MockModeManager {
   constructor() {
     this.isMockMode = this.shouldUseMockMode();
     this.logMockStatus();
   }
 
+  /**
+   * Determines if the application should use mock mode
+   * @returns {boolean} True if mock mode should be used
+   */
   shouldUseMockMode() {
     // Force mock mode in test environment
     if (process.env.NODE_ENV === 'test') {
@@ -34,6 +43,9 @@ class MockModeManager {
     return missingKeys.length > 0;
   }
 
+  /**
+   * Logs the current mock mode status to console
+   */
   logMockStatus() {
     if (this.isMockMode) {
       console.log('🎭 Mock Mode ENABLED - Using fake data for all external APIs');
@@ -42,7 +54,11 @@ class MockModeManager {
     }
   }
 
-  // API Mock Generators
+  /**
+   * Generates a mock Supabase client with stateful storage
+   * Implements deduplication logic for comments table
+   * @returns {Object} Mock Supabase client with full API compatibility
+   */
   generateMockSupabaseClient() {
     // Initialize global mock storage for stateful operations
     if (typeof global !== 'undefined') {
@@ -164,18 +180,24 @@ class MockModeManager {
                 
                 // Return the existing comment instead of inserting duplicate
                 const chainableInsert = {
-                  select: (columns = '*') => ({
-                    single: () => Promise.resolve({
-                      data: existing,
-                      error: null
-                    }),
-                    then: (resolve) => {
-                      resolve({
-                        data: [existing],
+                  select: (columns = '*') => {
+                    const selectBuilder = {
+                      single: () => Promise.resolve({
+                        data: existing,
                         error: null
-                      });
-                    }
-                  }),
+                      })
+                    };
+                    
+                    // Return a Promise that resolves to the existing data
+                    return Promise.resolve({
+                      data: [existing],
+                      error: null
+                    }).then(result => {
+                      // Attach single method for chaining
+                      result.single = selectBuilder.single;
+                      return result;
+                    });
+                  },
                   single: () => Promise.resolve({
                     data: existing,
                     error: null
@@ -202,21 +224,27 @@ class MockModeManager {
             }
             
             const chainableInsert = {
-              select: (columns = '*') => ({
-                single: () => {
-                  const result = Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 };
-                  return Promise.resolve({
-                    data: result,
-                    error: null
-                  });
-                },
-                then: (resolve) => {
-                  resolve({
-                    data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1 })) : [{ ...data, id: 1 }],
-                    error: null
-                  });
-                }
-              }),
+              select: (columns = '*') => {
+                const selectBuilder = {
+                  single: () => {
+                    const result = Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 };
+                    return Promise.resolve({
+                      data: result,
+                      error: null
+                    });
+                  }
+                };
+                
+                // Return a Promise that resolves to the data array
+                return Promise.resolve({
+                  data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1 })) : [{ ...data, id: 1 }],
+                  error: null
+                }).then(result => {
+                  // Attach the single method to the resolved result for chaining
+                  result.single = selectBuilder.single;
+                  return result;
+                });
+              },
               single: () => {
                 const result = Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 };
                 return Promise.resolve({
@@ -239,39 +267,53 @@ class MockModeManager {
           })
         };
 
-        // Handle direct promise resolution for some methods
-        Object.assign(chainable, {
-          then: (resolve) => {
-            if (table === 'comments') {
-              // Return filtered comments based on current queries
-              const storage = global.mockCommentStorage || [];
-              let filteredData = storage;
-              
-              // Apply filters based on current queries
-              if (currentQueries.organization_id) {
-                filteredData = filteredData.filter(c => c.organization_id === currentQueries.organization_id);
-              }
-              if (currentQueries.platform) {
-                filteredData = filteredData.filter(c => c.platform === currentQueries.platform);
-              }
-              if (currentQueries.platform_comment_id) {
-                filteredData = filteredData.filter(c => c.platform_comment_id === currentQueries.platform_comment_id);
-              }
-              
-              resolve({
-                data: filteredData,
-                error: null
-              });
-            } else {
-              resolve({
-                data: [{ id: 1, name: 'Mock Data', created_at: new Date().toISOString() }],
-                error: null
-              });
+        // Convert chainable object to a proper Promise for direct awaiting
+        const makePromiseCompatible = (obj) => {
+          if (table === 'comments') {
+            // Return filtered comments based on current queries
+            const storage = global.mockCommentStorage || [];
+            let filteredData = storage;
+            
+            // Apply filters based on current queries
+            if (currentQueries.organization_id) {
+              filteredData = filteredData.filter(c => c.organization_id === currentQueries.organization_id);
             }
+            if (currentQueries.platform) {
+              filteredData = filteredData.filter(c => c.platform === currentQueries.platform);
+            }
+            if (currentQueries.platform_comment_id) {
+              filteredData = filteredData.filter(c => c.platform_comment_id === currentQueries.platform_comment_id);
+            }
+            
+            return Promise.resolve({
+              data: filteredData,
+              error: null
+            }).then(result => {
+              // Attach chainable methods to the result
+              Object.assign(result, obj);
+              return result;
+            });
+          } else {
+            return Promise.resolve({
+              data: [{ id: 1, name: 'Mock Data', created_at: new Date().toISOString() }],
+              error: null
+            }).then(result => {
+              // Attach chainable methods to the result
+              Object.assign(result, obj);
+              return result;
+            });
+          }
+        };
+        
+        // Make the chainable object act like a Promise
+        return Object.assign(chainable, {
+          then: (onFulfilled, onRejected) => {
+            return makePromiseCompatible(chainable).then(onFulfilled, onRejected);
+          },
+          catch: (onRejected) => {
+            return makePromiseCompatible(chainable).catch(onRejected);
           }
         });
-
-        return chainable;
       },
       
       // RPC method for database functions (required by CostControlService)
@@ -320,6 +362,11 @@ class MockModeManager {
     };
   }
 
+  /**
+   * Generates a mock OpenAI client for testing
+   * Provides chat completions API with consistent mock responses
+   * @returns {Object} Mock OpenAI client with chat.completions.create method
+   */
   generateMockOpenAI() {
     return {
       chat: {
@@ -343,6 +390,11 @@ class MockModeManager {
     };
   }
 
+  /**
+   * Generates a mock Stripe client for billing/payment testing
+   * Provides customers, subscriptions, prices, and webhooks APIs
+   * @returns {Object} Mock Stripe client with payment operation methods
+   */
   generateMockStripe() {
     return {
       customers: {
@@ -367,6 +419,11 @@ class MockModeManager {
     };
   }
 
+  /**
+   * Generates a mock Perspective API client for toxicity analysis testing
+   * Provides comment.analyze method with consistent low-toxicity scores
+   * @returns {Object} Mock Perspective API client with analyze capabilities
+   */
   generateMockPerspective() {
     return {
       comments: {
@@ -383,6 +440,11 @@ class MockModeManager {
     };
   }
 
+  /**
+   * Generates a mock fetch function for HTTP request testing
+   * Provides URL-based response routing for health checks, logs, and API calls
+   * @returns {Function} Mock fetch function compatible with native fetch API
+   */
   generateMockFetch() {
     return async (url, options = {}) => {
       console.log(`🎭 Mock fetch called: ${url}`);

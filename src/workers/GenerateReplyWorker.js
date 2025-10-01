@@ -104,7 +104,9 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Initialize OpenAI client
+   * Initialize OpenAI client with mock mode support
+   * Sets up either real OpenAI client or mock client based on environment
+   * @throws {Error} If OpenAI client initialization fails
    */
   initializeOpenAI() {
     if (mockMode.isMockMode) {
@@ -123,7 +125,8 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Initialize response templates
+   * Initialize response templates for fallback generation
+   * Sets up pre-defined response templates categorized by tone
    */
   initializeTemplates() {
     this.templates = {
@@ -151,6 +154,8 @@ class GenerateReplyWorker extends BaseWorker {
   
   /**
    * ROUND 6 CRITICAL FIX: Enhanced circuit breaker for job processing
+   * Checks circuit breaker state and throws error if circuit is open
+   * @throws {Error} If circuit breaker is open and service is unavailable
    */
   checkCircuitBreaker() {
     const now = Date.now();
@@ -172,7 +177,8 @@ class GenerateReplyWorker extends BaseWorker {
   }
 
   /**
-   * Record circuit breaker success
+   * Record circuit breaker success and manage state transitions
+   * Updates circuit breaker state based on successful operations
    */
   recordCircuitBreakerSuccess() {
     if (this.circuitBreaker.state === 'half-open') {
@@ -189,7 +195,8 @@ class GenerateReplyWorker extends BaseWorker {
   }
 
   /**
-   * Record circuit breaker failure
+   * Record circuit breaker failure and potentially open circuit
+   * @param {Error} error - The error that caused the failure
    */
   recordCircuitBreakerFailure(error) {
     this.circuitBreaker.failures++;
@@ -226,12 +233,25 @@ class GenerateReplyWorker extends BaseWorker {
         throw new Error('Invalid job: missing or invalid payload object');
       }
       
-      // Validate required payload fields
-      const requiredFields = ['comment_id', 'organization_id', 'platform', 'original_text'];
-      const missingFields = requiredFields.filter(field => !job.payload[field]);
+      // CODERABBIT FIX: Flexible payload validation - use job payload as source of truth
+      // Support both direct comment data and comment reference patterns
+      const hasDirectCommentData = job.payload.comment_id && job.payload.organization_id && 
+                                  job.payload.platform && job.payload.original_text;
+      const hasCommentReference = job.payload.commentId || job.payload.comment_reference;
       
-      if (missingFields.length > 0) {
-        throw new Error(`Invalid job: missing required fields: ${missingFields.join(', ')}`);
+      if (!hasDirectCommentData && !hasCommentReference) {
+        // Fallback: check if we have minimum required organizational context
+        if (!job.payload.organization_id && !job.payload.org_id) {
+          throw new Error('Invalid job: missing organization context (organization_id or org_id required)');
+        }
+        
+        // Log flexible validation for monitoring
+        this.log('warn', 'Using flexible payload validation - no direct comment data found', {
+          processingId,
+          payloadKeys: Object.keys(job.payload),
+          hasDirectData: hasDirectCommentData,
+          hasReference: hasCommentReference
+        });
       }
       
       this.log('info', 'Starting job processing with enhanced validation', {
@@ -254,15 +274,14 @@ class GenerateReplyWorker extends BaseWorker {
       throw error;
     }
 
-    const {
-      comment_id,
-      organization_id,
-      platform,
-      original_text,
-      toxicity_score,
-      severity_level,
-      categories
-    } = job.payload;
+    // CODERABBIT FIX: Flexible payload destructuring - support multiple payload patterns
+    const comment_id = job.payload.comment_id || job.payload.commentId;
+    const organization_id = job.payload.organization_id || job.payload.org_id;
+    const platform = job.payload.platform;
+    const original_text = job.payload.original_text || job.payload.text;
+    const toxicity_score = job.payload.toxicity_score;
+    const severity_level = job.payload.severity_level;
+    const categories = job.payload.categories;
 
     // Check kill switch before processing
     const autopostCheck = await shouldBlockAutopost(platform);
@@ -533,7 +552,10 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Get comment from database
+   * Get comment from database by ID with error handling
+   * @param {string} commentId - The unique identifier for the comment
+   * @returns {Promise<Object|null>} Comment object or null if not found
+   * @throws {Error} If database query fails
    */
   async getComment(commentId) {
     try {
@@ -556,7 +578,10 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Get integration configuration
+   * Get integration configuration from database
+   * @param {string} organizationId - Organization identifier
+   * @param {string} configId - Integration configuration identifier
+   * @returns {Promise<Object|null>} Integration config object or null if not found
    */
   async getIntegrationConfig(organizationId, configId) {
     try {
@@ -583,6 +608,8 @@ class GenerateReplyWorker extends BaseWorker {
   /**
    * Fetch user's Roastr Persona data for personalized response generation
    * Issue #81: Enable persona-aware roast generation and analytics tracking
+   * @param {string} organizationId - Organization identifier to fetch persona data for
+   * @returns {Promise<Object|null>} Persona data object or null if not found/configured
    */
   async fetchPersonaData(organizationId) {
     try {
@@ -678,6 +705,8 @@ class GenerateReplyWorker extends BaseWorker {
   
   /**
    * Check if response should be generated based on frequency setting
+   * @param {number} frequency - Response frequency between 0 and 1
+   * @returns {boolean} True if response should be generated based on probability
    */
   shouldRespondBasedOnFrequency(frequency) {
     if (frequency >= 1.0) return true; // Always respond
@@ -688,6 +717,10 @@ class GenerateReplyWorker extends BaseWorker {
   
   /**
    * Generate response using OpenAI or templates
+   * @param {string} originalText - Original comment text to respond to
+   * @param {Object} config - Integration configuration object
+   * @param {Object} context - Response generation context
+   * @returns {Promise<Object>} Generated response with metadata
    */
   async generateResponse(originalText, config, context) {
     let response = null;
@@ -778,7 +811,11 @@ class GenerateReplyWorker extends BaseWorker {
   }
 
   /**
-   * Generate response using OpenAI
+   * Generate response using OpenAI with persona-aware prompting
+   * @param {string} originalText - Original comment text to respond to
+   * @param {Object} config - Integration configuration object
+   * @param {Object} context - Response generation context including persona data
+   * @returns {Promise<Object>} Generated OpenAI response with metadata
    */
   async generateOpenAIResponse(originalText, config, context) {
     const { tone, humor_type } = config;
@@ -865,7 +902,11 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Generate response using templates
+   * Generate response using pre-defined templates as fallback
+   * @param {string} originalText - Original comment text (not directly used in templates)
+   * @param {Object} config - Integration configuration object
+   * @param {Object} context - Response generation context
+   * @returns {Object} Generated template response
    */
   generateTemplateResponse(originalText, config, context) {
     const { tone } = config;
@@ -881,7 +922,11 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Build system prompt for OpenAI
+   * Build system prompt for OpenAI (legacy method)
+   * @param {string} tone - Response tone (sarcastic, ironic, absurd)
+   * @param {string} humorType - Humor style (witty, clever, playful)
+   * @param {string} platform - Target platform for response
+   * @returns {string} Formatted system prompt for OpenAI
    */
   buildSystemPrompt(tone, humorType, platform) {
     const toneGuide = this.tonePrompts[tone] || this.tonePrompts.sarcastic;
@@ -920,7 +965,9 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Get platform-specific constraints
+   * Get platform-specific constraints for response generation
+   * @param {string} platform - Target platform (twitter, youtube, instagram, etc.)
+   * @returns {string} Platform-specific constraint text in Spanish
    */
   getPlatformConstraint(platform) {
     const constraints = {
@@ -938,6 +985,9 @@ class GenerateReplyWorker extends BaseWorker {
 
   /**
    * Build user prompt for OpenAI (legacy method, may be deprecated)
+   * @param {string} originalText - Original comment text
+   * @param {Object} context - Context with toxicity and category information
+   * @returns {string} Formatted user prompt for OpenAI
    */
   buildUserPrompt(originalText, context) {
     const { severity_level, toxicity_score, categories } = context;
@@ -954,7 +1004,10 @@ class GenerateReplyWorker extends BaseWorker {
   }
   
   /**
-   * Validate response length for platform constraints
+   * Validate response length for platform constraints and truncate if necessary
+   * @param {string} response - The generated response text
+   * @param {string} platform - The target platform (twitter, instagram, youtube, etc.)
+   * @returns {string} Validated response text, truncated if exceeds platform limits
    */
   validateResponseLength(response, platform) {
     let maxLength;
@@ -994,6 +1047,12 @@ class GenerateReplyWorker extends BaseWorker {
   /**
    * Store response in database with Roastr Persona tracking
    * Issue #81: Track which persona fields were used in response generation
+   * @param {string} commentId - Comment identifier
+   * @param {string} organizationId - Organization identifier
+   * @param {Object} response - Generated response object
+   * @param {Object} config - Integration configuration
+   * @param {number} generationTime - Time taken to generate response in milliseconds
+   * @returns {Promise<Object>} Stored response object from database
    */
   async storeResponse(commentId, organizationId, response, config, generationTime) {
     try {
@@ -1195,6 +1254,10 @@ class GenerateReplyWorker extends BaseWorker {
   /**
    * Queue posting job with optional auto-approval metadata
    * ROUND 6 FIX: Enhanced to preserve GDPR-safe auto-approval metadata
+   * @param {string} organizationId - Organization identifier
+   * @param {Object} response - Response object to post
+   * @param {string} platform - Target platform for posting
+   * @param {Object} autoApprovalMetadata - Optional auto-approval metadata (GDPR-safe)
    */
   async queuePostingJob(organizationId, response, platform, autoApprovalMetadata = null) {
     // GDPR-Safe metadata: Only include essential, non-personal data
@@ -1253,6 +1316,8 @@ class GenerateReplyWorker extends BaseWorker {
   
   /**
    * Estimate tokens used for cost calculation
+   * @param {string} text - Text to estimate token count for
+   * @returns {number} Estimated number of tokens
    */
   estimateTokens(text) {
     // More accurate estimation for OpenAI models
@@ -1308,8 +1373,8 @@ class GenerateReplyWorker extends BaseWorker {
   }
 
   /**
-   * Parse and validate a toxicity score
-   * @param {any} score - Raw score value
+   * Parse and validate a toxicity score with multiple scale support
+   * @param {any} score - Raw score value (number, string, or other)
    * @returns {number|null} Parsed score between 0-1, or null if invalid
    */
   parseScore(score) {
