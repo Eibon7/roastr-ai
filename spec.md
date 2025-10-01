@@ -16,12 +16,12 @@
 #### 2. ⏱️ Timeout-Aware Promise Protection
 - **Promise.race() Patterns**: Fail-closed timeout protection for all organization policy validation
 - **Timeout Metadata**: Error objects include operation context, timeout duration, and organization ID
-- **Conservative Timeouts** (config-driven):
-  - DB health-check: 1s (`this.config.healthCheckTimeout`)
-  - Policy fetch: 2.5s (`this.config.policyFetchTimeout`)
-  - Org queries: 3s (`this.config.queryTimeout`)
-  - Transparency: 2s (`this.config.transparencyTimeout`)
-  - Content validation: 1.5s (`this.config.contentValidationTimeout`)
+- **Configurable Timeouts** (environment variables with secure defaults):
+  - DB health-check: 1s (`HEALTH_CHECK_TIMEOUT` || 1000ms)
+  - Policy fetch: 2.5s (`POLICY_FETCH_TIMEOUT` || 2500ms)
+  - Org queries: 3s (`RATE_LIMIT_QUERY_TIMEOUT` || 3000ms)
+  - Transparency: 2s (`TRANSPARENCY_TIMEOUT` || 2000ms)
+  - Content validation: 1.5s (`CONTENT_VALIDATION_TIMEOUT` || 1500ms)
 - **Method**: `timeoutPromise()` with comprehensive error handling and logging
 
 #### 3. 🧮 Safe Number Parsing with Conservative Fallbacks
@@ -30,9 +30,12 @@
 - **Fallback Security**: Conservative defaults prevent security bypasses from malformed numeric data
 - **Method**: `safeParseNumber()` with detailed validation and warning logs
 
-#### 4. 📊 Enhanced Toxicity Score Validation
+#### 4. 📊 Consolidated Toxicity Score Validation Rules
 - **Scale Normalization**: Automatic detection and normalization of 0-100 vs 0-1 scale scores
-- **Dynamic Thresholds**: Context-aware validation based on original toxicity levels
+- **Dynamic Thresholds**: Context-aware validation based on original toxicity levels:
+  - High original toxicity (>0.5): Max increase 0.2, Max final 0.8
+  - Low original toxicity (≤0.5): Max increase 0.3, Max final 0.7
+- **Timing-Safe Comparison**: Uses crypto.timingSafeEqual for digest comparison to prevent timing attacks
 - **Unique Validation IDs**: Each validation gets a unique ID for audit trail correlation
 - **Comprehensive Logging**: Debug, info, warn, and error logs for complete validation transparency
 
@@ -68,7 +71,9 @@
 - `src/services/autoApprovalService.js` - Added 4 new Round 9 security methods and enhanced toxicity validation
 - `tests/unit/services/autoApprovalService-round9-security.test.js` - Comprehensive 67-test security validation suite
 
-**Status**: ✅ **PRODUCTION READY** with ultra-critical security posture
+**Status**: ✅ **PRODUCTION READY** (Auto-approval service scope) with ultra-critical security posture
+- **Scope Clarification**: Production readiness applies specifically to the auto-approval security enhancements
+- **Full System Status**: Other components may require additional validation before production deployment
 
 ---
 
