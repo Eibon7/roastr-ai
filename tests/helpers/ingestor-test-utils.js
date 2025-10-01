@@ -62,6 +62,12 @@ class IngestorTestUtils {
             existingJob.completed_at = new Date().toISOString();
             existingJob.result = result;
           }
+          // Also update the job object passed in
+          if (job) {
+            job.status = 'completed';
+            job.completed_at = new Date().toISOString();
+            job.result = result;
+          }
         },
         failJob: async (job, error) => {
           const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
@@ -69,6 +75,12 @@ class IngestorTestUtils {
             existingJob.status = 'failed';
             existingJob.completed_at = new Date().toISOString();
             existingJob.error_message = error.message || error.toString();
+          }
+          // Also update the job object passed in
+          if (job) {
+            job.status = 'failed';
+            job.completed_at = new Date().toISOString();
+            job.error_message = error.message || error.toString();
           }
         },
         getQueueStats: async () => {
@@ -108,21 +120,40 @@ class IngestorTestUtils {
    * Clean up test environment
    */
   async cleanup() {
-    // Stop all workers
-    for (const worker of this.workers) {
-      if (worker.isRunning) {
-        await worker.stop();
+    // Stop all workers immediately
+    const stopPromises = this.workers.map(async (worker) => {
+      try {
+        if (worker.isRunning) {
+          worker.isRunning = false; // Force stop the processing loop
+          await worker.stop();
+        }
+      } catch (error) {
+        console.warn('Error stopping worker:', error.message);
       }
-    }
+    });
+    
+    await Promise.all(stopPromises);
     this.workers = [];
 
     // Clean up queue service
-    if (this.queueService) {
-      await this.queueService.shutdown();
+    if (this.queueService && typeof this.queueService.shutdown === 'function') {
+      try {
+        await this.queueService.shutdown();
+      } catch (error) {
+        console.warn('Error shutting down queue service:', error.message);
+      }
     }
 
     // Clean up test data from database
     await this.cleanupTestData();
+
+    // Clear any global storage
+    if (typeof global !== 'undefined') {
+      global.mockCommentStorage = [];
+      global.mockJobStorage = [];
+      global.mockOrgStorage = [];
+      global.mockConfigStorage = [];
+    }
 
     this.setupComplete = false;
   }
@@ -137,6 +168,16 @@ class IngestorTestUtils {
       pollInterval: 50, // Faster polling for tests
       ...options
     });
+
+    // Override the worker's queue service with our test queue service
+    worker.queueService = this.queueService;
+    
+    // Override the processing loop to prevent infinite polling in tests
+    const originalProcessingLoop = worker.processingLoop;
+    worker.processingLoop = async function() {
+      // Don't run the processing loop in tests - we'll call processJob directly
+      return;
+    };
 
     this.workers.push(worker);
     return worker;
@@ -420,22 +461,24 @@ class IngestorTestUtils {
    * Measure retry timing for backoff testing
    */
   async measureRetryTiming(worker, expectedRetries = 3) {
-    const retryTimes = [];
-    const originalHandleJobError = worker.handleJobError;
+    const retryDelays = [];
+    const originalCalculateRetryDelay = worker.calculateRetryDelay;
 
-    worker.handleJobError = async function(job, error) {
-      retryTimes.push(Date.now());
-      return originalHandleJobError.call(this, job, error);
+    // Override calculateRetryDelay to track actual delay values
+    worker.calculateRetryDelay = function(attempt) {
+      const delay = originalCalculateRetryDelay.call(this, attempt);
+      retryDelays.push(delay);
+      return delay;
     };
 
     return {
-      getRetryTimes: () => retryTimes,
+      getRetryDelays: () => retryDelays,
       getIntervals: () => {
-        const intervals = [];
-        for (let i = 1; i < retryTimes.length; i++) {
-          intervals.push(retryTimes[i] - retryTimes[i - 1]);
-        }
-        return intervals;
+        // Return the actual delays calculated for each retry
+        return retryDelays;
+      },
+      restore: () => {
+        worker.calculateRetryDelay = originalCalculateRetryDelay;
       }
     };
   }

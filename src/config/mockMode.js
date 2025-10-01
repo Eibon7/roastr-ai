@@ -181,21 +181,32 @@ class MockModeManager {
                 // Return the existing comment instead of inserting duplicate
                 const chainableInsert = {
                   select: (columns = '*') => {
-                    const selectBuilder = {
+                    // Create a proper chainable select that supports .single()
+                    const selectChain = {
                       single: () => Promise.resolve({
                         data: existing,
                         error: null
                       })
                     };
                     
-                    // Return a Promise that resolves to the existing data
-                    return Promise.resolve({
-                      data: [existing],
-                      error: null
-                    }).then(result => {
-                      // Attach single method for chaining
-                      result.single = selectBuilder.single;
-                      return result;
+                    // Make this object act like a Promise while preserving chainable methods
+                    return Object.assign(selectChain, {
+                      then: (onFulfilled, onRejected) => {
+                        return Promise.resolve({
+                          data: [existing],
+                          error: null
+                        }).then(result => {
+                          // Attach single method to the resolved result for further chaining
+                          result.single = selectChain.single;
+                          return result;
+                        }).then(onFulfilled, onRejected);
+                      },
+                      catch: (onRejected) => {
+                        return Promise.resolve({
+                          data: [existing],
+                          error: null
+                        }).catch(onRejected);
+                      }
                     });
                   },
                   single: () => Promise.resolve({
@@ -225,9 +236,10 @@ class MockModeManager {
             
             const chainableInsert = {
               select: (columns = '*') => {
-                const selectBuilder = {
+                // Create a proper chainable select that supports .single()
+                const selectChain = {
                   single: () => {
-                    const result = Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 };
+                    const result = Array.isArray(data) ? { ...data[0], id: 1, created_at: new Date().toISOString() } : { ...data, id: 1, created_at: new Date().toISOString() };
                     return Promise.resolve({
                       data: result,
                       error: null
@@ -235,18 +247,29 @@ class MockModeManager {
                   }
                 };
                 
-                // Return a Promise that resolves to the data array
-                return Promise.resolve({
-                  data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1 })) : [{ ...data, id: 1 }],
-                  error: null
-                }).then(result => {
-                  // Attach the single method to the resolved result for chaining
-                  result.single = selectBuilder.single;
-                  return result;
+                // Make this object act like a Promise while preserving chainable methods
+                return Object.assign(selectChain, {
+                  then: (onFulfilled, onRejected) => {
+                    const resultData = Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1, created_at: new Date().toISOString() })) : [{ ...data, id: 1, created_at: new Date().toISOString() }];
+                    return Promise.resolve({
+                      data: resultData,
+                      error: null
+                    }).then(result => {
+                      // Attach single method to the resolved result for further chaining
+                      result.single = selectChain.single;
+                      return result;
+                    }).then(onFulfilled, onRejected);
+                  },
+                  catch: (onRejected) => {
+                    return Promise.resolve({
+                      data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1, created_at: new Date().toISOString() })) : [{ ...data, id: 1, created_at: new Date().toISOString() }],
+                      error: null
+                    }).catch(onRejected);
+                  }
                 });
               },
               single: () => {
-                const result = Array.isArray(data) ? { ...data[0], id: 1 } : { ...data, id: 1 };
+                const result = Array.isArray(data) ? { ...data[0], id: 1, created_at: new Date().toISOString() } : { ...data, id: 1, created_at: new Date().toISOString() };
                 return Promise.resolve({
                   data: result,
                   error: null
