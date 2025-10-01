@@ -346,17 +346,24 @@ describe('Multi-Tenant Workflow Integration', () => {
         return { success: true, result: 'recovered' };
       });
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      // Simulate job processing
-      const testJob = {
-        id: 'failing-job',
-        organization_id: orgAId,
-        text: 'test comment'
-      };
+        // Simulate job processing
+        const testJob = {
+          id: 'failing-job',
+          organization_id: orgAId,
+          text: 'test comment'
+        };
 
-      // Should eventually succeed after retries
-      const result = await worker.processJobAsync(testJob);
+        // Should eventually succeed after retries
+        result = await worker.processJobAsync(testJob);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
+      
       expect(worker.processJob).toHaveBeenCalledTimes(3);
       expect(worker.processedJobs).toBe(1);
     });

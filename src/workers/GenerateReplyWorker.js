@@ -1521,7 +1521,8 @@ class GenerateReplyWorker extends BaseWorker {
         storedResponse, 
         approvedVariant, 
         originalResponse,
-        validationId
+        validationId,
+        context // CODERABBIT FIX: Pass context for comment_id fallback
       );
 
       if (!metadataValidation.valid) {
@@ -1628,13 +1629,21 @@ class GenerateReplyWorker extends BaseWorker {
    * @param {Object} approvedVariant - Approved variant object
    * @param {Object} originalResponse - Original response object
    * @param {string} validationId - Validation operation ID
+   * @param {Object} context - Additional context including job payload
    * @returns {Object} Metadata validation result
    */
-  validateContentMetadata(storedResponse, approvedVariant, originalResponse, validationId) {
+  validateContentMetadata(storedResponse, approvedVariant, originalResponse, validationId, context = {}) {
     const issues = [];
 
-    // Validate basic structure consistency
-    if (storedResponse.comment_id !== originalResponse.comment_id) {
+    // CODERABBIT FIX: Use context/job payload for comment ID validation when not available in response
+    const expectedCommentId = context.comment_id ?? 
+                             context.commentId ?? 
+                             originalResponse?.comment_id ?? 
+                             storedResponse?.comment_id;
+
+    // Validate basic structure consistency only if we have expected comment ID
+    if (expectedCommentId && storedResponse.comment_id && 
+        storedResponse.comment_id !== expectedCommentId) {
       issues.push('comment_id_mismatch');
     }
 

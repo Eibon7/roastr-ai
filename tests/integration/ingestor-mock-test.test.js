@@ -47,8 +47,6 @@ describe('Ingestor Mock Mode Test', () => {
       // Verify deduplication by processing same job again (without restarting worker)
       const result2 = await worker.processJob(job);
 
-      await worker.stop();
-
       // Should not add duplicate
       expect(result2.success).toBe(true);
       expect(result2.commentsCount).toBe(0); // No new comments added
@@ -56,6 +54,9 @@ describe('Ingestor Mock Mode Test', () => {
       console.error('Test error:', error);
       console.error('Stack:', error.stack);
       throw error;
+    } finally {
+      // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+      await worker.stop();
     }
   });
 });

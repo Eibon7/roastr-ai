@@ -6,6 +6,27 @@
  */
 
 /**
+ * Timeout promise helper for mock operations
+ * @param {Promise} promise - The promise to wrap with timeout
+ * @param {number} timeoutMs - Timeout in milliseconds
+ * @param {string} operation - Operation name for error context
+ * @param {string} organizationId - Organization ID for error context
+ * @returns {Promise} Promise that either resolves with the original promise or rejects with timeout error
+ */
+const timeoutPromise = (promise, timeoutMs, operation, organizationId) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      const err = new Error(`${operation} timeout after ${timeoutMs}ms for organization ${organizationId}`);
+      err.isTimeout = true;
+      err.operation = operation;
+      err.organizationId = organizationId;
+      setTimeout(() => reject(err), timeoutMs);
+    })
+  ]);
+};
+
+/**
  * MockModeManager handles switching between real and mock APIs
  * Automatically detects when to use mock mode based on environment
  * and missing API credentials
@@ -100,7 +121,7 @@ class MockModeManager {
             return chainable;
           },
           single: () => {
-            // Make a copy of queries for this specific call to avoid pollution
+            // Make a copy of currentQueries for this specific call to avoid pollution
             const queries = { ...currentQueries };
             
             if (table === 'integration_configs') {
@@ -527,5 +548,6 @@ const mockMode = new MockModeManager();
 
 module.exports = {
   mockMode,
-  MockModeManager
+  MockModeManager,
+  timeoutPromise
 };

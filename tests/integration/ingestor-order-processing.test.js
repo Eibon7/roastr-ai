@@ -56,14 +56,17 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Process all jobs
-      for (const job of jobs) {
-        await worker.processJob(job);
+        // Process all jobs
+        for (const job of jobs) {
+          await worker.processJob(job);
+        }
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
       }
-
-      await worker.stop();
 
       // Verify processing order matches creation order
       expect(processedOrder).toHaveLength(orderedComments.length);
@@ -104,41 +107,44 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return comments;
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Process batches in sequence
-      const job1 = {
-        payload: {
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comments: batch1
-        }
-      };
+        // Process batches in sequence
+        const job1 = {
+          payload: {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comments: batch1
+          }
+        };
 
-      const job2 = {
-        payload: {
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comments: batch2
-        }
-      };
+        const job2 = {
+          payload: {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comments: batch2
+          }
+        };
 
-      const job3 = {
-        payload: {
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comments: batch3
-        }
-      };
+        const job3 = {
+          payload: {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comments: batch3
+          }
+        };
 
-      await worker.processJob(job1);
-      await worker.processJob(job2);
-      await worker.processJob(job3);
-
-      await worker.stop();
+        await worker.processJob(job1);
+        await worker.processJob(job2);
+        await worker.processJob(job3);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       // Verify processing order maintained across batches
       expect(allProcessedComments).toHaveLength(3);
@@ -217,15 +223,18 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Process by getting jobs from queue (should respect priority)
-      let job;
-      while ((job = await worker.getNextJob()) !== null) {
-        await worker.processJob(job);
+        // Process by getting jobs from queue (should respect priority)
+        let job;
+        while ((job = await worker.getNextJob()) !== null) {
+          await worker.processJob(job);
+        }
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
       }
-
-      await worker.stop();
 
       // Should process in priority order: high, normal, low
       expect(processedOrder).toEqual([
@@ -289,18 +298,21 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Process all jobs (including retries)
-      for (const job of jobs) {
-        try {
-          await worker.processJob(job);
-        } catch (error) {
-          // Expected for failing job on first attempt
+        // Process all jobs (including retries)
+        for (const job of jobs) {
+          try {
+            await worker.processJob(job);
+          } catch (error) {
+            // Expected for failing job on first attempt
+          }
         }
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
       }
-
-      await worker.stop();
 
       // Should eventually process all in order
       expect(processedOrder).toEqual([
@@ -362,20 +374,23 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Process all jobs
-      const results = [];
-      for (const job of jobs) {
-        try {
-          const result = await worker.processJob(job);
-          results.push({ success: true, result });
-        } catch (error) {
-          results.push({ success: false, error: error.message });
+        // Process all jobs
+        const results = [];
+        for (const job of jobs) {
+          try {
+            const result = await worker.processJob(job);
+            results.push({ success: true, result });
+          } catch (error) {
+            results.push({ success: false, error: error.message });
+          }
         }
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
       }
-
-      await worker.stop();
 
       // First and third should succeed, middle should fail
       expect(results[0].success).toBe(true);
@@ -453,13 +468,16 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Process all jobs concurrently
-      const promises = concurrentJobs.map(job => worker.processJob(job));
-      await Promise.all(promises);
-
-      await worker.stop();
+        // Process all jobs concurrently
+        const promises = concurrentJobs.map(job => worker.processJob(job));
+        await Promise.all(promises);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       // All should be processed
       expect(processedComments).toHaveLength(5);
@@ -536,17 +554,20 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return [comment];
       };
 
-      await worker.start();
+      try {
+        await worker.start();
 
-      // Get and process jobs based on priority
-      const processedJobs = [];
-      let job;
-      while ((job = await worker.getNextJob()) !== null) {
-        const result = await worker.processJob(job);
-        processedJobs.push(result);
+        // Get and process jobs based on priority
+        const processedJobs = [];
+        let job;
+        while ((job = await worker.getNextJob()) !== null) {
+          const result = await worker.processJob(job);
+          processedJobs.push(result);
+        }
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
       }
-
-      await worker.stop();
 
       // High priority jobs should be processed before low priority
       // Order within each priority level should be maintained

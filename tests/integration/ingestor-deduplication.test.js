@@ -32,24 +32,27 @@ describe('Ingestor Deduplication Integration Tests', () => {
       // Mock the Twitter API to return our duplicate comments
       worker.fetchCommentsFromPlatform = async () => duplicateComments;
 
-      // Start worker
-      await worker.start();
+      let result;
+      try {
+        // Start worker
+        await worker.start();
 
-      // Create a fetch job
-      const job = {
-        payload: {
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          since_id: '0'
-        }
-      };
+        // Create a fetch job
+        const job = {
+          payload: {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            since_id: '0'
+          }
+        };
 
-      // Process the job
-      const result = await worker.processJob(job);
-
-      // Stop worker
-      await worker.stop();
+        // Process the job
+        result = await worker.processJob(job);
+      } finally {
+        // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
+        await worker.stop();
+      }
 
       // Verify only one comment was stored despite two being fetched
       expect(result.success).toBe(true);
@@ -90,20 +93,24 @@ describe('Ingestor Deduplication Integration Tests', () => {
       // Mock the API to return the same comment again
       worker.fetchCommentsFromPlatform = async () => [comment];
 
-      await worker.start();
+      let result;
+      try {
+        await worker.start();
 
-      // Process job again
-      const job = {
-        payload: {
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          since_id: '0'
-        }
-      };
+        // Process job again
+        const job = {
+          payload: {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            since_id: '0'
+          }
+        };
 
-      const result = await worker.processJob(job);
-      await worker.stop();
+        result = await worker.processJob(job);
+      } finally {
+        await worker.stop();
+      }
 
       // Should report 0 new comments since it's a duplicate
       expect(result.success).toBe(true);
