@@ -156,6 +156,7 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
     // Return successful response
     res.json({
       success: true,
+      correlation_id: correlationId,
       decision: {
         action: decision.action,
         reasoning: decision.reasoning,
@@ -174,7 +175,8 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
         platform: comment.platform,
         analysis_time_ms: decision.decision_time_ms,
         total_time_ms: totalTime,
-        cache_performance: decision.cache_stats
+        cache_performance: decision.cache_stats,
+        correlation_id: correlationId
       }
     });
 
@@ -464,7 +466,7 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
       summary,
       performance: {
         total_time_ms: totalTime,
-        average_time_per_comment: totalTime / comments.length,
+        average_time_per_comment: comments.length > 0 ? totalTime / comments.length : 0,
         comments_per_second: totalTime > 0 ? (comments.length / totalTime) * 1000 : 0
       },
       correlation_id: correlationId
