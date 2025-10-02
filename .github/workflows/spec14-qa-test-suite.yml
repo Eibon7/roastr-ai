@@ -389,7 +389,7 @@ jobs:
         echo "  Coverage: $COVERAGE_RESULT"  
         echo "  Scenarios: $SCENARIOS_RESULT"
         
-        # Verify all critical requirements (allow skipped for dependency-only PRs)
+        # Verify all critical requirements (accept "skipped" for dependency-only PRs)
         if [[ ("$CORE_RESULT" == "success" || "$CORE_RESULT" == "skipped") && ("$SCENARIOS_RESULT" == "success" || "$SCENARIOS_RESULT" == "skipped") ]]; then
           echo ""
           echo "✅ SPEC 14 Requirements Met:"
