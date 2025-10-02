@@ -95,14 +95,14 @@ The core decision engine implements toxicity-based routing with plan-specific th
 - **Starter Plan**: 0.30 (roast threshold), Shield enabled ✨  
 - **Pro Plan**: 0.25 (roast threshold), Shield enabled
 - **Plus Plan**: 0.20 (roast threshold), Shield enabled
-- **Creator Plus Plan**: 0.20 (roast threshold), Shield enabled
+- **Creator Plus Plan** (creator_plus): 0.20 (roast threshold), Shield enabled
 - **All Plans**: 0.85 (universal block threshold)
 
 #### 🎯 Decision Logic Flow
-```
+```text
 Comment Toxicity Analysis (AnalyzeToxicityWorker)
     ↓
-≥ 0.85: BLOCK (+ Shield actions for Pro+ plans)
+≥ 0.85: BLOCK (+ Shield actions for Starter+ plans)
     ↓
 ≥ Plan Threshold: ROAST (subject to rate limits & capacity)
     ↓
@@ -113,8 +113,8 @@ Plan Limits Exceeded: DEFER (retry later)
 ```
 
 ### 🛡️ Shield System Integration
-- **Free/Starter Plans**: No Shield integration (cost optimization)
-- **Pro+ Plans**: Full Shield integration with escalating actions:
+- **Free Plan**: No Shield integration (cost optimization)
+- **Starter+ Plans**: Full Shield integration with escalating actions:
   - Triggered automatically for content ≥ 0.85 toxicity (block threshold)
   - Integrates with ShieldDecisionEngine for advanced moderation decisions
   - Shield actions executed in parallel with triage blocking
@@ -5433,7 +5433,7 @@ Complete dashboard system with analytics metrics, Shield UI components, feature 
 #### 🔢 5. Tier-Based Connection Limits
 - **Free Plan**: 1 connection maximum
 - **Pro Plan**: 5 connections maximum  
-- **Creator Plus/Custom**: 999 connections (effectively unlimited)
+- **Creator Plus Plan** (creator_plus): 999 connections (effectively unlimited)
 - **Validation**: Array safety with proper null/undefined handling
 - **User Feedback**: Clear error messages with upgrade prompts
 

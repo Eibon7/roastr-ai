@@ -1,7 +1,7 @@
 const { logger } = require('../utils/logger');
 const ShieldDecisionEngine = require('./shieldDecisionEngine');
 const CostControlService = require('./costControl');
-const PlanLimitsService = require('./planLimitsService');
+const planLimitsService = require('./planLimitsService');
 const AnalyzeToxicityWorker = require('../workers/AnalyzeToxicityWorker');
 const crypto = require('crypto');
 
@@ -21,7 +21,7 @@ class TriageService {
   constructor() {
     this.shieldDecisionEngine = new ShieldDecisionEngine();
     this.costControl = new CostControlService();
-    this.planLimits = new PlanLimitsService();
+    this.planLimits = planLimitsService;
     this.toxicityWorker = new AnalyzeToxicityWorker();
     
     // Decision matrix - integrates with existing Shield thresholds
@@ -527,7 +527,9 @@ class TriageService {
       cache_performance: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses) || 0,
+        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0 
+          ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
+          : 0,
         cache_size: this.decisionCache.size
       },
       thresholds: {

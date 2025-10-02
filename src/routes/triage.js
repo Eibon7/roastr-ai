@@ -283,7 +283,8 @@ router.get('/stats', authenticateToken, statsRateLimit, async (req, res) => {
 
     res.json({
       success: true,
-      stats: enrichedStats
+      stats: enrichedStats,
+      correlation_id: correlationId
     });
 
   } catch (error) {
@@ -464,7 +465,7 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
       performance: {
         total_time_ms: totalTime,
         average_time_per_comment: totalTime / comments.length,
-        comments_per_second: (comments.length / totalTime) * 1000
+        comments_per_second: totalTime > 0 ? (comments.length / totalTime) * 1000 : 0
       },
       correlation_id: correlationId
     });
