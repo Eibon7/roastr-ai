@@ -62,7 +62,7 @@ class TriageService {
    */
   async analyzeAndRoute(comment, organization, user = null, options = {}) {
     const startTime = Date.now();
-    const correlationId = this.generateCorrelationId();
+    const correlationId = options.correlation_id || this.generateCorrelationId();
     
     logger.info('Starting triage analysis', {
       correlation_id: correlationId,
@@ -465,11 +465,12 @@ class TriageService {
   enrichDecisionWithMetadata(decision, correlationId, startTime) {
     return {
       ...decision,
+      correlation_id: correlationId,
       total_time_ms: Date.now() - startTime,
       cache_stats: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0 
+        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0
           ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
           : 0
       }

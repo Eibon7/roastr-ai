@@ -6081,11 +6081,11 @@ const tabs = [
 - **Quality Maintained**: All coverage still meets 25% minimum threshold
 
 ### 📊 Coverage Results (Post-Fix)
-```
+```text
 All files: Lines 57.97%, Functions 67.22%, Statements 57.91%, Branches 28.57%
 ✅ All metrics exceed 25% threshold requirement
 ✅ 67 SPEC 14 tests passing (24 skipped)
-✅ 46 adapter contract tests passing  
+✅ 46 adapter contract tests passing
 ✅ 9 E2E scenario tests passing
 ✅ 12 idempotency tests passing
 ```

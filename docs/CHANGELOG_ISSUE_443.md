@@ -170,8 +170,8 @@ All acceptance criteria from Issue #443 have been implemented and validated:
 ---
 
 ## 🔧 CodeRabbit Review #3290723169 - PR #444 Fixes
-**Date**: 2025-10-02  
-**Review**: https://github.com/Eibon7/roastr-ai/pull/444#pullrequestreview-3290723169  
+**Date**: 2025-10-02
+**Review**: [CodeRabbit Review #3290723169](https://github.com/Eibon7/roastr-ai/pull/444#pullrequestreview-3290723169)
 **Status**: ✅ All CodeRabbit feedback addressed and resolved
 
 ### Issues Fixed
@@ -223,8 +223,8 @@ All acceptance criteria from Issue #443 have been implemented and validated:
 ---
 
 ## 🔧 CodeRabbit Review #3293203223 - PR #444 Round 3 Fixes
-**Date**: 2025-10-02  
-**Review**: https://github.com/Eibon7/roastr-ai/pull/444#pullrequestreview-3293203223  
+**Date**: 2025-10-02
+**Review**: [CodeRabbit Review #3293203223](https://github.com/Eibon7/roastr-ai/pull/444#pullrequestreview-3293203223)
 **Status**: ✅ All CodeRabbit Round 3 feedback addressed and resolved
 
 ### Issues Fixed
