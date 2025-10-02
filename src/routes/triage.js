@@ -456,7 +456,7 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
       organization_id: organization.id,
       ...summary,
       total_time_ms: totalTime,
-      avg_time_per_comment: totalTime / comments.length
+      avg_time_per_comment: comments.length > 0 ? totalTime / comments.length : 0
     });
 
     res.json({
@@ -467,7 +467,7 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
       performance: {
         total_time_ms: totalTime,
         average_time_per_comment: comments.length > 0 ? totalTime / comments.length : 0,
-        comments_per_second: totalTime > 0 ? (comments.length / totalTime) * 1000 : 0
+        comments_per_second: totalTime > 0 && comments.length > 0 ? (comments.length / totalTime) * 1000 : 0
       },
       correlation_id: correlationId
     });

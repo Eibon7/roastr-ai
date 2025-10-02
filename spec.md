@@ -2409,7 +2409,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €0
 - **Modelo IA**: GPT-3.5
 - **Cuentas por red**: 1
-- **Límites**: 100 análisis, 10 roasts
+- **Límites**: 100 análisis, 100 roasts
 - **Cuentas por red social**: 1
 - **Funciones incluidas**:
     - Comment analysis
@@ -2423,7 +2423,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €5
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 1
-- **Límites**: 1000 análisis, 10 roasts
+- **Límites**: 500 análisis, 500 roasts
 - **Cuentas por red social**: 1
 - **Funciones incluidas**:
     - Comment analysis
@@ -2438,7 +2438,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €15
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 2
-- **Límites**: 10,000 análisis, 1,000 roasts
+- **Límites**: 2,000 análisis, 1,000 roasts
 - **Cuentas por red social**: hasta **2 de la misma red social**
 - **Funciones incluidas**:
     - Comment analysis
@@ -2454,7 +2454,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €50
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 2
-- **Límites**: 100.000 análisis, 5000 roasts
+- **Límites**: Unlimited análisis, Unlimited roasts
 - **Cuentas por red social**: hasta **2 de la misma red social**
 - **Funciones incluidas**:
     - Comment analysis
