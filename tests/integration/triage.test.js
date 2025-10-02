@@ -1,4 +1,4 @@
-const { describe, it, beforeEach, afterEach, expect, jest } = require('@jest/globals');
+const { describe, it, beforeEach, afterEach, expect } = require('@jest/globals');
 const TriageService = require('../../src/services/triageService');
 const TriageFixtures = require('../helpers/triageFixtures');
 
@@ -6,19 +6,21 @@ const TriageFixtures = require('../helpers/triageFixtures');
 jest.mock('../../src/services/shieldDecisionEngine');
 jest.mock('../../src/workers/AnalyzeToxicityWorker');
 jest.mock('../../src/services/costControl');
-jest.mock('../../src/services/planLimitsService');
+jest.mock('../../src/services/planLimitsService', () => ({
+  getPlanLimits: jest.fn(),
+  getPlanConfig: jest.fn()
+}));
 
 const ShieldDecisionEngine = require('../../src/services/shieldDecisionEngine');
 const AnalyzeToxicityWorker = require('../../src/workers/AnalyzeToxicityWorker');
 const CostControlService = require('../../src/services/costControl');
-const PlanLimitsService = require('../../src/services/planLimitsService');
+const planLimitsService = require('../../src/services/planLimitsService');
 
 describe('Triage System Integration Tests', () => {
   let triageService;
   let mockShieldEngine;
   let mockToxicityWorker;
   let mockCostControl;
-  let mockPlanLimits;
 
   beforeEach(() => {
     // Reset all mocks
@@ -40,16 +42,11 @@ describe('Triage System Integration Tests', () => {
       getUserPlan: jest.fn()
     };
 
-    mockPlanLimits = {
-      getPlanLimits: jest.fn(),
-      getPlanConfig: jest.fn()
-    };
 
     // Mock module implementations
     ShieldDecisionEngine.mockImplementation(() => mockShieldEngine);
     AnalyzeToxicityWorker.mockImplementation(() => mockToxicityWorker);
     CostControlService.mockImplementation(() => mockCostControl);
-    PlanLimitsService.mockImplementation(() => mockPlanLimits);
 
     // Create fresh service instance
     triageService = new (require('../../src/services/triageService').constructor)();
