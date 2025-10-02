@@ -99,7 +99,7 @@ The core decision engine implements toxicity-based routing with plan-specific th
 - **All Plans**: 0.85 (universal block threshold)
 
 #### 🎯 Decision Logic Flow
-```
+```text
 Comment Toxicity Analysis (AnalyzeToxicityWorker)
     ↓
 ≥ 0.85: BLOCK (+ Shield actions for Pro+ plans)
@@ -113,8 +113,8 @@ Plan Limits Exceeded: DEFER (retry later)
 ```
 
 ### 🛡️ Shield System Integration
-- **Free/Starter Plans**: No Shield integration (cost optimization)
-- **Pro+ Plans**: Full Shield integration with escalating actions:
+- **Free Plan**: No Shield integration (cost optimization)
+- **Starter/Pro+ Plans**: Full Shield integration with escalating actions:
   - Triggered automatically for content ≥ 0.85 toxicity (block threshold)
   - Integrates with ShieldDecisionEngine for advanced moderation decisions
   - Shield actions executed in parallel with triage blocking
@@ -6081,7 +6081,7 @@ const tabs = [
 - **Quality Maintained**: All coverage still meets 25% minimum threshold
 
 ### 📊 Coverage Results (Post-Fix)
-```
+```text
 All files: Lines 57.97%, Functions 67.22%, Statements 57.91%, Branches 28.57%
 ✅ All metrics exceed 25% threshold requirement
 ✅ 67 SPEC 14 tests passing (24 skipped)
