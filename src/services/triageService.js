@@ -39,7 +39,7 @@ class TriageService {
       },
       
       // Shield integration thresholds
-      SHIELD_ENABLED_PLANS: ['pro', 'plus', 'creator_plus'],
+      SHIELD_ENABLED_PLANS: ['starter', 'pro', 'plus', 'creator_plus'],
       
       // Cache configuration - matches Shield patterns
       CACHE_TTL_MS: 300000, // 5 minutes
@@ -469,7 +469,9 @@ class TriageService {
       cache_stats: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
+        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0 
+          ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
+          : 0
       }
     };
   }

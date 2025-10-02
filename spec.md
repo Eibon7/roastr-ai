@@ -92,7 +92,7 @@ The core decision engine implements toxicity-based routing with plan-specific th
 
 #### 📊 Toxicity Thresholds by Plan
 - **Free Plan**: 0.30 (roast threshold), Shield disabled
-- **Starter Plan**: 0.30 (roast threshold), Shield disabled  
+- **Starter Plan**: 0.30 (roast threshold), Shield enabled ✨  
 - **Pro Plan**: 0.25 (roast threshold), Shield enabled
 - **Plus Plan**: 0.20 (roast threshold), Shield enabled
 - **Creator Plus Plan**: 0.20 (roast threshold), Shield enabled
