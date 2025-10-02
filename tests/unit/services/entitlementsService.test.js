@@ -75,7 +75,7 @@ describe('EntitlementsService', () => {
             id: priceId,
             lookup_key: 'pro_monthly',
             metadata: {
-                analysis_limit_monthly: '2000',
+                analysis_limit_monthly: '10000',
                 roast_limit_monthly: '1000',
                 model: 'gpt-4',
                 shield_enabled: 'true',
@@ -160,8 +160,8 @@ describe('EntitlementsService', () => {
     describe('setEntitlements', () => {
         const userId = 'test-user-123';
         const entitlements = {
-            analysis_limit_monthly: 500,
-            roast_limit_monthly: 500,
+            analysis_limit_monthly: 1000,
+            roast_limit_monthly: 10,
             model: 'gpt-3.5-turbo',
             shield_enabled: false,
             rqc_mode: 'basic',
@@ -231,7 +231,7 @@ describe('EntitlementsService', () => {
 
             expect(result.plan_name).toBe('free');
             expect(result.analysis_limit_monthly).toBe(100);
-            expect(result.roast_limit_monthly).toBe(100);
+            expect(result.roast_limit_monthly).toBe(10);
         });
 
         it('should return default entitlements on database error', async () => {
@@ -284,10 +284,10 @@ describe('EntitlementsService', () => {
             });
 
             jest.spyOn(entitlementsService, 'getEntitlements').mockResolvedValue({
-                roast_limit_monthly: 100
+                roast_limit_monthly: 10
             });
             jest.spyOn(entitlementsService, 'getCurrentUsage').mockResolvedValue({
-                roasts_used: 100,
+                roasts_used: 10,
                 period_start: '2024-01-01',
                 period_end: '2024-01-31'
             });
@@ -295,8 +295,8 @@ describe('EntitlementsService', () => {
             const result = await entitlementsService.checkUsageLimit(userId, 'roasts');
 
             expect(result.allowed).toBe(false);
-            expect(result.limit).toBe(100);
-            expect(result.used).toBe(100);
+            expect(result.limit).toBe(10);
+            expect(result.used).toBe(10);
             expect(result.remaining).toBe(0);
         });
 
@@ -466,8 +466,8 @@ describe('EntitlementsService', () => {
 
         it('should return comprehensive usage summary', async () => {
             const mockEntitlements = {
-                analysis_limit_monthly: 1000,
-                roast_limit_monthly: 500
+                analysis_limit_monthly: 10000,
+                roast_limit_monthly: 1000
             };
             
             const mockUsage = {
@@ -485,8 +485,8 @@ describe('EntitlementsService', () => {
             expect(result.user_id).toBe(userId);
             expect(result.entitlements).toEqual(mockEntitlements);
             expect(result.usage).toEqual(mockUsage);
-            expect(result.utilization.analysis.percentage).toBe(20); // 200/1000 * 100
-            expect(result.utilization.roasts.percentage).toBe(20); // 100/500 * 100
+            expect(result.utilization.analysis.percentage).toBe(2); // 200/10000 * 100
+            expect(result.utilization.roasts.percentage).toBe(10); // 100/1000 * 100
             expect(result.period.start).toBe('2024-01-01');
         });
 
@@ -512,7 +512,7 @@ describe('EntitlementsService', () => {
         it('should extract entitlements from price metadata correctly', () => {
             const mockPrice = {
                 metadata: {
-                    analysis_limit_monthly: '2000',
+                    analysis_limit_monthly: '10000',
                     roast_limit_monthly: '1000',
                     model: 'gpt-4',
                     shield_enabled: 'true',
@@ -529,7 +529,7 @@ describe('EntitlementsService', () => {
 
             const result = entitlementsService._extractEntitlementsFromPrice(mockPrice);
 
-            expect(result.analysis_limit_monthly).toBe(2000); // From price metadata
+            expect(result.analysis_limit_monthly).toBe(10000); // From price metadata
             expect(result.roast_limit_monthly).toBe(1000);
             expect(result.model).toBe('gpt-4');
             expect(result.shield_enabled).toBe(true);
@@ -542,14 +542,14 @@ describe('EntitlementsService', () => {
         it('should return correct defaults for starter plan', () => {
             const result = entitlementsService._getPlanDefaults('starter_monthly');
             expect(result.plan_name).toBe('starter');
-            expect(result.analysis_limit_monthly).toBe(500);
+            expect(result.analysis_limit_monthly).toBe(1000);
             expect(result.shield_enabled).toBe(false);
         });
 
         it('should return correct defaults for pro plan', () => {
             const result = entitlementsService._getPlanDefaults('pro_monthly');
             expect(result.plan_name).toBe('pro');
-            expect(result.analysis_limit_monthly).toBe(2000);
+            expect(result.analysis_limit_monthly).toBe(10000);
             expect(result.shield_enabled).toBe(true);
             expect(result.model).toBe('gpt-4');
         });
@@ -557,8 +557,8 @@ describe('EntitlementsService', () => {
         it('should return correct defaults for creator plus plan', () => {
             const result = entitlementsService._getPlanDefaults('creator_plus_monthly');
             expect(result.plan_name).toBe('creator_plus');
-            expect(result.analysis_limit_monthly).toBe(-1); // Unlimited
-            expect(result.roast_limit_monthly).toBe(-1); // Unlimited
+            expect(result.analysis_limit_monthly).toBe(100000);
+            expect(result.roast_limit_monthly).toBe(5000);
             expect(result.rqc_mode).toBe('premium');
         });
 
@@ -566,7 +566,7 @@ describe('EntitlementsService', () => {
             const result = entitlementsService._getPlanDefaults('unknown_plan');
             expect(result.plan_name).toBe('free');
             expect(result.analysis_limit_monthly).toBe(100);
-            expect(result.roast_limit_monthly).toBe(100);
+            expect(result.roast_limit_monthly).toBe(10);
         });
     });
 });

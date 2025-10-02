@@ -113,8 +113,8 @@ describe('Entitlements Integration Flow', () => {
             id: 'price_starter123',
             lookup_key: 'starter_monthly',
             metadata: {
-                analysis_limit_monthly: '500',
-                roast_limit_monthly: '500',
+                analysis_limit_monthly: '1000',
+                roast_limit_monthly: '10',
                 model: 'gpt-3.5-turbo',
                 shield_enabled: 'false',
                 rqc_mode: 'basic',
@@ -136,8 +136,8 @@ describe('Entitlements Integration Flow', () => {
                     single: jest.fn().mockResolvedValue({
                         data: {
                             account_id: 'test-user-123',
-                            analysis_limit_monthly: 500,
-                            roast_limit_monthly: 500,
+                            analysis_limit_monthly: 1000,
+                            roast_limit_monthly: 10,
                             model: 'gpt-3.5-turbo',
                             shield_enabled: false,
                             rqc_mode: 'basic',
@@ -159,8 +159,8 @@ describe('Entitlements Integration Flow', () => {
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: 500,
-                        roast_limit_monthly: 500,
+                        analysis_limit_monthly: 1000,
+                        roast_limit_monthly: 10,
                         shield_enabled: false
                     },
                     error: null
@@ -191,7 +191,7 @@ describe('Entitlements Integration Flow', () => {
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: 500,
+                        analysis_limit_monthly: 1000,
                         shield_enabled: false
                     },
                     error: null
@@ -241,7 +241,7 @@ describe('Entitlements Integration Flow', () => {
             id: 'price_pro123',
             lookup_key: 'pro_monthly',
             metadata: {
-                analysis_limit_monthly: '2000',
+                analysis_limit_monthly: '10000',
                 roast_limit_monthly: '1000',
                 model: 'gpt-4',
                 shield_enabled: 'true',
@@ -263,7 +263,7 @@ describe('Entitlements Integration Flow', () => {
                     single: jest.fn().mockResolvedValue({
                         data: {
                             account_id: 'test-user-123',
-                            analysis_limit_monthly: 2000,
+                            analysis_limit_monthly: 10000,
                             roast_limit_monthly: 1000,
                             model: 'gpt-4',
                             shield_enabled: true,
@@ -283,7 +283,7 @@ describe('Entitlements Integration Flow', () => {
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: 2000,
+                        analysis_limit_monthly: 10000,
                         shield_enabled: true
                     },
                     error: null
@@ -489,8 +489,8 @@ describe('Entitlements Integration Flow', () => {
     describe('Usage Summary Integration', () => {
         it('should provide comprehensive usage information', async () => {
             const mockEntitlements = {
-                analysis_limit_monthly: 1000,
-                roast_limit_monthly: 500,
+                analysis_limit_monthly: 10000,
+                roast_limit_monthly: 1000,
                 plan_name: 'pro'
             };
 
@@ -584,7 +584,7 @@ describe('Entitlements Integration Flow', () => {
             const proPrice = {
                 id: 'price_pro123',
                 metadata: {
-                    analysis_limit_monthly: '2000',
+                    analysis_limit_monthly: '10000',
                     roast_limit_monthly: '1000',
                     shield_enabled: 'true',
                     plan_name: 'pro'
@@ -599,7 +599,7 @@ describe('Entitlements Integration Flow', () => {
                     single: jest.fn().mockResolvedValue({
                         data: {
                             account_id: 'test-user-123',
-                            analysis_limit_monthly: 2000,
+                            analysis_limit_monthly: 10000,
                             shield_enabled: true,
                             plan_name: 'pro'
                         }
@@ -610,14 +610,14 @@ describe('Entitlements Integration Flow', () => {
             const result = await entitlementsService.setEntitlementsFromStripePrice('test-user-123', 'price_pro123');
 
             expect(result.success).toBe(true);
-            expect(result.entitlements.analysis_limit_monthly).toBe(2000);
+            expect(result.entitlements.analysis_limit_monthly).toBe(10000);
             expect(result.entitlements.shield_enabled).toBe(true);
         });
 
         it('should handle downgrade from pro to free plan', async () => {
             const freeEntitlements = {
                 analysis_limit_monthly: 100,
-                roast_limit_monthly: 100,
+                roast_limit_monthly: 10,
                 model: 'gpt-3.5-turbo',
                 shield_enabled: false,
                 rqc_mode: 'basic',
