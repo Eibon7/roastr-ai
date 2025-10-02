@@ -138,7 +138,7 @@
     "commander": "^14.0.0",
     "cors": "^2.8.5",
     "cron": "^4.3.3",
-    "discord.js": "^14.15.3",
+    "discord.js": "^14.22.1",
     "dompurify": "^3.2.6",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
