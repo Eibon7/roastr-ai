@@ -466,17 +466,39 @@ TriageFixtures.getCommentsByAction = function(action) {
 };
 
 TriageFixtures.getCommentsByPlan = function(plan) {
+  // Return empty array for invalid plan
+  if (!plan || typeof plan !== 'string') {
+    return [];
+  }
+  
   const comments = [];
   for (const category of Object.keys(this)) {
     if (category === 'getCommentsByAction' || category === 'getCommentsByPlan') continue;
+    
+    // Only include comments that are relevant to the specified plan
     comments.push(...this[category].filter(c => {
+      // If comment explicitly lists plans it applies to
       if (Array.isArray(c.expected_plans)) {
         return c.expected_plans.includes(plan);
       }
+      
+      // If comment has plan-specific expected actions
       if (typeof c.expected_action === 'object') {
         return c.expected_action[plan] !== undefined;
       }
-      return true;
+      
+      // If comment has plan-specific expected actions (alternative property)
+      if (typeof c.expected_actions === 'object') {
+        return c.expected_actions[plan] !== undefined;
+      }
+      
+      // Only include comments with simple expected actions for known plans
+      if (typeof c.expected_action === 'string') {
+        const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus'];
+        return validPlans.includes(plan);
+      }
+      
+      return false; // Exclude if no clear plan applicability
     }));
   }
   return comments;

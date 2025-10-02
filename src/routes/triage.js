@@ -389,7 +389,7 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
           id: commentData.id || `batch-${correlationId}-${i}`,
           content: commentData.content.trim(),
           platform: commentData.platform || 'api',
-          metadata: { ...commentData.metadata, batch_index: i },
+          metadata: { ...(commentData.metadata || {}), batch_index: i },
           created_at: new Date().toISOString(),
           source: 'batch_api_request'
         };
