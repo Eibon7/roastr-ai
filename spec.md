@@ -122,10 +122,10 @@ Comment Toxicity Analysis
 - Shield service failures → continue with base triage decision
 
 #### Rate Limiting by Plan
-- **Free**: 5 roasts/day, 50/month
-- **Starter**: 20 roasts/day, 500/month
-- **Pro**: 100 roasts/day, 2,500/month
-- **Plus**: 500 roasts/day, 10,000/month
+- **Free**: 100 roasts/month
+- **Starter**: 500 roasts/month
+- **Pro**: 1,000 roasts/month
+- **Plus**: Unlimited roasts/month
 
 ### 🧪 Comprehensive Test Suite (25 Tests)
 **File**: `tests/integration/triage-decisions.test.js`
@@ -2602,10 +2602,10 @@ Como **usuario de Roastr**, quiero tener distintos planes de suscripción, con l
 
 ### 🎯 Key Achievements
 #### ✅ Tier Configuration (Exactly per SPEC)
-- **Free**: 100 análisis / 10 roasts / 1 cuenta por red / No Shield, No Original Tone
-- **Starter**: 1,000 análisis / 100 roasts / 1 cuenta por red / Shield ON, No Original Tone  
-- **Pro**: 10,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
-- **Plus**: 100,000 análisis / 5,000 roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
+- **Free**: 100 análisis / 100 roasts / 1 cuenta por red / No Shield, No Original Tone
+- **Starter**: 500 análisis / 500 roasts / 1 cuenta por red / Shield ON, No Original Tone
+- **Pro**: 2,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
+- **Plus**: Unlimited análisis / Unlimited roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
 
 #### 🔧 Runtime Validation System
 - **Real-time tier validation** on all API endpoints
