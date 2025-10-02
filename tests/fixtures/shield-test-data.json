@@ -1,0 +1,131 @@
+{
+  "comments": {
+    "low_toxicity": [
+      {
+        "id": "comment_low_1",
+        "original_text": "This app is not very good",
+        "toxicity_score": 0.35,
+        "severity_level": "low",
+        "categories": ["TOXICITY"],
+        "expected_action": "warn"
+      },
+      {
+        "id": "comment_low_2", 
+        "original_text": "I don't like this feature",
+        "toxicity_score": 0.25,
+        "severity_level": "low",
+        "categories": ["TOXICITY"],
+        "expected_action": "warn"
+      }
+    ],
+    "medium_toxicity": [
+      {
+        "id": "comment_medium_1",
+        "original_text": "You are such an idiot for using this",
+        "toxicity_score": 0.65,
+        "severity_level": "medium", 
+        "categories": ["TOXICITY", "INSULT"],
+        "expected_action": "mute_temp"
+      },
+      {
+        "id": "comment_medium_2",
+        "original_text": "This is really stupid and annoying",
+        "toxicity_score": 0.58,
+        "severity_level": "medium",
+        "categories": ["TOXICITY"],
+        "expected_action": "mute_temp"
+      }
+    ],
+    "high_toxicity": [
+      {
+        "id": "comment_high_1",
+        "original_text": "I hope you die you worthless piece of trash",
+        "toxicity_score": 0.85,
+        "severity_level": "high",
+        "categories": ["SEVERE_TOXICITY", "THREAT"],
+        "expected_action": "block"
+      }
+    ],
+    "critical_toxicity": [
+      {
+        "id": "comment_critical_1",
+        "original_text": "I'm going to find you and make you pay",
+        "toxicity_score": 0.98,
+        "severity_level": "critical",
+        "categories": ["SEVERE_TOXICITY", "THREAT", "IDENTITY_ATTACK"],
+        "expected_action": "report"
+      }
+    ]
+  },
+  "users": {
+    "first_time_offender": {
+      "platform_user_id": "user_first_time",
+      "platform_username": "newfirsttime",
+      "total_violations": 0,
+      "actions_taken": [],
+      "expected_offense_level": "first"
+    },
+    "repeat_offender": {
+      "platform_user_id": "user_repeat",
+      "platform_username": "repeatuser", 
+      "total_violations": 2,
+      "actions_taken": [
+        { "action": "warn", "date": "2024-09-01", "severity": "low" },
+        { "action": "mute_temp", "date": "2024-09-15", "severity": "medium" }
+      ],
+      "expected_offense_level": "repeat"
+    },
+    "persistent_offender": {
+      "platform_user_id": "user_persistent",
+      "platform_username": "persistentuser",
+      "total_violations": 4,
+      "actions_taken": [
+        { "action": "warn", "date": "2024-08-01", "severity": "low" },
+        { "action": "mute_temp", "date": "2024-08-15", "severity": "medium" },
+        { "action": "mute_permanent", "date": "2024-09-01", "severity": "medium" },
+        { "action": "block", "date": "2024-09-15", "severity": "high" }
+      ],
+      "expected_offense_level": "persistent"
+    }
+  },
+  "platforms": {
+    "twitter": {
+      "actions": ["warn", "mute_temp", "mute_permanent", "block", "report"],
+      "api_methods": {
+        "hideComment": "v2.hideReply",
+        "blockUser": "v2.blockUser",
+        "reportUser": "v2.reportUser"
+      }
+    },
+    "discord": {
+      "actions": ["warn", "mute", "kick", "ban", "report"],
+      "api_methods": {
+        "muteUser": "guild.members.edit",
+        "banUser": "guild.members.ban",
+        "deleteMessage": "message.delete"
+      }
+    },
+    "youtube": {
+      "actions": ["warn", "hide_comment", "block_channel", "report"],
+      "api_methods": {
+        "hideComment": "commentThreads.update",
+        "blockChannel": "channels.update"
+      }
+    }
+  },
+  "escalation_matrix": {
+    "severity_mapping": {
+      "low": { "first": "warn", "repeat": "warn", "persistent": "mute_temp" },
+      "medium": { "first": "warn", "repeat": "mute_temp", "persistent": "mute_permanent" },
+      "high": { "first": "mute_temp", "repeat": "block", "persistent": "report" },
+      "critical": { "first": "report", "repeat": "report", "persistent": "report" }
+    },
+    "priority_mapping": {
+      "warn": 5,
+      "mute_temp": 4,
+      "mute_permanent": 3,
+      "block": 2,
+      "report": 1
+    }
+  }
+}
