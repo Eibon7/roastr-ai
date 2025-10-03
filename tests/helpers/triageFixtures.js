@@ -466,41 +466,45 @@ TriageFixtures.getCommentsByAction = function(action) {
 };
 
 TriageFixtures.getCommentsByPlan = function(plan) {
-  // Return empty array for invalid plan
-  if (!plan || typeof plan !== 'string') {
+  // Validate plan parameter
+  const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus'];
+  if (!plan || typeof plan !== 'string' || !validPlans.includes(plan)) {
+    console.warn(`Invalid plan specified: ${plan}. Expected one of: ${validPlans.join(', ')}`);
     return [];
   }
-  
+
   const comments = [];
   for (const category of Object.keys(this)) {
     if (category === 'getCommentsByAction' || category === 'getCommentsByPlan') continue;
-    
+
     // Only include comments that are relevant to the specified plan
-    comments.push(...this[category].filter(c => {
+    const filteredComments = this[category].filter(c => {
       // If comment explicitly lists plans it applies to
       if (Array.isArray(c.expected_plans)) {
         return c.expected_plans.includes(plan);
       }
-      
+
       // If comment has plan-specific expected actions
-      if (typeof c.expected_action === 'object') {
-        return c.expected_action[plan] !== undefined;
+      if (typeof c.expected_action === 'object' && c.expected_action !== null) {
+        return c.expected_action.hasOwnProperty(plan);
       }
-      
+
       // If comment has plan-specific expected actions (alternative property)
-      if (typeof c.expected_actions === 'object') {
-        return c.expected_actions[plan] !== undefined;
+      if (typeof c.expected_actions === 'object' && c.expected_actions !== null) {
+        return c.expected_actions.hasOwnProperty(plan);
       }
-      
-      // Only include comments with simple expected actions for known plans
+
+      // Only include comments with simple expected actions for valid plans
       if (typeof c.expected_action === 'string') {
-        const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus'];
-        return validPlans.includes(plan);
+        return true; // Simple actions apply to all valid plans
       }
-      
+
       return false; // Exclude if no clear plan applicability
-    }));
+    });
+
+    comments.push(...filteredComments);
   }
+
   return comments;
 };
 

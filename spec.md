@@ -92,17 +92,17 @@ The core decision engine implements toxicity-based routing with plan-specific th
 
 #### 📊 Toxicity Thresholds by Plan
 - **Free Plan**: 0.30 (roast threshold), Shield disabled
-- **Starter Plan**: 0.30 (roast threshold), Shield enabled ✨  
+- **Starter Plan**: 0.30 (roast threshold), Shield enabled ✨
 - **Pro Plan**: 0.25 (roast threshold), Shield enabled
 - **Plus Plan**: 0.20 (roast threshold), Shield enabled
-- **Creator Plus Plan**: 0.20 (roast threshold), Shield enabled
+- **Creator Plus Plan** (creator_plus): 0.20 (roast threshold), Shield enabled
 - **All Plans**: 0.85 (universal block threshold)
 
 #### 🎯 Decision Logic Flow
 ```text
 Comment Toxicity Analysis (AnalyzeToxicityWorker)
     ↓
-≥ 0.85: BLOCK (+ Shield actions for Pro+ plans)
+≥ 0.85: BLOCK (+ Shield actions for Starter+ plans)
     ↓
 ≥ Plan Threshold: ROAST (subject to rate limits & capacity)
     ↓
@@ -114,7 +114,7 @@ Plan Limits Exceeded: DEFER (retry later)
 
 ### 🛡️ Shield System Integration
 - **Free Plan**: No Shield integration (cost optimization)
-- **Starter/Pro+ Plans**: Full Shield integration with escalating actions:
+- **Starter+ Plans**: Full Shield integration with escalating actions:
   - Triggered automatically for content ≥ 0.85 toxicity (block threshold)
   - Integrates with ShieldDecisionEngine for advanced moderation decisions
   - Shield actions executed in parallel with triage blocking
@@ -5433,7 +5433,7 @@ Complete dashboard system with analytics metrics, Shield UI components, feature 
 #### 🔢 5. Tier-Based Connection Limits
 - **Free Plan**: 1 connection maximum
 - **Pro Plan**: 5 connections maximum  
-- **Creator Plus/Custom**: 999 connections (effectively unlimited)
+- **Creator Plus Plan** (creator_plus): 999 connections (effectively unlimited)
 - **Validation**: Array safety with proper null/undefined handling
 - **User Feedback**: Clear error messages with upgrade prompts
 
@@ -6085,7 +6085,7 @@ const tabs = [
 All files: Lines 57.97%, Functions 67.22%, Statements 57.91%, Branches 28.57%
 ✅ All metrics exceed 25% threshold requirement
 ✅ 67 SPEC 14 tests passing (24 skipped)
-✅ 46 adapter contract tests passing  
+✅ 46 adapter contract tests passing
 ✅ 9 E2E scenario tests passing
 ✅ 12 idempotency tests passing
 ```

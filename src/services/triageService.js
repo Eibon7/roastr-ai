@@ -62,7 +62,7 @@ class TriageService {
    */
   async analyzeAndRoute(comment, organization, user = null, options = {}) {
     const startTime = Date.now();
-    const correlationId = this.generateCorrelationId();
+    const correlationId = options.correlation_id || this.generateCorrelationId();
     
     logger.info('Starting triage analysis', {
       correlation_id: correlationId,
@@ -146,6 +146,11 @@ class TriageService {
     // Basic validation
     if (!comment || !comment.content || typeof comment.content !== 'string') {
       errors.push('invalid_comment_content');
+    }
+
+    // Check for empty or whitespace-only content
+    if (comment.content && typeof comment.content === 'string' && comment.content.trim().length === 0) {
+      errors.push('empty_content');
     }
 
     if (!organization || !organization.id || !organization.plan) {
@@ -256,9 +261,9 @@ class TriageService {
         error: error.message
       });
 
-      // Fallback to conservative analysis
+      // Fallback to conservative analysis (below all thresholds to avoid false positives)
       return {
-        toxicity: 0.5, // Conservative middle ground
+        toxicity: 0.15, // Conservative low value - below all plan thresholds
         categories: ['TOXICITY'],
         confidence: 0.1,
         fallback_used: true,
@@ -465,11 +470,12 @@ class TriageService {
   enrichDecisionWithMetadata(decision, correlationId, startTime) {
     return {
       ...decision,
+      correlation_id: correlationId,
       total_time_ms: Date.now() - startTime,
       cache_stats: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0 
+        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0
           ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
           : 0
       }
@@ -527,7 +533,9 @@ class TriageService {
       cache_performance: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses) || 0,
+        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0
+          ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
+          : 0,
         cache_size: this.decisionCache.size
       },
       thresholds: {

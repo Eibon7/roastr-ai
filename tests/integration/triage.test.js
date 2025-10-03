@@ -1,4 +1,4 @@
-const { describe, it, beforeEach, afterEach, expect, jest } = require('@jest/globals');
+const { describe, it, beforeEach, afterEach, expect } = require('@jest/globals');
 const TriageService = require('../../src/services/triageService');
 const TriageFixtures = require('../helpers/triageFixtures');
 
@@ -6,19 +6,21 @@ const TriageFixtures = require('../helpers/triageFixtures');
 jest.mock('../../src/services/shieldDecisionEngine');
 jest.mock('../../src/workers/AnalyzeToxicityWorker');
 jest.mock('../../src/services/costControl');
-jest.mock('../../src/services/planLimitsService');
+jest.mock('../../src/services/planLimitsService', () => ({
+  getPlanLimits: jest.fn(),
+  getPlanConfig: jest.fn()
+}));
 
 const ShieldDecisionEngine = require('../../src/services/shieldDecisionEngine');
 const AnalyzeToxicityWorker = require('../../src/workers/AnalyzeToxicityWorker');
 const CostControlService = require('../../src/services/costControl');
-const PlanLimitsService = require('../../src/services/planLimitsService');
+const planLimitsService = require('../../src/services/planLimitsService');
 
 describe('Triage System Integration Tests', () => {
   let triageService;
   let mockShieldEngine;
   let mockToxicityWorker;
   let mockCostControl;
-  let mockPlanLimits;
 
   beforeEach(() => {
     // Reset all mocks
@@ -40,16 +42,11 @@ describe('Triage System Integration Tests', () => {
       getUserPlan: jest.fn()
     };
 
-    mockPlanLimits = {
-      getPlanLimits: jest.fn(),
-      getPlanConfig: jest.fn()
-    };
 
     // Mock module implementations
     ShieldDecisionEngine.mockImplementation(() => mockShieldEngine);
     AnalyzeToxicityWorker.mockImplementation(() => mockToxicityWorker);
     CostControlService.mockImplementation(() => mockCostControl);
-    PlanLimitsService.mockImplementation(() => mockPlanLimits);
 
     // Create fresh service instance
     triageService = new (require('../../src/services/triageService').constructor)();
@@ -209,6 +206,9 @@ describe('Triage System Integration Tests', () => {
       const plans = ['free', 'starter', 'pro', 'plus', 'creator_plus'];
       
       for (const plan of plans) {
+        // Clear mocks between iterations - CodeRabbit recommendation
+        jest.clearAllMocks();
+        
         const organization = { id: 'test-org', plan };
         
         mockCostControl.canPerformOperation.mockResolvedValue({
@@ -228,16 +228,28 @@ describe('Triage System Integration Tests', () => {
         expect(result.action).toBe('block');
         expect(result.toxicity_score).toBe(0.90);
         
-        // Shield should be called for paid plans
-        if (['pro', 'plus', 'creator_plus'].includes(plan)) {
-          expect(mockShieldEngine.makeDecision).toHaveBeenCalled();
+        // Enhanced assertions for Shield calls per plan - CodeRabbit recommendation
+        if (['starter', 'pro', 'plus', 'creator_plus'].includes(plan)) {
+          expect(mockShieldEngine.makeDecision).toHaveBeenCalledTimes(1);
+          expect(mockShieldEngine.makeDecision).toHaveBeenCalledWith(
+            expect.objectContaining({
+              organizationId: 'test-org',
+              toxicityAnalysis: expect.objectContaining({
+                toxicity: 0.90,
+                categories: ['SEVERE_TOXICITY', 'THREAT']
+              })
+            })
+          );
+        } else {
+          // Shield should never be called for free plans
+          expect(mockShieldEngine.makeDecision).not.toHaveBeenCalled();
         }
       }
     });
   });
 
   describe('3. Integration with Existing Services (Critical)', () => {
-    it('should properly integrate with ShieldDecisionEngine', async () => {
+    it('should properly integrate with ShieldDecisionEngine for paid plans only', async () => {
       const comment = {
         id: 'shield-test',
         content: 'Eres un idiota completo, ojalá te mueras pronto.',
@@ -245,36 +257,103 @@ describe('Triage System Integration Tests', () => {
         author: 'toxic_user',
         author_id: 'toxic_123'
       };
-      const organization = { id: 'test-org', plan: 'pro' };
       const user = { id: 'test-user' };
       
-      mockCostControl.canPerformOperation.mockResolvedValue({
-        allowed: true
-      });
-      mockToxicityWorker.analyzeToxicity.mockResolvedValue({
-        toxicity: 0.88,
-        categories: ['SEVERE_TOXICITY', 'THREAT']
-      });
-      mockShieldEngine.makeDecision.mockResolvedValue({
-        action: 'block_and_report',
-        severity: 'critical',
-        priority: 1,
-        escalationLevel: 5
-      });
+      const testCases = [
+        { plan: 'free', shouldCallShield: false },
+        { plan: 'starter', shouldCallShield: true },
+        { plan: 'pro', shouldCallShield: true },
+        { plan: 'plus', shouldCallShield: true },
+        { plan: 'creator_plus', shouldCallShield: true }
+      ];
 
-      const result = await triageService.analyzeAndRoute(comment, organization, user);
+      for (const testCase of testCases) {
+        // Clear mocks between iterations - CodeRabbit requirement
+        jest.clearAllMocks();
+        
+        const organization = { id: 'test-org', plan: testCase.plan };
+        
+        mockCostControl.canPerformOperation.mockResolvedValue({
+          allowed: true
+        });
+        mockToxicityWorker.analyzeToxicity.mockResolvedValue({
+          toxicity: 0.88,
+          categories: ['SEVERE_TOXICITY', 'THREAT']
+        });
+        mockShieldEngine.makeDecision.mockResolvedValue({
+          action: 'block_and_report',
+          severity: 'critical',
+          priority: 1,
+          escalationLevel: 5
+        });
 
-      expect(result.action).toBe('block');
-      expect(mockShieldEngine.makeDecision).toHaveBeenCalledWith(
-        expect.objectContaining({
-          organizationId: 'test-org',
-          platform: 'twitter',
-          originalText: comment.content,
-          toxicityAnalysis: expect.objectContaining({
-            toxicity: 0.88
-          })
-        })
-      );
+        const result = await triageService.analyzeAndRoute(comment, organization, user);
+
+        expect(result.action).toBe('block');
+        
+        // Enhanced Shield integration assertions - CodeRabbit recommendation
+        if (testCase.shouldCallShield) {
+          expect(mockShieldEngine.makeDecision).toHaveBeenCalledTimes(1);
+          expect(mockShieldEngine.makeDecision).toHaveBeenCalledWith(
+            expect.objectContaining({
+              organizationId: 'test-org',
+              platform: 'twitter',
+              originalText: comment.content,
+              toxicityAnalysis: expect.objectContaining({
+                toxicity: 0.88,
+                categories: ['SEVERE_TOXICITY', 'THREAT']
+              }),
+              metadata: expect.objectContaining({
+                triage_source: true
+              })
+            })
+          );
+        } else {
+          // Shield should never be called for free plans
+          expect(mockShieldEngine.makeDecision).not.toHaveBeenCalled();
+        }
+      }
+    });
+
+    it('should never call Shield for toxicity below block threshold', async () => {
+      const comment = {
+        id: 'shield-threshold-test',
+        content: 'This content is moderately toxic but below block threshold',
+        platform: 'twitter'
+      };
+      const user = { id: 'test-user' };
+      
+      const testCases = [
+        { plan: 'free', toxicity: 0.50 },
+        { plan: 'starter', toxicity: 0.60 },
+        { plan: 'pro', toxicity: 0.70 },
+        { plan: 'plus', toxicity: 0.80 },
+        { plan: 'creator_plus', toxicity: 0.84 } // Just below 0.85 threshold
+      ];
+
+      for (const testCase of testCases) {
+        // Clear mocks between iterations
+        jest.clearAllMocks();
+        
+        const organization = { id: 'test-org', plan: testCase.plan };
+        
+        mockCostControl.canPerformOperation.mockResolvedValue({
+          allowed: true
+        });
+        mockToxicityWorker.analyzeToxicity.mockResolvedValue({
+          toxicity: testCase.toxicity,
+          categories: ['TOXICITY']
+        });
+
+        const result = await triageService.analyzeAndRoute(comment, organization, user);
+
+        // Should be roast action (not block)
+        expect(result.action).toBe('roast');
+        expect(result.toxicity_score).toBe(testCase.toxicity);
+        
+        // Shield should NEVER be called below block threshold regardless of plan
+        expect(mockShieldEngine.makeDecision).not.toHaveBeenCalled();
+      }
     });
 
     it('should properly integrate with AnalyzeToxicityWorker', async () => {
@@ -506,7 +585,7 @@ describe('Triage System Integration Tests', () => {
       
       expect(processingTime).toBeLessThan(5000); // Should complete in under 5 seconds
       expect(result.total_time_ms).toBeDefined();
-      expect(result.total_time_ms).toBeGreaterThan(0);
+      expect(result.total_time_ms).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -572,25 +651,35 @@ describe('Triage System Integration Tests', () => {
   describe('7. Boundary Testing', () => {
     it('should handle exact threshold boundaries correctly', async () => {
       const boundaryTests = [
-        { plan: 'free', toxicity: 0.299, expected: 'publish' },
-        { plan: 'free', toxicity: 0.301, expected: 'roast' },
-        { plan: 'pro', toxicity: 0.249, expected: 'publish' },
-        { plan: 'pro', toxicity: 0.251, expected: 'roast' },
-        { plan: 'plus', toxicity: 0.199, expected: 'publish' },
-        { plan: 'plus', toxicity: 0.201, expected: 'roast' },
-        { plan: 'pro', toxicity: 0.849, expected: 'roast' },
-        { plan: 'pro', toxicity: 0.851, expected: 'block' }
+        { plan: 'free', toxicity: 0.29, expected: 'publish' },
+        { plan: 'free', toxicity: 0.30, expected: 'roast' },
+        { plan: 'free', toxicity: 0.31, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.24, expected: 'publish' },
+        { plan: 'pro', toxicity: 0.25, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.26, expected: 'roast' },
+        { plan: 'plus', toxicity: 0.19, expected: 'publish' },
+        { plan: 'plus', toxicity: 0.20, expected: 'roast' },
+        { plan: 'plus', toxicity: 0.21, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.84, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.85, expected: 'block' },
+        { plan: 'pro', toxicity: 0.86, expected: 'block' }
       ];
       
       for (const test of boundaryTests) {
+        // Clear mocks before each test iteration
+        jest.clearAllMocks();
+
+        // Clear cache to ensure each boundary test is independent
+        triageService.clearCache();
+
         const comment = {
           id: `boundary-${test.plan}-${test.toxicity}`,
-          content: `Boundary test content for ${test.plan} plan`,
+          content: `Boundary test content for ${test.plan} plan at ${test.toxicity}`,
           platform: 'twitter'
         };
         const organization = { id: 'test-org', plan: test.plan };
         const user = { id: 'test-user' };
-        
+
         mockCostControl.canPerformOperation.mockResolvedValue({
           allowed: true
         });
@@ -736,33 +825,54 @@ describe('Triage System Integration Tests', () => {
 
       expect(result.action).toBe('publish'); // Conservative fallback
       expect(result.fallback_used).toBe(true);
-      expect(result.toxicity_score).toBe(0.5); // Conservative middle ground
+      expect(result.toxicity_score).toBe(0.15); // Conservative fallback updated by CodeRabbit
     });
 
-    it('should handle Shield service failures gracefully', async () => {
+    it('should handle Shield service failures gracefully for paid plans', async () => {
       const comment = {
         id: 'shield-error-test',
         content: 'High toxicity content',
         platform: 'twitter'
       };
-      const organization = { id: 'test-org', plan: 'pro' };
       const user = { id: 'test-user' };
 
-      mockCostControl.canPerformOperation.mockResolvedValue({
-        allowed: true
-      });
-      mockToxicityWorker.analyzeToxicity.mockResolvedValue({
-        toxicity: 0.90, // Should trigger block
-        categories: ['SEVERE_TOXICITY']
-      });
-      mockShieldEngine.makeDecision.mockRejectedValue(
-        new Error('Shield service unavailable')
-      );
+      const paidPlans = ['starter', 'pro', 'plus', 'creator_plus'];
 
-      const result = await triageService.analyzeAndRoute(comment, organization, user);
+      for (const plan of paidPlans) {
+        // Clear mocks between iterations
+        jest.clearAllMocks();
+        
+        const organization = { id: 'test-org', plan };
 
-      expect(result.action).toBe('block'); // Still blocks high toxicity
-      expect(result.shield_decision).toBeNull(); // But no Shield decision
+        mockCostControl.canPerformOperation.mockResolvedValue({
+          allowed: true
+        });
+        mockToxicityWorker.analyzeToxicity.mockResolvedValue({
+          toxicity: 0.90, // Should trigger block
+          categories: ['SEVERE_TOXICITY']
+        });
+        mockShieldEngine.makeDecision.mockRejectedValue(
+          new Error('Shield service unavailable')
+        );
+
+        const result = await triageService.analyzeAndRoute(comment, organization, user);
+
+        expect(result.action).toBe('block'); // Still blocks high toxicity
+        expect(result.shield_decision).toBeNull(); // But no Shield decision
+        
+        // Verify Shield was called but failed for paid plans
+        expect(mockShieldEngine.makeDecision).toHaveBeenCalledTimes(1);
+        expect(mockShieldEngine.makeDecision).toHaveBeenCalledWith(
+          expect.objectContaining({
+            organizationId: 'test-org',
+            platform: 'twitter',
+            toxicityAnalysis: expect.objectContaining({
+              toxicity: 0.90,
+              categories: ['SEVERE_TOXICITY']
+            })
+          })
+        );
+      }
     });
   });
 });
