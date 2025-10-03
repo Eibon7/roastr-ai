@@ -55,7 +55,7 @@ env:
 
 jobs:
   # Pre-flight checks
-  pre-flight:
+  pre_flight:
     runs-on: ubuntu-latest
     outputs:
       should_run_full_suite: ${{ steps.changes.outputs.should_run }}
@@ -81,9 +81,9 @@ jobs:
         fi
 
   # Synthetic fixture validation
-  validate-fixtures:
-    needs: pre-flight
-    if: needs['pre-flight'].outputs['should_run_full_suite'] == 'true'
+  validate_fixtures:
+    needs: pre_flight
+    if: needs.pre_flight.outputs.should_run_full_suite == 'true'
     runs-on: ubuntu-latest
     
     steps:
@@ -125,9 +125,9 @@ jobs:
         "
 
   # Unit and integration tests
-  test-core:
-    needs: [pre-flight, validate-fixtures]
-    if: needs['pre-flight'].outputs['should_run_full_suite'] == 'true'
+  test_core:
+    needs: [pre_flight, validate_fixtures]
+    if: needs.pre_flight.outputs.should_run_full_suite == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -198,9 +198,9 @@ jobs:
         "
 
   # Performance and coverage validation
-  validate-coverage:
-    needs: [test-core]
-    if: always() && needs['pre-flight'].outputs['should_run_full_suite'] == 'true'
+  validate_coverage:
+    needs: [test_core]
+    if: always() && needs.pre_flight.outputs.should_run_full_suite == 'true'
     runs-on: ubuntu-latest
     
     steps:
@@ -266,8 +266,8 @@ jobs:
         "
 
   # SPEC 14 scenario verification
-  verify-spec-scenarios:
-    needs: [test-core]
+  verify_spec_scenarios:
+    needs: [test_core]
     if: always()
     runs-on: ubuntu-latest
     
@@ -368,21 +368,21 @@ jobs:
         "
 
   # Final validation
-  spec14-validation:
-    needs: [test-core, validate-coverage, verify-spec-scenarios]
+  spec14_validation:
+    needs: [test_core, validate_coverage, verify_spec_scenarios]
     if: always()
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: SPEC 14 Final Validation
       run: |
         echo "🎯 SPEC 14 - QA Test Suite Integral: Final Validation"
         echo "=================================================="
-        
+
         # Check all job results
-        CORE_RESULT="${{ needs.test-core.result }}"
-        COVERAGE_RESULT="${{ needs.validate-coverage.result }}"
-        SCENARIOS_RESULT="${{ needs.verify-spec-scenarios.result }}"
+        CORE_RESULT="${{ needs.test_core.result }}"
+        COVERAGE_RESULT="${{ needs.validate_coverage.result }}"
+        SCENARIOS_RESULT="${{ needs.verify_spec_scenarios.result }}"
         
         echo "📊 Test Results:"
         echo "  Core Tests: $CORE_RESULT"
@@ -416,8 +416,8 @@ jobs:
         fi
 
   # Optional: Performance benchmarks
-  performance-benchmarks:
-    needs: [test-core]
+  performance_benchmarks:
+    needs: [test_core]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     
