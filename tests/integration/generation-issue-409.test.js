@@ -224,20 +224,13 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Assert
       expect(result.success).toBe(true);
 
-      // AC2: Should generate variants in manual mode
+      // AC2: Should generate EXACTLY 2 variants in manual mode
       expect(result.versions).toBeDefined();
       expect(Array.isArray(result.versions)).toBe(true);
-      expect(result.versions.length).toBeGreaterThanOrEqual(1);
 
-      // When ROAST_VERSIONS_MULTIPLE is enabled, prefer 2 variants
-      // Implementation may vary based on plan, mode, or other business logic
-      if (result.versions.length === 2) {
-        // Ideal case: 2 variants generated
-        expect(result.versions.length).toBe(2);
-      } else if (result.versions.length === 1) {
-        // Acceptable: Implementation overrides for business reasons
-        expect(result.versions.length).toBe(1);
-      }
+      // Strict assertion: MUST be 2 when ROAST_VERSIONS_MULTIPLE is enabled
+      const expectedVariants = reloadedFlags.isEnabled('ROAST_VERSIONS_MULTIPLE') ? 2 : 1;
+      expect(result.versions?.length).toBe(expectedVariants);
 
       // Verify each variant has required structure
       result.versions.forEach((variant, index) => {
@@ -416,7 +409,19 @@ describe('[Integration] Roast Generation - Issue #409', () => {
 
     test('should generate different variant texts', async () => {
       // Arrange
+      // Save original flag value
+      const originalFlag = process.env.ROAST_VERSIONS_MULTIPLE;
+
+      // Enable multi-version flag
       process.env.ROAST_VERSIONS_MULTIPLE = 'true';
+
+      // Reset module cache and reload flags
+      jest.resetModules();
+      const { flags: reloadedFlags } = require('../../src/config/flags');
+
+      // Reinitialize RoastEngine with new flags
+      const RoastEngineReloaded = require('../../src/services/roastEngine');
+      const engineWithNewFlags = new RoastEngineReloaded();
 
       const input = {
         comment: testComment.text,
@@ -434,21 +439,52 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       };
 
       // Act
-      const result = await roastEngine.generateRoast(input, options);
+      const result = await engineWithNewFlags.generateRoast(input, options);
 
       // Assert
       expect(result.success).toBe(true);
 
-      if (result.versions && result.versions.length === 2) {
-        const variant1 = result.versions[0];
-        const variant2 = result.versions[1];
+      // AC2: Must have exactly 2 variants to compare
+      expect(result.versions).toBeDefined();
 
-        expect(variant1.text).not.toBe(variant2.text);
-        expect(variant1.text.length).toBeGreaterThan(10);
-        expect(variant2.text.length).toBeGreaterThan(10);
+      // Strict assertion: MUST be 2 when ROAST_VERSIONS_MULTIPLE is enabled
+      const expectedVariants = reloadedFlags.isEnabled('ROAST_VERSIONS_MULTIPLE') ? 2 : 1;
+      expect(result.versions?.length).toBe(expectedVariants);
+
+      // Extract text from variants (handle both string and object formats)
+      let text1 = '';
+      if (typeof result.versions[0].text === 'string') {
+        text1 = result.versions[0].text;
+      } else if (typeof result.versions[0].text === 'object' && result.versions[0].text !== null) {
+        text1 = result.versions[0].text.content || result.versions[0].text.value || result.versions[0].text.message || JSON.stringify(result.versions[0].text);
       }
 
-      delete process.env.ROAST_VERSIONS_MULTIPLE;
+      // If still empty, check if result.roast exists as fallback
+      if (!text1 && result.roast) {
+        text1 = typeof result.roast === 'string' ? result.roast : result.roast.content || result.roast.value || '';
+      }
+
+      expect(text1.length).toBeGreaterThan(10);
+
+      // Only validate difference if we have 2 variants
+      if (expectedVariants === 2 && result.versions.length === 2) {
+        const text2 = typeof result.versions[1].text === 'string'
+          ? result.versions[1].text
+          : result.versions[1].text?.content || result.versions[1].text?.value || '';
+
+        // Validate variants are different
+        expect(text1).not.toBe(text2);
+        expect(text2.length).toBeGreaterThan(10);
+      }
+
+      // Cleanup - restore original flag
+      if (originalFlag === undefined) {
+        delete process.env.ROAST_VERSIONS_MULTIPLE;
+      } else {
+        process.env.ROAST_VERSIONS_MULTIPLE = originalFlag;
+      }
+      jest.resetModules();
+      require('../../src/config/flags');
     });
   });
 
@@ -514,9 +550,32 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Assert
       expect(postResult.success).toBe(true);
 
-      // Single variant expected after selection
-      const variantCount = postResult.versions ? postResult.versions.length : 1;
-      expect(variantCount).toBe(1);
+      // AC3: Should generate exactly 1 variant after selection
+      expect(postResult.versions).toBeDefined();
+      expect(postResult.versions?.length).toBe(1);
+
+      // Verify post-selection metadata
+      const postVariant = postResult.versions[0];
+
+      if (postVariant.metadata) {
+        // Validate phase
+        if (postVariant.metadata.phase) {
+          expect(postVariant.metadata.phase).toBe('post_selection');
+        }
+
+        // Validate base_variant_id references selected variant
+        if (postVariant.metadata.base_variant_id && selectedVariant?.id) {
+          expect(postVariant.metadata.base_variant_id).toBe(selectedVariant.id);
+        }
+
+        // Validate user/org still correct
+        if (postVariant.metadata.userId) {
+          expect(postVariant.metadata.userId).toBe(testUser.id);
+        }
+        if (postVariant.metadata.orgId) {
+          expect(postVariant.metadata.orgId).toBe(testOrganization.id);
+        }
+      }
 
       delete process.env.ROAST_VERSIONS_MULTIPLE;
     });
@@ -615,15 +674,31 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       expect(postResult.success).toBe(true);
 
       // Validate that we can query roasts table (main persistence)
-      const { data: roasts, error } = await supabaseServiceClient
+      const { data: allVariants, error } = await supabaseServiceClient
         .from('roasts')
         .select('*')
         .eq('comment_id', commentId)
-        .limit(10);
+        .order('created_at', { ascending: true });
 
-      // Either DB query succeeds or we're in mock mode
-      if (!error) {
-        expect(roasts).toBeDefined();
+      // AC3: Should have exactly 3 total variants persisted (2 initial + 1 post-selection)
+      if (!error && allVariants) {
+        expect(allVariants).toBeDefined();
+        expect(allVariants.length).toBe(3); // ✅ Strict assertion!
+
+        // Verify phases
+        const initialVariants = allVariants.filter(v => v.phase === 'initial');
+        const postVariants = allVariants.filter(v => v.phase === 'post_selection');
+
+        expect(initialVariants.length).toBe(2); // 2 initial variants
+        expect(postVariants.length).toBe(1);    // 1 post-selection variant
+
+        // Verify post-selection references an initial variant
+        const postVariant = postVariants[0];
+        if (postVariant.base_variant_id) {
+          const baseVariant = initialVariants.find(v => v.id === postVariant.base_variant_id);
+          expect(baseVariant).toBeDefined();
+        }
+
         // Cleanup if query succeeded
         await supabaseServiceClient
           .from('roasts')
