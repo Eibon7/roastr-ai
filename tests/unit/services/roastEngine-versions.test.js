@@ -35,7 +35,8 @@ describe('RoastEngine - Version Control', () => {
     } else {
       process.env.ROAST_VERSIONS_MULTIPLE = originalFlag;
     }
-    flags.reload();
+    // Reset modules to reload flags
+    jest.resetModules();
   });
 
   describe('Voice Styles', () => {
