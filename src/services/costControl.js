@@ -55,6 +55,7 @@ class CostControlService {
         'generate_reply': 'roasts',
         'fetch_comment': 'api_calls',
         'analyze_toxicity': 'comment_analysis',
+        'triage_analysis': 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
         'post_response': 'api_calls',
         'shield_action': 'shield_actions',
         'webhook_call': 'webhook_calls'
@@ -145,6 +146,7 @@ class CostControlService {
         'generate_reply': 'roasts',
         'fetch_comment': 'api_calls',
         'analyze_toxicity': 'comment_analysis',
+        'triage_analysis': 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
         'post_response': 'api_calls',
         'shield_action': 'shield_actions',
         'webhook_call': 'webhook_calls'

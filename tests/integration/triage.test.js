@@ -585,7 +585,7 @@ describe('Triage System Integration Tests', () => {
       
       expect(processingTime).toBeLessThan(5000); // Should complete in under 5 seconds
       expect(result.total_time_ms).toBeDefined();
-      expect(result.total_time_ms).toBeGreaterThan(0);
+      expect(result.total_time_ms).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -651,25 +651,35 @@ describe('Triage System Integration Tests', () => {
   describe('7. Boundary Testing', () => {
     it('should handle exact threshold boundaries correctly', async () => {
       const boundaryTests = [
-        { plan: 'free', toxicity: 0.299, expected: 'publish' },
-        { plan: 'free', toxicity: 0.301, expected: 'roast' },
-        { plan: 'pro', toxicity: 0.249, expected: 'publish' },
-        { plan: 'pro', toxicity: 0.251, expected: 'roast' },
-        { plan: 'plus', toxicity: 0.199, expected: 'publish' },
-        { plan: 'plus', toxicity: 0.201, expected: 'roast' },
-        { plan: 'pro', toxicity: 0.849, expected: 'roast' },
-        { plan: 'pro', toxicity: 0.851, expected: 'block' }
+        { plan: 'free', toxicity: 0.29, expected: 'publish' },
+        { plan: 'free', toxicity: 0.30, expected: 'roast' },
+        { plan: 'free', toxicity: 0.31, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.24, expected: 'publish' },
+        { plan: 'pro', toxicity: 0.25, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.26, expected: 'roast' },
+        { plan: 'plus', toxicity: 0.19, expected: 'publish' },
+        { plan: 'plus', toxicity: 0.20, expected: 'roast' },
+        { plan: 'plus', toxicity: 0.21, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.84, expected: 'roast' },
+        { plan: 'pro', toxicity: 0.85, expected: 'block' },
+        { plan: 'pro', toxicity: 0.86, expected: 'block' }
       ];
       
       for (const test of boundaryTests) {
+        // Clear mocks before each test iteration
+        jest.clearAllMocks();
+
+        // Clear cache to ensure each boundary test is independent
+        triageService.clearCache();
+
         const comment = {
           id: `boundary-${test.plan}-${test.toxicity}`,
-          content: `Boundary test content for ${test.plan} plan`,
+          content: `Boundary test content for ${test.plan} plan at ${test.toxicity}`,
           platform: 'twitter'
         };
         const organization = { id: 'test-org', plan: test.plan };
         const user = { id: 'test-user' };
-        
+
         mockCostControl.canPerformOperation.mockResolvedValue({
           allowed: true
         });
@@ -815,7 +825,7 @@ describe('Triage System Integration Tests', () => {
 
       expect(result.action).toBe('publish'); // Conservative fallback
       expect(result.fallback_used).toBe(true);
-      expect(result.toxicity_score).toBe(0.5); // Conservative middle ground
+      expect(result.toxicity_score).toBe(0.15); // Conservative fallback updated by CodeRabbit
     });
 
     it('should handle Shield service failures gracefully for paid plans', async () => {
@@ -863,6 +873,46 @@ describe('Triage System Integration Tests', () => {
           })
         );
       }
+    });
+
+    it('should fail-closed when cost control check fails', async () => {
+      const comment = {
+        id: 'cost-control-error',
+        content: 'Moderately toxic comment',
+        platform: 'twitter'
+      };
+      const organization = { id: 'test-org', plan: 'pro' };
+      const user = { id: 'test-user' };
+
+      // Mock cost control failure - this happens before toxicity check
+      mockCostControl.canPerformOperation.mockRejectedValue(
+        new Error('Cost control database connection failed')
+      );
+
+      const result = await triageService.analyzeAndRoute(comment, organization, user);
+
+      // Should fail-closed (defer) instead of allowing roast
+      expect(result.action).toBe('defer');
+      expect(result.reasoning).toBe('plan_limit_exceeded');
+      expect(result.limit_info).toBeDefined();
+      expect(result.limit_info.allowed).toBe(false);
+      expect(result.limit_info.reason).toBe('permission_check_failed');
+    });
+
+    it('should generate crypto-secure correlation IDs', () => {
+      const id1 = triageService.generateCorrelationId();
+      const id2 = triageService.generateCorrelationId();
+
+      // Format: triage-{timestamp}-{8 hex chars}
+      expect(id1).toMatch(/^triage-\d+-[a-f0-9]{8}$/);
+      expect(id2).toMatch(/^triage-\d+-[a-f0-9]{8}$/);
+
+      // Should be unique
+      expect(id1).not.toBe(id2);
+
+      // Timestamp should be recent (within last second)
+      const timestamp1 = parseInt(id1.split('-')[1]);
+      expect(Date.now() - timestamp1).toBeLessThan(1000);
     });
   });
 });

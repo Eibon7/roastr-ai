@@ -23,7 +23,18 @@ class TriageService {
     this.costControl = new CostControlService();
     this.planLimits = planLimitsService;
     this.toxicityWorker = new AnalyzeToxicityWorker();
-    
+
+    // Initialize cache secret from environment or generate random (CodeRabbit #3298455873)
+    this.CACHE_SECRET = process.env.TRIAGE_CACHE_SECRET ||
+                        crypto.randomBytes(32).toString('hex');
+
+    if (!process.env.TRIAGE_CACHE_SECRET) {
+      logger.warn('TRIAGE_CACHE_SECRET not set in environment, using random secret (cache will not persist across restarts)', {
+        service: 'TriageService',
+        security_warning: true
+      });
+    }
+
     // Decision matrix - integrates with existing Shield thresholds
     this.decisionMatrix = {
       // Block threshold - aligns with Shield critical level
@@ -148,6 +159,11 @@ class TriageService {
       errors.push('invalid_comment_content');
     }
 
+    // Check for empty or whitespace-only content
+    if (comment.content && typeof comment.content === 'string' && comment.content.trim().length === 0) {
+      errors.push('empty_content');
+    }
+
     if (!organization || !organization.id || !organization.plan) {
       errors.push('invalid_organization');
     }
@@ -229,14 +245,22 @@ class TriageService {
   /**
    * Perform toxicity analysis using existing worker
    * Leverages AnalyzeToxicityWorker for consistency
+   *
+   * @timeout 10 seconds - Prevents hanging on slow API calls (CodeRabbit #3298511777)
    */
   async analyzeToxicity(comment, organization, correlationId) {
     const startTime = Date.now();
+    const ANALYSIS_TIMEOUT = 10000; // 10 seconds
 
     try {
-      // Use existing toxicity worker for consistent analysis
-      const analysis = await this.toxicityWorker.analyzeToxicity(comment.content);
-      
+      // Use existing toxicity worker with timeout protection (CodeRabbit #3298511777)
+      const analysis = await Promise.race([
+        this.toxicityWorker.analyzeToxicity(comment.content),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Toxicity analysis timeout')), ANALYSIS_TIMEOUT)
+        )
+      ]);
+
       logger.debug('Toxicity analysis completed', {
         correlation_id: correlationId,
         toxicity_score: analysis.toxicity,
@@ -253,12 +277,18 @@ class TriageService {
     } catch (error) {
       logger.error('Toxicity analysis failed', {
         correlation_id: correlationId,
-        error: error.message
+        error: error.message,
+        timeout: error.message.includes('timeout')
       });
 
-      // Fallback to conservative analysis
+      // Fallback to conservative analysis (below all thresholds to avoid false positives)
+      // When toxicity analysis fails, we use fail-open approach: assume content is safe
+      // 0.15 is BELOW all plan thresholds (free: 0.30, pro: 0.25, plus: 0.20)
+      // This means the comment will be PUBLISHED (not roasted/blocked)
+      // This prevents false positives (blocking innocent content when API is down)
+      // CodeRabbit #3298546625: Confirmed this is correct behavior for fallback scenarios
       return {
-        toxicity: 0.5, // Conservative middle ground
+        toxicity: 0.15, // Conservative low value - below all plan thresholds
         categories: ['TOXICITY'],
         confidence: 0.1,
         fallback_used: true,
@@ -338,8 +368,9 @@ class TriageService {
         platform: comment.platform || 'unknown',
         accountRef: comment.account_ref || 'triage_system',
         externalCommentId: comment.id,
-        externalAuthorId: comment.author_id || 'unknown',
-        externalAuthorUsername: comment.author || 'unknown',
+        // Use unique identifiers for unknown authors to prevent conflation (CodeRabbit #3298546625)
+        externalAuthorId: comment.author_id || `anonymous_${crypto.randomBytes(8).toString('hex')}`,
+        externalAuthorUsername: comment.author || `anonymous_user_${crypto.randomBytes(6).toString('hex')}`,
         originalText: comment.content,
         toxicityAnalysis: toxicityAnalysis,
         metadata: {
@@ -397,8 +428,12 @@ class TriageService {
         error: error.message
       });
 
-      // Fail-open for roast checking (less critical than security)
-      return { allowed: true };
+      // Fail-closed: deny on cost control errors (CodeRabbit #3298389136)
+      return {
+        allowed: false,
+        reason: 'cost_control_check_failed',
+        fallback: true
+      };
     }
   }
 
@@ -416,7 +451,7 @@ class TriageService {
     };
 
     const keyString = JSON.stringify(keyData);
-    return crypto.createHmac('sha256', 'triage_cache_key')
+    return crypto.createHmac('sha256', this.CACHE_SECRET)
                  .update(keyString)
                  .digest('hex');
   }
@@ -493,7 +528,9 @@ class TriageService {
    * Generate correlation ID for request tracing
    */
   generateCorrelationId() {
-    return `triage-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = Date.now();
+    const randomId = crypto.randomUUID().split('-')[0]; // First 8 hex chars
+    return `triage-${timestamp}-${randomId}`;
   }
 
   /**
@@ -520,24 +557,43 @@ class TriageService {
 
   /**
    * Get triage statistics for monitoring and analytics
+   *
+   * TODO: Implement database queries for organization-specific stats
+   * Currently returns cache-only statistics (not org-specific)
+   * CodeRabbit #3298546625: Parameters not yet utilized in implementation
+   *
+   * @param {string} organizationId - Organization ID (not yet used)
+   * @param {string} timeRange - Time range for stats (not yet used)
+   * @returns {Object} Cache statistics and thresholds
    */
   async getTriageStats(organizationId, timeRange = '1h') {
-    // This would query from database in production
-    // For now, return cache statistics and basic metrics
+    // Log that this is a simplified implementation
+    logger.warn('getTriageStats returning cache-only statistics (not organization-specific)', {
+      organization_id: organizationId,
+      time_range: timeRange,
+      implementation_status: 'incomplete',
+      note: 'Database queries pending future implementation'
+    });
+
+    // This would query from database in production for org-specific stats
+    // For now, return global cache statistics and basic metrics
     return {
       cache_performance: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0 
+        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0
           ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
           : 0,
-        cache_size: this.decisionCache.size
+        cache_size: this.decisionCache.size,
+        evictions: this.cacheStats.evictions
       },
       thresholds: {
         block_threshold: this.decisionMatrix.BLOCK_THRESHOLD,
         roast_thresholds: this.decisionMatrix.ROAST_THRESHOLDS
       },
       time_range: timeRange,
+      organization_id: organizationId,
+      implementation_note: 'Cache-only statistics - Database integration pending',
       last_updated: new Date().toISOString()
     };
   }
