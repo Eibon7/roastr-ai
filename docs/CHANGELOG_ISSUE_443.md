@@ -1,5 +1,43 @@
 # Changelog - Issue #443: Complete Triage System Implementation
 
+## 🔧 CodeRabbit Review #3298482838 Applied (2025-10-03)
+**PR**: #445
+**Status**: ✅ Workflow Output Naming Fix
+
+### Workflow Syntax Issue Fixed
+
+**File**: `.github/workflows/spec14-qa-test-suite.yml`
+**Issue**: Job output using hyphens instead of snake_case
+
+#### Problem
+GitHub Actions job outputs must use snake_case, not kebab-case:
+```yaml
+# INCORRECT - Causes workflow failures
+outputs:
+  should-run-full-suite: ${{ steps.changes.outputs.should_run }}
+
+# CORRECT - GitHub Actions compliant
+outputs:
+  should_run_full_suite: ${{ steps.changes.outputs.should_run }}
+```
+
+#### Fix Applied
+- **Line 61**: Changed `should-run-full-suite` → `should_run_full_suite`
+- **Line 86**: Updated reference in `validate-fixtures` job
+- **Line 130**: Updated reference in `test-core` job
+- **Line 203**: Updated reference in `validate-coverage` job
+
+### Impact
+- ✅ **Workflow Compliance**: Follows GitHub Actions naming conventions
+- ✅ **Job Dependencies**: Output references now work correctly
+- ✅ **CI/CD Reliability**: Prevents workflow execution failures
+
+### Files Modified
+- `.github/workflows/spec14-qa-test-suite.yml` - Output naming consistency
+- `docs/plan/review-3298482838.md` - Fix implementation plan
+
+---
+
 ## 🔧 CodeRabbit Review #3298455873 Applied (2025-10-03)
 **PR**: #445
 **Status**: ✅ CRITICAL Security Fix - HMAC Secret Hardcoded

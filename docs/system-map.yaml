@@ -14,7 +14,6 @@ features:
       - cost-control
     docs:
       - docs/nodes/roast.md
-      - docs/nodes/prompt-template.md
     owner: Back-end Dev
     priority: critical
 
