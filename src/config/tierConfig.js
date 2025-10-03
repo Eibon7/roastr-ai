@@ -179,8 +179,8 @@ const DEFAULT_TIER_LIMITS = {
         ai_model: 'gpt-3.5-turbo'
     },
     starter: {
-        maxRoasts: 50,
-        monthlyResponsesLimit: 50,
+        maxRoasts: 10,
+        monthlyResponsesLimit: 10,
         monthlyAnalysisLimit: 1000,
         maxPlatforms: 1,
         integrationsLimit: 1,
