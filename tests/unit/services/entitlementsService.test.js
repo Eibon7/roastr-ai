@@ -543,7 +543,9 @@ describe('EntitlementsService', () => {
             const result = entitlementsService._getPlanDefaults('starter_monthly');
             expect(result.plan_name).toBe('starter');
             expect(result.analysis_limit_monthly).toBe(1000);
-            expect(result.shield_enabled).toBe(false);
+            expect(result.roast_limit_monthly).toBe(100);
+            expect(result.shield_enabled).toBe(true);
+            expect(result.model).toBe('gpt-4o');
         });
 
         it('should return correct defaults for pro plan', () => {

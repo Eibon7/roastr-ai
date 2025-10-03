@@ -113,10 +113,10 @@ describe('Entitlements Integration Flow', () => {
             id: 'price_starter123',
             lookup_key: 'starter_monthly',
             metadata: {
-                analysis_limit_monthly: '500',
-                roast_limit_monthly: '500',
-                model: 'gpt-3.5-turbo',
-                shield_enabled: 'false',
+                analysis_limit_monthly: '1000',
+                roast_limit_monthly: '100',
+                model: 'gpt-4o',
+                shield_enabled: 'true',
                 rqc_mode: 'basic',
                 plan_name: 'starter'
             },
@@ -130,16 +130,16 @@ describe('Entitlements Integration Flow', () => {
         beforeEach(async () => {
             // Setup Starter plan entitlements
             mockStripeWrapper.prices.retrieve.mockResolvedValue(starterPrice);
-            
+
             supabaseServiceClient.upsert.mockReturnValue({
                 select: jest.fn().mockReturnValue({
                     single: jest.fn().mockResolvedValue({
                         data: {
                             account_id: 'test-user-123',
-                            analysis_limit_monthly: 500,
-                            roast_limit_monthly: 500,
-                            model: 'gpt-3.5-turbo',
-                            shield_enabled: false,
+                            analysis_limit_monthly: 1000,
+                            roast_limit_monthly: 100,
+                            model: 'gpt-4o',
+                            shield_enabled: true,
                             rqc_mode: 'basic',
                             plan_name: 'starter'
                         }
@@ -159,9 +159,9 @@ describe('Entitlements Integration Flow', () => {
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: 500,
-                        roast_limit_monthly: 500,
-                        shield_enabled: false
+                        analysis_limit_monthly: 1000,
+                        roast_limit_monthly: 100,
+                        shield_enabled: true
                     },
                     error: null
                 })
@@ -187,18 +187,18 @@ describe('Entitlements Integration Flow', () => {
         it('should block analysis requests when limit reached', async () => {
             // Mock usage check - limit reached
             supabaseServiceClient.rpc.mockResolvedValue({ data: false, error: null });
-            
+
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: 500,
-                        shield_enabled: false
+                        analysis_limit_monthly: 1000,
+                        shield_enabled: true
                     },
                     error: null
                 })
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_used: 500,
+                        analysis_used: 1000,
                         period_start: '2024-01-01',
                         period_end: '2024-01-31'
                     },
@@ -213,14 +213,14 @@ describe('Entitlements Integration Flow', () => {
             expect(response.body.success).toBe(false);
             expect(response.body.code).toBe('LIMIT_REACHED');
             expect(response.body.details.action_type).toBe('analysis');
-            expect(response.body.details.used).toBe(500);
-            expect(response.body.details.limit).toBe(500);
+            expect(response.body.details.used).toBe(1000);
+            expect(response.body.details.limit).toBe(1000);
         });
 
-        it('should deny access to Shield feature', async () => {
+        it('should allow access to Shield feature', async () => {
             supabaseServiceClient.single.mockResolvedValue({
                 data: {
-                    shield_enabled: false,
+                    shield_enabled: true,
                     plan_name: 'starter'
                 },
                 error: null
@@ -229,10 +229,9 @@ describe('Entitlements Integration Flow', () => {
             const response = await request(app)
                 .get('/api/shield-feature');
 
-            expect(response.status).toBe(403);
-            expect(response.body.code).toBe('FEATURE_NOT_AVAILABLE');
-            expect(response.body.details.feature).toBe('shield_enabled');
-            expect(response.body.details.current_plan).toBe('starter');
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.message).toBe('Shield feature accessed');
         });
     });
 
@@ -345,9 +344,9 @@ describe('Entitlements Integration Flow', () => {
             id: 'price_creator123',
             lookup_key: 'plus_monthly',
             metadata: {
-                analysis_limit_monthly: '-1',
-                roast_limit_monthly: '-1',
-                model: 'gpt-4',
+                analysis_limit_monthly: '100000',
+                roast_limit_monthly: '5000',
+                model: 'gpt-4o',
                 shield_enabled: 'true',
                 rqc_mode: 'premium',
                 plan_name: 'plus'
@@ -361,15 +360,15 @@ describe('Entitlements Integration Flow', () => {
 
         beforeEach(async () => {
             mockStripeWrapper.prices.retrieve.mockResolvedValue(creatorPrice);
-            
+
             supabaseServiceClient.upsert.mockReturnValue({
                 select: jest.fn().mockReturnValue({
                     single: jest.fn().mockResolvedValue({
                         data: {
                             account_id: 'test-user-123',
-                            analysis_limit_monthly: -1,
-                            roast_limit_monthly: -1,
-                            model: 'gpt-4',
+                            analysis_limit_monthly: 100000,
+                            roast_limit_monthly: 5000,
+                            model: 'gpt-4o',
                             shield_enabled: true,
                             rqc_mode: 'premium',
                             plan_name: 'plus'
@@ -381,21 +380,21 @@ describe('Entitlements Integration Flow', () => {
             await entitlementsService.setEntitlementsFromStripePrice('test-user-123', 'price_creator123');
         });
 
-        it('should allow unlimited usage', async () => {
-            // Always allow for unlimited plans
+        it('should allow high usage under limit', async () => {
+            // Allow usage under Plus plan limits
             supabaseServiceClient.rpc.mockResolvedValue({ data: true, error: null });
-            
+
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: -1, // Unlimited
+                        analysis_limit_monthly: 100000,
                         shield_enabled: true
                     },
                     error: null
                 })
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_used: 10000, // Very high usage
+                        analysis_used: 10000, // Well under 100k limit
                         period_start: '2024-01-01',
                         period_end: '2024-01-31'
                     },
@@ -404,7 +403,7 @@ describe('Entitlements Integration Flow', () => {
 
             const response = await request(app)
                 .post('/api/analysis')
-                .send({ text: 'Creator plus analysis' });
+                .send({ text: 'Plus plan analysis' });
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);

@@ -122,8 +122,8 @@ const PLAN_BENEFITS = {
         'Funcionalidades básicas'
     ],
     starter: [
-        '500 análisis por mes',
-        '50 roasts por mes',
+        '1,000 análisis por mes',
+        '100 roasts por mes',
         '1 cuenta por red social',
         'Shield habilitado'
     ],
@@ -134,8 +134,8 @@ const PLAN_BENEFITS = {
         'Shield + Tono Original'
     ],
     plus: [
-        'Análisis ilimitados',
-        'Roasts ilimitados',
+        '100,000 análisis por mes',
+        '5,000 roasts por mes',
         '2 cuentas por red social',
         'Shield + Tono Original + Juez Embebido'
     ]
@@ -179,9 +179,9 @@ const DEFAULT_TIER_LIMITS = {
         ai_model: 'gpt-3.5-turbo'
     },
     starter: {
-        maxRoasts: 50,
-        monthlyResponsesLimit: 50,
-        monthlyAnalysisLimit: 500,
+        maxRoasts: 100,
+        monthlyResponsesLimit: 100,
+        monthlyAnalysisLimit: 1000,
         maxPlatforms: 1,
         integrationsLimit: 1,
         shieldEnabled: true,
@@ -215,9 +215,9 @@ const DEFAULT_TIER_LIMITS = {
         ai_model: 'gpt-4o'
     },
     plus: {
-        maxRoasts: -1,
-        monthlyResponsesLimit: -1,
-        monthlyAnalysisLimit: -1,
+        maxRoasts: 5000,
+        monthlyResponsesLimit: 5000,
+        monthlyAnalysisLimit: 100000,
         maxPlatforms: 2,
         integrationsLimit: 2,
         shieldEnabled: true,
@@ -320,13 +320,13 @@ function getUpgradeRecommendation(usageType, currentLimit) {
     const recommendations = {
         analysis: {
             100: 'starter',    // Free -> Starter
-            500: 'pro',        // Starter -> Pro
-            10000: 'plus'      // Pro -> Plus (Plus is unlimited, so this is the Pro limit)
+            1000: 'pro',       // Starter -> Pro
+            10000: 'plus'      // Pro -> Plus
         },
         roast: {
-            10: 'starter',     // Free -> Starter
-            50: 'pro',         // Starter -> Pro
-            1000: 'plus'       // Pro -> Plus
+            10: 'starter',     // Free -> Starter (10 roasts)
+            100: 'pro',        // Starter -> Pro (100 roasts)
+            1000: 'plus'       // Pro -> Plus (1000 roasts)
         },
         platform: {
             1: 'pro'           // Free/Starter -> Pro (2 accounts per platform)

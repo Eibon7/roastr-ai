@@ -128,10 +128,10 @@ Plan Limits Exceeded: DEFER (retry later)
 - Shield service failures → continue with base triage decision
 
 #### Rate Limiting by Plan
-- **Free**: 100 roasts/month
-- **Starter**: 500 roasts/month
+- **Free**: 10 roasts/month
+- **Starter**: 100 roasts/month
 - **Pro**: 1,000 roasts/month
-- **Plus**: Unlimited roasts/month
+- **Plus**: 5,000 roasts/month
 
 ### 🧪 Comprehensive Test Suite (41 Tests)
 **File**: `tests/integration/triage.test.js`
@@ -2624,10 +2624,10 @@ Como **usuario de Roastr**, quiero tener distintos planes de suscripción, con l
 
 ### 🎯 Key Achievements
 #### ✅ Tier Configuration (Exactly per SPEC)
-- **Free**: 100 análisis / 100 roasts / 1 cuenta por red / No Shield, No Original Tone
-- **Starter**: 500 análisis / 500 roasts / 1 cuenta por red / Shield ON, No Original Tone
-- **Pro**: 2,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
-- **Plus**: Unlimited análisis / Unlimited roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
+- **Free**: 100 análisis / 10 roasts / 1 cuenta por red / No Shield, No Original Tone
+- **Starter**: 1,000 análisis / 100 roasts / 1 cuenta por red / Shield ON, No Original Tone
+- **Pro**: 10,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
+- **Plus**: 100,000 análisis / 5,000 roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
 
 #### 🔧 Runtime Validation System
 - **Real-time tier validation** on all API endpoints

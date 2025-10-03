@@ -1,0 +1,134 @@
+# Roastr System Map - Graph Driven Development
+# Version: 1.0.0
+# Description: Dependency graph for modular documentation
+# Owner: Documentation Agent
+
+features:
+  roast:
+    description: Core roast generation system with AI prompts and quality control
+    depends_on:
+      - persona
+      - tone
+      - platform-constraints
+      - shield
+      - cost-control
+    docs:
+      - docs/nodes/roast.md
+    owner: Back-end Dev
+    priority: critical
+
+  shield:
+    description: Automated content moderation with escalating actions
+    depends_on:
+      - cost-control
+      - queue-system
+    docs:
+      - docs/nodes/shield.md
+    owner: Back-end Dev
+    priority: critical
+
+  persona:
+    description: User personality and roast style configuration
+    depends_on:
+      - plan-features
+    docs:
+      - docs/nodes/persona.md
+    owner: Back-end Dev
+    priority: high
+
+  tone:
+    description: Tone mapping and humor type configuration
+    depends_on:
+      - persona
+      - plan-features
+    docs:
+      - docs/nodes/tone.md
+    owner: Back-end Dev
+    priority: high
+
+  platform-constraints:
+    description: Platform-specific character limits and style guides
+    depends_on:
+      - social-platforms
+    docs:
+      - docs/nodes/platform-constraints.md
+    owner: Back-end Dev
+    priority: high
+
+  plan-features:
+    description: Subscription plan feature gates and limits
+    depends_on:
+      - multi-tenant
+    docs:
+      - docs/nodes/plan-features.md
+    owner: Back-end Dev
+    priority: critical
+
+  queue-system:
+    description: Unified Redis/Upstash + Database queue management
+    depends_on:
+      - multi-tenant
+    docs:
+      - docs/nodes/queue-system.md
+    owner: Back-end Dev
+    priority: critical
+
+  cost-control:
+    description: Usage tracking, billing integration, and limit enforcement
+    depends_on:
+      - multi-tenant
+      - plan-features
+    docs:
+      - docs/nodes/cost-control.md
+    owner: Back-end Dev
+    priority: critical
+
+  multi-tenant:
+    description: Row Level Security (RLS) and organization isolation
+    depends_on: []
+    docs:
+      - docs/nodes/multi-tenant.md
+    owner: Back-end Dev
+    priority: critical
+
+  social-platforms:
+    description: 9 platform integrations (Twitter, YouTube, Instagram, etc.)
+    depends_on:
+      - queue-system
+      - cost-control
+    docs:
+      - docs/nodes/social-platforms.md
+    owner: Back-end Dev
+    priority: high
+
+  trainer:
+    description: AI model fine-tuning and training data management
+    depends_on:
+      - roast
+      - shield
+    docs:
+      - docs/nodes/trainer.md
+    owner: Back-end Dev
+    priority: medium
+    status: planned
+
+  analytics:
+    description: Usage analytics, metrics, and reporting dashboard
+    depends_on:
+      - cost-control
+      - multi-tenant
+    docs:
+      - docs/nodes/analytics.md
+    owner: Back-end Dev
+    priority: medium
+    status: planned
+
+# Metadata
+metadata:
+  version: 1.0.0
+  created: 2025-10-03
+  last_updated: 2025-10-03
+  total_nodes: 12
+  critical_nodes: 6
+  high_priority_nodes: 4
+  planned_nodes: 2

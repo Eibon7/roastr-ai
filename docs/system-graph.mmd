@@ -1,0 +1,40 @@
+graph TD
+  roast["roast":::critical]
+  shield["shield":::critical]
+  persona["persona":::high]
+  tone["tone":::high]
+  platform_constraints["platform-constraints":::high]
+  plan_features["plan-features":::critical]
+  queue_system["queue-system":::critical]
+  cost_control["cost-control":::critical]
+  multi_tenant["multi-tenant":::critical]
+  social_platforms["social-platforms":::high]
+  trainer["trainer":::planned]
+  analytics["analytics":::planned]
+
+  roast --> persona
+  roast --> tone
+  roast --> platform_constraints
+  roast --> shield
+  roast --> cost_control
+  shield --> cost_control
+  shield --> queue_system
+  persona --> plan_features
+  tone --> persona
+  tone --> plan_features
+  platform_constraints --> social_platforms
+  plan_features --> multi_tenant
+  queue_system --> multi_tenant
+  cost_control --> multi_tenant
+  cost_control --> plan_features
+  social_platforms --> queue_system
+  social_platforms --> cost_control
+  trainer --> roast
+  trainer --> shield
+  analytics --> cost_control
+  analytics --> multi_tenant
+
+  classDef critical fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px,color:#fff
+  classDef high fill:#ffd43b,stroke:#fab005,stroke-width:2px
+  classDef planned fill:#e9ecef,stroke:#adb5bd,stroke-width:1px,stroke-dasharray: 5 5
+

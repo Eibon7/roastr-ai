@@ -341,6 +341,178 @@ const prompt = await promptTemplate.buildPrompt({
 - **Guarda el plan en `docs/plan/<issue>.md`**.
 - **Solo después de que el plan esté guardado y validado, procede a la implementación**.
 
+### Gestión de Agentes Relevantes (GDD Phase 4)
+
+- **Cada nodo en `docs/nodes/*.md` debe mantener actualizada la sección "## Agentes Relevantes"**.
+- **Reglas de sincronización**:
+  - Si durante una tarea invocas a un agente que **no está listado** en "Agentes Relevantes" del nodo → **añádelo automáticamente**.
+  - Si detectas que un agente listado **ya no aplica** al nodo → **elimínalo**.
+  - Mantén la lista ordenada alfabéticamente para facilitar la lectura.
+- **Validación automática**: Ejecuta `node scripts/resolve-graph.js --validate` antes de cerrar cualquier PR para verificar que todos los nodos tienen sección de agentes válida.
+- **Checklist obligatorio al cerrar nodo/PR**:
+  - [ ] Leí `spec.md` y el archivo `.md` del nodo afectado.
+  - [ ] Revisé que `## Agentes Relevantes` refleja los agentes efectivamente usados en esta tarea.
+  - [ ] Añadí agentes que invocamos y no estaban listados.
+  - [ ] Eliminé agentes que ya no son relevantes para este nodo.
+  - [ ] Ejecuté `node scripts/resolve-graph.js --validate` y no hay errores.
+  - [ ] Confirmé que `spec.md` tiene la tabla global de nodos-agentes sincronizada.
+  - [ ] Generé reporte de validación con `node scripts/resolve-graph.js --report`.
+
+**Tabla global de nodos-agentes**: Ver sección "Node-Agent Matrix" en `spec.md` para referencia rápida.
+
+### GDD Activation - Issue Analysis & Context Loading (October 3, 2025)
+
+**IMPORTANTE:** A partir de ahora, el Orchestrator debe usar Graph Driven Development (GDD) para **todas las issues**, cargando solo los nodos relevantes en lugar de spec.md completo.
+
+#### 1. Issue Analysis (Automático)
+
+**Cuando el usuario menciona un número de issue** (ej: "Trabajemos en Issue #408"):
+
+1. **Fetch issue metadata:**
+   ```bash
+   gh issue view 408 --json labels,title,body
+   ```
+
+2. **Map labels → nodes** usando esta tabla:
+
+   | Label | Nodos Afectados | Comando |
+   |-------|----------------|---------|
+   | `area:shield` | shield, multi-tenant | `node scripts/resolve-graph.js shield` |
+   | `area:billing` | cost-control, plan-features, multi-tenant | `node scripts/resolve-graph.js cost-control` |
+   | `area:platforms` | social-platforms, platform-constraints | `node scripts/resolve-graph.js social-platforms` |
+   | `area:workers` | queue-system, multi-tenant | `node scripts/resolve-graph.js queue-system` |
+   | `area:ui` | roast, persona, tone | `node scripts/resolve-graph.js roast` |
+   | `area:demo` | roast, shield, queue-system | `node scripts/resolve-graph.js roast` |
+   | `area:multitenant` | multi-tenant | `node scripts/resolve-graph.js multi-tenant` |
+   | `area:publisher` | queue-system, social-platforms | `node scripts/resolve-graph.js queue-system` |
+   | `area:observability` | ALL nodes | `cat docs/nodes/*.md` |
+   | `area:reliability` | queue-system, shield, multi-tenant | `node scripts/resolve-graph.js queue-system` |
+   | `test:e2e` | ALL nodes (pipeline completo) | `cat docs/nodes/*.md` |
+   | `test:integration` | depende de otros labels | Ver arriba |
+   | `test:unit` | nodo específico del título | Parsear keywords |
+
+3. **Keyword fallback** (si no hay label `area:*`), buscar en título/body:
+
+   | Keywords | Nodo Principal |
+   |----------|----------------|
+   | "shield", "moderación", "ofensor" | shield |
+   | "billing", "stripe", "plan", "entitlements" | cost-control |
+   | "worker", "queue", "redis", "job" | queue-system |
+   | "roast", "generación", "prompt", "variante" | roast |
+   | "multi-tenant", "RLS", "organization" | multi-tenant |
+   | "platform", "twitter", "discord", "integration" | social-platforms |
+   | "persona", "tone", "style", "humor" | persona |
+   | "demo mode", "fixtures", "seeds" | roast |
+   | "publisher", "publicación", "post" | queue-system |
+
+4. **Resolve dependencies:**
+   ```bash
+   node scripts/resolve-graph.js <nodes>
+   ```
+
+5. **Load ONLY resolved nodes** (NO spec.md)
+
+6. **Announce context loaded:**
+   ```
+   🔍 Analyzing Issue #408...
+
+   📊 GDD Node Mapping:
+   - Primary node: shield
+   - Dependencies: multi-tenant, plan-features, cost-control
+
+   📖 Loading context (2,050 lines):
+     ✓ docs/nodes/shield.md (680 lines)
+     ✓ docs/nodes/multi-tenant.md (707 lines)
+     ✓ docs/nodes/plan-features.md (194 lines)
+     ✓ docs/nodes/cost-control.md (470 lines)
+
+   💾 Context reduction: 71% (7,034 → 2,050 lines)
+   ⚡ Token savings: ~14,500 tokens
+
+   🚀 Ready to work on Shield integration tests!
+   ```
+
+#### 2. During Development
+
+**ALWAYS:**
+- ✅ Read nodes, NOT spec.md (unless `test:e2e` or `area:observability`)
+- ✅ Update affected nodes when code changes
+- ✅ Add agents to "Agentes Relevantes" if invoked but not listed
+- ✅ Run `node scripts/resolve-graph.js --validate` before commits
+- ✅ Keep node docs synchronized with code
+
+**NEVER:**
+- ❌ Load entire spec.md (unless explicitly required)
+- ❌ Skip node updates after code changes
+- ❌ Forget to add new agents to "Agentes Relevantes"
+- ❌ Commit without validation passing
+
+#### 3. Before Closing PR
+
+**Mandatory GDD Checklist (in addition to existing checklist):**
+- [ ] Verified "Agentes Relevantes" reflects agents actually used
+- [ ] Added missing agents, removed irrelevant agents
+- [ ] Ran `node scripts/resolve-graph.js --validate` → no errors
+- [ ] Generated report: `node scripts/resolve-graph.js --report`
+- [ ] Included GDD summary in PR description:
+  ```markdown
+  ## 📊 GDD Summary
+
+  **Nodes Updated:**
+  - shield.md (added hide/block/report methods)
+  - multi-tenant.md (RLS policies updated)
+
+  **Context Used:** 2,050 lines (71% reduction vs spec.md)
+  **Validation:** ✅ All checks passing
+  **Agent Sync:** ✅ Up to date
+  ```
+
+#### 4. Fallback Strategy
+
+**Si no puedes determinar nodos automáticamente:**
+1. Preguntar al usuario: "I see Issue #XXX. Which feature area? (shield, billing, workers, etc.)"
+2. Usuario responde → mapear a nodos
+3. Si aún no está claro → cargar nodos comunes: `roast, shield, queue-system` (~2,000 líneas)
+4. Explicar contexto cargado y pedir confirmación
+
+**NUNCA cargar spec.md por defecto.**
+
+#### 5. Examples
+
+**Example 1: Shield Integration (Issue #408)**
+```
+USER: "Trabajemos en Issue #408"
+
+ORCHESTRATOR:
+1. gh issue view 408 --json labels,title,body
+2. Labels: area:shield, test:integration, priority:P0
+3. Map: area:shield → shield
+4. node scripts/resolve-graph.js shield
+5. Load: shield.md, multi-tenant.md, plan-features.md, cost-control.md
+6. Announce: "Loading 2,050 lines (71% reduction)"
+7. Work on issue using only those 4 nodes
+8. Update shield.md when adding new code
+9. Validate before commit
+10. Include GDD summary in PR
+```
+
+**Example 2: Multi-tenant RLS (Issue #412)**
+```
+USER: "Issue #412 - multi-tenant RLS tests"
+
+ORCHESTRATOR:
+1. Labels: area:multitenant, test:integration, priority:P0
+2. Map: area:multitenant → multi-tenant
+3. node scripts/resolve-graph.js multi-tenant
+4. Load: multi-tenant.md (leaf node, no deps = 707 lines)
+5. Announce: "Loading 707 lines (90% reduction)"
+6. Work on RLS tests using only multi-tenant.md
+7. Update multi-tenant.md with new RLS policies
+8. Validate and commit
+```
+
+**Full details:** See `docs/GDD-ACTIVATION-GUIDE.md` for complete mapping tables and workflows.
+
 ### Tareas al Cerrar
 
 - **Actualizar siempre spec.md con el nuevo estado del sistema**: Reflejar los cambios realizados en la documentación central.

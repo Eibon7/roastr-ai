@@ -408,9 +408,9 @@ class EntitlementsService {
         if (lowerIdentifier.includes('starter')) {
             return {
                 analysis_limit_monthly: 1000,
-                roast_limit_monthly: 10,
-                model: 'gpt-3.5-turbo',
-                shield_enabled: false,
+                roast_limit_monthly: 100,
+                model: 'gpt-4o',
+                shield_enabled: true,
                 rqc_mode: 'basic',
                 plan_name: 'starter'
             };

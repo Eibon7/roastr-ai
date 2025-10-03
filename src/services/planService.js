@@ -25,7 +25,7 @@ const PLAN_FEATURES = {
       renewalType: 'automatic' // automatic, manual
     },
     limits: {
-      roastsPerMonth: 50,
+      roastsPerMonth: 10,
       commentsPerMonth: 100,
       platformIntegrations: 1
     },
