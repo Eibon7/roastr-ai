@@ -65,8 +65,8 @@ describe('Plan Routes', () => {
         name: 'Free',
         price: 0,
         features: {
-          roastsPerMonth: 100,
-          platformConnections: 2,
+          roastsPerMonth: 10,
+          platformConnections: 1,
           styleProfile: false,
           prioritySupport: false,
           customPrompts: false
@@ -322,7 +322,7 @@ describe('Plan Routes', () => {
         name: 'Free',
         price: 0,
         features: expect.objectContaining({
-          roastsPerMonth: 100,
+          roastsPerMonth: 10,
           styleProfile: false
         })
       });

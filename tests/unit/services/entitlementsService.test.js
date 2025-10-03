@@ -543,7 +543,7 @@ describe('EntitlementsService', () => {
             const result = entitlementsService._getPlanDefaults('starter_monthly');
             expect(result.plan_name).toBe('starter');
             expect(result.analysis_limit_monthly).toBe(1000);
-            expect(result.roast_limit_monthly).toBe(100);
+            expect(result.roast_limit_monthly).toBe(10);
             expect(result.shield_enabled).toBe(true);
             expect(result.model).toBe('gpt-4o');
         });
