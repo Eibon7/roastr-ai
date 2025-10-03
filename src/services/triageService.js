@@ -402,8 +402,12 @@ class TriageService {
         error: error.message
       });
 
-      // Fail-open for roast checking (less critical than security)
-      return { allowed: true };
+      // Fail-closed: deny on cost control errors (CodeRabbit #3298389136)
+      return {
+        allowed: false,
+        reason: 'cost_control_check_failed',
+        fallback: true
+      };
     }
   }
 
@@ -498,7 +502,9 @@ class TriageService {
    * Generate correlation ID for request tracing
    */
   generateCorrelationId() {
-    return `triage-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = Date.now();
+    const randomId = crypto.randomUUID().split('-')[0]; // First 8 hex chars
+    return `triage-${timestamp}-${randomId}`;
   }
 
   /**

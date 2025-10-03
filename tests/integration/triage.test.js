@@ -874,5 +874,45 @@ describe('Triage System Integration Tests', () => {
         );
       }
     });
+
+    it('should fail-closed when cost control check fails', async () => {
+      const comment = {
+        id: 'cost-control-error',
+        content: 'Moderately toxic comment',
+        platform: 'twitter'
+      };
+      const organization = { id: 'test-org', plan: 'pro' };
+      const user = { id: 'test-user' };
+
+      // Mock cost control failure - this happens before toxicity check
+      mockCostControl.canPerformOperation.mockRejectedValue(
+        new Error('Cost control database connection failed')
+      );
+
+      const result = await triageService.analyzeAndRoute(comment, organization, user);
+
+      // Should fail-closed (defer) instead of allowing roast
+      expect(result.action).toBe('defer');
+      expect(result.reasoning).toBe('plan_limit_exceeded');
+      expect(result.limit_info).toBeDefined();
+      expect(result.limit_info.allowed).toBe(false);
+      expect(result.limit_info.reason).toBe('permission_check_failed');
+    });
+
+    it('should generate crypto-secure correlation IDs', () => {
+      const id1 = triageService.generateCorrelationId();
+      const id2 = triageService.generateCorrelationId();
+
+      // Format: triage-{timestamp}-{8 hex chars}
+      expect(id1).toMatch(/^triage-\d+-[a-f0-9]{8}$/);
+      expect(id2).toMatch(/^triage-\d+-[a-f0-9]{8}$/);
+
+      // Should be unique
+      expect(id1).not.toBe(id2);
+
+      // Timestamp should be recent (within last second)
+      const timestamp1 = parseInt(id1.split('-')[1]);
+      expect(Date.now() - timestamp1).toBeLessThan(1000);
+    });
   });
 });
