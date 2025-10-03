@@ -519,10 +519,11 @@ if (!isValid) {
 
 ### Integration Tests
 
-| Test File | Focus |
-|-----------|-------|
-| `multiTenantWorkflow.test.js` | End-to-end roast generation with cost control |
-| `rqc-integration.test.js` | RQC review process and decision flow |
+| Test File | Focus | Status |
+|-----------|-------|--------|
+| `multiTenantWorkflow.test.js` | End-to-end roast generation with cost control | ✅ Passing |
+| `rqc-integration.test.js` | RQC review process and decision flow | ✅ Passing |
+| `generation-issue-409.test.js` | **Issue #409** - Tone enforcement + 2 initial variants + 1 post-selection | ✅ 15/15 passing |
 
 ### Test Utilities
 
