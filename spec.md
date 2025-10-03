@@ -128,10 +128,10 @@ Plan Limits Exceeded: DEFER (retry later)
 - Shield service failures → continue with base triage decision
 
 #### Rate Limiting by Plan
-- **Free**: 10 roasts/month
-- **Starter**: 10 roasts/month
+- **Free**: 100 roasts/month
+- **Starter**: 500 roasts/month
 - **Pro**: 1,000 roasts/month
-- **Plus**: 5,000 roasts/month
+- **Plus**: Unlimited roasts/month
 
 ### 🧪 Comprehensive Test Suite (41 Tests)
 **File**: `tests/integration/triage.test.js`
@@ -2409,7 +2409,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €0
 - **Modelo IA**: GPT-3.5
 - **Cuentas por red**: 1
-- **Límites**: 100 análisis, 10 roasts
+- **Límites**: 100 análisis, 100 roasts
 - **Cuentas por red social**: 1
 - **Funciones incluidas**:
     - Comment analysis
@@ -2423,7 +2423,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €5
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 1
-- **Límites**: 1000 análisis, 10 roasts
+- **Límites**: 500 análisis, 500 roasts
 - **Cuentas por red social**: 1
 - **Funciones incluidas**:
     - Comment analysis
@@ -2454,7 +2454,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €50
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 2
-- **Límites**: 100,000 análisis, 5000 roasts
+- **Límites**: Unlimited análisis, Unlimited roasts
 - **Cuentas por red social**: hasta **2 de la misma red social**
 - **Funciones incluidas**:
     - Comment analysis
@@ -2624,10 +2624,10 @@ Como **usuario de Roastr**, quiero tener distintos planes de suscripción, con l
 
 ### 🎯 Key Achievements
 #### ✅ Tier Configuration (Exactly per SPEC)
-- **Free**: 100 análisis / 10 roasts / 1 cuenta por red / No Shield, No Original Tone
-- **Starter**: 1,000 análisis / 10 roasts / 1 cuenta por red / Shield ON, No Original Tone
-- **Pro**: 10,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
-- **Plus**: 100,000 análisis / 5,000 roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
+- **Free**: 100 análisis / 100 roasts / 1 cuenta por red / No Shield, No Original Tone
+- **Starter**: 500 análisis / 500 roasts / 1 cuenta por red / Shield ON, No Original Tone
+- **Pro**: 2,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
+- **Plus**: Unlimited análisis / Unlimited roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
 
 #### 🔧 Runtime Validation System
 - **Real-time tier validation** on all API endpoints

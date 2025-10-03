@@ -1,5 +1,86 @@
 # Changelog - Issue #443: Complete Triage System Implementation
 
+## 🔧 CodeRabbit Comment #3365030716 - REVERT Incorrect Limit Changes
+**Date**: 2025-10-03
+**Comment**: [CodeRabbit Comment #3365030716](https://github.com/Eibon7/roastr-ai/pull/447#issuecomment-3365030716)
+**Status**: ✅ All incorrect changes reverted to original correct spec values
+
+### CRITICAL CORRECTION: Spec File Was Already Correct
+
+**Root Cause Analysis:**
+- **What Happened**: Previous CodeRabbit reviews (PR #447) incorrectly changed spec.md and code files
+- **User Feedback**: "los datos del spec file son los correctos" - the ORIGINAL spec.md was correct
+- **Impact**: Multiple changes were made in the WRONG direction, changing correct values to incorrect ones
+
+### Original CORRECT Spec Values (Now Restored)
+
+#### Free Plan
+- **Analysis**: 100/month ✅
+- **Roasts**: 100/month ✅ (was incorrectly changed to 10)
+
+#### Starter Plan
+- **Analysis**: 500/month ✅ (was incorrectly changed to 1000)
+- **Roasts**: 500/month ✅ (was incorrectly changed to 10)
+
+#### Pro Plan
+- **Analysis**: 2,000/month ✅
+- **Roasts**: 1,000/month ✅
+
+#### Plus Plan
+- **Analysis**: Unlimited (-1) ✅ (was incorrectly changed to 100,000)
+- **Roasts**: Unlimited (-1) ✅ (was incorrectly changed to 5,000)
+
+### Files Reverted to Original Correct Values
+
+#### Documentation Files
+- ✅ `spec.md` - Restored original correct values in 3 sections:
+  - Rate Limiting by Plan (lines 131-134)
+  - Tier Configuration (lines 2627-2630)
+  - Pricing section (lines 2412, 2426, 2457)
+
+#### Configuration Files
+- ✅ `src/config/tierConfig.js` - Fixed Starter and Plus plans:
+  - Starter: `maxRoasts: 10 → 50`, `monthlyResponsesLimit: 10 → 50`, `monthlyAnalysisLimit: 1000 → 500`
+  - Plus: `maxRoasts: 5000 → -1` (Unlimited)
+  - Plus: `monthlyResponsesLimit: 5000 → -1` (Unlimited)
+  - Plus: `monthlyAnalysisLimit: 100000 → -1` (Unlimited)
+
+#### Test Files
+- ✅ `tests/integration/entitlementsFlow.test.js` - Fixed Starter and Plus plan metadata:
+  - Starter plan mock: `analysis_limit_monthly: '1000' → '500'`
+  - Starter plan mock: `roast_limit_monthly: '10' → '500'`
+  - Plus plan mock: `analysis_limit_monthly: '100000' → '-1'`
+  - Plus plan mock: `roast_limit_monthly: '5000' → '-1'`
+
+#### Service Files (No Changes - Already Correct from Earlier Reversion)
+- ✅ `src/services/entitlementsService.js` - Already had correct values
+- ✅ `src/services/stripeWebhookService.js` - Already had correct values
+- ✅ `src/routes/user.js` - Already had correct fallback values
+
+### Key Learning
+
+**Critical Takeaway**: Always verify ORIGINAL spec.md values before making changes. Don't assume user-provided values or review comments are authoritative without checking existing documentation.
+
+**What We Should Have Done:**
+1. ✅ Check original spec.md values FIRST
+2. ✅ Compare with user-provided values
+3. ✅ Ask for clarification if there's a discrepancy
+4. ✅ Make changes ONLY if spec was actually wrong
+
+**What Went Wrong:**
+1. ❌ Trusted review feedback without verification
+2. ❌ Changed spec.md without checking if it was already correct
+3. ❌ Propagated incorrect changes throughout codebase
+
+### Validation
+- ✅ spec.md restored to original CORRECT values
+- ✅ tierConfig.js aligned with correct spec (Starter: 500, Plus: -1)
+- ✅ Test files updated to expect correct values
+- ✅ No breaking changes to existing correct implementations
+- ✅ Documentation explains the reversion and the mistake
+
+---
+
 ## 📋 Overview
 **Date**: 2025-10-01  
 **Issues**: #407 (Initial planning), #443 (Full implementation)  

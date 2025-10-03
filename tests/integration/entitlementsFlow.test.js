@@ -113,8 +113,8 @@ describe('Entitlements Integration Flow', () => {
             id: 'price_starter123',
             lookup_key: 'starter_monthly',
             metadata: {
-                analysis_limit_monthly: '1000',
-                roast_limit_monthly: '10',
+                analysis_limit_monthly: '500',
+                roast_limit_monthly: '500',
                 model: 'gpt-3.5-turbo',
                 shield_enabled: 'false',
                 rqc_mode: 'basic',
@@ -136,8 +136,8 @@ describe('Entitlements Integration Flow', () => {
                     single: jest.fn().mockResolvedValue({
                         data: {
                             account_id: 'test-user-123',
-                            analysis_limit_monthly: 1000,
-                            roast_limit_monthly: 10,
+                            analysis_limit_monthly: 500,
+                            roast_limit_monthly: 500,
                             model: 'gpt-3.5-turbo',
                             shield_enabled: false,
                             rqc_mode: 'basic',
@@ -159,8 +159,8 @@ describe('Entitlements Integration Flow', () => {
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: 1000,
-                        roast_limit_monthly: 10,
+                        analysis_limit_monthly: 500,
+                        roast_limit_monthly: 500,
                         shield_enabled: false
                     },
                     error: null
@@ -191,7 +191,7 @@ describe('Entitlements Integration Flow', () => {
             supabaseServiceClient.single
                 .mockResolvedValueOnce({
                     data: {
-                        analysis_limit_monthly: 1000,
+                        analysis_limit_monthly: 500,
                         shield_enabled: false
                     },
                     error: null
@@ -345,8 +345,8 @@ describe('Entitlements Integration Flow', () => {
             id: 'price_creator123',
             lookup_key: 'plus_monthly',
             metadata: {
-                analysis_limit_monthly: '100000',
-                roast_limit_monthly: '5000',
+                analysis_limit_monthly: '-1',
+                roast_limit_monthly: '-1',
                 model: 'gpt-4',
                 shield_enabled: 'true',
                 rqc_mode: 'premium',
