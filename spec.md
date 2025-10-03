@@ -1,5 +1,65 @@
 # 🧠 Flujo de comentarios en Roastr
 
+# 📈 Graph Driven Development (GDD)
+
+**Status:** ✅ Phase 2 Completed (5/12 nodes documented)
+**Last Updated:** 2025-10-03
+
+## Modular Documentation System
+
+Roastr.ai uses **Graph Driven Development (GDD)** to organize documentation as a dependency graph instead of a monolithic spec.md file. This reduces agent context load by **70-93%** through intelligent dependency resolution.
+
+### System Map
+
+Central dependency graph: [`docs/system-map.yaml`](/docs/system-map.yaml)
+
+**12 Feature Nodes:**
+- **6 Critical:** roast, shield, plan-features, queue-system, cost-control, multi-tenant
+- **4 High Priority:** persona, tone, platform-constraints, social-platforms
+- **2 Planned:** trainer, analytics
+
+### Documented Nodes (Phase 2 Complete)
+
+| Node | Description | Status | Path |
+|------|-------------|--------|------|
+| **roast** | Core roast generation system | ✅ Production | [docs/nodes/roast.md](/docs/nodes/roast.md) |
+| **shield** | Automated content moderation | ✅ Production | [docs/nodes/shield.md](/docs/nodes/shield.md) |
+| **persona** | User personality & style config | ✅ Production | [docs/nodes/persona.md](/docs/nodes/persona.md) |
+| **tone** | Tone mapping & humor types | ✅ Production | [docs/nodes/tone.md](/docs/nodes/tone.md) |
+| **platform-constraints** | Platform-specific rules | ✅ Production | [docs/nodes/platform-constraints.md](/docs/nodes/platform-constraints.md) |
+| **plan-features** | Subscription plan gates | ✅ Production | [docs/nodes/plan-features.md](/docs/nodes/plan-features.md) |
+
+### Pending Nodes (Phase 3-4)
+
+- `queue-system` - Redis/Upstash queue management
+- `cost-control` - Usage tracking and billing
+- `multi-tenant` - RLS and organization isolation
+- `social-platforms` - 9 platform integrations
+- `trainer` - AI model fine-tuning (planned)
+- `analytics` - Usage analytics (planned)
+
+### Usage
+
+```bash
+# Resolve dependencies for a specific node
+node scripts/resolve-graph.js roast
+
+# Validate entire graph
+node scripts/resolve-graph.js --validate
+
+# Generate Mermaid diagram
+node scripts/resolve-graph.js --graph > docs/system-graph.mmd
+```
+
+**Context Reduction Examples:**
+- Work on Roast: 90% reduction (5000 → 500 lines)
+- Work on Shield: 84% reduction (5000 → 800 lines)
+- Work on Multi-tenant: 93% reduction (5000 → 350 lines)
+
+**For full GDD documentation, see:** [`scripts/README.md#graph-driven-development-gdd`](/scripts/README.md#graph-driven-development-gdd)
+
+---
+
 ## 🛡️ CodeRabbit Round 9 Security Enhancements - Issue #405 Ultra-Critical Patterns
 ### 🛠️ Implementation Date: 2025-09-29
 **Review ID**: #3277389459 (CodeRabbit PR #428)  

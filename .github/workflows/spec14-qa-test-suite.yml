@@ -58,7 +58,7 @@ jobs:
   pre-flight:
     runs-on: ubuntu-latest
     outputs:
-      should-run-full-suite: ${{ steps.changes.outputs.should-run }}
+      should-run-full-suite: ${{ steps.changes.outputs.should_run }}
     
     steps:
     - uses: actions/checkout@v4
@@ -73,11 +73,11 @@ jobs:
         SPEC14_PATTERNS="tests/e2e/spec14|tests/integration/spec14|tests/helpers/syntheticFixtures|src/adapters|src/services/shield|src/workers"
         
         if echo "$CHANGED_FILES" | grep -E "$SPEC14_PATTERNS"; then
-          echo "should-run=true" >> $GITHUB_OUTPUT
+          echo "should_run=true" >> $GITHUB_OUTPUT
         elif echo "$CHANGED_FILES" | grep -E "(src/|tests/|spec.md)"; then
-          echo "should-run=true" >> $GITHUB_OUTPUT
+          echo "should_run=true" >> $GITHUB_OUTPUT
         else
-          echo "should-run=false" >> $GITHUB_OUTPUT
+          echo "should_run=false" >> $GITHUB_OUTPUT
         fi
 
   # Synthetic fixture validation
