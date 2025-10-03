@@ -2,7 +2,7 @@ name: SPEC 14 - QA Test Suite Integral
 
 on:
   push:
-    branches: [ main, develop, feat/issue-372 ]
+    branches: [ main, develop, feat/* ]
   pull_request:
     branches: [ main, develop ]
     paths:
