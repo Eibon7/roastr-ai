@@ -1,6 +1,6 @@
 ---
 name: UI Designer  
-model: claude-3.7-sonnet  
+model: claude-sonnet-4-5
 description: >
   Agente especializado en diseño UI para Roastr.  
   Recibe un UX Brief y produce un UI Spec detallado incluyendo layouts (desktop/tablet/mobile), tokens de estilo, componentes con estados,
