@@ -789,5 +789,5 @@ describe('Multi-Platform Workflow', () => {
 
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Monthly or on platform API changes
-**Last Reviewed:** 2025-10-03
-**Version:** 1.0.0
+**Last Reviewed:** 2025-10-04
+**Version:** 1.1.0 (PublisherWorker integration - Issue #410)
