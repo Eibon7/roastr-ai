@@ -518,21 +518,24 @@ describe('Plan Configuration Tests', () => {
         expect(PLAN_HIERARCHY.free).toBe(0);
         expect(PLAN_HIERARCHY.starter).toBe(1);
         expect(PLAN_HIERARCHY.pro).toBe(2);
-        expect(PLAN_HIERARCHY.plus).toBe(3);
+        expect(PLAN_HIERARCHY.creator_plus).toBe(3);
     });
 
     it('should have correct plan limits', () => {
         expect(PLAN_LIMITS.free.maxPlatforms).toBe(1);
-        expect(PLAN_LIMITS.free.maxRoastsPerMonth).toBe(100);
-        expect(PLAN_LIMITS.pro.maxPlatforms).toBe(5);
+        expect(PLAN_LIMITS.free.maxRoastsPerMonth).toBe(10);
+        expect(PLAN_LIMITS.starter.maxPlatforms).toBe(1);
+        expect(PLAN_LIMITS.starter.maxRoastsPerMonth).toBe(10);
+        expect(PLAN_LIMITS.pro.maxPlatforms).toBe(2);
         expect(PLAN_LIMITS.pro.maxRoastsPerMonth).toBe(1000);
-        expect(PLAN_LIMITS.plus.maxPlatforms).toBe(-1);
-        expect(PLAN_LIMITS.plus.maxRoastsPerMonth).toBe(-1);
+        expect(PLAN_LIMITS.creator_plus.maxPlatforms).toBe(2);
+        expect(PLAN_LIMITS.creator_plus.maxRoastsPerMonth).toBe(5000);
     });
 
     it('should have correct feature access', () => {
         expect(PLAN_LIMITS.free.features).toContain('basic_roasts');
+        expect(PLAN_LIMITS.starter.features).toContain('basic_roasts');
         expect(PLAN_LIMITS.pro.features).toContain('advanced_tones');
-        expect(PLAN_LIMITS.plus.features).toContain('api_access');
+        expect(PLAN_LIMITS.creator_plus.features).toContain('api_access');
     });
 });

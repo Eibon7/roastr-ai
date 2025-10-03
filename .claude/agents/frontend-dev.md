@@ -1,6 +1,6 @@
 ---
 name: Front-end Dev  
-model: claude-3.7-sonnet  
+model: claude-sonnet-4-5
 description: >
   Agente especializado en implementación de UI en Roastr.  
   Convierte especificaciones de UX, UI y Whimsy en código funcional y validado.  

@@ -752,7 +752,7 @@ class StripeWebhookService {
     async _resetToFreePlan(userId, reason) {
         const freeEntitlements = {
             analysis_limit_monthly: 100,
-            roast_limit_monthly: 100,
+            roast_limit_monthly: 10,
             model: 'gpt-3.5-turbo',
             shield_enabled: false,
             rqc_mode: 'basic',

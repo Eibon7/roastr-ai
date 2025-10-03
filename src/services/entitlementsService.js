@@ -407,16 +407,16 @@ class EntitlementsService {
 
         if (lowerIdentifier.includes('starter')) {
             return {
-                analysis_limit_monthly: 500,
-                roast_limit_monthly: 500,
-                model: 'gpt-3.5-turbo',
-                shield_enabled: false,
+                analysis_limit_monthly: 1000,
+                roast_limit_monthly: 10,
+                model: 'gpt-4o',
+                shield_enabled: true,
                 rqc_mode: 'basic',
                 plan_name: 'starter'
             };
         } else if (lowerIdentifier.includes('pro')) {
             return {
-                analysis_limit_monthly: 2000,
+                analysis_limit_monthly: 10000,
                 roast_limit_monthly: 1000,
                 model: 'gpt-4',
                 shield_enabled: true,
@@ -425,8 +425,8 @@ class EntitlementsService {
             };
         } else if (lowerIdentifier.includes('creator') || lowerIdentifier.includes('plus')) {
             return {
-                analysis_limit_monthly: -1, // Unlimited
-                roast_limit_monthly: -1, // Unlimited
+                analysis_limit_monthly: 100000,
+                roast_limit_monthly: 5000,
                 model: 'gpt-4',
                 shield_enabled: true,
                 rqc_mode: 'premium',
@@ -445,7 +445,7 @@ class EntitlementsService {
             // Default to free plan
             return {
                 analysis_limit_monthly: 100,
-                roast_limit_monthly: 100,
+                roast_limit_monthly: 10,
                 model: 'gpt-3.5-turbo',
                 shield_enabled: false,
                 rqc_mode: 'basic',
@@ -489,7 +489,7 @@ class EntitlementsService {
         return {
             account_id: userId,
             analysis_limit_monthly: 100,
-            roast_limit_monthly: 100,
+            roast_limit_monthly: 10,
             model: 'gpt-3.5-turbo',
             shield_enabled: false,
             rqc_mode: 'basic',

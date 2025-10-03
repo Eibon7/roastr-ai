@@ -123,7 +123,7 @@ const PLAN_BENEFITS = {
     ],
     starter: [
         '1,000 análisis por mes',
-        '50 roasts por mes', 
+        '10 roasts por mes',
         '1 cuenta por red social',
         'Shield habilitado'
     ],
@@ -179,8 +179,8 @@ const DEFAULT_TIER_LIMITS = {
         ai_model: 'gpt-3.5-turbo'
     },
     starter: {
-        maxRoasts: 50,
-        monthlyResponsesLimit: 50,
+        maxRoasts: 10,
+        monthlyResponsesLimit: 10,
         monthlyAnalysisLimit: 1000,
         maxPlatforms: 1,
         integrationsLimit: 1,
@@ -320,13 +320,12 @@ function getUpgradeRecommendation(usageType, currentLimit) {
     const recommendations = {
         analysis: {
             100: 'starter',    // Free -> Starter
-            1000: 'pro',       // Starter -> Pro  
+            1000: 'pro',       // Starter -> Pro
             10000: 'plus'      // Pro -> Plus
         },
         roast: {
-            10: 'starter',     // Free -> Starter
-            100: 'pro',        // Starter -> Pro
-            1000: 'plus'       // Pro -> Plus
+            10: 'pro',         // Free/Starter -> Pro (both have 10 roasts)
+            1000: 'plus'       // Pro -> Plus (1000 roasts)
         },
         platform: {
             1: 'pro'           // Free/Starter -> Pro (2 accounts per platform)

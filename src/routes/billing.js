@@ -57,18 +57,18 @@ const PLAN_CONFIG = {
         price: 0,
         currency: 'eur',
         description: 'Perfect for getting started',
-        features: ['50 roasts per month', '1 platform integration', 'Basic support'],
+        features: ['10 roasts per month', '1 platform integration', 'Basic support'],
         maxPlatforms: 1,
-        maxRoasts: 50
+        maxRoasts: 10
     },
     [PLAN_IDS.STARTER]: {
         name: 'Starter',
         price: 500, // €5.00 in cents
         currency: 'eur',
         description: 'Great for regular users',
-        features: ['100 roasts per month', '2 platform integrations', 'Shield protection', 'Email support'],
-        maxPlatforms: 2,
-        maxRoasts: 100,
+        features: ['10 roasts per month', '1,000 analyses', 'Shield protection', 'Email support'],
+        maxPlatforms: 1,
+        maxRoasts: 10,
         lookupKey: process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly'
     },
     [PLAN_IDS.PRO]: {

@@ -424,7 +424,7 @@ describe('StripeWebhookService', () => {
                 expect.objectContaining({
                     plan_name: 'free',
                     analysis_limit_monthly: 100,
-                    roast_limit_monthly: 100
+                    roast_limit_monthly: 10
                 })
             );
         });

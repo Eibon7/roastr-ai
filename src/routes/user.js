@@ -2601,7 +2601,7 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
                 // No entitlements found, return default free plan
                 const defaultEntitlements = {
                     analysis_limit_monthly: 100,
-                    roast_limit_monthly: 50,
+                    roast_limit_monthly: 10,
                     model: 'gpt-3.5-turbo',
                     shield_enabled: false,
                     rqc_mode: 'basic',
@@ -2626,7 +2626,7 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
             // Mock mode response
             const defaultEntitlements = {
                 analysis_limit_monthly: 100,
-                roast_limit_monthly: 50,
+                roast_limit_monthly: 10,
                 model: 'gpt-3.5-turbo',
                 shield_enabled: false,
                 rqc_mode: 'basic',

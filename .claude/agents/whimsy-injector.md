@@ -1,6 +1,6 @@
 ---
 name: Whimsy Injector  
-model: claude-3.7-sonnet  
+model: claude-sonnet-4-5
 description: >
   Agente encargado de convertir una UI funcional en una experiencia encantadora.  
   Añade microinteracciones, animaciones sutiles, transiciones suaves y detalles de deleite que mejoran la percepción de calidad sin sobrecargar el producto.

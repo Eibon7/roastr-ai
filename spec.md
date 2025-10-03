@@ -1,86 +1,5 @@
 # 🧠 Flujo de comentarios en Roastr
 
-# 📈 Graph Driven Development (GDD)
-
-**Status:** ✅ Phase 3 Completed (12/12 nodes documented)
-**Last Updated:** 2025-10-03
-
-## Modular Documentation System
-
-Roastr.ai uses **Graph Driven Development (GDD)** to organize documentation as a dependency graph instead of a monolithic spec.md file. This reduces agent context load by **70-93%** through intelligent dependency resolution.
-
-### System Map
-
-Central dependency graph: [`docs/system-map.yaml`](/docs/system-map.yaml)
-
-**12 Feature Nodes:**
-- **6 Critical:** roast, shield, plan-features, queue-system, cost-control, multi-tenant
-- **4 High Priority:** persona, tone, platform-constraints, social-platforms
-- **2 Planned:** trainer, analytics
-
-### All Nodes Documented (Phase 3 Complete ✅)
-
-| Node | Description | Status | Path |
-|------|-------------|--------|------|
-| **roast** | Core roast generation system | ✅ Production | [docs/nodes/roast.md](/docs/nodes/roast.md) |
-| **shield** | Automated content moderation | ✅ Production | [docs/nodes/shield.md](/docs/nodes/shield.md) |
-| **persona** | User personality & style config | ✅ Production | [docs/nodes/persona.md](/docs/nodes/persona.md) |
-| **tone** | Tone mapping & humor types | ✅ Production | [docs/nodes/tone.md](/docs/nodes/tone.md) |
-| **platform-constraints** | Platform-specific rules | ✅ Production | [docs/nodes/platform-constraints.md](/docs/nodes/platform-constraints.md) |
-| **plan-features** | Subscription plan gates | ✅ Production | [docs/nodes/plan-features.md](/docs/nodes/plan-features.md) |
-| **queue-system** | Redis/DB queue management | ✅ Production | [docs/nodes/queue-system.md](/docs/nodes/queue-system.md) |
-| **cost-control** | Usage tracking & billing | ✅ Production | [docs/nodes/cost-control.md](/docs/nodes/cost-control.md) |
-| **multi-tenant** | RLS & organization isolation | ✅ Production | [docs/nodes/multi-tenant.md](/docs/nodes/multi-tenant.md) |
-| **social-platforms** | 9 platform integrations | ✅ Production | [docs/nodes/social-platforms.md](/docs/nodes/social-platforms.md) |
-| **trainer** | AI model fine-tuning | 📋 Roadmap | [docs/nodes/trainer.md](/docs/nodes/trainer.md) |
-| **analytics** | Usage analytics & insights | 📋 Roadmap | [docs/nodes/analytics.md](/docs/nodes/analytics.md) |
-
-### Usage
-
-```bash
-# Resolve dependencies for a specific node
-node scripts/resolve-graph.js roast
-
-# Validate entire graph
-node scripts/resolve-graph.js --validate
-
-# Generate Mermaid diagram
-node scripts/resolve-graph.js --graph > docs/system-graph.mmd
-```
-
-**Context Reduction Examples:**
-- Work on Roast: 90% reduction (5000 → 500 lines)
-- Work on Shield: 84% reduction (5000 → 800 lines)
-- Work on Multi-tenant: 93% reduction (5000 → 350 lines)
-
-**For full GDD documentation, see:** [`scripts/README.md#graph-driven-development-gdd`](/scripts/README.md#graph-driven-development-gdd)
-
-
-### Node-Agent Matrix
-
-Esta tabla muestra los agentes relevantes para cada nodo del sistema. Los agentes son responsables de mantener y actualizar la documentación de su nodo correspondiente.
-
-| Node | Agentes Relevantes |
-|------|-------------------|
-| **roast** | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent |
-| **shield** | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
-| **persona** | Back-end Dev, UX Researcher, Documentation Agent, Security Audit Agent, Test Engineer |
-| **tone** | Back-end Dev, UX Researcher, Documentation Agent, Test Engineer |
-| **platform-constraints** | Back-end Dev, Documentation Agent, Test Engineer |
-| **plan-features** | Back-end Dev, Documentation Agent, Test Engineer |
-| **queue-system** | Back-end Dev, Performance Monitor Agent, Documentation Agent, Test Engineer |
-| **cost-control** | Back-end Dev, Documentation Agent, Test Engineer |
-| **multi-tenant** | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
-| **social-platforms** | Back-end Dev, Documentation Agent, Test Engineer |
-| **trainer** | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
-| **analytics** | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
-
-**Última actualización:** 2025-10-03 (generada automáticamente con `node scripts/resolve-graph.js --report`)
-
-
----
----
-
 ## 🛡️ CodeRabbit Round 9 Security Enhancements - Issue #405 Ultra-Critical Patterns
 ### 🛠️ Implementation Date: 2025-09-29
 **Review ID**: #3277389459 (CodeRabbit PR #428)  
@@ -173,7 +92,7 @@ The core decision engine implements toxicity-based routing with plan-specific th
 
 #### 📊 Toxicity Thresholds by Plan
 - **Free Plan**: 0.30 (roast threshold), Shield disabled
-- **Starter Plan**: 0.30 (roast threshold), Shield enabled ✨
+- **Starter Plan**: 0.30 (roast threshold), Shield enabled ✨  
 - **Pro Plan**: 0.25 (roast threshold), Shield enabled
 - **Plus Plan**: 0.20 (roast threshold), Shield enabled
 - **Creator Plus Plan** (creator_plus): 0.20 (roast threshold), Shield enabled
@@ -2519,7 +2438,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €15
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 2
-- **Límites**: 10,000 análisis, 1,000 roasts
+- **Límites**: 10.000 análisis, 1000 roasts
 - **Cuentas por red social**: hasta **2 de la misma red social**
 - **Funciones incluidas**:
     - Comment analysis

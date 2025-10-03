@@ -1,6 +1,6 @@
 ---
 name: Test Engineer
-model: claude-3.7-sonnet
+model: claude-sonnet-4-5
 description: >
   Agente responsable de asegurar la cobertura completa de tests en Roastr.
   Genera y mantiene tests unitarios, de integración y E2E, incluyendo validación visual automatizada con Playwright.

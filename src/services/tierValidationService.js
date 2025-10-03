@@ -4,7 +4,7 @@
  * 
  * Implements:
  * - Free: 100 análisis / 10 roasts, 1 cuenta por red, sin Shield/Original Tone
- * - Starter: 1,000 análisis / 50 roasts, 1 cuenta por red, Shield ON (Fixed Round 7)
+ * - Starter: 1,000 análisis / 100 roasts, 1 cuenta por red, Shield ON (Fixed Round 7)
  * - Pro: 10,000 análisis / 1,000 roasts, 2 cuentas por red, Shield + Original Tone
  * - Plus: 100,000 análisis / 5,000 roasts, 2 cuentas por red, Shield + Original Tone + Embedded Judge
  */

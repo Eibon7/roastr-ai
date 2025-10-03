@@ -134,22 +134,29 @@ class WorkerNotificationService {
     getFallbackLimits(plan, status) {
         const FALLBACK_LIMITS = {
             free: {
-                maxRoasts: 100,
+                maxRoasts: 10,
                 maxPlatforms: 1,
                 shieldEnabled: false,
                 customPrompts: false,
                 prioritySupport: false
             },
+            starter: {
+                maxRoasts: 10,
+                maxPlatforms: 1,
+                shieldEnabled: true,
+                customPrompts: false,
+                prioritySupport: false
+            },
             pro: {
                 maxRoasts: 1000,
-                maxPlatforms: 5,
+                maxPlatforms: 2,
                 shieldEnabled: true,
                 customPrompts: false,
                 prioritySupport: true
             },
             creator_plus: {
-                maxRoasts: -1,
-                maxPlatforms: -1,
+                maxRoasts: 5000,
+                maxPlatforms: 2,
                 shieldEnabled: true,
                 customPrompts: true,
                 prioritySupport: true

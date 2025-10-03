@@ -18,22 +18,22 @@ const PLAN_HIERARCHY = {
 const PLAN_LIMITS = {
     free: {
         maxPlatforms: 1,
-        maxRoastsPerMonth: 100,
+        maxRoastsPerMonth: 10,
         features: ['basic_roasts']
     },
     starter: {
-        maxPlatforms: 2,
-        maxRoastsPerMonth: 100,
+        maxPlatforms: 1,
+        maxRoastsPerMonth: 10,
         features: ['basic_roasts']
     },
     pro: {
-        maxPlatforms: 5,
+        maxPlatforms: 2,
         maxRoastsPerMonth: 1000,
         features: ['basic_roasts', 'advanced_tones', 'analytics', 'priority_support']
     },
     creator_plus: {
-        maxPlatforms: -1, // unlimited
-        maxRoastsPerMonth: -1, // unlimited
+        maxPlatforms: 2,
+        maxRoastsPerMonth: 5000,
         features: ['basic_roasts', 'advanced_tones', 'analytics', 'priority_support', 'custom_tones', 'api_access', 'white_label']
     }
 };

@@ -20,9 +20,9 @@ const PLAN_CONFIG = {
         price: 0,
         currency: 'eur',
         description: 'Perfect for getting started',
-        features: ['100 roasts per month', '1 platform integration', 'Basic support'],
+        features: ['10 roasts per month', '1 platform integration', 'Basic support'],
         maxPlatforms: 1,
-        maxRoasts: 100
+        maxRoasts: 10
     },
     pro: {
         name: 'Pro',
