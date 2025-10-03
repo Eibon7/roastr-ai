@@ -110,11 +110,11 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       expect(result.versions).toBeDefined();
 
       // Validate all variants respect tone
-      if (result.versions && result.versions.length > 0) {
-        result.versions.forEach(variant => {
-          expect(variant.style).toBe('balanceado');
-        });
-      }
+      expect(result.versions).toBeDefined();
+      expect(result.versions.length).toBeGreaterThan(0);
+      result.versions.forEach(variant => {
+        expect(variant.style).toBe('balanceado');
+      });
     });
 
     test('should fallback to default tone when user has no preference', async () => {
@@ -146,11 +146,12 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       expect(result.success).toBe(true);
 
       // Should use default tone (balanceado)
-      if (result.versions && result.versions.length > 0) {
-        result.versions.forEach(variant => {
-          expect(['balanceado', 'flanders', 'canalla']).toContain(variant.style?.toLowerCase());
-        });
-      }
+      expect(result.versions).toBeDefined();
+      expect(result.versions.length).toBeGreaterThan(0);
+      result.versions.forEach(variant => {
+        expect(variant.style).toBeDefined();
+        expect(variant.style.toLowerCase()).toBe('balanceado');
+      });
     });
 
     test('should reject invalid tone parameter', async () => {
@@ -250,15 +251,13 @@ describe('[Integration] Roast Generation - Issue #409', () => {
           variantText = variant.text.content || variant.text.value || variant.text.message || JSON.stringify(variant.text);
         }
 
-        // Variant should have non-empty text
-        if (variantText.length > 0) {
-          expect(variantText.length).toBeGreaterThan(0);
-        }
+        // Variant MUST have non-empty text
+        expect(variantText).toBeDefined();
+        expect(variantText.length).toBeGreaterThan(0);
 
-        // If style exists, verify it matches
-        if (variant.style) {
-          expect(variant.style).toBe('balanceado');
-        }
+        // Style MUST exist and match
+        expect(variant.style).toBeDefined();
+        expect(variant.style).toBe('balanceado');
       });
 
       // Cleanup - restore original flag
@@ -382,15 +381,16 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       expect(result.metadata.userId).toBe(testUser.id);
       expect(result.metadata.orgId).toBe(testOrganization.id);
 
-      // If variants have metadata, verify them too
-      if (result.versions && result.versions.length > 0) {
-        result.versions.forEach(variant => {
-          if (variant.metadata) {
-            expect(variant.metadata.userId).toBe(testUser.id);
-            expect(variant.metadata.orgId).toBe(testOrganization.id);
-          }
-        });
-      }
+      // Variants should have metadata if supported by implementation
+      expect(result.versions).toBeDefined();
+      expect(result.versions.length).toBeGreaterThan(0);
+      result.versions.forEach(variant => {
+        // If variant has metadata, it MUST be valid
+        if (variant.metadata) {
+          expect(variant.metadata.userId).toBe(testUser.id);
+          expect(variant.metadata.orgId).toBe(testOrganization.id);
+        }
+      });
 
       // Verify in database as well
       const { data: persistedRoasts, error } = await supabaseServiceClient
@@ -571,24 +571,19 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Verify post-selection metadata
       const postVariant = postResult.versions[0];
 
+      // If metadata exists, validate it strictly
       if (postVariant.metadata) {
-        // Validate phase
-        if (postVariant.metadata.phase) {
-          expect(postVariant.metadata.phase).toBe('post_selection');
-        }
+        // Phase MUST be post_selection
+        expect(postVariant.metadata.phase).toBe('post_selection');
 
-        // Validate base_variant_id references selected variant
-        if (postVariant.metadata.base_variant_id && selectedVariant?.id) {
+        // base_variant_id MUST reference selected variant if available
+        if (selectedVariant?.id) {
           expect(postVariant.metadata.base_variant_id).toBe(selectedVariant.id);
         }
 
-        // Validate user/org still correct
-        if (postVariant.metadata.userId) {
-          expect(postVariant.metadata.userId).toBe(testUser.id);
-        }
-        if (postVariant.metadata.orgId) {
-          expect(postVariant.metadata.orgId).toBe(testOrganization.id);
-        }
+        // user/org MUST be correct
+        expect(postVariant.metadata.userId).toBe(testUser.id);
+        expect(postVariant.metadata.orgId).toBe(testOrganization.id);
       }
 
       delete process.env.ROAST_VERSIONS_MULTIPLE;
@@ -631,12 +626,11 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // AC3: Validate post-selection metadata
       expect(result.metadata).toBeDefined();
 
-      // Validate phase if present
+      // If metadata has phase/base_variant_id, validate them strictly
       if (result.metadata.phase) {
         expect(result.metadata.phase).toBe('post_selection');
       }
 
-      // Validate base_variant_id if present
       if (result.metadata.base_variant_id) {
         expect(result.metadata.base_variant_id).toBe(selectedVariantId);
       }
@@ -825,17 +819,29 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Assert
       expect(result.success).toBe(true);
 
-      // Validate that generated roasts respect platform constraints
+      // Helper to extract text from string or object format
+      const extractText = (text) => {
+        if (typeof text === 'string') return text;
+        if (typeof text === 'object' && text !== null) {
+          return text.content || text.value || text.message || text.roast || '';
+        }
+        return '';
+      };
+
+      // Validate that generated roasts respect platform constraints (280 chars for Twitter)
       if (result.versions && result.versions.length > 0) {
         result.versions.forEach(variant => {
-          // Twitter limit is 280 characters
-          if (variant.text && typeof variant.text === 'string') {
-            expect(variant.text.length).toBeLessThanOrEqual(280);
-          }
+          const variantText = extractText(variant.text);
+          expect(variantText).toBeDefined();
+          expect(variantText.length).toBeGreaterThan(0);
+          expect(variantText.length).toBeLessThanOrEqual(280);
         });
-      } else if (result.text && typeof result.text === 'string') {
+      } else {
         // Single version mode
-        expect(result.text.length).toBeLessThanOrEqual(280);
+        const resultText = extractText(result.text || result.roast);
+        expect(resultText).toBeDefined();
+        expect(resultText.length).toBeGreaterThan(0);
+        expect(resultText.length).toBeLessThanOrEqual(280);
       }
     });
   });
@@ -931,31 +937,59 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Assert
       expect(result.success).toBe(true);
 
+      // Helper to validate Spanish language
+      const isValidSpanish = (text) => {
+        const spanishPattern = /[áéíóúñü]/i;
+        const spanishStopwords = /\b(de|la|que|en|y|los|el|es|para|con|una|por|su)\b/i;
+        const commonEnglishWords = /\b(the|and|or|is|are|was|were|be|been|being)\b/i;
+
+        const hasSpanishChars = spanishPattern.test(text);
+        const hasSpanishStopwords = spanishStopwords.test(text);
+        const hasEnglishWords = commonEnglishWords.test(text);
+
+        return hasSpanishChars || (hasSpanishStopwords && !hasEnglishWords);
+      };
+
       // Coherence validation - The roast should be contextually relevant
       if (result.versions && result.versions.length > 0) {
         result.versions.forEach(variant => {
-          if (variant.text && typeof variant.text === 'string') {
-            // Basic coherence: roast should have meaningful content
-            expect(variant.text.length).toBeGreaterThan(10);
-
-            // Coherence: Should be in Spanish (same language as input)
-            const spanishPattern = /[áéíóúñü]/i;
-            const hasSpanishChars = spanishPattern.test(variant.text) ||
-                                    variant.text.split(' ').length >= 10;
-            expect(hasSpanishChars).toBe(true);
-
-            // Coherence: Should not be generic error message
-            expect(variant.text.toLowerCase()).not.toContain('error');
-            expect(variant.text.toLowerCase()).not.toContain('failed');
+          // Extract text handling both string and object formats
+          let variantText = '';
+          if (typeof variant.text === 'string') {
+            variantText = variant.text;
+          } else if (typeof variant.text === 'object' && variant.text !== null) {
+            variantText = variant.text.roast || variant.text.content || variant.text.value ||
+                         variant.text.message || JSON.stringify(variant.text);
           }
+
+          // Text MUST exist and have meaningful content
+          expect(variantText).toBeDefined();
+          expect(variantText.length).toBeGreaterThan(10);
+
+          // MUST be in Spanish (same language as input)
+          expect(isValidSpanish(variantText)).toBe(true);
+
+          // MUST NOT be generic error message
+          expect(variantText.toLowerCase()).not.toContain('error');
+          expect(variantText.toLowerCase()).not.toContain('failed');
         });
-      } else if (result.text && typeof result.text === 'string') {
+      } else {
         // Single version mode
-        expect(result.text.length).toBeGreaterThan(10);
-        const spanishPattern = /[áéíóúñü]/i;
-        const hasSpanishChars = spanishPattern.test(result.text) ||
-                                result.text.split(' ').length >= 10;
-        expect(hasSpanishChars).toBe(true);
+        let resultText = '';
+        if (typeof result.text === 'string') {
+          resultText = result.text;
+        } else if (typeof result.text === 'object' && result.text !== null) {
+          resultText = result.text.roast || result.text.content || result.text.value || result.text.message;
+        } else if (result.roast) {
+          resultText = result.roast;
+        }
+
+        expect(resultText).toBeDefined();
+        expect(resultText.length).toBeGreaterThan(10);
+        expect(isValidSpanish(resultText)).toBe(true);
+
+        expect(resultText.toLowerCase()).not.toContain('error');
+        expect(resultText.toLowerCase()).not.toContain('failed');
       }
     });
   });
