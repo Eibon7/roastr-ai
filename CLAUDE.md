@@ -334,9 +334,88 @@ const prompt = await promptTemplate.buildPrompt({
 - **Si se detecta código nuevo sin tests asociados → coordinar con Test Engineer** para generar los tests antes de cerrar la tarea.
 - **Cambios en UI/frontend deben incluir evidencias visuales**: capturas + report.md en docs/test-evidence/ para validar la implementación visual.
 
+### Task Assessment (FASE 0 - OBLIGATORIA)
+
+**IMPORTANTE**: Antes de cualquier planning o implementación, SIEMPRE evalúa el estado actual de la tarea.
+
+#### Criterio de Decisión: ¿Assessment Simple o Completo?
+
+- **Assessment Simple** (Orquestador inline):
+  - Tareas con ≤ 2 criterios de aceptación
+  - Issues de tipo: docs, config simple, fix pequeño
+  - Ejecución: Orquestador hace búsqueda inline y ejecuta tests si existen
+
+- **Assessment Completo** (Task Assessor Agent):
+  - Tareas con ≥ 3 criterios de aceptación
+  - Issues P0/P1 críticas
+  - Features complejas, integraciones, refactors
+  - Ejecución: Invocar Task Assessor Agent
+
+#### Workflow de Assessment
+
+1. **Identificar Tipo de Assessment**:
+   - Leer issue/tarea completa
+   - Contar criterios de aceptación
+   - Determinar complejidad
+
+2. **Assessment Simple** (Orquestador):
+   ```bash
+   # Buscar archivos relacionados
+   find tests/ src/ docs/ -name "*<keyword>*"
+
+   # Si hay tests, ejecutarlos
+   npm test -- <keyword>
+
+   # Determinar recomendación inline:
+   # - Si tests pasan + AC cumplidos → CLOSE
+   # - Si tests fallan → FIX
+   # - Si implementación parcial → ENHANCE
+   # - Si no existe nada → CREATE
+   ```
+
+   Documentar decisión en el plan directamente.
+
+3. **Assessment Completo** (Task Assessor Agent):
+   ```
+   Invocar: Task Assessor Agent con issue number
+   Output: docs/assessment/<issue>.md
+   Resultado: Recomendación CREATE | FIX | ENHANCE | CLOSE
+   ```
+
+4. **Actuar según Recomendación**:
+   - **CLOSE**: Cerrar issue con evidencia, no proceder a planning
+   - **FIX**: Planning enfocado en arreglar lo que falla
+   - **ENHANCE**: Planning para mejorar lo existente
+   - **CREATE**: Planning para implementar desde cero
+
+#### Ejemplos de Assessment
+
+**Ejemplo 1 - Assessment Simple (Orquestador inline):**
+```
+Issue #450: "Actualizar README con nuevos comandos"
+- AC: 1 (añadir comandos al README)
+- Tipo: docs
+→ Orquestador inline: find README.md, revisar contenido
+→ Recomendación: ENHANCE (README existe, añadir sección)
+→ Procede a planning simple
+```
+
+**Ejemplo 2 - Assessment Completo (Task Assessor Agent):**
+```
+Issue #408: "Shield integration tests"
+- AC: 5 (acciones, registro, no respuestas, escalamiento, logs)
+- Tipo: test integration P0
+→ Invocar Task Assessor Agent
+→ Agent encuentra: tests/integration/shield-issue-408.test.js
+→ Agent ejecuta: 11 tests failing
+→ Recomendación: FIX (tests existen pero fallan)
+→ Procede a planning para FIX
+```
+
 ### Planning Mode
 
 - **Antes de implementar cualquier feature/tarea, genera siempre un plan en modo texto (planning mode)**.
+- **El plan debe incluir sección "Estado Actual"** basada en el assessment realizado.
 - **El plan debe describir**: pasos de diseño, subagentes a usar, archivos afectados, criterios de validación.
 - **Guarda el plan en `docs/plan/<issue>.md`**.
 - **Solo después de que el plan esté guardado y validado, procede a la implementación**.
