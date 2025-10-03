@@ -1,0 +1,6 @@
+[32m✅ Validation report generated: /Users/emiliopostigo/roastr-ai/docs/system-validation.md[0m
+
+[1m[36m🔍 Graph Validation Results[0m
+
+[32m✅ Graph validation passed! No issues found.[0m
+
