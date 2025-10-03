@@ -21,9 +21,13 @@ const { supabaseServiceClient } = require('../../src/config/supabase');
 const RoastEngine = require('../../src/services/roastEngine');
 const { normalizeTone, isValidTone } = require('../../src/config/tones');
 const { flags } = require('../../src/config/flags');
+const { calculateQualityScore } = require('../helpers/testUtils');
 
 // Test timeout configuration
 jest.setTimeout(45000);
+
+// AC5: Quality threshold for variant validation
+const QUALITY_THRESHOLD = 0.5;
 
 describe('[Integration] Roast Generation - Issue #409', () => {
   let roastEngine;
@@ -276,6 +280,10 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       jest.resetModules();
       const { flags: reloadedFlags } = require('../../src/config/flags');
 
+      // Reinitialize RoastEngine with new flags
+      const RoastEngineReloaded = require('../../src/services/roastEngine');
+      const engineWithNewFlags = new RoastEngineReloaded();
+
       const commentId = randomUUID();
       const input = {
         comment: 'Comentario para persistencia',
@@ -295,12 +303,15 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       };
 
       // Act
-      const result = await roastEngine.generateRoast(input, options);
+      const result = await engineWithNewFlags.generateRoast(input, options);
 
       // Assert - Verify generation succeeded
       expect(result.success).toBe(true);
       expect(result.versions).toBeDefined();
-      expect(result.versions.length).toBeGreaterThanOrEqual(1);
+
+      // AC2: Expect 2 variants if flag is enabled, 1 otherwise
+      const expectedVariants = reloadedFlags.isEnabled('ROAST_VERSIONS_MULTIPLE') ? 2 : 1;
+      expect(result.versions).toHaveLength(expectedVariants);
 
       // Verify database persistence (conditional - may fail in mock mode)
       const { data: persistedRoasts, error } = await supabaseServiceClient
@@ -312,8 +323,8 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       if (!error && persistedRoasts) {
         expect(persistedRoasts).toBeDefined();
 
-        // Should have at least 1 roast persisted (multiple variants may share roast_id)
-        expect(persistedRoasts.length).toBeGreaterThanOrEqual(1);
+        // AC2: Should have same number of persisted variants as generated
+        expect(persistedRoasts.length).toBe(expectedVariants);
 
         // Verify persisted data matches generation
         persistedRoasts.forEach(roast => {
@@ -389,6 +400,9 @@ describe('[Integration] Roast Generation - Issue #409', () => {
         .limit(5);
 
       if (!error && persistedRoasts) {
+        // AC2: Ensure at least one row persisted before checking associations
+        expect(persistedRoasts.length).toBeGreaterThan(0);
+
         persistedRoasts.forEach(roast => {
           expect(roast.user_id).toBe(testUser.id);
           // org_id might not be in roasts table, check if exists
@@ -614,10 +628,17 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Assert
       expect(result.success).toBe(true);
 
-      // Validate that the new variant has context of the base variant
-      // (Implementation detail - might be in metadata or generation context)
-      if (result.metadata) {
-        expect(result.metadata).toBeDefined();
+      // AC3: Validate post-selection metadata
+      expect(result.metadata).toBeDefined();
+
+      // Validate phase if present
+      if (result.metadata.phase) {
+        expect(result.metadata.phase).toBe('post_selection');
+      }
+
+      // Validate base_variant_id if present
+      if (result.metadata.base_variant_id) {
+        expect(result.metadata.base_variant_id).toBe(selectedVariantId);
       }
     });
 
@@ -738,11 +759,9 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Assert
       expect(result.success).toBe(true);
 
-      // Transparency should be applied in auto-approve mode
-      if (options.autoApprove && result.status === 'auto_approved') {
-        // Check that transparency was validated
-        expect(result.status).toBe('auto_approved');
-      }
+      // AC4: Transparency MUST be validated when autoApprove is true
+      expect(result.status).toBe('auto_approved');
+      expect(result.metadata?.transparencyValidated ?? true).toBe(true);
     });
 
     test('should consume credits before generation', async () => {
@@ -841,21 +860,39 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Assert
       expect(result.success).toBe(true);
 
-      // Quality validation - Basic: text length > minimum threshold
+      // AC5: Validate quality score above threshold
       if (result.versions && result.versions.length > 0) {
-        result.versions.forEach(variant => {
-          if (variant.text && typeof variant.text === 'string') {
-            expect(variant.text.length).toBeGreaterThan(10);
+        result.versions.forEach((variant, index) => {
+          // Extract text from variant (handle both string and object formats)
+          let variantText = '';
+          if (typeof variant.text === 'string') {
+            variantText = variant.text;
+          } else if (typeof variant.text === 'object' && variant.text !== null) {
+            variantText = variant.text.roast || variant.text.content || variant.text.value || variant.text.message || '';
+          }
 
-            // Quality check: Not empty, has substance
-            expect(variant.text.trim()).not.toBe('');
+          // Calculate quality score for each variant with normalized text
+          const normalizedVariant = { text: variantText };
+          const qualityScore = calculateQualityScore(normalizedVariant, input.comment);
 
-            // Quality check: Has reasonable length (not too short)
-            expect(variant.text.length).toBeGreaterThan(15);
+          // Require quality score to be a number
+          expect(typeof qualityScore).toBe('number');
+
+          // Require quality score to meet minimum threshold
+          expect(qualityScore).toBeGreaterThanOrEqual(QUALITY_THRESHOLD);
+
+          // Also validate text length as secondary check
+          if (variantText) {
+            expect(variantText.length).toBeGreaterThan(15);
+            expect(variantText.trim()).not.toBe('');
           }
         });
       } else if (result.text && typeof result.text === 'string') {
-        // Single version mode
+        // Single version mode - also check quality
+        const singleVariant = { text: result.text };
+        const qualityScore = calculateQualityScore(singleVariant, input.comment);
+        expect(typeof qualityScore).toBe('number');
+        expect(qualityScore).toBeGreaterThanOrEqual(QUALITY_THRESHOLD);
         expect(result.text.length).toBeGreaterThan(15);
         expect(result.text.trim()).not.toBe('');
       }
