@@ -122,8 +122,8 @@ const PLAN_BENEFITS = {
         'Funcionalidades básicas'
     ],
     starter: [
-        '1,000 análisis por mes',
-        '50 roasts por mes', 
+        '500 análisis por mes',
+        '50 roasts por mes',
         '1 cuenta por red social',
         'Shield habilitado'
     ],
@@ -134,8 +134,8 @@ const PLAN_BENEFITS = {
         'Shield + Tono Original'
     ],
     plus: [
-        '100,000 análisis por mes',
-        '5,000 roasts por mes',
+        'Análisis ilimitados',
+        'Roasts ilimitados',
         '2 cuentas por red social',
         'Shield + Tono Original + Juez Embebido'
     ]
@@ -320,12 +320,12 @@ function getUpgradeRecommendation(usageType, currentLimit) {
     const recommendations = {
         analysis: {
             100: 'starter',    // Free -> Starter
-            1000: 'pro',       // Starter -> Pro  
-            10000: 'plus'      // Pro -> Plus
+            500: 'pro',        // Starter -> Pro
+            10000: 'plus'      // Pro -> Plus (Plus is unlimited, so this is the Pro limit)
         },
         roast: {
             10: 'starter',     // Free -> Starter
-            100: 'pro',        // Starter -> Pro
+            50: 'pro',         // Starter -> Pro
             1000: 'plus'       // Pro -> Plus
         },
         platform: {
