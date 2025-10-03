@@ -245,14 +245,22 @@ class TriageService {
   /**
    * Perform toxicity analysis using existing worker
    * Leverages AnalyzeToxicityWorker for consistency
+   *
+   * @timeout 10 seconds - Prevents hanging on slow API calls (CodeRabbit #3298511777)
    */
   async analyzeToxicity(comment, organization, correlationId) {
     const startTime = Date.now();
+    const ANALYSIS_TIMEOUT = 10000; // 10 seconds
 
     try {
-      // Use existing toxicity worker for consistent analysis
-      const analysis = await this.toxicityWorker.analyzeToxicity(comment.content);
-      
+      // Use existing toxicity worker with timeout protection (CodeRabbit #3298511777)
+      const analysis = await Promise.race([
+        this.toxicityWorker.analyzeToxicity(comment.content),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Toxicity analysis timeout')), ANALYSIS_TIMEOUT)
+        )
+      ]);
+
       logger.debug('Toxicity analysis completed', {
         correlation_id: correlationId,
         toxicity_score: analysis.toxicity,
@@ -269,7 +277,8 @@ class TriageService {
     } catch (error) {
       logger.error('Toxicity analysis failed', {
         correlation_id: correlationId,
-        error: error.message
+        error: error.message,
+        timeout: error.message.includes('timeout')
       });
 
       // Fallback to conservative analysis (below all thresholds to avoid false positives)
