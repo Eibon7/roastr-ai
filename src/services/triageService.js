@@ -282,6 +282,11 @@ class TriageService {
       });
 
       // Fallback to conservative analysis (below all thresholds to avoid false positives)
+      // When toxicity analysis fails, we use fail-open approach: assume content is safe
+      // 0.15 is BELOW all plan thresholds (free: 0.30, pro: 0.25, plus: 0.20)
+      // This means the comment will be PUBLISHED (not roasted/blocked)
+      // This prevents false positives (blocking innocent content when API is down)
+      // CodeRabbit #3298546625: Confirmed this is correct behavior for fallback scenarios
       return {
         toxicity: 0.15, // Conservative low value - below all plan thresholds
         categories: ['TOXICITY'],
@@ -363,8 +368,9 @@ class TriageService {
         platform: comment.platform || 'unknown',
         accountRef: comment.account_ref || 'triage_system',
         externalCommentId: comment.id,
-        externalAuthorId: comment.author_id || 'unknown',
-        externalAuthorUsername: comment.author || 'unknown',
+        // Use unique identifiers for unknown authors to prevent conflation (CodeRabbit #3298546625)
+        externalAuthorId: comment.author_id || `anonymous_${crypto.randomBytes(8).toString('hex')}`,
+        externalAuthorUsername: comment.author || `anonymous_user_${crypto.randomBytes(6).toString('hex')}`,
         originalText: comment.content,
         toxicityAnalysis: toxicityAnalysis,
         metadata: {
@@ -551,10 +557,26 @@ class TriageService {
 
   /**
    * Get triage statistics for monitoring and analytics
+   *
+   * TODO: Implement database queries for organization-specific stats
+   * Currently returns cache-only statistics (not org-specific)
+   * CodeRabbit #3298546625: Parameters not yet utilized in implementation
+   *
+   * @param {string} organizationId - Organization ID (not yet used)
+   * @param {string} timeRange - Time range for stats (not yet used)
+   * @returns {Object} Cache statistics and thresholds
    */
   async getTriageStats(organizationId, timeRange = '1h') {
-    // This would query from database in production
-    // For now, return cache statistics and basic metrics
+    // Log that this is a simplified implementation
+    logger.warn('getTriageStats returning cache-only statistics (not organization-specific)', {
+      organization_id: organizationId,
+      time_range: timeRange,
+      implementation_status: 'incomplete',
+      note: 'Database queries pending future implementation'
+    });
+
+    // This would query from database in production for org-specific stats
+    // For now, return global cache statistics and basic metrics
     return {
       cache_performance: {
         hits: this.cacheStats.hits,
@@ -562,13 +584,16 @@ class TriageService {
         hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0
           ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
           : 0,
-        cache_size: this.decisionCache.size
+        cache_size: this.decisionCache.size,
+        evictions: this.cacheStats.evictions
       },
       thresholds: {
         block_threshold: this.decisionMatrix.BLOCK_THRESHOLD,
         roast_thresholds: this.decisionMatrix.ROAST_THRESHOLDS
       },
       time_range: timeRange,
+      organization_id: organizationId,
+      implementation_note: 'Cache-only statistics - Database integration pending',
       last_updated: new Date().toISOString()
     };
   }
