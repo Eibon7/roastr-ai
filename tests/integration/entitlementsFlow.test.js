@@ -345,8 +345,8 @@ describe('Entitlements Integration Flow', () => {
             id: 'price_creator123',
             lookup_key: 'plus_monthly',
             metadata: {
-                analysis_limit_monthly: '100000',
-                roast_limit_monthly: '5000',
+                analysis_limit_monthly: '-1',
+                roast_limit_monthly: '-1',
                 model: 'gpt-4',
                 shield_enabled: 'true',
                 rqc_mode: 'premium',

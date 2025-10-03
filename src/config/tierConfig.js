@@ -181,7 +181,7 @@ const DEFAULT_TIER_LIMITS = {
     starter: {
         maxRoasts: 50,
         monthlyResponsesLimit: 50,
-        monthlyAnalysisLimit: 1000,
+        monthlyAnalysisLimit: 500,
         maxPlatforms: 1,
         integrationsLimit: 1,
         shieldEnabled: true,
@@ -215,9 +215,9 @@ const DEFAULT_TIER_LIMITS = {
         ai_model: 'gpt-4o'
     },
     plus: {
-        maxRoasts: 5000,
-        monthlyResponsesLimit: 5000,
-        monthlyAnalysisLimit: 100000,
+        maxRoasts: -1,
+        monthlyResponsesLimit: -1,
+        monthlyAnalysisLimit: -1,
         maxPlatforms: 2,
         integrationsLimit: 2,
         shieldEnabled: true,

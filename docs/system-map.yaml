@@ -1,0 +1,298 @@
+# Roastr System Map - Graph Driven Development (GDD)
+# Version: 1.0
+# Last updated: 2025-01-10
+
+metadata:
+  name: Roastr System Map
+  description: Graph of features and their dependencies for modular documentation
+  version: 1.0.0
+  maintained_by: Documentation Agent
+
+# Feature nodes - each represents a domain/module with its own documentation
+features:
+  # ============================================================================
+  # CORE FEATURES
+  # ============================================================================
+
+  roast:
+    name: Roast Generation
+    description: AI-powered roast generation with personalization, RQC and prompt templates
+    priority: critical
+    docs:
+      - docs/nodes/roast.md
+      - docs/nodes/prompt-template.md
+    depends_on:
+      - persona
+      - tone
+      - platform-constraints
+      - shield
+      - cost-control
+    owners:
+      - back-end-dev
+      - ux-researcher
+    code_paths:
+      - src/services/roastGeneratorEnhanced.js
+      - src/services/roastPromptTemplate.js
+      - src/services/csvRoastService.js
+    tests:
+      - tests/unit/services/roastGenerator.test.js
+      - tests/integration/roast-creation.test.js
+
+  shield:
+    name: Shield Automated Moderation
+    description: Priority-based automated content moderation with escalating actions
+    priority: critical
+    docs:
+      - docs/nodes/shield.md
+      - docs/nodes/moderation-rules.md
+    depends_on:
+      - cost-control
+      - queue-system
+    owners:
+      - back-end-dev
+      - security-audit
+    code_paths:
+      - src/services/shieldService.js
+      - src/workers/ShieldActionWorker.js
+    tests:
+      - tests/unit/services/shieldService.test.js
+      - tests/integration/shield-moderation.test.js
+
+  persona:
+    name: User Persona System
+    description: User personality profiles and preferences for roast customization
+    priority: high
+    docs:
+      - docs/nodes/persona.md
+      - docs/nodes/user-preferences.md
+    depends_on:
+      - plan-features
+    owners:
+      - ux-researcher
+      - back-end-dev
+    code_paths:
+      - src/services/personaService.js
+    tests:
+      - tests/unit/services/personaService.test.js
+
+  tone:
+    name: Tone System
+    description: Humor intensity, style and voice configuration for roasts
+    priority: high
+    docs:
+      - docs/nodes/tone.md
+    depends_on:
+      - persona
+      - plan-features
+    owners:
+      - ux-researcher
+      - back-end-dev
+    code_paths:
+      - src/services/toneService.js
+    tests:
+      - tests/unit/services/toneService.test.js
+
+  platform-constraints:
+    name: Platform Constraints
+    description: Character limits, style rules and constraints for each social media platform
+    priority: high
+    docs:
+      - docs/nodes/platform-constraints.md
+    depends_on:
+      - social-platforms
+    owners:
+      - back-end-dev
+    code_paths:
+      - src/services/platformConstraints.js
+    tests:
+      - tests/unit/services/platformConstraints.test.js
+
+  # ============================================================================
+  # INFRASTRUCTURE
+  # ============================================================================
+
+  queue-system:
+    name: Queue System
+    description: Redis/Upstash + DB fallback queue management with priority support
+    priority: critical
+    docs:
+      - docs/nodes/queue-system.md
+      - docs/nodes/workers.md
+    depends_on: []
+    owners:
+      - back-end-dev
+      - performance-monitor
+    code_paths:
+      - src/services/queueService.js
+      - src/workers/BaseWorker.js
+      - src/workers/FetchCommentsWorker.js
+      - src/workers/AnalyzeToxicityWorker.js
+      - src/workers/GenerateReplyWorker.js
+      - src/workers/ShieldActionWorker.js
+    tests:
+      - tests/unit/services/queueService.test.js
+      - tests/integration/queue-workflow.test.js
+
+  cost-control:
+    name: Cost Control & Billing
+    description: Usage tracking, billing integration and automatic limit enforcement
+    priority: critical
+    docs:
+      - docs/nodes/cost-control.md
+    depends_on:
+      - plan-features
+    owners:
+      - back-end-dev
+    code_paths:
+      - src/services/costControl.js
+    tests:
+      - tests/unit/services/costControl.test.js
+
+  multi-tenant:
+    name: Multi-Tenant Architecture
+    description: Row Level Security (RLS), data isolation and organization-scoped operations
+    priority: critical
+    docs:
+      - docs/nodes/multi-tenant.md
+      - docs/nodes/rls.md
+    depends_on: []
+    owners:
+      - back-end-dev
+      - security-audit
+    code_paths:
+      - database/schema.sql
+    tests:
+      - tests/integration/multiTenantWorkflow.test.js
+
+  # ============================================================================
+  # INTEGRATIONS
+  # ============================================================================
+
+  social-platforms:
+    name: Social Media Integrations
+    description: 9 platform integrations (Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky)
+    priority: high
+    docs:
+      - docs/nodes/platforms/overview.md
+      - docs/nodes/platforms/twitter.md
+      - docs/nodes/platforms/youtube.md
+      - docs/nodes/platforms/instagram.md
+      - docs/nodes/platforms/facebook.md
+      - docs/nodes/platforms/discord.md
+      - docs/nodes/platforms/twitch.md
+      - docs/nodes/platforms/reddit.md
+      - docs/nodes/platforms/tiktok.md
+      - docs/nodes/platforms/bluesky.md
+    depends_on:
+      - queue-system
+    owners:
+      - back-end-dev
+    code_paths:
+      - src/integrations/twitter/twitterService.js
+      - src/integrations/youtube/youtubeService.js
+      - src/integrations/instagram/instagramService.js
+      - src/integrations/facebook/facebookService.js
+      - src/integrations/discord/discordService.js
+      - src/integrations/twitch/twitchService.js
+      - src/integrations/reddit/redditService.js
+      - src/integrations/tiktok/tiktokService.js
+      - src/integrations/bluesky/blueskyService.js
+    tests:
+      - tests/unit/integrations/twitter.test.js
+      - tests/integration/platform-workflow.test.js
+
+  # ============================================================================
+  # BUSINESS LOGIC
+  # ============================================================================
+
+  plan-features:
+    name: Plan Features & Limits
+    description: Subscription tiers (Free, Starter, Pro, Plus) with features and limits
+    priority: high
+    docs:
+      - docs/nodes/plan-features.md
+      - docs/nodes/subscription-tiers.md
+    depends_on: []
+    owners:
+      - back-end-dev
+      - ux-researcher
+    code_paths:
+      - src/services/entitlementsService.js
+    tests:
+      - tests/unit/services/entitlementsService.test.js
+
+  # ============================================================================
+  # FUTURE FEATURES (Post-MVP)
+  # ============================================================================
+
+  trainer:
+    name: Trainer System
+    description: Fine-tuning system for custom roast models (Post-MVP)
+    priority: low
+    docs:
+      - docs/nodes/trainer.md
+    depends_on:
+      - roast
+      - cost-control
+    owners:
+      - back-end-dev
+    status: planned
+
+  analytics:
+    name: Analytics & Metrics
+    description: Usage analytics, performance metrics and business intelligence (Post-MVP)
+    priority: low
+    docs:
+      - docs/nodes/analytics.md
+    depends_on:
+      - roast
+      - shield
+      - cost-control
+    owners:
+      - back-end-dev
+      - performance-monitor
+    status: planned
+
+  webhooks:
+    name: Webhooks System
+    description: Event-driven webhooks for integrations (Post-MVP)
+    priority: low
+    docs:
+      - docs/nodes/webhooks.md
+    depends_on:
+      - multi-tenant
+      - queue-system
+    owners:
+      - back-end-dev
+    status: planned
+
+# ============================================================================
+# VALIDATION RULES
+# ============================================================================
+validation:
+  max_dependency_depth: 5        # Maximum depth of dependency chain
+  detect_cycles: true            # Detect circular dependencies
+  require_owners: true           # Every node must have at least one owner
+  require_docs: true             # Every node must reference at least one doc file
+  require_code_paths: false      # Code paths optional (some nodes are pure docs)
+  allowed_priorities:
+    - critical
+    - high
+    - medium
+    - low
+
+# ============================================================================
+# METADATA FOR TOOLING
+# ============================================================================
+tooling:
+  visualization:
+    format: mermaid              # Graph visualization format
+    output: docs/system-graph.md
+
+  dependency_resolver:
+    cache_enabled: true
+    max_depth: 10
+
+  documentation_agent:
+    sync_spec: true              # Keep spec.md as consolidated overview
+    validate_on_update: true     # Validate graph integrity on every update

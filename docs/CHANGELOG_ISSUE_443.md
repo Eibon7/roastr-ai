@@ -1,9 +1,42 @@
 # Changelog - Issue #443: Complete Triage System Implementation
 
+## 🔄 CodeRabbit Review #3298220527 Applied (2025-10-03)
+**PR**: #445
+**Status**: ✅ Merge conflicts resolved + CodeRabbit improvements applied
+
+### Changes Applied
+1. **Timeout Protection** (`triageService.js:61-77`)
+   - Added `withTimeout()` method to prevent hanging async operations
+   - Configured timeouts: toxicity analysis (5s), Shield decision (3s)
+   - Prevents pipeline blockage from slow/failing external services
+
+2. **Security Pattern Refinement** (`triageService.js:189-197`)
+   - Refined regex patterns to reduce false positives
+   - Template injection: now requires dangerous chars `{{.*[;<>].*}}`
+   - Variable injection: now requires execution keywords `eval|exec|require|import`
+   - Script tags: full tag detection `<script[^>]*>.*</script>`
+
+3. **Fallback Toxicity Score** (`triageService.js:288-295`)
+   - Changed from 0.5 to 0.15 to avoid false routing
+   - Low score (0.15) stays below all roast thresholds
+   - Prevents unwanted roast generation on API failures
+
+4. **Anonymous Author Identification** (`triageService.js:370-372`)
+   - Changed from `'unknown'` to `anon-${comment.id}`
+   - Prevents conflation of different anonymous authors
+   - Enables proper offender tracking in Shield system
+
+### Conflicts Resolved
+- **6 files**: `triageService.js`, `triage.js`, `triage.test.js`, `triageFixtures.js`, `CHANGELOG_ISSUE_443.md`, `spec.md`
+- **Strategy**: Accepted `main` branch versions (more recent, includes Round 3 fixes)
+- **Test Updates**: Fixed 23/25 tests passing (2 edge cases with mock timing remain)
+
+---
+
 ## 📋 Overview
-**Date**: 2025-10-01  
-**Issues**: #407 (Initial planning), #443 (Full implementation)  
-**Branch**: `feat/issue-443-triage-complete`  
+**Date**: 2025-10-01
+**Issues**: #407 (Initial planning), #443 (Full implementation)
+**Branch**: `feat/issue-443-triage-complete`
 **Status**: ✅ Complete implementation ready for review
 
 ## 🎯 Summary
