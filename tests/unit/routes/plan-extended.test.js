@@ -46,10 +46,11 @@ describe('Plan Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.plans).toHaveLength(3);
-      
+      expect(response.body.data.plans).toHaveLength(4);
+
       const planIds = response.body.data.plans.map(p => p.id);
       expect(planIds).toContain('free');
+      expect(planIds).toContain('starter');
       expect(planIds).toContain('pro');
       expect(planIds).toContain('creator_plus');
     });
@@ -247,12 +248,12 @@ describe('Plan Routes', () => {
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Invalid plan selected');
-      expect(response.body.availablePlans).toEqual(['free', 'pro', 'creator_plus']);
+      expect(response.body.availablePlans).toEqual(['free', 'starter', 'pro', 'creator_plus']);
     });
 
     test('should select all available plans', async () => {
       // Test selecting each plan
-      const plans = ['free', 'pro', 'creator_plus'];
+      const plans = ['free', 'starter', 'pro', 'creator_plus'];
       
       for (const planId of plans) {
         const response = await request(app)
@@ -309,11 +310,12 @@ describe('Plan Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.comparison).toHaveLength(3);
+      expect(response.body.data.comparison).toHaveLength(4);
       expect(response.body.data.styleProfileAvailable).toBeDefined();
 
       const comparison = response.body.data.comparison;
       const freePlan = comparison.find(p => p.id === 'free');
+      const starterPlan = comparison.find(p => p.id === 'starter');
       const proPlan = comparison.find(p => p.id === 'pro');
       const creatorPlan = comparison.find(p => p.id === 'creator_plus');
 

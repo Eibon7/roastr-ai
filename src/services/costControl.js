@@ -898,10 +898,16 @@ class CostControlService {
       // Define limits by plan and resource type
       const planLimits = {
         free: {
-          roasts: { monthly: 100, overage: false, hard: true },
-          integrations: { monthly: 2, overage: false, hard: true },
+          roasts: { monthly: 10, overage: false, hard: true },
+          integrations: { monthly: 1, overage: false, hard: true },
           api_calls: { monthly: 200, overage: false, hard: true },
           shield_actions: { monthly: 0, overage: false, hard: true }
+        },
+        starter: {
+          roasts: { monthly: 10, overage: false, hard: true },
+          integrations: { monthly: 1, overage: false, hard: true },
+          api_calls: { monthly: 500, overage: false, hard: true },
+          shield_actions: { monthly: 100, overage: false, hard: true }
         },
         pro: {
           roasts: { monthly: 1000, overage: true, hard: false },

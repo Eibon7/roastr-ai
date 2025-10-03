@@ -129,7 +129,7 @@ Plan Limits Exceeded: DEFER (retry later)
 
 #### Rate Limiting by Plan
 - **Free**: 10 roasts/month
-- **Starter**: 100 roasts/month
+- **Starter**: 10 roasts/month
 - **Pro**: 1,000 roasts/month
 - **Plus**: 5,000 roasts/month
 
@@ -2625,7 +2625,7 @@ Como **usuario de Roastr**, quiero tener distintos planes de suscripción, con l
 ### 🎯 Key Achievements
 #### ✅ Tier Configuration (Exactly per SPEC)
 - **Free**: 100 análisis / 10 roasts / 1 cuenta por red / No Shield, No Original Tone
-- **Starter**: 1,000 análisis / 100 roasts / 1 cuenta por red / Shield ON, No Original Tone
+- **Starter**: 1,000 análisis / 10 roasts / 1 cuenta por red / Shield ON, No Original Tone
 - **Pro**: 10,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
 - **Plus**: 100,000 análisis / 5,000 roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
 
