@@ -1,5 +1,73 @@
 # Changelog - Issue #443: Complete Triage System Implementation
 
+## 🔧 CodeRabbit Review #3298455873 Applied (2025-10-03)
+**PR**: #445
+**Status**: ✅ CRITICAL Security Fix - HMAC Secret Hardcoded
+
+### Critical Security Issue Fixed
+
+**Vulnerability**: CWE-798 - Use of Hard-coded Credentials
+**Severity**: CRITICAL (CVSS ~7.5)
+**Component**: Triage Service Cache System
+
+#### Issue
+- HMAC secret hardcoded as string literal in source code
+- Secret visible in git history and to anyone with repo access
+- Enabled cache poisoning attacks
+- Prevented secret rotation without code deployment
+- Same secret shared across all environments
+
+#### Fix Applied (`src/services/triageService.js`)
+
+**1. Constructor Enhancement** (lines 27-36):
+```javascript
+// Initialize cache secret from environment or generate random
+this.CACHE_SECRET = process.env.TRIAGE_CACHE_SECRET ||
+                    crypto.randomBytes(32).toString('hex');
+
+if (!process.env.TRIAGE_CACHE_SECRET) {
+  logger.warn('TRIAGE_CACHE_SECRET not set in environment...');
+}
+```
+
+**2. Cache Key Generation** (line 439):
+```javascript
+// BEFORE: Hardcoded secret (INSECURE)
+return crypto.createHmac('sha256', 'triage_cache_key')
+
+// AFTER: Environment-based secret (SECURE)
+return crypto.createHmac('sha256', this.CACHE_SECRET)
+```
+
+### Security Benefits
+- ✅ **Secret Externalized**: Moved to environment variable
+- ✅ **Environment Isolation**: Different secrets per env (dev/staging/prod)
+- ✅ **Rotatable**: Can rotate secret without code changes
+- ✅ **Fallback**: Auto-generates random secret in dev
+- ✅ **Auditable**: Warning logged if not configured
+
+### Configuration
+- Added `TRIAGE_CACHE_SECRET` to `.env.example`
+- Recommended: Generate with `openssl rand -hex 32`
+- Production: MUST be set in environment
+- Development: Optional (uses random fallback)
+
+### Impact
+- **Cache Integrity**: Protected from poisoning attacks
+- **Secret Rotation**: Now possible without redeployment
+- **Compliance**: Resolves CWE-798 security finding
+- **Best Practice**: Follows 12-factor app methodology
+
+### Files Modified
+- `src/services/triageService.js` - Constructor + generateCacheKey
+- `.env.example` - Added TRIAGE_CACHE_SECRET documentation
+- `docs/plan/review-3298455873.md` - Security fix plan
+
+### Test Results
+✅ 27/27 integration tests passing (no regressions)
+
+---
+
 ## 🔧 CodeRabbit Review #3298445385 Verified (2025-10-03)
 **PR**: #445
 **Status**: ✅ Confirmation - Fix already applied

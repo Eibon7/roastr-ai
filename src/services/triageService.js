@@ -23,7 +23,18 @@ class TriageService {
     this.costControl = new CostControlService();
     this.planLimits = planLimitsService;
     this.toxicityWorker = new AnalyzeToxicityWorker();
-    
+
+    // Initialize cache secret from environment or generate random (CodeRabbit #3298455873)
+    this.CACHE_SECRET = process.env.TRIAGE_CACHE_SECRET ||
+                        crypto.randomBytes(32).toString('hex');
+
+    if (!process.env.TRIAGE_CACHE_SECRET) {
+      logger.warn('TRIAGE_CACHE_SECRET not set in environment, using random secret (cache will not persist across restarts)', {
+        service: 'TriageService',
+        security_warning: true
+      });
+    }
+
     // Decision matrix - integrates with existing Shield thresholds
     this.decisionMatrix = {
       // Block threshold - aligns with Shield critical level
@@ -425,7 +436,7 @@ class TriageService {
     };
 
     const keyString = JSON.stringify(keyData);
-    return crypto.createHmac('sha256', 'triage_cache_key')
+    return crypto.createHmac('sha256', this.CACHE_SECRET)
                  .update(keyString)
                  .digest('hex');
   }

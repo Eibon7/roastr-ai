@@ -1,0 +1,775 @@
+# Multi-Tenant - Row Level Security & Organization Isolation
+
+**Node ID:** `multi-tenant`
+**Owner:** Back-end Dev
+**Priority:** Critical
+**Status:** Production
+**Last Updated:** 2025-10-03
+
+## Dependencies
+
+None (foundational node)
+
+## Overview
+
+Multi-Tenant provides complete data isolation between organizations using PostgreSQL Row Level Security (RLS) and Supabase Auth integration. It ensures that users can only access data belonging to their organization or organizations they are members of, preventing data leakage and unauthorized access.
+
+### Key Capabilities
+
+1. **Row Level Security (RLS)** - PostgreSQL-native data isolation at the database level
+2. **Organization-Scoped Access** - All tables scoped by organization_id
+3. **Membership Management** - Owner/admin/member role hierarchy
+4. **Service Role Bypass** - Backend services can access all data with service_role
+5. **Advisory Locks** - Prevent race conditions in concurrent operations
+6. **Automatic Isolation** - RLS policies enforced transparently on all queries
+
+## Architecture
+
+### Core Tables
+
+**Table:** `organizations`
+
+```sql
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(100) UNIQUE NOT NULL,
+  owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
+
+  -- Plan & billing
+  plan_id VARCHAR(50) NOT NULL DEFAULT 'free',
+  subscription_status VARCHAR(20) DEFAULT 'active',
+  stripe_subscription_id VARCHAR(255),
+
+  -- Usage limits
+  monthly_responses_limit INTEGER NOT NULL DEFAULT 100,
+  monthly_responses_used INTEGER DEFAULT 0,
+
+  -- Settings
+  settings JSONB DEFAULT '{}',
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  CONSTRAINT organizations_slug_check CHECK (slug ~* '^[a-z0-9-]+$'),
+  CONSTRAINT organizations_plan_check CHECK (plan_id IN ('free', 'pro', 'creator_plus', 'custom'))
+);
+```
+
+**Table:** `organization_members`
+
+```sql
+CREATE TABLE organization_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  role VARCHAR(20) NOT NULL DEFAULT 'member',
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+
+  UNIQUE(organization_id, user_id),
+  CONSTRAINT organization_members_role_check CHECK (role IN ('owner', 'admin', 'member'))
+);
+```
+
+### RLS Policy Pattern
+
+All organization-scoped tables follow this RLS pattern:
+
+```sql
+-- Enable RLS on table
+ALTER TABLE <table_name> ENABLE ROW LEVEL SECURITY;
+
+-- Create isolation policy
+CREATE POLICY org_isolation ON <table_name> FOR ALL USING (
+  organization_id IN (
+    SELECT o.id FROM organizations o
+    LEFT JOIN organization_members om ON o.id = om.organization_id
+    WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
+  )
+) WITH CHECK (
+  organization_id IN (
+    SELECT o.id FROM organizations o
+    LEFT JOIN organization_members om ON o.id = om.organization_id
+    WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
+  )
+);
+```
+
+### Tables with RLS Enabled
+
+**53 RLS Policies Across 22 Tables:**
+
+- `organization_settings` - Organization-level Shield configuration
+- `platform_settings` - Platform-specific Shield settings
+- `integration_configs` - Platform integration credentials
+- `comments` - Comments received from platforms
+- `responses` - Generated roast responses
+- `usage_records` - Usage tracking for billing
+- `monthly_usage` - Monthly usage summaries
+- `shield_actions` - Shield moderation actions
+- `shield_events` - Shield event log
+- `roast_metadata` - Roast generation metadata
+- `analysis_usage` - Analysis credit consumption
+- `user_activities` - User activity audit log
+- `app_logs` - Application error logs
+- `api_keys` - Organization API keys
+- `audit_logs` - Security audit logs
+- `account_deletion_requests` - GDPR deletion requests
+- `password_history` - Password change history
+- `stylecards` - Custom style cards (Plus plan)
+- `notifications` - User notifications
+- `webhook_events` - Stripe webhook events
+- `subscription_audit_log` - Subscription change log
+- `feature_flags` - Organization feature flags
+
+## Core Functions
+
+### Check Organization Access
+
+```javascript
+const { supabaseClient } = require('./config/supabase');
+
+async function hasOrganizationAccess(userId, organizationId) {
+  // RLS automatically filters this query
+  const { data: org } = await supabaseClient
+    .from('organizations')
+    .select('id, name, owner_id')
+    .eq('id', organizationId)
+    .single();
+
+  // If RLS blocks access, data will be null
+  return org !== null;
+}
+```
+
+### Get User Organizations
+
+```javascript
+async function getUserOrganizations(userId) {
+  // Returns only orgs where user is owner or member
+  const { data: orgs } = await supabaseClient
+    .from('organizations')
+    .select(`
+      *,
+      organization_members!inner(role)
+    `)
+    .or(`owner_id.eq.${userId},organization_members.user_id.eq.${userId}`);
+
+  return orgs;
+}
+```
+
+### Create Organization
+
+```javascript
+async function createOrganization(userId, name, slug) {
+  // Create organization with service role (bypasses RLS)
+  const { data: org, error } = await supabaseServiceClient
+    .from('organizations')
+    .insert({
+      name,
+      slug,
+      owner_id: userId,
+      plan_id: 'free',
+      subscription_status: 'active'
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  // Default organization settings are created automatically via trigger
+  // (see create_default_organization_settings_trigger in 001_shield_settings.sql)
+
+  return org;
+}
+```
+
+### Add Organization Member
+
+```javascript
+async function addOrganizationMember(organizationId, userId, role = 'member') {
+  // Only owners/admins can add members (enforced by API endpoint, not RLS)
+  const { data: member, error } = await supabaseServiceClient
+    .from('organization_members')
+    .insert({
+      organization_id: organizationId,
+      user_id: userId,
+      role
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') { // Unique violation
+      throw new Error('User is already a member of this organization');
+    }
+    throw error;
+  }
+
+  return member;
+}
+```
+
+## RLS Policy Types
+
+### 1. Organization Isolation (Standard)
+
+Used for most organization-scoped tables:
+
+```sql
+CREATE POLICY org_isolation ON comments FOR ALL USING (
+  organization_id IN (
+    SELECT o.id FROM organizations o
+    LEFT JOIN organization_members om ON o.id = om.organization_id
+    WHERE o.owner_id = auth.uid() OR om.user_id = auth.uid()
+  )
+);
+```
+
+**Tables Using This Pattern:**
+- `comments`, `responses`, `integration_configs`, `usage_records`, `monthly_usage`, `shield_actions`, `shield_events`, `app_logs`, `api_keys`, `audit_logs`, `stylecards`, `notifications`, `webhook_events`, `subscription_audit_log`, `feature_flags`
+
+### 2. User Isolation (Personal Data)
+
+Used for user-specific tables:
+
+```sql
+-- Users can only access their own data
+CREATE POLICY user_isolation ON analysis_usage FOR ALL USING (
+  user_id = auth.uid()
+);
+```
+
+**Tables Using This Pattern:**
+- `analysis_usage`, `account_deletion_requests`, `password_history`
+
+### 3. Granular Policies (Enhanced Security)
+
+Separate policies for SELECT, INSERT, UPDATE, DELETE operations:
+
+```sql
+-- Migration 018: Improved RLS for analysis_usage
+CREATE POLICY analysis_usage_select_policy ON analysis_usage
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY analysis_usage_insert_policy ON analysis_usage
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY analysis_usage_update_policy ON analysis_usage
+  FOR UPDATE
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY analysis_usage_delete_policy ON analysis_usage
+  FOR DELETE USING (user_id = auth.uid());
+```
+
+### 4. Service Role Bypass
+
+Backend services use `supabaseServiceClient` to bypass RLS:
+
+```javascript
+const { createClient } = require('@supabase/supabase-js');
+
+// Service role client (bypasses RLS)
+const supabaseServiceClient = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+// User client (RLS enforced)
+const supabaseClient = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+```
+
+## Advisory Locks (Race Condition Prevention)
+
+### Credit Consumption with Locking
+
+```javascript
+-- Function: consume_analysis_credits_safe (Migration 018)
+CREATE OR REPLACE FUNCTION consume_analysis_credits_safe(
+  p_user_id UUID,
+  p_plan VARCHAR(50),
+  p_monthly_limit INTEGER,
+  p_metadata JSONB DEFAULT '{}'
+) RETURNS JSONB AS $$
+DECLARE
+  v_lock_id BIGINT;
+BEGIN
+  -- Create unique lock ID from user_id
+  v_lock_id := ('x' || substr(md5(p_user_id::text), 1, 15))::bit(60)::bigint;
+
+  -- Acquire advisory lock
+  IF NOT pg_try_advisory_lock(v_lock_id) THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'Credit consumption in progress, please try again'
+    );
+  END IF;
+
+  BEGIN
+    -- Get current usage within lock
+    v_current_usage := get_monthly_analysis_usage(p_user_id);
+
+    -- Check limit
+    IF v_remaining <= 0 THEN
+      v_result := jsonb_build_object('success', false, 'hasCredits', false);
+    ELSE
+      -- Consume credit
+      INSERT INTO analysis_usage (user_id, count, metadata)
+      VALUES (p_user_id, 1, p_metadata);
+
+      v_result := jsonb_build_object('success', true, 'hasCredits', true);
+    END IF;
+
+    -- Release lock
+    PERFORM pg_advisory_unlock(v_lock_id);
+    RETURN v_result;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Ensure lock is released on error
+      PERFORM pg_advisory_unlock(v_lock_id);
+      RETURN jsonb_build_object('success', false, 'error', SQLERRM);
+  END;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### Usage in Application
+
+```javascript
+const { CostControlService } = require('./services/costControl');
+
+async function consumeAnalysisCredit(userId, planId, monthlyLimit) {
+  const { data: result } = await supabaseServiceClient
+    .rpc('consume_analysis_credits_safe', {
+      p_user_id: userId,
+      p_plan: planId,
+      p_monthly_limit: monthlyLimit,
+      p_metadata: { timestamp: new Date().toISOString() }
+    });
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to consume credit');
+  }
+
+  return result;
+}
+```
+
+## Database Functions
+
+### Check Usage Limit
+
+```sql
+CREATE OR REPLACE FUNCTION check_usage_limit(org_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+  current_month INTEGER := EXTRACT(MONTH FROM NOW());
+  current_year INTEGER := EXTRACT(YEAR FROM NOW());
+  usage_record RECORD;
+  org_record RECORD;
+BEGIN
+  -- Get organization details
+  SELECT monthly_responses_limit INTO org_record
+  FROM organizations WHERE id = org_id;
+
+  -- Get current month usage
+  SELECT total_responses INTO usage_record
+  FROM monthly_usage
+  WHERE organization_id = org_id
+    AND year = current_year
+    AND month = current_month;
+
+  -- Return true if under limit
+  IF usage_record.total_responses IS NULL THEN
+    RETURN TRUE; -- No usage yet
+  END IF;
+
+  RETURN usage_record.total_responses < org_record.monthly_responses_limit;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### Increment Usage
+
+```sql
+CREATE OR REPLACE FUNCTION increment_usage(
+  org_id UUID,
+  platform_name VARCHAR,
+  cost INTEGER DEFAULT 0
+)
+RETURNS VOID AS $$
+DECLARE
+  current_month INTEGER := EXTRACT(MONTH FROM NOW());
+  current_year INTEGER := EXTRACT(YEAR FROM NOW());
+  org_limit INTEGER;
+BEGIN
+  -- Get org limit
+  SELECT monthly_responses_limit INTO org_limit
+  FROM organizations WHERE id = org_id;
+
+  -- Insert or update monthly usage
+  INSERT INTO monthly_usage (
+    organization_id, year, month, total_responses,
+    responses_by_platform, total_cost_cents, responses_limit
+  )
+  VALUES (
+    org_id,
+    current_year,
+    current_month,
+    1,
+    jsonb_build_object(platform_name, 1),
+    cost,
+    org_limit
+  )
+  ON CONFLICT (organization_id, year, month)
+  DO UPDATE SET
+    total_responses = monthly_usage.total_responses + 1,
+    responses_by_platform = jsonb_set(
+      monthly_usage.responses_by_platform,
+      ARRAY[platform_name],
+      (COALESCE((monthly_usage.responses_by_platform->>platform_name)::INTEGER, 0) + 1)::TEXT::JSONB
+    ),
+    total_cost_cents = monthly_usage.total_cost_cents + cost,
+    updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql;
+```
+
+## Organization Settings Inheritance
+
+### Effective Settings with Fallback
+
+```sql
+-- Function: get_effective_shield_settings (Migration 001)
+CREATE OR REPLACE FUNCTION get_effective_shield_settings(
+  org_id UUID,
+  platform_name VARCHAR
+)
+RETURNS TABLE (
+  aggressiveness INTEGER,
+  tau_roast_lower DECIMAL(3,2),
+  tau_shield DECIMAL(3,2),
+  tau_critical DECIMAL(3,2),
+  shield_enabled BOOLEAN,
+  auto_approve_shield_actions BOOLEAN,
+  corrective_messages_enabled BOOLEAN,
+  response_frequency DECIMAL(3,2),
+  trigger_words TEXT[],
+  max_responses_per_hour INTEGER
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    COALESCE(ps.aggressiveness, os.aggressiveness) as aggressiveness,
+    COALESCE(ps.tau_roast_lower, os.tau_roast_lower) as tau_roast_lower,
+    COALESCE(ps.tau_shield, os.tau_shield) as tau_shield,
+    COALESCE(ps.tau_critical, os.tau_critical) as tau_critical,
+    COALESCE(ps.shield_enabled, os.shield_enabled) as shield_enabled,
+    COALESCE(ps.auto_approve_shield_actions, os.auto_approve_shield_actions) as auto_approve,
+    COALESCE(ps.corrective_messages_enabled, os.corrective_messages_enabled) as corrective,
+    COALESCE(ps.response_frequency, 1.0) as response_frequency,
+    COALESCE(ps.trigger_words, ARRAY['roast', 'burn', 'insult']) as trigger_words,
+    COALESCE(ps.max_responses_per_hour, 50) as max_responses_per_hour
+  FROM organization_settings os
+  LEFT JOIN platform_settings ps
+    ON ps.organization_id = os.organization_id
+    AND ps.platform = platform_name
+  WHERE os.organization_id = org_id;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### Usage in Application
+
+```javascript
+async function getShieldSettings(organizationId, platform) {
+  const { data: settings } = await supabaseServiceClient
+    .rpc('get_effective_shield_settings', {
+      org_id: organizationId,
+      platform_name: platform
+    })
+    .single();
+
+  return settings;
+}
+```
+
+## Automatic Triggers
+
+### Default Organization Settings
+
+```sql
+-- Trigger: create_default_organization_settings_trigger (Migration 001)
+CREATE OR REPLACE FUNCTION create_default_organization_settings()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Create default Shield settings for new organization
+  INSERT INTO organization_settings (
+    organization_id,
+    aggressiveness,
+    tau_roast_lower,
+    tau_shield,
+    tau_critical,
+    shield_enabled,
+    auto_approve_shield_actions,
+    corrective_messages_enabled,
+    created_by
+  ) VALUES (
+    NEW.id,
+    95, -- Default "Balanced" aggressiveness
+    0.25, -- Default τ_roast_lower
+    0.70, -- Default τ_shield
+    0.90, -- Default τ_critical
+    CASE
+      WHEN NEW.plan_id IN ('pro', 'creator_plus', 'custom') THEN TRUE
+      ELSE FALSE
+    END, -- Shield enabled for Pro+ plans
+    FALSE, -- Manual approval by default
+    TRUE, -- Corrective messages enabled
+    NEW.owner_id
+  );
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER create_default_organization_settings_trigger
+  AFTER INSERT ON organizations
+  FOR EACH ROW EXECUTE FUNCTION create_default_organization_settings();
+```
+
+### Update Timestamp Trigger
+
+```sql
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Applied to all tables with updated_at column
+CREATE TRIGGER update_organizations_updated_at
+  BEFORE UPDATE ON organizations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+```
+
+## Security Best Practices
+
+### 1. Always Use Appropriate Client
+
+```javascript
+// ❌ BAD: Using service client for user queries (bypasses RLS)
+const { data } = await supabaseServiceClient
+  .from('comments')
+  .select('*')
+  .eq('organization_id', req.user.organizationId);
+
+// ✅ GOOD: Using user client (RLS enforced)
+const { data } = await supabaseClient
+  .from('comments')
+  .select('*');
+  // RLS automatically filters by organization_id
+```
+
+### 2. Validate Organization Access
+
+```javascript
+// API endpoint example
+app.get('/api/organizations/:orgId/comments', async (req, res) => {
+  const { orgId } = req.params;
+
+  // Check access via RLS
+  const { data: org } = await supabaseClient
+    .from('organizations')
+    .select('id')
+    .eq('id', orgId)
+    .single();
+
+  if (!org) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  // Fetch comments (RLS automatically filters)
+  const { data: comments } = await supabaseClient
+    .from('comments')
+    .select('*')
+    .eq('organization_id', orgId);
+
+  res.json(comments);
+});
+```
+
+### 3. Service Role Only for System Operations
+
+```javascript
+// ✅ GOOD: Service role for background workers
+class GenerateReplyWorker {
+  async processJob(job) {
+    // Worker needs access to all orgs
+    const { data: comment } = await supabaseServiceClient
+      .from('comments')
+      .select('*')
+      .eq('id', job.payload.commentId)
+      .single();
+
+    // Process comment...
+  }
+}
+```
+
+### 4. Prevent SQL Injection
+
+```javascript
+// ❌ BAD: String concatenation
+const { data } = await supabaseClient
+  .from('comments')
+  .select('*')
+  .filter('platform', 'eq', req.query.platform); // User input
+
+// ✅ GOOD: Parameterized queries (Supabase handles this automatically)
+const { data } = await supabaseClient
+  .from('comments')
+  .select('*')
+  .eq('platform', req.query.platform); // Safe
+```
+
+## Testing
+
+### Unit Tests
+
+```javascript
+describe('Multi-Tenant RLS', () => {
+  test('users can only access their own organization data', async () => {
+    // User A creates organization
+    const orgA = await createOrganization(userA.id, 'Org A', 'org-a');
+
+    // User B creates organization
+    const orgB = await createOrganization(userB.id, 'Org B', 'org-b');
+
+    // User A tries to access Org B data (should fail)
+    const { data: comments } = await supabaseClient
+      .auth.setAuth(userA.token)
+      .from('comments')
+      .select('*')
+      .eq('organization_id', orgB.id);
+
+    expect(comments).toHaveLength(0); // RLS blocks access
+  });
+
+  test('organization members can access shared data', async () => {
+    const org = await createOrganization(ownerUser.id, 'Shared Org', 'shared-org');
+    await addOrganizationMember(org.id, memberUser.id, 'member');
+
+    // Member can access organization data
+    const { data: comments } = await supabaseClient
+      .auth.setAuth(memberUser.token)
+      .from('comments')
+      .select('*')
+      .eq('organization_id', org.id);
+
+    expect(comments).toBeDefined(); // RLS allows access
+  });
+
+  test('service role bypasses RLS', async () => {
+    // Create test data
+    const org = await createOrganization(userA.id, 'Test Org', 'test-org');
+
+    // Service role can access all data
+    const { data: allOrgs } = await supabaseServiceClient
+      .from('organizations')
+      .select('*');
+
+    expect(allOrgs).toContainEqual(expect.objectContaining({ id: org.id }));
+  });
+});
+```
+
+### Integration Tests
+
+```javascript
+describe('Multi-Tenant Workflow', () => {
+  test('complete organization creation workflow', async () => {
+    // 1. Create organization
+    const org = await createOrganization(ownerUser.id, 'New Org', 'new-org');
+
+    // 2. Check default settings were created (via trigger)
+    const { data: settings } = await supabaseServiceClient
+      .from('organization_settings')
+      .select('*')
+      .eq('organization_id', org.id)
+      .single();
+
+    expect(settings.aggressiveness).toBe(95);
+    expect(settings.tau_shield).toBe(0.70);
+
+    // 3. Add member
+    await addOrganizationMember(org.id, memberUser.id, 'admin');
+
+    // 4. Member can access org data
+    const { data: memberOrgs } = await supabaseClient
+      .auth.setAuth(memberUser.token)
+      .from('organizations')
+      .select('*');
+
+    expect(memberOrgs).toContainEqual(expect.objectContaining({ id: org.id }));
+  });
+});
+```
+
+## Error Handling
+
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| `Access denied` | User not member of organization | Add user to organization_members |
+| `RLS policy violation` | Attempting to insert data for another org | Use correct organization_id |
+| `Unique constraint violation (23505)` | Duplicate organization member | User already added, no action needed |
+| `Foreign key violation (23503)` | Invalid organization_id or user_id | Verify IDs exist in respective tables |
+| `Lock acquisition failed` | Concurrent credit consumption | Retry request (advisory lock prevents race condition) |
+
+## Monitoring & Alerts
+
+### Key Metrics
+
+- **RLS policy violations** - Blocked queries (should be 0 in production)
+- **Organization count** - Total active organizations
+- **Average members per org** - Team collaboration metric
+- **Orphaned organizations** - Orgs with no owner (alert if > 0)
+- **Lock contention** - Failed pg_try_advisory_lock attempts
+
+### Grafana Dashboard
+
+```javascript
+{
+  organizations_total: { type: 'gauge', value: 1542 },
+  organizations_active: { type: 'gauge', value: 1398 },
+  avg_members_per_org: { type: 'gauge', value: 2.3 },
+  rls_violations: { type: 'counter', value: 0 }, // Should always be 0
+  lock_failures: { type: 'counter', value: 12 }
+}
+```
+
+## Related Nodes
+
+- **plan-features** - Plan limits are organization-scoped
+- **cost-control** - Usage tracking per organization
+- **queue-system** - Jobs are organization-scoped
+- **shield** - Shield settings per organization/platform
+- **roast** - Roast generation per organization
+- **social-platforms** - Integration configs per organization
+
+---
+
+**Maintained by:** Back-end Dev Agent
+**Review Frequency:** Monthly or on security/architecture changes
+**Last Reviewed:** 2025-10-03
+**Version:** 1.0.0
