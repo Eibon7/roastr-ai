@@ -555,6 +555,14 @@ describe('TrainingService', () => {
 }
 ```
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Documentation Agent
+- Performance Monitor Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **roast** - Source of training data (approved roasts)

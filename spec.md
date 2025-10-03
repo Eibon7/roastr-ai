@@ -55,6 +55,29 @@ node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 
 **For full GDD documentation, see:** [`scripts/README.md#graph-driven-development-gdd`](/scripts/README.md#graph-driven-development-gdd)
 
+
+### Node-Agent Matrix
+
+Esta tabla muestra los agentes relevantes para cada nodo del sistema. Los agentes son responsables de mantener y actualizar la documentación de su nodo correspondiente.
+
+| Node | Agentes Relevantes |
+|------|-------------------|
+| **roast** | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent |
+| **shield** | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
+| **persona** | Back-end Dev, UX Researcher, Documentation Agent, Security Audit Agent, Test Engineer |
+| **tone** | Back-end Dev, UX Researcher, Documentation Agent, Test Engineer |
+| **platform-constraints** | Back-end Dev, Documentation Agent, Test Engineer |
+| **plan-features** | Back-end Dev, Documentation Agent, Test Engineer |
+| **queue-system** | Back-end Dev, Performance Monitor Agent, Documentation Agent, Test Engineer |
+| **cost-control** | Back-end Dev, Documentation Agent, Test Engineer |
+| **multi-tenant** | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
+| **social-platforms** | Back-end Dev, Documentation Agent, Test Engineer |
+| **trainer** | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
+| **analytics** | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
+
+**Última actualización:** 2025-10-03 (generada automáticamente con `node scripts/resolve-graph.js --report`)
+
+
 ---
 ---
 

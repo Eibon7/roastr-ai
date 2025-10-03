@@ -278,6 +278,14 @@ test('tone configuration affects roast style', async () => {
 - [ ] Multi-language tone definitions
 - [ ] Tone evolution over time (learning)
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- UX Researcher
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **persona** - Provides humor_type and custom_style_prompt

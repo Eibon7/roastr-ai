@@ -131,7 +131,10 @@ class GraphResolver {
       circularDeps: [],
       missingDeps: [],
       missingDocs: [],
-      orphanedNodes: []
+      orphanedNodes: [],
+      missingAgentsSection: [],
+      duplicateAgents: [],
+      invalidAgents: []
     };
 
     // Check each node
@@ -181,6 +184,100 @@ class GraphResolver {
         // This is a leaf node with dependencies - OK
       } else if (!hasIncoming && (!node.depends_on || node.depends_on.length === 0)) {
         // This is a root node - also OK
+      }
+
+      // NEW: Validate agents section in documentation
+      if (node.docs && node.docs.length > 0) {
+        for (const docPath of node.docs) {
+          const fullPath = path.join(process.cwd(), docPath);
+          if (fs.existsSync(fullPath)) {
+            const agentIssues = this.validateAgentsSection(fullPath, nodeName);
+            if (agentIssues.missingSection) {
+              issues.missingAgentsSection.push({
+                node: nodeName,
+                file: docPath
+              });
+            }
+            if (agentIssues.duplicates.length > 0) {
+              issues.duplicateAgents.push({
+                node: nodeName,
+                file: docPath,
+                duplicates: agentIssues.duplicates
+              });
+            }
+            if (agentIssues.invalidAgents.length > 0) {
+              issues.invalidAgents.push({
+                node: nodeName,
+                file: docPath,
+                invalid: agentIssues.invalidAgents
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return issues;
+  }
+
+  /**
+   * Validate that a node doc has proper "Agentes Relevantes" section
+   * @param {string} docPath - Path to documentation file
+   * @param {string} nodeName - Name of the node
+   * @returns {Object} - Agent validation issues
+   */
+  validateAgentsSection(docPath, nodeName) {
+    const content = fs.readFileSync(docPath, 'utf8');
+    const validAgents = [
+      'UX Researcher',
+      'UI Designer',
+      'Whimsy Injector',
+      'Front-end Dev',
+      'Back-end Dev',
+      'Test Engineer',
+      'GitHub Monitor',
+      'Documentation Agent',
+      'Security Audit Agent',
+      'Performance Monitor Agent'
+    ];
+
+    const issues = {
+      missingSection: false,
+      duplicates: [],
+      invalidAgents: []
+    };
+
+    // Check if "Agentes Relevantes" section exists
+    const agentsRegex = /## Agentes Relevantes/i;
+    if (!agentsRegex.test(content)) {
+      issues.missingSection = true;
+      return issues;
+    }
+
+    // Extract agents from section
+    const sectionMatch = content.match(/## Agentes Relevantes\s*([\s\S]*?)(?=\n##|\n---|\Z)/);
+    if (sectionMatch) {
+      const sectionContent = sectionMatch[1];
+      const lines = sectionContent.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('-'));
+
+      const agents = lines.map(line => line.replace(/^-\s*/, '').trim());
+
+      // Check for duplicates
+      const seen = new Set();
+      for (const agent of agents) {
+        if (seen.has(agent)) {
+          issues.duplicates.push(agent);
+        }
+        seen.add(agent);
+      }
+
+      // Check for invalid agents
+      for (const agent of agents) {
+        if (!validAgents.includes(agent)) {
+          issues.invalidAgents.push(agent);
+        }
       }
     }
 
@@ -294,6 +391,142 @@ class GraphResolver {
   }
 
   /**
+   * Generate validation report in markdown format
+   * @param {Object} issues - Validation issues
+   * @returns {string} - Markdown report
+   */
+  generateValidationReport(issues) {
+    const now = new Date().toISOString();
+    let report = `# System Validation Report\n\n`;
+    report += `**Generated:** ${now}\n`;
+    report += `**Tool:** resolve-graph.js\n\n`;
+    report += `---\n\n`;
+
+    report += `## Summary\n\n`;
+
+    const totalCritical = issues.circularDeps.length + issues.missingDeps.length +
+                          issues.missingDocs.length + issues.missingAgentsSection.length;
+    const totalWarnings = issues.duplicateAgents.length + issues.invalidAgents.length;
+
+    if (totalCritical === 0 && totalWarnings === 0) {
+      report += `✅ **All validations passed!** No issues found.\n\n`;
+    } else {
+      report += `| Category | Count |\n`;
+      report += `|----------|-------|\n`;
+      report += `| Critical Issues | ${totalCritical} |\n`;
+      report += `| Warnings | ${totalWarnings} |\n\n`;
+    }
+
+    // Graph validation
+    report += `## Graph Validation\n\n`;
+
+    if (issues.circularDeps.length > 0) {
+      report += `### ❌ Circular Dependencies (${issues.circularDeps.length})\n\n`;
+      for (const issue of issues.circularDeps) {
+        report += `- **${issue.node}**: ${issue.error}\n`;
+      }
+      report += `\n`;
+    } else {
+      report += `✅ No circular dependencies detected\n\n`;
+    }
+
+    if (issues.missingDeps.length > 0) {
+      report += `### ⚠️  Missing Dependencies (${issues.missingDeps.length})\n\n`;
+      for (const issue of issues.missingDeps) {
+        report += `- **${issue.node}** depends on non-existent node: \`${issue.missingDep}\`\n`;
+      }
+      report += `\n`;
+    } else {
+      report += `✅ All dependencies valid\n\n`;
+    }
+
+    if (issues.missingDocs.length > 0) {
+      report += `### ⚠️  Missing Documentation Files (${issues.missingDocs.length})\n\n`;
+      for (const issue of issues.missingDocs) {
+        report += `- **${issue.node}**: \`${issue.missingDoc}\`\n`;
+      }
+      report += `\n`;
+    } else {
+      report += `✅ All documentation files exist\n\n`;
+    }
+
+    // Agent validation
+    report += `## Agent Validation\n\n`;
+
+    if (issues.missingAgentsSection.length > 0) {
+      report += `### ❌ Missing "Agentes Relevantes" Section (${issues.missingAgentsSection.length})\n\n`;
+      for (const issue of issues.missingAgentsSection) {
+        report += `- **${issue.node}**: \`${issue.file}\`\n`;
+      }
+      report += `\n`;
+    } else {
+      report += `✅ All nodes have "Agentes Relevantes" section\n\n`;
+    }
+
+    if (issues.duplicateAgents.length > 0) {
+      report += `### ⚠️  Duplicate Agents (${issues.duplicateAgents.length})\n\n`;
+      for (const issue of issues.duplicateAgents) {
+        report += `- **${issue.node}**: ${issue.duplicates.join(', ')}\n`;
+      }
+      report += `\n`;
+    }
+
+    if (issues.invalidAgents.length > 0) {
+      report += `### ⚠️  Invalid Agents (${issues.invalidAgents.length})\n\n`;
+      for (const issue of issues.invalidAgents) {
+        report += `- **${issue.node}**: ${issue.invalid.join(', ')}\n`;
+      }
+      report += `\n`;
+    }
+
+    if (issues.duplicateAgents.length === 0 && issues.invalidAgents.length === 0 && issues.missingAgentsSection.length === 0) {
+      report += `✅ All agent sections are valid\n\n`;
+    }
+
+    // Node-Agent matrix
+    report += `## Node-Agent Matrix\n\n`;
+    report += `| Node | Agents |\n`;
+    report += `|------|--------|\n`;
+
+    for (const [nodeName, node] of Object.entries(this.systemMap.features)) {
+      if (node.docs && node.docs.length > 0) {
+        const docPath = node.docs[0];
+        const fullPath = path.join(process.cwd(), docPath);
+        if (fs.existsSync(fullPath)) {
+          const agents = this.extractAgents(fullPath);
+          report += `| ${nodeName} | ${agents.length > 0 ? agents.join(', ') : '*(none)*'} |\n`;
+        }
+      }
+    }
+
+    report += `\n---\n\n`;
+    report += `**Last validated:** ${now}\n`;
+
+    return report;
+  }
+
+  /**
+   * Extract agents list from a documentation file
+   * @param {string} docPath - Path to documentation file
+   * @returns {Array<string>} - List of agents
+   */
+  extractAgents(docPath) {
+    const content = fs.readFileSync(docPath, 'utf8');
+    const sectionMatch = content.match(/## Agentes Relevantes\s*([\s\S]*?)(?=\n##|\n---|\Z)/);
+
+    if (sectionMatch) {
+      const sectionContent = sectionMatch[1];
+      const lines = sectionContent.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('-'));
+
+      return lines.map(line => line.replace(/^-\s*/, '').trim());
+    }
+
+    return [];
+  }
+
+  /**
    * Print validation results to console
    * @param {Object} issues - Validation issues
    */
@@ -301,6 +534,7 @@ class GraphResolver {
     console.log(`\n${colors.bright}${colors.cyan}🔍 Graph Validation Results${colors.reset}\n`);
 
     let hasIssues = false;
+    let hasWarnings = false;
 
     // Circular dependencies
     if (issues.circularDeps.length > 0) {
@@ -332,12 +566,47 @@ class GraphResolver {
       console.log();
     }
 
+    // NEW: Missing agents section
+    if (issues.missingAgentsSection.length > 0) {
+      hasIssues = true;
+      console.log(`${colors.red}❌ Missing "Agentes Relevantes" Section (${issues.missingAgentsSection.length}):${colors.reset}`);
+      for (const issue of issues.missingAgentsSection) {
+        console.log(`  - ${issue.node}: ${issue.file}`);
+      }
+      console.log();
+    }
+
+    // NEW: Duplicate agents
+    if (issues.duplicateAgents.length > 0) {
+      hasWarnings = true;
+      console.log(`${colors.yellow}⚠️  Duplicate Agents (${issues.duplicateAgents.length}):${colors.reset}`);
+      for (const issue of issues.duplicateAgents) {
+        console.log(`  - ${issue.node}: ${issue.duplicates.join(', ')}`);
+      }
+      console.log();
+    }
+
+    // NEW: Invalid agents
+    if (issues.invalidAgents.length > 0) {
+      hasWarnings = true;
+      console.log(`${colors.yellow}⚠️  Invalid Agents (${issues.invalidAgents.length}):${colors.reset}`);
+      for (const issue of issues.invalidAgents) {
+        console.log(`  - ${issue.node}: ${issue.invalid.join(', ')}`);
+      }
+      console.log();
+    }
+
     // Summary
-    if (!hasIssues) {
+    if (!hasIssues && !hasWarnings) {
       console.log(`${colors.green}✅ Graph validation passed! No issues found.${colors.reset}\n`);
-    } else {
-      console.log(`${colors.red}❌ Graph validation failed with ${issues.circularDeps.length + issues.missingDeps.length + issues.missingDocs.length} issues.${colors.reset}\n`);
+    } else if (hasIssues) {
+      const totalIssues = issues.circularDeps.length + issues.missingDeps.length +
+                          issues.missingDocs.length + issues.missingAgentsSection.length;
+      console.log(`${colors.red}❌ Graph validation failed with ${totalIssues} critical issues.${colors.reset}\n`);
       process.exit(1);
+    } else {
+      const totalWarnings = issues.duplicateAgents.length + issues.invalidAgents.length;
+      console.log(`${colors.yellow}⚠️  Graph validation passed with ${totalWarnings} warnings.${colors.reset}\n`);
     }
   }
 }
@@ -350,13 +619,15 @@ function main() {
   let nodeName = null;
   let verbose = false;
   let format = 'text';
-  let mode = 'resolve'; // resolve, validate, graph
+  let mode = 'resolve'; // resolve, validate, graph, report
 
   for (const arg of args) {
     if (arg === '--validate') {
       mode = 'validate';
     } else if (arg === '--graph') {
       mode = 'graph';
+    } else if (arg === '--report') {
+      mode = 'report';
     } else if (arg === '--verbose' || arg === '-v') {
       verbose = true;
     } else if (arg.startsWith('--format=')) {
@@ -381,6 +652,16 @@ function main() {
       // Generate Mermaid diagram
       const mermaid = resolver.generateMermaidDiagram();
       console.log(mermaid);
+    } else if (mode === 'report') {
+      // Generate validation report and save to file
+      const issues = resolver.validate();
+      const report = resolver.generateValidationReport(issues);
+      const reportPath = path.join(process.cwd(), 'docs', 'system-validation.md');
+      fs.writeFileSync(reportPath, report, 'utf8');
+      console.log(`${colors.green}✅ Validation report generated: ${reportPath}${colors.reset}`);
+
+      // Also print to console
+      resolver.printValidation(issues);
     } else {
       // Resolve dependencies for specific node
       if (!nodeName) {
@@ -414,10 +695,12 @@ ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js <node-name> [options]
   node scripts/resolve-graph.js --validate
   node scripts/resolve-graph.js --graph
+  node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
   --validate              Validate entire graph for issues
   --graph                 Generate Mermaid diagram of dependencies
+  --report                Generate validation report (docs/system-validation.md)
   --verbose, -v           Enable verbose output
   --format=<format>       Output format (text, json)
   --help, -h              Show this help message
@@ -428,6 +711,9 @@ ${colors.bright}EXAMPLES:${colors.reset}
 
   ${colors.dim}# Resolve with verbose output${colors.reset}
   node scripts/resolve-graph.js shield --verbose
+
+  ${colors.dim}# Generate validation report${colors.reset}
+  node scripts/resolve-graph.js --report
 
   ${colors.dim}# Validate entire graph${colors.reset}
   node scripts/resolve-graph.js --validate

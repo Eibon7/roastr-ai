@@ -605,6 +605,13 @@ All roast generation events logged with:
 - [ ] Platform-specific style guides
 - [ ] Sentiment analysis integration
 
+## Agentes Relevantes
+
+- Back-end Dev
+- Documentation Agent
+- Test Engineer
+- Performance Monitor Agent
+
 ## Related Nodes
 
 - **persona** - User personality configuration and style preferences

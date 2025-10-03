@@ -453,6 +453,13 @@ describe('CostControlService', () => {
 }
 ```
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **plan-features** - Plan limits and feature gates

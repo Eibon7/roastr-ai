@@ -305,6 +305,13 @@ describe('Plan Features', () => {
 - [ ] Team collaboration features
 - [ ] Annual billing discounts
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **multi-tenant** - Organization isolation for plan data

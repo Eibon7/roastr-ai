@@ -758,6 +758,14 @@ describe('Multi-Tenant Workflow', () => {
 }
 ```
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Security Audit Agent
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **plan-features** - Plan limits are organization-scoped

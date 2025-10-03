@@ -692,6 +692,15 @@ All persona changes logged with:
 - [ ] Persona effectiveness scoring
 - [ ] Visual persona builder UI
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- UX Researcher
+- Documentation Agent
+- Security Audit Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **plan-features** - Subscription plan access control for persona features

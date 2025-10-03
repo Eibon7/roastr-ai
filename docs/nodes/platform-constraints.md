@@ -248,6 +248,13 @@ describe('Platform Constraints', () => {
 - [ ] Multi-part roast support for threading
 - [ ] Real-time platform API limit sync
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **social-platforms** - Platform integrations consume these constraints

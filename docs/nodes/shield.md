@@ -996,6 +996,14 @@ const stats = await shieldService.getShieldStats('org_123', 30);
 - [ ] Real-time dashboard for Shield operations
 - [ ] Integration with external moderation services (ModAPI, Hive)
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Security Audit Agent
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **cost-control** - Usage tracking and billing for Shield actions

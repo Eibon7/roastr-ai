@@ -464,6 +464,14 @@ describe('QueueService', () => {
 }
 ```
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Performance Monitor Agent
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **multi-tenant** - Organization isolation for job queues

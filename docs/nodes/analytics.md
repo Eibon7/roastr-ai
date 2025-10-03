@@ -621,6 +621,14 @@ describe('AnalyticsService', () => {
 }
 ```
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Documentation Agent
+- Performance Monitor Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **multi-tenant** - Organization-scoped analytics

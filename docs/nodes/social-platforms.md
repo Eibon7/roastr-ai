@@ -770,6 +770,13 @@ describe('Multi-Platform Workflow', () => {
 }
 ```
 
+
+## Agentes Relevantes
+
+- Back-end Dev
+- Documentation Agent
+- Test Engineer
+
 ## Related Nodes
 
 - **multi-tenant** - Organization-scoped integration configs
