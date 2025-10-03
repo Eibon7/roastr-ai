@@ -244,6 +244,15 @@ describe('Tone Validation', () => {
 
 ### Integration Tests
 
+**File:** `tests/integration/generation-issue-409.test.js` (**Issue #409**)
+
+**Tone Enforcement Tests (AC1):**
+- ✅ `should respect user tone preference in all variants` - Validates all generated variants use user's configured tone
+- ✅ `should fallback to default tone when user has no preference` - Tests default tone behavior
+- 🟡 `should reject invalid tone parameter` - Validates error handling for invalid tones (needs fix)
+
+**Status:** 2/3 passing (67% coverage)
+
 ```javascript
 // Tone → Roast flow
 test('tone configuration affects roast style', async () => {

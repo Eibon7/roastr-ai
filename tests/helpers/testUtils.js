@@ -578,6 +578,139 @@ const withMockEnvironment = (envVars, testFn) => {
   };
 };
 
+/**
+ * Helpers for Issue #409 - Roast Generation with Tone + Variants
+ */
+
+/**
+ * Create test user with tone preference
+ * @param {string} tonePreference - Tone preference (flanders, balanceado, canalla)
+ * @param {string} plan - User plan (free, starter, pro, plus)
+ * @returns {Object} Test user object
+ */
+const createTestUserWithTone = (tonePreference = 'balanceado', plan = 'pro') => {
+  return {
+    id: randomUUID(),
+    email: `testuser-${Date.now()}@example.com`,
+    tone_preference: tonePreference,
+    plan: plan,
+    language: 'es',
+    org_id: randomUUID(),
+    created_at: new Date().toISOString(),
+    isActive: true
+  };
+};
+
+/**
+ * Query variants from database
+ * @param {string} commentId - Comment ID to query variants for
+ * @param {string|null} phase - Optional phase filter (initial, post_selection)
+ * @returns {Promise<Array>} Array of variants from database
+ */
+const getVariantsFromDB = async (commentId, phase = null) => {
+  const { supabaseServiceClient } = require('../../src/config/supabase');
+
+  let query = supabaseServiceClient
+    .from('roasts_metadata')
+    .select('*')
+    .eq('comment_id', commentId)
+    .order('created_at', { ascending: true });
+
+  if (phase) {
+    query = query.eq('phase', phase);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('Error querying variants from DB:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+/**
+ * Calculate basic quality score for a roast variant
+ * @param {Object} variant - Variant object with text
+ * @param {string} originalComment - Original comment text
+ * @returns {number} Quality score between 0 and 1
+ */
+const calculateQualityScore = (variant, originalComment) => {
+  if (!variant || !variant.text) {
+    return 0;
+  }
+
+  let score = 0;
+  const text = variant.text;
+
+  // Quality metric 1: Length (minimum 20 chars, max score at 100 chars)
+  if (text.length >= 20) {
+    score += 0.3;
+  }
+  if (text.length >= 50) {
+    score += 0.2;
+  }
+
+  // Quality metric 2: Not empty or generic error
+  if (text.trim() !== '' &&
+      !text.toLowerCase().includes('error') &&
+      !text.toLowerCase().includes('failed')) {
+    score += 0.2;
+  }
+
+  // Quality metric 3: Language coherence (Spanish chars for Spanish input)
+  const spanishPattern = /[áéíóúñü]/i;
+  const hasSpanishChars = spanishPattern.test(text) || text.split(' ').length > 3;
+  if (hasSpanishChars) {
+    score += 0.15;
+  }
+
+  // Quality metric 4: Coherence with original (basic keyword matching)
+  if (originalComment) {
+    const commentWords = originalComment.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const hasRelevantWords = commentWords.some(word =>
+      text.toLowerCase().includes(word.substring(0, 4))
+    );
+    if (hasRelevantWords) {
+      score += 0.15;
+    }
+  }
+
+  return Math.min(score, 1.0); // Cap at 1.0
+};
+
+/**
+ * Validate tone enforcement in variants
+ * @param {Array} variants - Array of variant objects
+ * @param {string} expectedTone - Expected tone (flanders, balanceado, canalla)
+ * @returns {Object} Validation result with isValid and errors
+ */
+const validateToneEnforcement = (variants, expectedTone) => {
+  const errors = [];
+
+  if (!variants || variants.length === 0) {
+    errors.push('No variants provided for tone validation');
+    return { isValid: false, errors };
+  }
+
+  const normalizedExpectedTone = expectedTone.toLowerCase();
+
+  variants.forEach((variant, index) => {
+    if (!variant.style) {
+      errors.push(`Variant ${index + 1} missing style property`);
+    } else if (variant.style.toLowerCase() !== normalizedExpectedTone) {
+      errors.push(
+        `Variant ${index + 1} has incorrect tone: expected '${normalizedExpectedTone}', got '${variant.style.toLowerCase()}'`
+      );
+    }
+  });
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 module.exports = {
   createMockOpenAIResponse,
   getMockRoastByTone,
@@ -600,5 +733,10 @@ module.exports = {
   createMultiTenantTestScenario,
   createMultiTenantMocks,
   createPlatformMockData,
-  createPlanBasedMockResponse
+  createPlanBasedMockResponse,
+  // Issue #409 - Roast Generation with Tone + Variants
+  createTestUserWithTone,
+  getVariantsFromDB,
+  calculateQualityScore,
+  validateToneEnforcement
 };
