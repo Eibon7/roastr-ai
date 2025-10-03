@@ -55,23 +55,36 @@ workflow:
      - Buscar docs: find docs/ -name "*<keyword>*"
      - Usar grep para buscar referencias en código
 
-  3. **Execute Tests** (si existen):
+  3. **Cross-check con GDD Graph**:
+     - Verificar si existe nodo en docs/nodes/ relacionado con la issue
+     - Revisar system-map.yaml para nodos vinculados
+     - Si existe documentación de nodo → usar como fuente de verdad
+     - Evitar recrear información ya documentada en nodos
+
+  4. **Execute Tests** (si existen):
      - Ejecutar: npm test -- <keyword>
      - Capturar output completo
      - Analizar: ¿Cuántos pasan? ¿Cuántos fallan? ¿Por qué fallan?
 
-  4. **Analyze Implementation** (si existe):
+  5. **Analyze Implementation** (si existe):
      - Leer archivos de implementación encontrados
      - Verificar si cumple criterios de aceptación
      - Identificar qué falta o qué está roto
 
-  5. **Determine Recommendation**:
+  6. **Determine Recommendation**:
      - CLOSE: Tests pasan + criterios cumplidos
      - FIX: Tests fallan o bugs identificados
      - ENHANCE: Implementación parcial o mejorable
      - CREATE: No existe implementación
+     - INCONCLUSIVE: Evidencia insuficiente para recomendar con confianza
 
-  6. **Generate Assessment Report**:
+  7. **Validar Consistencia con GDD**:
+     - Verificar coherencia con docs/nodes/ relevantes en system-map.yaml
+     - Confirmar que la recomendación no contradice documentación existente
+     - Si hay conflictos → documentar en assessment y pedir clarificación
+
+  8. **Generate Assessment Report**:
+     - Si evidencia insuficiente → devolver estado INCONCLUSIVE y pedir clarificación
      - Crear docs/assessment/<issue-number>.md
      - Incluir evidencias concretas
      - Listar gaps específicos
@@ -135,12 +148,17 @@ format:
 
   ## Recommendation
 
-  **Action Type**: `CREATE` | `FIX` | `ENHANCE` | `CLOSE`
+  **Action Type**: `CREATE` | `FIX` | `ENHANCE` | `CLOSE` | `INCONCLUSIVE`
 
   **Reasoning**:
   [Detailed explanation of why this recommendation]
 
   **Confidence Level**: High | Medium | Low
+
+  **GDD Consistency Check**:
+  - **Related Nodes**: [list of docs/nodes/ files checked]
+  - **Conflicts Detected**: Yes/No
+  - **Documentation Source of Truth**: [reference to authoritative node if applicable]
 
   **Suggested Approach**:
   [Specific steps to take based on recommendation]
@@ -166,6 +184,12 @@ format:
   - **Evidence of Completion**: [list]
   - **All AC Verified**: Yes/No
   - **Suggested Next Steps**: Document, close issue, notify stakeholders
+
+  ### If INCONCLUSIVE:
+  - **Missing Information**: [list what's unclear or ambiguous]
+  - **Conflicting Evidence**: [describe contradictions found]
+  - **Questions for Clarification**: [specific questions to resolve]
+  - **Recommended Next Steps**: Gather more info, clarify requirements, update docs
 
   ## Evidence Appendix
 
@@ -197,30 +221,42 @@ criteria_of_success:
 rules:
   - NUNCA modificar código durante assessment
   - SIEMPRE ejecutar tests existentes antes de recomendar
+  - SIEMPRE verificar docs/nodes/ y system-map.yaml antes de recomendar CREATE
   - SER CONSERVADOR: si algo funciona bien, recomendar CLOSE
   - NO recomendar trabajo que no esté en los acceptance criteria
   - Documentar TODAS las evidencias (no borrar outputs)
-  - Si tienes dudas, recomendar confidence: Low y explicar por qué
+  - Si evidencia insuficiente o ambigua → devolver INCONCLUSIVE, nunca adivinar
+  - Si tienes dudas sobre la recomendación → usar INCONCLUSIVE y pedir clarificación
   - Preferir FIX sobre CREATE cuando existe código base
   - Usar grep extensivamente para encontrar referencias
+  - Si hay conflicto entre código y nodos GDD → documentar y pedir input
 
 examples:
   - "Issue #408: Shield integration tests"
     → Find: tests/integration/shield-*.test.js (16 files)
+    → GDD Check: docs/nodes/shield.md exists and documents Shield system
     → Execute: npm test -- shield-issue-408
     → Result: 11/11 tests failing with same error
-    → Recommendation: FIX (tests exist but broken)
+    → Recommendation: FIX (tests exist but broken, docs confirm expected behavior)
 
   - "Issue #500: User profile page"
     → Find: No files in src/ or tests/ matching "profile"
-    → Recommendation: CREATE (nothing exists)
+    → GDD Check: No node for "profile" in system-map.yaml
+    → Recommendation: CREATE (nothing exists, no docs)
 
   - "Issue #350: Add email validation"
     → Find: src/utils/validation.js with emailValidator()
     → Find: tests/unit/validation.test.js (10/10 passing)
-    → Recommendation: CLOSE (already complete and tested)
+    → GDD Check: docs/nodes/validation.md confirms AC requirements
+    → Recommendation: CLOSE (complete, tested, documented)
+
+  - "Issue #600: Update billing logic"
+    → Find: src/services/billing.js exists
+    → Find: Tests pass but AC mentions "new EU regulations" (unclear)
+    → GDD Check: docs/nodes/billing.md has outdated regulation info
+    → Recommendation: INCONCLUSIVE (conflicting docs, need clarification on EU regs)
 
 ---
 
 output:
-- Mensaje: "✅ Assessment completado en docs/assessment/<issue-number>.md\n\n**Recomendación:** [ACTION_TYPE]\n**Confianza:** [High|Medium|Low]\n**Scope:** [Small|Medium|Large]\n\nVer report completo para detalles y evidencias."
+- Mensaje: "✅ Assessment completado en docs/assessment/<issue-number>.md\n\n**Recomendación:** [CREATE|FIX|ENHANCE|CLOSE|INCONCLUSIVE]\n**Confianza:** [High|Medium|Low]\n**GDD Consistency:** [OK|Conflicts Detected|No Related Nodes]\n**Scope:** [Small|Medium|Large]\n\nVer report completo para detalles y evidencias."
