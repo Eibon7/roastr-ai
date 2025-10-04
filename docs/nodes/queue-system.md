@@ -33,7 +33,7 @@ Queue System provides unified queue management for Roastr.ai with automatic Redi
 | **analyze_toxicity** | 3 (medium) | Toxicity analysis | AnalyzeToxicityWorker |
 | **generate_reply** | 3 (medium) | Roast generation | GenerateReplyWorker |
 | **shield_action** | 1 (critical) | Shield moderation actions | ShieldActionWorker |
-| **post_response** | 4 (normal) | Publish roasts to platforms | (planned) |
+| **post_response** | 4 (normal) | Publish roasts to platforms | **PublisherWorker** ✅ |
 
 ### Priority Levels
 
@@ -483,5 +483,5 @@ describe('QueueService', () => {
 
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Monthly or on queue infrastructure changes
-**Last Reviewed:** 2025-10-03
-**Version:** 1.0.0
+**Last Reviewed:** 2025-10-04
+**Version:** 1.1.0 (PublisherWorker added - Issue #410)

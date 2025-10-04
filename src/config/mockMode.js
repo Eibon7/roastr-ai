@@ -85,8 +85,10 @@ class MockModeManager {
     if (typeof global !== 'undefined') {
       global.mockCommentStorage = global.mockCommentStorage || [];
       global.mockJobStorage = global.mockJobStorage || [];
+      global.mockJobQueueStorage = global.mockJobQueueStorage || [];
       global.mockOrgStorage = global.mockOrgStorage || [];
       global.mockConfigStorage = global.mockConfigStorage || [];
+      global.mockRoastStorage = global.mockRoastStorage || [];
     }
     return {
       auth: {
@@ -181,6 +183,54 @@ class MockModeManager {
           order: (column, options) => chainable,
           upsert: (data, options) => Promise.resolve({ data, error: null }),
           insert: (data) => {
+            // Handle job_queue table
+            if (table === 'job_queue') {
+              const storage = global.mockJobQueueStorage || [];
+              const jobData = Array.isArray(data) ? data[0] : data;
+              const newJob = {
+                ...jobData,
+                id: jobData.id || `job-${storage.length + 1}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+              storage.push(newJob);
+              global.mockJobQueueStorage = storage;
+
+              const chainableInsert = {
+                select: (columns = '*') => ({
+                  single: () => Promise.resolve({
+                    data: newJob,
+                    error: null
+                  })
+                })
+              };
+              return chainableInsert;
+            }
+
+            // Handle roasts table
+            if (table === 'roasts') {
+              const storage = global.mockRoastStorage || [];
+              const roastData = Array.isArray(data) ? data[0] : data;
+              const newRoast = {
+                ...roastData,
+                id: roastData.id || `roast-${storage.length + 1}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              };
+              storage.push(newRoast);
+              global.mockRoastStorage = storage;
+
+              const chainableInsert = {
+                select: (columns = '*') => ({
+                  single: () => Promise.resolve({
+                    data: newRoast,
+                    error: null
+                  })
+                })
+              };
+              return chainableInsert;
+            }
+
             // Store data in global storage if it's comments with proper deduplication
             if (table === 'comments') {
               const storage = global.mockCommentStorage || [];

@@ -50,17 +50,18 @@ class QueueService {
    */
   async initialize() {
     try {
-      // Skip real connections in mock mode
+      // Initialize mock Supabase client in mock mode
       if (mockMode.isMockMode) {
-        this.log('info', 'Queue Service initialized in mock mode - skipping real connections');
+        this.supabase = mockMode.generateMockSupabaseClient();
+        this.log('info', 'Queue Service initialized in mock mode with mock Supabase client');
         return;
       }
-      
+
       // Initialize Redis connection
       if (this.options.preferRedis && this.options.redisUrl) {
         await this.initializeRedis();
       }
-      
+
       // Initialize Supabase connection for fallback
       await this.initializeDatabase();
       
@@ -174,11 +175,19 @@ class QueueService {
     };
     
     try {
+      let result;
       if (this.isRedisAvailable) {
-        return await this.addJobToRedis(job, options);
+        result = await this.addJobToRedis(job, options);
       } else {
-        return await this.addJobToDatabase(job);
+        result = await this.addJobToDatabase(job);
       }
+
+      // Return consistent format for tests
+      return {
+        success: true,
+        jobId: job.id,
+        job: result
+      };
       
     } catch (error) {
       this.log('error', 'Failed to add job to queue', {
@@ -190,12 +199,22 @@ class QueueService {
       // Try fallback if primary method fails
       if (this.isRedisAvailable) {
         this.log('info', 'Trying database fallback for job addition');
-        return await this.addJobToDatabase(job);
+        const fallbackResult = await this.addJobToDatabase(job);
+        return {
+          success: true,
+          jobId: job.id,
+          job: fallbackResult
+        };
       } else if (this.redis) {
         this.log('info', 'Trying Redis fallback for job addition');
-        return await this.addJobToRedis(job, options);
+        const fallbackResult = await this.addJobToRedis(job, options);
+        return {
+          success: true,
+          jobId: job.id,
+          job: fallbackResult
+        };
       }
-      
+
       throw error;
     }
   }
