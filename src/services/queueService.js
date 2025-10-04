@@ -177,12 +177,25 @@ class QueueService {
     };
     
     try {
+      let result;
+      let queuedTo;
+
       if (this.isRedisAvailable) {
-        return await this.addJobToRedis(job, options);
+        result = await this.addJobToRedis(job, options);
+        queuedTo = 'redis';
       } else {
-        return await this.addJobToDatabase(job);
+        result = await this.addJobToDatabase(job);
+        queuedTo = 'database';
       }
-      
+
+      // Return consistent format for tests
+      return {
+        success: true,
+        jobId: job.id,
+        job: result,
+        queuedTo
+      };
+
     } catch (error) {
       this.log('error', 'Failed to add job to queue', {
         jobType,

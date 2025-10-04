@@ -55,6 +55,15 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
     }
   });
 
+  afterEach(() => {
+    // Clear mock storage after each test to prevent state leakage
+    if (typeof global !== 'undefined') {
+      if (global.mockUserBehaviorStorage) {
+        global.mockUserBehaviorStorage = [];
+      }
+    }
+  });
+
   describe('End-to-End Comment Processing Workflow', () => {
     test('should process comment through complete pipeline', async () => {
       // Skip if running in CI without real database
