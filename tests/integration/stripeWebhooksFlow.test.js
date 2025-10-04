@@ -93,8 +93,9 @@ describe('Stripe Webhooks Integration Flow', () => {
     beforeEach(() => {
         jest.clearAllMocks();
 
-        // DON'T clear eventCallCounts here - it needs to persist within a test
-        // (but gets reset by jest.clearAllMocks() resetting the mock implementation)
+        // Clear idempotency tracker to prevent test interference
+        // Exception: Idempotency test relies on Map persisting between its 2 requests
+        eventCallCounts.clear();
 
         // Reset Supabase mock to default state
         supabaseServiceClient.from.mockReturnThis();
@@ -138,6 +139,14 @@ describe('Stripe Webhooks Integration Flow', () => {
                 // Check if event has missing or empty user_id in metadata
                 if (event.type === 'checkout.session.completed') {
                     const userId = event.data?.object?.metadata?.user_id;
+                    // Debug: Log to understand what's happening
+                    if (process.env.DEBUG_WEBHOOK_MOCK) {
+                        console.log('[Mock] Checkout event:', {
+                            id: event.id,
+                            userId,
+                            metadata: event.data?.object?.metadata
+                        });
+                    }
                     if (!userId || userId === '') {
                         return {
                             success: true,
@@ -296,9 +305,7 @@ describe('Stripe Webhooks Integration Flow', () => {
             }
         };
 
-        beforeEach(() => {
-            mockStripeWrapper.webhooks.constructEvent.mockReturnValue(checkoutCompletedEvent);
-        });
+        // Note: Don't set default constructEvent mock here - each test sets its own
 
         it('should process new checkout completion successfully', async () => {
             // Use unique event ID to avoid idempotency interference
@@ -353,6 +360,9 @@ describe('Stripe Webhooks Integration Flow', () => {
         });
 
         it('should handle idempotent checkout events', async () => {
+            // Mock constructEvent for this test
+            mockStripeWrapper.webhooks.constructEvent.mockReturnValue(checkoutCompletedEvent);
+
             const payload = JSON.stringify(checkoutCompletedEvent);
             const timestamp = Math.floor(Date.now() / 1000);
             const signature = generateStripeSignature(payload, testWebhookSecret, timestamp);
