@@ -46,14 +46,14 @@ class PublisherWorker extends BaseWorker {
   }
 
   /**
-   * Process a publication job
+   * Internal job processing method (required by BaseWorker)
    *
    * @param {Object} job - Job from post_response queue
    * @param {string} job.data.roastId - ID of roast to publish
    * @param {string} job.data.organizationId - Organization ID
    * @returns {Object} Publication result
    */
-  async processJob(job) {
+  async _processJobInternal(job) {
     const { roastId, organizationId } = job.data;
     const startTime = Date.now();
 
@@ -205,15 +205,13 @@ class PublisherWorker extends BaseWorker {
         attempt
       });
 
-      // Call platform service's postResponse method
-      // Note: Different platforms may have different method signatures
-      // Discord uses postResponse(originalMessage, responseText)
-      // We'll need to adapt this based on platform
-      const response = await service.postResponse({
-        text: roast.roast_text,
-        parentId: roast.original_comment_id,
-        roastId: roast.id
-      });
+      // Call platform service's postResponse method with platform-specific arguments
+      // Each platform has its own signature - we adapt here
+      const response = await this.callPlatformPostResponse(
+        service,
+        roast.platform,
+        roast
+      );
 
       if (!response.success) {
         throw new Error(response.error || 'Platform API returned success: false');
@@ -234,6 +232,95 @@ class PublisherWorker extends BaseWorker {
   }
 
   /**
+   * Call platform postResponse with platform-specific arguments
+   * Adapter pattern to handle different platform service signatures
+   */
+  async callPlatformPostResponse(service, platform, roast) {
+    const platformLower = platform.toLowerCase();
+
+    // Platform-specific argument mapping
+    switch (platformLower) {
+      case 'discord':
+        // Discord: postResponse(originalMessage, responseText)
+        // originalMessage needs id and channelId at minimum
+        return await service.postResponse(
+          {
+            id: roast.original_comment_id,
+            channelId: roast.channel_id || 'unknown',
+            content: roast.original_text || ''
+          },
+          roast.roast_text
+        );
+
+      case 'youtube':
+        // YouTube: postResponse(commentId, responseText)
+        return await service.postResponse(
+          roast.original_comment_id,
+          roast.roast_text
+        );
+
+      case 'facebook':
+      case 'instagram':
+        // Facebook/Instagram: postResponse(postId, commentId, responseText)
+        return await service.postResponse(
+          roast.post_id || roast.parent_id,
+          roast.original_comment_id,
+          roast.roast_text
+        );
+
+      case 'twitter':
+        // Twitter: postResponse(tweetId, responseText, userId)
+        return await service.postResponse(
+          roast.original_comment_id,
+          roast.roast_text,
+          roast.user_id
+        );
+
+      case 'reddit':
+        // Reddit: postResponse(subreddit, commentId, responseText)
+        return await service.postResponse(
+          roast.subreddit || 'roastr',
+          roast.original_comment_id,
+          roast.roast_text
+        );
+
+      case 'twitch':
+        // Twitch: postResponse(channelId, commentId, responseText)
+        return await service.postResponse(
+          roast.channel_id || roast.parent_id,
+          roast.original_comment_id,
+          roast.roast_text
+        );
+
+      case 'tiktok':
+        // TikTok: postResponse(videoId, commentId, responseText)
+        return await service.postResponse(
+          roast.video_id || roast.parent_id,
+          roast.original_comment_id,
+          roast.roast_text
+        );
+
+      case 'bluesky':
+        // Bluesky: postResponse(uri, responseText)
+        return await service.postResponse(
+          roast.uri || roast.original_comment_id,
+          roast.roast_text
+        );
+
+      default:
+        // Fallback: Try generic object signature (backwards compatibility)
+        this.log('warn', 'Using generic object signature for unknown platform', {
+          platform: platformLower
+        });
+        return await service.postResponse({
+          text: roast.roast_text,
+          parentId: roast.original_comment_id,
+          roastId: roast.id
+        });
+    }
+  }
+
+  /**
    * Update roast record with publication details
    */
   async updateRoastRecord(roastId, platformPostId) {
@@ -243,7 +330,8 @@ class PublisherWorker extends BaseWorker {
       .from('roasts')
       .update({
         platform_post_id: platformPostId,
-        published_at: publishedAt
+        published_at: publishedAt,
+        status: 'published'
       })
       .eq('id', roastId)
       .select();
