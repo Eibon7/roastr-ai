@@ -30,7 +30,10 @@ Antes de ejecutar `gh pr create`, verificar:
   - Unit tests para toda lógica nueva
   - Integration tests para flujos E2E
   - Edge cases cubiertos
-  - Tests pasando localmente: `npm test`
+  - Tests pasando localmente:
+    ```bash
+    npm test
+    ```
 
 - [ ] **Documentación actualizada**
   - CLAUDE.md si afecta workflow/orquestación
@@ -127,13 +130,13 @@ Antes de ejecutar `gh pr create`, verificar:
 
 ### 1. Durante Desarrollo
 
-```
+```text
 [Código] → Self-Review → Tests → Pre-flight Checklist → [PR Draft]
 ```
 
 ### 2. PR Review Process
 
-```
+```text
 [PR Created] → CI/CD → CodeRabbit Review
                          ↓
                     ¿0 comentarios?
@@ -151,7 +154,7 @@ Antes de ejecutar `gh pr create`, verificar:
 
 ### 3. Post-Merge
 
-```
+```text
 [Merged] → Update Epic Tracking → Close Related Issues → Document Learnings
 ```
 

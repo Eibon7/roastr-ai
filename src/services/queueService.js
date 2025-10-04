@@ -193,10 +193,22 @@ class QueueService {
       // Try fallback if primary method fails
       if (this.isRedisAvailable) {
         this.log('info', 'Trying database fallback for job addition');
-        return await this.addJobToDatabase(job);
+        const fallbackResult = await this.addJobToDatabase(job);
+        return {
+          success: true,
+          jobId: job.id,
+          job: fallbackResult,
+          queuedTo: 'database'
+        };
       } else if (this.redis) {
         this.log('info', 'Trying Redis fallback for job addition');
-        return await this.addJobToRedis(job, options);
+        const fallbackResult = await this.addJobToRedis(job, options);
+        return {
+          success: true,
+          jobId: job.id,
+          job: fallbackResult,
+          queuedTo: 'redis'
+        };
       }
       
       throw error;
