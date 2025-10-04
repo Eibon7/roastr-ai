@@ -4,8 +4,7 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-05
-**Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
+**Last Updated:** 2025-10-03
 
 ## Dependencies
 
@@ -759,40 +758,6 @@ describe('Multi-Tenant Workflow', () => {
 }
 ```
 
-
-## Testing Infrastructure (Issue #412)
-
-### Test Utilities
-
-**File:** `tests/helpers/tenantTestUtils.js`
-
-Provides helper functions for RLS testing:
-
-- `createTestTenants()` - Creates 2 test organizations with users
-- `createTestData(tenantId, type)` - Seeds posts, comments, roasts
-- `setTenantContext(tenantId)` - JWT-based RLS context switching
-- `getTenantContext()` - Current context verification
-- `cleanupTestData()` - FK-safe cleanup (roasts → comments → posts → orgs → users)
-
-**Schema Compliance:**
-- Creates users with required fields (email, name, plan)
-- Creates organizations with slug (UNIQUE) and owner_id (FK)
-- Respects all foreign key constraints
-
-### Integration Tests
-
-**File:** `tests/integration/multi-tenant-rls-issue-412.test.js`
-
-**Test Coverage:**
-- AC1: Listados restringidos por tenant_id (3 tests)
-- AC2: Accesos directos verifican tenant_id (6 tests)
-- AC3: Accesos cruzados → 404/forbidden (3 tests)
-- AC4: RLS en 9 tablas críticas (18 tests) - TODO
-- AC5: Auditoría cross-tenant (2 tests) - TODO
-
-**Status:** 🟡 Infrastructure ready, blocked by Supabase connection
-
-See `docs/test-evidence/issue-412/SUMMARY.md` for details.
 
 ## Agentes Relevantes
 
