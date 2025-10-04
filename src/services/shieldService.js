@@ -1,10 +1,11 @@
 const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
+const { mockMode } = require('../config/mockMode');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
- * 
+ *
  * Advanced toxicity protection and automated moderation:
  * - High-priority toxicity analysis
  * - Automated user behavior tracking
@@ -21,11 +22,17 @@ class ShieldService {
       severityEscalation: process.env.SHIELD_SEVERITY_ESCALATION !== 'false',
       ...options
     };
-    
+
     // Initialize connections
     this.supabaseUrl = process.env.SUPABASE_URL;
     this.supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-    this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+
+    // Use mock Supabase client in test mode
+    if (mockMode.isMockMode) {
+      this.supabase = mockMode.generateMockSupabaseClient();
+    } else {
+      this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+    }
     
     this.costControl = new CostControlService();
     this.queueService = new QueueService();
