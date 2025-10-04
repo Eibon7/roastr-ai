@@ -44,7 +44,7 @@ if [ -d "tests" ]; then
   check_pass "Tests directory exists"
 
   # Run tests
-  if npm test -- --passWithNoTests 2>&1 | grep -q "Tests.*passed"; then
+  if npm test -- --passWithNoTests > /dev/null 2>&1; then
     check_pass "Tests are passing"
   else
     check_fail "Tests are failing - fix before creating PR"
@@ -87,8 +87,9 @@ else
 fi
 
 # Check for TODOs without issues
-if git diff --cached | grep -q "TODO\|FIXME" | grep -v "issue #"; then
-  check_warn "Found TODO/FIXME comments - consider creating issues"
+if git diff --cached | grep -qE "TODO|FIXME" && ! git diff --cached | grep -E "TODO|FIXME" | grep -q "issue #"; then
+  TODO_COUNT=$(git diff --cached | grep -E "TODO|FIXME" | grep -v "issue #" | wc -l)
+  check_warn "Found $TODO_COUNT TODO/FIXME comments - consider creating issues"
 else
   check_pass "No untracked TODOs found"
 fi
