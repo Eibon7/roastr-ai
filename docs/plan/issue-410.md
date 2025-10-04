@@ -82,7 +82,7 @@ class PublisherWorker extends BaseWorker {
     }
 
     // 2. Platform selection & publication
-    const result = await this.publishToplatform(roast);
+    const result = await this.publishToPlatform(roast);
 
     // 3. Update database
     await this.updateRoastRecord(roast.id, result.postId);
@@ -106,7 +106,7 @@ class PublisherWorker extends BaseWorker {
 - Llamar `service.createComment()` con roast text + metadata
 
 ```javascript
-async publishToplatform(roast) {
+async publishToPlatform(roast) {
   const service = this.getPlatformService(roast.platform);
 
   try {
