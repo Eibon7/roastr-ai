@@ -1,42 +1,47 @@
 /**
  * Billing routes for Stripe integration
  * Handles subscription creation, management, and webhooks
+ *
+ * Issue #413 - Refactored to use Dependency Injection for testability
  */
 
 const express = require('express');
-const StripeWrapper = require('../services/stripeWrapper');
-const EntitlementsService = require('../services/entitlementsService');
-const StripeWebhookService = require('../services/stripeWebhookService');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { getPlanFromStripeLookupKey, normalizePlanId, PLAN_IDS } = require('../config/planMappings');
-const { supabaseServiceClient, createUserClient } = require('../config/supabase');
+const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
-const emailService = require('../services/emailService');
-const notificationService = require('../services/notificationService');
-const workerNotificationService = require('../services/workerNotificationService');
-const QueueService = require('../services/queueService');
-const { createWebhookRetryHandler } = require('../utils/retry');
+const BillingFactory = require('./billingFactory');
 
 const router = express.Router();
 
-// Initialize Stripe Wrapper, Queue Service, Entitlements Service, and Webhook Service
-let stripeWrapper = null;
-let queueService = null;
-let entitlementsService = null;
-let webhookService = null;
+// Create controller with dependency injection (allows override in tests)
+let billingController = null;
 
-if (flags.isEnabled('ENABLE_BILLING')) {
-  stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
-  queueService = new QueueService();
-  queueService.initialize();
-  entitlementsService = new EntitlementsService();
-  webhookService = new StripeWebhookService();
-} else {
-  logger.warn('⚠️ Stripe billing disabled - missing configuration keys');
-  entitlementsService = new EntitlementsService(); // Always available for free plans
-  webhookService = new StripeWebhookService(); // Always available for webhook processing
+// Lazy initialization - creates controller on first access
+function getController() {
+  if (!billingController) {
+    billingController = BillingFactory.createController();
+  }
+  return billingController;
 }
+
+// Get PLAN_CONFIG from factory
+const PLAN_CONFIG = BillingFactory.getPlanConfig();
+
+// Get services from controller for backward compatibility (lazy getters)
+Object.defineProperty(exports, 'stripeWrapper', {
+  get: () => getController().stripeWrapper
+});
+Object.defineProperty(exports, 'queueService', {
+  get: () => getController().queueService
+});
+Object.defineProperty(exports, 'entitlementsService', {
+  get: () => getController().entitlementsService
+});
+Object.defineProperty(exports, 'webhookService', {
+  get: () => getController().webhookService
+});
 
 // Middleware to check billing availability
 const requireBilling = (req, res, next) => {
@@ -48,49 +53,6 @@ const requireBilling = (req, res, next) => {
     });
   }
   next();
-};
-
-// Plan configuration using shared constants
-const PLAN_CONFIG = {
-    [PLAN_IDS.FREE]: {
-        name: 'Free',
-        price: 0,
-        currency: 'eur',
-        description: 'Perfect for getting started',
-        features: ['10 roasts per month', '1 platform integration', 'Basic support'],
-        maxPlatforms: 1,
-        maxRoasts: 10
-    },
-    [PLAN_IDS.STARTER]: {
-        name: 'Starter',
-        price: 500, // €5.00 in cents
-        currency: 'eur',
-        description: 'Great for regular users',
-        features: ['10 roasts per month', '1,000 analyses', 'Shield protection', 'Email support'],
-        maxPlatforms: 1,
-        maxRoasts: 10,
-        lookupKey: process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly'
-    },
-    [PLAN_IDS.PRO]: {
-        name: 'Pro',
-        price: 1500, // €15.00 in cents
-        currency: 'eur',
-        description: 'Best for power users',
-        features: ['1,000 roasts per month', '2 platform integrations', 'Shield protection', 'Priority support', 'Advanced analytics'],
-        maxPlatforms: 2,
-        maxRoasts: 1000,
-        lookupKey: process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly'
-    },
-    [PLAN_IDS.PLUS]: {
-        name: 'Plus',
-        price: 5000, // €50.00 in cents
-        currency: 'eur', 
-        description: 'For creators and professionals',
-        features: ['5,000 roasts per month', '2 platform integrations', 'Shield protection', '24/7 support', 'Custom tones', 'API access'],
-        maxPlatforms: 2,
-        maxRoasts: 5000,
-        lookupKey: process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly'
-    }
 };
 
 /**
@@ -183,7 +145,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         if (existingSubscription?.stripe_customer_id) {
             // Retrieve existing customer
             try {
-                customer = await stripeWrapper.customers.retrieve(existingSubscription.stripe_customer_id);
+                customer = await getController().stripeWrapper.customers.retrieve(existingSubscription.stripe_customer_id);
             } catch (stripeError) {
                 logger.warn('Failed to retrieve existing customer, creating new one:', stripeError.message);
                 customer = null;
@@ -192,7 +154,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
 
         // Create new customer if none exists or retrieval failed
         if (!customer) {
-            customer = await stripeWrapper.customers.create({
+            customer = await getController().stripeWrapper.customers.create({
                 email: userEmail,
                 metadata: {
                     user_id: userId
@@ -211,7 +173,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         }
 
         // Get price by lookup key
-        const prices = await stripeWrapper.prices.list({
+        const prices = await getController().stripeWrapper.prices.list({
             lookup_keys: [targetLookupKey],
             expand: ['data.product']
         });
@@ -226,7 +188,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         const price = prices.data[0];
 
         // Create checkout session
-        const session = await stripeWrapper.checkout.sessions.create({
+        const session = await getController().stripeWrapper.checkout.sessions.create({
             customer: customer.id,
             payment_method_types: ['card'],
             mode: 'subscription',
@@ -297,7 +259,7 @@ router.post('/portal', authenticateToken, requireBilling, async (req, res) => {
         }
 
         // Create portal session
-        const portalSession = await stripeWrapper.billingPortal.sessions.create({
+        const portalSession = await getController().stripeWrapper.billingPortal.sessions.create({
             customer: subscription.stripe_customer_id,
             return_url: process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:3000/billing'
         });
@@ -345,7 +307,7 @@ router.post('/create-portal-session', authenticateToken, requireBilling, async (
         }
 
         // Create portal session
-        const portalSession = await stripeWrapper.billingPortal.sessions.create({
+        const portalSession = await getController().stripeWrapper.billingPortal.sessions.create({
             customer: subscription.stripe_customer_id,
             return_url: process.env.STRIPE_PORTAL_RETURN_URL
         });
@@ -458,7 +420,8 @@ router.post('/webhooks/stripe',
             });
 
             // Process event using the webhook service with enhanced context
-            const result = await webhookService.processWebhookEvent(event, {
+            const controller = getController();
+            const result = await controller.webhookService.processWebhookEvent(event, {
                 requestId,
                 securityContext: req.webhookSecurity
             });
@@ -532,7 +495,7 @@ router.get('/webhook-stats', authenticateToken, async (req, res) => {
         }
 
         const daysAgo = parseInt(req.query.days) || 7;
-        const stats = await webhookService.getWebhookStats(daysAgo);
+        const stats = await getController().webhookService.getWebhookStats(daysAgo);
 
         res.json({
             success: true,
@@ -555,7 +518,7 @@ router.get('/webhook-stats', authenticateToken, async (req, res) => {
  * POST /api/billing/webhook-cleanup
  * Cleanup old webhook events (admin only)
  */
-router.post('/webhook-cleanup', authenticateToken, async (req, res) => {
+router.post('/webhook-cleanup', express.json(), authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -574,7 +537,14 @@ router.post('/webhook-cleanup', authenticateToken, async (req, res) => {
         }
 
         const olderThanDays = parseInt(req.body.days) || 30;
-        const result = await webhookService.cleanupOldEvents(olderThanDays);
+
+        let result;
+        try {
+            result = await getController().webhookService.cleanupOldEvents(olderThanDays);
+        } catch (cleanupError) {
+            logger.error('cleanupOldEvents threw error:', cleanupError);
+            throw cleanupError; // Re-throw to outer catch
+        }
 
         res.json({
             success: result.success,
@@ -586,658 +556,107 @@ router.post('/webhook-cleanup', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Error cleaning up webhook events:', error);
+        logger.error('Error cleaning up webhook events:', error.message, error.stack);
         res.status(500).json({
             success: false,
-            error: 'Failed to cleanup webhook events'
+            error: 'Failed to cleanup webhook events',
+            details: process.env.NODE_ENV === 'test' ? error.message : undefined
         });
     }
 });
 
 /**
+ * Helper function to export controller for testing
+ * Allows tests to inject mock controller
+ * IMPORTANT: Call this IMMEDIATELY after requiring billing routes, before any requests
+ */
+router.setController = (controller) => {
+  billingController = controller;
+  // Force immediate use of injected controller
+  return billingController;
+};
+
+/**
+ * Get current controller (for debugging/testing)
+ */
+router.getController = () => getController();
+
+// Legacy functions - now delegated to controller
+// Kept for backward compatibility with any external references
+
+/**
  * Queue a billing job for processing by BillingWorker
- * @param {string} jobType - Type of billing job
- * @param {Object} webhookData - Webhook data from Stripe
+ * @deprecated Use billingController.queueBillingJob() instead
  */
 async function queueBillingJob(jobType, webhookData) {
-    if (!queueService) {
-        logger.error('Queue service not initialized, falling back to synchronous processing');
-        // Fallback to original handlers for critical functionality
-        switch (jobType) {
-            case 'subscription_cancelled':
-                return await handleSubscriptionDeleted(webhookData);
-            case 'payment_succeeded':
-                return await handlePaymentSucceeded(webhookData);
-            case 'payment_failed':
-                return await handlePaymentFailed(webhookData);
-            case 'subscription_updated':
-                return await handleSubscriptionUpdated(webhookData);
-            default:
-                logger.warn('Unknown fallback job type:', jobType);
-        }
-        return;
-    }
-
-    try {
-        // Extract common data from webhook
-        let jobData = {};
-
-        switch (jobType) {
-            case 'payment_failed':
-                const { data: failedUserSub } = await supabaseServiceClient
-                    .from('user_subscriptions')
-                    .select('user_id')
-                    .eq('stripe_customer_id', webhookData.customer)
-                    .single();
-
-                jobData = {
-                    userId: failedUserSub?.user_id,
-                    customerId: webhookData.customer,
-                    invoiceId: webhookData.id,
-                    amount: webhookData.amount_due,
-                    attemptCount: 0
-                };
-                break;
-
-            case 'subscription_cancelled':
-                const { data: cancelledUserSub } = await supabaseServiceClient
-                    .from('user_subscriptions')
-                    .select('user_id')
-                    .eq('stripe_customer_id', webhookData.customer)
-                    .single();
-
-                jobData = {
-                    userId: cancelledUserSub?.user_id,
-                    customerId: webhookData.customer,
-                    subscriptionId: webhookData.id,
-                    cancelReason: webhookData.cancellation_details?.reason || 'user_requested'
-                };
-                break;
-
-            case 'subscription_updated':
-                const { data: updatedUserSub } = await supabaseServiceClient
-                    .from('user_subscriptions')
-                    .select('user_id, plan')
-                    .eq('stripe_customer_id', webhookData.customer)
-                    .single();
-
-                // Determine plan from subscription
-                let newPlan = PLAN_IDS.FREE;
-                if (webhookData.items?.data?.length > 0) {
-                    const price = webhookData.items.data[0].price;
-                    const prices = await stripeWrapper.prices.list({ limit: 100 });
-                    const priceData = prices.data.find(p => p.id === price.id);
-                    
-                    if (priceData?.lookup_key) {
-                        newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.FREE;
-                    }
-                }
-
-                jobData = {
-                    userId: updatedUserSub?.user_id,
-                    customerId: webhookData.customer,
-                    subscriptionId: webhookData.id,
-                    newPlan,
-                    newStatus: webhookData.status
-                };
-                break;
-
-            case 'payment_succeeded':
-                const { data: succeededUserSub } = await supabaseServiceClient
-                    .from('user_subscriptions')
-                    .select('user_id')
-                    .eq('stripe_customer_id', webhookData.customer)
-                    .single();
-
-                jobData = {
-                    userId: succeededUserSub?.user_id,
-                    customerId: webhookData.customer,
-                    invoiceId: webhookData.id,
-                    amount: webhookData.amount_paid
-                };
-                break;
-
-            case 'invoice_payment_action_required':
-                const { data: actionUserSub } = await supabaseServiceClient
-                    .from('user_subscriptions')
-                    .select('user_id')
-                    .eq('stripe_customer_id', webhookData.customer)
-                    .single();
-
-                jobData = {
-                    userId: actionUserSub?.user_id,
-                    customerId: webhookData.customer,
-                    invoiceId: webhookData.id,
-                    paymentIntentId: webhookData.payment_intent
-                };
-                break;
-        }
-
-        // Queue the job for BillingWorker
-        await queueService.addJob({
-            job_type: jobType,
-            data: jobData,
-            priority: 2, // High priority for billing jobs
-            organization_id: null // Billing jobs are system-wide
-        });
-
-        logger.info('Billing job queued successfully', {
-            jobType,
-            userId: jobData.userId,
-            customerId: jobData.customerId
-        });
-
-    } catch (error) {
-        logger.error('Failed to queue billing job, falling back to sync processing', {
-            jobType,
-            error: error.message
-        });
-
-        // Fallback to synchronous processing if queueing fails
-        switch (jobType) {
-            case 'subscription_cancelled':
-                return await handleSubscriptionDeleted(webhookData);
-            case 'payment_succeeded':
-                return await handlePaymentSucceeded(webhookData);
-            case 'payment_failed':
-                return await handlePaymentFailed(webhookData);
-            case 'subscription_updated':
-                return await handleSubscriptionUpdated(webhookData);
-            default:
-                logger.warn('Unknown fallback job type:', jobType);
-        }
-    }
+  return getController().queueBillingJob(jobType, webhookData);
 }
 
 /**
- * Handle checkout.session.completed event with transaction support
- * Issue #95: Added database transactions to prevent inconsistent state
+ * Handle checkout completed
+ * @deprecated Use billingController.handleCheckoutCompleted() instead
  */
 async function handleCheckoutCompleted(session) {
-    const userId = session.metadata?.user_id;
-    
-    if (!userId) {
-        logger.error('No user_id in checkout session metadata');
-        return;
-    }
-
-    const subscription = await stripeWrapper.subscriptions.retrieve(session.subscription);
-    const customer = await stripeWrapper.customers.retrieve(session.customer);
-
-    // Get the price ID from the subscription for entitlements update
-    const priceId = subscription.items?.data?.[0]?.price?.id;
-    
-    // Determine plan from price lookup key using shared mappings
-    let plan = PLAN_IDS.FREE;
-    const lookupKey = session.metadata?.lookup_key;
-    
-    if (lookupKey) {
-        plan = getPlanFromStripeLookupKey(lookupKey) || PLAN_IDS.FREE;
-    }
-
-    // Execute critical database operations in a transaction
-    const transactionResult = await supabaseServiceClient.rpc('execute_checkout_completed_transaction', {
-        p_user_id: userId,
-        p_stripe_customer_id: customer.id,
-        p_stripe_subscription_id: subscription.id,
-        p_plan: plan,
-        p_status: subscription.status,
-        p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        p_cancel_at_period_end: subscription.cancel_at_period_end,
-        p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
-        p_price_id: priceId,
-        p_metadata: JSON.stringify({
-            subscription_id: subscription.id,
-            customer_id: customer.id,
-            checkout_session_id: session.id,
-            updated_from: 'checkout_completed'
-        })
-    });
-
-    if (transactionResult.error) {
-        logger.error('Transaction failed during checkout completion:', {
-            userId,
-            subscriptionId: subscription.id,
-            error: transactionResult.error,
-            details: transactionResult.data
-        });
-        throw new Error(`Checkout completion transaction failed: ${transactionResult.error}`);
-    }
-
-    logger.info('Checkout transaction completed successfully:', {
-        userId,
-        plan,
-        subscriptionId: subscription.id,
-        entitlementsUpdated: transactionResult.data?.entitlements_updated || false,
-        planName: transactionResult.data?.plan_name || plan
-    });
-
-    // Send upgrade success email notification (non-critical, outside transaction)
-    if (plan !== PLAN_IDS.FREE) {
-        try {
-            // Get user email from customer
-            const userEmail = customer.email;
-            const planConfig = PLAN_CONFIG[plan] || {};
-            
-            await emailService.sendUpgradeSuccessNotification(userEmail, {
-                userName: customer.name || userEmail.split('@')[0],
-                oldPlanName: 'Free',
-                newPlanName: planConfig.name || plan,
-                newFeatures: planConfig.features || [],
-                activationDate: new Date().toLocaleDateString(),
-            });
-
-            logger.info('📧 Upgrade success email sent:', { userId, plan, email: userEmail });
-        } catch (emailError) {
-            logger.error('📧 Failed to send upgrade success email:', emailError);
-        }
-
-        // Create in-app notification (non-critical, outside transaction)
-        try {
-            await notificationService.createUpgradeSuccessNotification(userId, {
-                oldPlanName: 'Free',
-                newPlanName: planConfig.name || plan,
-                newFeatures: planConfig.features || [],
-                activationDate: new Date().toLocaleDateString(),
-            });
-
-            logger.info('📝 Upgrade success notification created:', { userId, plan });
-        } catch (notificationError) {
-            logger.error('📝 Failed to create upgrade success notification:', notificationError);
-        }
-    }
+  return getController().handleCheckoutCompleted(session);
 }
 
 /**
- * Handle subscription updated event with transaction support
- * Issue #95: Added database transactions to prevent inconsistent state
+ * Handle subscription updated
+ * @deprecated Use billingController.handleSubscriptionUpdated() instead
  */
 async function handleSubscriptionUpdated(subscription) {
-    try {
-        // Get user ID from subscription
-        const { data: userSub } = await supabaseServiceClient
-            .from('user_subscriptions')
-            .select('user_id')
-            .eq('stripe_subscription_id', subscription.id)
-            .single();
-
-        if (!userSub) {
-            logger.warn('No user found for subscription update', {
-                subscriptionId: subscription.id,
-                customerId: subscription.customer
-            });
-            return;
-        }
-
-        const userId = userSub.user_id;
-        const priceId = subscription.items?.data?.[0]?.price?.id;
-
-        // Determine plan from subscription items using shared mappings
-        let newPlan = PLAN_IDS.FREE;
-        if (priceId) {
-            const prices = await stripeWrapper.prices.list({ limit: 100 });
-            const priceData = prices.data.find(p => p.id === priceId);
-            
-            if (priceData?.lookup_key) {
-                newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.FREE;
-            }
-        }
-
-        // Execute subscription update operations in a transaction
-        const transactionResult = await supabaseServiceClient.rpc('execute_subscription_updated_transaction', {
-            p_user_id: userId,
-            p_subscription_id: subscription.id,
-            p_customer_id: subscription.customer,
-            p_plan: newPlan,
-            p_status: subscription.status,
-            p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            p_cancel_at_period_end: subscription.cancel_at_period_end,
-            p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
-            p_price_id: priceId,
-            p_metadata: JSON.stringify({
-                subscription_id: subscription.id,
-                customer_id: subscription.customer,
-                updated_from: 'subscription_updated',
-                subscription_status: subscription.status
-            })
-        });
-
-        if (transactionResult.error) {
-            logger.error('Transaction failed during subscription update:', {
-                userId,
-                subscriptionId: subscription.id,
-                customerId: subscription.customer,
-                error: transactionResult.error,
-                details: transactionResult.data
-            });
-            // Don't throw - webhook should still return success, but log the error
-            return;
-        }
-
-        logger.info('Subscription update transaction completed successfully:', {
-            userId,
-            subscriptionId: subscription.id,
-            oldPlan: transactionResult.data?.old_plan || 'unknown',
-            newPlan: transactionResult.data?.new_plan || newPlan,
-            status: subscription.status,
-            entitlementsUpdated: transactionResult.data?.entitlements_updated || false
-        });
-
-        // Try to use existing subscription service if available (non-critical)
-        try {
-            const subscriptionService = require('../services/subscriptionService');
-            const result = await subscriptionService.processSubscriptionUpdate(subscription);
-            
-            if (!result.success) {
-                logger.warn('Subscription update blocked by service:', {
-                    customerId: subscription.customer,
-                    reason: result.reason
-                });
-            } else {
-                logger.info('Subscription service processed update successfully:', {
-                    userId: result.userId,
-                    oldPlan: result.oldPlan,
-                    newPlan: result.newPlan,
-                    status: result.status
-                });
-            }
-        } catch (serviceError) {
-            logger.info('Subscription service not available, using transaction result', {
-                error: serviceError.message
-            });
-        }
-
-    } catch (error) {
-        logger.error('Failed to process subscription update:', error);
-        // Don't throw - webhook should still return success
-    }
+  return getController().handleSubscriptionUpdated(subscription);
 }
 
 /**
- * Handle subscription deleted event with transaction support
- * Issue #95: Added database transactions to prevent inconsistent state
+ * Handle subscription deleted
+ * @deprecated Use billingController.handleSubscriptionDeleted() instead
  */
 async function handleSubscriptionDeleted(subscription) {
-    const customerId = subscription.customer;
-    
-    const { data: userSub, error: findError } = await supabaseServiceClient
-        .from('user_subscriptions')
-        .select('user_id')
-        .eq('stripe_customer_id', customerId)
-        .single();
-
-    if (findError || !userSub) {
-        logger.error('Could not find user for customer:', customerId);
-        return;
-    }
-
-    // Execute critical database operations in a transaction
-    const transactionResult = await supabaseServiceClient.rpc('execute_subscription_deleted_transaction', {
-        p_user_id: userSub.user_id,
-        p_subscription_id: subscription.id,
-        p_customer_id: customerId,
-        p_canceled_at: new Date().toISOString()
-    });
-
-    if (transactionResult.error) {
-        logger.error('Transaction failed during subscription deletion:', {
-            userId: userSub.user_id,
-            subscriptionId: subscription.id,
-            customerId,
-            error: transactionResult.error,
-            details: transactionResult.data
-        });
-        throw new Error(`Subscription deletion transaction failed: ${transactionResult.error}`);
-    }
-
-    logger.info('Subscription deletion transaction completed successfully:', {
-        userId: userSub.user_id,
-        subscriptionId: subscription.id,
-        entitlementsReset: transactionResult.data?.entitlements_reset || false
-    });
-
-    // Send subscription canceled email notification (non-critical, outside transaction)
-    try {
-        const customer = await stripeWrapper.customers.retrieve(customerId);
-        const userEmail = customer.email;
-        
-        // Get the canceled plan info from transaction result
-        const planConfig = PLAN_CONFIG[transactionResult.data?.previous_plan] || {};
-        
-        await emailService.sendSubscriptionCanceledNotification(userEmail, {
-            userName: customer.name || userEmail.split('@')[0],
-            planName: planConfig.name || 'Pro',
-            cancellationDate: new Date().toLocaleDateString(),
-            accessUntilDate: transactionResult.data?.access_until_date || new Date().toLocaleDateString(),
-        });
-
-        logger.info('📧 Cancellation email sent:', { 
-            userId: userSub.user_id, 
-            email: userEmail 
-        });
-    } catch (emailError) {
-        logger.error('📧 Failed to send cancellation email:', emailError);
-    }
-
-    // Create in-app notification (non-critical, outside transaction)
-    try {
-        const planConfig = PLAN_CONFIG[transactionResult.data?.previous_plan] || {};
-        
-        await notificationService.createSubscriptionCanceledNotification(userSub.user_id, {
-            planName: planConfig.name || 'Pro',
-            cancellationDate: new Date().toLocaleDateString(),
-            accessUntilDate: transactionResult.data?.access_until_date || new Date().toLocaleDateString(),
-        });
-
-        logger.info('📝 Cancellation notification created:', { 
-            userId: userSub.user_id 
-        });
-    } catch (notificationError) {
-        logger.error('📝 Failed to create cancellation notification:', notificationError);
-    }
+  return getController().handleSubscriptionDeleted(subscription);
 }
 
 /**
- * Handle successful payment with transaction support
- * Issue #95: Added database transactions to prevent inconsistent state
+ * Handle payment succeeded
+ * @deprecated Use billingController.handlePaymentSucceeded() instead
  */
 async function handlePaymentSucceeded(invoice) {
-    const customerId = invoice.customer;
-    
-    const { data: userSub, error } = await supabaseServiceClient
-        .from('user_subscriptions')
-        .select('user_id')
-        .eq('stripe_customer_id', customerId)
-        .single();
-
-    if (!error && userSub) {
-        // Execute payment success operations in a transaction
-        const transactionResult = await supabaseServiceClient.rpc('execute_payment_succeeded_transaction', {
-            p_user_id: userSub.user_id,
-            p_customer_id: customerId,
-            p_invoice_id: invoice.id,
-            p_amount_paid: invoice.amount_paid,
-            p_payment_succeeded_at: new Date().toISOString()
-        });
-
-        if (transactionResult.error) {
-            logger.error('Transaction failed during payment success:', {
-                userId: userSub.user_id,
-                invoiceId: invoice.id,
-                customerId,
-                error: transactionResult.error,
-                details: transactionResult.data
-            });
-            throw new Error(`Payment success transaction failed: ${transactionResult.error}`);
-        }
-
-        logger.info('Payment succeeded transaction completed:', {
-            userId: userSub.user_id,
-            invoiceId: invoice.id,
-            amount: invoice.amount_paid,
-            statusUpdated: transactionResult.data?.status_updated || false
-        });
-    }
+  return getController().handlePaymentSucceeded(invoice);
 }
 
 /**
- * Handle failed payment with transaction support
- * Issue #95: Added database transactions to prevent inconsistent state
+ * Handle payment failed
+ * @deprecated Use billingController.handlePaymentFailed() instead
  */
 async function handlePaymentFailed(invoice) {
-    const customerId = invoice.customer;
-    
-    const { data: userSub, error } = await supabaseServiceClient
-        .from('user_subscriptions')
-        .select('user_id')
-        .eq('stripe_customer_id', customerId)
-        .single();
-
-    if (!error && userSub) {
-        // Calculate next attempt date (Stripe typically retries in 3 days)
-        const nextAttempt = new Date();
-        nextAttempt.setDate(nextAttempt.getDate() + 3);
-
-        // Execute payment failure operations in a transaction
-        const transactionResult = await supabaseServiceClient.rpc('execute_payment_failed_transaction', {
-            p_user_id: userSub.user_id,
-            p_customer_id: customerId,
-            p_invoice_id: invoice.id,
-            p_amount_due: invoice.amount_due,
-            p_attempt_count: invoice.attempt_count || 1,
-            p_next_attempt_date: nextAttempt.toISOString(),
-            p_payment_failed_at: new Date().toISOString()
-        });
-
-        if (transactionResult.error) {
-            logger.error('Transaction failed during payment failure:', {
-                userId: userSub.user_id,
-                invoiceId: invoice.id,
-                customerId,
-                error: transactionResult.error,
-                details: transactionResult.data
-            });
-            throw new Error(`Payment failure transaction failed: ${transactionResult.error}`);
-        }
-
-        logger.warn('Payment failed transaction completed:', {
-            userId: userSub.user_id,
-            invoiceId: invoice.id,
-            amount: invoice.amount_due,
-            statusUpdated: transactionResult.data?.status_updated || false,
-            planName: transactionResult.data?.plan_name || 'unknown'
-        });
-
-        // Send payment failed email notification (non-critical, outside transaction)
-        try {
-            const customer = await stripeWrapper.customers.retrieve(customerId);
-            const userEmail = customer.email;
-            
-            const planConfig = PLAN_CONFIG[transactionResult.data?.plan_name] || {};
-            
-            await emailService.sendPaymentFailedNotification(userEmail, {
-                userName: customer.name || userEmail.split('@')[0],
-                planName: planConfig.name || 'Pro',
-                failedAmount: invoice.amount_due ? `€${(invoice.amount_due / 100).toFixed(2)}` : 'N/A',
-                nextAttemptDate: nextAttempt.toLocaleDateString(),
-            });
-
-            logger.info('📧 Payment failed email sent:', { 
-                userId: userSub.user_id, 
-                email: userEmail,
-                amount: invoice.amount_due 
-            });
-        } catch (emailError) {
-            logger.error('📧 Failed to send payment failed email:', emailError);
-        }
-
-        // Create in-app notification (non-critical, outside transaction)
-        try {
-            const planConfig = PLAN_CONFIG[transactionResult.data?.plan_name] || {};
-            
-            await notificationService.createPaymentFailedNotification(userSub.user_id, {
-                planName: planConfig.name || 'Pro',
-                failedAmount: invoice.amount_due ? `€${(invoice.amount_due / 100).toFixed(2)}` : 'N/A',
-                nextAttemptDate: nextAttempt.toLocaleDateString(),
-            });
-
-            logger.info('📝 Payment failed notification created:', { 
-                userId: userSub.user_id,
-                amount: invoice.amount_due 
-            });
-        } catch (notificationError) {
-            logger.error('📝 Failed to create payment failed notification:', notificationError);
-        }
-    }
+  return getController().handlePaymentFailed(invoice);
 }
 
 /**
- * Apply plan limits dynamically when subscription changes
- * @param {string} userId - User ID
- * @param {string} plan - New plan (free, starter, pro, plus)
- * @param {string} status - Subscription status
+ * Apply plan limits
+ * @deprecated Use billingController.applyPlanLimits() instead
  */
 async function applyPlanLimits(userId, plan, status) {
-    const planConfig = PLAN_CONFIG[plan] || PLAN_CONFIG.free;
-    
-    // If subscription is not active, apply limited access
-    const isActive = status === 'active';
-    const limits = isActive ? planConfig : PLAN_CONFIG.free;
-    
-    try {
-        // Update user limits in the database
-        const { error } = await supabaseServiceClient
-            .from('users')
-            .update({
-                plan: plan,
-                // Reset monthly usage if upgrading to higher plan
-                monthly_messages_sent: plan !== PLAN_IDS.FREE ? 0 : undefined,
-                monthly_tokens_consumed: plan !== PLAN_IDS.FREE ? 0 : undefined,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', userId);
-
-        if (error) {
-            throw error;
-        }
-
-        // Update organization limits if user is owner
-        const { data: orgData, error: orgError } = await supabaseServiceClient
-            .from('organizations')
-            .select('id')
-            .eq('owner_id', userId)
-            .maybeSingle();
-
-        if (!orgError && orgData) {
-            await supabaseServiceClient
-                .from('organizations')
-                .update({
-                    plan_id: plan,
-                    subscription_status: status,
-                    monthly_responses_limit: limits.maxRoasts === -1 ? 999999 : limits.maxRoasts,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', orgData.id);
-        }
-
-        // Notify worker system of limit changes
-        await workerNotificationService.notifyStatusChange(userId, plan, status);
-        logger.info('🔄 Plan limits updated, workers notified:', {
-            userId,
-            plan,
-            status,
-            limits: {
-                maxRoasts: limits.maxRoasts,
-                maxPlatforms: limits.maxPlatforms
-            }
-        });
-
-    } catch (error) {
-        logger.error('Failed to apply plan limits:', error);
-        throw error;
-    }
+  return getController().applyPlanLimits(userId, plan, status);
 }
+
+// LEGACY IMPLEMENTATION BELOW - REPLACED WITH CONTROLLER
+
+/**
+ * LEGACY IMPLEMENTATION REMOVED - All business logic moved to BillingController
+ * The functions above (queueBillingJob, handleCheckoutCompleted, etc.) now delegate
+ * to billingController methods for backward compatibility.
+ *
+ * Benefits of DI refactor:
+ * - Testable: Can inject mocks in tests
+ * - SOLID: Follows Dependency Inversion Principle
+ * - Maintainable: Business logic separated from routing
+ * - Flexible: Easy to swap implementations
+ *
+ * See:
+ * - src/routes/billingController.js for business logic
+ * - src/routes/billingFactory.js for dependency creation
+ * - tests/integration/stripeWebhooksFlow.test.js for testing with mocks
+ */
 
 module.exports = router;
