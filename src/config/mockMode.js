@@ -87,6 +87,8 @@ class MockModeManager {
       global.mockJobStorage = global.mockJobStorage || [];
       global.mockOrgStorage = global.mockOrgStorage || [];
       global.mockConfigStorage = global.mockConfigStorage || [];
+      global.mockRoastStorage = global.mockRoastStorage || [];
+      global.mockUserBehaviorStorage = global.mockUserBehaviorStorage || [];
     }
     return {
       auth: {
@@ -144,20 +146,41 @@ class MockModeManager {
               });
             }
             
+            if (table === 'user_behaviors') {
+              const storage = global.mockUserBehaviorStorage || [];
+              const existing = storage.find(behavior =>
+                behavior.organization_id === queries.organization_id &&
+                behavior.platform === queries.platform &&
+                behavior.platform_user_id === queries.platform_user_id
+              );
+
+              if (existing) {
+                return Promise.resolve({
+                  data: existing,
+                  error: null
+                });
+              } else {
+                return Promise.resolve({
+                  data: null,
+                  error: null
+                });
+              }
+            }
+
             if (table === 'comments') {
               // Check if comment exists in global storage
               const storage = global.mockCommentStorage || [];
               console.log('🔍 Mock: Checking for existing comment with queries:', queries);
               console.log('🔍 Mock: Current storage has', storage.length, 'comments');
-              
-              const existing = storage.find(comment => 
+
+              const existing = storage.find(comment =>
                 comment.organization_id === queries.organization_id &&
                 comment.platform === queries.platform &&
                 comment.platform_comment_id === queries.platform_comment_id
               );
-              
+
               console.log('🔍 Mock: Found existing comment:', !!existing);
-              
+
               if (existing) {
                 return Promise.resolve({
                   data: existing,
@@ -171,7 +194,7 @@ class MockModeManager {
                 });
               }
             }
-            
+
             return Promise.resolve({
               data: { id: 1, name: 'Mock Data', created_at: new Date().toISOString() },
               error: null
@@ -260,7 +283,13 @@ class MockModeManager {
                 // Create a proper chainable select that supports .single()
                 const selectChain = {
                   single: () => {
-                    const result = Array.isArray(data) ? { ...data[0], id: 1, created_at: new Date().toISOString() } : { ...data, id: 1, created_at: new Date().toISOString() };
+                    // Preserve existing ID if present, otherwise generate one
+                    const baseData = Array.isArray(data) ? data[0] : data;
+                    const result = {
+                      ...baseData,
+                      id: baseData.id || 1,
+                      created_at: baseData.created_at || new Date().toISOString()
+                    };
                     return Promise.resolve({
                       data: result,
                       error: null
@@ -271,7 +300,9 @@ class MockModeManager {
                 // Make this object act like a Promise while preserving chainable methods
                 return Object.assign(selectChain, {
                   then: (onFulfilled, onRejected) => {
-                    const resultData = Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1, created_at: new Date().toISOString() })) : [{ ...data, id: 1, created_at: new Date().toISOString() }];
+                    const resultData = Array.isArray(data)
+                      ? data.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
+                      : [{ ...data, id: data.id || 1, created_at: data.created_at || new Date().toISOString() }];
                     return Promise.resolve({
                       data: resultData,
                       error: null
@@ -282,15 +313,23 @@ class MockModeManager {
                     }).then(onFulfilled, onRejected);
                   },
                   catch: (onRejected) => {
+                    const resultData = Array.isArray(data)
+                      ? data.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
+                      : [{ ...data, id: data.id || 1, created_at: data.created_at || new Date().toISOString() }];
                     return Promise.resolve({
-                      data: Array.isArray(data) ? data.map((item, i) => ({ ...item, id: i + 1, created_at: new Date().toISOString() })) : [{ ...data, id: 1, created_at: new Date().toISOString() }],
+                      data: resultData,
                       error: null
                     }).catch(onRejected);
                   }
                 });
               },
               single: () => {
-                const result = Array.isArray(data) ? { ...data[0], id: 1, created_at: new Date().toISOString() } : { ...data, id: 1, created_at: new Date().toISOString() };
+                const baseData = Array.isArray(data) ? data[0] : data;
+                const result = {
+                  ...baseData,
+                  id: baseData.id || 1,
+                  created_at: baseData.created_at || new Date().toISOString()
+                };
                 return Promise.resolve({
                   data: result,
                   error: null

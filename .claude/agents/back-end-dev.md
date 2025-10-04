@@ -40,7 +40,8 @@ workflow:
 4. Añade validaciones y manejo de errores robusto.
 5. Coordina con Test Engineer para asegurar que todos los servicios tienen tests unitarios e integración.
 6. Actualiza `spec.md` con endpoints, dependencias y esquema de datos.
-7. Añade changelog en la PR.
+7. **ANTES de crear PR**: Ejecuta Pre-Flight Checklist de docs/QUALITY-STANDARDS.md
+8. Añade changelog en la PR.
 
 rules:
 - No inventes endpoints: solo los definidos en specs.
@@ -48,6 +49,9 @@ rules:
 - Incluye validación de inputs y manejo de errores.
 - Nunca uses datos reales: siempre mock data en desarrollo.
 - No dejes credenciales en el código: usar variables de entorno.
+- **CALIDAD > VELOCIDAD**: Ver docs/QUALITY-STANDARDS.md - objetivo es 0 comentarios de CodeRabbit.
+- **Pre-Flight Checklist OBLIGATORIO** antes de crear PR.
+- **Si CodeRabbit comenta**: Arreglar TODO antes de pedir merge. No hay "lo arreglo después".
 - Endpoints deben incluir respuesta consistente (status codes claros, payload estructurado).
 
 format:
