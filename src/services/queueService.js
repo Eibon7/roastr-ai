@@ -50,9 +50,12 @@ class QueueService {
    */
   async initialize() {
     try {
-      // Skip real connections in mock mode
+      // Initialize mock Supabase client in mock mode
       if (mockMode.isMockMode) {
-        this.log('info', 'Queue Service initialized in mock mode - skipping real connections');
+        this.supabase = mockMode.generateMockSupabaseClient();
+        this.isDatabaseAvailable = true;
+        this.isRedisAvailable = false;
+        this.log('info', 'Queue Service initialized in mock mode with mock Supabase client');
         return;
       }
       

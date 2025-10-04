@@ -41,11 +41,9 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
     costControl = new CostControlService();
     shieldService = new ShieldService();
 
-    // Skip actual initialization in test environment
-    if (process.env.NODE_ENV !== 'test') {
-      await queueService.initialize();
-      await shieldService.initialize();
-    }
+    // Initialize services (will use mock clients in test environment)
+    await queueService.initialize();
+    await shieldService.initialize();
   });
 
   afterAll(async () => {
@@ -185,6 +183,18 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
         platform: 'twitter',
         organization_id: testOrganization.id
       };
+
+      // Setup repeat offender in mock storage
+      if (typeof global !== 'undefined') {
+        global.mockUserBehaviorStorage = global.mockUserBehaviorStorage || [];
+        global.mockUserBehaviorStorage.push({
+          organization_id: testOrganization.id,
+          platform: 'twitter',
+          platform_user_id: 'user-repeat-offender',
+          total_violations: 3, // Enough to trigger escalate_to_human
+          created_at: new Date().toISOString()
+        });
+      }
 
       // Mock repeat offender behavior
       jest.spyOn(shieldService, 'getUserRiskLevel')
