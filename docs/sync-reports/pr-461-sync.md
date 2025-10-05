@@ -2,7 +2,7 @@
 
 **PR:** #461 - test: Add comprehensive kill-switch integration tests - Issue #414
 **Branch:** test/issue-414-killswitch-integration
-**Date:** 2025-10-05
+**Date:** 2025-10-05 (Last Updated: 2025-10-05 23:00 UTC)
 **Status:** 🟢 SYNCED
 **Type:** Test-Only PR (no src/ changes)
 
@@ -50,13 +50,19 @@ PR #461 adds **comprehensive integration tests** for the kill-switch middleware 
 - **docs/plan/review-3302408711.md** (+867 lines)
 - **docs/plan/review-3302415963.md** (+370 lines)
 - **docs/plan/review-3302449267.md** (+290 lines)
+- **docs/plan/review-3302458637.md** (+XXX lines)
+- **docs/plan/review-3302460426.md** (+XXX lines)
+- **docs/plan/review-3302467241.md** (+XXX lines)
+- **docs/plan/review-3302472422.md** (+457 lines)
+- **docs/plan/review-3302504177.md** (N/A - nitpicks applied inline)
 
 ### Documentation Sync (Updated)
 - **docs/sync-reports/pr-461-sync.md** (this file, updated)
 - **docs/GDD-IMPLEMENTATION-SUMMARY.md** (updated with PR #461 sync history + node count fix)
 
-**Total Lines Added:** ~5,000 lines (tests + documentation + sync reports)
+**Total Lines Added:** ~6,500 lines (tests + documentation + planning + sync reports)
 **Production Code Changes:** 0 lines
+**Planning Documents:** 34 files (30+ CodeRabbit review plans)
 
 ---
 
@@ -197,7 +203,7 @@ node scripts/resolve-graph.js --validate
 
 ## CodeRabbit Reviews Resolved
 
-PR #461 had **5 CodeRabbit reviews** with a total of **10 issues** (some duplicates between reviews).
+PR #461 had **10 CodeRabbit reviews** with a total of **15 unique issues** (excluding duplicates).
 
 ### Review Timeline
 
@@ -217,7 +223,7 @@ PR #461 had **5 CodeRabbit reviews** with a total of **10 issues** (some duplica
    - 🟢 Minor: Language tag (duplicate)
    - Status: ✅ RESOLVED
 
-4. **Review #3302415963** (0dbd5f1d)
+4. **Review #3302415963** (4a2b0e59)
    - 🟠 Major: AC6 worker test doesn't simulate DB outage
    - 🟠 Major: AC5 test (duplicate - already fixed)
    - 🟢 Minor: SUMMARY.md (duplicate - already fixed)
@@ -227,8 +233,29 @@ PR #461 had **5 CodeRabbit reviews** with a total of **10 issues** (some duplica
    - 🟡 Minor: "Total Nodes Updated" count mismatch in GDD Summary
    - Status: ✅ RESOLVED
 
-**Total Unique Issues:** 8
-**Total Issues Resolved:** 8
+6. **Review #3302458637** (f9f612e6)
+   - 🟢 Minor: 6 bold step titles in sync report (MD036)
+   - Status: ✅ RESOLVED
+
+7. **Review #3302460426** (67b022f6)
+   - 🟢 Minor: Bold steps in code snippets within planning doc
+   - Status: ✅ RESOLVED
+
+8. **Review #3302467241** (ab28c32a)
+   - 🟢 Minor: Nested markdown fences in planning doc
+   - Status: ✅ RESOLVED
+
+9. **Review #3302472422** (d4480a60)
+   - 🟠 Major: Bold-as-heading pattern across 25+ planning docs (MD036 systemic)
+   - Status: ✅ RESOLVED (43 occurrences fixed)
+
+10. **Review #3302504177** (a2bbc7b9)
+    - 🟡 Nitpick #1: Conflicting AC6 expectations in planning doc
+    - 🟡 Nitpick #2: Outdated status in planning doc
+    - Status: ✅ RESOLVED
+
+**Total Unique Issues:** 15
+**Total Issues Resolved:** 15
 **Resolution Rate:** 100%
 
 ---
@@ -347,10 +374,16 @@ PR #461 had **5 CodeRabbit reviews** with a total of **10 issues** (some duplica
 - `79a941d3` - Markdown linting fix (Review #3302103120)
 - `22d48d7b` - AC5 test fix (Review #3302403814)
 - `db34ca7c` - AC5 DB outage simulation (Review #3302408711)
-- `0dbd5f1d` - AC6 DB outage simulation (Review #3302415963)
+- `4a2b0e59` - AC6 DB outage simulation (Review #3302415963)
 - `4fcd9274` - Documentation sync (initial)
 - `e4c66fcd` - Merge conflict resolution (PR #459 sync)
 - `f797f0ef` - Node count fix (Review #3302449267)
+- `851f2e33` - Documentation sync update
+- `f9f612e6` - Bold step titles fix (Review #3302458637)
+- `67b022f6` - Bold steps in snippets fix (Review #3302460426)
+- `ab28c32a` - Nested markdown fences fix (Review #3302467241)
+- `d4480a60` - Bold-as-heading pattern fix (Review #3302472422)
+- `a2bbc7b9` - AC6 expectations clarification (Review #3302504177)
 
 ---
 
