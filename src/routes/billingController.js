@@ -64,7 +64,7 @@ class BillingController {
       let jobData = {};
 
       switch (jobType) {
-        case 'payment_failed':
+        case 'payment_failed': {
           const { data: failedUserSub } = await this.supabaseClient
             .from('user_subscriptions')
             .select('user_id')
@@ -79,8 +79,9 @@ class BillingController {
             attemptCount: 0
           };
           break;
+        }
 
-        case 'subscription_cancelled':
+        case 'subscription_cancelled': {
           const { data: cancelledUserSub } = await this.supabaseClient
             .from('user_subscriptions')
             .select('user_id')
@@ -94,8 +95,9 @@ class BillingController {
             cancelReason: webhookData.cancellation_details?.reason || 'user_requested'
           };
           break;
+        }
 
-        case 'subscription_updated':
+        case 'subscription_updated': {
           const { data: updatedUserSub } = await this.supabaseClient
             .from('user_subscriptions')
             .select('user_id, plan')
@@ -123,8 +125,9 @@ class BillingController {
             newStatus: webhookData.status
           };
           break;
+        }
 
-        case 'payment_succeeded':
+        case 'payment_succeeded': {
           const { data: succeededUserSub } = await this.supabaseClient
             .from('user_subscriptions')
             .select('user_id')
@@ -138,8 +141,9 @@ class BillingController {
             amount: webhookData.amount_paid
           };
           break;
+        }
 
-        case 'invoice_payment_action_required':
+        case 'invoice_payment_action_required': {
           const { data: actionUserSub } = await this.supabaseClient
             .from('user_subscriptions')
             .select('user_id')
@@ -153,6 +157,7 @@ class BillingController {
             paymentIntentId: webhookData.payment_intent
           };
           break;
+        }
       }
 
       // Queue the job for BillingWorker

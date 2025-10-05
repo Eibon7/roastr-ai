@@ -488,21 +488,22 @@ describe('Ingestor Error Handling Integration Tests', () => {
         switch (scenario) {
           case 'success':
             return [fixtures.retryComments[0]];
-            
+
           case 'transient':
             throw new Error('Persistent transient error');
-            
-          case 'permanent':
+
+          case 'permanent': {
             const permError = new Error('Permanent error');
             permError.statusCode = 401;
             throw permError;
-            
+          }
+
           case 'eventual_success':
             if (attemptCounts[scenario] <= 2) {
               throw new Error('Transient error - will succeed');
             }
             return [fixtures.retryComments[0]];
-            
+
           default:
             throw new Error('Unknown scenario');
         }
