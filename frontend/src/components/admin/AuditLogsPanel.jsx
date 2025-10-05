@@ -127,12 +127,14 @@ const AuditLogsPanel = () => {
 
     // Generate description based on action type
     switch (log.action_type) {
-      case 'kill_switch_toggle':
+      case 'kill_switch_toggle': {
         const newState = log.new_value?.enabled ? 'activated' : 'deactivated';
         return `Kill switch ${newState}`;
-      case 'feature_flag_update':
+      }
+      case 'feature_flag_update': {
         const flagState = log.new_value?.is_enabled ? 'enabled' : 'disabled';
         return `Feature flag '${log.resource_id}' ${flagState}`;
+      }
       default:
         return `${log.action_type} performed on ${log.resource_type}`;
     }

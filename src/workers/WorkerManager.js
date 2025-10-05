@@ -4,6 +4,7 @@ const GenerateReplyWorker = require('./GenerateReplyWorker');
 const ShieldActionWorker = require('./ShieldActionWorker');
 const BillingWorker = require('./BillingWorker');
 const StyleProfileWorker = require('./StyleProfileWorker');
+const PublisherWorker = require('./PublisherWorker');
 
 /**
  * Worker Manager for Roastr.ai Multi-Tenant Architecture
@@ -43,7 +44,8 @@ class WorkerManager {
       'generate_reply': GenerateReplyWorker,
       'shield_action': ShieldActionWorker,
       'billing': BillingWorker,
-      'style_profile': StyleProfileWorker
+      'style_profile': StyleProfileWorker,
+      'post_response': PublisherWorker
     };
     
     this.log('info', 'Worker Manager initialized', {
