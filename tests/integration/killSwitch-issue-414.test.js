@@ -418,19 +418,23 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
       killSwitchService.lastCacheUpdate = 0;
       killSwitchService.isInitialized = false;
 
-      // Simulate complete DB failure - getFlag will call handleMissingFlag
-      // which returns {is_enabled: false, flag_value: false} by default
+      // Simulate ACTUAL database connection failure (exception thrown)
+      // Not "flag not found" but actual DB outage
+      const dbFailure = new Error('Database connection failed');
       mockEq.mockReturnValue({
-        single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } })
+        single: jest.fn().mockRejectedValue(dbFailure)
       });
-      mockIn.mockResolvedValue({ data: null, error: { message: 'Not found' } });
+      mockIn.mockRejectedValue(dbFailure);
 
       // Test via HTTP middleware (proper integration test)
       const response = await request(app).post('/api/autopost');
 
-      // With missing flags, handleMissingFlag returns is_enabled=false
-      // This means: kill switch OFF, autopost DISABLED
-      // Expected: 503 AUTOPOST_DISABLED
+      // With actual DB failure and no cache:
+      // 1. getFlag() catches exception, calls handleMissingFlag()
+      // 2. handleMissingFlag() returns {is_enabled: false} (default safe behavior)
+      // 3. isKillSwitchActive() returns false, isAutopostEnabled() returns false
+      // 4. Middleware blocks with AUTOPOST_DISABLED
+      // This is correct fail-safe behavior: when DB is down, disable autopost
       expect(response.status).toBe(503);
       expect(response.body.code).toBe('AUTOPOST_DISABLED');
     });
