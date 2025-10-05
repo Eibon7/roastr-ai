@@ -425,10 +425,14 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
       });
       mockIn.mockResolvedValue({ data: null, error: { message: 'Not found' } });
 
-      // getFlag returns default values (is_enabled: false), so isKillSwitchActive returns false
-      // This is actually the correct behavior - missing flag defaults to "disabled"
-      const isActive = await killSwitchService.isKillSwitchActive();
-      expect(isActive).toBe(false); // Default behavior: kill switch OFF when flag missing
+      // Test via HTTP middleware (proper integration test)
+      const response = await request(app).post('/api/autopost');
+
+      // With missing flags, handleMissingFlag returns is_enabled=false
+      // This means: kill switch OFF, autopost DISABLED
+      // Expected: 503 AUTOPOST_DISABLED
+      expect(response.status).toBe(503);
+      expect(response.body.code).toBe('AUTOPOST_DISABLED');
     });
   });
 
