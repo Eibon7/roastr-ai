@@ -506,11 +506,13 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
       killSwitchService.lastCacheUpdate = 0;
       killSwitchService.isInitialized = false;
 
-      // Setup both refresh and direct query to return "not found" (which triggers handleMissingFlag)
+      // Simulate ACTUAL database connection failure (exception thrown)
+      // Not "flag not found" but actual DB outage
+      const dbFailure = new Error('Database connection failed');
       mockEq.mockReturnValue({
-        single: jest.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } })
+        single: jest.fn().mockRejectedValue(dbFailure)
       });
-      mockIn.mockResolvedValue({ data: null, error: { message: 'Not found' } });
+      mockIn.mockRejectedValue(dbFailure);
 
       // Delete local cache file
       const cacheFile = path.join(process.cwd(), '.cache', 'kill-switch-state.json');
@@ -522,9 +524,12 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
 
       const result = await shouldBlockAutopost();
 
-      // With default missingFlagBehavior='disable', flags return is_enabled=false
-      // So kill switch is inactive and autopost is disabled
-      // Expected: blocked=true, reason='AUTOPOST_DISABLED'
+      // With actual DB failure and no cache (same behavior as AC5):
+      // 1. getFlag() catches exception → handleMissingFlag()
+      // 2. handleMissingFlag() returns {is_enabled: false} (safe defaults)
+      // 3. isKillSwitchActive() = false, isAutopostEnabled() = false
+      // 4. shouldBlockAutopost() returns blocked=true, reason='AUTOPOST_DISABLED'
+      // This is correct fail-safe behavior: when DB is down, block operations
       expect(result).toMatchObject({
         blocked: true,
         reason: 'AUTOPOST_DISABLED',
