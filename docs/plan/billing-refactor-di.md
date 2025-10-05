@@ -598,4 +598,4 @@ git reset --hard <commit_id_antes_refactor>
 
 **Próximo paso:** Crear `docs/nodes/billing.md` y validar grafo
 
-**NO PROCEDER a Fase 2 sin confirmación explícita del plan**
+#### NO PROCEDER a Fase 2 sin confirmación explícita del plan

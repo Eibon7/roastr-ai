@@ -97,7 +97,7 @@ describe('Kill-switch Integration - Issue #414', () => {
 
 ### Test Patterns
 
-**AC1: Bloqueo de publicaciones**
+#### AC1: Bloqueo de publicaciones
 ```javascript
 it('should reject new jobs when kill-switch is active', async () => {
   // Activate kill-switch
@@ -113,7 +113,7 @@ it('should reject new jobs when kill-switch is active', async () => {
 });
 ```
 
-**AC2: Cancelación de jobs**
+#### AC2: Cancelación de jobs
 ```javascript
 it('should cancel pending jobs on activation', async () => {
   // Create pending jobs
@@ -128,7 +128,7 @@ it('should cancel pending jobs on activation', async () => {
 });
 ```
 
-**AC4: Persistencia**
+#### AC4: Persistencia
 ```javascript
 it('should persist state across service restarts', async () => {
   await killSwitchService.activate(orgA.id, 'Test');
@@ -141,7 +141,7 @@ it('should persist state across service restarts', async () => {
 });
 ```
 
-**AC5: Rollback**
+#### AC5: Rollback
 ```javascript
 it('should resume publishing after deactivation', async () => {
   await killSwitchService.activate(orgA.id, 'Test');
@@ -154,7 +154,7 @@ it('should resume publishing after deactivation', async () => {
 });
 ```
 
-**Multi-tenant isolation**
+#### Multi-tenant isolation
 ```javascript
 it('should only affect target org', async () => {
   await killSwitchService.activate(orgA.id, 'Test');
