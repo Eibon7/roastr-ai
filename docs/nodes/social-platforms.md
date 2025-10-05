@@ -12,6 +12,10 @@
 - `platform-constraints` - Character limits and style guides
 - `queue-system` - Comment fetching via workers
 
+## Used By
+
+- `queue-system` - PublisherWorker calls platform services via postResponse
+
 ## Overview
 
 Social Platforms provides unified integration layer for 9 social media platforms, enabling automated comment monitoring, roast generation, and posting across Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, and Bluesky.

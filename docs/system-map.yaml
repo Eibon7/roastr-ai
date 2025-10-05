@@ -125,10 +125,12 @@ features:
 
 # Metadata
 metadata:
-  version: 1.0.0
+  version: 1.0.1
   created: 2025-10-03
-  last_updated: 2025-10-03
+  last_updated: 2025-10-05
   total_nodes: 12
   critical_nodes: 6
   high_priority_nodes: 4
   planned_nodes: 2
+  pr: "#453"
+  changes: "Added social-platforms dependency to queue-system (PublisherWorker integration)"
