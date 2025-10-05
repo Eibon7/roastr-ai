@@ -130,13 +130,13 @@ Antes de ejecutar `gh pr create`, verificar:
 
 ### 1. Durante Desarrollo
 
-```text
+```mermaid
 [Código] → Self-Review → Tests → Pre-flight Checklist → [PR Draft]
 ```
 
 ### 2. PR Review Process
 
-```text
+```mermaid
 [PR Created] → CI/CD → CodeRabbit Review
                          ↓
                     ¿0 comentarios?
@@ -154,7 +154,7 @@ Antes de ejecutar `gh pr create`, verificar:
 
 ### 3. Post-Merge
 
-```text
+```mermaid
 [Merged] → Update Epic Tracking → Close Related Issues → Document Learnings
 ```
 

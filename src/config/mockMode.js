@@ -283,6 +283,7 @@ class MockModeManager {
                 // Create a proper chainable select that supports .single()
                 const selectChain = {
                   single: () => {
+                    // Preserve existing ID if present, otherwise generate one
                     const baseData = Array.isArray(data) ? data[0] : data;
                     const result = {
                       ...baseData,
@@ -300,16 +301,8 @@ class MockModeManager {
                 return Object.assign(selectChain, {
                   then: (onFulfilled, onRejected) => {
                     const resultData = Array.isArray(data)
-                      ? data.map((item, i) => ({
-                          ...item,
-                          id: item.id || (i + 1),
-                          created_at: item.created_at || new Date().toISOString()
-                        }))
-                      : [{
-                          ...data,
-                          id: data.id || 1,
-                          created_at: data.created_at || new Date().toISOString()
-                        }];
+                      ? data.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
+                      : [{ ...data, id: data.id || 1, created_at: data.created_at || new Date().toISOString() }];
                     return Promise.resolve({
                       data: resultData,
                       error: null
@@ -321,16 +314,8 @@ class MockModeManager {
                   },
                   catch: (onRejected) => {
                     const resultData = Array.isArray(data)
-                      ? data.map((item, i) => ({
-                          ...item,
-                          id: item.id || (i + 1),
-                          created_at: item.created_at || new Date().toISOString()
-                        }))
-                      : [{
-                          ...data,
-                          id: data.id || 1,
-                          created_at: data.created_at || new Date().toISOString()
-                        }];
+                      ? data.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
+                      : [{ ...data, id: data.id || 1, created_at: data.created_at || new Date().toISOString() }];
                     return Promise.resolve({
                       data: resultData,
                       error: null
@@ -339,7 +324,12 @@ class MockModeManager {
                 });
               },
               single: () => {
-                const result = Array.isArray(data) ? { ...data[0], id: 1, created_at: new Date().toISOString() } : { ...data, id: 1, created_at: new Date().toISOString() };
+                const baseData = Array.isArray(data) ? data[0] : data;
+                const result = {
+                  ...baseData,
+                  id: baseData.id || 1,
+                  created_at: baseData.created_at || new Date().toISOString()
+                };
                 return Promise.resolve({
                   data: result,
                   error: null

@@ -188,6 +188,7 @@ class QueueService {
         queuedTo = 'database';
       }
 
+      // Return consistent format
       return {
         success: true,
         jobId: job.id,

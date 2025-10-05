@@ -24,6 +24,17 @@ jest.mock('../../src/config/supabase', () => ({
 
 jest.mock('../../src/services/stripeWrapper');
 jest.mock('../../src/services/entitlementsService');
+jest.mock('../../src/services/stripeWebhookService');
+jest.mock('../../src/middleware/webhookSecurity', () => ({
+    stripeWebhookSecurity: () => (req, res, next) => {
+        req.webhookSecurity = {
+            requestId: 'test-request-id',
+            timestampAge: 10,
+            bodySize: req.body?.length || 0
+        };
+        next();
+    }
+}));
 jest.mock('../../src/config/flags', () => ({
     flags: {
         isEnabled: jest.fn().mockReturnValue(true)
@@ -41,17 +52,18 @@ jest.mock('../../src/utils/logger', () => ({
 describe('Stripe Webhooks Integration Flow', () => {
     let app;
     let mockStripeWrapper;
+    let mockWebhookService;
 
     // Test webhook secret for signature generation
     const testWebhookSecret = 'whsec_test123456789abcdef';
-    
+
     beforeAll(() => {
         process.env.STRIPE_WEBHOOK_SECRET = testWebhookSecret;
     });
 
     beforeEach(() => {
         jest.clearAllMocks();
-        
+
         // Mock StripeWrapper
         mockStripeWrapper = {
             webhooks: {
@@ -63,9 +75,20 @@ describe('Stripe Webhooks Integration Flow', () => {
         };
         StripeWrapper.mockImplementation(() => mockStripeWrapper);
 
+        // Mock StripeWebhookService
+        const StripeWebhookService = require('../../src/services/stripeWebhookService');
+        mockWebhookService = {
+            processWebhookEvent: jest.fn().mockResolvedValue({
+                success: true,
+                idempotent: false,
+                processingTimeMs: 100
+            })
+        };
+        StripeWebhookService.mockImplementation(() => mockWebhookService);
+
         // Setup Express app with webhook route
         app = express();
-        
+
         // Import billing routes (this will use our mocked services)
         const billingRoutes = require('../../src/routes/billing');
         app.use('/api/billing', billingRoutes);
@@ -101,8 +124,9 @@ describe('Stripe Webhooks Integration Flow', () => {
 
             const response = await request(app)
                 .post('/api/billing/webhooks/stripe')
+                .set('Content-Type', 'application/json')
                 .set('stripe-signature', signature)
-                .send(testPayload);
+                .send(Buffer.from(testPayload));
 
             expect(response.status).toBe(200);
             expect(response.body.received).toBe(true);
