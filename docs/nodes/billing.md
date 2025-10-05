@@ -1,7 +1,7 @@
 # Billing Node
 
-**Estado:** 🔄 Refactoring (DI implemented, tests 17/17 passing - 100%)
-**Próximo Milestone:** ✅ All tests passing, pending PR merge and final validation
+**Estado:** ✅ Completado (DI refactor v2.0 - 17/17 tests passing)
+**Próximo Milestone:** Merge to main
 **Responsable:** Orchestrator + Test Engineer
 **Última actualización:** 2025-10-05
 **Version:** 2.0 (Dependency Injection)
