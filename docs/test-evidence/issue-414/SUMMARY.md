@@ -11,7 +11,7 @@ Successfully created and validated 20 comprehensive integration tests for the ki
 
 ### Test Results
 
-```
+```text
 PASS tests/integration/killSwitch-issue-414.test.js
   ✓ 20 tests passing (20/20)
   ✓ 8 test suites covering 8 acceptance criteria
