@@ -90,7 +90,7 @@
 **Purpose:** Main RLS integration test suite
 
 **Test Structure:**
-```
+```text
 Multi-Tenant RLS Integration Tests - Issue #412
 ├── Setup Verification (1 test)
 ├── AC1: Listados restringidos por tenant_id (3 tests)
@@ -108,7 +108,7 @@ Multi-Tenant RLS Integration Tests - Issue #412
 ### Issue: Supabase Connection Required
 
 **Error:**
-```
+```text
 Failed to create User A: TypeError: Cannot read properties of undefined (reading 'status')
 at /node_modules/@supabase/postgrest-js/src/PostgrestBuilder.ts:124:24
 ```
@@ -224,7 +224,7 @@ node scripts/resolve-graph.js --validate
 - ✅ All edges bidirectional
 
 **Node-Agent Matrix:**
-```
+```text
 multi-tenant | Orchestrator Agent, Task Assessor Agent,
              | Test Engineer Agent, Database Schema Agent
 ```
@@ -363,7 +363,7 @@ multi-tenant | Orchestrator Agent, Task Assessor Agent,
 
 ### Current Status 🟡
 
-**Infrastructure Ready, Execution Blocked**
+#### Infrastructure Ready, Execution Blocked
 
 - All helper functions implemented
 - All test cases defined
