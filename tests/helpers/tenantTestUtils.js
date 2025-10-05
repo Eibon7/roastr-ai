@@ -69,10 +69,6 @@ async function createTestTenants() {
 
   testUsers.push(createdUserA.id, createdUserB.id);
 
-  // Map tenants to their owner user IDs for JWT context
-  tenantUsers.set(tenantA.id, createdUserA.id);
-  tenantUsers.set(tenantB.id, createdUserB.id);
-
   // Now create organizations with required fields
   const tenantA = {
     id: uuidv4(),
@@ -123,6 +119,10 @@ async function createTestTenants() {
   if (errorB) throw new Error(`Failed to create Tenant B: ${JSON.stringify(errorB)}`);
 
   testTenants.push(tenantA.id, tenantB.id);
+
+  // Map tenants to their owner user IDs for JWT context
+  tenantUsers.set(tenantA.id, createdUserA.id);
+  tenantUsers.set(tenantB.id, createdUserB.id);
 
   console.log(`✅ Tenant A: ${tenantA.id} (owner: ${createdUserA.id})`);
   console.log(`✅ Tenant B: ${tenantB.id} (owner: ${createdUserB.id})`);
