@@ -135,7 +135,7 @@ $ node scripts/resolve-graph.js --validate
 
 ### Test Architecture
 
-```
+```text
 Express App + Kill-Switch Middleware
     ↓
 HTTP Integration Tests (AC1-AC7)
