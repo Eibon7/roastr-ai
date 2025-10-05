@@ -38,7 +38,7 @@ args.forEach(arg => {
 
 // Load configuration
 let config = {
-  enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'style_profile'],
+  enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'style_profile', 'post_response'],
   workerConfig: {
     fetch_comments: {
       maxConcurrency: 5,
@@ -55,6 +55,12 @@ let config = {
     style_profile: {
       maxConcurrency: 2,
       pollInterval: 5000 // Less frequent polling as it's not time-critical
+    },
+    post_response: {
+      maxConcurrency: 2,
+      pollInterval: 2000, // Poll every 2s for publication jobs
+      maxRetries: 3,
+      retryDelay: 2000 // 2s base delay for exponential backoff
     }
   },
   healthCheckInterval: 30000
@@ -92,6 +98,11 @@ if (options.environment === 'production') {
     },
     generate_reply: {
       ...config.workerConfig.generate_reply,
+      maxConcurrency: 3,
+      pollInterval: 1500
+    },
+    post_response: {
+      ...config.workerConfig.post_response,
       maxConcurrency: 3,
       pollInterval: 1500
     }
