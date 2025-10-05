@@ -523,7 +523,7 @@ if (!isValid) {
 |-----------|-------|--------|
 | `multiTenantWorkflow.test.js` | End-to-end roast generation with cost control | ✅ Passing |
 | `rqc-integration.test.js` | RQC review process and decision flow | ✅ Passing |
-| `generation-issue-409.test.js` | **Issue #409** - Tone enforcement + 2 initial variants + 1 post-selection | 🟡 8/15 passing |
+| `generation-issue-409.test.js` | **Issue #409** - Tone enforcement + 2 initial variants + 1 post-selection | ✅ 15/15 passing |
 
 ### Test Utilities
 
