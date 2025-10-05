@@ -1,5 +1,5 @@
 # Roastr System Map - Graph Driven Development
-# Version: 1.0.0
+# Version: 1.0.1
 # Description: Dependency graph for modular documentation
 # Owner: Documentation Agent
 
@@ -133,4 +133,4 @@ metadata:
   high_priority_nodes: 4
   planned_nodes: 2
   pr: "#453"
-  changes: "Added social-platforms dependency to queue-system (PublisherWorker integration)"
+  changes: "Documentation sync for PR #453 - PublisherWorker + Twitter adapter (no dependency graph changes)"
