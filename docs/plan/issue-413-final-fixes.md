@@ -1,25 +1,28 @@
 # Plan: Arreglar 4 Tests Restantes de Stripe Webhooks - Issue #413
 
-**Estado Actual:** 12/16 tests pasando (75%)
+**Estado Actual:** 6/16 tests pasando (37.5%)
 **Objetivo:** 16/16 tests pasando (100%)
 **Branch:** fix/issue-413-stripe-webhooks
 
 ## Estado Actual del Assessment
 
-### Tests Pasando (12/16)
+### Tests Pasando (6/16)
 - ✅ Signature verification (3/3)
 - ✅ Checkout completion successfully (1/1)
 - ✅ Idempotent checkout events (1/1)
-- ✅ Subscription events (2/2)
-- ✅ Payment events (2/2)
-- ✅ Webhook statistics (1/1)
-- ✅ Non-admin access denial (1/1)
+- ✅ Subscription events (1/1) - partially passing
 
-### Tests Fallando (4/16)
+### Tests Fallando (10/16)
 1. ❌ should handle checkout events with missing user_id
 2. ❌ should handle database errors gracefully
 3. ❌ should handle unrecognized event types gracefully
 4. ❌ should allow webhook cleanup for admin users
+5. ❌ should handle subscription deleted event
+6. ❌ should handle payment succeeded event
+7. ❌ should handle payment failed event
+8. ❌ should return webhook statistics
+9. ❌ should deny access to non-admin users
+10. ❌ Additional failing tests (total 10 failing)
 
 ## Análisis Raíz del Problema
 
@@ -66,6 +69,7 @@ El mock de StripeWebhookService está correctamente configurado en jest.mock(), 
 
 #### Test 1: Missing user_id
 **Problema:** Mock devuelve `processed: true` en lugar de `false`
+**Estado actual:** 6/16 passing (37.5%)
 
 **Hipótesis:**
 - El evento llega con una estructura diferente a la esperada

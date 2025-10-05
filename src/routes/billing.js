@@ -30,16 +30,16 @@ function getController() {
 const PLAN_CONFIG = BillingFactory.getPlanConfig();
 
 // Get services from controller for backward compatibility (lazy getters)
-Object.defineProperty(exports, 'stripeWrapper', {
+Object.defineProperty(router, 'stripeWrapper', {
   get: () => getController().stripeWrapper
 });
-Object.defineProperty(exports, 'queueService', {
+Object.defineProperty(router, 'queueService', {
   get: () => getController().queueService
 });
-Object.defineProperty(exports, 'entitlementsService', {
+Object.defineProperty(router, 'entitlementsService', {
   get: () => getController().entitlementsService
 });
-Object.defineProperty(exports, 'webhookService', {
+Object.defineProperty(router, 'webhookService', {
   get: () => getController().webhookService
 });
 
@@ -658,5 +658,14 @@ async function applyPlanLimits(userId, plan, status) {
  * - src/routes/billingFactory.js for dependency creation
  * - tests/integration/stripeWebhooksFlow.test.js for testing with mocks
  */
+
+// Export legacy functions on router for backward compatibility
+router.queueBillingJob = queueBillingJob;
+router.handleCheckoutCompleted = handleCheckoutCompleted;
+router.handleSubscriptionUpdated = handleSubscriptionUpdated;
+router.handleSubscriptionDeleted = handleSubscriptionDeleted;
+router.handlePaymentSucceeded = handlePaymentSucceeded;
+router.handlePaymentFailed = handlePaymentFailed;
+router.applyPlanLimits = applyPlanLimits;
 
 module.exports = router;

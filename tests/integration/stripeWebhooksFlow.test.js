@@ -85,7 +85,7 @@ describe('Stripe Webhooks Integration Flow', () => {
     let mockWebhookService; // DI-injected mock for testing
 
     // Test webhook secret for signature generation
-    const testWebhookSecret = 'whsec_test123456789abcdef';
+    const testWebhookSecret = 'whsec_TEST_MOCK_SECRET_FOR_UNIT_TESTS_ONLY';
 
     beforeAll(() => {
         process.env.STRIPE_WEBHOOK_SECRET = testWebhookSecret;
