@@ -27,6 +27,7 @@ const testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const testTenants = [];
 const testUsers = [];
+const tenantUsers = new Map(); // Map<tenantId, userId> for JWT context
 let currentTenantContext = null;
 
 /**
@@ -67,6 +68,10 @@ async function createTestTenants() {
   if (errorUserB) throw new Error(`Failed to create User B: ${JSON.stringify(errorUserB)}`);
 
   testUsers.push(createdUserA.id, createdUserB.id);
+
+  // Map tenants to their owner user IDs for JWT context
+  tenantUsers.set(tenantA.id, createdUserA.id);
+  tenantUsers.set(tenantB.id, createdUserB.id);
 
   // Now create organizations with required fields
   const tenantA = {
@@ -216,9 +221,15 @@ async function createTestData(tenantId, type = 'all') {
 async function setTenantContext(tenantId) {
   console.log(`🔄 Switching to tenant: ${tenantId}`);
 
+  // Get tenant owner's user ID
+  const userId = tenantUsers.get(tenantId);
+  if (!userId) {
+    throw new Error(`No user found for tenant ${tenantId}`);
+  }
+
   const token = jwt.sign(
     {
-      sub: uuidv4(),
+      sub: userId,  // Use actual tenant owner's user ID
       organization_id: tenantId,
       role: 'authenticated',
       aud: 'authenticated',
@@ -271,6 +282,7 @@ async function cleanupTestData() {
 
   testTenants.length = 0;
   testUsers.length = 0;
+  tenantUsers.clear();
   currentTenantContext = null;
   await testClient.auth.signOut();
 
