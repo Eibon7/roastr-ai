@@ -267,7 +267,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
 - ❌ Viola principio de Inversión de Dependencias (SOLID)
 - ❌ 4/16 tests fallan porque mock no se ejecuta
 
-### Arquitectura Refactorizada (Post-Refactor) 🔄 EN PROGRESO
+### Arquitectura Refactorizada (Post-Refactor) ✅ COMPLETADO
 
 **Patrón: Dependency Injection con Controller + Factory**
 
@@ -336,7 +336,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
 
 ### Flujo 1: Checkout Completo
 
-```
+```text
 Usuario → Frontend
   ↓ POST /api/billing/create-checkout-session
 billing.js
@@ -360,7 +360,7 @@ Usuario recibe email de confirmación
 
 ### Flujo 2: Subscription Update
 
-```
+```text
 Usuario → Stripe Portal (cambiar plan)
   ↓ webhook customer.subscription.updated
 Stripe → POST /api/billing/webhooks/stripe
@@ -376,7 +376,7 @@ Workers actualizan límites de plan
 
 ### Flujo 3: Payment Failed
 
-```
+```text
 Stripe → intento de cobro falla
   ↓ webhook invoice.payment_failed
 Stripe → POST /api/billing/webhooks/stripe
@@ -644,7 +644,7 @@ function getPlanFromStripeLookupKey(lookupKey) {
 
 ### Issues Relacionados
 
-- **Issue #413:** Stripe Webhooks Integration Tests (4 tests fallando)
+- **Issue #413:** Stripe Webhooks Integration Tests (17/17 passing - 100%)
 - **Issue #95:** Transacciones atómicas para webhooks (completado)
 - **Issue #237:** Setup admin users para backoffice (completado)
 
