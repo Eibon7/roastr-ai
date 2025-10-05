@@ -80,12 +80,12 @@ class TwitterService {
       // Normalize response to PublisherWorker expected format
       // Legacy bot may return: { success, data: { id }, error }
       if (result.success) {
-        const tweetId = result.data?.id || result.id;
+        const responseTweetId = result.data?.id || result.id;
 
         return {
           success: true,
-          responseId: tweetId,
-          id: tweetId
+          responseId: responseTweetId,
+          id: responseTweetId
         };
       } else {
         return {

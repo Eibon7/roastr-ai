@@ -128,9 +128,29 @@ class TwitterService {
   }
 
   async postResponse(tweetId, responseText, userId) {
-    // Adapt PublisherWorker signature → legacy bot signature
-    const result = await this.bot.postResponse(tweetId, responseText);
-    return { success, responseId: result.data.id };
+    try {
+      // Adapt PublisherWorker signature → legacy bot signature
+      const result = await this.bot.postResponse(tweetId, responseText);
+
+      if (result.success) {
+        const responseTweetId = result.data?.id || result.id;
+        return {
+          success: true,
+          responseId: responseTweetId,
+          id: responseTweetId
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error || 'Unknown error'
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 }
 ```
