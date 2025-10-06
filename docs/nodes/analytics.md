@@ -242,9 +242,13 @@ async function getPerformanceAnalytics(organizationId, startDate, endDate) {
     .gte('responses.created_at', startDate)
     .lte('responses.created_at', endDate);
 
-  // Calculate averages
-  const avgRQCScore = metrics.reduce((sum, m) => sum + (m.rqc_score || 0), 0) / metrics.length;
-  const avgResponseTime = metrics.reduce((sum, m) => sum + (m.response_time_ms || 0), 0) / metrics.length;
+  // Calculate averages (with null safety to prevent divide-by-zero)
+  const avgRQCScore = metrics.length > 0
+    ? metrics.reduce((sum, m) => sum + (m.rqc_score || 0), 0) / metrics.length
+    : 0;
+  const avgResponseTime = metrics.length > 0
+    ? metrics.reduce((sum, m) => sum + (m.response_time_ms || 0), 0) / metrics.length
+    : 0;
 
   // Quality distribution
   const qualityDistribution = {
@@ -288,20 +292,20 @@ async function getCostAnalytics(organizationId, startDate, endDate) {
     .gte('created_at', startDate)
     .lte('created_at', endDate);
 
-  // Total cost
-  const totalCost = usage.reduce((sum, u) => sum + (u.cost_cents || 0), 0);
+  // Total cost (with null safety using nullish coalescing)
+  const totalCost = usage.reduce((sum, u) => sum + (u.cost_cents ?? 0), 0);
 
-  // Cost by operation type
+  // Cost by operation type (with null safety)
   const costByOperation = usage.reduce((acc, u) => {
     const type = u.metadata?.operation_type || 'unknown';
-    acc[type] = (acc[type] || 0) + u.cost_cents;
+    acc[type] = (acc[type] ?? 0) + (u.cost_cents ?? 0);
     return acc;
   }, {});
 
-  // Cost by platform
+  // Cost by platform (with null safety)
   const costByPlatform = usage.reduce((acc, u) => {
     const platform = u.platform || 'unknown';
-    acc[platform] = (acc[platform] || 0) + u.cost_cents;
+    acc[platform] = (acc[platform] ?? 0) + (u.cost_cents ?? 0);
     return acc;
   }, {});
 
