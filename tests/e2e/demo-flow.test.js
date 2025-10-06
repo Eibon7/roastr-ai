@@ -10,6 +10,24 @@ const request = require('supertest');
 const { setupTestEnvironment, cleanTestDatabase, TestData, waitForAsync } = require('../helpers/test-setup');
 const { createTestScenario, loadFixtures } = require('../helpers/fixtures-loader');
 
+// Constants for worker timeout handling in mock mode
+const WORKER_TIMEOUT_MS = 5000; // Timeout for worker operations in mock mode
+
+/**
+ * Wraps a worker operation with a timeout to prevent indefinite hanging in mock mode
+ * @param {Promise} workerPromise - The worker operation promise
+ * @param {number} timeoutMs - Timeout in milliseconds
+ * @returns {Promise} - Resolves with worker result or rejects on timeout
+ */
+function withWorkerTimeout(workerPromise, timeoutMs = WORKER_TIMEOUT_MS) {
+  return Promise.race([
+    workerPromise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Worker timeout')), timeoutMs)
+    )
+  ]);
+}
+
 describe('[E2E] Demo Flow Pipeline', () => {
   let app;
   let testScenario;
@@ -85,15 +103,15 @@ describe('[E2E] Demo Flow Pipeline', () => {
       };
       
       try {
-        const ingestResult = await Promise.race([
-          fetchWorker.processJob(ingestJobData),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Worker timeout')), 5000))
-        ]);
+        const ingestResult = await withWorkerTimeout(
+          fetchWorker.processJob(ingestJobData)
+        );
         expect(ingestResult.success).toBe(true);
         console.log('✅ Ingest worker processed comment successfully');
       } catch (error) {
         // In mock mode, worker may not have all dependencies - validate structure
         expect(fetchWorker.workerType).toBe('fetch_comments');
+        expect(error.message).toMatch(/Worker timeout|connection|platform.*not found|client.*configured/i);
         console.log('✅ Ingest worker structure validated (timeout or error expected in mock mode)');
       }
 
@@ -110,15 +128,15 @@ describe('[E2E] Demo Flow Pipeline', () => {
       };
       
       try {
-        const triageResult = await Promise.race([
-          triageWorker.processJob(triageJobData),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Worker timeout')), 5000))
-        ]);
+        const triageResult = await withWorkerTimeout(
+          triageWorker.processJob(triageJobData)
+        );
         expect(triageResult).toBeDefined();
         console.log('✅ Triage worker processed comment successfully');
       } catch (error) {
         // In mock mode, validate worker exists and has correct type
         expect(triageWorker.workerType).toBe('analyze_toxicity');
+        expect(error.message).toMatch(/Worker timeout|API.*unavailable|dependency|Perspective|not found/i);
         console.log('✅ Triage worker structure validated (timeout or error expected in mock mode)');
       }
 
@@ -137,15 +155,15 @@ describe('[E2E] Demo Flow Pipeline', () => {
       };
       
       try {
-        const generationResult = await Promise.race([
-          generationWorker.processJob(generationJobData),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Worker timeout')), 5000))
-        ]);
+        const generationResult = await withWorkerTimeout(
+          generationWorker.processJob(generationJobData)
+        );
         expect(generationResult).toBeDefined();
         console.log('✅ Generation worker processed comment successfully');
       } catch (error) {
         // In mock mode, validate worker exists and has correct type
         expect(generationWorker.workerType).toBe('generate_reply');
+        expect(error.message).toMatch(/Worker timeout|model.*unavailable|OpenAI|invalid.*payload/i);
         console.log('✅ Generation worker structure validated (timeout or error expected in mock mode)');
       }
 

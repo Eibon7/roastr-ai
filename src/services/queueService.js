@@ -161,6 +161,7 @@ class QueueService {
   
   /**
    * Add job to queue with priority support
+   * @returns {Promise<{success: boolean, jobId?: string, error?: string}>} Result with success flag and jobId
    */
   async addJob(jobType, payload, options = {}) {
     const job = {
@@ -170,12 +171,12 @@ class QueueService {
       priority: options.priority || 5,
       payload,
       max_attempts: options.maxAttempts || this.options.maxRetries,
-      scheduled_at: options.delay ? 
-        new Date(Date.now() + options.delay).toISOString() : 
+      scheduled_at: options.delay ?
+        new Date(Date.now() + options.delay).toISOString() :
         new Date().toISOString(),
       created_at: new Date().toISOString()
     };
-    
+
     try {
       let result;
       let queuedTo;
@@ -188,7 +189,7 @@ class QueueService {
         queuedTo = 'database';
       }
 
-      // Return consistent format
+      // Return consistent format with all fields
       return {
         success: true,
         jobId: job.id,
@@ -202,29 +203,42 @@ class QueueService {
         jobId: job.id,
         error: error.message
       });
-      
+
       // Try fallback if primary method fails
-      if (this.isRedisAvailable) {
-        this.log('info', 'Trying database fallback for job addition');
-        const fallbackResult = await this.addJobToDatabase(job);
+      try {
+        let fallbackResult;
+        let fallbackQueue;
+
+        if (this.isRedisAvailable) {
+          this.log('info', 'Trying database fallback for job addition');
+          fallbackResult = await this.addJobToDatabase(job);
+          fallbackQueue = 'database';
+        } else if (this.redis) {
+          this.log('info', 'Trying Redis fallback for job addition');
+          fallbackResult = await this.addJobToRedis(job, options);
+          fallbackQueue = 'redis';
+        } else {
+          // No fallback available
+          return {
+            success: false,
+            error: error.message || 'Failed to add job to queue'
+          };
+        }
+
+        // Fallback succeeded
         return {
           success: true,
           jobId: job.id,
           job: fallbackResult,
-          queuedTo: 'database'
+          queuedTo: fallbackQueue
         };
-      } else if (this.redis) {
-        this.log('info', 'Trying Redis fallback for job addition');
-        const fallbackResult = await this.addJobToRedis(job, options);
+      } catch (fallbackError) {
+        // Both primary and fallback failed
         return {
-          success: true,
-          jobId: job.id,
-          job: fallbackResult,
-          queuedTo: 'redis'
+          success: false,
+          error: fallbackError.message || error.message || 'Failed to add job to queue'
         };
       }
-      
-      throw error;
     }
   }
   
