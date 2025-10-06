@@ -5,6 +5,127 @@
  * @GDD:node=roast,shield,queue-system,multi-tenant
  */
 
+import 'styled-components';
+
+declare module 'styled-components' {
+  export interface DefaultTheme {
+    colors: {
+      // Primary (Status Indicators)
+      primary: string;
+      secondary: string;
+
+      // Backgrounds
+      background: string;
+      surface: string;
+      surfaceHover: string;
+      overlay: string;
+
+      // Text
+      textPrimary: string;
+      textSecondary: string;
+      textDisabled: string;
+      textInverse: string;
+
+      // Status Colors
+      statusHealthy: string;
+      statusWarning: string;
+      statusCritical: string;
+
+      // Drift Risk
+      driftHealthy: string;
+      driftAtRisk: string;
+      driftCritical: string;
+
+      // Coverage
+      coverageHigh: string;
+      coverageMedium: string;
+      coverageLow: string;
+
+      // Accents
+      accentPrimary: string;
+      accentSecondary: string;
+      accentTertiary: string;
+
+      // State Colors
+      stateSuccess: string;
+      stateInfo: string;
+      stateWarning: string;
+      stateError: string;
+
+      // UI Elements
+      border: string;
+      borderFocus: string;
+      borderError: string;
+      divider: string;
+
+      // Links
+      linkDefault: string;
+      linkHover: string;
+
+      // Syntax Highlighting
+      syntaxBg: string;
+      syntaxKeyword: string;
+      syntaxString: string;
+      syntaxFunction: string;
+      syntaxComment: string;
+      syntaxVariable: string;
+    };
+
+    typography: {
+      fontFamily: {
+        primary: string;
+        secondary: string;
+      };
+      fontSize: {
+        xs: string;
+        sm: string;
+        md: string;
+        lg: string;
+        xl: string;
+        '2xl': string;
+        '3xl': string;
+        h1: string;
+        h2: string;
+        h3: string;
+        h4: string;
+      };
+      fontWeight: {
+        regular: number;
+        medium: number;
+        semibold: number;
+        bold: number;
+      };
+      lineHeight: {
+        tight: number;
+        normal: number;
+        relaxed: number;
+      };
+    };
+
+    spacing: (factor: number) => string;
+
+    borderRadius: {
+      none: string;
+      sm: string;
+      md: string;
+      lg: string;
+    };
+
+    shadows: {
+      sm: string;
+      md: string;
+      lg: string;
+      glow: string;
+    };
+
+    animations: {
+      glitch: string;
+      fadeIn: string;
+      slideIn: string;
+    };
+  }
+}
+
 export interface Theme {
   colors: {
     // Primary (Status Indicators)
