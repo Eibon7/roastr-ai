@@ -1,11 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Overview } from '@components/dashboard/Overview';
+import { NodeExplorer } from '@components/dashboard/NodeExplorer';
 
 const DashboardContainer = styled.div`
   width: 100%;
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background};
   padding: ${({ theme }) => theme.spacing(6)};
+
+  @media (max-width: 768px) {
+    padding: ${({ theme }) => theme.spacing(4)};
+  }
 `;
 
 const Header = styled.header`
@@ -20,6 +26,10 @@ const Title = styled.h1`
   margin-bottom: ${({ theme }) => theme.spacing(2)};
   letter-spacing: -0.02em;
   animation: ${({ theme }) => theme.animations.slideIn};
+
+  @media (max-width: 768px) {
+    font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  }
 `;
 
 const Subtitle = styled.p`
@@ -29,60 +39,10 @@ const Subtitle = styled.p`
   animation: ${({ theme }) => theme.animations.fadeIn};
   animation-delay: 0.1s;
   animation-fill-mode: both;
-`;
 
-const StatusIndicator = styled.div<{ status: 'healthy' | 'warning' | 'critical' }>`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing(2)};
-  padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(4)}`};
-  background: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  margin-top: ${({ theme }) => theme.spacing(6)};
-  animation: ${({ theme }) => theme.animations.fadeIn};
-  animation-delay: 0.2s;
-  animation-fill-mode: both;
-
-  &::before {
-    content: '';
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: ${({ theme, status }) => {
-      switch (status) {
-        case 'healthy':
-          return theme.colors.statusHealthy;
-        case 'warning':
-          return theme.colors.statusWarning;
-        case 'critical':
-          return theme.colors.statusCritical;
-        default:
-          return theme.colors.statusHealthy;
-      }
-    }};
-    border: 2px solid ${({ theme, status }) => {
-      switch (status) {
-        case 'healthy':
-          return theme.colors.statusHealthy;
-        case 'warning':
-          return theme.colors.statusWarning;
-        case 'critical':
-          return theme.colors.statusCritical;
-        default:
-          return theme.colors.statusHealthy;
-      }
-    }};
-    box-shadow: ${({ theme }) => theme.shadows.glow};
-    animation: pulse 1.5s ease-in-out infinite;
+  @media (max-width: 768px) {
+    font-size: ${({ theme }) => theme.typography.fontSize.md};
   }
-`;
-
-const StatusText = styled.span`
-  font-family: ${({ theme }) => theme.typography.fontFamily.primary};
-  font-size: ${({ theme }) => theme.typography.fontSize.h2};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.textPrimary};
 `;
 
 const GridContainer = styled.div`
@@ -90,6 +50,11 @@ const GridContainer = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: ${({ theme }) => theme.spacing(6)};
   margin-top: ${({ theme }) => theme.spacing(8)};
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing(4)};
+  }
 `;
 
 const Card = styled.div`
@@ -107,7 +72,7 @@ const Card = styled.div`
 `;
 
 const CardTitle = styled.h3`
-  font-family: ${({ theme }) => theme.typography.fontFamily.sans};
+  font-family: ${({ theme }) => theme.typography.fontFamily.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.h3};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.textPrimary};
@@ -134,38 +99,40 @@ const PlaceholderText = styled.div`
   background: ${({ theme }) => theme.colors.background};
 `;
 
+const ComingSoonBadge = styled.span`
+  display: inline-block;
+  margin-left: ${({ theme }) => theme.spacing(2)};
+  padding: ${({ theme }) => `${theme.spacing(1)} ${theme.spacing(2)}`};
+  background: ${({ theme }) => theme.colors.primary}20;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+`;
+
 function GDDDashboard() {
   return (
     <DashboardContainer id="main-content">
       <Header>
         <Title>GDD SYSTEM DASHBOARD</Title>
         <Subtitle>Graph-Driven Development Monitoring & Administration</Subtitle>
-        <StatusIndicator status="healthy">
-          <StatusText>SYSTEM STATUS: HEALTHY</StatusText>
-        </StatusIndicator>
       </Header>
 
+      {/* Overview Panel - FUNCTIONAL */}
+      <Overview />
+
+      {/* Node Explorer - FUNCTIONAL */}
+      <NodeExplorer />
+
+      {/* Placeholder components - Coming soon */}
       <GridContainer>
         <Card>
-          <CardTitle>Overview Panel</CardTitle>
-          <CardContent>
-            <PlaceholderText>
-              System health metrics, drift predictions, and recent activity will be displayed here.
-            </PlaceholderText>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardTitle>Node Explorer</CardTitle>
-          <CardContent>
-            <PlaceholderText>
-              Interactive table of all 13 GDD nodes with search and filtering capabilities.
-            </PlaceholderText>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardTitle>Dependency Graph</CardTitle>
+          <CardTitle>
+            Dependency Graph
+            <ComingSoonBadge>Coming Soon</ComingSoonBadge>
+          </CardTitle>
           <CardContent>
             <PlaceholderText>
               D3.js force-directed graph visualization of node dependencies.
@@ -174,7 +141,10 @@ function GDDDashboard() {
         </Card>
 
         <Card>
-          <CardTitle>Reports Viewer</CardTitle>
+          <CardTitle>
+            Reports Viewer
+            <ComingSoonBadge>Coming Soon</ComingSoonBadge>
+          </CardTitle>
           <CardContent>
             <PlaceholderText>
               Markdown reports: Validation, Health, Drift, and Auto-Repair.
