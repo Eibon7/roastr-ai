@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { SystemStatusBar } from './SystemStatusBar';
 import { LeftSidebar } from './LeftSidebar';
 import { HealthPanel } from './HealthPanel';
 import { GraphView } from './GraphView';
@@ -15,22 +14,17 @@ const LayoutContainer = styled.div`
   background: #0b0b0d;
   display: grid;
   grid-template-columns: 280px 1fr;
-  grid-template-rows: 80px 1fr;
-`;
-
-const StatusBarWrapper = styled.div`
-  grid-column: 1 / -1;
-  grid-row: 1;
+  grid-template-rows: 1fr;
 `;
 
 const SidebarWrapper = styled.div`
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 1;
 `;
 
 const MainContent = styled.div`
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   overflow: hidden;
 `;
 
@@ -54,25 +48,6 @@ export const CommandCenterLayout: React.FC = () => {
     { timestamp: '18:05', event: 'DependencyGraph component updated' },
     { timestamp: '18:00', event: 'GDD runtime validation passed' },
   ]);
-
-  const [lastUpdated, setLastUpdated] = useState(
-    new Date().toLocaleTimeString('en-US', { hour12: false })
-  );
-
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastUpdated(new Date().toLocaleTimeString('en-US', { hour12: false }));
-      // In production, this would trigger data refetch
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleRefresh = () => {
-    setLastUpdated(new Date().toLocaleTimeString('en-US', { hour12: false }));
-    // In production, this would trigger immediate data refetch
-  };
 
   const handleNodeClick = (nodeId: string) => {
     setSelectedNode(nodeId);
@@ -119,17 +94,6 @@ export const CommandCenterLayout: React.FC = () => {
 
   return (
     <LayoutContainer>
-      <StatusBarWrapper>
-        <SystemStatusBar
-          healthScore={stats.health}
-          driftRisk={stats.drift}
-          totalNodes={stats.nodes}
-          coverage={stats.coverage}
-          lastUpdated={lastUpdated}
-          onRefresh={handleRefresh}
-        />
-      </StatusBarWrapper>
-
       <SidebarWrapper>
         <LeftSidebar
           activeView={activeView}
