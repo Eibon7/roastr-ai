@@ -105,7 +105,7 @@
     "coverage:check": "cross-env ENABLE_MOCK_MODE=true jest --coverage --passWithNoTests",
     "test:mvp": "jest --config=jest.testing-mvp.config.js",
     "test:mvp:e2e": "jest --config=jest.testing-mvp.config.js --selectProjects e2e",
-    "test:mvp:integration": "jest --config=jest.testing-mvp.config.js --selectProjects integration", 
+    "test:mvp:integration": "jest --config=jest.testing-mvp.config.js --selectProjects integration",
     "test:mvp:unit": "jest --config=jest.testing-mvp.config.js --selectProjects unit",
     "test:mvp:coverage": "jest --config=jest.testing-mvp.config.js --coverage",
     "test:mvp:watch": "jest --config=jest.testing-mvp.config.js --watch",
@@ -195,6 +195,7 @@
     "jsdom": "^26.1.0",
     "nock": "^13.3.3",
     "playwright": "^1.55.0",
-    "supertest": "^7.1.4"
+    "supertest": "^7.1.4",
+    "yaml": "^2.8.1"
   }
 }

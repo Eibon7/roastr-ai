@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-10-06T10:05:04.448Z",
+  "mode": "full",
+  "nodes_validated": 13,
+  "orphans": [
+    "analytics",
+    "billing",
+    "cost-control",
+    "multi-tenant",
+    "persona",
+    "plan-features",
+    "platform-constraints",
+    "queue-system",
+    "roast",
+    "shield",
+    "social-platforms",
+    "tone",
+    "trainer"
+  ],
+  "drift": {},
+  "outdated": [],
+  "cycles": [],
+  "missing_refs": [
+    {
+      "type": "node_not_in_spec",
+      "node": "cost-control",
+      "message": "Active node cost-control not referenced in spec.md"
+    },
+    {
+      "type": "node_not_in_spec",
+      "node": "plan-features",
+      "message": "Active node plan-features not referenced in spec.md"
+    },
+    {
+      "type": "node_not_in_spec",
+      "node": "platform-constraints",
+      "message": "Active node platform-constraints not referenced in spec.md"
+    },
+    {
+      "type": "node_not_in_spec",
+      "node": "social-platforms",
+      "message": "Active node social-platforms not referenced in spec.md"
+    },
+    {
+      "type": "node_not_in_spec",
+      "node": "trainer",
+      "message": "Active node trainer not referenced in spec.md"
+    }
+  ],
+  "broken_links": [],
+  "status": "warning"
+}

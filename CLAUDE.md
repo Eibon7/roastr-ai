@@ -69,6 +69,14 @@ npm run queue:retry             # Retry failed jobs
 # Testing
 npm test                        # Run all tests
 npm run test:coverage           # Run tests with coverage
+
+# GDD Runtime Validation (Graph-Driven Development 2.0)
+node scripts/validate-gdd-runtime.js --full    # Validate entire system
+node scripts/validate-gdd-runtime.js --diff    # Validate only changed nodes
+node scripts/validate-gdd-runtime.js --node=shield  # Validate specific node
+node scripts/validate-gdd-runtime.js --report  # Generate report only
+node scripts/validate-gdd-runtime.js --ci      # CI mode (exit 1 on errors)
+node scripts/watch-gdd.js                      # Watch mode (development)
 ```
 
 ## Multi-Tenant Project Structure
@@ -620,6 +628,143 @@ ORCHESTRATOR:
 ```
 
 **Full details:** See `docs/GDD-ACTIVATION-GUIDE.md` for complete mapping tables and workflows.
+
+## Runtime Validation Workflow (GDD 2.0)
+
+The GDD Runtime Validator continuously monitors and validates the coherence between `system-map.yaml`, `docs/nodes/**`, `spec.md`, and source code (`src/**`). This ensures the documentation graph remains synchronized with the actual implementation.
+
+### Validation Components
+
+**1. CLI Validator (`scripts/validate-gdd-runtime.js`)**
+
+Validates the entire GDD system on-demand with multiple modes:
+
+```bash
+# Full system validation
+node scripts/validate-gdd-runtime.js --full
+
+# Validate only nodes changed since last sync
+node scripts/validate-gdd-runtime.js --diff
+
+# Validate a specific node
+node scripts/validate-gdd-runtime.js --node=shield
+
+# Generate report without console output
+node scripts/validate-gdd-runtime.js --report
+
+# CI mode (exits with code 1 on errors)
+node scripts/validate-gdd-runtime.js --ci
+```
+
+**2. Watcher (`scripts/watch-gdd.js`)**
+
+Monitors file changes in development and automatically validates:
+
+```bash
+# Start watching (monitors src/, docs/nodes/, system-map.yaml, spec.md)
+node scripts/watch-gdd.js
+```
+
+The watcher displays a real-time status dashboard:
+```
+╔════════════════════════════════════════╗
+║ 🟢 GDD STATUS: HEALTHY                ║
+╠════════════════════════════════════════╣
+║ 🟢 Nodes:        12                    ║
+║ ✅ Orphans:       0                    ║
+║ ✅ Outdated:      2                    ║
+║ ✅ Cycles:        0                    ║
+║ ✅ Missing Refs:  0                    ║
+║ ✅ Drift Issues:  0                    ║
+╚════════════════════════════════════════╝
+```
+
+### Validation Rules
+
+The validator checks:
+
+**1. Graph Structure:**
+- All nodes in `system-map.yaml` exist in `docs/nodes/`
+- `depends_on` and `used_by` are bidirectional
+- No dependency cycles (A → B → C → A)
+- No duplicate or orphaned nodes
+
+**2. Documentation Synchronization:**
+- Every active node appears in `spec.md`
+- Every `spec.md` reference has a corresponding node
+- `last_updated` timestamps < 30 days (warning if older)
+- Deprecated nodes not listed in `system-map.yaml`
+
+**3. Link Integrity:**
+- All node links point to valid paths
+- "Agentes Relevantes" and "Dependencies" sections complete
+- Referenced nodes exist and are active
+
+**4. Code Integration:**
+- `@GDD:node=<name>` tags in source code reference existing nodes
+- Modified source files without associated nodes flagged as drift
+
+### Validation Outputs
+
+**1. Markdown Report (`docs/system-validation.md`)**
+
+Human-readable report with:
+- Summary of validation results
+- Table of node statuses
+- List of issues by severity
+- Recommendations for fixes
+
+**2. JSON Status (`gdd-status.json`)**
+
+Machine-readable status for CI/CD:
+```json
+{
+  "timestamp": "2025-10-06T12:44:00Z",
+  "nodes_validated": 12,
+  "orphans": [],
+  "drift": {},
+  "status": "healthy"
+}
+```
+
+### Integration with Workflow
+
+**During Development:**
+```bash
+# Terminal 1: Start watcher
+node scripts/watch-gdd.js
+
+# Terminal 2: Work on code
+# Watcher auto-validates on file save
+```
+
+**Before Commit:**
+```bash
+# Validate system
+node scripts/validate-gdd-runtime.js --full
+
+# If issues found, review:
+cat docs/system-validation.md
+```
+
+**In CI/CD:**
+```bash
+# Add to GitHub Actions or pre-push hook
+node scripts/validate-gdd-runtime.js --ci
+
+# Fails if validation errors (exit code 1)
+```
+
+**Before PR Merge:**
+- Run full validation
+- Ensure status is 🟢 HEALTHY or 🟡 WARNING (with acceptable issues)
+- 🔴 CRITICAL status blocks merge
+
+### Status Levels
+
+- **🟢 HEALTHY**: All checks pass, documentation fully synced
+- **🟡 WARNING**: Minor issues (outdated nodes, drift warnings)
+- **🔴 CRITICAL**: Major issues (cycles, missing nodes, broken references)
 
 ### Tareas al Cerrar
 
