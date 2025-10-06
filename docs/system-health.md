@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-06T10:18:59.365Z
+**Generated:** 2025-10-06T10:49:04.900Z
 **Overall Status:** 🟡 DEGRADED
-**Average Score:** 63.5/100
+**Average Score:** 67.7/100
 
 ---
 
@@ -19,97 +19,83 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
-| cost-control | 🟡 59 | degraded | N/A | N/A | 0 | 2 |
-| plan-features | 🟡 59 | degraded | N/A | N/A | 0 | 2 |
-| platform-constraints | 🟡 59 | degraded | N/A | N/A | 0 | 2 |
-| social-platforms | 🟡 59 | degraded | N/A | N/A | 0 | 2 |
-| billing | 🟡 62 | degraded | N/A | N/A | 0 | 1 |
-| tone | 🟡 62 | degraded | N/A | N/A | 0 | 1 |
-| trainer | 🟡 64 | degraded | N/A | N/A | 0 | 2 |
-| analytics | 🟡 67 | degraded | N/A | N/A | 0 | 1 |
-| multi-tenant | 🟡 67 | degraded | N/A | N/A | 0 | 1 |
-| persona | 🟡 67 | degraded | N/A | N/A | 0 | 1 |
-| queue-system | 🟡 67 | degraded | N/A | N/A | 0 | 1 |
-| roast | 🟡 67 | degraded | N/A | N/A | 0 | 1 |
-| shield | 🟡 67 | degraded | N/A | N/A | 0 | 1 |
+| billing | 🟡 65 | degraded | N/A | N/A | 0 | 0 |
+| cost-control | 🟡 65 | degraded | N/A | N/A | 0 | 0 |
+| plan-features | 🟡 65 | degraded | N/A | N/A | 0 | 0 |
+| platform-constraints | 🟡 65 | degraded | N/A | N/A | 0 | 0 |
+| social-platforms | 🟡 65 | degraded | N/A | N/A | 0 | 0 |
+| tone | 🟡 65 | degraded | N/A | N/A | 0 | 0 |
+| analytics | 🟡 70 | degraded | N/A | N/A | 0 | 0 |
+| multi-tenant | 🟡 70 | degraded | N/A | N/A | 0 | 0 |
+| persona | 🟡 70 | degraded | N/A | N/A | 0 | 0 |
+| queue-system | 🟡 70 | degraded | N/A | N/A | 0 | 0 |
+| roast | 🟡 70 | degraded | N/A | N/A | 0 | 0 |
+| shield | 🟡 70 | degraded | N/A | N/A | 0 | 0 |
+| trainer | 🟡 70 | degraded | N/A | N/A | 0 | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes to Review
 
-### cost-control (Score: 59)
+### billing (Score: 65)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
-- Sync Accuracy: 80/100
+- Sync Accuracy: 100/100
 - Update Freshness: 50/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 0/100
 - Agent Relevance: 50/100
 
-**Issues:**
-- Orphan node (not in system-map.yaml)
-- Active node cost-control not referenced in spec.md
 
-### plan-features (Score: 59)
+### cost-control (Score: 65)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
-- Sync Accuracy: 80/100
+- Sync Accuracy: 100/100
 - Update Freshness: 50/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 0/100
 - Agent Relevance: 50/100
 
-**Issues:**
-- Orphan node (not in system-map.yaml)
-- Active node plan-features not referenced in spec.md
 
-### platform-constraints (Score: 59)
+### plan-features (Score: 65)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
-- Sync Accuracy: 80/100
+- Sync Accuracy: 100/100
 - Update Freshness: 50/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 0/100
 - Agent Relevance: 50/100
 
-**Issues:**
-- Orphan node (not in system-map.yaml)
-- Active node platform-constraints not referenced in spec.md
 
-### social-platforms (Score: 59)
+### platform-constraints (Score: 65)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
-- Sync Accuracy: 80/100
+- Sync Accuracy: 100/100
 - Update Freshness: 50/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 0/100
 - Agent Relevance: 50/100
 
-**Issues:**
-- Orphan node (not in system-map.yaml)
-- Active node social-platforms not referenced in spec.md
 
-### billing (Score: 62)
+### social-platforms (Score: 65)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
-- Sync Accuracy: 90/100
+- Sync Accuracy: 100/100
 - Update Freshness: 50/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 0/100
 - Agent Relevance: 50/100
 
-**Issues:**
-- Orphan node (not in system-map.yaml)
 
 ---
 

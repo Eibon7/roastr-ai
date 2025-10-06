@@ -1,17 +1,15 @@
 {
-  "generated_at": "2025-10-06T10:41:35.158Z",
+  "generated_at": "2025-10-06T10:48:57.395Z",
   "analysis_period_days": 30,
   "nodes": {
     "analytics": {
-      "drift_risk": 25,
+      "drift_risk": 15,
       "status": "healthy",
       "factors": [
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 67 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 67)"
       ],
       "git_activity": {
@@ -22,17 +20,15 @@
       "coverage": null
     },
     "billing": {
-      "drift_risk": 45,
+      "drift_risk": 35,
       "status": "at_risk",
       "factors": [
         "+20 pts: No last_updated timestamp",
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 62 (<70)",
         "-10 pts: Recent commit (0 days ago)"
       ],
       "recommendations": [
         "Add last_updated timestamp to metadata",
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 62)"
       ],
       "git_activity": {
@@ -43,15 +39,13 @@
       "coverage": null
     },
     "cost-control": {
-      "drift_risk": 35,
-      "status": "at_risk",
+      "drift_risk": 15,
+      "status": "healthy",
       "factors": [
-        "+20 pts: 2 active warning(s)",
         "+25 pts: Health score 59 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 2 validation warning(s)",
         "Improve health score to 70+ (currently 59)"
       ],
       "git_activity": {
@@ -62,15 +56,13 @@
       "coverage": null
     },
     "multi-tenant": {
-      "drift_risk": 25,
+      "drift_risk": 15,
       "status": "healthy",
       "factors": [
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 67 (<70)",
         "-10 pts: Recent commit (1 days ago)"
       ],
       "recommendations": [
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 67)"
       ],
       "git_activity": {
@@ -81,15 +73,13 @@
       "coverage": null
     },
     "persona": {
-      "drift_risk": 25,
+      "drift_risk": 15,
       "status": "healthy",
       "factors": [
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 67 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 67)"
       ],
       "git_activity": {
@@ -100,15 +90,13 @@
       "coverage": null
     },
     "plan-features": {
-      "drift_risk": 35,
-      "status": "at_risk",
+      "drift_risk": 15,
+      "status": "healthy",
       "factors": [
-        "+20 pts: 2 active warning(s)",
         "+25 pts: Health score 59 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 2 validation warning(s)",
         "Improve health score to 70+ (currently 59)"
       ],
       "git_activity": {
@@ -119,15 +107,13 @@
       "coverage": null
     },
     "platform-constraints": {
-      "drift_risk": 35,
-      "status": "at_risk",
+      "drift_risk": 15,
+      "status": "healthy",
       "factors": [
-        "+20 pts: 2 active warning(s)",
         "+25 pts: Health score 59 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 2 validation warning(s)",
         "Improve health score to 70+ (currently 59)"
       ],
       "git_activity": {
@@ -138,15 +124,13 @@
       "coverage": null
     },
     "queue-system": {
-      "drift_risk": 25,
+      "drift_risk": 15,
       "status": "healthy",
       "factors": [
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 67 (<70)",
         "-10 pts: Recent commit (0 days ago)"
       ],
       "recommendations": [
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 67)"
       ],
       "git_activity": {
@@ -157,15 +141,13 @@
       "coverage": "87"
     },
     "roast": {
-      "drift_risk": 25,
+      "drift_risk": 15,
       "status": "healthy",
       "factors": [
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 67 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 67)"
       ],
       "git_activity": {
@@ -176,15 +158,13 @@
       "coverage": null
     },
     "shield": {
-      "drift_risk": 25,
+      "drift_risk": 15,
       "status": "healthy",
       "factors": [
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 67 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 67)"
       ],
       "git_activity": {
@@ -195,15 +175,13 @@
       "coverage": null
     },
     "social-platforms": {
-      "drift_risk": 35,
-      "status": "at_risk",
+      "drift_risk": 15,
+      "status": "healthy",
       "factors": [
-        "+20 pts: 2 active warning(s)",
         "+25 pts: Health score 59 (<70)",
         "-10 pts: Recent commit (1 days ago)"
       ],
       "recommendations": [
-        "Resolve 2 validation warning(s)",
         "Improve health score to 70+ (currently 59)"
       ],
       "git_activity": {
@@ -214,15 +192,13 @@
       "coverage": null
     },
     "tone": {
-      "drift_risk": 25,
+      "drift_risk": 15,
       "status": "healthy",
       "factors": [
-        "+10 pts: 1 active warning(s)",
         "+25 pts: Health score 62 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 1 validation warning(s)",
         "Improve health score to 70+ (currently 62)"
       ],
       "git_activity": {
@@ -233,15 +209,13 @@
       "coverage": null
     },
     "trainer": {
-      "drift_risk": 35,
-      "status": "at_risk",
+      "drift_risk": 15,
+      "status": "healthy",
       "factors": [
-        "+20 pts: 2 active warning(s)",
         "+25 pts: Health score 64 (<70)",
         "-10 pts: Recent commit (2 days ago)"
       ],
       "recommendations": [
-        "Resolve 2 validation warning(s)",
         "Improve health score to 70+ (currently 64)"
       ],
       "git_activity": {
@@ -253,8 +227,8 @@
     }
   },
   "overall_status": "WARNING",
-  "average_drift_risk": 30,
+  "average_drift_risk": 17,
   "high_risk_count": 0,
-  "at_risk_count": 6,
-  "healthy_count": 7
+  "at_risk_count": 1,
+  "healthy_count": 12
 }

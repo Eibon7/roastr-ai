@@ -1,17 +1,17 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-06T10:41:35.158Z
+**Generated:** 2025-10-06T10:48:57.395Z
 **Analysis Period:** Last 30 days
 **Overall Status:** ⚪ WARNING
-**Average Drift Risk:** 30/100
+**Average Drift Risk:** 17/100
 
 ---
 
 ## Summary
 
 - **Total Nodes:** 13
-- 🟢 **Healthy (0-30):** 7
-- 🟡 **At Risk (31-60):** 6
+- 🟢 **Healthy (0-30):** 12
+- 🟡 **At Risk (31-60):** 1
 - 🔴 **Likely Drift (61-100):** 0
 
 ---
@@ -20,100 +20,90 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| billing | 🟡 45 | at_risk | 62 | N/A | 0d ago | 1 |
-| cost-control | 🟡 35 | at_risk | 59 | N/A | 2d ago | 1 |
-| plan-features | 🟡 35 | at_risk | 59 | N/A | 2d ago | 1 |
-| platform-constraints | 🟡 35 | at_risk | 59 | N/A | 2d ago | 1 |
-| social-platforms | 🟡 35 | at_risk | 59 | N/A | 1d ago | 1 |
-| trainer | 🟡 35 | at_risk | 64 | N/A | 2d ago | 1 |
-| analytics | 🟢 25 | healthy | 67 | N/A | 2d ago | 1 |
-| multi-tenant | 🟢 25 | healthy | 67 | N/A | 1d ago | 1 |
-| persona | 🟢 25 | healthy | 67 | N/A | 2d ago | 1 |
-| queue-system | 🟢 25 | healthy | 67 | 87% | 0d ago | 1 |
-| roast | 🟢 25 | healthy | 67 | N/A | 2d ago | 1 |
-| shield | 🟢 25 | healthy | 67 | N/A | 2d ago | 1 |
-| tone | 🟢 25 | healthy | 62 | N/A | 2d ago | 1 |
+| billing | 🟡 35 | at_risk | 62 | N/A | 0d ago | 0 |
+| analytics | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
+| cost-control | 🟢 15 | healthy | 59 | N/A | 2d ago | 0 |
+| multi-tenant | 🟢 15 | healthy | 67 | N/A | 1d ago | 0 |
+| persona | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
+| plan-features | 🟢 15 | healthy | 59 | N/A | 2d ago | 0 |
+| platform-constraints | 🟢 15 | healthy | 59 | N/A | 2d ago | 0 |
+| queue-system | 🟢 15 | healthy | 67 | 87% | 0d ago | 0 |
+| roast | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
+| shield | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
+| social-platforms | 🟢 15 | healthy | 59 | N/A | 1d ago | 0 |
+| tone | 🟢 15 | healthy | 62 | N/A | 2d ago | 0 |
+| trainer | 🟢 15 | healthy | 64 | N/A | 2d ago | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes at Risk
 
-### billing (Risk: 45)
+### billing (Risk: 35)
 
 **Status:** 🟡 AT_RISK
 
 **Risk Factors:**
 - +20 pts: No last_updated timestamp
-- +10 pts: 1 active warning(s)
 - +25 pts: Health score 62 (<70)
 - -10 pts: Recent commit (0 days ago)
 
 **Recommendations:**
 - Add last_updated timestamp to metadata
-- Resolve 1 validation warning(s)
 - Improve health score to 70+ (currently 62)
 
 **Git Activity:** 7 commits in last 30 days
 
-### cost-control (Risk: 35)
+### analytics (Risk: 15)
 
-**Status:** 🟡 AT_RISK
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +20 pts: 2 active warning(s)
+- +25 pts: Health score 67 (<70)
+- -10 pts: Recent commit (2 days ago)
+
+**Recommendations:**
+- Improve health score to 70+ (currently 67)
+
+**Git Activity:** 2 commits in last 30 days
+
+### cost-control (Risk: 15)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
 - +25 pts: Health score 59 (<70)
 - -10 pts: Recent commit (2 days ago)
 
 **Recommendations:**
-- Resolve 2 validation warning(s)
 - Improve health score to 70+ (currently 59)
 
 **Git Activity:** 2 commits in last 30 days
 
-### plan-features (Risk: 35)
+### multi-tenant (Risk: 15)
 
-**Status:** 🟡 AT_RISK
-
-**Risk Factors:**
-- +20 pts: 2 active warning(s)
-- +25 pts: Health score 59 (<70)
-- -10 pts: Recent commit (2 days ago)
-
-**Recommendations:**
-- Resolve 2 validation warning(s)
-- Improve health score to 70+ (currently 59)
-
-**Git Activity:** 2 commits in last 30 days
-
-### platform-constraints (Risk: 35)
-
-**Status:** 🟡 AT_RISK
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +20 pts: 2 active warning(s)
-- +25 pts: Health score 59 (<70)
-- -10 pts: Recent commit (2 days ago)
-
-**Recommendations:**
-- Resolve 2 validation warning(s)
-- Improve health score to 70+ (currently 59)
-
-**Git Activity:** 2 commits in last 30 days
-
-### social-platforms (Risk: 35)
-
-**Status:** 🟡 AT_RISK
-
-**Risk Factors:**
-- +20 pts: 2 active warning(s)
-- +25 pts: Health score 59 (<70)
+- +25 pts: Health score 67 (<70)
 - -10 pts: Recent commit (1 days ago)
 
 **Recommendations:**
-- Resolve 2 validation warning(s)
-- Improve health score to 70+ (currently 59)
+- Improve health score to 70+ (currently 67)
 
-**Git Activity:** 7 commits in last 30 days
+**Git Activity:** 5 commits in last 30 days
+
+### persona (Risk: 15)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +25 pts: Health score 67 (<70)
+- -10 pts: Recent commit (2 days ago)
+
+**Recommendations:**
+- Improve health score to 70+ (currently 67)
+
+**Git Activity:** 2 commits in last 30 days
 
 ---
 

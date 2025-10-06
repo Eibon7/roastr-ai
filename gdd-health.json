@@ -1,198 +1,167 @@
 {
-  "generated_at": "2025-10-06T10:18:59.365Z",
+  "generated_at": "2025-10-06T10:49:04.900Z",
   "overall_status": "DEGRADED",
-  "average_score": 63.5,
+  "average_score": 67.7,
   "node_count": 13,
   "healthy_count": 0,
   "degraded_count": 13,
   "critical_count": 0,
   "nodes": {
     "analytics": {
-      "score": 67,
+      "score": 70,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 100
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "billing": {
-      "score": 62,
+      "score": 65,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 50
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "cost-control": {
-      "score": 59,
+      "score": 65,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 80,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 50
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)",
-        "Active node cost-control not referenced in spec.md"
-      ]
+      "issues": []
     },
     "multi-tenant": {
-      "score": 67,
+      "score": 70,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 100
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "persona": {
-      "score": 67,
+      "score": 70,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 100
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "plan-features": {
-      "score": 59,
+      "score": 65,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 80,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 50
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)",
-        "Active node plan-features not referenced in spec.md"
-      ]
+      "issues": []
     },
     "platform-constraints": {
-      "score": 59,
+      "score": 65,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 80,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 50
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)",
-        "Active node platform-constraints not referenced in spec.md"
-      ]
+      "issues": []
     },
     "queue-system": {
-      "score": 67,
+      "score": 70,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 100
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "roast": {
-      "score": 67,
+      "score": 70,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 100
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "shield": {
-      "score": 67,
+      "score": 70,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 100
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "social-platforms": {
-      "score": 59,
+      "score": 65,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 80,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 50
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)",
-        "Active node social-platforms not referenced in spec.md"
-      ]
+      "issues": []
     },
     "tone": {
-      "score": 62,
+      "score": 65,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 90,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 50
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)"
-      ]
+      "issues": []
     },
     "trainer": {
-      "score": 64,
+      "score": 70,
       "status": "degraded",
       "breakdown": {
-        "syncAccuracy": 80,
+        "syncAccuracy": 100,
         "updateFreshness": 50,
         "dependencyIntegrity": 100,
         "coverageEvidence": 0,
         "agentRelevance": 100
       },
-      "issues": [
-        "Orphan node (not in system-map.yaml)",
-        "Active node trainer not referenced in spec.md"
-      ]
+      "issues": []
     }
   }
 }

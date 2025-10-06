@@ -1,17 +1,17 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-06T10:41:35.082Z
+**Date:** 2025-10-06T10:48:57.329Z
 **Mode:** full
-**Status:** 🟡 WARNING
+**Status:** 🟢 HEALTHY
 
 ---
 
 ## Summary
 
 - **Nodes Validated:** 13
-- **Orphan Nodes:** 13
+- **Orphan Nodes:** 0
 - **Outdated Nodes:** 0
-- **Missing References:** 5
+- **Missing References:** 0
 - **Cycles Detected:** 0
 - **Drift Issues:** 0
 
@@ -25,34 +25,6 @@
 ---
 
 ## Validation Results
-
-### ⚠️ Missing References
-
-| Type | Node | Issue |
-|------|------|-------|
-| node_not_in_spec | cost-control | Active node cost-control not referenced in spec.md |
-| node_not_in_spec | plan-features | Active node plan-features not referenced in spec.md |
-| node_not_in_spec | platform-constraints | Active node platform-constraints not referenced in spec.md |
-| node_not_in_spec | social-platforms | Active node social-platforms not referenced in spec.md |
-| node_not_in_spec | trainer | Active node trainer not referenced in spec.md |
-
-### 🔴 Orphan Nodes
-
-Nodes not referenced in system-map.yaml:
-
-- `analytics`
-- `billing`
-- `cost-control`
-- `multi-tenant`
-- `persona`
-- `plan-features`
-- `platform-constraints`
-- `queue-system`
-- `roast`
-- `shield`
-- `social-platforms`
-- `tone`
-- `trainer`
 
 ### 🔮 Drift Risk Analysis
 
