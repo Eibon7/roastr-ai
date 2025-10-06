@@ -11,6 +11,14 @@ jest.mock('../../../src/config/flags', () => ({
   }
 }));
 
+// Mock PersonaInputSanitizer
+jest.mock('../../../src/services/personaInputSanitizer', () => {
+  return jest.fn().mockImplementation(() => ({
+    sanitizePersonaInput: jest.fn((text) => text), // Return text as-is for tests
+    getValidationErrorMessage: jest.fn(() => 'Validation error')
+  }));
+});
+
 describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
   let app;
   let mockSupabaseServiceClient;

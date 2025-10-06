@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-06T10:48:57.329Z
+**Date:** 2025-10-06T17:25:13.806Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -17,10 +17,10 @@
 
 ### 🔮 Drift Risk Summary
 
-- **Average Drift Risk:** 30/100
+- **Average Drift Risk:** 3/100
 - **High Risk Nodes (>60):** 0
-- **At Risk Nodes (31-60):** 6
-- **Healthy Nodes (0-30):** 7
+- **At Risk Nodes (31-60):** 0
+- **Healthy Nodes (0-30):** 13
 
 ---
 
@@ -30,19 +30,19 @@
 
 | Node | Drift Risk | Status | Health Score | Last Commit | Recommendations |
 |------|------------|--------|--------------|-------------|-----------------|
-| billing | 🟡 45 | at_risk | 62 | 0d ago | Add last_updated timestamp to metadata |
-| cost-control | 🟡 35 | at_risk | 59 | 2d ago | Resolve 2 validation warning(s) |
-| plan-features | 🟡 35 | at_risk | 59 | 2d ago | Resolve 2 validation warning(s) |
-| platform-constraints | 🟡 35 | at_risk | 59 | 2d ago | Resolve 2 validation warning(s) |
-| social-platforms | 🟡 35 | at_risk | 59 | 1d ago | Resolve 2 validation warning(s) |
-| trainer | 🟡 35 | at_risk | 64 | 2d ago | Resolve 2 validation warning(s) |
-| analytics | 🟢 25 | healthy | 67 | 2d ago | Resolve 1 validation warning(s) |
-| multi-tenant | 🟢 25 | healthy | 67 | 1d ago | Resolve 1 validation warning(s) |
-| persona | 🟢 25 | healthy | 67 | 2d ago | Resolve 1 validation warning(s) |
-| queue-system | 🟢 25 | healthy | 67 | 0d ago | Resolve 1 validation warning(s) |
-| roast | 🟢 25 | healthy | 67 | 2d ago | Resolve 1 validation warning(s) |
-| shield | 🟢 25 | healthy | 67 | 2d ago | Resolve 1 validation warning(s) |
-| tone | 🟢 25 | healthy | 62 | 2d ago | Resolve 1 validation warning(s) |
+| analytics | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 60%) |
+| billing | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 65%) |
+| cost-control | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 68%) |
+| multi-tenant | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 72%) |
+| persona | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 75%) |
+| plan-features | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 70%) |
+| shield | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 78%) |
+| tone | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 73%) |
+| trainer | 🟢 5 | healthy | 90 | 0d ago | Increase test coverage to 80%+ (currently 45%) |
+| platform-constraints | 🟢 0 | healthy | 100 | 0d ago | - |
+| queue-system | 🟢 0 | healthy | 100 | 0d ago | - |
+| roast | 🟢 0 | healthy | 100 | 0d ago | - |
+| social-platforms | 🟢 0 | healthy | 100 | 0d ago | - |
 
 ---
 

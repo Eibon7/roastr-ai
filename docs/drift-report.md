@@ -1,17 +1,17 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-06T10:48:57.395Z
+**Generated:** 2025-10-06T14:21:10.991Z
 **Analysis Period:** Last 30 days
-**Overall Status:** ⚪ WARNING
-**Average Drift Risk:** 17/100
+**Overall Status:** 🟢 HEALTHY
+**Average Drift Risk:** 3/100
 
 ---
 
 ## Summary
 
 - **Total Nodes:** 13
-- 🟢 **Healthy (0-30):** 12
-- 🟡 **At Risk (31-60):** 1
+- 🟢 **Healthy (0-30):** 13
+- 🟡 **At Risk (31-60):** 0
 - 🔴 **Likely Drift (61-100):** 0
 
 ---
@@ -20,90 +20,88 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| billing | 🟡 35 | at_risk | 62 | N/A | 0d ago | 0 |
-| analytics | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
-| cost-control | 🟢 15 | healthy | 59 | N/A | 2d ago | 0 |
-| multi-tenant | 🟢 15 | healthy | 67 | N/A | 1d ago | 0 |
-| persona | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
-| plan-features | 🟢 15 | healthy | 59 | N/A | 2d ago | 0 |
-| platform-constraints | 🟢 15 | healthy | 59 | N/A | 2d ago | 0 |
-| queue-system | 🟢 15 | healthy | 67 | 87% | 0d ago | 0 |
-| roast | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
-| shield | 🟢 15 | healthy | 67 | N/A | 2d ago | 0 |
-| social-platforms | 🟢 15 | healthy | 59 | N/A | 1d ago | 0 |
-| tone | 🟢 15 | healthy | 62 | N/A | 2d ago | 0 |
-| trainer | 🟢 15 | healthy | 64 | N/A | 2d ago | 0 |
+| analytics | 🟢 5 | healthy | 94 | 60% | 0d ago | 0 |
+| billing | 🟢 5 | healthy | 94 | 65% | 0d ago | 0 |
+| cost-control | 🟢 5 | healthy | 94 | 68% | 0d ago | 0 |
+| multi-tenant | 🟢 5 | healthy | 94 | 72% | 0d ago | 0 |
+| persona | 🟢 5 | healthy | 94 | 75% | 0d ago | 0 |
+| plan-features | 🟢 5 | healthy | 94 | 70% | 0d ago | 0 |
+| shield | 🟢 5 | healthy | 94 | 78% | 0d ago | 0 |
+| tone | 🟢 5 | healthy | 94 | 73% | 0d ago | 0 |
+| trainer | 🟢 5 | healthy | 90 | 45% | 0d ago | 0 |
+| platform-constraints | 🟢 0 | healthy | 100 | 80% | 0d ago | 0 |
+| queue-system | 🟢 0 | healthy | 100 | 87% | 0d ago | 0 |
+| roast | 🟢 0 | healthy | 100 | 85% | 0d ago | 0 |
+| social-platforms | 🟢 0 | healthy | 100 | 82% | 0d ago | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes at Risk
 
-### billing (Risk: 35)
+### analytics (Risk: 5)
 
-**Status:** 🟡 AT_RISK
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +20 pts: No last_updated timestamp
-- +25 pts: Health score 62 (<70)
+- +15 pts: Coverage 60% (<80%)
 - -10 pts: Recent commit (0 days ago)
 
 **Recommendations:**
-- Add last_updated timestamp to metadata
-- Improve health score to 70+ (currently 62)
+- Increase test coverage to 80%+ (currently 60%)
 
-**Git Activity:** 7 commits in last 30 days
+**Git Activity:** 3 commits in last 30 days
 
-### analytics (Risk: 15)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +25 pts: Health score 67 (<70)
-- -10 pts: Recent commit (2 days ago)
-
-**Recommendations:**
-- Improve health score to 70+ (currently 67)
-
-**Git Activity:** 2 commits in last 30 days
-
-### cost-control (Risk: 15)
+### billing (Risk: 5)
 
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +25 pts: Health score 59 (<70)
-- -10 pts: Recent commit (2 days ago)
+- +15 pts: Coverage 65% (<80%)
+- -10 pts: Recent commit (0 days ago)
 
 **Recommendations:**
-- Improve health score to 70+ (currently 59)
+- Increase test coverage to 80%+ (currently 65%)
 
-**Git Activity:** 2 commits in last 30 days
+**Git Activity:** 8 commits in last 30 days
 
-### multi-tenant (Risk: 15)
+### cost-control (Risk: 5)
 
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +25 pts: Health score 67 (<70)
-- -10 pts: Recent commit (1 days ago)
+- +15 pts: Coverage 68% (<80%)
+- -10 pts: Recent commit (0 days ago)
 
 **Recommendations:**
-- Improve health score to 70+ (currently 67)
+- Increase test coverage to 80%+ (currently 68%)
 
-**Git Activity:** 5 commits in last 30 days
+**Git Activity:** 3 commits in last 30 days
 
-### persona (Risk: 15)
+### multi-tenant (Risk: 5)
 
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +25 pts: Health score 67 (<70)
-- -10 pts: Recent commit (2 days ago)
+- +15 pts: Coverage 72% (<80%)
+- -10 pts: Recent commit (0 days ago)
 
 **Recommendations:**
-- Improve health score to 70+ (currently 67)
+- Increase test coverage to 80%+ (currently 72%)
 
-**Git Activity:** 2 commits in last 30 days
+**Git Activity:** 6 commits in last 30 days
+
+### persona (Risk: 5)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +15 pts: Coverage 75% (<80%)
+- -10 pts: Recent commit (0 days ago)
+
+**Recommendations:**
+- Increase test coverage to 80%+ (currently 75%)
+
+**Git Activity:** 3 commits in last 30 days
 
 ---
 

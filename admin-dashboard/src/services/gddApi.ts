@@ -11,7 +11,8 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
  * Fetch GDD health scores
  */
 export async function fetchGDDHealth(): Promise<GDDHealthData> {
-  const response = await fetch(`${API_BASE}/gdd-health.json`);
+  const url = API_BASE ? `${API_BASE}/gdd-health.json` : '/gdd-health.json';
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch health data: ${response.statusText}`);
   }
@@ -22,7 +23,8 @@ export async function fetchGDDHealth(): Promise<GDDHealthData> {
  * Fetch GDD validation status
  */
 export async function fetchGDDStatus(): Promise<GDDStatusData> {
-  const response = await fetch(`${API_BASE}/gdd-status.json`);
+  const url = API_BASE ? `${API_BASE}/gdd-status.json` : '/gdd-status.json';
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch status data: ${response.statusText}`);
   }
@@ -33,7 +35,8 @@ export async function fetchGDDStatus(): Promise<GDDStatusData> {
  * Fetch GDD drift predictions
  */
 export async function fetchGDDDrift(): Promise<GDDDriftData> {
-  const response = await fetch(`${API_BASE}/gdd-drift.json`);
+  const url = API_BASE ? `${API_BASE}/gdd-drift.json` : '/gdd-drift.json';
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch drift data: ${response.statusText}`);
   }
