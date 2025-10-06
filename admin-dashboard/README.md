@@ -1,6 +1,6 @@
 # Roastr AI - Admin Dashboard
 
-**GDD System Monitoring & Administration**
+## GDD System Monitoring & Administration
 
 Snake Eater UI themed admin panel for Graph-Driven Development monitoring.
 
@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Dashboard will be available at: **http://localhost:3000**
+Dashboard will be available at: <http://localhost:3000>
 
 ### Build for Production
 
@@ -34,7 +34,7 @@ npm run preview  # Preview production build
 
 ## 📁 Project Structure
 
-```
+```text
 admin-dashboard/
 ├── src/
 │   ├── pages/
@@ -63,21 +63,25 @@ admin-dashboard/
 ## 🎨 Snake Eater UI Theme
 
 **Design Philosophy:**
+
 - Metal Gear Solid codec screen inspired
 - Dark-cyber aesthetic
 - Terminal/hacker vibe
 
 **Color Palette:**
+
 - **Primary:** `#00FF41` (Neon green)
 - **Background:** `#0A0E14` (Deep space blue-black)
 - **Surface:** `#151921` (Elevated surface)
 - **Text Primary:** `#E5E9F0` (Light gray)
 
 **Typography:**
+
 - **Monospace:** JetBrains Mono, Fira Code
 - **Sans-serif:** Inter
 
 **Accessibility:**
+
 - WCAG AA compliant contrast ratios
 - Full keyboard navigation
 - Screen reader support
@@ -87,23 +91,27 @@ admin-dashboard/
 ## 🧩 Dashboard Components (Phase 11)
 
 ### 1. Overview Panel
+
 - System status indicator (🟢 Healthy / 🟡 Warning / 🔴 Critical)
 - 4 metric cards (Health avg, Drift risk, Total nodes, Coverage avg)
 - Recent activity timeline
 
 ### 2. Node Explorer
+
 - Searchable table of all GDD nodes
 - Filter by status, coverage, drift risk
 - Sortable columns
 - Expandable rows with node details
 
 ### 3. Dependency Graph
+
 - D3.js force-directed graph
 - Interactive zoom/pan
 - Node color by health status
 - Click to highlight dependencies
 
 ### 4. Reports Viewer
+
 - Tabs: Validation, Health, Drift, Auto-Repair
 - Markdown rendering with syntax highlighting
 - Export buttons (JSON, Markdown)
@@ -114,7 +122,7 @@ admin-dashboard/
 
 **Expected API endpoints** (to be implemented in main backend):
 
-```
+```text
 GET  /api/admin/gdd/health        # Health scores per node
 GET  /api/admin/gdd/status        # Validation status
 GET  /api/admin/gdd/drift         # Drift predictions
@@ -123,7 +131,8 @@ GET  /api/admin/gdd/reports/:type # Markdown reports
 ```
 
 **WebSocket namespace:**
-```
+
+```text
 /admin/gdd  # Real-time updates
 ```
 
@@ -169,6 +178,7 @@ npm run test:coverage # Generate coverage report
 ## 🚢 Deployment
 
 **Recommended deployment:**
+
 - **URL:** `https://admin.roastr.ai`
 - **Platform:** Vercel or Netlify
 - **Environment Variables:**
@@ -176,6 +186,7 @@ npm run test:coverage # Generate coverage report
   - `VITE_WS_URL` - WebSocket URL
 
 **Build command:** `npm run build`
+
 **Output directory:** `dist/`
 
 ---
@@ -200,15 +211,18 @@ npm run test:coverage # Generate coverage report
 ## 🎯 Current Status
 
 **Phase 11.A:** ✅ Foundation Complete
+
 - Vite + React 18 + TypeScript configured
 - Snake Eater UI theme system implemented
 - Main dashboard page with placeholders
 
 **Phase 11.B:** 🚧 In Progress
+
 - Implementing shared UI components
 - Creating dashboard components
 
 **Phase 11.C:** ⏳ Pending
+
 - Backend API integration
 - Real-time WebSocket updates
 
@@ -217,6 +231,7 @@ npm run test:coverage # Generate coverage report
 ## 📞 Support
 
 For issues or questions, see:
+
 - **Planning:** `docs/plan/phase-11-dashboard.md`
 - **Design:** `docs/ui/design/phase-11-dashboard/ui-spec.md`
 - **GDD Docs:** `docs/GDD-IMPLEMENTATION-SUMMARY.md`
@@ -224,5 +239,7 @@ For issues or questions, see:
 ---
 
 **Version:** 1.0.0
+
 **Last Updated:** 2025-10-06
+
 **Status:** Foundation Ready ✅
