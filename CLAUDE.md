@@ -766,6 +766,82 @@ node scripts/validate-gdd-runtime.js --ci
 - **🟡 WARNING**: Minor issues (outdated nodes, drift warnings)
 - **🔴 CRITICAL**: Major issues (cycles, missing nodes, broken references)
 
+---
+
+## Node Health Scoring System (GDD 2.0 - Phase 7)
+
+The Health Scoring System provides quantitative metrics (0-100) for each GDD node, measuring technical and documentation quality.
+
+### Health Score Calculation
+
+Each node is scored using 5 weighted factors:
+
+| Factor | Weight | Metric | Scoring Criteria |
+|--------|--------|--------|------------------|
+| **Sync Accuracy** | 30% | spec.md ↔ node ↔ code alignment | -10 per critical mismatch |
+| **Update Freshness** | 20% | Days since last_updated | 100 - (days × 2), min 0 |
+| **Dependency Integrity** | 20% | Bidirectional edges, no cycles | -20 per failure |
+| **Coverage Evidence** | 20% | Tests documented + coverage % | 100 if >80%, 70 if 60-80%, 40 if <60% |
+| **Agent Relevance** | 10% | Agent list complete & valid | 100 if complete, 50 if partial, 0 if absent |
+
+**Final Score** = Weighted average, rounded to nearest integer
+
+### Health Status Levels
+
+- **🟢 HEALTHY (80-100)**: Node in good condition, minimal maintenance needed
+- **🟡 DEGRADED (50-79)**: Node needs attention, schedule maintenance
+- **🔴 CRITICAL (<50)**: Urgent action required, may impact system
+
+### Usage
+
+```bash
+# Standalone health scoring
+node scripts/score-gdd-health.js
+
+# Combined validation + scoring
+node scripts/validate-gdd-runtime.js --score
+
+# Watch mode includes health scoring
+node scripts/watch-gdd.js
+```
+
+### Output Files
+
+**1. Human-Readable Report** (`docs/system-health.md`):
+- Summary with overall status
+- Table of all nodes sorted by score (worst first)
+- Top 5 nodes requiring review with detailed breakdown
+
+**2. Machine-Readable Status** (`gdd-health.json`):
+- Overall statistics (average_score, status, counts)
+- Individual node scores with breakdown
+- Integration-ready for dashboards/CI
+
+### Example Output
+
+```
+╔════════════════════════════════════════╗
+║     📊 NODE HEALTH SUMMARY            ║
+╚════════════════════════════════════════╝
+🟢 Healthy: 8 | 🟡 Degraded: 3 | 🔴 Critical: 2
+Average Score: 82.4/100
+```
+
+### Integration with Development Workflow
+
+**During Development:**
+- Watcher automatically scores nodes on each validation
+- Real-time feedback on node health
+
+**Before Commit:**
+- Run `node scripts/validate-gdd-runtime.js --score`
+- Review `docs/system-health.md` for nodes below 80
+
+**Before PR Merge:**
+- Check average score > 75
+- No critical nodes (<50) allowed
+- Address degraded nodes (50-79) or document why deferred
+
 ### Tareas al Cerrar
 
 **🚨 VERIFICACIÓN OBLIGATORIA antes de marcar tarea como completa:**

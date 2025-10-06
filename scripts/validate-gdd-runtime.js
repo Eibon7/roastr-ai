@@ -12,6 +12,7 @@
  *   node scripts/validate-gdd-runtime.js --node=shield
  *   node scripts/validate-gdd-runtime.js --report
  *   node scripts/validate-gdd-runtime.js --ci
+ *   node scripts/validate-gdd-runtime.js --score    # Run validation + health scoring
  */
 
 const fs = require('fs').promises;
@@ -720,6 +721,7 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
 // CLI Entry Point
 async function main() {
   const args = process.argv.slice(2);
+  const runScoring = args.includes('--score');
 
   const options = {
     mode: 'full',
@@ -740,6 +742,26 @@ async function main() {
 
   const validator = new GDDValidator(options);
   await validator.validate();
+
+  // Run health scoring if requested
+  if (runScoring) {
+    console.log('');
+    console.log('\x1b[36m🧬 Running Node Health Scoring...\x1b[0m');
+    console.log('');
+
+    const { GDDHealthScorer } = require('./score-gdd-health');
+    const scorer = new GDDHealthScorer({ json: false });
+    const { stats } = await scorer.score();
+
+    // Print integrated summary
+    console.log('');
+    console.log('╔════════════════════════════════════════╗');
+    console.log('║     🧩 NODE HEALTH SUMMARY            ║');
+    console.log('╚════════════════════════════════════════╝');
+    console.log(`🟢 Healthy: ${stats.healthy_count} | 🟡 Degraded: ${stats.degraded_count} | 🔴 Critical: ${stats.critical_count}`);
+    console.log(`Average Score: ${stats.average_score}/100`);
+    console.log('');
+  }
 }
 
 if (require.main === module) {

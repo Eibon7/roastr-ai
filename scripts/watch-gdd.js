@@ -137,8 +137,13 @@ class GDDWatcher {
 
       const results = await validator.validate();
 
-      // Print status bar
-      this.printStatusBar(results);
+      // Run health scoring
+      const { GDDHealthScorer } = require('./score-gdd-health');
+      const scorer = new GDDHealthScorer({ json: true });
+      const { stats } = await scorer.score();
+
+      // Print status bar with health info
+      this.printStatusBar(results, stats);
 
       this.lastStatus = results.status;
     } catch (error) {
@@ -151,7 +156,7 @@ class GDDWatcher {
   /**
    * Print visual status bar
    */
-  printStatusBar(results) {
+  printStatusBar(results, healthStats) {
     const statusColors = {
       healthy: '\x1b[42m',   // Green background
       warning: '\x1b[43m',   // Yellow background
@@ -180,6 +185,17 @@ class GDDWatcher {
     console.log(`║ ${Object.keys(results.drift).length > 0 ? '⚠️ ' : '✅'} Drift Issues: ${String(Object.keys(results.drift).length).padStart(3)}                    ║`);
     console.log('╚════════════════════════════════════════╝');
     console.log('');
+
+    // Add health summary
+    if (healthStats) {
+      console.log('────────────────────────────────────────');
+      console.log('📊 NODE HEALTH STATUS');
+      console.log(`🟢 ${healthStats.healthy_count} Healthy | 🟡 ${healthStats.degraded_count} Degraded | 🔴 ${healthStats.critical_count} Critical`);
+      console.log(`Average Score: ${healthStats.average_score}/100`);
+      console.log('────────────────────────────────────────');
+      console.log('');
+    }
+
     console.log(`Last check: ${new Date().toLocaleTimeString()}`);
     console.log('');
   }
