@@ -50,26 +50,31 @@ const Controls = styled.div`
 `;
 
 const ReportSelect = styled.select`
-  background: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  padding: ${({ theme }) => `${theme.spacing(2)} ${theme.spacing(3)}`};
-  font-family: ${({ theme }) => theme.typography.fontFamily.secondary};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.textPrimary};
+  background: #1f1d20;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #bdbdbd;
   cursor: pointer;
   min-width: 200px;
   transition: all 0.15s ease;
 
+  &:hover {
+    border-color: rgba(80, 250, 123, 0.4);
+  }
+
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}20;
+    border-color: #50fa7b;
+    box-shadow: 0 0 0 2px rgba(80, 250, 123, 0.2);
   }
 
   option {
-    background: ${({ theme }) => theme.colors.background};
-    color: ${({ theme }) => theme.colors.textPrimary};
+    background: #1f1d20;
+    color: #bdbdbd;
+    padding: 12px;
   }
 
   @media (max-width: 768px) {
@@ -113,7 +118,6 @@ const ContentContainer = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   padding: ${({ theme }) => theme.spacing(6)};
-  max-height: 600px;
   overflow-y: auto;
 
   &::-webkit-scrollbar {
@@ -344,7 +348,7 @@ export function ReportsViewer() {
   return (
     <ViewerContainer>
       <Header>
-        <Title>📄 Reports Viewer</Title>
+        <Title>Reports Viewer</Title>
         <Controls>
           <ReportSelect
             value={selectedReport}
