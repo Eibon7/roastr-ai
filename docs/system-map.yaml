@@ -138,12 +138,12 @@ features:
 
 # Metadata
 metadata:
-  version: 1.0.1
+  version: 1.0.2
   created: 2025-10-03
-  last_updated: 2025-10-05
+  last_updated: 2025-10-06
   total_nodes: 13
   critical_nodes: 7
   high_priority_nodes: 4
   planned_nodes: 2
-  pr: "#459"
-  changes: "Added billing node for Stripe integration (Issue #413)"
+  pr: "#458"
+  changes: "Updated queue-system node (v1.2.0): API normalization + enhanced error handling - PR #458"

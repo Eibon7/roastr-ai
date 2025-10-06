@@ -1443,16 +1443,27 @@ We've achieved:
 - **Graph validation:** ✅ PASSED
 - **Report:** docs/sync-reports/pr-453-sync.md
 
+#### PR #458 - Demo Mode E2E Timeout + Queue System API Normalization (2025-10-06)
+- **Nodes updated:** queue-system.md (v1.2.0)
+- **Issues created:** 0
+- **Orphan nodes:** 0
+- **Test coverage:** 26/26 unit + 7/7 E2E (100% passing)
+- **Coverage improvement:** 82% → 87% (+5%)
+- **Graph validation:** ✅ PASSED
+- **API changes:** Breaking change in `QueueService.addJob()` return value
+- **CodeRabbit reviews resolved:** 2 (4 unique issues, 100% resolution rate)
+- **Report:** docs/sync-reports/pr-458-sync.md
+
 ### Sync Metrics
 
-**Total PRs Synced:** 4
+**Total PRs Synced:** 5
 **Total Nodes Updated:** 4 unique nodes (billing, shield, multi-tenant, queue-system)
 **Total Issues Created:** 0
 **Total Orphan Nodes Detected:** 0
 **Average Graph Validation:** 100% passing
-**Last Validation Date:** 2025-10-05
+**Last Validation Date:** 2025-10-06
 
 ---
 
 🤖 Documentation Agent
-**Last Updated:** 2025-10-05
+**Last Updated:** 2025-10-06
