@@ -89,9 +89,13 @@ describe('[E2E] Demo Flow Pipeline', () => {
         expect(ingestResult.success).toBe(true);
         console.log('✅ Ingest worker processed comment successfully');
       } catch (error) {
-        // In mock mode, worker may not have all dependencies - validate structure
+        // In mock mode, workers may not have all dependencies available (e.g., Supabase, Redis),
+        // so we expect timeouts or connection errors. We validate the worker structure
+        // instead of requiring successful execution, which tests the architecture without
+        // external service dependencies.
         expect(fetchWorker.workerType).toBe('fetch_comments');
-        console.log('✅ Ingest worker structure validated');
+        expect(error.message).toMatch(/timeout|connection|dependency|unavailable|client|configured|not found|invalid|payload/i);
+        console.log('✅ Ingest worker structure validated (mock mode)');
       }
 
       // 2. Triage: Use actual AnalyzeToxicityWorker
@@ -111,9 +115,12 @@ describe('[E2E] Demo Flow Pipeline', () => {
         expect(triageResult).toBeDefined();
         console.log('✅ Triage worker processed comment successfully');
       } catch (error) {
-        // In mock mode, validate worker exists and has correct type
+        // In mock mode, workers may not have all dependencies available (e.g., Perspective API, Supabase),
+        // so we expect timeouts or connection errors. We validate the worker structure
+        // instead of requiring successful execution.
         expect(triageWorker.workerType).toBe('analyze_toxicity');
-        console.log('✅ Triage worker structure validated');
+        expect(error.message).toMatch(/timeout|connection|dependency|unavailable|client|configured|not found|invalid|payload/i);
+        console.log('✅ Triage worker structure validated (mock mode)');
       }
 
       // 3. Generation: Use actual GenerateReplyWorker  
@@ -135,9 +142,12 @@ describe('[E2E] Demo Flow Pipeline', () => {
         expect(generationResult).toBeDefined();
         console.log('✅ Generation worker processed comment successfully');
       } catch (error) {
-        // In mock mode, validate worker exists and has correct type
+        // In mock mode, workers may not have all dependencies available (e.g., OpenAI API, Supabase),
+        // so we expect timeouts or connection errors. We validate the worker structure
+        // instead of requiring successful execution.
         expect(generationWorker.workerType).toBe('generate_reply');
-        console.log('✅ Generation worker structure validated');
+        expect(error.message).toMatch(/timeout|connection|dependency|unavailable|client|configured|not found|invalid|payload/i);
+        console.log('✅ Generation worker structure validated (mock mode)');
       }
 
       // 4. Publication: Verify queue system integration
@@ -169,7 +179,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
       }
 
       console.log('✅ Complete pipeline flow validated with real workers');
-    });
+    }, 60000); // 60 second timeout for pipeline flow test (workers may need time in mock mode)
 
     test('should ensure no copy/paste shortcuts in demo mode', async () => {
       if (process.env.ENABLE_MOCK_MODE !== 'true') {
@@ -241,7 +251,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
 
       console.log('✅ Pipeline traceability validated');
     });
-  });
+  }, 60000); // 60 second timeout for pipeline integration tests
 
   describe('Multi-Tenant Pipeline Isolation', () => {
     test('should process fixtures for different organizations separately', async () => {
@@ -279,7 +289,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
 
       console.log('✅ Multi-tenant pipeline isolation validated');
     });
-  });
+  }, 60000); // 60 second timeout for multi-tenant tests
 
   describe('Demo Mode Configuration', () => {
     test('should validate demo mode environment setup', async () => {
