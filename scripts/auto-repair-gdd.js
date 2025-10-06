@@ -336,8 +336,8 @@ class AutoRepairEngine {
           field: 'status',
           description: `${nodeName}: Missing status field`,
           fix: async () => {
-            // Add default status based on node
-            const defaultStatus = 'Production';
+            // Add default status based on node (use lowercase for consistency)
+            const defaultStatus = 'production';
             node.content = this.addMetadataField(node.content, 'Status', defaultStatus);
             await fs.writeFile(node.path, node.content);
             this.fixes.push(`Added status to ${nodeName}`);
@@ -450,9 +450,10 @@ class AutoRepairEngine {
                 depNode.used_by.push(nodeName);
                 depNode.used_by.sort();
 
-                // Save system-map
+                // Save system-map preserving comments
                 const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
-                await fs.writeFile(mapPath, yaml.stringify(systemMap));
+                const originalContent = await fs.readFile(mapPath, 'utf-8');
+                await this.saveSystemMapPreservingComments(systemMap, originalContent);
                 this.fixes.push(`Restored edge: ${dep} ← ${nodeName}`);
               }
             });
@@ -489,7 +490,8 @@ class AutoRepairEngine {
             };
 
             const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
-            await fs.writeFile(mapPath, yaml.stringify(systemMap));
+            const originalContent = await fs.readFile(mapPath, 'utf-8');
+            await this.saveSystemMapPreservingComments(systemMap, originalContent);
             this.fixes.push(`Added ${nodeName} to system-map.yaml`);
           }
         });
@@ -522,6 +524,32 @@ class AutoRepairEngine {
         await issue.fix();
       }
     }
+  }
+
+  /**
+   * Safely update system-map.yaml preserving comments
+   */
+  async saveSystemMapPreservingComments(systemMap, originalContent) {
+    const yamlLines = yaml.stringify(systemMap).split('\n');
+    const originalLines = originalContent.split('\n');
+
+    // Preserve header comments (lines starting with #)
+    const headerComments = [];
+    for (const line of originalLines) {
+      if (line.trim().startsWith('#') || line.trim() === '') {
+        headerComments.push(line);
+      } else {
+        break; // Stop at first non-comment line
+      }
+    }
+
+    // Combine preserved comments + new YAML
+    const finalContent = headerComments.length > 0
+      ? headerComments.join('\n') + '\n' + yamlLines.join('\n')
+      : yamlLines.join('\n');
+
+    const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
+    await fs.writeFile(mapPath, finalContent);
   }
 
   /**
@@ -677,8 +705,28 @@ ${this.fixes.map(f => `- ${f}`).join('\n')}
       }
     }
 
-    if (insertIndex !== -1) {
+    // Fallback if still not found
+    if (insertIndex === -1) {
+      console.warn(`⚠️  Could not find insertion point for ${field} in node`);
+      // Insert at beginning after any YAML frontmatter
+      let yamlEnd = 0;
+      if (lines[0] === '---') {
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i] === '---') {
+            yamlEnd = i + 1;
+            break;
+          }
+        }
+      }
+      insertIndex = yamlEnd > 0 ? yamlEnd + 1 : 0;
+    }
+
+    if (insertIndex >= 0 && insertIndex <= lines.length) {
       lines.splice(insertIndex, 0, `**${field}:** ${value}`);
+    } else {
+      // Last resort: append at end
+      console.warn(`⚠️  Using fallback: appending ${field} at end of file`);
+      lines.push('', `**${field}:** ${value}`);
     }
 
     return lines.join('\n');
