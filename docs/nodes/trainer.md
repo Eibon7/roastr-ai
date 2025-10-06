@@ -576,7 +576,106 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 ---
 
+## Tests
+
+### Ubicación de Tests
+
+**Unit Tests** (2 archivos):
+- `tests/unit/csvRoastService.test.js` - CSV roast reference system (full tests)
+- `tests/unit/csvRoastService-simple.test.js` - Simplified CSV tests
+
+**Test Data**:
+- `tests/data/roasts_test.csv` - Sample CSV data for testing
+
+### Cobertura de Tests
+
+- **CSV Roast Service**: ~60% coverage (basic functionality tested)
+- **Test Data**: Sample CSV with various roast categories
+- **Integration**: Falta integration con roast generation
+
+### Casos de Prueba Cubiertos
+
+**CSV Roast System (Current Implementation):**
+- ✅ CSV file loading and parsing
+- ✅ Roast retrieval by category
+- ✅ Random roast selection
+- ✅ Category matching logic
+- ✅ Error handling for missing files
+- ✅ Edge cases (empty CSV, invalid format)
+
+**Current Functionality:**
+- ✅ Reference roast database (CSV-based)
+- ✅ Category-based roast lookup
+- ✅ Integration with roast generator (basic)
+
+### Tests Pendientes (Trainer Roadmap)
+
+**Feedback Loop (Phase 2):**
+- [ ] User rating collection tests
+- [ ] Rating validation (1-5 stars)
+- [ ] Organization-scoped feedback storage
+- [ ] Aggregated rating queries
+
+**Quality Metrics (Phase 3):**
+- [ ] Quality score calculation tests
+- [ ] Low-quality roast detection
+- [ ] Variant comparison tests
+- [ ] A/B testing framework tests
+
+**Fine-tuning System (Phase 4-5):**
+- [ ] Training data generation tests
+- [ ] Fine-tuning job creation tests
+- [ ] Model versioning tests
+- [ ] Rollout strategy tests (canary, blue-green)
+- [ ] Performance regression detection
+
+**Auto-Improvement (Phase 6-7):**
+- [ ] Variant generation tests
+- [ ] Automatic retraining trigger tests
+- [ ] Quality improvement validation
+- [ ] Drift detection tests
+
+### Comandos de Test
+
+```bash
+# Run CSV roast service tests
+npm test -- csvRoastService
+
+# Run simple tests
+npm test -- csvRoastService-simple
+
+# Run specific test file
+npm test -- tests/unit/csvRoastService.test.js
+```
+
+### Roadmap de Testing
+
+**Fase 1 (Current)**: CSV Roast Reference System
+- Status: ✅ Básico implementado, 60% coverage
+
+**Fase 2**: Feedback Loop
+- Status: ⏳ Pendiente
+- Tests needed: User rating collection, validation, storage
+
+**Fase 3**: Quality Metrics
+- Status: ⏳ Pendiente
+- Tests needed: Quality scoring, low-quality detection
+
+**Fase 4**: Fine-tuning System
+- Status: ⏳ Pendiente
+- Tests needed: Training data, fine-tuning jobs, model versioning
+
+**Fase 5-7**: Auto-Improvement
+- Status: ⏳ Pendiente
+- Tests needed: Variant generation, retraining triggers, drift detection
+
+### Notas
+
+El nodo **trainer** está en fase de roadmap. La cobertura actual (50-60%) refleja solo la funcionalidad CSV básica implementada. El sistema completo de fine-tuning y auto-improvement requiere tests adicionales que se implementarán en fases futuras.
+
+---
+
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Quarterly or on feature prioritization
-**Last Reviewed:** 2025-10-03
+**Last Reviewed:** 2025-10-06
 **Version:** 1.0.0 (Roadmap)

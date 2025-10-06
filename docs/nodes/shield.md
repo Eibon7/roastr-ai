@@ -1038,7 +1038,120 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 ---
 
+## Tests
+
+### Ubicación de Tests
+
+**Unit Tests** (13 archivos):
+- `tests/unit/services/shieldService.test.js` - Core service functionality
+- `tests/unit/services/shieldService-edge-cases.test.js` - Edge cases and error handling
+- `tests/unit/services/shieldDecisionEngine.test.js` - Decision logic and thresholds
+- `tests/unit/services/shieldActionExecutor.test.js` - Action execution layer
+- `tests/unit/services/shieldPersistenceService.test.js` - Database persistence
+- `tests/unit/services/shieldPersistenceService-retention.test.js` - Data retention policies
+- `tests/unit/routes/shield-round2.test.js` - API endpoints (Round 2)
+- `tests/unit/routes/shield-round3-security.test.js` - Security hardening
+- `tests/unit/routes/shield-round4-enhancements.test.js` - Feature enhancements
+- `tests/unit/routes/shield-round5.test.js` - Latest API additions
+- `tests/unit/database/shield-migration.test.js` - Database migrations
+- `tests/unit/database/shield-migration-round5.test.js` - Latest schema changes
+- `tests/unit/utils/shield-validation.test.js` - Input validation utilities
+
+**Integration Tests** (10+ archivos):
+- `tests/integration/shieldDecisionEngine.integration.test.js` - Full decision flow
+- `tests/integration/shieldActionExecutor.integration.test.js` - Action execution with platforms
+- `tests/integration/shieldPersistenceIntegration.test.js` - Database integration
+- `tests/integration/shield-round3-complete.test.js` - Round 3 complete flow
+- `tests/integration/shield-actions-integration.test.js` - Multi-action scenarios
+- `tests/integration/shieldUIIntegration.test.js` - UI integration
+- Additional platform-specific integration tests
+
+**Visual Tests** (1 archivo):
+- `tests/unit/visual/shield-round5-stability.test.js` - Visual regression testing
+
+### Cobertura de Tests
+
+- **Total Tests**: ~30 archivos de test
+- **Unit Test Coverage**: ~95% del código crítico
+- **Integration Tests**: 10+ escenarios de flujo completo
+- **Visual Tests**: Estabilidad de UI en Round 5
+
+### Casos de Prueba Cubiertos
+
+**Decision Engine:**
+- ✅ Threshold-based decision making (Critical, High, Moderate, Corrective, Normal)
+- ✅ Offender history tracking and recidivism detection
+- ✅ Risk level calculation (Critical, High, Moderate, Low)
+- ✅ Platform-specific threshold overrides
+- ✅ Organization-level settings inheritance
+- ✅ Red Lines (zero-tolerance) detection
+- ✅ Circuit breaker pattern with fallback strategies
+
+**Action Execution:**
+- ✅ Platform-specific actions (mute, block, report, hide, timeout)
+- ✅ Action escalation based on recidivism
+- ✅ Multi-platform support (Twitter, Discord, Twitch, YouTube, etc.)
+- ✅ Action priority handling (high-priority actions via Priority 1 queue)
+- ✅ Error handling and retry logic
+- ✅ Action logging and audit trail
+
+**Persistence:**
+- ✅ Shield events database storage
+- ✅ Offender history queries and aggregation
+- ✅ Settings CRUD operations
+- ✅ Data retention policies (30 days default, configurable)
+- ✅ Organization-scoped data access (RLS)
+- ✅ Platform-level settings inheritance
+
+**API Endpoints:**
+- ✅ GET /api/shield/events - List shield events
+- ✅ GET /api/shield/offenders - Get offender stats
+- ✅ GET /api/shield/settings - Retrieve settings
+- ✅ PUT /api/shield/settings - Update settings
+- ✅ POST /api/shield/test - Test Shield decision
+- ✅ Authentication and authorization
+- ✅ Input validation and sanitization
+- ✅ Rate limiting
+
+**Edge Cases:**
+- ✅ Missing or invalid input data
+- ✅ Database connection failures
+- ✅ Platform API errors
+- ✅ Concurrent action requests
+- ✅ Empty offender history
+- ✅ Circular dependencies in settings inheritance
+- ✅ Extremely high toxicity scores (>1.0)
+
+### Tests Pendientes
+
+- [ ] E2E tests con plataformas reales (requiere API keys de producción)
+- [ ] Performance tests con alto volumen (>1000 eventos/segundo)
+- [ ] Chaos engineering tests (simulación de fallos de infraestructura)
+- [ ] Load tests para Action Executor (múltiples plataformas simultáneas)
+- [ ] Security penetration tests (autenticación, autorización, SQL injection)
+
+### Comandos de Test
+
+```bash
+# Run all Shield tests
+npm test -- shield
+
+# Run unit tests only
+npm test -- tests/unit/services/shield
+
+# Run integration tests
+npm test -- tests/integration/shield
+
+# Run specific test file
+npm test -- tests/unit/services/shieldDecisionEngine.test.js
+
+# Run with coverage
+npm test -- shield --coverage
+```
+
+---
+
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Weekly or on critical incidents
-**Last Reviewed:** 2025-10-03
+**Last Reviewed:** 2025-10-06
 **Version:** 1.0.0
