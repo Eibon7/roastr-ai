@@ -1,7 +1,175 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import * as d3 from 'd3';
 
+// ===== CONSTANTS =====
+const NODE_WIDTH = 220;
+const NODE_HEIGHT = 80;
+const NODE_BORDER_RADIUS = 8;
+const HORIZONTAL_GAP = 180;
+const VERTICAL_GAP = 40;
+const CANVAS_PADDING = 80;
+
+// ===== SVG ICON COMPONENTS =====
+const MessageSquareIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const ShieldIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const UserIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const MusicIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18V5l12-2v13" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="18" cy="16" r="3" />
+  </svg>
+);
+
+const SettingsIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 1v6m0 6v6M1 12h6m6 0h6M4.2 4.2l4.3 4.3m5.5 5.5l4.3 4.3m-4.3-14.1l4.3-4.3M9.5 14.5l-4.3 4.3" />
+  </svg>
+);
+
+const LayersIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </svg>
+);
+
+const BuildingIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+    <path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01" />
+  </svg>
+);
+
+const DollarSignIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="1" x2="12" y2="23" />
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+  </svg>
+);
+
+const CreditCardIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+    <line x1="1" y1="10" x2="23" y2="10" />
+  </svg>
+);
+
+const PackageIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+    <line x1="12" y1="22.08" x2="12" y2="12" />
+  </svg>
+);
+
+const Share2Icon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+  </svg>
+);
+
+const BarChart2Icon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const BrainIcon = ({ color = '#8AFF80' }: { color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" />
+    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />
+  </svg>
+);
+
+// ===== ICON MAPPING =====
+const nodeIcons: Record<string, React.ReactNode> = {
+  'roast': <MessageSquareIcon />,
+  'shield': <ShieldIcon />,
+  'persona': <UserIcon />,
+  'tone': <MusicIcon />,
+  'platform-constraints': <SettingsIcon />,
+  'queue-system': <LayersIcon />,
+  'multi-tenant': <BuildingIcon />,
+  'cost-control': <DollarSignIcon />,
+  'billing': <CreditCardIcon />,
+  'plan-features': <PackageIcon />,
+  'social-platforms': <Share2Icon />,
+  'analytics': <BarChart2Icon />,
+  'trainer': <BrainIcon />
+};
+
+// ===== LAYER ASSIGNMENTS =====
+const LAYER_ASSIGNMENTS: Record<string, number> = {
+  // Layer 0 (leftmost - inputs)
+  'persona': 0,
+  'tone': 0,
+  'platform-constraints': 0,
+  'multi-tenant': 0,
+
+  // Layer 1 (processing)
+  'cost-control': 1,
+  'plan-features': 1,
+  'queue-system': 1,
+
+  // Layer 2 (core business logic)
+  'billing': 2,
+  'roast': 2,
+  'shield': 2,
+  'social-platforms': 2,
+
+  // Layer 3 (rightmost - outputs)
+  'analytics': 3,
+  'trainer': 3
+};
+
+// ===== TYPES =====
+interface GraphNode {
+  id: string;
+  group: number;
+  coverage?: number;
+  x?: number;
+  y?: number;
+  layer?: number;
+}
+
+interface GraphLink {
+  source: string | GraphNode;
+  target: string | GraphNode;
+  value: number;
+}
+
+interface GraphData {
+  nodes: GraphNode[];
+  links: GraphLink[];
+}
+
+// ===== STYLED COMPONENTS =====
 const GraphContainer = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -47,16 +215,16 @@ const Controls = styled.div`
   }
 `;
 
-const Button = styled.button<{ active?: boolean }>`
-  background: ${({ theme, active }) =>
-    active ? theme.colors.primary : theme.colors.background};
+const Button = styled.button<{ $active?: boolean }>`
+  background: ${({ theme, $active }) =>
+    $active ? theme.colors.primary : theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.primary};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   padding: ${({ theme }) => `${theme.spacing(2)} ${theme.spacing(4)}`};
   font-family: ${({ theme }) => theme.typography.fontFamily.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme, active }) => (active ? theme.colors.background : theme.colors.primary)};
+  color: ${({ theme, $active }) => ($active ? theme.colors.background : theme.colors.primary)};
   cursor: pointer;
   transition: all 0.15s ease;
   text-transform: uppercase;
@@ -79,7 +247,7 @@ const SvgContainer = styled.div`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  overflow: hidden;
+  overflow: auto;
   position: relative;
 
   @media (max-width: 768px) {
@@ -110,320 +278,281 @@ const LegendItem = styled.div`
 const LegendColor = styled.div<{ color: string }>`
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: 4px;
   background: ${({ color }) => color};
-  border: 2px solid ${({ color }) => color};
 `;
 
-const LoadingSpinner = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: ${({ theme }) => theme.spacing(8)};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-family: ${({ theme }) => theme.typography.fontFamily.primary};
-`;
+// ===== HELPER FUNCTIONS =====
+function calculateNodePositions(nodes: GraphNode[]): GraphNode[] {
+  // Group nodes by layer
+  const layers: Record<number, GraphNode[]> = {};
 
-const ErrorMessage = styled.div`
-  padding: ${({ theme }) => theme.spacing(4)};
-  background: ${({ theme }) => theme.colors.statusCritical}15;
-  border: 1px solid ${({ theme }) => theme.colors.statusCritical};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  color: ${({ theme }) => theme.colors.statusCritical};
-  font-family: ${({ theme }) => theme.typography.fontFamily.secondary};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
+  nodes.forEach(node => {
+    const layer = LAYER_ASSIGNMENTS[node.id] ?? 0;
+    if (!layers[layer]) layers[layer] = [];
+    layers[layer].push({ ...node, layer });
+  });
 
-interface GraphNode extends d3.SimulationNodeDatum {
-  id: string;
-  group: number;
-  coverage: number;
+  const positionedNodes: GraphNode[] = [];
+
+  // Calculate positions for each layer
+  Object.entries(layers).forEach(([layerStr, layerNodes]) => {
+    const layer = parseInt(layerStr);
+    const layerHeight = layerNodes.length * (NODE_HEIGHT + VERTICAL_GAP) - VERTICAL_GAP;
+    const startY = CANVAS_PADDING + (600 - 2 * CANVAS_PADDING - layerHeight) / 2;
+
+    layerNodes.forEach((node, index) => {
+      positionedNodes.push({
+        ...node,
+        x: layer * (NODE_WIDTH + HORIZONTAL_GAP) + CANVAS_PADDING,
+        y: startY + index * (NODE_HEIGHT + VERTICAL_GAP),
+        layer
+      });
+    });
+  });
+
+  return positionedNodes;
 }
 
-interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
-  source: string | GraphNode;
-  target: string | GraphNode;
-  value: number;
+function generateBezierPath(
+  sourceX: number,
+  sourceY: number,
+  targetX: number,
+  targetY: number
+): string {
+  const dx = targetX - sourceX;
+  const controlX1 = sourceX + Math.min(dx * 0.5, 100);
+  const controlX2 = targetX - Math.min(dx * 0.5, 100);
+
+  return `M ${sourceX + NODE_WIDTH} ${sourceY + NODE_HEIGHT / 2}
+          C ${controlX1} ${sourceY + NODE_HEIGHT / 2},
+            ${controlX2} ${targetY + NODE_HEIGHT / 2},
+            ${targetX} ${targetY + NODE_HEIGHT / 2}`;
 }
 
-interface GraphData {
-  nodes: GraphNode[];
-  links: GraphLink[];
-}
-
-type LayoutType = 'force' | 'circular' | 'hierarchical';
-
+// ===== MAIN COMPONENT =====
 export function DependencyGraph() {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [data, setData] = useState<GraphData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [layout, setLayout] = useState<LayoutType>('force');
-  const [highlightedNode, setHighlightedNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const prefersReducedMotion = useMemo(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    []
+  );
 
   useEffect(() => {
-    async function fetchGraphData() {
-      try {
-        const response = await fetch('/gdd-graph.json');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch graph data: ${response.statusText}`);
-        }
-        const graphData: GraphData = await response.json();
-        setData(graphData);
-        setLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        setLoading(false);
-      }
-    }
-
-    fetchGraphData();
-  }, []);
-
-  useEffect(() => {
-    if (!data || !svgRef.current) return;
+    if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
+    // Fetch graph data
+    fetch('/gdd-graph.json')
+      .then(response => response.json())
+      .then((data: GraphData) => {
+        // Calculate node positions
+        const positionedNodes = calculateNodePositions(data.nodes);
 
-    const g = svg.append('g');
+        // Calculate SVG dimensions based on layout
+        const maxLayer = Math.max(...positionedNodes.map(n => n.layer ?? 0));
+        const svgWidth = (maxLayer + 1) * (NODE_WIDTH + HORIZONTAL_GAP) + 2 * CANVAS_PADDING;
+        const svgHeight = 600;
 
-    // Zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 3])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-      });
+        svg.attr('width', svgWidth).attr('height', svgHeight);
 
-    svg.call(zoom);
+        // Define arrow marker
+        const defs = svg.append('defs');
+        defs.append('marker')
+          .attr('id', 'arrowhead')
+          .attr('markerWidth', 10)
+          .attr('markerHeight', 10)
+          .attr('refX', 9)
+          .attr('refY', 3)
+          .attr('orient', 'auto')
+          .attr('markerUnits', 'strokeWidth')
+          .append('path')
+          .attr('d', 'M0,0 L0,6 L9,3 z')
+          .attr('fill', 'rgba(255, 255, 255, 0.3)');
 
-    // Color scale
-    const color = d3.scaleOrdinal<number, string>()
-      .domain([1, 2, 3, 4])
-      .range(['#00FF41', '#FFB800', '#00D9FF', '#FF3B3B']);
+        // Create node lookup
+        const nodeMap = new Map(positionedNodes.map(n => [n.id, n]));
 
-    // Create simulation
-    let simulation: d3.Simulation<GraphNode, GraphLink>;
+        // Draw links
+        const linkGroup = svg.append('g').attr('class', 'links');
+        data.links.forEach(link => {
+          const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+          const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+          const sourceNode = nodeMap.get(sourceId);
+          const targetNode = nodeMap.get(targetId);
 
-    if (layout === 'force') {
-      simulation = d3.forceSimulation<GraphNode>(data.nodes)
-        .force('link', d3.forceLink<GraphNode, GraphLink>(data.links).id(d => d.id).distance(100))
-        .force('charge', d3.forceManyBody().strength(-300))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(50));
-    } else if (layout === 'circular') {
-      const radius = Math.min(width, height) / 3;
-      const angleStep = (2 * Math.PI) / data.nodes.length;
+          if (sourceNode && targetNode && sourceNode.x !== undefined && sourceNode.y !== undefined &&
+              targetNode.x !== undefined && targetNode.y !== undefined) {
+            const path = generateBezierPath(sourceNode.x, sourceNode.y, targetNode.x, targetNode.y);
 
-      data.nodes.forEach((node, i) => {
-        node.x = width / 2 + radius * Math.cos(i * angleStep);
-        node.y = height / 2 + radius * Math.sin(i * angleStep);
-        node.fx = node.x;
-        node.fy = node.y;
-      });
-
-      simulation = d3.forceSimulation<GraphNode>(data.nodes)
-        .force('link', d3.forceLink<GraphNode, GraphLink>(data.links).id(d => d.id).distance(100));
-    } else {
-      // Hierarchical layout
-      const levels: { [key: number]: GraphNode[] } = {};
-      data.nodes.forEach(node => {
-        if (!levels[node.group]) levels[node.group] = [];
-        levels[node.group].push(node);
-      });
-
-      Object.entries(levels).forEach(([group, nodes]) => {
-        const y = (parseInt(group) - 1) * (height / 4) + height / 8;
-        const spacing = width / (nodes.length + 1);
-        nodes.forEach((node, i) => {
-          node.x = spacing * (i + 1);
-          node.y = y;
-          node.fx = node.x;
-          node.fy = node.y;
+            linkGroup.append('path')
+              .attr('d', path)
+              .attr('stroke', 'rgba(255, 255, 255, 0.2)')
+              .attr('stroke-width', 2)
+              .attr('fill', 'none')
+              .attr('marker-end', 'url(#arrowhead)')
+              .attr('data-source', sourceId)
+              .attr('data-target', targetId)
+              .style('transition', 'stroke 0.3s ease, stroke-width 0.3s ease');
+          }
         });
-      });
 
-      simulation = d3.forceSimulation<GraphNode>(data.nodes)
-        .force('link', d3.forceLink<GraphNode, GraphLink>(data.links).id(d => d.id).distance(100));
-    }
+        // Draw nodes
+        const nodeGroup = svg.append('g').attr('class', 'nodes');
+        positionedNodes.forEach(node => {
+          if (node.x === undefined || node.y === undefined) return;
 
-    // Draw links
-    const link = g.append('g')
-      .selectAll('line')
-      .data(data.links)
-      .join('line')
-      .attr('stroke', '#00FF41')
-      .attr('stroke-opacity', 0.3)
-      .attr('stroke-width', d => Math.sqrt(d.value) * 2);
+          const g = nodeGroup.append('g')
+            .attr('class', 'node')
+            .attr('data-node-id', node.id)
+            .attr('transform', `translate(${node.x}, ${node.y})`)
+            .style('cursor', 'pointer');
 
-    // Draw nodes
-    const node = g.append('g')
-      .selectAll('g')
-      .data(data.nodes)
-      .join('g')
-      .call(d3.drag<SVGGElement, GraphNode>()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended) as any);
+          // Node background
+          const rect = g.append('rect')
+            .attr('width', NODE_WIDTH)
+            .attr('height', NODE_HEIGHT)
+            .attr('rx', NODE_BORDER_RADIUS)
+            .attr('fill', 'rgba(26, 32, 38, 0.95)')
+            .attr('stroke', 'rgba(138, 255, 128, 0.3)')
+            .attr('stroke-width', 1.5)
+            .style('transition', 'all 0.3s ease');
 
-    node.append('circle')
-      .attr('r', d => 10 + (d.coverage / 10))
-      .attr('fill', d => color(d.group))
-      .attr('stroke', '#00FF41')
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.8)
-      .on('mouseenter', function(event, d) {
-        setHighlightedNode(d.id);
-        d3.select(this)
-          .attr('opacity', 1)
-          .attr('stroke-width', 4);
+          // Node content group
+          const contentG = g.append('g')
+            .attr('transform', `translate(${NODE_WIDTH / 2}, ${NODE_HEIGHT / 2})`);
 
-        // Highlight connected links
-        link.attr('stroke-opacity', l => {
-          const sourceId = typeof l.source === 'object' ? l.source.id : l.source;
-          const targetId = typeof l.target === 'object' ? l.target.id : l.target;
-          return sourceId === d.id || targetId === d.id ? 0.8 : 0.1;
+          // Icon (centered at top of content area)
+          const iconG = contentG.append('g')
+            .attr('transform', 'translate(-12, -25)')
+            .attr('color', '#8AFF80');
+
+          // Text label (below icon)
+          contentG.append('text')
+            .attr('y', 8)
+            .attr('text-anchor', 'middle')
+            .attr('font-family', 'JetBrains Mono, monospace')
+            .attr('font-size', '12px')
+            .attr('font-weight', '600')
+            .attr('fill', '#ffffff')
+            .text(node.id);
+
+          // Coverage badge
+          if (node.coverage !== undefined) {
+            contentG.append('text')
+              .attr('y', 24)
+              .attr('text-anchor', 'middle')
+              .attr('font-family', 'JetBrains Mono, monospace')
+              .attr('font-size', '10px')
+              .attr('fill', '#8AFF80')
+              .text(`${node.coverage}%`);
+          }
+
+          // Event handlers
+          g.on('mouseenter', function() {
+            setHoveredNode(node.id);
+
+            if (!prefersReducedMotion) {
+              d3.select(this).select('rect')
+                .transition()
+                .duration(200)
+                .attr('fill', 'rgba(26, 32, 38, 1)')
+                .attr('stroke', 'rgba(138, 255, 128, 0.6)')
+                .attr('stroke-width', 2)
+                .attr('transform', 'scale(1.02)');
+            } else {
+              d3.select(this).select('rect')
+                .attr('stroke', 'rgba(138, 255, 128, 0.6)')
+                .attr('stroke-width', 2);
+            }
+
+            // Highlight connected paths
+            svg.selectAll('path')
+              .filter(function() {
+                const path = d3.select(this);
+                return path.attr('data-source') === node.id || path.attr('data-target') === node.id;
+              })
+              .attr('stroke', 'rgba(138, 255, 128, 0.6)')
+              .attr('stroke-width', 3);
+          })
+          .on('mouseleave', function() {
+            setHoveredNode(null);
+
+            if (!prefersReducedMotion) {
+              d3.select(this).select('rect')
+                .transition()
+                .duration(200)
+                .attr('fill', 'rgba(26, 32, 38, 0.95)')
+                .attr('stroke', 'rgba(138, 255, 128, 0.3)')
+                .attr('stroke-width', 1.5)
+                .attr('transform', 'scale(1)');
+            } else {
+              d3.select(this).select('rect')
+                .attr('stroke', 'rgba(138, 255, 128, 0.3)')
+                .attr('stroke-width', 1.5);
+            }
+
+            // Reset path highlighting
+            svg.selectAll('path')
+              .attr('stroke', 'rgba(255, 255, 255, 0.2)')
+              .attr('stroke-width', 2);
+          })
+          .on('click', function() {
+            setSelectedNode(selectedNode === node.id ? null : node.id);
+
+            if (!prefersReducedMotion) {
+              d3.select(this).select('rect')
+                .transition()
+                .duration(100)
+                .attr('transform', 'scale(0.98)')
+                .transition()
+                .duration(200)
+                .attr('transform', 'scale(1.05)')
+                .transition()
+                .duration(100)
+                .attr('transform', 'scale(1)');
+            }
+          });
         });
+
       })
-      .on('mouseleave', function() {
-        setHighlightedNode(null);
-        d3.select(this)
-          .attr('opacity', 0.8)
-          .attr('stroke-width', 2);
-
-        link.attr('stroke-opacity', 0.3);
+      .catch(error => {
+        console.error('Failed to load graph data:', error);
       });
 
-    node.append('text')
-      .text(d => d.id)
-      .attr('x', 0)
-      .attr('y', d => -(12 + d.coverage / 10))
-      .attr('text-anchor', 'middle')
-      .attr('font-family', 'JetBrains Mono, monospace')
-      .attr('font-size', '10px')
-      .attr('font-weight', 'bold')
-      .attr('fill', '#00FF41')
-      .attr('pointer-events', 'none');
-
-    // Coverage badge
-    node.append('text')
-      .text(d => `${d.coverage}%`)
-      .attr('x', 0)
-      .attr('y', 4)
-      .attr('text-anchor', 'middle')
-      .attr('font-family', 'JetBrains Mono, monospace')
-      .attr('font-size', '8px')
-      .attr('fill', '#0A0E14')
-      .attr('font-weight', 'bold')
-      .attr('pointer-events', 'none');
-
-    simulation.on('tick', () => {
-      link
-        .attr('x1', d => (d.source as GraphNode).x!)
-        .attr('y1', d => (d.source as GraphNode).y!)
-        .attr('x2', d => (d.target as GraphNode).x!)
-        .attr('y2', d => (d.target as GraphNode).y!);
-
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
-    });
-
-    function dragstarted(event: d3.D3DragEvent<SVGGElement, GraphNode, GraphNode>) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event: d3.D3DragEvent<SVGGElement, GraphNode, GraphNode>) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragended(event: d3.D3DragEvent<SVGGElement, GraphNode, GraphNode>) {
-      if (!event.active) simulation.alphaTarget(0);
-      if (layout === 'force') {
-        event.subject.fx = null;
-        event.subject.fy = null;
-      }
-    }
-
-    return () => {
-      simulation.stop();
-    };
-  }, [data, layout]);
-
-  if (loading) {
-    return (
-      <GraphContainer>
-        <LoadingSpinner>Loading dependency graph...</LoadingSpinner>
-      </GraphContainer>
-    );
-  }
-
-  if (error) {
-    return (
-      <GraphContainer>
-        <ErrorMessage>⚠️ Failed to load graph data: {error}</ErrorMessage>
-      </GraphContainer>
-    );
-  }
+  }, [selectedNode, prefersReducedMotion]);
 
   return (
     <GraphContainer>
       <Header>
         <Title>🔗 Dependency Graph</Title>
         <Controls>
-          <Button active={layout === 'force'} onClick={() => setLayout('force')}>
-            Force
-          </Button>
-          <Button active={layout === 'circular'} onClick={() => setLayout('circular')}>
-            Circular
-          </Button>
-          <Button active={layout === 'hierarchical'} onClick={() => setLayout('hierarchical')}>
-            Hierarchical
-          </Button>
+          <Button $active={true}>Workflow View</Button>
         </Controls>
       </Header>
 
       <SvgContainer>
-        <svg ref={svgRef} width="100%" height="100%" />
+        <svg ref={svgRef} style={{ display: 'block' }} />
       </SvgContainer>
 
       <Legend>
         <LegendItem>
-          <LegendColor color="#00FF41" />
-          <span>Core Services (roast, shield)</span>
+          <LegendColor color="rgba(138, 255, 128, 0.3)" />
+          <span>Node Border</span>
         </LegendItem>
         <LegendItem>
-          <LegendColor color="#FFB800" />
-          <span>Configuration (persona, tone)</span>
+          <LegendColor color="rgba(138, 255, 128, 0.6)" />
+          <span>Hover State</span>
         </LegendItem>
         <LegendItem>
-          <LegendColor color="#00D9FF" />
-          <span>Infrastructure (queue, billing)</span>
-        </LegendItem>
-        <LegendItem>
-          <LegendColor color="#FF3B3B" />
-          <span>Analytics & Integrations</span>
+          <LegendColor color="rgba(255, 255, 255, 0.2)" />
+          <span>Dependency Path</span>
         </LegendItem>
       </Legend>
-
-      {highlightedNode && (
-        <div style={{
-          marginTop: '16px',
-          padding: '12px',
-          background: 'rgba(0, 255, 65, 0.1)',
-          border: '1px solid #00FF41',
-          borderRadius: '4px',
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '14px',
-          color: '#00FF41'
-        }}>
-          Selected: <strong>{highlightedNode}</strong>
-        </div>
-      )}
     </GraphContainer>
   );
 }
