@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { LeftSidebar } from './LeftSidebar';
 import { HealthPanel } from './HealthPanel';
 import { GraphView } from './GraphView';
 import { ReportsViewer } from '@components/dashboard/ReportsViewer';
 import { NodeDetailsDrawer } from './NodeDetailsDrawer';
+import { useGDDData } from '@hooks/useGDDData';
 
 type ViewType = 'health' | 'graph' | 'reports';
 
@@ -33,21 +34,24 @@ export const CommandCenterLayout: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
-  // Mock data - will be replaced with real data from hooks
-  const [stats, setStats] = useState({
-    health: 95.5,
-    drift: 12,
-    nodes: 13,
-    coverage: 78
-  });
+  // Fetch real GDD data
+  const { health, drift, nodes, coverage, loading, error, lastUpdated, refresh } = useGDDData();
 
-  const [activities] = useState([
-    { timestamp: '18:20', event: 'System validation completed - 13 nodes validated' },
-    { timestamp: '18:15', event: 'Health scores updated - Average 95.5/100' },
-    { timestamp: '18:10', event: 'Drift analysis completed - 13 nodes low risk' },
-    { timestamp: '18:05', event: 'DependencyGraph component updated' },
-    { timestamp: '18:00', event: 'GDD runtime validation passed' },
-  ]);
+  // Map to stats object for compatibility
+  const stats = {
+    health,
+    drift,
+    nodes,
+    coverage
+  };
+
+  // Generate recent activities from real data
+  const activities = [
+    { timestamp: lastUpdated, event: `System validation completed - ${nodes} nodes validated` },
+    { timestamp: lastUpdated, event: `Health scores updated - Average ${health.toFixed(1)}/100` },
+    { timestamp: lastUpdated, event: `Drift analysis completed - ${drift}% average risk` },
+    { timestamp: lastUpdated, event: `Coverage at ${coverage}% across all nodes` },
+  ];
 
   const handleNodeClick = (nodeId: string) => {
     setSelectedNode(nodeId);
@@ -80,6 +84,55 @@ export const CommandCenterLayout: React.FC = () => {
   };
 
   const renderMainContent = () => {
+    // Show loading state
+    if (loading && nodes === 0) {
+      return (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: '#bdbdbd',
+          fontFamily: 'JetBrains Mono, monospace'
+        }}>
+          Loading GDD data...
+        </div>
+      );
+    }
+
+    // Show error state
+    if (error) {
+      return (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: '#ff5555',
+          fontFamily: 'JetBrains Mono, monospace',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <div>⚠️ Failed to load GDD data</div>
+          <div style={{ fontSize: '14px', color: '#8a8a8a' }}>{error}</div>
+          <button
+            onClick={refresh}
+            style={{
+              background: '#1f1d20',
+              border: '1px solid #50fa7b',
+              borderRadius: '4px',
+              padding: '8px 16px',
+              color: '#50fa7b',
+              cursor: 'pointer',
+              fontFamily: 'JetBrains Mono, monospace'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+
     switch (activeView) {
       case 'health':
         return <HealthPanel stats={stats} activities={activities} />;
