@@ -29,7 +29,7 @@ Shield is the automated content moderation system for Roastr.ai that provides ad
 
 ### Main Flow
 
-```
+```text
 Comment Analysis (toxicity_score, labels)
     ↓
 ShieldDecisionEngine.makeDecision()
@@ -315,7 +315,7 @@ Shield maps generic actions to platform-specific implementations:
 
 ### Action Execution Flow
 
-```
+```text
 Decision Made → Queue shield_action job (priority 1)
     ↓
 ShieldActionWorker picks up job
@@ -512,7 +512,7 @@ When primary action fails or circuit is open:
 
 ### Settings Inheritance Model
 
-```
+```text
 Global Defaults
     ↓
 Organization Settings (org-level)
@@ -644,7 +644,7 @@ Shield integrates with the triage system for automated comment routing:
 
 ### Triage Flow Integration
 
-```
+```text
 Comment Analyzed (toxicity_score)
     ↓
 TriageService.processComment()

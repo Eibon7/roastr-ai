@@ -93,11 +93,50 @@ CREATE TABLE analytics_events (
   platform VARCHAR(50),
   user_id UUID REFERENCES users(id),
 
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-
-  INDEX (organization_id, event_type, created_at),
-  INDEX (organization_id, event_category, created_at)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Indexes for query performance
+CREATE INDEX idx_analytics_events_org_type_time
+  ON analytics_events(organization_id, event_type, created_at);
+CREATE INDEX idx_analytics_events_org_category_time
+  ON analytics_events(organization_id, event_category, created_at);
+```
+
+## Safety Patterns
+
+### Null Safety in Calculations
+
+All aggregation queries use defensive null handling:
+
+**Pattern 1: COALESCE for default values**
+```sql
+SELECT
+  COALESCE(SUM(toxicity_score), 0) as total_toxicity,
+  COALESCE(AVG(response_time_ms), 0) as avg_response_time
+FROM analytics_events
+WHERE organization_id = $1;
+```
+
+**Pattern 2: NULLIF to prevent division by zero**
+```sql
+SELECT
+  COALESCE(
+    SUM(successful_responses)::FLOAT /
+    NULLIF(SUM(total_requests), 0),
+    0
+  ) * 100 as success_rate_pct
+FROM analytics_aggregates;
+```
+
+**Pattern 3: Safe percentage calculations**
+```sql
+SELECT
+  CASE
+    WHEN total_count = 0 THEN 0
+    ELSE (filtered_count::FLOAT / total_count * 100)
+  END as percentage
+FROM analytics_summary;
 ```
 
 **Table:** `analytics_recommendations`
@@ -366,6 +405,34 @@ async function getEngagementAnalytics(organizationId, startDate, endDate) {
   };
 }
 ```
+
+### Safe Array Relationship Handling
+
+When joining arrays or handling platform-specific data:
+
+```sql
+-- Safe array operations with existence checks
+SELECT
+  ae.id,
+  ae.platform,
+  COALESCE(
+    (ae.metadata->>'platform_data')::jsonb,
+    '{}'::jsonb
+  ) as platform_data,
+  CASE
+    WHEN jsonb_typeof(ae.metadata->'tags') = 'array'
+    THEN ae.metadata->'tags'
+    ELSE '[]'::jsonb
+  END as tags_array
+FROM analytics_events ae
+WHERE ae.organization_id = $1
+  AND ae.metadata IS NOT NULL;
+```
+
+**Key safety checks**:
+- COALESCE for missing JSONB fields
+- jsonb_typeof to validate array types
+- Explicit NULL checks before accessing nested fields
 
 ### 5. Shield Analytics
 
