@@ -13,6 +13,7 @@
  *   node scripts/validate-gdd-runtime.js --report
  *   node scripts/validate-gdd-runtime.js --ci
  *   node scripts/validate-gdd-runtime.js --score    # Run validation + health scoring
+ *   node scripts/validate-gdd-runtime.js --drift    # Run validation + drift prediction
  */
 
 const fs = require('fs').promises;
@@ -67,8 +68,16 @@ class GDDValidator {
       // Generate reports
       await this.generateReports();
 
+      // Run drift prediction if requested
+      let driftData = null;
+      if (this.options.drift || this.options.full) {
+        const { GDDDriftPredictor } = require('./predict-gdd-drift');
+        const predictor = new GDDDriftPredictor({ mode: 'full', ci: this.isCIMode });
+        driftData = await predictor.predict();
+      }
+
       // Output summary
-      this.printSummary();
+      this.printSummary(driftData);
 
       // Exit code for CI
       if (this.isCIMode && this.results.status !== 'healthy') {
@@ -528,7 +537,17 @@ class GDDValidator {
    */
   async generateReports() {
     if (!this.options.skipReports) {
-      await this.generateMarkdownReport();
+      // Load drift data if exists
+      let driftData = null;
+      const driftPath = path.join(this.rootDir, 'gdd-drift.json');
+      try {
+        const driftContent = await fs.readFile(driftPath, 'utf8');
+        driftData = JSON.parse(driftContent);
+      } catch (error) {
+        // Drift data not available, skip
+      }
+
+      await this.generateMarkdownReport(driftData);
       await this.generateJSONReport();
     }
   }
@@ -536,7 +555,7 @@ class GDDValidator {
   /**
    * Generate system-validation.md
    */
-  async generateMarkdownReport() {
+  async generateMarkdownReport(driftData) {
     const statusEmoji = {
       healthy: '🟢',
       warning: '🟡',
@@ -559,7 +578,21 @@ class GDDValidator {
 - **Missing References:** ${this.results.missing_refs.length}
 - **Cycles Detected:** ${this.results.cycles.length}
 - **Drift Issues:** ${Object.keys(this.results.drift).length}
+`;
 
+    // Add drift summary if available
+    if (driftData) {
+      markdown += `
+### 🔮 Drift Risk Summary
+
+- **Average Drift Risk:** ${driftData.average_drift_risk}/100
+- **High Risk Nodes (>60):** ${driftData.high_risk_count}
+- **At Risk Nodes (31-60):** ${driftData.at_risk_count}
+- **Healthy Nodes (0-30):** ${driftData.healthy_count}
+`;
+    }
+
+    markdown += `
 ---
 
 ## Validation Results
@@ -627,6 +660,32 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
 `;
     }
 
+    // Drift Risk Table
+    if (driftData && Object.keys(driftData.nodes).length > 0) {
+      markdown += `### 🔮 Drift Risk Analysis
+
+| Node | Drift Risk | Status | Health Score | Last Commit | Recommendations |
+|------|------------|--------|--------------|-------------|-----------------|
+`;
+
+      const nodeEntries = Object.entries(driftData.nodes)
+        .sort((a, b) => b[1].drift_risk - a[1].drift_risk);
+
+      for (const [nodeName, data] of nodeEntries) {
+        const emoji = data.status === 'likely_drift' ? '🔴' : data.status === 'at_risk' ? '🟡' : '🟢';
+        const lastCommit = data.git_activity.last_commit_days_ago !== null
+          ? `${data.git_activity.last_commit_days_ago}d ago`
+          : 'N/A';
+        const recommendations = data.recommendations.length > 0
+          ? data.recommendations[0]
+          : '-';
+
+        markdown += `| ${nodeName} | ${emoji} ${data.drift_risk} | ${data.status} | ${data.health_score || 'N/A'} | ${lastCommit} | ${recommendations} |\n`;
+      }
+
+      markdown += `\n`;
+    }
+
     markdown += `---
 
 **Validation Time:** ${((Date.now() - this.startTime) / 1000).toFixed(2)}s
@@ -656,7 +715,7 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
   /**
    * Print summary to console
    */
-  printSummary() {
+  printSummary(driftData) {
     if (this.isCIMode) return;
 
     console.log('');
@@ -684,6 +743,17 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
 
     if (Object.keys(this.results.drift).length > 0) {
       console.log(`⚠ ${Object.keys(this.results.drift).length} drift issue(s)`);
+    }
+
+    // Add drift risk summary
+    if (driftData) {
+      console.log('');
+      console.log('═══════════════════════════════════════');
+      console.log('         DRIFT RISK SUMMARY');
+      console.log('═══════════════════════════════════════');
+      console.log('');
+      console.log(`🟢 ${driftData.healthy_count} Healthy | 🟡 ${driftData.at_risk_count} At Risk | 🔴 ${driftData.high_risk_count} Likely Drift`);
+      console.log(`📊 Average Drift Risk: ${driftData.average_drift_risk}/100`);
     }
 
     console.log('');
@@ -722,11 +792,13 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
 async function main() {
   const args = process.argv.slice(2);
   const runScoring = args.includes('--score');
+  const runDrift = args.includes('--drift');
 
   const options = {
     mode: 'full',
     ci: args.includes('--ci'),
     skipReports: args.includes('--report') && args.length === 1,
+    drift: runDrift,
     node: null
   };
 

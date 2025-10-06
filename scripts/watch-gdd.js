@@ -14,6 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const { GDDValidator } = require('./validate-gdd-runtime');
+const { GDDDriftPredictor } = require('./predict-gdd-drift');
 
 class GDDWatcher {
   constructor() {
@@ -142,8 +143,12 @@ class GDDWatcher {
       const scorer = new GDDHealthScorer({ json: true });
       const { stats } = await scorer.score();
 
-      // Print status bar with health info
-      this.printStatusBar(results, stats);
+      // Run drift prediction
+      const driftPredictor = new GDDDriftPredictor({ mode: 'full', ci: true });
+      const driftData = await driftPredictor.predict();
+
+      // Print status bar with health and drift info
+      this.printStatusBar(results, stats, driftData);
 
       this.lastStatus = results.status;
     } catch (error) {
@@ -156,7 +161,7 @@ class GDDWatcher {
   /**
    * Print visual status bar
    */
-  printStatusBar(results, healthStats) {
+  printStatusBar(results, healthStats, driftData) {
     const statusColors = {
       healthy: '\x1b[42m',   // Green background
       warning: '\x1b[43m',   // Yellow background
@@ -192,6 +197,31 @@ class GDDWatcher {
       console.log('📊 NODE HEALTH STATUS');
       console.log(`🟢 ${healthStats.healthy_count} Healthy | 🟡 ${healthStats.degraded_count} Degraded | 🔴 ${healthStats.critical_count} Critical`);
       console.log(`Average Score: ${healthStats.average_score}/100`);
+      console.log('────────────────────────────────────────');
+      console.log('');
+    }
+
+    // Add drift risk summary
+    if (driftData) {
+      console.log('────────────────────────────────────────');
+      console.log('🔮 DRIFT RISK STATUS');
+      console.log(`🟢 ${driftData.healthy_count} Healthy | 🟡 ${driftData.at_risk_count} At Risk | 🔴 ${driftData.high_risk_count} Likely Drift`);
+      console.log(`Average Drift Risk: ${driftData.average_drift_risk}/100`);
+
+      // Show top 3 highest risk nodes
+      if (driftData.nodes && Object.keys(driftData.nodes).length > 0) {
+        const topRiskNodes = Object.entries(driftData.nodes)
+          .sort((a, b) => b[1].drift_risk - a[1].drift_risk)
+          .slice(0, 3);
+
+        if (topRiskNodes.length > 0) {
+          console.log('\nTop Risk Nodes:');
+          for (const [nodeName, data] of topRiskNodes) {
+            const emoji = data.status === 'likely_drift' ? '🔴' : data.status === 'at_risk' ? '🟡' : '🟢';
+            console.log(`  ${emoji} ${nodeName}: ${data.drift_risk}/100`);
+          }
+        }
+      }
       console.log('────────────────────────────────────────');
       console.log('');
     }

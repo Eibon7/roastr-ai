@@ -76,7 +76,14 @@ node scripts/validate-gdd-runtime.js --diff    # Validate only changed nodes
 node scripts/validate-gdd-runtime.js --node=shield  # Validate specific node
 node scripts/validate-gdd-runtime.js --report  # Generate report only
 node scripts/validate-gdd-runtime.js --ci      # CI mode (exit 1 on errors)
+node scripts/validate-gdd-runtime.js --drift   # Include drift prediction
 node scripts/watch-gdd.js                      # Watch mode (development)
+
+# GDD Drift Prediction (Phase 8)
+node scripts/predict-gdd-drift.js --full       # Predict drift risk for all nodes
+node scripts/predict-gdd-drift.js --node=shield  # Analyze specific node
+node scripts/predict-gdd-drift.js --ci         # CI mode (exit 1 if high-risk)
+node scripts/predict-gdd-drift.js --create-issues  # Create GitHub issues for high-risk nodes
 ```
 
 ## Multi-Tenant Project Structure
@@ -841,6 +848,118 @@ Average Score: 82.4/100
 - Check average score > 75
 - No critical nodes (<50) allowed
 - Address degraded nodes (50-79) or document why deferred
+
+## Predictive Drift Detection (GDD 2.0 - Phase 8)
+
+The GDD system includes predictive drift detection that analyzes historical patterns to forecast documentation drift risk before it happens.
+
+### How It Works
+
+The drift predictor analyzes multiple factors to calculate a **Drift Risk Score (0-100)** for each node:
+
+| Factor | Impact | Description |
+|--------|--------|-------------|
+| Last Updated | +20 pts | Node not updated in >30 days |
+| Active Warnings | +10 pts/warning | Validation issues detected |
+| Test Coverage | +15 pts | Coverage < 80% |
+| Health Score | +25 pts | Health score < 70 |
+| Recent Activity | -10 pts | Commit in last 7 days (reduces risk) |
+
+### Risk Levels
+
+- 🟢 **Healthy (0-30)**: Well-maintained, low risk
+- 🟡 **At Risk (31-60)**: Needs attention soon
+- 🔴 **Likely Drift (61-100)**: High risk, immediate action required
+
+### Commands
+
+```bash
+# Run drift prediction
+node scripts/predict-gdd-drift.js --full
+
+# Analyze specific node
+node scripts/predict-gdd-drift.js --node=shield
+
+# CI mode (exit code 1 if high-risk nodes found)
+node scripts/predict-gdd-drift.js --ci
+
+# Create GitHub issues for high-risk nodes (>70)
+node scripts/predict-gdd-drift.js --create-issues
+
+# Integrated with validator
+node scripts/validate-gdd-runtime.js --drift
+
+# Watcher automatically runs drift detection
+node scripts/watch-gdd.js  # includes drift in real-time dashboard
+```
+
+### Output Files
+
+- **docs/drift-report.md**: Human-readable report with risk factors and recommendations
+- **gdd-drift.json**: Machine-readable data for automation
+
+### Example Output
+
+```json
+{
+  "generated_at": "2025-10-06T10:37:35.795Z",
+  "analysis_period_days": 30,
+  "overall_status": "WARNING",
+  "average_drift_risk": 30,
+  "high_risk_count": 0,
+  "at_risk_count": 6,
+  "healthy_count": 7,
+  "nodes": {
+    "billing": {
+      "drift_risk": 45,
+      "status": "at_risk",
+      "factors": [
+        "+20 pts: No last_updated timestamp",
+        "+10 pts: 1 active warning(s)",
+        "+25 pts: Health score 62 (<70)",
+        "-10 pts: Recent commit (0 days ago)"
+      ],
+      "recommendations": [
+        "Add last_updated timestamp to metadata",
+        "Resolve 1 validation warning(s)",
+        "Improve health score to 70+ (currently 62)"
+      ],
+      "git_activity": {
+        "commits_last_30d": 7,
+        "last_commit_days_ago": 0
+      }
+    }
+  }
+}
+```
+
+### Integration with Workflow
+
+**Development:**
+```bash
+# Start watcher - includes drift monitoring
+node scripts/watch-gdd.js
+```
+
+**Before PR:**
+```bash
+# Check drift risk
+node scripts/predict-gdd-drift.js --full
+# Review docs/drift-report.md
+# Address nodes with risk > 60
+```
+
+**CI/CD:**
+```bash
+# Automated drift checking
+node scripts/predict-gdd-drift.js --ci
+# Fails build if high-risk nodes detected
+```
+
+**Automatic Alerts:**
+- Nodes with risk > 70 can trigger automatic GitHub issues
+- Issues include risk factors, recommendations, and action items
+- Labels: `documentation`, `drift-risk`
 
 ### Tareas al Cerrar
 
