@@ -1,0 +1,47 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/unit/services/queueService.test.js
+
+PASS node-tests tests/unit/services/queueService.test.js
+  QueueService
+    Constructor and Configuration
+      ✓ should initialize with correct default properties (13 ms)
+      ✓ should have correct priority queue mappings (12 ms)
+      ✓ should accept custom options (13 ms)
+    Queue Key Generation
+      ✓ should generate correct queue keys for different priorities (11 ms)
+      ✓ should handle default priority (11 ms)
+      ✓ should handle various job types (12 ms)
+    Job ID Generation
+      ✓ should generate unique job IDs (12 ms)
+      ✓ should generate IDs with correct format (12 ms)
+    addJob
+      ✓ should create job with correct properties (12 ms)
+      ✓ should use default priority when not specified (11 ms)
+      ✓ should set correct max attempts (11 ms)
+      ✓ should fallback to database when Redis unavailable (11 ms)
+    getNextJob
+      ✓ should return null when no jobs available (11 ms)
+      ✓ should prioritize Redis when available (11 ms)
+      ✓ should use database when Redis unavailable (12 ms)
+    Job Management
+      ✓ should complete job successfully (11 ms)
+      ✓ should handle job completion gracefully (12 ms)
+      ✓ should handle job without throwing errors (12 ms)
+    Statistics and Monitoring
+      ✓ should return queue statistics structure (11 ms)
+      ✓ should handle database-only statistics (13 ms)
+    Utility Methods
+      ✓ should handle logging correctly (21 ms)
+      ✓ should handle shutdown gracefully (12 ms)
+      ✓ should increment metrics properly (12 ms)
+    Error Handling
+      ✓ should handle Redis connection errors gracefully (15 ms)
+      ✓ should handle malformed job data (47 ms)
+      ✓ should handle valid job data (11 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       26 passed, 26 total
+Snapshots:   0 total
+Time:        0.695 s, estimated 1 s
+Ran all test suites matching tests/unit/services/queueService.test.js.

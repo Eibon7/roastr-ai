@@ -201,6 +201,16 @@ describe('QueueService', () => {
       expect(result.job.organization_id).toBe('org-123');
       expect(result.job.priority).toBe(2);
       expect(result.queuedTo).toBe('redis');
+
+      // Validate the job object passed to addJobToRedis
+      const [jobArg] = queueService.addJobToRedis.mock.calls[0];
+      expect(jobArg).toMatchObject({
+        job_type: 'fetch_comments',
+        organization_id: 'org-123',
+        priority: 2,
+        payload: jobData,
+        max_attempts: 3
+      });
     });
 
     test('should use default priority when not specified', async () => {
@@ -224,6 +234,15 @@ describe('QueueService', () => {
       expect(result.success).toBe(true);
       expect(result.jobId).toBeDefined();
       expect(result.job.priority).toBe(5);
+
+      // Validate the job object has default priority
+      const [jobArg] = queueService.addJobToRedis.mock.calls[0];
+      expect(jobArg).toMatchObject({
+        job_type: 'fetch_comments',
+        organization_id: 'org-123',
+        priority: 5,
+        payload: jobData
+      });
     });
 
     test('should set correct max attempts', async () => {
@@ -243,6 +262,15 @@ describe('QueueService', () => {
       expect(result.success).toBe(true);
       expect(result.jobId).toBeDefined();
       expect(result.job.max_attempts).toBe(5);
+
+      // Validate the job object has custom max_attempts
+      const [jobArg] = queueService.addJobToRedis.mock.calls[0];
+      expect(jobArg).toMatchObject({
+        job_type: 'test',
+        organization_id: 'org-123',
+        max_attempts: 5,
+        payload: jobData
+      });
     });
 
     test('should fallback to database when Redis unavailable', async () => {
@@ -261,6 +289,14 @@ describe('QueueService', () => {
       expect(result.success).toBe(true);
       expect(result.jobId).toBeDefined();
       expect(queueService.addJobToDatabase).toHaveBeenCalled();
+
+      // Validate the job object passed to addJobToDatabase
+      const [jobArg] = queueService.addJobToDatabase.mock.calls[0];
+      expect(jobArg).toMatchObject({
+        job_type: 'test',
+        organization_id: 'org-123',
+        payload: jobData
+      });
     });
   });
 
