@@ -1,8 +1,16 @@
 /**
  * Queue Service Tests
- * 
+ *
  * Tests for unified Redis/Database queue management with priority support
  */
+
+// Mock mockMode to disable it in tests
+jest.mock('../../../src/config/mockMode', () => ({
+  mockMode: {
+    isMockMode: false,
+    generateMockSupabaseClient: jest.fn()
+  }
+}));
 
 const QueueService = require('../../../src/services/queueService');
 
@@ -187,6 +195,12 @@ describe('QueueService', () => {
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
       expect(result.jobId).toBeDefined();
+      expect(result.job).toBeDefined();
+      expect(result.job.id).toBeDefined();
+      expect(result.job.job_type).toBe('fetch_comments');
+      expect(result.job.organization_id).toBe('org-123');
+      expect(result.job.priority).toBe(2);
+      expect(result.queuedTo).toBe('redis');
     });
 
     test('should use default priority when not specified', async () => {
@@ -209,6 +223,7 @@ describe('QueueService', () => {
 
       expect(result.success).toBe(true);
       expect(result.jobId).toBeDefined();
+      expect(result.job.priority).toBe(5);
     });
 
     test('should set correct max attempts', async () => {
@@ -227,6 +242,7 @@ describe('QueueService', () => {
 
       expect(result.success).toBe(true);
       expect(result.jobId).toBeDefined();
+      expect(result.job.max_attempts).toBe(5);
     });
 
     test('should fallback to database when Redis unavailable', async () => {
@@ -293,6 +309,9 @@ describe('QueueService', () => {
       jest.spyOn(queueService, 'completeJobInDatabase').mockResolvedValue(true);
       jest.spyOn(queueService, 'incrementMetric').mockResolvedValue(true);
 
+      // Ensure supabase is available for the test
+      queueService.supabase = {};
+
       await queueService.completeJob(job, result);
 
       expect(queueService.completeJobInDatabase).toHaveBeenCalledWith(job, result);
@@ -338,6 +357,7 @@ describe('QueueService', () => {
       });
 
       queueService.isRedisAvailable = true;
+      queueService.supabase = {}; // Ensure database is available
 
       const stats = await queueService.getQueueStats();
 
@@ -356,6 +376,7 @@ describe('QueueService', () => {
       });
 
       queueService.isRedisAvailable = false;
+      queueService.supabase = {}; // Ensure database is available
 
       const stats = await queueService.getQueueStats();
 

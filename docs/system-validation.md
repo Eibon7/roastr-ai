@@ -1,6 +1,6 @@
 # System Validation Report
 
-**Generated:** 2025-10-03T18:23:09.156Z
+**Generated:** 2025-10-04T21:45:20.543Z
 **Tool:** resolve-graph.js
 
 ---
@@ -39,7 +39,8 @@
 | social-platforms | Back-end Dev, Documentation Agent, Test Engineer |
 | trainer | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
 | analytics | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
+| billing | Back-end Dev, Documentation Agent, Test Engineer |
 
 ---
 
-**Last validated:** 2025-10-03T18:23:09.156Z
+**Last validated:** 2025-10-04T21:45:20.543Z

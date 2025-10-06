@@ -328,6 +328,30 @@ const prompt = await promptTemplate.buildPrompt({
 - **Si detectas commits fuera de scope → detener y abrir nueva PR**: Evitar la deriva del alcance durante el desarrollo.
 - **Documentar estas reglas también en la plantilla de PR**: Asegurar que todos los colaboradores conozcan las normas.
 
+### ⭐ Quality Standards (CRÍTICO)
+
+**Ver docs/QUALITY-STANDARDS.md para detalles completos.**
+
+**Requisitos NO NEGOCIABLES para mergear PR:**
+1. ✅ Sin conflictos con main
+2. ✅ CI/CD passing (todos los jobs verdes)
+3. ✅ **0 comentarios de CodeRabbit** (CERO, no "casi cero")
+
+**Pre-Flight Checklist OBLIGATORIO antes de `gh pr create`:**
+- Tests completos y pasando
+- Documentación actualizada (CLAUDE.md, spec.md, nodos GDD)
+- Code quality (sin console.logs, TODOs, código muerto)
+- Self-review exhaustivo (como si fueras CodeRabbit)
+
+**Si CodeRabbit comenta:**
+- NO pedir merge
+- Implementar TODAS las sugerencias
+- Push de correcciones
+- Esperar nueva review
+- Repetir hasta 0 comentarios
+
+**Mentalidad:** Producto monetizable, no proyecto de instituto. Calidad > Velocidad.
+
 ### Reglas de Commits y Tests
 
 - **Commit sin tests no permitido**: Todo código nuevo debe incluir pruebas correspondientes.
@@ -418,7 +442,12 @@ Issue #408: "Shield integration tests"
 - **El plan debe incluir sección "Estado Actual"** basada en el assessment realizado.
 - **El plan debe describir**: pasos de diseño, subagentes a usar, archivos afectados, criterios de validación.
 - **Guarda el plan en `docs/plan/<issue>.md`**.
-- **Solo después de que el plan esté guardado y validado, procede a la implementación**.
+- **⚠️ CRÍTICO: Después de guardar el plan, CONTINÚA AUTOMÁTICAMENTE con la implementación**.
+  - **NO esperes confirmación** del usuario
+  - **NO preguntes** "¿procedemos?" o "¿continuamos?"
+  - El plan es para **documentar**, no para **pedir permiso**
+  - **EJECUTA el plan inmediatamente** después de guardarlo
+  - Solo te detienes si encuentras un **bloqueador técnico real** (API down, credenciales faltantes, etc.)
 
 ### Gestión de Agentes Relevantes (GDD Phase 4)
 
@@ -594,6 +623,33 @@ ORCHESTRATOR:
 
 ### Tareas al Cerrar
 
-- **Actualizar siempre spec.md con el nuevo estado del sistema**: Reflejar los cambios realizados en la documentación central.
-- **Incluir mapa de cobertura de tests + referencia a evidencias visuales**: Documentar qué se ha probado y cómo.
-- **Dejar un changelog detallado en la PR**: código, tests, evidencias para facilitar el review y futuro mantenimiento.
+**🚨 VERIFICACIÓN OBLIGATORIA antes de marcar tarea como completa:**
+
+1. **Tests DEBEN PASAR al 100%**:
+   ```bash
+   npm test -- <relevant-tests>
+   # O específico:
+   npm test <test-file>.test.js
+   ```
+   - ✅ **0 tests fallando** - Si hay 1 solo test rojo, la tarea NO está completa
+   - ❌ **NUNCA marcar completa con tests failing**
+   - Si tests fallan → arreglar ANTES de continuar
+
+2. **Pre-Flight Checklist ejecutado**:
+   - [ ] Tests pasando (ver punto 1)
+   - [ ] Documentación actualizada
+   - [ ] Code quality verificado
+   - [ ] Self-review completado
+
+3. **Documentación actualizada**:
+   - **spec.md** reflejando nuevos cambios
+   - **Nodos GDD** con status actualizado
+   - **Mapa de cobertura de tests** + evidencias visuales
+   - **Changelog detallado** en la PR
+
+**⚠️ Si encuentras tests failing:**
+- NO continúes con siguiente tarea
+- NO marques como completa
+- Arregla los tests AHORA
+- Re-ejecuta para verificar
+- Solo entonces procede

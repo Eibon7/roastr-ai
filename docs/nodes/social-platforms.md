@@ -4,13 +4,17 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-05
 
 ## Dependencies
 
 - `multi-tenant` - Organization-scoped integration configs
 - `platform-constraints` - Character limits and style guides
 - `queue-system` - Comment fetching via workers
+
+## Used By
+
+- `queue-system` - PublisherWorker calls platform services via postResponse
 
 ## Overview
 
@@ -103,6 +107,64 @@ CREATE TABLE integration_configs (
   )
 );
 ```
+
+## Twitter Legacy Adapter Pattern
+
+**Context:** CodeRabbit Review #3302108179 - Missing Twitter Service Path
+
+The Twitter integration uses an **adapter pattern** to bridge legacy architecture with the unified integration path convention:
+
+**Legacy Path:** `src/services/twitter.js` (600+ lines)
+- Used by: Twitter bot, collectors, OAuth providers
+- Maintained for backward compatibility
+
+**Integration Path:** `src/integrations/twitter/twitterService.js` (NEW - adapter)
+- Delegates to legacy TwitterRoastBot
+- Provides path consistency with other 8 platforms
+- Required by PublisherWorker
+
+**Adapter Implementation:**
+```javascript
+class TwitterService {
+  constructor() {
+    this.bot = new TwitterRoastBot(); // Delegate to legacy
+    this.supportDirectPosting = true;
+  }
+
+  async postResponse(tweetId, responseText, userId) {
+    try {
+      // Adapt PublisherWorker signature → legacy bot signature
+      const result = await this.bot.postResponse(tweetId, responseText);
+
+      if (result.success) {
+        const responseTweetId = result.data?.id || result.id;
+        return {
+          success: true,
+          responseId: responseTweetId,
+          id: responseTweetId
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error || 'Unknown error'
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+}
+```
+
+**Future Migration:**
+Once all dependent code migrates to the integration pattern, the legacy bot can be deprecated and the adapter can become the primary implementation.
+
+**Related:**
+- Issue #410 (PublisherWorker)
+- CodeRabbit Review #3302108179
 
 ## Platform Details
 
@@ -789,5 +851,5 @@ describe('Multi-Platform Workflow', () => {
 
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Monthly or on platform API changes
-**Last Reviewed:** 2025-10-03
-**Version:** 1.0.0
+**Last Reviewed:** 2025-10-04
+**Version:** 1.1.0 (PublisherWorker integration - Issue #410)

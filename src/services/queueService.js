@@ -50,9 +50,12 @@ class QueueService {
    */
   async initialize() {
     try {
-      // Skip real connections in mock mode
+      // Initialize mock Supabase client in mock mode
       if (mockMode.isMockMode) {
-        this.log('info', 'Queue Service initialized in mock mode - skipping real connections');
+        this.supabase = mockMode.generateMockSupabaseClient();
+        this.isDatabaseAvailable = true;
+        this.isRedisAvailable = false;
+        this.log('info', 'Queue Service initialized in mock mode with mock Supabase client');
         return;
       }
       
@@ -176,16 +179,22 @@ class QueueService {
 
     try {
       let result;
+      let queuedTo;
+
       if (this.isRedisAvailable) {
         result = await this.addJobToRedis(job, options);
+        queuedTo = 'redis';
       } else {
         result = await this.addJobToDatabase(job);
+        queuedTo = 'database';
       }
 
-      // Normalize return value to { success, jobId }
+      // Return consistent format with all fields
       return {
         success: true,
-        jobId: result.id || result.job_id || job.id
+        jobId: job.id,
+        job: result,
+        queuedTo
       };
 
     } catch (error) {
@@ -198,12 +207,16 @@ class QueueService {
       // Try fallback if primary method fails
       try {
         let fallbackResult;
+        let fallbackQueue;
+
         if (this.isRedisAvailable) {
           this.log('info', 'Trying database fallback for job addition');
           fallbackResult = await this.addJobToDatabase(job);
+          fallbackQueue = 'database';
         } else if (this.redis) {
           this.log('info', 'Trying Redis fallback for job addition');
           fallbackResult = await this.addJobToRedis(job, options);
+          fallbackQueue = 'redis';
         } else {
           // No fallback available
           return {
@@ -215,7 +228,9 @@ class QueueService {
         // Fallback succeeded
         return {
           success: true,
-          jobId: fallbackResult.id || fallbackResult.job_id || job.id
+          jobId: job.id,
+          job: fallbackResult,
+          queuedTo: fallbackQueue
         };
       } catch (fallbackError) {
         // Both primary and fallback failed

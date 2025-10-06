@@ -86,4 +86,4 @@ Implementar tests de integración completos para el sistema Ingestor que verifiq
 - Tests de manejo de errores: 45 min
 - Documentación y validación: 30 min
 
-**Total estimado: 4.5 horas**
+#### Total estimado: 4.5 horas

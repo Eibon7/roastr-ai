@@ -660,7 +660,7 @@ const calculateQualityScore = (variant, originalComment) => {
 
   // Quality metric 3: Language coherence (Spanish chars for Spanish input)
   const spanishPattern = /[áéíóúñü]/i;
-  const hasSpanishChars = spanishPattern.test(text) || text.split(' ').length > 3;
+  const hasSpanishChars = spanishPattern.test(text) || text.split(' ').length >= 10;
   if (hasSpanishChars) {
     score += 0.15;
   }
