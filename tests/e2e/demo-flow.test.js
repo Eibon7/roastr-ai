@@ -94,6 +94,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
       } catch (error) {
         // In mock mode, worker may not have all dependencies - validate structure
         expect(fetchWorker.workerType).toBe('fetch_comments');
+        expect(error.message).toMatch(/Worker timeout|connection|dependency|not found|invalid|unavailable/i);
         console.log('✅ Ingest worker structure validated (timeout or error expected in mock mode)');
       }
 
@@ -119,6 +120,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
       } catch (error) {
         // In mock mode, validate worker exists and has correct type
         expect(triageWorker.workerType).toBe('analyze_toxicity');
+        expect(error.message).toMatch(/Worker timeout|connection|dependency|not found|invalid|unavailable/i);
         console.log('✅ Triage worker structure validated (timeout or error expected in mock mode)');
       }
 
@@ -146,6 +148,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
       } catch (error) {
         // In mock mode, validate worker exists and has correct type
         expect(generationWorker.workerType).toBe('generate_reply');
+        expect(error.message).toMatch(/Worker timeout|connection|dependency|not found|invalid|unavailable/i);
         console.log('✅ Generation worker structure validated (timeout or error expected in mock mode)');
       }
 
