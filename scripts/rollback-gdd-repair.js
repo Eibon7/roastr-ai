@@ -28,6 +28,9 @@ class RollbackEngine {
     console.log('═══════════════════════════════════════════');
     console.log('');
 
+    // Pre-flight safety checks
+    await this.performPreFlightChecks();
+
     const backupDir = timestamp === 'last'
       ? await this.getLastBackup()
       : path.join(this.backupsRoot, timestamp);
@@ -158,6 +161,47 @@ class RollbackEngine {
     const backups = await fs.readdir(this.backupsRoot);
     const sorted = backups.sort().reverse();
     return sorted.length > 0 ? path.join(this.backupsRoot, sorted[0]) : null;
+  }
+
+  async performPreFlightChecks() {
+    const { execSync } = require('child_process');
+
+    try {
+      // Check for uncommitted changes
+      const gitStatus = execSync('git status --porcelain', {
+        encoding: 'utf-8',
+        cwd: this.rootDir
+      });
+
+      if (gitStatus.trim().length > 0) {
+        console.warn('⚠️  WARNING: You have uncommitted changes!');
+        console.warn('   Rollback may overwrite current work.');
+        console.warn('');
+        console.warn('   Run `git stash` to save your changes first.');
+        console.warn('');
+        throw new Error('Uncommitted changes detected. Rollback aborted.');
+      }
+    } catch (error) {
+      if (error.message.includes('Uncommitted changes')) {
+        throw error;
+      }
+      // Git not available or other error - log warning and continue
+      console.warn('⚠️  Could not verify git status (git may not be available)');
+      console.warn('');
+    }
+
+    try {
+      // Log current commit for reference
+      const currentCommit = execSync('git rev-parse HEAD', {
+        encoding: 'utf-8',
+        cwd: this.rootDir
+      }).trim();
+
+      console.log(`📍 Current commit: ${currentCommit.substring(0, 8)}`);
+      console.log('');
+    } catch (error) {
+      // Git not available, continue silently
+    }
   }
 
   async loadManifest(backupDir) {
