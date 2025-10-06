@@ -32,7 +32,7 @@ export interface GDDStatusData {
   mode: string;
   nodes_validated: number;
   orphans: string[];
-  drift: Record<string, any>;
+  drift: Record<string, unknown>;
   outdated: string[];
   cycles: string[];
   missing_refs: string[];
