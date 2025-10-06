@@ -10,6 +10,9 @@
 
 ---
 
+**Last Updated:** 2025-10-06
+**Coverage:** 65%
+
 ## Propósito
 
 El nodo **Billing** gestiona toda la integración con Stripe para suscripciones, webhooks y gestión de planes. Actúa como punto de entrada para operaciones de billing, coordinando entre servicios de pago, entitlements y queue system.
@@ -634,9 +637,14 @@ function getPlanFromStripeLookupKey(lookupKey) {
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Billing Specialist**
+- **Orchestrator**
+
 
 ---
 

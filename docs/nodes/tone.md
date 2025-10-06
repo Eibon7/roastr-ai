@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-06
+**Coverage:** 73%
 
 ## Dependencies
 
@@ -290,10 +291,13 @@ test('tone configuration affects roast style', async () => {
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- UX Researcher
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **UX Designer**
+
 
 ## Related Nodes
 

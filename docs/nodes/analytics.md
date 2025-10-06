@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Planned
 **Status:** Roadmap
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-06
+**Coverage:** 60%
 
 ## Dependencies
 
@@ -624,10 +625,13 @@ describe('AnalyticsService', () => {
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Documentation Agent
-- Performance Monitor Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Data Analyst**
+
 
 ## Related Nodes
 

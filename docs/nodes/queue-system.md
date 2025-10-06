@@ -590,10 +590,14 @@ test('should process fixtures through complete pipeline', async () => {
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Performance Monitor Agent
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Performance Monitor**
+- **Orchestrator**
+
 
 ## Related Nodes
 

@@ -135,8 +135,8 @@ class GDDHealthScorer {
       }
     }
 
-    // Extract last_updated
-    const dateMatch = content.match(/last[_\s]updated:?\s*(\d{4}-\d{2}-\d{2})/i);
+    // Extract last_updated (supports both "last_updated:" and "**Last Updated:**")
+    const dateMatch = content.match(/\*?\*?last[_\s]updated:?\*?\*?\s*(\d{4}-\d{2}-\d{2})/i);
     if (dateMatch) {
       metadata.last_updated = dateMatch[1];
     }
@@ -154,15 +154,19 @@ class GDDHealthScorer {
       metadata.dependencies = depMatches.map(m => m.match(/([a-z-]+)\.md/i)[1]);
     }
 
-    // Extract agents
+    // Extract agents (supports both "- Agent" and "- **Agent**")
     const agentsSection = content.match(/##\s*Agentes Relevantes[\s\S]*?(?=##|$)/i);
     if (agentsSection) {
-      const agentMatches = agentsSection[0].match(/-\s*([A-Za-z\s]+Agent)/g) || [];
-      metadata.agents = agentMatches.map(m => m.replace(/^-\s*/, '').trim());
+      // Match lines starting with "- " followed by optional ** and agent name
+      const agentMatches = agentsSection[0].match(/-\s*\*?\*?([A-Za-z\s]+(?:Agent|Developer|Engineer|Analyst|Orchestrator))\*?\*?/gi) || [];
+      metadata.agents = agentMatches.map(m => {
+        // Remove leading "- " and optional "**"
+        return m.replace(/^-\s*\*?\*?/, '').replace(/\*?\*?$/, '').trim();
+      });
     }
 
-    // Extract coverage
-    const coverageMatch = content.match(/coverage:?\s*(\d+)%/i);
+    // Extract coverage (supports both "coverage: 60%" and "**Coverage:** 60%")
+    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
     if (coverageMatch) {
       metadata.coverage = parseInt(coverageMatch[1]);
     }
@@ -321,22 +325,27 @@ class GDDHealthScorer {
     const coverage = nodeData.metadata.coverage;
     const hasTests = nodeData.metadata.tests && nodeData.metadata.tests.length > 0;
 
-    if (!hasTests) {
-      return 0; // No tests documented
+    // If coverage is explicitly documented, use it regardless of Testing section
+    if (coverage !== null && coverage !== undefined) {
+      // Score based on coverage percentage
+      if (coverage >= 80) {
+        return 100;
+      } else if (coverage >= 60) {
+        return 70;
+      } else if (coverage >= 40) {
+        return 50;
+      } else {
+        return 30;
+      }
     }
 
-    if (coverage === null || coverage === undefined) {
+    // If no coverage but tests are documented
+    if (hasTests) {
       return 50; // Tests exist but no coverage documented
     }
 
-    // Score based on coverage percentage
-    if (coverage >= 80) {
-      return 100;
-    } else if (coverage >= 60) {
-      return 70;
-    } else {
-      return 40;
-    }
+    // No tests or coverage documented
+    return 0;
   }
 
   /**

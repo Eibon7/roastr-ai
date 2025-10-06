@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-06
+**Coverage:** 78%
 
 ## Dependencies
 
@@ -1018,10 +1019,14 @@ const stats = await shieldService.getShieldStats('org_123', 30);
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Security Audit Agent
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Security Engineer**
+- **Orchestrator**
+
 
 ## Related Nodes
 

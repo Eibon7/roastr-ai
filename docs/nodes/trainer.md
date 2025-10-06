@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Planned
 **Status:** Roadmap
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-06
+**Coverage:** 45%
 
 ## Dependencies
 
@@ -558,10 +559,13 @@ describe('TrainingService', () => {
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Documentation Agent
-- Performance Monitor Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Backend Developer**
+- **ML Engineer**
+- **Data Scientist**
+
 
 ## Related Nodes
 

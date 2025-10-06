@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-05
+**Last Updated:** 2025-10-06
+**Coverage:** 72%
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
 
 ## Dependencies
@@ -796,10 +797,14 @@ See `docs/test-evidence/issue-412/SUMMARY.md` for details.
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Security Audit Agent
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Security Engineer**
+- **Database Admin**
+
 
 ## Related Nodes
 
