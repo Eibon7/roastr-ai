@@ -92,7 +92,7 @@ He completado **TODAS LAS FASES (100%)** del plan de mejoras para Issue #409, im
 1. `tests/unit/config/tones.test.js` (223 líneas, 22 tests)
 2. `tests/unit/services/roastEngine-versions.test.js` (150 líneas, 11 tests)
 
-**Total: 33 unit tests implementados**
+#### Total: 33 unit tests implementados
 
 **tones.test.js - 22 tests:**
 - TONE_DEFINITIONS immutability (3 tests)
