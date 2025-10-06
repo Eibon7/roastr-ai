@@ -301,6 +301,13 @@ const reports = [
   { id: 'drift', label: 'Drift Prediction Report', file: 'report-drift.md' },
 ];
 
+/**
+ * Renders a Reports Viewer UI that loads and displays Markdown reports and lets the user download the currently selected report.
+ *
+ * The component manages report selection, fetches the selected report's markdown content, presents loading, error, and empty states, renders content with syntax highlighting, and exposes a Download control that saves the current markdown file.
+ *
+ * @returns A JSX element representing the Reports Viewer component
+ */
 export function ReportsViewer() {
   const [selectedReport, setSelectedReport] = useState(reports[0].id);
   const [content, setContent] = useState<string>('');

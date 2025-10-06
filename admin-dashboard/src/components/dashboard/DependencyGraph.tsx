@@ -282,7 +282,14 @@ const LegendColor = styled.div<{ color: string }>`
   background: ${({ color }) => color};
 `;
 
-// ===== HELPER FUNCTIONS =====
+/**
+ * Compute absolute canvas positions and assign a layer index for each node.
+ *
+ * Positions are derived from a predefined mapping of node IDs to horizontal layers and from layout constants (node size, gaps, and canvas padding); nodes within the same layer are vertically stacked and centered.
+ *
+ * @param nodes - Array of nodes whose `id` values are used to determine horizontal layer placement
+ * @returns A new array of GraphNode where each node includes computed `x`, `y`, and `layer` properties
+ */
 function calculateNodePositions(nodes: GraphNode[]): GraphNode[] {
   // Group nodes by layer
   const layers: Record<number, GraphNode[]> = {};
@@ -314,6 +321,17 @@ function calculateNodePositions(nodes: GraphNode[]): GraphNode[] {
   return positionedNodes;
 }
 
+/**
+ * Create a cubic Bezier SVG path that connects two node rectangles horizontally.
+ *
+ * Generates a path starting at the right center of the source node and ending at the left center of the target node, using control points biased toward the horizontal midpoint (capped) to produce a smooth curve.
+ *
+ * @param sourceX - X coordinate of the source node's top-left corner
+ * @param sourceY - Y coordinate of the source node's top-left corner
+ * @param targetX - X coordinate of the target node's top-left corner
+ * @param targetY - Y coordinate of the target node's top-left corner
+ * @returns An SVG path string for a cubic Bezier curve connecting the two nodes
+ */
 function generateBezierPath(
   sourceX: number,
   sourceY: number,
@@ -330,7 +348,13 @@ function generateBezierPath(
             ${targetX} ${targetY + NODE_HEIGHT / 2}`;
 }
 
-// ===== MAIN COMPONENT =====
+/**
+ * Render an interactive dependency graph visualization for workflow nodes and links.
+ *
+ * Fetches graph data (from /gdd-graph.json), lays out nodes, and renders an SVG-based graph with hover and selection interactions, animated transitions (disabled when the user prefers reduced motion), and a legend and controls bar.
+ *
+ * @returns The rendered React element containing the dependency graph UI
+ */
 export function DependencyGraph() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);

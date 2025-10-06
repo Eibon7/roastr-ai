@@ -788,7 +788,21 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
   }
 }
 
-// CLI Entry Point
+/**
+ * CLI entry point that runs the GDD runtime validation and, optionally, the node health scorer.
+ *
+ * Parses process.argv for flags to configure validation mode and behavior, instantiates a GDDValidator
+ * with the resolved options, and invokes its validate flow. If the `--score` flag is present, runs
+ * the GDDHealthScorer and prints a compact health summary to stdout.
+ *
+ * Recognized flags:
+ * - `--score` : run node health scoring after validation
+ * - `--drift` : enable drift checks
+ * - `--ci`    : run in CI mode (suppresses non-error logging and influences exit behavior)
+ * - `--report`: controls report generation (combined with other args affects skip behavior)
+ * - `--diff`  : run in diff validation mode
+ * - `--node=NAME` : run validation for a single node (sets mode to `single` and selects the node)
+ */
 async function main() {
   const args = process.argv.slice(2);
   const runScoring = args.includes('--score');

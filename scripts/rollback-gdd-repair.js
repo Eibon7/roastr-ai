@@ -191,7 +191,18 @@ class RollbackEngine {
   }
 }
 
-// CLI Entry Point
+/**
+ * Parse CLI arguments and dispatch rollback, list, and verify commands for the GDD Auto-Repair Rollback system.
+ *
+ * Parses arguments from process.argv and handles the following commands:
+ * - --list: lists available backups
+ * - --verify <timestamp>: verifies a specific backup
+ * - --last: rolls back to the most recent backup
+ * - --timestamp <timestamp>: rolls back to a specific backup
+ * - --help, -h: prints usage and exits
+ *
+ * Prints usage when no arguments or help flags are provided. Invokes the corresponding RollbackEngine methods and terminates the process with exit code 0 on success or 1 on failure. If a required timestamp argument is missing, prints an error and exits with code 1.
+ */
 async function main() {
   const args = process.argv.slice(2);
 
