@@ -2,6 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import { Overview } from '@components/dashboard/Overview';
 import { NodeExplorer } from '@components/dashboard/NodeExplorer';
+import { DependencyGraph } from '@components/dashboard/DependencyGraph';
+import { ReportsViewer } from '@components/dashboard/ReportsViewer';
 
 const DashboardContainer = styled.div`
   width: 100%;
@@ -126,32 +128,11 @@ function GDDDashboard() {
       {/* Node Explorer - FUNCTIONAL */}
       <NodeExplorer />
 
-      {/* Placeholder components - Coming soon */}
-      <GridContainer>
-        <Card>
-          <CardTitle>
-            Dependency Graph
-            <ComingSoonBadge>Coming Soon</ComingSoonBadge>
-          </CardTitle>
-          <CardContent>
-            <PlaceholderText>
-              D3.js force-directed graph visualization of node dependencies.
-            </PlaceholderText>
-          </CardContent>
-        </Card>
+      {/* Dependency Graph - FUNCTIONAL */}
+      <DependencyGraph />
 
-        <Card>
-          <CardTitle>
-            Reports Viewer
-            <ComingSoonBadge>Coming Soon</ComingSoonBadge>
-          </CardTitle>
-          <CardContent>
-            <PlaceholderText>
-              Markdown reports: Validation, Health, Drift, and Auto-Repair.
-            </PlaceholderText>
-          </CardContent>
-        </Card>
-      </GridContainer>
+      {/* Reports Viewer - FUNCTIONAL */}
+      <ReportsViewer />
     </DashboardContainer>
   );
 }
