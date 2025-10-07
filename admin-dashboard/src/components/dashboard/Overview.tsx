@@ -190,6 +190,13 @@ const ErrorMessage = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
+/**
+ * Render the dashboard overview card displaying GDD health, drift, and status metrics.
+ *
+ * Shows a loading spinner while any GDD data is being fetched, a styled error banner if health data fails to load, and nothing if health data is absent after loading. When data is available, displays overall system status with last-updated time, primary metric cards (health score, drift risk, total nodes, coverage), and a recent activity list with conditional entries for degraded or critical node counts.
+ *
+ * @returns The overview component element containing status, metrics, and recent activity.
+ */
 export function Overview() {
   const { data: healthData, isLoading: healthLoading, error: healthError } = useGDDHealth();
   const { data: driftData, isLoading: driftLoading } = useGDDDrift();

@@ -9,6 +9,8 @@ const NODE_BORDER_RADIUS = 8;
 const HORIZONTAL_GAP = 180;
 const VERTICAL_GAP = 40;
 const CANVAS_PADDING = 80;
+const CANVAS_HEIGHT = 600;
+const BEZIER_CONTROL_OFFSET_CAP = 100;
 
 // ===== SVG ICON COMPONENTS =====
 const MessageSquareIcon = ({ color = '#8AFF80' }: { color?: string }) => (
@@ -243,7 +245,7 @@ const Button = styled.button<{ $active?: boolean }>`
 
 const SvgContainer = styled.div`
   width: 100%;
-  height: 600px;
+  height: ${CANVAS_HEIGHT}px;
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -282,7 +284,14 @@ const LegendColor = styled.div<{ color: string }>`
   background: ${({ color }) => color};
 `;
 
-// ===== HELPER FUNCTIONS =====
+/**
+ * Compute absolute canvas positions and assign a layer index for each node.
+ *
+ * Positions are derived from a predefined mapping of node IDs to horizontal layers and from layout constants (node size, gaps, and canvas padding); nodes within the same layer are vertically stacked and centered.
+ *
+ * @param nodes - Array of nodes whose `id` values are used to determine horizontal layer placement
+ * @returns A new array of GraphNode where each node includes computed `x`, `y`, and `layer` properties
+ */
 function calculateNodePositions(nodes: GraphNode[]): GraphNode[] {
   // Group nodes by layer
   const layers: Record<number, GraphNode[]> = {};
@@ -299,7 +308,7 @@ function calculateNodePositions(nodes: GraphNode[]): GraphNode[] {
   Object.entries(layers).forEach(([layerStr, layerNodes]) => {
     const layer = parseInt(layerStr);
     const layerHeight = layerNodes.length * (NODE_HEIGHT + VERTICAL_GAP) - VERTICAL_GAP;
-    const startY = CANVAS_PADDING + (600 - 2 * CANVAS_PADDING - layerHeight) / 2;
+    const startY = CANVAS_PADDING + (CANVAS_HEIGHT - 2 * CANVAS_PADDING - layerHeight) / 2;
 
     layerNodes.forEach((node, index) => {
       positionedNodes.push({
@@ -314,6 +323,17 @@ function calculateNodePositions(nodes: GraphNode[]): GraphNode[] {
   return positionedNodes;
 }
 
+/**
+ * Create a cubic Bezier SVG path that connects two node rectangles horizontally.
+ *
+ * Generates a path starting at the right center of the source node and ending at the left center of the target node, using control points biased toward the horizontal midpoint (capped) to produce a smooth curve.
+ *
+ * @param sourceX - X coordinate of the source node's top-left corner
+ * @param sourceY - Y coordinate of the source node's top-left corner
+ * @param targetX - X coordinate of the target node's top-left corner
+ * @param targetY - Y coordinate of the target node's top-left corner
+ * @returns An SVG path string for a cubic Bezier curve connecting the two nodes
+ */
 function generateBezierPath(
   sourceX: number,
   sourceY: number,
@@ -321,8 +341,8 @@ function generateBezierPath(
   targetY: number
 ): string {
   const dx = targetX - sourceX;
-  const controlX1 = sourceX + Math.min(dx * 0.5, 100);
-  const controlX2 = targetX - Math.min(dx * 0.5, 100);
+  const controlX1 = sourceX + Math.min(dx * 0.5, BEZIER_CONTROL_OFFSET_CAP);
+  const controlX2 = targetX - Math.min(dx * 0.5, BEZIER_CONTROL_OFFSET_CAP);
 
   return `M ${sourceX + NODE_WIDTH} ${sourceY + NODE_HEIGHT / 2}
           C ${controlX1} ${sourceY + NODE_HEIGHT / 2},
@@ -330,7 +350,13 @@ function generateBezierPath(
             ${targetX} ${targetY + NODE_HEIGHT / 2}`;
 }
 
-// ===== MAIN COMPONENT =====
+/**
+ * Render an interactive dependency graph visualization for workflow nodes and links.
+ *
+ * Fetches graph data (from /gdd-graph.json), lays out nodes, and renders an SVG-based graph with hover and selection interactions, animated transitions (disabled when the user prefers reduced motion), and a legend and controls bar.
+ *
+ * @returns The rendered React element containing the dependency graph UI
+ */
 export function DependencyGraph() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -356,7 +382,7 @@ export function DependencyGraph() {
         // Calculate SVG dimensions based on layout
         const maxLayer = Math.max(...positionedNodes.map(n => n.layer ?? 0));
         const svgWidth = (maxLayer + 1) * (NODE_WIDTH + HORIZONTAL_GAP) + 2 * CANVAS_PADDING;
-        const svgHeight = 600;
+        const svgHeight = CANVAS_HEIGHT;
 
         svg.attr('width', svgWidth).attr('height', svgHeight);
 

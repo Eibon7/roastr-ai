@@ -20,9 +20,10 @@ export interface GDDRawData {
 }
 
 /**
- * Custom hook to fetch and manage GDD system data
- * Fetches data from gdd-health.json, gdd-status.json, gdd-drift.json
- * Auto-refreshes every 30 seconds
+ * Exposes GDD health, status, and drift data alongside derived metrics and a refresh control for React components.
+ *
+ * @param autoRefresh - If `true`, polls the GDD endpoints every 30 seconds; if `false`, disables automatic polling.
+ * @returns An object containing derived metrics (`health`, `drift`, `nodes`, `coverage`), state (`loading`, `error`, `lastUpdated`), a `refresh` function to re-fetch data, and `rawData` with the fetched `health`, `status`, and `drift` payloads.
  */
 export function useGDDData(autoRefresh = true): GDDStats & { rawData: GDDRawData } {
   const [loading, setLoading] = useState(true);
@@ -96,7 +97,10 @@ export function useGDDData(autoRefresh = true): GDDStats & { rawData: GDDRawData
 }
 
 /**
- * Calculate average coverage from coverageEvidence across all nodes
+ * Compute the average `coverageEvidence` across all nodes and return it as a rounded integer.
+ *
+ * @param healthData - The GDD health payload containing a `nodes` map; may be `null`.
+ * @returns The average `coverageEvidence` per node rounded to the nearest integer, or `0` if no node data is available.
  */
 function calculateCoverage(healthData: GDDHealthData | null): number {
   if (!healthData || !healthData.nodes) return 0;

@@ -339,6 +339,15 @@ interface NodeRow {
   issues: string[];
 }
 
+/**
+ * Renders an interactive node health explorer with search, filters, sorting, and expandable detail rows.
+ *
+ * The component fetches health data, derives a tabular list of nodes, and provides client-side:
+ * search by name, status and coverage filters, sortable columns (name, score, status, coverage),
+ * and per-row expansion showing detailed metrics and issue lists.
+ *
+ * @returns The JSX element containing the node explorer UI
+ */
 export function NodeExplorer() {
   const { data: healthData, isLoading, error } = useGDDHealth();
   const [searchQuery, setSearchQuery] = useState('');

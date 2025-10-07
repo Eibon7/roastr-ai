@@ -572,7 +572,13 @@ class GDDDriftPredictor {
   }
 }
 
-// CLI Entry Point
+/**
+ * CLI entry point that parses command-line flags, configures a GDDDriftPredictor, and runs the prediction workflow.
+ *
+ * Parses --ci, --create-issues, and --node=<name> to build the predictor options (switching to single-node mode when --node is provided),
+ * instantiates GDDDriftPredictor with those options, and invokes its prediction run. When running in CI mode, exits the process
+ * with the numeric code returned by the predictor if one is provided.
+ */
 async function main() {
   const args = process.argv.slice(2);
 

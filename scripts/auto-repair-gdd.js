@@ -766,7 +766,14 @@ Los siguientes agentes son responsables de mantener este nodo:
   }
 }
 
-// CLI Entry Point
+/**
+ * Parse command-line arguments and run the AutoRepairEngine with the selected options.
+ *
+ * Reads flags (--auto, --ci, --dry-run, --verbose/-v, --help/-h) from process.argv,
+ * prints usage and exits when help is requested, constructs an AutoRepairEngine
+ * with the chosen options, invokes its repair flow, and exits with status 1 when
+ * running in CI mode and the repair result indicates failure.
+ */
 async function main() {
   const args = process.argv.slice(2);
   const options = {

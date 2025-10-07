@@ -564,7 +564,11 @@ class GDDHealthScorer {
   }
 }
 
-// CLI Entry Point
+/**
+ * CLI entry point that parses command-line options and runs the GDD health scoring workflow.
+ *
+ * Parses the `--json` flag, instantiates a GDDHealthScorer with the derived options, and invokes its scoring process which generates the health reports and console summary (console output is suppressed when `--json` is provided).
+ */
 async function main() {
   const args = process.argv.slice(2);
   const options = {

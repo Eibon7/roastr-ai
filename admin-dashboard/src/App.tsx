@@ -15,6 +15,11 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Application root component that configures React Query, theming, accessibility, and routes for the admin dashboard.
+ *
+ * @returns The root React element for the admin dashboard application.
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>

@@ -251,7 +251,14 @@ class GDDHealthComputer {
   }
 }
 
-// CLI Entry Point
+/**
+ * Parse CLI arguments, run the GDD health computation, and handle process-level output and exits.
+ *
+ * Parses command-line options (--min-score, --ci, --json, --verbose/-v, --help), validates the
+ * minimum score value, prints help or validation errors when appropriate, creates a
+ * GDDHealthComputer with the resolved options, invokes its computation, and—if run in CI mode—
+ * exits the process with the resulting exit code (0 = pass, 1 = fail, 2 = error).
+ */
 async function main() {
   const args = process.argv.slice(2);
 

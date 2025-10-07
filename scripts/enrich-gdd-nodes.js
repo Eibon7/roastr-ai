@@ -305,7 +305,11 @@ class GDDNodeEnricher {
   }
 }
 
-// CLI Entry Point
+/**
+ * CLI entry point that creates a GDDNodeEnricher and runs its enrichment process.
+ *
+ * Instantiates the enricher and invokes its enrich method to update GDD node Markdown files.
+ */
 async function main() {
   const enricher = new GDDNodeEnricher();
   await enricher.enrich();

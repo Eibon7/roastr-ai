@@ -264,7 +264,9 @@ class GDDWatcher {
   }
 }
 
-// CLI Entry Point
+/**
+ * CLI entry point that instantiates a GDDWatcher and starts watching for changes.
+ */
 async function main() {
   const watcher = new GDDWatcher();
   await watcher.start();
