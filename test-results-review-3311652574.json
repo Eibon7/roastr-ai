@@ -1,0 +1,115 @@
+{
+  "review": "3311652574",
+  "timestamp": "2025-10-07T20:05:27.571Z",
+  "totalTests": 21,
+  "passed": 21,
+  "failed": 0,
+  "successRate": 100,
+  "results": [
+    {
+      "name": "execFileSync is imported",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "createIssue uses execFileSync with array arguments",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "createIssue does not use execSync",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "gh CLI arguments are properly separated",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "RuntimeValidator can call trigger_validation",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "RuntimeValidator can call read_nodes",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "RuntimeValidator cannot call update_metadata",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "RuntimeValidator cannot call write_field",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "RuntimeValidator cannot call create_issue",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "RuntimeValidator cannot call trigger_auto_repair",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Code uses whitelist approach (mutatingPrefixes)",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Mutating prefixes include all critical operations",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "pollIntervalRef is declared",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "pollIntervalRef uses useRef",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "setInterval result is stored in pollIntervalRef.current",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "disconnectWebSocket clears interval",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "pollIntervalRef.current is set to null after clearing",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "connectWebSocket checks for existing interval",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Commit step has pull_request conditional",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Uses git-auto-commit-action",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Conditional appears before action invocation",
+      "passed": true,
+      "details": ""
+    }
+  ]
+}
