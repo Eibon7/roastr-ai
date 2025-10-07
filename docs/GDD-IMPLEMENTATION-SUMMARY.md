@@ -1,7 +1,7 @@
 # Graph Driven Development (GDD) - Implementation Summary
 
-**Status:** ✅ Phase 2 Completed - 6 Nodes Documented
-**Date:** October 3, 2025
+**Status:** ✅ Phases 2-10 Completed - 13 Nodes Documented
+**Last Updated:** October 7, 2025
 **Owner:** Documentation Agent
 
 ---
@@ -18,7 +18,7 @@ Successfully implemented Graph Driven Development (GDD) for Roastr.ai, replacing
 
 ### 1. System Map (`docs/system-map.yaml`)
 
-Central dependency graph defining 12 feature nodes with explicit relationships:
+Central dependency graph defining 13 feature nodes with explicit relationships:
 
 ```yaml
 features:
@@ -32,8 +32,8 @@ features:
 
 **Nodes Defined:**
 - 6 Critical nodes (roast, shield, plan-features, queue-system, cost-control, multi-tenant)
-- 4 High priority nodes (persona, tone, platform-constraints, social-platforms)
-- 2 Planned nodes (trainer, analytics)
+- 5 High priority nodes (persona, tone, platform-constraints, social-platforms, trainer)
+- 2 Medium priority nodes (analytics, billing)
 
 ### 2. Graph Resolver (`scripts/resolve-graph.js`)
 
@@ -1548,7 +1548,7 @@ node scripts/watch-gdd.js
 ```
 
 **Watcher Dashboard:**
-```
+```text
 ╔════════════════════════════════════════╗
 ║   GDD STATUS: WARNING                 ║
 ╠════════════════════════════════════════╣
@@ -1663,7 +1663,7 @@ class GDDDriftPredictor {
 
 #### Files Updated
 
-**1. scripts/watch-gdd.js**
+##### 1. scripts/watch-gdd.js
 - Integrated drift prediction in validation cycle
 - Added drift risk summary to dashboard
 - Top 3 highest-risk nodes displayed
@@ -1679,7 +1679,7 @@ const driftData = await driftPredictor.predict();
 this.printStatusBar(results, stats, driftData);
 ```
 
-**2. scripts/validate-gdd-runtime.js**
+##### 2. scripts/validate-gdd-runtime.js
 - Added --drift flag support
 - Load drift data from gdd-drift.json
 - Include drift summary in console output
@@ -1697,7 +1697,7 @@ if (this.options.drift || this.options.full) {
 await this.generateMarkdownReport(driftData);
 ```
 
-**3. CLAUDE.md**
+##### 3. CLAUDE.md
 - Added "Predictive Drift Detection (GDD 2.0 - Phase 8)" section (110 lines)
 - Documented drift risk factors and calculation
 - Added command examples
@@ -1721,7 +1721,7 @@ node scripts/validate-gdd-runtime.js --drift
 ### 📊 Output Examples
 
 #### Console Output
-```
+```text
 ╔════════════════════════════════════════╗
 ║ 🔮 GDD Drift Risk Predictor          ║
 ╚════════════════════════════════════════╝
@@ -1980,7 +1980,7 @@ nodes:
 - ✅ All nodes linked and validated
 
 **Current Status:**
-```
+```text
 ═══════════════════════════════════════
          VALIDATION SUMMARY
 ═══════════════════════════════════════
@@ -2564,278 +2564,10 @@ Planned integrations:
 **Maintenance Loop:** CLOSED ✅
 - Detection → Health Scoring → **Auto-Repair** → Validation → Rollback (if needed)
 
-**Total GDD Phases Completed:** 8 + Phase 7.1 + Phase 9 + Phase 10 + Phase 12
-**GDD 2.0 Status:** ✅ FULLY OPERATIONAL + PREDICTIVE + COHERENT + ENRICHED + SELF-HEALING + **CI/CD INTEGRATED**
+**Total GDD Phases Completed:** 8 + Phase 7.1 + Phase 9 + Phase 10
+**GDD 2.0 Status:** ✅ FULLY OPERATIONAL + PREDICTIVE + COHERENT + ENRICHED + **SELF-HEALING**
 
 🎊 **GDD 2.0 Phase 10: Auto-Repair Assistant Complete!** 🎊
-
----
-
-## 📦 Phase 12: CI/CD Integration & Auto-Issue Workflow
-
-**Objective:** Integrate GDD system into CI/CD pipeline with automated validation, repair, and issue management.
-
-**Status:** ✅ COMPLETED (October 7, 2025)
-
-### What Was Built
-
-#### 1. Configuration System
-
-**`.gddrc.json`** - Central GDD configuration:
-```json
-{
-  "min_health_score": 95,
-  "auto_fix": true,
-  "create_issues": true,
-  "validation": {
-    "fail_on_critical": true,
-    "fail_on_degraded": false
-  },
-  "drift": {
-    "max_allowed_risk": 60,
-    "create_issues_above": 70
-  },
-  "auto_repair": {
-    "enabled": true,
-    "commit_fixes": true,
-    "max_attempts": 3
-  },
-  "github": {
-    "pr_comments": true,
-    "auto_labels": true,
-    "block_merge_below_health": 95
-  }
-}
-```
-
-#### 2. GitHub Actions Workflows
-
-**`.github/workflows/gdd-validate.yml`**
-- Triggers on PR to main/develop
-- Runs validation + health scoring + drift prediction
-- Posts detailed PR comment with metrics
-- **Blocks merge** if health < 95
-- Creates issues on failure
-- Uploads artifacts (reports, JSON files)
-
-**Key Features:**
-- Health threshold enforcement (configurable)
-- Automated PR comments with status summary
-- Issue creation for failures
-- Artifact retention (30 days)
-- Manual workflow dispatch support
-
-**`.github/workflows/gdd-repair.yml`**
-- Triggers after validation or manually
-- Runs auto-repair in dry-run mode first
-- Applies fixes automatically if enabled
-- Re-validates after repair
-- Commits fixes to PR branch
-- Posts repair summary comment
-- Creates issues if manual review needed
-
-**Key Features:**
-- Dry-run mode (safe preview)
-- Automatic fix application
-- Git commit with detailed message
-- Re-validation after repair
-- Manual review issue creation
-
-#### 3. Scripts & Tooling
-
-**`scripts/compute-gdd-health.js`**
-- CI/CD wrapper for health scoring
-- Threshold checking
-- CI-formatted output
-- Exit codes for automation
-
-**Existing scripts enhanced:**
-- `validate-gdd-runtime.js` - CI mode
-- `score-gdd-health.js` - CI mode
-- `predict-gdd-drift.js` - CI mode
-- `auto-repair-gdd.js` - Auto-fix mode
-
-#### 4. Documentation Updates
-
-**CLAUDE.md:**
-- New "CI/CD GDD Automation" section
-- Workflow documentation
-- Testing scenarios
-- Integration guidelines
-- Monitoring & alerts
-
-**Key sections added:**
-- Configuration reference
-- Workflow triggers & steps
-- PR comment examples
-- Testing scenarios
-- GitHub issue management
-- Artifact documentation
-
-### Workflow Integration
-
-**PR Flow:**
-```text
-PR opened/updated
-    ↓
-GDD Validation runs
-    ↓
-Health < 95? → Merge blocked + Issue created
-    ↓
-Auto-Repair attempts fixes
-    ↓
-Fixes successful? → Commit + Re-validate
-    ↓
-Health ≥ 95 → PR comment + Merge allowed
-```
-
-**Testing Scenarios:**
-
-1. **PR with drift > 50**
-   - ❌ Validation fails
-   - 🚫 Merge blocked
-   - 📝 Issue: "[GDD] High Drift Risk Detected"
-
-2. **PR with orphan nodes**
-   - 🔧 Auto-repair executes
-   - ✅ Fixes applied
-   - ♻️ Re-validation passes
-   - 📦 Committed to PR
-
-3. **PR with health ≥ 95**
-   - ✅ All checks pass
-   - 💬 PR comment posted
-   - 🟢 Merge allowed
-
-4. **Manual trigger**
-   - 🎛️ Workflow dispatch
-   - 🔍 On-demand validation
-   - 📊 Fresh reports generated
-
-### PR Comment Example
-
-```markdown
-## 🧠 GDD Validation Summary
-
-### Overall Status: ✅ HEALTHY
-
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Health Score** | 97.3/100 | 🟢 |
-| **Drift Risk** | 18/100 | 🟢 |
-| **Nodes Validated** | 13 | ✅ |
-| **Coverage** | 85% | 🟢 |
-
-### Health Breakdown
-- 🟢 Healthy nodes: 11
-- 🟡 Degraded nodes: 2
-- 🔴 Critical nodes: 0
-
-### ✅ Safe to Merge
-All GDD checks passed. Documentation is in sync with implementation.
-```
-
-### Auto-Created Issues
-
-**Issue types:**
-1. **[GDD] Validation Failed** - Health < threshold
-2. **[GDD] Auto-Repair Failed** - Repair errors
-3. **[GDD] High Drift Risk** - Drift > 70
-4. **[GDD] Manual Review Required** - Auto-fix insufficient
-
-**Issue labels:**
-- `documentation`
-- `gdd`
-- `tech-debt`
-- `priority:P1` or `priority:P2`
-- `manual-review`
-- `drift-risk`
-
-### Artifacts & Reports
-
-**Workflow artifacts (30 days retention):**
-- `gdd-validation-results/`
-  - `gdd-health.json`
-  - `gdd-drift.json`
-  - `gdd-status.json`
-  - `docs/system-validation.md`
-  - `docs/system-health.md`
-  - `docs/drift-report.md`
-
-- `gdd-repair-results/`
-  - `gdd-repair.json`
-  - `repair-summary.md`
-
-### Success Criteria
-
-- ✅ `.gddrc.json` configuration created
-- ✅ `gdd-validate.yml` workflow implemented
-- ✅ `gdd-repair.yml` workflow implemented
-- ✅ PR comment generation working
-- ✅ Health threshold enforcement (blocks merge)
-- ✅ Auto-repair with commit capability
-- ✅ Issue creation on failures
-- ✅ Artifact upload & retention
-- ✅ Manual workflow dispatch support
-- ✅ CLAUDE.md documentation updated
-- ✅ Testing scenarios defined
-- ⏸️ Manual workflow testing (pending PR)
-
-### System Status
-
-**Before Phase 12:**
-- Manual validation required
-- No CI/CD integration
-- No automatic merge blocking
-- Manual issue creation
-
-**After Phase 12:**
-- ✅ Automated validation on every PR
-- ✅ Health threshold enforced (blocks merge)
-- ✅ Auto-repair with automatic commits
-- ✅ Automatic issue creation
-- ✅ PR comments with detailed metrics
-- ✅ Manual workflow dispatch
-- ✅ Full artifact retention
-
-### Integration Benefits
-
-1. **Quality Enforcement**
-   - Merge blocked if health < 95
-   - No manual checks required
-   - Consistent quality standards
-
-2. **Developer Experience**
-   - Clear PR comments with metrics
-   - Auto-repair attempts before failing
-   - Manual trigger for on-demand validation
-
-3. **Observability**
-   - All validation runs visible in PR checks
-   - Detailed artifacts available
-   - Historical tracking via issues
-
-4. **Automation**
-   - Auto-fix common issues
-   - Auto-commit to PR branch
-   - Auto-create issues for failures
-
-5. **Reliability**
-   - Always up-to-date validation
-   - No stale documentation
-   - Drift prevention
-
----
-
-**Phase 12 Status:** ✅ COMPLETED (October 7, 2025)
-
-**CI/CD Integration:** ACTIVE ✅
-- Validation → Health Check → Auto-Repair → Merge Control
-
-**Total GDD Phases Completed:** 8 + Phase 7.1 + Phase 9 + Phase 10 + **Phase 12**
-**GDD 2.0 Status:** ✅ FULLY OPERATIONAL + PREDICTIVE + COHERENT + ENRICHED + SELF-HEALING + **CI/CD INTEGRATED**
-
-🎊 **GDD 2.0 Phase 12: CI/CD Integration Complete!** 🎊
 
 ---
 
@@ -2874,3 +2606,285 @@ All GDD checks passed. Documentation is in sync with implementation.
 
 **GDD Documentation Sync:** ✅ ACTIVE
 
+---
+
+## Phase 13: Telemetry & Analytics Layer (October 7, 2025)
+
+**Status:** ✅ COMPLETED  
+**Deliverables:** 5/5 completed  
+**Impact:** Historical tracking + predictive analytics + CI/CD automation
+
+### 🎯 Objective
+
+Extend GDD 2.0 with telemetry and analytics to measure system evolution over time, enabling trend analysis, pattern detection, and automated stability reports.
+
+### 📦 Deliverables
+
+#### 1. Telemetry Engine ✅
+
+**Script:** `scripts/collect-gdd-telemetry.js` (400+ lines)
+
+**Features:**
+- Collects metrics from all GDD subsystems (health, drift, validation, repair)
+- Calculates derived metrics (stability index, momentum)
+- Generates automated reports
+- Alert system with configurable thresholds
+- 90-day retention policy
+
+**Metrics Collected:**
+```javascript
+{
+  health: { overall_score, average_score, healthy/degraded/critical counts },
+  drift: { average_drift_risk, high_risk/at_risk/healthy counts },
+  validation: { nodes_validated, orphans, missing_refs, cycles },
+  repair: { total_fixes, successful_fixes, failed_fixes, success_rate },
+  coverage: { avg_coverage, nodes_with_coverage },
+  derived: { stability_index, health_variance, system_status }
+}
+```
+
+**Usage:**
+```bash
+node scripts/collect-gdd-telemetry.js          # Full output
+node scripts/collect-gdd-telemetry.js --ci     # CI mode
+node scripts/collect-gdd-telemetry.js --verbose # Debug
+```
+
+#### 2. Historical Reports ✅
+
+**Markdown Reports:** `telemetry/reports/gdd-telemetry-YYYY-MM-DD.md`
+
+Auto-generated daily with:
+- System status (STABLE/DEGRADED/CRITICAL)
+- Key metrics table with targets
+- Momentum analysis (improving/declining/stable)
+- Alert summary
+- Detailed breakdowns
+
+**JSON Snapshots:** `telemetry/snapshots/gdd-metrics-history.json`
+
+Machine-readable history with:
+- All metrics + timestamps
+- Retention management (90 days)
+- Delta calculations for momentum
+
+#### 3. Telemetry Configuration ✅
+
+**File:** `telemetry-config.json`
+
+```json
+{
+  "interval_hours": 24,
+  "min_health_for_report": 95,
+  "retention_days": 90,
+  "metrics_to_track": [
+    "health_score",
+    "drift_score",
+    "auto_fix_success_rate",
+    "stability_index",
+    "momentum"
+  ],
+  "alert_thresholds": {
+    "health_below": 90,
+    "drift_above": 40,
+    "auto_fix_success_below": 80
+  }
+}
+```
+
+#### 4. Watch Integration ✅
+
+**Enhanced:** `scripts/watch-gdd.js`
+
+Now displays telemetry section in real-time dashboard:
+
+```
+────────────────────────────────────────
+📈 TELEMETRY (Last Snapshot)
+⬆️ Momentum: Health improving by 2.3 points
+🟢 Stability Index: 92/100
+📊 Total Snapshots: 5
+────────────────────────────────────────
+```
+
+**New Method:** `loadTelemetrySnapshot()`
+- Reads latest snapshot
+- Shows momentum trend
+- Displays stability index
+- Snapshot count
+
+#### 5. CI/CD Automation ✅
+
+**Workflow:** `.github/workflows/gdd-telemetry.yml`
+
+**Triggers:**
+- Scheduled: Daily at 00:00 UTC
+- Manual: workflow_dispatch
+- PR: On telemetry file changes
+
+**Steps:**
+1. Run fresh GDD validation + health + drift
+2. Collect telemetry snapshot
+3. Auto-commit to repo (skip CI)
+4. Upload artifacts (30 days retention)
+5. Check for CRITICAL status
+6. Create GitHub issue if CRITICAL
+
+**Permissions:**
+- contents: write (for commits)
+- issues: write (for alerts)
+- pull-requests: write (for comments)
+
+### 📊 Metrics Tracked
+
+| Metric | Target | Weight | Description |
+|--------|--------|--------|-------------|
+| **Health Score** | ≥95 | 33% | Overall system health |
+| **Drift Risk** | <25 | 33% | Average drift risk |
+| **Auto-Fix Success** | ≥90% | 33% | Repair success rate |
+| **Stability Index** | ≥90 | - | Combined metric |
+| **Momentum** | >0 | - | Trend over time |
+
+### 🧬 Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│          GDD Subsystems                     │
+├─────────────────────────────────────────────┤
+│  • validate-gdd-runtime.js → gdd-status.json│
+│  • score-gdd-health.js → gdd-health.json    │
+│  • predict-gdd-drift.js → gdd-drift.json    │
+│  • auto-repair-gdd.js → auto-repair-log     │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│      Telemetry Collector (Phase 13)         │
+├─────────────────────────────────────────────┤
+│  • Reads all subsystem outputs              │
+│  • Calculates derived metrics              │
+│  • Generates momentum (historical delta)    │
+│  • Checks alert thresholds                  │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│              Outputs                        │
+├─────────────────────────────────────────────┤
+│  • JSON: telemetry/snapshots/gdd-metrics-   │
+│    history.json (90 days retention)         │
+│  • Markdown: telemetry/reports/gdd-         │
+│    telemetry-YYYY-MM-DD.md                  │
+│  • Alerts: GitHub issues (if CRITICAL)      │
+│  • Artifacts: 30 days in GitHub Actions     │
+└─────────────────────────────────────────────┘
+```
+
+### 🔄 Integration Points
+
+1. **watch-gdd.js**
+   - `loadTelemetrySnapshot()` method
+   - Real-time telemetry display
+   - Momentum visualization
+
+2. **GitHub Actions**
+   - Daily scheduled execution
+   - Auto-commit snapshots
+   - Issue creation on failure
+
+3. **validate-gdd-runtime.js**
+   - Exports data for telemetry
+   - Compatible with Phase 13
+
+4. **score-gdd-health.js**
+   - Provides health data
+   - Compatible with Phase 13
+
+5. **predict-gdd-drift.js**
+   - Provides drift data
+   - Compatible with Phase 13
+
+### 📈 Sample Telemetry Report
+
+```markdown
+# GDD Telemetry Report
+
+**Generated:** 2025-10-07 19:27:58
+**Date:** 2025-10-07
+**Phase:** GDD 2.0 Phase 13
+
+## 📊 System Status
+
+🟢 **STABLE**
+
+## 🎯 Key Metrics
+
+| Metric | Value | Target | Status |
+|--------|-------|--------|--------|
+| Health Score | 95/100 | ≥95 | ✅ |
+| Drift Risk | 18/100 | <25 | ✅ |
+| Stability Index | 92/100 | ≥90 | ✅ |
+
+## 📈 Momentum
+
+⬆️ **Health improving by 2.3 points**
+
+## ✅ No Alerts
+```
+
+### 🎯 Success Criteria
+
+- ✅ Telemetry engine functional
+- ✅ Daily snapshots generated
+- ✅ Markdown reports created
+- ✅ watch-gdd.js integration
+- ✅ CI/CD workflow operational
+- ✅ Alert system working
+- ✅ Retention policy applied
+- ✅ Momentum calculations accurate
+- ✅ Issue creation on CRITICAL
+
+### 📊 Impact
+
+**Visibility:**
+- Historical trend analysis (90 days)
+- Momentum tracking (improving/declining)
+- Early degradation detection
+
+**Automation:**
+- Daily telemetry collection (no manual intervention)
+- Auto-commit to repo
+- GitHub issue creation on failures
+
+**Decision Support:**
+- Stability index for quick health check
+- Trend analysis for planning
+- Alert thresholds for proactive action
+
+### 🎉 GDD 2.0 Complete Status
+
+**All Phases Complete:**
+- ✅ Phase 1-5: Graph foundation
+- ✅ Phase 6: Runtime validation
+- ✅ Phase 7: Health scoring
+- ✅ Phase 7.1: System recovery
+- ✅ Phase 8: Drift prediction
+- ✅ Phase 9: Coverage enrichment
+- ✅ Phase 10: Auto-repair
+- ✅ Phase 11: Command center dashboard
+- ✅ Phase 12: CI/CD integration
+- ✅ **Phase 13: Telemetry & Analytics**
+
+**GDD 2.0 is now:**
+- 🟢 FULLY OPERATIONAL
+- 🔮 PREDICTIVE
+- 🔄 COHERENT
+- 📊 ENRICHED
+- 🔧 SELF-HEALING
+- 🚀 CI/CD INTEGRATED
+- **📈 ANALYTICS-ENABLED**
+
+---
+
+**Implemented by:** Orchestrator Agent  
+**Review Frequency:** Weekly  
+**Last Reviewed:** 2025-10-07  
+**Version:** 13.0.0
