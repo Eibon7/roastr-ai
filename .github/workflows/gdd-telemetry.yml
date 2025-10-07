@@ -44,10 +44,9 @@ jobs:
 
       - name: Collect telemetry
         id: telemetry
-        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           node scripts/collect-gdd-telemetry.js --ci
-          echo "status=$(cat telemetry/snapshots/gdd-metrics-history.json | jq -r '.snapshots[-1].metrics.derived.system_status')" >> $GITHUB_OUTPUT || true
+          echo "status=$(cat telemetry/snapshots/gdd-metrics-history.json | jq -r '.snapshots[-1].metrics.derived.system_status')" >> $GITHUB_OUTPUT
 
       - name: Commit telemetry data
         uses: stefanzweifel/git-auto-commit-action@v5
