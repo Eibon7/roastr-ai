@@ -20,15 +20,28 @@ test.describe('Dashboard Accessibility', () => {
   });
 
   test('should support keyboard navigation', async ({ page }) => {
-    await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
-    
-    const focusedElement = await page.evaluate(() => {
-      const el = document.activeElement;
-      return el ? { tagName: el.tagName } : null;
+    // Tab through first 5 interactive elements
+    const focusedElements = [];
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press('Tab');
+      await page.waitForTimeout(100);
+      const el = await page.evaluate(() => ({
+        tagName: document.activeElement?.tagName,
+        role: document.activeElement?.getAttribute('role'),
+        ariaLabel: document.activeElement?.getAttribute('aria-label')
+      }));
+      focusedElements.push(el);
+    }
+
+    // Verify all focused elements are interactive
+    const interactiveTags = ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'];
+    focusedElements.forEach((el, index) => {
+      expect(interactiveTags).toContain(el.tagName);
     });
-    
-    expect(focusedElement).not.toBeNull();
+
+    // Verify we moved through different elements (no focus trap)
+    const uniqueTags = new Set(focusedElements.map(el => el.tagName));
+    expect(uniqueTags.size).toBeGreaterThanOrEqual(2);
   });
 
   test('should have proper semantic HTML', async ({ page }) => {

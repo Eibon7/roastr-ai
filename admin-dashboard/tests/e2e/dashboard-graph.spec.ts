@@ -24,8 +24,20 @@ test.describe('Dashboard Graph Interactions', () => {
     const nodeCount = await nodeElements.count();
     if (nodeCount > 0) {
       await nodeElements.first().click();
-      await page.waitForTimeout(500);
+
+      // Wait for node details, highlights, or drawer to appear
+      const hasVisualFeedback = await page.waitForSelector(
+        '[data-node-highlighted], [data-testid="node-details"], [class*="selected"], [class*="active"]',
+        { timeout: 2000 }
+      ).catch(() => null);
+
+      // Log for debugging if no visual feedback found
+      if (!hasVisualFeedback) {
+        console.log('Note: No visual feedback detected after node click (non-critical)');
+      }
     }
+
+    // Verify page still functional and no crashes
     await expect(page.locator('main, #root').first()).toBeVisible();
   });
 

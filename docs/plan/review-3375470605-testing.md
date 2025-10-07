@@ -945,7 +945,7 @@ VITE_WS_URL=wss://api.roastr.ai
 **Phase 11 Status**: ✅ **COMPLETE AND READY FOR MERGE**
 
 **Next**: Merge PR #475 → Deploy to production → Monitor usage → Iterate based on feedback
-```
+```text
 
 #### 4.2 Update `docs/GDD-IMPLEMENTATION-SUMMARY.md`
 
