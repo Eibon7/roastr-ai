@@ -96,7 +96,7 @@ CREATE TABLE analytics_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Indexes for query performance
+-- Indexes (standalone statements)
 CREATE INDEX idx_analytics_events_org_type_time
   ON analytics_events(organization_id, event_type, created_at);
 CREATE INDEX idx_analytics_events_org_category_time

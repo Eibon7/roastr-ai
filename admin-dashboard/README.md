@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Dashboard will be available at: <http://localhost:3000>
+Dashboard will be available at: http://localhost:3000
 
 ### Build for Production
 
