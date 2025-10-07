@@ -1,49 +1,22 @@
 /**
  * Unit tests for calculateDerivedMetrics - Codex Review #3311704785
  * Tests nullish coalescing fix for repair score (P1 issue)
+ *
+ * UPDATED - Codex Review #3311794192: Now imports real production code
  */
 
+// Import the real TelemetryCollector class from production code
+const TelemetryCollector = require('../../../scripts/collect-gdd-telemetry');
+
+// Create a single instance to use across all tests
+const collector = new TelemetryCollector();
+
+// Helper function to call the production method
+function calculateDerivedMetrics(metrics) {
+  return collector.calculateDerivedMetrics(metrics);
+}
+
 describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
-  /**
-   * Mock implementation of calculateDerivedMetrics (extracted from collect-gdd-telemetry.js)
-   * This is the FIXED version with `??` instead of `||`
-   */
-  function calculateDerivedMetrics(metrics) {
-    const derived = {};
-
-    // System stability index (0-100)
-    const healthScore = metrics.health?.overall_score || 0;
-    const driftScore = 100 - (metrics.drift?.average_drift_risk || 0);
-    const repairScore = metrics.repair?.success_rate ?? 100;  // ✅ Fixed: Use ?? to treat 0 as valid
-
-    derived.stability_index = Math.round((healthScore + driftScore + repairScore) / 3);
-
-    // Node health variance
-    if (metrics.health) {
-      const { healthy_count, degraded_count, critical_count, total_nodes } = metrics.health;
-      const variance = total_nodes > 0
-        ? Math.abs((healthy_count / total_nodes) - 0.85) * 100
-        : 0;
-      derived.health_variance = Math.round(variance);
-    }
-
-    // Auto-fix efficiency
-    if (metrics.repair) {
-      derived.auto_fix_efficiency = metrics.repair.success_rate;
-    }
-
-    // Overall system status
-    if (healthScore >= 95 && driftScore >= 60 && repairScore >= 90) {
-      derived.system_status = 'STABLE';
-    } else if (healthScore >= 80 && driftScore >= 40) {
-      derived.system_status = 'DEGRADED';
-    } else {
-      derived.system_status = 'CRITICAL';
-    }
-
-    return derived;
-  }
-
   describe('P1: Nullish Coalescing for Repair Score', () => {
     test('should treat success_rate=0 as valid value (not fallback to 100)', () => {
       // Scenario: Auto-fix completely failing (0% success)
