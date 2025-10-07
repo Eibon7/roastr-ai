@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GDD Agent Permissions Matrix",
+  "description": "Defines what actions each agent can perform on the GDD system",
+  "version": "1.0.0",
+  "agents": {
+    "DocumentationAgent": {
+      "description": "Agent responsible for maintaining documentation coherence",
+      "permissions": [
+        "update_metadata",
+        "create_issue",
+        "update_dependencies",
+        "update_agent_list",
+        "read_nodes"
+      ],
+      "restricted_fields": [
+        "health_score",
+        "drift_risk",
+        "system_config"
+      ]
+    },
+    "Orchestrator": {
+      "description": "Main coordinator agent that manages overall system state",
+      "permissions": [
+        "sync_nodes",
+        "update_health",
+        "mark_stale",
+        "update_metadata",
+        "read_nodes",
+        "trigger_validation"
+      ],
+      "restricted_fields": []
+    },
+    "DriftWatcher": {
+      "description": "Monitors and predicts drift in the system",
+      "permissions": [
+        "trigger_auto_repair",
+        "update_timestamp",
+        "update_drift_metrics",
+        "create_issue",
+        "read_nodes"
+      ],
+      "restricted_fields": [
+        "dependencies",
+        "agent_list"
+      ]
+    },
+    "RuntimeValidator": {
+      "description": "Validates system coherence and integrity",
+      "permissions": [
+        "read_nodes",
+        "read_system_config",
+        "trigger_validation"
+      ],
+      "restricted_fields": [
+        "*"
+      ],
+      "read_only": true
+    },
+    "TestEngineer": {
+      "description": "Manages test coverage and validation",
+      "permissions": [
+        "read_nodes",
+        "update_test_coverage",
+        "create_issue",
+        "read_system_config"
+      ],
+      "restricted_fields": [
+        "health_score",
+        "drift_risk",
+        "dependencies"
+      ]
+    },
+    "FrontendDev": {
+      "description": "Manages UI components and frontend integration",
+      "permissions": [
+        "read_nodes",
+        "read_system_config"
+      ],
+      "restricted_fields": [
+        "*"
+      ],
+      "read_only": true
+    }
+  },
+  "action_definitions": {
+    "update_metadata": "Modify node metadata fields (last_updated, status, etc)",
+    "create_issue": "Create GitHub issues for detected problems",
+    "update_dependencies": "Modify node dependency relationships",
+    "update_agent_list": "Add/remove agents from node's agent list",
+    "read_nodes": "Read node content and metadata",
+    "sync_nodes": "Synchronize nodes with source code",
+    "update_health": "Update health score metrics",
+    "mark_stale": "Mark nodes as stale when outdated",
+    "trigger_auto_repair": "Trigger automatic repair procedures",
+    "update_timestamp": "Update node timestamps",
+    "update_drift_metrics": "Update drift prediction metrics",
+    "trigger_validation": "Trigger system validation",
+    "read_system_config": "Read system configuration files",
+    "update_test_coverage": "Update test coverage metrics"
+  },
+  "global_rules": {
+    "max_actions_per_minute": 60,
+    "max_issues_per_hour": 10,
+    "require_signature": true,
+    "require_rollback_capability": true,
+    "log_all_actions": true,
+    "notify_telemetry": true
+  },
+  "restricted_operations": {
+    "delete_node": "No agent can delete nodes",
+    "modify_permissions": "No agent can modify this permission file",
+    "bypass_validation": "No agent can skip validation checks",
+    "force_merge": "No agent can force merge without validation"
+  }
+}
