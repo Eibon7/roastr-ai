@@ -1,0 +1,494 @@
+# Failure Path Scenarios - Review #3311385378
+
+## Test Scenarios for Unhealthy Health Score
+
+This document outlines test scenarios to verify the workflow behavior when health score falls below threshold.
+
+---
+
+## Scenario 1: Critical Health Score (< 50)
+
+### Setup
+- Health Score: 35/100
+- Min Threshold: 95
+- Status: CRITICAL
+- Critical Nodes: 5
+- Degraded Nodes: 6
+- Healthy Nodes: 2
+
+### Expected Workflow Execution
+
+```
+┌─────────────────────────────────────┐
+│ 1. Run GDD validation               │ ✅ Success
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 2. Run health scoring               │ ✅ Success (score=35)
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 3. Run drift prediction             │ ✅ Success
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 4. Check health threshold           │ ✅ Detects failure
+│    - Current: 35                    │    Sets result=fail
+│    - Required: 95                   │    CONTINUES (no exit)
+│    - Output: result=fail            │
+│    - Message: "⚠️ Job will fail..." │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 5. Generate PR comment              │ ✅ Executes
+│    - Status: 🔴 CRITICAL            │    (if: always())
+│    - Health: 35/100 🔴              │
+│    - Message: "⚠️ Action Required"  │
+│    - Critical nodes listed          │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 6. Upload GDD artifacts             │ ✅ Executes
+│    - gdd-health.json                │    (if: always())
+│    - gdd-drift.json                 │
+│    - reports                        │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 7. Fail if health below threshold   │ ❌ Fails with exit 1
+│    - if: result == 'fail'           │
+│    - exit 1                         │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 8. Create issue on failure          │ ✅ Executes
+│    - Triggers on step 7 failure     │    (if: failure())
+│    - Creates GitHub issue           │
+│    - Title: "[GDD] Validation..."   │
+│    - Lists 5 critical nodes         │
+└─────────────────────────────────────┘
+```
+
+### Expected Outputs
+
+**Job Status**: ❌ Failed
+
+**PR Comment**:
+```markdown
+## 🧠 GDD Validation Summary
+
+### Overall Status: 🔴 CRITICAL
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Health Score** | 35.0/100 | 🔴 |
+| **Drift Risk** | 85/100 | 🔴 |
+| **Nodes Validated** | 13 | ✅ |
+| **Coverage** | 45% | 🟡 |
+
+### Health Breakdown
+
+- 🟢 Healthy nodes: 2
+- 🟡 Degraded nodes: 6
+- 🔴 Critical nodes: 5
+
+### Drift Analysis
+
+- 🟢 Low risk: 1
+- 🟡 At risk: 4
+- 🔴 High risk: 8
+
+### ⚠️ Action Required
+
+Health score is below the minimum threshold of 95. Please review and fix the issues before merging.
+
+---
+
+📊 **Detailed Reports:**
+- [System Validation](../blob/main/docs/system-validation.md)
+- [Health Report](../blob/main/docs/system-health.md)
+- [Drift Report](../blob/main/docs/drift-report.md)
+```
+
+**GitHub Issue Created**:
+```markdown
+[GDD] Validation Failed - PR #478
+
+## 🔴 GDD Validation Failed
+
+PR #478 failed GDD validation.
+
+### Metrics
+- Health Score: 35/100
+- Critical Nodes: 5
+- Degraded Nodes: 6
+
+### Critical Nodes
+- **billing**: 28/100
+- **roast**: 32/100
+- **shield**: 38/100
+- **queue-system**: 41/100
+- **multi-tenant**: 45/100
+
+### Action Required
+1. Review the [validation report](...)
+2. Fix the issues listed above
+3. Re-run the validation
+
+### Related PR
+- #478
+```
+
+**Artifacts Uploaded**:
+- ✅ gdd-health.json
+- ✅ gdd-drift.json
+- ✅ gdd-status.json
+- ✅ docs/system-validation.md
+- ✅ docs/system-health.md
+- ✅ docs/drift-report.md
+
+---
+
+## Scenario 2: Degraded Health Score (50-79)
+
+### Setup
+- Health Score: 72/100
+- Min Threshold: 95
+- Status: WARNING
+- Critical Nodes: 0
+- Degraded Nodes: 7
+- Healthy Nodes: 6
+
+### Expected Workflow Execution
+
+```
+Steps 1-6: Same as Scenario 1 (all succeed)
+           ↓
+┌─────────────────────────────────────┐
+│ 7. Fail if health below threshold   │ ❌ Fails with exit 1
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 8. Create issue on failure          │ ✅ Executes
+│    - 0 critical nodes               │
+│    - 7 degraded nodes listed        │
+└─────────────────────────────────────┘
+```
+
+### Expected Outputs
+
+**Job Status**: ❌ Failed
+
+**PR Comment**:
+```markdown
+## 🧠 GDD Validation Summary
+
+### Overall Status: ⚠️ WARNING
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Health Score** | 72.0/100 | 🟡 |
+| **Drift Risk** | 55/100 | 🟡 |
+
+### Health Breakdown
+
+- 🟢 Healthy nodes: 6
+- 🟡 Degraded nodes: 7
+- 🔴 Critical nodes: 0
+
+### ⚠️ Action Required
+
+Health score is below the minimum threshold of 95. Please review and fix the issues before merging.
+```
+
+**GitHub Issue Created**:
+```markdown
+[GDD] Validation Failed - PR #478
+
+### Metrics
+- Health Score: 72/100
+- Critical Nodes: 0
+- Degraded Nodes: 7
+
+### Critical Nodes
+None
+
+### Action Required
+1. Review degraded nodes
+2. Improve documentation sync
+3. Update outdated nodes
+```
+
+---
+
+## Scenario 3: Just Below Threshold (90-94)
+
+### Setup
+- Health Score: 93/100
+- Min Threshold: 95
+- Status: HEALTHY (but below threshold)
+- Critical Nodes: 0
+- Degraded Nodes: 2
+- Healthy Nodes: 11
+
+### Expected Workflow Execution
+
+```
+Steps 1-6: Same as Scenario 1 (all succeed)
+           ↓
+┌─────────────────────────────────────┐
+│ 7. Fail if health below threshold   │ ❌ Fails with exit 1
+│    - Score: 93 < 95                 │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 8. Create issue on failure          │ ✅ Executes
+│    - Minor degradation              │
+│    - 2 degraded nodes listed        │
+└─────────────────────────────────────┘
+```
+
+### Expected Outputs
+
+**Job Status**: ❌ Failed (strict threshold enforcement)
+
+**PR Comment**:
+```markdown
+## 🧠 GDD Validation Summary
+
+### Overall Status: ✅ HEALTHY
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Health Score** | 93.0/100 | 🟢 |
+| **Drift Risk** | 25/100 | 🟢 |
+
+### Health Breakdown
+
+- 🟢 Healthy nodes: 11
+- 🟡 Degraded nodes: 2
+- 🔴 Critical nodes: 0
+
+### ⚠️ Action Required
+
+Health score is below the minimum threshold of 95. Please review and fix the issues before merging.
+```
+
+**Note**: Even though status is "HEALTHY", score < threshold triggers failure
+
+---
+
+## Scenario 4: Validation Failure (Earlier Step)
+
+### Setup
+- Validation script fails (exit 1)
+- Health scoring doesn't run
+- Drift prediction doesn't run
+
+### Expected Workflow Execution
+
+```
+┌─────────────────────────────────────┐
+│ 1. Run GDD validation               │ ❌ Fails (exit 1)
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 2-4. Health, drift, threshold       │ ⏭️ Skipped (depend on step 1)
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 5. Generate PR comment              │ ✅ Executes (if: always())
+│    - May fail if JSON missing       │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 6. Upload artifacts                 │ ✅ Executes (if: always())
+│    - Uploads partial results        │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 7. Fail if health below threshold   │ ⏭️ Skipped (threshold didn't run)
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 8. Create issue on failure          │ ✅ Executes (step 1 failed)
+└─────────────────────────────────────┘
+```
+
+### Expected Outputs
+
+**Job Status**: ❌ Failed (validation script failure)
+
+**PR Comment**: May fail or show incomplete data
+
+**GitHub Issue Created**: Yes (triggered by step 1 failure)
+
+**Artifacts**: Partial (whatever was generated before failure)
+
+---
+
+## Scenario 5: Healthy Path (Control)
+
+### Setup
+- Health Score: 98/100
+- Min Threshold: 95
+- Status: HEALTHY
+- Critical Nodes: 0
+- Degraded Nodes: 1
+- Healthy Nodes: 12
+
+### Expected Workflow Execution
+
+```
+┌─────────────────────────────────────┐
+│ 1. Run GDD validation               │ ✅ Success
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 2. Run health scoring               │ ✅ Success (score=98)
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 3. Run drift prediction             │ ✅ Success
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 4. Check health threshold           │ ✅ Passes
+│    - Current: 98                    │    Sets result=pass
+│    - Required: 95                   │
+│    - Output: result=pass            │
+│    - Message: "✅ Health score..."  │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 5. Generate PR comment              │ ✅ Executes
+│    - Status: ✅ HEALTHY             │    (if: always())
+│    - Health: 98/100 🟢              │
+│    - Message: "✅ Safe to Merge"    │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 6. Upload GDD artifacts             │ ✅ Executes
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 7. Fail if health below threshold   │ ⏭️ Skipped (result=pass)
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│ 8. Create issue on failure          │ ⏭️ Skipped (no failure)
+└─────────────────────────────────────┘
+```
+
+### Expected Outputs
+
+**Job Status**: ✅ Success
+
+**PR Comment**:
+```markdown
+## 🧠 GDD Validation Summary
+
+### Overall Status: ✅ HEALTHY
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **Health Score** | 98.0/100 | 🟢 |
+| **Drift Risk** | 18/100 | 🟢 |
+
+### Health Breakdown
+
+- 🟢 Healthy nodes: 12
+- 🟡 Degraded nodes: 1
+- 🔴 Critical nodes: 0
+
+### ✅ Safe to Merge
+
+All GDD checks passed. Documentation is in sync with implementation.
+```
+
+**GitHub Issue Created**: ❌ No (job succeeded)
+
+**Artifacts Uploaded**: ✅ Yes
+
+---
+
+## Verification Checklist
+
+### For Each Scenario
+
+- [ ] Job completes (success or failure as expected)
+- [ ] PR comment generated (with correct status)
+- [ ] Artifacts uploaded (all 6 files)
+- [ ] GitHub issue created (only on failure)
+- [ ] Issue contains correct node information
+- [ ] Final step executes correctly (fail or skip)
+- [ ] No unreachable steps
+
+### Before Fix (Expected Failures)
+
+- [ ] Scenarios 1-4: PR comment NOT generated ❌
+- [ ] Scenarios 1-4: GitHub issue NOT created ❌
+- [ ] Scenario 5: All steps execute correctly ✅
+
+### After Fix (Expected Success)
+
+- [ ] Scenarios 1-4: PR comment generated ✅
+- [ ] Scenarios 1-4: GitHub issue created ✅
+- [ ] Scenarios 1-4: Artifacts uploaded ✅
+- [ ] Scenarios 1-4: Job fails with diagnostics ✅
+- [ ] Scenario 5: All steps execute correctly ✅
+- [ ] Scenario 5: No issue created ✅
+
+---
+
+## Test Execution Plan
+
+### Local Validation
+
+1. **Syntax Check**:
+   ```bash
+   actionlint .github/workflows/gdd-validate.yml
+   ```
+   Expected: No errors
+
+2. **Dry-Run Simulation** (manual review):
+   - Read workflow step by step
+   - Trace execution for each scenario
+   - Verify `if:` conditions
+   - Confirm step dependencies
+
+### CI/CD Validation
+
+1. **Push commit to PR**:
+   - Workflow triggers automatically
+   - Observe actual execution
+
+2. **Monitor job execution**:
+   - Check job logs
+   - Verify all steps execute as expected
+   - Confirm PR comment appears
+   - Verify artifacts uploaded
+
+3. **Manual workflow_dispatch** (optional):
+   - Trigger workflow manually
+   - Simulate different health scores (by modifying test data)
+
+---
+
+## Success Criteria
+
+### All Scenarios Must Pass
+
+✅ PR comments generated in all failure scenarios
+✅ GitHub issues created in all failure scenarios
+✅ Artifacts uploaded in all scenarios
+✅ Jobs fail/succeed as expected
+✅ No unreachable steps
+✅ No syntax errors
+✅ User experience improved with actionable diagnostics
+
+---
+
+**Generated**: 2025-10-07
+**Review ID**: 3311385378
+**PR**: #478
