@@ -1,0 +1,13 @@
+      - name: Upload repair artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gdd-repair-results
+          path: |
+            gdd-repair.json
+            repair-summary.md
+            gdd-health.json
+            gdd-status.json
+          retention-days: 30
+
+      - name: Fail if errors occurred

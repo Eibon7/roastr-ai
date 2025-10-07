@@ -129,7 +129,7 @@ jobs:
           - **Committed**: ${{ steps.commit.outputs.committed || 'false' }}
 
           ### Health Impact
-          ${steps.revalidate.outputs.new_health && '- **New health score**: ' + steps.revalidate.outputs.new_health + '/100'}
+          ${{ steps.revalidate.outputs.new_health && format('- **New health score**: {0}/100', steps.revalidate.outputs.new_health) }}
 
           ### Actions Taken
           EOF
@@ -250,6 +250,7 @@ jobs:
             gdd-health.json
             gdd-status.json
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Fail if errors occurred
         if: steps.repair.outputs.errors > 0
