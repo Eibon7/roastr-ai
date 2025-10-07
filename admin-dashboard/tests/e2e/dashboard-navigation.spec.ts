@@ -65,7 +65,8 @@ test.describe('Dashboard Navigation', () => {
     if (await navElements.count() > 0) {
       // Click first navigation element
       await navElements.first().click();
-      await page.waitForTimeout(500);
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle');
 
       // Verify page didn't crash (title still exists)
       await expect(page.locator('h1, h2').first()).toBeVisible();
