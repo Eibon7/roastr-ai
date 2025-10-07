@@ -109,7 +109,7 @@ CREATE INDEX idx_analytics_events_org_category_time
 
 All aggregation queries use defensive null handling:
 
-**Pattern 1: COALESCE for default values**
+#### Pattern 1: COALESCE for default values
 ```sql
 SELECT
   COALESCE(SUM(toxicity_score), 0) as total_toxicity,
@@ -118,7 +118,7 @@ FROM analytics_events
 WHERE organization_id = $1;
 ```
 
-**Pattern 2: NULLIF to prevent division by zero**
+#### Pattern 2: NULLIF to prevent division by zero
 ```sql
 SELECT
   COALESCE(
@@ -129,7 +129,7 @@ SELECT
 FROM analytics_aggregates;
 ```
 
-**Pattern 3: Safe percentage calculations**
+#### Pattern 3: Safe percentage calculations
 ```sql
 SELECT
   CASE
@@ -420,7 +420,7 @@ SELECT
   ae.id,
   ae.platform,
   COALESCE(
-    (ae.metadata->>'platform_data')::jsonb,
+    ae.metadata->'platform_data',
     '{}'::jsonb
   ) as platform_data,
   CASE
