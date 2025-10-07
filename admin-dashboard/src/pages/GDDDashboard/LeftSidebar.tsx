@@ -1,17 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
+import type { HealthStats } from '@/types/dashboard';
 
 type ViewType = 'health' | 'graph' | 'reports';
 
 interface LeftSidebarProps {
   activeView: ViewType;
   onViewChange: (view: ViewType) => void;
-  stats: {
-    health: number;
-    drift: number;
-    nodes: number;
-    coverage: number;
-  };
+  stats: HealthStats;
 }
 
 const SidebarContainer = styled.div`
@@ -99,10 +95,11 @@ const NavItem = styled.button<{ $active: boolean }>`
   }
 `;
 
-const DisabledNavItem = styled(NavItem)`
-  color: #9e9ea0;  // WCAG 2.1 AA compliant (4.5:1 contrast ratio)
-  opacity: 0.6;
+const DisabledNavItem = styled(NavItem).attrs({ 'aria-disabled': true })`
+  color: #bdbdbd;
+  opacity: 1;
   cursor: not-allowed;
+  pointer-events: none;
 
   &:hover {
     background: transparent;
@@ -110,21 +107,28 @@ const DisabledNavItem = styled(NavItem)`
   }
 `;
 
+/**
+ * Determines the color of a stat value based on its score and type
+ * @param value - The numeric value to evaluate (0-100)
+ * @param isRisk - If true, lower values are better (drift risk). If false, higher values are better (health)
+ * @returns Color hex code for the stat value
+ */
+const getStatColor = (value: number, isRisk: boolean = false): string => {
+  if (isRisk) {
+    if (value <= 30) return '#50fa7b';
+    if (value <= 60) return '#f1fa8c';
+    return '#ff5555';
+  }
+  if (value >= 80) return '#50fa7b';
+  if (value >= 50) return '#f1fa8c';
+  return '#ff5555';
+};
+
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   activeView,
   onViewChange,
   stats
 }) => {
-  const getStatColor = (value: number, isRisk: boolean = false) => {
-    if (isRisk) {
-      if (value <= 30) return '#50fa7b';
-      if (value <= 60) return '#f1fa8c';
-      return '#ff5555';
-    }
-    if (value >= 80) return '#50fa7b';
-    if (value >= 50) return '#f1fa8c';
-    return '#ff5555';
-  };
 
   return (
     <SidebarContainer data-testid="left-sidebar">

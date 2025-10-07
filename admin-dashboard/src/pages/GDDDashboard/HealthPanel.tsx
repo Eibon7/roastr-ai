@@ -2,18 +2,11 @@ import React from 'react';
 import styled from 'styled-components';
 import { StatusCard } from '@components/dashboard/StatusCard';
 import { ActivityLogItem } from '@components/dashboard/ActivityLogItem';
+import type { HealthStats, ActivityEvent } from '@/types/dashboard';
 
 interface HealthPanelProps {
-  stats: {
-    health: number;
-    drift: number;
-    nodes: number;
-    coverage: number;
-  };
-  activities: Array<{
-    timestamp: string;
-    event: string;
-  }>;
+  stats: HealthStats;
+  activities: ActivityEvent[];
 }
 
 const PanelContainer = styled.div`
@@ -89,21 +82,41 @@ const EmptyState = styled.div`
   color: #8a8a8a;
 `;
 
+/**
+ * Determines the health status based on score thresholds
+ * @param score - Health score value (0-100)
+ * @returns Status indicator: 'healthy', 'warning', or 'critical'
+ */
+const getHealthStatus = (score: number): 'healthy' | 'warning' | 'critical' => {
+  if (score >= 80) return 'healthy';
+  if (score >= 50) return 'warning';
+  return 'critical';
+};
+
+/**
+ * Determines the drift status (lower is better)
+ * @param drift - Drift risk percentage (0-100)
+ * @returns Status indicator: 'healthy', 'warning', or 'critical'
+ */
+const getDriftStatus = (drift: number): 'healthy' | 'warning' | 'critical' => {
+  if (drift <= 20) return 'healthy';
+  if (drift <= 50) return 'warning';
+  return 'critical';
+};
+
+/**
+ * Determines the coverage status based on threshold
+ * @param coverage - Code coverage percentage (0-100)
+ * @returns Status indicator: 'healthy' or 'warning'
+ */
+const getCoverageStatus = (coverage: number): 'healthy' | 'warning' => {
+  return coverage >= 70 ? 'healthy' : 'warning';
+};
+
 export const HealthPanel: React.FC<HealthPanelProps> = ({
   stats,
   activities
 }) => {
-  const getHealthStatus = (score: number) => {
-    if (score >= 80) return 'healthy';
-    if (score >= 50) return 'warning';
-    return 'critical';
-  };
-
-  const getDriftStatus = (drift: number) => {
-    if (drift <= 20) return 'healthy';
-    if (drift <= 50) return 'warning';
-    return 'critical';
-  };
 
   return (
     <PanelContainer data-testid="health-panel">
@@ -134,7 +147,7 @@ export const HealthPanel: React.FC<HealthPanelProps> = ({
             value={stats.coverage}
             max={100}
             unit="%"
-            status={stats.coverage >= 70 ? 'healthy' : 'warning'}
+            status={getCoverageStatus(stats.coverage)}
           />
         </MetricsGrid>
       </Section>
