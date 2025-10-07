@@ -66,7 +66,7 @@ class GDDNodeEnricher {
     console.log('╚════════════════════════════════════════╝');
     console.log('');
 
-    const nodes = this.getAllNodeFiles();
+    const nodes = await this.getAllNodeFiles();
     let updated = 0;
 
     for (const nodeFile of nodes) {
@@ -99,9 +99,18 @@ class GDDNodeEnricher {
   /**
    * Get all node markdown files
    */
-  getAllNodeFiles() {
-    return fs.readdirSync(this.nodesDir)
-      .filter(f => f.endsWith('.md'))
+  async getAllNodeFiles() {
+    // Check directory exists
+    try {
+      await fs.promises.access(this.nodesDir);
+    } catch (error) {
+      throw new Error(`Nodes directory not found: ${this.nodesDir}`);
+    }
+
+    // Use async fs methods
+    const files = await fs.promises.readdir(this.nodesDir);
+    return files
+      .filter(f => f.endsWith('.md') && f !== 'README.md')
       .map(f => path.join(this.nodesDir, f));
   }
 

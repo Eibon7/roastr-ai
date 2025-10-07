@@ -146,7 +146,7 @@ export const CommandCenterLayout: React.FC = () => {
   };
 
   return (
-    <LayoutContainer>
+    <LayoutContainer data-testid="dashboard-layout">
       <SidebarWrapper>
         <LeftSidebar
           activeView={activeView}
@@ -155,9 +155,11 @@ export const CommandCenterLayout: React.FC = () => {
         />
       </SidebarWrapper>
 
-      <MainContent>
-        {renderMainContent()}
-      </MainContent>
+      <main data-testid="main-content">
+        <MainContent>
+          {renderMainContent()}
+        </MainContent>
+      </main>
 
       <NodeDetailsDrawer
         nodeId={selectedNode}

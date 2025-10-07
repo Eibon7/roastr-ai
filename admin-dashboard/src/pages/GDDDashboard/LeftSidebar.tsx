@@ -1,17 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
+import type { HealthStats } from '@/types/dashboard';
 
 type ViewType = 'health' | 'graph' | 'reports';
 
 interface LeftSidebarProps {
   activeView: ViewType;
   onViewChange: (view: ViewType) => void;
-  stats: {
-    health: number;
-    drift: number;
-    nodes: number;
-    coverage: number;
-  };
+  stats: HealthStats;
 }
 
 const SidebarContainer = styled.div`
@@ -99,9 +95,11 @@ const NavItem = styled.button<{ $active: boolean }>`
   }
 `;
 
-const DisabledNavItem = styled(NavItem)`
-  opacity: 0.4;
+const DisabledNavItem = styled(NavItem).attrs({ 'aria-disabled': true })`
+  color: #bdbdbd;
+  opacity: 1;
   cursor: not-allowed;
+  pointer-events: none;
 
   &:hover {
     background: transparent;
@@ -109,46 +107,53 @@ const DisabledNavItem = styled(NavItem)`
   }
 `;
 
+/**
+ * Determines the color of a stat value based on its score and type
+ * @param value - The numeric value to evaluate (0-100)
+ * @param isRisk - If true, lower values are better (drift risk). If false, higher values are better (health)
+ * @returns Color hex code for the stat value
+ */
+const getStatColor = (value: number, isRisk: boolean = false): string => {
+  if (isRisk) {
+    if (value <= 30) return '#50fa7b';
+    if (value <= 60) return '#f1fa8c';
+    return '#ff5555';
+  }
+  if (value >= 80) return '#50fa7b';
+  if (value >= 50) return '#f1fa8c';
+  return '#ff5555';
+};
+
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   activeView,
   onViewChange,
   stats
 }) => {
-  const getStatColor = (value: number, isRisk: boolean = false) => {
-    if (isRisk) {
-      if (value <= 30) return '#50fa7b';
-      if (value <= 60) return '#f1fa8c';
-      return '#ff5555';
-    }
-    if (value >= 80) return '#50fa7b';
-    if (value >= 50) return '#f1fa8c';
-    return '#ff5555';
-  };
 
   return (
-    <SidebarContainer>
-      <Section>
+    <SidebarContainer data-testid="left-sidebar">
+      <Section data-testid="system-status">
         <SectionTitle>System Status</SectionTitle>
-        <StatsGrid>
-          <StatItem>
+        <StatsGrid data-testid="stats-grid">
+          <StatItem data-testid="stat-health">
             <StatLabel>Health</StatLabel>
             <StatValue $color={getStatColor(stats.health)}>
               {stats.health.toFixed(0)}
             </StatValue>
           </StatItem>
-          <StatItem>
+          <StatItem data-testid="stat-drift">
             <StatLabel>Drift</StatLabel>
             <StatValue $color={getStatColor(stats.drift, true)}>
               {stats.drift.toFixed(0)}
             </StatValue>
           </StatItem>
-          <StatItem>
+          <StatItem data-testid="stat-nodes">
             <StatLabel>Nodes</StatLabel>
             <StatValue $color="#50fa7b">
               {stats.nodes}
             </StatValue>
           </StatItem>
-          <StatItem>
+          <StatItem data-testid="stat-coverage">
             <StatLabel>Coverage</StatLabel>
             <StatValue $color={getStatColor(stats.coverage)}>
               {stats.coverage.toFixed(0)}%
@@ -157,11 +162,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </StatsGrid>
       </Section>
 
-      <NavMenu>
+      <NavMenu data-testid="nav-menu">
         <NavItem
           $active={activeView === 'health'}
           onClick={() => onViewChange('health')}
           aria-current={activeView === 'health' ? 'page' : undefined}
+          data-testid="nav-health"
         >
           Health Panel
         </NavItem>
@@ -169,6 +175,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           $active={activeView === 'graph'}
           onClick={() => onViewChange('graph')}
           aria-current={activeView === 'graph' ? 'page' : undefined}
+          data-testid="nav-graph"
         >
           System Graph
         </NavItem>
@@ -176,16 +183,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           $active={activeView === 'reports'}
           onClick={() => onViewChange('reports')}
           aria-current={activeView === 'reports' ? 'page' : undefined}
+          data-testid="nav-reports"
         >
           Reports
         </NavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon">
+        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-feature-flags">
           Feature Flags
         </DisabledNavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon">
+        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-user-search">
           User Search
         </DisabledNavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon">
+        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-release-panel">
           Release Panel
         </DisabledNavItem>
       </NavMenu>
