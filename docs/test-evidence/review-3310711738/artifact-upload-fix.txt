@@ -9,5 +9,10 @@
             gdd-health.json
             gdd-status.json
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Fail if errors occurred
+        if: steps.repair.outputs.errors > 0
+        run: |
+          echo "❌ Auto-repair completed with errors"
+          exit 1
