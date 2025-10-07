@@ -1,0 +1,9 @@
+          TARGET_BRANCH="${{ github.head_ref || github.ref_name }}"
+          if [ -z "$TARGET_BRANCH" ]; then
+            echo "❌ Cannot determine target branch for push"
+            exit 1
+          fi
+          git push origin HEAD:"$TARGET_BRANCH"
+          echo "committed=true" >> $GITHUB_OUTPUT
+
+      - name: Generate repair summary
