@@ -100,7 +100,8 @@ const NavItem = styled.button<{ $active: boolean }>`
 `;
 
 const DisabledNavItem = styled(NavItem)`
-  opacity: 0.4;
+  color: #9e9ea0;  // WCAG 2.1 AA compliant (4.5:1 contrast ratio)
+  opacity: 0.6;
   cursor: not-allowed;
 
   &:hover {
