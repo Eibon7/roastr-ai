@@ -382,7 +382,10 @@ class AgentInterface {
 
     try {
       const command = 'node scripts/auto-repair-gdd.js --auto-fix';
-      const output = execSync(command, { encoding: 'utf8' });
+      const output = execSync(command, {
+        encoding: 'utf8',
+        timeout: 30000 // 30 second timeout
+      });
 
       const result = {
         success: true,
@@ -408,7 +411,10 @@ class AgentInterface {
   async getSystemHealth() {
     try {
       const command = 'node scripts/compute-gdd-health.js --json';
-      const output = execSync(command, { encoding: 'utf8' });
+      const output = execSync(command, {
+        encoding: 'utf8',
+        timeout: 30000 // 30 second timeout
+      });
       const data = JSON.parse(output);
       return data.overallHealth || 0;
     } catch (error) {
