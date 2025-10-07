@@ -1,0 +1,275 @@
+GIT DIFF MODES - COMPLETE EXPLANATION
+======================================
+
+Understanding git diff modes is critical for correct staged change detection.
+
+═══════════════════════════════════════════════════════════════
+
+GIT WORKING AREAS
+═══════════════════════════════════════════════════════════════
+
+Git has 3 main areas:
+
+1. **Working Tree** (Working Directory)
+   - Your local files on disk
+   - Where you make edits
+
+2. **Index** (Staging Area)
+   - Prepared changes for next commit
+   - Modified by git add
+
+3. **HEAD** (Last Commit)
+   - Current branch tip
+   - Last committed state
+
+Flow: Working Tree → git add → Index → git commit → HEAD
+
+═══════════════════════════════════════════════════════════════
+
+GIT DIFF MODES
+═══════════════════════════════════════════════════════════════
+
+git diff (no flags)
+-------------------
+Compares: Working Tree vs Index
+Shows: Unstaged changes
+Use case: "What have I changed but not staged?"
+
+Example:
+  echo "new content" >> file.txt
+  git diff  # Shows: +new content (unstaged)
+  git add file.txt
+  git diff  # Shows: (nothing - working tree = index)
+
+git diff --cached (or --staged)
+--------------------------------
+Compares: Index vs HEAD
+Shows: Staged changes
+Use case: "What will be in my next commit?"
+
+Example:
+  echo "new content" >> file.txt
+  git diff --cached  # Shows: (nothing - index = HEAD)
+  git add file.txt
+  git diff --cached  # Shows: +new content (staged)
+
+git diff HEAD
+-------------
+Compares: Working Tree vs HEAD
+Shows: All local changes (staged + unstaged)
+Use case: "What have I changed vs last commit?"
+
+Example:
+  echo "new content" >> file.txt
+  git diff HEAD  # Shows: +new content
+  git add file.txt
+  git diff HEAD  # Still shows: +new content
+
+═══════════════════════════════════════════════════════════════
+
+--quiet FLAG
+═══════════════════════════════════════════════════════════════
+
+Purpose: Silent mode, exit code only (no output)
+
+Exit codes:
+  - 0: No differences
+  - 1: Differences exist
+
+Usage:
+  git diff --quiet && echo "No changes" || echo "Has changes"
+
+═══════════════════════════════════════════════════════════════
+
+WORKFLOW SCENARIO
+═══════════════════════════════════════════════════════════════
+
+Auto-repair workflow:
+
+Step 1: Auto-repair modifies files
+  - docs/nodes/shield.md changed
+  - Working tree ≠ Index
+  - Working tree ≠ HEAD
+
+Step 2: git add .
+  - Stages all changes
+  - Working tree = Index (both have new content)
+  - Index ≠ HEAD (new content not committed yet)
+
+Step 3: Check if there are changes to commit
+  WRONG: git diff --quiet
+    - Compares: Working tree vs Index
+    - After git add: Working tree = Index
+    - Exit code: 0 (NO DIFFERENCES)
+    - Result: "No changes to commit" ❌ WRONG
+
+  CORRECT: git diff --cached --quiet
+    - Compares: Index vs HEAD
+    - After git add: Index ≠ HEAD (staged changes)
+    - Exit code: 1 (DIFFERENCES EXIST)
+    - Result: Continues to commit ✅ CORRECT
+
+═══════════════════════════════════════════════════════════════
+
+BEFORE FIX (BROKEN)
+═══════════════════════════════════════════════════════════════
+
+Code:
+  git add .
+  if git diff --quiet; then  # ❌ WRONG MODE
+    echo "No changes to commit"
+    exit 0
+  fi
+
+Scenario: Auto-repair changes docs/nodes/shield.md
+
+Working tree state:
+  docs/nodes/shield.md: [modified content]
+
+After git add .:
+  Working tree: [modified content]
+  Index:        [modified content]  ← Same
+  HEAD:         [old content]
+
+git diff --quiet:
+  Compares: Working tree vs Index
+  Result: No differences (both have modified content)
+  Exit code: 0
+
+Workflow result:
+  "No changes to commit"
+  committed=false
+  exit 0
+
+PROBLEM: Staged changes exist, but workflow exits!
+
+═══════════════════════════════════════════════════════════════
+
+AFTER FIX (CORRECT)
+═══════════════════════════════════════════════════════════════
+
+Code:
+  git add .
+  if git diff --cached --quiet; then  # ✅ CORRECT MODE
+    echo "No changes to commit"
+    exit 0
+  fi
+
+Scenario: Auto-repair changes docs/nodes/shield.md
+
+Working tree state:
+  docs/nodes/shield.md: [modified content]
+
+After git add .:
+  Working tree: [modified content]
+  Index:        [modified content]
+  HEAD:         [old content]      ← Different
+
+git diff --cached --quiet:
+  Compares: Index vs HEAD
+  Result: Differences exist (index has new content, HEAD doesn't)
+  Exit code: 1
+
+Workflow result:
+  Check fails (exit 1)
+  Continues to git commit
+  committed=true
+
+SUCCESS: Staged changes committed correctly!
+
+═══════════════════════════════════════════════════════════════
+
+NO CHANGES SCENARIO (BOTH WORK)
+═══════════════════════════════════════════════════════════════
+
+Scenario: Auto-repair runs but makes no changes
+
+After git add . (nothing to add):
+  Working tree: [unchanged]
+  Index:        [unchanged]
+  HEAD:         [unchanged]
+
+git diff --quiet:
+  Compares: Working tree vs Index
+  Result: No differences
+  Exit code: 0 ✅
+
+git diff --cached --quiet:
+  Compares: Index vs HEAD
+  Result: No differences
+  Exit code: 0 ✅
+
+Both commands work correctly when there are no changes!
+
+═══════════════════════════════════════════════════════════════
+
+COMPARISON TABLE
+═══════════════════════════════════════════════════════════════
+
+| Scenario | git diff --quiet | git diff --cached --quiet |
+|----------|------------------|---------------------------|
+| No changes | Exit 0 ✅ | Exit 0 ✅ |
+| Staged changes | Exit 0 ❌ WRONG | Exit 1 ✅ CORRECT |
+
+═══════════════════════════════════════════════════════════════
+
+CORRECT CHOICE FOR WORKFLOW
+═══════════════════════════════════════════════════════════════
+
+After git add ., we want to check: "Are there staged changes to commit?"
+
+Answer: Use git diff --cached --quiet
+
+Why:
+  - Compares Index vs HEAD
+  - Checks what will be in next commit
+  - Detects staged changes correctly
+  - Works for both scenarios (changes + no changes)
+
+═══════════════════════════════════════════════════════════════
+
+FINAL FIX
+═══════════════════════════════════════════════════════════════
+
+One-line change:
+
+-if git diff --quiet; then
++if git diff --cached --quiet; then
+
+Impact:
+  ✅ Auto-fix now commits staged changes
+  ✅ No changes scenario still works
+  ✅ Correct staged change detection
+  ✅ Workflow functional again
+
+═══════════════════════════════════════════════════════════════
+
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+Test 1: With Changes
+  echo "test" >> test.txt
+  git add test.txt
+  git diff --quiet && echo "WRONG" || echo "CORRECT (has unstaged changes)"
+  # Output: WRONG (working tree = index after git add)
+
+  git diff --cached --quiet && echo "WRONG" || echo "CORRECT (has staged changes)"
+  # Output: CORRECT (index ≠ HEAD)
+
+Test 2: Without Changes
+  git diff --quiet && echo "No changes" || echo "Has changes"
+  # Output: No changes ✅
+
+  git diff --cached --quiet && echo "No changes" || echo "Has changes"
+  # Output: No changes ✅
+
+═══════════════════════════════════════════════════════════════
+
+FINAL STATUS
+═══════════════════════════════════════════════════════════════
+
+✅ git diff --cached --quiet is CORRECT
+✅ Detects staged changes after git add
+✅ Works for both scenarios (changes + no changes)
+✅ Auto-fix workflow functional
+✅ Production-ready

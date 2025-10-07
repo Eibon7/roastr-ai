@@ -1,0 +1,1 @@
+✅ gdd-repair.yml: Valid YAML

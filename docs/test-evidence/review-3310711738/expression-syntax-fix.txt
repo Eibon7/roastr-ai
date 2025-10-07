@@ -1,0 +1,6 @@
+          ### Health Impact
+          ${{ steps.revalidate.outputs.new_health && format('- **New health score**: {0}/100', steps.revalidate.outputs.new_health) }}
+
+          ### Actions Taken
+          EOF
+
