@@ -2675,7 +2675,7 @@ Planned integrations:
 ### Workflow Integration
 
 **PR Flow:**
-```
+```text
 PR opened/updated
     ↓
 GDD Validation runs

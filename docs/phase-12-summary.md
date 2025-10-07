@@ -75,22 +75,22 @@ All GDD checks passed. Documentation is in sync with implementation.
 ## 🧪 Testing Scenarios
 
 ### Scenario 1: Healthy PR (health ≥ 95)
-```
+```text
 PR opened → Validation runs → Health 97 → ✅ Comment posted → Merge allowed
 ```
 
 ### Scenario 2: Unhealthy PR (health < 95)
-```
+```text
 PR opened → Validation runs → Health 87 → ❌ Merge blocked → Issue created
 ```
 
 ### Scenario 3: Auto-Repair Success
-```
+```text
 PR with orphans → Auto-repair runs → Fixes applied → Committed → Re-validated → ✅
 ```
 
 ### Scenario 4: Manual Trigger
-```
+```text
 Actions tab → Select workflow → Run workflow → Reports generated
 ```
 

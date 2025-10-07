@@ -1,0 +1,4 @@
+.github/workflows/gdd-repair.yml:34:          ref: ${{ github.head_ref }}
+.github/workflows/gdd-repair.yml:112:          git push origin HEAD:${{ github.head_ref }}
+.github/workflows/gdd-repair.yml:217:            - Branch: ${{ github.head_ref }}
+.github/workflows/gdd-validate.yml:212:            1. Review the [validation report](../blob/${{ github.head_ref }}/docs/system-validation.md)
