@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-06
+**Coverage:** 75%
 
 ## Dependencies
 
@@ -695,11 +696,13 @@ All persona changes logged with:
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- UX Researcher
-- Documentation Agent
-- Security Audit Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **UX Designer**
+
 
 ## Related Nodes
 

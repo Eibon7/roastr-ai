@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-06
+**Coverage:** 80%
 
 ## Dependencies
 
@@ -251,9 +252,13 @@ describe('Platform Constraints', () => {
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Integration Specialist**
+
 
 ## Related Nodes
 

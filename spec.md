@@ -7238,3 +7238,196 @@ Tests: 6 passed, 6 total
 
 ### ✅ Issue #406 Status: PRIMARY OBJECTIVE ACHIEVED
 Core deduplication by comment_id is fully functional, tested, and production-ready. Multi-tenant comment ingestion now prevents duplicate processing while maintaining organizational data isolation.
+
+---
+
+## GDD Node Architecture Documentation
+
+This section documents the core architectural nodes that form the foundation of the Roastr.ai system, following Graph-Driven Development (GDD) principles.
+
+### Cost Control Node
+
+**Purpose:** Usage tracking, billing integration, and limit enforcement across all platform features.
+
+**Responsibilities:**
+- Track usage metrics per organization (roasts, analyses, API calls)
+- Enforce plan-specific limits dynamically
+- Integrate with billing system for subscription management
+- Provide cost alerts and usage reporting
+- Rate limiting and throttling
+
+**Dependencies:**
+- `multi-tenant` - Organization-scoped usage tracking with RLS
+- `plan-features` - Plan tier limits and feature access control
+
+**Used By:**
+- `roast` - Usage validation before roast generation
+- `shield` - Usage tracking for moderation actions
+- `billing` - Billing calculations and subscription updates
+- `analytics` - Usage metrics and reporting
+- `social-platforms` - API usage tracking per platform
+
+**Implementation:**
+- `src/services/costControl.js` - Main cost control orchestrator
+- `src/services/usageTracker.js` - Usage metrics tracking
+- Database tables: `usage_metrics`, `cost_tracking`
+
+**GDD Node:** [docs/nodes/cost-control.md](docs/nodes/cost-control.md)
+
+---
+
+### Plan Features Node
+
+**Purpose:** Subscription plan tier configuration and feature access control.
+
+**Responsibilities:**
+- Define features and limits for each plan (Free, Starter, Pro, Plus)
+- Control access to premium features
+- Manage plan transitions and upgrades
+- Provide feature flags per organization
+- Dynamic entitlements management
+
+**Plan Tiers:**
+- **Free**: 100 roasts/month, 100 analyses/month, basic features
+- **Starter** (€5/month): 500 roasts/month, 500 analyses/month, enhanced features
+- **Pro** (€15/month): 1,000 roasts/month, 2,000 analyses/month, advanced features
+- **Plus** (€50/month): Unlimited roasts/analyses, premium features, priority support
+
+**Dependencies:**
+- `multi-tenant` - Organization-based plan assignment
+
+**Used By:**
+- `cost-control` - Plan limit enforcement
+- `billing` - Plan subscription management
+- `persona` - Premium persona options
+- `tone` - Advanced tone configurations
+- `roast` - Feature gating for RQC and auto-approval
+
+**Implementation:**
+- `src/services/planLimitsService.js` - Plan limits singleton service
+- `src/services/entitlementsService.js` - Feature entitlements management
+- Database tables: `user_subscriptions`, `plan_features`
+
+**GDD Node:** [docs/nodes/plan-features.md](docs/nodes/plan-features.md)
+
+---
+
+### Platform Constraints Node
+
+**Purpose:** Platform-specific character limits, formatting rules, and style guides for social media integrations.
+
+**Responsibilities:**
+- Enforce character limits per platform (Twitter 280, LinkedIn 3000, etc.)
+- Apply platform-specific formatting rules
+- Handle emoji and special character restrictions
+- Manage platform API rate limits
+- Provide platform style guidelines for roast generation
+
+**Platform Support:**
+- Twitter: 280 characters, hashtag optimization
+- YouTube: 10,000 characters for comments
+- Instagram: 2,200 characters, hashtag limits
+- Facebook: 63,206 characters
+- LinkedIn: 3,000 characters, professional tone
+- TikTok: 150 characters for comments
+- Discord: 2,000 characters per message
+- Twitch: 500 characters
+- Bluesky: 300 characters
+
+**Dependencies:**
+- `social-platforms` - Platform API specifications and limits
+
+**Used By:**
+- `roast` - Platform-aware roast generation with character limits
+
+**Implementation:**
+- `src/services/platformConstraints.js` - Platform limits and rules engine
+- Configuration: Platform-specific JSON configs
+
+**GDD Node:** [docs/nodes/platform-constraints.md](docs/nodes/platform-constraints.md)
+
+---
+
+### Social Platforms Node
+
+**Purpose:** Unified integration layer for 9 social media platforms with consistent API abstraction.
+
+**Responsibilities:**
+- Provide unified API for platform operations (post, reply, fetch comments)
+- Handle platform-specific authentication (OAuth, API keys)
+- Manage rate limiting per platform
+- Queue platform API calls for reliability
+- Handle platform-specific error codes and retries
+
+**Supported Platforms:**
+1. **Twitter** (X) - OAuth 2.0, API v2
+2. **YouTube** - Google OAuth, Data API v3
+3. **Instagram** - Facebook Login, Basic Display API
+4. **Facebook** - Graph API, Page Access Tokens
+5. **Discord** - Bot Token, WebSocket Gateway
+6. **Twitch** - OAuth, Helix API
+7. **Reddit** - OAuth, Reddit API
+8. **TikTok** - Business API (limited)
+9. **Bluesky** - AT Protocol
+
+**Dependencies:**
+- `queue-system` - Async platform API calls
+- `cost-control` - API usage tracking
+- `multi-tenant` - Organization-scoped platform accounts
+
+**Used By:**
+- `platform-constraints` - Platform specifications
+- `analytics` - Platform-specific metrics
+
+**Implementation:**
+- `src/integrations/twitter/twitterService.js`
+- `src/integrations/youtube/youtubeService.js`
+- `src/integrations/instagram/instagramService.js`
+- `src/integrations/facebook/facebookService.js`
+- `src/integrations/discord/discordService.js`
+- `src/integrations/twitch/twitchService.js`
+- `src/integrations/reddit/redditService.js`
+- `src/integrations/tiktok/tiktokService.js`
+- `src/integrations/bluesky/blueskyService.js`
+
+**GDD Node:** [docs/nodes/social-platforms.md](docs/nodes/social-platforms.md)
+
+---
+
+### Trainer Node
+
+**Purpose:** AI model fine-tuning and training data management for improving roast quality over time.
+
+**Status:** Development (not yet in production)
+
+**Responsibilities:**
+- Collect approved roasts as training data
+- Manage training datasets with quality labels
+- Fine-tune OpenAI models on organization-specific data
+- A/B test model improvements
+- Track model performance metrics
+
+**Planned Features:**
+- Organization-specific model fine-tuning
+- User feedback integration for model improvement
+- Quality scoring for training data selection
+- Multi-language model training
+- Continuous learning pipeline
+
+**Dependencies:**
+- `roast` - Source of approved roasts for training
+- `shield` - Quality-filtered content for training
+- `analytics` - Model performance tracking
+
+**Implementation (Planned):**
+- `src/services/trainerService.js` - Training orchestration
+- `src/services/datasetManager.js` - Training data management
+- OpenAI Fine-tuning API integration
+- Database tables: `training_data`, `model_versions`
+
+**GDD Node:** [docs/nodes/trainer.md](docs/nodes/trainer.md)
+
+---
+
+**GDD System Map:** [docs/system-map.yaml](docs/system-map.yaml)
+**GDD Documentation:** [docs/GDD-IMPLEMENTATION-SUMMARY.md](docs/GDD-IMPLEMENTATION-SUMMARY.md)

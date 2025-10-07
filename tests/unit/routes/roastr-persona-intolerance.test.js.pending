@@ -1,11 +1,30 @@
 const request = require('supertest');
 const express = require('express');
 
+// Mock flags before requiring user routes
+jest.mock('../../../src/config/flags', () => ({
+  flags: {
+    isEnabled: jest.fn((flag) => {
+      if (flag === 'ENABLE_SUPABASE') return true;
+      return false;
+    })
+  }
+}));
+
+// Mock PersonaInputSanitizer
+jest.mock('../../../src/services/personaInputSanitizer', () => {
+  return jest.fn().mockImplementation(() => ({
+    sanitizePersonaInput: jest.fn((text) => text), // Return text as-is for tests
+    getValidationErrorMessage: jest.fn(() => 'Validation error')
+  }));
+});
+
 describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
   let app;
   let mockSupabaseServiceClient;
   let mockAuthenticateToken;
   let mockEncryptionService;
+  let mockCreateUserClient;
 
   beforeEach(() => {
     // Mock Supabase service client
@@ -38,10 +57,13 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
       sanitizeForEncryption: jest.fn((text) => text.trim())
     };
 
+    // Mock createUserClient
+    mockCreateUserClient = jest.fn(() => mockSupabaseServiceClient);
+
     // Mock dependencies
     jest.mock('../../../src/config/supabase', () => ({
       supabaseServiceClient: mockSupabaseServiceClient,
-      createUserClient: jest.fn(() => mockSupabaseServiceClient)
+      createUserClient: mockCreateUserClient
     }));
 
     jest.mock('../../../src/middleware/auth', () => ({
@@ -78,7 +100,11 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
         lo_que_no_tolero_encrypted: 'encrypted_aW5zdWx0b3MgcmFjaWFsZXM=', // "insultos raciales" encrypted
         lo_que_no_tolero_visible: false,
         lo_que_no_tolero_created_at: '2024-01-01T00:00:00Z',
-        lo_que_no_tolero_updated_at: '2024-01-02T00:00:00Z'
+        lo_que_no_tolero_updated_at: '2024-01-02T00:00:00Z',
+        lo_que_me_da_igual_encrypted: 'encrypted_cG9sw610aWNh', // "política" encrypted
+        lo_que_me_da_igual_visible: false,
+        lo_que_me_da_igual_created_at: '2024-01-01T00:00:00Z',
+        lo_que_me_da_igual_updated_at: '2024-01-02T00:00:00Z'
       };
 
       mockSupabaseServiceClient.single.mockResolvedValue({
@@ -102,7 +128,12 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
         isIntoleranceVisible: false,
         intoleranceCreatedAt: '2024-01-01T00:00:00Z',
         intoleranceUpdatedAt: '2024-01-02T00:00:00Z',
-        hasIntoleranceContent: true
+        hasIntoleranceContent: true,
+        loQueMeDaIgual: 'política',
+        isToleranceVisible: false,
+        toleranceCreatedAt: '2024-01-01T00:00:00Z',
+        toleranceUpdatedAt: '2024-01-02T00:00:00Z',
+        hasToleranceContent: true
       });
     });
 
@@ -116,7 +147,11 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
         lo_que_no_tolero_encrypted: null,
         lo_que_no_tolero_visible: false,
         lo_que_no_tolero_created_at: null,
-        lo_que_no_tolero_updated_at: null
+        lo_que_no_tolero_updated_at: null,
+        lo_que_me_da_igual_encrypted: null,
+        lo_que_me_da_igual_visible: false,
+        lo_que_me_da_igual_created_at: null,
+        lo_que_me_da_igual_updated_at: null
       };
 
       mockSupabaseServiceClient.single.mockResolvedValue({
@@ -131,6 +166,8 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
       expect(response.status).toBe(200);
       expect(response.body.data.loQueNoTolero).toBe(null);
       expect(response.body.data.hasIntoleranceContent).toBe(false);
+      expect(response.body.data.loQueMeDaIgual).toBe(null);
+      expect(response.body.data.hasToleranceContent).toBe(false);
     });
 
     it('should handle decryption errors gracefully', async () => {
@@ -143,7 +180,11 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
         lo_que_no_tolero_encrypted: 'invalid_encrypted_data',
         lo_que_no_tolero_visible: false,
         lo_que_no_tolero_created_at: '2024-01-01T00:00:00Z',
-        lo_que_no_tolero_updated_at: '2024-01-02T00:00:00Z'
+        lo_que_no_tolero_updated_at: '2024-01-02T00:00:00Z',
+        lo_que_me_da_igual_encrypted: null,
+        lo_que_me_da_igual_visible: false,
+        lo_que_me_da_igual_created_at: null,
+        lo_que_me_da_igual_updated_at: null
       };
 
       mockSupabaseServiceClient.single.mockResolvedValue({
@@ -164,7 +205,7 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.loQueNoTolero).toBe(null);
-      expect(response.body.data.hasIntoleranceContent).toBe(true); // Field exists but couldn't decrypt
+      expect(response.body.data.hasIntoleranceContent).toBe(false); // Field exists but decryption failed = null
     });
   });
 
@@ -173,7 +214,11 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
       // Mock existing data check
       mockSupabaseServiceClient.single
         .mockResolvedValueOnce({
-          data: { lo_que_me_define_encrypted: null, lo_que_no_tolero_encrypted: null },
+          data: {
+            lo_que_me_define_encrypted: null,
+            lo_que_no_tolero_encrypted: null,
+            lo_que_me_da_igual_encrypted: null
+          },
           error: null
         })
         .mockResolvedValue({
@@ -186,7 +231,11 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
             lo_que_no_tolero_encrypted: 'encrypted_aW5zdWx0b3MgcmFjaWFsZXM=',
             lo_que_no_tolero_visible: false,
             lo_que_no_tolero_created_at: '2024-01-02T00:00:00Z',
-            lo_que_no_tolero_updated_at: '2024-01-02T00:00:00Z'
+            lo_que_no_tolero_updated_at: '2024-01-02T00:00:00Z',
+            lo_que_me_da_igual_encrypted: null,
+            lo_que_me_da_igual_visible: false,
+            lo_que_me_da_igual_created_at: null,
+            lo_que_me_da_igual_updated_at: null
           },
           error: null
         });
@@ -205,8 +254,8 @@ describe('Roastr Persona - Lo que no tolero (Issue #149)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('actualizada');
-      expect(response.body.data.loQueNoTolero).toBe('insultos raciales');
+      expect(response.body.message).toContain('updated successfully');
+      expect(response.body.data.loQueNoTolero).toBe('insultos raciales, comentarios sobre peso');
       expect(response.body.data.hasIntoleranceContent).toBe(true);
 
       // Verify encryption was called

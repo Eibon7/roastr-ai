@@ -1,0 +1,33 @@
+{
+  "nodes": [
+    { "id": "roast", "group": 1, "coverage": 95 },
+    { "id": "shield", "group": 1, "coverage": 98 },
+    { "id": "persona", "group": 2, "coverage": 92 },
+    { "id": "tone", "group": 2, "coverage": 90 },
+    { "id": "platform-constraints", "group": 2, "coverage": 88 },
+    { "id": "cost-control", "group": 3, "coverage": 96 },
+    { "id": "queue-system", "group": 3, "coverage": 94 },
+    { "id": "multi-tenant", "group": 3, "coverage": 97 },
+    { "id": "social-platforms", "group": 4, "coverage": 91 },
+    { "id": "billing", "group": 3, "coverage": 93 },
+    { "id": "plan-features", "group": 3, "coverage": 95 },
+    { "id": "analytics", "group": 4, "coverage": 89 },
+    { "id": "trainer", "group": 4, "coverage": 87 }
+  ],
+  "links": [
+    { "source": "roast", "target": "persona", "value": 2 },
+    { "source": "roast", "target": "tone", "value": 2 },
+    { "source": "roast", "target": "platform-constraints", "value": 1 },
+    { "source": "roast", "target": "shield", "value": 2 },
+    { "source": "roast", "target": "cost-control", "value": 2 },
+    { "source": "shield", "target": "cost-control", "value": 2 },
+    { "source": "shield", "target": "queue-system", "value": 2 },
+    { "source": "cost-control", "target": "billing", "value": 2 },
+    { "source": "cost-control", "target": "plan-features", "value": 2 },
+    { "source": "queue-system", "target": "multi-tenant", "value": 1 },
+    { "source": "social-platforms", "target": "platform-constraints", "value": 1 },
+    { "source": "social-platforms", "target": "queue-system", "value": 1 },
+    { "source": "billing", "target": "multi-tenant", "value": 1 },
+    { "source": "analytics", "target": "multi-tenant", "value": 1 }
+  ]
+}

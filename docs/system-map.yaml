@@ -1,149 +1,288 @@
 # Roastr System Map - Graph Driven Development
-# Version: 1.0.1
-# Description: Dependency graph for modular documentation
+# Version: 2.0.0
+# Description: Complete dependency graph with bidirectional relationships
 # Owner: Documentation Agent
+# Last Updated: 2025-10-06
 
-features:
+# Metadata
+metadata:
+  version: 2.0.0
+  created: 2025-10-03
+  last_updated: 2025-10-06
+  total_nodes: 13
+  critical_nodes: 7
+  high_priority_nodes: 4
+  production_nodes: 12
+  development_nodes: 1
+  pr: "#458"
+  changes: "Phase 7.1: Complete system-map with bidirectional relationships + metadata"
+
+# Node Definitions
+nodes:
+  # Core Feature Nodes
   roast:
     description: Core roast generation system with AI prompts and quality control
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 85
     depends_on:
       - persona
       - tone
       - platform-constraints
       - shield
       - cost-control
+    used_by:
+      - analytics
+      - trainer
     docs:
       - docs/nodes/roast.md
-    owner: Back-end Dev
-    priority: critical
+    files:
+      - src/services/roastEngine.js
+      - src/services/roastGeneratorEnhanced.js
+      - src/services/roastPromptTemplate.js
+      - src/services/csvRoastService.js
 
   shield:
     description: Automated content moderation with escalating actions
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 78
     depends_on:
       - cost-control
       - queue-system
+    used_by:
+      - roast
+      - trainer
+      - analytics
     docs:
       - docs/nodes/shield.md
-    owner: Back-end Dev
-    priority: critical
+    files:
+      - src/services/shieldService.js
+      - src/services/shieldDecisionEngine.js
+      - src/services/shieldActionExecutor.js
+      - src/workers/ShieldActionWorker.js
 
-  persona:
-    description: User personality and roast style configuration
-    depends_on:
-      - plan-features
-    docs:
-      - docs/nodes/persona.md
-    owner: Back-end Dev
-    priority: high
-
-  tone:
-    description: Tone mapping and humor type configuration
-    depends_on:
-      - persona
-      - plan-features
-    docs:
-      - docs/nodes/tone.md
-    owner: Back-end Dev
-    priority: high
-
-  platform-constraints:
-    description: Platform-specific character limits and style guides
-    depends_on:
-      - social-platforms
-    docs:
-      - docs/nodes/platform-constraints.md
-    owner: Back-end Dev
-    priority: high
-
-  plan-features:
-    description: Subscription plan feature gates and limits
-    depends_on:
-      - multi-tenant
-    docs:
-      - docs/nodes/plan-features.md
-    owner: Back-end Dev
-    priority: critical
-
+  # Infrastructure Nodes
   queue-system:
     description: Unified Redis/Upstash + Database queue management
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 87
     depends_on:
       - multi-tenant
+    used_by:
+      - shield
+      - social-platforms
+      - billing
     docs:
       - docs/nodes/queue-system.md
-    owner: Back-end Dev
-    priority: critical
-
-  cost-control:
-    description: Usage tracking, billing integration, and limit enforcement
-    depends_on:
-      - multi-tenant
-      - plan-features
-    docs:
-      - docs/nodes/cost-control.md
-    owner: Back-end Dev
-    priority: critical
+    files:
+      - src/services/queueService.js
+      - src/workers/BaseWorker.js
 
   multi-tenant:
     description: Row Level Security (RLS) and organization isolation
-    depends_on: []
-    docs:
-      - docs/nodes/multi-tenant.md
-    owner: Back-end Dev
+    status: production
     priority: critical
-
-  social-platforms:
-    description: 9 platform integrations (Twitter, YouTube, Instagram, etc.)
-    depends_on:
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 72
+    depends_on: []
+    used_by:
       - queue-system
       - cost-control
+      - plan-features
+      - billing
+      - analytics
+      - social-platforms
     docs:
-      - docs/nodes/social-platforms.md
-    owner: Back-end Dev
-    priority: high
+      - docs/nodes/multi-tenant.md
+    files:
+      - database/schema.sql
 
-  trainer:
-    description: AI model fine-tuning and training data management
+  # Business Logic Nodes
+  cost-control:
+    description: Usage tracking, billing integration, and limit enforcement
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 68
     depends_on:
+      - multi-tenant
+      - plan-features
+    used_by:
       - roast
       - shield
+      - billing
+      - analytics
+      - social-platforms
     docs:
-      - docs/nodes/trainer.md
-    owner: Back-end Dev
-    priority: medium
-    status: planned
+      - docs/nodes/cost-control.md
+    files:
+      - src/services/costControl.js
+      - src/services/usageTracker.js
 
-  analytics:
-    description: Usage analytics, metrics, and reporting dashboard
-    depends_on:
-      - cost-control
-      - multi-tenant
-    docs:
-      - docs/nodes/analytics.md
+  plan-features:
+    description: Subscription plan feature gates and limits
+    status: production
+    priority: critical
     owner: Back-end Dev
-    priority: medium
-    status: planned
+    last_updated: 2025-10-06
+    coverage: 70
+    depends_on:
+      - multi-tenant
+    used_by:
+      - cost-control
+      - billing
+      - persona
+      - tone
+    docs:
+      - docs/nodes/plan-features.md
+    files:
+      - src/services/planLimitsService.js
+      - src/services/entitlementsService.js
 
   billing:
     description: Stripe integration for subscriptions, webhooks, and plan management
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 65
     depends_on:
       - cost-control
       - queue-system
       - multi-tenant
       - plan-features
+    used_by:
+      - analytics
     docs:
       - docs/nodes/billing.md
-    owner: Back-end Dev
-    priority: critical
-    status: refactoring
+    files:
+      - src/services/billingService.js
+      - src/services/stripeService.js
 
-# Metadata
-metadata:
-  version: 1.0.2
-  created: 2025-10-03
-  last_updated: 2025-10-06
-  total_nodes: 13
-  critical_nodes: 7
-  high_priority_nodes: 4
-  planned_nodes: 2
-  pr: "#458"
-  changes: "Updated queue-system node (v1.2.0): API normalization + enhanced error handling - PR #458"
+  # Configuration Nodes
+  persona:
+    description: User personality and roast style configuration
+    status: production
+    priority: high
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 75
+    depends_on:
+      - plan-features
+    used_by:
+      - roast
+      - tone
+    docs:
+      - docs/nodes/persona.md
+    files:
+      - src/services/personaService.js
+
+  tone:
+    description: Tone mapping and humor type configuration
+    status: production
+    priority: high
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 73
+    depends_on:
+      - persona
+      - plan-features
+    used_by:
+      - roast
+    docs:
+      - docs/nodes/tone.md
+    files:
+      - src/services/toneService.js
+
+  platform-constraints:
+    description: Platform-specific character limits and style guides
+    status: production
+    priority: high
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 80
+    depends_on:
+      - social-platforms
+    used_by:
+      - roast
+    docs:
+      - docs/nodes/platform-constraints.md
+    files:
+      - src/services/platformConstraints.js
+
+  social-platforms:
+    description: 9 platform integrations (Twitter, YouTube, Instagram, etc.)
+    status: production
+    priority: high
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 82
+    depends_on:
+      - queue-system
+      - cost-control
+      - multi-tenant
+    used_by:
+      - platform-constraints
+      - analytics
+    docs:
+      - docs/nodes/social-platforms.md
+    files:
+      - src/integrations/twitter/twitterService.js
+      - src/integrations/youtube/youtubeService.js
+      - src/integrations/instagram/instagramService.js
+
+  # Support Nodes
+  analytics:
+    description: Usage analytics, metrics, and reporting dashboard
+    status: production
+    priority: medium
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 60
+    depends_on:
+      - cost-control
+      - multi-tenant
+      - roast
+      - shield
+      - billing
+      - social-platforms
+    used_by: []
+    docs:
+      - docs/nodes/analytics.md
+    files:
+      - src/services/analyticsService.js
+
+  trainer:
+    description: AI model fine-tuning and training data management
+    status: development
+    priority: medium
+    owner: Back-end Dev
+    last_updated: 2025-10-06
+    coverage: 45
+    depends_on:
+      - roast
+      - shield
+    used_by: []
+    docs:
+      - docs/nodes/trainer.md
+    files:
+      - src/services/trainerService.js
+
+# Validation Rules
+validation:
+  bidirectional_check: true
+  cycle_detection: true
+  orphan_detection: true
+  spec_sync_check: true
+  coverage_threshold: 70
+  update_freshness_days: 30

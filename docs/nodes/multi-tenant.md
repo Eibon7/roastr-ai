@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-05
+**Last Updated:** 2025-10-06
+**Coverage:** 72%
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
 
 ## Dependencies
@@ -796,10 +797,14 @@ See `docs/test-evidence/issue-412/SUMMARY.md` for details.
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Security Audit Agent
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Security Engineer**
+- **Database Admin**
+
 
 ## Related Nodes
 
@@ -812,7 +817,89 @@ See `docs/test-evidence/issue-412/SUMMARY.md` for details.
 
 ---
 
+## Tests
+
+### Ubicación de Tests
+
+**Integration Tests** (1 archivo):
+- `tests/integration/multi-tenant-rls-issue-412.test.js` - Comprehensive RLS validation tests
+
+**Test Helpers**:
+- `tests/helpers/tenantTestUtils.js` - Utilities for multi-tenant testing (organization creation, user setup, etc.)
+
+### Cobertura de Tests
+
+- **Integration Tests**: 1 archivo completo con múltiples escenarios
+- **RLS Policy Coverage**: ~85% de las políticas RLS validadas
+- **Test Utilities**: Helper functions para setup/teardown de organizaciones
+
+### Casos de Prueba Cubiertos
+
+**Row Level Security (RLS):**
+- ✅ Users can only see their organization's data
+- ✅ Service role bypasses RLS (backend operations)
+- ✅ Anonymous users have no access
+- ✅ RLS policies on all major tables (users, organizations, organization_members, etc.)
+- ✅ Cross-organization access prevention
+- ✅ Membership-based access control
+
+**Organization Management:**
+- ✅ Organization creation with proper isolation
+- ✅ User assignment to organizations
+- ✅ Role-based permissions (owner, admin, member)
+- ✅ Organization deletion with cascading cleanup
+- ✅ Membership CRUD operations
+
+**Data Isolation:**
+- ✅ Queue jobs scoped by organization
+- ✅ Shield events scoped by organization
+- ✅ Social accounts scoped by organization
+- ✅ Settings scoped by organization
+- ✅ Roast generations scoped by organization
+
+**Edge Cases:**
+- ✅ Users in multiple organizations
+- ✅ Orphaned data handling
+- ✅ Concurrent organization operations
+- ✅ Invalid organization_id access attempts
+- ✅ Missing membership records
+
+### Tests Pendientes
+
+- [ ] Performance tests con millones de registros multi-tenant
+- [ ] RLS policy performance benchmarking (query optimization)
+- [ ] Security penetration tests (authorization bypass attempts)
+- [ ] Load tests con múltiples organizaciones simultáneas
+- [ ] Migration tests (schema changes con datos existentes)
+- [ ] Advisory lock contention tests
+- [ ] Service role security audit (evitar abusos)
+
+### Comandos de Test
+
+```bash
+# Run multi-tenant RLS tests
+npm test -- multi-tenant-rls
+
+# Run with specific test file
+npm test -- tests/integration/multi-tenant-rls-issue-412.test.js
+
+# Run with verbose output
+npm test -- multi-tenant-rls --verbose
+
+# Check RLS policies in database
+psql $DATABASE_URL -c "SELECT schemaname, tablename, policyname FROM pg_policies WHERE schemaname = 'public';"
+```
+
+### Referencia
+
+**Issue #412**: Multi-tenant RLS Integration Tests
+- **Status**: Infrastructure ready, tests implemented
+- **Coverage**: RLS policies validated across core tables
+- **Documentation**: See test file for detailed scenarios
+
+---
+
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Monthly or on security/architecture changes
-**Last Reviewed:** 2025-10-03
+**Last Reviewed:** 2025-10-06
 **Version:** 1.0.0

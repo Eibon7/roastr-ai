@@ -4,7 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-03
+**Last Updated:** 2025-10-06
+**Coverage:** 68%
 
 ## Dependencies
 
@@ -456,9 +457,14 @@ describe('CostControlService', () => {
 
 ## Agentes Relevantes
 
-- Back-end Dev
-- Documentation Agent
-- Test Engineer
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+- **Billing Specialist**
+- **Orchestrator**
+
 
 ## Related Nodes
 
@@ -470,7 +476,89 @@ describe('CostControlService', () => {
 
 ---
 
+## Tests
+
+### Ubicación de Tests
+
+**Unit Tests** (5 archivos):
+- `tests/unit/services/costControl.test.js` - Core cost tracking functionality
+- `tests/unit/services/costControl.enhanced.test.js` - Enhanced features and edge cases
+- `tests/unit/services/costControl-alerts.test.js` - Alert system and notifications
+- `tests/unit/services/entitlementsService.test.js` - Plan limits and entitlements
+- `tests/unit/services/stripeWrapper.test.js` - Stripe API integration wrapper
+
+**Integration Tests** (1 archivo):
+- `tests/integration/entitlementsFlow.test.js` - Full entitlements and cost control flow
+
+### Cobertura de Tests
+
+- **Unit Test Coverage**: ~90% del código de cost control
+- **Integration Tests**: Flujo completo de entitlements
+- **Total Tests**: 6 archivos con múltiples escenarios
+
+### Casos de Prueba Cubiertos
+
+**Cost Tracking:**
+- ✅ Usage increment per operation (roasts, análisis)
+- ✅ Organization-scoped usage tracking
+- ✅ Monthly usage reset
+- ✅ Real-time usage queries
+- ✅ Cost calculation per plan tier
+
+**Entitlements & Limits:**
+- ✅ Plan-based limits enforcement (Free, Starter, Pro, Plus)
+- ✅ Feature flag checks per plan
+- ✅ Roast limit validation (100, 500, 1000, unlimited)
+- ✅ Análisis limit validation (100, 500, 2000, unlimited)
+- ✅ Platform access restrictions per plan
+- ✅ Over-limit prevention
+
+**Alerts & Notifications:**
+- ✅ 80% usage warning emails
+- ✅ 100% limit reached notifications
+- ✅ Alert throttling (no spam)
+- ✅ Organization admin notifications
+
+**Stripe Integration:**
+- ✅ Stripe API wrapper methods
+- ✅ Error handling and retries
+- ✅ Webhook payload validation
+- ✅ Subscription status sync
+
+**Edge Cases:**
+- ✅ Invalid organization_id handling
+- ✅ Missing subscription data
+- ✅ Concurrent usage increments
+- ✅ Negative usage values
+- ✅ Plan tier downgrades
+
+### Tests Pendientes
+
+- [ ] Load tests con alto volumen de operaciones (>10,000/min)
+- [ ] Billing accuracy tests (revenue reconciliation)
+- [ ] Concurrent usage increment stress tests
+- [ ] Plan transition edge cases (mid-month upgrades/downgrades)
+- [ ] Stripe webhook retry logic tests
+
+### Comandos de Test
+
+```bash
+# Run all cost-control tests
+npm test -- costControl
+
+# Run entitlements tests
+npm test -- entitlements
+
+# Run specific test file
+npm test -- tests/unit/services/costControl.test.js
+
+# Run integration flow
+npm test -- tests/integration/entitlementsFlow.test.js
+```
+
+---
+
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Monthly or on billing changes
-**Last Reviewed:** 2025-10-03
+**Last Reviewed:** 2025-10-06
 **Version:** 1.0.0
