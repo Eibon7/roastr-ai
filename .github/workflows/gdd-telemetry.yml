@@ -59,6 +59,7 @@ jobs:
           fi
 
       - name: Commit telemetry data
+        if: github.event_name != 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore(telemetry): Daily GDD metrics snapshot [skip ci]"

@@ -351,6 +351,7 @@ export const AgentActivityMonitor: React.FC = () => {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     loadRecentActions();
@@ -393,26 +394,34 @@ export const AgentActivityMonitor: React.FC = () => {
   };
 
   const connectWebSocket = () => {
+    // Clear any existing interval before creating a new one
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+
     // Note: This would connect to a WebSocket endpoint
     // For now, we'll simulate it with polling
-    const interval = setInterval(() => {
+    pollIntervalRef.current = setInterval(() => {
       loadRecentActions();
       loadStats();
     }, 5000);
 
     setConnected(true);
-
-    return () => {
-      clearInterval(interval);
-      setConnected(false);
-    };
   };
 
   const disconnectWebSocket = () => {
+    // Clean up polling interval
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+
+    // Clean up WebSocket connection
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
     }
+
     setConnected(false);
   };
 
