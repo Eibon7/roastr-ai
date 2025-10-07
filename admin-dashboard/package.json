@@ -29,6 +29,8 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.56.0",
     "@types/d3": "^7.4.3",
     "@types/lodash": "^4.14.202",
     "@types/react": "^18.2.45",
