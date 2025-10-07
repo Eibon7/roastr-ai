@@ -367,7 +367,7 @@ export function ReportsViewer() {
               </option>
             ))}
           </ReportSelect>
-          <Button onClick={handleDownload} disabled={!content || loading}>
+          <Button onClick={handleDownload} disabled={!content || loading || !!error}>
             Download
           </Button>
         </Controls>

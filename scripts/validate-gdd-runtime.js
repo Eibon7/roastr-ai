@@ -789,6 +789,61 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
 }
 
 /**
+ * Display help information
+ */
+function showHelp() {
+  console.log(`
+GDD Runtime Validator - Validate Graph-Driven Development system
+
+USAGE:
+  node scripts/validate-gdd-runtime.js [OPTIONS]
+
+OPTIONS:
+  --full              Validate entire GDD system (default)
+  --diff              Validate only changed nodes since last sync
+  --node=<name>       Validate specific node (e.g., --node=shield)
+  --report            Generate report without console output
+  --ci                CI mode (exit code 1 on errors, minimal output)
+  --drift             Include drift prediction analysis
+  --score             Include health scoring analysis
+  -h, --help          Show this help message
+
+EXAMPLES:
+  # Validate entire system
+  node scripts/validate-gdd-runtime.js --full
+
+  # Validate specific node with health scoring
+  node scripts/validate-gdd-runtime.js --node=shield --score
+
+  # CI mode with drift prediction
+  node scripts/validate-gdd-runtime.js --ci --drift
+
+  # Validate only changed nodes
+  node scripts/validate-gdd-runtime.js --diff
+
+OUTPUT FILES:
+  - docs/system-validation.md    Full validation report (Markdown)
+  - gdd-status.json             Machine-readable status (JSON)
+
+VALIDATION CHECKS:
+  ✓ Graph consistency (nodes, dependencies, cycles)
+  ✓ Bidirectional edges validation
+  ✓ spec.md ↔ nodes synchronization
+  ✓ Code integration (@GDD tags)
+  ✓ Outdated nodes detection (>30 days)
+  ✓ Orphan nodes detection
+
+ADDITIONAL ANALYSIS (when enabled):
+  --drift: Predictive drift detection with risk scoring
+  --score: Node health scoring (0-100) with quality metrics
+
+For more information, see:
+  - docs/GDD-IMPLEMENTATION-SUMMARY.md
+  - CLAUDE.md (GDD Runtime Validation section)
+  `);
+}
+
+/**
  * CLI entry point that runs the GDD runtime validation and, optionally, the node health scorer.
  *
  * Parses process.argv for flags to configure validation mode and behavior, instantiates a GDDValidator
@@ -802,9 +857,17 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
  * - `--report`: controls report generation (combined with other args affects skip behavior)
  * - `--diff`  : run in diff validation mode
  * - `--node=NAME` : run validation for a single node (sets mode to `single` and selects the node)
+ * - `--help`, `-h` : display help information
  */
 async function main() {
   const args = process.argv.slice(2);
+
+  // Handle help flag
+  if (args.includes('--help') || args.includes('-h')) {
+    showHelp();
+    process.exit(0);
+  }
+
   const runScoring = args.includes('--score');
   const runDrift = args.includes('--drift');
 

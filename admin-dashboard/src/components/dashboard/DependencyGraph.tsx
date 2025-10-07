@@ -9,6 +9,8 @@ const NODE_BORDER_RADIUS = 8;
 const HORIZONTAL_GAP = 180;
 const VERTICAL_GAP = 40;
 const CANVAS_PADDING = 80;
+const CANVAS_HEIGHT = 600;
+const BEZIER_CONTROL_OFFSET_CAP = 100;
 
 // ===== SVG ICON COMPONENTS =====
 const MessageSquareIcon = ({ color = '#8AFF80' }: { color?: string }) => (
@@ -243,7 +245,7 @@ const Button = styled.button<{ $active?: boolean }>`
 
 const SvgContainer = styled.div`
   width: 100%;
-  height: 600px;
+  height: ${CANVAS_HEIGHT}px;
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -306,7 +308,7 @@ function calculateNodePositions(nodes: GraphNode[]): GraphNode[] {
   Object.entries(layers).forEach(([layerStr, layerNodes]) => {
     const layer = parseInt(layerStr);
     const layerHeight = layerNodes.length * (NODE_HEIGHT + VERTICAL_GAP) - VERTICAL_GAP;
-    const startY = CANVAS_PADDING + (600 - 2 * CANVAS_PADDING - layerHeight) / 2;
+    const startY = CANVAS_PADDING + (CANVAS_HEIGHT - 2 * CANVAS_PADDING - layerHeight) / 2;
 
     layerNodes.forEach((node, index) => {
       positionedNodes.push({
@@ -339,8 +341,8 @@ function generateBezierPath(
   targetY: number
 ): string {
   const dx = targetX - sourceX;
-  const controlX1 = sourceX + Math.min(dx * 0.5, 100);
-  const controlX2 = targetX - Math.min(dx * 0.5, 100);
+  const controlX1 = sourceX + Math.min(dx * 0.5, BEZIER_CONTROL_OFFSET_CAP);
+  const controlX2 = targetX - Math.min(dx * 0.5, BEZIER_CONTROL_OFFSET_CAP);
 
   return `M ${sourceX + NODE_WIDTH} ${sourceY + NODE_HEIGHT / 2}
           C ${controlX1} ${sourceY + NODE_HEIGHT / 2},
@@ -380,7 +382,7 @@ export function DependencyGraph() {
         // Calculate SVG dimensions based on layout
         const maxLayer = Math.max(...positionedNodes.map(n => n.layer ?? 0));
         const svgWidth = (maxLayer + 1) * (NODE_WIDTH + HORIZONTAL_GAP) + 2 * CANVAS_PADDING;
-        const svgHeight = 600;
+        const svgHeight = CANVAS_HEIGHT;
 
         svg.attr('width', svgWidth).attr('height', svgHeight);
 
