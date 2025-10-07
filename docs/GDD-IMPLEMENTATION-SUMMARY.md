@@ -1548,7 +1548,7 @@ node scripts/watch-gdd.js
 ```
 
 **Watcher Dashboard:**
-```
+```text
 ╔════════════════════════════════════════╗
 ║   GDD STATUS: WARNING                 ║
 ╠════════════════════════════════════════╣
@@ -1663,7 +1663,7 @@ class GDDDriftPredictor {
 
 #### Files Updated
 
-**1. scripts/watch-gdd.js**
+##### 1. scripts/watch-gdd.js
 - Integrated drift prediction in validation cycle
 - Added drift risk summary to dashboard
 - Top 3 highest-risk nodes displayed
@@ -1679,7 +1679,7 @@ const driftData = await driftPredictor.predict();
 this.printStatusBar(results, stats, driftData);
 ```
 
-**2. scripts/validate-gdd-runtime.js**
+##### 2. scripts/validate-gdd-runtime.js
 - Added --drift flag support
 - Load drift data from gdd-drift.json
 - Include drift summary in console output
@@ -1697,7 +1697,7 @@ if (this.options.drift || this.options.full) {
 await this.generateMarkdownReport(driftData);
 ```
 
-**3. CLAUDE.md**
+##### 3. CLAUDE.md
 - Added "Predictive Drift Detection (GDD 2.0 - Phase 8)" section (110 lines)
 - Documented drift risk factors and calculation
 - Added command examples
@@ -1721,7 +1721,7 @@ node scripts/validate-gdd-runtime.js --drift
 ### 📊 Output Examples
 
 #### Console Output
-```
+```text
 ╔════════════════════════════════════════╗
 ║ 🔮 GDD Drift Risk Predictor          ║
 ╚════════════════════════════════════════╝
@@ -1980,7 +1980,7 @@ nodes:
 - ✅ All nodes linked and validated
 
 **Current Status:**
-```
+```text
 ═══════════════════════════════════════
          VALIDATION SUMMARY
 ═══════════════════════════════════════
