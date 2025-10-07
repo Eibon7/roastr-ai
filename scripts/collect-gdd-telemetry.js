@@ -296,7 +296,7 @@ class TelemetryCollector {
     // System stability index (0-100)
     const healthScore = metrics.health?.overall_score || 0;
     const driftScore = 100 - (metrics.drift?.average_drift_risk || 0);
-    const repairScore = metrics.repair?.success_rate || 100;
+    const repairScore = metrics.repair?.success_rate ?? 100;  // Codex P1: Use ?? to treat 0 as valid
 
     derived.stability_index = Math.round((healthScore + driftScore + repairScore) / 3);
 
