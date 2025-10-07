@@ -19,7 +19,8 @@ When collector exits with code 1 on critical alerts, bash stops executing before
     echo "status=$(cat telemetry/snapshots/gdd-metrics-history.json | jq -r '.snapshots[-1].metrics.derived.system_status')" >> $GITHUB_OUTPUT
 ```
 
-**Failure Mode:**
+#### Failure Mode
+
 1. Collector detects critical health status
 2. Collector exits with code 1
 3. Bash step aborts immediately
@@ -46,7 +47,8 @@ When collector exits with code 1 on critical alerts, bash stops executing before
     fi
 ```
 
-**Fix Components:**
+#### Fix Components
+
 1. ✅ `|| true` - Collector can fail, bash continues
 2. ✅ `continue-on-error` - Step can fail in PR context
 3. ✅ Status extraction always runs
@@ -55,7 +57,8 @@ When collector exits with code 1 on critical alerts, bash stops executing before
 
 ### Validation
 
-**Scenario 1: Collector succeeds**
+#### Scenario 1: Collector succeeds
+
 ```bash
 $ node scripts/collect-gdd-telemetry.js --ci || true
 ✅ Snapshot saved
@@ -66,7 +69,8 @@ $ echo "status=STABLE" >> $GITHUB_OUTPUT
 ```
 Result: ✅ Workflow continues, no issue created
 
-**Scenario 2: Collector fails (critical health)**
+#### Scenario 2: Collector fails (critical health)
+
 ```bash
 $ node scripts/collect-gdd-telemetry.js --ci || true
 ❌ Critical health detected
@@ -89,7 +93,8 @@ jq command fails on missing file or malformed JSON, aborting workflow.
 echo "status=$(cat telemetry/snapshots/gdd-metrics-history.json | jq -r '.snapshots[-1].metrics.derived.system_status')" >> $GITHUB_OUTPUT
 ```
 
-**Failure Modes:**
+#### Failure Modes
+
 1. File doesn't exist → `cat` fails
 2. File is empty → `jq` fails
 3. JSON is malformed → `jq` fails
@@ -106,7 +111,8 @@ else
 fi
 ```
 
-**Fix Components:**
+#### Fix Components
+
 1. ✅ File existence check (`-f` test)
 2. ✅ jq stderr redirect (`2>/dev/null`)
 3. ✅ Fallback on jq failure (`|| echo "UNKNOWN"`)
@@ -116,7 +122,8 @@ fi
 
 ### Validation
 
-**Scenario 1: File exists, valid JSON**
+#### Scenario 1: File exists, valid JSON
+
 ```bash
 $ [ -f telemetry/snapshots/gdd-metrics-history.json ] && echo "exists"
 exists
@@ -129,7 +136,8 @@ $ echo "status=STABLE" >> $GITHUB_OUTPUT
 ```
 Result: ✅ Status extracted correctly
 
-**Scenario 2: File missing**
+#### Scenario 2: File missing
+
 ```bash
 $ [ -f telemetry/snapshots/gdd-metrics-history.json ] || echo "missing"
 missing
@@ -142,7 +150,8 @@ $ echo "status=UNKNOWN" >> $GITHUB_OUTPUT
 ```
 Result: ✅ Graceful fallback, no crash
 
-**Scenario 3: Malformed JSON**
+#### Scenario 3: Malformed JSON
+
 ```bash
 $ jq -r '.snapshots[-1].metrics.derived.system_status // "UNKNOWN"' bad.json 2>/dev/null || echo "UNKNOWN"
 UNKNOWN
@@ -172,7 +181,8 @@ await github.rest.issues.create({
 });
 ```
 
-**Failure Mode:**
+#### Failure Mode
+
 1. Report file not generated (collector crashed early)
 2. `fs.readFileSync()` throws error
 3. Workflow step fails
@@ -210,7 +220,8 @@ await github.rest.issues.create({
 });
 ```
 
-**Fix Components:**
+#### Fix Components
+
 1. ✅ File existence check (`fs.existsSync()`)
 2. ✅ Error logged if missing
 3. ✅ Graceful fallback (basic issue body)
@@ -219,7 +230,8 @@ await github.rest.issues.create({
 
 ### Validation
 
-**Scenario 1: Report file exists**
+#### Scenario 1: Report file exists
+
 ```javascript
 if (!fs.existsSync('telemetry/reports/gdd-telemetry-2025-10-07.md')) {
   // Not executed
@@ -230,7 +242,8 @@ if (!fs.existsSync('telemetry/reports/gdd-telemetry-2025-10-07.md')) {
 ```
 Result: ✅ Issue created with full report
 
-**Scenario 2: Report file missing**
+#### Scenario 2: Report file missing
+
 ```javascript
 if (!fs.existsSync('telemetry/reports/gdd-telemetry-MISSING.md')) {
   console.error('Report file not found:', reportPath);

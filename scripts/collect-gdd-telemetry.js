@@ -234,11 +234,13 @@ class TelemetryCollector {
       const failures = (content.match(/❌/g) || []).length;
       const total = fixes + failures;
 
+      // M2 Fix: Return null for success_rate when no fixes attempted (not 100%)
+      // Only return percentage when actual fixes were attempted
       return {
         total_fixes_attempted: total,
         successful_fixes: fixes,
         failed_fixes: failures,
-        success_rate: total > 0 ? Math.round((fixes / total) * 100) : 100
+        success_rate: total > 0 ? Math.round((fixes / total) * 100) : null
       };
     } catch (error) {
       this.log('error', `Failed to collect repair metrics: ${error.message}`);
@@ -246,7 +248,7 @@ class TelemetryCollector {
         total_fixes_attempted: 0,
         successful_fixes: 0,
         failed_fixes: 0,
-        success_rate: 100
+        success_rate: null  // M2 Fix: null when error, not 100%
       };
     }
   }

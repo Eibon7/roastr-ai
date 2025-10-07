@@ -54,17 +54,30 @@ jobs:
             STATUS=$(jq -r '.snapshots[-1].metrics.derived.system_status // "UNKNOWN"' telemetry/snapshots/gdd-metrics-history.json 2>/dev/null || echo "UNKNOWN")
             echo "status=${STATUS}" >> $GITHUB_OUTPUT
           else
-            echo "::warning::Telemetry snapshot file not found"
-            echo "status=UNKNOWN" >> $GITHUB_OUTPUT
+            echo "::error::Telemetry collector failed to generate snapshot"
+            echo "status=ERROR" >> $GITHUB_OUTPUT
+
+            # C1: Propagate failure in scheduled/manual runs (not PRs)
+            if [ "${{ github.event_name }}" != "pull_request" ]; then
+              echo "::error::Collector failure in production run - exiting with error"
+              exit 1
+            fi
           fi
 
       - name: Commit telemetry data
+        if: github.event_name != 'pull_request'  # M1 Fix: Skip on PR events
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore(telemetry): Daily GDD metrics snapshot [skip ci]"
           file_pattern: |
             telemetry/snapshots/gdd-metrics-history.json
             telemetry/reports/*.md
+            gdd-status.json
+            gdd-health.json
+            gdd-drift.json
+            docs/drift-report.md
+            docs/system-health.md
+            docs/system-validation.md
           commit_user_name: "gdd-telemetry-bot"
           commit_user_email: "bot@gdd-telemetry.local"
           commit_author: "GDD Telemetry Bot <bot@gdd-telemetry.local>"

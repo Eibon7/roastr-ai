@@ -431,7 +431,7 @@ $ grep -n "^## CI/CD Automation" docs/GDD-ACTIVATION-GUIDE.md
 Following the plan in `docs/plan/review-3311427245.md`:
 
 **Commit 1:** (This commit)
-```
+```text
 fix(gdd): Apply CodeRabbit Review #3311427245 - Phase 13 Telemetry fixes
 
 ### Issues Addressed
