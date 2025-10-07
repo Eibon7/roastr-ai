@@ -6,18 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a comprehensive multi-tenant toxicity detection and roast generation system for social media platforms. The project features a scalable architecture built with Node.js, supporting multiple organizations with dedicated workers, cost control, and automated moderation through the Shield system.
 
-### Multi-Tenant Architecture
-
-The system is designed as a multi-tenant SaaS platform with:
-
-- **Row Level Security (RLS)** for complete data isolation between organizations
-- **Usage-based billing** with plan limits and cost tracking
-- **Dedicated worker system** for scalable background processing  
-- **Unified queue management** supporting Redis/Upstash and database fallback
-- **Shield automated moderation** with priority-based action system
-- **9 platform integrations** (Twitter, YouTube, Instagram, Facebook, etc.)
-- **Master Prompt Template System** (v1-roast-prompt) for consistent, high-quality roast generation
-
 ## Business Model
 
 The platform operates on a subscription-based model with multiple tiers:
@@ -84,6 +72,15 @@ node scripts/predict-gdd-drift.js --full       # Predict drift risk for all node
 node scripts/predict-gdd-drift.js --node=shield  # Analyze specific node
 node scripts/predict-gdd-drift.js --ci         # CI mode (exit 1 if high-risk)
 node scripts/predict-gdd-drift.js --create-issues  # Create GitHub issues for high-risk nodes
+
+# GDD Auto-Repair (Phase 10)
+node scripts/auto-repair-gdd.js --dry-run      # Show what would be fixed
+node scripts/auto-repair-gdd.js --auto-fix     # Apply fixes automatically
+node scripts/auto-repair-gdd.js --ci           # CI mode (exit 1 on errors)
+
+# GDD Health Scoring (Phase 7)
+node scripts/score-gdd-health.js --ci          # Score all nodes
+node scripts/compute-gdd-health.js --threshold=95  # Check health threshold
 ```
 
 ## Multi-Tenant Project Structure
@@ -638,328 +635,85 @@ ORCHESTRATOR:
 
 ## Runtime Validation Workflow (GDD 2.0)
 
-The GDD Runtime Validator continuously monitors and validates the coherence between `system-map.yaml`, `docs/nodes/**`, `spec.md`, and source code (`src/**`). This ensures the documentation graph remains synchronized with the actual implementation.
+> **For full details, see:** `docs/GDD-ACTIVATION-GUIDE.md#runtime-validation`
 
-### Validation Components
+The GDD Runtime Validator continuously monitors and validates the coherence between `system-map.yaml`, `docs/nodes/**`, `spec.md`, and source code (`src/**`).
 
-**1. CLI Validator (`scripts/validate-gdd-runtime.js`)**
-
-Validates the entire GDD system on-demand with multiple modes:
-
+**Key Commands:**
 ```bash
-# Full system validation
-node scripts/validate-gdd-runtime.js --full
-
-# Validate only nodes changed since last sync
-node scripts/validate-gdd-runtime.js --diff
-
-# Validate a specific node
-node scripts/validate-gdd-runtime.js --node=shield
-
-# Generate report without console output
-node scripts/validate-gdd-runtime.js --report
-
-# CI mode (exits with code 1 on errors)
-node scripts/validate-gdd-runtime.js --ci
+node scripts/validate-gdd-runtime.js --full    # Validate entire system
+node scripts/validate-gdd-runtime.js --ci      # CI mode (exit 1 on errors)
+node scripts/watch-gdd.js                      # Watch mode (development)
 ```
 
-**2. Watcher (`scripts/watch-gdd.js`)**
+**Validation Rules:** Graph structure, documentation sync, link integrity, code integration
 
-Monitors file changes in development and automatically validates:
+**Status Levels:** 🟢 HEALTHY | 🟡 WARNING | 🔴 CRITICAL
 
-```bash
-# Start watching (monitors src/, docs/nodes/, system-map.yaml, spec.md)
-node scripts/watch-gdd.js
-```
-
-The watcher displays a real-time status dashboard:
-```
-╔════════════════════════════════════════╗
-║ 🟢 GDD STATUS: HEALTHY                ║
-╠════════════════════════════════════════╣
-║ 🟢 Nodes:        12                    ║
-║ ✅ Orphans:       0                    ║
-║ ✅ Outdated:      2                    ║
-║ ✅ Cycles:        0                    ║
-║ ✅ Missing Refs:  0                    ║
-║ ✅ Drift Issues:  0                    ║
-╚════════════════════════════════════════╝
-```
-
-### Validation Rules
-
-The validator checks:
-
-**1. Graph Structure:**
-- All nodes in `system-map.yaml` exist in `docs/nodes/`
-- `depends_on` and `used_by` are bidirectional
-- No dependency cycles (A → B → C → A)
-- No duplicate or orphaned nodes
-
-**2. Documentation Synchronization:**
-- Every active node appears in `spec.md`
-- Every `spec.md` reference has a corresponding node
-- `last_updated` timestamps < 30 days (warning if older)
-- Deprecated nodes not listed in `system-map.yaml`
-
-**3. Link Integrity:**
-- All node links point to valid paths
-- "Agentes Relevantes" and "Dependencies" sections complete
-- Referenced nodes exist and are active
-
-**4. Code Integration:**
-- `@GDD:node=<name>` tags in source code reference existing nodes
-- Modified source files without associated nodes flagged as drift
-
-### Validation Outputs
-
-**1. Markdown Report (`docs/system-validation.md`)**
-
-Human-readable report with:
-- Summary of validation results
-- Table of node statuses
-- List of issues by severity
-- Recommendations for fixes
-
-**2. JSON Status (`gdd-status.json`)**
-
-Machine-readable status for CI/CD:
-```json
-{
-  "timestamp": "2025-10-06T12:44:00Z",
-  "nodes_validated": 12,
-  "orphans": [],
-  "drift": {},
-  "status": "healthy"
-}
-```
-
-### Integration with Workflow
-
-**During Development:**
-```bash
-# Terminal 1: Start watcher
-node scripts/watch-gdd.js
-
-# Terminal 2: Work on code
-# Watcher auto-validates on file save
-```
-
-**Before Commit:**
-```bash
-# Validate system
-node scripts/validate-gdd-runtime.js --full
-
-# If issues found, review:
-cat docs/system-validation.md
-```
-
-**In CI/CD:**
-```bash
-# Add to GitHub Actions or pre-push hook
-node scripts/validate-gdd-runtime.js --ci
-
-# Fails if validation errors (exit code 1)
-```
-
-**Before PR Merge:**
-- Run full validation
-- Ensure status is 🟢 HEALTHY or 🟡 WARNING (with acceptable issues)
-- 🔴 CRITICAL status blocks merge
-
-### Status Levels
-
-- **🟢 HEALTHY**: All checks pass, documentation fully synced
-- **🟡 WARNING**: Minor issues (outdated nodes, drift warnings)
-- **🔴 CRITICAL**: Major issues (cycles, missing nodes, broken references)
+**Before PR Merge:** Run full validation, ensure 🟢 HEALTHY or acceptable 🟡 WARNING
 
 ---
 
 ## Node Health Scoring System (GDD 2.0 - Phase 7)
 
-The Health Scoring System provides quantitative metrics (0-100) for each GDD node, measuring technical and documentation quality.
+> **For full details, see:** `docs/GDD-ACTIVATION-GUIDE.md#health-scoring`
 
-### Health Score Calculation
+Provides quantitative metrics (0-100) for each GDD node based on 5 weighted factors: Sync Accuracy (30%), Update Freshness (20%), Dependency Integrity (20%), Coverage Evidence (20%), Agent Relevance (10%).
 
-Each node is scored using 5 weighted factors:
-
-| Factor | Weight | Metric | Scoring Criteria |
-|--------|--------|--------|------------------|
-| **Sync Accuracy** | 30% | spec.md ↔ node ↔ code alignment | -10 per critical mismatch |
-| **Update Freshness** | 20% | Days since last_updated | 100 - (days × 2), min 0 |
-| **Dependency Integrity** | 20% | Bidirectional edges, no cycles | -20 per failure |
-| **Coverage Evidence** | 20% | Tests documented + coverage % | 100 if >80%, 70 if 60-80%, 40 if <60% |
-| **Agent Relevance** | 10% | Agent list complete & valid | 100 if complete, 50 if partial, 0 if absent |
-
-**Final Score** = Weighted average, rounded to nearest integer
-
-### Health Status Levels
-
-- **🟢 HEALTHY (80-100)**: Node in good condition, minimal maintenance needed
-- **🟡 DEGRADED (50-79)**: Node needs attention, schedule maintenance
-- **🔴 CRITICAL (<50)**: Urgent action required, may impact system
-
-### Usage
-
+**Commands:**
 ```bash
-# Standalone health scoring
-node scripts/score-gdd-health.js
-
-# Combined validation + scoring
-node scripts/validate-gdd-runtime.js --score
-
-# Watch mode includes health scoring
-node scripts/watch-gdd.js
+node scripts/score-gdd-health.js              # Standalone scoring
+node scripts/validate-gdd-runtime.js --score  # Combined validation + scoring
 ```
 
-### Output Files
+**Status Levels:** 🟢 HEALTHY (80-100) | 🟡 DEGRADED (50-79) | 🔴 CRITICAL (<50)
 
-**1. Human-Readable Report** (`docs/system-health.md`):
-- Summary with overall status
-- Table of all nodes sorted by score (worst first)
-- Top 5 nodes requiring review with detailed breakdown
-
-**2. Machine-Readable Status** (`gdd-health.json`):
-- Overall statistics (average_score, status, counts)
-- Individual node scores with breakdown
-- Integration-ready for dashboards/CI
-
-### Example Output
-
-```
-╔════════════════════════════════════════╗
-║     📊 NODE HEALTH SUMMARY            ║
-╚════════════════════════════════════════╝
-🟢 Healthy: 8 | 🟡 Degraded: 3 | 🔴 Critical: 2
-Average Score: 82.4/100
-```
-
-### Integration with Development Workflow
-
-**During Development:**
-- Watcher automatically scores nodes on each validation
-- Real-time feedback on node health
-
-**Before Commit:**
-- Run `node scripts/validate-gdd-runtime.js --score`
-- Review `docs/system-health.md` for nodes below 80
-
-**Before PR Merge:**
-- Check average score > 75
-- No critical nodes (<50) allowed
-- Address degraded nodes (50-79) or document why deferred
+**Before PR Merge:** Average score > 75, no critical nodes
 
 ## Predictive Drift Detection (GDD 2.0 - Phase 8)
 
-The GDD system includes predictive drift detection that analyzes historical patterns to forecast documentation drift risk before it happens.
+> **For full details, see:** `docs/GDD-ACTIVATION-GUIDE.md#drift-prediction`
 
-### How It Works
+Analyzes historical patterns to calculate a **Drift Risk Score (0-100)** for each node based on: last updated, active warnings, test coverage, health score, and recent activity.
 
-The drift predictor analyzes multiple factors to calculate a **Drift Risk Score (0-100)** for each node:
-
-| Factor | Impact | Description |
-|--------|--------|-------------|
-| Last Updated | +20 pts | Node not updated in >30 days |
-| Active Warnings | +10 pts/warning | Validation issues detected |
-| Test Coverage | +15 pts | Coverage < 80% |
-| Health Score | +25 pts | Health score < 70 |
-| Recent Activity | -10 pts | Commit in last 7 days (reduces risk) |
-
-### Risk Levels
-
-- 🟢 **Healthy (0-30)**: Well-maintained, low risk
-- 🟡 **At Risk (31-60)**: Needs attention soon
-- 🔴 **Likely Drift (61-100)**: High risk, immediate action required
-
-### Commands
-
+**Commands:**
 ```bash
-# Run drift prediction
-node scripts/predict-gdd-drift.js --full
-
-# Analyze specific node
-node scripts/predict-gdd-drift.js --node=shield
-
-# CI mode (exit code 1 if high-risk nodes found)
-node scripts/predict-gdd-drift.js --ci
-
-# Create GitHub issues for high-risk nodes (>70)
-node scripts/predict-gdd-drift.js --create-issues
-
-# Integrated with validator
-node scripts/validate-gdd-runtime.js --drift
-
-# Watcher automatically runs drift detection
-node scripts/watch-gdd.js  # includes drift in real-time dashboard
+node scripts/predict-gdd-drift.js --full         # Run drift prediction
+node scripts/predict-gdd-drift.js --ci           # CI mode (exit 1 if high-risk)
+node scripts/predict-gdd-drift.js --create-issues # Create issues for high-risk nodes
 ```
 
-### Output Files
+**Risk Levels:** 🟢 Healthy (0-30) | 🟡 At Risk (31-60) | 🔴 Likely Drift (61-100)
 
-- **docs/drift-report.md**: Human-readable report with risk factors and recommendations
-- **gdd-drift.json**: Machine-readable data for automation
+**Before PR:** Check drift risk, address nodes with risk > 60
 
-### Example Output
+---
 
-```json
-{
-  "generated_at": "2025-10-06T10:37:35.795Z",
-  "analysis_period_days": 30,
-  "overall_status": "WARNING",
-  "average_drift_risk": 30,
-  "high_risk_count": 0,
-  "at_risk_count": 6,
-  "healthy_count": 7,
-  "nodes": {
-    "billing": {
-      "drift_risk": 45,
-      "status": "at_risk",
-      "factors": [
-        "+20 pts: No last_updated timestamp",
-        "+10 pts: 1 active warning(s)",
-        "+25 pts: Health score 62 (<70)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Add last_updated timestamp to metadata",
-        "Resolve 1 validation warning(s)",
-        "Improve health score to 70+ (currently 62)"
-      ],
-      "git_activity": {
-        "commits_last_30d": 7,
-        "last_commit_days_ago": 0
-      }
-    }
-  }
-}
-```
+## CI/CD GDD Automation (Phase 12)
 
-### Integration with Workflow
+> **For full details, see:** `docs/GDD-ACTIVATION-GUIDE.md#cicd-automation`
 
-**Development:**
-```bash
-# Start watcher - includes drift monitoring
-node scripts/watch-gdd.js
-```
+The GDD system is fully integrated into the CI/CD pipeline with automated validation, repair, and issue management.
+
+**Configuration:** `.gddrc.json` (min_health_score: 95, auto_fix: true, block_merge_below_health: 95)
+
+**Workflows:**
+1. **GDD Validation** (`.github/workflows/gdd-validate.yml`) - Runs on PR to main/develop, validates nodes, scores health, predicts drift, posts PR comment, blocks merge if health < 95
+2. **GDD Auto-Repair** (`.github/workflows/gdd-repair.yml`) - Auto-fixes missing agent sections, broken links, missing node references
 
 **Before PR:**
 ```bash
-# Check drift risk
+node scripts/validate-gdd-runtime.js --full
 node scripts/predict-gdd-drift.js --full
-# Review docs/drift-report.md
-# Address nodes with risk > 60
+node scripts/compute-gdd-health.js --threshold=95
+node scripts/auto-repair-gdd.js --auto-fix  # If needed
 ```
 
-**CI/CD:**
-```bash
-# Automated drift checking
-node scripts/predict-gdd-drift.js --ci
-# Fails build if high-risk nodes detected
-```
+**Success Criteria:** Health ≥ 95, no critical nodes, drift < 60
 
-**Automatic Alerts:**
-- Nodes with risk > 70 can trigger automatic GitHub issues
-- Issues include risk factors, recommendations, and action items
-- Labels: `documentation`, `drift-risk`
+**Auto-created Issues:** Validation failed, auto-repair failed, high drift risk, manual review required
+
+---
 
 ### Tareas al Cerrar
 
