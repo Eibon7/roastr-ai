@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const SecureWriteProtocol = require('./secure-write.js');
 
 class AgentInterface {
@@ -91,8 +91,21 @@ class AgentInterface {
     }
 
     // Check read-only restriction
-    if (agentConfig.read_only && !action.startsWith('read_')) {
-      return false;
+    // For read-only agents, block only mutating actions
+    if (agentConfig.read_only) {
+      const mutatingPrefixes = [
+        'update_',
+        'write_',
+        'create_',
+        'delete_',
+        'trigger_auto_repair',
+        'sync_',
+        'mark_',
+        'force_'
+      ];
+      if (mutatingPrefixes.some(prefix => action.startsWith(prefix))) {
+        return false;
+      }
     }
 
     // Check if action is permitted
@@ -320,9 +333,21 @@ class AgentInterface {
     }
 
     try {
-      // Use GitHub CLI to create issue
-      const command = `gh issue create --title "${title}" --body "${body}" --label "gdd-agent,${agent.toLowerCase()}"`;
-      const output = execSync(command, { encoding: 'utf8' });
+      // Use GitHub CLI to create issue (secure: no shell interpretation)
+      const output = execFileSync(
+        'gh',
+        [
+          'issue',
+          'create',
+          '--title',
+          title,
+          '--body',
+          body,
+          '--label',
+          `gdd-agent,${agent.toLowerCase()}`
+        ],
+        { encoding: 'utf8' }
+      );
 
       const result = {
         success: true,
