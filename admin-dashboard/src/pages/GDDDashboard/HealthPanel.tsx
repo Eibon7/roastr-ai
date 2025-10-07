@@ -106,10 +106,10 @@ export const HealthPanel: React.FC<HealthPanelProps> = ({
   };
 
   return (
-    <PanelContainer>
-      <Section>
+    <PanelContainer data-testid="health-panel">
+      <Section data-testid="overview-section">
         <SectionTitle>System Overview</SectionTitle>
-        <MetricsGrid>
+        <MetricsGrid data-testid="metrics-grid">
           <StatusCard
             label="Health Score"
             value={stats.health}
@@ -139,9 +139,9 @@ export const HealthPanel: React.FC<HealthPanelProps> = ({
         </MetricsGrid>
       </Section>
 
-      <Section>
+      <Section data-testid="activity-section">
         <SectionTitle>Recent Activity</SectionTitle>
-        <ActivityLog>
+        <ActivityLog data-testid="activity-log">
           <ActivityTitle>System Validation Events</ActivityTitle>
           {activities.length > 0 ? (
             <ActivityList>

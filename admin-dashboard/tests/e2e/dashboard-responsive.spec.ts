@@ -6,9 +6,12 @@ test.describe('Dashboard Responsive Design', () => {
     const page = await context.newPage();
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('main, #root').first()).toBeVisible();
-    const sections = await page.locator('section, [class*="panel"]').count();
-    expect(sections).toBeGreaterThanOrEqual(2);
+
+    // Check main layout renders
+    await expect(page.getByTestId('dashboard-layout')).toBeVisible();
+    await expect(page.getByTestId('main-content')).toBeVisible();
+    await expect(page.getByTestId('left-sidebar')).toBeVisible();
+
     await context.close();
   });
 
@@ -17,7 +20,10 @@ test.describe('Dashboard Responsive Design', () => {
     const page = await context.newPage();
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('main, #root').first()).toBeVisible();
+
+    // Check main content renders on mobile
+    await expect(page.getByTestId('main-content')).toBeVisible();
+
     await context.close();
   });
 
@@ -26,7 +32,10 @@ test.describe('Dashboard Responsive Design', () => {
     const page = await context.newPage();
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('main, #root').first()).toBeVisible();
+
+    // Check main content renders on tablet
+    await expect(page.getByTestId('main-content')).toBeVisible();
+
     await context.close();
   });
 });

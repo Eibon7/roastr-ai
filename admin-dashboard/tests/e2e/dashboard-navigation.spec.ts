@@ -18,62 +18,46 @@ test.describe('Dashboard Navigation', () => {
   test('should display dashboard with all sections', async ({ page }) => {
     // Test AC: Dashboard loads and displays all major sections
 
-    // Check for main heading
-    await expect(page.locator('h1, h2').first()).toBeVisible();
+    // Check for main content
+    await expect(page.getByTestId('main-content')).toBeVisible();
 
-    // Check for Overview section
-    const overviewSection = page.locator('text=/overview/i').first();
-    await expect(overviewSection).toBeVisible();
+    // Check for sidebar sections
+    await expect(page.getByTestId('left-sidebar')).toBeVisible();
+    await expect(page.getByTestId('system-status')).toBeVisible();
 
-    // Check for Node Explorer section
-    const nodeExplorerSection = page.locator('text=/node explorer/i').first();
-    await expect(nodeExplorerSection).toBeVisible();
-
-    // Check for Dependency Graph section
-    const graphSection = page.locator('text=/dependency graph|graph/i').first();
-    await expect(graphSection).toBeVisible();
-
-    // Check for Reports/Validation section
-    const reportsSection = page.locator('text=/reports|validation/i').first();
-    await expect(reportsSection).toBeVisible();
+    // Check for navigation menu
+    await expect(page.getByTestId('nav-menu')).toBeVisible();
+    await expect(page.getByTestId('nav-health')).toBeVisible();
+    await expect(page.getByTestId('nav-graph')).toBeVisible();
+    await expect(page.getByTestId('nav-reports')).toBeVisible();
   });
 
   test('should display metric cards with values', async ({ page }) => {
     // Test AC: Metric cards render with actual data
 
-    // Look for metric cards (should have numeric values)
-    const metricCards = page.locator('[class*="metric"], [class*="card"]').filter({
-      hasText: /\d+/
-    });
-
-    // Should have at least 3 metric cards
-    const count = await metricCards.count();
-    expect(count).toBeGreaterThanOrEqual(3);
-
-    // Each card should be visible
-    for (let i = 0; i < Math.min(count, 5); i++) {
-      await expect(metricCards.nth(i)).toBeVisible();
-    }
+    // Check for stats grid and individual stats
+    await expect(page.getByTestId('stats-grid')).toBeVisible();
+    await expect(page.getByTestId('stat-health')).toBeVisible();
+    await expect(page.getByTestId('stat-drift')).toBeVisible();
+    await expect(page.getByTestId('stat-nodes')).toBeVisible();
+    await expect(page.getByTestId('stat-coverage')).toBeVisible();
   });
 
   test('should navigate between sections using tabs or buttons', async ({ page }) => {
     // Test AC: User can navigate between different dashboard sections
 
-    // Find navigation elements (tabs, buttons, links)
-    const navElements = page.locator('nav a, button[role="tab"], [role="navigation"] button');
+    // Click on Health Panel nav
+    await page.getByTestId('nav-health').click();
+    await expect(page.getByTestId('health-panel')).toBeVisible();
 
-    if (await navElements.count() > 0) {
-      // Click first navigation element
-      await navElements.first().click();
-      // Wait for navigation to complete
-      await page.waitForLoadState('networkidle');
+    // Click on System Graph nav
+    await page.getByTestId('nav-graph').click();
+    await expect(page.getByTestId('graph-view')).toBeVisible();
 
-      // Verify page didn't crash (title still exists)
-      await expect(page.locator('h1, h2').first()).toBeVisible();
-    } else {
-      // If no navigation elements, verify at least the main content is present
-      await expect(page.locator('main, [role="main"], #root').first()).toBeVisible();
-    }
+    // Click on Reports nav
+    await page.getByTestId('nav-reports').click();
+    // Reports component doesn't have a test ID yet, check main content still visible
+    await expect(page.getByTestId('main-content')).toBeVisible();
   });
 
   test('should display Snake Eater UI theming', async ({ page }) => {

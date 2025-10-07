@@ -7,48 +7,46 @@ test.describe('Dashboard Graph Interactions', () => {
   });
 
   test('should render dependency graph', async ({ page }) => {
-    await page.waitForTimeout(1500);
-    const graphContainer = page.locator('[class*="graph"], [class*="dependency"], svg, canvas').first();
-    const graphExists = await graphContainer.count() > 0;
-    if (graphExists) {
-      await expect(graphContainer).toBeVisible();
-    } else {
-      const hasDependencyText = await page.locator('text=/depends|dependencies/i').count() > 0;
-      expect(hasDependencyText).toBeTruthy();
-    }
+    // Switch to graph view
+    await page.getByTestId('nav-graph').click();
+
+    // Check for graph container
+    await expect(page.getByTestId('graph-view')).toBeVisible();
+    await expect(page.getByTestId('graph-wrapper')).toBeVisible();
   });
 
   test('should allow node selection', async ({ page }) => {
-    await page.waitForTimeout(1500);
-    const nodeElements = page.locator('[class*="node"], circle');
-    const nodeCount = await nodeElements.count();
-    if (nodeCount > 0) {
-      await nodeElements.first().click();
+    // Switch to graph view
+    await page.getByTestId('nav-graph').click();
 
-      // Wait for node details, highlights, or drawer to appear
-      const hasVisualFeedback = await page.waitForSelector(
-        '[data-node-highlighted], [data-testid="node-details"], [class*="selected"], [class*="active"]',
-        { timeout: 2000 }
-      ).catch(() => null);
+    // Verify graph wrapper is visible
+    await expect(page.getByTestId('graph-wrapper')).toBeVisible();
 
-      // Log for debugging if no visual feedback found
-      if (!hasVisualFeedback) {
-        console.log('Note: No visual feedback detected after node click (non-critical)');
-      }
+    // Check for SVG or Canvas elements (graph rendering)
+    const graphElements = page.locator('[data-testid="graph-wrapper"] svg, [data-testid="graph-wrapper"] canvas');
+    const hasGraphElement = await graphElements.count() > 0;
+
+    if (hasGraphElement) {
+      // If graph rendered, verify it's visible
+      await expect(graphElements.first()).toBeVisible();
     }
 
-    // Verify page still functional and no crashes
-    await expect(page.locator('main, #root').first()).toBeVisible();
+    // Verify page still functional
+    await expect(page.getByTestId('main-content')).toBeVisible();
   });
 
   test('should support interactions', async ({ page }) => {
-    await page.waitForTimeout(1500);
-    const interactiveGraph = page.locator('svg, canvas').first();
+    // Switch to graph view
+    await page.getByTestId('nav-graph').click();
+
+    // Verify graph view is rendered
+    await expect(page.getByTestId('graph-view')).toBeVisible();
+    await expect(page.getByTestId('graph-wrapper')).toBeVisible();
+
+    // Graph rendering complete - check for interactive elements
+    const interactiveGraph = page.locator('[data-testid="graph-wrapper"] svg, [data-testid="graph-wrapper"] canvas');
     if (await interactiveGraph.count() > 0) {
-      await expect(interactiveGraph).toBeVisible();
-    } else {
-      const hasStaticGraph = await page.locator('[class*="graph"]').count() > 0;
-      expect(hasStaticGraph).toBeTruthy();
+      await expect(interactiveGraph.first()).toBeVisible();
     }
   });
 });

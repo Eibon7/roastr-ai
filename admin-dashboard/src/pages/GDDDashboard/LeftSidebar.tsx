@@ -127,29 +127,29 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   };
 
   return (
-    <SidebarContainer>
-      <Section>
+    <SidebarContainer data-testid="left-sidebar">
+      <Section data-testid="system-status">
         <SectionTitle>System Status</SectionTitle>
-        <StatsGrid>
-          <StatItem>
+        <StatsGrid data-testid="stats-grid">
+          <StatItem data-testid="stat-health">
             <StatLabel>Health</StatLabel>
             <StatValue $color={getStatColor(stats.health)}>
               {stats.health.toFixed(0)}
             </StatValue>
           </StatItem>
-          <StatItem>
+          <StatItem data-testid="stat-drift">
             <StatLabel>Drift</StatLabel>
             <StatValue $color={getStatColor(stats.drift, true)}>
               {stats.drift.toFixed(0)}
             </StatValue>
           </StatItem>
-          <StatItem>
+          <StatItem data-testid="stat-nodes">
             <StatLabel>Nodes</StatLabel>
             <StatValue $color="#50fa7b">
               {stats.nodes}
             </StatValue>
           </StatItem>
-          <StatItem>
+          <StatItem data-testid="stat-coverage">
             <StatLabel>Coverage</StatLabel>
             <StatValue $color={getStatColor(stats.coverage)}>
               {stats.coverage.toFixed(0)}%
@@ -158,11 +158,12 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </StatsGrid>
       </Section>
 
-      <NavMenu>
+      <NavMenu data-testid="nav-menu">
         <NavItem
           $active={activeView === 'health'}
           onClick={() => onViewChange('health')}
           aria-current={activeView === 'health' ? 'page' : undefined}
+          data-testid="nav-health"
         >
           Health Panel
         </NavItem>
@@ -170,6 +171,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           $active={activeView === 'graph'}
           onClick={() => onViewChange('graph')}
           aria-current={activeView === 'graph' ? 'page' : undefined}
+          data-testid="nav-graph"
         >
           System Graph
         </NavItem>
@@ -177,16 +179,17 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           $active={activeView === 'reports'}
           onClick={() => onViewChange('reports')}
           aria-current={activeView === 'reports' ? 'page' : undefined}
+          data-testid="nav-reports"
         >
           Reports
         </NavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon">
+        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-feature-flags">
           Feature Flags
         </DisabledNavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon">
+        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-user-search">
           User Search
         </DisabledNavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon">
+        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-release-panel">
           Release Panel
         </DisabledNavItem>
       </NavMenu>

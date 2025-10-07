@@ -24,8 +24,8 @@ const GraphWrapper = styled.div`
 
 export const GraphView: React.FC<GraphViewProps> = ({ onNodeClick }) => {
   return (
-    <GraphContainer>
-      <GraphWrapper>
+    <GraphContainer data-testid="graph-view">
+      <GraphWrapper data-testid="graph-wrapper">
         <DependencyGraph />
       </GraphWrapper>
     </GraphContainer>
