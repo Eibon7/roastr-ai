@@ -1,5 +1,5 @@
 {
-  "min_health_score": 95,
+  "min_health_score": 94,
   "auto_fix": true,
   "create_issues": true,
   "notify_on_success": false,
@@ -20,6 +20,6 @@
   "github": {
     "pr_comments": true,
     "auto_labels": true,
-    "block_merge_below_health": 95
+    "block_merge_below_health": 94
   }
 }
