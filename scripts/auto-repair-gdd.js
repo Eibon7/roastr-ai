@@ -142,6 +142,39 @@ class AutoRepairEngine {
       console.log('═══════════════════════════════════════════');
       console.log('');
 
+      // 9. Generate JSON output for CI/CD
+      const jsonOutput = {
+        timestamp: new Date().toISOString(),
+        mode: this.options.dryRun ? 'dry-run' : 'apply',
+        success: true,
+        fixes_would_apply: this.options.dryRun ? this.issues.autoFixable.length : 0,
+        fixes_applied: this.options.dryRun ? 0 : this.fixes.length,
+        errors: 0,
+        health_before: this.healthBefore,
+        health_after: this.healthAfter || this.healthBefore,
+        details: {
+          fixes: this.options.dryRun
+            ? this.issues.autoFixable.map(issue => ({
+                type: 'auto',
+                node: issue.node || 'unknown',
+                action: issue.description
+              }))
+            : this.fixes.map(fix => ({
+                type: 'auto',
+                node: 'unknown',
+                action: fix
+              })),
+          humanReview: this.issues.humanReview.map(issue => ({
+            node: issue.node,
+            description: issue.description
+          })),
+          errors: []
+        }
+      };
+
+      const jsonPath = path.join(this.rootDir, 'gdd-repair.json');
+      await fs.writeFile(jsonPath, JSON.stringify(jsonOutput, null, 2));
+
       return {
         success: true,
         fixes: this.fixes,
