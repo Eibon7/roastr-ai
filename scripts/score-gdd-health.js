@@ -5,7 +5,7 @@
  *
  * Calculates a health score (0-100) for each GDD node based on:
  * 1. Sync Accuracy (25%) - spec.md ↔ node ↔ code alignment
- * 2. Update Freshness (20%) - Days since last_updated
+ * 2. Update Freshness (15%) - Days since last_updated
  * 3. Dependency Integrity (20%) - Bidirectional edges, no cycles
  * 4. Coverage Evidence (20%) - Tests documented, coverage metrics
  * 5. Agent Relevance (10%) - Agent list complete and valid
@@ -223,15 +223,16 @@ class GDDHealthScorer {
 
     // Weighted average (adjusted to include integrity score)
     const totalScore =
-      scores.syncAccuracy * 0.25 +           // Reduced from 30%
-      scores.updateFreshness * 0.20 +
-      scores.dependencyIntegrity * 0.20 +
-      scores.coverageEvidence * 0.20 +
-      scores.agentRelevance * 0.10 +
-      scores.integrityScore * 0.10;          // New 10%
+      scores.syncAccuracy * 0.25 +           // 25%
+      scores.updateFreshness * 0.15 +        // 15% (reduced from 20% to balance weights)
+      scores.dependencyIntegrity * 0.20 +    // 20%
+      scores.coverageEvidence * 0.20 +       // 20%
+      scores.agentRelevance * 0.10 +         // 10%
+      scores.integrityScore * 0.10;          // 10% (added in Phase 15.1)
+    // Total: 25 + 15 + 20 + 20 + 10 + 10 = 100%
 
     return {
-      score: Math.round(totalScore),
+      score: Math.min(100, Math.max(0, Math.round(totalScore))),
       breakdown: scores,
       status: this.getStatusFromScore(Math.round(totalScore)),
       metadata: nodeData.metadata,

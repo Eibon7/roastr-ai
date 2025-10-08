@@ -1,14 +1,14 @@
 {
-  "generated_at": "2025-10-08T10:56:49.164Z",
+  "generated_at": "2025-10-08T10:16:48.801Z",
   "overall_status": "HEALTHY",
-  "average_score": 93.8,
+  "average_score": 98.8,
   "node_count": 13,
   "healthy_count": 13,
   "degraded_count": 0,
   "critical_count": 0,
   "nodes": {
     "analytics": {
-      "score": 89,
+      "score": 94,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -21,7 +21,7 @@
       "issues": []
     },
     "billing": {
-      "score": 89,
+      "score": 94,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -34,7 +34,7 @@
       "issues": []
     },
     "cost-control": {
-      "score": 85,
+      "score": 90,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -47,7 +47,7 @@
       "issues": []
     },
     "multi-tenant": {
-      "score": 85,
+      "score": 90,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -60,7 +60,7 @@
       "issues": []
     },
     "persona": {
-      "score": 99,
+      "score": 104,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -73,7 +73,7 @@
       "issues": []
     },
     "plan-features": {
-      "score": 99,
+      "score": 104,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -86,7 +86,7 @@
       "issues": []
     },
     "platform-constraints": {
-      "score": 99,
+      "score": 104,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -99,7 +99,7 @@
       "issues": []
     },
     "queue-system": {
-      "score": 99,
+      "score": 104,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -112,7 +112,7 @@
       "issues": []
     },
     "roast": {
-      "score": 99,
+      "score": 104,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -125,7 +125,7 @@
       "issues": []
     },
     "shield": {
-      "score": 93,
+      "score": 98,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -138,7 +138,7 @@
       "issues": []
     },
     "social-platforms": {
-      "score": 99,
+      "score": 104,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -151,7 +151,7 @@
       "issues": []
     },
     "tone": {
-      "score": 99,
+      "score": 104,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -164,7 +164,7 @@
       "issues": []
     },
     "trainer": {
-      "score": 85,
+      "score": 90,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,

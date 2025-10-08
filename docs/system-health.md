@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-08T10:32:43.322Z
+**Generated:** 2025-10-08T10:56:49.164Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 98.8/100
+**Average Score:** 93.8/100
 
 ---
 
@@ -19,25 +19,25 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
-| cost-control | 🟢 90 | healthy | 2025-10-06 | 3% | 0 | 0 |
-| multi-tenant | 🟢 90 | healthy | 2025-10-06 | 0% | 0 | 0 |
-| trainer | 🟢 90 | healthy | 2025-10-06 | 0% | 0 | 0 |
-| analytics | 🟢 94 | healthy | 2025-10-06 | 49% | 0 | 0 |
-| billing | 🟢 94 | healthy | 2025-10-06 | 58% | 0 | 0 |
-| shield | 🟢 98 | healthy | 2025-10-06 | 66% | 0 | 0 |
-| persona | 🟢 104 | healthy | 2025-10-06 | 86% | 0 | 0 |
-| plan-features | 🟢 104 | healthy | 2025-10-06 | 93% | 0 | 0 |
-| platform-constraints | 🟢 104 | healthy | 2025-10-06 | 80% | 0 | 0 |
-| queue-system | 🟢 104 | healthy | 2025-10-06 | 87% | 0 | 0 |
-| roast | 🟢 104 | healthy | 2025-10-06 | 85% | 0 | 0 |
-| social-platforms | 🟢 104 | healthy | 2025-10-06 | 82% | 0 | 0 |
-| tone | 🟢 104 | healthy | 2025-10-06 | 100% | 0 | 0 |
+| cost-control | 🟢 85 | healthy | 2025-10-06 | 3% | 0 | 0 |
+| multi-tenant | 🟢 85 | healthy | 2025-10-06 | 0% | 0 | 0 |
+| trainer | 🟢 85 | healthy | 2025-10-06 | 0% | 0 | 0 |
+| analytics | 🟢 89 | healthy | 2025-10-06 | 49% | 0 | 0 |
+| billing | 🟢 89 | healthy | 2025-10-06 | 58% | 0 | 0 |
+| shield | 🟢 93 | healthy | 2025-10-06 | 66% | 0 | 0 |
+| persona | 🟢 99 | healthy | 2025-10-06 | 86% | 0 | 0 |
+| plan-features | 🟢 99 | healthy | 2025-10-06 | 93% | 0 | 0 |
+| platform-constraints | 🟢 99 | healthy | 2025-10-06 | 80% | 0 | 0 |
+| queue-system | 🟢 99 | healthy | 2025-10-06 | 87% | 0 | 0 |
+| roast | 🟢 99 | healthy | 2025-10-06 | 85% | 0 | 0 |
+| social-platforms | 🟢 99 | healthy | 2025-10-06 | 82% | 0 | 0 |
+| tone | 🟢 99 | healthy | 2025-10-06 | 100% | 0 | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes to Review
 
-### cost-control (Score: 90)
+### cost-control (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
@@ -50,7 +50,7 @@
 - Integrity Score: 100/100
 
 
-### multi-tenant (Score: 90)
+### multi-tenant (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
@@ -63,7 +63,7 @@
 - Integrity Score: 100/100
 
 
-### trainer (Score: 90)
+### trainer (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
@@ -76,7 +76,7 @@
 - Integrity Score: 100/100
 
 
-### analytics (Score: 94)
+### analytics (Score: 89)
 
 **Status:** 🟢 HEALTHY
 
@@ -89,7 +89,7 @@
 - Integrity Score: 100/100
 
 
-### billing (Score: 94)
+### billing (Score: 89)
 
 **Status:** 🟢 HEALTHY
 
