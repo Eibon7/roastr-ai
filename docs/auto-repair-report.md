@@ -1,13 +1,13 @@
 # Auto-Repair Report
 
-**Generated:** 2025-10-08T10:16:48.401Z
+**Generated:** 2025-10-08T10:32:42.899Z
 **Triggered by:** CI/CD
 **Health Score:** 98.8 → 98.8 (0.0)
 
 ## ✅ Fixes Applied (2)
 
-1. Added coverage to multi-tenant
-2. Added coverage to trainer
+1. [object Object]
+2. [object Object]
 
 ## ⚠️ Pending Human Review (0)
 
@@ -22,7 +22,7 @@ None
 - 🟢 Health Score: 98.8/100
 - ⚙️ Auto-fixes: 2 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T10-16-48-206Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T10-32-42-721Z`
 
 ---
 
