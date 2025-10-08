@@ -276,21 +276,21 @@ grep "^## 2025-" docs/auto-repair-changelog.md | head -10
 
 ### Verify Entry 1
 ```bash
-head -n 125 docs/auto-repair-changelog.md | tail -n 10 | grep -E "^## |^**Repair ID"
+head -n 125 docs/auto-repair-changelog.md | tail -n 10 | grep -E "^## |^\\*\\*Repair ID"
 # Expected: Timestamps match (same UTC instant)
 # Actual: ✅ PASS
 ```
 
 ### Verify Entry 2
 ```bash
-head -n 142 docs/auto-repair-changelog.md | tail -n 10 | grep -E "^## |^**Repair ID"
+head -n 142 docs/auto-repair-changelog.md | tail -n 10 | grep -E "^## |^\\*\\*Repair ID"
 # Expected: Timestamps match (same UTC instant)
 # Actual: ✅ PASS
 ```
 
 ### Verify All Entries
 ```bash
-grep -B 2 "Repair ID" docs/auto-repair-changelog.md | grep -E "^## |^**Repair ID" | paste - -
+grep -B 2 "Repair ID" docs/auto-repair-changelog.md | grep -E "^## |^\\*\\*Repair ID" | paste - -
 # Expected: All pairs match (no 2-hour gaps)
 # Actual: ✅ PASS
 ```
