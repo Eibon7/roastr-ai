@@ -78,7 +78,7 @@ const entry = `
 
 **Validation:**
 ```bash
-$ head -20 docs/auto-repair-changelog.md
+head -20 docs/auto-repair-changelog.md
 ```
 
 **Output:**
@@ -116,7 +116,7 @@ Updated phase constant in `scripts/auto-repair-gdd.js:781`:
 
 **Validation:**
 ```bash
-$ tail -10 docs/auto-repair-report.md
+tail -10 docs/auto-repair-report.md
 ```
 
 **Output:**
@@ -262,7 +262,7 @@ Sorted agents alphabetically:
 
 **Validation:**
 ```bash
-$ grep -A 5 "Agentes Relevantes" docs/nodes/multi-tenant.md
+grep -A 5 "Agentes Relevantes" docs/nodes/multi-tenant.md
 ```
 
 **Output:**
