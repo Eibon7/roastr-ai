@@ -161,8 +161,8 @@ class AutoRepairEngine {
               }))
             : this.fixes.map(fix => ({
                 type: 'auto',
-                node: 'unknown',
-                action: fix
+                node: fix.node || 'unknown',
+                action: fix.description || fix
               })),
           humanReview: this.issues.humanReview.map(issue => ({
             node: issue.node,
@@ -375,7 +375,10 @@ class AutoRepairEngine {
             const defaultStatus = 'production';
             node.content = this.addMetadataField(node.content, 'Status', defaultStatus);
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added status to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added status to ${nodeName}`
+            });
           }
         });
       }
@@ -399,7 +402,10 @@ class AutoRepairEngine {
           fix: async () => {
             node.content = this.addMetadataField(node.content, 'Last Updated', this.getToday());
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added timestamp to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added timestamp to ${nodeName}`
+            });
           }
         });
       } else {
@@ -431,7 +437,10 @@ class AutoRepairEngine {
             const coverage = 50;
             node.content = this.addMetadataField(node.content, 'Coverage', `${coverage}%`);
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added coverage to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added coverage to ${nodeName}`
+            });
           }
         });
       }
@@ -452,7 +461,10 @@ class AutoRepairEngine {
             const agentsSection = this.getDefaultAgentsSection(nodeName);
             node.content = this.addAgentsSection(node.content, agentsSection);
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added agents section to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added agents section to ${nodeName}`
+            });
           }
         });
       }
@@ -489,7 +501,10 @@ class AutoRepairEngine {
                 const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
                 const originalContent = await fs.readFile(mapPath, 'utf-8');
                 await this.saveSystemMapPreservingComments(systemMap, originalContent);
-                this.fixes.push(`Restored edge: ${dep} ← ${nodeName}`);
+                this.fixes.push({
+                  node: nodeName,
+                  description: `Restored edge: ${dep} ← ${nodeName}`
+                });
               }
             });
           }
@@ -527,7 +542,10 @@ class AutoRepairEngine {
             const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
             const originalContent = await fs.readFile(mapPath, 'utf-8');
             await this.saveSystemMapPreservingComments(systemMap, originalContent);
-            this.fixes.push(`Added ${nodeName} to system-map.yaml`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added ${nodeName} to system-map.yaml`
+            });
           }
         });
       }
@@ -582,7 +600,10 @@ class AutoRepairEngine {
               '$1\n**Coverage Source:** auto'
             );
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added coverage source to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added coverage source to ${nodeName}`
+            });
           }
         });
       } else if (coverageSource === 'manual') {
@@ -597,7 +618,10 @@ class AutoRepairEngine {
               '$1auto'
             );
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Changed coverage source to 'auto' for ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Changed coverage source to 'auto' for ${nodeName}`
+            });
           }
         });
       }
@@ -623,7 +647,10 @@ class AutoRepairEngine {
               `$1${validation.actual}%`
             );
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Reset coverage to ${validation.actual}% for ${nodeName} (was ${declaredCoverage}%)`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Reset coverage to ${validation.actual}% for ${nodeName} (was ${declaredCoverage}%)`
+            });
           }
         });
       }
