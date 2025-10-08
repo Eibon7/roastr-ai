@@ -853,6 +853,115 @@ Displays:
 
 ---
 
+## Documentation Integrity Policy (Phase 15.3)
+
+### GDD Implementation Summary Governance
+
+**Effective:** October 8, 2025 (GDD 2.0 Phase 15.3)
+
+The GDD Implementation Summary has been modularized to prevent token limit errors and improve performance. All future documentation must follow these rules:
+
+#### Size Limits
+
+- **GDD Implementation Summary Index** (`docs/GDD-IMPLEMENTATION-SUMMARY.md`)
+  - **Maximum Size:** 350 lines (~5,000 tokens)
+  - **Current Size:** 249 lines (~1,200 tokens)
+  - **Purpose:** Lightweight index with links to detailed phase documentation
+
+- **Phase Documentation** (`docs/implementation/GDD-PHASE-*.md`)
+  - **Maximum Size:** 1,000 lines per phase file
+  - **Purpose:** Detailed documentation for specific GDD phases
+  - **Structure:** Must include header with back-link to index and footer with navigation
+
+#### Mandatory Structure
+
+All new phase documentation must include:
+
+1. **Header**
+   ```markdown
+   # GDD 2.0 - Phase <number>
+
+   [← Back to Index](../GDD-IMPLEMENTATION-SUMMARY.md)
+
+   ---
+   ```
+
+2. **Content Sections**
+   - Objective
+   - Implementation details
+   - Results & impact
+   - Testing validation
+   - Files modified
+
+3. **Footer**
+   ```markdown
+   ---
+
+   [← Back to Index](../GDD-IMPLEMENTATION-SUMMARY.md) | [View All Phases](./)
+   ```
+
+#### Source of Truth
+
+- **Phase Metadata:** `docs/.gddindex.json` is the authoritative source for:
+  - Total phases count
+  - Latest phase number
+  - Phase status (completed, in_progress, planned)
+  - File locations and sizes
+  - System health snapshot
+
+- **Phase Content:** Individual phase files in `docs/implementation/` contain detailed documentation
+
+#### Update Requirements
+
+When adding a new GDD phase, you **MUST** update:
+
+1. ✅ Create phase file: `docs/implementation/GDD-PHASE-<number>.md`
+2. ✅ Update index: `docs/GDD-IMPLEMENTATION-SUMMARY.md` (add row to phase table)
+3. ✅ Update metadata: `docs/.gddindex.json` (increment counters, add phase entry)
+4. ✅ Verify size: Ensure index remains <350 lines
+
+**Failure to update all three components will cause validation errors.**
+
+#### Enforcement
+
+- **CI/CD Validation:** `.github/workflows/gdd-validate.yml` checks index size
+- **Auto-Repair:** `scripts/auto-repair-gdd.js` can fix missing phase references
+- **Health Scoring:** Documentation size is monitored in health metrics
+- **Manual Edits:** Require approval from Orchestrator Agent
+
+#### Migration Path
+
+If index exceeds size limits:
+
+1. Identify sections that can be moved to phase files
+2. Create summary tables instead of full descriptions
+3. Archive historical data to appropriate phase files
+4. Update links and references
+5. Validate that all phase files have proper headers/footers
+
+#### Rationale
+
+**Why Modularization?**
+- Previous monolithic file: 3,069 lines (~27,700 tokens)
+- Token limit errors prevented file reads
+- Performance degraded with file size
+- Maintenance became difficult
+
+**Phase 15.3 Results:**
+- Index reduced to 249 lines (93% reduction)
+- Token errors eliminated
+- Read time improved from 800ms+ to <50ms
+- Clear navigation with direct phase links
+
+#### Documentation
+
+For complete details on modularization architecture, see:
+- [GDD Phase 15.3 Documentation](./docs/GDD-PHASE-15.3-MODULARIZATION.md)
+- [GDD Index Metadata](./docs/.gddindex.json)
+- [Modular Phase Files](./docs/implementation/)
+
+---
+
 ### Tareas al Cerrar
 
 **🚨 VERIFICACIÓN OBLIGATORIA antes de marcar tarea como completa:**

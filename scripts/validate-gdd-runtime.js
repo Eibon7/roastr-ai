@@ -937,7 +937,9 @@ ADDITIONAL ANALYSIS (when enabled):
   --score: Node health scoring (0-100) with quality metrics
 
 For more information, see:
-  - docs/GDD-IMPLEMENTATION-SUMMARY.md
+  - docs/GDD-IMPLEMENTATION-SUMMARY.md (modular index)
+  - docs/implementation/ (detailed phase documentation)
+  - docs/.gddindex.json (system metadata)
   - CLAUDE.md (GDD Runtime Validation section)
   `);
 }
