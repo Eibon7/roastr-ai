@@ -7,7 +7,6 @@
 **Last Updated:** 2025-10-06
 **Coverage:** 0%
 **Coverage Source:** auto
-**Coverage:** 50%
 
 ## Dependencies
 

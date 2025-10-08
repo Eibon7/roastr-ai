@@ -1,26 +1,13 @@
 # Auto-Repair Report
 
-**Generated:** 2025-10-08T09:09:53.610Z
+**Generated:** 2025-10-08T10:12:51.888Z
 **Triggered by:** Manual
-**Health Score:** 93.8 → 93.8 (0.0)
+**Health Score:** 98.8 → 98.8 (0.0)
 
-## ✅ Fixes Applied (15)
+## ✅ Fixes Applied (2)
 
 1. Added coverage to multi-tenant
 2. Added coverage to trainer
-3. Added coverage source to analytics
-4. Added coverage source to billing
-5. Added coverage source to cost-control
-6. Added coverage source to multi-tenant
-7. Added coverage source to persona
-8. Added coverage source to plan-features
-9. Added coverage source to platform-constraints
-10. Added coverage source to queue-system
-11. Added coverage source to roast
-12. Added coverage source to shield
-13. Added coverage source to social-platforms
-14. Added coverage source to tone
-15. Added coverage source to trainer
 
 ## ⚠️ Pending Human Review (0)
 
@@ -32,10 +19,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 93.8/100
-- ⚙️ Auto-fixes: 15 applied
+- 🟢 Health Score: 98.8/100
+- ⚙️ Auto-fixes: 2 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T09-09-53-564Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T10-12-51-812Z`
 
 ---
 

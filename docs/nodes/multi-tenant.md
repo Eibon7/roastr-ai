@@ -8,7 +8,6 @@
 **Coverage:** 0%
 **Coverage Source:** auto
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
-**Coverage:** 50%
 
 ## Dependencies
 
