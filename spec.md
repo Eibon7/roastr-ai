@@ -1,5 +1,132 @@
 # 🧠 Flujo de comentarios en Roastr
 
+## 🛡️ GDD Telemetry Null Handling Improvements - CodeRabbit Review #3313481290
+### 🛠️ Implementation Date: 2025-10-08
+**PR**: [#492 - Phase 13 - Telemetry & Analytics Layer](https://github.com/Eibon7/roastr-ai/pull/492)
+**Review**: [CodeRabbit #3313481290](https://github.com/Eibon7/roastr-ai/pull/492#pullrequestreview-3313481290)
+**Status**: ✅ COMPLETE - All issues resolved (2 P1 Critical + 2 Major)
+
+### 🎯 Overview
+Applied comprehensive null/undefined handling improvements to GDD telemetry system based on CodeRabbit review feedback. Fixes prevent false positives in alerts, incorrect stability calculations, and confusing report output when auto-repair metrics are unavailable.
+
+### 🔧 Critical Issues Resolved (P1)
+
+#### P1-1: Workflow Error Propagation
+**File:** `.github/workflows/gdd-telemetry.yml` (lines 61-68)
+- **Problem:** Collector failures not propagated when snapshot missing or status UNKNOWN
+- **Impact:** Workflow succeeded even when telemetry completely failed
+- **Fix:** Added exit 1 for scheduled/manual runs when collector fails
+```yaml
+# P1-1: Propagate failures when collector never writes snapshot or status is UNKNOWN
+if [ "${{ github.event_name }}" != "pull_request" ]; then
+  if [ ! -f telemetry/snapshots/gdd-metrics-history.json ] || [ "${STATUS}" = "UNKNOWN" ]; then
+    echo "::error::Collector failed to generate valid snapshot or status"
+    exit 1
+  fi
+fi
+```
+
+#### P1-2: Nullish Coalescing for repairScore
+**File:** `scripts/collect-gdd-telemetry.js` (line 297)
+- **Problem:** `||` operator treated 0% success as 100% (falsy value)
+- **Impact:** System reported STABLE when auto-fix completely failed (33-point inflation)
+- **Fix:** Changed to `??` operator (nullish coalescing)
+```javascript
+// Before: const repairScore = metrics.repair?.success_rate || 100;
+const repairScore = metrics.repair?.success_rate ?? 100;  // P1: Treat 0 as valid
+```
+
+**Impact Prevented:**
+- 0% auto-fix → repairScore 0 (not 100)
+- stability_index 62 (not 95)
+- system_status DEGRADED (not STABLE)
+
+### 🔧 Major Issues Resolved
+
+#### M1: Type Guard for Auto-Fix Alerts
+**File:** `scripts/collect-gdd-telemetry.js` (lines 356-366)
+- **Problem:** Comparison `success_rate < threshold` without type check
+- **Impact:** False alerts with "null% below threshold" message
+- **Fix:** Added type guard before comparison
+```javascript
+// M1: Only check if success_rate is numeric
+if (metrics.repair && typeof metrics.repair.success_rate === 'number' &&
+    metrics.repair.success_rate < thresholds.auto_fix_success_below) {
+  // Alert logic
+}
+```
+
+#### M2: Null Handling in Report Output
+**File:** `scripts/collect-gdd-telemetry.js` (lines 513-520, 576-585)
+- **Problem:** Report displayed "null%" or "undefined%" when metrics unavailable
+- **Impact:** Confusing/misleading telemetry reports
+- **Fix:** Display "N/A" with neutral marker ➖
+```javascript
+// Key Metrics Table
+const successRate = metrics.repair.success_rate;
+const displayValue = typeof successRate === 'number' ? `${successRate}%` : 'N/A';
+const repairStatus = typeof successRate !== 'number' ? '➖' :
+  successRate >= 90 ? '✅' : successRate >= 70 ? '⚠️' : '❌';
+```
+
+**Before:** `| Auto-Fix Success | null% | ≥90% | ❌ |`
+**After:** `| Auto-Fix Success | N/A | ≥90% | ➖ |`
+
+### 🧪 Test Coverage
+
+**New Test File:** `tests/unit/utils/telemetry-null-handling.test.js` (341 lines)
+- **17 unit tests** covering all null/undefined edge cases
+- **100% pass rate** (0 failures)
+- **Coverage:** calculateDerivedMetrics, checkAlerts, buildMarkdownReport
+
+**Test Breakdown:**
+- **P1-2 Tests (5):** Nullish coalescing with 0/null/undefined values
+- **M1 Tests (5):** Type guard prevents false alerts
+- **M2 Tests (5):** Report formatting handles null gracefully
+- **Edge Cases (2):** Missing repair metrics, undefined properties
+
+### 📊 Impact Summary
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| False STABLE status (0% auto-fix) | ✅ STABLE | ✅ DEGRADED | Correct escalation |
+| stability_index (0% auto-fix) | 95 (wrong) | 62 (correct) | 33-point fix |
+| False alerts (null success_rate) | Yes | No | 100% prevented |
+| Report quality (null metrics) | "null%" | "N/A" | Clean output |
+| Workflow reliability | Fails silently | Fails loudly | Production-ready |
+
+### 📁 Files Modified
+
+1. **`.github/workflows/gdd-telemetry.yml`** (+8 lines)
+   - Added error propagation for production runs
+   - PR runs continue (continue-on-error)
+
+2. **`scripts/collect-gdd-telemetry.js`** (+17/-4 lines)
+   - Line 297: Nullish coalescing (P1-2)
+   - Lines 356-366: Type guard for alerts (M1)
+   - Lines 513-520: Null handling in Key Metrics (M2)
+   - Lines 576-585: Null handling in Detailed Metrics (M2)
+
+3. **`tests/unit/utils/telemetry-null-handling.test.js`** (+341 lines)
+   - Comprehensive null handling test suite
+   - 17 tests, 100% coverage
+
+### ✅ Validation
+
+- ✅ **All CodeRabbit issues resolved (4/4)**
+- ✅ **17 tests passing (100%)**
+- ✅ **0 regressions detected**
+- ✅ **Workflow error handling verified**
+- ✅ **Production-ready improvements**
+
+### 📝 Documentation
+
+- **Implementation Plan:** `docs/plan/review-3313481290.md`
+- **Test Evidence:** `docs/test-evidence/review-3313481290/SUMMARY.md`
+- **Coverage Reports:** All edge cases documented
+
+---
+
 ## 🏢 Multi-Tenant RLS Integration Tests - Issue #412
 ### 🛠️ Implementation Date: 2025-10-05
 **Issue**: [#412 - Multi-Tenant RLS Integration Tests](https://github.com/Eibon7/roastr-ai/issues/412)

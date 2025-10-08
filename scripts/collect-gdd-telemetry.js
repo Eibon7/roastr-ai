@@ -294,7 +294,7 @@ class TelemetryCollector {
     // System stability index (0-100)
     const healthScore = metrics.health?.overall_score || 0;
     const driftScore = 100 - (metrics.drift?.average_drift_risk || 0);
-    const repairScore = metrics.repair?.success_rate || 100;
+    const repairScore = metrics.repair?.success_rate ?? 100;  // P1: Use ?? to treat 0 as valid
 
     derived.stability_index = Math.round((healthScore + driftScore + repairScore) / 3);
 
@@ -353,8 +353,9 @@ class TelemetryCollector {
       });
     }
 
-    // Auto-fix alerts
-    if (metrics.repair && metrics.repair.success_rate < thresholds.auto_fix_success_below) {
+    // Auto-fix alerts - M1: Only check if success_rate is numeric (prevent false alerts when null)
+    if (metrics.repair && typeof metrics.repair.success_rate === 'number' &&
+        metrics.repair.success_rate < thresholds.auto_fix_success_below) {
       alerts.push({
         type: 'auto_fix',
         severity: 'warning',
@@ -510,8 +511,12 @@ class TelemetryCollector {
     }
 
     if (metrics.repair) {
-      const repairStatus = metrics.repair.success_rate >= 90 ? '✅' : metrics.repair.success_rate >= 70 ? '⚠️' : '❌';
-      md += `| Auto-Fix Success | ${metrics.repair.success_rate}% | ≥90% | ${repairStatus} |\n`;
+      // M2: Handle null/undefined success_rate gracefully in report
+      const successRate = metrics.repair.success_rate;
+      const displayValue = typeof successRate === 'number' ? `${successRate}%` : 'N/A';
+      const repairStatus = typeof successRate !== 'number' ? '➖' :
+        successRate >= 90 ? '✅' : successRate >= 70 ? '⚠️' : '❌';
+      md += `| Auto-Fix Success | ${displayValue} | ≥90% | ${repairStatus} |\n`;
     }
 
     if (metrics.derived) {
@@ -573,7 +578,10 @@ class TelemetryCollector {
       md += `- Total Fixes Attempted: ${metrics.repair.total_fixes_attempted}\n`;
       md += `- Successful Fixes: ${metrics.repair.successful_fixes}\n`;
       md += `- Failed Fixes: ${metrics.repair.failed_fixes}\n`;
-      md += `- Success Rate: ${metrics.repair.success_rate}%\n\n`;
+      // M2: Handle null success_rate in detailed metrics too
+      const successRate = metrics.repair.success_rate;
+      const displayValue = typeof successRate === 'number' ? `${successRate}%` : 'N/A';
+      md += `- Success Rate: ${displayValue}\n\n`;
     }
 
     if (metrics.coverage) {

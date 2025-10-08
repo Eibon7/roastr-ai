@@ -58,6 +58,15 @@ jobs:
             echo "status=UNKNOWN" >> $GITHUB_OUTPUT
           fi
 
+          # P1-1: Propagate failures when collector never writes snapshot or status is UNKNOWN
+          # Only fail in scheduled/manual runs (not PRs - handled by continue-on-error)
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            if [ ! -f telemetry/snapshots/gdd-metrics-history.json ] || [ "${STATUS}" = "UNKNOWN" ]; then
+              echo "::error::Collector failed to generate valid snapshot or status"
+              exit 1
+            fi
+          fi
+
       - name: Commit telemetry data
         if: github.event_name != 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
