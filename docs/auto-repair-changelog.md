@@ -1,5 +1,22 @@
 # Auto-Repair Changelog
 
+## 2025-10-08T13:50:23.542Z
+
+**Repair ID:** 2025-10-08T13:50:23Z
+**Triggered by:** CI/CD
+**Nodes affected:** multi-tenant, trainer
+
+**Fixes applied:**
+- Added coverage to multi-tenant
+- Added coverage to trainer
+
+**Outcome:**
+- Health score: 93.8 → 93.8
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T13-50-23-364Z`
+
+---
+
 ## 2025-10-08T13:31:18.533Z
 
 **Repair ID:** 2025-10-08T13:31:18Z
