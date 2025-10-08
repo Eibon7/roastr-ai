@@ -5,7 +5,7 @@
 **Priority:** High
 **Status:** Production
 **Last Updated:** 2025-10-06
-**Coverage:** 80%
+**Coverage:** 75%
 
 ## Dependencies
 
