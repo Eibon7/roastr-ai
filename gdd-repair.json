@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-10-08T10:15:19.380Z",
-  "mode": "dry-run",
+  "timestamp": "2025-10-08T10:16:48.402Z",
+  "mode": "apply",
   "success": true,
-  "fixes_would_apply": 2,
-  "fixes_applied": 0,
+  "fixes_would_apply": 0,
+  "fixes_applied": 2,
   "errors": 0,
   "health_before": 98.8,
   "health_after": 98.8,
@@ -11,13 +11,13 @@
     "fixes": [
       {
         "type": "auto",
-        "node": "multi-tenant",
-        "action": "multi-tenant: Missing coverage field"
+        "node": "unknown",
+        "action": "Added coverage to multi-tenant"
       },
       {
         "type": "auto",
-        "node": "trainer",
-        "action": "trainer: Missing coverage field"
+        "node": "unknown",
+        "action": "Added coverage to trainer"
       }
     ],
     "humanReview": [],
