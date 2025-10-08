@@ -245,6 +245,7 @@ class SecureWriteProtocol {
       signature,
       hashBefore,
       hashAfter,
+      healthBefore, // Include healthBefore for rollback decisions (CodeRabbit Review #3311794192)
       backup: backup.backupPath,
       rollback: null
     };
@@ -276,7 +277,7 @@ class SecureWriteProtocol {
    */
   async rollbackIfNeeded(writeResult, healthAfter) {
     const { hashBefore, backup, agent, action, target } = writeResult;
-    const healthBefore = writeResult.healthBefore || 100;
+    const healthBefore = writeResult.healthBefore ?? 100; // Use nullish coalescing to handle healthBefore=0
 
     // Check if rollback needed
     if (healthAfter >= healthBefore) {

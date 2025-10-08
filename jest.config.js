@@ -78,7 +78,7 @@ module.exports = {
   projects: [
     {
       displayName: 'node-tests',
-      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/adapters/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/e2e/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js'],
+      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/adapters/**/*.test.js', '<rootDir>/tests/unit/agents/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/e2e/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
     },
     {
