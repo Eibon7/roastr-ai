@@ -80,11 +80,39 @@ class CoverageHelper {
     let fileCount = 0;
 
     for (const filePath of nodeConfig.files) {
-      // Convert relative path to absolute for coverage lookup
-      const absolutePath = path.join(this.rootDir, filePath);
+      // Progressive fallback lookup to handle different Jest configurations
+      let fileEntry = null;
 
-      // Find coverage entry for this file
-      const fileEntry = coverageData[absolutePath];
+      // Strategy 1: Absolute path lookup (e.g., "/Users/.../src/services/foo.js")
+      // This is the most common format when Jest runs with absolute paths
+      const absolutePath = path.join(this.rootDir, filePath);
+      fileEntry = coverageData[absolutePath];
+
+      // Strategy 2: Relative path lookup (e.g., "src/services/foo.js")
+      // Some Jest configurations store keys as relative paths from project root
+      if (!fileEntry) {
+        fileEntry = coverageData[filePath];
+      }
+
+      // Strategy 3: Normalized path comparison (fallback for edge cases)
+      // Handles differences in path separators (Windows vs Unix), trailing slashes, etc.
+      if (!fileEntry) {
+        const normalizedTarget = path.normalize(filePath);
+        for (const [key, entry] of Object.entries(coverageData)) {
+          if (key === 'total') continue; // Skip the 'total' summary entry
+
+          // Try to convert absolute key to relative and compare
+          const normalizedKey = path.isAbsolute(key)
+            ? path.relative(this.rootDir, key)
+            : path.normalize(key);
+
+          if (normalizedKey === normalizedTarget) {
+            fileEntry = entry;
+            break;
+          }
+        }
+      }
+
       if (fileEntry && fileEntry.lines && fileEntry.lines.pct !== undefined) {
         totalCoverage += fileEntry.lines.pct;
         fileCount++;
