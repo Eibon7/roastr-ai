@@ -559,7 +559,18 @@ class GDDValidator {
 
       validated++;
 
-      if (!validation.valid && validation.actual !== null) {
+      // Check for missing coverage data (Phase 15.1 - Codex Review #3316270086)
+      if (validation.actual === null) {
+        this.results.coverage_integrity.push({
+          type: 'missing_coverage_data',
+          node: nodeName,
+          severity: 'warning',
+          declared: validation.declared,
+          actual: null,
+          message: validation.message || `${nodeName}: Coverage data not available for validation`
+        });
+      } else if (!validation.valid) {
+        // Coverage mismatch detected
         violations++;
         this.results.coverage_integrity.push({
           type: 'coverage_integrity_violation',
@@ -573,10 +584,17 @@ class GDDValidator {
       }
     }
 
-    if (violations === 0) {
+    // Summary reporting
+    const missingDataCount = this.results.coverage_integrity.filter(v => v.type === 'missing_coverage_data').length;
+
+    if (violations === 0 && missingDataCount === 0) {
       this.log(`   ✅ ${validated} nodes validated, all authentic`, 'success');
-    } else {
+    } else if (violations > 0 && missingDataCount === 0) {
       this.log(`   ⚠️  ${violations}/${validated} coverage mismatches detected`, 'warning');
+    } else if (violations === 0 && missingDataCount > 0) {
+      this.log(`   ⚠️  ${missingDataCount}/${validated} nodes missing coverage data`, 'warning');
+    } else {
+      this.log(`   ⚠️  ${violations} mismatches, ${missingDataCount} missing data (${validated} total)`, 'warning');
     }
   }
 
@@ -586,6 +604,11 @@ class GDDValidator {
   determineStatus() {
     const criticalCoverageViolations = this.results.coverage_integrity.filter(
       v => v.severity === 'critical'
+    ).length;
+
+    // Only coverage mismatches (not missing data warnings) should affect status
+    const coverageMismatches = this.results.coverage_integrity.filter(
+      v => v.type === 'coverage_integrity_violation'
     ).length;
 
     if (
@@ -599,7 +622,7 @@ class GDDValidator {
       this.results.orphans.length > 0 ||
       Object.keys(this.results.drift).length > 0 ||
       this.results.outdated.length > 3 ||
-      this.results.coverage_integrity.length > 0
+      coverageMismatches > 0  // Only actual mismatches, not missing data warnings
     ) {
       this.results.status = 'warning';
     } else {
