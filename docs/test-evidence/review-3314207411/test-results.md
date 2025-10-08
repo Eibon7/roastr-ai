@@ -135,12 +135,12 @@ return {
 
 ### Before Fix
 
-**File:** `before-gdd-health.json`
+**File:** `docs/test-evidence/review-3314207411/before-gdd-health.json`
 
 **Nodes with overflow (score > 100):**
 
 ```bash
-$ cat before-gdd-health.json | jq -r '.nodes | to_entries[] | select(.value.score > 100) | .key'
+$ cat docs/test-evidence/review-3314207411/before-gdd-health.json | jq -r '.nodes | to_entries[] | select(.value.score > 100) | .key'
 persona
 plan-features
 platform-constraints
@@ -183,12 +183,12 @@ tone
 
 ### After Fix
 
-**File:** `after-gdd-health.json`
+**File:** `docs/test-evidence/review-3314207411/after-gdd-health.json`
 
 **Nodes with overflow (score > 100):**
 
 ```bash
-$ cat after-gdd-health.json | jq -r '.nodes | to_entries[] | select(.value.score > 100) | .key'
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq -r '.nodes | to_entries[] | select(.value.score > 100) | .key'
 (empty output)
 ```
 
@@ -254,14 +254,14 @@ $ cat after-gdd-health.json | jq -r '.nodes | to_entries[] | select(.value.score
 ### 1. Score Range Validation
 
 ```bash
-$ cat after-gdd-health.json | jq '.nodes[].score' | awk '$1 > 100 {print "FAIL: Score "$1" exceeds 100"; exit 1}'
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes[].score' | awk '$1 > 100 {print "FAIL: Score "$1" exceeds 100"; exit 1}'
 ✅ VALIDATION PASSED: All scores ≤ 100
 ```
 
 ### 2. Score Distribution
 
 ```bash
-$ cat after-gdd-health.json | jq '.nodes[].score' | sort -n
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes[].score' | sort -n
 85
 85
 85
@@ -390,8 +390,8 @@ $ cat gdd-health.json | jq -e '.overall_status, .average_score, .nodes'
 ✅ All fields present
 
 # 4. Test no node status changed incorrectly
-$ diff <(cat before-gdd-health.json | jq -r '.nodes | to_entries[] | "\(.key): \(.value.status)"' | sort) \
-       <(cat after-gdd-health.json | jq -r '.nodes | to_entries[] | "\(.key): \(.value.status)"' | sort)
+$ diff <(cat docs/test-evidence/review-3314207411/before-gdd-health.json | jq -r '.nodes | to_entries[] | "\(.key): \(.value.status)"' | sort) \
+       <(cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq -r '.nodes | to_entries[] | "\(.key): \(.value.status)"' | sort)
 (no differences - all nodes remain "healthy") ✅
 ```
 
