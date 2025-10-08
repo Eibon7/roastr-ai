@@ -11,7 +11,7 @@
 ---
 
 **Last Updated:** 2025-10-06
-**Coverage:** 65%
+**Coverage:** 58%
 
 ## Propósito
 
