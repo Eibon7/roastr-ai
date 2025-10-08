@@ -7,8 +7,7 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
-- [object Object]
-- [object Object]
+- Fix description unavailable (legacy entry - serialization bug fixed in review #3314283246)
 
 **Outcome:**
 - Health score: 93.8 → 93.8
@@ -24,8 +23,7 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
-- [object Object]
-- [object Object]
+- Fix description unavailable (legacy entry - serialization bug fixed in review #3314283246)
 
 **Outcome:**
 - Health score: 98.8 → 98.8

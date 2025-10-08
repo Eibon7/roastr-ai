@@ -1,6 +1,6 @@
 # CodeRabbit Review #3314207411 - Test Results
 
-**Review:** https://github.com/Eibon7/roastr-ai/pull/499#pullrequestreview-3314207411
+**Review:** <https://github.com/Eibon7/roastr-ai/pull/499#pullrequestreview-3314207411>
 **PR:** #499
 **Branch:** feat/gdd-phase-15.1-coverage-integrity
 **Date:** 2025-10-08
@@ -37,7 +37,7 @@ const totalScore =
 ```
 
 **Example Calculation (node "persona"):**
-```
+```text
 syncAccuracy:        100 * 0.25 = 25.0
 updateFreshness:      96 * 0.20 = 19.2
 dependencyIntegrity: 100 * 0.20 = 20.0
@@ -67,7 +67,7 @@ return {
 ```
 
 **Example Calculation (node "persona"):**
-```
+```text
 syncAccuracy:        100 * 0.25 = 25.0
 updateFreshness:      96 * 0.15 = 14.4  ← REDUCED
 dependencyIntegrity: 100 * 0.20 = 20.0
@@ -296,7 +296,7 @@ $ node -e "console.log(0.25 + 0.15 + 0.20 + 0.20 + 0.10 + 0.10)"
 ### 4. Perfect Node Calculation
 
 **For a hypothetical node with all metrics at 100:**
-```
+```text
 100 * 0.25 + 100 * 0.15 + 100 * 0.20 + 100 * 0.20 + 100 * 0.10 + 100 * 0.10
 = 25 + 15 + 20 + 20 + 10 + 10
 = 100 ✅

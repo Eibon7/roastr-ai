@@ -797,7 +797,7 @@ ${this.issues.critical.map((issue, i) => `${i + 1}. **${issue.node}** - ${issue.
 **Nodes affected:** ${[...new Set(this.issues.autoFixable.map(i => i.node))].join(', ')}
 
 **Fixes applied:**
-${this.fixes.map(f => `- ${f}`).join('\n')}
+${this.fixes.map(f => `- ${f.description}`).join('\n')}
 
 **Outcome:**
 - Health score: ${this.healthBefore} → ${this.healthAfter || this.healthBefore}

@@ -382,8 +382,8 @@ class GDDHealthScorer {
     // Extract declared coverage
     const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
     if (!coverageMatch) {
-      // No coverage declared, integrity N/A → full score
-      return 100;
+      // No declared coverage → unverifiable; apply mild penalty
+      return 80;
     }
 
     const declaredCoverage = parseInt(coverageMatch[1], 10);
