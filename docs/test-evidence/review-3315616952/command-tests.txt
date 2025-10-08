@@ -1,0 +1,177 @@
+# Command Tests - CodeRabbit Review #3315616952
+
+**Date:** 2025-10-08
+**Status:** ✅ ALL TESTS PASSING
+
+---
+
+## Test 1: Script Name Verification
+
+**Command:**
+```bash
+grep -r "compute-gdd-health.js" docs/plan/review-3315336900.md
+```
+
+**Result:**
+```
+(no output)
+```
+
+**Status:** ✅ PASS - No references to old script name
+
+**Verification:**
+```bash
+ls scripts/score-gdd-health.js
+```
+
+**Output:**
+```
+scripts/score-gdd-health.js
+```
+
+**Status:** ✅ PASS - Correct script exists
+
+---
+
+## Test 2: Grep Pattern Validation
+
+**Command:**
+```bash
+grep -F -A 3 "**Coverage:**" docs/nodes/multi-tenant.md
+```
+
+**Result:**
+```
+**Coverage:** 0%
+**Coverage Source:** auto
+**Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
+```
+
+**Status:** ✅ PASS - Grep -F flag works correctly
+
+**Command:**
+```bash
+grep -F -A 3 "**Coverage:**" docs/nodes/trainer.md
+```
+
+**Result:**
+```
+**Coverage:** 0%
+**Coverage Source:** auto
+
+## Dependencies
+```
+
+**Status:** ✅ PASS - Grep -F flag works correctly
+
+---
+
+## Test 3: JSON Parsing with jq
+
+**Command:**
+```bash
+jq -r '.average_score' gdd-health.json
+```
+
+**Result:**
+```
+93.8
+```
+
+**Status:** ✅ PASS - jq -r returns raw numeric value
+
+**Command:**
+```bash
+jq -r '.fixes_applied' gdd-repair.json
+```
+
+**Result:**
+```
+2
+```
+
+**Status:** ✅ PASS - jq -r works for all JSON fields
+
+---
+
+## Test 4: File Counting (grep -rl)
+
+**Command:**
+```bash
+grep -rl "Coverage Source:" docs/nodes | wc -l
+```
+
+**Result:**
+```
+13
+```
+
+**Status:** ✅ PASS - Counts files, not occurrences
+
+**Comparison (old method):**
+```bash
+grep -r "Coverage Source:" docs/nodes/*.md | wc -l
+```
+
+**Result:**
+```
+13
+```
+
+**Note:** In this case both methods return same result, but -rl is more robust if nodes have duplicate fields.
+
+---
+
+## Test 5: CI Sync Check
+
+**Command:**
+```bash
+JSON_SCORE=$(jq -r '.average_score' gdd-health.json)
+MD_SCORE=$(grep -m1 "Average Score:" docs/system-health.md | awk '{print $3}' | cut -d'/' -f1)
+echo "JSON: $JSON_SCORE"
+echo "MD: $MD_SCORE"
+```
+
+**Result:**
+```
+JSON: 93.8
+MD: 93.8
+```
+
+**Status:** ✅ PASS - Both values match, extraction is robust
+
+**Comparison (old method):**
+```bash
+MD_SCORE=$(grep "Average Score:" docs/system-health.md | awk '{print $3}' | tr -d '/')
+echo "MD (old): $MD_SCORE"
+```
+
+**Result:**
+```
+MD (old): 93.8100
+```
+
+**Note:** Old method with `tr -d '/'` would incorrectly produce "93.8100" if format was "93.8/100"
+
+---
+
+## Summary
+
+**Tests Run:** 5
+**Tests Passed:** 5
+**Tests Failed:** 0
+
+**Issues Verified:**
+- ✅ Issue 1: Script name (compute → score) - ALL occurrences fixed (3 total)
+- ✅ Issue 2: Grep pattern (invalid → valid with -F flag) - WORKS
+- ✅ Issue 6: JSON parsing (grep → jq -r) - WORKS
+- ✅ Issue 9: CI sync check (tr → cut) - WORKS
+- ✅ Issue 10: Artifact alignment (jq → jq -r) - WORKS
+- ✅ Issue 11: File counting (grep -r → grep -rl) - WORKS
+
+**All documented commands execute correctly.**
+
+---
+
+**Generated:** 2025-10-08
+**Review:** #3315616952
