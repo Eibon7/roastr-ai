@@ -56,10 +56,13 @@ jobs:
           else
             echo "::error::Telemetry collector failed to generate snapshot"
             echo "status=ERROR" >> $GITHUB_OUTPUT
+          fi
 
-            # C1: Propagate failure in scheduled/manual runs (not PRs)
-            if [ "${{ github.event_name }}" != "pull_request" ]; then
-              echo "::error::Collector failure in production run - exiting with error"
+          # P1-1: Propagate failures when collector fails or status is UNKNOWN
+          # Only fail in scheduled/manual runs (not PRs - handled by continue-on-error)
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            if [ ! -f telemetry/snapshots/gdd-metrics-history.json ] || [ "${STATUS}" = "UNKNOWN" ] || [ "${STATUS}" = "ERROR" ]; then
+              echo "::error::Collector failed to generate valid snapshot or status (STATUS=${STATUS})"
               exit 1
             fi
           fi
