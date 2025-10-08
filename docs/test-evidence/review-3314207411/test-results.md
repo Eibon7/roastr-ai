@@ -265,7 +265,6 @@ $ cat after-gdd-health.json | jq '.nodes[].score' | sort -n
 85
 85
 85
-85
 89
 89
 93
