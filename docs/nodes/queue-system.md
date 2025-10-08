@@ -647,7 +647,8 @@ Los siguientes agentes son responsables de mantener este nodo:
 - Validates both return value AND internal job structure
 - Uses `toMatchObject()` for flexible matching (allows extra fields)
 
-**Coverage:** 87% overall (4 enhanced tests with +16 assertions)
+**Coverage:** 87%
+**Coverage Source:** auto overall (4 enhanced tests with +16 assertions)
 
 ---
 

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-07T19:10:33.466Z",
+  "timestamp": "2025-10-08T09:11:59.430Z",
   "mode": "full",
   "nodes_validated": 13,
   "orphans": [],
@@ -8,5 +8,6 @@
   "cycles": [],
   "missing_refs": [],
   "broken_links": [],
+  "coverage_integrity": [],
   "status": "healthy"
 }

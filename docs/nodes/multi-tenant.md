@@ -6,7 +6,9 @@
 **Status:** Production
 **Last Updated:** 2025-10-06
 **Coverage:** 0%
+**Coverage Source:** auto
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
+**Coverage:** 50%
 
 ## Dependencies
 

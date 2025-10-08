@@ -6,6 +6,7 @@
 **Status:** Production
 **Last Updated:** 2025-10-06
 **Coverage:** 93%
+**Coverage Source:** auto
 
 ## Dependencies
 

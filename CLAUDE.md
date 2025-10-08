@@ -480,6 +480,52 @@ Issue #408: "Shield integration tests"
 
 **Tabla global de nodos-agentes**: Ver sección "Node-Agent Matrix" en `spec.md` para referencia rápida.
 
+### Coverage Authenticity Rules (GDD Phase 15.1)
+
+**NEVER modify `**Coverage:**` values manually. Coverage data must always be derived from automated reports.**
+
+- **Coverage Source**: All GDD nodes must have `**Coverage Source:** auto` field immediately after `**Coverage:**` field
+- **Automated Enforcement**: Validation and Auto-Repair scripts enforce coverage authenticity automatically
+- **Manual modifications are considered integrity violations** and will trigger CI failure
+- **Coverage data sources**:
+  - Primary: `coverage/coverage-summary.json`
+  - Secondary: `lcov.info`
+- **Tolerance**: 3% difference allowed between declared and actual coverage
+- **Violations**: Any mismatch >3% triggers critical integrity violation
+
+**Validation Commands:**
+```bash
+# Validate coverage authenticity
+node scripts/validate-gdd-runtime.js --full
+
+# Auto-repair coverage mismatches
+node scripts/auto-repair-gdd.js --auto-fix
+```
+
+**Coverage Update Workflow:**
+1. Run tests: `npm test -- --coverage`
+2. Coverage report auto-generated in `coverage/coverage-summary.json`
+3. Run auto-repair: `node scripts/auto-repair-gdd.js --auto`
+4. Auto-repair reads actual coverage and updates node docs
+5. Commit updated node docs with accurate coverage
+
+**Manual Override (discouraged):**
+- If coverage data is unavailable, use `**Coverage Source:** manual`
+- This triggers a warning (not an error)
+- Must be justified in PR description
+- Switch back to `auto` when coverage becomes available
+
+**Integrity Score:**
+- Coverage authenticity contributes 10% to node health score
+- Manual coverage source: -20 points
+- Missing coverage source: -10 points
+- Coverage mismatch: penalty based on diff (up to -50 points)
+
+**CI/CD Integration:**
+- CI checks coverage authenticity before merge
+- Blocks merge if coverage integrity violations detected
+- Auto-creates issues for manual review if needed
+
 ### GDD Activation - Issue Analysis & Context Loading (October 3, 2025)
 
 **IMPORTANTE:** A partir de ahora, el Orchestrator debe usar Graph Driven Development (GDD) para **todas las issues**, cargando solo los nodos relevantes en lugar de spec.md completo.

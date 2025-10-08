@@ -6,6 +6,7 @@
 **Status:** Roadmap
 **Last Updated:** 2025-10-06
 **Coverage:** 49%
+**Coverage Source:** auto
 
 ## Dependencies
 

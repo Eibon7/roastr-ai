@@ -20,6 +20,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
+const { CoverageHelper } = require('./gdd-coverage-helper');
 
 class AutoRepairEngine {
   constructor(options = {}) {
@@ -268,6 +269,7 @@ class AutoRepairEngine {
     await this.detectBrokenEdges(systemMap);
     await this.detectOrphanNodes(nodes, systemMap);
     await this.detectMissingSpecReferences(nodes, spec);
+    await this.detectCoverageIntegrity(nodes);  // Phase 15.1
   }
 
   /**
@@ -510,6 +512,86 @@ class AutoRepairEngine {
           type: 'missing_spec_ref',
           node: nodeName,
           description: `${nodeName}: Not referenced in spec.md (requires manual content)`
+        });
+      }
+    }
+  }
+
+  /**
+   * Detect coverage integrity violations (Phase 15.1)
+   */
+  async detectCoverageIntegrity(nodes) {
+    const coverageHelper = new CoverageHelper();
+
+    for (const [nodeName, node] of Object.entries(nodes)) {
+      // Extract declared coverage
+      const coverageMatch = node.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+      if (!coverageMatch) {
+        continue;  // No coverage declared, skip
+      }
+
+      const declaredCoverage = parseInt(coverageMatch[1], 10);
+
+      // Check coverage source
+      const sourceMatch = node.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
+      const coverageSource = sourceMatch ? sourceMatch[1].toLowerCase() : null;
+
+      // If no source specified or manual, add coverage source field
+      if (!coverageSource) {
+        this.issues.autoFixable.push({
+          type: 'missing_coverage_source',
+          node: nodeName,
+          description: `${nodeName}: Missing coverage source field`,
+          fix: async () => {
+            // Add Coverage Source: auto after Coverage field
+            node.content = node.content.replace(
+              /(\*?\*?coverage:?\*?\*?\s*\d+%)/i,
+              '$1\n**Coverage Source:** auto'
+            );
+            await fs.writeFile(node.path, node.content);
+            this.fixes.push(`Added coverage source to ${nodeName}`);
+          }
+        });
+      } else if (coverageSource === 'manual') {
+        this.issues.autoFixable.push({
+          type: 'manual_coverage_source',
+          node: nodeName,
+          description: `${nodeName}: Coverage source is 'manual' (should be 'auto')`,
+          fix: async () => {
+            // Change manual → auto
+            node.content = node.content.replace(
+              /(\*?\*?coverage\s+source:?\*?\*?\s*)manual/i,
+              '$1auto'
+            );
+            await fs.writeFile(node.path, node.content);
+            this.fixes.push(`Changed coverage source to 'auto' for ${nodeName}`);
+          }
+        });
+      }
+
+      // Validate coverage authenticity
+      const validation = await coverageHelper.validateCoverageAuthenticity(
+        nodeName,
+        declaredCoverage,
+        3  // 3% tolerance
+      );
+
+      if (!validation.valid && validation.actual !== null) {
+        // Coverage mismatch detected
+        this.issues.autoFixable.push({
+          type: 'coverage_integrity_violation',
+          node: nodeName,
+          severity: validation.severity,
+          description: `${nodeName}: Coverage mismatch - declared ${declaredCoverage}% but actual is ${validation.actual}% (diff: ${validation.diff}%)`,
+          fix: async () => {
+            // Reset coverage to actual value from report
+            node.content = node.content.replace(
+              /(\*?\*?coverage:?\*?\*?\s*)\d+%/i,
+              `$1${validation.actual}%`
+            );
+            await fs.writeFile(node.path, node.content);
+            this.fixes.push(`Reset coverage to ${validation.actual}% for ${nodeName} (was ${declaredCoverage}%)`);
+          }
         });
       }
     }
