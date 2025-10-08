@@ -5,7 +5,7 @@
 **Priority:** Planned
 **Status:** Roadmap
 **Last Updated:** 2025-10-06
-**Coverage:** 45%
+**Coverage:** 80%
 
 ## Dependencies
 
