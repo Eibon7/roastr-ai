@@ -1398,11 +1398,25 @@ We've achieved:
 ## 📝 Documentation Sync History
 
 ### Last Doc Sync
-- **Date:** 2025-10-05
+- **Date:** 2025-10-08
 - **Status:** 🟢 passed
-- **PR:** #461
+- **PR:** #492
 
 ### Synced PRs
+
+#### PR #492 - Phase 13 Telemetry & Analytics Layer (2025-10-08)
+- **Type:** Infrastructure/Observability (not feature/business logic)
+- **Issue:** Phase 13 implementation
+- **Nodes updated:** 0 (infrastructure layer only)
+- **Tests added:** 7 unit tests (100% passing)
+- **Issues created:** 0
+- **Orphan nodes:** 0
+- **Test coverage:** 7/7 (100%) - calculateDerivedMetrics: 0% → 100%
+- **Graph validation:** ✅ PASSED
+- **CodeRabbit reviews resolved:** 2 (Review #3311553722, Codex #3311704785, 7 issues total)
+- **Critical fixes:** M2 (null handling), P1 (nullish coalescing - prevented 33pt inflation)
+- **spec.md:** 148 lines added (comprehensive Phase 13 entry)
+- **Report:** docs/sync-reports/pr-492-sync.md (updated 2025-10-08T07:46:19Z)
 
 #### PR #461 - Kill-Switch Integration Tests (2025-10-05)
 - **Type:** Test-only PR (no src/ changes)
