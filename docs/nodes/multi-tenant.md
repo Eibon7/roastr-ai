@@ -10,6 +10,7 @@
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
 **Coverage:** 50%
 **Coverage:** 50%
+**Coverage:** 50%
 
 ## Dependencies
 
