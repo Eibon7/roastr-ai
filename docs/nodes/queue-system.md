@@ -4,9 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-06
+**Last Updated:** 2025-10-09
+**Coverage:** 100%
+**Coverage Source:** auto
 **Version:** 1.2.0
-**Related PR:** #458
+**Related PRs:** #458, #499
 
 ## Dependencies
 

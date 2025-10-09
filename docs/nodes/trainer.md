@@ -4,12 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Planned
 **Status:** Roadmap
-**Last Updated:** 2025-10-06
-**Coverage:** 0%
+**Last Updated:** 2025-10-09
+**Coverage:** 50%
 **Coverage Source:** auto
-**Coverage:** 50%
-**Coverage:** 50%
-**Coverage:** 50%
+**Related PRs:** #499
 
 ## Dependencies
 
