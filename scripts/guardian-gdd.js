@@ -89,12 +89,11 @@ class GuardianEngine {
    */
   getGitDiff() {
     try {
-      // Get staged changes
-      let diff = '';
-      try {
-        diff = execSync('git diff --cached --name-status', { encoding: 'utf8' });
-      } catch (e) {
-        // If no staged changes, get unstaged changes
+      // Get staged changes first
+      let diff = execSync('git diff --cached --name-status', { encoding: 'utf8' });
+
+      // If no staged changes (empty output), check unstaged changes
+      if (!diff.trim()) {
         diff = execSync('git diff --name-status', { encoding: 'utf8' });
       }
 
@@ -133,10 +132,10 @@ class GuardianEngine {
         diff = execSync(`git diff -- "${file}"`, { encoding: 'utf8' });
       }
 
-      // Count lines
+      // Count lines (exclude diff headers +++ and ---)
       const lines = diff.split('\n');
-      const added = lines.filter(l => l.startsWith('+')).length;
-      const removed = lines.filter(l => l.startsWith('-')).length;
+      const added = lines.filter(l => l.startsWith('+') && !l.startsWith('+++')).length;
+      const removed = lines.filter(l => l.startsWith('-') && !l.startsWith('---')).length;
 
       this.changesSummary.total_lines_added += added;
       this.changesSummary.total_lines_removed += removed;
@@ -326,6 +325,9 @@ class GuardianEngine {
 
     // Initialize audit log if it doesn't exist
     if (!fs.existsSync(AUDIT_LOG_PATH)) {
+      // Ensure directory exists
+      fs.mkdirSync(path.dirname(AUDIT_LOG_PATH), { recursive: true });
+
       const header = `# Guardian Audit Log
 
 **Generated:** ${timestamp}
@@ -354,6 +356,9 @@ This file contains a chronological record of all Guardian Agent events.
     fs.appendFileSync(AUDIT_LOG_PATH, logEntry);
 
     // Create case file
+    // Ensure cases directory exists
+    fs.mkdirSync(CASES_DIR, { recursive: true });
+
     const caseFile = path.join(CASES_DIR, `${caseId}.json`);
     const caseData = {
       case_id: caseId,
@@ -392,6 +397,9 @@ This file contains a chronological record of all Guardian Agent events.
   generateReport() {
     const timestamp = new Date().toISOString();
     const reportPath = path.join(__dirname, '../docs/guardian/guardian-report.md');
+
+    // Ensure directory exists
+    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
 
     const report = `# Guardian Scan Report
 
