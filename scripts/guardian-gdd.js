@@ -102,7 +102,7 @@ class GuardianEngine {
   shouldIgnoreFile(filePath) {
     // Check against ignore patterns using minimatch
     for (const pattern of this.ignorePatterns) {
-      if (minimatch(filePath, pattern, { matchBase: true, dot: true, nocase: true })) {
+      if (minimatch(filePath, pattern, { matchBase: true, dot: true })) {
         return true;
       }
     }
@@ -189,6 +189,7 @@ class GuardianEngine {
 
       return { diff, added, removed };
     } catch (error) {
+      console.error(`⚠️  Failed to get diff for ${file}: ${error.message}`);
       return { diff: '', added: 0, removed: 0 };
     }
   }
