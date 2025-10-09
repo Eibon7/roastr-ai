@@ -106,111 +106,12 @@
     "violations": []
   },
   "dependency_validation": {
-    "total": 11,
-    "valid": 3,
-    "missing_deps": 5,
+    "total": 0,
+    "valid": 0,
+    "missing_deps": 0,
     "phantom_deps": 0,
-    "violations": [
-      {
-        "node": "analytics",
-        "declared": [
-          "-",
-          "-",
-          "-",
-          "-"
-        ],
-        "detected": [],
-        "missing": [],
-        "phantom": [],
-        "reason": "no_source_files"
-      },
-      {
-        "node": "persona",
-        "declared": [
-          "-"
-        ],
-        "detected": [],
-        "missing": [],
-        "phantom": [],
-        "reason": "no_source_files"
-      },
-      {
-        "node": "plan-features",
-        "declared": [
-          "-"
-        ],
-        "detected": [],
-        "missing": [],
-        "phantom": [],
-        "reason": "no_source_files"
-      },
-      {
-        "node": "platform-constraints",
-        "declared": [
-          "-"
-        ],
-        "detected": [],
-        "missing": [],
-        "phantom": [],
-        "reason": "no_source_files"
-      },
-      {
-        "node": "roast",
-        "declared": [
-          "-",
-          "-",
-          "-",
-          "-",
-          "-"
-        ],
-        "detected": [],
-        "missing": [
-          "-",
-          "-",
-          "-",
-          "-",
-          "-"
-        ],
-        "phantom": [],
-        "reason": "dependency_mismatch"
-      },
-      {
-        "node": "social-platforms",
-        "declared": [
-          "-",
-          "-",
-          "-"
-        ],
-        "detected": [],
-        "missing": [],
-        "phantom": [],
-        "reason": "no_source_files"
-      },
-      {
-        "node": "tone",
-        "declared": [
-          "-",
-          "-"
-        ],
-        "detected": [],
-        "missing": [],
-        "phantom": [],
-        "reason": "no_source_files"
-      },
-      {
-        "node": "trainer",
-        "declared": [
-          "-",
-          "-",
-          "-"
-        ],
-        "detected": [],
-        "missing": [],
-        "phantom": [],
-        "reason": "no_source_files"
-      }
-    ]
+    "violations": []
   },
-  "overall_score": 97.4,
+  "overall_score": 100,
   "status": "HEALTHY"
 }

@@ -1,15 +1,15 @@
 # Cross-Validation Report
 
-**Generated:** 2025-10-09T10:36:16.313Z
-**Status:** 🟡 WARNING
-**Overall Score:** 87.2/100
+**Generated:** 2025-10-09T12:42:00.857Z
+**Status:** 🟢 HEALTHY
+**Overall Score:** 100/100
 
 ---
 
 ## Summary
 
 - **Nodes Validated:** 13
-- **Overall Status:** WARNING
+- **Overall Status:** HEALTHY
 
 ---
 
@@ -43,75 +43,23 @@
 
 ## Timestamp Validation
 
-**Status:** ⚠️ FAIL
+**Status:** ✅ PASS
 
 - **Total Checked:** 13
-- **Valid:** 9
+- **Valid:** 13
 - **Stale:** 0
-- **Future:** 4
-
-### Violations
-
-| Node | Declared | Actual | Diff (days) | Reason |
-|------|----------|--------|-------------|--------|
-| platform-constraints | 2025-10-09 | 2025-10-06 | 3 | future_date |
-| queue-system | 2025-10-09 | 2025-10-06 | 3 | future_date |
-| roast | 2025-10-09 | 2025-10-06 | 3 | future_date |
-| social-platforms | 2025-10-09 | 2025-10-06 | 3 | future_date |
+- **Future:** 0
 
 ---
 
 ## Dependency Validation
 
-**Status:** ⚠️ FAIL
+**Status:** ✅ PASS
 
-- **Total Checked:** 11
-- **Valid:** 3
-- **Missing Dependencies:** 5
+- **Total Checked:** 0
+- **Valid:** 0
+- **Missing Dependencies:** 0
 - **Phantom Dependencies:** 0
-
-### Violations
-
-#### analytics
-
-- **Declared:** -, -, -, -
-- **Detected:** None
-
-#### persona
-
-- **Declared:** -
-- **Detected:** None
-
-#### plan-features
-
-- **Declared:** -
-- **Detected:** None
-
-#### platform-constraints
-
-- **Declared:** -
-- **Detected:** None
-
-#### roast
-
-- **Declared:** -, -, -, -, -
-- **Detected:** None
-- **Missing:** -, -, -, -, -
-
-#### social-platforms
-
-- **Declared:** -, -, -
-- **Detected:** None
-
-#### tone
-
-- **Declared:** -, -
-- **Detected:** None
-
-#### trainer
-
-- **Declared:** -, -, -
-- **Detected:** None
 
 ---
 
