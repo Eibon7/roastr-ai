@@ -131,7 +131,9 @@ class GDDCrossValidator {
 
       if (segment.includes('*')) {
         // Wildcard segment - expand it by reading directories
-        const regex = new RegExp('^' + segment.replace(/\*/g, '.*') + '$');
+        // Escape regex metacharacters, then replace * with .*
+        const escaped = segment.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp('^' + escaped.replace(/\*/g, '.*') + '$');
 
         for (const basePath of currentPaths) {
           try {
