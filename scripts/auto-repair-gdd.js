@@ -199,7 +199,7 @@ class AutoRepairEngine {
       const healthFile = path.join(this.rootDir, 'gdd-health.json');
       const content = await fs.readFile(healthFile, 'utf-8');
       const data = JSON.parse(content);
-      return data.average_score;
+      return data.overall_score;
     } catch (error) {
       return null;
     }
@@ -702,7 +702,7 @@ class AutoRepairEngine {
     const { GDDHealthScorer } = require('./score-gdd-health.js');
     const scorer = new GDDHealthScorer({ json: true });
     const result = await scorer.score();
-    this.healthAfter = result.stats.average_score;
+    this.healthAfter = result.stats.overall_score;
   }
 
   /**

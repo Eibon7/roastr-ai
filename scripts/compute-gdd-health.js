@@ -82,7 +82,7 @@ class GDDHealthComputer {
    * Validate health against minimum threshold
    */
   validateHealth(healthData) {
-    const score = healthData.average_score;
+    const score = healthData.overall_score;
     const passed = score >= this.options.minScore;
 
     // Identify nodes below threshold
@@ -113,8 +113,8 @@ class GDDHealthComputer {
       passed,
       score,
       minScore: this.options.minScore,
-      status: healthData.overall_status,
-      nodeCount: healthData.node_count,
+      status: healthData.status,
+      nodeCount: healthData.total_nodes,
       healthyCount: healthData.healthy_count,
       degradedCount: healthData.degraded_count,
       criticalCount: healthData.critical_count,

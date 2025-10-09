@@ -332,7 +332,7 @@ class GDDWatcher {
             nodes_validated: results.nodes_validated,
             orphans: results.orphans.length,
             outdated: results.outdated.length,
-            health_score: healthStats?.average_score || 0,
+            health_score: healthStats?.overall_score || 0,
             drift_risk: driftData?.average_drift_risk || 0
           },
           timestamp: new Date().toISOString()
@@ -382,7 +382,7 @@ class GDDWatcher {
       console.log('────────────────────────────────────────');
       console.log('📊 NODE HEALTH STATUS');
       console.log(`🟢 ${healthStats.healthy_count} Healthy | 🟡 ${healthStats.degraded_count} Degraded | 🔴 ${healthStats.critical_count} Critical`);
-      console.log(`Average Score: ${healthStats.average_score}/100`);
+      console.log(`Average Score: ${healthStats.overall_score}/100`);
       console.log('────────────────────────────────────────');
       console.log('');
     }

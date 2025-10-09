@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-09T10:44:42.558Z",
+  "generated_at": "2025-10-09T11:53:29.779Z",
   "analysis_period_days": 30,
   "nodes": {
     "analytics": {
@@ -212,7 +212,7 @@
       "coverage": "50"
     }
   },
-  "overall_status": "HEALTHY",
+  "status": "HEALTHY",
   "average_drift_risk": 3,
   "high_risk_count": 0,
   "at_risk_count": 0,

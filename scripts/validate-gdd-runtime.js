@@ -1032,7 +1032,7 @@ async function main() {
     console.log('║     🧩 NODE HEALTH SUMMARY            ║');
     console.log('╚════════════════════════════════════════╝');
     console.log(`🟢 Healthy: ${stats.healthy_count} | 🟡 Degraded: ${stats.degraded_count} | 🔴 Critical: ${stats.critical_count}`);
-    console.log(`Average Score: ${stats.average_score}/100`);
+    console.log(`Average Score: ${stats.overall_score}/100`);
     console.log('');
   }
 }

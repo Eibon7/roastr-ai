@@ -53,7 +53,7 @@ class GDDDriftPredictor {
       generated_at: new Date().toISOString(),
       analysis_period_days: 30,
       nodes: {},
-      overall_status: 'HEALTHY',
+      status: 'HEALTHY',
       average_drift_risk: 0,
       high_risk_count: 0,
       at_risk_count: 0,
@@ -403,11 +403,11 @@ class GDDDriftPredictor {
       : 0;
 
     if (this.driftData.high_risk_count > 0) {
-      this.driftData.overall_status = 'CRITICAL';
+      this.driftData.status = 'CRITICAL';
     } else if (this.driftData.at_risk_count > 0) {
-      this.driftData.overall_status = 'WARNING';
+      this.driftData.status = 'WARNING';
     } else {
-      this.driftData.overall_status = 'HEALTHY';
+      this.driftData.status = 'HEALTHY';
     }
   }
 
@@ -435,7 +435,7 @@ class GDDDriftPredictor {
     let md = '# 🔮 GDD Drift Risk Report\n\n';
     md += `**Generated:** ${this.driftData.generated_at}\n`;
     md += `**Analysis Period:** Last ${this.driftData.analysis_period_days} days\n`;
-    md += `**Overall Status:** ${this.getDriftEmoji(this.driftData.overall_status.toLowerCase())} ${this.driftData.overall_status}\n`;
+    md += `**Overall Status:** ${this.getDriftEmoji(this.driftData.status.toLowerCase())} ${this.driftData.status}\n`;
     md += `**Average Drift Risk:** ${this.driftData.average_drift_risk}/100\n\n`;
     md += '---\n\n';
 
@@ -555,7 +555,7 @@ class GDDDriftPredictor {
   printSummary(duration) {
     console.log('');
     console.log('╔════════════════════════════════════════╗');
-    console.log(`║ ${this.getDriftEmoji(this.driftData.overall_status.toLowerCase())}  DRIFT STATUS: ${this.driftData.overall_status.padEnd(22)} ║`);
+    console.log(`║ ${this.getDriftEmoji(this.driftData.status.toLowerCase())}  DRIFT STATUS: ${this.driftData.status.padEnd(22)} ║`);
     console.log('╠════════════════════════════════════════╣');
     console.log(`║ 📊 Average Risk:  ${String(this.driftData.average_drift_risk).padStart(3)}/100              ║`);
     console.log(`║ 🟢 Healthy:       ${String(this.driftData.healthy_count).padStart(3)}                    ║`);

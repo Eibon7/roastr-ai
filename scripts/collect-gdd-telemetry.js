@@ -182,7 +182,7 @@ class TelemetryCollector {
         high_risk_count: driftData.high_risk_count || 0,
         at_risk_count: driftData.at_risk_count || 0,
         healthy_count: driftData.healthy_count || 0,
-        overall_status: driftData.overall_status || 'unknown'
+        overall_status: driftData.status || driftData.overall_status || 'unknown'  // NEW key (status) with fallback to OLD (overall_status)
       };
     } catch (error) {
       this.log('error', `Failed to collect drift metrics: ${error.message}`);
