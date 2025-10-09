@@ -26,6 +26,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const yaml = require('yaml');
+const { minimatch } = require('minimatch');
 
 // ============================================================
 // Configuration
@@ -105,6 +106,19 @@ class GuardianEngine {
       // Parse diff output
       const changes = diff.trim().split('\n').map(line => {
         const [status, ...fileParts] = line.split('\t');
+
+        // Handle renamed files (status starts with 'R')
+        if (status.startsWith('R')) {
+          const oldFile = fileParts[0];
+          const newFile = fileParts[1] || oldFile;
+          return {
+            status,
+            file: newFile,
+            oldPath: oldFile,
+            renamed: true
+          };
+        }
+
         const file = fileParts.join('\t');
         return { status, file };
       });
@@ -158,12 +172,21 @@ class GuardianEngine {
     for (const [domainName, domain] of Object.entries(domains)) {
       let matched = false;
 
-      // 1. Check file path match
+      // 1. Check file path match (using glob patterns)
       if (domain.files) {
-        for (const protectedFile of domain.files) {
-          if (file.includes(protectedFile) || protectedFile.includes(file)) {
-            matched = true;
-            break;
+        for (const pattern of domain.files) {
+          const hasGlobChars = /[*?[\]{}]/.test(pattern);
+
+          if (hasGlobChars) {
+            if (minimatch(file, pattern, { matchBase: true, dot: true })) {
+              matched = true;
+              break;
+            }
+          } else {
+            if (file === pattern || file.endsWith('/' + pattern)) {
+              matched = true;
+              break;
+            }
           }
         }
       }
@@ -319,7 +342,7 @@ class GuardianEngine {
    */
   generateAuditLog() {
     const timestamp = new Date().toISOString();
-    const caseId = timestamp.replace(/[:.]/g, '-').split('T').join('-').substring(0, 19);
+    const caseId = timestamp.replace(/[:.]/g, '-').split('T').join('-').substring(0, 23);
 
     // Create audit log entry
     const allViolations = [
@@ -350,7 +373,10 @@ This file contains a chronological record of all Guardian Agent events.
     }
 
     // Append to audit log
-    const actor = process.env.USER || 'unknown';
+    const actor = process.env.GITHUB_ACTOR ||
+                  process.env.USER ||
+                  process.env.USERNAME ||
+                  'unknown';
     const domains = Array.from(this.changesSummary.domains_affected).join(', ') || 'none';
     const files = allViolations.length;
     const severity = this.violations.critical.length > 0 ? 'CRITICAL' :
