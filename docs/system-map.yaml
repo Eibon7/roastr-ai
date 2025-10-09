@@ -8,14 +8,14 @@
 metadata:
   version: 2.0.0
   created: 2025-10-03
-  last_updated: 2025-10-06
-  total_nodes: 13
-  critical_nodes: 7
+  last_updated: 2025-10-09
+  total_nodes: 14
+  critical_nodes: 8
   high_priority_nodes: 4
-  production_nodes: 12
+  production_nodes: 13
   development_nodes: 1
-  pr: "#458"
-  changes: "Phase 7.1: Complete system-map with bidirectional relationships + metadata"
+  pr: "#515"
+  changes: "Phase 16: Added Guardian node (product governance layer)"
 
 # Node Definitions
 nodes:
@@ -277,6 +277,31 @@ nodes:
       - docs/nodes/trainer.md
     files:
       - src/services/trainerService.js
+
+  # Governance Nodes
+  guardian:
+    description: Product governance layer for monitoring and protecting sensitive changes
+    status: production
+    priority: critical
+    owner: Product Owner
+    last_updated: 2025-10-09
+    coverage: 80
+    depends_on: []
+    used_by: []
+    protected_domains:
+      - pricing
+      - quotas
+      - auth_policies
+      - ai_models
+      - public_contracts
+    docs:
+      - docs/nodes/guardian.md
+    files:
+      - scripts/guardian-gdd.js
+      - config/product-guard.yaml
+      - config/guardian-ignore.yaml
+    tests:
+      - tests/unit/scripts/guardian-gdd.test.js
 
 # Validation Rules
 validation:

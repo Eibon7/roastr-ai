@@ -7809,5 +7809,82 @@ This section documents the core architectural nodes that form the foundation of 
 
 ---
 
+### Guardian Node
+
+**Purpose:** Product governance layer that monitors and protects sensitive changes in product logic, pricing, authentication policies, and documentation.
+
+**Status:** Active (Phase 16 - October 2025)
+
+**Responsibilities:**
+- Monitor git changes for violations of protected domains (pricing, quotas, auth, AI models, public APIs)
+- Classify changes by severity: CRITICAL (block merge), SENSITIVE (manual review), SAFE (auto-approve)
+- Generate audit logs and case files for compliance and traceability
+- Enforce approval workflows based on domain ownership
+- Integrate with CI/CD pipelines via semantic exit codes (0=safe, 1=review, 2=block)
+- Filter test fixtures and false positives using ignore patterns
+
+**Protected Domains (config/product-guard.yaml):**
+1. **pricing** (CRITICAL) - Subscription tiers, billing logic, Stripe integration
+2. **quotas** (CRITICAL) - Usage limits, rate limiting, resource allocation
+3. **auth_policies** (CRITICAL) - RLS policies, authentication, authorization
+4. **ai_models** (SENSITIVE) - AI prompts, model selection, OpenAI configuration
+5. **public_contracts** (SENSITIVE) - API endpoints, webhooks, external schemas
+
+**Business Impact:**
+- Prevents accidental pricing changes that could impact revenue (€5/€15/€50 plans)
+- Enforces security reviews for auth policy changes (SOC 2 compliance)
+- Ensures AI model changes are reviewed by domain experts
+- Maintains audit trail for compliance (SOC 2, GDPR)
+
+**Dependencies:**
+- None (leaf node - core infrastructure layer)
+
+**Used By:**
+- None yet (new feature in Phase 16)
+- **Planned (Phase 17):** CI/CD workflows, pre-commit hooks, PR validation bot
+
+**Implementation:**
+- `scripts/guardian-gdd.js` - Guardian engine with GuardianEngine class
+- `config/product-guard.yaml` - Protected domains configuration (5 domains)
+- `config/guardian-ignore.yaml` - Ignore patterns for test fixtures
+- `docs/guardian/audit-log.md` - Chronological audit log (append-only)
+- `docs/guardian/cases/*.json` - Case files with full scan details
+- `tests/unit/scripts/guardian-gdd.test.js` - 14 unit tests covering all methods
+
+**CLI Usage:**
+```bash
+# Full system scan
+node scripts/guardian-gdd.js --full
+
+# CI mode (semantic exit codes)
+node scripts/guardian-gdd.js --ci
+
+# Generate markdown report
+node scripts/guardian-gdd.js --report
+```
+
+**Exit Codes:**
+- `0` - SAFE: All changes approved, auto-merge
+- `1` - SENSITIVE: Manual review required, Tech Lead approval
+- `2` - CRITICAL: Merge blocked, Product Owner approval required
+
+**Approval Workflow:**
+- **CRITICAL:** 3 approvers (Product Owner + Tech Lead + Backend Dev), 48h SLA
+- **SENSITIVE:** 2 approvers (Tech Lead + Domain Owner), 24h SLA
+- **SAFE:** 0 approvers (auto-approve)
+
+**Key Features:**
+- Glob pattern matching for file paths (minimatch)
+- Actor detection with multi-source fallback (GITHUB_ACTOR → USER → USERNAME)
+- Case ID collision prevention (milliseconds precision)
+- Renamed file detection (prevents double-counting)
+- Line counting accuracy (excludes diff headers)
+- Ignore patterns for test fixtures (Windows security test vectors)
+- Error logging and observability
+
+**GDD Node:** [docs/nodes/guardian.md](docs/nodes/guardian.md)
+
+---
+
 **GDD System Map:** [docs/system-map.yaml](docs/system-map.yaml)
 **GDD Documentation:** [docs/GDD-IMPLEMENTATION-SUMMARY.md](docs/GDD-IMPLEMENTATION-SUMMARY.md)
