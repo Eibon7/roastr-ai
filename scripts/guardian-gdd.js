@@ -398,6 +398,29 @@ This file contains a chronological record of all Guardian Agent events.
 
     console.log(`📝 Audit log updated: ${AUDIT_LOG_PATH}`);
     console.log(`📁 Case file created: ${caseFile}\n`);
+
+    // Send notification for CRITICAL/SENSITIVE cases (Phase 17)
+    if (severity !== 'SAFE') {
+      this.sendNotification(caseId);
+    }
+  }
+
+  /**
+   * Send email notification for case (Phase 17)
+   */
+  sendNotification(caseId) {
+    try {
+      console.log(`📧 Sending notification for case: ${caseId}`);
+      const notifyScript = path.join(__dirname, 'notify-guardian.js');
+      execSync(`node "${notifyScript}" --case-id=${caseId}`, {
+        stdio: 'inherit',
+        env: { ...process.env }
+      });
+      console.log(`✅ Notification sent successfully`);
+    } catch (error) {
+      console.error(`⚠️  Failed to send notification: ${error.message}`);
+      console.error(`   (Continuing without notification)`);
+    }
   }
 
   /**
