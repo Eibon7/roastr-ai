@@ -1,16 +1,16 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-09T11:53:29.779Z
+**Generated:** 2025-10-09T22:46:11.019Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
-**Average Drift Risk:** 3/100
+**Average Drift Risk:** 4/100
 
 ---
 
 ## Summary
 
-- **Total Nodes:** 13
-- 🟢 **Healthy (0-30):** 13
+- **Total Nodes:** 14
+- 🟢 **Healthy (0-30):** 14
 - 🟡 **At Risk (31-60):** 0
 - 🔴 **Likely Drift (61-100):** 0
 
@@ -23,6 +23,7 @@
 | analytics | 🟢 5 | healthy | 94 | 70% | 0d ago | 0 |
 | billing | 🟢 5 | healthy | 94 | 70% | 0d ago | 0 |
 | cost-control | 🟢 5 | healthy | 94 | 70% | 0d ago | 0 |
+| guardian | 🟢 5 | healthy | N/A | 50% | 0d ago | 0 |
 | multi-tenant | 🟢 5 | healthy | 94 | 70% | 0d ago | 0 |
 | persona | 🟢 5 | healthy | 94 | 70% | 0d ago | 0 |
 | plan-features | 🟢 5 | healthy | 94 | 70% | 0d ago | 0 |
@@ -77,6 +78,19 @@
 
 **Git Activity:** 9 commits in last 30 days
 
+### guardian (Risk: 5)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +15 pts: Coverage 50% (<80%)
+- -10 pts: Recent commit (0 days ago)
+
+**Recommendations:**
+- Increase test coverage to 80%+ (currently 50%)
+
+**Git Activity:** 4 commits in last 30 days
+
 ### multi-tenant (Risk: 5)
 
 **Status:** 🟢 HEALTHY
@@ -89,19 +103,6 @@
 - Increase test coverage to 80%+ (currently 70%)
 
 **Git Activity:** 34 commits in last 30 days
-
-### persona (Risk: 5)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (0 days ago)
-
-**Recommendations:**
-- Increase test coverage to 80%+ (currently 70%)
-
-**Git Activity:** 8 commits in last 30 days
 
 ---
 
