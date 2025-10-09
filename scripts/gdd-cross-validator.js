@@ -230,7 +230,16 @@ class GDDCrossValidator {
 
     for (const file of files) {
       const absolutePath = path.join(this.rootDir, file);
-      const fileData = this.coverageData[absolutePath];
+      const relPath = path.relative(this.rootDir, absolutePath);
+      const relPosix = relPath.replace(/\\/g, '/');
+
+      // Try multiple path formats to find coverage data
+      // coverage-summary.json keys can be absolute, relative, or POSIX-relative
+      const fileData =
+        this.coverageData[absolutePath] ??       // Try absolute path
+        this.coverageData[relPath] ??            // Try relative path
+        this.coverageData[relPosix] ??           // Try POSIX relative path
+        this.coverageData[file];                 // Try original path as-is
 
       if (fileData && fileData.statements) {
         totalStatements += fileData.statements.total || 0;
