@@ -221,7 +221,12 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
+
+            // Check if repair file exists
+            let repair = { details: { errors: [] } };
+            if (fs.existsSync('gdd-repair.json')) {
+              repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
+            }
 
             const errors = repair.details?.errors || [];
             const errorList = errors.map(e => `- **${e.type}** (${e.node}): ${e.error}`).join('\n');
