@@ -32,7 +32,7 @@ Integrate agents from the GDD ecosystem with a secure, auditable, and reversible
 **Security:**
 - Permission validation before every operation
 - SHA-256 hash integrity checks
-- Automatic rollback if health degrades
+- Manual rollback via `rollback()` call (no automatic health-driven rollback implemented)
 - Digital signatures for all writes
 - 403 errors logged for unauthorized actions
 
@@ -85,8 +85,8 @@ const health = await ail.getSystemHealth();
 7. Broadcast event to Telemetry Bus
 
 **Rollback Features:**
-- Automatic rollback if health degrades
-- Manual rollback via signature ID
+- Manual rollback via signature ID or `rollback()` call
+- **Note:** Automatic health-driven rollback must be implemented in future phase if needed
 - Backup retention (last 10 per file)
 - Signature verification for integrity
 - Audit trail for all rollbacks

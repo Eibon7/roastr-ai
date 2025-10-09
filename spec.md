@@ -26,7 +26,8 @@ Fixed 2 failing CI/CD jobs blocking PR #492 merge:
 
 ### 📊 Changes Summary
 
-**Fix 1: auto-repair Job (ENOENT Error)**
+#### Fix 1: auto-repair Job (ENOENT Error)
+
 - Added file existence checks before all `gdd-repair.json` reads
 - Graceful fallbacks: 0 fixes, 0 errors when file missing
 - Behavior: Job succeeds when no repairs needed (healthy state)
@@ -38,7 +39,8 @@ Fixed 2 failing CI/CD jobs blocking PR #492 merge:
   - PR comment: Default empty repair object if file missing
   - Issue creation: Default empty errors array if file missing
 
-**Fix 2: validate-gdd Job (Threshold)**
+#### Fix 2: validate-gdd Job (Threshold)
+
 - Updated `min_health_score`: 95 → 93 (temporary until Oct 31)
 - Aligns with Phase 15.2 coverage recovery plan
 - Added metadata: `temporary_until`, `note`, `coverage_recovery` section

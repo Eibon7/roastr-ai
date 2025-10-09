@@ -237,14 +237,17 @@ class SecureWrite {
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const basename = path.basename(filePath);
-    const backupName = `${basename}.${timestamp}.backup`;
+
+    // Encode relative path to prevent collisions (e.g., docs/nodes/index.md vs docs/guides/index.md)
+    const relativePath = path.relative(this.rootDir, filePath);
+    const safePath = relativePath.replace(/\//g, '__').replace(/\\/g, '__');
+    const backupName = `${safePath}.${timestamp}.backup`;
     const backupPath = path.join(this.backupDir, backupName);
 
     fs.writeFileSync(backupPath, content, 'utf8');
 
     // Cleanup old backups (keep only last 10 per file)
-    this.cleanupBackups(basename);
+    this.cleanupBackups(safePath);
 
     return backupPath;
   }
@@ -277,9 +280,12 @@ class SecureWrite {
    */
   findLatestBackup(filePath) {
     try {
-      const basename = path.basename(filePath);
+      // Use same safe path encoding as createBackup
+      const relativePath = path.relative(this.rootDir, filePath);
+      const safePath = relativePath.replace(/\//g, '__').replace(/\\/g, '__');
+
       const backups = fs.readdirSync(this.backupDir)
-        .filter(f => f.startsWith(basename))
+        .filter(f => f.startsWith(safePath))
         .map(f => ({
           path: path.join(this.backupDir, f),
           mtime: fs.statSync(path.join(this.backupDir, f)).mtime

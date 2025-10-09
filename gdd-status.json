@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-08T22:18:40.165Z",
+  "timestamp": "2025-10-09T10:02:11.489Z",
   "mode": "full",
   "nodes_validated": 13,
   "orphans": [],
@@ -8,111 +8,5 @@
   "cycles": [],
   "missing_refs": [],
   "broken_links": [],
-  "coverage_integrity": [
-    {
-      "type": "missing_coverage_data",
-      "node": "analytics",
-      "severity": "warning",
-      "declared": 49,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "billing",
-      "severity": "warning",
-      "declared": 58,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "cost-control",
-      "severity": "warning",
-      "declared": 3,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "multi-tenant",
-      "severity": "warning",
-      "declared": 0,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "persona",
-      "severity": "warning",
-      "declared": 86,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "plan-features",
-      "severity": "warning",
-      "declared": 93,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "platform-constraints",
-      "severity": "warning",
-      "declared": 80,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "queue-system",
-      "severity": "warning",
-      "declared": 87,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "roast",
-      "severity": "warning",
-      "declared": 85,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "shield",
-      "severity": "warning",
-      "declared": 66,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "social-platforms",
-      "severity": "warning",
-      "declared": 82,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "tone",
-      "severity": "warning",
-      "declared": 100,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "trainer",
-      "severity": "warning",
-      "declared": 0,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    }
-  ],
   "status": "healthy"
 }

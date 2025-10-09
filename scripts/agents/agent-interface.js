@@ -449,13 +449,13 @@ class AgentInterface {
       const healthData = JSON.parse(fs.readFileSync(healthPath, 'utf8'));
 
       return {
-        overall_score: healthData.average_score || 0,
-        average_score: healthData.average_score || 0,
-        healthy_count: healthData.healthy_count || 0,
-        degraded_count: healthData.degraded_count || 0,
-        critical_count: healthData.critical_count || 0,
-        total_nodes: healthData.node_count || 0,
-        status: healthData.overall_status || 'unknown'
+        overall_score: healthData.overall_score ?? 0,  // ✅ NEW KEY
+        average_score: healthData.overall_score ?? 0,  // ✅ NEW KEY (alias for compatibility)
+        healthy_count: healthData.healthy_count ?? 0,
+        degraded_count: healthData.degraded_count ?? 0,
+        critical_count: healthData.critical_count ?? 0,
+        total_nodes: healthData.total_nodes ?? 0,      // ✅ NEW KEY
+        status: healthData.status || 'unknown'          // ✅ NEW KEY
       };
     } catch (error) {
       this.log('error', `Failed to get system health: ${error.message}`);

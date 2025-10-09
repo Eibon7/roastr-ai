@@ -33,6 +33,11 @@ class GDDWatcher {
     this.agentsActive = options.agentsActive || false;
     this.telemetryEnabled = options.telemetry || false;
 
+    // Issue deduplication tracking (M6 fix)
+    this.issuesTrackingPath = path.join(this.rootDir, '.gdd-issues-created.json');
+    this.issuesCooldownMs = 60 * 60 * 1000; // 1 hour cooldown
+    this.loadIssuesTracking();
+
     // Initialize telemetry bus if enabled
     if (this.telemetryEnabled) {
       this.telemetryBus = getTelemetryBus({ verbose: false });
@@ -46,6 +51,48 @@ class GDDWatcher {
         verbose: false
       });
       this.log('🤖 Agents active', 'info');
+    }
+  }
+
+  /**
+   * Load issues tracking from file (M6 fix)
+   */
+  loadIssuesTracking() {
+    try {
+      if (fs.existsSync(this.issuesTrackingPath)) {
+        this.issuesTracking = JSON.parse(fs.readFileSync(this.issuesTrackingPath, 'utf8'));
+      } else {
+        this.issuesTracking = { created_at: new Date().toISOString(), issues: {} };
+      }
+    } catch (error) {
+      this.issuesTracking = { created_at: new Date().toISOString(), issues: {} };
+    }
+  }
+
+  /**
+   * Check if issue should be created (M6 fix - deduplication + cooldown)
+   */
+  shouldCreateIssue(issueKey) {
+    const now = Date.now();
+    const lastCreated = this.issuesTracking.issues[issueKey];
+
+    if (!lastCreated) {
+      return true; // Never created before
+    }
+
+    const timeSinceCreated = now - new Date(lastCreated).getTime();
+    return timeSinceCreated > this.issuesCooldownMs; // Only if cooldown passed
+  }
+
+  /**
+   * Mark issue as created (M6 fix)
+   */
+  markIssueCreated(issueKey) {
+    this.issuesTracking.issues[issueKey] = new Date().toISOString();
+    try {
+      fs.writeFileSync(this.issuesTrackingPath, JSON.stringify(this.issuesTracking, null, 2));
+    } catch (error) {
+      // Ignore write errors
     }
   }
 
@@ -216,11 +263,19 @@ class GDDWatcher {
         }
       }
 
-      // 2. DocumentationAgent: Create issue for orphan nodes
+      // 2. DocumentationAgent: Create issue for orphan nodes (M6: with deduplication)
       if (results.orphans && results.orphans.length > 0) {
         this.log(`📝 DocumentationAgent: ${results.orphans.length} orphan node(s) detected`, 'warning');
 
         for (const orphan of results.orphans.slice(0, 3)) { // Limit to 3 per run
+          const issueKey = `orphan-${orphan}`;
+
+          // M6 fix: Check if issue should be created (deduplication + cooldown)
+          if (!this.shouldCreateIssue(issueKey)) {
+            this.log(`⏭️  DocumentationAgent: Skipping ${orphan} (cooldown active)`, 'info');
+            continue;
+          }
+
           try {
             await this.agentInterface.createIssue(
               'DocumentationAgent',
@@ -232,6 +287,9 @@ class GDDWatcher {
               `- Documentation out of sync\n\n` +
               `**Action required:** Review and update node dependencies or remove if obsolete.`
             );
+
+            // M6 fix: Mark issue as created
+            this.markIssueCreated(issueKey);
           } catch (error) {
             this.log(`❌ DocumentationAgent: Failed to create issue: ${error.message}`, 'error');
           }

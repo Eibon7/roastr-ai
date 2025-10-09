@@ -3,7 +3,7 @@
   "title": "GDD Agent Permissions Matrix",
   "description": "Defines what actions each GDD agent is allowed to perform",
   "version": "1.0.0",
-  "phase": 14,
+  "phase": 13,
   "last_updated": "2025-10-09",
 
   "permissions": {

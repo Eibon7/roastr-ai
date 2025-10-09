@@ -48,6 +48,7 @@ class TelemetryBus extends EventEmitter {
    *
    * @param {string} eventType - Type of event
    * @param {object} data - Event data
+   * @returns {boolean} True if listeners invoked, false if none (EventEmitter semantics)
    */
   emit(eventType, data) {
     const event = {
@@ -60,9 +61,9 @@ class TelemetryBus extends EventEmitter {
     // Add to buffer
     this.addToBuffer(event);
 
-    // Emit to subscribers
-    super.emit(eventType, event);
-    super.emit('event', event); // Generic event listener
+    // Emit to subscribers (preserve EventEmitter semantics: return boolean)
+    const specificResult = super.emit(eventType, event);
+    const genericResult = super.emit('event', event); // Generic event listener
 
     // Notify all subscribers
     this.notifySubscribers(event);
@@ -71,7 +72,8 @@ class TelemetryBus extends EventEmitter {
       this.log('info', `Event: ${eventType} (${event.id.substring(0, 8)}...)`);
     }
 
-    return event;
+    // ✅ Return boolean per EventEmitter contract (true if listeners invoked)
+    return specificResult || genericResult;
   }
 
   /**
