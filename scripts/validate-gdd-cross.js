@@ -69,12 +69,19 @@ class CrossValidationRunner {
       const nodes = await this.loadNodes();
 
       // Filter by specific node if requested
-      const nodesToValidate = this.options.node
-        ? { [this.options.node]: nodes[this.options.node] }
-        : nodes;
+      let nodesToValidate;
+      if (this.options.node) {
+        // Guard: Ensure node exists before accessing
+        if (!nodes[this.options.node]) {
+          throw new Error(`Node not found: ${this.options.node}`);
+        }
+        nodesToValidate = { [this.options.node]: nodes[this.options.node] };
+      } else {
+        nodesToValidate = nodes;
+      }
 
       if (!nodesToValidate || Object.keys(nodesToValidate).length === 0) {
-        throw new Error(`Node not found: ${this.options.node}`);
+        throw new Error('No nodes to validate');
       }
 
       this.results.nodes_validated = Object.keys(nodesToValidate).length;

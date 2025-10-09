@@ -331,6 +331,10 @@ class AgentInterface {
         const before = content.substring(0, firstHeading);
         const after = content.substring(firstHeading);
         return `${before}\n\n**${field.charAt(0).toUpperCase() + field.slice(1)}:** ${value}${after}`;
+      } else {
+        // Fallback: If no heading found, append field at the end of document
+        // This ensures metadata is always added even for malformed documents
+        return `${content}\n\n**${field.charAt(0).toUpperCase() + field.slice(1)}:** ${value}\n`;
       }
     }
 
