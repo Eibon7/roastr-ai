@@ -705,7 +705,7 @@ Plan Limits Exceeded: DEFER (retry later)
 
 #### Rate Limiting by Plan
 - **Free**: 100 análisis/month, 10 roasts/month
-- **Starter**: 1,000 análisis/month, 10 roasts/month
+- **Starter**: 1,000 análisis/month, 100 roasts/month
 - **Pro**: 10,000 análisis/month, 1,000 roasts/month
 - **Plus**: 100,000 análisis/month, 5,000 roasts/month
 
@@ -7830,6 +7830,16 @@ This section documents the core architectural nodes that form the foundation of 
 4. **ai_models** (SENSITIVE) - AI prompts, model selection, OpenAI configuration
 5. **public_contracts** (SENSITIVE) - API endpoints, webhooks, external schemas
 
+**Domain→Glob Pattern Mapping:**
+
+| Domain | Severity | Glob Patterns | Example Files |
+|--------|----------|---------------|---------------|
+| **pricing** | CRITICAL | `src/**/*{cost,billing,stripe,price}*.js` | costControl.js, billingService.js, stripeWebhookService.js, billingController.js |
+| **quotas** | CRITICAL | `src/**/*{quota,limit,entitlement,plan}*.js` | entitlementsService.js, planService.js, planLimitsService.js, planValidation.js, tierValidation.js |
+| **auth_policies** | CRITICAL | `src/**/*{auth,oauth,rls}*.js` | authService.js, auth.js (middleware + routes), oauthProvider.js |
+| **ai_models** | SENSITIVE | `src/**/*{openai,model,prompt}*.js` | openai.js, modelAvailabilityService.js, roastPromptTemplate.js |
+| **public_contracts** | SENSITIVE | `src/{index,routes}/**/*.js` | index.js, routes/*.js (all API endpoints), webhooks |
+
 **Business Impact:**
 - Prevents accidental pricing changes that could impact revenue (€5/€15/€50 plans)
 - Enforces security reviews for auth policy changes (SOC 2 compliance)
@@ -7872,6 +7882,52 @@ node scripts/guardian-gdd.js --report
 - **CRITICAL:** 3 approvers (Product Owner + Tech Lead + Backend Dev), 48h SLA
 - **SENSITIVE:** 2 approvers (Tech Lead + Domain Owner), 24h SLA
 - **SAFE:** 0 approvers (auto-approve)
+
+**CI/CD Integration:**
+
+Guardian integrates with CI/CD pipelines via semantic exit codes that control merge behavior:
+
+- **Exit Code 0 (SAFE):**
+  - CI workflow passes
+  - Auto-merge enabled (if configured)
+  - No manual review required
+  - Example: Changes to test fixtures, docs, non-protected code
+
+- **Exit Code 1 (SENSITIVE):**
+  - CI workflow passes with warning
+  - Requires manual approval from Tech Lead + Domain Owner (2 approvers)
+  - PR cannot be merged until approvals received
+  - 24h SLA for review
+  - Example: AI model prompt changes, API endpoint modifications
+
+- **Exit Code 2 (CRITICAL):**
+  - CI workflow fails
+  - Merge blocked on protected branches (main, develop)
+  - Requires manual approval from Product Owner + Tech Lead + Backend Dev (3 approvers)
+  - 48h SLA for review
+  - Example: Pricing logic changes, quota adjustments, RLS policy modifications
+
+**GitHub Actions Example:**
+
+```yaml
+name: Guardian Product Check
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  guardian-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Guardian
+        run: node scripts/guardian-gdd.js --ci
+      - name: Enforce Approval Rules
+        if: failure()
+        run: |
+          echo "::error::CRITICAL violations detected. Requires Product Owner approval."
+          exit 1
+```
 
 **Key Features:**
 - Glob pattern matching for file paths (minimatch)
