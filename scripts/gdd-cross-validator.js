@@ -112,6 +112,67 @@ class GDDCrossValidator {
   }
 
   /**
+   * Expand a single glob pattern recursively
+   * Handles patterns like src/integrations/STAR/index.js where wildcards appear in directory names
+   * @param {string} pattern - Glob pattern
+   * @returns {Promise<string[]>} - Resolved file paths
+   */
+  async expandGlobPattern(pattern) {
+    const segments = pattern.split('/').filter(Boolean);
+
+    // Start with root as base
+    let currentPaths = [''];
+
+    // Process each path segment
+    for (const segment of segments) {
+      const newPaths = [];
+
+      if (segment.includes('*')) {
+        // Wildcard segment - expand it by reading directories
+        const regex = new RegExp('^' + segment.replace(/\*/g, '.*') + '$');
+
+        for (const basePath of currentPaths) {
+          try {
+            const searchDir = path.join(this.rootDir, basePath);
+            const entries = await fs.readdir(searchDir, { withFileTypes: true });
+
+            for (const entry of entries) {
+              if (regex.test(entry.name)) {
+                newPaths.push(path.join(basePath, entry.name));
+              }
+            }
+          } catch (error) {
+            // Directory not accessible or doesn't exist, skip
+          }
+        }
+      } else {
+        // Literal segment - append to all current paths
+        for (const basePath of currentPaths) {
+          newPaths.push(path.join(basePath, segment));
+        }
+      }
+
+      currentPaths = newPaths;
+    }
+
+    // Filter to only existing files (not directories)
+    const existingFiles = [];
+    for (const filePath of currentPaths) {
+      try {
+        const fullPath = path.join(this.rootDir, filePath);
+        const stat = await fs.stat(fullPath);
+        if (stat.isFile()) {
+          existingFiles.push(filePath);
+        }
+      } catch (error) {
+        // File doesn't exist or not accessible, skip
+      }
+    }
+
+    return existingFiles;
+  }
+
+  /**
    * Get source files for a node
    * @param {string} nodeName - Node name
    */
@@ -138,21 +199,9 @@ class GDDCrossValidator {
     const resolvedFiles = [];
     for (const filePattern of files) {
       if (filePattern.includes('*')) {
-        // Glob pattern - expand it
-        const dir = path.dirname(filePattern);
-        const pattern = path.basename(filePattern);
-        try {
-          const dirPath = path.join(this.rootDir, dir);
-          const allFiles = await fs.readdir(dirPath);
-          const regex = new RegExp(pattern.replace('*', '.*'));
-          for (const file of allFiles) {
-            if (regex.test(file)) {
-              resolvedFiles.push(path.join(dir, file));
-            }
-          }
-        } catch (error) {
-          // Directory not found
-        }
+        // Glob pattern - use recursive expansion to handle nested wildcards
+        const expanded = await this.expandGlobPattern(filePattern);
+        resolvedFiles.push(...expanded);
       } else {
         // Direct file path
         try {

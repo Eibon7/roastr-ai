@@ -100,39 +100,10 @@
   },
   "timestamp_validation": {
     "total": 13,
-    "valid": 9,
+    "valid": 13,
     "stale": 0,
-    "future": 4,
-    "violations": [
-      {
-        "node": "platform-constraints",
-        "declared": "2025-10-09",
-        "actual": "2025-10-06",
-        "diffDays": 3,
-        "reason": "future_date"
-      },
-      {
-        "node": "queue-system",
-        "declared": "2025-10-09",
-        "actual": "2025-10-06",
-        "diffDays": 3,
-        "reason": "future_date"
-      },
-      {
-        "node": "roast",
-        "declared": "2025-10-09",
-        "actual": "2025-10-06",
-        "diffDays": 3,
-        "reason": "future_date"
-      },
-      {
-        "node": "social-platforms",
-        "declared": "2025-10-09",
-        "actual": "2025-10-06",
-        "diffDays": 3,
-        "reason": "future_date"
-      }
-    ]
+    "future": 0,
+    "violations": []
   },
   "dependency_validation": {
     "total": 11,
@@ -240,6 +211,6 @@
       }
     ]
   },
-  "overall_score": 87.2,
-  "status": "WARNING"
+  "overall_score": 97.4,
+  "status": "HEALTHY"
 }
