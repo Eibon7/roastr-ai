@@ -33,6 +33,7 @@ const { minimatch } = require('minimatch');
 // ============================================================
 
 const PRODUCT_GUARD_CONFIG = path.join(__dirname, '../config/product-guard.yaml');
+const GUARDIAN_IGNORE_CONFIG = path.join(__dirname, '../config/guardian-ignore.yaml');
 const AUDIT_LOG_PATH = path.join(__dirname, '../docs/guardian/audit-log.md');
 const CASES_DIR = path.join(__dirname, '../docs/guardian/cases');
 const DIFFS_DIR = path.join(__dirname, '../docs/guardian/diffs');
@@ -57,6 +58,7 @@ const flags = {
 class GuardianEngine {
   constructor() {
     this.config = null;
+    this.ignorePatterns = [];
     this.violations = {
       critical: [],
       sensitive: [],
@@ -78,11 +80,33 @@ class GuardianEngine {
       const configContent = fs.readFileSync(PRODUCT_GUARD_CONFIG, 'utf8');
       this.config = yaml.parse(configContent);
       console.log('✅ Configuration loaded successfully');
+
+      // Load ignore patterns if config exists
+      if (fs.existsSync(GUARDIAN_IGNORE_CONFIG)) {
+        const ignoreContent = fs.readFileSync(GUARDIAN_IGNORE_CONFIG, 'utf8');
+        const ignoreConfig = yaml.parse(ignoreContent);
+        this.ignorePatterns = ignoreConfig.ignore_patterns || [];
+        console.log(`✅ Loaded ${this.ignorePatterns.length} ignore patterns`);
+      }
+
       return true;
     } catch (error) {
       console.error('❌ Failed to load configuration:', error.message);
       return false;
     }
+  }
+
+  /**
+   * Check if file should be ignored
+   */
+  shouldIgnoreFile(filePath) {
+    // Check against ignore patterns using minimatch
+    for (const pattern of this.ignorePatterns) {
+      if (minimatch(filePath, pattern, { matchBase: true, dot: true, nocase: true })) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -104,7 +128,7 @@ class GuardianEngine {
       }
 
       // Parse diff output
-      const changes = diff.trim().split('\n').map(line => {
+      const allChanges = diff.trim().split('\n').map(line => {
         const [status, ...fileParts] = line.split('\t');
 
         // Handle renamed files (status starts with 'R')
@@ -123,8 +147,17 @@ class GuardianEngine {
         return { status, file };
       });
 
+      // Filter out ignored files (test fixtures, Windows paths, etc.)
+      const changes = allChanges.filter(change => {
+        const shouldIgnore = this.shouldIgnoreFile(change.file);
+        if (shouldIgnore) {
+          console.log(`  ⏩ Ignoring: ${change.file} (matches ignore pattern)`);
+        }
+        return !shouldIgnore;
+      });
+
       this.changesSummary.total_files = changes.length;
-      console.log(`📊 Detected ${changes.length} changed file(s)`);
+      console.log(`📊 Detected ${changes.length} changed file(s) (${allChanges.length - changes.length} ignored)`);
 
       return changes;
     } catch (error) {
