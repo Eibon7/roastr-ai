@@ -134,12 +134,11 @@ class TelemetryCollector {
 
       const healthData = JSON.parse(fs.readFileSync(healthPath, 'utf8'));
 
-      // Fix C3: Map field names correctly from gdd-health.json schema
-      // gdd-health.json uses: node_count, overall_status, average_score
-      // NOT: total_nodes, status, overall_score
-      const averageScore = healthData.average_score || 0;
-      const nodeCount = healthData.node_count || healthData.total_nodes || 0;
-      const overallStatus = healthData.overall_status || healthData.status || 'unknown';
+      // Schema Migration: gdd-health.json uses NEW keys (overall_score, status, total_nodes)
+      // Fallback to OLD keys (average_score, overall_status, node_count) for backwards compatibility
+      const averageScore = healthData.overall_score || healthData.average_score || 0;
+      const nodeCount = healthData.total_nodes || healthData.node_count || 0;
+      const overallStatus = healthData.status || healthData.overall_status || 'unknown';
 
       // Calculate overall_score from average_score (they represent the same metric)
       const overallScore = averageScore;
@@ -315,7 +314,8 @@ class TelemetryCollector {
     }
 
     // Overall system status
-    if (healthScore >= 95 && driftScore >= 60 && repairScore >= 90) {
+    // Note: Using 93 threshold to align with Phase 15.2 temporary threshold (until Oct 31)
+    if (healthScore >= 93 && driftScore >= 60 && repairScore >= 90) {
       derived.system_status = 'STABLE';
     } else if (healthScore >= 80 && driftScore >= 40) {
       derived.system_status = 'DEGRADED';
