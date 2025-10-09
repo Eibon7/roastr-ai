@@ -313,7 +313,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 
 1. **Permission-First Design**: Validating permissions before operations prevents unauthorized changes
 2. **Hash-Based Integrity**: SHA-256 hashing catches corruption and unauthorized modifications
-3. **Rollback Safety**: Automatic rollback on health degradation prevents bad changes from propagating
+3. **Rollback Safety**: Manual rollback capability prevents bad changes (automatic health-driven rollback planned for future phase)
 4. **Audit Everything**: Comprehensive logging enables debugging and compliance
 5. **Modular Architecture**: Separating AIL, SWP, and agents allows independent testing and updates
 
