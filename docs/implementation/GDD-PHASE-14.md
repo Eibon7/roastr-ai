@@ -12,7 +12,7 @@ Integrate agents from the GDD ecosystem with a secure, auditable, and reversible
 
 1. **Agent Interface Layer (AIL)**: Centralized API for bidirectional agent-system communication
 2. **Permission Matrix**: Role-based access control for agent actions
-3. **Secure Write Protocol (SWP)**: Hash-based integrity checks with automatic rollback
+3. **Secure Write Protocol (SWP)**: Hash-based integrity checks with manual rollback (automatic rollback planned for a future phase)
 4. **Agent Integration**: Connect agents to watch system for autonomous monitoring
 
 ## 🏗️ Implementation
@@ -67,7 +67,7 @@ const health = await ail.getSystemHealth();
 - Authentication required for all operations
 - All actions logged (success + failures)
 - Forbidden attempts logged with 403 error
-- Rollback on health degradation enabled
+- Manual rollback only (health-triggered automation planned)
 - Max 100 actions/minute rate limit
 - Telemetry enabled for all events
 
@@ -235,7 +235,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 
 ✅ **Agent Interface Layer** - Centralized API with 6 core methods
 ✅ **Permission Matrix** - 6 agents with role-based access control
-✅ **Secure Write Protocol** - SHA-256 hashing + automatic rollback
+✅ **Secure Write Protocol** - SHA-256 hashing + manual rollback (automatic rollback planned)
 ✅ **Audit Trail** - Complete logging (JSON + Markdown + signatures)
 ✅ **Watcher Integration** - 4 autonomous agent actions implemented
 ✅ **Tests Passing** - All components validated successfully
