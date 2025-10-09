@@ -586,14 +586,41 @@ node scripts/guardian-gdd.js --help
 ```
 
 ### CI/CD Integration
+
+✅ **Production Ready** - Guardian automatically runs on all PRs to main/develop branches.
+
+**Workflow:** `.github/workflows/guardian-check.yml`
+
+**Triggers:**
+- Pull requests (opened, synchronize, reopened)
+- Targets: `main`, `develop` branches
+
+**Behavior:**
 ```yaml
-# .github/workflows/guardian-check.yml (Phase 17)
-- name: Run Guardian Scan
-  run: node scripts/guardian-gdd.js --ci
-  # Exit 0 = auto-merge
-  # Exit 1 = require Tech Lead review
-  # Exit 2 = block merge (Product Owner approval)
+# Exit codes determine workflow outcome:
+# 0 = SAFE      → Auto-merge allowed, no review needed
+# 1 = SENSITIVE → Tech Lead approval required
+# 2 = CRITICAL  → Merge blocked, Product Owner approval required
 ```
+
+**On Violation Detection:**
+1. Workflow fails (exit code 1 or 2)
+2. Uploads audit logs as GitHub artifacts (30 days retention)
+3. Posts PR comment with Guardian report
+4. Requires manual approval before merge
+
+**Manual Override:**
+```bash
+# Run Guardian locally before pushing
+node scripts/guardian-gdd.js --check
+
+# CI mode (used in GitHub Actions)
+node scripts/guardian-gdd.js --ci
+```
+
+**Dependencies:**
+- `minimatch@^10.0.3` - Pattern matching for protected domains
+- `yaml@^2.8.1` - Configuration file parsing
 
 ### Pre-commit Hook (Phase 17)
 ```bash
@@ -607,9 +634,9 @@ npm run guardian:check
 
 ### Phase 17: Guardian Notifications & Workflows
 - [ ] Implement `scripts/notify-guardian.js` for email/Slack notifications (#516)
-- [ ] Create `.github/workflows/guardian-check.yml` for PR validation (#517)
+- [x] Create `.github/workflows/guardian-check.yml` for PR validation (#517) ✅ **COMPLETED** (CodeRabbit #3387536267)
 - [ ] Add Husky pre-commit hook integration (#518)
-- [ ] Create PR comment bot with scan results (#519)
+- [x] Create PR comment bot with scan results (#519) ✅ **COMPLETED** (included in workflow)
 
 ### Phase 18: Guardian Dashboard
 - [ ] Build web UI for audit log visualization (#520)
