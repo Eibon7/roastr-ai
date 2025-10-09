@@ -7615,10 +7615,10 @@ This section documents the core architectural nodes that form the foundation of 
 - Dynamic entitlements management
 
 **Plan Tiers:**
-- **Free**: 100 roasts/month, 100 analyses/month, basic features
-- **Starter** (€5/month): 500 roasts/month, 500 analyses/month, enhanced features
-- **Pro** (€15/month): 1,000 roasts/month, 2,000 analyses/month, advanced features
-- **Plus** (€50/month): Unlimited roasts/analyses, premium features, priority support
+- **Free**: 10 roasts/month, 100 analyses/month, basic features
+- **Starter** (€5/month): 10 roasts/month, 1,000 analyses/month, enhanced features
+- **Pro** (€15/month): 1,000 roasts/month, 10,000 analyses/month, advanced features
+- **Plus** (€50/month): 5,000 roasts/month, 100,000 analyses/month, premium features, priority support
 
 **Dependencies:**
 - `multi-tenant` - Organization-based plan assignment

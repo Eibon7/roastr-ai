@@ -158,8 +158,8 @@ class AgentInterface {
     // Extract common metadata fields
     const patterns = {
       status: /\*\*Status:\*\*\s+([^\n]+)/,
-      coverage: /\*\*Coverage:\*\*\s+(\d+)%/,
-      health: /\*\*Health:\*\*\s+(\d+)/,
+      coverage: /\*\*Coverage:\*\*\s+(\d+(?:\.\d+)?)%/,
+      health: /\*\*Health:\*\*\s+(\d+(?:\.\d+)?)/,
       last_updated: /\*\*Last Updated:\*\*\s+([^\n]+)/,
       dependencies: /## Dependencies\n\n([\s\S]*?)(?=\n##|$)/
     };
@@ -405,7 +405,9 @@ class AgentInterface {
       const { execSync } = require('child_process');
       const output = execSync('node scripts/auto-repair-gdd.js --auto-fix', {
         cwd: this.rootDir,
-        encoding: 'utf8'
+        encoding: 'utf8',
+        timeout: 120000, // 120s timeout to prevent hangs
+        stdio: ['ignore', 'pipe', 'pipe'] // Capture stdout/stderr
       });
 
       this.log('info', `Auto-repair triggered by ${agent}`);

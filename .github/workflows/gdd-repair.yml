@@ -94,7 +94,7 @@ jobs:
           node scripts/validate-gdd-runtime.js --ci
           node scripts/score-gdd-health.js --ci
 
-          NEW_HEALTH=$(jq -r '.average_score' gdd-health.json)
+          NEW_HEALTH=$(jq -r '.overall_score' gdd-health.json)
           echo "new_health=$NEW_HEALTH" >> $GITHUB_OUTPUT
           echo "New health score: $NEW_HEALTH"
 
