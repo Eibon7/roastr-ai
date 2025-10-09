@@ -114,14 +114,19 @@ class DiffCollector {
    */
   getChangedFiles() {
     try {
-      // Get staged + unstaged changes
       let diff = '';
-      try {
-        // Try staged first
+
+      // If base commit specified, use commit range comparison
+      if (this.baseCommit !== 'HEAD') {
+        diff = execSync(`git diff ${this.baseCommit} --name-status`, { encoding: 'utf8' });
+      } else {
+        // Otherwise, get staged + unstaged changes from working tree
         diff = execSync('git diff --cached --name-status', { encoding: 'utf8' });
-      } catch (e) {
-        // Fallback to unstaged
-        diff = execSync('git diff --name-status', { encoding: 'utf8' });
+
+        // If no staged changes, check unstaged
+        if (!diff.trim()) {
+          diff = execSync('git diff --name-status', { encoding: 'utf8' });
+        }
       }
 
       if (!diff.trim()) {
@@ -154,15 +159,22 @@ class DiffCollector {
    */
   getFileDiff(file) {
     try {
-      // Try staged first, fallback to unstaged
       let diff = '';
-      try {
+
+      // If base commit specified, use commit range comparison
+      if (this.baseCommit !== 'HEAD') {
+        diff = execSync(`git diff ${this.baseCommit} -- "${file}"`, { encoding: 'utf8' });
+      } else {
+        // Otherwise, get staged + unstaged changes from working tree
         diff = execSync(`git diff --cached -- "${file}"`, { encoding: 'utf8' });
-      } catch (e) {
-        diff = execSync(`git diff -- "${file}"`, { encoding: 'utf8' });
+
+        // If no staged changes, check unstaged
+        if (!diff.trim()) {
+          diff = execSync(`git diff -- "${file}"`, { encoding: 'utf8' });
+        }
       }
 
-      // Count lines
+      // Count lines (exclude diff headers +++ and ---)
       const lines = diff.split('\n');
       const added = lines.filter(l => l.startsWith('+') && !l.startsWith('+++')).length;
       const removed = lines.filter(l => l.startsWith('-') && !l.startsWith('---')).length;
