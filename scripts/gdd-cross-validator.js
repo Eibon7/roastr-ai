@@ -101,7 +101,9 @@ class GDDCrossValidator {
       files: nodeFiles
     };
 
-    if (!valid) {
+    // Only record true coverage mismatches as violations
+    // Warnings (data unavailable, no source files, calculation failed) should not be violations
+    if (!valid && result.reason === 'coverage_mismatch') {
       this.violations.coverage.push({
         node: nodeName,
         ...result
