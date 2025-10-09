@@ -267,7 +267,7 @@ echo "NEW_HEALTH=$NEW_HEALTH"
 
 **Single commit** with CI fix:
 
-```
+```text
 fix(ci): Add file existence check for gdd-health.json in auto-repair workflow
 
 Resolves Issue #514 - Workflow failure when gdd-health.json missing.
