@@ -115,9 +115,9 @@ node scripts/validate-gdd-cross.js --full
 
 **Results:**
 - ✅ All nodes validated
-- ✅ Coverage validation: functional
-- ✅ Dependency validation: operational
-- ✅ Timestamp validation: passing
+- 🟡 Coverage validation: NO DATA (coverage-summary.json not accessible)
+- ❌ Dependency validation: FAIL (phantom dependencies detected)
+- ✅ Timestamp validation: PASS
 
 ### Linting Validation
 
