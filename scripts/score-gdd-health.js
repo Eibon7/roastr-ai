@@ -4,11 +4,12 @@
  * GDD Node Health Scoring System
  *
  * Calculates a health score (0-100) for each GDD node based on:
- * 1. Sync Accuracy (30%) - spec.md ↔ node ↔ code alignment
- * 2. Update Freshness (20%) - Days since last_updated
+ * 1. Sync Accuracy (25%) - spec.md ↔ node ↔ code alignment
+ * 2. Update Freshness (15%) - Days since last_updated
  * 3. Dependency Integrity (20%) - Bidirectional edges, no cycles
  * 4. Coverage Evidence (20%) - Tests documented, coverage metrics
  * 5. Agent Relevance (10%) - Agent list complete and valid
+ * 6. Integrity Score (10%) - Coverage authenticity (Phase 15.1)
  *
  * Usage:
  *   node scripts/score-gdd-health.js
@@ -18,6 +19,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
+const { CoverageHelper } = require('./gdd-coverage-helper');
 
 class GDDHealthScorer {
   constructor(options = {}) {
@@ -215,19 +217,22 @@ class GDDHealthScorer {
       updateFreshness: this.scoreUpdateFreshness(nodeData),
       dependencyIntegrity: this.scoreDependencyIntegrity(nodeName, nodeData, systemMap),
       coverageEvidence: this.scoreCoverageEvidence(nodeData),
-      agentRelevance: this.scoreAgentRelevance(nodeData)
+      agentRelevance: this.scoreAgentRelevance(nodeData),
+      integrityScore: await this.scoreIntegrity(nodeName, nodeData)  // Phase 15.1
     };
 
-    // Weighted average
+    // Weighted average (adjusted to include integrity score)
     const totalScore =
-      scores.syncAccuracy * 0.30 +
-      scores.updateFreshness * 0.20 +
-      scores.dependencyIntegrity * 0.20 +
-      scores.coverageEvidence * 0.20 +
-      scores.agentRelevance * 0.10;
+      scores.syncAccuracy * 0.25 +           // 25%
+      scores.updateFreshness * 0.15 +        // 15% (reduced from 20% to balance weights)
+      scores.dependencyIntegrity * 0.20 +    // 20%
+      scores.coverageEvidence * 0.20 +       // 20%
+      scores.agentRelevance * 0.10 +         // 10%
+      scores.integrityScore * 0.10;          // 10% (added in Phase 15.1)
+    // Total: 25 + 15 + 20 + 20 + 10 + 10 = 100%
 
     return {
-      score: Math.round(totalScore),
+      score: Math.min(100, Math.max(0, Math.round(totalScore))),
       breakdown: scores,
       status: this.getStatusFromScore(Math.round(totalScore)),
       metadata: nodeData.metadata,
@@ -369,6 +374,53 @@ class GDDHealthScorer {
   }
 
   /**
+   * Score coverage integrity (10%) - Phase 15.1
+   */
+  async scoreIntegrity(nodeName, nodeData) {
+    const coverageHelper = new CoverageHelper();
+
+    // Extract declared coverage
+    const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+    if (!coverageMatch) {
+      // No declared coverage → unverifiable; apply mild penalty
+      return 80;
+    }
+
+    const declaredCoverage = parseInt(coverageMatch[1], 10);
+
+    // Check coverage source
+    const sourceMatch = nodeData.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
+    const coverageSource = sourceMatch ? sourceMatch[1].toLowerCase() : null;
+
+    let score = 100;
+
+    // Penalize if no source specified
+    if (!coverageSource) {
+      score -= 10;
+    }
+
+    // Penalize if manual source
+    if (coverageSource === 'manual') {
+      score -= 20;  // Manual coverage is discouraged
+    }
+
+    // Validate coverage authenticity
+    const validation = await coverageHelper.validateCoverageAuthenticity(
+      nodeName,
+      declaredCoverage,
+      3  // 3% tolerance
+    );
+
+    if (!validation.valid && validation.actual !== null) {
+      // Coverage mismatch detected - critical integrity violation
+      const diffPenalty = Math.min(50, validation.diff * 5);  // Up to 50% penalty
+      score -= diffPenalty;
+    }
+
+    return Math.max(0, score);
+  }
+
+  /**
    * Get status from score
    */
   getStatusFromScore(score) {
@@ -496,7 +548,8 @@ class GDDHealthScorer {
       markdown += `- Update Freshness: ${data.breakdown.updateFreshness}/100\n`;
       markdown += `- Dependency Integrity: ${data.breakdown.dependencyIntegrity}/100\n`;
       markdown += `- Coverage Evidence: ${data.breakdown.coverageEvidence}/100\n`;
-      markdown += `- Agent Relevance: ${data.breakdown.agentRelevance}/100\n\n`;
+      markdown += `- Agent Relevance: ${data.breakdown.agentRelevance}/100\n`;
+      markdown += `- Integrity Score: ${data.breakdown.integrityScore}/100\n\n`;
 
       if (data.issues.length > 0) {
         markdown += `**Issues:**\n`;

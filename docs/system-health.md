@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-07T19:10:01.805Z
+**Generated:** 2025-10-09T07:33:30.343Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 95.5/100
+**Average Score:** 93.8/100
 
 ---
 
@@ -19,82 +19,87 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
-| trainer | 🟢 90 | healthy | 2025-10-06 | 45% | 0 | 0 |
-| analytics | 🟢 94 | healthy | 2025-10-06 | 60% | 0 | 0 |
-| billing | 🟢 94 | healthy | 2025-10-06 | 65% | 0 | 0 |
-| cost-control | 🟢 94 | healthy | 2025-10-06 | 68% | 0 | 0 |
-| multi-tenant | 🟢 94 | healthy | 2025-10-06 | 72% | 0 | 0 |
-| persona | 🟢 94 | healthy | 2025-10-06 | 75% | 0 | 0 |
-| plan-features | 🟢 94 | healthy | 2025-10-06 | 70% | 0 | 0 |
-| shield | 🟢 94 | healthy | 2025-10-06 | 78% | 0 | 0 |
-| tone | 🟢 94 | healthy | 2025-10-06 | 73% | 0 | 0 |
-| platform-constraints | 🟢 100 | healthy | 2025-10-06 | 80% | 0 | 0 |
-| queue-system | 🟢 100 | healthy | 2025-10-06 | 87% | 0 | 0 |
-| roast | 🟢 100 | healthy | 2025-10-06 | 85% | 0 | 0 |
-| social-platforms | 🟢 100 | healthy | 2025-10-06 | 82% | 0 | 0 |
+| cost-control | 🟢 85 | healthy | 2025-10-06 | 3% | 0 | 0 |
+| multi-tenant | 🟢 85 | healthy | 2025-10-06 | 0% | 0 | 0 |
+| trainer | 🟢 85 | healthy | 2025-10-06 | 0% | 0 | 0 |
+| analytics | 🟢 89 | healthy | 2025-10-06 | 49% | 0 | 0 |
+| billing | 🟢 89 | healthy | 2025-10-06 | 58% | 0 | 0 |
+| shield | 🟢 93 | healthy | 2025-10-06 | 66% | 0 | 0 |
+| persona | 🟢 99 | healthy | 2025-10-06 | 86% | 0 | 0 |
+| plan-features | 🟢 99 | healthy | 2025-10-06 | 93% | 0 | 0 |
+| platform-constraints | 🟢 99 | healthy | 2025-10-06 | 80% | 0 | 0 |
+| queue-system | 🟢 99 | healthy | 2025-10-06 | 87% | 0 | 0 |
+| roast | 🟢 99 | healthy | 2025-10-06 | 85% | 0 | 0 |
+| social-platforms | 🟢 99 | healthy | 2025-10-06 | 82% | 0 | 0 |
+| tone | 🟢 99 | healthy | 2025-10-06 | 100% | 0 | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes to Review
 
-### trainer (Score: 90)
+### cost-control (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 98/100
+- Update Freshness: 94/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### multi-tenant (Score: 85)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 94/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### trainer (Score: 85)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 94/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### analytics (Score: 89)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 94/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
+- Integrity Score: 100/100
 
 
-### analytics (Score: 94)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 98/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 70/100
-- Agent Relevance: 100/100
-
-
-### billing (Score: 94)
+### billing (Score: 89)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 98/100
+- Update Freshness: 94/100
 - Dependency Integrity: 100/100
-- Coverage Evidence: 70/100
+- Coverage Evidence: 50/100
 - Agent Relevance: 100/100
-
-
-### cost-control (Score: 94)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 98/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 70/100
-- Agent Relevance: 100/100
-
-
-### multi-tenant (Score: 94)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 98/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 70/100
-- Agent Relevance: 100/100
+- Integrity Score: 100/100
 
 
 ---

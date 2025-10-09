@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-10-09T07:33:29.861Z",
+  "mode": "apply",
+  "success": true,
+  "fixes_would_apply": 0,
+  "fixes_applied": 2,
+  "errors": 0,
+  "health_before": 93.8,
+  "health_after": 93.8,
+  "details": {
+    "fixes": [
+      {
+        "type": "auto",
+        "node": "multi-tenant",
+        "action": "Added coverage to multi-tenant"
+      },
+      {
+        "type": "auto",
+        "node": "trainer",
+        "action": "Added coverage to trainer"
+      }
+    ],
+    "humanReview": [],
+    "errors": []
+  }
+}

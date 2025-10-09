@@ -1,0 +1,106 @@
+# CodeRabbit Review #3314380997 - Verification Output
+# Date: 2025-10-08
+
+## 1. Actual Score Distribution
+
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes[].score' | sort -n
+85
+85
+85
+89
+89
+93
+99
+99
+99
+99
+99
+99
+99
+
+## 2. Node Count
+
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes | length'
+13
+
+## 3. Count of Scores == 85
+
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes[].score' | grep -c '^85$'
+3
+
+## 4. Distribution with Counts
+
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes[].score' | sort | uniq -c
+   3 85
+   2 89
+   1 93
+   7 99
+
+## 5. Nodes by Score
+
+$ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes | to_entries[] | {node: .key, score: .value.score}' | jq -s 'sort_by(.score)'
+[
+  {
+    "node": "cost-control",
+    "score": 85
+  },
+  {
+    "node": "multi-tenant",
+    "score": 85
+  },
+  {
+    "node": "trainer",
+    "score": 85
+  },
+  {
+    "node": "analytics",
+    "score": 89
+  },
+  {
+    "node": "billing",
+    "score": 89
+  },
+  {
+    "node": "shield",
+    "score": 93
+  },
+  {
+    "node": "persona",
+    "score": 99
+  },
+  {
+    "node": "plan-features",
+    "score": 99
+  },
+  {
+    "node": "platform-constraints",
+    "score": 99
+  },
+  {
+    "node": "queue-system",
+    "score": 99
+  },
+  {
+    "node": "roast",
+    "score": 99
+  },
+  {
+    "node": "social-platforms",
+    "score": 99
+  },
+  {
+    "node": "tone",
+    "score": 99
+  }
+]
+
+## Summary
+
+✅ Total nodes: 13 (not 14)
+✅ Scores == 85: 3 (not 4)
+✅ Distribution: 3×85, 2×89, 1×93, 7×99
+✅ All data validated against source file
+
+## Conclusion
+
+The fix in docs/test-evidence/review-3314207411/test-results.md correctly removes the extra "85" line, making the documentation match the actual data in after-gdd-health.json.

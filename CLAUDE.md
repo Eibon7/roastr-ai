@@ -480,6 +480,52 @@ Issue #408: "Shield integration tests"
 
 **Tabla global de nodos-agentes**: Ver sección "Node-Agent Matrix" en `spec.md` para referencia rápida.
 
+### Coverage Authenticity Rules (GDD Phase 15.1)
+
+**NEVER modify `**Coverage:**` values manually. Coverage data must always be derived from automated reports.**
+
+- **Coverage Source**: All GDD nodes must have `**Coverage Source:** auto` field immediately after `**Coverage:**` field
+- **Automated Enforcement**: Validation and Auto-Repair scripts enforce coverage authenticity automatically
+- **Manual modifications are considered integrity violations** and will trigger CI failure
+- **Coverage data sources**:
+  - Primary: `coverage/coverage-summary.json`
+  - Secondary: `lcov.info`
+- **Tolerance**: 3% difference allowed between declared and actual coverage
+- **Violations**: Any mismatch >3% triggers critical integrity violation
+
+**Validation Commands:**
+```bash
+# Validate coverage authenticity
+node scripts/validate-gdd-runtime.js --full
+
+# Auto-repair coverage mismatches
+node scripts/auto-repair-gdd.js --auto-fix
+```
+
+**Coverage Update Workflow:**
+1. Run tests: `npm test -- --coverage`
+2. Coverage report auto-generated in `coverage/coverage-summary.json`
+3. Run auto-repair: `node scripts/auto-repair-gdd.js --auto`
+4. Auto-repair reads actual coverage and updates node docs
+5. Commit updated node docs with accurate coverage
+
+**Manual Override (discouraged):**
+- If coverage data is unavailable, use `**Coverage Source:** manual`
+- This triggers a warning (not an error)
+- Must be justified in PR description
+- Switch back to `auto` when coverage becomes available
+
+**Integrity Score:**
+- Coverage authenticity contributes 10% to node health score
+- Manual coverage source: -20 points
+- Missing coverage source: -10 points
+- Coverage mismatch: penalty based on diff (up to -50 points)
+
+**CI/CD Integration:**
+- CI checks coverage authenticity before merge
+- Blocks merge if coverage integrity violations detected
+- Auto-creates issues for manual review if needed
+
 ### GDD Activation - Issue Analysis & Context Loading (October 3, 2025)
 
 **IMPORTANTE:** A partir de ahora, el Orchestrator debe usar Graph Driven Development (GDD) para **todas las issues**, cargando solo los nodos relevantes en lugar de spec.md completo.
@@ -712,6 +758,207 @@ node scripts/auto-repair-gdd.js --auto-fix  # If needed
 **Success Criteria:** Health ≥ 95, no critical nodes, drift < 60
 
 **Auto-created Issues:** Validation failed, auto-repair failed, high drift risk, manual review required
+
+---
+
+## Telemetry & Analytics Layer (Phase 13)
+
+> **For full details, see:** `docs/GDD-IMPLEMENTATION-SUMMARY.md#phase-13`
+
+GDD 2.0 now includes historical telemetry and analytics to track system evolution over time.
+
+### Telemetry Collection
+
+**Script:** `scripts/collect-gdd-telemetry.js`
+
+Automatically collects metrics from GDD subsystems every 24 hours:
+- Health scores (overall + per-node)
+- Drift risk trends
+- Auto-repair success rates
+- Validation results
+- Coverage metrics
+
+**Run manually:**
+```bash
+node scripts/collect-gdd-telemetry.js          # Full output
+node scripts/collect-gdd-telemetry.js --ci     # CI mode (silent)
+node scripts/collect-gdd-telemetry.js --verbose # Detailed output
+```
+
+### Key Metrics Tracked
+
+| Metric | Target | Description |
+|--------|--------|-------------|
+| Health Score | ≥95 | Overall system health |
+| Drift Risk | <25 | Average drift risk across nodes |
+| Stability Index | ≥90 | Combined health + drift + repair |
+| Auto-Fix Success | ≥90% | Successful auto-repairs |
+| Momentum | >0 | Trend over time (improving/declining) |
+
+### Outputs
+
+**1. JSON Snapshot:** `telemetry/snapshots/gdd-metrics-history.json`
+- Historical data (90 days retention)
+- All metrics + timestamps
+- Momentum calculations
+
+**2. Markdown Reports:** `telemetry/reports/gdd-telemetry-YYYY-MM-DD.md`
+- Daily summary reports
+- Trend analysis
+- Alert notifications
+
+**3. Watch Integration:**
+```bash
+node scripts/watch-gdd.js  # Now includes telemetry section
+```
+
+Displays:
+- 📈 Latest momentum (improving/declining/stable)
+- 🔢 Stability index
+- 📊 Total snapshots
+
+### CI/CD Integration
+
+**Workflow:** `.github/workflows/gdd-telemetry.yml`
+
+**Schedule:** Daily at 00:00 UTC
+
+**Actions:**
+1. Run validation, health scoring, drift prediction
+2. Collect telemetry snapshot
+3. Auto-commit data to repo
+4. Upload artifacts (30 days retention)
+5. Create issues if status == CRITICAL
+
+**Manual trigger:** Available via GitHub Actions UI
+
+### Configuration
+
+**File:** `telemetry-config.json`
+
+```json
+{
+  "interval_hours": 24,
+  "min_health_for_report": 95,
+  "include_auto_fixes": true,
+  "generate_markdown_report": true,
+  "retention_days": 90,
+  "alert_thresholds": {
+    "health_below": 90,
+    "drift_above": 40,
+    "auto_fix_success_below": 80
+  }
+}
+```
+
+---
+
+## Documentation Integrity Policy (Phase 15.3)
+
+### GDD Implementation Summary Governance
+
+**Effective:** October 8, 2025 (GDD 2.0 Phase 15.3)
+
+The GDD Implementation Summary has been modularized to prevent token limit errors and improve performance. All future documentation must follow these rules:
+
+#### Size Limits
+
+- **GDD Implementation Summary Index** (`docs/GDD-IMPLEMENTATION-SUMMARY.md`)
+  - **Maximum Size:** 350 lines (~5,000 tokens)
+  - **Current Size:** 249 lines (~1,200 tokens)
+  - **Purpose:** Lightweight index with links to detailed phase documentation
+
+- **Phase Documentation** (`docs/implementation/GDD-PHASE-*.md`)
+  - **Maximum Size:** 1,000 lines per phase file
+  - **Purpose:** Detailed documentation for specific GDD phases
+  - **Structure:** Must include header with back-link to index and footer with navigation
+
+#### Mandatory Structure
+
+All new phase documentation must include:
+
+1. **Header**
+   ```markdown
+   # GDD 2.0 - Phase <number>
+
+   [← Back to Index](../GDD-IMPLEMENTATION-SUMMARY.md)
+
+   ---
+   ```
+
+2. **Content Sections**
+   - Objective
+   - Implementation details
+   - Results & impact
+   - Testing validation
+   - Files modified
+
+3. **Footer**
+   ```markdown
+   ---
+
+   [← Back to Index](../GDD-IMPLEMENTATION-SUMMARY.md) | [View All Phases](./)
+   ```
+
+#### Source of Truth
+
+- **Phase Metadata:** `docs/.gddindex.json` is the authoritative source for:
+  - Total phases count
+  - Latest phase number
+  - Phase status (completed, in_progress, planned)
+  - File locations and sizes
+  - System health snapshot
+
+- **Phase Content:** Individual phase files in `docs/implementation/` contain detailed documentation
+
+#### Update Requirements
+
+When adding a new GDD phase, you **MUST** update:
+
+1. ✅ Create phase file: `docs/implementation/GDD-PHASE-<number>.md`
+2. ✅ Update index: `docs/GDD-IMPLEMENTATION-SUMMARY.md` (add row to phase table)
+3. ✅ Update metadata: `docs/.gddindex.json` (increment counters, add phase entry)
+4. ✅ Verify size: Ensure index remains <350 lines
+
+**Failure to update all three components will cause validation errors.**
+
+#### Enforcement
+
+- **CI/CD Validation:** `.github/workflows/gdd-validate.yml` checks index size
+- **Auto-Repair:** `scripts/auto-repair-gdd.js` can fix missing phase references
+- **Health Scoring:** Documentation size is monitored in health metrics
+- **Manual Edits:** Require approval from Orchestrator Agent
+
+#### Migration Path
+
+If index exceeds size limits:
+
+1. Identify sections that can be moved to phase files
+2. Create summary tables instead of full descriptions
+3. Archive historical data to appropriate phase files
+4. Update links and references
+5. Validate that all phase files have proper headers/footers
+
+#### Rationale
+
+**Why Modularization?**
+- Previous monolithic file: 3,069 lines (~27,700 tokens)
+- Token limit errors prevented file reads
+- Performance degraded with file size
+- Maintenance became difficult
+
+**Phase 15.3 Results:**
+- Index reduced to 249 lines (93% reduction)
+- Token errors eliminated
+- Read time improved from 800ms+ to <50ms
+- Clear navigation with direct phase links
+
+#### Documentation
+
+For complete details on modularization architecture, see:
+- [GDD Phase 15.3 Documentation](./docs/GDD-PHASE-15.3-MODULARIZATION.md)
+- [GDD Index Metadata](./docs/.gddindex.json)
+- [Modular Phase Files](./docs/implementation/)
 
 ---
 
