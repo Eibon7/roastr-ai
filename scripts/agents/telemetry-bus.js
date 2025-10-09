@@ -381,4 +381,23 @@ Integration:
   }
 }
 
-module.exports = TelemetryBus;
+// Singleton instance
+let instance = null;
+
+/**
+ * Get singleton instance of TelemetryBus
+ * @param {Object} options - Options for telemetry bus
+ * @returns {TelemetryBus} Singleton instance
+ */
+function getInstance(options = {}) {
+  if (!instance) {
+    instance = new TelemetryBus(options);
+  }
+  return instance;
+}
+
+// Export
+module.exports = {
+  TelemetryBus,
+  getInstance
+};
