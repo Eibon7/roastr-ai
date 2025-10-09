@@ -201,13 +201,13 @@ class IntegrationStatusUpdater {
     }
 
     if (credentialsPresent) {
-      score += 60; // Credentials add significant value
+      score += 50; // Credentials add significant value
     }
 
     // Bonus for critical platforms
     const criticalPlatforms = ['twitter', 'discord', 'youtube'];
     if (criticalPlatforms.includes(platform.name) && credentialsPresent) {
-      score += 10;
+      score += 10; // Now reaches 100 for critical platforms with full setup
     }
 
     return Math.min(100, score);
