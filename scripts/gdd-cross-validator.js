@@ -13,7 +13,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 
 class GDDCrossValidator {
   constructor(rootDir = null) {
@@ -131,7 +131,9 @@ class GDDCrossValidator {
 
       if (segment.includes('*')) {
         // Wildcard segment - expand it by reading directories
-        const regex = new RegExp('^' + segment.replace(/\*/g, '.*') + '$');
+        // Escape regex metacharacters, then replace * with .*
+        const escaped = segment.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp('^' + escaped.replace(/\*/g, '.*') + '$');
 
         for (const basePath of currentPaths) {
           try {
@@ -265,12 +267,24 @@ class GDDCrossValidator {
     const nodeFile = path.join('docs', 'nodes', `${nodeName}.md`);
 
     try {
-      // Get last commit date for the node file
-      const gitCommand = `git log -1 --format=%ai --follow -- ${nodeFile}`;
-      const gitDate = execSync(gitCommand, {
+      // Get last commit date for the node file (using spawnSync to prevent command injection)
+      const result = spawnSync('git', [
+        'log',
+        '-1',
+        '--format=%ai',
+        '--follow',
+        '--',
+        nodeFile
+      ], {
         cwd: this.rootDir,
         encoding: 'utf-8'
-      }).trim();
+      });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      const gitDate = result.stdout.trim();
 
       if (!gitDate) {
         return {

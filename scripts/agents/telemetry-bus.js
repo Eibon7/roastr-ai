@@ -41,6 +41,10 @@ class TelemetryBus extends EventEmitter {
       this.persistBuffer();
       process.exit(0);
     });
+    process.on('SIGTERM', () => {
+      this.persistBuffer();
+      process.exit(0);
+    });
   }
 
   /**
@@ -453,8 +457,9 @@ if (require.main === module) {
     console.log('✅ All Telemetry Bus tests passed!\n');
 
   } else {
+    const scriptName = path.basename(__filename);
     console.log('Usage:');
-    console.log('  node telemetry-bus.js --listen   # Listen to events');
-    console.log('  node telemetry-bus.js --test     # Run tests');
+    console.log(`  node ${scriptName} --listen   # Listen to events`);
+    console.log(`  node ${scriptName} --test     # Run tests`);
   }
 }

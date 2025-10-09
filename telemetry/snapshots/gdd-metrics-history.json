@@ -47,7 +47,7 @@
       "alerts": [],
       "metadata": {
         "version": "1.0.0",
-        "phase": 13,
+        "phase": 15,
         "collector": "collect-gdd-telemetry.js"
       }
     },
@@ -100,7 +100,7 @@
       "alerts": [],
       "metadata": {
         "version": "1.0.0",
-        "phase": 13,
+        "phase": 15,
         "collector": "collect-gdd-telemetry.js"
       }
     },
@@ -153,7 +153,7 @@
       "alerts": [],
       "metadata": {
         "version": "1.0.0",
-        "phase": 13,
+        "phase": 15,
         "collector": "collect-gdd-telemetry.js"
       }
     }

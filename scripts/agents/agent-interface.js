@@ -9,7 +9,7 @@
  *
  * @module agent-interface
  * @version 1.0.0
- * @phase GDD 2.0 Phase 14 - Agent-Aware Integration
+ * @phase GDD 2.0 Phase 15 - Cross-Validation & Extended Health Metrics
  */
 
 const fs = require('fs');
@@ -85,7 +85,7 @@ class AgentInterface {
       const initialLog = {
         created_at: new Date().toISOString(),
         version: '1.0.0',
-        phase: 14,
+        phase: 15,
         events: []
       };
       fs.writeFileSync(this.logPath, JSON.stringify(initialLog, null, 2));
@@ -331,6 +331,10 @@ class AgentInterface {
         const before = content.substring(0, firstHeading);
         const after = content.substring(firstHeading);
         return `${before}\n\n**${field.charAt(0).toUpperCase() + field.slice(1)}:** ${value}${after}`;
+      } else {
+        // Fallback: If no heading found, append field at the end of document
+        // This ensures metadata is always added even for malformed documents
+        return `${content}\n\n**${field.charAt(0).toUpperCase() + field.slice(1)}:** ${value}\n`;
       }
     }
 
@@ -522,7 +526,7 @@ class AgentInterface {
       if (!fs.existsSync(this.historyPath)) {
         const header = `# GDD Agent Activity History\n\n` +
           `**Version:** 1.0.0\n` +
-          `**Phase:** GDD 2.0 Phase 14\n` +
+          `**Phase:** GDD 2.0 Phase 15\n` +
           `**Created:** ${new Date().toISOString()}\n\n` +
           `---\n\n`;
         fs.writeFileSync(this.historyPath, header);

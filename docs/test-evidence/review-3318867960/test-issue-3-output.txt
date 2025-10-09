@@ -1,0 +1,23 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose validate-gdd-cross-issue-3.test.js
+
+🔍 Validating test-node...🔍 Validating test-node...🔍 Validating test-node...🔍 Validating test-node...🔍 Validating node-1...🔍 Validating node-2...🔍 Validating node-3...🔍 Validating test-node...PASS node-tests tests/unit/scripts/validate-gdd-cross-issue-3.test.js
+  CrossValidationRunner - Validation Structure (Issue #3)
+    Skipped counter for warnings
+      ✓ should increment skipped counter for coverage_data_unavailable (1 ms)
+      ✓ should increment skipped counter for no_source_files_found
+      ✓ should increment skipped counter for coverage_calculation_failed (1 ms)
+    Violations array for true mismatches
+      ✓ should add violation and increment mismatched for coverage_mismatch
+    Mixed scenarios
+      ✓ should correctly separate warnings and violations (1 ms)
+      ✓ should not affect matched counter when coverage is valid
+    Initialization
+      ✓ should initialize with skipped counter at 0 (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       7 passed, 7 total
+Snapshots:   0 total
+Time:        0.406 s, estimated 1 s
+Ran all test suites matching validate-gdd-cross-issue-3.test.js.

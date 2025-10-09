@@ -94,9 +94,9 @@ jobs:
           node scripts/validate-gdd-runtime.js --ci
           node scripts/score-gdd-health.js --ci
 
-          # Read health score (check if file exists first)
+          # Guard: Check if gdd-health.json exists
           if [ -f gdd-health.json ]; then
-            NEW_HEALTH=$(jq -r '.average_score // 0' gdd-health.json)
+            NEW_HEALTH=$(jq -r '.overall_score // 0' gdd-health.json)
           else
             NEW_HEALTH=0
           fi

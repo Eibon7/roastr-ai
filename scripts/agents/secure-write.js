@@ -73,14 +73,25 @@ class SecureWrite {
    * @param {object} options.metadata - Additional metadata
    * @returns {object} Write result with signature
    */
-  async write({ path, content, agent, action, metadata = {} }) {
+  async write({ path: requestedPath, content, agent, action, metadata = {} }) {
     try {
+      // 0. Root confinement - Prevent path traversal attacks
+      // SECURITY: Normalize ALL paths (relative AND absolute) before validation
+      // This prevents attacks like "/repo/../etc/passwd" or "C:\repo\..\Windows\system.ini"
+      const targetPath = path.resolve(this.rootDir, requestedPath);
+      const relativeTarget = path.relative(this.rootDir, targetPath);
+
+      // Reject if target is outside repository (starts with .. or is absolute)
+      if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
+        throw new Error(`Security violation: Refusing to write outside repository root: ${requestedPath}`);
+      }
+
       // 1. Read current content (if exists)
       let currentContent = null;
       let hashBefore = null;
 
-      if (fs.existsSync(path)) {
-        currentContent = fs.readFileSync(path, 'utf8');
+      if (fs.existsSync(targetPath)) {
+        currentContent = fs.readFileSync(targetPath, 'utf8');
         hashBefore = this.calculateHash(currentContent);
       }
 
@@ -88,11 +99,11 @@ class SecureWrite {
       const hashAfter = this.calculateHash(content);
 
       // 3. Create backup
-      const backupPath = this.createBackup(path, currentContent);
+      const backupPath = this.createBackup(targetPath, currentContent);
 
       // 4. Create signature
       const signature = this.createSignature({
-        path,
+        path: targetPath,
         agent,
         action,
         hashBefore,
@@ -102,7 +113,7 @@ class SecureWrite {
       });
 
       // 5. Write new content
-      fs.writeFileSync(path, content, 'utf8');
+      fs.writeFileSync(targetPath, content, 'utf8');
 
       // 6. Save signature
       this.saveSignature(signature);
@@ -112,14 +123,14 @@ class SecureWrite {
         this.telemetryBus.emit('secure_write', {
           agent,
           action,
-          path: path.replace(this.rootDir, ''),
+          path: targetPath.replace(this.rootDir, ''),
           signature: signature.id,
           timestamp: signature.timestamp
         });
       }
 
       if (this.verbose) {
-        this.log('success', `Secure write: ${path.replace(this.rootDir, '')}`);
+        this.log('success', `Secure write: ${targetPath.replace(this.rootDir, '')}`);
         this.log('info', `  Hash: ${hashBefore?.substring(0, 8) || 'N/A'} → ${hashAfter.substring(0, 8)}`);
         this.log('info', `  Signature: ${signature.id}`);
       }
@@ -149,8 +160,19 @@ class SecureWrite {
    * @param {string} options.signatureId - Signature ID to rollback (optional)
    * @returns {object} Rollback result
    */
-  async rollback({ path, content = null, reason, agent, signatureId = null }) {
+  async rollback({ path: requestedPath, content = null, reason, agent, signatureId = null }) {
     try {
+      // 0. Root confinement - Prevent path traversal attacks
+      // SECURITY: Normalize ALL paths (relative AND absolute) before validation
+      // This prevents attacks like "/repo/../etc/passwd" or "C:\repo\..\Windows\system.ini"
+      const targetPath = path.resolve(this.rootDir, requestedPath);
+      const relativeTarget = path.relative(this.rootDir, targetPath);
+
+      // Reject if target is outside repository (starts with .. or is absolute)
+      if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
+        throw new Error(`Security violation: Refusing to rollback outside repository root: ${requestedPath}`);
+      }
+
       let restoredContent = content;
 
       // If signature ID provided, find backup from signature
@@ -165,7 +187,7 @@ class SecureWrite {
 
       // If no content provided and no signature, try to find latest backup
       if (!restoredContent) {
-        const latestBackup = this.findLatestBackup(path);
+        const latestBackup = this.findLatestBackup(targetPath);
         if (latestBackup) {
           restoredContent = fs.readFileSync(latestBackup, 'utf8');
         } else {
@@ -174,18 +196,18 @@ class SecureWrite {
       }
 
       // Get hash before rollback
-      const hashBefore = fs.existsSync(path)
-        ? this.calculateHash(fs.readFileSync(path, 'utf8'))
+      const hashBefore = fs.existsSync(targetPath)
+        ? this.calculateHash(fs.readFileSync(targetPath, 'utf8'))
         : null;
 
       // Restore content
-      fs.writeFileSync(path, restoredContent, 'utf8');
+      fs.writeFileSync(targetPath, restoredContent, 'utf8');
 
       const hashAfter = this.calculateHash(restoredContent);
 
       // Create rollback signature
       const signature = this.createSignature({
-        path,
+        path: targetPath,
         agent,
         action: 'rollback',
         hashBefore,
@@ -202,7 +224,7 @@ class SecureWrite {
       if (this.telemetryBus) {
         this.telemetryBus.emit('rollback', {
           agent,
-          path: path.replace(this.rootDir, ''),
+          path: targetPath.replace(this.rootDir, ''),
           reason,
           signature: signature.id,
           timestamp: signature.timestamp
@@ -210,7 +232,7 @@ class SecureWrite {
       }
 
       if (this.verbose) {
-        this.log('warn', `Rollback: ${path.replace(this.rootDir, '')}`);
+        this.log('warn', `Rollback: ${targetPath.replace(this.rootDir, '')}`);
         this.log('info', `  Reason: ${reason}`);
         this.log('info', `  Hash: ${hashBefore?.substring(0, 8) || 'N/A'} → ${hashAfter.substring(0, 8)}`);
       }

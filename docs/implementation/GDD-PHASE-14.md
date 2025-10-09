@@ -255,7 +255,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 | Permission validation | ✅ | All actions checked against matrix |
 | Hash integrity | ✅ | SHA-256 before/after every write |
 | Digital signatures | ✅ | All writes signed and verified |
-| Automatic rollback | ✅ | Triggers on health degradation |
+| Manual rollback | ✅ | Via signature ID or rollback() call |
 | Audit trail | ✅ | JSON + Markdown + signatures |
 | Rate limiting | ✅ | 100 actions/minute max |
 
@@ -263,7 +263,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 
 ### Example 1: DriftWatcher Auto-Repair
 
-```
+```console
 [18:32:15] 🔧 DriftWatcher: High drift detected, triggering auto-repair...
 [18:32:17] ✅ DriftWatcher: Auto-repair triggered
 [18:32:18] 📡 Telemetry: { agent: 'DriftWatcher', action: 'trigger_repair', deltaHealth: +2.1 }
@@ -271,7 +271,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 
 ### Example 2: DocumentationAgent Issue Creation
 
-```
+```console
 [18:35:42] 📝 DocumentationAgent: 2 orphan node(s) detected
 [18:35:43] ✅ Created issue: "Orphan GDD node detected: analytics"
 [18:35:44] ✅ Created issue: "Orphan GDD node detected: trainer"
@@ -279,7 +279,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 
 ### Example 3: Orchestrator Stale Marking
 
-```
+```console
 [18:40:12] ⏰ Orchestrator: 8 outdated nodes detected
 [18:40:13] ✅ Orchestrator: Marked billing as stale
 [18:40:14] ✅ Orchestrator: Marked analytics as stale
@@ -313,7 +313,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 
 1. **Permission-First Design**: Validating permissions before operations prevents unauthorized changes
 2. **Hash-Based Integrity**: SHA-256 hashing catches corruption and unauthorized modifications
-3. **Rollback Safety**: Automatic rollback on health degradation prevents bad changes from propagating
+3. **Rollback Safety**: Manual rollback capability prevents bad changes (automatic health-driven rollback planned for future phase)
 4. **Audit Everything**: Comprehensive logging enables debugging and compliance
 5. **Modular Architecture**: Separating AIL, SWP, and agents allows independent testing and updates
 

@@ -201,7 +201,7 @@ class IntegrationStatusUpdater {
     }
 
     if (credentialsPresent) {
-      score += 50; // Credentials add significant value
+      score += 60; // Credentials add significant value
     }
 
     // Bonus for critical platforms
