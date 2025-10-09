@@ -368,7 +368,7 @@ npm test -- path-traversal.test.js
 ```
 
 **Results:**
-```
+```text
 Test Suites: 1 passed, 1 total
 Tests:       24 passed, 24 total
 Snapshots:   0 total
@@ -390,7 +390,7 @@ node scripts/validate-gdd-cross.js --full
 ```
 
 **Results:**
-```
+```text
 ✅ Coverage Validation: HEALTHY
 ✅ Timestamp Validation: HEALTHY
 ✅ Dependency Validation: HEALTHY
@@ -412,22 +412,26 @@ node scripts/validate-gdd-cross.js --full
 
 ### Defense in Depth
 
-**Layer 1: Input Validation**
+### Layer 1: Input Validation
+
 - ✅ Path normalization (path.resolve)
 - ✅ Root confinement checks (startsWith)
 - ✅ Type validation (guard clauses)
 
-**Layer 2: Safe Execution**
+### Layer 2: Safe Execution
+
 - ✅ Array-based subprocess arguments (spawnSync)
 - ✅ No shell invocation
 - ✅ Explicit error handling
 
-**Layer 3: Monitoring & Logging**
+### Layer 3: Monitoring & Logging
+
 - ✅ Security violation logging
 - ✅ Attempted path tracking
 - ✅ Audit trail for forensics
 
-**Layer 4: Testing**
+### Layer 4: Testing
+
 - ✅ 24 comprehensive security tests
 - ✅ Attack vector coverage
 - ✅ Edge case validation
@@ -438,34 +442,39 @@ node scripts/validate-gdd-cross.js --full
 
 ### OWASP Top 10 (2021)
 
-**A01:2021 - Broken Access Control**
+#### A01:2021 - Broken Access Control
+
 - ✅ Path traversal vulnerability eliminated (C1)
 - ✅ Root confinement enforced
 - ✅ Authorization boundaries validated
 
-**A03:2021 - Injection**
+#### A03:2021 - Injection
+
 - ✅ Command injection risk mitigated (m2)
 - ✅ Shell metacharacter handling eliminated
 - ✅ Array-based subprocess arguments
 
-**A04:2021 - Insecure Design**
+#### A04:2021 - Insecure Design
+
 - ✅ Security requirements validated during design
 - ✅ Threat model updated with path traversal scenarios
 - ✅ Secure-by-design principles applied
 
 ### CWE Coverage
 
-**CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')**
+#### CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')
+
 - ✅ FIXED (C1)
 - ✅ Mitigation: Path normalization + root confinement
 - ✅ Validation: 24 security tests
 
-**CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')**
+#### CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')
+
 - ✅ FIXED (m2)
 - ✅ Mitigation: spawnSync with array arguments
 - ✅ Validation: No shell invocation
 
-**CWE-252: Unchecked Return Value**
+#### CWE-252: Unchecked Return Value
 - ✅ FIXED (m1, m3)
 - ✅ Mitigation: Explicit error handling + guard clauses
 - ✅ Validation: Comprehensive state coverage

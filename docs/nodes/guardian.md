@@ -65,14 +65,15 @@ Guardian Agent is the **Product Governance Layer** for GDD 2.0, providing automa
 
 ### GuardianEngine Class
 
-**Constructor**
+#### Constructor
+
 ```javascript
 const guardian = new GuardianEngine();
 ```
 
 Initializes empty violations store and changes summary.
 
-**Public Methods**
+#### Public Methods
 
 #### `loadConfig() → boolean`
 Loads product guard configuration and ignore patterns.
@@ -97,7 +98,8 @@ Checks if file matches any ignore patterns.
 - `true` - File should be ignored (test fixture, Windows path, etc.)
 - `false` - File should be scanned
 
-**Used for:**
+#### Used for
+
 - Filtering test fixtures (C:\Windows\System32\SAM, etc.)
 - Skipping guardian case files (docs/guardian/cases/**)
 - Ignoring telemetry snapshots
@@ -209,7 +211,7 @@ Main orchestration method. Runs full Guardian scan workflow.
 Displays scan results in formatted table to console.
 
 **Output:**
-```
+```text
 ╔═══════════════════════════════════════════════════════════════╗
 ║                  Guardian Scan Results                        ║
 ╠═══════════════════════════════════════════════════════════════╣
@@ -431,39 +433,47 @@ const caseId = timestamp.replace(/[:.]/g, '-').split('T').join('-').substring(0,
 
 ### Test Structure
 
-**1. M1: Unstaged Changes Detection (lines 46-100)**
+#### 1. M1: Unstaged Changes Detection (lines 46-100)
+
 - 4 tests covering fallback from staged → unstaged changes
 - Validates detection when `git diff --cached` returns empty
 - Tests error handling (git not installed)
 
-**2. M2: Line Counting (lines 106-182)**
+#### 2. M2: Line Counting (lines 106-182)
+
 - 4 tests excluding `+++` and `---` headers from counts
 - Validates mixed additions/removals
 - Tests empty diffs
 
-**3. C4: Directory Creation (lines 188-294)**
+#### 3. C4: Directory Creation (lines 188-294)
+
 - 4 tests ensuring `fs.mkdirSync({ recursive: true })` before writes
 - Validates audit log, cases, and report directory creation
 - Tests graceful handling of existing directories
 
-**4. N2: Actor Detection (lines 362-428)**
+#### 4. N2: Actor Detection (lines 362-428)
+
 - 4 tests covering fallback chain: GITHUB_ACTOR → USER → USERNAME → unknown
 - Validates CI environment detection
 
-**5. N1: Case ID Milliseconds (lines 459-525)**
+#### 5. N1: Case ID Milliseconds (lines 459-525)
+
 - 3 tests ensuring 23-character format with milliseconds
 - Validates collision prevention in rapid scans
 
-**6. MN1: Renamed Files Parsing (lines 544-617)**
+#### 6. MN1: Renamed Files Parsing (lines 544-617)
+
 - 4 tests parsing Git status 'R' with old/new paths
 - Validates double-counting prevention
 
-**7. M1: Glob Pattern Matching (lines 619-678)**
+#### 7. M1: Glob Pattern Matching (lines 619-678)
+
 - 3 tests for wildcard patterns (`docs/nodes/*.md`)
 - Validates exact path matching
 - Tests false positive prevention (`my-docs/nodes` ≠ `docs/nodes`)
 
-**8. Integration Tests (lines 300-360)**
+#### 8. Integration Tests (lines 300-360)
+
 - Complete workflow test combining all fixes
 - Validates M1 (unstaged detection) + M2 (line counting) + C4 (directory creation)
 
@@ -627,6 +637,9 @@ npm run guardian:check
 
 ## Agentes Relevantes
 
+- **Documentation Agent** - Maintains Guardian node documentation, ensures spec.md Guardian section remains synchronized
+- **Orchestrator Agent** - Coordinates Guardian integration into CI/CD pipelines, manages approval workflows
+- **Product Owner** - Reviews and approves CRITICAL violations affecting pricing, quotas, and auth policies
 - **Test Engineer** - Created 14 unit tests for all Guardian methods, validated fixes from CodeRabbit reviews #3319715250 and #3319862956
 
 ---

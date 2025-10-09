@@ -166,7 +166,7 @@ guardian:
 **Command:** `node scripts/validate-gdd-runtime.js --full`
 
 **Results:**
-```
+```text
 ✔ 14 nodes validated
 ⚠ 13 coverage integrity issue(s)
 
@@ -200,18 +200,20 @@ guardian:
 
 ### Guardian Node TODOs (from docs/nodes/guardian.md)
 
-**Phase 17: Guardian Notifications & Workflows**
+### Phase 17: Guardian Notifications & Workflows
+
 - [ ] Implement `scripts/notify-guardian.js` for email/Slack notifications (**Issue:** #516 - to be created)
 - [ ] Create `.github/workflows/guardian-check.yml` for PR validation (**Issue:** #517 - to be created)
 - [ ] Add Husky pre-commit hook integration (**Issue:** #518 - to be created)
 - [ ] Create PR comment bot with scan results (**Issue:** #519 - to be created)
 
-**Phase 18: Guardian Dashboard**
+### Phase 18: Guardian Dashboard
+
 - [ ] Build web UI for audit log visualization (**Issue:** #520 - to be created)
 - [ ] Add approval workflow management interface (**Issue:** #521 - to be created)
 - [ ] Create domain ownership directory (**Issue:** #522 - to be created)
 
-**Future Enhancements**
+### Future Enhancements
 - [ ] Support multiple configuration profiles (dev, staging, prod)
 - [ ] Add machine learning for anomaly detection (unusual change patterns)
 - [ ] Integrate with Slack for real-time approval requests
