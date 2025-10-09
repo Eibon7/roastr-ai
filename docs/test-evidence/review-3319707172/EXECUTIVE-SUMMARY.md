@@ -2,7 +2,7 @@
 
 **Review Date:** 2025-10-09
 **Review ID:** 3319707172
-**PR:** #TBD (feat/gdd-phase-15-cross-validation)
+**PR:** #511 (feat/gdd-phase-15-cross-validation)
 **Branch:** feat/gdd-phase-15-cross-validation
 **Status:** ✅ COMPLETE (24/26 issues resolved - 92.3%)
 
@@ -285,7 +285,7 @@ npx markdownlint-cli2 "docs/**/*.md"
 
 ### Follow-Up Tasks
 
-**Issue #TBD: Complete Remaining MD040 Fixes**
+### Issue #TBD: Complete Remaining MD040 Fixes
 - **Scope:** 5 test-evidence files (n1-n5)
 - **Priority:** Low
 - **Effort:** 15 minutes
