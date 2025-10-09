@@ -469,9 +469,9 @@ class GDDHealthScorer {
 
     return {
       generated_at: new Date().toISOString(),
-      overall_status: overallStatus,
-      average_score: parseFloat(averageScore.toFixed(1)),
-      node_count: scores.length,
+      status: overallStatus,
+      overall_score: parseFloat(averageScore.toFixed(1)),
+      total_nodes: scores.length,
       healthy_count: healthy,
       degraded_count: degraded,
       critical_count: critical
@@ -502,14 +502,14 @@ class GDDHealthScorer {
     let markdown = `# 📊 GDD Node Health Report
 
 **Generated:** ${stats.generated_at}
-**Overall Status:** ${statusEmoji[stats.overall_status.toLowerCase()]} ${stats.overall_status}
-**Average Score:** ${stats.average_score}/100
+**Overall Status:** ${statusEmoji[stats.status.toLowerCase()]} ${stats.status}
+**Average Score:** ${stats.overall_score}/100
 
 ---
 
 ## Summary
 
-- **Total Nodes:** ${stats.node_count}
+- **Total Nodes:** ${stats.total_nodes}
 - 🟢 **Healthy (80-100):** ${stats.healthy_count}
 - 🟡 **Degraded (50-79):** ${stats.degraded_count}
 - 🔴 **Critical (<50):** ${stats.critical_count}
@@ -606,9 +606,9 @@ class GDDHealthScorer {
     console.log(`🟡 Degraded:  ${stats.degraded_count}`);
     console.log(`🔴 Critical:  ${stats.critical_count}`);
     console.log('');
-    console.log(`Average Score: ${stats.average_score}/100`);
+    console.log(`Average Score: ${stats.overall_score}/100`);
     console.log('');
-    console.log(`Overall Status: ${stats.overall_status}`);
+    console.log(`Overall Status: ${stats.status}`);
     console.log('');
     console.log('📄 Reports generated:');
     console.log('   - docs/system-health.md');

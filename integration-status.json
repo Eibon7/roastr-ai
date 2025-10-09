@@ -1,0 +1,116 @@
+{
+  "last_updated": "2025-10-09T12:40:47.885Z",
+  "version": "1.0",
+  "integrations": [
+    {
+      "name": "twitter",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms",
+        "roast",
+        "shield"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "discord",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms",
+        "shield"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "twitch",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms",
+        "shield"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "youtube",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "instagram",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "facebook",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "reddit",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "tiktok",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    },
+    {
+      "name": "bluesky",
+      "status": "inactive",
+      "last_checked": "2025-10-09",
+      "related_nodes": [
+        "social-platforms"
+      ],
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "active": 0,
+    "inactive": 9,
+    "not_connected": 0,
+    "overall_health": 40
+  }
+}

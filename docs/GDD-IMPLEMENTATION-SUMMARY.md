@@ -1,8 +1,8 @@
 # GDD 2.0 - Implementation Summary Index
 
-**Last Updated:** October 8, 2025
+**Last Updated:** October 9, 2025
 **Status:** ✅ 15+ Phases Completed - Modular Documentation Active
-**Total Phases:** 15 documented, 17 implemented
+**Total Phases:** 16 documented, 18 implemented
 **Index Size:** ~200 lines (was 3,069 lines - 93% reduction)
 
 ---
@@ -38,6 +38,7 @@
 | 11 | GDD Admin Dashboard | Oct 6, 2025 | ✅ Complete | - | Documented in Phase 13 |
 | 12 | CI/CD Integration | Oct 6, 2025 | ✅ Complete | - | Documented in Phase 13 |
 | 13 | Telemetry & Analytics Layer | Oct 7, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-13.md) |
+| 15 | Cross-Validation & Extended Health | Oct 9, 2025 | ✅ Complete | 100/100 | [View Details](./plan/gdd-phase-15-cross-validation.md) |
 | 15.1 | Coverage Integrity Enforcement | Oct 8, 2025 | ✅ Complete | - | Implemented (no doc) |
 | 15.2 | Temporary Threshold & Coverage Recovery | Oct 8, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-15.2.md) |
 | 15.3 | Modularization of GDD Summary | Oct 8, 2025 | 🚧 In Progress | - | This implementation |
@@ -123,8 +124,17 @@ node scripts/auto-repair-gdd.js --auto-fix
 # Collect telemetry
 node scripts/collect-gdd-telemetry.js
 
+# Cross-validate (Phase 15)
+node scripts/validate-gdd-cross.js --full
+
+# Update integration status (Phase 15)
+node scripts/update-integration-status.js
+
 # Watch mode (real-time)
 node scripts/watch-gdd.js
+
+# Watch with Phase 15 features
+node scripts/watch-gdd.js --cross --connectivity
 
 # Resolve dependencies for a node
 node scripts/resolve-graph.js roast
@@ -208,11 +218,18 @@ All phase documentation has been modularized for performance. Browse individual 
 
 - [📁 View All Phases](./implementation/)
 
-**Latest Phase:** [Phase 15.2 - Temporary Threshold & Coverage Recovery](./implementation/GDD-PHASE-15.2.md)
+**Latest Phase:** [Phase 15 - Cross-Validation & Extended Health Metrics](./plan/gdd-phase-15-cross-validation.md)
 
 ---
 
 ## 🔔 Recent Updates
+
+### October 9, 2025
+- ✅ **Phase 15:** Cross-Validation & Extended Health Metrics
+- ✅ Cross-validation engine (coverage, timestamps, dependencies)
+- ✅ Integration status tracking (9 platforms)
+- ✅ Extended health scoring with composite metrics
+- ✅ Watch mode enhancements (--cross, --connectivity flags)
 
 ### October 8, 2025
 - ✅ **Phase 15.2:** Temporary threshold adjustment (95 → 93)

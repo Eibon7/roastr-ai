@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "GDD Agent Permissions Matrix",
+  "description": "Defines what actions each GDD agent is allowed to perform",
+  "version": "1.0.0",
+  "phase": 13,
+  "last_updated": "2025-10-09",
+
+  "permissions": {
+    "DocumentationAgent": {
+      "description": "Agent responsible for maintaining documentation coherence",
+      "allowed_actions": [
+        "read_node",
+        "update_metadata",
+        "create_issue",
+        "update_dependencies"
+      ],
+      "forbidden_actions": [
+        "trigger_auto_repair",
+        "mark_stale"
+      ]
+    },
+
+    "Orchestrator": {
+      "description": "Main orchestrator agent coordinating all operations",
+      "allowed_actions": [
+        "read_node",
+        "sync_nodes",
+        "update_health",
+        "mark_stale",
+        "update_metadata",
+        "create_issue"
+      ],
+      "forbidden_actions": []
+    },
+
+    "DriftWatcher": {
+      "description": "Agent monitoring drift risk and triggering repairs",
+      "allowed_actions": [
+        "read_node",
+        "trigger_auto_repair",
+        "update_timestamp",
+        "create_issue"
+      ],
+      "forbidden_actions": [
+        "update_metadata",
+        "mark_stale"
+      ]
+    },
+
+    "RuntimeValidator": {
+      "description": "Validation agent with read-only access",
+      "allowed_actions": [
+        "read_node",
+        "read_only"
+      ],
+      "forbidden_actions": [
+        "update_metadata",
+        "create_issue",
+        "trigger_auto_repair",
+        "mark_stale"
+      ]
+    },
+
+    "TestEngineer": {
+      "description": "Test generation and validation agent",
+      "allowed_actions": [
+        "read_node",
+        "create_issue",
+        "update_metadata"
+      ],
+      "forbidden_actions": [
+        "trigger_auto_repair",
+        "mark_stale"
+      ]
+    },
+
+    "UIDesigner": {
+      "description": "UI/UX design agent",
+      "allowed_actions": [
+        "read_node",
+        "create_issue"
+      ],
+      "forbidden_actions": [
+        "update_metadata",
+        "trigger_auto_repair",
+        "mark_stale"
+      ]
+    }
+  },
+
+  "action_definitions": {
+    "read_node": "Read GDD node documentation",
+    "update_metadata": "Update node metadata fields (status, health, coverage, etc.)",
+    "create_issue": "Create GitHub issues",
+    "update_dependencies": "Update node dependencies list",
+    "trigger_auto_repair": "Trigger GDD auto-repair system",
+    "mark_stale": "Mark nodes as stale when outdated",
+    "sync_nodes": "Synchronize nodes with source code",
+    "update_health": "Update health scores",
+    "update_timestamp": "Update last_updated timestamps",
+    "read_only": "Read-only access to all resources"
+  },
+
+  "security_rules": {
+    "authentication_required": true,
+    "log_all_actions": true,
+    "log_forbidden_attempts": true,
+    "rollback_on_health_degradation": true,
+    "max_actions_per_minute": 100,
+    "enable_telemetry": true
+  },
+
+  "audit": {
+    "log_file": "gdd-agent-log.json",
+    "history_file": "docs/gdd-agent-history.md",
+    "retention_days": 90,
+    "include_timestamps": true,
+    "include_signatures": true
+  }
+}

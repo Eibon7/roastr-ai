@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "📊 Running health scoring..."
           node scripts/score-gdd-health.js --ci
-          HEALTH_SCORE=$(jq -r '.average_score' gdd-health.json)
+          HEALTH_SCORE=$(jq -r '.overall_score' gdd-health.json)
           HEALTH_STATUS=$(jq -r '.status' gdd-health.json)
           echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
           echo "health_status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
@@ -118,7 +118,7 @@ jobs:
             const status = JSON.parse(fs.readFileSync('gdd-status.json', 'utf8'));
 
             // Determine status emoji
-            const healthEmoji = health.average_score >= 95 ? '🟢' : health.average_score >= 80 ? '🟡' : '🔴';
+            const healthEmoji = health.overall_score >= 95 ? '🟢' : health.overall_score >= 80 ? '🟡' : '🔴';
             const driftEmoji = drift.average_drift_risk <= 30 ? '🟢' : drift.average_drift_risk <= 60 ? '🟡' : '🔴';
 
             // Generate comment
@@ -128,7 +128,7 @@ jobs:
 
             | Metric | Value | Status |
             |--------|-------|--------|
-            | **Health Score** | ${health.average_score.toFixed(1)}/100 | ${healthEmoji} |
+            | **Health Score** | ${health.overall_score.toFixed(1)}/100 | ${healthEmoji} |
             | **Drift Risk** | ${drift.average_drift_risk}/100 | ${driftEmoji} |
             | **Nodes Validated** | ${status.nodes_validated} | ✅ |
             | **Coverage Integrity** | ${status.coverage_integrity?.length || 0} violations | ${(status.coverage_integrity?.length || 0) === 0 ? '🟢' : '🔴'} |
@@ -146,7 +146,7 @@ jobs:
             - 🟡 At risk: ${drift.at_risk_count}
             - 🔴 High risk: ${drift.high_risk_count}
 
-            ${health.average_score < ${{ steps.config.outputs.min_health }} ? '### ⚠️ Action Required\n\nHealth score is below the minimum threshold of ' + ${{ steps.config.outputs.min_health }} + '. Please review and fix the issues before merging.' : '### ✅ Safe to Merge\n\nAll GDD checks passed. Documentation is in sync with implementation.'}
+            ${health.overall_score < ${{ steps.config.outputs.min_health }} ? '### ⚠️ Action Required\n\nHealth score is below the minimum threshold of ' + ${{ steps.config.outputs.min_health }} + '. Please review and fix the issues before merging.' : '### ✅ Safe to Merge\n\nAll GDD checks passed. Documentation is in sync with implementation.'}
 
             ---
 
@@ -217,7 +217,7 @@ jobs:
             PR #${{ github.event.pull_request.number }} failed GDD validation.
 
             ### Metrics
-            - Health Score: ${health.average_score}/100
+            - Health Score: ${health.overall_score}/100
             - Critical Nodes: ${health.critical_count}
             - Degraded Nodes: ${health.degraded_count}
 

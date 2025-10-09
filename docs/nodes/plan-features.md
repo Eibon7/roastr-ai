@@ -313,10 +313,10 @@ describe('Plan Features', () => {
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
+- **Documentation Agent**
 - **Product Manager**
+- **Test Engineer**
 
 
 ## Related Nodes

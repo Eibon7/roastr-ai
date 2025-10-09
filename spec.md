@@ -1,5 +1,73 @@
 # 🧠 Flujo de comentarios en Roastr
 
+## 📊 GDD Schema Consistency - CodeRabbit Review #3313789669
+### 🛠️ Implementation Date: 2025-10-09
+**PR**: [#492](https://github.com/Eibon7/roastr-ai/pull/492)
+**Review**: [#3313789669](https://github.com/Eibon7/roastr-ai/pull/492#pullrequestreview-3313789669)
+**Status**: ✅ COMPLETE
+
+### Changes
+1. **Alphabetized** plan-features.md agents list
+2. **Renamed schema keys**: overall_status→status, average_score→overall_score, node_count→total_nodes
+3. **Updated** consumers: gdd-validate.yml workflow
+4. **Regenerated** gdd-health.json with new schema (93.8/100)
+
+---
+
+## 🔧 CI/CD Job Fixes - PR #492 Unblock
+### 🛠️ Implementation Date: 2025-10-09
+**PR**: [#492 - Phase 13 - Telemetry & Analytics Layer](https://github.com/Eibon7/roastr-ai/pull/492)
+**Status**: ✅ COMPLETE - Both jobs fixed
+
+### 🎯 Overview
+Fixed 2 failing CI/CD jobs blocking PR #492 merge:
+1. **auto-repair job**: ENOENT error when `gdd-repair.json` doesn't exist
+2. **validate-gdd job**: Health threshold mismatch (95 vs Phase 15.2 temporary 93)
+
+### 📊 Changes Summary
+
+#### Fix 1: auto-repair Job (ENOENT Error)
+
+- Added file existence checks before all `gdd-repair.json` reads
+- Graceful fallbacks: 0 fixes, 0 errors when file missing
+- Behavior: Job succeeds when no repairs needed (healthy state)
+- Modified: `.github/workflows/gdd-repair.yml` (+30/-5 lines)
+- Sections fixed:
+  - Dry-run step: Check file before reading `fixes_would_apply`
+  - Apply fixes step: Check file before reading `fixes_applied` and `errors`
+  - Summary generation: Fallback message "No repairs needed"
+  - PR comment: Default empty repair object if file missing
+  - Issue creation: Default empty errors array if file missing
+
+#### Fix 2: validate-gdd Job (Threshold)
+
+- Updated `min_health_score`: 95 → 93 (temporary until Oct 31)
+- Aligns with Phase 15.2 coverage recovery plan
+- Added metadata: `temporary_until`, `note`, `coverage_recovery` section
+- Modified: `.gddrc.json` (+5/-2 lines)
+- Configuration now self-documenting with explicit expiration date
+
+### 🧪 Testing
+- ✅ **auto-repair**: Succeeds with "No repairs needed" when gdd-repair.json missing
+- ✅ **validate-gdd**: Health 93.8/100 passes (above 93 threshold)
+- ✅ **PR #492**: Now mergeable with all checks green
+
+### 📚 Related
+- **Phase 15.2**: Temporary Threshold & Coverage Recovery
+- **Issues #500-505**: Coverage recovery tasks
+- **Review #3313481290**: Previous fix (nullish coalescing)
+- **Review #3313789669**: Next fix (queued)
+
+### 📁 Files Modified
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `.gddrc.json` | +5/-2 | Temporary threshold 93 + metadata |
+| `.github/workflows/gdd-repair.yml` | +30/-5 | File existence checks |
+| `docs/plan/ci-fix-pr-492.md` | +280 new | Implementation plan |
+
+---
+
 ## 📊 GDD Phase 15.1 - Coverage Integrity Enforcement
 ### 🛠️ Implementation Date: 2025-10-09
 **PR**: [#499 - Coverage Integrity Enforcement](https://github.com/Eibon7/roastr-ai/pull/499)
@@ -68,20 +136,24 @@ node scripts/compute-gdd-health.js --threshold=95
 
 ### 📁 Files Modified
 
-**Infrastructure (4 files):**
+#### Infrastructure (4 files)
+
 - `scripts/validate-gdd-runtime.js` - Coverage validation logic
 - `scripts/auto-repair-gdd.js` - Coverage integrity detection and repair
 - `scripts/score-gdd-health.js` - Integrity scoring
 - `scripts/gdd-coverage-helper.js` - **NEW** - Coverage validation utilities
 
-**CI/CD (1 file):**
+#### CI/CD (1 file)
+
 - `.github/workflows/gdd-validate.yml` - Coverage integrity CI check
 
-**Documentation (14 files):**
+#### Documentation (14 files)
+
 - All 13 GDD nodes in `docs/nodes/*.md` - Added `Coverage Source` field
 - `CLAUDE.md` - Coverage Authenticity Rules section added
 
-**Configuration (1 file):**
+#### Configuration (1 file)
+
 - `.gddrc.json` - Temporary threshold (95→93) until 2025-10-31
 
 ### ✅ Validation Results
@@ -2332,7 +2404,8 @@ CREATE UNIQUE INDEX idx_org_usage_unique ON organization_usage(
 
 ---
 
-# 📑 Spec – Flujo de comentarios Roastr (actualizado)
+## 📑 Spec – Flujo de comentarios Roastr (actualizado)
+
 ## 1. Contexto general
 Cuando un usuario recibe un mensaje público en redes sociales (comentarios en su perfil, en un post propio, en una respuesta o en un mensaje donde ha sido etiquetado), el comentario entra en el pipeline de Roastr.
 

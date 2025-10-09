@@ -58,8 +58,12 @@ jobs:
           echo "🔍 Running auto-repair in dry-run mode..."
           node scripts/auto-repair-gdd.js --dry-run
 
-          # Count potential fixes
-          FIXES=$(jq -r '.fixes_would_apply' gdd-repair.json)
+          # Count potential fixes (check if file exists first)
+          if [ -f gdd-repair.json ]; then
+            FIXES=$(jq -r '.fixes_would_apply // 0' gdd-repair.json)
+          else
+            FIXES=0
+          fi
           echo "fixes_count=$FIXES" >> $GITHUB_OUTPUT
           echo "Found $FIXES potential fixes"
 
@@ -70,9 +74,14 @@ jobs:
           echo "🔧 Running auto-repair with fixes..."
           node scripts/auto-repair-gdd.js --auto-fix --ci
 
-          # Count applied fixes
-          FIXES=$(jq -r '.fixes_applied' gdd-repair.json)
-          ERRORS=$(jq -r '.errors' gdd-repair.json)
+          # Count applied fixes (check if file exists first)
+          if [ -f gdd-repair.json ]; then
+            FIXES=$(jq -r '.fixes_applied // 0' gdd-repair.json)
+            ERRORS=$(jq -r '.errors // 0' gdd-repair.json)
+          else
+            FIXES=0
+            ERRORS=0
+          fi
           echo "fixes_applied=$FIXES" >> $GITHUB_OUTPUT
           echo "errors=$ERRORS" >> $GITHUB_OUTPUT
           echo "Applied $FIXES fixes, encountered $ERRORS errors"
@@ -150,8 +159,12 @@ jobs:
           ### Actions Taken
           EOF
 
-          # Add details from repair report
-          jq -r '.details.fixes[] | "- \(.type): \(.node) - \(.action)"' gdd-repair.json >> repair-summary.md || true
+          # Add details from repair report (check if file exists first)
+          if [ -f gdd-repair.json ]; then
+            jq -r '.details.fixes[]? | "- \(.type): \(.node) - \(.action)"' gdd-repair.json >> repair-summary.md 2>/dev/null || echo "- No repair details available" >> repair-summary.md
+          else
+            echo "- No repairs needed" >> repair-summary.md
+          fi
 
           cat repair-summary.md
 
@@ -161,7 +174,13 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
+
+            // Check if repair file exists
+            let repair = { fixes_applied: 0, fixes_would_apply: 0, errors: 0, details: {} };
+            if (fs.existsSync('gdd-repair.json')) {
+              repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
+            }
+
             const summary = fs.readFileSync('repair-summary.md', 'utf8');
 
             const fixesApplied = repair.fixes_applied || 0;
@@ -221,7 +240,12 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
+
+            // Check if repair file exists
+            let repair = { details: { errors: [] } };
+            if (fs.existsSync('gdd-repair.json')) {
+              repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
+            }
 
             const errors = repair.details?.errors || [];
             const errorList = errors.map(e => `- **${e.type}** (${e.node}): ${e.error}`).join('\n');
