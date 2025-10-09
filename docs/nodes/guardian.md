@@ -644,9 +644,9 @@ npm run guardian:check
 
 ---
 
-**Coverage:** TBD%
+**Coverage:** 50%
 **Coverage Source:** auto
-**Health Score:** TBD (pending first validation run)
+**Health Score:** TBD (pending first validation run with coverage)
 **Drift Risk:** 0 (newly created node)
 
 ---
