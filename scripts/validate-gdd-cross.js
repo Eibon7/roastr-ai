@@ -32,6 +32,7 @@ class CrossValidationRunner {
         total: 0,
         matched: 0,
         mismatched: 0,
+        skipped: 0,
         violations: []
       },
       timestamp_validation: {
@@ -217,15 +218,17 @@ class CrossValidationRunner {
 
         if (!isWarning) {
           this.results.coverage_validation.mismatched++;
+          this.results.coverage_validation.violations.push({
+            node: nodeName,
+            declared: coverageResult.declared,
+            actual: coverageResult.actual,
+            diff: coverageResult.diff,
+            reason: coverageResult.reason
+          });
+        } else {
+          // Warning detected (non-actionable) - track for transparency
+          this.results.coverage_validation.skipped++;
         }
-
-        this.results.coverage_validation.violations.push({
-          node: nodeName,
-          declared: coverageResult.declared,
-          actual: coverageResult.actual,
-          diff: coverageResult.diff,
-          reason: coverageResult.reason
-        });
       }
     }
 
@@ -320,6 +323,7 @@ class CrossValidationRunner {
 - **Total Checked:** ${this.results.coverage_validation.total}
 - **Matched:** ${this.results.coverage_validation.matched}
 - **Mismatched:** ${this.results.coverage_validation.mismatched}
+- **Skipped (Warnings):** ${this.results.coverage_validation.skipped}
 
 `;
 
