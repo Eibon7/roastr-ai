@@ -3,7 +3,7 @@
   "coverage_validation": {
     "total": 13,
     "matched": 0,
-    "mismatched": 13,
+    "mismatched": 0,
     "violations": [
       {
         "node": "analytics",

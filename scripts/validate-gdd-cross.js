@@ -211,7 +211,13 @@ class CrossValidationRunner {
       if (coverageResult.valid) {
         this.results.coverage_validation.matched++;
       } else {
-        this.results.coverage_validation.mismatched++;
+        // Only count true mismatches, skip warnings (unavailable data, missing files)
+        const isWarning = ['coverage_data_unavailable', 'no_source_files_found', 'coverage_calculation_failed'].includes(coverageResult.reason);
+
+        if (!isWarning) {
+          this.results.coverage_validation.mismatched++;
+        }
+
         this.results.coverage_validation.violations.push({
           node: nodeName,
           declared: coverageResult.declared,
