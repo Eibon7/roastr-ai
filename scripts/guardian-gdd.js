@@ -115,7 +115,7 @@ class GuardianEngine {
       return changes;
     } catch (error) {
       console.error('❌ Failed to get git diff:', error.message);
-      return [];
+      return null; // Signal error (distinguishable from valid empty array)
     }
   }
 
@@ -214,6 +214,15 @@ class GuardianEngine {
 
     // Get changes
     const changes = this.getGitDiff();
+
+    // Check for error state (null) first
+    if (changes === null) {
+      console.error('❌ Guardian scan failed to read git changes.');
+      console.error('   This is a blocking error. Fix git setup and retry.\n');
+      return 2; // Critical error - block
+    }
+
+    // Check for valid empty array (no changes)
     if (changes.length === 0) {
       console.log('✅ No changes to scan\n');
       return 0; // Safe

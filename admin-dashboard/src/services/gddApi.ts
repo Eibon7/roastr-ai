@@ -3,7 +3,7 @@
  * Fetches GDD system data from JSON files
  */
 
-import type { GDDHealthData, GDDStatusData, GDDDriftData } from '@types/gdd.types';
+import type { GDDHealthData, GDDStatusData, GDDDriftData } from '../types/gdd.types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
