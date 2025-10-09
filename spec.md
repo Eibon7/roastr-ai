@@ -136,20 +136,24 @@ node scripts/compute-gdd-health.js --threshold=95
 
 ### 📁 Files Modified
 
-**Infrastructure (4 files):**
+#### Infrastructure (4 files)
+
 - `scripts/validate-gdd-runtime.js` - Coverage validation logic
 - `scripts/auto-repair-gdd.js` - Coverage integrity detection and repair
 - `scripts/score-gdd-health.js` - Integrity scoring
 - `scripts/gdd-coverage-helper.js` - **NEW** - Coverage validation utilities
 
-**CI/CD (1 file):**
+#### CI/CD (1 file)
+
 - `.github/workflows/gdd-validate.yml` - Coverage integrity CI check
 
-**Documentation (14 files):**
+#### Documentation (14 files)
+
 - All 13 GDD nodes in `docs/nodes/*.md` - Added `Coverage Source` field
 - `CLAUDE.md` - Coverage Authenticity Rules section added
 
-**Configuration (1 file):**
+#### Configuration (1 file)
+
 - `.gddrc.json` - Temporary threshold (95→93) until 2025-10-31
 
 ### ✅ Validation Results
@@ -2400,7 +2404,8 @@ CREATE UNIQUE INDEX idx_org_usage_unique ON organization_usage(
 
 ---
 
-# 📑 Spec – Flujo de comentarios Roastr (actualizado)
+## 📑 Spec – Flujo de comentarios Roastr (actualizado)
+
 ## 1. Contexto general
 Cuando un usuario recibe un mensaje público en redes sociales (comentarios en su perfil, en un post propio, en una respuesta o en un mensaje donde ha sido etiquetado), el comentario entra en el pipeline de Roastr.
 
