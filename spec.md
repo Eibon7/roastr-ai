@@ -59,6 +59,7 @@ Fixed 2 failing CI/CD jobs blocking PR #492 merge:
 - **Review #3313789669**: Next fix (queued)
 
 ### 📁 Files Modified
+
 | File | Lines | Description |
 |------|-------|-------------|
 | `.gddrc.json` | +5/-2 | Temporary threshold 93 + metadata |

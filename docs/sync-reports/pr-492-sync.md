@@ -109,7 +109,7 @@ All other GDD nodes remain unchanged and are already synchronized:
 
 ### GDD Runtime Validation
 
-```
+```text
 🔍 Running GDD Runtime Validation...
 
 ✅ Loaded 13 nodes
@@ -125,7 +125,7 @@ All other GDD nodes remain unchanged and are already synchronized:
 
 ### Health Scoring
 
-```
+```text
 📊 NODE HEALTH SUMMARY
 
 🟢 Healthy:   13
@@ -138,7 +138,7 @@ Overall Status: HEALTHY
 
 ### Drift Prediction
 
-```
+```text
 🔮 GDD DRIFT RISK PREDICTOR
 
 📊 Average Risk:    3/100

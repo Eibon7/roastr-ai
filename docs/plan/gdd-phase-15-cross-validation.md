@@ -216,7 +216,8 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ### Phase 4: Unified Health Reports
 **Update:** `docs/system-health.md`
 
-**New Section: External Integrations Status**
+#### New Section: External Integrations Status
+
 ```markdown
 ## External Integrations Status
 
@@ -232,7 +233,8 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ...
 ```
 
-**New Section: Cross-Validation Summary**
+#### New Section: Cross-Validation Summary
+
 ```markdown
 ## Cross-Validation Summary
 
@@ -250,7 +252,8 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 - ❌ Future: 1/13 nodes
 ```
 
-**New Section: Composite Health Score**
+#### New Section: Composite Health Score
+
 ```markdown
 ## System Health Intelligence Summary
 
@@ -271,7 +274,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 - `--all` - Run all checks (validation + health + drift + cross + connectivity)
 
 **Updated Dashboard Output:**
-```
+```text
 ╔════════════════════════════════════════╗
 ║  GDD STATUS: HEALTHY                  ║
 ╠════════════════════════════════════════╣

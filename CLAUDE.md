@@ -1161,7 +1161,7 @@ node scripts/watch-gdd.js --all
 ```
 
 **Enhanced Dashboard Display:**
-```
+```text
 ╔═══════════════════════════════════════════════════════╗
 ║            GDD Runtime Validation Dashboard            ║
 ╠═══════════════════════════════════════════════════════╣
@@ -1233,27 +1233,31 @@ Phase 15 meets all performance targets:
 
 ### Troubleshooting
 
-**Issue: "No coverage data found"**
+#### Issue: "No coverage data found"
+
 ```bash
 # Solution: Run tests with coverage first
 npm test -- --coverage
 node scripts/validate-gdd-cross.js --full
 ```
 
-**Issue: "Git log failed for node X"**
+#### Issue: "Git log failed for node X"
+
 ```bash
 # Solution: Ensure source files exist and are tracked by git
 git status
 git add <missing-files>
 ```
 
-**Issue: "All integrations showing 'inactive'"**
+#### Issue: "All integrations showing 'inactive'"
+
 ```bash
 # Solution: Add platform credentials to .env
 # See "Platform Integrations" section in this file for required env vars
 ```
 
-**Issue: "Coverage mismatch for node X"**
+#### Issue: "Coverage mismatch for node X"
+
 ```bash
 # Solution: Either update node docs or improve test coverage
 # Option 1: Update declared coverage (manual)
@@ -1261,7 +1265,8 @@ git add <missing-files>
 node scripts/auto-repair-gdd.js --auto-fix
 ```
 
-**Issue: "Cross-validation score lower than expected"**
+#### Issue: "Cross-validation score lower than expected"
+
 ```bash
 # Solution: Check detailed violations
 node scripts/validate-gdd-cross.js --full
