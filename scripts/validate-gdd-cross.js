@@ -180,10 +180,11 @@ class CrossValidationRunner {
     // Extract dependencies
     const depsSection = content.match(/##\s*Dependencies[\s\S]*?(?=##|$)/i);
     if (depsSection) {
-      // Match standard markdown list format: "- node-name" or "- `node-name`"
-      const depMatches = depsSection[0].match(/^\s*-\s*`?([a-z0-9-]+)`?\s*$/gim) || [];
+      // Match standard markdown list format: "- node-name" or "- `node-name`" (with optional description)
+      const depMatches = depsSection[0].match(/^\s*-\s*`?([a-z0-9-]+)`?/gim) || [];
       metadata.dependencies = depMatches.map(m => {
-        const match = m.match(/`?([a-z0-9-]+)`?/i);
+        // Extract node name from: "- `node-name` - description" or "- node-name"
+        const match = m.match(/^\s*-\s*`?([a-z0-9-]+)`?/i);
         return match ? match[1] : null;
       }).filter(Boolean);
     }

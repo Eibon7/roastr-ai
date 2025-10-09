@@ -371,11 +371,31 @@ class GDDCrossValidator {
       }
     }
 
+    // Check which imports correspond to undeclared node dependencies (phantom deps)
+    const phantomDeps = new Set();
+    for (const imp of actualDeps) {
+      // For each import, check if it matches any node pattern
+      for (const [node, patterns] of Object.entries(depMappings)) {
+        // Skip if already declared
+        if (declaredDeps.includes(node)) {
+          continue;
+        }
+
+        // Check if this import matches this node's patterns
+        for (const pattern of patterns) {
+          if (imp.includes(pattern)) {
+            phantomDeps.add(node);
+            break;
+          }
+        }
+      }
+    }
+
     // Find missing and phantom dependencies
     const missing = declaredDeps.filter(dep => !detectedDeps.has(dep));
-    const phantom = []; // Phantom deps = declared but never imported (covered by missing)
+    const phantom = Array.from(phantomDeps); // Phantom deps = imported but not declared
 
-    const valid = missing.length === 0;
+    const valid = missing.length === 0 && phantom.length === 0;
 
     const result = {
       valid,

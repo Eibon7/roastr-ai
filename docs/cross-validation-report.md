@@ -1,15 +1,15 @@
 # Cross-Validation Report
 
-**Generated:** 2025-10-09T12:47:16.616Z
-**Status:** 🟢 HEALTHY
-**Overall Score:** 100/100
+**Generated:** 2025-10-09T12:50:59.427Z
+**Status:** 🟡 WARNING
+**Overall Score:** 92.3/100
 
 ---
 
 ## Summary
 
 - **Nodes Validated:** 13
-- **Overall Status:** HEALTHY
+- **Overall Status:** WARNING
 
 ---
 
@@ -54,12 +54,69 @@
 
 ## Dependency Validation
 
-**Status:** ✅ PASS
+**Status:** ⚠️ FAIL
 
-- **Total Checked:** 0
-- **Valid:** 0
-- **Missing Dependencies:** 0
-- **Phantom Dependencies:** 0
+- **Total Checked:** 11
+- **Valid:** 1
+- **Missing Dependencies:** 8
+- **Phantom Dependencies:** 2
+
+### Violations
+
+#### analytics
+
+- **Declared:** multi-tenant, cost-control, roast, shield
+- **Detected:** None
+
+#### cost-control
+
+- **Declared:** multi-tenant, plan-features
+- **Detected:** None
+- **Missing:** multi-tenant, plan-features
+
+#### persona
+
+- **Declared:** plan-features
+- **Detected:** None
+
+#### plan-features
+
+- **Declared:** multi-tenant
+- **Detected:** None
+
+#### platform-constraints
+
+- **Declared:** social-platforms
+- **Detected:** None
+
+#### queue-system
+
+- **Declared:** multi-tenant
+- **Detected:** None
+- **Missing:** multi-tenant
+- **Phantom:** queue-system
+
+#### roast
+
+- **Declared:** persona, tone, platform-constraints, shield, cost-control
+- **Detected:** None
+- **Missing:** persona, tone, platform-constraints, shield, cost-control
+- **Phantom:** roast
+
+#### social-platforms
+
+- **Declared:** multi-tenant, platform-constraints, queue-system
+- **Detected:** None
+
+#### tone
+
+- **Declared:** persona, plan-features
+- **Detected:** None
+
+#### trainer
+
+- **Declared:** roast, persona, plan-features
+- **Detected:** None
 
 ---
 

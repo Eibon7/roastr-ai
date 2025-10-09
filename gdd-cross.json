@@ -106,12 +106,141 @@
     "violations": []
   },
   "dependency_validation": {
-    "total": 0,
-    "valid": 0,
-    "missing_deps": 0,
-    "phantom_deps": 0,
-    "violations": []
+    "total": 11,
+    "valid": 1,
+    "missing_deps": 8,
+    "phantom_deps": 2,
+    "violations": [
+      {
+        "node": "analytics",
+        "declared": [
+          "multi-tenant",
+          "cost-control",
+          "roast",
+          "shield"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "cost-control",
+        "declared": [
+          "multi-tenant",
+          "plan-features"
+        ],
+        "detected": [],
+        "missing": [
+          "multi-tenant",
+          "plan-features"
+        ],
+        "phantom": [],
+        "reason": "dependency_mismatch"
+      },
+      {
+        "node": "persona",
+        "declared": [
+          "plan-features"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "plan-features",
+        "declared": [
+          "multi-tenant"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "platform-constraints",
+        "declared": [
+          "social-platforms"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "queue-system",
+        "declared": [
+          "multi-tenant"
+        ],
+        "detected": [],
+        "missing": [
+          "multi-tenant"
+        ],
+        "phantom": [
+          "queue-system"
+        ],
+        "reason": "dependency_mismatch"
+      },
+      {
+        "node": "roast",
+        "declared": [
+          "persona",
+          "tone",
+          "platform-constraints",
+          "shield",
+          "cost-control"
+        ],
+        "detected": [],
+        "missing": [
+          "persona",
+          "tone",
+          "platform-constraints",
+          "shield",
+          "cost-control"
+        ],
+        "phantom": [
+          "roast"
+        ],
+        "reason": "dependency_mismatch"
+      },
+      {
+        "node": "social-platforms",
+        "declared": [
+          "multi-tenant",
+          "platform-constraints",
+          "queue-system"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "tone",
+        "declared": [
+          "persona",
+          "plan-features"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "trainer",
+        "declared": [
+          "roast",
+          "persona",
+          "plan-features"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      }
+    ]
   },
-  "overall_score": 100,
-  "status": "HEALTHY"
+  "overall_score": 92.3,
+  "status": "WARNING"
 }
