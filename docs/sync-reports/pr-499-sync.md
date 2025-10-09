@@ -163,7 +163,7 @@ node scripts/validate-gdd-runtime.js --full
 ```
 
 **Output:**
-```
+```text
 ✅ Loaded system-map.yaml
 ✅ Loaded 13 nodes
 ✅ Graph consistent
