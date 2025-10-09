@@ -9,7 +9,7 @@
  *
  * @module agent-interface
  * @version 1.0.0
- * @phase GDD 2.0 Phase 14 - Agent-Aware Integration
+ * @phase GDD 2.0 Phase 15 - Cross-Validation & Extended Health Metrics
  */
 
 const fs = require('fs');
@@ -85,7 +85,7 @@ class AgentInterface {
       const initialLog = {
         created_at: new Date().toISOString(),
         version: '1.0.0',
-        phase: 14,
+        phase: 15,
         events: []
       };
       fs.writeFileSync(this.logPath, JSON.stringify(initialLog, null, 2));
@@ -526,7 +526,7 @@ class AgentInterface {
       if (!fs.existsSync(this.historyPath)) {
         const header = `# GDD Agent Activity History\n\n` +
           `**Version:** 1.0.0\n` +
-          `**Phase:** GDD 2.0 Phase 14\n` +
+          `**Phase:** GDD 2.0 Phase 15\n` +
           `**Created:** ${new Date().toISOString()}\n\n` +
           `---\n\n`;
         fs.writeFileSync(this.historyPath, header);
