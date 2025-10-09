@@ -76,12 +76,13 @@ class SecureWrite {
   async write({ path: requestedPath, content, agent, action, metadata = {} }) {
     try {
       // 0. Root confinement - Prevent path traversal attacks
-      const targetPath = path.isAbsolute(requestedPath)
-        ? requestedPath
-        : path.resolve(this.rootDir, requestedPath);
+      // SECURITY: Normalize ALL paths (relative AND absolute) before validation
+      // This prevents attacks like "/repo/../etc/passwd" or "C:\repo\..\Windows\system.ini"
+      const targetPath = path.resolve(this.rootDir, requestedPath);
+      const relativeTarget = path.relative(this.rootDir, targetPath);
 
-      // Ensure target is within repository root
-      if (!targetPath.startsWith(this.rootDir + path.sep) && targetPath !== this.rootDir) {
+      // Reject if target is outside repository (starts with .. or is absolute)
+      if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
         throw new Error(`Security violation: Refusing to write outside repository root: ${requestedPath}`);
       }
 
@@ -162,12 +163,13 @@ class SecureWrite {
   async rollback({ path: requestedPath, content = null, reason, agent, signatureId = null }) {
     try {
       // 0. Root confinement - Prevent path traversal attacks
-      const targetPath = path.isAbsolute(requestedPath)
-        ? requestedPath
-        : path.resolve(this.rootDir, requestedPath);
+      // SECURITY: Normalize ALL paths (relative AND absolute) before validation
+      // This prevents attacks like "/repo/../etc/passwd" or "C:\repo\..\Windows\system.ini"
+      const targetPath = path.resolve(this.rootDir, requestedPath);
+      const relativeTarget = path.relative(this.rootDir, targetPath);
 
-      // Ensure target is within repository root
-      if (!targetPath.startsWith(this.rootDir + path.sep) && targetPath !== this.rootDir) {
+      // Reject if target is outside repository (starts with .. or is absolute)
+      if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
         throw new Error(`Security violation: Refusing to rollback outside repository root: ${requestedPath}`);
       }
 
