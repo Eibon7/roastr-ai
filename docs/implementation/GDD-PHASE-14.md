@@ -255,7 +255,7 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 | Permission validation | ✅ | All actions checked against matrix |
 | Hash integrity | ✅ | SHA-256 before/after every write |
 | Digital signatures | ✅ | All writes signed and verified |
-| Automatic rollback | ✅ | Triggers on health degradation |
+| Manual rollback | ✅ | Via signature ID or rollback() call |
 | Audit trail | ✅ | JSON + Markdown + signatures |
 | Rate limiting | ✅ | 100 actions/minute max |
 

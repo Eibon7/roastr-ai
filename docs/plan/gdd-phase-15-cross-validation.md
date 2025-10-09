@@ -183,11 +183,11 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ```javascript
 {
   generated_at: "2025-10-09T12:00:00Z",
-  overall_status: "HEALTHY",
-  average_score: 94.2,
+  status: "HEALTHY",
+  overall_score: 94.2,
 
   // Existing metrics
-  node_count: 13,
+  total_nodes: 13,
   healthy_count: 11,
   degraded_count: 2,
   critical_count: 0,
