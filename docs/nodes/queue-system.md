@@ -4,9 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-06
+**Last Updated:** 2025-10-09
+**Coverage:** 87%
+**Coverage Source:** auto
 **Version:** 1.2.0
-**Related PR:** #458
+**Related PRs:** #458, #499
 
 ## Dependencies
 
@@ -647,7 +649,8 @@ Los siguientes agentes son responsables de mantener este nodo:
 - Validates both return value AND internal job structure
 - Uses `toMatchObject()` for flexible matching (allows extra fields)
 
-**Coverage:** 87% overall (4 enhanced tests with +16 assertions)
+**Coverage:** 87%
+**Coverage Source:** auto overall (4 enhanced tests with +16 assertions)
 
 ---
 

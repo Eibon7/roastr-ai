@@ -20,6 +20,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
+const { CoverageHelper } = require('./gdd-coverage-helper');
 
 class AutoRepairEngine {
   constructor(options = {}) {
@@ -140,6 +141,39 @@ class AutoRepairEngine {
       }
       console.log('═══════════════════════════════════════════');
       console.log('');
+
+      // 9. Generate JSON output for CI/CD
+      const jsonOutput = {
+        timestamp: new Date().toISOString(),
+        mode: this.options.dryRun ? 'dry-run' : 'apply',
+        success: true,
+        fixes_would_apply: this.options.dryRun ? this.issues.autoFixable.length : 0,
+        fixes_applied: this.options.dryRun ? 0 : this.fixes.length,
+        errors: 0,
+        health_before: this.healthBefore,
+        health_after: this.healthAfter || this.healthBefore,
+        details: {
+          fixes: this.options.dryRun
+            ? this.issues.autoFixable.map(issue => ({
+                type: 'auto',
+                node: issue.node || 'unknown',
+                action: issue.description
+              }))
+            : this.fixes.map(fix => ({
+                type: 'auto',
+                node: fix.node || 'unknown',
+                action: fix.description || fix
+              })),
+          humanReview: this.issues.humanReview.map(issue => ({
+            node: issue.node,
+            description: issue.description
+          })),
+          errors: []
+        }
+      };
+
+      const jsonPath = path.join(this.rootDir, 'gdd-repair.json');
+      await fs.writeFile(jsonPath, JSON.stringify(jsonOutput, null, 2));
 
       return {
         success: true,
@@ -268,6 +302,7 @@ class AutoRepairEngine {
     await this.detectBrokenEdges(systemMap);
     await this.detectOrphanNodes(nodes, systemMap);
     await this.detectMissingSpecReferences(nodes, spec);
+    await this.detectCoverageIntegrity(nodes);  // Phase 15.1
   }
 
   /**
@@ -340,7 +375,10 @@ class AutoRepairEngine {
             const defaultStatus = 'production';
             node.content = this.addMetadataField(node.content, 'Status', defaultStatus);
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added status to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added status to ${nodeName}`
+            });
           }
         });
       }
@@ -364,7 +402,10 @@ class AutoRepairEngine {
           fix: async () => {
             node.content = this.addMetadataField(node.content, 'Last Updated', this.getToday());
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added timestamp to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added timestamp to ${nodeName}`
+            });
           }
         });
       } else {
@@ -396,7 +437,10 @@ class AutoRepairEngine {
             const coverage = 50;
             node.content = this.addMetadataField(node.content, 'Coverage', `${coverage}%`);
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added coverage to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added coverage to ${nodeName}`
+            });
           }
         });
       }
@@ -417,7 +461,10 @@ class AutoRepairEngine {
             const agentsSection = this.getDefaultAgentsSection(nodeName);
             node.content = this.addAgentsSection(node.content, agentsSection);
             await fs.writeFile(node.path, node.content);
-            this.fixes.push(`Added agents section to ${nodeName}`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added agents section to ${nodeName}`
+            });
           }
         });
       }
@@ -454,7 +501,10 @@ class AutoRepairEngine {
                 const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
                 const originalContent = await fs.readFile(mapPath, 'utf-8');
                 await this.saveSystemMapPreservingComments(systemMap, originalContent);
-                this.fixes.push(`Restored edge: ${dep} ← ${nodeName}`);
+                this.fixes.push({
+                  node: nodeName,
+                  description: `Restored edge: ${dep} ← ${nodeName}`
+                });
               }
             });
           }
@@ -492,7 +542,10 @@ class AutoRepairEngine {
             const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
             const originalContent = await fs.readFile(mapPath, 'utf-8');
             await this.saveSystemMapPreservingComments(systemMap, originalContent);
-            this.fixes.push(`Added ${nodeName} to system-map.yaml`);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added ${nodeName} to system-map.yaml`
+            });
           }
         });
       }
@@ -510,6 +563,95 @@ class AutoRepairEngine {
           type: 'missing_spec_ref',
           node: nodeName,
           description: `${nodeName}: Not referenced in spec.md (requires manual content)`
+        });
+      }
+    }
+  }
+
+  /**
+   * Detect coverage integrity violations (Phase 15.1)
+   */
+  async detectCoverageIntegrity(nodes) {
+    const coverageHelper = new CoverageHelper();
+
+    for (const [nodeName, node] of Object.entries(nodes)) {
+      // Extract declared coverage
+      const coverageMatch = node.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+      if (!coverageMatch) {
+        continue;  // No coverage declared, skip
+      }
+
+      const declaredCoverage = parseInt(coverageMatch[1], 10);
+
+      // Check coverage source
+      const sourceMatch = node.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
+      const coverageSource = sourceMatch ? sourceMatch[1].toLowerCase() : null;
+
+      // If no source specified or manual, add coverage source field
+      if (!coverageSource) {
+        this.issues.autoFixable.push({
+          type: 'missing_coverage_source',
+          node: nodeName,
+          description: `${nodeName}: Missing coverage source field`,
+          fix: async () => {
+            // Add Coverage Source: auto after Coverage field
+            node.content = node.content.replace(
+              /(\*?\*?coverage:?\*?\*?\s*\d+%)/i,
+              '$1\n**Coverage Source:** auto'
+            );
+            await fs.writeFile(node.path, node.content);
+            this.fixes.push({
+              node: nodeName,
+              description: `Added coverage source to ${nodeName}`
+            });
+          }
+        });
+      } else if (coverageSource === 'manual') {
+        this.issues.autoFixable.push({
+          type: 'manual_coverage_source',
+          node: nodeName,
+          description: `${nodeName}: Coverage source is 'manual' (should be 'auto')`,
+          fix: async () => {
+            // Change manual → auto
+            node.content = node.content.replace(
+              /(\*?\*?coverage\s+source:?\*?\*?\s*)manual/i,
+              '$1auto'
+            );
+            await fs.writeFile(node.path, node.content);
+            this.fixes.push({
+              node: nodeName,
+              description: `Changed coverage source to 'auto' for ${nodeName}`
+            });
+          }
+        });
+      }
+
+      // Validate coverage authenticity
+      const validation = await coverageHelper.validateCoverageAuthenticity(
+        nodeName,
+        declaredCoverage,
+        3  // 3% tolerance
+      );
+
+      if (!validation.valid && validation.actual !== null) {
+        // Coverage mismatch detected
+        this.issues.autoFixable.push({
+          type: 'coverage_integrity_violation',
+          node: nodeName,
+          severity: validation.severity,
+          description: `${nodeName}: Coverage mismatch - declared ${declaredCoverage}% but actual is ${validation.actual}% (diff: ${validation.diff}%)`,
+          fix: async () => {
+            // Reset coverage to actual value from report
+            node.content = node.content.replace(
+              /(\*?\*?coverage:?\*?\*?\s*)\d+%/i,
+              `$1${validation.actual}%`
+            );
+            await fs.writeFile(node.path, node.content);
+            this.fixes.push({
+              node: nodeName,
+              description: `Reset coverage to ${validation.actual}% for ${nodeName} (was ${declaredCoverage}%)`
+            });
+          }
         });
       }
     }
@@ -617,7 +759,7 @@ class AutoRepairEngine {
 
 ## ✅ Fixes Applied (${this.fixes.length})
 
-${this.fixes.map((fix, i) => `${i + 1}. ${fix}`).join('\n')}
+${this.fixes.map((fix, i) => `${i + 1}. ${fix.description || fix.message || JSON.stringify(fix)}`).join('\n')}
 
 ## ⚠️ Pending Human Review (${this.issues.humanReview.length})
 
@@ -636,7 +778,7 @@ ${this.issues.critical.map((issue, i) => `${i + 1}. **${issue.node}** - ${issue.
 
 ---
 
-**Generated by:** GDD Auto-Repair Assistant (Phase 10)
+**Generated by:** GDD Auto-Repair Assistant (Phase 15.1)
 `;
 
     const reportPath = path.join(this.rootDir, 'docs', 'auto-repair-report.md');
@@ -647,15 +789,17 @@ ${this.issues.critical.map((issue, i) => `${i + 1}. **${issue.node}** - ${issue.
    * Update changelog
    */
   async updateChangelog() {
+    const timestamp = new Date().toISOString();
+    const repairId = timestamp.split('.')[0] + 'Z';
     const entry = `
-## ${new Date().toISOString()}
+## ${timestamp}
 
-**Repair ID:** ${new Date().toISOString().split('T')[0]}T${new Date().toTimeString().split(' ')[0]}Z
+**Repair ID:** ${repairId}
 **Triggered by:** ${this.options.ci ? 'CI/CD' : 'Manual'}
 **Nodes affected:** ${[...new Set(this.issues.autoFixable.map(i => i.node))].join(', ')}
 
 **Fixes applied:**
-${this.fixes.map(f => `- ${f}`).join('\n')}
+${this.fixes.map(f => `- ${f.description}`).join('\n')}
 
 **Outcome:**
 - Health score: ${this.healthBefore} → ${this.healthAfter || this.healthBefore}

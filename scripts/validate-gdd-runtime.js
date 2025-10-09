@@ -19,6 +19,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
+const { CoverageHelper } = require('./gdd-coverage-helper');
 
 class GDDValidator {
   constructor(options = {}) {
@@ -34,6 +35,7 @@ class GDDValidator {
       cycles: [],
       missing_refs: [],
       broken_links: [],
+      coverage_integrity: [],  // Phase 15.1: Coverage authenticity violations
       status: 'healthy'
     };
     this.rootDir = path.resolve(__dirname, '..');
@@ -61,6 +63,7 @@ class GDDValidator {
       await this.validateCodeIntegration(nodes, sourceFiles);
       await this.checkOutdatedNodes(nodes);
       await this.detectOrphans(systemMap, nodes);
+      await this.validateCoverageAuthenticity(nodes);  // Phase 15.1
 
       // Determine overall status
       this.determineStatus();
@@ -515,16 +518,111 @@ class GDDValidator {
   }
 
   /**
+   * Validate coverage authenticity (Phase 15.1)
+   */
+  async validateCoverageAuthenticity(nodes) {
+    this.log('🔢 Validating coverage authenticity...', 'step');
+
+    const coverageHelper = new CoverageHelper();
+    let violations = 0;
+    let validated = 0;
+
+    for (const [nodeName, nodeData] of Object.entries(nodes)) {
+      // Extract declared coverage from node content
+      const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+      if (!coverageMatch) {
+        // No coverage declared, skip validation
+        continue;
+      }
+
+      const declaredCoverage = parseInt(coverageMatch[1], 10);
+
+      // Check coverage source
+      const sourceMatch = nodeData.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
+      const coverageSource = sourceMatch ? sourceMatch[1].toLowerCase() : null;
+
+      if (coverageSource === 'manual') {
+        this.results.coverage_integrity.push({
+          type: 'manual_coverage_source',
+          node: nodeName,
+          severity: 'warning',
+          message: `${nodeName}: Coverage source is 'manual' (should be 'auto')`
+        });
+      }
+
+      // Validate against actual coverage report
+      const validation = await coverageHelper.validateCoverageAuthenticity(
+        nodeName,
+        declaredCoverage,
+        3  // 3% tolerance
+      );
+
+      validated++;
+
+      // Check for missing coverage data (Phase 15.1 - Codex Review #3316270086)
+      if (validation.actual === null) {
+        this.results.coverage_integrity.push({
+          type: 'missing_coverage_data',
+          node: nodeName,
+          severity: 'warning',
+          declared: validation.declared,
+          actual: null,
+          message: validation.message || `${nodeName}: Coverage data not available for validation`
+        });
+      } else if (!validation.valid) {
+        // Coverage mismatch detected
+        violations++;
+        this.results.coverage_integrity.push({
+          type: 'coverage_integrity_violation',
+          node: nodeName,
+          severity: validation.severity,
+          declared: validation.declared,
+          actual: validation.actual,
+          diff: validation.diff,
+          message: validation.message
+        });
+      }
+    }
+
+    // Summary reporting
+    const missingDataCount = this.results.coverage_integrity.filter(v => v.type === 'missing_coverage_data').length;
+
+    if (violations === 0 && missingDataCount === 0) {
+      this.log(`   ✅ ${validated} nodes validated, all authentic`, 'success');
+    } else if (violations > 0 && missingDataCount === 0) {
+      this.log(`   ⚠️  ${violations}/${validated} coverage mismatches detected`, 'warning');
+    } else if (violations === 0 && missingDataCount > 0) {
+      this.log(`   ⚠️  ${missingDataCount}/${validated} nodes missing coverage data`, 'warning');
+    } else {
+      this.log(`   ⚠️  ${violations} mismatches, ${missingDataCount} missing data (${validated} total)`, 'warning');
+    }
+  }
+
+  /**
    * Determine overall status
    */
   determineStatus() {
-    if (this.results.cycles.length > 0 || this.results.missing_refs.length > 5) {
+    const criticalCoverageViolations = this.results.coverage_integrity.filter(
+      v => v.severity === 'critical'
+    ).length;
+
+    // Only coverage mismatches (not missing data warnings) should affect status
+    const coverageMismatches = this.results.coverage_integrity.filter(
+      v => v.type === 'coverage_integrity_violation'
+    ).length;
+
+    if (
+      this.results.cycles.length > 0 ||
+      this.results.missing_refs.length > 5 ||
+      criticalCoverageViolations > 0
+    ) {
       this.results.status = 'critical';
     } else if (
       this.results.missing_refs.length > 0 ||
       this.results.orphans.length > 0 ||
       Object.keys(this.results.drift).length > 0 ||
-      this.results.outdated.length > 3
+      this.results.outdated.length > 3 ||
+      coverageMismatches > 0  // Only actual mismatches, not missing data warnings
     ) {
       this.results.status = 'warning';
     } else {
@@ -578,6 +676,7 @@ class GDDValidator {
 - **Missing References:** ${this.results.missing_refs.length}
 - **Cycles Detected:** ${this.results.cycles.length}
 - **Drift Issues:** ${Object.keys(this.results.drift).length}
+- **Coverage Integrity Violations:** ${this.results.coverage_integrity.length}
 `;
 
     // Add drift summary if available
@@ -656,6 +755,24 @@ Files with potential drift:
 ${Object.entries(this.results.drift).map(([file, issues]) =>
   `- **${file}**\n${issues.map(i => `  - ${i}`).join('\n')}`
 ).join('\n')}
+
+`;
+    }
+
+    // Coverage Integrity Violations (Phase 15.1)
+    if (this.results.coverage_integrity.length > 0) {
+      markdown += `### ⚠️ Coverage Integrity Violations
+
+Coverage authenticity issues detected:
+
+| Node | Type | Declared | Actual | Diff | Severity |
+|------|------|----------|--------|------|----------|
+${this.results.coverage_integrity.map(v =>
+  `| ${v.node} | ${v.type} | ${v.declared || 'N/A'}% | ${v.actual || 'N/A'}% | ${v.diff || 'N/A'}% | ${v.severity} |`
+).join('\n')}
+
+**Actions Required:**
+${this.results.coverage_integrity.map(v => `- ${v.message}`).join('\n')}
 
 `;
     }
@@ -743,6 +860,11 @@ ${Object.entries(this.results.drift).map(([file, issues]) =>
 
     if (Object.keys(this.results.drift).length > 0) {
       console.log(`⚠ ${Object.keys(this.results.drift).length} drift issue(s)`);
+    }
+
+    if (this.results.coverage_integrity.length > 0) {
+      const critical = this.results.coverage_integrity.filter(v => v.severity === 'critical').length;
+      console.log(`⚠ ${this.results.coverage_integrity.length} coverage integrity issue(s)${critical > 0 ? ` (${critical} critical)` : ''}`);
     }
 
     // Add drift risk summary
@@ -838,7 +960,9 @@ ADDITIONAL ANALYSIS (when enabled):
   --score: Node health scoring (0-100) with quality metrics
 
 For more information, see:
-  - docs/GDD-IMPLEMENTATION-SUMMARY.md
+  - docs/GDD-IMPLEMENTATION-SUMMARY.md (modular index)
+  - docs/implementation/ (detailed phase documentation)
+  - docs/.gddindex.json (system metadata)
   - CLAUDE.md (GDD Runtime Validation section)
   `);
 }

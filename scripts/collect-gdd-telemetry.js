@@ -134,7 +134,7 @@ class TelemetryCollector {
 
       const healthData = JSON.parse(fs.readFileSync(healthPath, 'utf8'));
 
-      // Schema Migration: gdd-health.json uses NEW keys (overall_score, status, total_nodes)
+      // Schema Migration: Use NEW keys (overall_score, status, total_nodes) as primary
       // Fallback to OLD keys (average_score, overall_status, node_count) for backwards compatibility
       const averageScore = healthData.overall_score || healthData.average_score || 0;
       const nodeCount = healthData.total_nodes || healthData.node_count || 0;
@@ -553,7 +553,6 @@ class TelemetryCollector {
     if (metrics.health) {
       md += `### Health\n\n`;
       md += `- Overall Score: ${metrics.health.overall_score}/100\n`;
-      md += `- Average Node Score: ${metrics.health.average_score}/100\n`;
       md += `- Healthy Nodes: ${metrics.health.healthy_count}\n`;
       md += `- Degraded Nodes: ${metrics.health.degraded_count}\n`;
       md += `- Critical Nodes: ${metrics.health.critical_count}\n\n`;

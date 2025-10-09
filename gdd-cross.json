@@ -1,0 +1,245 @@
+{
+  "nodes_validated": 13,
+  "coverage_validation": {
+    "total": 13,
+    "matched": 0,
+    "mismatched": 13,
+    "violations": [
+      {
+        "node": "analytics",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "billing",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "cost-control",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "coverage_calculation_failed"
+      },
+      {
+        "node": "multi-tenant",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "persona",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "plan-features",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "platform-constraints",
+        "declared": 100,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "queue-system",
+        "declared": 87,
+        "actual": null,
+        "diff": null,
+        "reason": "coverage_calculation_failed"
+      },
+      {
+        "node": "roast",
+        "declared": 100,
+        "actual": null,
+        "diff": null,
+        "reason": "coverage_calculation_failed"
+      },
+      {
+        "node": "shield",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "coverage_calculation_failed"
+      },
+      {
+        "node": "social-platforms",
+        "declared": 100,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "tone",
+        "declared": 70,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      },
+      {
+        "node": "trainer",
+        "declared": 50,
+        "actual": null,
+        "diff": null,
+        "reason": "no_source_files_found"
+      }
+    ]
+  },
+  "timestamp_validation": {
+    "total": 13,
+    "valid": 9,
+    "stale": 0,
+    "future": 4,
+    "violations": [
+      {
+        "node": "platform-constraints",
+        "declared": "2025-10-09",
+        "actual": "2025-10-06",
+        "diffDays": 3,
+        "reason": "future_date"
+      },
+      {
+        "node": "queue-system",
+        "declared": "2025-10-09",
+        "actual": "2025-10-06",
+        "diffDays": 3,
+        "reason": "future_date"
+      },
+      {
+        "node": "roast",
+        "declared": "2025-10-09",
+        "actual": "2025-10-06",
+        "diffDays": 3,
+        "reason": "future_date"
+      },
+      {
+        "node": "social-platforms",
+        "declared": "2025-10-09",
+        "actual": "2025-10-06",
+        "diffDays": 3,
+        "reason": "future_date"
+      }
+    ]
+  },
+  "dependency_validation": {
+    "total": 11,
+    "valid": 3,
+    "missing_deps": 5,
+    "phantom_deps": 0,
+    "violations": [
+      {
+        "node": "analytics",
+        "declared": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "persona",
+        "declared": [
+          "-"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "plan-features",
+        "declared": [
+          "-"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "platform-constraints",
+        "declared": [
+          "-"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "roast",
+        "declared": [
+          "-",
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "detected": [],
+        "missing": [
+          "-",
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "phantom": [],
+        "reason": "dependency_mismatch"
+      },
+      {
+        "node": "social-platforms",
+        "declared": [
+          "-",
+          "-",
+          "-"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "tone",
+        "declared": [
+          "-",
+          "-"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      },
+      {
+        "node": "trainer",
+        "declared": [
+          "-",
+          "-",
+          "-"
+        ],
+        "detected": [],
+        "missing": [],
+        "phantom": [],
+        "reason": "no_source_files"
+      }
+    ]
+  },
+  "overall_score": 87.2,
+  "status": "WARNING"
+}

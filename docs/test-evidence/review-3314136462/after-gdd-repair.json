@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-10-08T10:25:11.730Z",
+  "mode": "dry-run",
+  "success": true,
+  "fixes_would_apply": 2,
+  "fixes_applied": 0,
+  "errors": 0,
+  "health_before": 98.8,
+  "health_after": 98.8,
+  "details": {
+    "fixes": [
+      {
+        "type": "auto",
+        "node": "multi-tenant",
+        "action": "multi-tenant: Missing coverage field"
+      },
+      {
+        "type": "auto",
+        "node": "trainer",
+        "action": "trainer: Missing coverage field"
+      }
+    ],
+    "humanReview": [],
+    "errors": []
+  }
+}

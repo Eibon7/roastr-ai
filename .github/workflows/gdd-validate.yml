@@ -71,6 +71,21 @@ jobs:
           echo "high_risk_count=$HIGH_RISK" >> $GITHUB_OUTPUT
           echo "Drift Risk: $DRIFT_RISK/100 (High-risk nodes: $HIGH_RISK)"
 
+      - name: Check coverage authenticity (Phase 15.1)
+        id: coverage_integrity
+        run: |
+          echo "🔢 Checking coverage authenticity..."
+          COVERAGE_VIOLATIONS=$(jq -r '.coverage_integrity | length' gdd-status.json)
+          CRITICAL_COVERAGE=$(jq -r '[.coverage_integrity[] | select(.severity == "critical")] | length' gdd-status.json)
+          echo "violations=$COVERAGE_VIOLATIONS" >> $GITHUB_OUTPUT
+          echo "critical_violations=$CRITICAL_COVERAGE" >> $GITHUB_OUTPUT
+          echo "Coverage Integrity: $COVERAGE_VIOLATIONS violations ($CRITICAL_COVERAGE critical)"
+
+          if [ "$CRITICAL_COVERAGE" -gt 0 ]; then
+            echo "❌ Critical coverage integrity violations detected!"
+            echo "::error::$CRITICAL_COVERAGE critical coverage authenticity violations found"
+          fi
+
       - name: Check health threshold
         id: threshold
         run: |
@@ -116,6 +131,7 @@ jobs:
             | **Health Score** | ${health.overall_score.toFixed(1)}/100 | ${healthEmoji} |
             | **Drift Risk** | ${drift.average_drift_risk}/100 | ${driftEmoji} |
             | **Nodes Validated** | ${status.nodes_validated} | ✅ |
+            | **Coverage Integrity** | ${status.coverage_integrity?.length || 0} violations | ${(status.coverage_integrity?.length || 0) === 0 ? '🟢' : '🔴'} |
             | **Coverage** | ${health.coverage_count || 0}% | ${health.coverage_count >= 80 ? '🟢' : '🟡'} |
 
             ### Health Breakdown
@@ -225,8 +241,13 @@ jobs:
               labels: ['documentation', 'gdd', 'tech-debt', 'priority:P1']
             });
 
-      - name: Fail if health below threshold
-        if: steps.threshold.outputs.result == 'fail'
+      - name: Fail if health below threshold or coverage integrity violated
+        if: steps.threshold.outputs.result == 'fail' || steps.coverage_integrity.outputs.critical_violations > 0
         run: |
-          echo "❌ GDD validation failed: Health score below threshold"
+          if [ "${{ steps.threshold.outputs.result }}" == "fail" ]; then
+            echo "❌ GDD validation failed: Health score below threshold"
+          fi
+          if [ "${{ steps.coverage_integrity.outputs.critical_violations }}" -gt 0 ]; then
+            echo "❌ GDD validation failed: Coverage integrity violations detected"
+          fi
           exit 1

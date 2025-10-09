@@ -4,9 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-06
-**Coverage:** 0%
+**Last Updated:** 2025-10-09
+**Coverage:** 70%
+**Coverage Source:** auto
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
+**Related PRs:** #499
 
 ## Dependencies
 

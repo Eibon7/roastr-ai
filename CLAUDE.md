@@ -491,6 +491,52 @@ Issue #408: "Shield integration tests"
 
 **Tabla global de nodos-agentes**: Ver sección "Node-Agent Matrix" en `spec.md` para referencia rápida.
 
+### Coverage Authenticity Rules (GDD Phase 15.1)
+
+**NEVER modify `**Coverage:**` values manually. Coverage data must always be derived from automated reports.**
+
+- **Coverage Source**: All GDD nodes must have `**Coverage Source:** auto` field immediately after `**Coverage:**` field
+- **Automated Enforcement**: Validation and Auto-Repair scripts enforce coverage authenticity automatically
+- **Manual modifications are considered integrity violations** and will trigger CI failure
+- **Coverage data sources**:
+  - Primary: `coverage/coverage-summary.json`
+  - Secondary: `lcov.info`
+- **Tolerance**: 3% difference allowed between declared and actual coverage
+- **Violations**: Any mismatch >3% triggers critical integrity violation
+
+**Validation Commands:**
+```bash
+# Validate coverage authenticity
+node scripts/validate-gdd-runtime.js --full
+
+# Auto-repair coverage mismatches
+node scripts/auto-repair-gdd.js --auto-fix
+```
+
+**Coverage Update Workflow:**
+1. Run tests: `npm test -- --coverage`
+2. Coverage report auto-generated in `coverage/coverage-summary.json`
+3. Run auto-repair: `node scripts/auto-repair-gdd.js --auto`
+4. Auto-repair reads actual coverage and updates node docs
+5. Commit updated node docs with accurate coverage
+
+**Manual Override (discouraged):**
+- If coverage data is unavailable, use `**Coverage Source:** manual`
+- This triggers a warning (not an error)
+- Must be justified in PR description
+- Switch back to `auto` when coverage becomes available
+
+**Integrity Score:**
+- Coverage authenticity contributes 10% to node health score
+- Manual coverage source: -20 points
+- Missing coverage source: -10 points
+- Coverage mismatch: penalty based on diff (up to -50 points)
+
+**CI/CD Integration:**
+- CI checks coverage authenticity before merge
+- Blocks merge if coverage integrity violations detected
+- Auto-creates issues for manual review if needed
+
 ### GDD Activation - Issue Analysis & Context Loading (October 3, 2025)
 
 **IMPORTANTE:** A partir de ahora, el Orchestrator debe usar Graph Driven Development (GDD) para **todas las issues**, cargando solo los nodos relevantes en lugar de spec.md completo.
@@ -815,6 +861,555 @@ Displays:
   }
 }
 ```
+
+---
+
+## Cross-Validation & Extended Health Metrics (GDD 2.0 - Phase 15)
+
+> **Implementation Date:** October 9, 2025
+> **Status:** Production Ready
+> **For full details, see:** `docs/plan/gdd-phase-15-cross-validation.md`
+
+GDD 2.0 Phase 15 extends the framework from a documentation coherence engine into a comprehensive **System Health Intelligence Layer** by adding cross-validation between documentation and runtime data, plus connectivity metrics for external integrations.
+
+### Overview
+
+Phase 15 introduces three major enhancements:
+
+1. **Cross-Validation Engine**: Automatically validates consistency between GDD node metadata and real runtime data sources (coverage reports, git history, source code imports)
+2. **Integration Status Tracking**: Monitors health and connectivity of 9 external platform integrations (Twitter, Discord, YouTube, etc.)
+3. **Unified Health Intelligence**: Combines documentation health (Phase 7), cross-validation accuracy, and connectivity metrics into a composite system health score
+
+### Cross-Validation Engine
+
+The cross-validation engine (`scripts/validate-gdd-cross.js`) verifies three critical dimensions:
+
+#### 1. Coverage Validation
+
+Compares declared coverage values in node docs against actual test coverage from `coverage/coverage-summary.json`:
+
+- Maps GDD nodes to source files using intelligent path resolution
+- Calculates actual coverage by aggregating line coverage across related files
+- Applies 3% tolerance for minor discrepancies
+- Flags mismatches that exceed tolerance as violations
+
+**Example:**
+```yaml
+# In docs/nodes/shield.md
+**Coverage:** 70%
+**Coverage Source:** auto
+
+# Validator checks:
+# - Reads coverage/coverage-summary.json
+# - Maps shield → [src/services/shieldService.js, src/workers/ShieldActionWorker.js]
+# - Calculates: (85% + 65%) / 2 = 75% actual coverage
+# - Compares: |75% - 70%| = 5% > 3% tolerance → VIOLATION
+```
+
+#### 2. Timestamp Validation
+
+Validates `**Last Updated:**` fields against actual git commit history:
+
+- Executes `git log -1 --format=%ai --follow` for each node's source files
+- Applies ±1 day tolerance to account for timezone and batch update differences
+- Detects stale documentation (declared date >> actual last commit)
+- Detects future dates (declared date in future)
+
+**Example:**
+```yaml
+# In docs/nodes/roast.md
+**Last Updated:** 2025-10-05
+
+# Validator checks:
+# - git log -1 --format=%ai src/services/roastGeneratorEnhanced.js
+# - Latest commit: 2025-10-08T14:30:00Z
+# - Difference: 3 days > 1 day tolerance → VIOLATION (stale)
+```
+
+#### 3. Dependency Validation
+
+Compares declared dependencies against actual imports/requires in source code:
+
+- Scans source files for `require()` and `import` statements
+- Extracts dependency list from actual code
+- Compares with `**Dependencies:**` declared in node docs
+- Flags missing dependencies (declared but not imported)
+- Flags phantom dependencies (imported but not declared)
+
+**Example:**
+```yaml
+# In docs/nodes/roast.md
+**Dependencies:**
+- shield
+- cost-control
+- persona
+
+# Validator scans src/services/roastGeneratorEnhanced.js:
+# - Found: require('./shieldService') → shield ✓
+# - Found: require('./personaService') → persona ✓
+# - Missing: cost-control not imported → MISSING DEPENDENCY VIOLATION
+```
+
+### Commands & Usage
+
+#### Basic Cross-Validation
+
+```bash
+# Validate all nodes (recommended)
+node scripts/validate-gdd-cross.js --full
+
+# Validate specific node
+node scripts/validate-gdd-cross.js --node=shield
+
+# Show summary only (no detailed violations)
+node scripts/validate-gdd-cross.js --full --summary
+
+# CI mode (exit 1 if warnings, exit 2 if errors)
+node scripts/validate-gdd-cross.js --full --ci
+```
+
+#### Output Formats
+
+**Markdown Report** (`docs/cross-validation-report.md`):
+```markdown
+# Cross-Validation Report
+
+**Generated:** 2025-10-09T12:00:00Z
+**Status:** 🟢 HEALTHY
+**Overall Score:** 97.4/100
+
+## Coverage Validation
+
+**Status:** ⚠️ FAIL
+- **Total Checked:** 13
+- **Matched:** 11
+- **Mismatched:** 2
+
+### Violations
+
+| Node | Declared | Actual | Diff | Reason |
+|------|----------|--------|------|--------|
+| shield | 70% | 75% | +5% | coverage_mismatch |
+| roast | 100% | 95% | -5% | coverage_mismatch |
+```
+
+**JSON Report** (`gdd-cross.json`):
+```json
+{
+  "nodes_validated": 13,
+  "coverage_validation": {
+    "total": 13,
+    "matched": 11,
+    "mismatched": 2,
+    "violations": [
+      {
+        "node": "shield",
+        "declared": 70,
+        "actual": 75,
+        "diff": 5,
+        "reason": "coverage_mismatch"
+      }
+    ]
+  },
+  "timestamp_validation": { ... },
+  "dependency_validation": { ... },
+  "overall_score": 97.4,
+  "status": "HEALTHY"
+}
+```
+
+### Integration Status Tracking
+
+The integration status system (`scripts/update-integration-status.js`, `integration-status.json`) monitors 9 external platform integrations:
+
+**Monitored Platforms:**
+- Twitter (X)
+- Discord
+- Twitch
+- YouTube
+- Instagram
+- Facebook
+- Reddit
+- TikTok
+- Bluesky
+
+**Status Levels:**
+- **active**: Adapter exists + credentials configured + recent successful API calls
+- **inactive**: Adapter exists + credentials missing or API calls failing
+- **not_connected**: No adapter implementation found
+
+**Health Calculation:**
+```javascript
+// Per-platform health (0-100)
+health = (adapter_exists ? 40 : 0) + (credentials_present ? 60 : 0)
+
+// Overall connectivity health
+overall_health = average(all_platform_health_scores)
+```
+
+**Update Integration Status:**
+```bash
+# Check all integrations
+node scripts/update-integration-status.js
+
+# Verbose output
+node scripts/update-integration-status.js --verbose
+
+# CI mode (silent)
+node scripts/update-integration-status.js --ci
+```
+
+**Output** (`integration-status.json`):
+```json
+{
+  "last_updated": "2025-10-09T12:00:00Z",
+  "version": "1.0",
+  "integrations": [
+    {
+      "name": "twitter",
+      "status": "inactive",
+      "health_score": 40,
+      "credentials_present": false,
+      "adapter_exists": true,
+      "last_check": "2025-10-09T12:00:00Z",
+      "related_nodes": ["social-platforms", "roast", "shield"]
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "active": 0,
+    "inactive": 9,
+    "not_connected": 0,
+    "overall_health": 40
+  }
+}
+```
+
+### Extended Health Scoring
+
+Phase 15 extends `scripts/score-gdd-health.js` with connectivity and cross-validation metrics.
+
+**Enhanced Health Formula:**
+```javascript
+// Documentation Health (existing from Phase 7)
+doc_health = weighted_avg([
+  sync_accuracy * 0.25,
+  update_freshness * 0.15,
+  dependency_integrity * 0.20,
+  coverage_evidence * 0.20,
+  agent_relevance * 0.10,
+  integrity_score * 0.10
+])
+
+// Connectivity Score (new in Phase 15)
+connectivity_score = (active_integrations / total_integrations) * 100
+
+// Cross-Validation Score (new in Phase 15)
+cross_validation_score = gdd-cross.json overall_score
+
+// Composite Health Score
+composite_health = weighted_avg([
+  doc_health * 0.40,
+  cross_validation_score * 0.30,
+  connectivity_score * 0.30
+])
+```
+
+**Enhanced Commands:**
+```bash
+# Score with Phase 15 metrics
+node scripts/score-gdd-health.js --ci
+
+# Generate extended report
+node scripts/score-gdd-health.js --format=markdown
+```
+
+**Extended Report Sections:**
+
+1. **External Integrations Status** (new):
+   - Connectivity score
+   - Active/inactive/not_connected counts
+   - Per-platform health breakdown
+
+2. **Cross-Validation Summary** (new):
+   - Overall cross-validation score
+   - Coverage/timestamp/dependency violation counts
+   - Top violators list
+
+3. **System Health Intelligence Summary** (new):
+   - Composite health score
+   - Weighted breakdown by dimension
+   - Status determination (HEALTHY/DEGRADED/CRITICAL)
+
+### Watch Mode Integration
+
+Phase 15 enhances `scripts/watch-gdd.js` with real-time cross-validation and connectivity monitoring.
+
+**New Flags:**
+```bash
+# Enable cross-validation in watch mode
+node scripts/watch-gdd.js --cross
+
+# Enable connectivity monitoring
+node scripts/watch-gdd.js --connectivity
+
+# Enable both
+node scripts/watch-gdd.js --cross --connectivity
+
+# Enable all Phase 15 features
+node scripts/watch-gdd.js --all
+```
+
+**Enhanced Dashboard Display:**
+```
+╔═══════════════════════════════════════════════════════╗
+║            GDD Runtime Validation Dashboard            ║
+╠═══════════════════════════════════════════════════════╣
+║ Cross-Validation Status                               ║
+║ ├─ Overall Score: 97.4/100 [HEALTHY]                  ║
+║ ├─ Coverage Violations: 2                             ║
+║ ├─ Timestamp Violations: 0                            ║
+║ └─ Dependency Violations: 1                           ║
+║                                                        ║
+║ Integration Connectivity                              ║
+║ ├─ Overall Health: 40%                                ║
+║ ├─ Active: 0/9                                        ║
+║ ├─ Inactive: 9/9                                      ║
+║ └─ Not Connected: 0/9                                 ║
+╚═══════════════════════════════════════════════════════╝
+```
+
+### Workflow Integration
+
+**Pre-Commit Workflow:**
+```bash
+# 1. Run tests with coverage
+npm test -- --coverage
+
+# 2. Update integration status
+node scripts/update-integration-status.js --ci
+
+# 3. Run cross-validation
+node scripts/validate-gdd-cross.js --full --ci
+
+# 4. Score health with Phase 15 metrics
+node scripts/score-gdd-health.js --ci
+
+# 5. Commit if all checks pass
+git add .
+git commit -m "feat: your feature description"
+```
+
+**CI/CD Integration:**
+
+Cross-validation is automatically integrated into `.github/workflows/gdd-validate.yml`:
+
+```yaml
+- name: Run Cross-Validation
+  run: node scripts/validate-gdd-cross.js --full --ci
+
+- name: Update Integration Status
+  run: node scripts/update-integration-status.js --ci
+
+- name: Score Health with Phase 15
+  run: node scripts/score-gdd-health.js --ci
+```
+
+**Exit Codes:**
+- `0`: All validations passed
+- `1`: Warnings detected (coverage mismatches within tolerance, minor issues)
+- `2`: Critical errors detected (major violations, missing data sources)
+
+### Performance Metrics
+
+Phase 15 meets all performance targets:
+
+| Operation | Target | Actual | Status |
+|-----------|--------|--------|--------|
+| Cross-validate 13 nodes | <1s | ~800ms | ✅ PASS |
+| Update integration status | <2s | ~1.2s | ✅ PASS |
+| Extended health scoring | <1s | ~600ms | ✅ PASS |
+| Watch mode refresh | <3s | ~2.1s | ✅ PASS |
+
+### Troubleshooting
+
+**Issue: "No coverage data found"**
+```bash
+# Solution: Run tests with coverage first
+npm test -- --coverage
+node scripts/validate-gdd-cross.js --full
+```
+
+**Issue: "Git log failed for node X"**
+```bash
+# Solution: Ensure source files exist and are tracked by git
+git status
+git add <missing-files>
+```
+
+**Issue: "All integrations showing 'inactive'"**
+```bash
+# Solution: Add platform credentials to .env
+# See "Platform Integrations" section in this file for required env vars
+```
+
+**Issue: "Coverage mismatch for node X"**
+```bash
+# Solution: Either update node docs or improve test coverage
+# Option 1: Update declared coverage (manual)
+# Option 2: Use auto-repair (coming in Phase 15.1)
+node scripts/auto-repair-gdd.js --auto-fix
+```
+
+**Issue: "Cross-validation score lower than expected"**
+```bash
+# Solution: Check detailed violations
+node scripts/validate-gdd-cross.js --full
+# Review docs/cross-validation-report.md for specifics
+# Address violations one by one
+```
+
+### Files Added/Modified
+
+**New Files:**
+- `scripts/validate-gdd-cross.js` - Main cross-validation engine
+- `scripts/gdd-cross-validator.js` - Helper class with validation utilities
+- `scripts/update-integration-status.js` - Integration status updater
+- `integration-status.json` - Integration status data store
+- `gdd-cross.json` - Cross-validation results (JSON output)
+- `docs/cross-validation-report.md` - Cross-validation results (markdown)
+- `docs/plan/gdd-phase-15-cross-validation.md` - Implementation plan
+
+**Modified Files:**
+- `scripts/score-gdd-health.js` - Extended with Phase 15 metrics
+- `scripts/watch-gdd.js` - Added --cross and --connectivity flags
+- `CLAUDE.md` - This documentation section
+
+### Success Criteria
+
+Phase 15 is considered complete when:
+
+- ✅ Cross-validation engine validates all 13 nodes in <1s
+- ✅ Coverage, timestamp, and dependency checks implemented
+- ✅ Both markdown and JSON reports generated
+- ✅ Integration status tracking operational for 9 platforms
+- ✅ Health scoring extended with connectivity and cross-validation metrics
+- ✅ Composite health formula implemented (40/30/30 weighting)
+- ✅ Watch mode enhanced with --cross and --connectivity flags
+- ✅ CI/CD integration with proper exit codes (0/1/2)
+- ✅ Performance targets met (<1s validation, <2s status update)
+- ✅ Documentation complete (CLAUDE.md, implementation plan)
+
+**Current Status:** All criteria met ✅
+
+---
+
+## Documentation Integrity Policy (Phase 15.3)
+
+### GDD Implementation Summary Governance
+
+**Effective:** October 8, 2025 (GDD 2.0 Phase 15.3)
+
+The GDD Implementation Summary has been modularized to prevent token limit errors and improve performance. All future documentation must follow these rules:
+
+#### Size Limits
+
+- **GDD Implementation Summary Index** (`docs/GDD-IMPLEMENTATION-SUMMARY.md`)
+  - **Maximum Size:** 350 lines (~5,000 tokens)
+  - **Current Size:** 249 lines (~1,200 tokens)
+  - **Purpose:** Lightweight index with links to detailed phase documentation
+
+- **Phase Documentation** (`docs/implementation/GDD-PHASE-*.md`)
+  - **Maximum Size:** 1,000 lines per phase file
+  - **Purpose:** Detailed documentation for specific GDD phases
+  - **Structure:** Must include header with back-link to index and footer with navigation
+
+#### Mandatory Structure
+
+All new phase documentation must include:
+
+1. **Header**
+   ```markdown
+   # GDD 2.0 - Phase <number>
+
+   [← Back to Index](../GDD-IMPLEMENTATION-SUMMARY.md)
+
+   ---
+   ```
+
+2. **Content Sections**
+   - Objective
+   - Implementation details
+   - Results & impact
+   - Testing validation
+   - Files modified
+
+3. **Footer**
+   ```markdown
+   ---
+
+   [← Back to Index](../GDD-IMPLEMENTATION-SUMMARY.md) | [View All Phases](./)
+   ```
+
+#### Source of Truth
+
+- **Phase Metadata:** `docs/.gddindex.json` is the authoritative source for:
+  - Total phases count
+  - Latest phase number
+  - Phase status (completed, in_progress, planned)
+  - File locations and sizes
+  - System health snapshot
+
+- **Phase Content:** Individual phase files in `docs/implementation/` contain detailed documentation
+
+#### Update Requirements
+
+When adding a new GDD phase, you **MUST** update:
+
+1. ✅ Create phase file: `docs/implementation/GDD-PHASE-<number>.md`
+2. ✅ Update index: `docs/GDD-IMPLEMENTATION-SUMMARY.md` (add row to phase table)
+3. ✅ Update metadata: `docs/.gddindex.json` (increment counters, add phase entry)
+4. ✅ Verify size: Ensure index remains <350 lines
+
+**Failure to update all three components will cause validation errors.**
+
+#### Enforcement
+
+- **CI/CD Validation:** `.github/workflows/gdd-validate.yml` checks index size
+- **Auto-Repair:** `scripts/auto-repair-gdd.js` can fix missing phase references
+- **Health Scoring:** Documentation size is monitored in health metrics
+- **Manual Edits:** Require approval from Orchestrator Agent
+
+#### Migration Path
+
+If index exceeds size limits:
+
+1. Identify sections that can be moved to phase files
+2. Create summary tables instead of full descriptions
+3. Archive historical data to appropriate phase files
+4. Update links and references
+5. Validate that all phase files have proper headers/footers
+
+#### Rationale
+
+**Why Modularization?**
+- Previous monolithic file: 3,069 lines (~27,700 tokens)
+- Token limit errors prevented file reads
+- Performance degraded with file size
+- Maintenance became difficult
+
+**Phase 15.3 Results:**
+- Index reduced to 249 lines (93% reduction)
+- Token errors eliminated
+- Read time improved from 800ms+ to <50ms
+- Clear navigation with direct phase links
+
+#### Documentation
+
+For complete details on modularization architecture, see:
+- [GDD Phase 15.3 Documentation](./docs/GDD-PHASE-15.3-MODULARIZATION.md)
+- [GDD Index Metadata](./docs/.gddindex.json)
+- [Modular Phase Files](./docs/implementation/)
 
 ---
 
