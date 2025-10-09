@@ -20,7 +20,7 @@ Fix 2 failing CI/CD jobs on PR #492:
 ### Issue 1: auto-repair Job Failure
 
 **Error**:
-```
+```text
 ENOENT: no such file or directory, open 'gdd-repair.json'
 ```
 
@@ -39,7 +39,7 @@ ENOENT: no such file or directory, open 'gdd-repair.json'
 ### Issue 2: validate-gdd Job Failure
 
 **Error**:
-```
+```text
 ❌ GDD validation failed: Health score below threshold
 Health Score: 93.8/100 (required: 95)
 ```
