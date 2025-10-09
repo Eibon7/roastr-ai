@@ -1,0 +1,233 @@
+## 🎯 Phase 15.1: Coverage Integrity Enforcement
+
+Prevents manual modification of coverage values in GDD nodes by enforcing automated validation against actual test reports.
+
+---
+
+## 📊 Summary
+
+**Status:** ✅ PRODUCTION READY
+**Health Score:** 98.8/100 (+5.0 improvement)
+**Coverage Integrity:** 0 violations across 13 nodes
+
+---
+
+## 🚀 Key Features
+
+### 1. Coverage Helper Module
+**New file:** `scripts/gdd-coverage-helper.js`
+
+- `getCoverageFromReport(nodeName)` - Fetches actual coverage from coverage-summary.json
+- `validateCoverageAuthenticity()` - Validates declared vs actual coverage (±3% tolerance)
+- Maps GDD nodes to source files via system-map.yaml
+- Calculates average coverage for multi-file nodes
+
+### 2. Validation Enhancement
+**Modified:** `scripts/validate-gdd-runtime.js`
+
+- New validation rule: `validateCoverageAuthenticity()`
+- Added `coverage_integrity[]` field to gdd-status.json
+- Critical violations trigger status: 'critical'
+- Coverage integrity results in system-validation.md
+
+### 3. Auto-Repair Integration
+**Modified:** `scripts/auto-repair-gdd.js`
+
+- New detection rule: `detectCoverageIntegrity()`
+- Auto-adds "Coverage Source: auto" field to all nodes
+- Resets coverage to actual value if mismatch >3%
+- **15 auto-fixes applied** in initial run
+
+### 4. Integrity Score Metric
+**Modified:** `scripts/score-gdd-health.js`
+
+- New **Integrity Score (10%)** in health scoring system
+- Adjusted weights: Sync Accuracy 25% (was 30%), Integrity 10% (new)
+- Penalizes:
+  - Missing Coverage Source: -10 points
+  - Manual Coverage Source: -20 points
+  - Coverage mismatch: up to -50 points
+
+### 5. Coverage Source Metadata
+**Modified:** All 13 GDD nodes in `docs/nodes/*.md`
+
+- Added `**Coverage Source:** auto` field after Coverage field
+- Indicates coverage derived from automated reports
+- Manual override allowed with "Coverage Source: manual" (triggers warning)
+
+### 6. Governance Rules
+**Modified:** `CLAUDE.md` (lines 483-528)
+
+New section: **"Coverage Authenticity Rules (GDD Phase 15.1)"**
+
+**Key rules:**
+- NEVER modify Coverage values manually
+- Coverage must derive from automated reports
+- 3% tolerance for minor variations
+- Manual modifications = integrity violations → CI failure
+
+### 7. CI/CD Integration
+**Modified:** `.github/workflows/gdd-validate.yml`
+
+- New step: "Check coverage authenticity (Phase 15.1)"
+- Blocks merge if critical coverage violations detected
+- PR comments show coverage integrity status
+
+---
+
+## 📈 Results
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| **Nodes with Coverage Source** | 0/13 | 13/13 | +13 ✅ |
+| **Coverage Integrity Violations** | N/A | 0 | ✅ |
+| **Average Health Score** | 93.8/100 | 98.8/100 | +5.0 ✅ |
+| **Healthy Nodes** | 13/13 | 13/13 | = |
+| **Integrity Score (avg)** | N/A | 100/100 | NEW ✅ |
+
+---
+
+## 🧪 Testing
+
+### End-to-End Validation
+
+**Test 1: Full GDD validation**
+```bash
+$ node scripts/validate-gdd-runtime.js --full
+🔢 Validating coverage authenticity...
+   ✅ 13 nodes validated, all authentic
+Overall Status: HEALTHY
+```
+✅ PASS
+
+**Test 2: Health scoring with integrity**
+```bash
+$ node scripts/score-gdd-health.js
+Average Score: 98.8/100
+Integrity Score: 100/100 (all nodes)
+```
+✅ PASS
+
+**Test 3: Auto-repair**
+```bash
+$ node scripts/auto-repair-gdd.js --auto
+Fixes applied: 15
+- Added coverage source to analytics
+- Added coverage source to billing
+- ...
+```
+✅ PASS
+
+**Test 4: System validation report**
+```bash
+$ cat docs/system-validation.md
+- Coverage Integrity Violations: 0
+```
+✅ PASS
+
+---
+
+## 📦 Files Modified
+
+### New Files
+- `scripts/gdd-coverage-helper.js` - Coverage authenticity helper
+- `docs/GDD-PHASE-15.1-COVERAGE-INTEGRITY.md` - Implementation summary
+
+### Modified Files
+- `scripts/validate-gdd-runtime.js` - Added coverage authenticity validation
+- `scripts/auto-repair-gdd.js` - Added integrity detection & auto-fix
+- `scripts/score-gdd-health.js` - Added Integrity Score (10%)
+- `CLAUDE.md` - Added Coverage Authenticity Rules
+- `.github/workflows/gdd-validate.yml` - Added coverage integrity check
+- `docs/nodes/*.md` (13 files) - Added Coverage Source field
+- `docs/system-health.md` - Auto-generated with integrity scores
+- `docs/system-validation.md` - Auto-generated with integrity results
+- `gdd-health.json` - Includes integrity scores per node
+- `gdd-status.json` - Includes coverage_integrity[] field
+
+---
+
+## 🔒 Enforcement
+
+### Validation Rules
+- Coverage values must match `coverage-summary.json` (±3% tolerance)
+- Manual modifications trigger **critical violations**
+- CI **blocks merge** if violations detected
+
+### Auto-Repair
+- Automatically adds `Coverage Source: auto` to all nodes
+- Resets coverage to actual values if mismatch >3%
+- Runs on-demand or via CI/CD
+
+### CI/CD Integration
+- Validates coverage authenticity on every PR
+- Creates GitHub error annotation if violations found
+- Blocks merge on critical violations
+
+---
+
+## 📊 GDD Summary
+
+**Nodes Updated:** 13/13
+**Context Used:** Full system validation
+**Validation:** ✅ All checks passing (0 violations)
+**Agent Sync:** ✅ Up to date
+
+**Related Documentation:**
+- Primary: `docs/GDD-PHASE-15.1-COVERAGE-INTEGRITY.md`
+- Governance: `CLAUDE.md` lines 483-528
+- Validation: `docs/system-validation.md`
+- Health: `docs/system-health.md`
+
+---
+
+## ✅ Success Criteria
+
+All criteria met:
+
+- [x] Coverage authenticity validation implemented
+- [x] Auto-repair detects and fixes coverage mismatches
+- [x] Coverage Source field added to all 13 nodes
+- [x] Integrity Score (10%) added to health scoring
+- [x] Governance rules documented
+- [x] CI/CD blocks merge on violations
+- [x] 0 coverage integrity violations
+- [x] Health score improved from 93.8 → 98.8
+
+---
+
+## 🚀 Merge Checklist
+
+**Pre-merge validation:**
+- [x] All tests passing
+- [x] GDD validation: HEALTHY (98.8/100)
+- [x] Coverage integrity: 0 violations
+- [x] Drift risk: 3/100 (healthy)
+- [x] Documentation updated
+- [x] CI/CD workflow tested
+- [x] No conflicts with main
+
+**Ready to merge:** ✅ YES
+
+---
+
+**Implementation details:** See `docs/GDD-PHASE-15.1-COVERAGE-INTEGRITY.md`
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+<!-- This is an auto-generated comment: release notes by coderabbit.ai -->
+## Summary by CodeRabbit
+
+* **New Features**
+  * Telemetry engine with scheduled/manual runs, snapshots, markdown reports, artifact retention, CI-aware commits, and automated alerts/issues for CRITICAL status.
+  * Coverage Integrity enforcement: per-node integrity scoring, coverage authenticity checks, auto-repair for coverage mismatches, and temporary health-threshold recovery flow.
+
+* **Bug Fixes**
+  * Null/zero handling fixes in metrics, robust workflow fallbacks and error propagation, and safer issue/report creation and serialization/timestamps.
+
+* **Documentation**
+  * Extensive documentation, plans, and evidence for telemetry, coverage integrity, auto-repair, governance, and phased rollout.
+
+* **Tests**
+  * New unit test suites for telemetry null-handling, derived metrics, coverage helper, and report rendering.
+<!-- end of auto-generated comment: release notes by coderabbit.ai -->

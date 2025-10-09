@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-10-08T22:23:09.810Z",
+  "buffer_size": 4,
+  "events": [
+    {
+      "id": "1759962189809-phaqyl1",
+      "type": "agent_action",
+      "timestamp": "2025-10-08T22:23:09.809Z",
+      "data": {
+        "agent": "TestAgent",
+        "action": "test_action_1",
+        "node": "test",
+        "deltaHealth": 1.5
+      }
+    },
+    {
+      "id": "1759962189809-m1jqs2l",
+      "type": "agent_action",
+      "timestamp": "2025-10-08T22:23:09.809Z",
+      "data": {
+        "agent": "TestAgent",
+        "action": "test_action_2",
+        "node": "test",
+        "deltaHealth": -0.3
+      }
+    },
+    {
+      "id": "1759962189809-xmyvv2l",
+      "type": "secure_write",
+      "timestamp": "2025-10-08T22:23:09.809Z",
+      "data": {
+        "agent": "TestAgent",
+        "action": "test_write",
+        "path": "/test/path"
+      }
+    },
+    {
+      "id": "1759962189810-u873hn7",
+      "type": "test_event",
+      "timestamp": "2025-10-08T22:23:09.810Z",
+      "data": {
+        "test": true
+      }
+    }
+  ]
+}

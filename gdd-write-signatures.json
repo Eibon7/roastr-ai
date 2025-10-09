@@ -1,0 +1,53 @@
+{
+  "created_at": "2025-10-08T22:23:09.718Z",
+  "version": "1.0.0",
+  "phase": 14,
+  "signatures": [
+    {
+      "id": "781af9d9-241c-4e16-91a0-8c32724310fd",
+      "timestamp": "2025-10-08T22:23:09.719Z",
+      "agent": "TestAgent",
+      "action": "test_write",
+      "path": "/.gdd-test-swp.txt",
+      "hashBefore": null,
+      "hashAfter": "3d963423afc264edeca79ea01b480646b43514548b54dc97030f1f723ab48d1c",
+      "metadata": {
+        "test": true
+      },
+      "backupPath": null,
+      "signature": "cb15e3e621e26fe501a1e59c62570397ac4062af8eb859eb90d70d91229f0fec"
+    },
+    {
+      "id": "16e2605b-e560-4fcb-99a2-49f9df05b53a",
+      "timestamp": "2025-10-08T22:23:09.720Z",
+      "agent": "TestAgent",
+      "action": "test_overwrite",
+      "path": "/.gdd-test-swp.txt",
+      "hashBefore": "3d963423afc264edeca79ea01b480646b43514548b54dc97030f1f723ab48d1c",
+      "hashAfter": "1a267d43d04719cb74664db1fe68bbc0b66619b8522bad8f344f46b1a78aa41e",
+      "metadata": {
+        "test": true,
+        "version": 2
+      },
+      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/.gdd-test-swp.txt.2025-10-08T22-23-09-720Z.backup",
+      "signature": "4a8da5c1012340d44fb0a633b4660c7e25b77457f6e557aab9da56e77ea8e8c2"
+    },
+    {
+      "id": "f2857396-a9c6-450c-9188-3988b40ff42c",
+      "timestamp": "2025-10-08T22:23:09.721Z",
+      "agent": "TestAgent",
+      "action": "rollback",
+      "path": "/.gdd-test-swp.txt",
+      "hashBefore": "1a267d43d04719cb74664db1fe68bbc0b66619b8522bad8f344f46b1a78aa41e",
+      "hashAfter": "3d963423afc264edeca79ea01b480646b43514548b54dc97030f1f723ab48d1c",
+      "metadata": {
+        "reason": "testing_rollback",
+        "original_signature": "16e2605b-e560-4fcb-99a2-49f9df05b53a"
+      },
+      "backupPath": null,
+      "signature": "829d989d5e63c420c41a92e32c20d9bda53393f53d857dd7e8524eebe5f790be"
+    }
+  ],
+  "last_updated": "2025-10-08T22:23:09.721Z",
+  "total_signatures": 3
+}
