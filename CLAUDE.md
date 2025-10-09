@@ -81,6 +81,17 @@ node scripts/auto-repair-gdd.js --ci           # CI mode (exit 1 on errors)
 # GDD Health Scoring (Phase 7)
 node scripts/score-gdd-health.js --ci          # Score all nodes
 node scripts/compute-gdd-health.js --threshold=95  # Check health threshold
+
+# GDD Agent Interface (Phase 14)
+node scripts/agents/agent-interface.js --simulate  # Test agent permissions
+node scripts/agents/secure-write.js --test     # Test secure write protocol
+node scripts/agents/telemetry-bus.js --listen  # Listen to telemetry events
+node scripts/agents/telemetry-bus.js --test    # Test telemetry bus
+
+# GDD Watch with Agents (Phase 14.1)
+node scripts/watch-gdd.js --agents-active      # Watch with autonomous agents
+node scripts/watch-gdd.js --telemetry          # Watch with telemetry display
+node scripts/watch-gdd.js --agents-active --telemetry  # Full agent integration
 ```
 
 ## Multi-Tenant Project Structure

@@ -1,5 +1,19 @@
 # 🧠 Flujo de comentarios en Roastr
 
+## 📊 GDD Schema Consistency - CodeRabbit Review #3313789669
+### 🛠️ Implementation Date: 2025-10-09
+**PR**: [#492](https://github.com/Eibon7/roastr-ai/pull/492)
+**Review**: [#3313789669](https://github.com/Eibon7/roastr-ai/pull/492#pullrequestreview-3313789669)
+**Status**: ✅ COMPLETE
+
+### Changes
+1. **Alphabetized** plan-features.md agents list
+2. **Renamed schema keys**: overall_status→status, average_score→overall_score, node_count→total_nodes
+3. **Updated** consumers: gdd-validate.yml workflow
+4. **Regenerated** gdd-health.json with new schema (93.8/100)
+
+---
+
 ## 🔧 CI/CD Job Fixes - PR #492 Unblock
 ### 🛠️ Implementation Date: 2025-10-09
 **PR**: [#492 - Phase 13 - Telemetry & Analytics Layer](https://github.com/Eibon7/roastr-ai/pull/492)

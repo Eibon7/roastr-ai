@@ -16,14 +16,37 @@ const path = require('path');
 const { GDDValidator } = require('./validate-gdd-runtime');
 const { GDDDriftPredictor } = require('./predict-gdd-drift');
 
+// Phase 14 + 14.1: Agent-Aware Integration
+const AgentInterface = require('./agents/agent-interface');
+const { getInstance: getTelemetryBus } = require('./agents/telemetry-bus');
+
 class GDDWatcher {
-  constructor() {
+  constructor(options = {}) {
     this.rootDir = path.resolve(__dirname, '..');
     this.watchers = [];
     this.debounceTimer = null;
     this.debounceDelay = 2000; // 2 seconds
     this.isValidating = false;
     this.lastStatus = null;
+
+    // Phase 14 + 14.1: Agent integration
+    this.agentsActive = options.agentsActive || false;
+    this.telemetryEnabled = options.telemetry || false;
+
+    // Initialize telemetry bus if enabled
+    if (this.telemetryEnabled) {
+      this.telemetryBus = getTelemetryBus({ verbose: false });
+      this.log('📡 Telemetry Bus enabled', 'info');
+    }
+
+    // Initialize agent interface if agents active
+    if (this.agentsActive) {
+      this.agentInterface = new AgentInterface({
+        telemetryBus: this.telemetryBus,
+        verbose: false
+      });
+      this.log('🤖 Agents active', 'info');
+    }
   }
 
   /**
@@ -39,6 +62,18 @@ class GDDWatcher {
     console.log('║    • docs/nodes/**                    ║');
     console.log('║    • docs/system-map.yaml             ║');
     console.log('║    • spec.md                          ║');
+
+    if (this.agentsActive || this.telemetryEnabled) {
+      console.log('╠════════════════════════════════════════╣');
+      console.log('║  Phase 14 + 14.1 Features:            ║');
+      if (this.agentsActive) {
+        console.log('║    🤖 Agents Active                   ║');
+      }
+      if (this.telemetryEnabled) {
+        console.log('║    📡 Telemetry Bus                   ║');
+      }
+    }
+
     console.log('╚════════════════════════════════════════╝');
     console.log('');
     console.log('Press Ctrl+C to stop');
@@ -150,11 +185,104 @@ class GDDWatcher {
       // Print status bar with health and drift info
       this.printStatusBar(results, stats, driftData);
 
+      // Phase 14 + 14.1: Execute agent actions based on conditions
+      if (this.agentsActive) {
+        await this.executeAgentActions(results, stats, driftData);
+      }
+
       this.lastStatus = results.status;
     } catch (error) {
       this.log(`❌ Validation error: ${error.message}`, 'error');
     } finally {
       this.isValidating = false;
+    }
+  }
+
+  /**
+   * Execute agent actions based on validation results
+   * Phase 14 + 14.1: Agent-Aware Integration
+   */
+  async executeAgentActions(results, healthStats, driftData) {
+    try {
+      // 1. DriftWatcher: Trigger auto-repair if drift > 60
+      if (driftData && driftData.average_drift_risk > 60) {
+        this.log('🔧 DriftWatcher: High drift detected, triggering auto-repair...', 'warning');
+
+        try {
+          await this.agentInterface.triggerRepair('DriftWatcher');
+          this.log('✅ DriftWatcher: Auto-repair triggered', 'success');
+        } catch (error) {
+          this.log(`❌ DriftWatcher: Auto-repair failed: ${error.message}`, 'error');
+        }
+      }
+
+      // 2. DocumentationAgent: Create issue for orphan nodes
+      if (results.orphans && results.orphans.length > 0) {
+        this.log(`📝 DocumentationAgent: ${results.orphans.length} orphan node(s) detected`, 'warning');
+
+        for (const orphan of results.orphans.slice(0, 3)) { // Limit to 3 per run
+          try {
+            await this.agentInterface.createIssue(
+              'DocumentationAgent',
+              `Orphan GDD node detected: ${orphan}`,
+              `The node \`${orphan}\` is not referenced by any other node in the system.\n\n` +
+              `This could indicate:\n` +
+              `- Missing dependency declarations\n` +
+              `- Node should be removed\n` +
+              `- Documentation out of sync\n\n` +
+              `**Action required:** Review and update node dependencies or remove if obsolete.`
+            );
+          } catch (error) {
+            this.log(`❌ DocumentationAgent: Failed to create issue: ${error.message}`, 'error');
+          }
+        }
+      }
+
+      // 3. Orchestrator: Mark nodes stale if outdated > 7
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      if (results.outdated && results.outdated.length > 7) {
+        this.log(`⏰ Orchestrator: ${results.outdated.length} outdated nodes detected`, 'warning');
+
+        for (const outdatedNode of results.outdated.slice(0, 5)) { // Limit to 5 per run
+          try {
+            await this.agentInterface.writeNodeField(
+              outdatedNode,
+              'status',
+              'stale',
+              'Orchestrator'
+            );
+            this.log(`✅ Orchestrator: Marked ${outdatedNode} as stale`, 'success');
+          } catch (error) {
+            this.log(`❌ Orchestrator: Failed to mark ${outdatedNode}: ${error.message}`, 'error');
+          }
+        }
+      }
+
+      // 4. RuntimeValidator: Update health scores
+      if (healthStats && this.agentInterface) {
+        this.log('📊 RuntimeValidator: Health scores updated', 'info');
+        // Health scores are already updated by the scorer, just log
+      }
+
+      // Emit telemetry event for validation completion
+      if (this.telemetryBus) {
+        this.telemetryBus.emit('validation_complete', {
+          agent: 'GDDWatcher',
+          results: {
+            status: results.status,
+            nodes_validated: results.nodes_validated,
+            orphans: results.orphans.length,
+            outdated: results.outdated.length,
+            health_score: healthStats?.average_score || 0,
+            drift_risk: driftData?.average_drift_risk || 0
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+    } catch (error) {
+      this.log(`❌ Agent actions error: ${error.message}`, 'error');
     }
   }
 
@@ -227,6 +355,25 @@ class GDDWatcher {
     }
 
     console.log(`Last check: ${new Date().toLocaleTimeString()}`);
+
+    // Phase 14.1: Show telemetry stats
+    if (this.telemetryEnabled && this.telemetryBus) {
+      console.log('────────────────────────────────────────');
+      console.log('📡 TELEMETRY STATUS');
+
+      const telemetryStats = this.telemetryBus.getStats(10); // Last 10 minutes
+      console.log(`Buffer: ${telemetryStats.buffer_size}/${this.telemetryBus.bufferSize} events`);
+      console.log(`Subscribers: ${telemetryStats.subscribers}`);
+      console.log(`Events (last 10 min): ${telemetryStats.total_events}`);
+
+      if (telemetryStats.avg_health_delta !== 0) {
+        const deltaSymbol = telemetryStats.avg_health_delta > 0 ? '⬆️' : '⬇️';
+        console.log(`Avg ΔHealth: ${deltaSymbol} ${telemetryStats.avg_health_delta.toFixed(2)}`);
+      }
+
+      console.log('────────────────────────────────────────');
+    }
+
     console.log('');
   }
 
@@ -268,7 +415,15 @@ class GDDWatcher {
  * CLI entry point that instantiates a GDDWatcher and starts watching for changes.
  */
 async function main() {
-  const watcher = new GDDWatcher();
+  const args = process.argv.slice(2);
+
+  // Phase 14 + 14.1: Parse flags
+  const options = {
+    agentsActive: args.includes('--agents-active'),
+    telemetry: args.includes('--telemetry')
+  };
+
+  const watcher = new GDDWatcher(options);
   await watcher.start();
 }
 
