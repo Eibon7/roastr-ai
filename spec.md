@@ -704,10 +704,10 @@ Plan Limits Exceeded: DEFER (retry later)
 - Shield service failures → continue with base triage decision
 
 #### Rate Limiting by Plan
-- **Free**: 10 roasts/month
-- **Starter**: 10 roasts/month
-- **Pro**: 1,000 roasts/month
-- **Plus**: 5,000 roasts/month
+- **Free**: 100 análisis/month, 10 roasts/month
+- **Starter**: 1,000 análisis/month, 10 roasts/month
+- **Pro**: 10,000 análisis/month, 1,000 roasts/month
+- **Plus**: 100,000 análisis/month, 5,000 roasts/month
 
 ### 🧪 Comprehensive Test Suite (41 Tests)
 **File**: `tests/integration/triage.test.js`
