@@ -1,6 +1,6 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-10T15:33:23.880Z
+**Generated:** 2025-10-10T16:37:59.830Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
 **Average Drift Risk:** 4/100
@@ -23,7 +23,7 @@
 | analytics | 🟢 5 | healthy | 94 | 70% | 1d ago | 0 |
 | billing | 🟢 5 | healthy | 94 | 70% | 1d ago | 0 |
 | cost-control | 🟢 5 | healthy | 94 | 70% | 1d ago | 0 |
-| guardian | 🟢 5 | healthy | N/A | 50% | 0d ago | 0 |
+| guardian | 🟢 5 | healthy | 90 | 50% | 0d ago | 0 |
 | multi-tenant | 🟢 5 | healthy | 94 | 70% | 1d ago | 0 |
 | persona | 🟢 5 | healthy | 94 | 70% | 1d ago | 0 |
 | plan-features | 🟢 5 | healthy | 94 | 70% | 1d ago | 0 |
@@ -32,7 +32,7 @@
 | trainer | 🟢 5 | healthy | 90 | 50% | 1d ago | 0 |
 | platform-constraints | 🟢 0 | healthy | 100 | 100% | 1d ago | 0 |
 | queue-system | 🟢 0 | healthy | 100 | 87% | 1d ago | 0 |
-| roast | 🟢 0 | healthy | 100 | 100% | 1d ago | 0 |
+| roast | 🟢 0 | healthy | 100 | 100% | 0d ago | 0 |
 | social-platforms | 🟢 0 | healthy | 100 | 100% | 1d ago | 0 |
 
 ---

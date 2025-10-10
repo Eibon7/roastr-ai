@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-10T15:33:23.880Z",
+  "generated_at": "2025-10-10T16:37:59.830Z",
   "analysis_period_days": 30,
   "nodes": {
     "analytics": {
@@ -67,7 +67,7 @@
         "commits_last_30d": 4,
         "last_commit_days_ago": 0
       },
-      "health_score": null,
+      "health_score": 90,
       "coverage": "50"
     },
     "multi-tenant": {
@@ -153,12 +153,12 @@
       "drift_risk": 0,
       "status": "healthy",
       "factors": [
-        "-10 pts: Recent commit (1 days ago)"
+        "-10 pts: Recent commit (0 days ago)"
       ],
       "recommendations": [],
       "git_activity": {
-        "commits_last_30d": 6,
-        "last_commit_days_ago": 1
+        "commits_last_30d": 7,
+        "last_commit_days_ago": 0
       },
       "health_score": 100,
       "coverage": "100"
