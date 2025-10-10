@@ -9,9 +9,24 @@ const request = require('supertest');
 const fs = require('fs').promises;
 const path = require('path');
 const { app } = require('../../src/index');
+const { getMockAdminAuthHeader } = require('../helpers/authHelper');
 
 const CASES_DIR = path.join(__dirname, '../../docs/guardian/cases');
-const TEST_CASE_ID = 'TEST-INTEGRATION-001';
+
+// Generate valid timestamp-based case ID
+function generateTestCaseId(offset = 0) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hour = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const sec = String(now.getSeconds()).padStart(2, '0');
+  const ms = String(now.getMilliseconds() + offset).padStart(3, '0');
+  return `${year}-${month}-${day}-${hour}-${min}-${sec}-${ms}`;
+}
+
+const TEST_CASE_ID = generateTestCaseId(100);
 
 describe('Guardian API Integration Tests', () => {
   // Create test case before tests
@@ -49,6 +64,7 @@ describe('Guardian API Integration Tests', () => {
     test('should list all Guardian cases', async () => {
       const response = await request(app)
         .get('/api/guardian/cases')
+        .set(getMockAdminAuthHeader())
         .expect('Content-Type', /json/)
         .expect(200);
 
@@ -61,6 +77,7 @@ describe('Guardian API Integration Tests', () => {
     test('should filter cases by severity=CRITICAL', async () => {
       const response = await request(app)
         .get('/api/guardian/cases?severity=CRITICAL')
+        .set(getMockAdminAuthHeader())
         .expect(200);
 
       expect(response.body.cases).toBeInstanceOf(Array);
@@ -72,6 +89,7 @@ describe('Guardian API Integration Tests', () => {
     test('should filter cases by action=REVIEW', async () => {
       const response = await request(app)
         .get('/api/guardian/cases?action=REVIEW')
+        .set(getMockAdminAuthHeader())
         .expect(200);
 
       expect(response.body.cases).toBeInstanceOf(Array);
@@ -83,6 +101,7 @@ describe('Guardian API Integration Tests', () => {
     test('should respect limit parameter', async () => {
       const response = await request(app)
         .get('/api/guardian/cases?limit=2')
+        .set(getMockAdminAuthHeader())
         .expect(200);
 
       expect(response.body.cases.length).toBeLessThanOrEqual(2);
@@ -91,6 +110,7 @@ describe('Guardian API Integration Tests', () => {
     test('should return 400 for invalid severity', async () => {
       const response = await request(app)
         .get('/api/guardian/cases?severity=INVALID')
+        .set(getMockAdminAuthHeader())
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
@@ -100,6 +120,7 @@ describe('Guardian API Integration Tests', () => {
     test('should return 400 for invalid action', async () => {
       const response = await request(app)
         .get('/api/guardian/cases?action=INVALID')
+        .set(getMockAdminAuthHeader())
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
@@ -109,10 +130,11 @@ describe('Guardian API Integration Tests', () => {
     test('should return 400 for invalid limit', async () => {
       const response = await request(app)
         .get('/api/guardian/cases?limit=9999')
+        .set(getMockAdminAuthHeader())
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toContain('Limit must be');
+      expect(response.body.error).toContain('Limit out of range');
     });
   });
 
@@ -120,6 +142,7 @@ describe('Guardian API Integration Tests', () => {
     test('should approve a case successfully', async () => {
       const response = await request(app)
         .post(`/api/guardian/cases/${TEST_CASE_ID}/approve`)
+        .set(getMockAdminAuthHeader())
         .send({ approver: 'Integration Test User' })
         .expect('Content-Type', /json/)
         .expect(200);
@@ -134,6 +157,7 @@ describe('Guardian API Integration Tests', () => {
     test('should return 400 for missing approver', async () => {
       const response = await request(app)
         .post(`/api/guardian/cases/${TEST_CASE_ID}/approve`)
+        .set(getMockAdminAuthHeader())
         .send({})
         .expect(400);
 
@@ -141,9 +165,21 @@ describe('Guardian API Integration Tests', () => {
       expect(response.body.error).toContain('Approver name is required');
     });
 
+    test('should return 400 for invalid case ID format', async () => {
+      const response = await request(app)
+        .post('/api/guardian/cases/INVALID-CASE-ID/approve')
+        .set(getMockAdminAuthHeader())
+        .send({ approver: 'Test User' })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toContain('Invalid case ID');
+    });
+
     test('should return 404 for non-existent case', async () => {
       const response = await request(app)
-        .post('/api/guardian/cases/NONEXISTENT-999/approve')
+        .post('/api/guardian/cases/2025-99-99-99-99-99-999/approve')
+        .set(getMockAdminAuthHeader())
         .send({ approver: 'Test User' })
         .expect(404);
 
@@ -155,6 +191,7 @@ describe('Guardian API Integration Tests', () => {
       // Try to approve again (already approved in previous test)
       const response = await request(app)
         .post(`/api/guardian/cases/${TEST_CASE_ID}/approve`)
+        .set(getMockAdminAuthHeader())
         .send({ approver: 'Another User' })
         .expect(400);
 
@@ -164,8 +201,8 @@ describe('Guardian API Integration Tests', () => {
   });
 
   describe('POST /api/guardian/cases/:caseId/deny', () => {
-    // Create a separate test case for denial tests
-    const DENY_TEST_CASE_ID = 'TEST-INTEGRATION-DENY';
+    // Create a separate test case for denial tests with valid timestamp format
+    const DENY_TEST_CASE_ID = generateTestCaseId(200);
 
     beforeAll(async () => {
       const testCase = {
@@ -199,6 +236,7 @@ describe('Guardian API Integration Tests', () => {
     test('should deny a case successfully', async () => {
       const response = await request(app)
         .post(`/api/guardian/cases/${DENY_TEST_CASE_ID}/deny`)
+        .set(getMockAdminAuthHeader())
         .send({
           denier: 'Integration Test User',
           reason: 'This is a valid denial reason for integration testing'
@@ -217,6 +255,7 @@ describe('Guardian API Integration Tests', () => {
     test('should return 400 for missing denier', async () => {
       const response = await request(app)
         .post(`/api/guardian/cases/${DENY_TEST_CASE_ID}/deny`)
+        .set(getMockAdminAuthHeader())
         .send({ reason: 'Has reason but no denier' })
         .expect(400);
 
@@ -227,6 +266,7 @@ describe('Guardian API Integration Tests', () => {
     test('should return 400 for missing reason', async () => {
       const response = await request(app)
         .post(`/api/guardian/cases/${DENY_TEST_CASE_ID}/deny`)
+        .set(getMockAdminAuthHeader())
         .send({ denier: 'Test User' })
         .expect(400);
 
@@ -237,6 +277,7 @@ describe('Guardian API Integration Tests', () => {
     test('should return 400 for reason too short', async () => {
       const response = await request(app)
         .post(`/api/guardian/cases/${DENY_TEST_CASE_ID}/deny`)
+        .set(getMockAdminAuthHeader())
         .send({ denier: 'Test User', reason: 'Short' })
         .expect(400);
 
@@ -244,9 +285,21 @@ describe('Guardian API Integration Tests', () => {
       expect(response.body.error).toContain('at least 10 characters');
     });
 
+    test('should return 400 for invalid case ID format', async () => {
+      const response = await request(app)
+        .post('/api/guardian/cases/INVALID-CASE-ID/deny')
+        .set(getMockAdminAuthHeader())
+        .send({ denier: 'Test User', reason: 'Valid reason with sufficient length' })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toContain('Invalid case ID');
+    });
+
     test('should return 404 for non-existent case', async () => {
       const response = await request(app)
-        .post('/api/guardian/cases/NONEXISTENT-999/deny')
+        .post('/api/guardian/cases/2025-99-99-99-99-99-998/deny')
+        .set(getMockAdminAuthHeader())
         .send({ denier: 'Test User', reason: 'Valid reason with sufficient length' })
         .expect(404);
 

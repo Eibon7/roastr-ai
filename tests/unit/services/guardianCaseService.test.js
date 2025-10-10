@@ -131,8 +131,12 @@ describe('guardianCaseService', () => {
   });
 
   describe('getCaseById', () => {
-    test('should return null for non-existent case', async () => {
-      const caseData = await getCaseById('INVALID-CASE-ID-999999');
+    test('should reject invalid case ID format', async () => {
+      await expect(getCaseById('INVALID-CASE-ID-999999')).rejects.toThrow('Invalid case ID format');
+    });
+
+    test('should return null for non-existent but valid case ID', async () => {
+      const caseData = await getCaseById('2025-99-99-99-99-99-999');
       expect(caseData).toBeNull();
     });
 
@@ -152,10 +156,21 @@ describe('guardianCaseService', () => {
     let testCaseId;
 
     beforeEach(async () => {
-      // Create a test case for approval
+      // Create a test case for approval with valid timestamp format
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hour = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const sec = String(now.getSeconds()).padStart(2, '0');
+      const ms = String(now.getMilliseconds()).padStart(3, '0');
+
+      testCaseId = `${year}-${month}-${day}-${hour}-${min}-${sec}-${ms}`;
+
       const testCase = {
-        case_id: 'TEST-APPROVE-001',
-        timestamp: new Date().toISOString(),
+        case_id: testCaseId,
+        timestamp: now.toISOString(),
         severity: 'CRITICAL',
         action: 'REVIEW',
         actor: 'test-actor',
@@ -170,7 +185,6 @@ describe('guardianCaseService', () => {
 
       const filePath = path.join(MOCK_CASES_DIR, `${testCase.case_id}.json`);
       await fs.writeFile(filePath, JSON.stringify(testCase, null, 2), 'utf8');
-      testCaseId = testCase.case_id;
     });
 
     afterEach(async () => {
@@ -195,8 +209,12 @@ describe('guardianCaseService', () => {
       await expect(approveCase(testCaseId, '')).rejects.toThrow('Name is required');
     });
 
+    test('should reject approval with invalid case ID format', async () => {
+      await expect(approveCase('INVALID-CASE-999', 'Test')).rejects.toThrow('Invalid case ID format');
+    });
+
     test('should reject approval of non-existent case', async () => {
-      await expect(approveCase('INVALID-CASE-999', 'Test')).rejects.toThrow('Case not found');
+      await expect(approveCase('2025-99-99-99-99-99-999', 'Test')).rejects.toThrow('Case not found');
     });
 
     test('should reject approval of already approved case', async () => {
@@ -214,10 +232,22 @@ describe('guardianCaseService', () => {
     let testCaseId;
 
     beforeEach(async () => {
-      // Create a test case for denial
+      // Create a test case for denial with valid timestamp format
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hour = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const sec = String(now.getSeconds()).padStart(2, '0');
+      // Add 1 to ms to avoid collision with approveCase tests
+      const ms = String(now.getMilliseconds() + 1).padStart(3, '0');
+
+      testCaseId = `${year}-${month}-${day}-${hour}-${min}-${sec}-${ms}`;
+
       const testCase = {
-        case_id: 'TEST-DENY-001',
-        timestamp: new Date().toISOString(),
+        case_id: testCaseId,
+        timestamp: now.toISOString(),
         severity: 'CRITICAL',
         action: 'REVIEW',
         actor: 'test-actor',
@@ -232,7 +262,6 @@ describe('guardianCaseService', () => {
 
       const filePath = path.join(MOCK_CASES_DIR, `${testCase.case_id}.json`);
       await fs.writeFile(filePath, JSON.stringify(testCase, null, 2), 'utf8');
-      testCaseId = testCase.case_id;
     });
 
     afterEach(async () => {
@@ -270,9 +299,15 @@ describe('guardianCaseService', () => {
       );
     });
 
-    test('should reject denial of non-existent case', async () => {
+    test('should reject denial with invalid case ID format', async () => {
       await expect(
         denyCase('INVALID-CASE-999', 'Test', 'Valid reason with sufficient length')
+      ).rejects.toThrow('Invalid case ID format');
+    });
+
+    test('should reject denial of non-existent case', async () => {
+      await expect(
+        denyCase('2025-99-99-99-99-99-998', 'Test', 'Valid reason with sufficient length')
       ).rejects.toThrow('Case not found');
     });
 

@@ -4,18 +4,20 @@
  *
  * REST API endpoints for Guardian governance
  * Base path: /api/guardian
+ *
+ * SECURITY: All routes require admin authentication
  */
 
 const express = require('express');
 const router = express.Router();
 const guardianController = require('../controllers/guardianController');
-
-// Note: Authentication middleware should be added when available
-// const { requireAdmin } = require('../middleware/auth');
+const { isAdminMiddleware } = require('../middleware/isAdmin');
 
 /**
  * GET /api/guardian/cases
  * List all Guardian cases with optional filtering
+ *
+ * SECURITY: Requires admin authentication
  *
  * Query parameters:
  * - severity: CRITICAL | SENSITIVE | SAFE
@@ -26,7 +28,7 @@ const guardianController = require('../controllers/guardianController');
  */
 router.get(
   '/cases',
-  // requireAdmin, // TODO: Add admin authentication when middleware is ready
+  isAdminMiddleware,
   guardianController.listCasesController
 );
 
@@ -34,8 +36,10 @@ router.get(
  * POST /api/guardian/cases/:caseId/approve
  * Approve a Guardian case
  *
+ * SECURITY: Requires admin authentication
+ *
  * Params:
- * - caseId: Case ID (e.g., CASE-20251010-001)
+ * - caseId: Case ID (e.g., 2025-10-09-18-07-06-685)
  *
  * Body:
  * - approver: string (2-100 chars)
@@ -44,7 +48,7 @@ router.get(
  */
 router.post(
   '/cases/:caseId/approve',
-  // requireAdmin, // TODO: Add admin authentication when middleware is ready
+  isAdminMiddleware,
   guardianController.approveCaseController
 );
 
@@ -52,8 +56,10 @@ router.post(
  * POST /api/guardian/cases/:caseId/deny
  * Deny a Guardian case
  *
+ * SECURITY: Requires admin authentication
+ *
  * Params:
- * - caseId: Case ID (e.g., CASE-20251010-001)
+ * - caseId: Case ID (e.g., 2025-10-09-18-07-06-685)
  *
  * Body:
  * - denier: string (2-100 chars)
@@ -63,7 +69,7 @@ router.post(
  */
 router.post(
   '/cases/:caseId/deny',
-  // requireAdmin, // TODO: Add admin authentication when middleware is ready
+  isAdminMiddleware,
   guardianController.denyCaseController
 );
 

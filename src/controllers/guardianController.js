@@ -10,6 +10,7 @@
  */
 
 const guardianCaseService = require('../services/guardianCaseService');
+const logger = require('../utils/logger');
 
 /**
  * List Guardian cases with filtering
@@ -51,12 +52,27 @@ async function listCasesController(req, res) {
 
     // Validate and apply limit
     if (limit) {
-      const parsedLimit = parseInt(limit, 10);
-      if (isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 1000) {
+      // SECURITY: Strict validation - only digits allowed (prevents "50abc" from being parsed as 50)
+      if (!/^\d+$/.test(limit)) {
         return res.status(400).json({
-          error: 'Limit must be a number between 1 and 1000'
+          error: 'Invalid limit parameter',
+          message: 'Limit must be a positive integer (digits only)',
+          received: limit,
+          validExample: '50'
         });
       }
+
+      const parsedLimit = parseInt(limit, 10);
+
+      if (parsedLimit < 1 || parsedLimit > 1000) {
+        return res.status(400).json({
+          error: 'Limit out of range',
+          message: 'Limit must be between 1 and 1000',
+          received: parsedLimit,
+          validRange: { min: 1, max: 1000 }
+        });
+      }
+
       filters.limit = parsedLimit;
     }
 
@@ -70,7 +86,11 @@ async function listCasesController(req, res) {
       filters: filters
     });
   } catch (error) {
-    console.error('Error in listCasesController:', error);
+    logger.error('Guardian controller error in listCases', {
+      error: error.message,
+      stack: error.stack,
+      query: req.query
+    });
     res.status(500).json({
       error: 'Failed to list Guardian cases',
       message: error.message
@@ -111,7 +131,12 @@ async function approveCaseController(req, res) {
       message: `Case ${caseId} approved successfully`
     });
   } catch (error) {
-    console.error('Error in approveCaseController:', error);
+    logger.error('Guardian controller error in approveCase', {
+      error: error.message,
+      stack: error.stack,
+      caseId: req.params.caseId,
+      approver: req.body.approver
+    });
 
     // Handle specific error types
     if (error.message === 'Case not found') {
@@ -123,6 +148,7 @@ async function approveCaseController(req, res) {
 
     if (
       error.message.includes('Name') ||
+      error.message.includes('Invalid case ID') ||
       error.message === 'Case already resolved'
     ) {
       return res.status(400).json({
@@ -179,7 +205,12 @@ async function denyCaseController(req, res) {
       message: `Case ${caseId} denied successfully`
     });
   } catch (error) {
-    console.error('Error in denyCaseController:', error);
+    logger.error('Guardian controller error in denyCase', {
+      error: error.message,
+      stack: error.stack,
+      caseId: req.params.caseId,
+      denier: req.body.denier
+    });
 
     // Handle specific error types
     if (error.message === 'Case not found') {
@@ -192,6 +223,7 @@ async function denyCaseController(req, res) {
     if (
       error.message.includes('Name') ||
       error.message.includes('reason') ||
+      error.message.includes('Invalid case ID') ||
       error.message === 'Case already resolved'
     ) {
       return res.status(400).json({

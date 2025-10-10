@@ -11,8 +11,46 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const logger = require('../utils/logger');
 
 const CASES_DIR = path.join(__dirname, '../../docs/guardian/cases');
+
+/**
+ * Validate case ID format to prevent path traversal attacks
+ *
+ * SECURITY: Critical validation to prevent directory traversal
+ * Expected format: YYYY-MM-DD-HH-MM-SS-mmm (e.g., 2025-10-09-18-07-06-685)
+ *
+ * @param {string} caseId - Case ID to validate
+ * @returns {string} Validated case ID
+ * @throws {Error} If case ID format is invalid
+ */
+function validateCaseId(caseId) {
+  // Expected format: YYYY-MM-DD-HH-MM-SS-mmm (timestamp with milliseconds)
+  const VALID_CASE_ID_REGEX = /^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
+
+  if (!caseId || typeof caseId !== 'string') {
+    throw new Error('Case ID must be a non-empty string');
+  }
+
+  // SECURITY: Reject any path traversal attempts
+  if (caseId.includes('..') || caseId.includes('/') || caseId.includes('\\')) {
+    logger.warn('Path traversal attempt detected', { caseId });
+    throw new Error(
+      `Invalid case ID: path traversal characters detected. ` +
+      `Expected format: YYYY-MM-DD-HH-MM-SS-mmm`
+    );
+  }
+
+  if (!VALID_CASE_ID_REGEX.test(caseId)) {
+    throw new Error(
+      `Invalid case ID format: ${caseId}. ` +
+      `Expected format: YYYY-MM-DD-HH-MM-SS-mmm (e.g., 2025-10-09-18-07-06-685)`
+    );
+  }
+
+  return caseId;
+}
 
 /**
  * List all Guardian cases with optional filtering
@@ -38,14 +76,14 @@ async function listCases(filters = {}) {
     const files = await fs.readdir(CASES_DIR);
     const jsonFiles = files.filter(f => f.endsWith('.json'));
 
-    // Load all case data
-    let cases = [];
-    for (const file of jsonFiles) {
+    // PERFORMANCE: Load all case data in parallel (not sequential)
+    const casePromises = jsonFiles.map(async (file) => {
       const filePath = path.join(CASES_DIR, file);
       const content = await fs.readFile(filePath, 'utf8');
-      const caseData = JSON.parse(content);
-      cases.push(caseData);
-    }
+      return JSON.parse(content);
+    });
+
+    let cases = await Promise.all(casePromises);
 
     // Apply severity filter
     if (filters.severity) {
@@ -67,7 +105,7 @@ async function listCases(filters = {}) {
 
     return cases;
   } catch (error) {
-    console.error('Error listing Guardian cases:', error);
+    logger.error('Error listing Guardian cases', { error: error.message, stack: error.stack });
     throw new Error('Failed to list Guardian cases');
   }
 }
@@ -86,6 +124,9 @@ async function listCases(filters = {}) {
  */
 async function getCaseById(caseId) {
   try {
+    // SECURITY: Validate caseId BEFORE path resolution to prevent traversal
+    caseId = validateCaseId(caseId);
+
     const filePath = path.join(CASES_DIR, `${caseId}.json`);
     const content = await fs.readFile(filePath, 'utf8');
     return JSON.parse(content);
@@ -93,7 +134,10 @@ async function getCaseById(caseId) {
     if (error.code === 'ENOENT') {
       return null; // Case not found
     }
-    console.error(`Error reading case ${caseId}:`, error);
+    if (error.message.includes('Invalid case ID')) {
+      throw error; // Re-throw validation errors
+    }
+    logger.error(`Error reading Guardian case ${caseId}`, { error: error.message });
     throw new Error(`Failed to read case ${caseId}`);
   }
 }
@@ -282,6 +326,7 @@ module.exports = {
   approveCase,
   denyCase,
   // Export validators for testing
+  validateCaseId,
   validateName,
   validateReason
 };
