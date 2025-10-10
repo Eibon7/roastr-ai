@@ -47,7 +47,7 @@
       "alerts": [],
       "metadata": {
         "version": "1.0.0",
-        "phase": 13,
+        "phase": 15,
         "collector": "collect-gdd-telemetry.js"
       }
     },
@@ -100,7 +100,7 @@
       "alerts": [],
       "metadata": {
         "version": "1.0.0",
-        "phase": 13,
+        "phase": 15,
         "collector": "collect-gdd-telemetry.js"
       }
     },
@@ -153,12 +153,71 @@
       "alerts": [],
       "metadata": {
         "version": "1.0.0",
+        "phase": 15,
+        "collector": "collect-gdd-telemetry.js"
+      }
+    },
+    {
+      "timestamp": "2025-10-10T00:49:43.054Z",
+      "date": "2025-10-10",
+      "metrics": {
+        "health": {
+          "overall_score": 95.5,
+          "average_score": 95.5,
+          "healthy_count": 13,
+          "degraded_count": 0,
+          "critical_count": 0,
+          "total_nodes": 13,
+          "status": "healthy"
+        },
+        "drift": {
+          "average_drift_risk": 3,
+          "high_risk_count": 0,
+          "at_risk_count": 0,
+          "healthy_count": 13,
+          "overall_status": "HEALTHY"
+        },
+        "validation": {
+          "nodes_validated": 13,
+          "orphans": 0,
+          "missing_refs": 0,
+          "cycles": 0,
+          "status": "healthy"
+        },
+        "repair": {
+          "total_fixes_attempted": 1,
+          "successful_fixes": 1,
+          "failed_fixes": 0,
+          "success_rate": 100
+        },
+        "coverage": {
+          "avg_coverage": 77,
+          "nodes_with_coverage": 13,
+          "total_nodes": 13
+        },
+        "derived": {
+          "stability_index": 98,
+          "health_variance": 15,
+          "auto_fix_efficiency": 100,
+          "system_status": "STABLE"
+        },
+        "momentum": {
+          "trend": "improving",
+          "delta": 1.7,
+          "current_health": 95.5,
+          "previous_health": 93.8,
+          "message": "Health improving by 1.7 points"
+        }
+      },
+      "alerts": [],
+      "metadata": {
+        "version": "1.0.0",
         "phase": 13,
         "collector": "collect-gdd-telemetry.js"
       }
     }
   ],
-  "last_updated": "2025-10-09T10:27:52.451Z",
-  "total_snapshots": 3,
+  "last_updated": "2025-10-10T00:49:43.054Z",
+  "total_snapshots": 4,
   "retention_days": 90
 }

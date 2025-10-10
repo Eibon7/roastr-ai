@@ -176,7 +176,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 ```
 
 **Live Telemetry Display:**
-```
+```text
 ────────────────────────────────────────
 📡 TELEMETRY STATUS
 Buffer: 45/100 events
@@ -296,7 +296,7 @@ $ node scripts/agents/telemetry-bus.js --test
 
 ### Combined Workflow
 
-```
+```text
 Agent Action → AIL Permission Check → SWP Write → Telemetry Emit
                                                           ↓
                                                     Buffer Store

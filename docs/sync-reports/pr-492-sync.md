@@ -27,7 +27,7 @@ PR #492 introduces **Phase 13 (Telemetry & Analytics Layer)** with critical bug 
 | `scripts/score-gdd-health.js` | Modified | Extended with Phase 15 composite metrics |
 | `scripts/update-integration-status.js` | Added | Phase 15 - Integration status tracker |
 | `scripts/validate-gdd-cross.js` | Added | Phase 15 - Cross-validation engine |
-| `scripts/watch-gdd.js` | Modified | Added Phase 15 flags (--cross, --connectivity) |
+| `scripts/watch-gdd.js` | Modified | Added Phase 14.1 flags (--agents-active, --telemetry) |
 
 ### CI/CD Workflows (2 files)
 

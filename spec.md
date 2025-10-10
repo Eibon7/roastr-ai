@@ -704,10 +704,10 @@ Plan Limits Exceeded: DEFER (retry later)
 - Shield service failures → continue with base triage decision
 
 #### Rate Limiting by Plan
-- **Free**: 100 análisis/month, 10 roasts/month
-- **Starter**: 1,000 análisis/month, 100 roasts/month
-- **Pro**: 10,000 análisis/month, 1,000 roasts/month
-- **Plus**: 100,000 análisis/month, 5,000 roasts/month
+- **Free**: 100 análisis/mes, 10 roasts/mes
+- **Starter**: 1,000 análisis/mes, 100 roasts/mes
+- **Pro**: 10,000 análisis/mes, 1,000 roasts/mes
+- **Plus**: 100,000 análisis/mes, 5,000 roasts/mes
 
 ### 🧪 Comprehensive Test Suite (41 Tests)
 **File**: `tests/integration/triage.test.js`
@@ -3090,7 +3090,7 @@ Roastr ofrece distintos planes de uso, diferenciados por límites de análisis, 
 - **Precio**: €5
 - **Modelo IA**: GPT-5
 - **Cuentas por red**: 1
-- **Límites**: 1000 análisis, 100 roasts
+- **Límites**: 1000 análisis, 10 roasts
 - **Cuentas por red social**: 1
 - **Funciones incluidas**:
     - Comment analysis
@@ -3292,7 +3292,7 @@ Como **usuario de Roastr**, quiero tener distintos planes de suscripción, con l
 ### 🎯 Key Achievements
 #### ✅ Tier Configuration (Exactly per SPEC)
 - **Free**: 100 análisis / 10 roasts / 1 cuenta por red / No Shield, No Original Tone
-- **Starter**: 1,000 análisis / 100 roasts / 1 cuenta por red / Shield ON, No Original Tone
+- **Starter**: 1,000 análisis / 10 roasts / 1 cuenta por red / Shield ON, No Original Tone
 - **Pro**: 10,000 análisis / 1,000 roasts / 2 cuentas por red / Shield + Original Tone
 - **Plus**: 100,000 análisis / 5,000 roasts / 2 cuentas por red / Shield + Original Tone + Embedded Judge
 
@@ -7668,10 +7668,10 @@ This section documents the core architectural nodes that form the foundation of 
 - Dynamic entitlements management
 
 **Plan Tiers:**
-- **Free**: 100 análisis/month, 10 roasts/month, basic features
-- **Starter** (€5/month): 1,000 análisis/month, 100 roasts/month, enhanced features
-- **Pro** (€15/month): 10,000 análisis/month, 1,000 roasts/month, advanced features
-- **Plus** (€50/month): 100,000 análisis/month, 5,000 roasts/month, premium features, priority support
+- **Free**: 100 roasts/month, 100 analyses/month, basic features
+- **Starter** (€5/month): 500 roasts/month, 500 analyses/month, enhanced features
+- **Pro** (€15/month): 1,000 roasts/month, 2,000 analyses/month, advanced features
+- **Plus** (€50/month): Unlimited roasts/analyses, premium features, priority support
 
 **Dependencies:**
 - `multi-tenant` - Organization-based plan assignment
@@ -7806,139 +7806,6 @@ This section documents the core architectural nodes that form the foundation of 
 - Database tables: `training_data`, `model_versions`
 
 **GDD Node:** [docs/nodes/trainer.md](docs/nodes/trainer.md)
-
----
-
-### Guardian Node
-
-**Purpose:** Product governance layer that monitors and protects sensitive changes in product logic, pricing, authentication policies, and documentation.
-
-**Status:** Active (Phase 16 - October 2025)
-
-**Responsibilities:**
-- Monitor git changes for violations of protected domains (pricing, quotas, auth, AI models, public APIs)
-- Classify changes by severity: CRITICAL (block merge), SENSITIVE (manual review), SAFE (auto-approve)
-- Generate audit logs and case files for compliance and traceability
-- Enforce approval workflows based on domain ownership
-- Integrate with CI/CD pipelines via semantic exit codes (0=safe, 1=review, 2=block)
-- Filter test fixtures and false positives using ignore patterns
-
-**Protected Domains (config/product-guard.yaml):**
-1. **pricing** (CRITICAL) - Subscription tiers, billing logic, Stripe integration
-2. **quotas** (CRITICAL) - Usage limits, rate limiting, resource allocation
-3. **auth_policies** (CRITICAL) - RLS policies, authentication, authorization
-4. **ai_models** (SENSITIVE) - AI prompts, model selection, OpenAI configuration
-5. **public_contracts** (SENSITIVE) - API endpoints, webhooks, external schemas
-
-**Domain→Glob Pattern Mapping:**
-
-| Domain | Severity | Glob Patterns | Example Files |
-|--------|----------|---------------|---------------|
-| **pricing** | CRITICAL | `src/**/*{cost,billing,stripe,price}*.js` | costControl.js, billingService.js, stripeWebhookService.js, billingController.js |
-| **quotas** | CRITICAL | `src/**/*{quota,limit,entitlement,plan}*.js` | entitlementsService.js, planService.js, planLimitsService.js, planValidation.js, tierValidation.js |
-| **auth_policies** | CRITICAL | `src/**/*{auth,oauth,rls}*.js` | authService.js, auth.js (middleware + routes), oauthProvider.js |
-| **ai_models** | SENSITIVE | `src/**/*{openai,model,prompt}*.js` | openai.js, modelAvailabilityService.js, roastPromptTemplate.js |
-| **public_contracts** | SENSITIVE | `src/{index,routes}/**/*.js` | index.js, routes/*.js (all API endpoints), webhooks |
-
-**Business Impact:**
-- Prevents accidental pricing changes that could impact revenue (€5/€15/€50 plans)
-- Enforces security reviews for auth policy changes (SOC 2 compliance)
-- Ensures AI model changes are reviewed by domain experts
-- Maintains audit trail for compliance (SOC 2, GDPR)
-
-**Dependencies:**
-- None (leaf node - core infrastructure layer)
-
-**Used By:**
-- None yet (new feature in Phase 16)
-- **Planned (Phase 17):** CI/CD workflows, pre-commit hooks, PR validation bot
-
-**Implementation:**
-- `scripts/guardian-gdd.js` - Guardian engine with GuardianEngine class
-- `config/product-guard.yaml` - Protected domains configuration (5 domains)
-- `config/guardian-ignore.yaml` - Ignore patterns for test fixtures
-- `docs/guardian/audit-log.md` - Chronological audit log (append-only)
-- `docs/guardian/cases/*.json` - Case files with full scan details
-- `tests/unit/scripts/guardian-gdd.test.js` - 14 unit tests covering all methods
-
-**CLI Usage:**
-```bash
-# Full system scan
-node scripts/guardian-gdd.js --full
-
-# CI mode (semantic exit codes)
-node scripts/guardian-gdd.js --ci
-
-# Generate markdown report
-node scripts/guardian-gdd.js --report
-```
-
-**Exit Codes:**
-- `0` - SAFE: All changes approved, auto-merge
-- `1` - SENSITIVE: Manual review required, Tech Lead approval
-- `2` - CRITICAL: Merge blocked, Product Owner approval required
-
-**Approval Workflow:**
-- **CRITICAL:** 3 approvers (Product Owner + Tech Lead + Backend Dev), 48h SLA
-- **SENSITIVE:** 2 approvers (Tech Lead + Domain Owner), 24h SLA
-- **SAFE:** 0 approvers (auto-approve)
-
-**CI/CD Integration:**
-
-Guardian integrates with CI/CD pipelines via semantic exit codes that control merge behavior:
-
-- **Exit Code 0 (SAFE):**
-  - CI workflow passes
-  - Auto-merge enabled (if configured)
-  - No manual review required
-  - Example: Changes to test fixtures, docs, non-protected code
-
-- **Exit Code 1 (SENSITIVE):**
-  - CI workflow passes with warning
-  - Requires manual approval from Tech Lead + Domain Owner (2 approvers)
-  - PR cannot be merged until approvals received
-  - 24h SLA for review
-  - Example: AI model prompt changes, API endpoint modifications
-
-- **Exit Code 2 (CRITICAL):**
-  - CI workflow fails
-  - Merge blocked on protected branches (main, develop)
-  - Requires manual approval from Product Owner + Tech Lead + Backend Dev (3 approvers)
-  - 48h SLA for review
-  - Example: Pricing logic changes, quota adjustments, RLS policy modifications
-
-**GitHub Actions Example:**
-
-```yaml
-name: Guardian Product Check
-on:
-  pull_request:
-    branches: [main, develop]
-
-jobs:
-  guardian-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Guardian
-        run: node scripts/guardian-gdd.js --ci
-      - name: Enforce Approval Rules
-        if: failure()
-        run: |
-          echo "::error::CRITICAL violations detected. Requires Product Owner approval."
-          exit 1
-```
-
-**Key Features:**
-- Glob pattern matching for file paths (minimatch)
-- Actor detection with multi-source fallback (GITHUB_ACTOR → USER → USERNAME)
-- Case ID collision prevention (milliseconds precision)
-- Renamed file detection (prevents double-counting)
-- Line counting accuracy (excludes diff headers)
-- Ignore patterns for test fixtures (Windows security test vectors)
-- Error logging and observability
-
-**GDD Node:** [docs/nodes/guardian.md](docs/nodes/guardian.md)
 
 ---
 
