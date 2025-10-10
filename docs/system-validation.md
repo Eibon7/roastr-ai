@@ -49,6 +49,7 @@ Coverage authenticity issues detected:
 | trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
 
 **Actions Required:**
+
 - Coverage data not available for validation
 - Coverage data not available for validation
 - Coverage data not available for validation

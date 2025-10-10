@@ -1,6 +1,6 @@
 # CodeRabbit Review #3324753493 - Executive Summary
 
-**Review URL:** https://github.com/Eibon7/roastr-ai/pull/526#pullrequestreview-3324753493
+**Review URL:** <https://github.com/Eibon7/roastr-ai/pull/526#pullrequestreview-3324753493>
 **PR:** #526 - docs: GDD Phases 14-18 Documentation Sync
 **Date:** 2025-10-10
 **Status:** ✅ COMPLETE
@@ -130,7 +130,7 @@
 ## Commit Details
 
 **Message:**
-```
+```text
 docs: Apply CodeRabbit Review #3324753493 - Fix coverage inconsistencies
 
 ### Issues Addressed
