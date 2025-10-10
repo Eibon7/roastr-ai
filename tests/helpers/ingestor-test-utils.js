@@ -55,18 +55,37 @@ class IngestorTestUtils {
           const pendingJobs = this.mockStoredJobs.filter(job => job.status === 'pending');
           return pendingJobs.length > 0 ? pendingJobs[0] : null;
         },
-        completeJob: async (job, result = {}) => {
+        completeJob: async (job, resultData = {}) => {
+          if (process.env.DEBUG_E2E) {
+            console.log('🔍 completeJob called:', {
+              jobId: job?.id,
+              existingCount: this.mockStoredJobs.length,
+              resultData: JSON.stringify(resultData).substring(0, 100)
+            });
+          }
           const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
           if (existingJob) {
             existingJob.status = 'completed';
             existingJob.completed_at = new Date().toISOString();
-            existingJob.result = result;
+            existingJob.result = resultData.result || resultData;
+            existingJob.processing_time = resultData.processingTime;
+            existingJob.completed_by = resultData.completedBy;
+            if (process.env.DEBUG_E2E) {
+              console.log('✅ Updated existing job in storage:', existingJob.id, 'status:', existingJob.status);
+            }
+          } else if (process.env.DEBUG_E2E) {
+            console.log('⚠️  Job not found in storage:', job?.id);
           }
           // Also update the job object passed in
           if (job) {
             job.status = 'completed';
             job.completed_at = new Date().toISOString();
-            job.result = result;
+            job.result = resultData.result || resultData;
+            job.processing_time = resultData.processingTime;
+            job.completed_by = resultData.completedBy;
+            if (process.env.DEBUG_E2E) {
+              console.log('✅ Updated job object status:', job.status);
+            }
           }
         },
         failJob: async (job, error) => {
@@ -74,13 +93,15 @@ class IngestorTestUtils {
           if (existingJob) {
             existingJob.status = 'failed';
             existingJob.completed_at = new Date().toISOString();
-            existingJob.error_message = error.message || error.toString();
+            existingJob.error_message = error?.message || error?.toString() || 'Unknown error';
+            existingJob.failed_at = new Date().toISOString();
           }
           // Also update the job object passed in
           if (job) {
             job.status = 'failed';
             job.completed_at = new Date().toISOString();
-            job.error_message = error.message || error.toString();
+            job.error_message = error?.message || error?.toString() || 'Unknown error';
+            job.failed_at = new Date().toISOString();
           }
         },
         getQueueStats: async () => {
@@ -488,7 +509,7 @@ class IngestorTestUtils {
    */
   async cleanupTestData() {
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       // Clear global mock storage
       if (typeof global !== 'undefined') {
@@ -497,6 +518,9 @@ class IngestorTestUtils {
         global.mockOrgStorage = [];
         global.mockConfigStorage = [];
       }
+      // Also clear instance storage
+      this.mockStoredComments = [];
+      this.mockStoredJobs = [];
       return;
     }
     

@@ -1,4 +1,63 @@
 
 > roastr-ai@1.0.0 test
-> jest --verbose stripeWebhooksFlow.test.js
+> jest --verbose tests/integration/entitlementsFlow.test.js tests/integration/stripeWebhooksFlow.test.js
 
+PASS node-tests tests/integration/entitlementsFlow.test.js
+  Entitlements Integration Flow
+    Starter Plan Flow
+      ✓ should allow analysis requests under limit (20 ms)
+      ✓ should block analysis requests when limit reached (6 ms)
+      ✓ should allow access to Shield feature (3 ms)
+    Pro Plan Flow
+      ✓ should allow higher usage limits (2 ms)
+      ✓ should allow access to Shield feature (2 ms)
+      ✓ should deny access to premium-only features (2 ms)
+    Plus Plan Flow
+      ✓ should allow high usage under limit (2 ms)
+      ✓ should allow access to all premium features (4 ms)
+    Free Plan Flow (Default)
+      ✓ should apply free plan limits by default (2 ms)
+      ✓ should deny access to premium features (1 ms)
+    Usage Summary Integration
+      ✓ should provide comprehensive usage information (2 ms)
+      ✓ should handle missing usage data gracefully (2 ms)
+    Error Handling
+      ✓ should handle Stripe API failures gracefully
+      ✓ should handle database errors in usage checks (1 ms)
+      ✓ should handle unauthenticated requests (2 ms)
+    Plan Transition Scenarios
+      ✓ should handle upgrade from free to pro plan (1 ms)
+      ✓ should handle downgrade from pro to free plan
+
+PASS node-tests tests/integration/stripeWebhooksFlow.test.js
+  Stripe Webhooks Integration Flow
+    Webhook Signature Verification
+      ✓ DIAGNOSTIC: should confirm mock is executing (50 ms)
+      ✓ should accept valid webhook signatures (2 ms)
+      ✓ should reject invalid webhook signatures (1 ms)
+      ✓ should handle missing stripe-signature header (1 ms)
+    Checkout Session Completed Flow
+      ✓ should process new checkout completion successfully (2 ms)
+      ✓ should handle idempotent checkout events (2 ms)
+      ✓ should handle checkout events with missing user_id (1 ms)
+    Subscription Events Flow
+      ✓ should process subscription update successfully (1 ms)
+      ✓ should process subscription deletion successfully (1 ms)
+    Payment Events Flow
+      ✓ should process payment succeeded events (1 ms)
+      ✓ should process payment failed events (2 ms)
+    Error Handling
+      ✓ should handle database errors gracefully (1 ms)
+      ✓ should handle unrecognized event types gracefully (1 ms)
+    Webhook Statistics and Cleanup
+      ✓ should return webhook statistics for admin users (1 ms)
+      ✓ should allow webhook cleanup for admin users (3 ms)
+      ✓ should deny webhook stats access for non-admin users (1 ms)
+    Performance and Rate Limiting
+      ✓ should handle concurrent webhook requests (4 ms)
+
+Test Suites: 2 passed, 2 total
+Tests:       34 passed, 34 total
+Snapshots:   0 total
+Time:        0.464 s, estimated 1 s
+Ran all test suites matching tests/integration/entitlementsFlow.test.js|tests/integration/stripeWebhooksFlow.test.js.

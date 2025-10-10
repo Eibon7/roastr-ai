@@ -428,7 +428,32 @@ class BaseWorker {
    * Process a single job (default implementation uses retry wrapper)
    */
   async processJob(job) {
-    return await this.executeJobWithRetry(job);
+    const startTime = Date.now();
+
+    try {
+      // Execute the job with retry logic
+      const result = await this.executeJobWithRetry(job);
+
+      const processingTime = Date.now() - startTime;
+
+      // Mark job as completed (don't fail the job if acknowledgment fails)
+      try {
+        await this.markJobCompleted(job, result, processingTime);
+      } catch (ackError) {
+        this.log('error', 'Failed to acknowledge job, but job was processed successfully', {
+          jobId: job.id,
+          error: ackError.message
+        });
+        // Continue - job was processed successfully even if ack failed
+      }
+
+      return result;
+
+    } catch (error) {
+      // Handle job error (marks as failed)
+      await this.handleJobError(job, error);
+      throw error;
+    }
   }
   
   /**
