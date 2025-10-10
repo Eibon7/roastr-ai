@@ -127,16 +127,18 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
           View Diff
         </button>
 
-        {isPending(caseData) && !isLoading && (
+        {isPending(caseData) && (
           <>
             <button
               onClick={() => setShowApproveForm(!showApproveForm)}
+              disabled={isLoading}
               style={{
                 backgroundColor: showApproveForm ? GUARDIAN_COLORS.approved : 'transparent',
                 border: `1px solid ${GUARDIAN_COLORS.approved}`,
                 color: showApproveForm ? '#000' : GUARDIAN_COLORS.approved,
                 padding: '8px 16px',
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.6 : 1,
                 fontFamily: "'Courier New', monospace"
               }}
             >
@@ -145,12 +147,14 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
 
             <button
               onClick={() => setShowDenyForm(!showDenyForm)}
+              disabled={isLoading}
               style={{
                 backgroundColor: showDenyForm ? GUARDIAN_COLORS.critical : 'transparent',
                 border: `1px solid ${GUARDIAN_COLORS.critical}`,
                 color: showDenyForm ? '#FFF' : GUARDIAN_COLORS.critical,
                 padding: '8px 16px',
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.6 : 1,
                 fontFamily: "'Courier New', monospace"
               }}
             >
