@@ -4,13 +4,7 @@
  */
 
 import React from 'react';
-import { GuardianCase, GUARDIAN_COLORS } from '../../types/guardian.types';
-
-interface DiffModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  caseData: GuardianCase | null;
-}
+import { GuardianCase, GUARDIAN_COLORS, DiffModalProps } from '../../types/guardian.types';
 
 export const DiffModal: React.FC<DiffModalProps> = ({ isOpen, onClose, caseData }) => {
   if (!isOpen || !caseData) return null;

@@ -6,12 +6,7 @@
  */
 
 import React from 'react';
-import { GuardianAction, GUARDIAN_COLORS, ACTION_LABELS } from '../../types/guardian.types';
-
-interface ActionTagProps {
-  action: GuardianAction;
-  className?: string;
-}
+import { GuardianAction, GUARDIAN_COLORS, ACTION_LABELS, ActionTagProps } from '../../types/guardian.types';
 
 export const ActionTag: React.FC<ActionTagProps> = ({ action, className = '' }) => {
   const colorMap = {
