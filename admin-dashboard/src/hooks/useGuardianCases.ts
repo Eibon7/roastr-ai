@@ -30,23 +30,59 @@ export const guardianKeys = {
 // ============================================================
 
 /**
+ * Options for useGuardianCases hook
+ */
+export interface UseGuardianCasesOptions {
+  /**
+   * Auto-refetch interval in milliseconds
+   * @default 60000 (60 seconds)
+   * @example
+   * // Critical alerts dashboard - faster refresh
+   * { refetchInterval: 10000 } // 10 seconds
+   *
+   * // Archived cases - slower refresh
+   * { refetchInterval: 300000 } // 5 minutes
+   *
+   * // Disable auto-refresh
+   * { refetchInterval: false }
+   */
+  refetchInterval?: number | false;
+}
+
+/**
  * Fetch Guardian cases with filtering
  *
  * @example
  * ```tsx
+ * // Default: 60-second auto-refresh
  * const { data, isLoading, error, refetch } = useGuardianCases({
  *   severity: 'CRITICAL',
  *   status: 'PENDING'
  * });
+ *
+ * // Custom refresh interval
+ * const { data } = useGuardianCases(
+ *   { severity: 'CRITICAL' },
+ *   { refetchInterval: 10000 } // 10 seconds for critical alerts
+ * );
+ *
+ * // Disable auto-refresh
+ * const { data } = useGuardianCases(
+ *   { status: 'APPROVED' },
+ *   { refetchInterval: false } // No auto-refresh for archived
+ * );
  * ```
  */
-export function useGuardianCases(params?: GuardianCaseListParams) {
+export function useGuardianCases(
+  params?: GuardianCaseListParams,
+  options?: UseGuardianCasesOptions
+) {
   return useQuery<GuardianCaseListResponse, Error>({
     queryKey: guardianKeys.caseList(params),
     queryFn: () => fetchGuardianCases(params),
     staleTime: 30000, // 30 seconds - data considered fresh
     gcTime: 300000, // 5 minutes - cache time (formerly cacheTime in v4)
-    refetchInterval: 60000, // Refetch every 60 seconds
+    refetchInterval: options?.refetchInterval ?? 60000, // Configurable, defaults to 60s
     refetchOnWindowFocus: true, // Refetch when window gains focus
     retry: 2, // Retry failed requests twice
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000) // Exponential backoff
