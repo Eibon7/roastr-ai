@@ -30,7 +30,7 @@
 | shield | 🟢 94 | healthy | 2025-10-09 | 70% | 0 | 0 |
 | tone | 🟢 94 | healthy | 2025-10-09 | 70% | 0 | 0 |
 | platform-constraints | 🟢 100 | healthy | 2025-10-09 | 100% | 0 | 0 |
-| queue-system | 🟢 100 | healthy | 2025-10-09 | 87% | 0 | 0 |
+| queue-system | 🟢 97 | healthy | 2025-10-09 | 87% | 0 | 0 |
 | roast | 🟢 100 | healthy | 2025-10-09 | 100% | 0 | 0 |
 | social-platforms | 🟢 100 | healthy | 2025-10-09 | 100% | 0 | 0 |
 

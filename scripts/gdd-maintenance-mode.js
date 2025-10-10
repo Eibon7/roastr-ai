@@ -133,14 +133,16 @@ if (require.main === module) {
       disableMaintenanceMode();
       break;
     case 'status':
-      const config = getMaintenanceConfig();
-      console.log('\n📊 GDD Maintenance Mode Status\n');
-      console.log(`Mode: ${config.maintenance_mode ? '🧊 ENABLED (Read-Only)' : '🔓 DISABLED (Active)'}`);
-      if (config.maintenance_mode) {
-        console.log(`Enabled: ${config.enabled_date}`);
-        console.log(`Snapshot: ${config.snapshot_reference}`);
+      {
+        const config = getMaintenanceConfig();
+        console.log('\n📊 GDD Maintenance Mode Status\n');
+        console.log(`Mode: ${config.maintenance_mode ? '🧊 ENABLED (Read-Only)' : '🔓 DISABLED (Active)'}`);
+        if (config.maintenance_mode) {
+          console.log(`Enabled: ${config.enabled_date}`);
+          console.log(`Snapshot: ${config.snapshot_reference}`);
+        }
+        console.log('');
       }
-      console.log('');
       break;
     default:
       console.log(`
