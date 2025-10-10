@@ -204,87 +204,57 @@ class MockModeManager {
           order: (column, options) => chainable,
           upsert: (data, options) => Promise.resolve({ data, error: null }),
           insert: (data) => {
+            let insertedData = data; // Default to original data
+
             // Store data in global storage if it's comments with proper deduplication
             if (table === 'comments') {
               const storage = global.mockCommentStorage || [];
-              
+
               // Check for existing comment to enforce deduplication
-              const existing = storage.find(comment => 
+              const existing = storage.find(comment =>
                 comment.organization_id === data.organization_id &&
                 comment.platform === data.platform &&
                 comment.platform_comment_id === data.platform_comment_id
               );
-              
+
               if (existing) {
                 console.log('🔍 Mock: Duplicate comment detected, not inserting:', {
                   platform_comment_id: data.platform_comment_id,
                   organization_id: data.organization_id,
                   platform: data.platform
                 });
-                
-                // Return the existing comment instead of inserting duplicate
-                const chainableInsert = {
-                  select: (columns = '*') => {
-                    // Create a proper chainable select that supports .single()
-                    const selectChain = {
-                      single: () => Promise.resolve({
-                        data: existing,
-                        error: null
-                      })
-                    };
-                    
-                    // Make this object act like a Promise while preserving chainable methods
-                    return Object.assign(selectChain, {
-                      then: (onFulfilled, onRejected) => {
-                        return Promise.resolve({
-                          data: [existing],
-                          error: null
-                        }).then(result => {
-                          // Attach single method to the resolved result for further chaining
-                          result.single = selectChain.single;
-                          return result;
-                        }).then(onFulfilled, onRejected);
-                      },
-                      catch: (onRejected) => {
-                        return Promise.resolve({
-                          data: [existing],
-                          error: null
-                        }).catch(onRejected);
-                      }
-                    });
-                  },
-                  single: () => Promise.resolve({
-                    data: existing,
-                    error: null
-                  })
+
+                // Use existing comment as the inserted data
+                insertedData = existing;
+              } else {
+                // Insert new comment since no duplicate found
+                const newComment = {
+                  ...data,
+                  id: `mock_comment_${Date.now()}_${Math.random()}`,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
                 };
-                return chainableInsert;
+                console.log('🔍 Mock: Inserting new comment:', {
+                  platform_comment_id: newComment.platform_comment_id,
+                  organization_id: newComment.organization_id,
+                  platform: newComment.platform
+                });
+                storage.push(newComment);
+                global.mockCommentStorage = storage;
+                console.log('🔍 Mock: Storage now has', storage.length, 'comments');
+
+                // Use the newly created comment as the inserted data
+                insertedData = newComment;
               }
-              
-              // Insert new comment since no duplicate found
-              const newComment = {
-                ...data,
-                id: storage.length + 1,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              };
-              console.log('🔍 Mock: Inserting new comment:', {
-                platform_comment_id: newComment.platform_comment_id,
-                organization_id: newComment.organization_id,
-                platform: newComment.platform
-              });
-              storage.push(newComment);
-              global.mockCommentStorage = storage;
-              console.log('🔍 Mock: Storage now has', storage.length, 'comments');
             }
-            
+
             const chainableInsert = {
               select: (columns = '*') => {
                 // Create a proper chainable select that supports .single()
                 const selectChain = {
                   single: () => {
-                    // Preserve existing ID if present, otherwise generate one
-                    const baseData = Array.isArray(data) ? data[0] : data;
+                    // Return the actually inserted data (either new or existing)
+                    const baseData = Array.isArray(insertedData) ? insertedData[0] : insertedData;
                     const result = {
                       ...baseData,
                       id: baseData.id || 1,
@@ -296,13 +266,13 @@ class MockModeManager {
                     });
                   }
                 };
-                
+
                 // Make this object act like a Promise while preserving chainable methods
                 return Object.assign(selectChain, {
                   then: (onFulfilled, onRejected) => {
-                    const resultData = Array.isArray(data)
-                      ? data.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
-                      : [{ ...data, id: data.id || 1, created_at: data.created_at || new Date().toISOString() }];
+                    const resultData = Array.isArray(insertedData)
+                      ? insertedData.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
+                      : [{ ...insertedData, id: insertedData.id || 1, created_at: insertedData.created_at || new Date().toISOString() }];
                     return Promise.resolve({
                       data: resultData,
                       error: null
@@ -313,9 +283,9 @@ class MockModeManager {
                     }).then(onFulfilled, onRejected);
                   },
                   catch: (onRejected) => {
-                    const resultData = Array.isArray(data)
-                      ? data.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
-                      : [{ ...data, id: data.id || 1, created_at: data.created_at || new Date().toISOString() }];
+                    const resultData = Array.isArray(insertedData)
+                      ? insertedData.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
+                      : [{ ...insertedData, id: insertedData.id || 1, created_at: insertedData.created_at || new Date().toISOString() }];
                     return Promise.resolve({
                       data: resultData,
                       error: null
@@ -324,7 +294,7 @@ class MockModeManager {
                 });
               },
               single: () => {
-                const baseData = Array.isArray(data) ? data[0] : data;
+                const baseData = Array.isArray(insertedData) ? insertedData[0] : insertedData;
                 const result = {
                   ...baseData,
                   id: baseData.id || 1,

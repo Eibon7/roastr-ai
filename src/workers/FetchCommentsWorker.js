@@ -108,46 +108,47 @@ class FetchCommentsWorker extends BaseWorker {
   }
   
   /**
-   * Process fetch job with retry wrapper
-   */
-  async processJob(job) {
-    return await this.executeJobWithRetry(job);
-  }
-
-  /**
    * Internal process fetch job (called by retry wrapper)
    */
   async _processJobInternal(job) {
-    const { organization_id, platform, integration_config_id, payload } = job.payload || job;
-    
+    // Extract job data from payload or directly from job
+    const jobData = job.payload || job;
+    const { organization_id, platform, integration_config_id } = jobData;
+
+    // Extract platform-specific payload (could be nested as payload.payload or directly in jobData)
+    // Support both structures for backwards compatibility:
+    // 1. job.payload.payload (nested) - for platform-specific data like video_ids, since_id
+    // 2. jobData itself - for jobs with comment_data directly in payload
+    const platformPayload = jobData.payload || jobData;
+
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
-      organization_id, 
+      organization_id,
       'fetch_comment',
       1, // quantity
       platform
     );
-    
+
     if (!canProcess.allowed) {
       throw new Error(`Organization ${organization_id} has reached limits: ${canProcess.reason}`);
     }
-    
+
     // Get integration configuration
     const integrationConfig = await this.getIntegrationConfig(
-      organization_id, 
-      platform, 
+      organization_id,
+      platform,
       integration_config_id
     );
-    
+
     if (!integrationConfig || !integrationConfig.enabled) {
       throw new Error(`Integration ${platform} is not enabled for organization ${organization_id}`);
     }
-    
+
     // Fetch comments based on platform
     const comments = await this.fetchCommentsFromPlatform(
-      platform, 
-      integrationConfig, 
-      payload
+      platform,
+      integrationConfig,
+      platformPayload
     );
     
     // Process and store comments
