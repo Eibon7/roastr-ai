@@ -286,7 +286,6 @@ npx markdownlint-cli2 "docs/**/*.md"
 ### Follow-Up Tasks
 
 ### Issue #TBD: Complete Remaining MD040 Fixes
-
 - **Scope:** 5 test-evidence files (n1-n5)
 - **Priority:** Low
 - **Effort:** 15 minutes

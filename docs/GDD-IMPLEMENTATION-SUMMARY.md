@@ -38,7 +38,7 @@
 | 11 | GDD Admin Dashboard | Oct 6, 2025 | ✅ Complete | - | Documented in Phase 13 |
 | 12 | CI/CD Integration | Oct 6, 2025 | ✅ Complete | - | Documented in Phase 13 |
 | 13 | Telemetry & Analytics Layer | Oct 7, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-13.md) |
-| 15 | Cross-Validation & Extended Health | Oct 9, 2025 | ✅ Complete | 100/100 | [View Details](./plan/gdd-phase-15-cross-validation.md) |
+| 15 | Cross-Validation & Extended Health | Oct 9, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-15.md) |
 | 15.1 | Coverage Integrity Enforcement | Oct 8, 2025 | ✅ Complete | - | Implemented (no doc) |
 | 15.2 | Temporary Threshold & Coverage Recovery | Oct 8, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-15.2.md) |
 | 15.3 | Modularization of GDD Summary | Oct 8, 2025 | 🚧 In Progress | - | This implementation |
@@ -71,8 +71,8 @@
 - **Telemetry & analytics** - Historical tracking and trend analysis
 
 **Architecture:**
-```
-docs/system-map.yaml      → Central dependency graph (13 nodes)
+```text
+docs/system-map.yaml      → Central dependency graph (14 nodes)
 docs/nodes/*.md           → Individual feature documentation (modular)
 scripts/resolve-graph.js  → Dependency resolver + validator
 scripts/score-gdd-health.js → Health scoring engine
@@ -218,7 +218,7 @@ All phase documentation has been modularized for performance. Browse individual 
 
 - [📁 View All Phases](./implementation/)
 
-**Latest Phase:** [Phase 15 - Cross-Validation & Extended Health Metrics](./plan/gdd-phase-15-cross-validation.md)
+**Latest Phase:** [Phase 15 - Cross-Validation & Extended Health Metrics](./implementation/GDD-PHASE-15.md)
 
 ---
 

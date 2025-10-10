@@ -69,12 +69,19 @@ class CrossValidationRunner {
       const nodes = await this.loadNodes();
 
       // Filter by specific node if requested
-      const nodesToValidate = this.options.node
-        ? { [this.options.node]: nodes[this.options.node] }
-        : nodes;
+      let nodesToValidate;
+      if (this.options.node) {
+        // Guard: Ensure node exists before accessing
+        if (!nodes[this.options.node]) {
+          throw new Error(`Node not found: ${this.options.node}`);
+        }
+        nodesToValidate = { [this.options.node]: nodes[this.options.node] };
+      } else {
+        nodesToValidate = nodes;
+      }
 
       if (!nodesToValidate || Object.keys(nodesToValidate).length === 0) {
-        throw new Error(`Node not found: ${this.options.node}`);
+        throw new Error('No nodes to validate');
       }
 
       this.results.nodes_validated = Object.keys(nodesToValidate).length;
@@ -284,6 +291,26 @@ class CrossValidationRunner {
   }
 
   /**
+   * Get coverage validation status with appropriate emoji and text
+   */
+  getCoverageValidationStatus() {
+    const { matched, mismatched, skipped } = this.results.coverage_validation;
+
+    // True failures (coverage mismatches)
+    if (mismatched > 0) {
+      return '⚠️ FAIL';
+    }
+
+    // Only warnings (no mismatches, but skipped items)
+    if (mismatched === 0 && skipped > 0 && matched === 0) {
+      return '📊 NO DATA';
+    }
+
+    // All passed
+    return '✅ PASS';
+  }
+
+  /**
    * Generate reports
    */
   async generateReports() {
@@ -318,13 +345,17 @@ class CrossValidationRunner {
 
 ## Coverage Validation
 
-**Status:** ${this.results.coverage_validation.mismatched === 0 ? '✅ PASS' : '⚠️ FAIL'}
+**Status:** ${this.getCoverageValidationStatus()}
 
 - **Total Checked:** ${this.results.coverage_validation.total}
 - **Matched:** ${this.results.coverage_validation.matched}
 - **Mismatched:** ${this.results.coverage_validation.mismatched}
 - **Skipped (Warnings):** ${this.results.coverage_validation.skipped}
 
+${this.results.coverage_validation.skipped > 0 ? `
+> **Note:** Skipped items are non-actionable warnings (e.g., \`no_source_files_found\`, \`coverage_data_unavailable\`, \`coverage_calculation_failed\`).
+> These do not constitute validation failures and are expected for infrastructure-only changes or nodes without source files.
+` : ''}
 `;
 
     if (this.results.coverage_validation.violations.length > 0) {
@@ -386,6 +417,16 @@ class CrossValidationRunner {
           markdown += `- **Phantom:** ${violation.phantom.join(', ')}\n`;
         }
         markdown += `\n`;
+      }
+
+      // Add explanatory note if many nodes have empty detected arrays
+      const emptyDetectedCount = this.results.dependency_validation.violations.filter(v => v.detected.length === 0).length;
+      if (emptyDetectedCount > 0) {
+        markdown += `
+> **Note:** Empty "Detected" arrays indicate no source files were found to scan for imports.
+> This is expected for infrastructure-only PRs, documentation changes, or nodes without implementation yet.
+> Dependency validation requires source files to analyze \`require()\` and \`import\` statements.
+`;
       }
     }
 

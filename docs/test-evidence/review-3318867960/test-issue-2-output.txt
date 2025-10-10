@@ -1,0 +1,20 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose gdd-cross-validator-issue-2.test.js
+
+PASS node-tests tests/unit/scripts/gdd-cross-validator-issue-2.test.js
+  GDDCrossValidator - Violation Classification (Issue #2)
+    validateCoverage() violation classification
+      ✓ should add violation for true coverage_mismatch (1 ms)
+      ✓ should NOT add violation for coverage_data_unavailable (1 ms)
+      ✓ should NOT add violation for no_source_files_found
+      ✓ should NOT add violation for coverage_calculation_failed
+      ✓ should handle multiple warnings without adding violations (1 ms)
+      ✓ should only record true mismatches in violations array
+      ✓ should maintain backward compatibility with existing callers
+
+Test Suites: 1 passed, 1 total
+Tests:       7 passed, 7 total
+Snapshots:   0 total
+Time:        0.333 s, estimated 1 s
+Ran all test suites matching gdd-cross-validator-issue-2.test.js.
