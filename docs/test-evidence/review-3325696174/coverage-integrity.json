@@ -1,8 +1,70 @@
 {
   "validation": "PASSED",
   "timestamp": "2025-10-11T00:00:00Z",
-  "metrics_before": $(cat /tmp/coverage-before.json),
-  "metrics_after": $(cat /tmp/coverage-after.json),
+  "metrics_before": {
+    "lines": {
+      "total": 583,
+      "covered": 338,
+      "skipped": 0,
+      "pct": 57.97
+    },
+    "statements": {
+      "total": 594,
+      "covered": 344,
+      "skipped": 0,
+      "pct": 57.91
+    },
+    "functions": {
+      "total": 119,
+      "covered": 80,
+      "skipped": 0,
+      "pct": 67.22
+    },
+    "branches": {
+      "total": 287,
+      "covered": 82,
+      "skipped": 0,
+      "pct": 28.57
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "metrics_after": {
+    "lines": {
+      "total": 583,
+      "covered": 338,
+      "skipped": 0,
+      "pct": 57.97
+    },
+    "statements": {
+      "total": 594,
+      "covered": 344,
+      "skipped": 0,
+      "pct": 57.91
+    },
+    "functions": {
+      "total": 119,
+      "covered": 80,
+      "skipped": 0,
+      "pct": 67.22
+    },
+    "branches": {
+      "total": 287,
+      "covered": 82,
+      "skipped": 0,
+      "pct": 28.57
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
   "paths_sanitized": 8,
   "absolute_paths_remaining": 0,
   "files_modified": [
