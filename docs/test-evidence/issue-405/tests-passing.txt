@@ -1,0 +1,19 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/e2e/auto-approval-flow.test.js
+
+PASS node-tests tests/e2e/auto-approval-flow.test.js (15.566 s)
+  [E2E] Auto-Approval Flow - Auto-approval ON
+    Auto-Approval Flow Pipeline Validation
+      ✓ should process roastable comment through complete auto-approval pipeline (15175 ms)
+      ✓ should handle edge cases in auto-approval flow
+      ✓ should maintain organization isolation in auto-approval flow (1 ms)
+    Auto-Approval Flow UI Integration Points
+      ✓ should validate auto-approval UI integration requirements
+      ✓ should validate auto-approval flow configuration requirements
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        15.601 s, estimated 16 s
+Ran all test suites matching tests/e2e/auto-approval-flow.test.js.
