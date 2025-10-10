@@ -210,42 +210,50 @@ class MockModeManager {
             if (table === 'comments') {
               const storage = global.mockCommentStorage || [];
 
-              // Check for existing comment to enforce deduplication
-              const existing = storage.find(comment =>
-                comment.organization_id === data.organization_id &&
-                comment.platform === data.platform &&
-                comment.platform_comment_id === data.platform_comment_id
-              );
+              // Handle both single object and array inputs
+              const dataArray = Array.isArray(data) ? data : [data];
+              const results = [];
 
-              if (existing) {
-                console.log('🔍 Mock: Duplicate comment detected, not inserting:', {
-                  platform_comment_id: data.platform_comment_id,
-                  organization_id: data.organization_id,
-                  platform: data.platform
-                });
+              dataArray.forEach(item => {
+                // Check for existing comment to enforce deduplication
+                const existing = storage.find(comment =>
+                  comment.organization_id === item.organization_id &&
+                  comment.platform === item.platform &&
+                  comment.platform_comment_id === item.platform_comment_id
+                );
 
-                // Use existing comment as the inserted data
-                insertedData = existing;
-              } else {
-                // Insert new comment since no duplicate found
-                const newComment = {
-                  ...data,
-                  id: `mock_comment_${Date.now()}_${Math.random()}`,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                };
-                console.log('🔍 Mock: Inserting new comment:', {
-                  platform_comment_id: newComment.platform_comment_id,
-                  organization_id: newComment.organization_id,
-                  platform: newComment.platform
-                });
-                storage.push(newComment);
-                global.mockCommentStorage = storage;
-                console.log('🔍 Mock: Storage now has', storage.length, 'comments');
+                if (existing) {
+                  console.log('🔍 Mock: Duplicate comment detected, not inserting:', {
+                    platform_comment_id: item.platform_comment_id,
+                    organization_id: item.organization_id,
+                    platform: item.platform
+                  });
 
-                // Use the newly created comment as the inserted data
-                insertedData = newComment;
-              }
+                  // Use existing comment as the inserted data
+                  results.push(existing);
+                } else {
+                  // Insert new comment since no duplicate found
+                  const newComment = {
+                    ...item,
+                    id: `mock_comment_${Date.now()}_${Math.random()}`,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  };
+                  console.log('🔍 Mock: Inserting new comment:', {
+                    platform_comment_id: newComment.platform_comment_id,
+                    organization_id: newComment.organization_id,
+                    platform: newComment.platform
+                  });
+                  storage.push(newComment);
+                  results.push(newComment);
+                }
+              });
+
+              global.mockCommentStorage = storage;
+              console.log('🔍 Mock: Storage now has', storage.length, 'comments');
+
+              // Preserve input format: return array if input was array, single object if input was object
+              insertedData = Array.isArray(data) ? results : results[0];
             }
 
             const chainableInsert = {
