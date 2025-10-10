@@ -3,10 +3,22 @@
  * Phase 17: Governance Interface & Alerts
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { GuardianCase, GUARDIAN_COLORS, DiffModalProps } from '../../types/guardian.types';
 
 export const DiffModal: React.FC<DiffModalProps> = ({ isOpen, onClose, caseData }) => {
+  // ESC key handler for accessibility (WCAG 2.1)
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !caseData) return null;
 
   const overlayStyles: React.CSSProperties = {
@@ -51,9 +63,17 @@ export const DiffModal: React.FC<DiffModalProps> = ({ isOpen, onClose, caseData 
 
   return (
     <div style={overlayStyles} onClick={onClose}>
-      <div style={modalStyles} onClick={e => e.stopPropagation()}>
+      <div
+        style={modalStyles}
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="diff-modal-title"
+      >
         <div style={headerStyles}>
-          <h2 style={{ margin: 0, color: GUARDIAN_COLORS.safe }}>Git Diff - {caseData.case_id}</h2>
+          <h2 id="diff-modal-title" style={{ margin: 0, color: GUARDIAN_COLORS.safe }}>
+            Git Diff - {caseData.case_id}
+          </h2>
           <button
             onClick={onClose}
             style={{
