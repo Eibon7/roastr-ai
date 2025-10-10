@@ -34,6 +34,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check maintenance mode
+        id: maintenance
+        run: |
+          if [ -f .gdd-maintenance ]; then
+            MAINTENANCE=$(jq -r '.maintenance_mode' .gdd-maintenance)
+            echo "maintenance_mode=$MAINTENANCE" >> $GITHUB_OUTPUT
+            if [ "$MAINTENANCE" == "true" ]; then
+              echo "🧊 GDD is in MAINTENANCE MODE (Read-Only Observer)"
+              echo "   - Validation: ACTIVE ✓"
+              echo "   - Auto-Repair: DISABLED"
+              echo "   - Issue Creation: DISABLED"
+            fi
+          else
+            echo "maintenance_mode=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Load GDD configuration
         id: config
         run: |
@@ -200,7 +216,7 @@ jobs:
           retention-days: 30
 
       - name: Create issue on failure
-        if: steps.threshold.outputs.result == 'fail' && github.event_name == 'pull_request'
+        if: steps.threshold.outputs.result == 'fail' && github.event_name == 'pull_request' && steps.maintenance.outputs.maintenance_mode != 'true'
         uses: actions/github-script@v7
         with:
           script: |

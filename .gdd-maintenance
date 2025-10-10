@@ -1,0 +1,6 @@
+{
+  "maintenance_mode": false,
+  "enabled_date": null,
+  "snapshot_reference": null,
+  "notes": "Set maintenance_mode to true to enable read-only observer mode for all GDD automation"
+}

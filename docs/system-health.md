@@ -1,15 +1,15 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-09T10:44:30.467Z
+**Generated:** 2025-10-10T15:51:56.761Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 95.5/100
+**Average Score:** 95.1/100
 
 ---
 
 ## Summary
 
-- **Total Nodes:** 13
-- 🟢 **Healthy (80-100):** 13
+- **Total Nodes:** 14
+- 🟢 **Healthy (80-100):** 14
 - 🟡 **Degraded (50-79):** 0
 - 🔴 **Critical (<50):** 0
 
@@ -19,6 +19,7 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
+| guardian | 🟢 90 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | trainer | 🟢 90 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | analytics | 🟢 94 | healthy | 2025-10-09 | 70% | 0 | 0 |
 | billing | 🟢 94 | healthy | 2025-10-09 | 70% | 0 | 0 |
@@ -37,13 +38,26 @@
 
 ## ⚠️ Top 5 Nodes to Review
 
+### guardian (Score: 90)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 98/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 50/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
 ### trainer (Score: 90)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 100/100
+- Update Freshness: 98/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
@@ -56,7 +70,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 100/100
+- Update Freshness: 98/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 70/100
 - Agent Relevance: 100/100
@@ -69,7 +83,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 100/100
+- Update Freshness: 98/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 70/100
 - Agent Relevance: 100/100
@@ -82,20 +96,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 100/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 70/100
-- Agent Relevance: 100/100
-- Integrity Score: 100/100
-
-
-### multi-tenant (Score: 94)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 100/100
+- Update Freshness: 98/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 70/100
 - Agent Relevance: 100/100
