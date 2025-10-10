@@ -506,6 +506,10 @@ app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
 // Admin routes (admin only)
 app.use('/api/admin', adminRoutes);
 
+// Guardian governance routes (Phase 17)
+const guardianRoutes = require('./routes/guardian');
+app.use('/api/guardian', guardianRoutes);
+
 // Instancia del generador de roasts
 let roastGenerator;
 try {
