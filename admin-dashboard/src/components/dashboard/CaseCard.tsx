@@ -4,17 +4,19 @@
  */
 
 import React, { useState } from 'react';
-import { GuardianCase, GUARDIAN_COLORS, formatTimestamp, isPending, isApproved, isDenied } from '../../types/guardian.types';
+import {
+  GuardianCase,
+  GUARDIAN_COLORS,
+  formatTimestamp,
+  isPending,
+  isApproved,
+  isDenied,
+  validateApprover,
+  validateDenialReason,
+  CaseCardProps
+} from '../../types/guardian.types';
 import SeverityTag from './SeverityTag';
 import ActionTag from './ActionTag';
-
-interface CaseCardProps {
-  caseData: GuardianCase;
-  onApprove: (caseId: string, approver: string) => Promise<void>;
-  onDeny: (caseId: string, denier: string, reason: string) => Promise<void>;
-  onViewDiff: (caseId: string) => void;
-  isLoading?: boolean;
-}
 
 export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny, onViewDiff, isLoading }) => {
   const [approver, setApprover] = useState('');
@@ -22,6 +24,7 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
   const [reason, setReason] = useState('');
   const [showApproveForm, setShowApproveForm] = useState(false);
   const [showDenyForm, setShowDenyForm] = useState(false);
+  const [errors, setErrors] = useState<{ approve?: string; deny?: string }>({});
 
   const cardStyles: React.CSSProperties = {
     backgroundColor: '#111',
@@ -34,24 +37,53 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
   };
 
   const handleApprove = async () => {
-    if (!approver.trim()) {
-      alert('Approver name is required');
+    // Clear previous errors
+    setErrors({ ...errors, approve: undefined });
+
+    // Validate using centralized validator
+    const validation = validateApprover(approver);
+    if (!validation.valid) {
+      setErrors({ ...errors, approve: validation.error });
       return;
     }
-    await onApprove(caseData.case_id, approver);
-    setShowApproveForm(false);
-    setApprover('');
+
+    try {
+      await onApprove(caseData.case_id, approver);
+      setShowApproveForm(false);
+      setApprover('');
+      setErrors({ ...errors, approve: undefined });
+    } catch (error: any) {
+      setErrors({ ...errors, approve: error.message || 'Failed to approve case' });
+    }
   };
 
   const handleDeny = async () => {
-    if (!denier.trim() || !reason.trim()) {
-      alert('Denier name and reason are required');
+    // Clear previous errors
+    setErrors({ ...errors, deny: undefined });
+
+    // Validate denier name
+    const denierValidation = validateApprover(denier); // Same validation rules
+    if (!denierValidation.valid) {
+      setErrors({ ...errors, deny: denierValidation.error });
       return;
     }
-    await onDeny(caseData.case_id, denier, reason);
-    setShowDenyForm(false);
-    setDenier('');
-    setReason('');
+
+    // Validate denial reason
+    const reasonValidation = validateDenialReason(reason);
+    if (!reasonValidation.valid) {
+      setErrors({ ...errors, deny: reasonValidation.error });
+      return;
+    }
+
+    try {
+      await onDeny(caseData.case_id, denier, reason);
+      setShowDenyForm(false);
+      setDenier('');
+      setReason('');
+      setErrors({ ...errors, deny: undefined });
+    } catch (error: any) {
+      setErrors({ ...errors, deny: error.message || 'Failed to deny case' });
+    }
   };
 
   return (
@@ -142,78 +174,149 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
 
       {showApproveForm && (
         <div style={{ marginTop: '15px', padding: '15px', border: `1px solid ${GUARDIAN_COLORS.approved}` }}>
+          <label
+            htmlFor={`approver-input-${caseData.case_id}`}
+            style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: GUARDIAN_COLORS.safe }}
+          >
+            Approver Name:
+          </label>
           <input
+            id={`approver-input-${caseData.case_id}`}
             type="text"
             placeholder="Your name"
             value={approver}
             onChange={e => setApprover(e.target.value)}
+            aria-invalid={!!errors.approve}
+            aria-describedby={errors.approve ? `approver-error-${caseData.case_id}` : undefined}
+            disabled={isLoading}
             style={{
               width: '100%',
               padding: '8px',
               marginBottom: '10px',
               backgroundColor: '#0a0a0a',
-              border: `1px solid ${GUARDIAN_COLORS.safe}`,
+              border: `1px solid ${errors.approve ? GUARDIAN_COLORS.critical : GUARDIAN_COLORS.safe}`,
               color: '#FFF',
-              fontFamily: "'Courier New', monospace"
+              fontFamily: "'Courier New', monospace",
+              opacity: isLoading ? 0.5 : 1
             }}
           />
-          <button onClick={handleApprove} style={{
-            backgroundColor: GUARDIAN_COLORS.approved,
-            border: 'none',
-            color: '#000',
-            padding: '8px 16px',
-            cursor: 'pointer',
-            fontFamily: "'Courier New', monospace",
-            fontWeight: 'bold'
-          }}>
-            Confirm Approval
+          {errors.approve && (
+            <p
+              id={`approver-error-${caseData.case_id}`}
+              role="alert"
+              style={{
+                color: GUARDIAN_COLORS.critical,
+                fontSize: '11px',
+                marginBottom: '10px',
+                marginTop: '-5px'
+              }}
+            >
+              {errors.approve}
+            </p>
+          )}
+          <button
+            onClick={handleApprove}
+            disabled={isLoading}
+            style={{
+              backgroundColor: GUARDIAN_COLORS.approved,
+              border: 'none',
+              color: '#000',
+              padding: '8px 16px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              fontFamily: "'Courier New', monospace",
+              fontWeight: 'bold',
+              opacity: isLoading ? 0.5 : 1
+            }}
+          >
+            {isLoading ? 'Processing...' : 'Confirm Approval'}
           </button>
         </div>
       )}
 
       {showDenyForm && (
         <div style={{ marginTop: '15px', padding: '15px', border: `1px solid ${GUARDIAN_COLORS.critical}` }}>
+          <label
+            htmlFor={`denier-input-${caseData.case_id}`}
+            style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: GUARDIAN_COLORS.safe }}
+          >
+            Your Name:
+          </label>
           <input
+            id={`denier-input-${caseData.case_id}`}
             type="text"
             placeholder="Your name"
             value={denier}
             onChange={e => setDenier(e.target.value)}
+            aria-invalid={!!errors.deny}
+            aria-describedby={errors.deny ? `deny-error-${caseData.case_id}` : undefined}
+            disabled={isLoading}
             style={{
               width: '100%',
               padding: '8px',
               marginBottom: '10px',
               backgroundColor: '#0a0a0a',
-              border: `1px solid ${GUARDIAN_COLORS.safe}`,
+              border: `1px solid ${errors.deny ? GUARDIAN_COLORS.critical : GUARDIAN_COLORS.safe}`,
               color: '#FFF',
-              fontFamily: "'Courier New', monospace"
+              fontFamily: "'Courier New', monospace",
+              opacity: isLoading ? 0.5 : 1
             }}
           />
+          <label
+            htmlFor={`reason-input-${caseData.case_id}`}
+            style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: GUARDIAN_COLORS.safe }}
+          >
+            Denial Reason (min 10 characters):
+          </label>
           <textarea
+            id={`reason-input-${caseData.case_id}`}
             placeholder="Reason for denial (min 10 characters)"
             value={reason}
             onChange={e => setReason(e.target.value)}
             rows={3}
+            aria-invalid={!!errors.deny}
+            aria-describedby={errors.deny ? `deny-error-${caseData.case_id}` : undefined}
+            disabled={isLoading}
             style={{
               width: '100%',
               padding: '8px',
               marginBottom: '10px',
               backgroundColor: '#0a0a0a',
-              border: `1px solid ${GUARDIAN_COLORS.safe}`,
+              border: `1px solid ${errors.deny ? GUARDIAN_COLORS.critical : GUARDIAN_COLORS.safe}`,
               color: '#FFF',
               fontFamily: "'Courier New', monospace",
-              resize: 'vertical' as const
+              resize: 'vertical' as const,
+              opacity: isLoading ? 0.5 : 1
             }}
           />
-          <button onClick={handleDeny} style={{
-            backgroundColor: GUARDIAN_COLORS.critical,
-            border: 'none',
-            color: '#FFF',
-            padding: '8px 16px',
-            cursor: 'pointer',
-            fontFamily: "'Courier New', monospace",
-            fontWeight: 'bold'
-          }}>
-            Confirm Denial
+          {errors.deny && (
+            <p
+              id={`deny-error-${caseData.case_id}`}
+              role="alert"
+              style={{
+                color: GUARDIAN_COLORS.critical,
+                fontSize: '11px',
+                marginBottom: '10px',
+                marginTop: '-5px'
+              }}
+            >
+              {errors.deny}
+            </p>
+          )}
+          <button
+            onClick={handleDeny}
+            disabled={isLoading}
+            style={{
+              backgroundColor: GUARDIAN_COLORS.critical,
+              border: 'none',
+              color: '#FFF',
+              padding: '8px 16px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              fontFamily: "'Courier New', monospace",
+              fontWeight: 'bold',
+              opacity: isLoading ? 0.5 : 1
+            }}
+          >
+            {isLoading ? 'Processing...' : 'Confirm Denial'}
           </button>
         </div>
       )}
