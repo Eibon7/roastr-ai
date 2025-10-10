@@ -1,71 +1,44 @@
+/**
+ * Guardian Agent - Corner Separator Component
+ * Phase 17: Governance Interface & Alerts
+ *
+ * Snake Eater themed separator line
+ */
+
 import React from 'react';
-import styled from 'styled-components';
+import { GUARDIAN_COLORS } from '../../types/guardian.types';
 
 interface CornerSeparatorProps {
-  variant?: 'default' | 'success';
-  position?: 'top' | 'bottom' | 'both';
+  className?: string;
 }
 
-const SeparatorContainer = styled.div<{ variant: 'default' | 'success'; position: string }>`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
+export const CornerSeparator: React.FC<CornerSeparatorProps> = ({ className = '' }) => {
+  const containerStyles = {
+    display: 'flex',
+    alignItems: 'center',
+    margin: '20px 0',
+    fontFamily: "'Courier New', monospace",
+    fontSize: '14px',
+    color: GUARDIAN_COLORS.safe,
+    opacity: 0.6
+  };
 
-  ${({ position }) => (position === 'top' || position === 'both') && `
-    &::before,
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      width: 8px;
-      height: 8px;
-      border-color: ${({ variant }) => variant === 'success' ? '#50fa7b' : 'rgba(255, 255, 255, 0.12)'};
-      border-style: solid;
-    }
+  const lineStyles = {
+    flex: 1,
+    height: '2px',
+    backgroundColor: GUARDIAN_COLORS.safe,
+    opacity: 0.3
+  };
 
-    &::before {
-      left: 0;
-      border-width: 1px 0 0 1px;
-    }
-
-    &::after {
-      right: 0;
-      border-width: 1px 1px 0 0;
-    }
-  `}
-
-  ${({ position }) => (position === 'bottom' || position === 'both') && `
-    ${position === 'both' ? '&' : '&::before, &::after'} {
-      ${position === 'both' ? `
-        &::before::after,
-        &::after::after
-      ` : ''}
-      content: '';
-      position: absolute;
-      bottom: 0;
-      width: 8px;
-      height: 8px;
-      border-color: ${({ variant }) => variant === 'success' ? '#50fa7b' : 'rgba(255, 255, 255, 0.12)'};
-      border-style: solid;
-    }
-
-    ${position === 'both' ? '&::before::after' : '&::before'} {
-      left: 0;
-      border-width: 0 0 1px 1px;
-    }
-
-    ${position === 'both' ? '&::after::after' : '&::after'} {
-      right: 0;
-      border-width: 0 1px 1px 0;
-    }
-  `}
-`;
-
-export const CornerSeparator: React.FC<CornerSeparatorProps> = ({
-  variant = 'default',
-  position = 'top'
-}) => {
-  return <SeparatorContainer variant={variant} position={position} />;
+  return (
+    <div style={containerStyles} className={className}>
+      <span style={{ marginRight: '10px' }}>└</span>
+      <div style={lineStyles} />
+      <span style={{ margin: '0 10px' }}>─</span>
+      <div style={lineStyles} />
+      <span style={{ marginLeft: '10px' }}>┘</span>
+    </div>
+  );
 };
+
+export default CornerSeparator;
