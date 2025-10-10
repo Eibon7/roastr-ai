@@ -67,7 +67,7 @@
         "commits_last_30d": 4,
         "last_commit_days_ago": 0
       },
-      "health_score": null,
+      "health_score": 94,
       "coverage": "50"
     },
     "multi-tenant": {
