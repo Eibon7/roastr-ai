@@ -1,25 +1,14 @@
 {
-  "timestamp": "2025-10-09T07:33:29.861Z",
-  "mode": "apply",
+  "timestamp": "2025-10-10T15:33:28.221Z",
+  "mode": "dry-run",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 2,
+  "fixes_applied": 0,
   "errors": 0,
-  "health_before": 93.8,
-  "health_after": 93.8,
+  "health_before": 95.1,
+  "health_after": 95.1,
   "details": {
-    "fixes": [
-      {
-        "type": "auto",
-        "node": "multi-tenant",
-        "action": "Added coverage to multi-tenant"
-      },
-      {
-        "type": "auto",
-        "node": "trainer",
-        "action": "Added coverage to trainer"
-      }
-    ],
+    "fixes": [],
     "humanReview": [],
     "errors": []
   }

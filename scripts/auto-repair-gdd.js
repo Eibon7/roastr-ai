@@ -21,6 +21,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const { CoverageHelper } = require('./gdd-coverage-helper');
+const { isMaintenanceMode, hasMaintenanceFlag, showMaintenanceBanner, blockIfMaintenance } = require('./gdd-maintenance-mode');
 
 class AutoRepairEngine {
   constructor(options = {}) {
@@ -47,6 +48,14 @@ class AutoRepairEngine {
    */
   async repair() {
     try {
+      // Check maintenance mode
+      if (isMaintenanceMode() || hasMaintenanceFlag()) {
+        showMaintenanceBanner();
+        console.log('⚠️  Auto-repair is DISABLED in maintenance mode');
+        console.log('📊 Running validation-only analysis...\n');
+        this.options.dryRun = true; // Force dry-run mode
+      }
+
       console.log('');
       console.log('═══════════════════════════════════════════');
       console.log('      🔧 GDD AUTO-REPAIR ASSISTANT');

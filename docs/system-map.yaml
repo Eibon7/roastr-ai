@@ -16,6 +16,9 @@ metadata:
   development_nodes: 1
   pr: "#515"
   changes: "Phase 16: Added Guardian node (product governance layer)"
+  protected: true
+  last_verified: 2025-10-10
+  protection_reason: "GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze"
 
 # Node Definitions
 nodes:

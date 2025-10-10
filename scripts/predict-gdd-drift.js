@@ -33,6 +33,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const { isMaintenanceMode, hasMaintenanceFlag, showMaintenanceBanner, blockIfMaintenance } = require('./gdd-maintenance-mode');
 
 class GDDDriftPredictor {
   constructor(options = {}) {
@@ -66,6 +67,16 @@ class GDDDriftPredictor {
    */
   async predict() {
     const startTime = Date.now();
+
+    // Check maintenance mode for issue creation
+    if ((isMaintenanceMode() || hasMaintenanceFlag()) && this.options.createIssues) {
+      if (!this.options.ci) {
+        showMaintenanceBanner();
+        console.log('⚠️  Issue creation is DISABLED in maintenance mode');
+        console.log('📊 Running prediction-only analysis...\n');
+      }
+      this.options.createIssues = false; // Disable issue creation
+    }
 
     if (!this.options.ci) {
       console.log('');

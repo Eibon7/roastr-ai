@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-10T15:51:56.761Z",
+  "generated_at": "2025-10-10T15:33:26.639Z",
   "status": "HEALTHY",
   "overall_score": 95.1,
   "total_nodes": 14,
@@ -112,13 +112,13 @@
       "issues": []
     },
     "queue-system": {
-      "score": 100,
+      "score": 97,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
         "updateFreshness": 98,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 100,
+        "coverageEvidence": 87,
         "agentRelevance": 100,
         "integrityScore": 100
       },
