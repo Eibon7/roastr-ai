@@ -1,0 +1,39 @@
+# Guardian Ignore Patterns
+# Paths to ignore during Guardian scans
+# @GDD:node=guardian
+# @GDD:version=1.0.0
+
+version: "1.0"
+description: "Guardian ignore patterns for test fixtures and false positives"
+
+# Ignore patterns (glob syntax)
+ignore_patterns:
+  # Test fixtures - Windows malicious paths (security tests)
+  - "**/C:\\Windows\\**"
+  - "**/..\\..\\..\\Windows\\**"
+  - "**/*.SAM"
+  - "**/System32/**"
+  - "**\\Windows\\**"
+
+  # Test artifacts
+  - "**/.gdd-backups/**"
+  - "**/docs/guardian/cases/**"
+  - "**/docs/guardian/diffs/**"
+  - "**/telemetry/snapshots/**"
+
+  # Temporary files
+  - "**/*.tmp"
+  - "**/.tmp/**"
+  - "**/tmp/**"
+
+# Platform-specific paths to block (security)
+blocked_windows_paths:
+  - "C:\\Windows\\System32\\config\\SAM"
+  - "C:\\Windows\\System32\\drivers\\etc\\hosts"
+  - "%SystemRoot%\\**"
+  - "%WinDir%\\**"
+
+# Notes
+# - These patterns prevent Guardian from scanning test fixtures
+# - Windows system paths are blocked for security (test vectors only)
+# - Real Windows paths should never appear in a macOS/Linux repo

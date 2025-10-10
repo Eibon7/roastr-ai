@@ -383,7 +383,9 @@ class GDDDriftPredictor {
     const emojis = {
       healthy: '🟢',
       at_risk: '🟡',
-      likely_drift: '🔴'
+      likely_drift: '🔴',
+      warning: '🟡',
+      critical: '🔴'
     };
     return emojis[status] || '⚪';
   }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchGDDHealth, fetchGDDStatus, fetchGDDDrift } from '@services/gddApi';
-import type { GDDHealthData, GDDStatusData, GDDDriftData } from '@types/gdd.types';
+import type { GDDHealthData, GDDStatusData, GDDDriftData } from '../types/gdd.types';
 
 export interface GDDStats {
   health: number;
@@ -76,7 +76,7 @@ export function useGDDData(autoRefresh = true): GDDStats & { rawData: GDDRawData
 
   // Calculate derived metrics
   const stats: GDDStats = {
-    health: healthData?.average_score ?? 0,
+    health: healthData?.overall_score ?? 0, // Using overall_score (renamed from average_score)
     drift: driftData?.average_drift_risk ?? 0,
     nodes: healthData?.node_count ?? statusData?.nodes_validated ?? 0,
     coverage: calculateCoverage(healthData),

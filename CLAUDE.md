@@ -92,6 +92,14 @@ node scripts/agents/telemetry-bus.js --test    # Test telemetry bus
 node scripts/watch-gdd.js --agents-active      # Watch with autonomous agents
 node scripts/watch-gdd.js --telemetry          # Watch with telemetry display
 node scripts/watch-gdd.js --agents-active --telemetry  # Full agent integration
+
+# Guardian Agent (Phase 16) - Product Governance
+node scripts/guardian-gdd.js --full            # Full product governance scan
+node scripts/guardian-gdd.js --check           # Quick validation
+node scripts/guardian-gdd.js --report          # Generate markdown report
+node scripts/guardian-gdd.js --ci              # CI mode (exit 0/1/2)
+node scripts/collect-diff.js --verbose         # Generate structured diffs
+node scripts/collect-diff.js --output diffs/my-diff.json  # Custom output
 ```
 
 ## Multi-Tenant Project Structure

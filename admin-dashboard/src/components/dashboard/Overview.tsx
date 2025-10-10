@@ -245,8 +245,8 @@ export function Overview() {
       <MetricsGrid>
         <MetricCard>
           <MetricLabel>Health Score</MetricLabel>
-          <MetricValue>{healthData.average_score.toFixed(1)}</MetricValue>
-          <MetricSubtext>/100 average</MetricSubtext>
+          <MetricValue>{healthData.overall_score.toFixed(1)}</MetricValue>
+          <MetricSubtext>/100 overall</MetricSubtext>
         </MetricCard>
 
         <MetricCard>
@@ -278,7 +278,7 @@ export function Overview() {
           </ActivityItem>
           <ActivityItem>
             <ActivityText>
-              Health scores updated - Average: {healthData.average_score.toFixed(1)}/100
+              Health scores updated - Overall: {healthData.overall_score.toFixed(1)}/100
             </ActivityText>
           </ActivityItem>
           <ActivityItem>

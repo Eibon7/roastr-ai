@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-09T11:53:29.779Z",
+  "generated_at": "2025-10-09T22:46:11.019Z",
   "analysis_period_days": 30,
   "nodes": {
     "analytics": {
@@ -53,6 +53,23 @@
       "health_score": 94,
       "coverage": "70"
     },
+    "guardian": {
+      "drift_risk": 5,
+      "status": "healthy",
+      "factors": [
+        "+15 pts: Coverage 50% (<80%)",
+        "-10 pts: Recent commit (0 days ago)"
+      ],
+      "recommendations": [
+        "Increase test coverage to 80%+ (currently 50%)"
+      ],
+      "git_activity": {
+        "commits_last_30d": 4,
+        "last_commit_days_ago": 0
+      },
+      "health_score": null,
+      "coverage": "50"
+    },
     "multi-tenant": {
       "drift_risk": 5,
       "status": "healthy",
@@ -98,7 +115,7 @@
         "Increase test coverage to 80%+ (currently 70%)"
       ],
       "git_activity": {
-        "commits_last_30d": 9,
+        "commits_last_30d": 10,
         "last_commit_days_ago": 0
       },
       "health_score": 94,
@@ -213,8 +230,8 @@
     }
   },
   "status": "HEALTHY",
-  "average_drift_risk": 3,
+  "average_drift_risk": 4,
   "high_risk_count": 0,
   "at_risk_count": 0,
-  "healthy_count": 13
+  "healthy_count": 14
 }

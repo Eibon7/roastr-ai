@@ -6,7 +6,7 @@
 export interface GDDHealthData {
   generated_at: string;
   overall_status: 'HEALTHY' | 'DEGRADED' | 'CRITICAL';
-  average_score: number;
+  overall_score: number; // Renamed from average_score for semantic clarity
   node_count: number;
   healthy_count: number;
   degraded_count: number;
