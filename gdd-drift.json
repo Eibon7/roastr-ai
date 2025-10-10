@@ -53,6 +53,23 @@
       "health_score": 94,
       "coverage": "70"
     },
+    "guardian": {
+      "drift_risk": 5,
+      "status": "healthy",
+      "factors": [
+        "+15 pts: Coverage 50% (<80%)",
+        "-10 pts: Recent commit (0 days ago)"
+      ],
+      "recommendations": [
+        "Increase test coverage to 80%+ (currently 50%)"
+      ],
+      "git_activity": {
+        "commits_last_30d": 4,
+        "last_commit_days_ago": 0
+      },
+      "health_score": 94,
+      "coverage": "50"
+    },
     "multi-tenant": {
       "drift_risk": 5,
       "status": "healthy",
