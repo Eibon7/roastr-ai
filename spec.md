@@ -7809,5 +7809,62 @@ This section documents the core architectural nodes that form the foundation of 
 
 ---
 
+### Guardian Node
+
+**Purpose:** Product Governance Layer providing automated monitoring and protection for sensitive changes in product logic, pricing, authentication policies, and documentation.
+
+**Status:** Production Ready (Phase 16)
+
+**Responsibilities:**
+- Monitor git changes for violations of protected domains (pricing, quotas, auth, AI models, public APIs)
+- Classify changes by severity: CRITICAL (block merge), SENSITIVE (manual review), SAFE (auto-approve)
+- Generate audit logs and case files for compliance and traceability
+- Enforce approval workflows based on domain ownership
+- Integrate with CI/CD pipelines via semantic exit codes (0=safe, 1=review, 2=block)
+- Filter test fixtures and false positives using ignore patterns
+
+**Protected Domains:**
+1. **pricing** (CRITICAL) - Subscription tiers, billing, Stripe integration
+2. **quotas** (CRITICAL) - Usage limits, rate limiting, entitlements
+3. **auth_policies** (CRITICAL) - RLS policies, authentication, authorization
+4. **ai_models** (SENSITIVE) - AI prompts, model selection, OpenAI config
+5. **public_contracts** (SENSITIVE) - API endpoints, webhooks, schemas
+
+**Dependencies:**
+- None (leaf node - core infrastructure layer)
+
+**Used By:**
+- CI/CD workflows (`.github/workflows/guardian-check.yml`)
+- Pre-commit hooks (Husky integration - Phase 17)
+- PR validation bot (auto-comment with scan results - Phase 17)
+
+**Implementation:**
+- `scripts/guardian-gdd.js` - Main Guardian engine and CLI
+- `config/product-guard.yaml` - Protected domains configuration
+- `config/guardian-ignore.yaml` - Ignore patterns for test fixtures
+- `docs/guardian/audit-log.md` - Audit trail (append-only)
+- `docs/guardian/cases/*.json` - Case files for violation details
+
+**Business Impact:**
+- Prevents accidental pricing changes that could impact revenue
+- Enforces security reviews for auth policy changes
+- Ensures AI model changes are reviewed by domain experts
+- Maintains audit trail for compliance (SOC 2, GDPR)
+
+**CI/CD Integration:**
+```bash
+# CI mode (semantic exit codes)
+node scripts/guardian-gdd.js --ci
+
+# Exit codes:
+# 0 = SAFE      → Auto-merge allowed
+# 1 = SENSITIVE → Tech Lead approval required
+# 2 = CRITICAL  → Merge blocked, Product Owner approval required
+```
+
+**GDD Node:** [docs/nodes/guardian.md](docs/nodes/guardian.md)
+
+---
+
 **GDD System Map:** [docs/system-map.yaml](docs/system-map.yaml)
 **GDD Documentation:** [docs/GDD-IMPLEMENTATION-SUMMARY.md](docs/GDD-IMPLEMENTATION-SUMMARY.md)

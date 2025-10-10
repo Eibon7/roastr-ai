@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-09T17:45:32.285Z
+**Date:** 2025-10-10T09:13:12.980Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -14,14 +14,14 @@
 - **Missing References:** 0
 - **Cycles Detected:** 0
 - **Drift Issues:** 0
-- **Coverage Integrity Violations:** 13
+- **Coverage Integrity Violations:** 14
 
 ### 🔮 Drift Risk Summary
 
-- **Average Drift Risk:** 3/100
+- **Average Drift Risk:** 4/100
 - **High Risk Nodes (>60):** 0
 - **At Risk Nodes (31-60):** 0
-- **Healthy Nodes (0-30):** 13
+- **Healthy Nodes (0-30):** 14
 
 ---
 
@@ -36,6 +36,7 @@ Coverage authenticity issues detected:
 | analytics | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | billing | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | cost-control | missing_coverage_data | 70% | N/A% | N/A% | warning |
+| guardian | missing_coverage_data | 50% | N/A% | N/A% | warning |
 | multi-tenant | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | plan-features | missing_coverage_data | 70% | N/A% | N/A% | warning |
@@ -61,6 +62,7 @@ Coverage authenticity issues detected:
 - Coverage data not available for validation
 - Coverage data not available for validation
 - Coverage data not available for validation
+- Coverage data not available for validation
 
 ### 🔮 Drift Risk Analysis
 
@@ -69,6 +71,7 @@ Coverage authenticity issues detected:
 | analytics | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 70%) |
 | billing | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 70%) |
 | cost-control | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 70%) |
+| guardian | 🟢 5 | healthy | N/A | 0d ago | Increase test coverage to 80%+ (currently 50%) |
 | multi-tenant | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 70%) |
 | persona | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 70%) |
 | plan-features | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (currently 70%) |
