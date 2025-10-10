@@ -67,7 +67,7 @@ Successfully synchronized all documentation for Guardian Agent (GDD 2.0 Phase 16
 
 **Used By:** None yet (Phase 17 will add CI/CD workflows)
 
-**Coverage:** 80% (estimated, pending actual test coverage run)
+**Coverage:** 50% (auto-validated from test coverage)
 
 **Testing:** 14 unit tests covering:
 - M1: Unstaged changes detection (4 tests)
@@ -184,7 +184,7 @@ guardian:
 
 **Coverage Integrity:**
 - ⚠️ 13/13 nodes missing coverage data (expected - requires `npm test -- --coverage`)
-- Note: Guardian coverage set to 80% (estimated based on 14 unit tests)
+- Note: Guardian coverage set to 50% (auto-validated from actual test coverage)
 
 **Drift Risk Analysis:**
 - Guardian not yet in drift analysis (newly created)

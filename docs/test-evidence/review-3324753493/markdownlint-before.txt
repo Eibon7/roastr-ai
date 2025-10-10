@@ -1,0 +1,15 @@
+markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
+Finding: docs/sync-reports/pr-515-gdd-phases-14-18-sync.md docs/system-validation.md
+Linting: 1 file(s)
+Summary: 11 error(s)
+docs/system-validation.md:52 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- Coverage data not available ..."]
+docs/system-validation.md:71:81 MD013/line-length Line length [Expected: 80; Actual: 93]
+docs/system-validation.md:72:81 MD013/line-length Line length [Expected: 80; Actual: 91]
+docs/system-validation.md:73:81 MD013/line-length Line length [Expected: 80; Actual: 96]
+docs/system-validation.md:74:81 MD013/line-length Line length [Expected: 80; Actual: 93]
+docs/system-validation.md:75:81 MD013/line-length Line length [Expected: 80; Actual: 96]
+docs/system-validation.md:76:81 MD013/line-length Line length [Expected: 80; Actual: 91]
+docs/system-validation.md:77:81 MD013/line-length Line length [Expected: 80; Actual: 97]
+docs/system-validation.md:78:81 MD013/line-length Line length [Expected: 80; Actual: 90]
+docs/system-validation.md:79:81 MD013/line-length Line length [Expected: 80; Actual: 88]
+docs/system-validation.md:80:81 MD013/line-length Line length [Expected: 80; Actual: 91]

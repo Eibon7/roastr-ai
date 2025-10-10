@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-10T15:51:56.870Z
+**Date:** 2025-10-10T16:37:43.244Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -49,6 +49,7 @@ Coverage authenticity issues detected:
 | trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
 
 **Actions Required:**
+
 - Coverage data not available for validation
 - Coverage data not available for validation
 - Coverage data not available for validation
@@ -71,7 +72,7 @@ Coverage authenticity issues detected:
 | analytics | 🟢 5 | healthy | 94 | 1d ago | Increase test coverage to 80%+ (currently 70%) |
 | billing | 🟢 5 | healthy | 94 | 1d ago | Increase test coverage to 80%+ (currently 70%) |
 | cost-control | 🟢 5 | healthy | 94 | 1d ago | Increase test coverage to 80%+ (currently 70%) |
-| guardian | 🟢 5 | healthy | N/A | 0d ago | Increase test coverage to 80%+ (currently 50%) |
+| guardian | 🟢 5 | healthy | 90 | 0d ago | Increase test coverage to 80%+ (currently 50%) |
 | multi-tenant | 🟢 5 | healthy | 94 | 1d ago | Increase test coverage to 80%+ (currently 70%) |
 | persona | 🟢 5 | healthy | 94 | 1d ago | Increase test coverage to 80%+ (currently 70%) |
 | plan-features | 🟢 5 | healthy | 94 | 1d ago | Increase test coverage to 80%+ (currently 70%) |
@@ -80,7 +81,7 @@ Coverage authenticity issues detected:
 | trainer | 🟢 5 | healthy | 90 | 1d ago | Increase test coverage to 80%+ (currently 50%) |
 | platform-constraints | 🟢 0 | healthy | 100 | 1d ago | - |
 | queue-system | 🟢 0 | healthy | 100 | 1d ago | - |
-| roast | 🟢 0 | healthy | 100 | 1d ago | - |
+| roast | 🟢 0 | healthy | 100 | 0d ago | - |
 | social-platforms | 🟢 0 | healthy | 100 | 1d ago | - |
 
 ---

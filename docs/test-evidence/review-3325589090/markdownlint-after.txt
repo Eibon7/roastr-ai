@@ -1,0 +1,4 @@
+markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
+Finding: docs/plan/review-3324753493.md docs/test-evidence/review-3324753493/SUMMARY.md docs/system-validation.md
+Linting: 3 file(s)
+Summary: 111 error(s)
