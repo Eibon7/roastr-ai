@@ -1,0 +1,61 @@
+# Grep Verification - Starter Quota Consistency
+
+## All "Starter" + "roast" mentions in spec.md
+
+$ grep -n "Starter" spec.md | grep -i "roast"
+671:- **Starter Plan**: 0.30 (roast threshold), Shield enabled ✨  
+708:- **Starter**: 1,000 análisis/month, 100 roasts/month
+3295:- **Starter**: 1,000 análisis / 100 roasts / 1 cuenta por red / Shield ON, No Original Tone
+7672:- **Starter** (€5/month): 1,000 análisis/month, 100 roasts/month, enhanced features
+
+✅ All 4 mentions show "100 roasts" (consistent)
+
+## All "10 roast" mentions in spec.md (should only be Free plan)
+
+$ grep -n "10 roast" spec.md
+707:- **Free**: 100 análisis/month, 10 roasts/month
+3079:- **Límites**: 100 análisis, 10 roasts
+3294:- **Free**: 100 análisis / 10 roasts / 1 cuenta por red / No Shield, No Original Tone
+7671:- **Free**: 100 análisis/month, 10 roasts/month, basic features
+
+✅ All 4 mentions are for Free plan (correct)
+
+## All "100 roast" mentions in spec.md (should only be Starter plan)
+
+$ grep -n "100 roast" spec.md
+708:- **Starter**: 1,000 análisis/month, 100 roasts/month
+3093:- **Límites**: 1000 análisis, 100 roasts
+3295:- **Starter**: 1,000 análisis / 100 roasts / 1 cuenta por red / Shield ON, No Original Tone
+7672:- **Starter** (€5/month): 1,000 análisis/month, 100 roasts/month, enhanced features
+
+✅ All 4 mentions are for Starter plan (correct)
+
+## Verification: No remaining inconsistencies
+
+$ grep -n "Starter.*10 roasts\|10 roasts.*Starter" spec.md
+(no output)
+
+✅ PASS: No Starter plan with "10 roasts" found
+
+## Cross-reference with code
+
+### Entitlements Service
+$ grep -A 3 "starter:" src/services/entitlementsService.js | grep roasts
+    roasts_per_month: 100,
+
+✅ Code confirms: Starter = 100 roasts/month
+
+### Tier Validation Middleware
+$ grep "100 starter" src/middleware/tierValidation.js
+ * Validate roast limits (10 free, 100 starter, 1,000 pro, 5,000 plus)
+
+✅ Middleware confirms: Starter = 100 roasts/month
+
+## Conclusion
+
+✅ spec.md is now 100% consistent with code
+✅ All Starter mentions show 100 roasts/month
+✅ All Free mentions show 10 roasts/month (unchanged)
+✅ No contradictions found
+
+Status: VERIFIED ✓

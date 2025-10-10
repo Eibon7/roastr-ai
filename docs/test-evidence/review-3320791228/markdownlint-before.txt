@@ -1,0 +1,22 @@
+markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
+Finding: docs/plan/coderabbit-comment-3387614510.md
+Linting: 1 file(s)
+Summary: 18 error(s)
+docs/plan/coderabbit-comment-3387614510.md:15:81 MD013/line-length Line length [Expected: 80; Actual: 131]
+docs/plan/coderabbit-comment-3387614510.md:18 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- ✅ Phase 15 Cross-Validation:..."]
+docs/plan/coderabbit-comment-3387614510.md:23 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- ✅ CI fix applied to `.github..."]
+docs/plan/coderabbit-comment-3387614510.md:63:81 MD013/line-length Line length [Expected: 80; Actual: 193]
+docs/plan/coderabbit-comment-3387614510.md:66 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- CodeRabbit scanned PR #519 o..."]
+docs/plan/coderabbit-comment-3387614510.md:92 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "1. File existence check: `if [..."]
+docs/plan/coderabbit-comment-3387614510.md:107 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- Lines 97-104 in `.github/wor..."]
+docs/plan/coderabbit-comment-3387614510.md:115 MD031/blanks-around-fences Fenced code blocks should be surrounded by blank lines [Context: "```bash"]
+docs/plan/coderabbit-comment-3387614510.md:126 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- ✅ No errors when file missin..."]
+docs/plan/coderabbit-comment-3387614510.md:138 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- [x] CI fix applied to gdd-re..."]
+docs/plan/coderabbit-comment-3387614510.md:144 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- [x] YAML syntax valid ✅"]
+docs/plan/coderabbit-comment-3387614510.md:150 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- [x] Planning document create..."]
+docs/plan/coderabbit-comment-3387614510.md:156 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- [x] CI fix complete (Issue #..."]
+docs/plan/coderabbit-comment-3387614510.md:209 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- Tactical fix (7 lines total)"]
+docs/plan/coderabbit-comment-3387614510.md:217 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- ❌ Fails when gdd-health.json..."]
+docs/plan/coderabbit-comment-3387614510.md:221 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- ✅ Handles missing file grace..."]
+docs/plan/coderabbit-comment-3387614510.md:234 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "1. Always verify current branc..."]
+docs/plan/coderabbit-comment-3387614510.md:242 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- CodeRabbit correctly identif..."]

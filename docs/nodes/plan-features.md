@@ -21,8 +21,8 @@ Plan Features manages subscription-based feature gating and usage limits across 
 
 | Feature | Free | Starter (€5/mo) | Pro (€15/mo) | Plus (€50/mo) |
 |---------|------|-----------------|--------------|---------------|
-| **Monthly Roasts** | 100 | 500 | 1,000 | Unlimited |
-| **Monthly Analysis** | 100 | 500 | 2,000 | Unlimited |
+| **Monthly Roasts** | 10 | 10 | 1,000 | 5,000 |
+| **Monthly Analysis** | 100 | 1,000 | 10,000 | 100,000 |
 | **Max Platforms** | 1 | 2 | 5 | 10 |
 | **AI Model** | GPT-3.5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 |
 | **RQC (Quality Control)** | ❌ | ❌ | ✅ | ✅ Advanced |
@@ -64,20 +64,20 @@ CREATE TABLE plan_limits (
 
 ```sql
 -- Free Plan
-('free', 'Free', 'Basic plan', 100, 100, 100, 1, FALSE, FALSE,
+('free', 'Free', 'Basic plan', 10, 10, 100, 1, FALSE, FALSE,
  '["basic_roasts", "single_platform"]')
 
 -- Starter Plan
-('starter', 'Starter', 'Entry plan with GPT-5 and Shield', 500, 500, 500, 2, FALSE, TRUE,
+('starter', 'Starter', 'Entry plan with GPT-5 and Shield', 10, 10, 1000, 2, FALSE, TRUE,
  '["gpt5_roasts", "shield_basic", "basic_integrations", "email_support"]')
 
 -- Pro Plan
-('pro', 'Pro', 'Professional plan', 1000, 1000, 2000, 5, TRUE, TRUE,
+('pro', 'Pro', 'Professional plan', 1000, 1000, 10000, 5, TRUE, TRUE,
  '["advanced_rqc", "shield_full", "priority_support", "custom_styles", "analytics"]')
 
 -- Plus Plan
-('plus', 'Plus', 'Premium tier', 999999, 999999, 999999, 10, TRUE, TRUE,
- '["unlimited_roasts", "advanced_rqc", "shield_advanced", "custom_styles", "24_7_support"]')
+('plus', 'Plus', 'Premium tier', 5000, 5000, 100000, 10, TRUE, TRUE,
+ '["advanced_rqc", "shield_advanced", "custom_styles", "24_7_support"]')
 ```
 
 ## Feature Gating
@@ -269,22 +269,22 @@ describe('Plan Features', () => {
   });
 
   test('Monthly limit enforced correctly', async () => {
-    // Simulate 100 roasts used (Free plan limit)
-    await simulateUsage(freeOrgId, 'roast', 100);
+    // Simulate 10 roasts used (Free plan limit)
+    await simulateUsage(freeOrgId, 'roast', 10);
 
     const result = await checkRoastLimit(freeOrgId);
 
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('monthly_limit_exceeded');
-    expect(result.usage).toBe(100);
-    expect(result.limit).toBe(100);
+    expect(result.usage).toBe(10);
+    expect(result.limit).toBe(10);
   });
 
-  test('Plus plan has unlimited roasts', async () => {
+  test('Plus plan has 5,000 roasts/month', async () => {
     const result = await checkRoastLimit(plusOrgId);
 
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(999999);  // Effectively unlimited
+    expect(result.limit).toBe(5000);
   });
 });
 ```
