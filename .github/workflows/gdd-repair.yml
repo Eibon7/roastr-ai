@@ -94,7 +94,12 @@ jobs:
           node scripts/validate-gdd-runtime.js --ci
           node scripts/score-gdd-health.js --ci
 
-          NEW_HEALTH=$(jq -r '.average_score' gdd-health.json)
+          # Guard: Check if gdd-health.json exists
+          if [ -f gdd-health.json ]; then
+            NEW_HEALTH=$(jq -r '.overall_score // 0' gdd-health.json)
+          else
+            NEW_HEALTH=0
+          fi
           echo "new_health=$NEW_HEALTH" >> $GITHUB_OUTPUT
           echo "New health score: $NEW_HEALTH"
 

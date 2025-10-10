@@ -20,8 +20,7 @@ describe('Path Traversal Security Tests (CWE-22)', () => {
 
   beforeEach(() => {
     swp = new SecureWrite({ verbose: false });
-
-    // Find repo root by searching for package.json
+    // Find repo root by searching for package.json (more robust)
     let dir = __dirname;
     while (dir !== path.dirname(dir)) {
       if (fs.existsSync(path.join(dir, 'package.json'))) {
