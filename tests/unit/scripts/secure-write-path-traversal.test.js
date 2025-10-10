@@ -20,7 +20,18 @@ describe('Path Traversal Security Tests (CWE-22)', () => {
 
   beforeEach(() => {
     swp = new SecureWrite({ verbose: false });
-    repoRoot = path.resolve(__dirname, '../../..');
+    // Find repo root by searching for package.json (more robust)
+    let dir = __dirname;
+    while (dir !== path.dirname(dir)) {
+      if (fs.existsSync(path.join(dir, 'package.json'))) {
+        repoRoot = dir;
+        break;
+      }
+      dir = path.dirname(dir);
+    }
+    if (!repoRoot) {
+      throw new Error('Could not find repository root (no package.json found)');
+    }
   });
 
   afterEach(() => {
@@ -31,8 +42,13 @@ describe('Path Traversal Security Tests (CWE-22)', () => {
     ];
 
     testFiles.forEach(file => {
-      if (fs.existsSync(file)) {
-        fs.unlinkSync(file);
+      try {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+        }
+      } catch (err) {
+        // Silently ignore cleanup errors in tests
+        // Tests have already run - cleanup is best-effort
       }
     });
   });
