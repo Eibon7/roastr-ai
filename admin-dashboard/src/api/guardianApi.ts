@@ -42,21 +42,40 @@ function buildQueryString(params: Record<string, any>): string {
 }
 
 /**
- * Handle API errors
+ * Handle API errors (fetch API, not axios)
  */
 function handleApiError(error: any, operation: string): never {
   console.error(`Guardian API Error (${operation}):`, error);
 
-  if (error.response) {
-    // Server responded with error
-    throw new Error(error.response.data?.message || `Server error: ${error.response.status}`);
-  } else if (error.request) {
-    // Request made but no response
-    throw new Error('No response from server. Check network connection.');
-  } else {
-    // Error setting up request
-    throw new Error(error.message || 'Unknown error occurred');
+  // fetch API throws TypeError for network errors (CORS, no internet, etc.)
+  if (error instanceof TypeError) {
+    throw new Error('Network error. Check your internet connection.');
   }
+
+  // Custom error with status from response (see fetch error handling below)
+  if (error.status) {
+    const statusMessage = error.message || `HTTP ${error.status}: ${getStatusText(error.status)}`;
+    throw new Error(statusMessage);
+  }
+
+  // Generic error fallback
+  throw new Error(error.message || 'Unknown error occurred');
+}
+
+/**
+ * Get human-readable status text for HTTP status codes
+ */
+function getStatusText(status: number): string {
+  const statusMap: Record<number, string> = {
+    400: 'Bad Request',
+    401: 'Unauthorized',
+    403: 'Forbidden',
+    404: 'Not Found',
+    500: 'Internal Server Error',
+    502: 'Bad Gateway',
+    503: 'Service Unavailable'
+  };
+  return statusMap[status] || 'Unknown Error';
 }
 
 // ============================================================
@@ -208,7 +227,18 @@ export async function fetchGuardianCases(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Try to extract error message from response body
+      let errorMessage = response.statusText;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        // Response not JSON, use statusText
+      }
+
+      const error: any = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
     }
 
     const data = await response.json();
@@ -258,7 +288,18 @@ export async function approveCase(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Try to extract error message from response body
+      let errorMessage = response.statusText;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        // Response not JSON, use statusText
+      }
+
+      const error: any = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
     }
 
     const data = await response.json();
@@ -310,7 +351,18 @@ export async function denyCase(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Try to extract error message from response body
+      let errorMessage = response.statusText;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        // Response not JSON, use statusText
+      }
+
+      const error: any = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
     }
 
     const data = await response.json();
