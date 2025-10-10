@@ -1,0 +1,17 @@
+{
+  "validation": "PASSED",
+  "timestamp": "2025-10-11T00:00:00Z",
+  "metrics_before": $(cat /tmp/coverage-before.json),
+  "metrics_after": $(cat /tmp/coverage-after.json),
+  "paths_sanitized": 8,
+  "absolute_paths_remaining": 0,
+  "files_modified": [
+    "docs/test-evidence/issue-405/coverage-report.json"
+  ],
+  "changes": {
+    "type": "path_sanitization",
+    "pattern_replaced": "/Users/emiliopostigo/roastr-ai/",
+    "replacement": "",
+    "result": "relative paths (src/, tests/)"
+  }
+}
