@@ -18,7 +18,7 @@ Phase 17 extends the Guardian Agent (Phase 16) with human-facing governance tool
 
 ## Architecture
 
-```
+```text
 Guardian Scan (Phase 16)
     ↓
 Detect CRITICAL/SENSITIVE change
