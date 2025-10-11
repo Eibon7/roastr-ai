@@ -1,0 +1,4 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/e2e/manual-flow.test.js
+

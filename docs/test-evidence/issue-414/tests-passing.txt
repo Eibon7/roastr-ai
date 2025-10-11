@@ -1,0 +1,40 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/killSwitch-issue-414.test.js
+
+PASS node-tests tests/integration/killSwitch-issue-414.test.js
+  Kill Switch Integration Tests - Issue #414
+    AC1: Kill switch blocks all autopost operations
+      ✓ should block autopost when kill switch is active (21 ms)
+      ✓ should allow autopost when kill switch is inactive (5 ms)
+      ✓ should block all platform-specific endpoints when kill switch is active (2 ms)
+    AC2: ENABLE_AUTOPOST controls global behavior
+      ✓ should block when ENABLE_AUTOPOST is disabled (1 ms)
+      ✓ should allow when both kill switch and ENABLE_AUTOPOST are enabled (2 ms)
+    AC3: Platform-specific autopost flags
+      ✓ should block Twitter when AUTOPOST_TWITTER is disabled (2 ms)
+      ✓ should allow Twitter when AUTOPOST_TWITTER is enabled (1 ms)
+      ✓ should allow Twitter but block YouTube independently (4 ms)
+    AC4: Cache TTL (30 seconds) works correctly
+      ✓ should use cache for requests within 30 seconds
+      ✓ should refresh cache after 30 seconds TTL expires
+    AC5: Fallback to local cache when DB fails
+      ✓ should save state to local cache on successful DB check (152 ms)
+      ✓ should use local cache when database is unavailable (102 ms)
+      ✓ should fail closed (block) when no cache available and DB fails (2 ms)
+    AC6: shouldBlockAutopost() for workers
+      ✓ should return blocked=true when kill switch is active (1 ms)
+      ✓ should return blocked=false when autopost is allowed
+      ✓ should check platform-specific flags when platform is provided
+      ✓ should fail closed when database check fails (1 ms)
+    AC7: Health check bypasses kill switch
+      ✓ should allow health check even when kill switch is active (1 ms)
+    AC8: Cache invalidation
+      ✓ should clear cache when invalidateCache() is called (1 ms)
+      ✓ should fetch fresh data after cache invalidation
+
+Test Suites: 1 passed, 1 total
+Tests:       20 passed, 20 total
+Snapshots:   0 total
+Time:        0.753 s, estimated 1 s
+Ran all test suites matching tests/integration/killSwitch-issue-414.test.js.
