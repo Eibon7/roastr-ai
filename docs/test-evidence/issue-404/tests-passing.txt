@@ -1,0 +1,24 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/e2e/manual-flow.test.js
+
+PASS node-tests tests/e2e/manual-flow.test.js (17.263 s)
+  [E2E] Manual Flow - Auto-approval OFF
+    Manual Flow Pipeline Validation
+      ✓ should process roastable comment through complete manual pipeline (15133 ms)
+      ✓ should handle edge cases in manual flow (1 ms)
+      ✓ should maintain organization isolation in manual flow
+    Manual Flow UI Integration Points
+      ✓ should validate UI integration requirements (1 ms)
+      ✓ should validate manual flow configuration requirements
+    Manual Flow Quality Enhancements
+      ✓ should validate quality metrics in generated variants (235 ms)
+      ✓ should handle multi-user concurrent generation (725 ms)
+      ✓ should retry generation on API failure with exponential backoff (448 ms)
+      ✓ should validate database persistence of variant metadata (356 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        17.295 s, estimated 20 s
+Ran all test suites matching tests/e2e/manual-flow.test.js.

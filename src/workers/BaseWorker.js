@@ -361,44 +361,68 @@ class BaseWorker {
    * Determine if an error is retryable
    */
   isRetryableError(error) {
-    // Don't retry permanent errors
+    const errorMessage = error.message || '';
+    const statusCode = error.statusCode || error.status;
+    const errorCode = error.code || '';
+
+    // Check for permanent error status codes (4xx client errors except rate limiting)
+    const permanentStatusCodes = [400, 401, 403, 404, 422];
+    if (statusCode && permanentStatusCodes.includes(statusCode)) {
+      return false;
+    }
+
+    // Check for permanent error codes
+    const permanentCodes = ['UNAUTHORIZED', 'FORBIDDEN', 'BAD_REQUEST', 'NOT_FOUND', 'CERT_INVALID'];
+    if (errorCode && permanentCodes.includes(errorCode)) {
+      return false;
+    }
+
+    // Check for permanent error patterns in message
     const permanentErrorPatterns = [
       /invalid.*authentication/i,
       /unauthorized/i,
-      /401/,
-      /403/,
       /api.*key.*invalid/i,
-      /forbidden/i
+      /forbidden/i,
+      /bad.*request/i,
+      /not.*found/i,
+      /ssl.*certificate/i
     ];
-    
-    const errorMessage = error.message || '';
-    
+
     for (const pattern of permanentErrorPatterns) {
       if (pattern.test(errorMessage)) {
         return false;
       }
     }
-    
-    // Retry transient errors
+
+    // Retry transient errors (rate limiting, server errors, network errors)
+    const retryableStatusCodes = [429, 500, 502, 503, 504];
+    if (statusCode && retryableStatusCodes.includes(statusCode)) {
+      return true;
+    }
+
+    // Check for retryable error codes
+    const retryableCodes = ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'];
+    if (errorCode && retryableCodes.includes(errorCode)) {
+      return true;
+    }
+
+    // Check for retryable error patterns in message
     const retryablePatterns = [
       /network/i,
       /connection/i,
       /timeout/i,
-      /econnreset/i,
       /rate.*limit/i,
-      /429/,
-      /500/,
-      /502/,
-      /503/,
-      /504/
+      /service.*unavailable/i,
+      /bad.*gateway/i,
+      /gateway.*timeout/i
     ];
-    
+
     for (const pattern of retryablePatterns) {
       if (pattern.test(errorMessage)) {
         return true;
       }
     }
-    
+
     // Default to retryable for unknown errors
     return true;
   }
@@ -436,6 +460,15 @@ class BaseWorker {
 
       const processingTime = Date.now() - startTime;
 
+      // Track processing time for health metrics
+      this.processingTimes.push(processingTime);
+      if (this.processingTimes.length > this.maxProcessingTimeSamples) {
+        this.processingTimes.shift(); // Remove oldest sample
+      }
+
+      // Update activity time
+      this.updateActivityTime();
+
       // Mark job as completed (don't fail the job if acknowledgment fails)
       try {
         await this.markJobCompleted(job, result, processingTime);
@@ -447,6 +480,9 @@ class BaseWorker {
         // Continue - job was processed successfully even if ack failed
       }
 
+      // Increment processed jobs counter
+      this.processedJobs++;
+
       return result;
 
     } catch (error) {
@@ -455,7 +491,7 @@ class BaseWorker {
       throw error;
     }
   }
-  
+
   /**
    * Mark job as completed
    */
@@ -467,9 +503,9 @@ class BaseWorker {
         completedBy: this.workerName
       });
     } catch (error) {
-      this.log('error', 'Failed to mark job as completed', { 
-        jobId: job.id, 
-        error: error.message 
+      this.log('error', 'Failed to mark job as completed', {
+        jobId: job.id,
+        error: error.message
       });
     }
   }

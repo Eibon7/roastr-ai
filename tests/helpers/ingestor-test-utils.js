@@ -53,7 +53,17 @@ class IngestorTestUtils {
         },
         getNextJob: async () => {
           const pendingJobs = this.mockStoredJobs.filter(job => job.status === 'pending');
-          return pendingJobs.length > 0 ? pendingJobs[0] : null;
+          if (pendingJobs.length === 0) return null;
+
+          // Sort by priority (lower number = higher priority) then by creation time (FIFO)
+          pendingJobs.sort((a, b) => {
+            if (a.priority !== b.priority) {
+              return a.priority - b.priority; // Lower priority number comes first
+            }
+            return new Date(a.created_at) - new Date(b.created_at); // FIFO within same priority
+          });
+
+          return pendingJobs[0];
         },
         completeJob: async (job, resultData = {}) => {
           if (process.env.DEBUG_E2E) {
@@ -511,6 +521,10 @@ class IngestorTestUtils {
     const { mockMode } = require('../../src/config/mockMode');
 
     if (mockMode.isMockMode) {
+      // Clear instance storage (used by mock queue service)
+      this.mockStoredJobs = [];
+      this.mockStoredComments = [];
+
       // Clear global mock storage
       if (typeof global !== 'undefined') {
         global.mockCommentStorage = [];
