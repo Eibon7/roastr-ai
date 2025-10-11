@@ -110,7 +110,8 @@
 
 ### Source Code (2 files)
 
-**1. src/workers/BaseWorker.js**
+#### 1. src/workers/BaseWorker.js
+
 ```javascript
 // BEFORE: Overly broad pattern matched network error codes
 const permanentErrorPatterns = [
@@ -126,9 +127,11 @@ const permanentErrorPatterns = [
   // ...
 ];
 ```
+
 **Impact:** Fixed retry logic to correctly identify retryable network errors
 
-**2. src/workers/FetchCommentsWorker.js**
+#### 2. src/workers/FetchCommentsWorker.js
+
 ```javascript
 // BEFORE: Only extracted from one structure
 const jobData = job.payload || job;
@@ -151,16 +154,18 @@ if (job.payload && job.payload.payload) {
   platformPayload = job.payload || job;  // Default fallback
 }
 ```
+
 **Impact:** Made job data extraction backwards-compatible with all test structures
 
 ### Test Files (2 files)
 
-**3. tests/integration/ingestor-error-handling.test.js**
+#### 3. tests/integration/ingestor-error-handling.test.js
 - Updated test expectations for "should handle database errors during comment storage"
 - Changed expected `fetchCount` from 1 to 3 to match actual retry behavior
 - Added explanatory comment about retry architecture
 
-**4. tests/integration/ingestor-acknowledgment.test.js**
+#### 4. tests/integration/ingestor-acknowledgment.test.js
+
 - Removed flaky timestamp uniqueness assertion
 - Kept core acknowledgment functionality checks
 - Eliminates test flakiness while maintaining coverage
@@ -176,7 +181,8 @@ if (job.payload && job.payload.payload) {
 - Network errors: "Network error: ENOTFOUND" ❌ (SHOULD retry)
 
 **Evidence:**
-```
+
+```text
 [RETRY LOOP] Caught error on attempt 2: Network error: ENOTFOUND
 [BASE WORKER DEBUG] isRetryableError called: {"errorCode":"ENOTFOUND"}
 [RETRY LOOP] isRetryable=false  ❌ WRONG!
@@ -199,7 +205,8 @@ if (job.payload && job.payload.payload) {
 The code only handled Structure B, breaking Structures A and C.
 
 **Evidence:**
-```
+
+```text
 [STORE COMMENTS] Called with 1 comments for org=undefined  ❌
 ```
 
