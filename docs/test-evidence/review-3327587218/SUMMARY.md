@@ -120,7 +120,7 @@
 ### Markdownlint - MD036 Violations
 
 **Before Fix:**
-```
+```text
 docs/test-evidence/review-3393621565/SUMMARY.md: MD036 violations (2 instances)
 docs/test-evidence/review-3327569755/SUMMARY.md: MD036 violations (2 instances)
 Total MD036 in target files: 4 violations

@@ -133,7 +133,7 @@ git diff docs/test-evidence/review-3393621565/SUMMARY.md
 
 ## Files Created/Modified
 
-### Created (3 files)
+### Created (5 files)
 
 1. `docs/plan/review-3327569755.md` (planning document, 337 lines)
 2. `docs/test-evidence/review-3327569755/SUMMARY.md` (this file)

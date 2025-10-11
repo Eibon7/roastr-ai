@@ -1,0 +1,26 @@
+docs/plan/review-3393621565.md:54:  2. [ ] Respuestas 402/403 donde corresponda por plan
+docs/plan/review-3393621565.md:133:- [ ] Respuestas 402/403 donde corresponda por plan → [x]
+docs/plan/review-3327587218.md:34:- HTTP status codes (402/403 → 429/403/401/500) - Already correct in Issue #413
+docs/plan/review-3327592440.md:39:- **Description:** References "Respuestas 402/403" but Issue #413 AC2 actually validates `429/403/401/500`
+docs/plan/review-3327592440.md:42:- **Fix:** Replace all `402/403` references with correct status codes `429/403/401/500`
+docs/plan/review-3327592440.md:74:- **Issue:** References 402/403 instead of 429/403/401/500
+docs/plan/review-3327592440.md:79:- **Issue:** Before/After checklists say 402/403 instead of correct codes
+docs/plan/review-3327592440.md:139:- **Lines 52-75, 200-205:** Fix HTTP status codes (402/403 → 429/403/401/500)
+docs/plan/review-3327592440.md:145:- **Lines 54-66, 131-150:** Fix HTTP status codes (402/403 → 429/403/401/500)
+docs/plan/review-3327592440.md:184:4. Search for any other occurrences of "402/403" pattern
+docs/plan/review-3327592440.md:217:- **Verification:** Text search for remaining "402/403" patterns
+docs/plan/review-3327592440.md:230:- [ ] HTTP status codes: 429/403/401/500 (not 402/403)
+docs/plan/review-3327592440.md:237:- [ ] No occurrences of "402/403" in planning or evidence docs
+docs/plan/review-3327592440.md:256:### Risk 1: Missing Other Occurrences of 402/403
+docs/plan/review-3327592440.md:277:- **HTTP Status Codes:** INCONSISTENT (402/403 vs actual 429/403/401/500)
+docs/plan/review-3327592440.md:303:5. `docs/test-evidence/review-3327592440/search-results.txt` (402/403 occurrences)
+docs/plan/review-3327592440.md:338:- [ ] All status codes fixed (402/403 → 429/403/401/500)
+docs/plan/review-3327592440.md:342:- [ ] No remaining "402/403" patterns
+docs/plan/review-3327592440.md:356:**Root Cause:** Early draft used placeholder codes (402/403) before AC2 was finalized
+docs/plan/review-3327592440.md:362:Respuestas 402/403 donde corresponda por plan
+docs/plan/review-3327592440.md:363:- [ ] Respuestas 402/403 donde corresponda por plan
+docs/test-evidence/review-3327587218/SUMMARY.md:37:**Topic:** HTTP status codes (402/403 → 429/403/401/500)
+docs/test-evidence/review-3393621565/SUMMARY.md:65:- [ ] Respuestas 402/403 donde corresponda por plan
+docs/test-evidence/review-3393621565/SUMMARY.md:74:- [x] Respuestas 402/403 donde corresponda por plan
+docs/test-evidence/issue-413/SUMMARY.md:56:### ✅ AC2: Respuestas 402/403 donde corresponda por plan
+docs/test-evidence/issue-413/SUMMARY.md:348:2. ✅ Respuestas 402/403 donde corresponda por plan

@@ -62,7 +62,7 @@ grep -c "413\|billing\|entitlements" docs/plan/review-3325526263.md
 **Before:**
 ```markdown
 - [ ] Límites por plan aplicados correctamente
-- [ ] Respuestas 402/403 donde corresponda por plan
+- [ ] Respuestas 429/403/401/500 donde corresponda por plan
 - [ ] Rutas protegidas según entitlements
 - [ ] Webhooks de Stripe procesados correctamente
 - [ ] Estados de suscripción actualizados en tiempo real
@@ -71,7 +71,7 @@ grep -c "413\|billing\|entitlements" docs/plan/review-3325526263.md
 **After:**
 ```markdown
 - [x] Límites por plan aplicados correctamente
-- [x] Respuestas 402/403 donde corresponda por plan
+- [x] Respuestas 429/403/401/500 donde corresponda por plan
 - [x] Rutas protegidas según entitlements
 - [x] Webhooks de Stripe procesados correctamente
 - [x] Estados de suscripción actualizados en tiempo real
