@@ -1,4 +1,19 @@
 {
+  "summary": {
+    "generated": "2025-10-10T00:00:00Z",
+    "test_file": "tests/e2e/auto-approval-flow.test.js",
+    "issue": "#405 - Auto-Approval Flow E2E Tests",
+    "key_metrics": {
+      "lines": "57.97%",
+      "statements": "57.91%",
+      "functions": "67.22%",
+      "branches": "28.57%"
+    },
+    "status": "PASSING",
+    "tests": "5/5 (100%)",
+    "runtime": "~15.6s",
+    "files_covered": 8
+  },
   "total": {
     "lines": {
       "total": 583,

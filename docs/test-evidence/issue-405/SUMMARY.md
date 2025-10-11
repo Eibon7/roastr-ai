@@ -6,6 +6,27 @@
 **Epic:** #403 - Testing MVP
 **Status:** ✅ TESTS PASSING - Documentation Added
 
+**Test File:** [`tests/e2e/auto-approval-flow.test.js`](../../../tests/e2e/auto-approval-flow.test.js)
+**Lines:** 651
+**Runtime:** ~15.6s
+**Tests:** ✅ 5/5 passing (100%)
+
+---
+
+## Test Execution
+
+To reproduce these test results, run:
+
+```bash
+npm test tests/e2e/auto-approval-flow.test.js
+```
+
+**Expected output:**
+
+- 5/5 tests passing
+- Runtime: ~15-20 seconds
+- Coverage: 57.97% lines, 57.91% statements
+
 ---
 
 ## Executive Summary
