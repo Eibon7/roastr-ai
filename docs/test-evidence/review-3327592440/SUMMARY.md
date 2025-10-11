@@ -214,7 +214,7 @@ npx markdownlint-cli2 "docs/test-evidence/review-3393621565/SUMMARY.md" \
 3. `docs/test-evidence/review-3327592440/search-402-403-before.txt` (before search)
 4. `docs/test-evidence/review-3327592440/search-402-403-after.txt` (after search)
 
-### Modified (4 files)
+### Modified (6 files)
 
 1. `docs/plan/review-3393621565.md`
    - Line 54: `402/403` → `429/403/401/500`
