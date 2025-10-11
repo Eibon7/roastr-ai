@@ -287,13 +287,13 @@ class BaseWorker {
   async executeJobWithRetry(job) {
     let lastError = null;
     const maxAttempts = this.config.maxRetries + 1; // Total attempts = initial + retries
-    
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        this.log('debug', 'Job attempt', { 
-          jobId: job.id, 
-          attempt, 
-          maxAttempts 
+        this.log('debug', 'Job attempt', {
+          jobId: job.id,
+          attempt,
+          maxAttempts
         });
         
         // Execute the job (implemented by subclasses)
@@ -312,7 +312,7 @@ class BaseWorker {
         
       } catch (error) {
         lastError = error;
-        
+
         // Check if error is retryable
         if (!this.isRetryableError(error)) {
           this.log('warn', 'Non-retryable error encountered', {
@@ -322,7 +322,7 @@ class BaseWorker {
           });
           throw error;
         }
-        
+
         // If this was the last attempt, throw the error
         if (attempt >= maxAttempts) {
           this.log('error', 'Job failed after all retry attempts', {
@@ -333,10 +333,10 @@ class BaseWorker {
           });
           throw error;
         }
-        
+
         // Calculate exponential backoff delay
         const delay = this.calculateRetryDelay(attempt);
-        
+
         this.log('warn', 'Job attempt failed, retrying', {
           jobId: job.id,
           attempt,
@@ -344,7 +344,7 @@ class BaseWorker {
           nextRetryIn: delay,
           error: error.message
         });
-        
+
         // Wait before retry
         await this.sleep(delay);
       }
@@ -375,13 +375,19 @@ class BaseWorker {
     }
 
     // Check for permanent error patterns in message
+    // NOTE: These patterns must be specific enough to avoid matching network error codes
+    // For example, /not.*found/i would match both "Resource not found" and "Network error: ENOTFOUND"
     const permanentErrorPatterns = [
       /invalid.*authentication/i,
       /unauthorized/i,
       /api.*key.*invalid/i,
       /forbidden/i,
       /bad.*request/i,
-      /not.*found/i,
+      /resource.*not.*found/i,  // Changed from /not.*found/i to be more specific
+      /video.*not.*found/i,     // Specific resource types
+      /user.*not.*found/i,
+      /page.*not.*found/i,
+      /endpoint.*not.*found/i,
       /ssl.*certificate/i
     ];
 

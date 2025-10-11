@@ -1,0 +1,105 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/ingestor-acknowledgment.test.js tests/integration/ingestor-deduplication.test.js tests/integration/ingestor-error-handling.test.js tests/integration/ingestor-mock-test.test.js tests/integration/ingestor-order-processing.test.js tests/integration/ingestor-retry-backoff.test.js
+
+PASS node-tests tests/integration/ingestor-mock-test.test.js
+  Ingestor Mock Mode Test
+    ✓ should work in mock mode (105 ms)
+
+PASS node-tests tests/integration/ingestor-deduplication.test.js
+  Ingestor Deduplication Integration Tests
+    Comment ID Deduplication
+      ✓ should prevent duplicate comments with same platform_comment_id (105 ms)
+      ✓ should handle reprocessing of same comments without duplicates (102 ms)
+      ✓ should allow same platform_comment_id across different organizations
+      ✓ should handle database constraint violations gracefully (101 ms)
+      ✓ should preserve deduplication across multiple fetch operations (104 ms)
+    Deduplication Performance
+      ✓ should efficiently handle large batches with duplicates (102 ms)
+
+PASS node-tests tests/integration/ingestor-order-processing.test.js
+  Ingestor Processing Order Integration Tests
+    FIFO Processing Order
+      ✓ should process jobs in first-in-first-out order (106 ms)
+      ✓ should maintain order across multiple fetch operations (101 ms)
+      ✓ should respect priority-based ordering (103 ms)
+    Order Preservation with Retries
+      ✓ should maintain order when jobs require retries (155 ms)
+      ✓ should not block processing when one job permanently fails (257 ms)
+    Concurrent Processing Order
+      ✓ should maintain order within priority levels during concurrent processing (190 ms)
+      ✓ should preserve order across different priority levels with concurrency (308 ms)
+    Order Validation Utilities
+      ✓ should validate job order using helper assertion (18 ms)
+
+FAIL node-tests tests/integration/ingestor-acknowledgment.test.js
+  Ingestor Message Acknowledgment Integration Tests
+    Successful Job Acknowledgment
+      ✓ should acknowledge jobs correctly after successful processing (106 ms)
+      ✓ should acknowledge multiple jobs in sequence (102 ms)
+      ✓ should preserve acknowledgment across worker restarts (204 ms)
+    Failed Job Acknowledgment
+      ✓ should properly handle failed job acknowledgment (433 ms)
+      ✓ should acknowledge after successful retry (257 ms)
+    Acknowledgment Timing and Performance
+      ✓ should acknowledge jobs promptly after completion (106 ms)
+      ✕ should handle concurrent job acknowledgments correctly (156 ms)
+    Acknowledgment Error Handling
+      ✓ should handle acknowledgment failures gracefully (102 ms)
+
+  ● Ingestor Message Acknowledgment Integration Tests › Acknowledgment Timing and Performance › should handle concurrent job acknowledgments correctly
+
+    expect(received).toBeGreaterThan(expected)
+
+    Expected: > 1
+    Received:   1
+
+      397 |       const completionTimes = acknowledgedJobs.map(j => j.completed_at);
+      398 |       const uniqueTimes = [...new Set(completionTimes)];
+    > 399 |       expect(uniqueTimes.length).toBeGreaterThan(1); // Should have different completion times
+          |                                  ^
+      400 |
+      401 |       // Verify all comments were stored
+      402 |       const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+
+      at Object.toBeGreaterThan (tests/integration/ingestor-acknowledgment.test.js:399:34)
+
+PASS node-tests tests/integration/ingestor-error-handling.test.js
+  Ingestor Error Handling Integration Tests
+    Transient Error Handling
+      ✓ should retry transient network errors (464 ms)
+      ✓ should handle timeout errors with appropriate retries (405 ms)
+      ✓ should handle rate limiting as transient error (259 ms)
+      ✓ should differentiate between recoverable and non-recoverable network errors (275 ms)
+    Permanent Error Handling
+      ✓ should not retry authentication errors (102 ms)
+      ✓ should not retry forbidden/permission errors (102 ms)
+      ✓ should not retry malformed request errors (103 ms)
+      ✓ should not retry resource not found errors (103 ms)
+    Error Classification
+      ✓ should correctly classify HTTP status codes (727 ms)
+      ✓ should handle mixed error scenarios in batch processing (416 ms)
+    Error Recovery and State Management
+      ✓ should maintain consistent state after error recovery (261 ms)
+      ✓ should handle database errors during comment storage (256 ms)
+      ✓ should handle partial batch failures gracefully (107 ms)
+
+PASS node-tests tests/integration/ingestor-retry-backoff.test.js (6.659 s)
+  Ingestor Retry and Backoff Integration Tests
+    Exponential Backoff Retry Logic
+      ✓ should implement exponential backoff with correct timing (411 ms)
+      ✓ should respect maximum retry attempts (275 ms)
+      ✓ should handle queue-level retry with exponential backoff (1 ms)
+      ✓ should use different backoff multipliers correctly (859 ms)
+    Retry Strategy Differentiation
+      ✓ should distinguish between transient and permanent errors (256 ms)
+      ✓ should handle rate limiting with appropriate backoff (409 ms)
+    Backoff Configuration
+      ✓ should respect custom retry delay configuration (709 ms)
+      ✓ should handle maximum backoff limits (3330 ms)
+
+Test Suites: 1 failed, 5 passed, 6 total
+Tests:       1 failed, 43 passed, 44 total
+Snapshots:   0 total
+Time:        6.755 s, estimated 7 s
+Ran all test suites matching tests/integration/ingestor-acknowledgment.test.js|tests/integration/ingestor-deduplication.test.js|tests/integration/ingestor-error-handling.test.js|tests/integration/ingestor-mock-test.test.js|tests/integration/ingestor-order-processing.test.js|tests/integration/ingestor-retry-backoff.test.js.
