@@ -12,7 +12,8 @@
 
 CodeRabbit performed a comprehensive safety and scope review of PR #528. All actionable documentation improvements have been applied successfully.
 
-**Review Results:**
+### Review Results
+
 - ✅ Issue #405 fully implemented (confirmed by CodeRabbit)
 - ✅ CI passing (28/28 checks green)
 - ✅ Mergeable status confirmed
@@ -29,7 +30,8 @@ CodeRabbit performed a comprehensive safety and scope review of PR #528. All act
 
 ### ⚠️ C1: Scope Mismatch - Multiple Features Bundled (CRITICAL)
 
-**CodeRabbit Finding:**
+#### CodeRabbit Finding
+
 PR claims "Issue #405 test evidences" but includes 73 files across multiple unrelated features:
 - Issue #405 documentation (3 files) ✅
 - Guardian Agent feature (15+ files)
@@ -39,9 +41,12 @@ PR claims "Issue #405 test evidences" but includes 73 files across multiple unre
 
 **Risk:** Medium-High (violates atomic commit principles)
 
-**CodeRabbit Recommendation:** Split into 4 separate PRs
+#### CodeRabbit Recommendation
 
-**Decision:**
+Split into 4 separate PRs
+
+#### Decision
+
 - ✅ **Acknowledged** - strategic concern documented
 - ❌ **Not actioned** - PR splitting is strategic decision outside scope of this review
 - ✅ **Documented** in planning document for future reference
@@ -545,7 +550,7 @@ npm test tests/e2e/auto-approval-flow.test.js
 
 ## Commit Message
 
-```
+```text
 docs: Apply CodeRabbit Review #3392598742 - Improve Issue #405 evidences
 
 ### Issues Addressed
