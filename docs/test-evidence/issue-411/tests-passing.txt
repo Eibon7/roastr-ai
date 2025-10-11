@@ -1,0 +1,33 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/spec14-idempotency.test.js
+
+PASS node-tests tests/integration/spec14-idempotency.test.js
+  SPEC 14 - Idempotency Tests
+    Comment Ingestion Idempotency
+      ✓ duplicate external_comment_id should not create new database records (25 ms)
+      ✓ same external_comment_id in different orgs should be allowed (1 ms)
+    Credit Deduction Idempotency
+      ✓ processing same comment multiple times should only deduct credits once
+      ✓ failed processing should not deduct credits
+    Shield Action Idempotency
+      ✓ duplicate Shield actions should not be executed multiple times
+      ✓ Shield actions for same user/author should not duplicate within time window
+    Queue Job Idempotency
+      ✓ duplicate queue jobs should be deduplicated (1 ms)
+    Response Generation Idempotency
+      ✓ generating response for same parameters should be deterministic
+    Database Constraint Enforcement
+      ✓ unique constraints prevent duplicate records
+    Retry Scenario Idempotency
+      ✓ failed operations can be safely retried without side effects
+    Cross-Service Idempotency
+      ✓ operations spanning multiple services maintain consistency
+    Performance Impact of Idempotency
+      ✓ idempotency checks do not significantly impact performance (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        0.263 s, estimated 1 s
+Ran all test suites matching tests/integration/spec14-idempotency.test.js.
