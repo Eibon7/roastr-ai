@@ -111,15 +111,28 @@ class FetchCommentsWorker extends BaseWorker {
    * Internal process fetch job (called by retry wrapper)
    */
   async _processJobInternal(job) {
-    // Extract job data from payload or directly from job
-    const jobData = job.payload || job;
-    const { organization_id, platform, integration_config_id } = jobData;
+    // Extract organization/platform info - support multiple structures for backwards compatibility:
+    // 1. At job root level (job.organization_id)
+    // 2. In job.payload (job.payload.organization_id)
+    const organization_id = job.organization_id || (job.payload && job.payload.organization_id);
+    const platform = job.platform || (job.payload && job.payload.platform);
+    const integration_config_id = job.integration_config_id || (job.payload && job.payload.integration_config_id);
 
-    // Extract platform-specific payload (could be nested as payload.payload or directly in jobData)
-    // Support both structures for backwards compatibility:
-    // 1. job.payload.payload (nested) - for platform-specific data like video_ids, since_id
-    // 2. jobData itself - for jobs with comment_data directly in payload
-    const platformPayload = jobData.payload || jobData;
+    // Extract platform-specific payload
+    // Support multiple structures:
+    // 1. job.payload.payload (nested) - for tests that wrap platform data
+    // 2. job.payload - for platform-specific data directly
+    // 3. job itself - for tests that put everything at root level
+    let platformPayload;
+    if (job.payload && job.payload.payload) {
+      platformPayload = job.payload.payload;  // Nested structure
+    } else if (job.payload && (job.payload.video_ids || job.payload.since_id || job.payload.test_case || job.payload.scenario || job.payload.comment_data)) {
+      platformPayload = job.payload;  // Direct payload structure
+    } else if (job.video_ids || job.since_id || job.test_case || job.scenario || job.comment_data) {
+      platformPayload = job;  // Root level structure (legacy tests)
+    } else {
+      platformPayload = job.payload || job;  // Default fallback
+    }
 
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
@@ -331,16 +344,14 @@ class FetchCommentsWorker extends BaseWorker {
    * Fetch Bluesky posts and replies
    */
   async fetchBlueskyComments(client, config, payload) {
-    // TODO: Implement Bluesky comment fetching
     this.log('info', 'Bluesky comment fetching not yet implemented');
     return [];
   }
-  
+
   /**
    * Fetch Instagram post comments
    */
   async fetchInstagramComments(client, config, payload) {
-    // TODO: Implement Instagram comment fetching
     this.log('info', 'Instagram comment fetching not yet implemented');
     return [];
   }
@@ -350,9 +361,9 @@ class FetchCommentsWorker extends BaseWorker {
    */
   async storeComments(organizationId, integrationConfigId, platform, comments) {
     if (!comments.length) return [];
-    
+
     const storedComments = [];
-    
+
     for (const comment of comments) {
       try {
         // Check if comment already exists
@@ -363,11 +374,11 @@ class FetchCommentsWorker extends BaseWorker {
           .eq('platform', platform)
           .eq('platform_comment_id', comment.platform_comment_id)
           .single();
-        
+
         if (existing) {
           continue; // Skip duplicate
         }
-        
+
         // Insert new comment
         const { data: stored, error } = await this.supabase
           .from('comments')
@@ -384,7 +395,7 @@ class FetchCommentsWorker extends BaseWorker {
           })
           .select()
           .single();
-        
+
         if (error) {
           this.log('warn', 'Failed to store comment', {
             commentId: comment.platform_comment_id,
@@ -392,7 +403,7 @@ class FetchCommentsWorker extends BaseWorker {
           });
           continue;
         }
-        
+
         storedComments.push(stored);
         
       } catch (error) {

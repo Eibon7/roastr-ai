@@ -257,7 +257,7 @@ const platformPayload = jobData.payload || jobData;  // ✅ Handles both
 `mockStoredJobs` array was not being cleared between tests, causing job count mismatches.
 
 **Evidence:**
-```
+```plaintext
 Expected length: 2
 Received length: 3
 ```

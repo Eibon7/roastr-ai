@@ -374,11 +374,12 @@ describe('Ingestor Processing Order Integration Tests', () => {
         return [comment];
       };
 
+      const results = [];
+
       try {
         await worker.start();
 
         // Process all jobs
-        const results = [];
         for (const job of jobs) {
           try {
             const result = await worker.processJob(job);

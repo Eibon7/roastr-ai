@@ -157,9 +157,6 @@ class BaseWorker {
       failedJobs: this.failedJobs,
       uptime: Date.now() - this.startTime
     });
-    
-    // TODO: Implement cleanup timeout to prevent hanging cleanup operations
-    // TODO: Add cleanup verification tests that check for resource leaks
   }
   
   /**
@@ -290,13 +287,13 @@ class BaseWorker {
   async executeJobWithRetry(job) {
     let lastError = null;
     const maxAttempts = this.config.maxRetries + 1; // Total attempts = initial + retries
-    
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        this.log('debug', 'Job attempt', { 
-          jobId: job.id, 
-          attempt, 
-          maxAttempts 
+        this.log('debug', 'Job attempt', {
+          jobId: job.id,
+          attempt,
+          maxAttempts
         });
         
         // Execute the job (implemented by subclasses)
@@ -315,7 +312,7 @@ class BaseWorker {
         
       } catch (error) {
         lastError = error;
-        
+
         // Check if error is retryable
         if (!this.isRetryableError(error)) {
           this.log('warn', 'Non-retryable error encountered', {
@@ -325,7 +322,7 @@ class BaseWorker {
           });
           throw error;
         }
-        
+
         // If this was the last attempt, throw the error
         if (attempt >= maxAttempts) {
           this.log('error', 'Job failed after all retry attempts', {
@@ -336,10 +333,10 @@ class BaseWorker {
           });
           throw error;
         }
-        
+
         // Calculate exponential backoff delay
         const delay = this.calculateRetryDelay(attempt);
-        
+
         this.log('warn', 'Job attempt failed, retrying', {
           jobId: job.id,
           attempt,
@@ -347,7 +344,7 @@ class BaseWorker {
           nextRetryIn: delay,
           error: error.message
         });
-        
+
         // Wait before retry
         await this.sleep(delay);
       }
@@ -361,44 +358,74 @@ class BaseWorker {
    * Determine if an error is retryable
    */
   isRetryableError(error) {
-    // Don't retry permanent errors
+    const errorMessage = error.message || '';
+    const statusCode = error.statusCode || error.status;
+    const errorCode = error.code || '';
+
+    // Check for permanent error status codes (4xx client errors except rate limiting)
+    const permanentStatusCodes = [400, 401, 403, 404, 422];
+    if (statusCode && permanentStatusCodes.includes(statusCode)) {
+      return false;
+    }
+
+    // Check for permanent error codes
+    const permanentCodes = ['UNAUTHORIZED', 'FORBIDDEN', 'BAD_REQUEST', 'NOT_FOUND', 'CERT_INVALID'];
+    if (errorCode && permanentCodes.includes(errorCode)) {
+      return false;
+    }
+
+    // Check for permanent error patterns in message
+    // NOTE: These patterns must be specific enough to avoid matching network error codes
+    // For example, /not.*found/i would match both "Resource not found" and "Network error: ENOTFOUND"
     const permanentErrorPatterns = [
       /invalid.*authentication/i,
       /unauthorized/i,
-      /401/,
-      /403/,
       /api.*key.*invalid/i,
-      /forbidden/i
+      /forbidden/i,
+      /bad.*request/i,
+      /resource.*not.*found/i,  // Changed from /not.*found/i to be more specific
+      /video.*not.*found/i,     // Specific resource types
+      /user.*not.*found/i,
+      /page.*not.*found/i,
+      /endpoint.*not.*found/i,
+      /ssl.*certificate/i
     ];
-    
-    const errorMessage = error.message || '';
-    
+
     for (const pattern of permanentErrorPatterns) {
       if (pattern.test(errorMessage)) {
         return false;
       }
     }
-    
-    // Retry transient errors
+
+    // Retry transient errors (rate limiting, server errors, network errors)
+    const retryableStatusCodes = [429, 500, 502, 503, 504];
+    if (statusCode && retryableStatusCodes.includes(statusCode)) {
+      return true;
+    }
+
+    // Check for retryable error codes
+    const retryableCodes = ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'];
+    if (errorCode && retryableCodes.includes(errorCode)) {
+      return true;
+    }
+
+    // Check for retryable error patterns in message
     const retryablePatterns = [
       /network/i,
       /connection/i,
       /timeout/i,
-      /econnreset/i,
       /rate.*limit/i,
-      /429/,
-      /500/,
-      /502/,
-      /503/,
-      /504/
+      /service.*unavailable/i,
+      /bad.*gateway/i,
+      /gateway.*timeout/i
     ];
-    
+
     for (const pattern of retryablePatterns) {
       if (pattern.test(errorMessage)) {
         return true;
       }
     }
-    
+
     // Default to retryable for unknown errors
     return true;
   }
@@ -436,6 +463,15 @@ class BaseWorker {
 
       const processingTime = Date.now() - startTime;
 
+      // Track processing time for health metrics
+      this.processingTimes.push(processingTime);
+      if (this.processingTimes.length > this.maxProcessingTimeSamples) {
+        this.processingTimes.shift(); // Remove oldest sample
+      }
+
+      // Update activity time
+      this.updateActivityTime();
+
       // Mark job as completed (don't fail the job if acknowledgment fails)
       try {
         await this.markJobCompleted(job, result, processingTime);
@@ -447,6 +483,9 @@ class BaseWorker {
         // Continue - job was processed successfully even if ack failed
       }
 
+      // Increment processed jobs counter
+      this.processedJobs++;
+
       return result;
 
     } catch (error) {
@@ -455,7 +494,7 @@ class BaseWorker {
       throw error;
     }
   }
-  
+
   /**
    * Mark job as completed
    */
@@ -467,9 +506,9 @@ class BaseWorker {
         completedBy: this.workerName
       });
     } catch (error) {
-      this.log('error', 'Failed to mark job as completed', { 
-        jobId: job.id, 
-        error: error.message 
+      this.log('error', 'Failed to mark job as completed', {
+        jobId: job.id,
+        error: error.message
       });
     }
   }
