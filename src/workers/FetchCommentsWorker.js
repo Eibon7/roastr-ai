@@ -331,16 +331,14 @@ class FetchCommentsWorker extends BaseWorker {
    * Fetch Bluesky posts and replies
    */
   async fetchBlueskyComments(client, config, payload) {
-    // TODO: Implement Bluesky comment fetching
     this.log('info', 'Bluesky comment fetching not yet implemented');
     return [];
   }
-  
+
   /**
    * Fetch Instagram post comments
    */
   async fetchInstagramComments(client, config, payload) {
-    // TODO: Implement Instagram comment fetching
     this.log('info', 'Instagram comment fetching not yet implemented');
     return [];
   }

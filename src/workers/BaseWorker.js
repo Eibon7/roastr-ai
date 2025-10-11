@@ -157,9 +157,6 @@ class BaseWorker {
       failedJobs: this.failedJobs,
       uptime: Date.now() - this.startTime
     });
-    
-    // TODO: Implement cleanup timeout to prevent hanging cleanup operations
-    // TODO: Add cleanup verification tests that check for resource leaks
   }
   
   /**

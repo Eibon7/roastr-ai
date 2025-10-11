@@ -66,13 +66,6 @@ class IngestorTestUtils {
           return pendingJobs[0];
         },
         completeJob: async (job, resultData = {}) => {
-          if (process.env.DEBUG_E2E) {
-            console.log('🔍 completeJob called:', {
-              jobId: job?.id,
-              existingCount: this.mockStoredJobs.length,
-              resultData: JSON.stringify(resultData).substring(0, 100)
-            });
-          }
           const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
           if (existingJob) {
             existingJob.status = 'completed';
@@ -80,11 +73,6 @@ class IngestorTestUtils {
             existingJob.result = resultData.result || resultData;
             existingJob.processing_time = resultData.processingTime;
             existingJob.completed_by = resultData.completedBy;
-            if (process.env.DEBUG_E2E) {
-              console.log('✅ Updated existing job in storage:', existingJob.id, 'status:', existingJob.status);
-            }
-          } else if (process.env.DEBUG_E2E) {
-            console.log('⚠️  Job not found in storage:', job?.id);
           }
           // Also update the job object passed in
           if (job) {
@@ -93,9 +81,6 @@ class IngestorTestUtils {
             job.result = resultData.result || resultData;
             job.processing_time = resultData.processingTime;
             job.completed_by = resultData.completedBy;
-            if (process.env.DEBUG_E2E) {
-              console.log('✅ Updated job object status:', job.status);
-            }
           }
         },
         failJob: async (job, error) => {
@@ -532,9 +517,6 @@ class IngestorTestUtils {
         global.mockOrgStorage = [];
         global.mockConfigStorage = [];
       }
-      // Also clear instance storage
-      this.mockStoredComments = [];
-      this.mockStoredJobs = [];
       return;
     }
     
