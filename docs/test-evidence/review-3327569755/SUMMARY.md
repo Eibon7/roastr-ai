@@ -187,7 +187,7 @@ git diff docs/test-evidence/review-3393621565/SUMMARY.md
 
 ### Original Comments
 
-**Nit 1 & 2: MD034 Violations**
+#### Nit 1 & 2: MD034 Violations
 
 > **Fix markdownlint MD034 (bare URL).**
 >
@@ -202,7 +202,7 @@ git diff docs/test-evidence/review-3393621565/SUMMARY.md
 
 **Resolution:** ✅ Applied to both files (planning doc + SUMMARY)
 
-**Nit 3: Filename Convention**
+#### Nit 3: Filename Convention
 
 > **Align filename with plan convention.**
 >

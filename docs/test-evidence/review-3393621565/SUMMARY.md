@@ -32,11 +32,12 @@
 
 ### Files Removed (6) - Scope Cleanup
 
-**Unrelated Planning Documents (2):**
+#### Unrelated Planning Documents (2)
+
 1. `docs/plan/review-3325526263.md` (586 lines) - CodeRabbit review for Issue #404
 2. `docs/plan/review-3392468917.md` (538 lines) - CodeRabbit review for Issue #404
 
-**Unrelated Test Evidence (4):**
+#### Unrelated Test Evidence (4)
 3. `docs/test-evidence/review-3325526263/SUMMARY.md` - Summary for Issue #404 review
 4. `docs/test-evidence/review-3325526263/tests-after.txt` - Test output for Issue #404
 5. `docs/test-evidence/review-3392468917/SUMMARY.md` - Summary for Issue #404 review
@@ -76,7 +77,7 @@ grep -c "413\|billing\|entitlements" docs/plan/review-3325526263.md
 - [x] Estados de suscripción actualizados en tiempo real
 ```
 
-**Method:** `gh issue edit 413 --body-file`
+**Method:** `gh issue edit 413 --body-file /tmp/issue-413-body-updated.txt`
 
 #### PR #531 - Description Updated
 **Before:**
@@ -96,7 +97,7 @@ grep -c "413\|billing\|entitlements" docs/plan/review-3325526263.md
 **Note:** Previous version of this PR incorrectly included 6 unrelated files from Issue #404 (CodeRabbit reviews #3325526263 and #3392468917). These have been removed to maintain clear PR scope per CodeRabbit Review #3393621565.
 ```
 
-**Method:** `gh pr edit 531 --body-file`
+**Method:** `gh pr edit 531 --body-file /tmp/pr-531-body-updated.txt`
 
 ---
 

@@ -1,0 +1,4 @@
+Summary: 181 error(s)
+docs/plan/review-3393621565.md:33 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "C1: Scope Creep - Unrelated Do..."]
+docs/plan/review-3393621565.md:46 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "C2: Acceptance Criteria Not Ch..."]
+docs/plan/review-3393621565.md:59 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "C3: PR Description Inconsisten..."]
