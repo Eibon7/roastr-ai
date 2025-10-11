@@ -1,0 +1,75 @@
+# Files Removed from PR #531 - CodeRabbit Review #3393621565
+
+## Reason: Scope Creep Resolution
+
+These files were removed from PR #531 because they document CodeRabbit reviews for Issue #404 (PR #527 - Manual Flow E2E tests), not Issue #413 (Billing/Entitlements tests).
+
+## Files Removed (6):
+
+### Planning Documents (2):
+1. docs/plan/review-3325526263.md (586 lines)
+   - CodeRabbit Review for PR #527
+   - Content: Fixes for manual-flow.test.js
+   - Related Issue: #404 (Manual flow E2E)
+
+2. docs/plan/review-3392468917.md (538 lines)
+   - CodeRabbit Review for PR #527
+   - Content: Variant text extraction fallback chain
+   - Related Issue: #404 (Manual flow E2E)
+
+### Test Evidence (4):
+3. docs/test-evidence/review-3325526263/SUMMARY.md
+   - Summary for review #3325526263 (Issue #404)
+
+4. docs/test-evidence/review-3325526263/tests-after.txt
+   - Test output for review #3325526263 (Issue #404)
+
+5. docs/test-evidence/review-3392468917/SUMMARY.md
+   - Summary for review #3392468917 (Issue #404)
+
+6. docs/test-evidence/review-3392468917/tests-after.txt
+   - Test output for review #3392468917 (Issue #404)
+
+## Verification:
+
+### Files reference Issue #404:
+```bash
+grep -c "404\|manual.*flow" docs/plan/review-3325526263.md
+# Result: Multiple matches
+
+grep -c "404\|manual.*flow" docs/plan/review-3392468917.md
+# Result: Multiple matches
+```
+
+### Files DO NOT reference Issue #413:
+```bash
+grep -c "413\|billing\|entitlements" docs/plan/review-3325526263.md
+# Result: 0 matches
+
+grep -c "413\|billing\|entitlements" docs/plan/review-3392468917.md
+# Result: 0 matches
+```
+
+## Impact:
+
+### Before Removal:
+- Total files in PR: 9
+- Issue #413 files: 3
+- Issue #404 files: 6
+- Scope: MIXED (confusing)
+
+### After Removal:
+- Total files in PR: 3
+- Issue #413 files: 3
+- Issue #404 files: 0
+- Scope: FOCUSED (clear)
+
+## Resolution:
+
+These files should be included in their proper PR:
+- **Correct Location:** PR #527 (Issue #404 - Manual Flow E2E tests)
+- **Incorrect Location:** PR #531 (Issue #413 - Billing/Entitlements) ❌
+
+## Date: October 11, 2025
+## Review: CodeRabbit #3393621565
+## Resolved By: Claude Code Orchestrator
