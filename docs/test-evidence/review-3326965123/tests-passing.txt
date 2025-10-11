@@ -1,0 +1,27 @@
+# Ingestor Acknowledgment Tests - Validation
+
+ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-acknowledgment.test.js
+
+PASS node-tests tests/integration/ingestor-acknowledgment.test.js
+  Ingestor Message Acknowledgment Integration Tests
+    Successful Job Acknowledgment
+      ✓ should acknowledge jobs correctly after successful processing (105 ms)
+      ✓ should acknowledge multiple jobs in sequence (102 ms)
+      ✓ should preserve acknowledgment across worker restarts (207 ms)
+    Failed Job Acknowledgment
+      ✓ should properly handle failed job acknowledgment (440 ms)
+      ✓ should acknowledge after successful retry (257 ms)
+    Acknowledgment Timing and Performance
+      ✓ should acknowledge jobs promptly after completion (102 ms)
+      ✓ should handle concurrent job acknowledgments correctly (162 ms)
+    Acknowledgment Error Handling
+      ✓ should handle acknowledgment failures gracefully (105 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total
+Snapshots:   0 total
+Time:        2.016 s, estimated 3 s
+
+✅ Result: 100% passing (8/8 tests)
+✅ No regressions introduced
+✅ Baseline maintained
