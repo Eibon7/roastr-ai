@@ -65,18 +65,22 @@ class IngestorTestUtils {
 
           return pendingJobs[0];
         },
-        completeJob: async (job, result = {}) => {
+        completeJob: async (job, resultData = {}) => {
           const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
           if (existingJob) {
             existingJob.status = 'completed';
             existingJob.completed_at = new Date().toISOString();
-            existingJob.result = result;
+            existingJob.result = resultData.result || resultData;
+            existingJob.processing_time = resultData.processingTime;
+            existingJob.completed_by = resultData.completedBy;
           }
           // Also update the job object passed in
           if (job) {
             job.status = 'completed';
             job.completed_at = new Date().toISOString();
-            job.result = result;
+            job.result = resultData.result || resultData;
+            job.processing_time = resultData.processingTime;
+            job.completed_by = resultData.completedBy;
           }
         },
         failJob: async (job, error) => {
@@ -84,13 +88,15 @@ class IngestorTestUtils {
           if (existingJob) {
             existingJob.status = 'failed';
             existingJob.completed_at = new Date().toISOString();
-            existingJob.error_message = error.message || error.toString();
+            existingJob.error_message = error?.message || error?.toString() || 'Unknown error';
+            existingJob.failed_at = new Date().toISOString();
           }
           // Also update the job object passed in
           if (job) {
             job.status = 'failed';
             job.completed_at = new Date().toISOString();
-            job.error_message = error.message || error.toString();
+            job.error_message = error?.message || error?.toString() || 'Unknown error';
+            job.failed_at = new Date().toISOString();
           }
         },
         getQueueStats: async () => {
