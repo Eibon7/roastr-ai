@@ -68,13 +68,13 @@
 ### Markdownlint - MD034 Violations
 
 **Before Fix:**
-```
+```text
 docs/plan/review-3393621565.md:4:13 MD034/no-bare-urls Bare URL used
 docs/test-evidence/review-3393621565/SUMMARY.md:3:13 MD034/no-bare-urls Bare URL used
 ```
 
 **After Fix:**
-```
+```text
 ✅ MD034 violations resolved (0 found)
 ```
 

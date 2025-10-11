@@ -73,7 +73,7 @@ Respuestas 429/403/401/500 donde corresponda por plan
 ### MD040 Fix (N1)
 
 **docs/test-evidence/review-3327587218/SUMMARY.md (line 123):**
-```markdown
+````markdown
 # BEFORE:
 ```
 docs/test-evidence/review-3393621565/SUMMARY.md: MD036 violations (2 instances)
@@ -83,7 +83,7 @@ docs/test-evidence/review-3393621565/SUMMARY.md: MD036 violations (2 instances)
 ```text
 docs/test-evidence/review-3393621565/SUMMARY.md: MD036 violations (2 instances)
 ```
-```
+````
 
 **Impact:** MD040 compliance achieved
 
