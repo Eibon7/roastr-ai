@@ -1,6 +1,6 @@
 # CodeRabbit Review #3393621565 - Test Evidence Summary
 
-**Review:** https://github.com/Eibon7/roastr-ai/pull/531#issuecomment-3393621565
+**Review:** <https://github.com/Eibon7/roastr-ai/pull/531#issuecomment-3393621565>
 **PR:** #531 - docs: Issue #413 - Billing/Entitlements test evidences
 **Branch:** docs/issue-413-billing-evidences
 **Date:** October 11, 2025
