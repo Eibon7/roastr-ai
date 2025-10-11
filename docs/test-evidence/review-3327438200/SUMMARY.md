@@ -137,7 +137,7 @@ $ grep -n "^## Estado Actual" docs/plan/review-3327038184.md
 - Includes all required elements
 - Compliant with CLAUDE.md guidelines
 
-### Created (2)
+### Created (3)
 
 **1. `docs/plan/review-3327438200.md` (285 lines)**
 - Planning document for this review
