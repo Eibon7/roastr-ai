@@ -1,0 +1,74 @@
+--- docs/test-evidence/review-3325808175/coverage-report-BEFORE.json	2025-10-11 20:48:29
++++ docs/test-evidence/review-3325808175/coverage-report-AFTER.json	2025-10-11 20:49:27
+@@ -31,7 +31,7 @@
+       "pct": 100
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/src/adapters/FacebookAdapter.js": {
++  "src/adapters/FacebookAdapter.js": {
+     "lines": {
+       "total": 79,
+       "covered": 17,
+@@ -57,7 +57,7 @@
+       "pct": 4.34
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/src/adapters/InstagramAdapter.js": {
++  "src/adapters/InstagramAdapter.js": {
+     "lines": {
+       "total": 49,
+       "covered": 17,
+@@ -83,7 +83,7 @@
+       "pct": 8
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/src/adapters/ShieldAdapter.js": {
++  "src/adapters/ShieldAdapter.js": {
+     "lines": {
+       "total": 58,
+       "covered": 37,
+@@ -109,7 +109,7 @@
+       "pct": 26.47
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/src/adapters/mock/DiscordShieldAdapter.js": {
++  "src/adapters/mock/DiscordShieldAdapter.js": {
+     "lines": {
+       "total": 104,
+       "covered": 65,
+@@ -135,7 +135,7 @@
+       "pct": 44.23
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/src/adapters/mock/TwitchShieldAdapter.js": {
++  "src/adapters/mock/TwitchShieldAdapter.js": {
+     "lines": {
+       "total": 92,
+       "covered": 57,
+@@ -161,7 +161,7 @@
+       "pct": 42.5
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/src/adapters/mock/TwitterShieldAdapter.js": {
++  "src/adapters/mock/TwitterShieldAdapter.js": {
+     "lines": {
+       "total": 58,
+       "covered": 47,
+@@ -187,7 +187,7 @@
+       "pct": 55
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/src/adapters/mock/YouTubeShieldAdapter.js": {
++  "src/adapters/mock/YouTubeShieldAdapter.js": {
+     "lines": {
+       "total": 70,
+       "covered": 47,
+@@ -213,7 +213,7 @@
+       "pct": 29.16
+     }
+   },
+-  "/Users/emiliopostigo/roastr-ai/tests/helpers/syntheticFixtures.js": {
++  "tests/helpers/syntheticFixtures.js": {
+     "lines": {
+       "total": 73,
+       "covered": 51,
