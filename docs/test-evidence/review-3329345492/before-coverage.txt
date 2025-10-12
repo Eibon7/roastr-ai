@@ -1,0 +1,50 @@
+{
+  "total": {
+    "lines": {
+      "total": 2859,
+      "covered": 164,
+      "skipped": 0,
+      "pct": 5.736271423574676
+    },
+    "statements": {
+      "total": 2859,
+      "covered": 164,
+      "skipped": 0,
+      "pct": 5.736271423574676
+    },
+    "functions": {
+      "total": 343,
+      "covered": 27,
+      "skipped": 0,
+      "pct": 7.871720116618077
+    },
+    "branches": {
+      "total": 1609,
+      "covered": 82,
+      "skipped": 0,
+      "pct": 5.0963331261653195
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "/Users/emiliopostigo/roastr-ai/src/workers/AccountDeletionWorker.js": {
+    "lines": {
+      "total": 137,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 0
+    },
+    "statements": {
+      "total": 137,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 0
+    },
+    "functions": {
+      "total": 18,
+      "covered": 0,
+      "skipped": 0,
