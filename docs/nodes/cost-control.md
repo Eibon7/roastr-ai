@@ -6,7 +6,7 @@
 **Status:** Production
 **Last Updated:** 2025-10-09
 **Coverage:** 5%
-**Coverage Source:** mocked
+**Coverage Source:** auto
 **Related PRs:** #499
 
 ## Dependencies
@@ -461,11 +461,11 @@ describe('CostControlService', () => {
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
 - **Billing Specialist**
+- **Documentation Agent**
 - **Orchestrator**
+- **Test Engineer**
 
 
 ## Related Nodes

@@ -6,7 +6,7 @@
 **Status:** Production
 **Last Updated:** 2025-10-09
 **Coverage:** 100%
-**Coverage Source:** mocked
+**Coverage Source:** auto
 **Related PRs:** #499
 
 ## Dependencies

@@ -5,8 +5,8 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-10-09
-**Coverage:** 17%
-**Coverage Source:** mocked
+**Coverage:** 45%
+**Coverage Source:** auto
 **Version:** 1.2.0
 **Related PRs:** #458, #499
 
@@ -594,11 +594,11 @@ test('should process fixtures through complete pipeline', async () => {
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
-- **Performance Monitor**
+- **Documentation Agent**
 - **Orchestrator**
+- **Performance Monitor**
+- **Test Engineer**
 
 
 ## Related Nodes
@@ -648,9 +648,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - Regression prevention: Job payload malformations now caught by tests
 - Validates both return value AND internal job structure
 - Uses `toMatchObject()` for flexible matching (allows extra fields)
-
-**Coverage:** 87%
-**Coverage Source:** auto overall (4 enhanced tests with +16 assertions)
 
 ---
 
