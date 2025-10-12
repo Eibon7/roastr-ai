@@ -6,7 +6,7 @@
 **Status:** Production
 **Last Updated:** 2025-10-09
 **Coverage:** 17%
-**Coverage Source:** auto
+**Coverage Source:** mocked
 **Version:** 1.2.0
 **Related PRs:** #458, #499
 
