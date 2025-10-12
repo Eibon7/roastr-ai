@@ -1,6 +1,6 @@
 # CodeRabbit Review #3328011233 - SUMMARY
 
-**Review Link:** https://github.com/Eibon7/roastr-ai/pull/532#pullrequestreview-3328011233
+**Review Link:** [CodeRabbit Review #3328011233](https://github.com/Eibon7/roastr-ai/pull/532#pullrequestreview-3328011233)
 **PR:** #532 - docs(tests): Issue #414 - Kill-switch integration test evidences
 **Branch:** `docs/issue-414-killswitch-evidences`
 **Date:** 2025-10-12
@@ -307,7 +307,7 @@ node scripts/validate-gdd-runtime.js --full
 
 **CodeRabbit Review:**
 - Review ID: 3328011233
-- URL: https://github.com/Eibon7/roastr-ai/pull/532#pullrequestreview-3328011233
+- URL: [Review #3328011233](https://github.com/Eibon7/roastr-ai/pull/532#pullrequestreview-3328011233)
 - Type: APPROVAL / VALIDATION
 - Date: 2025-10-12
 
