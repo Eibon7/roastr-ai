@@ -36,7 +36,7 @@ Successfully regenerated coverage reports and synced real coverage values to 6/1
 **Output:** `coverage/coverage-summary.json` (regenerated)
 
 **Results:**
-```
+```text
 Total Coverage:
   Lines: 3.13% (793/25,332)
   Statements: 3.13% (793/25,332)
@@ -107,6 +107,7 @@ node scripts/gdd-coverage-helper.js --update-from-report
 **Command:** `node scripts/compute-gdd-health.js`
 
 **Results:**
+
 | Metric | Before (main) | After (branch) | Change |
 |--------|---------------|----------------|--------|
 | **Overall Health Score** | 95.1/100 | 88.5/100 | **-6.6** |
