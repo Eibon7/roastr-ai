@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-10-12T14:32:12.038Z",
-  "mode": "single",
-  "nodes_validated": 15,
+  "timestamp": "2025-10-12T15:04:57.901Z",
+  "mode": "full",
+  "nodes_validated": 14,
   "orphans": [],
   "drift": {},
   "outdated": [],
@@ -22,6 +22,14 @@
       "node": "billing",
       "severity": "warning",
       "declared": 70,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "cost-control",
+      "severity": "warning",
+      "declared": 5,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -51,9 +59,49 @@
     },
     {
       "type": "missing_coverage_data",
+      "node": "plan-features",
+      "severity": "warning",
+      "declared": 2,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
       "node": "platform-constraints",
       "severity": "warning",
       "declared": 100,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "queue-system",
+      "severity": "warning",
+      "declared": 17,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "roast",
+      "severity": "warning",
+      "declared": 32,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "shield",
+      "severity": "warning",
+      "declared": 2,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "social-platforms",
+      "severity": "warning",
+      "declared": 0,
       "actual": null,
       "message": "Coverage data not available for validation"
     },

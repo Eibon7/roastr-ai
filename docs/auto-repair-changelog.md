@@ -1,5 +1,21 @@
 # Auto-Repair Changelog
 
+## 2025-10-12T15:04:57.824Z
+
+**Repair ID:** 2025-10-12T15:04:57Z
+**Triggered by:** CI/CD
+**Nodes affected:** social-platforms
+
+**Fixes applied:**
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 89.4
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T15-04-57-578Z`
+
+---
+
 ## 2025-10-09T07:33:29.860Z
 
 **Repair ID:** 2025-10-09T07:33:29Z
