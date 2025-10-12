@@ -1,0 +1,155 @@
+# Coverage Comparison: Before vs After
+
+## System-Wide Coverage
+
+### Before (coverage-final.json, Sept 26)
+- Files: 8
+- Coverage: 60.15% lines (estimated from old summary)
+- Status: Outdated, incomplete
+
+### After (coverage-summary.json, Oct 12)
+- Files: 207
+- Coverage: 3.13% lines
+- Status: Current, complete
+
+Breakdown:
+  Lines:      793 / 25,332 (3.13%)
+  Statements: 793 / 25,332 (3.13%)
+  Functions:  129 / 3,418  (3.77%)
+  Branches:   294 / 15,429 (1.91%)
+
+---
+
+## Node-Level Coverage Changes
+
+| Node | Before | After | Change | Status |
+|------|--------|-------|--------|--------|
+| roast | 100% | 32% | -68% | ✅ Updated |
+| shield | 70% | 2% | -68% | ✅ Updated |
+| queue-system | 87% | 17% | -70% | ✅ Updated |
+| cost-control | 70% | 5% | -65% | ✅ Updated |
+| plan-features | 70% | 2% | -68% | ✅ Updated |
+| social-platforms | 100% | 0% | -100% | ✅ Updated |
+| multi-tenant | 70% | N/A | - | ⚠️ No data (SQL file) |
+| billing | 70% | N/A | - | ⚠️ No data (not implemented) |
+| persona | 70% | N/A | - | ⚠️ No data (not implemented) |
+| tone | 70% | N/A | - | ⚠️ No data (not implemented) |
+| platform-constraints | 100% | N/A | - | ⚠️ No data (not implemented) |
+| analytics | 70% | N/A | - | ⚠️ No data (not implemented) |
+| trainer | 50% | N/A | - | ⚠️ No data (not implemented) |
+| guardian | 50% | N/A | - | ⚠️ No data (config files) |
+
+---
+
+## File Mapping Analysis
+
+### Files with Coverage Data (6 nodes)
+
+**roast:**
+- src/services/roastEngine.js
+- src/services/roastGeneratorEnhanced.js
+- src/services/roastPromptTemplate.js
+- src/services/csvRoastService.js
+Average: 32%
+
+**shield:**
+- src/services/shieldService.js
+- src/services/shieldDecisionEngine.js
+- src/services/shieldActionExecutor.js
+- src/workers/ShieldActionWorker.js
+Average: 2%
+
+**queue-system:**
+- src/services/queueService.js
+- src/workers/BaseWorker.js
+Average: 17%
+
+**cost-control:**
+- src/services/costControl.js
+- src/services/usageTracker.js
+Average: 5%
+
+**plan-features:**
+- src/services/planLimitsService.js
+- src/services/entitlementsService.js
+Average: 2%
+
+**social-platforms:**
+- src/integrations/twitter/twitterService.js
+- src/integrations/youtube/youtubeService.js
+- src/integrations/instagram/instagramService.js
+Average: 0%
+
+### Files Missing from Coverage (8 nodes)
+
+**Not Yet Implemented (6 nodes):**
+- src/services/analyticsService.js (analytics)
+- src/services/billingService.js (billing)
+- src/services/stripeService.js (billing)
+- src/services/personaService.js (persona)
+- src/services/toneService.js (tone)
+- src/services/platformConstraints.js (platform-constraints)
+- src/services/trainerService.js (trainer)
+
+**Non-JS Files (2 nodes):**
+- database/schema.sql (multi-tenant) - SQL schema
+- scripts/guardian-gdd.js (guardian) - not in Jest coverage
+- config/product-guard.yaml (guardian) - YAML config
+- config/guardian-ignore.yaml (guardian) - YAML config
+
+---
+
+## Health Score Impact
+
+### Overall System Health
+
+| Metric | Before (main) | After (branch) | Change |
+|--------|---------------|----------------|--------|
+| Health Score | 95.1/100 | 88.5/100 | **-6.6** |
+| Status | 🟢 HEALTHY | 🟢 HEALTHY | (same) |
+
+### Node Health Scores (After)
+
+| Node | Score | Status |
+|------|-------|--------|
+| platform-constraints | 99/100 | 🟢 Healthy |
+| roast | 85/100 | 🟢 Healthy |
+| shield | 85/100 | 🟢 Healthy |
+| queue-system | 85/100 | 🟢 Healthy |
+| cost-control | 85/100 | 🟢 Healthy |
+| plan-features | 85/100 | 🟢 Healthy |
+| social-platforms | 85/100 | 🟢 Healthy |
+| analytics | 93/100 | 🟢 Healthy |
+| billing | 93/100 | 🟢 Healthy |
+| multi-tenant | 93/100 | 🟢 Healthy |
+| persona | 93/100 | 🟢 Healthy |
+| tone | 93/100 | 🟢 Healthy |
+| guardian | 89/100 | 🟢 Healthy |
+| trainer | 89/100 | 🟢 Healthy |
+| observability | 76/100 | 🟡 Degraded |
+
+**Note:** Despite lower coverage, all nodes remain HEALTHY due to other factors (sync accuracy, update freshness, dependency integrity).
+
+---
+
+## Integrity Violations
+
+### Before (from Issue #525)
+- Total violations: 14
+- Type: missing_coverage_data
+- All nodes affected
+
+### After
+- Total violations: 8
+- Type: missing_coverage_data (severity: warning)
+- Only unimplemented/non-JS nodes affected
+
+**Improvement:** 6 violations resolved (43% reduction)
+
+---
+
+## Conclusion
+
+The coverage sync successfully updated 6/14 nodes with real coverage data from test reports. The remaining 8 nodes show "missing coverage data" because their associated files either don't exist yet (planned but not implemented) or are non-JS files (SQL, YAML, config files).
+
+The health score decrease (-6.6 points) accurately reflects the gap between declared coverage targets and actual test coverage implementation.
