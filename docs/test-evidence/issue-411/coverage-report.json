@@ -1,0 +1,242 @@
+{
+  "total": {
+    "lines": {
+      "total": 583,
+      "covered": 338,
+      "skipped": 0,
+      "pct": 57.97
+    },
+    "statements": {
+      "total": 594,
+      "covered": 344,
+      "skipped": 0,
+      "pct": 57.91
+    },
+    "functions": {
+      "total": 119,
+      "covered": 80,
+      "skipped": 0,
+      "pct": 67.22
+    },
+    "branches": {
+      "total": 287,
+      "covered": 82,
+      "skipped": 0,
+      "pct": 28.57
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "src/adapters/FacebookAdapter.js": {
+    "lines": {
+      "total": 79,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 21.51
+    },
+    "functions": {
+      "total": 11,
+      "covered": 5,
+      "skipped": 0,
+      "pct": 45.45
+    },
+    "statements": {
+      "total": 79,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 21.51
+    },
+    "branches": {
+      "total": 46,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 4.34
+    }
+  },
+  "src/adapters/InstagramAdapter.js": {
+    "lines": {
+      "total": 49,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 34.69
+    },
+    "functions": {
+      "total": 8,
+      "covered": 5,
+      "skipped": 0,
+      "pct": 62.5
+    },
+    "statements": {
+      "total": 49,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 34.69
+    },
+    "branches": {
+      "total": 25,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 8
+    }
+  },
+  "src/adapters/ShieldAdapter.js": {
+    "lines": {
+      "total": 58,
+      "covered": 37,
+      "skipped": 0,
+      "pct": 63.79
+    },
+    "functions": {
+      "total": 20,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 40
+    },
+    "statements": {
+      "total": 60,
+      "covered": 37,
+      "skipped": 0,
+      "pct": 61.66
+    },
+    "branches": {
+      "total": 34,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 26.47
+    }
+  },
+  "src/adapters/mock/DiscordShieldAdapter.js": {
+    "lines": {
+      "total": 104,
+      "covered": 65,
+      "skipped": 0,
+      "pct": 62.5
+    },
+    "functions": {
+      "total": 18,
+      "covered": 14,
+      "skipped": 0,
+      "pct": 77.77
+    },
+    "statements": {
+      "total": 106,
+      "covered": 66,
+      "skipped": 0,
+      "pct": 62.26
+    },
+    "branches": {
+      "total": 52,
+      "covered": 23,
+      "skipped": 0,
+      "pct": 44.23
+    }
+  },
+  "src/adapters/mock/TwitchShieldAdapter.js": {
+    "lines": {
+      "total": 92,
+      "covered": 57,
+      "skipped": 0,
+      "pct": 61.95
+    },
+    "functions": {
+      "total": 18,
+      "covered": 14,
+      "skipped": 0,
+      "pct": 77.77
+    },
+    "statements": {
+      "total": 95,
+      "covered": 59,
+      "skipped": 0,
+      "pct": 62.1
+    },
+    "branches": {
+      "total": 40,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 42.5
+    }
+  },
+  "src/adapters/mock/TwitterShieldAdapter.js": {
+    "lines": {
+      "total": 58,
+      "covered": 47,
+      "skipped": 0,
+      "pct": 81.03
+    },
+    "functions": {
+      "total": 12,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 91.66
+    },
+    "statements": {
+      "total": 60,
+      "covered": 49,
+      "skipped": 0,
+      "pct": 81.66
+    },
+    "branches": {
+      "total": 20,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 55
+    }
+  },
+  "src/adapters/mock/YouTubeShieldAdapter.js": {
+    "lines": {
+      "total": 70,
+      "covered": 47,
+      "skipped": 0,
+      "pct": 67.14
+    },
+    "functions": {
+      "total": 12,
+      "covered": 10,
+      "skipped": 0,
+      "pct": 83.33
+    },
+    "statements": {
+      "total": 71,
+      "covered": 48,
+      "skipped": 0,
+      "pct": 67.6
+    },
+    "branches": {
+      "total": 24,
+      "covered": 7,
+      "skipped": 0,
+      "pct": 29.16
+    }
+  },
+  "tests/helpers/syntheticFixtures.js": {
+    "lines": {
+      "total": 73,
+      "covered": 51,
+      "skipped": 0,
+      "pct": 69.86
+    },
+    "functions": {
+      "total": 20,
+      "covered": 13,
+      "skipped": 0,
+      "pct": 65
+    },
+    "statements": {
+      "total": 74,
+      "covered": 51,
+      "skipped": 0,
+      "pct": 68.91
+    },
+    "branches": {
+      "total": 46,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 23.91
+    }
+  }
+}

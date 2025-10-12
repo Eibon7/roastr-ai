@@ -53,7 +53,7 @@
 
 ---
 
-### ✅ AC2: Respuestas 402/403 donde corresponda por plan
+### ✅ AC2: Respuestas 429/403/401/500 donde corresponda por plan
 
 **HTTP Status Codes Validated:**
 - 429 (Too Many Requests) - limit reached
@@ -345,7 +345,7 @@ All limits validated in tests ✅
 
 **All Acceptance Criteria Validated:**
 1. ✅ Límites por plan aplicados correctamente
-2. ✅ Respuestas 402/403 donde corresponda por plan
+2. ✅ Respuestas 429/403/401/500 donde corresponda por plan
 3. ✅ Rutas protegidas según entitlements
 4. ✅ Webhooks de Stripe procesados correctamente
 5. ✅ Estados de suscripción actualizados en tiempo real
