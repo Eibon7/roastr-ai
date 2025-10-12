@@ -1,16 +1,16 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-12T14:35:57.888Z
+**Generated:** 2025-10-12T18:19:10.315Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 88.5/100
+**Average Score:** 89.4/100
 
 ---
 
 ## Summary
 
-- **Total Nodes:** 15
+- **Total Nodes:** 14
 - 🟢 **Healthy (80-100):** 14
-- 🟡 **Degraded (50-79):** 1
+- 🟡 **Degraded (50-79):** 0
 - 🔴 **Critical (<50):** 0
 
 ---
@@ -19,7 +19,6 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
-| observability | 🟡 76 | degraded | 2025-10-12 | 10% | 0 | 0 |
 | cost-control | 🟢 85 | healthy | 2025-10-09 | 5% | 0 | 0 |
 | plan-features | 🟢 85 | healthy | 2025-10-09 | 2% | 0 | 0 |
 | queue-system | 🟢 85 | healthy | 2025-10-09 | 17% | 0 | 0 |
@@ -38,19 +37,6 @@
 ---
 
 ## ⚠️ Top 5 Nodes to Review
-
-### observability (Score: 76)
-
-**Status:** 🟡 DEGRADED
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 100/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 30/100
-- Agent Relevance: 0/100
-- Integrity Score: 100/100
-
 
 ### cost-control (Score: 85)
 
@@ -92,6 +78,19 @@
 
 
 ### roast (Score: 85)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 94/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### shield (Score: 85)
 
 **Status:** 🟢 HEALTHY
 

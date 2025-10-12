@@ -1,5 +1,30 @@
 # Auto-Repair Changelog
 
+## 2025-10-12T18:19:09.894Z
+
+**Repair ID:** 2025-10-12T18:19:09Z
+**Triggered by:** CI/CD
+**Nodes affected:** social-platforms, analytics, billing, cost-control, guardian, multi-tenant, persona, platform-constraints, tone, trainer
+
+**Fixes applied:**
+- Added coverage to social-platforms
+- Added coverage source to analytics
+- Added coverage source to billing
+- Added coverage source to cost-control
+- Added coverage source to guardian
+- Added coverage source to multi-tenant
+- Added coverage source to persona
+- Added coverage source to platform-constraints
+- Added coverage source to tone
+- Added coverage source to trainer
+
+**Outcome:**
+- Health score: 88.5 → 89.4
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T18-19-09-707Z`
+
+---
+
 ## 2025-10-09T07:33:29.860Z
 
 **Repair ID:** 2025-10-09T07:33:29Z
