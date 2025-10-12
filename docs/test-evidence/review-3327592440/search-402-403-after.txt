@@ -1,1 +1,0 @@
-docs/plan/review-3327587218.md:34:- HTTP status codes (402/403 → 429/403/401/500) - Already correct in Issue #413
