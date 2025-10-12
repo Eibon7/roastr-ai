@@ -1,0 +1,16 @@
+markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
+Finding: docs/plan/review-3326043773.md
+Linting: 1 file(s)
+Summary: 12 error(s)
+docs/plan/review-3326043773.md:4:81 MD013/line-length Line length [Expected: 80; Actual: 93]
+docs/plan/review-3326043773.md:31:81 MD013/line-length Line length [Expected: 80; Actual: 91]
+docs/plan/review-3326043773.md:33:81 MD013/line-length Line length [Expected: 80; Actual: 111]
+docs/plan/review-3326043773.md:41:81 MD013/line-length Line length [Expected: 80; Actual: 98]
+docs/plan/review-3326043773.md:136:81 MD013/line-length Line length [Expected: 80; Actual: 116]
+docs/plan/review-3326043773.md:166:81 MD013/line-length Line length [Expected: 80; Actual: 102]
+docs/plan/review-3326043773.md:182:81 MD013/line-length Line length [Expected: 80; Actual: 111]
+docs/plan/review-3326043773.md:203 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "Phase 1: Verification (CURRENT..."]
+docs/plan/review-3326043773.md:231 MD040/fenced-code-language Fenced code blocks should have a language specified [Context: "```"]
+docs/plan/review-3326043773.md:321 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "Scenario 1: Test failures unre..."]
+docs/plan/review-3326043773.md:327 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "Scenario 2: Coverage drop from..."]
+docs/plan/review-3326043773.md:333 MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "Scenario 3: Pattern found else..."]
