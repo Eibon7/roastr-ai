@@ -228,7 +228,7 @@ node scripts/gdd-coverage-helper.js --update-from-report --verbose
 ```
 
 **Output Example:**
-```
+```text
 📊 GDD Coverage Sync
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -454,7 +454,7 @@ Summary:
 ```javascript
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml'); // For system-map.yaml parsing
+const yaml = require('yaml'); // For system-map.yaml parsing
 ```
 
 **Key Functions:**
@@ -741,7 +741,7 @@ node scripts/gdd-coverage-helper.js --update-from-report
 
 **Runtime:**
 - Node.js ≥16.x
-- npm packages: `js-yaml` (for YAML parsing)
+- npm packages: `yaml` (for YAML parsing)
 
 **Data:**
 - `coverage/coverage-summary.json` (from Jest/coverage)
