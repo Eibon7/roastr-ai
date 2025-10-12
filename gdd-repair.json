@@ -1,14 +1,25 @@
 {
-  "timestamp": "2025-10-10T15:33:28.221Z",
-  "mode": "dry-run",
+  "timestamp": "2025-10-12T15:03:32.740Z",
+  "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 0,
+  "fixes_applied": 2,
   "errors": 0,
-  "health_before": 95.1,
-  "health_after": 95.1,
+  "health_before": 88.5,
+  "health_after": 88.5,
   "details": {
-    "fixes": [],
+    "fixes": [
+      {
+        "type": "auto",
+        "node": "observability",
+        "action": "Added status to observability"
+      },
+      {
+        "type": "auto",
+        "node": "social-platforms",
+        "action": "Added coverage to social-platforms"
+      }
+    ],
     "humanReview": [],
     "errors": []
   }

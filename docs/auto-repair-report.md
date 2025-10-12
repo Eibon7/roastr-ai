@@ -1,13 +1,13 @@
 # Auto-Repair Report
 
-**Generated:** 2025-10-09T07:33:29.859Z
+**Generated:** 2025-10-12T15:03:32.739Z
 **Triggered by:** CI/CD
-**Health Score:** 93.8 → 93.8 (0.0)
+**Health Score:** 88.5 → 88.5 (0.0)
 
 ## ✅ Fixes Applied (2)
 
-1. Added coverage to multi-tenant
-2. Added coverage to trainer
+1. Added status to observability
+2. Added coverage to social-platforms
 
 ## ⚠️ Pending Human Review (0)
 
@@ -19,10 +19,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 93.8/100
+- 🟢 Health Score: 88.5/100
 - ⚙️ Auto-fixes: 2 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-09T07-33-29-686Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T15-03-32-531Z`
 
 ---
 
