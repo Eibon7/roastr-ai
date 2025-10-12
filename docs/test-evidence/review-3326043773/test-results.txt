@@ -1,0 +1,323 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/ingestor-acknowledgment.test.js tests/integration/ingestor-deduplication.test.js tests/integration/ingestor-error-handling.test.js tests/integration/ingestor-mock-test.test.js tests/integration/ingestor-order-processing.test.js tests/integration/ingestor-retry-backoff.test.js
+
+PASS node-tests tests/integration/ingestor-mock-test.test.js
+  Ingestor Mock Mode Test
+    ✓ should work in mock mode (107 ms)
+
+PASS node-tests tests/integration/ingestor-deduplication.test.js
+  Ingestor Deduplication Integration Tests
+    Comment ID Deduplication
+      ✓ should prevent duplicate comments with same platform_comment_id (107 ms)
+      ✓ should handle reprocessing of same comments without duplicates (101 ms)
+      ✓ should allow same platform_comment_id across different organizations (1 ms)
+      ✓ should handle database constraint violations gracefully (101 ms)
+      ✓ should preserve deduplication across multiple fetch operations (102 ms)
+    Deduplication Performance
+      ✓ should efficiently handle large batches with duplicates (102 ms)
+
+FAIL node-tests tests/integration/ingestor-order-processing.test.js
+  Ingestor Processing Order Integration Tests
+    FIFO Processing Order
+      ✓ should process jobs in first-in-first-out order (107 ms)
+      ✓ should maintain order across multiple fetch operations (102 ms)
+      ✕ should respect priority-based ordering (105 ms)
+    Order Preservation with Retries
+      ✓ should maintain order when jobs require retries (153 ms)
+      ✕ should not block processing when one job permanently fails (255 ms)
+    Concurrent Processing Order
+      ✓ should maintain order within priority levels during concurrent processing (202 ms)
+      ✕ should preserve order across different priority levels with concurrency (307 ms)
+    Order Validation Utilities
+      ✓ should validate job order using helper assertion (10 ms)
+
+  ● Ingestor Processing Order Integration Tests › FIFO Processing Order › should respect priority-based ordering
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Array [
+    -   "high_priority_1",
+    -   "normal_priority_1",
+        "low_priority_1",
+    +   "normal_priority_1",
+    +   "high_priority_1",
+      ]
+
+      238 |
+      239 |       // Should process in priority order: high, normal, low
+    > 240 |       expect(processedOrder).toEqual([
+          |                              ^
+      241 |         'high_priority_1',
+      242 |         'normal_priority_1',
+      243 |         'low_priority_1'
+
+      at Object.toEqual (tests/integration/ingestor-order-processing.test.js:240:30)
+
+  ● Ingestor Processing Order Integration Tests › Order Preservation with Retries › should not block processing when one job permanently fails
+
+    ReferenceError: results is not defined
+
+      394 |
+      395 |       // First and third should succeed, middle should fail
+    > 396 |       expect(results[0].success).toBe(true);
+          |              ^
+      397 |       expect(results[1].success).toBe(false);
+      398 |       expect(results[2].success).toBe(true);
+      399 |
+
+      at Object.results (tests/integration/ingestor-order-processing.test.js:396:14)
+
+  ● Ingestor Processing Order Integration Tests › Concurrent Processing Order › should preserve order across different priority levels with concurrency
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Array [
+    -   "high_1",
+    -   "high_2",
+    +   "low_1",
+    +   "low_2",
+      ]
+
+      572 |       // High priority jobs should be processed before low priority
+      573 |       // Order within each priority level should be maintained
+    > 574 |       expect(processedOrder.slice(0, 2)).toEqual(['high_1', 'high_2']);
+          |                                          ^
+      575 |       expect(processedOrder.slice(2, 4)).toEqual(['low_1', 'low_2']);
+      576 |     });
+      577 |   });
+
+      at Object.toEqual (tests/integration/ingestor-order-processing.test.js:574:42)
+
+PASS node-tests tests/integration/ingestor-acknowledgment.test.js
+  Ingestor Message Acknowledgment Integration Tests
+    Successful Job Acknowledgment
+      ✓ should acknowledge jobs correctly after successful processing (106 ms)
+      ✓ should acknowledge multiple jobs in sequence (102 ms)
+      ✓ should preserve acknowledgment across worker restarts (204 ms)
+    Failed Job Acknowledgment
+      ✓ should properly handle failed job acknowledgment (422 ms)
+      ✓ should acknowledge after successful retry (254 ms)
+    Acknowledgment Timing and Performance
+      ✓ should acknowledge jobs promptly after completion (102 ms)
+      ✓ should handle concurrent job acknowledgments correctly (154 ms)
+    Acknowledgment Error Handling
+      ✓ should handle acknowledgment failures gracefully (102 ms)
+
+FAIL node-tests tests/integration/ingestor-error-handling.test.js (6.133 s)
+  Ingestor Error Handling Integration Tests
+    Transient Error Handling
+      ✕ should retry transient network errors (462 ms)
+      ✓ should handle timeout errors with appropriate retries (404 ms)
+      ✓ should handle rate limiting as transient error (255 ms)
+      ✓ should differentiate between recoverable and non-recoverable network errors (419 ms)
+    Permanent Error Handling
+      ✕ should not retry authentication errors (457 ms)
+      ✕ should not retry forbidden/permission errors (461 ms)
+      ✕ should not retry malformed request errors (455 ms)
+      ✕ should not retry resource not found errors (456 ms)
+    Error Classification
+      ✕ should correctly classify HTTP status codes (873 ms)
+      ✕ should handle mixed error scenarios in batch processing (559 ms)
+    Error Recovery and State Management
+      ✕ should maintain consistent state after error recovery (254 ms)
+      ✕ should handle database errors during comment storage (255 ms)
+      ✕ should handle partial batch failures gracefully (102 ms)
+
+  ● Ingestor Error Handling Integration Tests › Transient Error Handling › should retry transient network errors
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      70 |       // Verify comment was stored
+      71 |       const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+    > 72 |       expect(storedComments).toHaveLength(1);
+         |                              ^
+      73 |       expect(storedComments[0].platform_comment_id).toBe(comment.platform_comment_id);
+      74 |     });
+      75 |
+
+      at Object.toHaveLength (tests/integration/ingestor-error-handling.test.js:72:30)
+
+  ● Ingestor Error Handling Integration Tests › Permanent Error Handling › should not retry authentication errors
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 4
+
+      292 |
+      293 |       // Should not have retried authentication error
+    > 294 |       expect(attemptCount).toBe(1);
+          |                            ^
+      295 |     });
+      296 |
+      297 |     test('should not retry forbidden/permission errors', async () => {
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:294:28)
+
+  ● Ingestor Error Handling Integration Tests › Permanent Error Handling › should not retry forbidden/permission errors
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 4
+
+      329 |       }
+      330 |
+    > 331 |       expect(attemptCount).toBe(1);
+          |                            ^
+      332 |     });
+      333 |
+      334 |     test('should not retry malformed request errors', async () => {
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:331:28)
+
+  ● Ingestor Error Handling Integration Tests › Permanent Error Handling › should not retry malformed request errors
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 4
+
+      366 |       }
+      367 |
+    > 368 |       expect(attemptCount).toBe(1);
+          |                            ^
+      369 |     });
+      370 |
+      371 |     test('should not retry resource not found errors', async () => {
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:368:28)
+
+  ● Ingestor Error Handling Integration Tests › Permanent Error Handling › should not retry resource not found errors
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 4
+
+      403 |       }
+      404 |
+    > 405 |       expect(attemptCount).toBe(1);
+          |                            ^
+      406 |     });
+      407 |   });
+      408 |
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:405:28)
+
+  ● Ingestor Error Handling Integration Tests › Error Classification › should correctly classify HTTP status codes
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 3
+
+      454 |             expect(attemptCount).toBeGreaterThan(1);
+      455 |           } else {
+    > 456 |             expect(attemptCount).toBe(1);
+          |                                  ^
+      457 |           }
+      458 |         }
+      459 |       } finally {
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:456:34)
+
+  ● Ingestor Error Handling Integration Tests › Error Classification › should handle mixed error scenarios in batch processing
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 3
+
+      542 |       expect(attemptCounts['success']).toBe(1);
+      543 |       expect(attemptCounts['transient']).toBe(3); // 1 + 2 retries
+    > 544 |       expect(attemptCounts['permanent']).toBe(1); // No retries
+          |                                          ^
+      545 |       expect(attemptCounts['eventual_success']).toBe(3); // Succeeded on 3rd attempt
+      546 |     });
+      547 |   });
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:544:42)
+
+  ● Ingestor Error Handling Integration Tests › Error Recovery and State Management › should maintain consistent state after error recovery
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      605 |
+      606 |       // Verify final state is correct
+    > 607 |       expect(worker.processedJobs).toBe(1);
+          |                                    ^
+      608 |       expect(worker.failedJobs).toBe(0); // Should not count as failed since it eventually succeeded
+      609 |     });
+      610 |
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:607:36)
+
+  ● Ingestor Error Handling Integration Tests › Error Recovery and State Management › should handle database errors during comment storage
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 3
+
+      656 |
+      657 |       expect(result.success).toBe(true);
+    > 658 |       expect(fetchCount).toBe(1); // Should fetch only once
+          |                          ^
+      659 |       expect(storeAttempts).toBe(3); // Should retry store operation
+      660 |
+      661 |       // Verify comment was eventually stored
+
+      at Object.toBe (tests/integration/ingestor-error-handling.test.js:658:26)
+
+  ● Ingestor Error Handling Integration Tests › Error Recovery and State Management › should handle partial batch failures gracefully
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+      728 |       // Verify only successful comments were stored
+      729 |       const storedComments = await testUtils.getCommentsByOrganization(organizationId);
+    > 730 |       expect(storedComments).toHaveLength(2);
+          |                              ^
+      731 |       
+      732 |       const commentIds = storedComments.map(c => c.platform_comment_id);
+      733 |       expect(commentIds).toContain('batch_1');
+
+      at Object.toHaveLength (tests/integration/ingestor-error-handling.test.js:730:30)
+
+PASS node-tests tests/integration/ingestor-retry-backoff.test.js (6.9 s)
+  Ingestor Retry and Backoff Integration Tests
+    Exponential Backoff Retry Logic
+      ✓ should implement exponential backoff with correct timing (409 ms)
+      ✓ should respect maximum retry attempts (272 ms)
+      ✓ should handle queue-level retry with exponential backoff (1 ms)
+      ✓ should use different backoff multipliers correctly (855 ms)
+    Retry Strategy Differentiation
+      ✓ should distinguish between transient and permanent errors (255 ms)
+      ✓ should handle rate limiting with appropriate backoff (404 ms)
+    Backoff Configuration
+      ✓ should respect custom retry delay configuration (704 ms)
+      ✓ should handle maximum backoff limits (3312 ms)
+
+Test Suites: 2 failed, 4 passed, 6 total
+Tests:       13 failed, 31 passed, 44 total
+Snapshots:   0 total
+Time:        7.011 s
+Ran all test suites matching tests/integration/ingestor-acknowledgment.test.js|tests/integration/ingestor-deduplication.test.js|tests/integration/ingestor-error-handling.test.js|tests/integration/ingestor-mock-test.test.js|tests/integration/ingestor-order-processing.test.js|tests/integration/ingestor-retry-backoff.test.js.
