@@ -659,6 +659,133 @@ class AdvancedLogger {
       audit: this.auditLogger
     };
   }
+
+  /**
+   * Create correlation context for observability (Issue #417)
+   *
+   * Generates a standardized correlation context object with timestamp
+   * and all relevant IDs for request tracing across the system.
+   *
+   * @param {Object} params - Correlation parameters
+   * @param {string} params.correlationId - Unique correlation ID (UUID)
+   * @param {string} params.tenantId - Organization/tenant ID
+   * @param {string} params.userId - User ID (optional)
+   * @param {string} params.commentId - Comment ID (optional)
+   * @param {string} params.roastId - Roast/response ID (optional)
+   * @returns {Object} Correlation context with timestamp
+   */
+  createCorrelationContext({
+    correlationId,
+    tenantId,
+    userId,
+    commentId,
+    roastId,
+    ...meta
+  } = {}) {
+    const context = {
+      timestamp: new Date().toISOString(),
+      ...meta
+    };
+
+    if (correlationId) context.correlationId = correlationId;
+    if (tenantId) context.tenantId = tenantId;
+    if (userId) context.userId = userId;
+    if (commentId) context.commentId = commentId;
+    if (roastId) context.roastId = roastId;
+
+    return context;
+  }
+
+  /**
+   * Log job lifecycle event with full correlation context (Issue #417)
+   *
+   * Logs key lifecycle events (enqueued, started, completed, failed) with
+   * correlation IDs for end-to-end request tracing.
+   *
+   * @param {string} workerName - Name of the worker or service
+   * @param {string} jobId - Job ID
+   * @param {string} lifecycle - Lifecycle event (enqueued, started, completed, failed)
+   * @param {Object} correlationContext - Correlation context from createCorrelationContext
+   * @param {Object} result - Optional result data to include in log
+   */
+  logJobLifecycle(workerName, jobId, lifecycle, correlationContext = {}, result = null) {
+    const context = this.createCorrelationContext(correlationContext);
+
+    const logData = {
+      worker: workerName,
+      jobId,
+      lifecycle,
+      ...context
+    };
+
+    if (result) {
+      logData.result = result;
+    }
+
+    const message = `Job ${lifecycle}: ${jobId}`;
+
+    // Use appropriate log level based on lifecycle
+    if (lifecycle === 'failed') {
+      this.workerLogger.error(message, logData);
+    } else {
+      this.workerLogger.info(message, logData);
+    }
+  }
+
+  /**
+   * Log worker error with correlation context (Issue #417)
+   *
+   * Logs worker errors with full stack trace and correlation IDs
+   * for debugging and traceability.
+   *
+   * @param {string} workerName - Name of the worker
+   * @param {string} action - Action that failed
+   * @param {Error} error - Error object
+   * @param {Object} correlationContext - Correlation context
+   */
+  logWorkerError(workerName, action, error, correlationContext = {}) {
+    const context = this.createCorrelationContext(correlationContext);
+
+    this.workerLogger.error(`Worker ${action} failed`, {
+      worker: workerName,
+      action,
+      error: error.message,
+      stack: error.stack,
+      ...context
+    });
+  }
+
+  /**
+   * Log worker action with correlation context (Issue #417)
+   *
+   * Logs general worker actions for observability and debugging.
+   *
+   * @param {string} workerName - Name of the worker
+   * @param {string} action - Action being performed
+   * @param {Object} correlationContext - Correlation context
+   * @param {Object} metadata - Additional metadata
+   */
+  logWorkerAction(workerName, action, correlationContext = {}, metadata = {}) {
+    const context = this.createCorrelationContext(correlationContext);
+
+    this.workerLogger.info(`Worker action: ${action}`, {
+      worker: workerName,
+      action,
+      ...context,
+      ...metadata
+    });
+  }
+
+  /**
+   * Aliases for compatibility with tests
+   */
+  get queueLogger() {
+    return this.workerLogger;
+  }
+
+  get errorLogger() {
+    return this.applicationLogger;
+  }
 }
 
 module.exports = new AdvancedLogger();

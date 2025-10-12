@@ -1,6 +1,8 @@
 const Redis = require('ioredis');
 const { createClient } = require('@supabase/supabase-js');
 const { mockMode } = require('../config/mockMode');
+const { v4: uuidv4 } = require('uuid');
+const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Queue Service for Roastr.ai Multi-Tenant Architecture
@@ -164,12 +166,18 @@ class QueueService {
    * @returns {Promise<{success: boolean, jobId?: string, error?: string}>} Result with success flag and jobId
    */
   async addJob(jobType, payload, options = {}) {
+    // Generate or extract correlation ID for observability (Issue #417)
+    const correlationId = options.correlationId || payload.correlationId || uuidv4();
+
     const job = {
       id: this.generateJobId(),
       job_type: jobType,
       organization_id: payload.organization_id,
       priority: options.priority || 5,
-      payload,
+      payload: {
+        ...payload,
+        correlationId // Ensure correlation ID is in payload for worker access
+      },
       max_attempts: options.maxAttempts || this.options.maxRetries,
       scheduled_at: options.delay ?
         new Date(Date.now() + options.delay).toISOString() :
@@ -189,6 +197,17 @@ class QueueService {
         queuedTo = 'database';
       }
 
+      // Log job enqueue with correlation context (Issue #417)
+      advancedLogger.logJobLifecycle('QueueService', job.id, 'enqueued', {
+        correlationId,
+        tenantId: payload.organization_id,
+        userId: payload.user_id,
+        commentId: payload.comment_id,
+        jobType,
+        queuedTo,
+        priority: job.priority
+      });
+
       // Return consistent format with all fields
       return {
         success: true,
@@ -198,9 +217,13 @@ class QueueService {
       };
 
     } catch (error) {
-      this.log('error', 'Failed to add job to queue', {
+      // Log error with correlation context (Issue #417)
+      advancedLogger.logJobLifecycle('QueueService', job.id, 'failed', {
+        correlationId,
+        tenantId: payload.organization_id,
+        userId: payload.user_id,
+        commentId: payload.comment_id,
         jobType,
-        jobId: job.id,
         error: error.message
       });
 
