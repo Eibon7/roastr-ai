@@ -35,6 +35,9 @@ Thumbs.db
 # Coverage reports
 coverage/
 
+# Test evidence - coverage reports with absolute paths
+docs/test-evidence/**/coverage-report.json
+
 # Test artifacts
 frontend/test-results/
 
