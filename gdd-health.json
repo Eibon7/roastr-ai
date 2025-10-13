@@ -1,7 +1,7 @@
 {
-  "generated_at": "2025-10-13T12:36:40.152Z",
+  "generated_at": "2025-10-13T16:24:04.916Z",
   "status": "HEALTHY",
-  "overall_score": 89.5,
+  "overall_score": 87.9,
   "total_nodes": 15,
   "healthy_count": 15,
   "degraded_count": 0,
@@ -34,7 +34,7 @@
       "issues": []
     },
     "cost-control": {
-      "score": 85,
+      "score": 82,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -42,7 +42,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 75
       },
       "issues": []
     },
@@ -73,7 +73,7 @@
       "issues": []
     },
     "observability": {
-      "score": 86,
+      "score": 81,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -81,7 +81,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
@@ -99,15 +99,15 @@
       "issues": []
     },
     "plan-features": {
-      "score": 85,
+      "score": 81,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 100,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
@@ -125,7 +125,7 @@
       "issues": []
     },
     "queue-system": {
-      "score": 89,
+      "score": 84,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -133,12 +133,12 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
     "roast": {
-      "score": 85,
+      "score": 80,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -146,7 +146,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
@@ -164,15 +164,15 @@
       "issues": []
     },
     "social-platforms": {
-      "score": 85,
+      "score": 84,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
         "updateFreshness": 92,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 30,
+        "coverageEvidence": 50,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },

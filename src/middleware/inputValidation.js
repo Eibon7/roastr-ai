@@ -43,10 +43,10 @@ const MALICIOUS_PATTERNS = [
     /(\{\{|\}\}|\$\{|\<%|\%\>)/gi
 ];
 
-// Suspicious User-Agent patterns
+// Suspicious User-Agent patterns (no 'g' flag to avoid stateful regex issues)
 const SUSPICIOUS_USER_AGENTS = [
-    /sqlmap|nikto|nessus|burp|acunetix|appscan|w3af/gi,
-    /masscan|nmap|zap|grabber|havij|pangolin/gi
+    /sqlmap|nikto|nessus|burp|acunetix|appscan|w3af/i,
+    /masscan|nmap|zap|grabber|havij|pangolin/i
 ];
 
 /**
@@ -210,30 +210,46 @@ function securityValidation(options = {}) {
         }
         
         // Check for malicious patterns in request data
+        // Only check string values, not JSON structure (avoids false positives)
         if (checkMaliciousPatterns) {
-            const requestData = JSON.stringify({
-                body: req.body,
-                query: req.query,
-                params: req.params
-            });
-            
-            const maliciousCheck = detectMaliciousPatterns(requestData);
-            
-            if (maliciousCheck.isMalicious) {
-                logger.error('Malicious patterns detected in request', {
-                    patterns: maliciousCheck.patterns,
-                    ip: clientIp,
-                    userId,
-                    endpoint: req.path,
-                    method: req.method
-                });
-                
-                if (blockMalicious) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'Request contains invalid patterns',
-                        code: 'INVALID_INPUT'
+            const valuesToCheck = [];
+
+            // Extract string values from body, query, params
+            const extractStrings = (obj) => {
+                if (!obj || typeof obj !== 'object') return;
+                for (const value of Object.values(obj)) {
+                    if (typeof value === 'string') {
+                        valuesToCheck.push(value);
+                    } else if (typeof value === 'object' && value !== null) {
+                        extractStrings(value);
+                    }
+                }
+            };
+
+            extractStrings(req.body);
+            extractStrings(req.query);
+            extractStrings(req.params);
+
+            // Check each string value
+            for (const value of valuesToCheck) {
+                const maliciousCheck = detectMaliciousPatterns(value);
+
+                if (maliciousCheck.isMalicious) {
+                    logger.error('Malicious patterns detected in request', {
+                        patterns: maliciousCheck.patterns,
+                        ip: clientIp,
+                        userId,
+                        endpoint: req.path,
+                        method: req.method
                     });
+
+                    if (blockMalicious) {
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Request contains invalid patterns',
+                            code: 'INVALID_INPUT'
+                        });
+                    }
                 }
             }
         }
