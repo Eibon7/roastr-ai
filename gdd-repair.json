@@ -1,4 +1,14 @@
 {
+  "_meta": {
+    "description": "GDD Auto-Repair execution report",
+    "field_semantics": {
+      "mode": "dry-run (preview only) or apply (execute fixes)",
+      "fixes_would_apply": "Number of fixes identified in dry-run mode",
+      "fixes_applied": "Number of fixes actually applied in apply mode",
+      "health_before": "System health score before repair (0-100)",
+      "health_after": "System health score after repair (0-100)"
+    }
+  },
   "timestamp": "2025-10-12T15:04:57.824Z",
   "mode": "apply",
   "success": true,
