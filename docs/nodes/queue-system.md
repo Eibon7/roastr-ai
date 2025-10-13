@@ -648,9 +648,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - Regression prevention: Job payload malformations now caught by tests
 - Validates both return value AND internal job structure
 - Uses `toMatchObject()` for flexible matching (allows extra fields)
-
-**Coverage:** 87%
-**Coverage Source:** auto overall (4 enhanced tests with +16 assertions)
+- 4 enhanced tests with +16 assertions
 
 ---
 

@@ -1,6 +1,6 @@
 # CodeRabbit Review #3332667107 - Executive Summary
 
-**Review URL:** https://github.com/Eibon7/roastr-ai/pull/577#pullrequestreview-3332667107
+**Review URL:** <https://github.com/Eibon7/roastr-ai/pull/577#pullrequestreview-3332667107>
 **PR:** #577 - Text Normalizer Utils + Tests
 **Branch:** feat/issue-422-text-normalizer-tests
 **Date Applied:** 2025-10-13
@@ -237,7 +237,7 @@ Successfully applied all CodeRabbit review comments with **zero regressions** an
 ## Commit Details
 
 **Commit Message:**
-```
+```text
 fix(security): Enhance URL sanitization with comprehensive protocol blocklist - Review #3332667107
 ```
 
@@ -275,4 +275,4 @@ fix(security): Enhance URL sanitization with comprehensive protocol blocklist - 
 
 **Generated:** 2025-10-13
 **Review Applied By:** Claude Code (Orchestrator)
-**Review URL:** https://github.com/Eibon7/roastr-ai/pull/577#pullrequestreview-3332667107
+**Review URL:** <https://github.com/Eibon7/roastr-ai/pull/577#pullrequestreview-3332667107>

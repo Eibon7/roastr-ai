@@ -1,0 +1,41 @@
+ M docs/guardian/audit-log.md
+ M docs/guardian/guardian-report.md
+ M docs/nodes/queue-system.md
+ M docs/nodes/social-platforms.md
+D  docs/plan/review-3332613106.md
+ M docs/plan/review-3332667107.md
+ M docs/system-validation.md
+D  docs/test-evidence/review-3332613106/SUMMARY.md
+D  docs/test-evidence/review-3332613106/coverage-declaration-counts.txt
+D  docs/test-evidence/review-3332613106/gdd-validation-results.txt
+D  docs/test-evidence/review-3332613106/markdown-lint-results.txt
+D  docs/test-evidence/review-3332613106/timestamp-sync-verification.txt
+ M docs/test-evidence/review-3332667107/SUMMARY.md
+ M gdd-write-signatures.json
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T07-55-51-007Z.backup
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T09-13-48-234Z.backup
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T12-24-59-925Z.backup
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T15-06-23-330Z.backup
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T15-08-06-891Z.backup
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T16-14-44-702Z.backup
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T17-56-09-747Z.backup
+?? .gdd-backups/.gdd-test-security.txt.2025-10-13T20-03-57-957Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T07-55-35-273Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T09-13-32-015Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T12-24-43-744Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T15-06-06-132Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T15-08-01-237Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T16-14-27-433Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T17-55-52-573Z.backup
+?? .gdd-backups/C:__Windows__System32__config__sam.2025-10-13T20-03-40-962Z.backup
+?? .gdd-backups/C:__repo__..__Windows__system.ini.2025-10-13T07-55-35-271Z.backup
+?? .gdd-backups/C:__repo__..__Windows__system.ini.2025-10-13T15-06-06-129Z.backup
+?? .gdd-backups/C:__repo__..__Windows__system.ini.2025-10-13T15-08-01-234Z.backup
+?? .gdd-backups/C:__repo__..__Windows__system.ini.2025-10-13T16-14-27-430Z.backup
+?? "C:\\repo\\..\\Windows\\system.ini"
+?? docs/guardian/cases/2025-10-13-20-03-41-039.json
+?? docs/guardian/cases/2025-10-13-20-03-41-040.json
+?? docs/guardian/cases/2025-10-13-20-03-41-042.json
+?? docs/plan/review-3332583632.md
+?? docs/plan/review-3332873308.md
+?? docs/test-evidence/review-3332873308/

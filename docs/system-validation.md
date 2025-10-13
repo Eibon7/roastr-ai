@@ -42,7 +42,7 @@ Coverage authenticity issues detected:
 | persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | platform-constraints | missing_coverage_data | 100% | N/A% | N/A% | warning |
 | queue-system | coverage_integrity_violation | 17% | 6% | 11% | critical |
-| roast | coverage_integrity_violation | 32% | N/A% | 32% | critical |
+| roast | coverage_integrity_violation | 32% | 0% | 32% | critical |
 | tone | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
 
