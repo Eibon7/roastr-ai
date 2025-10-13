@@ -94,7 +94,7 @@
 
 ### GDD Node Validation
 ```bash
-$ node scripts/validate-gdd-runtime.js --node=roast
+node scripts/validate-gdd-runtime.js --node=roast
 ```
 
 **Result:** ✅ PASS
@@ -106,7 +106,7 @@ $ node scripts/validate-gdd-runtime.js --node=roast
 
 ### Health Score Check
 ```bash
-$ node scripts/score-gdd-health.js --ci
+node scripts/score-gdd-health.js --ci
 ```
 
 **Result:** ✅ HEALTHY
