@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-12T15:03:32.816Z
+**Date:** 2025-10-13T09:26:14.254Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -38,7 +38,7 @@ Coverage authenticity issues detected:
 | cost-control | missing_coverage_data | 5% | N/A% | N/A% | warning |
 | guardian | missing_coverage_data | 50% | N/A% | N/A% | warning |
 | multi-tenant | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| observability | missing_coverage_data | 10% | N/A% | N/A% | warning |
+| observability | missing_coverage_data | 14% | N/A% | N/A% | warning |
 | persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | plan-features | missing_coverage_data | 2% | N/A% | N/A% | warning |
 | platform-constraints | missing_coverage_data | 100% | N/A% | N/A% | warning |

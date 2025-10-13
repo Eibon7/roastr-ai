@@ -1,19 +1,14 @@
 {
-  "timestamp": "2025-10-12T15:03:32.740Z",
+  "timestamp": "2025-10-13T09:26:14.178Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 2,
+  "fixes_applied": 1,
   "errors": 0,
   "health_before": 88.5,
-  "health_after": 88.5,
+  "health_after": 89.2,
   "details": {
     "fixes": [
-      {
-        "type": "auto",
-        "node": "observability",
-        "action": "Added status to observability"
-      },
       {
         "type": "auto",
         "node": "social-platforms",

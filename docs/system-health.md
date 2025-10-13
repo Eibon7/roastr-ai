@@ -1,16 +1,16 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-12T15:03:33.155Z
+**Generated:** 2025-10-13T09:26:14.629Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 88.5/100
+**Average Score:** 89.2/100
 
 ---
 
 ## Summary
 
 - **Total Nodes:** 15
-- 🟢 **Healthy (80-100):** 14
-- 🟡 **Degraded (50-79):** 1
+- 🟢 **Healthy (80-100):** 15
+- 🟡 **Degraded (50-79):** 0
 - 🔴 **Critical (<50):** 0
 
 ---
@@ -19,13 +19,13 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
-| observability | 🟡 76 | degraded | 2025-10-12 | 10% | 0 | 0 |
 | cost-control | 🟢 85 | healthy | 2025-10-09 | 5% | 0 | 0 |
 | plan-features | 🟢 85 | healthy | 2025-10-09 | 2% | 0 | 0 |
 | queue-system | 🟢 85 | healthy | 2025-10-09 | 17% | 0 | 0 |
 | roast | 🟢 85 | healthy | 2025-10-09 | 32% | 0 | 0 |
 | shield | 🟢 85 | healthy | 2025-10-09 | 2% | 0 | 0 |
 | social-platforms | 🟢 85 | healthy | 2025-10-09 | 0% | 0 | 0 |
+| observability | 🟢 86 | healthy | 2025-10-12 | 14% | 0 | 0 |
 | guardian | 🟢 89 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | trainer | 🟢 89 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | analytics | 🟢 93 | healthy | 2025-10-09 | 70% | 0 | 0 |
@@ -39,26 +39,13 @@
 
 ## ⚠️ Top 5 Nodes to Review
 
-### observability (Score: 76)
-
-**Status:** 🟡 DEGRADED
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 100/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 30/100
-- Agent Relevance: 0/100
-- Integrity Score: 100/100
-
-
 ### cost-control (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -71,7 +58,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -84,7 +71,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -97,7 +84,20 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### shield (Score: 85)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
