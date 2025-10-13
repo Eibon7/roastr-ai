@@ -1,5 +1,21 @@
 # Auto-Repair Changelog
 
+## 2025-10-13T17:03:37.104Z
+
+**Repair ID:** 2025-10-13T17:03:37Z
+**Triggered by:** CI/CD
+**Nodes affected:** roast
+
+**Fixes applied:**
+- Added coverage to roast
+
+**Outcome:**
+- Health score: 88.7 → 89.9
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T17-03-36-895Z`
+
+---
+
 ## 2025-10-13T16:47:00.710Z
 
 **Repair ID:** 2025-10-13T16:47:00Z
