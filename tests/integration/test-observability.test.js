@@ -42,7 +42,8 @@ describe('Observability Integration Tests (Issue #417)', () => {
 
   beforeEach(() => {
     // Generate unique test IDs for each test
-    testCorrelationId = `test_${uuidv4()}`;
+    // Use valid UUID v4 format for correlation IDs (Issue #417 improvements)
+    testCorrelationId = uuidv4();
     testOrganizationId = `org_${uuidv4()}`;
     testCommentId = `comment_${uuidv4()}`;
   });
@@ -250,8 +251,8 @@ describe('Observability Integration Tests (Issue #417)', () => {
     });
 
     test('should support multi-tenant isolation with correlation IDs', async () => {
-      const org1CorrelationId = `org1_${uuidv4()}`;
-      const org2CorrelationId = `org2_${uuidv4()}`;
+      const org1CorrelationId = uuidv4();
+      const org2CorrelationId = uuidv4();
 
       const payload1 = {
         organization_id: 'org1',
@@ -454,17 +455,153 @@ describe('Observability Integration Tests (Issue #417)', () => {
       // correlationId should be undefined, not cause an error
     });
   });
+
+  /**
+   * TEST SUITE 8: Correlation ID Validation (Post-Review Improvements)
+   * Verify correlation ID format validation (Issue #417 improvements)
+   */
+  describe('Suite 8: Correlation ID Validation', () => {
+    test('should reject invalid UUID format in options', async () => {
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId
+      };
+
+      const options = {
+        correlationId: 'invalid-uuid-format'
+      };
+
+      await expect(queueService.addJob('analyze_toxicity', payload, options))
+        .rejects.toThrow('Invalid correlation ID format');
+    });
+
+    test('should reject invalid UUID format in payload', async () => {
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId,
+        correlationId: 'not-a-valid-uuid'
+      };
+
+      await expect(queueService.addJob('analyze_toxicity', payload))
+        .rejects.toThrow('Invalid correlation ID format');
+    });
+
+    test('should reject non-string correlation IDs', async () => {
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId,
+        correlationId: 12345 // Number instead of string
+      };
+
+      await expect(queueService.addJob('analyze_toxicity', payload))
+        .rejects.toThrow('Invalid correlation ID: must be a string');
+    });
+
+    test('should accept valid UUID v4', async () => {
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000'; // Valid UUID v4
+
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId
+      };
+
+      const options = {
+        correlationId: validUuid
+      };
+
+      const result = await queueService.addJob('analyze_toxicity', payload, options);
+
+      expect(result.success).toBe(true);
+      expect(result.job.payload.correlationId).toBe(validUuid);
+    });
+
+    test('should auto-generate when correlation ID is undefined', async () => {
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId
+        // correlationId is intentionally omitted
+      };
+
+      const result = await queueService.addJob('analyze_toxicity', payload);
+
+      expect(result.success).toBe(true);
+      expect(result.job.payload.correlationId).toBeDefined();
+      expect(result.job.payload.correlationId).toMatch(/^[0-9a-f-]{36}$/i); // UUID format
+    });
+
+    test('should auto-generate when correlation ID is null', async () => {
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId,
+        correlationId: null
+      };
+
+      const result = await queueService.addJob('analyze_toxicity', payload);
+
+      expect(result.success).toBe(true);
+      expect(result.job.payload.correlationId).toBeDefined();
+      expect(result.job.payload.correlationId).toMatch(/^[0-9a-f-]{36}$/i);
+    });
+
+    test('should auto-generate when correlation ID is empty string', async () => {
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId,
+        correlationId: ''
+      };
+
+      const result = await queueService.addJob('analyze_toxicity', payload);
+
+      expect(result.success).toBe(true);
+      expect(result.job.payload.correlationId).toBeDefined();
+      expect(result.job.payload.correlationId).toMatch(/^[0-9a-f-]{36}$/i);
+    });
+
+    test('should validate UUID v4 version number (4 in third segment)', async () => {
+      // UUID v1 format (not v4) - should be rejected
+      const uuidV1 = '550e8400-e29b-11d4-a716-446655440000'; // Version 1 (note the '1' in third segment)
+
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId,
+        correlationId: uuidV1
+      };
+
+      await expect(queueService.addJob('analyze_toxicity', payload))
+        .rejects.toThrow('Invalid correlation ID format');
+    });
+
+    test('should validate UUID v4 variant (8, 9, a, or b in fourth segment)', async () => {
+      // Invalid variant (first character of fourth segment must be 8, 9, a, or b)
+      const invalidVariant = '550e8400-e29b-41d4-c716-446655440000'; // 'c' is invalid
+
+      const payload = {
+        organization_id: testOrganizationId,
+        comment_id: testCommentId,
+        correlationId: invalidVariant
+      };
+
+      await expect(queueService.addJob('analyze_toxicity', payload))
+        .rejects.toThrow('Invalid correlation ID format');
+    });
+  });
 });
 
 /**
  * Summary of Test Coverage:
  *
  * ✅ AC1 (Logs estructurados): Suites 1, 5, 6
- * ✅ AC2 (Correlación IDs): Suites 2, 4, 7
+ * ✅ AC2 (Correlación IDs): Suites 2, 4, 7, 8
  * ✅ AC3 (Timestamps): Suite 3
  * ✅ AC4 (Trazabilidad E2E): Suite 4
  * ✅ AC5 (Formato JSON): Suite 5
+ * ✅ Correlation ID Validation (Post-Review): Suite 8
  *
- * Total: 7 test suites, 20+ individual tests
- * Coverage: All 5 acceptance criteria validated
+ * Total: 8 test suites, 28 individual tests
+ * Coverage: All 5 acceptance criteria validated + correlation ID validation
+ *
+ * Post-Review Improvements (Issue #417):
+ * - Suite 8: Correlation ID format validation (9 tests)
+ * - Validates UUID v4 format, type checking, version/variant validation
+ * - Ensures auto-generation when undefined/null/empty
  */
