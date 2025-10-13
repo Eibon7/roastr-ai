@@ -440,6 +440,52 @@ describe('textNormalizer', () => {
       });
     });
 
+    it('should block blob: URLs (can contain malicious content)', () => {
+      const blob = 'blob:https://example.com/uuid-here';
+      expect(sanitizeUrl(blob)).toBe(null);
+    });
+
+    it('should block filesystem: URLs (filesystem access)', () => {
+      const fs = 'filesystem:https://example.com/path';
+      expect(sanitizeUrl(fs)).toBe(null);
+    });
+
+    it('should block jar: URLs (Java Archive protocol)', () => {
+      const jar = 'jar:http://example.com/evil.jar!/';
+      expect(sanitizeUrl(jar)).toBe(null);
+    });
+
+    it('should block chrome: URLs (browser internal)', () => {
+      const chrome = 'chrome://settings';
+      expect(sanitizeUrl(chrome)).toBe(null);
+    });
+
+    it('should block chrome-extension: URLs (extension URIs)', () => {
+      const ext = 'chrome-extension://abcdefg/page.html';
+      expect(sanitizeUrl(ext)).toBe(null);
+    });
+
+    it('should block view-source: URLs (can nest dangerous protocols)', () => {
+      const viewSource = 'view-source:javascript:alert(1)';
+      expect(sanitizeUrl(viewSource)).toBe(null);
+    });
+
+    it('should block percent-encoded javascript: protocol (obfuscation bypass)', () => {
+      const encoded = '%6a%61%76%61%73%63%72%69%70%74:alert(1)';
+      expect(sanitizeUrl(encoded)).toBe(null);
+    });
+
+    it('should block percent-encoded dangerous protocols', () => {
+      const dangerousEncoded = [
+        '%64%61%74%61:text/html,<script>alert(1)</script>', // data:
+        '%66%69%6c%65:///etc/passwd', // file:
+        '%62%6c%6f%62:https://example.com/uuid' // blob:
+      ];
+      dangerousEncoded.forEach(url => {
+        expect(sanitizeUrl(url)).toBe(null);
+      });
+    });
+
     it('should handle extremely long input without crashing', () => {
       const veryLongText = 'a'.repeat(1000000);
       expect(() => normalizeText(veryLongText)).not.toThrow();

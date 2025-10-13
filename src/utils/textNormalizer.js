@@ -33,6 +33,9 @@ function normalizeUnicode(text, form = 'NFC') {
  * Sanitize and validate URL
  * @param {string} url - URL to sanitize
  * @param {Object} options - Sanitization options
+ * @param {string[]} options.allowedProtocols - Whitelist of allowed protocols (default: ['http:', 'https:'])
+ * @param {boolean} options.removeQueryParams - Remove query parameters
+ * @param {boolean} options.removeFragment - Remove fragment
  * @returns {string|null} Sanitized URL or null if invalid
  */
 function sanitizeUrl(url, options = {}) {
@@ -51,23 +54,40 @@ function sanitizeUrl(url, options = {}) {
     return null;
   }
 
-  // Detect and reject XSS attempts
-  const xssPatterns = [
-    /javascript:/i,
-    /data:/i,
-    /vbscript:/i,
-    /file:/i,
-    /about:/i
+  // Canonicalize: decode percent-encoding to prevent obfuscation bypass
+  // Example: %6a%61%76%61%73%63%72%69%70%74: → javascript:
+  let canonicalized;
+  try {
+    canonicalized = decodeURIComponent(trimmed);
+  } catch (error) {
+    // Invalid percent-encoding
+    return null;
+  }
+
+  // Comprehensive dangerous protocol blocklist (defense in depth)
+  // Even though we use whitelist, block known dangerous protocols explicitly
+  const dangerousProtocols = [
+    /^javascript:/i,      // Direct script execution
+    /^data:/i,            // Data URIs (can contain HTML/SVG with script)
+    /^vbscript:/i,        // VBScript (legacy IE)
+    /^file:/i,            // Local file access
+    /^about:/i,           // Browser internal pages
+    /^blob:/i,            // Blob URLs (can contain malicious content)
+    /^filesystem:/i,      // Filesystem access
+    /^jar:/i,             // Java Archive (legacy)
+    /^chrome:/i,          // Chrome internal
+    /^chrome-extension:/i,// Chrome extension
+    /^view-source:/i      // View source (can nest dangerous protocols)
   ];
 
-  if (xssPatterns.some(pattern => pattern.test(trimmed))) {
+  if (dangerousProtocols.some(pattern => pattern.test(canonicalized))) {
     return null;
   }
 
   try {
-    const parsed = new URL(trimmed);
+    const parsed = new URL(canonicalized);
 
-    // Validate protocol
+    // Whitelist approach: only allow explicitly safe protocols
     if (!allowedProtocols.includes(parsed.protocol)) {
       return null;
     }
@@ -90,10 +110,15 @@ function sanitizeUrl(url, options = {}) {
 }
 
 /**
- * Normalize quotes to straight quotes
+ * Normalize quotes to straight or smart quotes
  * @param {string} text - Text with quotes
  * @param {Object} options - Normalization options
+ * @param {string} options.style - Quote style: 'straight' (default) or 'smart' (basic heuristic)
  * @returns {string} Text with normalized quotes
+ * @note Smart quote conversion uses a basic heuristic and may not handle all cases correctly:
+ *       - Apostrophes in contractions (e.g., "don't") might be converted incorrectly
+ *       - Opening vs. closing quote detection is based on simple pattern matching, not linguistic context
+ *       For production use cases requiring accurate smart quotes, consider a dedicated library
  */
 function normalizeQuotes(text, options = {}) {
   if (typeof text !== 'string') {
