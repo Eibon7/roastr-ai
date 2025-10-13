@@ -5,6 +5,18 @@ const { supabaseServiceClient } = require('../config/supabase');
 
 const router = express.Router();
 
+// Error codes for consistent error handling (Issue #419)
+const ERROR_CODES = {
+  TIMEOUT: 'E_TIMEOUT',
+  NETWORK_ERROR: 'E_NETWORK',
+  VARIANTS_EXHAUSTED: 'E_VARIANT_LIMIT',
+  VALIDATION_ERROR: 'E_VALIDATION',
+  SERVER_ERROR: 'E_SERVER'
+};
+
+// Configuration constants (Issue #419)
+const MAX_VARIANTS_PER_ROAST = 5;
+
 // All routes require authentication
 router.use(authenticateToken);
 
@@ -487,7 +499,26 @@ router.post('/:id/regenerate', async (req, res) => {
         if (getError || !originalResponse) {
             return res.status(404).json({
                 success: false,
-                error: 'Response not found or already processed'
+                error: 'Response not found or already processed',
+                code: ERROR_CODES.VALIDATION_ERROR
+            });
+        }
+
+        // Check variant limit (Issue #419: Max 5 variants per roast)
+        const { data: variantCount, error: countError } = await supabaseServiceClient
+            .rpc('count_roast_attempts', { comment_uuid: originalResponse.comment_id });
+
+        if (countError) {
+            logger.error('Failed to count variants:', countError.message);
+        } else if (variantCount && variantCount >= MAX_VARIANTS_PER_ROAST) {
+            logger.warn(`Variant limit reached for comment ${originalResponse.comment_id}: ${variantCount} attempts`);
+            return res.status(429).json({
+                success: false,
+                error: 'VARIANTS_EXHAUSTED',
+                message: 'No more variants available for this roast',
+                code: ERROR_CODES.VARIANTS_EXHAUSTED,
+                current_attempts: variantCount,
+                max_attempts: MAX_VARIANTS_PER_ROAST
             });
         }
 
@@ -656,9 +687,31 @@ router.post('/:id/regenerate', async (req, res) => {
 
     } catch (error) {
         logger.error('Regenerate response error:', error.message);
+
+        // Issue #419: Specific error handling with codes
+        if (error.message && error.message.includes('timeout')) {
+            return res.status(408).json({
+                success: false,
+                error: 'TIMEOUT',
+                message: 'Variant generation timed out',
+                code: ERROR_CODES.TIMEOUT
+            });
+        }
+
+        if (error.message && error.message.includes('VARIANTS_EXHAUSTED')) {
+            return res.status(429).json({
+                success: false,
+                error: 'VARIANTS_EXHAUSTED',
+                message: 'No more variants available for this roast',
+                code: ERROR_CODES.VARIANTS_EXHAUSTED
+            });
+        }
+
         res.status(500).json({
             success: false,
-            error: 'Failed to regenerate response'
+            error: 'SERVER_ERROR',
+            message: 'Failed to regenerate response',
+            code: ERROR_CODES.SERVER_ERROR
         });
     }
 });

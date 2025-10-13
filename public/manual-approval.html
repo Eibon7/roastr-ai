@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Approval - Roastr.ai</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    /* Error Message Component */
+    .error-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #fee;
+      border: 2px solid #f44;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .error-message.hidden {
+      display: none;
+    }
+
+    .error-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    #error-text {
+      color: #c33;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .error-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Success Message Component */
+    .success-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #efe;
+      border: 2px solid #4c4;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .success-message.hidden {
+      display: none;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-retry {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .btn-retry:hover:not(:disabled) {
+      background: #45a049;
+    }
+
+    .btn-dismiss {
+      background: #999;
+      color: white;
+    }
+
+    .btn-dismiss:hover {
+      background: #888;
+    }
+
+    .btn-approve {
+      background: #2196F3;
+      color: white;
+    }
+
+    .btn-approve:hover:not(:disabled) {
+      background: #0b7dda;
+    }
+
+    .btn-reject {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-reject:hover:not(:disabled) {
+      background: #da190b;
+    }
+
+    .btn-variant {
+      background: #FF9800;
+      color: white;
+    }
+
+    .btn-variant:hover:not(:disabled) {
+      background: #e68900;
+    }
+
+    /* Roast Card */
+    .roast-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: #fafafa;
+    }
+
+    .roast-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .roast-section {
+      margin-bottom: 15px;
+    }
+
+    .roast-label {
+      font-weight: 600;
+      color: #666;
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .comment-text, .roast-text, .variant-text {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .comment-text {
+      color: #c33;
+      border-left: 4px solid #f44;
+    }
+
+    .roast-text {
+      color: #333;
+      border-left: 4px solid #2196F3;
+    }
+
+    .variant-text {
+      color: #333;
+      border-left: 4px solid #FF9800;
+    }
+
+    .roast-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+      color: #999;
+      margin-top: 10px;
+    }
+
+    .roast-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    .loading-spinner.hidden {
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛡️ Manual Approval</h1>
+    <p class="subtitle">Review and approve roast responses before publishing</p>
+
+    <!-- Error Message Component -->
+    <div id="error-container" class="error-message hidden">
+      <div class="error-icon">⚠️</div>
+      <p id="error-text"></p>
+      <div class="error-actions">
+        <button id="retry-button" class="btn btn-retry hidden" data-testid="retry-btn">
+          Reintentar
+        </button>
+        <button id="dismiss-button" class="btn btn-dismiss">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Success Message Component -->
+    <div id="success-container" class="success-message hidden">
+      <div class="error-icon">✅</div>
+      <p id="success-text"></p>
+      <button id="success-dismiss-button" class="btn btn-dismiss">Cerrar</button>
+    </div>
+
+    <!-- Roasts Container -->
+    <div id="roasts-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">⏳</div>
+        <p>Cargando roasts pendientes...</p>
+        <span class="loading-spinner"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===================================
+    // Global State
+    // ===================================
+    let currentRetryCallback = null;
+
+    // ===================================
+    // Utility Functions
+    // ===================================
+
+    /**
+     * Fetch with timeout support
+     * @param {string} url - API endpoint
+     * @param {Object} options - Fetch options
+     * @param {number} timeout - Timeout in milliseconds (default 30s)
+     * @returns {Promise<Response>}
+     */
+    async function fetchWithTimeout(url, options = {}, timeout = 30000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('TIMEOUT');
+        }
+        throw error;
+      }
+    }
+
+    /**
+     * Show error message to user
+     * @param {string} message - Error message
+     * @param {Function} retryCallback - Optional callback for retry button
+     */
+    function showError(message, retryCallback = null) {
+      hideSuccess(); // Hide success message if visible
+
+      const errorContainer = document.getElementById('error-container');
+      const errorText = document.getElementById('error-text');
+      const retryButton = document.getElementById('retry-button');
+      const dismissButton = document.getElementById('dismiss-button');
+
+      errorText.textContent = message;
+      errorContainer.classList.remove('hidden');
+
+      if (retryCallback) {
+        retryButton.classList.remove('hidden');
+        currentRetryCallback = retryCallback;
+        retryButton.onclick = () => {
+          hideError();
+          if (currentRetryCallback) {
+            currentRetryCallback();
+          }
+        };
+      } else {
+        retryButton.classList.add('hidden');
+        currentRetryCallback = null;
+      }
+
+      dismissButton.onclick = () => hideError();
+
+      // Auto-hide after 10 seconds (except for retry-enabled errors)
+      if (!retryCallback) {
+        setTimeout(() => hideError(), 10000);
+      }
+    }
+
+    /**
+     * Hide error message
+     */
+    function hideError() {
+      document.getElementById('error-container').classList.add('hidden');
+      currentRetryCallback = null;
+    }
+
+    /**
+     * Show success message to user
+     * @param {string} message - Success message
+     */
+    function showSuccess(message) {
+      hideError(); // Hide error message if visible
+
+      const successContainer = document.getElementById('success-container');
+      const successText = document.getElementById('success-text');
+      const dismissButton = document.getElementById('success-dismiss-button');
+
+      successText.textContent = message;
+      successContainer.classList.remove('hidden');
+
+      dismissButton.onclick = () => hideSuccess();
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => hideSuccess(), 5000);
+    }
+
+    /**
+     * Hide success message
+     */
+    function hideSuccess() {
+      document.getElementById('success-container').classList.add('hidden');
+    }
+
+    /**
+     * Handle API errors and show user-friendly messages
+     * @param {Error} error - Error object
+     * @param {string} context - Context of the operation (e.g., "generar variante")
+     * @param {Function} retryCallback - Optional retry callback
+     */
+    function handleError(error, context, retryCallback = null) {
+      console.error(`Error during ${context}:`, error);
+
+      if (error.message === 'TIMEOUT') {
+        showError(
+          `La operación tardó demasiado. Por favor, intenta de nuevo.`,
+          retryCallback
+        );
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        showError(
+          `Error de red. Verifica tu conexión e intenta de nuevo.`,
+          retryCallback
+        );
+      } else if (error.status === 429 || error.message.includes('VARIANTS_EXHAUSTED')) {
+        // Non-recoverable error (no retry)
+        showError(
+          `No hay más variantes disponibles. Puedes aprobar o rechazar esta respuesta.`
+        );
+      } else if (error.status >= 500) {
+        showError(
+          `Error del servidor. Por favor, intenta de nuevo más tarde.`,
+          retryCallback
+        );
+      } else {
+        showError(
+          `Ocurrió un error al ${context}. Por favor, intenta de nuevo.`,
+          retryCallback
+        );
+      }
+    }
+
+    // ===================================
+    // API Functions
+    // ===================================
+
+    /**
+     * Load pending roasts from API
+     */
+    async function loadPendingRoasts() {
+      const container = document.getElementById('roasts-container');
+
+      try {
+        const response = await fetchWithTimeout('/api/approval/pending', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const roasts = data.roasts || [];
+
+        if (roasts.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">✨</div>
+              <p>No hay roasts pendientes de aprobación</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = roasts.map(roast => createRoastCard(roast)).join('');
+
+      } catch (error) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">❌</div>
+            <p>Error al cargar roasts pendientes</p>
+          </div>
+        `;
+        handleError(error, 'cargar roasts', () => loadPendingRoasts());
+      }
+    }
+
+    /**
+     * Create HTML for a roast card
+     * @param {Object} roast - Roast object
+     * @returns {string} HTML string
+     */
+    function createRoastCard(roast) {
+      return `
+        <div class="roast-card" data-roast-id="${roast.id}">
+          <div class="roast-section">
+            <span class="roast-label">💬 Comentario Original</span>
+            <div class="comment-text">${escapeHtml(roast.comment)}</div>
+          </div>
+
+          <div class="roast-section">
+            <span class="roast-label">🔥 Respuesta Generada</span>
+            <div class="roast-text">${escapeHtml(roast.roast)}</div>
+          </div>
+
+          <div class="roast-meta">
+            <span>📱 ${roast.platform || 'Unknown'}</span>
+            <span>🎯 Toxicity: ${((roast.toxicity_score || 0) * 100).toFixed(0)}%</span>
+            <span>📅 ${new Date(roast.created_at).toLocaleString('es-ES')}</span>
+          </div>
+
+          <div class="roast-actions">
+            <button
+              class="btn btn-approve"
+              data-testid="approve-btn"
+              onclick="approveRoast('${roast.id}')"
+            >
+              ✅ Aprobar y Publicar
+            </button>
+            <button
+              class="btn btn-reject"
+              data-testid="reject-btn"
+              onclick="rejectRoast('${roast.id}')"
+            >
+              ❌ Rechazar
+            </button>
+            <button
+              class="btn btn-variant"
+              data-testid="generate-variant-btn"
+              onclick="generateVariant('${roast.id}')"
+            >
+              🔄 Generar Variante
+            </button>
+          </div>
+
+          <div id="variant-${roast.id}" class="roast-section hidden">
+            <span class="roast-label">✨ Nueva Variante</span>
+            <div class="variant-text"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     * @param {string} text - Text to escape
+     * @returns {string} Escaped text
+     */
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    /**
+     * Approve roast and publish
+     * @param {string} roastId - Roast ID
+     */
+    async function approveRoast(roastId) {
+      try {
+        const response = await fetchWithTimeout(`/api/approval/${roastId}/approve`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const error = new Error(errorData.message || `HTTP ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        showSuccess('✅ Roast aprobado y publicado correctamente');
+
+        // Remove roast card from UI
+        const card = document.querySelector(`[data-roast-id="${roastId}"]`);
+        if (card) {
+          card.style.transition = 'opacity 0.3s';
+          card.style.opacity = '0';
+          setTimeout(() => {
+            card.remove();
+            // Check if no more roasts
+            if (!document.querySelectorAll('.roast-card').length) {
+              loadPendingRoasts();
+            }
+          }, 300);
+        }
+
+      } catch (error) {
+        handleError(error, 'aprobar', () => approveRoast(roastId));
+      }
+    }
+
+    /**
+     * Reject roast
+     * @param {string} roastId - Roast ID
+     */
+    async function rejectRoast(roastId) {
+      try {
+        const response = await fetchWithTimeout(`/api/approval/${roastId}/reject`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const error = new Error(errorData.message || `HTTP ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        showSuccess('🗑️ Roast rechazado correctamente');
+
+        // Remove roast card from UI
+        const card = document.querySelector(`[data-roast-id="${roastId}"]`);
+        if (card) {
+          card.style.transition = 'opacity 0.3s';
+          card.style.opacity = '0';
+          setTimeout(() => {
+            card.remove();
+            // Check if no more roasts
+            if (!document.querySelectorAll('.roast-card').length) {
+              loadPendingRoasts();
+            }
+          }, 300);
+        }
+
+      } catch (error) {
+        handleError(error, 'rechazar', () => rejectRoast(roastId));
+      }
+    }
+
+    /**
+     * Generate new variant for roast
+     * @param {string} roastId - Roast ID
+     */
+    async function generateVariant(roastId) {
+      const variantContainer = document.getElementById(`variant-${roastId}`);
+      const generateBtn = document.querySelector(`[data-roast-id="${roastId}"] [data-testid="generate-variant-btn"]`);
+
+      // Disable button during generation
+      if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '⏳ Generando... <span class="loading-spinner"></span>';
+      }
+
+      try {
+        const response = await fetchWithTimeout(`/api/approval/${roastId}/regenerate`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Content-Type': 'application/json',
+          },
+        }, 30000);
+
+        if (response.status === 429) {
+          // Variant exhaustion - non-recoverable
+          const errorData = await response.json().catch(() => ({}));
+          const error = new Error('VARIANTS_EXHAUSTED');
+          error.status = 429;
+          throw error;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const error = new Error(errorData.message || `HTTP ${response.status}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const data = await response.json();
+
+        // Show variant
+        if (variantContainer) {
+          variantContainer.classList.remove('hidden');
+          const variantText = variantContainer.querySelector('.variant-text');
+          if (variantText) {
+            variantText.textContent = data.variant.text || data.variant;
+          }
+        }
+
+        showSuccess('✨ Nueva variante generada correctamente');
+
+        // Re-enable button
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generateBtn.innerHTML = '🔄 Generar Variante';
+        }
+
+      } catch (error) {
+        // Re-enable button on error (unless variant exhaustion)
+        if (generateBtn && error.message !== 'VARIANTS_EXHAUSTED') {
+          generateBtn.disabled = false;
+          generateBtn.innerHTML = '🔄 Generar Variante';
+        } else if (generateBtn && error.message === 'VARIANTS_EXHAUSTED') {
+          // Disable permanently on exhaustion
+          generateBtn.disabled = true;
+          generateBtn.innerHTML = '❌ Límite Alcanzado';
+        }
+
+        handleError(error, 'generar variante', error.message !== 'VARIANTS_EXHAUSTED' ? () => generateVariant(roastId) : null);
+      }
+    }
+
+    // ===================================
+    // Initialization
+    // ===================================
+
+    // Load pending roasts on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPendingRoasts();
+    });
+  </script>
+</body>
+</html>

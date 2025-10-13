@@ -1,0 +1,140 @@
+name: E2E Tests - Manual Approval UI
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'public/**'
+      - 'src/routes/approval.js'
+      - 'src/services/roastGeneratorEnhanced.js'
+      - 'tests/e2e/**'
+      - '.github/workflows/e2e-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'src/routes/approval.js'
+      - 'tests/e2e/**'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: roastr_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup environment variables
+        run: |
+          echo "NODE_ENV=test" >> $GITHUB_ENV
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/roastr_test" >> $GITHUB_ENV
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Setup test database
+        run: |
+          npm run db:migrate:test || echo "No migration script, skipping"
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roastr_test
+
+      - name: Start application server
+        run: |
+          npm run start &
+          echo "Waiting for server to be ready..."
+          npx wait-on http://localhost:3000 -t 30000 || (echo "Server failed to start" && exit 1)
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roastr_test
+          PORT: 3000
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          NODE_ENV: test
+          BASE_URL: http://localhost:3000
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-screenshots
+          path: docs/test-evidence/issue-419/
+          retention-days: 7
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          if [ -f playwright-report/results.json ]; then
+            cat playwright-report/results.json | jq -r '"**Tests Run:** \(.suites[].tests | length)  \n**Duration:** \(.duration)ms"' >> $GITHUB_STEP_SUMMARY || echo "Test results available in artifacts" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Test results will be available after tests complete" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## E2E Test Results\\n\\n';
+
+            try {
+              const resultsPath = 'playwright-report/results.json';
+              if (fs.existsSync(resultsPath)) {
+                const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+                const totalTests = results.suites.reduce((sum, suite) => sum + suite.tests.length, 0);
+                const duration = results.duration;
+
+                comment += `✅ **${totalTests} tests** completed in ${duration}ms\\n`;
+                comment += `\\nFull report available in workflow artifacts.`;
+              } else {
+                comment += 'Test results not available.';
+              }
+            } catch (error) {
+              comment += `Error generating summary: ${error.message}`;
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
