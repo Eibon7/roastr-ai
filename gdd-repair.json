@@ -1,19 +1,9 @@
 {
-  "_meta": {
-    "description": "GDD Auto-Repair execution report",
-    "field_semantics": {
-      "mode": "dry-run (preview only) or apply (execute fixes)",
-      "fixes_would_apply": "Number of fixes identified in dry-run mode",
-      "fixes_applied": "Number of fixes actually applied in apply mode",
-      "health_before": "System health score before repair (0-100)",
-      "health_after": "System health score after repair (0-100)"
-    }
-  },
-  "timestamp": "2025-10-12T15:04:57.824Z",
+  "timestamp": "2025-10-12T18:19:09.895Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 1,
+  "fixes_applied": 10,
   "errors": 0,
   "health_before": 88.5,
   "health_after": 89.4,
@@ -23,6 +13,51 @@
         "type": "auto",
         "node": "social-platforms",
         "action": "Added coverage to social-platforms"
+      },
+      {
+        "type": "auto",
+        "node": "analytics",
+        "action": "Added coverage source to analytics"
+      },
+      {
+        "type": "auto",
+        "node": "billing",
+        "action": "Added coverage source to billing"
+      },
+      {
+        "type": "auto",
+        "node": "cost-control",
+        "action": "Added coverage source to cost-control"
+      },
+      {
+        "type": "auto",
+        "node": "guardian",
+        "action": "Added coverage source to guardian"
+      },
+      {
+        "type": "auto",
+        "node": "multi-tenant",
+        "action": "Added coverage source to multi-tenant"
+      },
+      {
+        "type": "auto",
+        "node": "persona",
+        "action": "Added coverage source to persona"
+      },
+      {
+        "type": "auto",
+        "node": "platform-constraints",
+        "action": "Added coverage source to platform-constraints"
+      },
+      {
+        "type": "auto",
+        "node": "tone",
+        "action": "Added coverage source to tone"
+      },
+      {
+        "type": "auto",
+        "node": "trainer",
+        "action": "Added coverage source to trainer"
       }
     ],
     "humanReview": [],
