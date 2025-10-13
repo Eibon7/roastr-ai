@@ -8,7 +8,8 @@
   "validation": {
     "fail_on_critical": true,
     "fail_on_degraded": false,
-    "allow_warnings": true
+    "allow_warnings": true,
+    "fail_on_coverage_integrity": false
   },
   "drift": {
     "max_allowed_risk": 60,

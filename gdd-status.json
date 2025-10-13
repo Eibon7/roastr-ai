@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-13T16:25:05.144Z",
+  "timestamp": "2025-10-13T16:31:11.952Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -68,15 +68,6 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
-      "node": "plan-features",
-      "severity": "critical",
-      "declared": 19,
-      "actual": 3,
-      "diff": 16,
-      "message": "Coverage mismatch: declared 19% but actual is 3% (diff: 16%)"
-    },
-    {
       "type": "missing_coverage_data",
       "node": "platform-constraints",
       "severity": "warning",
@@ -92,15 +83,6 @@
       "actual": 6,
       "diff": 39,
       "message": "Coverage mismatch: declared 45% but actual is 6% (diff: 39%)"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "roast",
-      "severity": "critical",
-      "declared": 32,
-      "actual": 0,
-      "diff": 32,
-      "message": "Coverage mismatch: declared 32% but actual is 0% (diff: 32%)"
     },
     {
       "type": "coverage_integrity_violation",
