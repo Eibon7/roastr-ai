@@ -268,7 +268,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ## Files Modified/Created
 
-### Created (2 files)
+### Created (3 files)
 
 1. **`docs/plan/issue-540.md`** (168 lines)
    - Planning hub linking to 3 review plans
