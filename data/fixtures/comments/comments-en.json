@@ -1,0 +1,274 @@
+[
+  {
+    "id": "fixture-101",
+    "language": "en",
+    "topic": "politics",
+    "comment_text": "These politicians are all corrupt and only care about lining their own pockets, doesn't matter which party",
+    "toxicity_score": 0.67,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "general-political-complaint",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-102",
+    "language": "en",
+    "topic": "politics",
+    "comment_text": "What a disgraceful government, they can't do anything right. They should all resign tomorrow, bunch of incompetents",
+    "toxicity_score": 0.71,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "facebook",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "government-criticism",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-103",
+    "language": "en",
+    "topic": "politics",
+    "comment_text": "These damn politicians are useless, they're only good at stealing and lying. They're all the same, a bunch of crooks",
+    "toxicity_score": 0.80,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "profanity-laced-complaint",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-104",
+    "language": "en",
+    "topic": "politics",
+    "comment_text": "These fucking politicians are ruining us, they're all bastards who only care about themselves",
+    "toxicity_score": 0.88,
+    "expected_action": "block",
+    "severity": "high",
+    "platform": "facebook",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "aggressive-insult",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-105",
+    "language": "en",
+    "topic": "sports",
+    "comment_text": "What a terrible team, they don't even know how to pass the ball. What a disaster, they played awful today",
+    "toxicity_score": 0.64,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "team-criticism",
+      "intensity": "mild"
+    }
+  },
+  {
+    "id": "fixture-106",
+    "language": "en",
+    "topic": "sports",
+    "comment_text": "This team is garbage, they can't win even by accident. The players are a complete disaster",
+    "toxicity_score": 0.70,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "harsh-team-criticism",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-107",
+    "language": "en",
+    "topic": "sports",
+    "comment_text": "Damn incompetents, they can't even play marbles. What a bunch of useless idiots, what a crap team",
+    "toxicity_score": 0.77,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "aggressive-criticism",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-108",
+    "language": "en",
+    "topic": "sports",
+    "comment_text": "They're a shit team, hope they fire all of them. Fucking losers who are good for nothing",
+    "toxicity_score": 0.86,
+    "expected_action": "block",
+    "severity": "high",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "profane-insult",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-109",
+    "language": "en",
+    "topic": "technology",
+    "comment_text": "This app is horrible, it doesn't work properly and has a thousand bugs. Total disappointment",
+    "toxicity_score": 0.62,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "app-criticism",
+      "intensity": "mild"
+    }
+  },
+  {
+    "id": "fixture-110",
+    "language": "en",
+    "topic": "technology",
+    "comment_text": "What crap software, they made it with their feet. Nothing works like it should",
+    "toxicity_score": 0.68,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "software-complaint",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-111",
+    "language": "en",
+    "topic": "technology",
+    "comment_text": "What a shit update, they broke everything. The developers are useless idiots who don't know how to code",
+    "toxicity_score": 0.78,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "developer-insult",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-112",
+    "language": "en",
+    "topic": "social",
+    "comment_text": "People nowadays don't know anything about anything, they're all ignorant",
+    "toxicity_score": 0.66,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "facebook",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "generational-complaint",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-113",
+    "language": "en",
+    "topic": "social",
+    "comment_text": "You're an idiot if you think that, you don't have two brain cells to rub together. What a stupid comment",
+    "toxicity_score": 0.81,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "personal-insult",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-114",
+    "language": "en",
+    "topic": "social",
+    "comment_text": "Shut the fuck up, asshole. Nobody asked you anything, you piece of shit",
+    "toxicity_score": 0.91,
+    "expected_action": "block",
+    "severity": "high",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "aggressive-insult",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-115",
+    "language": "en",
+    "topic": "social",
+    "comment_text": "I'm going to find you and beat the shit out of you, you son of a bitch. You're going to regret writing that",
+    "toxicity_score": 0.96,
+    "expected_action": "report",
+    "severity": "extreme",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "threat-violence",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-116",
+    "language": "en",
+    "topic": "entertainment",
+    "comment_text": "This movie is terrible, I've seen better things on YouTube. What a disappointment",
+    "toxicity_score": 0.61,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "movie-criticism",
+      "intensity": "mild"
+    }
+  },
+  {
+    "id": "fixture-117",
+    "language": "en",
+    "topic": "entertainment",
+    "comment_text": "What garbage show, the actors are terrible and the script is horrible. Not worth it",
+    "toxicity_score": 0.69,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "show-criticism",
+      "intensity": "moderate"
+    }
+  }
+]

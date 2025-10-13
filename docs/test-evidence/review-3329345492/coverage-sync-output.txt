@@ -1,0 +1,31 @@
+📊 GDD Coverage Sync
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Reading coverage data: coverage/coverage-summary.json
+✓ Reading system map: docs/system-map.yaml
+
+Analyzing nodes...
+
+Node Updates:
+  — roast: 32% (Source: auto)
+  ✓ shield: 2% → 0% (Source: auto)
+  ✓ queue-system: 17% → 45% (Source: auto)
+  — multi-tenant: 70% (Source: manual → auto)
+  — cost-control: 5% (Source: manual → auto)
+  — plan-features: 2% (Source: auto)
+  — billing: 70% (Source: manual → auto)
+  — persona: 70% (Source: manual → auto)
+  — tone: 70% (Source: manual → auto)
+  — platform-constraints: 100% (Source: manual → auto)
+  — social-platforms: 0% (Source: auto)
+  — analytics: 70% (Source: manual → auto)
+  — trainer: 50% (Source: manual → auto)
+  — guardian: 50% (Source: manual → auto)
+
+Summary:
+  Nodes Analyzed: 14
+  Nodes Updated: 2
+  Coverage Source: auto (14/14)
+  Health Score (estimated): 94.1 → 95.1
+
+✅ Sync complete

@@ -1,0 +1,290 @@
+[
+  {
+    "id": "fixture-001",
+    "language": "es",
+    "topic": "politics",
+    "comment_text": "Los políticos son todos unos corruptos que solo piensan en llenarse los bolsillos, da igual el partido",
+    "toxicity_score": 0.68,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "general-political-complaint",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-002",
+    "language": "es",
+    "topic": "politics",
+    "comment_text": "Menuda vergüenza de gobierno, no hacen nada bien. Deberían dimitir todos mañana mismo, son incompetentes",
+    "toxicity_score": 0.72,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "facebook",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "government-criticism",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-003",
+    "language": "es",
+    "topic": "politics",
+    "comment_text": "Vaya mierda de políticos, no sirven para nada más que para robar y mentir. Todos son iguales, unos sinvergüenzas",
+    "toxicity_score": 0.81,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "profanity-laced-complaint",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-004",
+    "language": "es",
+    "topic": "politics",
+    "comment_text": "Estos políticos de mierda nos están arruinando, son unos hijos de puta que solo buscan su beneficio",
+    "toxicity_score": 0.89,
+    "expected_action": "block",
+    "severity": "high",
+    "platform": "facebook",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "aggressive-insult",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-005",
+    "language": "es",
+    "topic": "sports",
+    "comment_text": "Qué equipo más malo, no saben ni pasar el balón. Menudo desastre, han jugado fatal hoy",
+    "toxicity_score": 0.65,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "team-criticism",
+      "intensity": "mild"
+    }
+  },
+  {
+    "id": "fixture-006",
+    "language": "es",
+    "topic": "sports",
+    "comment_text": "Este equipo es una basura, no ganan ni de casualidad. Los jugadores son un desastre total",
+    "toxicity_score": 0.71,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "harsh-team-criticism",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-007",
+    "language": "es",
+    "topic": "sports",
+    "comment_text": "Malditos incompetentes, no saben jugar ni a las canicas. Vaya panda de inútiles, menuda porquería de equipo",
+    "toxicity_score": 0.78,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "aggressive-criticism",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-008",
+    "language": "es",
+    "topic": "sports",
+    "comment_text": "Son una mierda de equipo, ojalá los echen a todos. Putos perdedores que no sirven para nada",
+    "toxicity_score": 0.87,
+    "expected_action": "block",
+    "severity": "high",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "profane-insult",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-009",
+    "language": "es",
+    "topic": "technology",
+    "comment_text": "Esta aplicación es horrible, no funciona bien y tiene mil bugs. Una decepción total",
+    "toxicity_score": 0.63,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "app-criticism",
+      "intensity": "mild"
+    }
+  },
+  {
+    "id": "fixture-010",
+    "language": "es",
+    "topic": "technology",
+    "comment_text": "Qué porquería de software, lo hicieron con las patas. No funciona nada como debería",
+    "toxicity_score": 0.69,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "software-complaint",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-011",
+    "language": "es",
+    "topic": "technology",
+    "comment_text": "Vaya mierda de actualización, han roto todo. Los desarrolladores son unos inútiles que no saben programar",
+    "toxicity_score": 0.79,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "developer-insult",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-012",
+    "language": "es",
+    "topic": "social",
+    "comment_text": "La gente de hoy en día no tiene ni idea de nada, son todos unos ignorantes",
+    "toxicity_score": 0.67,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "facebook",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "generational-complaint",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-013",
+    "language": "es",
+    "topic": "social",
+    "comment_text": "Eres un imbécil si piensas eso, no tienes ni dos dedos de frente. Qué comentario más estúpido",
+    "toxicity_score": 0.82,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "personal-insult",
+      "intensity": "strong"
+    }
+  },
+  {
+    "id": "fixture-014",
+    "language": "es",
+    "topic": "social",
+    "comment_text": "Cállate la puta boca, gilipollas. Nadie te preguntó nada, pedazo de idiota",
+    "toxicity_score": 0.92,
+    "expected_action": "block",
+    "severity": "high",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "aggressive-insult",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-015",
+    "language": "es",
+    "topic": "social",
+    "comment_text": "Voy a buscarte y te voy a reventar, hijo de puta. Te vas a arrepentir de haber escrito eso",
+    "toxicity_score": 0.97,
+    "expected_action": "report",
+    "severity": "extreme",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": true,
+      "sentiment": "negative",
+      "context": "threat-violence",
+      "intensity": "extreme"
+    }
+  },
+  {
+    "id": "fixture-016",
+    "language": "es",
+    "topic": "entertainment",
+    "comment_text": "Esta película es malísima, he visto mejores cosas en YouTube. Qué decepción",
+    "toxicity_score": 0.62,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "movie-criticism",
+      "intensity": "mild"
+    }
+  },
+  {
+    "id": "fixture-017",
+    "language": "es",
+    "topic": "entertainment",
+    "comment_text": "Menuda basura de serie, los actores son pésimos y el guion es horrible. No vale la pena",
+    "toxicity_score": 0.70,
+    "expected_action": "roast",
+    "severity": "low",
+    "platform": "twitter",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "show-criticism",
+      "intensity": "moderate"
+    }
+  },
+  {
+    "id": "fixture-018",
+    "language": "es",
+    "topic": "entertainment",
+    "comment_text": "Qué cantante más malo, canta como el culo. Es una vergüenza que tenga fans, no tiene talento ninguno",
+    "toxicity_score": 0.77,
+    "expected_action": "mute",
+    "severity": "moderate",
+    "platform": "youtube",
+    "metadata": {
+      "has_profanity": false,
+      "sentiment": "negative",
+      "context": "artist-insult",
+      "intensity": "strong"
+    }
+  }
+]

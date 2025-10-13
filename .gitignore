@@ -65,3 +65,6 @@ docs/backup/
 *.SAM
 **/System32/**
 
+# Guardian security test backups (should never be committed)
+.gdd-backups/
+

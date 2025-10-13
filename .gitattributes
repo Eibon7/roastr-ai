@@ -1,0 +1,6 @@
+# Auto-generated GDD artifacts
+docs/system-*.md linguist-generated=true
+docs/auto-repair-*.md linguist-generated=true
+gdd-*.json linguist-generated=true
+docs/guardian/audit-log.md linguist-generated=true
+docs/guardian/guardian-report.md linguist-generated=true

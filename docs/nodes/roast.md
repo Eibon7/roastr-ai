@@ -1,16 +1,18 @@
 # Roast Generation System
 
 **Node ID:** `roast`
-**Owner:** Back-end Dev
+**Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-09
-**Coverage:** 32%
+**Last Updated:** 2025-10-13
+**Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499
 **Protected:** true
 **Last Verified:** 2025-10-10
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
+**Coverage:** 50%
+**Coverage:** 50%
 
 ## Dependencies
 
@@ -616,10 +618,10 @@ All roast generation events logged with:
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
+- **Documentation Agent**
 - **Orchestrator**
+- **Test Engineer**
 
 
 ## Related Nodes
@@ -632,7 +634,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 ---
 
-**Maintained by:** Back-end Dev Agent
+**Maintained by:** Backend Developer
 **Review Frequency:** Bi-weekly or on major feature changes
 **Last Reviewed:** 2025-10-03
 **Version:** 1.0.0
