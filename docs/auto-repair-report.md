@@ -1,21 +1,13 @@
 # Auto-Repair Report
 
-**Generated:** 2025-10-12T18:19:09.894Z
+**Generated:** 2025-10-13T07:53:52.075Z
 **Triggered by:** CI/CD
-**Health Score:** 88.5 → 89.4 (+0.9)
+**Health Score:** 89.4 → 89.7 (+0.3)
 
-## ✅ Fixes Applied (10)
+## ✅ Fixes Applied (2)
 
-1. Added coverage to social-platforms
-2. Added coverage source to analytics
-3. Added coverage source to billing
-4. Added coverage source to cost-control
-5. Added coverage source to guardian
-6. Added coverage source to multi-tenant
-7. Added coverage source to persona
-8. Added coverage source to platform-constraints
-9. Added coverage source to tone
-10. Added coverage source to trainer
+1. Added coverage to shield
+2. Added coverage to social-platforms
 
 ## ⚠️ Pending Human Review (0)
 
@@ -27,10 +19,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 89.4/100
-- ⚙️ Auto-fixes: 10 applied
+- 🟢 Health Score: 89.7/100
+- ⚙️ Auto-fixes: 2 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T18-19-09-707Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T07-53-51-887Z`
 
 ---
 

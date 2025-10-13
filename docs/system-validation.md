@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-12T18:19:09.970Z
+**Date:** 2025-10-13T07:53:52.150Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -41,9 +41,9 @@ Coverage authenticity issues detected:
 | persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | plan-features | missing_coverage_data | 2% | N/A% | N/A% | warning |
 | platform-constraints | missing_coverage_data | 100% | N/A% | N/A% | warning |
-| queue-system | missing_coverage_data | 17% | N/A% | N/A% | warning |
+| queue-system | missing_coverage_data | 45% | N/A% | N/A% | warning |
 | roast | missing_coverage_data | 32% | N/A% | N/A% | warning |
-| shield | missing_coverage_data | 2% | N/A% | N/A% | warning |
+| shield | missing_coverage_data | N/A% | N/A% | N/A% | warning |
 | social-platforms | missing_coverage_data | N/A% | N/A% | N/A% | warning |
 | tone | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
