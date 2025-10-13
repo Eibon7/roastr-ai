@@ -1,10 +1,12 @@
 const Redis = require('ioredis');
 const { createClient } = require('@supabase/supabase-js');
 const { mockMode } = require('../config/mockMode');
+const { v4: uuidv4 } = require('uuid');
+const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Queue Service for Roastr.ai Multi-Tenant Architecture
- * 
+ *
  * Provides unified queue management for Redis/Upstash and database fallback:
  * - High-performance Redis queues for production
  * - Database-based queues for development/fallback
@@ -13,6 +15,41 @@ const { mockMode } = require('../config/mockMode');
  * - Queue monitoring and statistics
  */
 class QueueService {
+  /**
+   * UUID v4 regex for correlation ID validation (Issue #417)
+   * Validates format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+   * where x is any hex digit and y is one of [89ab]
+   */
+  static UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  /**
+   * Validate correlation ID format (Issue #417)
+   * @param {string|undefined} correlationId - Correlation ID to validate
+   * @throws {Error} If correlation ID is invalid
+   * @returns {boolean} True if valid or undefined (will be auto-generated)
+   */
+  static validateCorrelationId(correlationId) {
+    // Allow undefined/null - will be auto-generated
+    if (correlationId === undefined || correlationId === null || correlationId === '') {
+      return true;
+    }
+
+    // Type check
+    if (typeof correlationId !== 'string') {
+      throw new Error(`Invalid correlation ID: must be a string, got ${typeof correlationId}`);
+    }
+
+    // Format check - must be UUID v4
+    if (!QueueService.UUID_V4_REGEX.test(correlationId)) {
+      throw new Error(
+        `Invalid correlation ID format: expected UUID v4, got "${correlationId}". ` +
+        `Valid format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`
+      );
+    }
+
+    return true;
+  }
+
   constructor(options = {}) {
     this.options = {
       preferRedis: process.env.QUEUE_PREFER_REDIS !== 'false',
@@ -164,12 +201,22 @@ class QueueService {
    * @returns {Promise<{success: boolean, jobId?: string, error?: string}>} Result with success flag and jobId
    */
   async addJob(jobType, payload, options = {}) {
+    // Validate externally-provided correlation IDs (Issue #417)
+    QueueService.validateCorrelationId(options.correlationId);
+    QueueService.validateCorrelationId(payload.correlationId);
+
+    // Generate or extract correlation ID for observability (Issue #417)
+    const correlationId = options.correlationId || payload.correlationId || uuidv4();
+
     const job = {
       id: this.generateJobId(),
       job_type: jobType,
       organization_id: payload.organization_id,
       priority: options.priority || 5,
-      payload,
+      payload: {
+        ...payload,
+        correlationId // Ensure correlation ID is in payload for worker access
+      },
       max_attempts: options.maxAttempts || this.options.maxRetries,
       scheduled_at: options.delay ?
         new Date(Date.now() + options.delay).toISOString() :
@@ -189,6 +236,17 @@ class QueueService {
         queuedTo = 'database';
       }
 
+      // Log job enqueue with correlation context (Issue #417)
+      advancedLogger.logJobLifecycle('QueueService', job.id, 'enqueued', {
+        correlationId,
+        tenantId: payload.organization_id,
+        userId: payload.user_id,
+        commentId: payload.comment_id,
+        jobType,
+        queuedTo,
+        priority: job.priority
+      });
+
       // Return consistent format with all fields
       return {
         success: true,
@@ -198,9 +256,13 @@ class QueueService {
       };
 
     } catch (error) {
-      this.log('error', 'Failed to add job to queue', {
+      // Log error with correlation context (Issue #417)
+      advancedLogger.logJobLifecycle('QueueService', job.id, 'failed', {
+        correlationId,
+        tenantId: payload.organization_id,
+        userId: payload.user_id,
+        commentId: payload.comment_id,
         jobType,
-        jobId: job.id,
         error: error.message
       });
 
@@ -737,18 +799,29 @@ class QueueService {
   }
   
   /**
-   * Logging utility
+   * Logging utility - Uses Winston advancedLogger for structured logging
+   * Supports correlation context for end-to-end traceability (Issue #417)
    */
   log(level, message, metadata = {}) {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      level,
+    const logData = {
       service: 'QueueService',
-      message,
       ...metadata
     };
-    
-    console.log(`[${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
+
+    // Use Winston logger based on level
+    switch (level) {
+      case 'error':
+        advancedLogger.queueLogger.error(message, logData);
+        break;
+      case 'warn':
+        advancedLogger.queueLogger.warn(message, logData);
+        break;
+      case 'debug':
+        advancedLogger.queueLogger.debug(message, logData);
+        break;
+      default:
+        advancedLogger.queueLogger.info(message, logData);
+    }
   }
 }
 

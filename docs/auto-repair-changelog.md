@@ -1,40 +1,8 @@
 # Auto-Repair Changelog
 
-## 2025-10-13T08:54:18.827Z
+## 2025-10-13T09:26:14.177Z
 
-**Repair ID:** 2025-10-13T08:54:18Z
-**Triggered by:** CI/CD
-**Nodes affected:** social-platforms
-
-**Fixes applied:**
-- Added coverage to social-platforms
-
-**Outcome:**
-- Health score: 89.4 → 89.4
-- Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T08-54-18-641Z`
-
----
-
-## 2025-10-12T18:40:54.114Z
-
-**Repair ID:** 2025-10-12T18:40:54Z
-**Triggered by:** CI/CD
-**Nodes affected:** social-platforms
-
-**Fixes applied:**
-- Added coverage to social-platforms
-
-**Outcome:**
-- Health score: 89.4 → 89.4
-- Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T18-40-53-906Z`
-
----
-
-## 2025-10-12T15:04:57.824Z
-
-**Repair ID:** 2025-10-12T15:04:57Z
+**Repair ID:** 2025-10-13T09:26:14Z
 **Triggered by:** CI/CD
 **Nodes affected:** social-platforms
 
@@ -44,7 +12,24 @@
 **Outcome:**
 - Health score: 88.5 → 89.4
 - Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T15-04-57-578Z`
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T09-26-13-976Z`
+
+---
+
+## 2025-10-12T15:03:32.739Z
+
+**Repair ID:** 2025-10-12T15:03:32Z
+**Triggered by:** CI/CD
+**Nodes affected:** observability, social-platforms
+
+**Fixes applied:**
+- Added status to observability
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T15-03-32-531Z`
 
 ---
 

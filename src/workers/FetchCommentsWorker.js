@@ -1,5 +1,6 @@
 const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
+const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Fetch Comments Worker
@@ -111,12 +112,23 @@ class FetchCommentsWorker extends BaseWorker {
    * Internal process fetch job (called by retry wrapper)
    */
   async _processJobInternal(job) {
+    // Extract correlation ID for observability (Issue #417)
+    const correlationId = (job.payload && job.payload.correlationId) || null;
+
     // Extract organization/platform info - support multiple structures for backwards compatibility:
     // 1. At job root level (job.organization_id)
     // 2. In job.payload (job.payload.organization_id)
     const organization_id = job.organization_id || (job.payload && job.payload.organization_id);
     const platform = job.platform || (job.payload && job.payload.platform);
     const integration_config_id = job.integration_config_id || (job.payload && job.payload.integration_config_id);
+
+    // Log job start with correlation context (Issue #417)
+    advancedLogger.logJobLifecycle(this.workerName, job.id, 'started', {
+      correlationId,
+      tenantId: organization_id,
+      platform,
+      integrationConfigId: integration_config_id
+    });
 
     // Extract platform-specific payload
     // Support multiple structures:
@@ -189,15 +201,25 @@ class FetchCommentsWorker extends BaseWorker {
     );
     
     // Queue analysis jobs for new comments
-    await this.queueAnalysisJobs(organization_id, storedComments);
-    
-    return {
+    await this.queueAnalysisJobs(organization_id, storedComments, correlationId);
+
+    const result = {
       success: true,
       summary: `Fetched ${storedComments.length} new comments from ${platform}`,
       commentsCount: storedComments.length,
       platform,
       organizationId: organization_id
     };
+
+    // Log job completion with correlation context (Issue #417)
+    advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
+      correlationId,
+      tenantId: organization_id,
+      platform,
+      commentsCount: storedComments.length
+    }, result);
+
+    return result;
   }
   
   /**
@@ -420,7 +442,7 @@ class FetchCommentsWorker extends BaseWorker {
   /**
    * Queue analysis jobs for new comments
    */
-  async queueAnalysisJobs(organizationId, comments) {
+  async queueAnalysisJobs(organizationId, comments, correlationId) {
     const analysisJobs = comments.map(comment => ({
       organization_id: organizationId,
       job_type: 'analyze_toxicity',
@@ -429,7 +451,8 @@ class FetchCommentsWorker extends BaseWorker {
         comment_id: comment.id,
         organization_id: organizationId,
         platform: comment.platform,
-        text: comment.original_text
+        text: comment.original_text,
+        correlationId // Propagate correlation ID (Issue #417)
       },
       max_attempts: 3
     }));

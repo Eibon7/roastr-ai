@@ -1,9 +1,9 @@
 {
-  "generated_at": "2025-10-13T08:54:19.229Z",
+  "generated_at": "2025-10-13T09:26:14.629Z",
   "status": "HEALTHY",
   "overall_score": 89.4,
-  "total_nodes": 14,
-  "healthy_count": 14,
+  "total_nodes": 15,
+  "healthy_count": 15,
   "degraded_count": 0,
   "critical_count": 0,
   "nodes": {
@@ -67,6 +67,19 @@
         "updateFreshness": 92,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
+        "agentRelevance": 100,
+        "integrityScore": 100
+      },
+      "issues": []
+    },
+    "observability": {
+      "score": 86,
+      "status": "healthy",
+      "breakdown": {
+        "syncAccuracy": 100,
+        "updateFreshness": 92,
+        "dependencyIntegrity": 100,
+        "coverageEvidence": 30,
         "agentRelevance": 100,
         "integrityScore": 100
       },

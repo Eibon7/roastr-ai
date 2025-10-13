@@ -8,16 +8,16 @@
 metadata:
   version: 2.0.0
   created: 2025-10-03
-  last_updated: 2025-10-09
-  total_nodes: 14
-  critical_nodes: 8
+  last_updated: 2025-10-12
+  total_nodes: 15
+  critical_nodes: 9
   high_priority_nodes: 4
-  production_nodes: 13
+  production_nodes: 14
   development_nodes: 1
   pr: "#515"
-  changes: "Phase 16: Added Guardian node (product governance layer)"
+  changes: "Added observability node (Issue #417 - structured logging and correlation)"
   protected: true
-  last_verified: 2025-10-10
+  last_verified: 2025-10-12
   protection_reason: "GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze"
 
 # Node Definitions
@@ -36,6 +36,7 @@ nodes:
       - platform-constraints
       - shield
       - cost-control
+      - observability
     used_by:
       - analytics
       - trainer
@@ -57,6 +58,7 @@ nodes:
     depends_on:
       - cost-control
       - queue-system
+      - observability
     used_by:
       - roast
       - trainer
@@ -79,6 +81,7 @@ nodes:
     coverage: 87
     depends_on:
       - multi-tenant
+      - observability
     used_by:
       - shield
       - social-platforms
@@ -89,6 +92,36 @@ nodes:
       - src/services/queueService.js
       - src/workers/BaseWorker.js
 
+  observability:
+    description: Structured logging, correlation tracking, and end-to-end request tracing
+    status: production
+    priority: critical
+    owner: Back-end Dev
+    last_updated: 2025-10-12
+    coverage: 10
+    depends_on: []
+    used_by:
+      - queue-system
+      - shield
+      - multi-tenant
+      - cost-control
+      - social-platforms
+      - roast
+      - billing
+      - analytics
+    docs:
+      - docs/nodes/observability.md
+    files:
+      - src/utils/advancedLogger.js
+      - src/workers/BaseWorker.js
+      - src/services/queueService.js
+      - src/workers/FetchCommentsWorker.js
+      - src/workers/AnalyzeToxicityWorker.js
+      - src/workers/GenerateReplyWorker.js
+      - src/workers/ShieldActionWorker.js
+    tests:
+      - tests/integration/test-observability.test.js
+
   multi-tenant:
     description: Row Level Security (RLS) and organization isolation
     status: production
@@ -96,7 +129,8 @@ nodes:
     owner: Back-end Dev
     last_updated: 2025-10-06
     coverage: 72
-    depends_on: []
+    depends_on:
+      - observability
     used_by:
       - queue-system
       - cost-control
@@ -120,6 +154,7 @@ nodes:
     depends_on:
       - multi-tenant
       - plan-features
+      - observability
     used_by:
       - roast
       - shield
@@ -164,6 +199,7 @@ nodes:
       - queue-system
       - multi-tenant
       - plan-features
+      - observability
     used_by:
       - analytics
     docs:
@@ -234,6 +270,7 @@ nodes:
       - queue-system
       - cost-control
       - multi-tenant
+      - observability
     used_by:
       - platform-constraints
       - analytics
@@ -259,6 +296,7 @@ nodes:
       - shield
       - billing
       - social-platforms
+      - observability
     used_by: []
     docs:
       - docs/nodes/analytics.md

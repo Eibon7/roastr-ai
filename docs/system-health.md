@@ -1,6 +1,6 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-13T08:54:19.229Z
+**Generated:** 2025-10-13T09:26:14.629Z
 **Overall Status:** 🟢 HEALTHY
 **Average Score:** 89.4/100
 
@@ -8,8 +8,8 @@
 
 ## Summary
 
-- **Total Nodes:** 14
-- 🟢 **Healthy (80-100):** 14
+- **Total Nodes:** 15
+- 🟢 **Healthy (80-100):** 15
 - 🟡 **Degraded (50-79):** 0
 - 🔴 **Critical (<50):** 0
 
@@ -25,6 +25,7 @@
 | roast | 🟢 85 | healthy | 2025-10-09 | 32% | 0 | 0 |
 | shield | 🟢 85 | healthy | 2025-10-09 | 2% | 0 | 0 |
 | social-platforms | 🟢 85 | healthy | 2025-10-09 | 0% | 0 | 0 |
+| observability | 🟢 86 | healthy | 2025-10-12 | 14% | 0 | 0 |
 | guardian | 🟢 89 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | trainer | 🟢 89 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | analytics | 🟢 93 | healthy | 2025-10-09 | 70% | 0 | 0 |
