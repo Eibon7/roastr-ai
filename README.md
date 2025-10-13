@@ -158,7 +158,9 @@ Ver comandos disponibles con detalles completos en [CLAUDE.md](./CLAUDE.md).
 
 ## 🧪 Tests en Entorno Sin Claves
 
-Roastr.ai está diseñado para funcionar sin claves externas usando mocks por defecto. Ideal para desarrollo y testing local:
+Roastr.ai está diseñado para funcionar sin claves externas usando mocks por defecto. Ideal para desarrollo y testing local.
+
+📚 **[Ver guía completa de testing](./docs/TESTING-GUIDE.md)** - Documentación exhaustiva sobre comandos, entornos, CI/CD, y troubleshooting.
 
 ### Configuración de Tests
 
