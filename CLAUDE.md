@@ -30,6 +30,9 @@ npm run roast "your message"     # CLI tool
 npm test                         # Run all tests
 npm run test:coverage            # Tests with coverage
 
+# 📚 For complete testing guide: docs/TESTING-GUIDE.md
+# Includes: test commands, env variables, fixtures, CI/CD config, benchmarks
+
 # Multi-tenant worker system
 npm run workers:start            # Start all workers
 npm run workers:status           # Check worker status
