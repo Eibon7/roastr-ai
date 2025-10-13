@@ -1,6 +1,6 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-12T18:40:54.536Z
+**Generated:** 2025-10-13T08:54:19.229Z
 **Overall Status:** 🟢 HEALTHY
 **Average Score:** 89.4/100
 
@@ -44,7 +44,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -57,7 +57,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -70,7 +70,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -83,7 +83,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -96,7 +96,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 94/100
+- Update Freshness: 92/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
