@@ -7,22 +7,23 @@
 
 const fs = require('fs');
 const path = require('path');
+const logger = require('../src/utils/logger');
 
 const rootDir = path.resolve(__dirname, '..');
 const coverageFinalPath = path.join(rootDir, 'coverage', 'coverage-final.json');
 const coverageSummaryPath = path.join(rootDir, 'coverage', 'coverage-summary.json');
 
-console.log('📊 Regenerating coverage-summary.json from coverage-final.json');
-console.log('');
+logger.info('📊 Regenerating coverage-summary.json from coverage-final.json');
+logger.info('');
 
 try {
   // Check if coverage-final.json exists
   if (!fs.existsSync(coverageFinalPath)) {
-    console.error(`❌ Error: Coverage file not found at ${coverageFinalPath}`);
-    console.error('');
-    console.error('Please run tests with coverage first:');
-    console.error('  npm test -- --coverage');
-    console.error('');
+    logger.error(`❌ Error: Coverage file not found at ${coverageFinalPath}`);
+    logger.error('');
+    logger.error('Please run tests with coverage first:');
+    logger.error('  npm test -- --coverage');
+    logger.error('');
     process.exit(1);
   }
 
@@ -32,13 +33,13 @@ try {
     const coverageData = fs.readFileSync(coverageFinalPath, 'utf8');
     coverageFinal = JSON.parse(coverageData);
   } catch (parseError) {
-    console.error(`❌ Error: Failed to parse ${coverageFinalPath}`);
-    console.error('');
-    console.error('Details:', parseError.message);
-    console.error('');
-    console.error('The coverage file may be corrupted. Try regenerating it:');
-    console.error('  npm test -- --coverage');
-    console.error('');
+    logger.error(`❌ Error: Failed to parse ${coverageFinalPath}`);
+    logger.error('');
+    logger.error('Details:', parseError.message);
+    logger.error('');
+    logger.error('The coverage file may be corrupted. Try regenerating it:');
+    logger.error('  npm test -- --coverage');
+    logger.error('');
     process.exit(1);
   }
 
@@ -112,41 +113,41 @@ try {
   });
   totals.branchesTrue.pct = 100;
 
-  console.log(`✓ Processed ${fileCount} source files`);
-  console.log('');
-  console.log('Total Coverage:');
-  console.log(`  Lines: ${totals.lines.pct.toFixed(2)}% (${totals.lines.covered}/${totals.lines.total})`);
-  console.log(`  Statements: ${totals.statements.pct.toFixed(2)}% (${totals.statements.covered}/${totals.statements.total})`);
-  console.log(`  Functions: ${totals.functions.pct.toFixed(2)}% (${totals.functions.covered}/${totals.functions.total})`);
-  console.log(`  Branches: ${totals.branches.pct.toFixed(2)}% (${totals.branches.covered}/${totals.branches.total})`);
-  console.log('');
+  logger.info(`✓ Processed ${fileCount} source files`);
+  logger.info('');
+  logger.info('Total Coverage:');
+  logger.info(`  Lines: ${totals.lines.pct.toFixed(2)}% (${totals.lines.covered}/${totals.lines.total})`);
+  logger.info(`  Statements: ${totals.statements.pct.toFixed(2)}% (${totals.statements.covered}/${totals.statements.total})`);
+  logger.info(`  Functions: ${totals.functions.pct.toFixed(2)}% (${totals.functions.covered}/${totals.functions.total})`);
+  logger.info(`  Branches: ${totals.branches.pct.toFixed(2)}% (${totals.branches.covered}/${totals.branches.total})`);
+  logger.info('');
 
   // Ensure coverage directory exists
   const coverageDir = path.dirname(coverageSummaryPath);
   if (!fs.existsSync(coverageDir)) {
-    console.log(`Creating coverage directory: ${coverageDir}`);
+    logger.info(`Creating coverage directory: ${coverageDir}`);
     fs.mkdirSync(coverageDir, { recursive: true });
   }
 
   // Write summary
   try {
     fs.writeFileSync(coverageSummaryPath, JSON.stringify(summary, null, 2));
-    console.log(`✅ coverage-summary.json regenerated → ${coverageSummaryPath}`);
+    logger.info(`✅ coverage-summary.json regenerated → ${coverageSummaryPath}`);
   } catch (writeError) {
-    console.error(`❌ Error: Failed to write ${coverageSummaryPath}`);
-    console.error('');
-    console.error('Details:', writeError.message);
-    console.error('');
-    console.error('Check file permissions and disk space.');
-    console.error('');
+    logger.error(`❌ Error: Failed to write ${coverageSummaryPath}`);
+    logger.error('');
+    logger.error('Details:', writeError.message);
+    logger.error('');
+    logger.error('Check file permissions and disk space.');
+    logger.error('');
     process.exit(1);
   }
 
 } catch (error) {
-  console.error('❌ Error regenerating coverage summary:', error.message);
-  console.error('');
-  console.error('Stack trace:');
-  console.error(error.stack);
-  console.error('');
+  logger.error('❌ Error regenerating coverage summary:', error.message);
+  logger.error('');
+  logger.error('Stack trace:');
+  logger.error(error.stack);
+  logger.error('');
   process.exit(1);
 }
