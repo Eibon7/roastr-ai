@@ -414,11 +414,11 @@ Requirements:
         process.exit(0);
       })
       .catch(error => {
-        console.log('❌ Fatal error:', error.message);
+        console.error('❌ Fatal error:', error.message);
         process.exit(1);
       });
   } else {
-    console.log('Error: No action specified. Use --update-from-report or --help');
+    console.error('Error: No action specified. Use --update-from-report or --help');
     process.exit(1);
   }
 }

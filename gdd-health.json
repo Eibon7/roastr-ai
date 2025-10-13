@@ -1,9 +1,9 @@
 {
-  "generated_at": "2025-10-13T07:53:52.494Z",
+  "generated_at": "2025-10-13T09:26:14.629Z",
   "status": "HEALTHY",
-  "overall_score": 89.7,
-  "total_nodes": 14,
-  "healthy_count": 14,
+  "overall_score": 89.2,
+  "total_nodes": 15,
+  "healthy_count": 15,
   "degraded_count": 0,
   "critical_count": 0,
   "nodes": {
@@ -72,6 +72,19 @@
       },
       "issues": []
     },
+    "observability": {
+      "score": 86,
+      "status": "healthy",
+      "breakdown": {
+        "syncAccuracy": 100,
+        "updateFreshness": 98,
+        "dependencyIntegrity": 100,
+        "coverageEvidence": 30,
+        "agentRelevance": 100,
+        "integrityScore": 100
+      },
+      "issues": []
+    },
     "persona": {
       "score": 93,
       "status": "healthy",
@@ -112,13 +125,13 @@
       "issues": []
     },
     "queue-system": {
-      "score": 89,
+      "score": 85,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
         "updateFreshness": 92,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 50,
+        "coverageEvidence": 30,
         "agentRelevance": 100,
         "integrityScore": 100
       },

@@ -5,10 +5,9 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-10-09
-**Coverage:** 0%
+**Coverage:** 2%
 **Coverage Source:** auto
 **Related PRs:** #499
-**Coverage:** 50%
 
 ## Dependencies
 
@@ -1024,11 +1023,11 @@ const stats = await shieldService.getShieldStats('org_123', 30);
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Backend Developer**
 - **Documentation Agent**
-- **Orchestrator**
-- **Security Engineer**
 - **Test Engineer**
+- **Backend Developer**
+- **Security Engineer**
+- **Orchestrator**
 
 
 ## Related Nodes

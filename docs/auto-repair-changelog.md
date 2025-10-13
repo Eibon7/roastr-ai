@@ -1,44 +1,35 @@
 # Auto-Repair Changelog
 
-## 2025-10-13T07:53:52.076Z
+## 2025-10-13T09:26:14.177Z
 
-**Repair ID:** 2025-10-13T07:53:52Z
+**Repair ID:** 2025-10-13T09:26:14Z
 **Triggered by:** CI/CD
-**Nodes affected:** shield, social-platforms
+**Nodes affected:** social-platforms
 
 **Fixes applied:**
-- Added coverage to shield
 - Added coverage to social-platforms
 
 **Outcome:**
-- Health score: 89.4 → 89.7
+- Health score: 88.5 → 89.2
 - Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T07-53-51-887Z`
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T09-26-13-976Z`
 
 ---
 
-## 2025-10-12T18:19:09.894Z
+## 2025-10-12T15:03:32.739Z
 
-**Repair ID:** 2025-10-12T18:19:09Z
+**Repair ID:** 2025-10-12T15:03:32Z
 **Triggered by:** CI/CD
-**Nodes affected:** social-platforms, analytics, billing, cost-control, guardian, multi-tenant, persona, platform-constraints, tone, trainer
+**Nodes affected:** observability, social-platforms
 
 **Fixes applied:**
+- Added status to observability
 - Added coverage to social-platforms
-- Added coverage source to analytics
-- Added coverage source to billing
-- Added coverage source to cost-control
-- Added coverage source to guardian
-- Added coverage source to multi-tenant
-- Added coverage source to persona
-- Added coverage source to platform-constraints
-- Added coverage source to tone
-- Added coverage source to trainer
 
 **Outcome:**
-- Health score: 88.5 → 89.4
+- Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T18-19-09-707Z`
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T15-03-32-531Z`
 
 ---
 

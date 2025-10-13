@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const QueueService = require('../services/queueService');
 const { mockMode } = require('../config/mockMode');
+const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Base Worker Class for Roastr.ai Multi-Tenant Architecture
@@ -569,19 +570,30 @@ class BaseWorker {
   }
   
   /**
-   * Logging utility
+   * Logging utility - Uses Winston advancedLogger for structured logging
+   * Supports correlation context for end-to-end traceability (Issue #417)
    */
   log(level, message, metadata = {}) {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      level,
+    const logData = {
       worker: this.workerName,
       workerType: this.workerType,
-      message,
       ...metadata
     };
-    
-    console.log(`[${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
+
+    // Use Winston logger based on level
+    switch (level) {
+      case 'error':
+        advancedLogger.workerLogger.error(message, logData);
+        break;
+      case 'warn':
+        advancedLogger.workerLogger.warn(message, logData);
+        break;
+      case 'debug':
+        advancedLogger.workerLogger.debug(message, logData);
+        break;
+      default:
+        advancedLogger.workerLogger.info(message, logData);
+    }
   }
   
   /**
