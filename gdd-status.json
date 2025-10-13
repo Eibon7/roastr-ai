@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-10-10T16:37:43.244Z",
+  "timestamp": "2025-10-13T09:26:14.254Z",
   "mode": "full",
-  "nodes_validated": 14,
+  "nodes_validated": 15,
   "orphans": [],
   "drift": {},
   "outdated": [],
@@ -29,7 +29,7 @@
       "type": "missing_coverage_data",
       "node": "cost-control",
       "severity": "warning",
-      "declared": 70,
+      "declared": 5,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -51,6 +51,14 @@
     },
     {
       "type": "missing_coverage_data",
+      "node": "observability",
+      "severity": "warning",
+      "declared": 14,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
       "node": "persona",
       "severity": "warning",
       "declared": 70,
@@ -61,7 +69,7 @@
       "type": "missing_coverage_data",
       "node": "plan-features",
       "severity": "warning",
-      "declared": 70,
+      "declared": 2,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -77,7 +85,7 @@
       "type": "missing_coverage_data",
       "node": "queue-system",
       "severity": "warning",
-      "declared": 87,
+      "declared": 17,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -85,7 +93,7 @@
       "type": "missing_coverage_data",
       "node": "roast",
       "severity": "warning",
-      "declared": 100,
+      "declared": 32,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -93,7 +101,7 @@
       "type": "missing_coverage_data",
       "node": "shield",
       "severity": "warning",
-      "declared": 70,
+      "declared": 2,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -101,7 +109,7 @@
       "type": "missing_coverage_data",
       "node": "social-platforms",
       "severity": "warning",
-      "declared": 100,
+      "declared": 0,
       "actual": null,
       "message": "Coverage data not available for validation"
     },

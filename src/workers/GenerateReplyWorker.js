@@ -6,6 +6,7 @@ const AutoApprovalService = require('../services/autoApprovalService');
 const { mockMode } = require('../config/mockMode');
 const { shouldBlockAutopost } = require('../middleware/killSwitch');
 const { PLATFORM_LIMITS } = require('../config/constants');
+const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Generate Reply Worker - Round 6 Critical Security Enhancements
@@ -282,6 +283,16 @@ class GenerateReplyWorker extends BaseWorker {
     const toxicity_score = job.payload.toxicity_score;
     const severity_level = job.payload.severity_level;
     const categories = job.payload.categories;
+    const correlationId = job.payload.correlationId; // Extract correlation ID (Issue #417)
+
+    // Log job start with correlation context (Issue #417)
+    advancedLogger.logJobLifecycle(this.workerName, job.id, 'started', {
+      correlationId,
+      tenantId: organization_id,
+      commentId: comment_id,
+      platform,
+      processingId
+    });
 
     // Check kill switch before processing
     const autopostCheck = await shouldBlockAutopost(platform);
@@ -485,10 +496,10 @@ class GenerateReplyWorker extends BaseWorker {
         autoApproved: true,
         approvalRecord: autoApprovalResult.approvalRecord,
         contentValidated: true
-      });
+      }, correlationId);
     } else if (!autoApprovalResult && integrationConfig.config.auto_post !== false) {
       // Standard manual flow auto-posting
-      await this.queuePostingJob(organization_id, storedResponse, platform);
+      await this.queuePostingJob(organization_id, storedResponse, platform, null, correlationId);
     }
     
     // ROUND 6 FIX: Build enhanced response summary with security context
@@ -535,7 +546,17 @@ class GenerateReplyWorker extends BaseWorker {
       circuitBreakerState: this.circuitBreaker.state,
       generationTime
     });
-    
+
+    // Log job completion with correlation context (Issue #417)
+    advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
+      correlationId,
+      tenantId: organization_id,
+      commentId: comment_id,
+      responseId: storedResponse.id,
+      mode,
+      processingId
+    }, responseData);
+
     return responseData;
     
   } catch (jobError) {
@@ -1258,8 +1279,9 @@ class GenerateReplyWorker extends BaseWorker {
    * @param {Object} response - Response object to post
    * @param {string} platform - Target platform for posting
    * @param {Object} autoApprovalMetadata - Optional auto-approval metadata (GDPR-safe)
+   * @param {string} correlationId - Correlation ID for observability (Issue #417)
    */
-  async queuePostingJob(organizationId, response, platform, autoApprovalMetadata = null) {
+  async queuePostingJob(organizationId, response, platform, autoApprovalMetadata = null, correlationId = null) {
     // GDPR-Safe metadata: Only include essential, non-personal data
     const gdprSafeMetadata = autoApprovalMetadata ? {
       autoApproved: autoApprovalMetadata.autoApproved || false,
@@ -1282,7 +1304,8 @@ class GenerateReplyWorker extends BaseWorker {
         response_text: response.response_text,
         comment_id: response.comment_id,
         // ROUND 6 FIX: Include GDPR-safe auto-approval metadata
-        autoApprovalMetadata: gdprSafeMetadata
+        autoApprovalMetadata: gdprSafeMetadata,
+        correlationId // Propagate correlation ID (Issue #417)
       },
       max_attempts: 3
     };

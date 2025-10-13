@@ -6,6 +6,7 @@ const { mockMode } = require('../config/mockMode');
 const encryptionService = require('../services/encryptionService');
 const EmbeddingsService = require('../services/embeddingsService');
 const toxicityPatternsService = require('../services/toxicityPatternsService');
+const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Analyze Toxicity Worker
@@ -192,7 +193,15 @@ class AnalyzeToxicityWorker extends BaseWorker {
    * Process toxicity analysis job
    */
   async processJob(job) {
-    const { comment_id, organization_id, platform, text } = job.payload || job;
+    const { comment_id, organization_id, platform, text, correlationId } = job.payload || job;
+
+    // Log job start with correlation context (Issue #417)
+    advancedLogger.logJobLifecycle(this.workerName, job.id, 'started', {
+      correlationId,
+      tenantId: organization_id,
+      commentId: comment_id,
+      platform
+    });
     
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
@@ -459,15 +468,15 @@ class AnalyzeToxicityWorker extends BaseWorker {
     
     // Queue response generation if comment meets criteria
     if (this.shouldGenerateResponse(analysisResult, comment)) {
-      await this.queueResponseGeneration(organization_id, comment, analysisResult);
+      await this.queueResponseGeneration(organization_id, comment, analysisResult, correlationId);
     }
     
     // Handle Shield mode actions for medium+ severity
     if (['medium', 'high', 'critical'].includes(analysisResult.severity_level)) {
       await this.handleShieldAnalysis(organization_id, comment, analysisResult);
     }
-    
-    return {
+
+    const result = {
       success: true,
       summary: `Analyzed comment toxicity: ${analysisResult.severity_level} (${analysisResult.toxicity_score})`,
       commentId: comment_id,
@@ -476,6 +485,17 @@ class AnalyzeToxicityWorker extends BaseWorker {
       categories: analysisResult.categories,
       service: analysisResult.service
     };
+
+    // Log job completion with correlation context (Issue #417)
+    advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
+      correlationId,
+      tenantId: organization_id,
+      commentId: comment_id,
+      toxicityScore: analysisResult.toxicity_score,
+      severityLevel: analysisResult.severity_level
+    }, result);
+
+    return result;
   }
   
   /**
@@ -1520,9 +1540,9 @@ class AnalyzeToxicityWorker extends BaseWorker {
   /**
    * Queue response generation job
    */
-  async queueResponseGeneration(organizationId, comment, analysis) {
+  async queueResponseGeneration(organizationId, comment, analysis, correlationId) {
     const priority = this.getResponsePriority(analysis.severity_level);
-    
+
     const responseJob = {
       organization_id: organizationId,
       job_type: 'generate_reply',
@@ -1534,7 +1554,8 @@ class AnalyzeToxicityWorker extends BaseWorker {
         original_text: comment.original_text,
         toxicity_score: analysis.toxicity_score,
         severity_level: analysis.severity_level,
-        categories: analysis.categories
+        categories: analysis.categories,
+        correlationId // Propagate correlation ID (Issue #417)
       },
       max_attempts: 3
     };

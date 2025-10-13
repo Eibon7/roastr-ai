@@ -5,9 +5,11 @@
 **Priority:** High
 **Status:** Production
 **Last Updated:** 2025-10-09
-**Coverage:** 100%
+**Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499
+**Coverage:** 50%
+**Coverage:** 50%
 
 ## Dependencies
 

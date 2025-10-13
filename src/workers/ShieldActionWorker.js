@@ -2,6 +2,7 @@ const BaseWorker = require('./BaseWorker');
 const ShieldActionExecutorService = require('../services/shieldActionExecutor');
 const ShieldPersistenceService = require('../services/shieldPersistenceService');
 const CostControlService = require('../services/costControl');
+const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Shield Action Worker
@@ -96,7 +97,7 @@ class ShieldActionWorker extends BaseWorker {
   async processJob(job) {
     const startTime = Date.now();
     const payload = job.payload || job;
-    
+
     const {
       organizationId,
       userId = null,
@@ -108,14 +109,24 @@ class ShieldActionWorker extends BaseWorker {
       action,
       reason = 'Shield automated action',
       originalText = null,
-      metadata = {}
+      metadata = {},
+      correlationId // Extract correlation ID (Issue #417)
     } = payload;
-    
+
     // Validate required fields
     if (!organizationId || !platform || !externalCommentId || !externalAuthorId || !action) {
       throw new Error('Missing required Shield action parameters');
     }
-    
+
+    // Log job start with correlation context (Issue #417)
+    advancedLogger.logJobLifecycle(this.workerName, job.id, 'started', {
+      correlationId,
+      tenantId: organizationId,
+      platform,
+      action,
+      externalCommentId
+    });
+
     this.log('info', 'Processing Shield action job', {
       organizationId,
       platform,
@@ -160,8 +171,8 @@ class ShieldActionWorker extends BaseWorker {
         requiresManualReview: result.requiresManualReview,
         processingTimeMs: Date.now() - startTime
       });
-      
-      return {
+
+      const resultData = {
         success: true,
         summary: `Shield action executed: ${action} on ${platform}`,
         platform,
@@ -172,6 +183,18 @@ class ShieldActionWorker extends BaseWorker {
         executionTime: result.executionTime,
         details: result.details
       };
+
+      // Log job completion with correlation context (Issue #417)
+      advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
+        correlationId,
+        tenantId: organizationId,
+        platform,
+        action,
+        success: result.success,
+        fallback: result.fallback
+      }, resultData);
+
+      return resultData;
       
     } catch (error) {
       // Update worker metrics
