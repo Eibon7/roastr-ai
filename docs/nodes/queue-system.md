@@ -473,11 +473,11 @@ WORKER_POLL_INTERVAL=1000  # ms
 
 ### Coverage
 
-**Overall:** 87% (updated 2025-10-06)
-- Statements: 89%
-- Branches: 83%
-- Functions: 91%
-- Lines: 87%
+**Overall:** 17% (updated 2025-10-12)
+- Lines: 17%
+- Statements: 17%
+- Functions: 15%
+- Branches: 14%
 
 ### Unit Tests
 
