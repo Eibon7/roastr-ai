@@ -8,9 +8,6 @@
 **Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499
-**Coverage:** 50%
-**Coverage:** 50%
-**Coverage:** 50%
 
 ## Dependencies
 
