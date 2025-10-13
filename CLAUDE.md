@@ -46,6 +46,14 @@ npm run queue:retry              # Retry failed jobs
 npm run setup:test-users:dry     # Preview test users
 npm run setup:test-users         # Create test users
 
+# Demo Mode (Issue #420)
+npm run demo:seed                # Seed demo data (orgs, users, comments)
+npm run demo:seed:dry            # Preview what would be seeded
+npm run demo:seed:force          # Force reseed (delete + recreate)
+npm run demo:validate            # Validate fixture files
+npm run demo:reset               # Clear all demo data
+npm run demo:reset:dry           # Preview what would be deleted
+
 # Twitter bot
 npm run twitter                  # Run Twitter bot
 ```
