@@ -51,6 +51,8 @@ const createMockClient = () => ({
                         },
                         in: (col, values) => {
                             // Mock implementation of .in() method for WHERE column IN (values)
+                            const baseResponse = { data: [], error: null };
+
                             const inBuilder = {
                                 eq: (col2, val2) => ({
                                     single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } })
@@ -61,7 +63,9 @@ const createMockClient = () => ({
                                     limit: (n) => ({
                                         single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } })
                                     })
-                                })
+                                }),
+                                // Make it thenable so it can be awaited directly (for kill switch service)
+                                then: (resolve, reject) => Promise.resolve(baseResponse).then(resolve, reject)
                             };
                             return inBuilder;
                         },
