@@ -74,6 +74,10 @@ jobs:
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roastr_test
+          SUPABASE_URL: ""
+          SUPABASE_SERVICE_KEY: ""
+          SUPABASE_ANON_KEY: ""
+          OPENAI_API_KEY: ""
           PORT: 3000
 
       - name: Run E2E tests
