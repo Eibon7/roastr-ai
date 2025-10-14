@@ -54,8 +54,10 @@ jobs:
         id: config
         run: |
           MIN_HEALTH=$(jq -r '.min_health_score' .gddrc.json)
+          FAIL_ON_COVERAGE=$(jq -r '.validation.fail_on_coverage_integrity // true' .gddrc.json)
           echo "min_health=$MIN_HEALTH" >> $GITHUB_OUTPUT
-          echo "📋 Configuration loaded: min_health_score=$MIN_HEALTH"
+          echo "fail_on_coverage_integrity=$FAIL_ON_COVERAGE" >> $GITHUB_OUTPUT
+          echo "📋 Configuration loaded: min_health_score=$MIN_HEALTH, fail_on_coverage_integrity=$FAIL_ON_COVERAGE"
 
       - name: Run GDD validation
         id: validation
@@ -258,12 +260,12 @@ jobs:
             });
 
       - name: Fail if health below threshold or coverage integrity violated
-        if: steps.threshold.outputs.result == 'fail' || steps.coverage_integrity.outputs.critical_violations > 0
+        if: steps.threshold.outputs.result == 'fail' || (steps.coverage_integrity.outputs.critical_violations > 0 && steps.config.outputs.fail_on_coverage_integrity == 'true')
         run: |
           if [ "${{ steps.threshold.outputs.result }}" == "fail" ]; then
             echo "❌ GDD validation failed: Health score below threshold"
           fi
-          if [ "${{ steps.coverage_integrity.outputs.critical_violations }}" -gt 0 ]; then
+          if [ "${{ steps.coverage_integrity.outputs.critical_violations }}" -gt 0 ] && [ "${{ steps.config.outputs.fail_on_coverage_integrity }}" == "true" ]; then
             echo "❌ GDD validation failed: Coverage integrity violations detected"
           fi
           exit 1

@@ -92,7 +92,7 @@ node scripts/gdd-coverage-helper.js --update-from-report
 - **Validation Time:** 0.05s
 
 **Violations:**
-```
+```text
 8 nodes with missing_coverage_data (severity: warning)
 - analytics, billing, guardian, multi-tenant
 - persona, platform-constraints, tone, trainer
