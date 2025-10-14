@@ -87,6 +87,9 @@ class KillSwitchService {
      */
     async saveLocalCache(killSwitchState) {
         try {
+            // Ensure cache directory exists before writing (handles race conditions during init)
+            await this.ensureCacheDirectory();
+
             const cacheData = {
                 killSwitchActive: killSwitchState,
                 timestamp: Date.now(),
