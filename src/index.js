@@ -507,20 +507,26 @@ app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
 app.use('/api/admin', adminRoutes);
 
 // Guardian governance routes (Phase 17)
+console.log('[DEBUG] About to require guardian routes...');
 const guardianRoutes = require('./routes/guardian');
 app.use('/api/guardian', guardianRoutes);
+console.log('[DEBUG] Guardian routes loaded successfully');
 
 // Instancia del generador de roasts
+console.log('[DEBUG] About to initialize RoastGeneratorReal...');
 let roastGenerator;
 try {
   roastGenerator = new RoastGeneratorReal();
+  console.log('[DEBUG] RoastGeneratorReal initialized successfully');
 } catch (error) {
   console.error("❌ Error inicializando RoastGenerator:", error.message);
   process.exit(1);
 }
 
 // Instancia del servicio de CSV roasts
+console.log('[DEBUG] About to initialize CsvRoastService...');
 const csvRoastService = new CsvRoastService();
+console.log('[DEBUG] CsvRoastService initialized successfully');
 
 // Ruta principal: servir React app
 app.get('/', (req, res) => {
