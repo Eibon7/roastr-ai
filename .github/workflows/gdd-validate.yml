@@ -217,7 +217,7 @@ jobs:
             docs/drift-report.md
           retention-days: 30
 
-      - name: Create issue on failure
+      - name: Create or update issue on failure
         if: steps.threshold.outputs.result == 'fail' && github.event_name == 'pull_request' && steps.maintenance.outputs.maintenance_mode != 'true'
         uses: actions/github-script@v7
         with:
@@ -230,6 +230,7 @@ jobs:
               .filter(([_, node]) => node.score < 50)
               .map(([name, node]) => `- **${name}**: ${node.score}/100`);
 
+            const issueTitle = '[GDD] Validation Failed - PR #' + context.issue.number;
             const issueBody = `## 🔴 GDD Validation Failed
 
             PR #${{ github.event.pull_request.number }} failed GDD validation.
@@ -249,15 +250,51 @@ jobs:
 
             ### Related PR
             - #${{ github.event.pull_request.number }}
+
+            ---
+            *Last updated: ${new Date().toISOString()}*
             `;
 
-            await github.rest.issues.create({
+            // Check if issue already exists
+            const { data: existingIssues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: '[GDD] Validation Failed - PR #' + context.issue.number,
-              body: issueBody,
-              labels: ['documentation', 'gdd', 'tech-debt', 'priority:P1']
+              state: 'open',
+              labels: 'gdd',
+              per_page: 100
             });
+
+            const existingIssue = existingIssues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🔄 **Revalidated on ${new Date().toISOString()}**\n\nHealth Score: ${health.overall_score}/100\n\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'gdd', 'tech-debt', 'priority:P1']
+              });
+
+              console.log(`Created new issue #${newIssue.number}`);
+            }
 
       - name: Fail if health below threshold or coverage integrity violated
         if: steps.threshold.outputs.result == 'fail' || (steps.coverage_integrity.outputs.critical_violations > 0 && steps.config.outputs.fail_on_coverage_integrity == 'true')
