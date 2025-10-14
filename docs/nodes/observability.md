@@ -1,6 +1,6 @@
 # Observability
 
-**Status:** 🟢 HEALTHY | **Test Coverage:** 14% | **Priority:** P1
+**Status:** 🟢 HEALTHY | **Test Coverage:** 13% | **Priority:** P1
 
 ## Overview
 
@@ -682,10 +682,10 @@ fields tenantId
 ## Health Metrics
 
 **Status:** 🟢 HEALTHY
-**Test Coverage:** 14% (28/28 integration tests passing)
+**Test Coverage:** 13% (19/19 integration tests passing, advancedLogger.js at 13%)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
-**Last Updated:** 2025-10-12
+**Last Updated:** 2025-10-14
 **Coverage Source:** auto
 
 ## Node Metadata

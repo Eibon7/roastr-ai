@@ -4,8 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-09
-**Coverage:** 45%
+**Last Updated:** 2025-10-14
+**Coverage:** 12%
 **Coverage Source:** auto
 **Version:** 1.2.0
 **Related PRs:** #458, #499
@@ -473,11 +473,13 @@ WORKER_POLL_INTERVAL=1000  # ms
 
 ### Coverage
 
-**Overall:** 17% (updated 2025-10-12)
-- Lines: 17%
-- Statements: 17%
-- Functions: 15%
-- Branches: 14%
+**Overall:** 12% (updated 2025-10-14)
+- queueService.js: 11.91% lines (28/235 lines covered)
+- BaseWorker.js: 0% (needs test coverage)
+- Lines: 12%
+- Statements: 12%
+- Functions: 13%
+- Branches: 7%
 
 ### Unit Tests
 
