@@ -20,6 +20,7 @@ class CoverageHelper {
 
   /**
    * Load coverage data from coverage-summary.json
+   * Validates file existence and JSON structure
    */
   async loadCoverageData() {
     if (this.coverageData) {
@@ -29,10 +30,32 @@ class CoverageHelper {
     try {
       const coveragePath = path.join(this.rootDir, 'coverage', 'coverage-summary.json');
       const content = await fs.readFile(coveragePath, 'utf-8');
-      this.coverageData = JSON.parse(content);
+      const data = JSON.parse(content);
+
+      // Validate coverage data structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid coverage data: not an object');
+      }
+
+      // Check if data has at least one valid entry
+      // (Either a 'total' key or at least one file entry with 'lines' property)
+      const hasValidEntry = Object.values(data).some(entry =>
+        entry && typeof entry === 'object' && entry.lines
+      );
+
+      if (!hasValidEntry) {
+        throw new Error('Invalid coverage data: no valid entries with "lines" property');
+      }
+
+      this.coverageData = data;
       return this.coverageData;
     } catch (error) {
-      // Coverage report not available
+      // Coverage report not available or invalid
+      if (error.message.startsWith('Invalid coverage data')) {
+        // Re-throw validation errors
+        throw error;
+      }
+      // File not found or JSON parse error - return null
       return null;
     }
   }
@@ -75,9 +98,11 @@ class CoverageHelper {
       return null;
     }
 
-    // Calculate average coverage for all files associated with this node
-    let totalCoverage = 0;
-    let fileCount = 0;
+    // Calculate weighted coverage for all files associated with this node
+    // Uses actual line counts (covered/total) instead of averaging percentages
+    // to ensure accurate representation of overall coverage
+    let coveredLines = 0;
+    let totalLines = 0;
 
     for (const filePath of nodeConfig.files) {
       // Progressive fallback lookup to handle different Jest configurations
@@ -113,19 +138,21 @@ class CoverageHelper {
         }
       }
 
-      if (fileEntry && fileEntry.lines && fileEntry.lines.pct !== undefined) {
-        totalCoverage += fileEntry.lines.pct;
-        fileCount++;
+      if (fileEntry && fileEntry.lines) {
+        // Use actual covered/total line counts, not percentages
+        const { covered = 0, total = 0 } = fileEntry.lines;
+        coveredLines += covered;
+        totalLines += total;
       }
     }
 
-    if (fileCount === 0) {
+    if (totalLines === 0) {
       // No coverage data found for any files
       return null;
     }
 
-    // Return average coverage rounded to nearest integer
-    return Math.round(totalCoverage / fileCount);
+    // Return weighted coverage: (total covered lines / total lines) * 100
+    return Math.round((coveredLines / totalLines) * 100);
   }
 
   /**

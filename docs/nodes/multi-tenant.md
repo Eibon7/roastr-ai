@@ -7,6 +7,7 @@
 **Last Updated:** 2025-10-09
 **Coverage:** 70%
 **Coverage Source:** auto
+**Coverage Source:** mocked
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
 **Related PRs:** #499
 

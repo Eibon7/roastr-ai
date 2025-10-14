@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-13T15:14:08.003Z",
+  "timestamp": "2025-10-13T18:16:46.635Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -69,7 +69,7 @@
       "type": "missing_coverage_data",
       "node": "plan-features",
       "severity": "warning",
-      "declared": 2,
+      "declared": 3,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -85,7 +85,7 @@
       "type": "missing_coverage_data",
       "node": "queue-system",
       "severity": "warning",
-      "declared": 17,
+      "declared": 45,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -93,7 +93,7 @@
       "type": "missing_coverage_data",
       "node": "roast",
       "severity": "warning",
-      "declared": 32,
+      "declared": 0,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -109,7 +109,7 @@
       "type": "missing_coverage_data",
       "node": "social-platforms",
       "severity": "warning",
-      "declared": 0,
+      "declared": 50,
       "actual": null,
       "message": "Coverage data not available for validation"
     },

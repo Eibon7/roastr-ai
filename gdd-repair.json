@@ -1,18 +1,18 @@
 {
-  "timestamp": "2025-10-13T15:14:07.915Z",
+  "timestamp": "2025-10-13T18:16:46.557Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
   "fixes_applied": 1,
   "errors": 0,
-  "health_before": 89.2,
-  "health_after": 89.2,
+  "health_before": 89.9,
+  "health_after": 89.9,
   "details": {
     "fixes": [
       {
         "type": "auto",
-        "node": "social-platforms",
-        "action": "Added coverage to social-platforms"
+        "node": "roast",
+        "action": "Added coverage to roast"
       }
     ],
     "humanReview": [],

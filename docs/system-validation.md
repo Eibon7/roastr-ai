@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-13T15:14:08.003Z
+**Date:** 2025-10-13T18:16:46.635Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -40,12 +40,12 @@ Coverage authenticity issues detected:
 | multi-tenant | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | observability | missing_coverage_data | 14% | N/A% | N/A% | warning |
 | persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| plan-features | missing_coverage_data | 2% | N/A% | N/A% | warning |
+| plan-features | missing_coverage_data | 3% | N/A% | N/A% | warning |
 | platform-constraints | missing_coverage_data | 100% | N/A% | N/A% | warning |
-| queue-system | missing_coverage_data | 17% | N/A% | N/A% | warning |
-| roast | missing_coverage_data | 32% | N/A% | N/A% | warning |
+| queue-system | missing_coverage_data | 45% | N/A% | N/A% | warning |
+| roast | missing_coverage_data | N/A% | N/A% | N/A% | warning |
 | shield | missing_coverage_data | 2% | N/A% | N/A% | warning |
-| social-platforms | missing_coverage_data | N/A% | N/A% | N/A% | warning |
+| social-platforms | missing_coverage_data | 50% | N/A% | N/A% | warning |
 | tone | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
 
