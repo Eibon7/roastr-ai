@@ -86,6 +86,12 @@ class KillSwitchService {
      * Save kill switch state to local cache
      */
     async saveLocalCache(killSwitchState) {
+        // Disable local cache in test/E2E environments to avoid file system issues
+        if (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
+            logger.debug('Local cache disabled in test mode', { killSwitchActive: killSwitchState });
+            return true;
+        }
+
         try {
             // Ensure cache directory exists before writing (handles race conditions during init)
             await this.ensureCacheDirectory();
