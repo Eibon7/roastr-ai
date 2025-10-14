@@ -46,6 +46,7 @@ const monitoringService = require('./services/monitoringService');
 const alertingService = require('./services/alertingService');
 
 // Import auth routes and middleware
+console.log('[DEBUG] About to import routes...');
 const authRoutes = require('./routes/auth');
 const integrationsRoutes = require('./routes/integrations');
 const oauthRoutes = require('./routes/oauth');
@@ -69,8 +70,10 @@ const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
+console.log('[DEBUG] All routes imported successfully');
 
 const app = express();
+console.log('[DEBUG] Express app created');
 const port = process.env.PORT || 3000;
 
 // Configure trust proxy for proper IP detection in production
