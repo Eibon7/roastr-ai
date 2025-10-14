@@ -822,6 +822,7 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 let server;
 
 if (require.main === module) {
+  console.log('[DEBUG] Entering main module block...');
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
   // Improved SPA routing with regex to exclude more paths for better performance
@@ -876,6 +877,7 @@ if (require.main === module) {
     }
   }
 
+  console.log(`[DEBUG] About to start server on port ${port}...`);
   server = app.listen(port, () => {
     console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
     console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
