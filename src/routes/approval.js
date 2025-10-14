@@ -481,7 +481,7 @@ router.post('/:id/regenerate', async (req, res) => {
             .from('responses')
             .select(`
                 *,
-                comments (
+                comments!inner (
                     id,
                     platform,
                     platform_comment_id,
@@ -572,19 +572,8 @@ router.post('/:id/regenerate', async (req, res) => {
             userConfig
         );
 
-        // Mark original response as discarded
-        const { error: discardError } = await supabaseServiceClient
-            .from('responses')
-            .update({
-                post_status: 'discarded'
-            })
-            .eq('id', id);
-
-        if (discardError) {
-            logger.error('Failed to mark original response as discarded:', discardError.message);
-        }
-
-        // Create new response record
+        // CRITICAL FIX (C2): Create new response FIRST, only discard original if successful
+        // This prevents data loss if insert fails
         const { data: newResponse, error: insertError } = await supabaseServiceClient
             .from('responses')
             .insert({
@@ -608,7 +597,35 @@ router.post('/:id/regenerate', async (req, res) => {
             logger.error('Failed to create new response:', insertError.message);
             return res.status(500).json({
                 success: false,
-                error: 'Failed to create regenerated response'
+                error: 'Failed to create regenerated response',
+                code: ERROR_CODES.SERVER_ERROR
+            });
+        }
+
+        // ONLY discard original after new response is successfully created
+        const { error: discardError } = await supabaseServiceClient
+            .from('responses')
+            .update({
+                post_status: 'discarded'
+            })
+            .eq('id', id);
+
+        if (discardError) {
+            logger.error('Failed to mark original response as discarded:', discardError.message);
+            // Rollback: delete the newly created response since we couldn't discard the original
+            const { error: rollbackError } = await supabaseServiceClient
+                .from('responses')
+                .delete()
+                .eq('id', newResponse.id);
+
+            if (rollbackError) {
+                logger.error('CRITICAL: Failed to rollback new response after discard error:', rollbackError.message);
+            }
+
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to complete regeneration transaction',
+                code: ERROR_CODES.SERVER_ERROR
             });
         }
 
