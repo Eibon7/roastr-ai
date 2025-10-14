@@ -1,8 +1,8 @@
 # Auto-Repair Changelog
 
-## 2025-10-13T17:40:36.357Z
+## 2025-10-13T18:16:46.557Z
 
-**Repair ID:** 2025-10-13T17:40:36Z
+**Repair ID:** 2025-10-13T18:16:46Z
 **Triggered by:** CI/CD
 **Nodes affected:** roast
 
@@ -12,13 +12,29 @@
 **Outcome:**
 - Health score: 89.9 → 89.9
 - Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T17-40-36-145Z`
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T18-16-46-342Z`
 
 ---
 
-## 2025-10-13T17:30:33.969Z
+## 2025-10-13T18:02:43.830Z
 
-**Repair ID:** 2025-10-13T17:30:33Z
+**Repair ID:** 2025-10-13T18:02:43Z
+**Triggered by:** CI/CD
+**Nodes affected:** roast
+
+**Fixes applied:**
+- Added coverage to roast
+
+**Outcome:**
+- Health score: 89.9 → 89.9
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T18-02-43-600Z`
+
+---
+
+## 2025-10-13T17:03:37.104Z
+
+**Repair ID:** 2025-10-13T17:03:37Z
 **Triggered by:** CI/CD
 **Nodes affected:** roast
 
@@ -28,7 +44,7 @@
 **Outcome:**
 - Health score: 88.7 → 89.9
 - Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T17-30-33-774Z`
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T17-03-36-895Z`
 
 ---
 
