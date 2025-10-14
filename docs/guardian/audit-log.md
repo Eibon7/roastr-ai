@@ -48,3 +48,9 @@ This file contains a chronological record of all Guardian Agent events, includin
 | 2025-10-13T15:09:05.511Z | 2025-10-13-15-09-05-511 | root | none | 1 | SAFE | APPROVED | Auto-approved |
 | 2025-10-13T15:09:05.513Z | 2025-10-13-15-09-05-513 | root | none | 1 | CRITICAL | BLOCKED | Requires Product Owner approval |
 | 2025-10-13T15:09:05.515Z | 2025-10-13-15-09-05-515 | root | none | 1 | SAFE | APPROVED | Auto-approved |
+| 2025-10-14T10:54:25.160Z | 2025-10-14-10-54-25-160 | emiliopostigo | none | 1 | SAFE | APPROVED | Auto-approved |
+| 2025-10-14T10:54:25.161Z | 2025-10-14-10-54-25-161 | emiliopostigo | none | 1 | CRITICAL | BLOCKED | Requires Product Owner approval |
+| 2025-10-14T10:54:25.162Z | 2025-10-14-10-54-25-162 | emiliopostigo | none | 1 | SAFE | APPROVED | Auto-approved |
+| 2025-10-14T13:43:37.686Z | 2025-10-14-13-43-37-686 | emiliopostigo | none | 1 | SAFE | APPROVED | Auto-approved |
+| 2025-10-14T13:43:37.688Z | 2025-10-14-13-43-37-688 | emiliopostigo | none | 1 | CRITICAL | BLOCKED | Requires Product Owner approval |
+| 2025-10-14T13:43:37.689Z | 2025-10-14-13-43-37-689 | emiliopostigo | none | 1 | SAFE | APPROVED | Auto-approved |
