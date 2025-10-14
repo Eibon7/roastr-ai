@@ -865,13 +865,15 @@ if (require.main === module) {
     });
   });
 
-  // Start Model Availability Worker (Issue #326)
-  try {
-    const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
-    const worker = startModelAvailabilityWorker();
-    console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
-  } catch (error) {
-    console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+  // Start Model Availability Worker (Issue #326) - Skip in test/E2E mode
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
+      const worker = startModelAvailabilityWorker();
+      console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
+    } catch (error) {
+      console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+    }
   }
 
   server = app.listen(port, () => {
