@@ -5,14 +5,12 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-10-13
-**Coverage:** 0%
+**Coverage:** 50%
 **Coverage Source:** auto
 **Related PRs:** #499
 **Protected:** true
 **Last Verified:** 2025-10-10
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
-**Coverage:** 50%
-**Coverage:** 50%
 
 ## Dependencies
 
@@ -546,6 +544,28 @@ const mockConfig = createMockRoastConfig({
 });
 ```
 
+### E2E Tests (Issue #419)
+
+**Test Suite:** [`tests/e2e/manual-approval-resilience.spec.js`](../../tests/e2e/manual-approval-resilience.spec.js)
+**Frontend Implementation:** [`public/js/manual-approval.js`](../../public/js/manual-approval.js)
+**Backend Error Handling:** [`src/routes/approval.js`](../../src/routes/approval.js)
+
+**Focus:** Manual Approval UI resilience under timeout, network errors, variant exhaustion scenarios.
+
+**Key Tests:**
+- Timeout handling with graceful degradation (30s)
+- Network error recovery with retry logic
+- Variant exhaustion (max 5 per roast) with fallback UI
+- Error code propagation (E_TIMEOUT, E_NETWORK, E_VARIANT_LIMIT, E_VALIDATION, E_SERVER)
+- Loading state management and user feedback
+- Rate limiting and concurrent request handling
+
+**Configuration:**
+- `maxRetries (UI/OpenAI client): 1` — Fail-fast for manual-approval fetches (Issue #419)
+  (Service-level generation retries remain 3; see "Retry Logic" section above)
+- `VARIANT_GENERATION_TIMEOUT: 30000ms` — OpenAI timeout for variant generation
+- `MAX_VARIANTS_PER_ROAST: 5` — Hard limit to prevent infinite loops
+
 ## Feature Flags
 
 | Flag | Default | Purpose |
@@ -566,6 +586,40 @@ const mockConfig = createMockRoastConfig({
 | `RQC all attempts failed` | Quality too low | Return safe fallback roast |
 | `Transparency validation failed` | Disclaimer not applied | Block publication, log to Sentry |
 | `User config not found` | Database error | Use default config |
+
+### Error Codes (Issue #419)
+
+**Backend Constants** (`src/routes/approval.js`):
+
+```javascript
+const ERROR_CODES = {
+  TIMEOUT: 'E_TIMEOUT',
+  NETWORK_ERROR: 'E_NETWORK',
+  VARIANTS_EXHAUSTED: 'E_VARIANT_LIMIT',
+  VALIDATION_ERROR: 'E_VALIDATION',
+  SERVER_ERROR: 'E_SERVER'
+};
+
+const MAX_VARIANTS_PER_ROAST = 5;
+```
+
+**Frontend Error Handling** (`public/js/manual-approval.js`):
+- Displays user-friendly error messages based on error code
+- Implements retry logic for transient errors (E_TIMEOUT, E_NETWORK)
+- Shows fallback UI when variants exhausted (E_VARIANT_LIMIT)
+- Prevents retry for validation/server errors (E_VALIDATION, E_SERVER)
+
+**OpenAI Client Configuration** (`src/services/roastGeneratorEnhanced.js`):
+
+```javascript
+const VARIANT_GENERATION_TIMEOUT = 30000; // 30 seconds
+
+this.openai = new OpenAI({
+  apiKey,
+  timeout: VARIANT_GENERATION_TIMEOUT,
+  maxRetries: 1
+});
+```
 
 ### Error Response Format
 
