@@ -605,15 +605,18 @@ const mockConfig = createMockRoastConfig({
 | Code | HTTP Status | Meaning | Recovery | Frontend Action |
 |------|-------------|---------|----------|-----------------|
 | `E_TIMEOUT` | 408 | Operation timed out (>30s) | Retry available | Show retry button |
-| `E_NETWORK` | 500 | Network error | Retry available | Show retry button |
+| `E_NETWORK` | 500 | Network error (*) | Retry available | Show retry button |
 | `E_VARIANT_LIMIT` | 429 | Max variants reached (5) | No retry | Disable variant button |
 | `E_VALIDATION` | 400 | Invalid input | No retry | Show error, no retry |
 | `E_SERVER` | 500 | Generic server error | Retry available | Show retry button |
 
+(*) Note: E_NETWORK currently maps to 500; consider using 502/503 for upstream/network errors in future iterations.
+
 **Configuration Constants:**
-- `MAX_VARIANTS_PER_ROAST = 5` - Maximum regeneration attempts per roast
-- `VARIANT_GENERATION_TIMEOUT = 30000` - 30 seconds timeout for OpenAI calls
-- `maxRetries: 1` - Reduced OpenAI retries for faster failure detection
+- `MAX_VARIANTS_PER_ROAST = 5` — Maximum regeneration attempts per roast
+- `VARIANT_GENERATION_TIMEOUT = 30000` — 30s timeout for OpenAI calls
+- `maxRetries (UI/OpenAI client): 1` — Fail-fast for manual-approval fetches (Issue #419)
+  (Service-level generation retries remain 3; see "Retry Logic" section above)
 
 ## Monitoring & Observability
 
