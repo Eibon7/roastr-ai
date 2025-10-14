@@ -46,57 +46,31 @@ const monitoringService = require('./services/monitoringService');
 const alertingService = require('./services/alertingService');
 
 // Import auth routes and middleware
-console.log('[DEBUG] About to import routes...');
-console.log('[DEBUG] Loading auth routes...');
 const authRoutes = require('./routes/auth');
-console.log('[DEBUG] Loading integrations routes...');
 const integrationsRoutes = require('./routes/integrations');
-console.log('[DEBUG] Loading oauth routes...');
 const oauthRoutes = require('./routes/oauth');
-console.log('[DEBUG] Loading webhooks routes...');
 const webhooksRoutes = require('./routes/webhooks');
-console.log('[DEBUG] Loading admin routes...');
 const adminRoutes = require('./routes/admin');
-console.log('[DEBUG] Loading user routes...');
 const userRoutes = require('./routes/user');
-console.log('[DEBUG] Loading billing routes...');
 const billingRoutes = require('./routes/billing');
-console.log('[DEBUG] Loading shop routes...');
 const shopRoutes = require('./routes/shop');
-console.log('[DEBUG] Loading dashboard routes...');
 const dashboardRoutes = require('./routes/dashboard');
-console.log('[DEBUG] Loading plan routes...');
 const { router: planRoutes } = require('./routes/plan');
-console.log('[DEBUG] Loading newIntegrations routes...');
 const { router: newIntegrationsRoutes } = require('./routes/integrations-new');
-console.log('[DEBUG] Loading styleProfile routes...');
 const styleProfileRoutes = require('./routes/style-profile');
-console.log('[DEBUG] Loading styleProfileExtraction routes...');
 const styleProfileExtractionRoutes = require('./routes/styleProfileExtraction');
-console.log('[DEBUG] Loading stylecards routes...');
 const stylecardsRoutes = require('./routes/stylecards');
-console.log('[DEBUG] Loading config routes...');
 const configRoutes = require('./routes/config');
-console.log('[DEBUG] Loading approval routes...');
 const approvalRoutes = require('./routes/approval');
-console.log('[DEBUG] Loading analytics routes...');
 const analyticsRoutes = require('./routes/analytics');
-console.log('[DEBUG] Loading notifications routes...');
 const notificationsRoutes = require('./routes/notifications');
-console.log('[DEBUG] Loading roast routes...');
 const roastRoutes = require('./routes/roast');
-console.log('[DEBUG] Loading settings routes...');
 const settingsRoutes = require('./routes/settings');
-console.log('[DEBUG] Loading comments routes...');
 const commentsRoutes = require('./routes/comments');
-console.log('[DEBUG] Loading triage routes...');
 const triageRoutes = require('./routes/triage');
-console.log('[DEBUG] Loading auth middleware...');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
-console.log('[DEBUG] All routes imported successfully');
 
 const app = express();
-console.log('[DEBUG] Express app created');
 const port = process.env.PORT || 3000;
 
 // Configure trust proxy for proper IP detection in production
@@ -533,26 +507,20 @@ app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
 app.use('/api/admin', adminRoutes);
 
 // Guardian governance routes (Phase 17)
-console.log('[DEBUG] About to require guardian routes...');
 const guardianRoutes = require('./routes/guardian');
 app.use('/api/guardian', guardianRoutes);
-console.log('[DEBUG] Guardian routes loaded successfully');
 
 // Instancia del generador de roasts
-console.log('[DEBUG] About to initialize RoastGeneratorReal...');
 let roastGenerator;
 try {
   roastGenerator = new RoastGeneratorReal();
-  console.log('[DEBUG] RoastGeneratorReal initialized successfully');
 } catch (error) {
   console.error("❌ Error inicializando RoastGenerator:", error.message);
   process.exit(1);
 }
 
 // Instancia del servicio de CSV roasts
-console.log('[DEBUG] About to initialize CsvRoastService...');
 const csvRoastService = new CsvRoastService();
-console.log('[DEBUG] CsvRoastService initialized successfully');
 
 // Ruta principal: servir React app
 app.get('/', (req, res) => {
@@ -853,13 +821,7 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 // Export app for testing
 let server;
 
-console.log('[DEBUG] About to check if require.main === module...');
-console.log('[DEBUG] require.main:', require.main?.filename);
-console.log('[DEBUG] module:', module.filename);
-console.log('[DEBUG] Are they equal?', require.main === module);
-
 if (require.main === module) {
-  console.log('[DEBUG] Entering main module block...');
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
   // Improved SPA routing with regex to exclude more paths for better performance
@@ -914,7 +876,6 @@ if (require.main === module) {
     }
   }
 
-  console.log(`[DEBUG] About to start server on port ${port}...`);
   server = app.listen(port, () => {
     console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
     console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
