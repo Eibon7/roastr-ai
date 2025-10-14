@@ -821,6 +821,11 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 // Export app for testing
 let server;
 
+console.log('[DEBUG] About to check if require.main === module...');
+console.log('[DEBUG] require.main:', require.main?.filename);
+console.log('[DEBUG] module:', module.filename);
+console.log('[DEBUG] Are they equal?', require.main === module);
+
 if (require.main === module) {
   console.log('[DEBUG] Entering main module block...');
   // Add catch-all handler only when running as main module (not in tests)
