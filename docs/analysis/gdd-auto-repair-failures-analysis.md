@@ -49,6 +49,7 @@ No - Script behavior is CORRECT (don't apply fixes that worsen health).
 No - This is a **false positive**. Rollback is working as designed.
 
 **Why is this happening frequently?**
+
 - Health scores fluctuate in 87-95 range
 - Small changes can tip score slightly
 - Auto-repair may fix one metric but worsen another
@@ -56,6 +57,7 @@ No - This is a **false positive**. Rollback is working as designed.
 ### Recommended Fix
 
 **Option A: Suppress issue creation for rollbacks**
+
 ```yaml
 # In .github/workflows/gdd-repair.yml
 - name: Capture rollback status
@@ -70,6 +72,7 @@ No - This is a **false positive**. Rollback is working as designed.
 ```
 
 **Option B: Tolerate small health decreases**
+
 ```javascript
 // In scripts/auto-repair-gdd.js
 const HEALTH_TOLERANCE = 0.5; // Allow 0.5 point decrease
@@ -112,6 +115,7 @@ Yes - Race condition between concurrent workflow runs.
 Maybe - First failure yes, retries no (with deduplication now in place).
 
 **Why is this happening?**
+
 - PR receives multiple pushes rapidly
 - Each triggers auto-repair workflow
 - Both attempt to push at same time
@@ -119,6 +123,7 @@ Maybe - First failure yes, retries no (with deduplication now in place).
 ### Recommended Fix
 
 **Option A: Add concurrency control**
+
 ```yaml
 # In .github/workflows/gdd-repair.yml
 concurrency:
@@ -127,6 +132,7 @@ concurrency:
 ```
 
 **Option B: Implement retry logic**
+
 ```yaml
 - name: Commit and push fixes (with retry)
   run: |
@@ -147,10 +153,12 @@ concurrency:
 ### Duplicate Issue Creation
 
 **Before this analysis:**
+
 - 7 auto-repair failure issues open
 - Some from same PR (duplicates)
 
 **After deduplication implementation:**
+
 - Issues now update existing instead of creating new
 - Problem should reduce from 7 → 5 actual PRs
 
@@ -161,6 +169,7 @@ Health scores fluctuating in narrow range (87-95) makes auto-repair sensitive to
 
 **Recommendation:**
 Consider implementing "health score bands":
+
 - 95-100: Excellent
 - 85-94: Good (allow small decreases within band)
 - 75-84: Degraded
@@ -193,12 +202,14 @@ Consider implementing "health score bands":
 ## Metrics
 
 **Before Analysis:**
+
 - Open auto-repair issues: 7
 - Duplicates: ~3 (43%)
 - False positives: ~4 (57%)
 - True errors: ~3 (43%)
 
 **After Fixes (Projected):**
+
 - Open issues: ~2-3 (real errors only)
 - Duplicates: 0 (deduplication working)
 - False positives: 0 (rollback suppression)

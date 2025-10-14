@@ -10,7 +10,9 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      contents: read        # For actions/checkout
+      issues: write         # For closing issues
+      pull-requests: read   # For checking PR status
 
     steps:
       - name: Checkout code
@@ -26,8 +28,8 @@ jobs:
 
             console.log(`🔍 Searching for GDD issues older than ${STALE_DAYS} days (before ${staleDate.toISOString()})`);
 
-            // Get all open GDD issues
-            const { data: gddIssues } = await github.rest.issues.listForRepo({
+            // Get all open GDD issues (with pagination)
+            const gddIssues = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
@@ -41,10 +43,11 @@ jobs:
             let keptCount = 0;
 
             for (const issue of gddIssues) {
-              const issueDate = new Date(issue.created_at);
+              // Use updated_at for staleness (better indicator of recent activity)
+              const issueDate = new Date(issue.updated_at);
               const ageInDays = Math.floor((Date.now() - issueDate) / (1000 * 60 * 60 * 24));
 
-              // Check if issue is stale
+              // Check if issue is stale (no updates in STALE_DAYS)
               if (issueDate < staleDate) {
                 // Extract PR number from title if exists
                 const prMatch = issue.title.match(/PR #(\d+)/);

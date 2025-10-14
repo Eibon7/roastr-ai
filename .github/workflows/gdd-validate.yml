@@ -255,16 +255,13 @@ jobs:
             *Last updated: ${new Date().toISOString()}*
             `;
 
-            // Check if issue already exists
-            const { data: existingIssues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'gdd',
-              per_page: 100
+            // Check if issue already exists (use Search API for efficiency)
+            const { data: searchResults } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:gdd in:title "${issueTitle}"`,
+              per_page: 1
             });
 
-            const existingIssue = existingIssues.find(issue => issue.title === issueTitle);
+            const existingIssue = searchResults.items[0];
 
             if (existingIssue) {
               // Update existing issue
