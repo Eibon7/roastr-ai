@@ -546,6 +546,12 @@ const mockConfig = createMockRoastConfig({
 
 ### E2E Tests (Issue #419)
 
+**Test Suite:** [`tests/e2e/manual-approval-resilience.spec.js`](../../tests/e2e/manual-approval-resilience.spec.js)
+
+**Frontend Implementation:** [`public/js/manual-approval.js`](../../public/js/manual-approval.js)
+
+**Backend Error Handling:** [`src/routes/approval.js`](../../src/routes/approval.js)
+
 | Test File | Focus | Tests | Status |
 |-----------|-------|-------|--------|
 | `manual-approval-resilience.spec.js` | UI resilience for manual approval flow | 17 | ✅ Implemented |
