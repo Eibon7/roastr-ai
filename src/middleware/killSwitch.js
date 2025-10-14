@@ -144,6 +144,8 @@ class KillSwitchService {
      */
     async initialize() {
         try {
+            // Ensure cache directory exists before any cache operations
+            await this.ensureCacheDirectory();
             await this.refreshCache();
             this.isInitialized = true;
             logger.info('Kill switch service initialized');
