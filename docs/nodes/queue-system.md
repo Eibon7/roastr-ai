@@ -5,7 +5,7 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-10-14
-**Coverage:** 12%
+**Coverage:** 6%
 **Coverage Source:** auto
 **Version:** 1.2.0
 **Related PRs:** #458, #499
@@ -478,7 +478,7 @@ WORKER_POLL_INTERVAL=1000  # ms
 
 ### Coverage
 
-**Overall:** 12% (updated 2025-10-14)
+**Overall:** 6% (updated 2025-10-14)
 - queueService.js: 11.91% lines (28/235 lines covered)
 - BaseWorker.js: 0% (needs test coverage)
 - Lines: 12%
