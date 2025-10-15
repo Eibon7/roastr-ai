@@ -547,24 +547,29 @@ const mockConfig = createMockRoastConfig({
 ### E2E Tests (Issue #419)
 
 **Test Suite:** [`tests/e2e/manual-approval-resilience.spec.js`](../../tests/e2e/manual-approval-resilience.spec.js)
+
 **Frontend Implementation:** [`public/js/manual-approval.js`](../../public/js/manual-approval.js)
+
 **Backend Error Handling:** [`src/routes/approval.js`](../../src/routes/approval.js)
 
-**Focus:** Manual Approval UI resilience under timeout, network errors, variant exhaustion scenarios.
+| Test File | Focus | Tests | Status |
+|-----------|-------|-------|--------|
+| `manual-approval-resilience.spec.js` | UI resilience for manual approval flow | 17 | ✅ Implemented |
 
-**Key Tests:**
-- Timeout handling with graceful degradation (30s)
-- Network error recovery with retry logic
-- Variant exhaustion (max 5 per roast) with fallback UI
-- Error code propagation (E_TIMEOUT, E_NETWORK, E_VARIANT_LIMIT, E_VALIDATION, E_SERVER)
-- Loading state management and user feedback
-- Rate limiting and concurrent request handling
+**Test Coverage:**
+- AC #1: Timeout handling (3 tests) - 30s timeout, retry, no hanging
+- AC #2: Network error handling (4 tests) - approval, variant, rejection, transient recovery
+- AC #3: Variant exhaustion (3 tests) - 429 handling, approval/rejection still available
+- AC #4: Error messages (3 tests) - clear messages, no sensitive data, actionable guidance
+- AC #5: Retry functionality (4 tests) - conditional retry, no duplication
 
-**Configuration:**
-- `maxRetries (UI/OpenAI client): 1` — Fail-fast for manual-approval fetches (Issue #419)
-  (Service-level generation retries remain 3; see "Retry Logic" section above)
-- `VARIANT_GENERATION_TIMEOUT: 30000ms` — OpenAI timeout for variant generation
-- `MAX_VARIANTS_PER_ROAST: 5` — Hard limit to prevent infinite loops
+**Infrastructure:**
+- Playwright E2E framework with Chromium browser
+- Mock server pattern for API simulation
+- Screenshot/video capture on failure
+- CI/CD integration via GitHub Actions
+
+**Configuration:** `playwright.config.js` - 30s timeout, retry: 1, screenshots on failure
 
 ## Feature Flags
 
@@ -633,6 +638,26 @@ this.openai = new OpenAI({
 }
 ```
 
+### Error Codes (Issue #419)
+
+**Backend Error Codes** (`src/routes/approval.js`):
+
+| Code | HTTP Status | Meaning | Recovery | Frontend Action |
+|------|-------------|---------|----------|-----------------|
+| `E_TIMEOUT` | 408 | Operation timed out (>30s) | Retry available | Show retry button |
+| `E_NETWORK` | 500 | Network error (*) | Retry available | Show retry button |
+| `E_VARIANT_LIMIT` | 429 | Max variants reached (5) | No retry | Disable variant button |
+| `E_VALIDATION` | 400 | Invalid input | No retry | Show error, no retry |
+| `E_SERVER` | 500 | Generic server error | Retry available | Show retry button |
+
+(*) Note: E_NETWORK currently maps to 500; consider using 502/503 for upstream/network errors in future iterations.
+
+**Configuration Constants:**
+- `MAX_VARIANTS_PER_ROAST = 5` — Maximum regeneration attempts per roast
+- `VARIANT_GENERATION_TIMEOUT = 30000` — 30s timeout for OpenAI calls
+- `maxRetries (UI/OpenAI client): 1` — Fail-fast for manual-approval fetches (Issue #419)
+  (Service-level generation retries remain 3; see "Retry Logic" section above)
+
 ## Monitoring & Observability
 
 ### Logging
@@ -674,8 +699,9 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 - **Backend Developer**
 - **Documentation Agent**
+- **Front-end Dev** (Issue #419 - Manual approval UI)
 - **Orchestrator**
-- **Test Engineer**
+- **Test Engineer** (Issue #419 - E2E resilience tests)
 
 
 ## Related Nodes

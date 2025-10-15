@@ -18,6 +18,9 @@ const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 require('dotenv').config();
 
+// Timeout configuration (Issue #419)
+const VARIANT_GENERATION_TIMEOUT = 30000; // 30 seconds
+
 class RoastGeneratorEnhanced {
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -29,7 +32,12 @@ class RoastGeneratorEnhanced {
       return;
     }
 
-    this.openai = new OpenAI({ apiKey });
+    // Issue #419: Add timeout to OpenAI client
+    this.openai = new OpenAI({
+      apiKey,
+      timeout: VARIANT_GENERATION_TIMEOUT,
+      maxRetries: 1 // Reduced retries for faster failure detection
+    });
     this.rqcService = new RQCService(this.openai);
     this.promptTemplate = new RoastPromptTemplate();
     this.isMockMode = false;

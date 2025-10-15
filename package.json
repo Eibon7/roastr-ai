@@ -109,7 +109,11 @@
     "test:mvp:unit": "jest --config=jest.testing-mvp.config.js --selectProjects unit",
     "test:mvp:coverage": "jest --config=jest.testing-mvp.config.js --coverage",
     "test:mvp:watch": "jest --config=jest.testing-mvp.config.js --watch",
-    "test:mvp:ci": "jest --config=jest.testing-mvp.config.js --ci --runInBand --coverage"
+    "test:mvp:ci": "jest --config=jest.testing-mvp.config.js --ci --runInBand --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
   },
   "repository": {
     "type": "git",
@@ -182,6 +186,7 @@
     "@babel/preset-env": "^7.28.0",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
+    "@playwright/test": "^1.56.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
@@ -196,7 +201,7 @@
     "jest-junit": "^16.0.0",
     "jsdom": "^26.1.0",
     "nock": "^13.3.3",
-    "playwright": "^1.55.0",
+    "playwright": "^1.56.0",
     "supertest": "^7.1.4"
   }
 }

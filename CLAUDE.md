@@ -49,8 +49,6 @@ npm run queue:retry              # Retry failed jobs
 npm run setup:test-users:dry     # Preview test users
 npm run setup:test-users         # Create test users
 
-# Twitter bot
-npm run twitter                  # Run Twitter bot
 ```
 
 ### GDD Command Reference
@@ -152,20 +150,17 @@ tests/
 - `ROAST_API_URL` - URL of roast API (defaults to production)
 - `SHIELD_ENABLED` - Enable Shield moderation (default: true for Pro+ plans)
 
-### Setting up OpenAI API
+### Setting up Integrations
 
+**Platform integrations** (Twitter, YouTube, Instagram, etc.):
+- 🔗 **Full details**: `docs/INTEGRATIONS.md`
+- Setup instructions for all 9 supported platforms
+- API credentials, rate limits, and architecture
+
+**OpenAI API setup:**
 1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Create `.env` file: `OPENAI_API_KEY=your_key_here`
-3. Run: `npm run roast "tu comentario aquí"`
-
-### Setting up Twitter Integration
-
-1. Create Twitter Developer account at [developer.twitter.com](https://developer.twitter.com)
-2. Create project and application
-3. Configure permissions to "Read and Write"
-4. Generate OAuth 1.0a tokens + Bearer Token
-5. Add credentials to `.env`
-6. Run: `npm run twitter`
+2. Add to `.env`: `OPENAI_API_KEY=your_key_here`
+3. Test: `npm run roast "tu comentario aquí"`
 
 ## Multi-Tenant Architecture
 
@@ -249,12 +244,6 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 - Platform-specific constraints (character limits, style guides)
 - Plan differentiation (Free excludes references, Pro+ includes full examples)
 
-## Twitter Bot Features
-
-- Mention monitoring, toxicity filtering, roast generation
-- Duplicate prevention via `data/processed_tweets.json`
-- Rate limiting and error handling
-
 ## Orquestación y Reglas
 
 ### Función de Orquestador
@@ -314,6 +303,95 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 - **Si código nuevo sin tests → coordinar con Test Engineer** antes de cerrar
 - **Cambios en UI/frontend deben incluir evidencias visuales**: capturas + report.md en docs/test-evidence/
 
+### Integration Workflow & Error Prevention
+
+**⚠️ CRITICAL: Before implementing ANY platform integration, follow this protocol to prevent past mistakes.**
+
+**Phase 1: Pre-Implementation (MANDATORY)**
+
+1. **Read integration documentation FIRST:**
+   ```bash
+   # ALWAYS read before starting
+   docs/INTEGRATIONS.md
+   docs/nodes/social-platforms.md
+   ```
+
+2. **Verify naming conventions:**
+   - Service file: `<platform>Service.js` (e.g., `twitterService.js`)
+   - Class name: PascalCase (e.g., `TwitterService`)
+   - Env vars: `<PLATFORM>_<PROPERTY>` (e.g., `TWITTER_API_KEY`)
+   - Test file: `<platform>.test.js`
+
+3. **Check for existing implementation:**
+   ```bash
+   grep -r "class <Platform>Service" src/integrations/
+   ls src/integrations/<platform>/
+   ```
+
+**Phase 2: Implementation Checklist**
+
+- [ ] Service implements required interface: `authenticate()`, `fetchComments()`, `postReply()`, `blockUser()`
+- [ ] Added platform routing in `FetchCommentsWorker.js`
+- [ ] Created integration tests in `tests/integration/<platform>.test.js`
+- [ ] NO hardcoded credentials (use env vars only)
+- [ ] NO env var examples in public docs (use "🔐 Requires environment variables" line)
+- [ ] Error handling for rate limits implemented
+- [ ] Logging uses `utils/logger.js` (not `console.log`)
+
+**Phase 3: Post-Implementation (MANDATORY)**
+
+1. **Update documentation:**
+   - [ ] Added platform section to `docs/INTEGRATIONS.md` following established format
+   - [ ] Updated `docs/nodes/social-platforms.md` with new platform entry
+   - [ ] Added to integration status check in `scripts/update-integration-status.js`
+
+2. **Validate naming consistency:**
+   ```bash
+   # Service file exists
+   ls src/integrations/<platform>/<platform>Service.js
+
+   # Worker routing added
+   grep -i "<platform>" src/workers/FetchCommentsWorker.js
+
+   # Tests exist
+   ls tests/integration/<platform>.test.js
+   ```
+
+**Common Past Mistakes (Learn from CodeRabbit):**
+
+❌ **Mistake 1: Duplicated naming**
+- Issue: Created `twitterIntegration.js` when `twitterService.js` existed
+- Fix: Always search codebase first, follow naming convention
+
+❌ **Mistake 2: Forgotten service registration**
+- Issue: Created service but forgot to register in FetchCommentsWorker
+- Fix: Follow checklist, grep for platform name in worker files
+
+❌ **Mistake 3: Token leakage in docs**
+- Issue: Added `YOUTUBE_API_KEY=your_key_here` to public docs
+- Fix: NEVER include env var examples in docs/INTEGRATIONS.md
+
+❌ **Mistake 4: Inconsistent error handling**
+- Issue: Each integration handled rate limits differently
+- Fix: Follow existing patterns in other services, use shared utilities
+
+❌ **Mistake 5: Missing tests**
+- Issue: Integration deployed without integration tests
+- Fix: Checklist item mandatory, tests must exist before PR
+
+❌ **Mistake 6: Outdated documentation**
+- Issue: Implemented integration but forgot to update docs/INTEGRATIONS.md
+- Fix: Phase 3 checklist mandatory, no PR without doc updates
+
+**Enforcement:**
+
+- ✅ This checklist is part of Pre-Flight Checklist
+- ✅ CodeRabbit will flag violations
+- ✅ 0 comments rule applies (fix ALL suggestions)
+- ✅ GDD validation includes integration documentation check
+
+**Principle:** "Hacer las cosas bien y escalables" - Take time to do it right the first time. Self-document, follow conventions, maintain consistency.
+
 ### Task Assessment (FASE 0 - OBLIGATORIA)
 
 **IMPORTANTE**: Antes de cualquier planning o implementación, SIEMPRE evalúa el estado actual de la tarea.
@@ -333,11 +411,41 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 
 **Workflow:**
 1. Identificar tipo (contar AC, determinar complejidad)
-2. Ejecutar assessment (inline o agent)
-3. Recibir recomendación: CREATE | FIX | ENHANCE | CLOSE
-4. Actuar según recomendación
+2. **LEER `docs/patterns/coderabbit-lessons.md`** (patrones conocidos)
+3. Ejecutar assessment (inline o agent)
+4. Recibir recomendación: CREATE | FIX | ENHANCE | CLOSE
+5. Actuar según recomendación
 
-🔗 **Ejemplos detallados**: Ver sección completa en líneas 448-468 del archivo original
+🔗 **Patrones aprendidos**: `docs/patterns/coderabbit-lessons.md`
+
+### CodeRabbit Lessons - Workflow de Aprendizaje
+
+**OBLIGATORIO: Leer antes de TODA implementación (FASE 0 o FASE 2)**
+
+**Antes de implementar:**
+1. **Leer:** `docs/patterns/coderabbit-lessons.md`
+2. **Consultar:** Patrones conocidos (ESLint, testing, GDD, security)
+3. **Aplicar:** Checklist pre-implementación del documento
+
+**Durante implementación:**
+- Seguir reglas documentadas
+- Evitar patrones conocidos (semicolons, const/let, console.log, etc.)
+- Aplicar fixes preventivos
+
+**Después de review CodeRabbit:**
+1. **Identificar nuevos patrones** (≥2 ocurrencias del mismo error)
+2. **Actualizar:** `docs/patterns/coderabbit-lessons.md`
+   - Añadir sección ❌ Mistake / ✅ Fix
+   - Actualizar estadísticas
+3. **Generar SUMMARY:** Usar `docs/templates/SUMMARY-template.md`
+   - Enfoque en patrones, NO cronología
+   - Máximo 50 líneas (vs 300+ antes)
+   - Extraer root causes y acciones correctivas
+4. **Commit:** `docs(patterns): Add CodeRabbit lesson - <patrón>`
+
+**Objetivo:** Reducir tasa de repetición <10% en todos los patrones
+
+**Beneficio:** Menos idas y venidas con CodeRabbit = menos tokens + faster reviews
 
 ### Planning Mode
 
@@ -409,88 +517,31 @@ node scripts/auto-repair-gdd.js --auto-fix
 
 **CI/CD**: Blocks merge if coverage integrity violations detected
 
-### 🎓 GDD Health Score Management - Critical Lessons Learned
+### 🎓 GDD Health Score Management - Principios Fundamentales
 
-**⚠️ NUNCA ajustar thresholds sin investigación exhaustiva. Esto es BÁSICO y FUNDAMENTAL para GDD.**
+**⚠️ NUNCA ajustar thresholds sin investigación exhaustiva.**
 
-**Workflow OBLIGATORIO cuando CI GDD falla:**
+**Workflow cuando CI GDD falla:**
 
-1. **NUNCA hacer shortcuts**:
-   - ❌ NO ajustar `.gddrc.json` threshold sin más
-   - ❌ NO bajar números solo para pasar CI
-   - ❌ NO asumir que el problema es solo el threshold
-   - ✅ SÍ investigar root cause primero
+1. **Ver score real:** `node scripts/score-gdd-health.js --ci`
+2. **Mapear cambios:** test files → source files → GDD nodes
+3. **Calcular coverage real:** `npm test -- --coverage` → revisar `coverage-summary.json`
+4. **Actualizar nodos:** Editar `docs/nodes/*.md` con valores reales
+5. **Regenerar score:** Verificar si threshold es alcanzable matemáticamente
+6. **Solo entonces ajustar threshold** con justificación técnica detallada en `.gddrc.json`
 
-2. **Proceso correcto (metodología GDD fundamental):**
-   ```bash
-   # Paso 1: Ver health score REAL
-   node scripts/score-gdd-health.js --ci
+**Principios:**
+- ❌ NO shortcuts: No bajar números solo para pasar CI
+- ❌ NO exponer keys: NUNCA incluir API keys, tokens, passwords en código o docs públicas
+- ✅ Tests fallidos = oportunidades: Arreglar ANTES de continuar
+- ✅ Documentar decisiones: Incluir `note` + `temporary_until` en `.gddrc.json`
+- ✅ **Hacer las cosas bien y escalables:** Investigar root cause, no parches rápidos
 
-   # Paso 2: Identificar qué nodos corresponden a tests nuevos
-   # - Mapear test files → source files → GDD nodes
-   # - Ejemplo: tierValidation.test.js → src/middleware/tierValidation.js → node "plan-features"
+**Mentalidad:** GDD threshold es indicador de salud del sistema, no obstáculo burocrático.
 
-   # Paso 3: Calcular coverage REAL desde tests
-   npm test -- --coverage
-   # Revisar coverage/coverage-summary.json para valores exactos
+**Security:** Todas las credenciales en env vars. Docs públicas: usar "🔐 Requires environment variables"
 
-   # Paso 4: Actualizar nodos con coverage real
-   # Editar docs/nodes/*.md con valores de coverage-summary.json
-
-   # Paso 5: Regenerar health score
-   node scripts/score-gdd-health.js --ci
-
-   # Paso 6: Verificar si se alcanza threshold
-   # Si NO se alcanza después de actualización correcta:
-   # - Analizar matemáticamente si es posible (gap, puntos necesarios)
-   # - Solo entonces ajustar threshold con justificación TÉCNICA detallada
-   ```
-
-3. **Tests fallidos son oportunidades**:
-   - ✅ Arreglar tests fallidos ANTES de continuar
-   - ✅ Bugs encontrados en producción → arreglar ahora
-   - ✅ False positives → arreglar lógica de validación
-   - ✅ Contribuye a health score y calidad general
-
-4. **Coverage Integrity Violations**:
-   - Si hay critical violations, verificar `coverage-summary.json`
-   - Puede estar desactualizado si solo corriste tests específicos
-   - Opciones:
-     - A) Correr full test suite: `npm test -- --coverage`
-     - B) Sincronizar valores con realidad actual
-     - C) Ajustar `fail_on_coverage_integrity: false` si violations son reales
-
-5. **Documentar decisiones**:
-   - Threshold adjustments deben tener `note` detallado en `.gddrc.json`
-   - Incluir: razón técnica, estado actual, plan de recuperación
-   - Establecer `temporary_until` date para recordar restaurar
-
-6. **Actualizar CI workflow si es necesario**:
-   - El workflow debe respetar configuración de `.gddrc.json`
-   - Verificar que flags como `fail_on_coverage_integrity` se lean correctamente
-   - Testear cambios localmente antes de push
-
-**Ejemplo Real (Issue #540 - 2025-10-13):**
-
-❌ **Primer intento (incorrecto):**
-- CI falla con health 87.9 < threshold 90
-- Cambié threshold de 90 → 89 sin investigar
-- Usuario preguntó: "has cambiado el número sin más?"
-- **Lección:** Shortcuts violan principios fundamentales de GDD
-
-✅ **Segundo intento (correcto):**
-- Ejecuté `node scripts/score-gdd-health.js --ci` → 88.2 real
-- Identifiqué tests → nodos: tierValidation → plan-features
-- Actualicé coverage con datos de `coverage-summary.json`
-- Arreglé 4 tests fallidos (encontrados bugs reales en `inputValidation.js`)
-- Regeneré score → 88.7/100
-- Analicé matemáticamente: imposible llegar a 90 sin más tests
-- Ajusté threshold a 88 con justificación técnica completa
-- Actualicé workflow para respetar `fail_on_coverage_integrity: false`
-
-**Resultado:** CI desbloqueado correctamente, siguiendo metodología GDD adecuada
-
-**Mentalidad:** El threshold GDD no es un obstáculo burocrático, es un indicador de salud del sistema. Bajarlo sin entender por qué es como ignorar el check engine light de un auto.
+🔗 **Lección completa con ejemplo:** `docs/lessons/gdd-threshold-management.md`
 
 ### GDD Activation - Issue Analysis & Context Loading
 
@@ -525,115 +576,21 @@ node scripts/auto-repair-gdd.js --auto-fix
 
 **Fallback**: Si no puedes determinar nodos → preguntar al usuario área de feature
 
-## GDD 2.0 Reference
+## GDD 2.0 - Quick Reference
 
-### Runtime Validation Workflow
+| Phase | Command | Threshold | Full Documentation |
+|-------|---------|-----------|-------------------|
+| **Validation** | `validate-gdd-runtime.js --full` | 🟢 HEALTHY | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#validation) |
+| **Health Score** | `score-gdd-health.js --ci` | ≥87 (temp until 2025-10-31) | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#health) |
+| **Drift Detection** | `predict-gdd-drift.js --full` | <60 risk | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#drift) |
+| **Auto-Repair** | `auto-repair-gdd.js --auto-fix` | N/A | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#repair) |
+| **CI/CD** | Automated workflows | Health ≥87 | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#cicd) |
+| **Telemetry** | `collect-gdd-telemetry.js` | N/A | [GDD-TELEMETRY.md](docs/GDD-TELEMETRY.md) |
+| **Cross-Val** | `validate-gdd-cross.js --full` | N/A | [GDD-PHASE-15.md](docs/GDD-PHASE-15.md) |
 
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#runtime-validation`
+**Before PR:** `Health ≥87`, `Drift <60`, `Tests 100%`, `Coverage: auto`
 
-GDD Runtime Validator monitors coherence between `system-map.yaml`, `docs/nodes/**`, `spec.md`, and `src/**`.
-
-**Key Commands:**
-```bash
-node scripts/validate-gdd-runtime.js --full    # Validate entire system
-node scripts/validate-gdd-runtime.js --ci      # CI mode (exit 1 on errors)
-node scripts/watch-gdd.js                      # Watch mode (development)
-```
-
-**Status Levels:** 🟢 HEALTHY | 🟡 WARNING | 🔴 CRITICAL
-
-**Before PR Merge:** Run full validation, ensure 🟢 HEALTHY or acceptable 🟡 WARNING
-
----
-
-### Node Health Scoring System (Phase 7)
-
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#health-scoring`
-
-Quantitative metrics (0-100) based on weighted factors: Sync Accuracy (30%), Update Freshness (20%), Dependency Integrity (20%), Coverage Evidence (20%), Agent Relevance (10%).
-
-**Commands:**
-```bash
-node scripts/score-gdd-health.js              # Standalone scoring
-node scripts/validate-gdd-runtime.js --score  # Combined validation + scoring
-```
-
-**Status:** 🟢 HEALTHY (80-100) | 🟡 DEGRADED (50-79) | 🔴 CRITICAL (<50)
-
-**Before PR:** Average score > 75, no critical nodes
-
----
-
-### Predictive Drift Detection (Phase 8)
-
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#drift-prediction`
-
-Calculates **Drift Risk Score (0-100)** based on: last updated, active warnings, test coverage, health score, recent activity.
-
-**Commands:**
-```bash
-node scripts/predict-gdd-drift.js --full         # Run drift prediction
-node scripts/predict-gdd-drift.js --ci           # CI mode (exit 1 if high-risk)
-node scripts/predict-gdd-drift.js --create-issues # Create issues for high-risk nodes
-```
-
-**Risk Levels:** 🟢 Healthy (0-30) | 🟡 At Risk (31-60) | 🔴 Likely Drift (61-100)
-
-**Before PR:** Check drift risk, address nodes with risk > 60
-
----
-
-### CI/CD GDD Automation (Phase 12)
-
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#cicd-automation`
-
-**Configuration:** `.gddrc.json` (min_health_score: 95, auto_fix: true, block_merge_below_health: 95)
-
-**Workflows:**
-1. **GDD Validation** (`.github/workflows/gdd-validate.yml`) - Validates on PR, blocks merge if health < 95
-2. **GDD Auto-Repair** (`.github/workflows/gdd-repair.yml`) - Auto-fixes missing sections, broken links
-
-**Before PR:**
-```bash
-node scripts/validate-gdd-runtime.js --full
-node scripts/predict-gdd-drift.js --full
-node scripts/compute-gdd-health.js --threshold=95
-node scripts/auto-repair-gdd.js --auto-fix  # If needed
-```
-
-**Success Criteria:** Health ≥ 95, no critical nodes, drift < 60
-
----
-
-### Telemetry & Analytics Layer (Phase 13)
-
-🔗 **Full details**: `docs/GDD-TELEMETRY.md`
-
-Historical telemetry tracks system evolution over time.
-
-**Key Metrics:** Health Score (≥95), Drift Risk (<25), Stability Index (≥90), Auto-Fix Success (≥90%), Momentum (>0)
-
-**Commands:** See `docs/GDD-TELEMETRY.md` for complete reference
-
----
-
-### Cross-Validation & Extended Health Metrics (Phase 15)
-
-🔗 **Full details**: `docs/GDD-PHASE-15.md`
-
-**System Health Intelligence Layer** with cross-validation and connectivity metrics.
-
-**Three Enhancements:**
-1. **Cross-Validation Engine**: Validates consistency between node metadata and runtime data
-2. **Integration Status Tracking**: Monitors 9 external platform integrations
-3. **Unified Health Intelligence**: Composite health score combining doc health, cross-validation, connectivity
-
-**Commands:** See `docs/GDD-PHASE-15.md` for complete reference
-
-**Performance Targets:**
-- Cross-validate 13 nodes: <1s (~800ms) ✅
-- Update integration status: <2s (~1.2s) ✅
-- Extended health scoring: <1s (~600ms) ✅
+**Status Levels:** 🟢 HEALTHY (80-100) | 🟡 DEGRADED (50-79) | 🔴 CRITICAL (<50)
 
 ---
 

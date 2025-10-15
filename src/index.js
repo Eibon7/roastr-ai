@@ -532,6 +532,11 @@ app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+// Direct route for manual approval UI (Issue #419 - E2E tests)
+app.get('/manual-approval.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/manual-approval.html'));
+});
+
 // Ruta para generar un roast normal
 app.post('/roast', async (req, res) => {
   const { message, tone } = req.body;
@@ -865,13 +870,15 @@ if (require.main === module) {
     });
   });
 
-  // Start Model Availability Worker (Issue #326)
-  try {
-    const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
-    const worker = startModelAvailabilityWorker();
-    console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
-  } catch (error) {
-    console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+  // Start Model Availability Worker (Issue #326) - Skip in test/E2E mode
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
+      const worker = startModelAvailabilityWorker();
+      console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
+    } catch (error) {
+      console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+    }
   }
 
   server = app.listen(port, () => {

@@ -1,18 +1,18 @@
 {
-  "generated_at": "2025-10-13T18:16:46.968Z",
+  "generated_at": "2025-10-15T12:58:52.566Z",
   "status": "HEALTHY",
-  "overall_score": 89.9,
+  "overall_score": 87.7,
   "total_nodes": 15,
   "healthy_count": 15,
   "degraded_count": 0,
   "critical_count": 0,
   "nodes": {
     "analytics": {
-      "score": 93,
+      "score": 92,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -21,11 +21,11 @@
       "issues": []
     },
     "billing": {
-      "score": 93,
+      "score": 92,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -34,24 +34,24 @@
       "issues": []
     },
     "cost-control": {
-      "score": 85,
+      "score": 82,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 75
       },
       "issues": []
     },
     "guardian": {
-      "score": 89,
+      "score": 88,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
@@ -60,11 +60,11 @@
       "issues": []
     },
     "multi-tenant": {
-      "score": 93,
+      "score": 92,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -73,7 +73,7 @@
       "issues": []
     },
     "observability": {
-      "score": 86,
+      "score": 81,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -81,16 +81,16 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
     "persona": {
-      "score": 93,
+      "score": 92,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -99,11 +99,11 @@
       "issues": []
     },
     "plan-features": {
-      "score": 86,
+      "score": 85,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 100,
+        "updateFreshness": 96,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
@@ -112,11 +112,11 @@
       "issues": []
     },
     "platform-constraints": {
-      "score": 99,
+      "score": 98,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
@@ -125,37 +125,37 @@
       "issues": []
     },
     "queue-system": {
-      "score": 89,
+      "score": 83,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 98,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 50,
+        "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 70
       },
       "issues": []
     },
     "roast": {
-      "score": 86,
+      "score": 84,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 100,
+        "updateFreshness": 96,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 30,
+        "coverageEvidence": 50,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
     "shield": {
-      "score": 85,
+      "score": 84,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
@@ -164,24 +164,24 @@
       "issues": []
     },
     "social-platforms": {
-      "score": 89,
+      "score": 83,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
     "tone": {
-      "score": 93,
+      "score": 92,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -190,11 +190,11 @@
       "issues": []
     },
     "trainer": {
-      "score": 89,
+      "score": 88,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 88,
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
