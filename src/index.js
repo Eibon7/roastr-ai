@@ -511,21 +511,27 @@ const guardianRoutes = require('./routes/guardian');
 app.use('/api/guardian', guardianRoutes);
 
 // Instancia del generador de roasts
+console.log('[E2E-DEBUG] Before RoastGeneratorReal instantiation');
 let roastGenerator;
 try {
   roastGenerator = new RoastGeneratorReal();
+  console.log('[E2E-DEBUG] After RoastGeneratorReal instantiation');
 } catch (error) {
   console.error("❌ Error inicializando RoastGenerator:", error.message);
   process.exit(1);
 }
 
 // Instancia del servicio de CSV roasts
+console.log('[E2E-DEBUG] Before CsvRoastService instantiation');
 const csvRoastService = new CsvRoastService();
+console.log('[E2E-DEBUG] After CsvRoastService instantiation');
 
 // Ruta principal: servir React app
+console.log('[E2E-DEBUG] Defining root route handler');
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
 });
+console.log('[E2E-DEBUG] After root route handler defined');
 
 // Mantener acceso directo a index.html si es necesario (legacy)
 app.get('/home', (req, res) => {
