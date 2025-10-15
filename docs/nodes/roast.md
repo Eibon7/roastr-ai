@@ -5,14 +5,12 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-10-13
-**Coverage:** 0%
+**Coverage:** 50%
 **Coverage Source:** auto
 **Related PRs:** #499
 **Protected:** true
 **Last Verified:** 2025-10-10
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
-**Coverage:** 50%
-**Coverage:** 50%
 
 ## Dependencies
 
@@ -546,6 +544,27 @@ const mockConfig = createMockRoastConfig({
 });
 ```
 
+### E2E Tests (Issue #419)
+
+| Test File | Focus | Tests | Status |
+|-----------|-------|-------|--------|
+| `manual-approval-resilience.spec.js` | UI resilience for manual approval flow | 17 | ✅ Implemented |
+
+**Test Coverage:**
+- AC #1: Timeout handling (3 tests) - 30s timeout, retry, no hanging
+- AC #2: Network error handling (4 tests) - approval, variant, rejection, transient recovery
+- AC #3: Variant exhaustion (3 tests) - 429 handling, approval/rejection still available
+- AC #4: Error messages (3 tests) - clear messages, no sensitive data, actionable guidance
+- AC #5: Retry functionality (4 tests) - conditional retry, no duplication
+
+**Infrastructure:**
+- Playwright E2E framework with Chromium browser
+- Mock server pattern for API simulation
+- Screenshot/video capture on failure
+- CI/CD integration via GitHub Actions
+
+**Configuration:** `playwright.config.js` - 30s timeout, retry: 1, screenshots on failure
+
 ## Feature Flags
 
 | Flag | Default | Purpose |
@@ -578,6 +597,23 @@ const mockConfig = createMockRoastConfig({
   processingTimeMs: 5234
 }
 ```
+
+### Error Codes (Issue #419)
+
+**Backend Error Codes** (`src/routes/approval.js`):
+
+| Code | HTTP Status | Meaning | Recovery | Frontend Action |
+|------|-------------|---------|----------|-----------------|
+| `E_TIMEOUT` | 408 | Operation timed out (>30s) | Retry available | Show retry button |
+| `E_NETWORK` | 500 | Network error | Retry available | Show retry button |
+| `E_VARIANT_LIMIT` | 429 | Max variants reached (5) | No retry | Disable variant button |
+| `E_VALIDATION` | 400 | Invalid input | No retry | Show error, no retry |
+| `E_SERVER` | 500 | Generic server error | Retry available | Show retry button |
+
+**Configuration Constants:**
+- `MAX_VARIANTS_PER_ROAST = 5` - Maximum regeneration attempts per roast
+- `VARIANT_GENERATION_TIMEOUT = 30000` - 30 seconds timeout for OpenAI calls
+- `maxRetries: 1` - Reduced OpenAI retries for faster failure detection
 
 ## Monitoring & Observability
 
@@ -620,8 +656,9 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 - **Backend Developer**
 - **Documentation Agent**
+- **Front-end Dev** (Issue #419 - Manual approval UI)
 - **Orchestrator**
-- **Test Engineer**
+- **Test Engineer** (Issue #419 - E2E resilience tests)
 
 
 ## Related Nodes

@@ -1,0 +1,81 @@
+
+> roastr-ai@1.0.0 test:smoke
+> jest tests/smoke/ --verbose
+
+PASS node-tests tests/smoke/api-health.test.js
+  API Health Smoke Tests
+    Health Check Endpoints
+      ✓ GET /health should return 200 (15 ms)
+      ✓ GET /api/health should be accessible (10 ms)
+    Auth Endpoints Accessibility
+      ✓ POST /api/auth/register should be accessible (12 ms)
+      ✓ POST /api/auth/login should be accessible (1 ms)
+    Billing Endpoints Accessibility
+      ✓ GET /api/billing/plans should be accessible (2 ms)
+      ✓ POST /api/billing/create-checkout-session endpoint exists (1 ms)
+    Integration Endpoints Accessibility
+      ✓ GET /api/user/integrations endpoint exists (1 ms)
+      ✓ POST /api/user/integrations/connect endpoint exists (1 ms)
+    Error Handling
+      ✓ Non-existent endpoints should return proper error (3 ms)
+      ✓ Wrong HTTP method should return proper error (2 ms)
+    Security Headers
+      ✓ Should include security headers (1 ms)
+
+PASS node-tests tests/smoke/backofficeEndpoints.test.js
+  Backoffice Endpoints Smoke Tests
+    PUT /api/admin/backoffice/thresholds - Enhanced Validation
+      Valid thresholds
+        ✓ should accept valid threshold configuration (4 ms)
+      Invalid tau_roast_lower validation
+        ✓ should reject tau_roast_lower below 0 (2 ms)
+        ✓ should reject tau_roast_lower above 1 (1 ms)
+        ✓ should reject non-numeric tau_roast_lower (1 ms)
+      Invalid aggressiveness validation
+        ✓ should reject invalid aggressiveness values (1 ms)
+        ✓ should reject non-numeric aggressiveness (2 ms)
+      Threshold hierarchy validation
+        ✓ should reject tau_roast_lower >= tau_shield (1 ms)
+        ✓ should reject tau_shield >= tau_critical (1 ms)
+    Global Thresholds Endpoints
+      ✓ GET /api/admin/backoffice/thresholds should return 200 (2 ms)
+      ✓ PUT /api/admin/backoffice/thresholds should accept valid data (2 ms)
+    Healthcheck Endpoints
+      ✓ GET /api/admin/backoffice/healthcheck/status should return 200 (6 ms)
+      ✓ POST /api/admin/backoffice/healthcheck should accept platform list (2 ms)
+    Audit Export Endpoints
+      ✓ GET /api/admin/backoffice/audit/export should support CSV format (1 ms)
+      ✓ GET /api/admin/backoffice/audit/export should support JSON format (1 ms)
+      ✓ GET /api/admin/backoffice/audit/export should reject invalid format
+    Feature Flags Integration
+      ✓ Should be able to access backoffice feature flags through main feature flags endpoint (1 ms)
+    Error Handling
+      ✓ Should return proper error response for invalid threshold values (1 ms)
+      ✓ Should return proper error response for invalid aggressiveness (1 ms)
+    GDPR Compliance Verification
+      ✓ Should not expose user personal data in any backoffice endpoint (3 ms)
+    Authentication and Authorization
+      ✓ Should require admin privileges for all backoffice endpoints (3 ms)
+
+PASS node-tests tests/smoke/simple-health.test.js
+  Shield Action Executor Smoke Test
+    ✓ should initialize service correctly (1 ms)
+    ✓ should return metrics
+    ✓ should return circuit breaker status
+    ✓ should return adapter capabilities
+    ✓ should handle mock action execution (54 ms)
+
+PASS node-tests tests/smoke/feature-flags.test.js
+  Feature Flags Smoke Tests
+    ✓ Feature flags should initialize without errors
+    ✓ Should be able to check flag status
+    ✓ Should return service status
+    ✓ Should return all flags
+    ✓ Should handle unknown flags gracefully
+    ✓ Feature flags should be consistent
+
+Test Suites: 4 passed, 4 total
+Tests:       42 passed, 42 total
+Snapshots:   0 total
+Time:        2.053 s
+Ran all test suites matching tests/smoke/.
