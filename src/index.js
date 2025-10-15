@@ -821,7 +821,9 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 // Export app for testing
 let server;
 
+console.log('[E2E-DEBUG] Reached require.main check');
 if (require.main === module) {
+  console.log('[E2E-DEBUG] Inside require.main block, about to call app.listen()');
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
   // Improved SPA routing with regex to exclude more paths for better performance
