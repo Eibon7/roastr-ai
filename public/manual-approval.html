@@ -423,12 +423,12 @@
 
       if (error.message === 'TIMEOUT') {
         showError(
-          `La operación tardó demasiado. Por favor, intenta de nuevo.`,
+          `La operación al ${context} tardó demasiado. Por favor, intenta de nuevo.`,
           retryCallback
         );
       } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         showError(
-          `Error de red. Verifica tu conexión e intenta de nuevo.`,
+          `Error de red al ${context}. Verifica tu conexión e intenta de nuevo.`,
           retryCallback
         );
       } else if (error.status === 429 || error.message.includes('VARIANTS_EXHAUSTED')) {
@@ -438,7 +438,7 @@
         );
       } else if (error.status >= 500) {
         showError(
-          `Error del servidor. Por favor, intenta de nuevo más tarde.`,
+          `Error del servidor al ${context}. Por favor, intenta de nuevo más tarde.`,
           retryCallback
         );
       } else {
