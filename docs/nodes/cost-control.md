@@ -9,6 +9,7 @@
 **Coverage Source:** auto
 **Coverage Source:** mocked
 **Related PRs:** #499
+**Coverage:** 50%
 
 ## Dependencies
 

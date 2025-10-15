@@ -1,16 +1,14 @@
 # Auto-Repair Report
 
-**Generated:** 2025-10-15T17:18:40.505Z
-**Triggered by:** Manual
-**Health Score:** 87.7 → 88.5 (+0.8)
+**Generated:** 2025-10-15T19:26:35.175Z
+**Triggered by:** CI/CD
+**Health Score:** 88.5 → 88.5 (0.0)
 
-## ✅ Fixes Applied (5)
+## ✅ Fixes Applied (3)
 
-1. Reset coverage to 0% for cost-control (was 5%)
-2. Reset coverage to 3% for observability (was 14%)
-3. Reset coverage to 6% for queue-system (was 12%)
-4. Reset coverage to 0% for roast (was 50%)
-5. Reset coverage to 0% for social-platforms (was 50%)
+1. Added coverage to cost-control
+2. Added coverage to roast
+3. Added coverage to social-platforms
 
 ## ⚠️ Pending Human Review (0)
 
@@ -23,9 +21,9 @@ None
 ## 📊 Results
 
 - 🟢 Health Score: 88.5/100
-- ⚙️ Auto-fixes: 5 applied
+- ⚙️ Auto-fixes: 3 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T17-18-40-395Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T19-26-34-934Z`
 
 ---
 
