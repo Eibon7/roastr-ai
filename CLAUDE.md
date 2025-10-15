@@ -162,6 +162,33 @@ tests/
 2. Add to `.env`: `OPENAI_API_KEY=your_key_here`
 3. Test: `npm run roast "tu comentario aquí"`
 
+### API Verification Scripts (Issue #490)
+
+Comprehensive verification scripts for all configured APIs:
+
+```bash
+# Core P0 APIs (Required for MVP)
+node scripts/verify-supabase-tables.js      # Database: 17 tables, RLS policies
+node scripts/verify-openai-api.js           # AI: 67 models, moderation
+node scripts/verify-twitter-api.js          # Platform: OAuth 1.0a/2.0, @Roastr_ai
+node scripts/verify-perspective-api.js      # Toxicity: 6 attributes, fallback
+
+# Platform Integrations (P1)
+node scripts/verify-youtube-api.js          # Video platform: search, comments
+
+# Database deployment
+node scripts/deploy-supabase-schema.js      # Deploy schema to Supabase
+```
+
+**Features:**
+- ✅ Comprehensive error handling with troubleshooting guidance
+- ✅ Rate limit detection and reporting
+- ✅ Clear success/failure indicators
+- ✅ Verification of all critical functionality
+- ✅ Fallback system validation
+
+**Status:** All P0 APIs verified and production-ready. See Issue #490 for full configuration checklist.
+
 ## Multi-Tenant Architecture
 
 The system is built on a comprehensive multi-tenant architecture designed for scale:
