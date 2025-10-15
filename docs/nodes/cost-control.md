@@ -7,7 +7,6 @@
 **Last Updated:** 2025-10-09
 **Coverage:** 0%
 **Coverage Source:** auto
-**Coverage Source:** mocked
 **Related PRs:** #499
 **Coverage:** 50%
 
