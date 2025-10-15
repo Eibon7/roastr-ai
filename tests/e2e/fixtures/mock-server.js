@@ -93,7 +93,7 @@ class MockServer {
    * Mock variant exhaustion error (429)
    * @param {string} [urlPattern] - URL pattern, defaults to variant endpoint
    */
-  async mockVariantExhaustion(urlPattern = '**/api/approval/variants/*') {
+  async mockVariantExhaustion(urlPattern = '**/api/approval/*/regenerate') {
     await this.mockEndpoint('POST', urlPattern, {
       status: 429,
       body: {
@@ -109,7 +109,7 @@ class MockServer {
    * @param {string} [urlPattern] - URL pattern, defaults to variant endpoint
    * @param {string} [variantText] - Variant text to return
    */
-  async mockSuccessfulVariant(urlPattern = '**/api/approval/variants/*', variantText = 'Este es un nuevo roast generado') {
+  async mockSuccessfulVariant(urlPattern = '**/api/approval/*/regenerate', variantText = 'Este es un nuevo roast generado') {
     await this.mockEndpoint('POST', urlPattern, {
       status: 200,
       body: {
@@ -126,7 +126,7 @@ class MockServer {
    * Mock successful approval
    * @param {string} [urlPattern] - URL pattern, defaults to approval endpoint
    */
-  async mockSuccessfulApproval(urlPattern = '**/api/approval/approve/*') {
+  async mockSuccessfulApproval(urlPattern = '**/api/approval/*/approve') {
     await this.mockEndpoint('POST', urlPattern, {
       status: 200,
       body: {
@@ -140,7 +140,7 @@ class MockServer {
    * Mock successful rejection
    * @param {string} [urlPattern] - URL pattern, defaults to rejection endpoint
    */
-  async mockSuccessfulRejection(urlPattern = '**/api/approval/reject/*') {
+  async mockSuccessfulRejection(urlPattern = '**/api/approval/*/reject') {
     await this.mockEndpoint('POST', urlPattern, {
       status: 200,
       body: {

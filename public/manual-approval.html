@@ -353,9 +353,10 @@
         retryButton.classList.remove('hidden');
         currentRetryCallback = retryCallback;
         retryButton.onclick = () => {
+          const callback = currentRetryCallback; // Save before hideError() clears it
           hideError();
-          if (currentRetryCallback) {
-            currentRetryCallback();
+          if (callback) {
+            callback();
           }
         };
       } else {
