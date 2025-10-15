@@ -66,13 +66,9 @@ const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
 const roastRoutes = require('./routes/roast');
 const settingsRoutes = require('./routes/settings');
-console.log('[E2E-DEBUG] After settings routes import');
 const commentsRoutes = require('./routes/comments');
-console.log('[E2E-DEBUG] After comments routes import');
 const triageRoutes = require('./routes/triage');
-console.log('[E2E-DEBUG] After triage routes import');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
-console.log('[E2E-DEBUG] After middleware imports - all route imports complete');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -511,34 +507,25 @@ app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
 app.use('/api/admin', adminRoutes);
 
 // Guardian governance routes (Phase 17)
-console.log('[E2E-DEBUG] Before requiring guardian routes');
 const guardianRoutes = require('./routes/guardian');
-console.log('[E2E-DEBUG] After requiring guardian routes');
 app.use('/api/guardian', guardianRoutes);
-console.log('[E2E-DEBUG] After registering guardian routes');
 
 // Instancia del generador de roasts
-console.log('[E2E-DEBUG] Before RoastGeneratorReal instantiation');
 let roastGenerator;
 try {
   roastGenerator = new RoastGeneratorReal();
-  console.log('[E2E-DEBUG] After RoastGeneratorReal instantiation');
 } catch (error) {
   console.error("❌ Error inicializando RoastGenerator:", error.message);
   process.exit(1);
 }
 
 // Instancia del servicio de CSV roasts
-console.log('[E2E-DEBUG] Before CsvRoastService instantiation');
 const csvRoastService = new CsvRoastService();
-console.log('[E2E-DEBUG] After CsvRoastService instantiation');
 
 // Ruta principal: servir React app
-console.log('[E2E-DEBUG] Defining root route handler');
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
 });
-console.log('[E2E-DEBUG] After root route handler defined');
 
 // Mantener acceso directo a index.html si es necesario (legacy)
 app.get('/home', (req, res) => {
@@ -834,9 +821,7 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 // Export app for testing
 let server;
 
-console.log('[E2E-DEBUG] Reached require.main check');
 if (require.main === module) {
-  console.log('[E2E-DEBUG] Inside require.main block, about to call app.listen()');
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
   // Improved SPA routing with regex to exclude more paths for better performance

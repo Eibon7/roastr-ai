@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const triageService = require('../services/triageService');
+const TriageService = require('../services/triageService');
+const triageService = new TriageService(); // Instantiate instead of using singleton
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const rateLimit = require('express-rate-limit');
