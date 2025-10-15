@@ -13,8 +13,8 @@ module.exports = defineConfig({
   /* Only run Playwright tests (*.spec.js), ignore Jest tests (*.test.js) */
   testMatch: '**/*.spec.js',
 
-  /* Maximum time one test can run for */
-  timeout: 30 * 1000,
+  /* Maximum time one test can run for (increased for timeout resilience tests) */
+  timeout: 45 * 1000,
 
   /* Test retry strategy for flaky tests */
   retries: process.env.CI ? 2 : 1,
