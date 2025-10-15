@@ -1,6 +1,6 @@
 # Observability
 
-**Status:** 🟢 HEALTHY | **Test Coverage:** 14% | **Priority:** P1
+**Status:** 🟢 HEALTHY | **Test Coverage:** 13% | **Priority:** P1
 
 ## Overview
 
@@ -14,7 +14,6 @@ Comprehensive observability infrastructure for structured logging, correlation t
 
 - **Daily log rotation** with automatic archiving (gzip compression)
 - **Separate log files** by category:
-**Status:** production
   - `workers/workers-{DATE}.log` - Worker activity
   - `workers/queue-{DATE}.log` - Queue events
   - `workers/worker-errors-{DATE}.log` - Worker errors
@@ -682,10 +681,10 @@ fields tenantId
 ## Health Metrics
 
 **Status:** 🟢 HEALTHY
-**Test Coverage:** 14% (28/28 integration tests passing)
+**Test Coverage:** 13% (19/19 integration tests passing, advancedLogger.js at 13%)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
-**Last Updated:** 2025-10-12
+**Last Updated:** 2025-10-14
 **Coverage Source:** auto
 
 ## Node Metadata
