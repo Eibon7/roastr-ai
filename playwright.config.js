@@ -10,6 +10,9 @@ const { defineConfig, devices } = require('@playwright/test');
 module.exports = defineConfig({
   testDir: './tests/e2e',
 
+  /* Only run Playwright tests (*.spec.js), ignore Jest tests (*.test.js) */
+  testMatch: '**/*.spec.js',
+
   /* Maximum time one test can run for */
   timeout: 30 * 1000,
 
