@@ -507,8 +507,11 @@ app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
 app.use('/api/admin', adminRoutes);
 
 // Guardian governance routes (Phase 17)
+console.log('[E2E-DEBUG] Before requiring guardian routes');
 const guardianRoutes = require('./routes/guardian');
+console.log('[E2E-DEBUG] After requiring guardian routes');
 app.use('/api/guardian', guardianRoutes);
+console.log('[E2E-DEBUG] After registering guardian routes');
 
 // Instancia del generador de roasts
 console.log('[E2E-DEBUG] Before RoastGeneratorReal instantiation');
