@@ -1,0 +1,3 @@
+Linting: 2 file(s)
+Summary: 116 error(s)
+docs/nodes/observability.md:573 MD040/fenced-code-language Fenced code blocks should have a language specified [Context: "```"]

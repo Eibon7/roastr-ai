@@ -1,12 +1,14 @@
 # Observability
 
-**Status:** 🟢 HEALTHY | **Test Coverage:** 13% | **Priority:** P1
+**Status:** 🟢 HEALTHY | **Test Coverage:** 14% | **Priority:** P1
 
 ## Overview
 
-Comprehensive observability infrastructure for structured logging, correlation tracking, and end-to-end request tracing across the multi-tenant queue system and all 4 background workers.
+Comprehensive observability infrastructure for structured logging, correlation tracking, and end-to-end request tracing across the multi-tenant queue system and all 4 background workers. Enhanced with E2E UI resilience testing for manual approval flow.
 
-**Implementation:** Issue #417 - Observabilidad mínima – structured logs y correlación
+**Implementation:**
+- Issue #417 - Observabilidad mínima – structured logs y correlación
+- Issue #419 - E2E UI resilience tests for manual approval flow (PR #574)
 
 ## Core Features
 
@@ -74,7 +76,7 @@ Comprehensive observability infrastructure for structured logging, correlation t
 
 ### Components
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     advancedLogger.js                        │
 │  (Winston-based logging with correlation context)           │
@@ -165,7 +167,7 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 
 **File:** `tests/integration/test-observability.test.js`
 
-**Coverage:** 19 tests across 7 suites (100% passing)
+**Coverage:** 19 tests across 8 suites (100% passing)
 
 **Test Suites:**
 1. **Structured Logs at Key Lifecycle Points** (2 tests)
@@ -195,6 +197,44 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 8. **Additional: BaseWorker Integration** (2 tests)
    - All log levels (debug, info, warn, error)
    - Graceful handling of missing correlation ID
+
+### E2E Tests (Issue #419, PR #574)
+
+**File:** `tests/e2e/manual-approval-resilience.spec.js`
+
+**Coverage:** 17 tests across 5 acceptance criteria (100% passing)
+
+**Test Suites:**
+1. **AC #1: Timeout Handling** (3 tests)
+   - 30s timeout triggers error UI
+   - Retry button available after timeout
+   - No hanging requests
+2. **AC #2: Network Error Handling** (4 tests)
+   - Approval network error recovery
+   - Variant generation network error
+   - Rejection network error recovery
+   - Transient error recovery
+3. **AC #3: Variant Exhaustion** (3 tests)
+   - 429 response handling
+   - Variant button permanently disabled
+   - Approval/rejection still available
+4. **AC #4: Error Messages** (3 tests)
+   - Clear Spanish error messages
+   - No sensitive data exposure
+   - Actionable guidance provided
+5. **AC #5: Retry Functionality** (4 tests)
+   - Conditional retry button display
+   - No duplication on retry
+   - Network transient recovery
+   - Multiple error scenarios
+
+**Infrastructure:**
+- **Framework:** Playwright with Chromium browser
+- **Mock Server:** API route mocking for deterministic error scenarios
+- **Artifacts:** Screenshot/video/trace capture on failure
+- **CI/CD:** GitHub Actions workflow (`.github/workflows/e2e-tests.yml`)
+- **Helpers:** Network simulation utilities, timeout helpers, API mocking fixtures
+- **Documentation:** `tests/e2e/README.md`
 
 ## Acceptance Criteria
 
@@ -238,8 +278,14 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 
 **Tests:**
 - `tests/integration/test-observability.test.js` - 19 integration tests (472 lines)
+- `tests/e2e/manual-approval-resilience.spec.js` - 17 E2E resilience tests (Issue #419, PR #574)
+- `tests/e2e/README.md` - E2E testing documentation
+- `tests/e2e/setup.js` - Global setup/teardown
+- `tests/e2e/helpers/network-helpers.js` - Network simulation utilities
+- `tests/e2e/helpers/timeout-helpers.js` - Timeout helper functions
+- `tests/e2e/fixtures/mock-server.js` - API mocking fixture
 
-**Total:** 8 files modified/created, ~700 lines added
+**Total:** 15 files modified/created (8 from #417, 7 from #419), ~2,200 lines added
 
 ## Performance Impact
 
@@ -305,7 +351,10 @@ jq 'select(.result.processingTime > 5000) | {jobId, worker, processingTime: .res
 jq '.lifecycle' logs/workers/queue-*.log | sort | uniq -c
 
 # Failed jobs in last hour
+# macOS/BSD:
 since=$(date -u -v-1H '+%Y-%m-%dT%H:%M:%S')
+# GNU/Linux alternative:
+# since=$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:%M:%S')
 jq --arg since "$since" 'select(.timestamp > $since and .lifecycle == "failed")' logs/workers/*.log
 ```
 
@@ -521,7 +570,7 @@ Create dashboards for:
 
 3. **Example Kibana Query:**
 
-```
+```text
 correlationId:"550e8400-e29b-41d4-a716-446655440000" AND lifecycle:*
 ```
 
@@ -681,11 +730,12 @@ fields tenantId
 ## Health Metrics
 
 **Status:** 🟢 HEALTHY
-**Test Coverage:** 13% (19/19 integration tests passing, advancedLogger.js at 13%)
+**Test Coverage:** 14% (28/28 integration tests + 17/17 E2E tests passing)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
-**Last Updated:** 2025-10-14
+**Last Updated:** 2025-10-15
 **Coverage Source:** auto
+**Related PRs:** #515 (Issue #417), #574 (Issue #419)
 
 ## Node Metadata
 
