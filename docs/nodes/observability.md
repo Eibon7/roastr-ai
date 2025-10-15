@@ -16,7 +16,6 @@ Comprehensive observability infrastructure for structured logging, correlation t
 
 - **Daily log rotation** with automatic archiving (gzip compression)
 - **Separate log files** by category:
-**Status:** production
   - `workers/workers-{DATE}.log` - Worker activity
   - `workers/queue-{DATE}.log` - Queue events
   - `workers/worker-errors-{DATE}.log` - Worker errors
@@ -77,7 +76,7 @@ Comprehensive observability infrastructure for structured logging, correlation t
 
 ### Components
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     advancedLogger.js                        │
 │  (Winston-based logging with correlation context)           │
@@ -168,7 +167,7 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 
 **File:** `tests/integration/test-observability.test.js`
 
-**Coverage:** 19 tests across 7 suites (100% passing)
+**Coverage:** 19 tests across 8 suites (100% passing)
 
 **Test Suites:**
 1. **Structured Logs at Key Lifecycle Points** (2 tests)
@@ -352,7 +351,10 @@ jq 'select(.result.processingTime > 5000) | {jobId, worker, processingTime: .res
 jq '.lifecycle' logs/workers/queue-*.log | sort | uniq -c
 
 # Failed jobs in last hour
+# macOS/BSD:
 since=$(date -u -v-1H '+%Y-%m-%dT%H:%M:%S')
+# GNU/Linux alternative:
+# since=$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:%M:%S')
 jq --arg since "$since" 'select(.timestamp > $since and .lifecycle == "failed")' logs/workers/*.log
 ```
 
@@ -568,7 +570,7 @@ Create dashboards for:
 
 3. **Example Kibana Query:**
 
-```
+```text
 correlationId:"550e8400-e29b-41d4-a716-446655440000" AND lifecycle:*
 ```
 

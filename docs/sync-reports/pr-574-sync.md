@@ -208,7 +208,7 @@ Complete documentation synchronization for PR #574, which implements comprehensi
 
 **Results:**
 
-```
+```text
 ╔════════════════════════════════════════╗
 ║ 🟢  DRIFT STATUS: HEALTHY                ║
 ╠════════════════════════════════════════╣
