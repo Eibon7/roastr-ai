@@ -478,7 +478,7 @@ WORKER_POLL_INTERVAL=1000  # ms
 
 ### Coverage
 
-**Overall:** 12% (updated 2025-10-14)
+**Overall:** 6% (updated 2025-10-14)
 - queueService.js: 11.91% lines (28/235 lines covered)
 - BaseWorker.js: 0% (needs test coverage)
 - Lines: 12%

@@ -808,7 +808,7 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 ## Health Metrics
 
 **Status:** 🟢 HEALTHY
-**Test Coverage:** 14% (19/19 integration tests + 17/17 E2E tests passing)
+**Test Coverage:** 3% (19/19 integration tests + 17/17 E2E tests passing)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
 **Last Updated:** 2025-10-15
