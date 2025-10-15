@@ -70,7 +70,7 @@ jobs:
         run: |
           npm run start &
           echo "Waiting for server to be ready..."
-          npx wait-on http://localhost:3000 -t 30000 || (echo "Server failed to start" && exit 1)
+          npx wait-on http://localhost:3000/health -t 30000 || (echo "Server failed to start" && exit 1)
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roastr_test
