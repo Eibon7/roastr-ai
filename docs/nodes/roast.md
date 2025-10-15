@@ -4,12 +4,12 @@
 **Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-13
+**Last Updated:** 2025-10-15
 **Coverage:** 50%
 **Coverage Source:** auto
-**Related PRs:** #499
+**Related PRs:** #499, #574
 **Protected:** true
-**Last Verified:** 2025-10-10
+**Last Verified:** 2025-10-15
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
 
 ## Dependencies
@@ -563,7 +563,11 @@ const mockConfig = createMockRoastConfig({
 - Screenshot/video capture on failure
 - CI/CD integration via GitHub Actions
 
-**Configuration:** `playwright.config.js` - 30s timeout, retry: 1, screenshots on failure
+**Configuration:**
+- `playwright.config.js` - 30s timeout, retry: 1, screenshots on failure
+- `tests/e2e/helpers/network-helpers.js` - Network simulation utilities
+- `tests/e2e/helpers/timeout-helpers.js` - Timeout helper functions
+- `tests/e2e/fixtures/mock-server.js` - API mocking fixture
 
 ## Feature Flags
 
@@ -610,10 +614,17 @@ const mockConfig = createMockRoastConfig({
 | `E_VALIDATION` | 400 | Invalid input | No retry | Show error, no retry |
 | `E_SERVER` | 500 | Generic server error | Retry available | Show retry button |
 
-**Configuration Constants:**
+**Configuration Constants** (`src/routes/approval.js`, `src/services/roastGeneratorEnhanced.js`):
 - `MAX_VARIANTS_PER_ROAST = 5` - Maximum regeneration attempts per roast
 - `VARIANT_GENERATION_TIMEOUT = 30000` - 30 seconds timeout for OpenAI calls
 - `maxRetries: 1` - Reduced OpenAI retries for faster failure detection
+
+**CI/CD Workflow** (`.github/workflows/e2e-tests.yml`):
+- PostgreSQL service for test database
+- Playwright browser installation (Chromium)
+- Application server startup with wait-on
+- Artifact upload on failure (screenshots, videos, traces)
+- PR comment with test results
 
 ## Monitoring & Observability
 
