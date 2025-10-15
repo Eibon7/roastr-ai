@@ -14,7 +14,6 @@ Comprehensive observability infrastructure for structured logging, correlation t
 
 - **Daily log rotation** with automatic archiving (gzip compression)
 - **Separate log files** by category:
-**Status:** production
   - `workers/workers-{DATE}.log` - Worker activity
   - `workers/queue-{DATE}.log` - Queue events
   - `workers/worker-errors-{DATE}.log` - Worker errors
