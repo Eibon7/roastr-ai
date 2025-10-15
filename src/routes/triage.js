@@ -1,10 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const TriageService = require('../services/triageService');
-const triageService = new TriageService(); // Instantiate instead of using singleton
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const rateLimit = require('express-rate-limit');
+
+/**
+ * Lazy initialization of TriageService to prevent blocking during module import
+ * Instance is created only when first route is called, not at require() time
+ */
+let triageServiceInstance = null;
+function getTriageService() {
+  if (!triageServiceInstance) {
+    triageServiceInstance = new TriageService();
+  }
+  return triageServiceInstance;
+}
 
 /**
  * Rate limiting for Triage API endpoints
@@ -133,9 +144,9 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
 
     // Perform triage analysis
     const startTime = Date.now();
-    const decision = await triageService.analyzeAndRoute(
-      comment, 
-      organization, 
+    const decision = await getTriageService().analyzeAndRoute(
+      comment,
+      organization,
       enrichedUser,
       {
         api_request: true,
@@ -254,7 +265,7 @@ router.get('/stats', authenticateToken, statsRateLimit, async (req, res) => {
     });
 
     // Get stats from triage service
-    const stats = await triageService.getTriageStats(organization.id, time_range);
+    const stats = await getTriageService().getTriageStats(organization.id, time_range);
 
     // Enrich with additional metadata
     const enrichedStats = {
@@ -399,9 +410,9 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
         };
 
         // Perform analysis
-        const decision = await triageService.analyzeAndRoute(
-          comment, 
-          organization, 
+        const decision = await getTriageService().analyzeAndRoute(
+          comment,
+          organization,
           user,
           {
             ...options,
@@ -523,7 +534,7 @@ router.post('/cache/clear', authenticateToken, async (req, res) => {
     });
 
     // Clear the cache
-    triageService.clearCache();
+    getTriageService().clearCache();
 
     logger.info('Triage API: Cache cleared successfully', {
       correlation_id: correlationId,
