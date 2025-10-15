@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-14T13:08:28.493Z",
+  "timestamp": "2025-10-15T12:58:42.978Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -54,10 +54,10 @@
       "type": "coverage_integrity_violation",
       "node": "observability",
       "severity": "critical",
-      "declared": 14,
+      "declared": 13,
       "actual": 3,
-      "diff": 11,
-      "message": "Coverage mismatch: declared 14% but actual is 3% (diff: 11%)"
+      "diff": 10,
+      "message": "Coverage mismatch: declared 13% but actual is 3% (diff: 10%)"
     },
     {
       "type": "missing_coverage_data",
@@ -79,10 +79,10 @@
       "type": "coverage_integrity_violation",
       "node": "queue-system",
       "severity": "critical",
-      "declared": 45,
+      "declared": 12,
       "actual": 6,
-      "diff": 39,
-      "message": "Coverage mismatch: declared 45% but actual is 6% (diff: 39%)"
+      "diff": 6,
+      "message": "Coverage mismatch: declared 12% but actual is 6% (diff: 6%)"
     },
     {
       "type": "coverage_integrity_violation",
