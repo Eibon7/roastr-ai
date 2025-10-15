@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-15T19:26:35.259Z
+**Date:** 2025-10-15T21:43:35.650Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -70,21 +70,21 @@ Coverage authenticity issues detected:
 
 | Node | Drift Risk | Status | Health Score | Last Commit | Recommendations |
 |------|------------|--------|--------------|-------------|-----------------|
-| analytics | 🟢 5 | healthy | 92 | 2d ago | Increase test coverage to 80%+ (currently 70%) |
-| billing | 🟢 5 | healthy | 92 | 2d ago | Increase test coverage to 80%+ (currently 70%) |
-| cost-control | 🟢 5 | healthy | 82 | 2d ago | Increase test coverage to 80%+ (currently 5%) |
-| guardian | 🟢 5 | healthy | 88 | 2d ago | Increase test coverage to 80%+ (currently 50%) |
-| multi-tenant | 🟢 5 | healthy | 92 | 2d ago | Increase test coverage to 80%+ (currently 70%) |
-| persona | 🟢 5 | healthy | 92 | 2d ago | Increase test coverage to 80%+ (currently 70%) |
+| analytics | 🟢 5 | healthy | 92 | 3d ago | Increase test coverage to 80%+ (currently 70%) |
+| billing | 🟢 5 | healthy | 92 | 3d ago | Increase test coverage to 80%+ (currently 70%) |
+| cost-control | 🟢 5 | healthy | 82 | 3d ago | Increase test coverage to 80%+ (currently 0%) |
+| guardian | 🟢 5 | healthy | 88 | 3d ago | Increase test coverage to 80%+ (currently 50%) |
+| multi-tenant | 🟢 5 | healthy | 92 | 3d ago | Increase test coverage to 80%+ (currently 70%) |
+| persona | 🟢 5 | healthy | 92 | 3d ago | Increase test coverage to 80%+ (currently 70%) |
 | plan-features | 🟢 5 | healthy | 85 | 2d ago | Increase test coverage to 80%+ (currently 3%) |
-| queue-system | 🟢 5 | healthy | 83 | 0d ago | Increase test coverage to 80%+ (currently 12%) |
-| roast | 🟢 5 | healthy | 84 | 1d ago | Increase test coverage to 80%+ (currently 50%) |
+| queue-system | 🟢 5 | healthy | 83 | 0d ago | Increase test coverage to 80%+ (currently 6%) |
+| roast | 🟢 5 | healthy | 84 | 1d ago | Increase test coverage to 80%+ (currently 0%) |
 | shield | 🟢 5 | healthy | 84 | 2d ago | Increase test coverage to 80%+ (currently 2%) |
-| social-platforms | 🟢 5 | healthy | 83 | 1d ago | Increase test coverage to 80%+ (currently 50%) |
-| tone | 🟢 5 | healthy | 92 | 2d ago | Increase test coverage to 80%+ (currently 70%) |
-| trainer | 🟢 5 | healthy | 88 | 2d ago | Increase test coverage to 80%+ (currently 50%) |
+| social-platforms | 🟢 5 | healthy | 83 | 2d ago | Increase test coverage to 80%+ (currently 0%) |
+| tone | 🟢 5 | healthy | 92 | 3d ago | Increase test coverage to 80%+ (currently 70%) |
+| trainer | 🟢 5 | healthy | 88 | 3d ago | Increase test coverage to 80%+ (currently 50%) |
 | observability | 🟢 0 | healthy | 81 | 0d ago | - |
-| platform-constraints | 🟢 0 | healthy | 98 | 2d ago | - |
+| platform-constraints | 🟢 0 | healthy | 98 | 3d ago | - |
 
 ---
 

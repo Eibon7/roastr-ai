@@ -1,6 +1,6 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-15T17:09:33.530Z
+**Generated:** 2025-10-15T21:43:20.843Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
 **Average Drift Risk:** 4/100
@@ -20,21 +20,21 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| analytics | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
-| billing | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
-| cost-control | 🟢 5 | healthy | 82 | 5% | 2d ago | 0 |
-| guardian | 🟢 5 | healthy | 88 | 50% | 2d ago | 0 |
-| multi-tenant | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
-| persona | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
+| analytics | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
+| billing | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
+| cost-control | 🟢 5 | healthy | 82 | 0% | 3d ago | 0 |
+| guardian | 🟢 5 | healthy | 88 | 50% | 3d ago | 0 |
+| multi-tenant | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
+| persona | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
 | plan-features | 🟢 5 | healthy | 85 | 3% | 2d ago | 0 |
-| queue-system | 🟢 5 | healthy | 83 | 12% | 0d ago | 0 |
-| roast | 🟢 5 | healthy | 84 | 50% | 1d ago | 0 |
+| queue-system | 🟢 5 | healthy | 83 | 6% | 0d ago | 0 |
+| roast | 🟢 5 | healthy | 84 | 0% | 1d ago | 0 |
 | shield | 🟢 5 | healthy | 84 | 2% | 2d ago | 0 |
-| social-platforms | 🟢 5 | healthy | 83 | 50% | 1d ago | 0 |
-| tone | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
-| trainer | 🟢 5 | healthy | 88 | 50% | 2d ago | 0 |
+| social-platforms | 🟢 5 | healthy | 83 | 0% | 2d ago | 0 |
+| tone | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
+| trainer | 🟢 5 | healthy | 88 | 50% | 3d ago | 0 |
 | observability | 🟢 0 | healthy | 81 | N/A | 0d ago | 0 |
-| platform-constraints | 🟢 0 | healthy | 98 | 100% | 2d ago | 0 |
+| platform-constraints | 🟢 0 | healthy | 98 | 100% | 3d ago | 0 |
 
 ---
 
@@ -46,7 +46,7 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (2 days ago)
+- -10 pts: Recent commit (3 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 70%)
@@ -59,7 +59,7 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (2 days ago)
+- -10 pts: Recent commit (3 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 70%)
@@ -71,11 +71,11 @@
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +15 pts: Coverage 5% (<80%)
-- -10 pts: Recent commit (2 days ago)
+- +15 pts: Coverage 0% (<80%)
+- -10 pts: Recent commit (3 days ago)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (currently 5%)
+- Increase test coverage to 80%+ (currently 0%)
 
 **Git Activity:** 15 commits in last 30 days
 
@@ -85,7 +85,7 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 50% (<80%)
-- -10 pts: Recent commit (2 days ago)
+- -10 pts: Recent commit (3 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 50%)
@@ -98,7 +98,7 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (2 days ago)
+- -10 pts: Recent commit (3 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 70%)
