@@ -212,6 +212,49 @@ logger.info('User data:', { email, passwordHash }); // Hash only
 
 ---
 
+### 7. PR Merge Policy
+
+**Pattern:** Claude merges PRs without user approval, bypassing final review opportunity
+
+**❌ Mistake:**
+```bash
+# After resolving conflicts and CI passing
+gh pr merge 581 --squash --delete-branch  # ❌ NEVER DO THIS
+```
+
+**✅ Fix:**
+```bash
+# After resolving conflicts and CI passing
+echo "✅ PR #581 ready to merge:"
+echo "- All CI checks passed"
+echo "- Conflicts resolved"
+echo "- CodeRabbit: awaiting review"
+echo ""
+echo "⏸️  Waiting for your approval to merge."
+# STOP HERE - User decides when to merge
+```
+
+**Why this matters:**
+- **CodeRabbit needs time to review** after final changes
+- **User is the project owner** - only they decide when to merge
+- **Final review opportunity** - user may spot issues Claude missed
+- **This is a monetizable product** - quality requires human oversight
+- **Unauthorized merges break trust** - Claude is an assistant, not the decision maker
+
+**Rules to apply:**
+- NEVER run `gh pr merge` command
+- NEVER click merge buttons
+- NEVER assume CI passing = ready to merge
+- ALWAYS report: "PR is ready, awaiting your approval"
+- ALWAYS wait for explicit "merge this" instruction
+- IF accidentally merged: revert immediately, apologize, recreate PR
+
+**Exception:** NONE - this rule has zero exceptions
+
+**Lesson learned:** 2025-10-15 (Issue: PR #581 merged without approval, had to revert)
+
+---
+
 ## 📊 Estadísticas
 
 | Patrón | Ocurrencias | Tasa Reducción | Última Ocurrencia |
@@ -222,6 +265,7 @@ logger.info('User data:', { email, passwordHash }); // Hash only
 | Console.log usage | 15 | -80% | 2025-10-08 |
 | Coverage manual | 4 | -100% | 2025-10-07 |
 | Generic errors | 6 | -50% | 2025-10-11 |
+| Unauthorized merge | 1 | N/A | 2025-10-15 |
 
 **Objetivo:** Reducir tasa de repetición <10% en todos los patrones
 
@@ -271,5 +315,5 @@ Antes de escribir código, verificar:
 
 **Maintained by:** Orchestrator
 **Review Frequency:** Weekly or after significant reviews
-**Last Reviewed:** 2025-10-14
-**Version:** 1.0.0
+**Last Reviewed:** 2025-10-15
+**Version:** 1.1.0
