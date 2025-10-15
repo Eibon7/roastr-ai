@@ -77,8 +77,8 @@ nodes:
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-10-06
-    coverage: 87
+    last_updated: 2025-10-14
+    coverage: 12
     depends_on:
       - multi-tenant
       - observability
@@ -97,8 +97,8 @@ nodes:
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-10-12
-    coverage: 10
+    last_updated: 2025-10-14
+    coverage: 13
     depends_on: []
     used_by:
       - queue-system

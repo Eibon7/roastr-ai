@@ -4,12 +4,12 @@
 **Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-15
+**Last Updated:** 2025-10-13
 **Coverage:** 50%
 **Coverage Source:** auto
-**Related PRs:** #499, #574
+**Related PRs:** #499
 **Protected:** true
-**Last Verified:** 2025-10-15
+**Last Verified:** 2025-10-10
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
 
 ## Dependencies
@@ -546,6 +546,12 @@ const mockConfig = createMockRoastConfig({
 
 ### E2E Tests (Issue #419)
 
+**Test Suite:** [`tests/e2e/manual-approval-resilience.spec.js`](../../tests/e2e/manual-approval-resilience.spec.js)
+
+**Frontend Implementation:** [`public/js/manual-approval.js`](../../public/js/manual-approval.js)
+
+**Backend Error Handling:** [`src/routes/approval.js`](../../src/routes/approval.js)
+
 | Test File | Focus | Tests | Status |
 |-----------|-------|-------|--------|
 | `manual-approval-resilience.spec.js` | UI resilience for manual approval flow | 17 | ✅ Implemented |
@@ -563,11 +569,7 @@ const mockConfig = createMockRoastConfig({
 - Screenshot/video capture on failure
 - CI/CD integration via GitHub Actions
 
-**Configuration:**
-- `playwright.config.js` - 30s timeout, retry: 1, screenshots on failure
-- `tests/e2e/helpers/network-helpers.js` - Network simulation utilities
-- `tests/e2e/helpers/timeout-helpers.js` - Timeout helper functions
-- `tests/e2e/fixtures/mock-server.js` - API mocking fixture
+**Configuration:** `playwright.config.js` - 30s timeout, retry: 1, screenshots on failure
 
 ## Feature Flags
 
@@ -609,22 +611,18 @@ const mockConfig = createMockRoastConfig({
 | Code | HTTP Status | Meaning | Recovery | Frontend Action |
 |------|-------------|---------|----------|-----------------|
 | `E_TIMEOUT` | 408 | Operation timed out (>30s) | Retry available | Show retry button |
-| `E_NETWORK` | 500 | Network error | Retry available | Show retry button |
+| `E_NETWORK` | 500 | Network error (*) | Retry available | Show retry button |
 | `E_VARIANT_LIMIT` | 429 | Max variants reached (5) | No retry | Disable variant button |
 | `E_VALIDATION` | 400 | Invalid input | No retry | Show error, no retry |
 | `E_SERVER` | 500 | Generic server error | Retry available | Show retry button |
 
-**Configuration Constants** (`src/routes/approval.js`, `src/services/roastGeneratorEnhanced.js`):
-- `MAX_VARIANTS_PER_ROAST = 5` - Maximum regeneration attempts per roast
-- `VARIANT_GENERATION_TIMEOUT = 30000` - 30 seconds timeout for OpenAI calls
-- `maxRetries: 1` - Reduced OpenAI retries for faster failure detection
+(*) Note: E_NETWORK currently maps to 500; consider using 502/503 for upstream/network errors in future iterations.
 
-**CI/CD Workflow** (`.github/workflows/e2e-tests.yml`):
-- PostgreSQL service for test database
-- Playwright browser installation (Chromium)
-- Application server startup with wait-on
-- Artifact upload on failure (screenshots, videos, traces)
-- PR comment with test results
+**Configuration Constants:**
+- `MAX_VARIANTS_PER_ROAST = 5` — Maximum regeneration attempts per roast
+- `VARIANT_GENERATION_TIMEOUT = 30000` — 30s timeout for OpenAI calls
+- `maxRetries (UI/OpenAI client): 1` — Fail-fast for manual-approval fetches (Issue #419)
+  (Service-level generation retries remain 3; see "Retry Logic" section above)
 
 ## Monitoring & Observability
 
