@@ -66,9 +66,13 @@ const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
 const roastRoutes = require('./routes/roast');
 const settingsRoutes = require('./routes/settings');
+console.log('[E2E-DEBUG] After settings routes import');
 const commentsRoutes = require('./routes/comments');
+console.log('[E2E-DEBUG] After comments routes import');
 const triageRoutes = require('./routes/triage');
+console.log('[E2E-DEBUG] After triage routes import');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
+console.log('[E2E-DEBUG] After middleware imports - all route imports complete');
 
 const app = express();
 const port = process.env.PORT || 3000;
