@@ -1,6 +1,6 @@
 # Observability
 
-**Status:** 🟢 HEALTHY | **Test Coverage:** 14% | **Priority:** P1
+**Status:** 🟢 HEALTHY | **Test Coverage:** 3% | **Priority:** P1
 
 ## Overview
 

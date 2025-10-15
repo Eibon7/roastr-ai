@@ -1,5 +1,25 @@
 # Auto-Repair Changelog
 
+## 2025-10-15T17:18:40.505Z
+
+**Repair ID:** 2025-10-15T17:18:40Z
+**Triggered by:** Manual
+**Nodes affected:** cost-control, observability, queue-system, roast, social-platforms
+
+**Fixes applied:**
+- Reset coverage to 0% for cost-control (was 5%)
+- Reset coverage to 3% for observability (was 14%)
+- Reset coverage to 6% for queue-system (was 12%)
+- Reset coverage to 0% for roast (was 50%)
+- Reset coverage to 0% for social-platforms (was 50%)
+
+**Outcome:**
+- Health score: 87.7 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T17-18-40-395Z`
+
+---
+
 ## 2025-10-13T18:16:46.557Z
 
 **Repair ID:** 2025-10-13T18:16:46Z

@@ -1,18 +1,38 @@
 {
-  "timestamp": "2025-10-13T18:16:46.557Z",
+  "timestamp": "2025-10-15T17:18:40.506Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 1,
+  "fixes_applied": 5,
   "errors": 0,
-  "health_before": 89.9,
-  "health_after": 89.9,
+  "health_before": 87.7,
+  "health_after": 88.5,
   "details": {
     "fixes": [
       {
         "type": "auto",
+        "node": "cost-control",
+        "action": "Reset coverage to 0% for cost-control (was 5%)"
+      },
+      {
+        "type": "auto",
+        "node": "observability",
+        "action": "Reset coverage to 3% for observability (was 14%)"
+      },
+      {
+        "type": "auto",
+        "node": "queue-system",
+        "action": "Reset coverage to 6% for queue-system (was 12%)"
+      },
+      {
+        "type": "auto",
         "node": "roast",
-        "action": "Added coverage to roast"
+        "action": "Reset coverage to 0% for roast (was 50%)"
+      },
+      {
+        "type": "auto",
+        "node": "social-platforms",
+        "action": "Reset coverage to 0% for social-platforms (was 50%)"
       }
     ],
     "humanReview": [],

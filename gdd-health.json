@@ -1,7 +1,7 @@
 {
-  "generated_at": "2025-10-15T12:58:52.566Z",
+  "generated_at": "2025-10-15T17:18:40.504Z",
   "status": "HEALTHY",
-  "overall_score": 87.7,
+  "overall_score": 88.5,
   "total_nodes": 15,
   "healthy_count": 15,
   "degraded_count": 0,
@@ -34,7 +34,7 @@
       "issues": []
     },
     "cost-control": {
-      "score": 82,
+      "score": 84,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -42,7 +42,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 75
+        "integrityScore": 100
       },
       "issues": []
     },
@@ -73,15 +73,15 @@
       "issues": []
     },
     "observability": {
-      "score": 81,
+      "score": 86,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 98,
+        "updateFreshness": 100,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 50
+        "integrityScore": 100
       },
       "issues": []
     },
@@ -125,7 +125,7 @@
       "issues": []
     },
     "queue-system": {
-      "score": 83,
+      "score": 86,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -133,20 +133,20 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 70
+        "integrityScore": 100
       },
       "issues": []
     },
     "roast": {
-      "score": 84,
+      "score": 85,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
         "updateFreshness": 96,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 50,
+        "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 50
+        "integrityScore": 100
       },
       "issues": []
     },
@@ -164,15 +164,15 @@
       "issues": []
     },
     "social-platforms": {
-      "score": 83,
+      "score": 84,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
         "updateFreshness": 88,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 50,
+        "coverageEvidence": 30,
         "agentRelevance": 100,
-        "integrityScore": 50
+        "integrityScore": 100
       },
       "issues": []
     },

@@ -1,6 +1,6 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-12T12:44:30.681Z
+**Generated:** 2025-10-15T17:09:33.530Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
 **Average Drift Risk:** 4/100
@@ -9,8 +9,8 @@
 
 ## Summary
 
-- **Total Nodes:** 14
-- 🟢 **Healthy (0-30):** 14
+- **Total Nodes:** 15
+- 🟢 **Healthy (0-30):** 15
 - 🟡 **At Risk (31-60):** 0
 - 🔴 **Likely Drift (61-100):** 0
 
@@ -20,20 +20,21 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| analytics | 🟢 5 | healthy | 93 | 70% | 3d ago | 0 |
-| billing | 🟢 5 | healthy | 93 | 70% | 3d ago | 0 |
-| cost-control | 🟢 5 | healthy | 93 | 70% | 3d ago | 0 |
-| guardian | 🟢 5 | healthy | 89 | 50% | 2d ago | 0 |
-| multi-tenant | 🟢 5 | healthy | 93 | 70% | 3d ago | 0 |
-| persona | 🟢 5 | healthy | 93 | 70% | 3d ago | 0 |
-| plan-features | 🟢 5 | healthy | 93 | 70% | 2d ago | 0 |
-| shield | 🟢 5 | healthy | 93 | 70% | 3d ago | 0 |
-| tone | 🟢 5 | healthy | 93 | 70% | 3d ago | 0 |
-| trainer | 🟢 5 | healthy | 89 | 50% | 3d ago | 0 |
-| platform-constraints | 🟢 0 | healthy | 99 | 100% | 3d ago | 0 |
-| queue-system | 🟢 0 | healthy | 99 | 87% | 3d ago | 0 |
-| roast | 🟢 0 | healthy | 99 | 100% | 1d ago | 0 |
-| social-platforms | 🟢 0 | healthy | 99 | 100% | 3d ago | 0 |
+| analytics | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
+| billing | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
+| cost-control | 🟢 5 | healthy | 82 | 5% | 2d ago | 0 |
+| guardian | 🟢 5 | healthy | 88 | 50% | 2d ago | 0 |
+| multi-tenant | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
+| persona | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
+| plan-features | 🟢 5 | healthy | 85 | 3% | 2d ago | 0 |
+| queue-system | 🟢 5 | healthy | 83 | 12% | 0d ago | 0 |
+| roast | 🟢 5 | healthy | 84 | 50% | 1d ago | 0 |
+| shield | 🟢 5 | healthy | 84 | 2% | 2d ago | 0 |
+| social-platforms | 🟢 5 | healthy | 83 | 50% | 1d ago | 0 |
+| tone | 🟢 5 | healthy | 92 | 70% | 2d ago | 0 |
+| trainer | 🟢 5 | healthy | 88 | 50% | 2d ago | 0 |
+| observability | 🟢 0 | healthy | 81 | N/A | 0d ago | 0 |
+| platform-constraints | 🟢 0 | healthy | 98 | 100% | 2d ago | 0 |
 
 ---
 
@@ -45,12 +46,12 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (2 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 70%)
 
-**Git Activity:** 12 commits in last 30 days
+**Git Activity:** 16 commits in last 30 days
 
 ### billing (Risk: 5)
 
@@ -58,25 +59,25 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (2 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 70%)
 
-**Git Activity:** 14 commits in last 30 days
+**Git Activity:** 18 commits in last 30 days
 
 ### cost-control (Risk: 5)
 
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- +15 pts: Coverage 5% (<80%)
+- -10 pts: Recent commit (2 days ago)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (currently 70%)
+- Increase test coverage to 80%+ (currently 5%)
 
-**Git Activity:** 9 commits in last 30 days
+**Git Activity:** 15 commits in last 30 days
 
 ### guardian (Risk: 5)
 
@@ -89,7 +90,7 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 50%)
 
-**Git Activity:** 4 commits in last 30 days
+**Git Activity:** 8 commits in last 30 days
 
 ### multi-tenant (Risk: 5)
 
@@ -97,12 +98,12 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (2 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (currently 70%)
 
-**Git Activity:** 34 commits in last 30 days
+**Git Activity:** 38 commits in last 30 days
 
 ---
 
