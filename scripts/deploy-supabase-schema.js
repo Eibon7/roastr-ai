@@ -18,8 +18,9 @@ const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
 
 // Postgres connection string for Supabase
 // User needs to provide SUPABASE_DB_PASSWORD
+// Note: encodeURIComponent handles special characters in password (e.g., @, #, /)
 const connectionString = process.env.DATABASE_URL ||
-  `postgresql://postgres:${process.env.SUPABASE_DB_PASSWORD}@db.${projectRef}.supabase.co:5432/postgres`;
+  `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD || '')}@db.${projectRef}.supabase.co:5432/postgres`;
 
 async function deploySchema() {
   console.log('🚀 Starting Supabase Schema Deployment...\n');
@@ -100,9 +101,17 @@ async function deploySchema() {
     console.log('📦 Executing schema.sql...');
     console.log('   This may take a few seconds...\n');
 
-    await client.query(schema);
-
-    console.log('✅ Schema executed successfully!\n');
+    // Wrap in transaction for atomicity (all-or-nothing)
+    await client.query('BEGIN');
+    try {
+      await client.query(schema);
+      await client.query('COMMIT');
+      console.log('✅ Schema executed successfully!\n');
+    } catch (schemaError) {
+      await client.query('ROLLBACK');
+      console.log('⚠️  Transaction rolled back due to error\n');
+      throw schemaError;
+    }
 
     // Verify deployment
     console.log('🔍 Verifying deployment...');

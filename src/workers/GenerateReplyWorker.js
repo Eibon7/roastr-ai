@@ -117,6 +117,7 @@ class GenerateReplyWorker extends BaseWorker {
       const { OpenAI } = require('openai');
       this.openaiClient = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
+        maxRetries: 2,
         timeout: 15000 // 15 second timeout
       });
       this.log('info', 'OpenAI client initialized');

@@ -168,10 +168,10 @@ Comprehensive verification scripts for all configured APIs:
 
 ```bash
 # Core P0 APIs (Required for MVP)
-node scripts/verify-supabase-tables.js      # Database: 17 tables, RLS policies
-node scripts/verify-openai-api.js           # AI: 67 models, moderation
+node scripts/verify-supabase-tables.js      # Database: core tables, RLS policies
+node scripts/verify-openai-api.js           # AI: available GPT models, moderation
 node scripts/verify-twitter-api.js          # Platform: OAuth 1.0a/2.0, @Roastr_ai
-node scripts/verify-perspective-api.js      # Toxicity: 6 attributes, fallback
+node scripts/verify-perspective-api.js      # Toxicity: analysis attributes, fallback
 
 # Platform Integrations (P1)
 node scripts/verify-youtube-api.js          # Video platform: search, comments

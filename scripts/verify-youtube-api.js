@@ -92,14 +92,28 @@ async function verifyYouTube() {
     // Test 3: Get channel details
     console.log('📺 Test 3: Getting channel details...');
 
-    const channelResponse = await axios.get(`${YOUTUBE_API_BASE}/channels`, {
+    // Try by username first (legacy method, deprecated but still works)
+    let channelResponse = await axios.get(`${YOUTUBE_API_BASE}/channels`, {
       params: {
         key: apiKey,
         part: 'snippet,statistics',
-        forUsername: 'Google' // Using Google's official channel
+        forUsername: 'Google'
       },
       timeout: 10000
     });
+
+    // Fallback to channel ID if username lookup returns no results
+    if (!channelResponse.data.items || channelResponse.data.items.length === 0) {
+      console.log('   Username lookup failed, trying channel ID...');
+      channelResponse = await axios.get(`${YOUTUBE_API_BASE}/channels`, {
+        params: {
+          key: apiKey,
+          part: 'snippet,statistics',
+          id: 'UCBR8-60-B28hp2BmDPdntcQ' // YouTube's official channel ID
+        },
+        timeout: 10000
+      });
+    }
 
     if (channelResponse.data.items && channelResponse.data.items.length > 0) {
       const channel = channelResponse.data.items[0];

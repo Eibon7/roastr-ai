@@ -10,6 +10,27 @@
 const axios = require('axios');
 require('dotenv').config();
 
+/**
+ * Helper function to analyze comment with Perspective API
+ * @param {string} apiKey - Perspective API key
+ * @param {string} text - Comment text to analyze
+ * @param {Object} attributes - Requested attributes (default: TOXICITY only)
+ * @param {string} language - Language code (default: 'en')
+ * @returns {Promise<Object>} Attribute scores from API
+ */
+async function analyzeComment(apiKey, text, attributes = { TOXICITY: {} }, language = 'en') {
+  const response = await axios.post(
+    `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`,
+    {
+      comment: { text },
+      requestedAttributes: attributes,
+      languages: [language]
+    },
+    { timeout: 10000 }
+  );
+  return response.data.attributeScores;
+}
+
 async function verifyPerspective() {
   console.log('🛡️  Verifying Perspective API Configuration...\n');
 
@@ -38,28 +59,15 @@ async function verifyPerspective() {
 
     const testComment = 'You are a stupid person and I hate you';
 
-    const response = await axios.post(
-      `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`,
-      {
-        comment: {
-          text: testComment
-        },
-        requestedAttributes: {
-          TOXICITY: {},
-          SEVERE_TOXICITY: {},
-          IDENTITY_ATTACK: {},
-          INSULT: {},
-          PROFANITY: {},
-          THREAT: {}
-        },
-        languages: ['en']
-      },
-      {
-        timeout: 10000
-      }
-    );
+    const scores = await analyzeComment(apiKey, testComment, {
+      TOXICITY: {},
+      SEVERE_TOXICITY: {},
+      IDENTITY_ATTACK: {},
+      INSULT: {},
+      PROFANITY: {},
+      THREAT: {}
+    });
 
-    const scores = response.data.attributeScores;
     const toxicityScore = scores.TOXICITY.summaryScore.value;
 
     console.log('✅ Toxicity analysis working!');
@@ -79,23 +87,9 @@ async function verifyPerspective() {
 
     const neutralComment = 'This is a wonderful day and I appreciate your help';
 
-    const response2 = await axios.post(
-      `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`,
-      {
-        comment: {
-          text: neutralComment
-        },
-        requestedAttributes: {
-          TOXICITY: {}
-        },
-        languages: ['en']
-      },
-      {
-        timeout: 10000
-      }
-    );
+    const scores2 = await analyzeComment(apiKey, neutralComment);
 
-    const neutralScore = response2.data.attributeScores.TOXICITY.summaryScore.value;
+    const neutralScore = scores2.TOXICITY.summaryScore.value;
 
     console.log('✅ Neutral comment analysis working!');
     console.log(`   Test comment: "${neutralComment}"`);
@@ -108,23 +102,9 @@ async function verifyPerspective() {
     const spanishComment = 'Eres un idiota y me caes mal';
 
     try {
-      const response3 = await axios.post(
-        `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${apiKey}`,
-        {
-          comment: {
-            text: spanishComment
-          },
-          requestedAttributes: {
-            TOXICITY: {}
-          },
-          languages: ['es']
-        },
-        {
-          timeout: 10000
-        }
-      );
+      const scores3 = await analyzeComment(apiKey, spanishComment, { TOXICITY: {} }, 'es');
 
-      const spanishScore = response3.data.attributeScores.TOXICITY.summaryScore.value;
+      const spanishScore = scores3.TOXICITY.summaryScore.value;
 
       console.log('✅ Spanish language support working!');
       console.log(`   Test comment: "${spanishComment}"`);

@@ -93,10 +93,17 @@ async function verifyTwitter() {
       'tweet.fields': ['created_at', 'author_id']
     });
 
-    const mentionsCount = mentionsResponse.data?.length || 0;
+    // Robust handling of API response formats (data vs tweets property)
+    const mentionsData = mentionsResponse.data ?? mentionsResponse.tweets ?? [];
+    const mentionsCount = Array.isArray(mentionsData) ? mentionsData.length : 0;
+    const hasMore = mentionsResponse.meta?.next_token ? true : false;
 
     console.log('✅ Bearer Token authentication successful!');
-    console.log(`   Recent mentions found: ${mentionsCount}\n`);
+    console.log(`   Recent mentions found: ${mentionsCount}`);
+    if (hasMore) {
+      console.log('   (More mentions available via pagination)');
+    }
+    console.log();
 
     // Test 3: Check rate limits
     console.log('📊 Test 3: Checking rate limits...');

@@ -27,7 +27,7 @@ async function verifyOpenAI() {
   console.log(`   Key prefix: ${apiKey.substring(0, 20)}...\n`);
 
   // Initialize OpenAI client
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ apiKey, maxRetries: 2, timeout: 30000 });
 
   try {
     // Test 1: List available models
@@ -56,9 +56,15 @@ async function verifyOpenAI() {
 
     const testComment = "Tu código es tan malo que ni ChatGPT lo arregla";
 
+    // Use env var override or prefer gpt-4o-mini if available
+    const testModel =
+      process.env.OPENAI_TEST_MODEL ||
+      (gptModels.includes('gpt-4o-mini') ? 'gpt-4o-mini' : gptModels[0]);
+    console.log(`   Using model: ${testModel}`);
+
     const startTime = Date.now();
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: testModel,
       messages: [
         {
           role: 'system',

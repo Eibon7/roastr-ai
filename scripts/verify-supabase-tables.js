@@ -17,6 +17,15 @@ async function verifyTables() {
 
   if (!supabaseUrl || !serviceKey) {
     console.error('❌ ERROR: Missing Supabase credentials');
+    if (!supabaseUrl) {
+      console.error('   SUPABASE_URL not found in .env');
+    }
+    if (!serviceKey) {
+      console.error('   SUPABASE_SERVICE_KEY not found in .env');
+    }
+    console.error('   Add them to your .env file:');
+    console.error('   SUPABASE_URL=https://your-project.supabase.co');
+    console.error('   SUPABASE_SERVICE_KEY=your_service_key_here\n');
     process.exit(1);
   }
 
