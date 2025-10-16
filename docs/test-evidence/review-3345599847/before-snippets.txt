@@ -1,0 +1,89 @@
+=== Before State - CodeRabbit Review #3345599847 ===
+
+Date: 2025-10-16
+Review: https://github.com/Eibon7/roastr-ai/pull/584#pullrequestreview-3345599847
+
+---
+
+## M1: C1 Blocker Not Properly Documented
+
+**File:** docs/plan/review-3343448532.md
+
+**Location 1 - C1 Section (lines 44-62):**
+
+BEFORE:
+```markdown
+### C1: Health Score Mismatch
+
+**File:** `docs/plan/review-3342561607.md`
+**Line:** 31
+**Severity:** Critical
+
+**Issue:**
+```markdown
+- Health Score: 88.5/100 (actual)
+```
+
+**Fix:**
+```markdown
+- Health Score: 87.7/100 (actual)
+```
+
+**Rationale:** Health Score must match the evidence file `docs/test-evidence/review-3342561607/gdd-health-after.txt` which shows 87.7/100.
+```
+
+**Problem:** Section reads as if fix can be applied immediately, but file doesn't exist. No mention of blocker in issue description.
+
+**Location 2 - Implementation Strategy (lines 112-116):**
+
+BEFORE:
+```bash
+**Fix C1:**
+```bash
+# Update Health Score in plan document
+sed -i '' 's/Health Score: 88\.5\/100 (actual)/Health Score: 87.7\/100 (actual)/' docs/plan/review-3342561607.md
+```
+```
+
+**Problem:** sed command attempts to edit non-existent file. No indication that file must be created first.
+
+**Evidence of Blocker:**
+- Success checklist (line 151) says: "❌ **BLOCKED** (file `docs/plan/review-3342561607.md` does not exist on branch)"
+- Evidence file docs/test-evidence/review-3343448532/SUMMARY.md lines 64-82 documents investigation showing file never existed
+
+---
+
+## Mi1: Incorrect Pattern Numbering
+
+**File:** docs/test-evidence/review-3345472977/SUMMARY.md
+
+**Location 1 (line 151):**
+
+BEFORE:
+```markdown
+- **Patterns Updated:** `docs/patterns/coderabbit-lessons.md` (Pattern #11: Cherry-Pick Reviews)
+```
+
+**Location 2 (line 160):**
+
+BEFORE:
+```markdown
+- [x] Patrón añadido a `coderabbit-lessons.md` (Pattern #11)
+```
+
+**Problem:** References "Pattern #11" but docs/patterns/coderabbit-lessons.md lists "Cherry-Pick Intermediate State Reviews" as Pattern #8 (line 258).
+
+**Verification:**
+```bash
+$ grep "### 8. Cherry-Pick Intermediate State Reviews" docs/patterns/coderabbit-lessons.md
+### 8. Cherry-Pick Intermediate State Reviews
+
+$ grep "Cherry-pick reviews" docs/patterns/coderabbit-lessons.md
+| Cherry-pick reviews | 1 | N/A | 2025-10-16 |
+```
+
+---
+
+**Inconsistencies Identified:** 2
+- M1: C1 section doesn't document blocker (4 locations need updates)
+- Mi1: Pattern numbering mismatch (2 locations need updates)
