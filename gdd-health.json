@@ -1,7 +1,7 @@
 {
-  "generated_at": "2025-10-16T09:30:57.017Z",
+  "generated_at": "2025-10-16T09:54:51.809Z",
   "status": "HEALTHY",
-  "overall_score": 88.5,
+  "overall_score": 88.7,
   "total_nodes": 15,
   "healthy_count": 15,
   "degraded_count": 0,
@@ -164,13 +164,13 @@
       "issues": []
     },
     "social-platforms": {
-      "score": 84,
+      "score": 88,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
         "updateFreshness": 86,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 30,
+        "coverageEvidence": 50,
         "agentRelevance": 100,
         "integrityScore": 100
       },
