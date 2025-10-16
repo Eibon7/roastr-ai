@@ -229,6 +229,8 @@ const MOCK_RATE_LIMITS = {
 };
 ```
 
+**Note:** These mock values are simplified for testing purposes. Production rate limits are tier-dependent — see §4.1 for actual Twitter API limits by tier (Free/Basic/Pro).
+
 ### 4.3 Rate Limit Handling
 
 **Strategy:**
@@ -461,7 +463,7 @@ Since no sandbox exists, this section documents expected differences between moc
 - Implement proper error handling
 
 **Implemented:**
-- ✅ Rate limits respected (300/15min)
+- ✅ Rate limits respected — see §4.1 for tier-dependent limits
 - ✅ User data not stored permanently
 - ✅ Attribution via reply threading
 - ✅ Error handling with retry logic
