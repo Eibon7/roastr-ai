@@ -1,0 +1,75 @@
+diff --git a/docs/plan/review-3343448532.md b/docs/plan/review-3343448532.md
+index 0189c520..a163da1d 100644
+--- a/docs/plan/review-3343448532.md
++++ b/docs/plan/review-3343448532.md
+@@ -46,15 +46,27 @@ CodeRabbit identified 3 documentation consistency issues across 2 files:
+ **File:** `docs/plan/review-3342561607.md`
+ **Line:** 31
+ **Severity:** Critical
++**Status:** ❌ **BLOCKED** - Target file does not exist
+ 
+ **Issue:**
+-```markdown
+-- Health Score: 88.5/100 (actual)
+-```
++CodeRabbit flagged a health score mismatch (88.5/100 should be 87.7/100) in file `docs/plan/review-3342561607.md`, but investigation shows this file was never created in the repository.
+ 
+-**Fix:**
+-```markdown
+-- Health Score: 87.7/100 (actual)
++**Evidence:**
++- Verified file absent on current branch: `ls docs/plan/review-3342561607.md` → No such file
++- Verified file absent on main branch: `git show main:docs/plan/review-3342561607.md` → fatal
++- See full investigation: `docs/test-evidence/review-3343448532/SUMMARY.md` lines 64-82
++
++**Blocker:**
++Cannot apply sed fix to non-existent file. File must be created first before numeric corrections can be applied.
++
++**Next Steps:**
++1. Determine if `review-3342561607.md` should exist as part of PR #579 workflow
++2. If yes: Identify source commit or branch where file was created
++3. If no: Close C1 as "not applicable" and document why CodeRabbit referenced non-existent file
++
++**Fix (Once File Exists):**
++```bash
++sed -i '' 's/Health Score: 88\.5\/100 (actual)/Health Score: 87.7\/100 (actual)/' docs/plan/review-3342561607.md
+ ```
+ 
+ **Rationale:** Health Score must match the evidence file `docs/test-evidence/review-3342561607/gdd-health-after.txt` which shows 87.7/100.
+@@ -111,8 +123,12 @@ Line 30: ### ⚠️ Coverage Integrity: 8/15 Missing Data (Warnings)
+ 
+ **Fix C1:**
+ ```bash
+-# Update Health Score in plan document
+-sed -i '' 's/Health Score: 88\.5\/100 (actual)/Health Score: 87.7\/100 (actual)/' docs/plan/review-3342561607.md
++# ❌ BLOCKED - Cannot apply fix to non-existent file
++# File docs/plan/review-3342561607.md must be created first
++# See C1 section for details and next steps
++
++# (Once file exists, use this command:)
++# sed -i '' 's/Health Score: 88\.5\/100 (actual)/Health Score: 87.7\/100 (actual)/' docs/plan/review-3342561607.md
+ ```
+ 
+ **Fix C2:**
+diff --git a/docs/test-evidence/review-3345472977/SUMMARY.md b/docs/test-evidence/review-3345472977/SUMMARY.md
+index f18994df..dcf9afd2 100644
+--- a/docs/test-evidence/review-3345472977/SUMMARY.md
++++ b/docs/test-evidence/review-3345472977/SUMMARY.md
+@@ -148,7 +148,7 @@ $ grep "2/3 Fixed" docs/test-evidence/review-3345390254/*.md
+ - **Review:** https://github.com/Eibon7/roastr-ai/pull/584#pullrequestreview-3345472977
+ - **Resolving Commit:** `77aa466f` (fix(shield): Fix falsy value bug)
+ - **Original Cherry-Pick:** `8d739d97` → `77aa466f`
+-- **Patterns Updated:** `docs/patterns/coderabbit-lessons.md` (Pattern #11: Cherry-Pick Reviews)
++- **Patterns Updated:** `docs/patterns/coderabbit-lessons.md` (Pattern #8: Cherry-Pick Reviews)
+ - **Plan:** `docs/plan/review-3345472977.md`
+ - **Verification:** `docs/test-evidence/review-3345472977/verification-clean.txt`
+ 
+@@ -157,7 +157,7 @@ $ grep "2/3 Fixed" docs/test-evidence/review-3345390254/*.md
+ ## ✅ Checklist de Cierre
+ 
+ - [x] Todos los comentarios verificados (4/4 pre-resolved)
+-- [x] Patrón añadido a `coderabbit-lessons.md` (Pattern #11)
++- [x] Patrón añadido a `coderabbit-lessons.md` (Pattern #8)
+ - [x] Acciones correctivas documentadas (verification protocol)
+ - [x] Verificación completa (all files clean)
+ - [x] Documentación actualizada (plan + evidence)

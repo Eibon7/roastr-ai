@@ -148,7 +148,7 @@ $ grep "2/3 Fixed" docs/test-evidence/review-3345390254/*.md
 - **Review:** https://github.com/Eibon7/roastr-ai/pull/584#pullrequestreview-3345472977
 - **Resolving Commit:** `77aa466f` (fix(shield): Fix falsy value bug)
 - **Original Cherry-Pick:** `8d739d97` → `77aa466f`
-- **Patterns Updated:** `docs/patterns/coderabbit-lessons.md` (Pattern #11: Cherry-Pick Reviews)
+- **Patterns Updated:** `docs/patterns/coderabbit-lessons.md` (Pattern #8: Cherry-Pick Reviews)
 - **Plan:** `docs/plan/review-3345472977.md`
 - **Verification:** `docs/test-evidence/review-3345472977/verification-clean.txt`
 
@@ -157,7 +157,7 @@ $ grep "2/3 Fixed" docs/test-evidence/review-3345390254/*.md
 ## ✅ Checklist de Cierre
 
 - [x] Todos los comentarios verificados (4/4 pre-resolved)
-- [x] Patrón añadido a `coderabbit-lessons.md` (Pattern #11)
+- [x] Patrón añadido a `coderabbit-lessons.md` (Pattern #8)
 - [x] Acciones correctivas documentadas (verification protocol)
 - [x] Verificación completa (all files clean)
 - [x] Documentación actualizada (plan + evidence)
