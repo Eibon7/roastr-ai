@@ -1,8 +1,8 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-15T12:58:42.978Z
+**Date:** 2025-10-16T09:30:56.698Z
 **Mode:** full
-**Status:** 🔴 CRITICAL
+**Status:** 🟢 HEALTHY
 
 ---
 
@@ -14,7 +14,7 @@
 - **Missing References:** 0
 - **Cycles Detected:** 0
 - **Drift Issues:** 0
-- **Coverage Integrity Violations:** 13
+- **Coverage Integrity Violations:** 15
 
 ### 🔮 Drift Risk Summary
 
@@ -35,30 +35,34 @@ Coverage authenticity issues detected:
 |------|------|----------|--------|------|----------|
 | analytics | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | billing | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| cost-control | coverage_integrity_violation | 5% | N/A% | 5% | critical |
+| cost-control | missing_coverage_data | N/A% | N/A% | N/A% | warning |
 | guardian | missing_coverage_data | 50% | N/A% | N/A% | warning |
 | multi-tenant | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| observability | coverage_integrity_violation | 13% | 3% | 10% | critical |
+| observability | missing_coverage_data | 3% | N/A% | N/A% | warning |
 | persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
+| plan-features | missing_coverage_data | 3% | N/A% | N/A% | warning |
 | platform-constraints | missing_coverage_data | 100% | N/A% | N/A% | warning |
-| queue-system | coverage_integrity_violation | 12% | 6% | 6% | critical |
-| roast | coverage_integrity_violation | 50% | N/A% | 50% | critical |
-| social-platforms | coverage_integrity_violation | 50% | N/A% | 50% | critical |
+| queue-system | missing_coverage_data | 6% | N/A% | N/A% | warning |
+| roast | missing_coverage_data | N/A% | N/A% | N/A% | warning |
+| shield | missing_coverage_data | 2% | N/A% | N/A% | warning |
+| social-platforms | missing_coverage_data | N/A% | N/A% | N/A% | warning |
 | tone | missing_coverage_data | 70% | N/A% | N/A% | warning |
 | trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
 
 **Actions Required:**
 - Coverage data not available for validation
 - Coverage data not available for validation
-- Coverage mismatch: declared 5% but actual is 0% (diff: 5%)
 - Coverage data not available for validation
 - Coverage data not available for validation
-- Coverage mismatch: declared 13% but actual is 3% (diff: 10%)
 - Coverage data not available for validation
 - Coverage data not available for validation
-- Coverage mismatch: declared 12% but actual is 6% (diff: 6%)
-- Coverage mismatch: declared 50% but actual is 0% (diff: 50%)
-- Coverage mismatch: declared 50% but actual is 0% (diff: 50%)
+- Coverage data not available for validation
+- Coverage data not available for validation
+- Coverage data not available for validation
+- Coverage data not available for validation
+- Coverage data not available for validation
+- Coverage data not available for validation
+- Coverage data not available for validation
 - Coverage data not available for validation
 - Coverage data not available for validation
 
