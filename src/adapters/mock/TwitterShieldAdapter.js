@@ -10,7 +10,7 @@ class TwitterShieldAdapter extends ShieldAdapter {
   constructor(config = {}) {
     super('twitter', config);
     this.mockLatency = config.mockLatency || { min: 100, max: 500 };
-    this.failureRate = config.failureRate || 0.05; // 5% failure rate
+    this.failureRate = config.failureRate !== undefined ? config.failureRate : 0.05; // 5% failure rate
   }
 
   async initialize() {

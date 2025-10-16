@@ -58,15 +58,15 @@
 
 **Problem:**
 - Plan claimed: "✅ Fixed" for all 3 issues
-- Evidence showed: "❌ 0/3" all blocked
+- Evidence showed: "⚠️ 2/3 Fixed, 1 Blocked"
 - Contradiction undermined documentation trust
 
 **Fix Applied:**
-1. Updated severity table (lines 28-32) to show blocked status
-2. Unchecked success checklist (lines 151-153) with BLOCKED reasons
-3. Changed status header (line 6) to "❌ Blocked"
+1. Updated severity table (lines 28-32) to "⚠️ 2/3 Fixed, 1 Blocked"
+2. Checked C2 and M1 as ✅ Fixed; left C1 ❌ Blocked in the checklist (lines 151-153)
+3. Changed status header (line 6) to "⚠️ Partially Complete (2/3 Fixed, 1 Blocked)"
 
-**Result:** Plan now accurately reflects 0/3 outcome with detailed blocker explanations.
+**Result:** Plan now accurately reflects 2/3 Fixed, 1 Blocked with detailed blocker explanations.
 
 ---
 
@@ -168,7 +168,7 @@ Added "## Scope Clarification" section to SUMMARY.md (after line 8) explicitly d
 # Verify plan and evidence align
 grep -A 5 "Success Criteria" docs/plan/review-3343448532.md
 grep -A 5 "Issues Resolved" docs/test-evidence/review-3343448532/SUMMARY.md
-# Result: Both show 0/3 blocked ✅
+# Result: Both show 2/3 Fixed, 1 Blocked ✅
 ```
 
 **No Code Changes:**
