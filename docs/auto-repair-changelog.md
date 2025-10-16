@@ -1,5 +1,23 @@
 # Auto-Repair Changelog
 
+## 2025-10-16T14:47:46.217Z
+
+**Repair ID:** 2025-10-16T14:47:46Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T14-47-46-012Z`
+
+---
+
 ## 2025-10-16T11:05:24.813Z
 
 **Repair ID:** 2025-10-16T11:05:24Z
