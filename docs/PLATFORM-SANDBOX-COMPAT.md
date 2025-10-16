@@ -51,13 +51,14 @@ Since no sandbox is available for standard access levels:
 - OAuth 2.0 (Modern user authentication)
 
 **Required Credentials:**
-```env
-TWITTER_BEARER_TOKEN=your_bearer_token
-TWITTER_APP_KEY=your_app_key
-TWITTER_APP_SECRET=your_app_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_SECRET=your_access_secret
-```
+
+🔐 Requires environment variables:
+
+- TWITTER_BEARER_TOKEN
+- TWITTER_APP_KEY
+- TWITTER_APP_SECRET
+- TWITTER_ACCESS_TOKEN
+- TWITTER_ACCESS_SECRET
 
 ---
 
@@ -126,7 +127,7 @@ Mocks are designed to match Twitter API v2 spec:
 
 **Twitter API v2 SDK Compliance:**
 - Character limits: 280 characters (verified)
-- Rate limits: 300 tweets/15min, 2400/day (documented)
+- Rate limits: Tier-dependent. See Section 4.1 for per-tier windows and caps.
 - Error codes: Match Twitter's error taxonomy
 - Response structure: Matches v2 API response format
 
@@ -151,7 +152,7 @@ Mocks are designed to match Twitter API v2 spec:
 | Character limit | N/A | 280 chars | ✅ 280 chars |
 | Media attachments | N/A | Supported | ⚠️ Simulated |
 | Threads | N/A | Supported | ⚠️ Simulated |
-| Rate limiting | N/A | 300/15min | ✅ Simulated |
+| Rate limiting | N/A | Tier-dependent (see §4.1) | ✅ Simulated |
 | Webhooks | N/A | Supported | ❌ Not implemented |
 | Real-time streaming | N/A | Supported | ❌ Not implemented |
 
@@ -283,8 +284,9 @@ if (response.status === 429) {
 getCapabilities() {
   return {
     rateLimits: {
-      postsPerHour: 300,
-      postsPerDay: 2400
+      // Values are tier-dependent; consult §4.1 or configuration.
+      policy: 'tier-dependent',
+      reference: 'See docs/PLATFORM-SANDBOX-COMPAT.md §4.1'
     }
   };
 }
