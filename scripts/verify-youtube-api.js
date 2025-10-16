@@ -32,7 +32,9 @@ async function verifyYouTube() {
   }
 
   console.log('✅ API Key found in environment');
-  console.log(`   Key prefix: ${apiKey.substring(0, 20)}...\n`);
+  // Security: Mask API key (show only last 4 chars) - GDPR/SOC2 compliance (CodeRabbit #3343936799)
+  const masked = apiKey.length > 8 ? `****${apiKey.slice(-4)}` : '****';
+  console.log(`   Key: ${masked}\n`);
 
   try {
     // Test 1: Search for videos

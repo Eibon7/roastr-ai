@@ -24,7 +24,9 @@ async function verifyOpenAI() {
   }
 
   console.log('✅ API Key found in environment');
-  console.log(`   Key prefix: ${apiKey.substring(0, 20)}...\n`);
+  // Security: Mask API key (show only last 4 chars) - GDPR/SOC2 compliance (CodeRabbit #3343936799)
+  const masked = apiKey.length > 8 ? `****${apiKey.slice(-4)}` : '****';
+  console.log(`   Key: ${masked}\n`);
 
   // Initialize OpenAI client
   const openai = new OpenAI({ apiKey, maxRetries: 2, timeout: 30000 });
@@ -94,6 +96,7 @@ async function verifyOpenAI() {
     console.log('🛡️  Test 3: Testing Moderation API...');
 
     const moderation = await openai.moderations.create({
+      model: 'omni-moderation-latest', // Required by OpenAI SDK v5.11.0+ (CodeRabbit #3343936799)
       input: testComment
     });
 

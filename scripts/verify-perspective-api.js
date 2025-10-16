@@ -51,7 +51,8 @@ async function verifyPerspective() {
   }
 
   console.log('✅ API Key found in environment');
-  console.log(`   Key prefix: ${apiKey.substring(0, 12)}...\n`);
+  // Security: Do NOT log API key or prefix (GDPR/SOC2 compliance - CodeRabbit #3343936799)
+  console.log();
 
   try {
     // Test 1: Analyze a sample comment for toxicity
