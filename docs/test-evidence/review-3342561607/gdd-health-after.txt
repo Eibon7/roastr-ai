@@ -1,0 +1,31 @@
+
+═══════════════════════════════════════════
+     🏥 GDD SYSTEM HEALTH VALIDATION
+═══════════════════════════════════════════
+
+✅ Overall Score:     87.7/100
+🟢 Overall Status:    HEALTHY
+🎯 Minimum Required:  87/100
+
+📊 Node Summary:
+   🟢 Healthy:   15/15
+   🟡 Degraded:  0/15
+   🔴 Critical:  0/15
+
+⚠️  7 node(s) below 87 threshold:
+
+   📌 cost-control (82/100)
+   📌 observability (81/100)
+   📌 plan-features (85/100)
+   📌 queue-system (83/100)
+   📌 roast (84/100)
+   📌 shield (84/100)
+   📌 social-platforms (83/100)
+
+═══════════════════════════════════════════
+✅ VALIDATION PASSED
+   System health (87.7/100) meets minimum threshold (87/100)
+═══════════════════════════════════════════
+
+📅 Report generated: 15/10/2025, 14:58:52
+
