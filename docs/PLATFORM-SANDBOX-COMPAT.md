@@ -13,7 +13,7 @@ This document covers sandbox/testing environment compatibility for Roastr.ai's p
 ### Acceptance Criteria Status
 
 ✅ **AC1:** Sandbox validation - Documented requirements and limitations
-✅ **AC2:** Faithful mocks - Verified mock fidelity to Twitter API v2 spec
+✅ **AC2:** Partial mock coverage - Core endpoints mocked (tweet posting, reading, search); Shield moderation endpoints (blocking, muting) tested via production API only
 ✅ **AC3:** API compatibility documented - Comprehensive compatibility matrix
 ✅ **AC4:** Rate limits respected - Sandbox and production limits documented
 ✅ **AC5:** Fallback to mocks - Implemented fallback strategy documented
@@ -51,7 +51,7 @@ Since no sandbox is available for standard access levels:
 - OAuth 2.0 (Modern user authentication)
 
 **Required Credentials:**
-```
+```env
 TWITTER_BEARER_TOKEN=your_bearer_token
 TWITTER_APP_KEY=your_app_key
 TWITTER_APP_SECRET=your_app_secret
@@ -88,11 +88,10 @@ Mocks are designed to match Twitter API v2 spec:
   }
 }
 
-// Mock response (matches spec)
+// Mock response (MUST match spec exactly - no additional fields)
 {
-  "success": true,
   "data": {
-    "id": "mock-tweet-1234567890",
+    "id": "mock-tweet-1234567890123456789",
     "text": "Hello world!"
   }
 }
@@ -110,12 +109,17 @@ Mocks are designed to match Twitter API v2 spec:
   ]
 }
 
-// Mock error (matches spec)
+// Mock error (MUST match spec exactly)
 {
-  "success": false,
-  "error": "Rate limit exceeded",
-  "code": 429
+  "errors": [
+    {
+      "message": "Rate limit exceeded",
+      "code": 88
+    }
+  ]
 }
+
+// Note: HTTP 429 status code is returned via response status, not in body
 ```
 
 ### 2.3 Verification Against SDK
@@ -163,18 +167,44 @@ Mocks are designed to match Twitter API v2 spec:
 
 ### 4.1 Production Rate Limits (Twitter API v2)
 
-**Tweet Publishing:**
-- **User context:** 300 tweets per 3-hour window
-- **App context:** 300 requests per 15-minute window
-- **Daily limit:** 2400 tweets per day
+**Rate limits vary by Twitter/X API access tier. The following reflect official limits as of 2025:**
 
-**Tweet Reading:**
-- **GET /2/tweets/:id:** 300 requests per 15-minute window
-- **GET /2/tweets/search/recent:** 180 requests per 15-minute window
+#### Tweet Publishing (POST /2/tweets)
 
-**Moderation Actions:**
-- **Blocking:** 50 requests per 15-minute window
-- **Muting:** 50 requests per 15-minute window
+| Tier | User Context | App Context | Daily Limit |
+|------|--------------|-------------|-------------|
+| **Pro** ($5,000/mo) | 100 requests / 15 min | 10,000 requests / 24 hrs | 10,000 / day |
+| **Basic** ($100/mo) | 100 requests / 24 hrs | 1,667 requests / 24 hrs | 1,667 / day |
+| **Free** | 17 requests / 24 hrs | 17 requests / 24 hrs | 17 / day |
+
+#### Tweet Reading (GET /2/tweets/:id)
+
+| Tier | User Context | App Context |
+|------|--------------|-------------|
+| **Pro** | 900 requests / 15 min | 450 requests / 15 min |
+| **Basic** | 15 requests / 15 min | 15 requests / 15 min |
+| **Free** | 1 request / 15 min | 1 request / 15 min |
+
+#### Tweet Search (GET /2/tweets/search/recent)
+
+- Varies by tier (not publicly documented for all tiers)
+- Basic tier: Typically 180 requests / 15 minutes
+
+#### Moderation Actions
+
+**Blocking (POST /2/users/:id/blocking):**
+- Not publicly documented in official rate limit tables
+- Estimated: 50 requests / 15 minutes (based on similar endpoints)
+
+**Muting (POST /2/users/:id/muting):**
+
+| Tier | User Context |
+|------|--------------|
+| **Pro** | 50 requests / 15 min |
+| **Basic** | 5 requests / 15 min |
+| **Free** | 1 request / 15 min |
+
+**Note:** Roastr.ai targets Basic or Pro tier for production deployment. Free tier limits are too restrictive for typical usage patterns.
 
 ### 4.2 Mock Rate Limits
 
@@ -272,19 +302,26 @@ if (ENABLE_MOCK_MODE === 'true' || NODE_ENV === 'test') {
 - postResponse method validation
 - getCapabilities method
 - Error handling
+- Rate limiting (canSendTweet, tweetsPerHour)
+- Tweet processing (validation, moderation)
 
-**Location:** `tests/unit/integrations/twitter/`
+**Test Files:**
+- [`tests/unit/twitterService.test.js`](../tests/unit/twitterService.test.js) - Comprehensive TwitterService tests (402 lines)
+- [`tests/unit/twitterService-simple.test.js`](../tests/unit/twitterService-simple.test.js) - Simplified test suite
+- [`tests/unit/services/collectors/twitterCollector.test.js`](../tests/unit/services/collectors/twitterCollector.test.js) - Twitter collector tests
 
 ### 6.2 Integration Tests
 
 **Coverage:**
-- Complete happy path (mock mode)
-- Rate limit scenarios
-- Error scenarios (4xx, 5xx)
-- Retry logic
-- Fallback to mocks
+- Complete happy path (mock mode enabled via `ENABLE_MOCK_MODE=true`)
+- Rate limit scenarios (429 responses, Retry-After headers)
+- Error scenarios (4xx, 5xx responses)
+- Retry logic with exponential backoff
+- Fallback to mocks when credentials missing
 
-**Location:** `tests/integration/twitter/`
+**Test Files:**
+- Integration testing primarily covered in unit tests using mock mode
+- E2E testing with real API requires manual execution (see section 6.3)
 
 ### 6.3 E2E Tests (Optional)
 
