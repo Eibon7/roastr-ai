@@ -1347,6 +1347,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
    */
   async analyzeOpenAI(text) {
     const response = await this.openaiClient.moderations.create({
+      model: process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest',
       input: text
     });
     
