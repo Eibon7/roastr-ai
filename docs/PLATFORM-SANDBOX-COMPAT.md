@@ -233,10 +233,51 @@ const MOCK_RATE_LIMITS = {
 **Strategy:**
 1. Track requests in memory (mocks) or rely on Twitter headers (production)
 2. Return 429 status when limit exceeded
-3. Include `Retry-After` header with seconds to wait
+3. Parse Twitter rate-limit headers for intelligent retry
 4. Implement exponential backoff for retries
 
-**Implementation:**
+#### 4.3.1 Twitter Rate-Limit Headers
+
+**Official Headers (Twitter API v2):**
+
+Twitter includes rate-limit information in HTTP response headers:
+
+| Header | Description | Example Value |
+|--------|-------------|---------------|
+| `x-rate-limit-limit` | Maximum requests allowed in current window | `300` |
+| `x-rate-limit-remaining` | Requests remaining in current window | `285` |
+| `x-rate-limit-reset` | Unix timestamp when limit resets | `1634567890` |
+
+**Parsing Example:**
+```javascript
+// Parse Twitter rate-limit headers
+function parseRateLimitHeaders(response) {
+  const headers = response.headers;
+  return {
+    limit: parseInt(headers.get('x-rate-limit-limit')),
+    remaining: parseInt(headers.get('x-rate-limit-remaining')),
+    reset: parseInt(headers.get('x-rate-limit-reset')),
+    resetDate: new Date(parseInt(headers.get('x-rate-limit-reset')) * 1000)
+  };
+}
+
+// Use headers for intelligent retry
+if (response.status === 429) {
+  const rateLimitInfo = parseRateLimitHeaders(response);
+  const waitSeconds = Math.ceil((rateLimitInfo.reset * 1000 - Date.now()) / 1000);
+  console.log(`Rate limited. Retry after ${waitSeconds}s (at ${rateLimitInfo.resetDate.toISOString()})`);
+  // Use waitSeconds for exponential backoff calculation
+}
+```
+
+**Benefits:**
+- ✅ **Accurate retry timing** based on actual reset time
+- ✅ **Avoid premature retries** that will fail again
+- ✅ **Better UX** with precise wait times
+- ✅ **Efficient** - no wasted API calls
+
+#### 4.3.2 Implementation Reference
+
 ```javascript
 // src/integrations/twitter/twitterService.js
 getCapabilities() {
@@ -255,21 +296,39 @@ getCapabilities() {
 
 ### 5.1 Environment Detection
 
-**Automatic Fallback Logic:**
+**Secure Fallback Logic:**
 ```javascript
-// Pseudocode for fallback strategy
-if (ENABLE_MOCK_MODE === 'true' || NODE_ENV === 'test') {
-  // Use mocks for all operations
+// Pseudocode for fallback strategy with explicit opt-in
+if (ENABLE_MOCK_MODE === 'true') {
+  // Explicit mock mode - safe for development/testing
+  return mockTwitterService;
+} else if (NODE_ENV === 'test') {
+  // Test environment always uses mocks
   return mockTwitterService;
 } else if (hasTwitterCredentials()) {
-  // Use production Twitter API
+  // Production Twitter API with credentials
   return realTwitterService;
 } else {
-  // Fallback to mock mode with warning
-  console.warn('Twitter credentials not found, using mock mode');
-  return mockTwitterService;
+  // FAIL-FAST: Missing credentials in production is an ERROR
+  throw new Error(
+    'Twitter credentials not found. Set TWITTER_BEARER_TOKEN or enable ENABLE_MOCK_MODE=true for testing.'
+  );
 }
 ```
+
+**Security Rationale:**
+- ❌ **Silent fallback to mocks in production is DANGEROUS**
+  - Hides configuration errors
+  - App appears to work but generates fake data
+  - Users receive mock responses instead of real tweets
+- ✅ **Explicit error in production is SAFE**
+  - Fail-fast on misconfiguration
+  - Clear error message guides remediation
+  - Prevents accidental mock usage in production
+- ✅ **Mock mode requires explicit opt-in**
+  - `ENABLE_MOCK_MODE=true` for development
+  - `NODE_ENV=test` for automated testing
+  - No silent degradation
 
 ### 5.2 Fallback Triggers
 
