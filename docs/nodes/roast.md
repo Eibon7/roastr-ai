@@ -11,11 +11,6 @@
 **Protected:** true
 **Last Verified:** 2025-10-10
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
-**Coverage:** 50%
-**Coverage:** 50%
-**Coverage:** 50%
-**Coverage:** 50%
-**Coverage:** 50%
 
 ## Dependencies
 

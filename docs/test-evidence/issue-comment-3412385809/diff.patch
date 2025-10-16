@@ -1,0 +1,12 @@
+diff --git a/src/workers/AnalyzeToxicityWorker.js b/src/workers/AnalyzeToxicityWorker.js
+index fef826fb..0873638e 100644
+--- a/src/workers/AnalyzeToxicityWorker.js
++++ b/src/workers/AnalyzeToxicityWorker.js
+@@ -1345,6 +1345,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
+    */
+   async analyzeOpenAI(text) {
+     const response = await this.openaiClient.moderations.create({
++      model: process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest',
+       input: text
+     });
+     
