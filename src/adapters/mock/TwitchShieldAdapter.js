@@ -10,7 +10,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
   constructor(config = {}) {
     super('twitch', config);
     this.mockLatency = config.mockLatency || { min: 80, max: 400 };
-    this.failureRate = config.failureRate || 0.02; // 2% failure rate
+    this.failureRate = config.failureRate !== undefined ? config.failureRate : 0.02; // 2% failure rate
     this.rateLimits = {
       moderation: {
         requests: 0,
