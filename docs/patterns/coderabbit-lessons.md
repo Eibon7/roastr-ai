@@ -2,7 +2,7 @@
 
 **Purpose:** Document recurring patterns from CodeRabbit reviews to prevent repetition and improve code quality.
 
-**Last Updated:** 2025-10-14
+**Last Updated:** 2025-10-16
 
 **Usage:** Read this file BEFORE implementing any feature (FASE 0 or FASE 2 of task workflow).
 
@@ -255,6 +255,80 @@ echo "⏸️  Waiting for your approval to merge."
 
 ---
 
+### 8. Cherry-Pick Intermediate State Reviews
+
+**Pattern:** CodeRabbit generates reviews on temporary intermediate commit states during multi-step git operations (cherry-picks, rebases, merges) before completion.
+
+**❌ Mistake:**
+```bash
+# During cherry-pick with conflicts
+git cherry-pick abc123
+# Conflicts occur, file has markers:
+# <<<<<<< HEAD
+# Status: Complete
+# =======
+# Status: Pending
+# >>>>>>> abc123
+
+git add .
+git commit  # Commit with conflict markers temporarily
+
+# CodeRabbit review generated NOW (intermediate state)
+
+git add resolved-file
+git cherry-pick --continue  # Complete resolution
+
+# Review arrives LATER flagging conflicts that no longer exist
+```
+
+**✅ Fix:**
+```bash
+# Verify current state BEFORE applying fixes
+grep -rn "<<<<<<< HEAD\|=======\|>>>>>>>" <files-mentioned-in-review>
+
+# If no markers found:
+# 1. Document as PRE-RESOLVED in docs/plan/review-{id}.md
+# 2. Create verification evidence showing clean state
+# 3. Reference the resolving commit in documentation
+# 4. Add pattern to coderabbit-lessons.md
+
+# Prevention: Add pre-push hook
+cat > .git/hooks/pre-push <<'EOF'
+#!/bin/bash
+if git grep -q "<<<<<<< HEAD\|=======\|>>>>>>>"; then
+  echo "❌ Merge conflict markers detected"
+  git grep -n "<<<<<<< HEAD\|=======\|>>>>>>>"
+  exit 1
+fi
+EOF
+chmod +x .git/hooks/pre-push
+```
+
+**Rules to apply:**
+- Always verify current file state before assuming issues exist
+- Complete cherry-pick/rebase operations promptly to avoid intermediate states
+- Run `git grep "<<<<<<< HEAD"` before pushing to catch stray markers
+- Document pre-resolved issues properly (create plan + evidence + reference resolving commit)
+- Consider squashing cherry-picked commits to avoid conflict artifacts
+- Add pre-push hook to detect conflict markers automatically
+
+**Why this happens:**
+- Cherry-picks/rebases can take multiple steps to complete
+- CodeRabbit review queue may process intermediate commits before resolution
+- Temporary conflict markers trigger reviews even if resolved moments later
+- Review arrives after conflicts already cleaned up
+
+**Response Protocol:**
+1. Verify current state first (don't assume issues exist)
+2. If pre-resolved, document why and when resolution occurred
+3. Create evidence showing verification of clean state
+4. Reference the resolving commit in documentation
+5. No code changes needed if already resolved
+
+**Lesson learned:** 2025-10-16 (Review #3345472977 flagged conflicts already resolved in commit 77aa466f)
+
+---
+
 ## 📊 Estadísticas
 
 | Patrón | Ocurrencias | Tasa Reducción | Última Ocurrencia |
@@ -266,6 +340,7 @@ echo "⏸️  Waiting for your approval to merge."
 | Coverage manual | 4 | -100% | 2025-10-07 |
 | Generic errors | 6 | -50% | 2025-10-11 |
 | Unauthorized merge | 1 | N/A | 2025-10-15 |
+| Cherry-pick reviews | 1 | N/A | 2025-10-16 |
 
 **Objetivo:** Reducir tasa de repetición <10% en todos los patrones
 
@@ -315,5 +390,5 @@ Antes de escribir código, verificar:
 
 **Maintained by:** Orchestrator
 **Review Frequency:** Weekly or after significant reviews
-**Last Reviewed:** 2025-10-15
-**Version:** 1.1.0
+**Last Reviewed:** 2025-10-16
+**Version:** 1.2.0
