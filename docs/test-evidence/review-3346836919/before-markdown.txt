@@ -1,0 +1,19 @@
+=== Bare URLs Before Fixes ===
+
+File: docs/plan/issue-comment-3412385809.md
+
+Line 5:
+**Comment URL:** https://github.com/Eibon7/roastr-ai/pull/584#issuecomment-3412385809
+
+Line 331:
+- **OpenAI Moderation API Docs:** https://platform.openai.com/docs/api-reference/moderations
+
+---
+
+File: docs/test-evidence/issue-comment-3412385809/SUMMARY.md
+
+Line 174:
+- **CodeRabbit Comment:** https://github.com/Eibon7/roastr-ai/pull/584#issuecomment-3412385809
+
+Line 176:
+- **OpenAI Moderation API Docs:** https://platform.openai.com/docs/api-reference/moderations

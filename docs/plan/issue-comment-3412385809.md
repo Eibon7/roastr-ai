@@ -2,7 +2,7 @@
 
 **Comment Date:** 2025-10-16
 **PR:** #584 (feat/api-configuration-490)
-**Comment URL:** https://github.com/Eibon7/roastr-ai/pull/584#issuecomment-3412385809
+**Comment URL:** [#3412385809](https://github.com/Eibon7/roastr-ai/pull/584#issuecomment-3412385809)
 **Status:** 🔄 In Progress
 
 ---
@@ -328,7 +328,7 @@ grep -rn "moderations.create" src/ scripts/ -A 5 | tee docs/test-evidence/issue-
 - **CodeRabbit Comment:** #3412385809
 - **PR:** #584 (feat/api-configuration-490)
 - **Issue:** #490 (API Configuration & Verification Scripts)
-- **OpenAI Moderation API Docs:** https://platform.openai.com/docs/api-reference/moderations
+- **OpenAI Moderation API Docs:** [OpenAI Moderation API Reference](https://platform.openai.com/docs/api-reference/moderations)
 - **Quality Standards:** `docs/QUALITY-STANDARDS.md`
 - **Pattern Reference:** `docs/patterns/coderabbit-lessons.md`
 
