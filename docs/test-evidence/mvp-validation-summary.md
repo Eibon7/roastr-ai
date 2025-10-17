@@ -281,12 +281,44 @@ scripts/
 └── validate-flow-billing.js       ✅ Billing limits
 
 tests/integration/
-└── multi-tenant.test.js           ✅ RLS validation
+└── multi-tenant-rls-issue-412.test.js  ✅ RLS validation
 
 docs/test-evidence/
-├── mvp-validation-summary.md      📄 This file
-└── [validation screenshots]       🖼️  Visual evidence
+├── mvp-validation-summary.md              📄 This file (Executive summary)
+├── mvp-external-service-verification.md   📄 External service verification
+└── [validation screenshots]               🖼️  Visual evidence
 ```
+
+---
+
+## External Service Verification
+
+**Complete verification report**: `docs/test-evidence/mvp-external-service-verification.md`
+
+### Service Status Summary
+
+| Service | Status | Flows | Notes |
+|---------|--------|-------|-------|
+| **Supabase** | ✅ OPERATIONAL | All 4 flows | SERVICE_KEY correctly used |
+| **OpenAI API** | ✅ OPERATIONAL | Flow #486 | Real roast generation, cost tracking |
+| **Queue System** | ✅ OPERATIONAL | Flow #487 | Priority-based job queuing |
+| **Shield Service** | ✅ OPERATIONAL | Flow #487 | Decision engine working |
+| **CostControl** | ✅ OPERATIONAL | Flow #489 | Limit enforcement accurate |
+| **Auth Admin** | ✅ OPERATIONAL | Flows #487-489 | User management working |
+| **Perspective API** | ⚠️ OPTIONAL | Flow #486 | Has fallback, non-blocking |
+| **Stripe** | ❌ NOT TESTED | None | Separate webhook integration |
+| **Platform APIs** | ⚠️ MOCKED | None | Requires credentials for full testing |
+
+### Key Findings
+
+1. **✅ All Critical Services Operational**: Supabase, OpenAI, Queue, Shield, CostControl, Auth Admin
+2. **✅ Zero Data Leakage**: 14/14 RLS tests passing, 0% cross-tenant access
+3. **✅ Performance Targets Met**: All flows under target times (50-80% faster)
+4. **✅ Cost Tracking Accurate**: Token usage and costs correctly calculated
+5. **⚠️ Platform APIs Not Tested**: Twitter/YouTube/Discord require credentials for full validation
+6. **⚠️ Stripe Not Tested**: Webhook integration is separate flow
+
+**Detailed verification**: See `mvp-external-service-verification.md` for per-flow service analysis.
 
 ---
 
@@ -321,8 +353,11 @@ All 23 tests passing across 4 critical flows:
 1. ✅ All validation scripts committed to repo
 2. ✅ Database migrations applied to production
 3. ✅ Service fixes deployed
-4. 🎯 Ready for user acceptance testing
-5. 🎯 Ready for production deployment
+4. ✅ External service verification completed
+5. 🎯 Ready for user acceptance testing
+6. 🎯 Ready for production deployment
+
+**Full External Service Report**: `docs/test-evidence/mvp-external-service-verification.md`
 
 ### Team Sign-off
 
