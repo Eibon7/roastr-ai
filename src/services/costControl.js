@@ -8,7 +8,8 @@ class CostControlService {
       this.supabase = mockMode.generateMockSupabaseClient();
     } else {
       this.supabaseUrl = process.env.SUPABASE_URL;
-      this.supabaseKey = process.env.SUPABASE_ANON_KEY;
+      // Use service key for admin operations, fallback to anon key
+      this.supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
       this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
     }
     
