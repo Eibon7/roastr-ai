@@ -171,9 +171,9 @@ Result: ✅ Single occurrence found, includes `model` parameter (line 1348)
 ## 🔗 Referencias
 
 - **PR:** #584 (feat/api-configuration-490)
-- **CodeRabbit Comment:** https://github.com/Eibon7/roastr-ai/pull/584#issuecomment-3412385809
+- **CodeRabbit Comment:** [#3412385809](https://github.com/Eibon7/roastr-ai/pull/584#issuecomment-3412385809)
 - **Issue:** #490 (API Configuration & Verification Scripts)
-- **OpenAI Moderation API Docs:** https://platform.openai.com/docs/api-reference/moderations
+- **OpenAI Moderation API Docs:** [OpenAI Moderation API Reference](https://platform.openai.com/docs/api-reference/moderations)
 - **Planning Document:** `docs/plan/issue-comment-3412385809.md`
 - **Evidence Directory:** `docs/test-evidence/issue-comment-3412385809/`
 - **Files Modified:** `src/workers/AnalyzeToxicityWorker.js` (lines 1347-1350)

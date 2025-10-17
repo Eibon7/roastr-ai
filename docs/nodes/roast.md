@@ -592,6 +592,40 @@ const mockConfig = createMockRoastConfig({
 | `Transparency validation failed` | Disclaimer not applied | Block publication, log to Sentry |
 | `User config not found` | Database error | Use default config |
 
+### Error Codes (Issue #419)
+
+**Backend Constants** (`src/routes/approval.js`):
+
+```javascript
+const ERROR_CODES = {
+  TIMEOUT: 'E_TIMEOUT',
+  NETWORK_ERROR: 'E_NETWORK',
+  VARIANTS_EXHAUSTED: 'E_VARIANT_LIMIT',
+  VALIDATION_ERROR: 'E_VALIDATION',
+  SERVER_ERROR: 'E_SERVER'
+};
+
+const MAX_VARIANTS_PER_ROAST = 5;
+```
+
+**Frontend Error Handling** (`public/js/manual-approval.js`):
+- Displays user-friendly error messages based on error code
+- Implements retry logic for transient errors (E_TIMEOUT, E_NETWORK)
+- Shows fallback UI when variants exhausted (E_VARIANT_LIMIT)
+- Prevents retry for validation/server errors (E_VALIDATION, E_SERVER)
+
+**OpenAI Client Configuration** (`src/services/roastGeneratorEnhanced.js`):
+
+```javascript
+const VARIANT_GENERATION_TIMEOUT = 30000; // 30 seconds
+
+this.openai = new OpenAI({
+  apiKey,
+  timeout: VARIANT_GENERATION_TIMEOUT,
+  maxRetries: 1
+});
+```
+
 ### Error Response Format
 
 ```javascript

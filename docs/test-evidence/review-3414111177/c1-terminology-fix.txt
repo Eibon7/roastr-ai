@@ -1,0 +1,65 @@
+# C1: Terminology Regression Fix
+
+## Issue
+CodeRabbit Comment #2437344742 (Critical)
+Location: docs/system-validation.md:88
+
+**Problem:** Drift Risk Analysis table uses ambiguous "currently X%" format in Recommendations column.
+
+**Expected:** Use precise "declared: X%, actual: N/A" format to distinguish target (declared coverage) from reality (actual coverage).
+
+## Root Cause
+Template in scripts/predict-gdd-drift.js generates recommendations with "currently X%" format.
+
+## Fix Applied
+
+### File Modified: scripts/predict-gdd-drift.js
+
+**Line 321 (Coverage Recommendations):**
+```diff
+-recommendations.push(`Increase test coverage to 80%+ (currently ${coverageNum}%)`);
++recommendations.push(`Increase test coverage to 80%+ (declared: ${coverageNum}%, actual: N/A)`);
+```
+
+**Line 332 (Health Score Recommendations):**
+```diff
+-recommendations.push(`Improve health score to 70+ (currently ${healthData.score})`);
++recommendations.push(`Improve health score to 70+ (declared: ${healthData.score}, actual: N/A)`);
+```
+
+## Impact
+
+### Files Auto-Generated (Regenerated After Template Fix):
+1. gdd-drift.json - 13 recommendations updated
+2. docs/system-validation.md - Drift Risk Analysis table (lines 59-71)
+
+### Verification Results:
+- ✅ 0 instances of "currently" in system-validation.md
+- ✅ 13 instances of "declared: X%, actual: N/A" format
+- ✅ All 13 nodes with coverage use correct terminology
+
+### Affected Nodes (13):
+1. analytics (declared: 70%, actual: N/A)
+2. billing (declared: 70%, actual: N/A)
+3. cost-control (declared: 0%, actual: N/A)
+4. guardian (declared: 50%, actual: N/A)
+5. multi-tenant (declared: 70%, actual: N/A)
+6. persona (declared: 70%, actual: N/A)
+7. plan-features (declared: 3%, actual: N/A)
+8. queue-system (declared: 6%, actual: N/A)
+9. roast (declared: 0%, actual: N/A)
+10. shield (declared: 2%, actual: N/A)
+11. social-platforms (declared: 0%, actual: N/A)
+12. tone (declared: 70%, actual: N/A)
+13. trainer (declared: 50%, actual: N/A)
+
+## Pattern Recognition
+
+**Pattern:** Same issue as Review #3346841401 (different branch)
+
+**Root Cause:** Template generates output → fixing template prevents future regressions
+
+**Prevention:** Template-level fixes ensure consistency across all generated reports
+
+## Status
+✅ RESOLVED - Template fixed at source, all outputs regenerated correctly

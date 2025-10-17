@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-10-15T18:26:07.850Z",
+  "mode": "full",
+  "nodes_validated": 15,
+  "orphans": [],
+  "drift": {},
+  "outdated": [],
+  "cycles": [],
+  "missing_refs": [],
+  "broken_links": [],
+  "coverage_integrity": [
+    {
+      "type": "missing_coverage_data",
+      "node": "analytics",
+      "severity": "warning",
+      "declared": 70,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "billing",
+      "severity": "warning",
+      "declared": 70,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "guardian",
+      "severity": "warning",
+      "declared": 50,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "multi-tenant",
+      "severity": "warning",
+      "declared": 70,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "persona",
+      "severity": "warning",
+      "declared": 70,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "platform-constraints",
+      "severity": "warning",
+      "declared": 100,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "tone",
+      "severity": "warning",
+      "declared": 70,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "trainer",
+      "severity": "warning",
+      "declared": 50,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    }
+  ],
+  "status": "healthy"
+}

@@ -1,12 +1,12 @@
 {
-  "timestamp": "2025-10-16T09:58:09.277Z",
+  "timestamp": "2025-10-16T20:03:04.702Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 2,
+  "fixes_applied": 3,
   "errors": 0,
-  "health_before": 88.7,
-  "health_after": 88.7,
+  "health_before": 88.5,
+  "health_after": 88.5,
   "details": {
     "fixes": [
       {
@@ -18,6 +18,11 @@
         "type": "auto",
         "node": "roast",
         "action": "Added coverage to roast"
+      },
+      {
+        "type": "auto",
+        "node": "social-platforms",
+        "action": "Added coverage to social-platforms"
       }
     ],
     "humanReview": [],
