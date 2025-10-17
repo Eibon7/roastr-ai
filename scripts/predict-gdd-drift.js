@@ -172,7 +172,7 @@ class GDDDriftPredictor {
         if (line.startsWith('COMMIT:')) {
           const [hash, timestamp] = line.replace('COMMIT:', '').split('|');
           currentCommit = hash;
-          currentTimestamp = parseInt(timestamp);
+          currentTimestamp = Number.parseInt(timestamp, 10);
           activity.totalCommits++;
         } else if (currentCommit && line.trim()) {
           // Check if file is related to a node
@@ -313,7 +313,7 @@ class GDDDriftPredictor {
     // Factor 3: Coverage
     const coverage = nodeData.metadata.coverage;
     if (coverage !== undefined) {
-      const coverageNum = parseInt(coverage);
+      const coverageNum = Number.parseInt(coverage, 10);
       if (coverageNum < 80) {
         const points = 15;
         risk += points;
@@ -391,6 +391,7 @@ class GDDDriftPredictor {
    * Get emoji for drift status
    */
   getDriftEmoji(status) {
+    const s = String(status || '').toLowerCase();
     const emojis = {
       healthy: '🟢',
       at_risk: '🟡',
@@ -398,7 +399,7 @@ class GDDDriftPredictor {
       warning: '🟡',
       critical: '🔴'
     };
-    return emojis[status] || '⚪';
+    return emojis[s] || '⚪';
   }
 
   /**
@@ -407,9 +408,10 @@ class GDDDriftPredictor {
   calculateOverallStats() {
     const nodes = Object.values(this.driftData.nodes);
 
-    this.driftData.high_risk_count = nodes.filter(n => n.status === 'likely_drift').length;
-    this.driftData.at_risk_count = nodes.filter(n => n.status === 'at_risk').length;
-    this.driftData.healthy_count = nodes.filter(n => n.status === 'healthy').length;
+    const toU = s => String(s || '').toUpperCase();
+    this.driftData.high_risk_count = nodes.filter(n => toU(n.status) === 'LIKELY_DRIFT').length;
+    this.driftData.at_risk_count = nodes.filter(n => toU(n.status) === 'AT_RISK').length;
+    this.driftData.healthy_count = nodes.filter(n => toU(n.status) === 'HEALTHY').length;
 
     this.driftData.average_drift_risk = nodes.length > 0
       ? Math.round(nodes.reduce((sum, n) => sum + n.drift_risk, 0) / nodes.length)
