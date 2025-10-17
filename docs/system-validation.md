@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-17T10:39:43.375Z
+**Date:** 2025-10-17T14:17:41.850Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -21,7 +21,7 @@
 - **Average Drift Risk:** 4/100
 - **High Risk Nodes (>60):** 0
 - **At Risk Nodes (31-60):** 0
-- **Healthy Nodes (0-30):** 0
+- **Healthy Nodes (0-30):** 15
 
 ---
 
@@ -34,15 +34,22 @@ Coverage authenticity issues detected:
 | Node | Type | Declared | Actual | Diff | Severity |
 |------|------|----------|--------|------|----------|
 | analytics | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| billing | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| guardian | missing_coverage_data | 50% | N/A% | N/A% | warning |
-| multi-tenant | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| platform-constraints | missing_coverage_data | 100% | N/A% | N/A% | warning |
-| tone | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
+| billing | [36m
+📄 Report written to: docs/system-validation.md[0m
+[36m📊 JSON status: gdd-status.json[0m
 
-**Actions Required:**
+═══════════════════════════════════════
+         VALIDATION SUMMARY
+═══════════════════════════════════════
+
+✔ 15 nodes validated
+⚠ 8 coverage integrity issue(s)
+
+⏱  Completed in 0.09s
+
+🟢 Overall Status: HEALTHY
+
+ired:**
 - Coverage data not available for validation
 - Coverage data not available for validation
 - Coverage data not available for validation

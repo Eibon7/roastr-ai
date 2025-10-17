@@ -1,6 +1,6 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-17T10:39:01.808Z
+**Generated:** 2025-10-17T14:17:41.607Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
 **Average Drift Risk:** 4/100
@@ -10,7 +10,7 @@
 ## Summary
 
 - **Total Nodes:** 15
-- 🟢 **Healthy (0-30):** 0
+- 🟢 **Healthy (0-30):** 15
 - 🟡 **At Risk (31-60):** 0
 - 🔴 **Likely Drift (61-100):** 0
 
@@ -20,21 +20,21 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| analytics | ⚪ 5 | HEALTHY | 92 | 70% | 4d ago | 0 |
-| billing | ⚪ 5 | HEALTHY | 92 | 70% | 4d ago | 0 |
-| cost-control | ⚪ 5 | HEALTHY | 84 | 0% | 0d ago | 0 |
-| guardian | ⚪ 5 | HEALTHY | 88 | 50% | 1d ago | 0 |
-| multi-tenant | ⚪ 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
-| persona | ⚪ 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
-| plan-features | ⚪ 5 | HEALTHY | 85 | 3% | 3d ago | 0 |
-| queue-system | ⚪ 5 | HEALTHY | 85 | 6% | 1d ago | 0 |
-| roast | ⚪ 5 | HEALTHY | 85 | 0% | 0d ago | 0 |
-| shield | ⚪ 5 | HEALTHY | 84 | 2% | 4d ago | 0 |
-| social-platforms | ⚪ 5 | HEALTHY | 84 | 0% | 0d ago | 0 |
-| tone | ⚪ 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
-| trainer | ⚪ 5 | HEALTHY | 88 | 50% | 1d ago | 0 |
-| observability | ⚪ 0 | HEALTHY | 86 | N/A | 1d ago | 0 |
-| platform-constraints | ⚪ 0 | HEALTHY | 98 | 100% | 1d ago | 0 |
+| analytics | 🟢 5 | HEALTHY | 92 | 70% | 4d ago | 0 |
+| billing | 🟢 5 | HEALTHY | 92 | 70% | 4d ago | 0 |
+| cost-control | 🟢 5 | HEALTHY | 84 | 0% | 0d ago | 0 |
+| guardian | 🟢 5 | HEALTHY | 88 | 50% | 1d ago | 0 |
+| multi-tenant | 🟢 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
+| persona | 🟢 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
+| plan-features | 🟢 5 | HEALTHY | 85 | 3% | 3d ago | 0 |
+| queue-system | 🟢 5 | HEALTHY | 85 | 6% | 1d ago | 0 |
+| roast | 🟢 5 | HEALTHY | 85 | 0% | 0d ago | 0 |
+| shield | 🟢 5 | HEALTHY | 84 | 2% | 4d ago | 0 |
+| social-platforms | 🟢 5 | HEALTHY | 84 | 0% | 0d ago | 0 |
+| tone | 🟢 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
+| trainer | 🟢 5 | HEALTHY | 88 | 50% | 1d ago | 0 |
+| observability | 🟢 0 | HEALTHY | 86 | N/A | 1d ago | 0 |
+| platform-constraints | 🟢 0 | HEALTHY | 98 | 100% | 1d ago | 0 |
 
 ---
 
@@ -42,7 +42,7 @@
 
 ### analytics (Risk: 5)
 
-**Status:** ⚪ HEALTHY
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
@@ -55,7 +55,7 @@
 
 ### billing (Risk: 5)
 
-**Status:** ⚪ HEALTHY
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
@@ -68,7 +68,7 @@
 
 ### cost-control (Risk: 5)
 
-**Status:** ⚪ HEALTHY
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 0% (<80%)
@@ -77,11 +77,11 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
-**Git Activity:** 28 commits in last 30 days
+**Git Activity:** 29 commits in last 30 days
 
 ### guardian (Risk: 5)
 
-**Status:** ⚪ HEALTHY
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 50% (<80%)
@@ -94,7 +94,7 @@
 
 ### multi-tenant (Risk: 5)
 
-**Status:** ⚪ HEALTHY
+**Status:** 🟢 HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
