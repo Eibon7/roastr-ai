@@ -31,7 +31,7 @@ Auto-repair script applies fixes but detects health score decreased after change
 
 ### Log Evidence
 
-```
+```text
 ✓ Validating repairs...
    Health Score: 89.4 → 89.2
 
@@ -98,7 +98,7 @@ Multiple workflow runs execute concurrently on same PR. Both apply fixes and att
 
 ### Log Evidence
 
-```
+```text
 hint: Updates were rejected because the remote contains work that you do not
 hint: have locally. This is usually caused by another repository pushing to
 hint: the same ref. If you want to integrate the remote changes, use
