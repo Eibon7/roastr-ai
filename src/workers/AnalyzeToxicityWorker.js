@@ -7,6 +7,7 @@ const encryptionService = require('../services/encryptionService');
 const EmbeddingsService = require('../services/embeddingsService');
 const toxicityPatternsService = require('../services/toxicityPatternsService');
 const advancedLogger = require('../utils/advancedLogger');
+const PerspectiveService = require('../services/perspective');
 
 /**
  * Analyze Toxicity Worker
@@ -164,16 +165,12 @@ class AnalyzeToxicityWorker extends BaseWorker {
       this.openaiClient = mockMode.generateMockOpenAI();
       this.log('info', 'Mock toxicity services initialized');
     } else {
-      // Google Perspective API
+      // Google Perspective API - using PerspectiveService
       if (process.env.PERSPECTIVE_API_KEY) {
-        const { google } = require('googleapis');
-        this.perspectiveClient = google.commentanalyzer({
-          version: 'v1alpha1',
-          auth: process.env.PERSPECTIVE_API_KEY
-        });
-        this.log('info', 'Perspective API client initialized');
+        this.perspectiveClient = new PerspectiveService(process.env.PERSPECTIVE_API_KEY);
+        this.log('info', 'Perspective API service initialized');
       }
-      
+
       // OpenAI Moderation API (fallback)
       if (process.env.OPENAI_API_KEY) {
         const { OpenAI } = require('openai');
@@ -183,7 +180,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         this.log('info', 'OpenAI Moderation API client initialized');
       }
     }
-    
+
     if (!this.perspectiveClient && !this.openaiClient) {
       this.log('warn', 'No toxicity detection APIs configured, using pattern-based fallback only');
     }
@@ -1302,41 +1299,21 @@ class AnalyzeToxicityWorker extends BaseWorker {
   }
   
   /**
-   * Analyze using Google Perspective API
+   * Analyze using Google Perspective API (via PerspectiveService)
    */
   async analyzePerspective(text) {
-    const request = {
-      comment: { text },
-      requestedAttributes: {
-        TOXICITY: {},
-        SEVERE_TOXICITY: {},
-        IDENTITY_ATTACK: {},
-        INSULT: {},
-        PROFANITY: {},
-        THREAT: {}
-      },
-      languages: ['en', 'es'], // Support English and Spanish
+    // Use our PerspectiveService implementation
+    const result = await this.perspectiveClient.analyzeToxicity(text, {
+      languages: ['en', 'es'],
       doNotStore: true
-    };
-    
-    const response = await this.perspectiveClient.comments.analyze({
-      resource: request
     });
-    
-    const scores = response.data.attributeScores;
-    const toxicityScore = scores.TOXICITY?.summaryScore?.value || 0;
-    
-    const categories = [];
-    for (const [attribute, data] of Object.entries(scores)) {
-      if (data.summaryScore?.value > 0.5) {
-        categories.push(attribute.toLowerCase());
-      }
-    }
-    
+
+    // Return in the expected format for the worker
     return {
-      toxicity_score: Math.round(toxicityScore * 1000) / 1000, // Round to 3 decimals
-      categories,
-      raw_scores: scores
+      toxicity_score: result.toxicityScore,
+      categories: result.categories,
+      raw_scores: result.scores,
+      severity: result.severity
     };
   }
   
