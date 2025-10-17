@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-15T12:58:42.978Z",
+  "timestamp": "2025-10-17T14:17:41.850Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -26,15 +26,6 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
-      "node": "cost-control",
-      "severity": "critical",
-      "declared": 5,
-      "actual": 0,
-      "diff": 5,
-      "message": "Coverage mismatch: declared 5% but actual is 0% (diff: 5%)"
-    },
-    {
       "type": "missing_coverage_data",
       "node": "guardian",
       "severity": "warning",
@@ -49,15 +40,6 @@
       "declared": 70,
       "actual": null,
       "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "observability",
-      "severity": "critical",
-      "declared": 13,
-      "actual": 3,
-      "diff": 10,
-      "message": "Coverage mismatch: declared 13% but actual is 3% (diff: 10%)"
     },
     {
       "type": "missing_coverage_data",
@@ -76,33 +58,6 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
-      "node": "queue-system",
-      "severity": "critical",
-      "declared": 12,
-      "actual": 6,
-      "diff": 6,
-      "message": "Coverage mismatch: declared 12% but actual is 6% (diff: 6%)"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "roast",
-      "severity": "critical",
-      "declared": 50,
-      "actual": 0,
-      "diff": 50,
-      "message": "Coverage mismatch: declared 50% but actual is 0% (diff: 50%)"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "social-platforms",
-      "severity": "critical",
-      "declared": 50,
-      "actual": 0,
-      "diff": 50,
-      "message": "Coverage mismatch: declared 50% but actual is 0% (diff: 50%)"
-    },
-    {
       "type": "missing_coverage_data",
       "node": "tone",
       "severity": "warning",
@@ -119,5 +74,5 @@
       "message": "Coverage data not available for validation"
     }
   ],
-  "status": "critical"
+  "status": "healthy"
 }

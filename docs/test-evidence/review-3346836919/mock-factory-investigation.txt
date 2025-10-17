@@ -1,0 +1,129 @@
+=== M1: Broken Mock Factory - Pre-Existing Issue ===
+
+**Status:** 📋 DEFERRED - Not caused by current PR
+**Severity:** Major (Infrastructure)
+**Action:** Create separate GitHub issue for investigation
+
+---
+
+## Issue Description
+
+**Error:**
+```
+TypeError: mockMode.generateMockSupabaseClient is not a function
+    at new QueueService (/Users/emiliopostigo/roastr-ai/src/services/queueService.js:93)
+```
+
+**Evidence File:** `docs/test-evidence/issue-comment-3412385809/test-results.txt` (line 131)
+
+**Location:** `src/services/queueService.js:93`
+
+**Code:**
+```javascript
+this.supabase = mockMode.generateMockSupabaseClient();
+```
+
+---
+
+## Investigation Findings
+
+**Problem:**
+- QueueService calls `mockMode.generateMockSupabaseClient()`
+- Function doesn't exist or isn't exported from mock configuration
+- Prevents AnalyzeToxicityWorker tests from running
+- Blocks test coverage measurement
+
+**Impact:**
+- Test suite cannot run for workers using QueueService
+- Coverage reports incomplete
+- Infrastructure issue, not feature code bug
+
+---
+
+## Why Deferred
+
+1. **Pre-existing:** Issue existed before Review #3346836919
+2. **Scope:** Current PR is documentation-only (env var + markdown links)
+3. **No regressions:** Our changes don't touch mock factory code
+4. **Separate concern:** Mock infrastructure requires dedicated investigation
+5. **Best practice:** Don't mix infrastructure fixes with documentation PRs
+
+---
+
+## Recommended Investigation Steps (for separate issue)
+
+### Step 1: Check Mock Configuration
+```bash
+# Verify mock factory exports
+cat src/config/mockMode.js | grep -A 10 "generateMock"
+
+# Find all exported functions
+grep "module.exports" src/config/mockMode.js
+```
+
+### Step 2: Check QueueService Usage
+```bash
+# Context around the error
+sed -n '88,95p' src/services/queueService.js
+
+# Find all mock factory calls
+grep -rn "generateMockSupabaseClient" src/ tests/
+```
+
+### Step 3: Identify Correct Pattern
+- Option A: Add missing `generateMockSupabaseClient` to mockMode.js
+- Option B: Update queueService.js to call existing factory function
+- Option C: Refactor mock pattern to be consistent across services
+
+### Step 4: Fix and Test
+- Implement chosen solution
+- Run full test suite to verify fix
+- Update test utilities documentation
+- Create evidence of before/after test results
+
+---
+
+## GitHub Issue Requirements
+
+**Title:** `[P1] Fix broken mock factory: generateMockSupabaseClient not a function`
+
+**Labels:** `bug`, `infrastructure`, `testing`, `P1`
+
+**Description:**
+```markdown
+## Problem
+QueueService tests fail with `TypeError: mockMode.generateMockSupabaseClient is not a function` at `src/services/queueService.js:93`.
+
+## Impact
+- AnalyzeToxicityWorker tests cannot run
+- Test coverage incomplete
+- Blocks quality assurance for queue-based workers
+
+## Investigation
+See: `docs/test-evidence/review-3346836919/mock-factory-investigation.txt`
+
+## Acceptance Criteria
+- [ ] Mock factory exports `generateMockSupabaseClient`
+- [ ] QueueService tests run successfully
+- [ ] AnalyzeToxicityWorker tests run successfully
+- [ ] Test coverage reports include queue workers
+- [ ] No regressions in other test suites
+
+## Priority
+P1 - Infrastructure blocker for test coverage measurement
+```
+
+---
+
+## References
+
+- **Detected in:** CodeRabbit Review #3346836919 (M1)
+- **Error location:** `src/services/queueService.js:93`
+- **Evidence:** `docs/test-evidence/issue-comment-3412385809/test-results.txt:131`
+- **Related:** AnalyzeToxicityWorker, QueueService, Mock Testing Infrastructure
+
+---
+
+**Status:** Documented for separate investigation
+**Date:** 2025-10-16
+**Will not block PR #584:** ✅ Correct decision

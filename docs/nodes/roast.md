@@ -5,7 +5,7 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-10-13
-**Coverage:** 50%
+**Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499
 **Protected:** true
@@ -592,6 +592,40 @@ const mockConfig = createMockRoastConfig({
 | `Transparency validation failed` | Disclaimer not applied | Block publication, log to Sentry |
 | `User config not found` | Database error | Use default config |
 
+### Error Codes (Issue #419)
+
+**Backend Constants** (`src/routes/approval.js`):
+
+```javascript
+const ERROR_CODES = {
+  TIMEOUT: 'E_TIMEOUT',
+  NETWORK_ERROR: 'E_NETWORK',
+  VARIANTS_EXHAUSTED: 'E_VARIANT_LIMIT',
+  VALIDATION_ERROR: 'E_VALIDATION',
+  SERVER_ERROR: 'E_SERVER'
+};
+
+const MAX_VARIANTS_PER_ROAST = 5;
+```
+
+**Frontend Error Handling** (`public/js/manual-approval.js`):
+- Displays user-friendly error messages based on error code
+- Implements retry logic for transient errors (E_TIMEOUT, E_NETWORK)
+- Shows fallback UI when variants exhausted (E_VARIANT_LIMIT)
+- Prevents retry for validation/server errors (E_VALIDATION, E_SERVER)
+
+**OpenAI Client Configuration** (`src/services/roastGeneratorEnhanced.js`):
+
+```javascript
+const VARIANT_GENERATION_TIMEOUT = 30000; // 30 seconds
+
+this.openai = new OpenAI({
+  apiKey,
+  timeout: VARIANT_GENERATION_TIMEOUT,
+  maxRetries: 1
+});
+```
+
 ### Error Response Format
 
 ```javascript
@@ -603,26 +637,6 @@ const mockConfig = createMockRoastConfig({
   processingTimeMs: 5234
 }
 ```
-
-### Error Codes (Issue #419)
-
-**Backend Error Codes** (`src/routes/approval.js`):
-
-| Code | HTTP Status | Meaning | Recovery | Frontend Action |
-|------|-------------|---------|----------|-----------------|
-| `E_TIMEOUT` | 408 | Operation timed out (>30s) | Retry available | Show retry button |
-| `E_NETWORK` | 500 | Network error (*) | Retry available | Show retry button |
-| `E_VARIANT_LIMIT` | 429 | Max variants reached (5) | No retry | Disable variant button |
-| `E_VALIDATION` | 400 | Invalid input | No retry | Show error, no retry |
-| `E_SERVER` | 500 | Generic server error | Retry available | Show retry button |
-
-(*) Note: E_NETWORK currently maps to 500; consider using 502/503 for upstream/network errors in future iterations.
-
-**Configuration Constants:**
-- `MAX_VARIANTS_PER_ROAST = 5` — Maximum regeneration attempts per roast
-- `VARIANT_GENERATION_TIMEOUT = 30000` — 30s timeout for OpenAI calls
-- `maxRetries (UI/OpenAI client): 1` — Fail-fast for manual-approval fetches (Issue #419)
-  (Service-level generation retries remain 3; see "Retry Logic" section above)
 
 ## Monitoring & Observability
 

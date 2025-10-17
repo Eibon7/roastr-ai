@@ -1,0 +1,12 @@
+diff --git a/docs/test-evidence/review-3344281711/after-state.txt b/docs/test-evidence/review-3344281711/after-state.txt
+index fe5ee5fb..197106c0 100644
+--- a/docs/test-evidence/review-3344281711/after-state.txt
++++ b/docs/test-evidence/review-3344281711/after-state.txt
+@@ -1,6 +1,6 @@
+ === After State (Post-Corrections) ===
+ 
+-Successfully applied 2 Critical fixes from CodeRabbit Review #3344281711:
++Reconciled 2 documentation inconsistencies from CodeRabbit Review #3344281711; plan remains blocked (0/3 applicable):
+ 
+ ** docs/plan/review-3343448532.md **
+ 

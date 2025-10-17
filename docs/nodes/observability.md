@@ -1,6 +1,6 @@
 # Observability
 
-**Status:** 🟢 HEALTHY | **Test Coverage:** 14% | **Priority:** P1
+**Status:** 🟢 HEALTHY | **Test Coverage:** 3% | **Priority:** P1
 
 ## Overview
 
@@ -669,6 +669,84 @@ fields tenantId
 
 ---
 
+## Workflow Reliability Patterns
+
+### Exit Code Failure Detection
+
+**Problem:** GitHub Actions workflows using `continue-on-error: true` can silently succeed when scripts crash before writing output files.
+
+**Context:**
+When a script is configured with `continue-on-error: true` to prevent blocking the workflow, crashes that occur before the script writes its output file (e.g., `gdd-repair.json`) result in:
+1. Missing output file
+2. Default values (e.g., `errors: 0`) used by workflow
+3. Workflow appears successful despite failure
+4. No issue created for manual review
+
+**Solution:** Explicitly capture and check exit codes in addition to output file parsing.
+
+**Pattern Implementation:**
+
+```yaml
+# 1. Capture exit code in the script step
+- name: Run auto-repair (apply fixes)
+  id: repair
+  continue-on-error: true
+  run: |
+    node scripts/auto-repair-gdd.js --auto-fix --ci
+    EXIT_CODE=$?
+
+    # Parse output file (if exists)
+    if [ -f gdd-repair.json ]; then
+      FIXES=$(jq -r '.fixes_applied // 0' gdd-repair.json)
+      ERRORS=$(jq -r '.errors // 0' gdd-repair.json)
+    else
+      FIXES=0
+      ERRORS=0
+    fi
+
+    # Output all metrics
+    echo "fixes_applied=$FIXES" >> $GITHUB_OUTPUT
+    echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+    echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+    # Pass through exit code
+    exit $EXIT_CODE
+
+# 2. Check exit code in failure conditions
+- name: Create or update issue for manual review
+  if: (failure() || steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code != '0' && steps.repair.outputs.exit_code != '2'))
+  uses: actions/github-script@v7
+  # ... issue creation logic ...
+
+# 3. Fail workflow if non-rollback error
+- name: Fail if errors occurred
+  if: (steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code != '0' && steps.repair.outputs.exit_code != '2'))
+  run: |
+    echo "❌ Auto-repair completed with errors"
+    exit 1
+```
+
+**Exit Code Contract:**
+- `0` - Success (no errors)
+- `1` - Error (requires manual intervention)
+- `2` - Rollback (health score decreased, changes reverted - not an error)
+
+**Key Points:**
+1. **Always capture exit code** even with `continue-on-error: true`
+2. **Check both output parsing AND exit code** in failure conditions
+3. **Exclude rollback exit code** (2) from error conditions
+4. **Use `failure()` for step-level failures** (syntax errors, missing files)
+
+**Files Using This Pattern:**
+- `.github/workflows/gdd-repair.yml` (lines 75-107, 262-263, 354-358)
+- `.github/workflows/gdd-validate.yml` (similar pattern)
+
+**References:**
+- CodeRabbit Review #3335075828 (C1, D1) - Identified missing exit code checks
+- CodeRabbit Review #3334552691 (M1) - Established exit code contract
+
+---
+
 ## Related Nodes
 
 - **queue-system** - Queue job lifecycle events
@@ -730,7 +808,7 @@ fields tenantId
 ## Health Metrics
 
 **Status:** 🟢 HEALTHY
-**Test Coverage:** 14% (19/19 integration tests + 17/17 E2E tests passing)
+**Test Coverage:** 3% (19/19 integration tests + 17/17 E2E tests passing)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
 **Last Updated:** 2025-10-15
