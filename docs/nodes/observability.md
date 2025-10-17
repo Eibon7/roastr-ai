@@ -1,6 +1,6 @@
 # Observability
 
-**Status:** 🟢 HEALTHY | **Test Coverage:** 3% | **Priority:** P1
+**Status:** 🟢 HEALTHY | **Test Coverage:** 3% | **Priority:** P1 | **Version:** v1.1.0
 
 ## Overview
 
@@ -9,6 +9,7 @@ Comprehensive observability infrastructure for structured logging, correlation t
 **Implementation:**
 - Issue #417 - Observabilidad mínima – structured logs y correlación
 - Issue #419 - E2E UI resilience tests for manual approval flow (PR #574)
+- PR #579 - GDD workflow reliability improvements (deduplication, rollback handling, auto-cleanup)
 
 ## Core Features
 
@@ -799,6 +800,13 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 
 ## Version History
 
+- **v1.1.0** (2025-10-17) - GDD workflow reliability improvements (PR #579)
+  - Issue deduplication in GDD validation workflow
+  - Rollback detection with exit code 2
+  - Auto-cleanup of stale GDD issues (>30 days)
+  - GitHub Search API integration (handles >100 issues)
+  - Case-insensitive status handling in drift prediction
+
 - **v1.0.0** (2025-10-12) - Initial implementation (Issue #417)
   - Winston-based structured logging
   - Correlation ID propagation
@@ -811,9 +819,9 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 **Test Coverage:** 3% (19/19 integration tests + 17/17 E2E tests passing)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
-**Last Updated:** 2025-10-15
+**Last Updated:** 2025-10-17
 **Coverage Source:** auto
-**Related PRs:** #515 (Issue #417), #574 (Issue #419)
+**Related PRs:** #515 (Issue #417), #574 (Issue #419), #579 (GDD workflow reliability)
 
 ## Node Metadata
 

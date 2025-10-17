@@ -3,8 +3,8 @@
 **Node Type:** Governance Layer
 **Status:** active
 **Version:** 1.0.0
-**Last Updated:** 2025-10-09
-**Related PR:** #515
+**Last Updated:** 2025-10-17
+**Related PR:** #515, #579 (AnalyzeToxicityWorker: configurable OpenAI model)
 
 ---
 

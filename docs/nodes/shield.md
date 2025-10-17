@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-10-17
 **Coverage:** 2%
 **Coverage Source:** auto
-**Related PRs:** #499
+**Related PRs:** #499, #579 (mock adapter improvements)
 
 ## Dependencies
 
