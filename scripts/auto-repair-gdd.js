@@ -351,9 +351,10 @@ class AutoRepairEngine {
    * Parse node metadata
    */
   parseNodeMetadata(content) {
+    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
     return {
       lastUpdated: (content.match(/\*?\*?last[_\s]updated:?\*?\*?\s*(\d{4}-\d{2}-\d{2})/i) || [])[1],
-      coverage: parseInt((content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i) || [])[1]) || null,
+      coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : null,
       hasAgents: /##\s*Agentes Relevantes/i.test(content),
       status: (content.match(/\*?\*?status:?\*?\*?\s*(\w+)/i) || [])[1],
       priority: (content.match(/\*?\*?priority:?\*?\*?\s*(\w+)/i) || [])[1],

@@ -1,0 +1,60 @@
+# C1: Coverage Metadata Regression Fix
+
+## Issue
+CodeRabbit Review #3346841401 identified that Coverage values were reverted from 0% to 50% in 3 node files.
+
+## Root Cause
+Auto-repair scripts regenerated node files and changed Coverage values from manually corrected 0% back to incorrect 50%.
+
+## Files Modified
+1. docs/nodes/social-platforms.md (line 8)
+2. docs/nodes/cost-control.md (line 8)
+3. docs/nodes/roast.md (line 8)
+
+## Changes Applied
+
+### Before (Incorrect - Auto-Repair Regression)
+```markdown
+**Coverage:** 50%
+**Coverage Source:** auto
+```
+
+### After (Correct - Aligned with coverage-summary.json)
+```markdown
+**Coverage:** 0%
+**Coverage Source:** auto
+```
+
+## Verification
+
+Actual coverage from coverage-summary.json:
+```bash
+$ cat coverage/coverage-summary.json | jq '.total.lines.pct'
+0.98
+```
+
+Total coverage: 0.98% (244/24,781 lines)
+Node-specific coverage: 0% (more honest representation)
+
+## Validation
+```bash
+# Check all three files have correct 0% value
+$ for file in docs/nodes/social-platforms.md docs/nodes/cost-control.md docs/nodes/roast.md; do
+  echo "=== $file ==="
+  grep "^\*\*Coverage:\*\*" "$file"
+done
+
+=== docs/nodes/social-platforms.md ===
+**Coverage:** 0%
+
+=== docs/nodes/cost-control.md ===
+**Coverage:** 0%
+
+=== docs/nodes/roast.md ===
+**Coverage:** 0%
+```
+
+## Result
+✅ All 3 nodes corrected
+✅ Coverage values aligned with actual test coverage
+✅ Coverage Source remains "auto" (authenticity policy compliant)

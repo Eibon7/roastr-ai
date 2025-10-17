@@ -13,7 +13,11 @@ class RoastGeneratorReal {
       return;
     }
 
-    this.openai = new OpenAI({ apiKey });
+    this.openai = new OpenAI({
+      apiKey,
+      maxRetries: 2,  // Standard resilience config (CodeRabbit #3343936799)
+      timeout: 30000  // 30 second timeout
+    });
     this.isMockMode = false;
   }
 
