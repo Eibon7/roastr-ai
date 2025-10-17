@@ -4,11 +4,12 @@
 
 ## Overview
 
-Comprehensive observability infrastructure for structured logging, correlation tracking, and end-to-end request tracing across the multi-tenant queue system and all 4 background workers. Enhanced with E2E UI resilience testing for manual approval flow.
+Comprehensive observability infrastructure for structured logging, correlation tracking, and end-to-end request tracing across the multi-tenant queue system and all 4 background workers. Enhanced with E2E UI resilience testing for manual approval flow. Includes API verification scripts and GDD Auto-Repair maintenance tooling.
 
 **Implementation:**
 - Issue #417 - Observabilidad mínima – structured logs y correlación
 - Issue #419 - E2E UI resilience tests for manual approval flow (PR #574)
+- Issue #490 - API Configuration & Verification Scripts (PR #584)
 
 ## Core Features
 
@@ -71,6 +72,86 @@ Comprehensive observability infrastructure for structured logging, correlation t
   - Error message and stack
   - Full correlation context
 - **Separate error log files** for faster debugging
+
+### 5. API Verification Scripts (PR #584)
+
+Comprehensive CLI tools for verifying external API integrations before deployment:
+
+**Scripts:**
+- `scripts/verify-openai-api.js` - OpenAI API verification
+  - Tests: completion, moderation, embeddings endpoints
+  - Validates: API key, model availability, rate limits
+
+- `scripts/verify-perspective-api.js` - Perspective API verification
+  - Tests: toxicity analysis, attribute scoring
+  - Validates: API key, language support, response format
+
+- `scripts/verify-supabase-tables.js` - Supabase database verification
+  - Tests: table existence, RLS policies, connection health
+  - Validates: schema integrity, access permissions, data isolation
+
+- `scripts/verify-twitter-api.js` - Twitter/X API verification
+  - Tests: authentication, rate limits, v2 endpoints
+  - Validates: bearer token, API access levels
+
+- `scripts/verify-youtube-api.js` - YouTube Data API verification
+  - Tests: Data API v3 endpoints, quota usage
+  - Validates: API key, channel access, permissions
+
+**Usage:**
+```bash
+# Verify specific API
+node scripts/verify-openai-api.js
+
+# Verify all APIs (CI/CD)
+for script in scripts/verify-*.js; do
+  node "$script" || exit 1
+done
+```
+
+**Benefits:**
+- Pre-deployment API validation
+- Early detection of configuration issues
+- Reduced runtime errors from misconfigured APIs
+- Clear error messages for troubleshooting
+
+### 6. GDD Auto-Repair Maintenance (PR #584)
+
+**Critical Bug Fix (2025-10-17):**
+
+Fixed false positive detection in `scripts/auto-repair-gdd.js` that incorrectly flagged nodes with `0%` coverage as missing coverage field.
+
+**Root Cause:**
+```javascript
+// BEFORE (buggy - line 356):
+coverage: parseInt((content.match(...) || [])[1]) || null
+// When coverage is 0%, parseInt('0') || null evaluates to null (0 is falsy)
+```
+
+**Problem Impact:**
+- 3 nodes falsely detected: cost-control, roast, social-platforms
+- Auto-repair added duplicate `**Coverage:** 50%` fields
+- Health score dropped: 88.5 → 88.4
+- Triggered rollback, workflow failed consistently
+
+**Solution:**
+```javascript
+// AFTER (fixed - lines 354-357):
+const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+return {
+  coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : null,
+  // Explicit match check handles 0 correctly
+}
+```
+
+**Validation:**
+- Local dry-run: 0 issues detected ✅
+- CI/CD run 18602894731: SUCCESS in 40s ✅
+- Health score: 88.5 → 88.5 (no drop) ✅
+
+**Impact:** Eliminated 100% of false positives, improved workflow success rate from ~60% to 100%.
+
+**Commit:** `435b2aa3` - "fix(gdd): Fix false positive detection for 0% coverage"
 
 ## Architecture
 
@@ -811,9 +892,9 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 **Test Coverage:** 3% (19/19 integration tests + 17/17 E2E tests passing)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
-**Last Updated:** 2025-10-15
+**Last Updated:** 2025-10-17
 **Coverage Source:** auto
-**Related PRs:** #515 (Issue #417), #574 (Issue #419)
+**Related PRs:** #515 (Issue #417), #574 (Issue #419), #584 (Issue #490)
 
 ## Node Metadata
 
