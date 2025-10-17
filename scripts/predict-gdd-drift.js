@@ -318,7 +318,7 @@ class GDDDriftPredictor {
         const points = 15;
         risk += points;
         factors.push(`+${points} pts: Coverage ${coverageNum}% (<80%)`);
-        recommendations.push(`Increase test coverage to 80%+ (currently ${coverageNum}%)`);
+        recommendations.push(`Increase test coverage to 80%+ (declared: ${coverageNum}%, actual: N/A)`);
       }
     }
 
@@ -329,7 +329,7 @@ class GDDDriftPredictor {
         const points = 25;
         risk += points;
         factors.push(`+${points} pts: Health score ${healthData.score} (<70)`);
-        recommendations.push(`Improve health score to 70+ (currently ${healthData.score})`);
+        recommendations.push(`Improve health score to 70+ (declared: ${healthData.score}, actual: N/A)`);
       }
     }
 
