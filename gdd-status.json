@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-16T20:03:04.773Z",
+  "timestamp": "2025-10-17T10:39:43.375Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -27,14 +27,6 @@
     },
     {
       "type": "missing_coverage_data",
-      "node": "cost-control",
-      "severity": "warning",
-      "declared": 0,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
       "node": "guardian",
       "severity": "warning",
       "declared": 50,
@@ -51,14 +43,6 @@
     },
     {
       "type": "missing_coverage_data",
-      "node": "observability",
-      "severity": "warning",
-      "declared": 3,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
       "node": "persona",
       "severity": "warning",
       "declared": 70,
@@ -67,49 +51,9 @@
     },
     {
       "type": "missing_coverage_data",
-      "node": "plan-features",
-      "severity": "warning",
-      "declared": 3,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
       "node": "platform-constraints",
       "severity": "warning",
       "declared": 100,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "queue-system",
-      "severity": "warning",
-      "declared": 6,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "roast",
-      "severity": "warning",
-      "declared": 0,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "shield",
-      "severity": "warning",
-      "declared": 2,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "social-platforms",
-      "severity": "warning",
-      "declared": 0,
       "actual": null,
       "message": "Coverage data not available for validation"
     },

@@ -1,6 +1,6 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-15T21:43:20.843Z
+**Generated:** 2025-10-17T10:39:01.808Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
 **Average Drift Risk:** 4/100
@@ -10,7 +10,7 @@
 ## Summary
 
 - **Total Nodes:** 15
-- 🟢 **Healthy (0-30):** 15
+- 🟢 **Healthy (0-30):** 0
 - 🟡 **At Risk (31-60):** 0
 - 🔴 **Likely Drift (61-100):** 0
 
@@ -20,21 +20,21 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| analytics | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
-| billing | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
-| cost-control | 🟢 5 | healthy | 82 | 0% | 3d ago | 0 |
-| guardian | 🟢 5 | healthy | 88 | 50% | 3d ago | 0 |
-| multi-tenant | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
-| persona | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
-| plan-features | 🟢 5 | healthy | 85 | 3% | 2d ago | 0 |
-| queue-system | 🟢 5 | healthy | 83 | 6% | 0d ago | 0 |
-| roast | 🟢 5 | healthy | 84 | 0% | 1d ago | 0 |
-| shield | 🟢 5 | healthy | 84 | 2% | 2d ago | 0 |
-| social-platforms | 🟢 5 | healthy | 83 | 0% | 2d ago | 0 |
-| tone | 🟢 5 | healthy | 92 | 70% | 3d ago | 0 |
-| trainer | 🟢 5 | healthy | 88 | 50% | 3d ago | 0 |
-| observability | 🟢 0 | healthy | 81 | N/A | 0d ago | 0 |
-| platform-constraints | 🟢 0 | healthy | 98 | 100% | 3d ago | 0 |
+| analytics | ⚪ 5 | HEALTHY | 92 | 70% | 4d ago | 0 |
+| billing | ⚪ 5 | HEALTHY | 92 | 70% | 4d ago | 0 |
+| cost-control | ⚪ 5 | HEALTHY | 84 | 0% | 0d ago | 0 |
+| guardian | ⚪ 5 | HEALTHY | 88 | 50% | 1d ago | 0 |
+| multi-tenant | ⚪ 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
+| persona | ⚪ 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
+| plan-features | ⚪ 5 | HEALTHY | 85 | 3% | 3d ago | 0 |
+| queue-system | ⚪ 5 | HEALTHY | 85 | 6% | 1d ago | 0 |
+| roast | ⚪ 5 | HEALTHY | 85 | 0% | 0d ago | 0 |
+| shield | ⚪ 5 | HEALTHY | 84 | 2% | 4d ago | 0 |
+| social-platforms | ⚪ 5 | HEALTHY | 84 | 0% | 0d ago | 0 |
+| tone | ⚪ 5 | HEALTHY | 92 | 70% | 1d ago | 0 |
+| trainer | ⚪ 5 | HEALTHY | 88 | 50% | 1d ago | 0 |
+| observability | ⚪ 0 | HEALTHY | 86 | N/A | 1d ago | 0 |
+| platform-constraints | ⚪ 0 | HEALTHY | 98 | 100% | 1d ago | 0 |
 
 ---
 
@@ -42,68 +42,68 @@
 
 ### analytics (Risk: 5)
 
-**Status:** 🟢 HEALTHY
+**Status:** ⚪ HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (4 days ago)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (currently 70%)
+- Increase test coverage to 80%+ (declared: 70%, actual: N/A)
 
 **Git Activity:** 16 commits in last 30 days
 
 ### billing (Risk: 5)
 
-**Status:** 🟢 HEALTHY
+**Status:** ⚪ HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (4 days ago)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (currently 70%)
+- Increase test coverage to 80%+ (declared: 70%, actual: N/A)
 
 **Git Activity:** 18 commits in last 30 days
 
 ### cost-control (Risk: 5)
 
-**Status:** 🟢 HEALTHY
+**Status:** ⚪ HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 0% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (today)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (currently 0%)
+- Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
-**Git Activity:** 15 commits in last 30 days
+**Git Activity:** 28 commits in last 30 days
 
 ### guardian (Risk: 5)
 
-**Status:** 🟢 HEALTHY
+**Status:** ⚪ HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 50% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (1 day ago)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (currently 50%)
+- Increase test coverage to 80%+ (declared: 50%, actual: N/A)
 
-**Git Activity:** 8 commits in last 30 days
+**Git Activity:** 9 commits in last 30 days
 
 ### multi-tenant (Risk: 5)
 
-**Status:** 🟢 HEALTHY
+**Status:** ⚪ HEALTHY
 
 **Risk Factors:**
 - +15 pts: Coverage 70% (<80%)
-- -10 pts: Recent commit (3 days ago)
+- -10 pts: Recent commit (1 day ago)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (currently 70%)
+- Increase test coverage to 80%+ (declared: 70%, actual: N/A)
 
-**Git Activity:** 38 commits in last 30 days
+**Git Activity:** 39 commits in last 30 days
 
 ---
 
