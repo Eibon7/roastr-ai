@@ -1291,13 +1291,22 @@ class AnalyzeToxicityWorker extends BaseWorker {
         };
       }
     }
-    
-    // Add severity level based on final score
-    result.severity_level = this.calculateSeverityLevel(result.toxicity_score);
-    
+
+    // Add severity level: Use Perspective API's severity if available,
+    // otherwise calculate from score
+    if (!result.severity_level) {
+      // If result has 'severity' from Perspective API, use it
+      if (result.severity) {
+        result.severity_level = result.severity;
+      } else {
+        // Fallback to calculated severity for OpenAI/patterns
+        result.severity_level = this.calculateSeverityLevel(result.toxicity_score);
+      }
+    }
+
     return result;
   }
-  
+
   /**
    * Analyze using Google Perspective API (via PerspectiveService)
    */
@@ -1309,11 +1318,12 @@ class AnalyzeToxicityWorker extends BaseWorker {
     });
 
     // Return in the expected format for the worker
+    // Use Perspective's severity directly (no recalculation needed)
     return {
       toxicity_score: result.toxicityScore,
+      severity_level: result.severity, // Use Perspective's severity directly
       categories: result.categories,
-      raw_scores: result.scores,
-      severity: result.severity
+      raw_scores: result.scores
     };
   }
   
