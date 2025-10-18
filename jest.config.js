@@ -77,8 +77,19 @@ module.exports = {
   // Projects for different test types
   projects: [
     {
-      displayName: 'node-tests',
-      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/adapters/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/unit/scripts/**/*.test.js', '<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/e2e/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js', '<rootDir>/tests/security/**/*.test.js'],
+      displayName: 'unit-tests',
+      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/adapters/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/unit/scripts/**/*.test.js'],
+      setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
+    },
+    {
+      displayName: 'integration-tests',
+      testMatch: ['<rootDir>/tests/integration/**/*.test.js', '<rootDir>/tests/e2e/**/*.test.js', '<rootDir>/tests/smoke/**/*.test.js'],
+      setupFilesAfterEnv: ['<rootDir>/tests/setupIntegration.js'],
+      testTimeout: 30000
+    },
+    {
+      displayName: 'security-tests',
+      testMatch: ['<rootDir>/tests/security/**/*.test.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
     },
     {

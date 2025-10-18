@@ -50,20 +50,20 @@ jest.mock('../../../src/workers/BaseWorker', () => {
 });
 
 // Mock Perspective API
-const mockPerspectiveService = {
-  analyzeToxicity: jest.fn(),
-  initialize: jest.fn()
-};
-
-jest.mock('../../../src/services/perspective', () => mockPerspectiveService);
+jest.mock('../../../src/services/perspective', () => {
+  return jest.fn().mockImplementation(() => ({
+    analyzeToxicity: jest.fn(),
+    initialize: jest.fn()
+  }));
+});
 
 // Mock OpenAI service
-const mockOpenAIService = {
-  moderateContent: jest.fn(),
-  initialize: jest.fn()
-};
-
-jest.mock('../../../src/services/openai', () => mockOpenAIService);
+jest.mock('../../../src/services/openai', () => {
+  return jest.fn().mockImplementation(() => ({
+    moderateContent: jest.fn(),
+    initialize: jest.fn()
+  }));
+});
 
 // Mock Shield service
 const mockShieldService = {
@@ -92,6 +92,27 @@ jest.mock('../../../src/services/costControl', () => {
 jest.mock('../../../src/config/mockMode', () => ({
   mockMode: {
     isMockMode: true,
+    generateMockSupabaseClient: jest.fn(() => ({
+      from: jest.fn(() => ({
+        select: jest.fn(() => ({
+          eq: jest.fn(() => ({
+            single: jest.fn()
+          }))
+        })),
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn()
+          }))
+        })),
+        update: jest.fn(() => ({
+          eq: jest.fn(() => ({
+            select: jest.fn(() => ({
+              single: jest.fn()
+            }))
+          }))
+        }))
+      }))
+    })),
     generateMockPerspective: jest.fn(() => ({
       comments: {
         analyze: jest.fn()
@@ -109,11 +130,15 @@ describe('AnalyzeToxicityWorker', () => {
   let worker;
   let mockSupabase;
   let mockQueueService;
+  let mockPerspectiveService;
+  let mockOpenAIService;
 
   beforeEach(() => {
     worker = new AnalyzeToxicityWorker();
     mockSupabase = worker.supabase;
     mockQueueService = worker.queueService;
+    mockPerspectiveService = worker.perspectiveClient;
+    mockOpenAIService = worker.openaiClient;
   });
 
   afterEach(() => {

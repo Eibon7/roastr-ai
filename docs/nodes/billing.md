@@ -772,6 +772,65 @@ Los siguientes agentes son responsables de mantener este nodo:
 - [ ] Refund flow tests
 - [ ] Payment dispute handling tests
 
+### Test Cleanup Best Practices
+
+**⚠️ IMPORTANT**: All billing validation tests that create test users and organizations MUST use `finally` blocks for cleanup to prevent test data pollution.
+
+**Pattern to Follow** (`scripts/validate-flow-billing.js`):
+```javascript
+// Declare variables outside try block for finally access
+let authUser = null;
+let testOrgId = null;
+const testEmail = `test-billing-${Date.now()}@example.com`;
+
+try {
+  // Create test user
+  const { data: authUserData, error: authError } = await client.auth.admin.createUser({
+    email: testEmail,
+    // ...
+  });
+  authUser = authUserData; // Assign to outer scope
+
+  // Create test organization
+  testOrgId = autoOrgs[0].id; // Assign to outer scope
+
+  // ... test logic ...
+
+} catch (error) {
+  // Error handling
+  results.failed++;
+  console.error(`Test failed: ${error.message}`);
+} finally {
+  // Cleanup runs WHETHER test passes OR fails
+  if (testOrgId || (authUser && authUser.user)) {
+    console.log('\n🧹 Cleaning up test data...');
+    try {
+      if (testOrgId) {
+        await client.from('monthly_usage').delete().eq('organization_id', testOrgId);
+        await client.from('usage_records').delete().eq('organization_id', testOrgId);
+        await client.from('organization_members').delete().eq('organization_id', testOrgId);
+        await client.from('organizations').delete().eq('id', testOrgId);
+      }
+      if (authUser && authUser.user) {
+        await client.from('users').delete().eq('id', authUser.user.id);
+        await client.auth.admin.deleteUser(authUser.user.id);
+      }
+      console.log('✅ Cleanup complete');
+    } catch (cleanupError) {
+      console.error(`⚠️  Cleanup failed: ${cleanupError.message}`);
+    }
+  }
+}
+```
+
+**Why This Matters**:
+- ❌ **Without finally**: If test fails midway, test users/orgs are left in database
+- ✅ **With finally**: Cleanup runs even if test throws error
+- ✅ **Prevents test pollution**: Database stays clean for next test run
+- ✅ **Prevents quota exhaustion**: Avoids hitting plan limits from abandoned test data
+
+**Related**: CodeRabbit Review #3352743882 (Major Issue M1), PR #587
+
 ### Comandos de Test
 
 ```bash

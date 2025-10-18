@@ -32,7 +32,13 @@ Shield is the automated content moderation system for Roastr.ai that provides ad
 ### Main Flow
 
 ```text
-Comment Analysis (toxicity_score, labels)
+Comment Detected
+    ↓
+AnalyzeToxicityWorker
+    ↓
+Perspective API (Google)
+    ↓ (toxicity_score, severity_level, categories, raw_scores)
+Shield Service receives analysis
     ↓
 ShieldDecisionEngine.makeDecision()
     ↓
@@ -42,13 +48,12 @@ ShieldDecisionEngine.makeDecision()
     ↓
 [Check Offender History] → Get recidivism data and risk level
     ↓
-[Apply Decision Logic] → Threshold-based decision tree
+[Apply Decision Logic] → Severity-based decision tree
     ↓
-    - Critical (≥0.98): Immediate severe action (block, report, escalate)
-    - High (≥0.95): Moderate Shield action (timeout, hide, warn)
-    - Moderate (≥0.90): Roastable comment (generate roast, monitor)
-    - Corrective (≥0.85): First strike with guidance message
-    - Normal (<0.85): Publish normally
+    - Critical (severity='critical'): Immediate block + report
+    - High (severity='high'): Auto-moderate + manual review
+    - Medium (severity='medium'): Manual moderation (temp mute)
+    - Low/Clean (severity='low'/'clean'): No action
     ↓
 [Record Decision] → Persistence layer for audit trail
     ↓
@@ -58,6 +63,42 @@ ShieldDecisionEngine.makeDecision()
     ↓
 [Update History] → Track action and update user behavior
 ```
+
+### Perspective API Integration
+
+**Integration Point:** `src/workers/AnalyzeToxicityWorker.js` → `src/services/shieldService.js`
+
+Shield receives toxicity analysis from Perspective API via AnalyzeToxicityWorker:
+
+```javascript
+{
+  toxicity_score: 0.88,           // TOXICITY score (0-1)
+  severity_level: 'high',          // Perspective's calculated severity
+  categories: ['insult'],          // Detected categories
+  raw_scores: {
+    toxicity: 0.88,
+    severeToxicity: 0.60,
+    identityAttack: 0.44,
+    insult: 0.616,
+    profanity: 0.528,
+    threat: 0.40
+  }
+}
+```
+
+**Severity Mapping (Perspective → Shield):**
+
+| Perspective Severity | Shield Priority | Shield Action | Auto Execute | Manual Review |
+|---------------------|-----------------|---------------|--------------|---------------|
+| `critical` (≥0.95)  | 1 (critical)    | block + report | YES          | NO            |
+| `high` (≥0.85)      | 2 (high)        | mute_permanent | YES          | YES           |
+| `medium` (≥0.60)    | 3 (medium)      | mute_temp      | NO           | NO            |
+| `low` (≥0.40)       | 5 (low)         | warn           | NO           | NO            |
+| `clean` (<0.40)     | 5 (low)         | warn           | NO           | NO            |
+
+**Important:** Shield uses Perspective's `severity_level` directly (not toxicity_score) for priority calculation. This ensures Perspective's multi-factor analysis (considering severeToxicity, threat, multiple thresholds) drives Shield decisions.
+
+**Validation:** See `docs/test-evidence/perspective-shield-validation.md` for integration test results.
 
 ### Component Files
 

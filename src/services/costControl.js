@@ -8,7 +8,17 @@ class CostControlService {
       this.supabase = mockMode.generateMockSupabaseClient();
     } else {
       this.supabaseUrl = process.env.SUPABASE_URL;
-      this.supabaseKey = process.env.SUPABASE_ANON_KEY;
+      this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+      // Fail fast if SERVICE_KEY is missing (required for admin operations)
+      if (!this.supabaseKey) {
+        throw new Error(
+          'SUPABASE_SERVICE_KEY is required for CostControlService. ' +
+          'This service requires admin privileges for usage tracking, billing, and cost control operations. ' +
+          'SUPABASE_ANON_KEY is NOT sufficient and will cause permission errors.'
+        );
+      }
+
       this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
     }
     
