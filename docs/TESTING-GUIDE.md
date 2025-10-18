@@ -106,6 +106,254 @@ npm run test:spec14:dry       # Preview without running
 npm run test -- tests/integration/test-observability.test.js
 ```
 
+### MVP Flow Validations (October 2025)
+
+End-to-end validation scripts for critical MVP flows. These are **standalone validation scripts** (not Jest tests) that validate complete workflows against real infrastructure.
+
+**🔗 Full Report:** `docs/test-evidence/mvp-validation-summary.md`
+
+#### 1. Basic Roast Flow (`validate-flow-basic-roast.js`)
+
+**What it validates:**
+- Complete roast generation pipeline: Comment → Toxicity → OpenAI → Storage → Retrieval
+- Tests 3 toxicity levels: high (0.85), medium (0.62), low (0.15)
+- Validates cost tracking, token usage, and response quality
+
+**How to run:**
+```bash
+node scripts/validate-flow-basic-roast.js
+```
+
+**Environment requirements:**
+```bash
+MOCK_MODE=false                    # Must use real APIs
+ENABLE_MOCK_MODE=false
+OPENAI_API_KEY=sk-...             # Real OpenAI key
+SUPABASE_URL=https://...          # Real database
+SUPABASE_SERVICE_KEY=...
+```
+
+**Expected results:**
+- ✅ 3/3 test scenarios passing
+- ⏱️ ~7-8 seconds total execution
+- 💰 Cost tracking verified (avg $0.002 per roast)
+- 📊 Performance: <3s per roast (target: <5s)
+
+**What's tested:**
+- ✅ Toxicity scoring (0.15-0.85 range)
+- ✅ OpenAI API integration (gpt-4o-mini)
+- ✅ Database storage (roasts table)
+- ✅ Cost calculation
+- ⚠️ Quality check (>50 chars) - NOT validated
+- ⚠️ UI dashboard - Missing
+
+#### 2. Shield Moderation Flow (`validate-flow-shield.js`)
+
+**What it validates:**
+- Automated content moderation with toxicity-based actions
+- Tests 3 severity levels: critical (0.98 → block), high (0.85 → warn), medium (0.65 → report)
+- Validates Shield activation, priority assignment, action determination, logging
+
+**How to run:**
+```bash
+node scripts/validate-flow-shield.js
+```
+
+**Environment requirements:**
+```bash
+MOCK_MODE=false
+ENABLE_MOCK_MODE=false
+OPENAI_API_KEY=sk-...             # For toxicity fallback
+SUPABASE_URL=...
+SUPABASE_SERVICE_KEY=...
+```
+
+**Expected results:**
+- ✅ 3/3 severity scenarios passing
+- ⏱️ ~8-9 seconds total execution
+- 🛡️ Shield activation confirmed for all cases
+- 🎯 Priority 1 assigned to critical actions
+- 📝 App logs created for audit trail
+
+**What's tested:**
+- ✅ Toxicity threshold triggers (>0.60)
+- ✅ Severity classification (critical/high/medium/low)
+- ✅ Action determination (block/warn/report)
+- ✅ User behavior tracking in database
+- ✅ Job queue creation with priority
+- ⚠️ Complete decision matrix - Partial (3/many scenarios)
+- ❌ Idempotency test - Missing
+- ❌ Real platform API test - Missing
+- ❌ UI dashboard - Missing
+
+#### 3. Multi-Tenant RLS Flow (`validate-flow-rls.js`)
+
+**What it validates:**
+- Row Level Security policies across multi-tenant tables
+- Tests data isolation between 2 test organizations
+- Validates CRUD operations respect organization boundaries
+
+**How to run:**
+```bash
+npm test tests/integration/test-multi-tenant-rls.test.js
+```
+
+**Environment requirements:**
+```bash
+SUPABASE_URL=...
+SUPABASE_SERVICE_KEY=...
+SUPABASE_ANON_KEY=...
+SUPABASE_JWT_SECRET=...           # For JWT generation
+```
+
+**Expected results:**
+- ✅ 14/14 RLS tests passing
+- ⏱️ ~12-15 seconds execution
+- 🔐 Complete data isolation verified
+- 🏢 2 test organizations with JWT context switching
+
+**What's tested:**
+- ✅ Organizations table isolation
+- ✅ Posts table isolation
+- ✅ Comments table isolation
+- ✅ Roasts table isolation
+- ⚠️ All 7 mandatory tables - Partial (4/7 validated)
+- ❌ Error code validation (403) - Missing
+- ❌ Performance measurement - Missing
+- ❌ SQL injection test - Missing
+- ❌ UI dashboard - Missing
+
+#### 4. Billing Limits Flow (`validate-flow-billing.js`)
+
+**What it validates:**
+- Plan-based limit enforcement (Free: 10, Pro: 1000, Creator Plus: 5000)
+- Tests limit blocking when exceeded
+- Validates monthly_usage tracking and CostControl service
+
+**How to run:**
+```bash
+node scripts/validate-flow-billing.js
+```
+
+**Environment requirements:**
+```bash
+SUPABASE_URL=...
+SUPABASE_SERVICE_KEY=...
+MOCK_MODE=false
+ENABLE_MOCK_MODE=false
+```
+
+**Expected results:**
+- ✅ 3/3 plan scenarios passing
+- ⏱️ ~5-6 seconds execution
+- 🚫 Limit enforcement confirmed for all plans
+- 💳 Monthly usage tracking verified
+
+**What's tested:**
+- ✅ Free plan limit (10 responses)
+- ✅ Pro plan limit (1000 responses)
+- ✅ Creator Plus limit (5000 responses)
+- ✅ Atomic usage increment
+- ⚠️ Starter plan - Missing test
+- ⚠️ Unlimited plan - Issue says unlimited, script uses 5000
+- ❌ 403 response code validation - Missing
+- ❌ Upgrade flow test - Missing
+- ❌ Monthly reset logic - Missing
+- ❌ Race condition test - Missing
+- ❌ Plan features matrix test - Missing
+- ❌ 5 edge cases - Missing
+- ❌ UI dashboard - Missing
+
+#### Infrastructure Improvements Made
+
+These validation scripts required and drove the following infrastructure improvements:
+
+**Database Migrations:**
+- `20251017000003_add_plan_limits.sql` - Plan configuration table with RLS
+- `20251017000004_fix_user_org_trigger.sql` - Fixed 'basic' → 'free' plan mapping
+
+**Service Fixes:**
+- `src/services/costControl.js:12` - Use SERVICE_KEY instead of ANON_KEY
+- `tests/helpers/tenantTestUtils.js` - Use auth.admin API for user creation
+
+**Test Configuration:**
+- `jest.config.js` - Split test projects (unit/integration/security/dom)
+- `tests/setupIntegration.js` - Created integration test setup
+
+#### Gap Analysis Summary
+
+Based on cross-referencing with original issues #486-#489:
+
+| Status | Count | Description |
+|--------|-------|-------------|
+| ✅ Fully Validated | 21 | Core flows working end-to-end |
+| ⚠️ Partial Coverage | 14 | Implemented but not fully tested |
+| ❌ Missing | 11 | Not yet implemented or validated |
+
+**Critical Gaps:**
+- Quality validation (roast length >50 chars)
+- Shield idempotency and complete decision matrix
+- RLS validation for all 7 tables with error codes
+- Billing edge cases (race conditions, downgrades, resets)
+- UI dashboards for all 4 flows
+
+**🔗 Detailed Gap Analysis:** See `docs/test-evidence/mvp-validation-summary.md` section "Gap Analysis"
+
+#### How to Expand These Tests
+
+**To add new validation scenarios:**
+
+1. **Create new script:** `scripts/validate-flow-<name>.js`
+2. **Follow the pattern:**
+   ```javascript
+   // 1. Disable mock mode
+   process.env.MOCK_MODE = 'false';
+   process.env.ENABLE_MOCK_MODE = 'false';
+
+   // 2. Define test scenarios array
+   const TEST_SCENARIOS = [
+     { input, expected, description },
+     // ...
+   ];
+
+   // 3. Run scenarios with proper cleanup
+   for (const scenario of TEST_SCENARIOS) {
+     try {
+       // Execute test
+       // Validate results
+       console.log(`✅ ${scenario.description}`);
+     } catch (error) {
+       console.error(`❌ ${scenario.description}`);
+       throw error;
+     }
+   }
+   ```
+
+3. **Add to npm scripts:** `package.json`
+   ```json
+   "scripts": {
+     "validate:flow:<name>": "node scripts/validate-flow-<name>.js"
+   }
+   ```
+
+4. **Document results:** Create evidence in `docs/test-evidence/`
+
+**Recommendations:**
+
+- ✅ **Reuse for regression testing:** Run before major releases
+- ✅ **Expand coverage:** Add missing edge cases from gap analysis
+- ✅ **Add to CI:** Consider adding critical flows to GitHub Actions
+- ✅ **Create UI validation:** Use Playwright MCP for visual testing
+- ✅ **Add performance benchmarks:** Track execution time trends
+- ⚠️ **Be cautious:** These use REAL APIs and cost money (OpenAI charges)
+- ⚠️ **Use test environment:** Never run against production database
+
+**Related Issues:**
+- #486 - Basic Roast Flow
+- #487 - Shield Flow
+- #488 - Multi-Tenant RLS
+- #489 - Billing Limits
+
 ---
 
 ## Environment Variables

@@ -468,6 +468,138 @@ console.log(result.versions);
 - Hard limit enforcement at 100% usage
 - Grace period: 10% overage allowed
 
+## Toxicity Analysis (Perspective API)
+
+**Service:** `src/services/perspective.js` → `src/workers/AnalyzeToxicityWorker.js`
+**Provider:** Google Perspective API
+**Documentation:** https://developers.perspectiveapi.com/s/
+
+### Integration Flow
+
+```text
+Comment Detected
+    ↓
+AnalyzeToxicityWorker.processJob()
+    ↓
+PerspectiveService.analyzeToxicity()
+    ↓
+Perspective API (Google)
+    ↓
+[Toxicity Analysis Result]
+    ↓
+    - toxicity_score: 0-1 (TOXICITY attribute)
+    - severity_level: critical/high/medium/low/clean
+    - categories: threat, severe_toxicity, insult, profanity, etc.
+    - raw_scores: All 6 Perspective attributes
+    ↓
+Router: BLOCK (≥0.85) | ROAST (0.30-0.84) | PUBLISH (<0.30)
+```
+
+### Toxicity Attributes
+
+Perspective API analyzes 6 toxicity dimensions:
+
+| Attribute | Description | Roast Usage |
+|-----------|-------------|-------------|
+| **TOXICITY** | Overall toxicity score | Primary routing decision |
+| **SEVERE_TOXICITY** | Severe toxic content | Contributes to severity |
+| **IDENTITY_ATTACK** | Attacks on identity/protected groups | Shield escalation |
+| **INSULT** | Insulting language | Comment categorization |
+| **PROFANITY** | Profane language | Tone adjustment |
+| **THREAT** | Threatening language | Shield critical priority |
+
+### Severity Calculation
+
+Perspective API calculates severity using multi-factor logic:
+
+```javascript
+// Critical: Severe toxicity or threat >= 0.95
+if (severeToxicity >= 0.95 || threat >= 0.95) return 'critical';
+
+// High: Any critical category >= 0.85
+if (toxicity >= 0.85 || severeToxicity >= 0.85 || threat >= 0.85) return 'high';
+
+// Medium: Toxicity >= 0.6
+if (toxicity >= 0.6) return 'medium';
+
+// Low: Toxicity >= 0.4
+if (toxicity >= 0.4) return 'low';
+
+// Clean: Toxicity < 0.4
+return 'clean';
+```
+
+**Important:** Severity considers multiple attributes, not just toxicity score. A comment with low toxicity (0.60) but high threat (0.95) will be classified as `critical`.
+
+### Roast Routing by Toxicity
+
+| Toxicity Score | Severity | Routing Decision |
+|----------------|----------|------------------|
+| ≥0.85 | critical/high | **BLOCK** + Shield analysis (no roast) |
+| 0.60-0.84 | medium | **ROAST** generation eligible |
+| 0.30-0.59 | low | **ROAST** generation eligible |
+| <0.30 | clean | **PUBLISH** normally (no roast needed) |
+
+### Fallback Strategy
+
+If Perspective API is unavailable:
+
+1. **OpenAI Moderation API** - Secondary toxicity detection
+2. **Pattern-Based Detection** - Regex patterns for common toxic language
+3. **Safe Default** - Classify as medium toxicity (roastable)
+
+**Fallback Chain:**
+```text
+Perspective API fails
+    ↓
+Try OpenAI Moderation
+    ↓ (fails)
+Try Pattern-Based Detection
+    ↓ (fails)
+Safe Default: toxicity = 0.55 (roastable)
+```
+
+### Integration with Roast Generation
+
+```javascript
+// Example: Toxicity analysis result
+{
+  toxicity_score: 0.72,           // TOXICITY attribute
+  severity_level: 'medium',        // Calculated severity
+  categories: ['insult'],          // Detected categories
+  raw_scores: {
+    toxicity: 0.72,
+    severeToxicity: 0.35,
+    identityAttack: 0.20,
+    insult: 0.68,
+    profanity: 0.42,
+    threat: 0.15
+  }
+}
+
+// Roasting eligible (0.30-0.84)
+await roastEngine.generateRoast(comment, {
+  userId,
+  toxicityScore: 0.72,           // Used for tone intensity
+  categories: ['insult'],         // Used for roast style selection
+  style: 'balanced',              // User preference
+  language: 'en'
+});
+```
+
+### Perspective API Configuration
+
+**Rate Limiting:** 1 QPS (free tier)
+**Request Timeout:** 10 seconds
+**Max Retries:** 3 with exponential backoff
+**Character Limit:** 3000 characters (auto-truncate)
+**Languages Supported:** English, Spanish (configurable)
+
+### Validation
+
+**Test Evidence:** `docs/test-evidence/perspective-shield-validation.md`
+**Integration Tests:** `tests/unit/services/perspective.test.js` (31 tests, 100% passing)
+
 ## Shield Integration
 
 **Dependency:** `shield` node
@@ -484,6 +616,26 @@ After roast generation, Shield may:
 ### Priority System
 
 Shield actions get priority 1 in queue system for immediate processing.
+
+### Perspective → Shield Flow
+
+For comments with toxicity ≥0.85 (BLOCK zone):
+
+```text
+Perspective Analysis (severity = 'high')
+    ↓
+Shield receives severity_level
+    ↓
+Shield Priority Calculation
+    ↓
+    - critical → Priority 1, auto-block + report
+    - high → Priority 2, auto-mute + manual review
+    - medium → Priority 3, manual moderation
+    ↓
+ShieldActionWorker executes platform action
+```
+
+**Note:** Shield decisions are based on Perspective's `severity_level`, not just `toxicity_score`. This ensures multi-factor analysis (threat, severe toxicity, etc.) drives moderation actions.
 
 ## Platform Constraints Integration
 
