@@ -29,7 +29,7 @@ Complete validation of MVP critical flows in production-like conditions. All cor
 
 ### Test Results
 
-```
+```text
 ✅ 14/14 tests passing (100%)
 ⏱️  Duration: 9.021s
 📊 Test suites: 1 passed, 1 total
@@ -73,14 +73,14 @@ Complete validation of MVP critical flows in production-like conditions. All cor
 
 ### Test Results
 
-```
+```text
 ✅ 3/3 tests passing (100%)
 ⏱️  Total time: 7.42s
 ```
 
 ### Flow Validated
 
-```
+```text
 Comment → Toxicity Analysis → OpenAI Generation → Storage → Retrieval
 ```
 
@@ -102,7 +102,7 @@ Comment → Toxicity Analysis → OpenAI Generation → Storage → Retrieval
 
 ### Sample Output
 
-```
+```text
 Test 1: High toxicity comment
   Toxicity score: 0.850
   Roast generated: "Oh wow, someone woke up on the bitter side of the bed! Maybe try decaf next time..."
@@ -121,14 +121,14 @@ Test 1: High toxicity comment
 
 ### Test Results
 
-```
+```text
 ✅ 3/3 tests passing (100%)
 ⏱️  Total time: 8.12s
 ```
 
 ### Flow Validated
 
-```
+```text
 Toxic Comment (≥0.95) → Shield Decision → Action → Platform API
 ```
 
@@ -172,14 +172,14 @@ Toxic Comment (≥0.95) → Shield Decision → Action → Platform API
 
 ### Test Results
 
-```
+```text
 ✅ 3/3 tests passing (100%)
 ⏱️  Total time: 5.38s
 ```
 
 ### Flow Validated
 
-```
+```text
 Usage Request → Check Limits → Allow/Deny → Update Usage
 ```
 
@@ -202,7 +202,7 @@ Usage Request → Check Limits → Allow/Deny → Update Usage
 
 ### Sample Output
 
-```
+```text
 Test 1: Free plan - limit exceeded
   Usage: 10/10 (100%)
   Can use: false
@@ -274,7 +274,7 @@ Test 1: Free plan - limit exceeded
 
 All test evidence and scripts are available:
 
-```
+```text
 scripts/
 ├── validate-flow-basic-roast.js   ✅ Roast generation
 ├── validate-flow-shield.js        ✅ Shield moderation

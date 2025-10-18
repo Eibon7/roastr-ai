@@ -91,13 +91,18 @@ async function validateBillingFlow() {
     console.log(`Limit: ${scenario.limit} roasts/month`);
     console.log(`Test usage: ${scenario.testUsage} roasts`);
 
+    // Declare variables outside try block for finally block access
+    let authUser = null;
+    let testOrgId = null;
+    const testEmail = `test-billing-${Date.now()}@example.com`;
+
     try {
       // Step 1: Create test user and organization
       console.log('\n📋 Step 1: Creating test user and organization...');
 
       // Create test user
-      const { data: authUser, error: authError } = await client.auth.admin.createUser({
-        email: `test-billing-${Date.now()}@example.com`,
+      const { data: authUserData, error: authError } = await client.auth.admin.createUser({
+        email: testEmail,
         email_confirm: true,
         user_metadata: {
           name: `Billing Test User ${i + 1}`,
@@ -105,15 +110,17 @@ async function validateBillingFlow() {
         }
       });
 
-      if (authError || !authUser.user) {
+      if (authError || !authUserData.user) {
         throw new Error(`User creation failed: ${authError?.message || 'No user returned'}`);
       }
+
+      authUser = authUserData; // Assign to outer scope variable
       console.log(`✅ Test user created: ${authUser.user.id}`);
 
       // Upsert in public.users - this will trigger auto-organization creation
       const { error: userUpsertError } = await client.from('users').upsert({
         id: authUser.user.id,
-        email: `test-billing-${Date.now()}@example.com`,
+        email: testEmail,
         name: `Billing Test User ${i + 1}`,
         plan: scenario.userPlan
       });
@@ -134,7 +141,7 @@ async function validateBillingFlow() {
         throw new Error(`Failed to get auto-created organization: ${getOrgError?.message || 'No org found'}`);
       }
 
-      const testOrgId = autoOrgs[0].id;
+      testOrgId = autoOrgs[0].id; // Assign to outer scope variable
 
       // Update the organization with our test values
       const { data: org, error: updateError } = await client
@@ -292,16 +299,6 @@ async function validateBillingFlow() {
         }
       }
 
-      // Cleanup
-      console.log('\n🧹 Cleaning up...');
-      await client.from('monthly_usage').delete().eq('organization_id', testOrgId);
-      await client.from('usage_records').delete().eq('organization_id', testOrgId);
-      await client.from('organization_members').delete().eq('organization_id', testOrgId);
-      await client.from('organizations').delete().eq('id', testOrgId);
-      await client.from('users').delete().eq('id', authUser.user.id);
-      await client.auth.admin.deleteUser(authUser.user.id);
-      console.log('✅ Cleanup complete');
-
       // Check execution time
       const executionTime = Date.now() - testStartTime;
       console.log(`\n⏱️  Total execution time: ${(executionTime / 1000).toFixed(2)}s`);
@@ -325,6 +322,26 @@ async function validateBillingFlow() {
         error: error.message
       });
       console.error(`\n❌ Test ${i + 1} FAILED: ${error.message}`);
+    } finally {
+      // Cleanup runs whether test passes or fails
+      if (testOrgId || (authUser && authUser.user)) {
+        console.log('\n🧹 Cleaning up test data...');
+        try {
+          if (testOrgId) {
+            await client.from('monthly_usage').delete().eq('organization_id', testOrgId);
+            await client.from('usage_records').delete().eq('organization_id', testOrgId);
+            await client.from('organization_members').delete().eq('organization_id', testOrgId);
+            await client.from('organizations').delete().eq('id', testOrgId);
+          }
+          if (authUser && authUser.user) {
+            await client.from('users').delete().eq('id', authUser.user.id);
+            await client.auth.admin.deleteUser(authUser.user.id);
+          }
+          console.log('✅ Cleanup complete');
+        } catch (cleanupError) {
+          console.error(`⚠️  Cleanup failed: ${cleanupError.message}`);
+        }
+      }
     }
   }
 

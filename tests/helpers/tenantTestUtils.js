@@ -9,14 +9,27 @@
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token-with-at-least-32-characters-long';
+
+// Use TEST_JWT_SECRET from env, fallback to SUPABASE_JWT_SECRET, or generate random for tests
+// Never use hardcoded secrets
+const JWT_SECRET = process.env.TEST_JWT_SECRET ||
+                   process.env.SUPABASE_JWT_SECRET ||
+                   process.env.JWT_SECRET ||
+                   crypto.randomBytes(32).toString('hex');
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !SUPABASE_ANON_KEY) {
   throw new Error('Missing required Supabase environment variables');
+}
+
+// Log warning if using generated secret (test may not work with real Supabase)
+if (!process.env.TEST_JWT_SECRET && !process.env.SUPABASE_JWT_SECRET && !process.env.JWT_SECRET) {
+  console.warn('⚠️  No TEST_JWT_SECRET env var found. Using randomly generated secret for tests.');
+  console.warn('   Set TEST_JWT_SECRET in .env for consistent test behavior.');
 }
 
 // Service client (bypasses RLS)
