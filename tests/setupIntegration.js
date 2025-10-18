@@ -11,10 +11,26 @@ require('dotenv').config();
 process.env.NODE_ENV = 'test';
 
 // Verify required credentials are present
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY || !process.env.SUPABASE_ANON_KEY) {
-  console.error('❌ Missing Supabase credentials in .env file');
-  console.error('Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY');
-  process.exit(1);
+// In CI/CD without credentials, use mock mode instead of failing
+const hasSupabaseCredentials = process.env.SUPABASE_URL &&
+                                process.env.SUPABASE_SERVICE_KEY &&
+                                process.env.SUPABASE_ANON_KEY;
+
+if (!hasSupabaseCredentials) {
+  // If in CI/CD or test environment without real credentials, enable mock mode
+  if (process.env.CI || process.env.IS_TEST) {
+    console.info('ℹ️  No Supabase credentials found - enabling mock mode for smoke tests');
+    process.env.MOCK_MODE = 'true';
+    // Set dummy values to prevent initialization errors
+    process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost:54321';
+    process.env.SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'mock-service-key';
+    process.env.SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'mock-anon-key';
+  } else {
+    // Local development without credentials - fail with clear message
+    console.error('❌ Missing Supabase credentials in .env file');
+    console.error('Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY');
+    process.exit(1);
+  }
 }
 
 // Add polyfills for Node.js tests
