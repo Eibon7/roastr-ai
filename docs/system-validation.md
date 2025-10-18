@@ -1,8 +1,8 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-10-17T14:14:34.170Z
+**Date:** 2025-10-17T14:17:41.850Z
 **Mode:** full
-**Status:** 🔴 CRITICAL
+**Status:** 🟢 HEALTHY
 
 ---
 
@@ -14,7 +14,7 @@
 - **Missing References:** 0
 - **Cycles Detected:** 0
 - **Drift Issues:** 0
-- **Coverage Integrity Violations:** 13
+- **Coverage Integrity Violations:** 8
 
 ### 🔮 Drift Risk Summary
 
@@ -34,31 +34,28 @@ Coverage authenticity issues detected:
 | Node | Type | Declared | Actual | Diff | Severity |
 |------|------|----------|--------|------|----------|
 | analytics | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| billing | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| cost-control | coverage_integrity_violation | 5% | N/A% | 5% | critical |
-| guardian | missing_coverage_data | 50% | N/A% | N/A% | warning |
-| multi-tenant | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| observability | coverage_integrity_violation | 14% | 3% | 11% | critical |
-| persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| platform-constraints | missing_coverage_data | 100% | N/A% | N/A% | warning |
-| queue-system | coverage_integrity_violation | 12% | 6% | 6% | critical |
-| roast | coverage_integrity_violation | 50% | N/A% | 50% | critical |
-| social-platforms | coverage_integrity_violation | 50% | N/A% | 50% | critical |
-| tone | missing_coverage_data | 70% | N/A% | N/A% | warning |
-| trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
+| billing | [36m
+📄 Report written to: docs/system-validation.md[0m
+[36m📊 JSON status: gdd-status.json[0m
 
-**Actions Required:**
+═══════════════════════════════════════
+         VALIDATION SUMMARY
+═══════════════════════════════════════
+
+✔ 15 nodes validated
+⚠ 8 coverage integrity issue(s)
+
+⏱  Completed in 0.09s
+
+🟢 Overall Status: HEALTHY
+
+ired:**
 - Coverage data not available for validation
 - Coverage data not available for validation
-- Coverage mismatch: declared 5% but actual is 0% (diff: 5%)
 - Coverage data not available for validation
 - Coverage data not available for validation
-- Coverage mismatch: declared 14% but actual is 3% (diff: 11%)
 - Coverage data not available for validation
 - Coverage data not available for validation
-- Coverage mismatch: declared 12% but actual is 6% (diff: 6%)
-- Coverage mismatch: declared 50% but actual is 0% (diff: 50%)
-- Coverage mismatch: declared 50% but actual is 0% (diff: 50%)
 - Coverage data not available for validation
 - Coverage data not available for validation
 
@@ -66,21 +63,21 @@ Coverage authenticity issues detected:
 
 | Node | Drift Risk | Status | Health Score | Last Commit | Recommendations |
 |------|------------|--------|--------------|-------------|-----------------|
-| analytics | 🟢 5 | healthy | 92 | 4d ago | Increase test coverage to 80%+ (currently 70%) |
-| billing | 🟢 5 | healthy | 92 | 4d ago | Increase test coverage to 80%+ (currently 70%) |
-| cost-control | 🟢 5 | healthy | 82 | 4d ago | Increase test coverage to 80%+ (currently 5%) |
-| guardian | 🟢 5 | healthy | 88 | 4d ago | Increase test coverage to 80%+ (currently 50%) |
-| multi-tenant | 🟢 5 | healthy | 92 | 4d ago | Increase test coverage to 80%+ (currently 70%) |
-| persona | 🟢 5 | healthy | 92 | 4d ago | Increase test coverage to 80%+ (currently 70%) |
-| plan-features | 🟢 5 | healthy | 85 | 3d ago | Increase test coverage to 80%+ (currently 3%) |
-| queue-system | 🟢 5 | healthy | 83 | 2d ago | Increase test coverage to 80%+ (currently 12%) |
-| roast | 🟢 5 | healthy | 84 | 3d ago | Increase test coverage to 80%+ (currently 50%) |
-| shield | 🟢 5 | healthy | 84 | 4d ago | Increase test coverage to 80%+ (currently 2%) |
-| social-platforms | 🟢 5 | healthy | 83 | 3d ago | Increase test coverage to 80%+ (currently 50%) |
-| tone | 🟢 5 | healthy | 92 | 4d ago | Increase test coverage to 80%+ (currently 70%) |
-| trainer | 🟢 5 | healthy | 88 | 4d ago | Increase test coverage to 80%+ (currently 50%) |
-| observability | 🟢 0 | healthy | 81 | 1d ago | - |
-| platform-constraints | 🟢 0 | healthy | 98 | 4d ago | - |
+| analytics | 🟢 5 | HEALTHY | 92 | 4d ago | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| billing | 🟢 5 | HEALTHY | 92 | 4d ago | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| cost-control | 🟢 5 | HEALTHY | 84 | 0d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
+| guardian | 🟢 5 | HEALTHY | 88 | 1d ago | Increase test coverage to 80%+ (declared: 50%, actual: N/A) |
+| multi-tenant | 🟢 5 | HEALTHY | 92 | 1d ago | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| persona | 🟢 5 | HEALTHY | 92 | 1d ago | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| plan-features | 🟢 5 | HEALTHY | 85 | 3d ago | Increase test coverage to 80%+ (declared: 3%, actual: N/A) |
+| queue-system | 🟢 5 | HEALTHY | 85 | 1d ago | Increase test coverage to 80%+ (declared: 6%, actual: N/A) |
+| roast | 🟢 5 | HEALTHY | 85 | 0d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
+| shield | 🟢 5 | HEALTHY | 84 | 4d ago | Increase test coverage to 80%+ (declared: 2%, actual: N/A) |
+| social-platforms | 🟢 5 | HEALTHY | 84 | 0d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
+| tone | 🟢 5 | HEALTHY | 92 | 1d ago | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| trainer | 🟢 5 | HEALTHY | 88 | 1d ago | Increase test coverage to 80%+ (declared: 50%, actual: N/A) |
+| observability | 🟢 0 | HEALTHY | 86 | 1d ago | - |
+| platform-constraints | 🟢 0 | HEALTHY | 98 | 1d ago | - |
 
 ---
 

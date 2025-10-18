@@ -1,0 +1,22 @@
+# BEFORE: OpenAI Moderation API Call (src/workers/AnalyzeToxicityWorker.js)
+
+**File:** src/workers/AnalyzeToxicityWorker.js
+**Lines:** 1347-1350
+**Date:** 2025-10-16 (before fix)
+
+```javascript
+async analyzeOpenAI(text) {
+  const response = await this.openaiClient.moderations.create({
+    input: text
+  });
+
+  const result = response.results[0];
+  // ... rest of method
+}
+```
+
+**Issue:** Missing required `model` parameter for OpenAI Moderation API v5+
+
+**Root Cause:** Code relied on deprecated implicit default behavior
+
+**Impact:** Potential API deprecation warnings or failures when OpenAI enforces stricter validation

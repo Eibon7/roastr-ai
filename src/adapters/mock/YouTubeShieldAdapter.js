@@ -10,7 +10,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
   constructor(config = {}) {
     super('youtube', config);
     this.mockLatency = config.mockLatency || { min: 200, max: 800 };
-    this.failureRate = config.failureRate || 0.03; // 3% failure rate
+    this.failureRate = config.failureRate !== undefined ? config.failureRate : 0.03; // 3% failure rate
     this.quotaCost = {
       setModerationStatus: 50,
       delete: 50

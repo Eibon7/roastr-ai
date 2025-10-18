@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-17T16:47:07.545Z
+**Generated:** 2025-10-16T20:03:05.129Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 87.5/100
+**Average Score:** 88.5/100
 
 ---
 
@@ -19,13 +19,13 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
-| observability | 🟢 80 | healthy | 2025-10-15 | 14% | 0 | 0 |
-| cost-control | 🟢 81 | healthy | 2025-10-09 | 5% | 0 | 0 |
-| queue-system | 🟢 82 | healthy | 2025-10-14 | 12% | 0 | 0 |
-| social-platforms | 🟢 83 | healthy | 2025-10-09 | 50% | 0 | 0 |
-| roast | 🟢 84 | healthy | 2025-10-13 | 50% | 0 | 0 |
+| cost-control | 🟢 84 | healthy | 2025-10-09 | 0% | 0 | 0 |
 | shield | 🟢 84 | healthy | 2025-10-09 | 2% | 0 | 0 |
+| social-platforms | 🟢 84 | healthy | 2025-10-09 | 0% | 0 | 0 |
 | plan-features | 🟢 85 | healthy | 2025-10-13 | 3% | 0 | 0 |
+| queue-system | 🟢 85 | healthy | 2025-10-14 | 6% | 0 | 0 |
+| roast | 🟢 85 | healthy | 2025-10-13 | 0% | 0 | 0 |
+| observability | 🟢 86 | healthy | 2025-10-15 | 3% | 0 | 0 |
 | guardian | 🟢 88 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | trainer | 🟢 88 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | analytics | 🟢 92 | healthy | 2025-10-09 | 70% | 0 | 0 |
@@ -39,33 +39,46 @@
 
 ## ⚠️ Top 5 Nodes to Review
 
-### observability (Score: 80)
+### cost-control (Score: 84)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 96/100
+- Update Freshness: 86/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
-- Integrity Score: 50/100
+- Integrity Score: 100/100
 
 
-### cost-control (Score: 81)
+### shield (Score: 84)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 84/100
+- Update Freshness: 86/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
-- Integrity Score: 75/100
+- Integrity Score: 100/100
 
 
-### queue-system (Score: 82)
+### social-platforms (Score: 84)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 86/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### plan-features (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
@@ -75,33 +88,20 @@
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
-- Integrity Score: 70/100
+- Integrity Score: 100/100
 
 
-### social-platforms (Score: 83)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 84/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 50/100
-- Agent Relevance: 100/100
-- Integrity Score: 50/100
-
-
-### roast (Score: 84)
+### queue-system (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 92/100
+- Update Freshness: 96/100
 - Dependency Integrity: 100/100
-- Coverage Evidence: 50/100
+- Coverage Evidence: 30/100
 - Agent Relevance: 100/100
-- Integrity Score: 50/100
+- Integrity Score: 100/100
 
 
 ---

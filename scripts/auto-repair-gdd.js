@@ -15,7 +15,17 @@
  *   node scripts/auto-repair-gdd.js --auto           # Auto-fix all
  *   node scripts/auto-repair-gdd.js --ci             # CI mode
  *   node scripts/auto-repair-gdd.js --dry-run        # Show what would be fixed
+ *
+ * Exit Codes:
+ *   0 - Success (fixes applied or no fixes needed)
+ *   1 - Error (real failure requiring manual intervention)
+ *   2 - Rollback (health degradation, fixes were rolled back)
  */
+
+// Exit code constants
+const EXIT_SUCCESS = 0;
+const EXIT_ERROR = 1;
+const EXIT_ROLLBACK = 2;
 
 const fs = require('fs').promises;
 const path = require('path');
@@ -341,9 +351,10 @@ class AutoRepairEngine {
    * Parse node metadata
    */
   parseNodeMetadata(content) {
+    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
     return {
       lastUpdated: (content.match(/\*?\*?last[_\s]updated:?\*?\*?\s*(\d{4}-\d{2}-\d{2})/i) || [])[1],
-      coverage: parseInt((content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i) || [])[1]) || null,
+      coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : null,
       hasAgents: /##\s*Agentes Relevantes/i.test(content),
       status: (content.match(/\*?\*?status:?\*?\*?\s*(\w+)/i) || [])[1],
       priority: (content.match(/\*?\*?priority:?\*?\*?\s*(\w+)/i) || [])[1],
@@ -970,14 +981,21 @@ Examples:
   const result = await engine.repair();
 
   if (options.ci && !result.success) {
-    process.exit(1);
+    // Check if failure was due to rollback
+    if (result.reason === 'health_degraded') {
+      process.exit(EXIT_ROLLBACK);  // Exit code 2
+    } else {
+      process.exit(EXIT_ERROR);     // Exit code 1
+    }
   }
+
+  process.exit(EXIT_SUCCESS);  // Exit code 0
 }
 
 if (require.main === module) {
   main().catch(error => {
     console.error('Fatal error:', error);
-    process.exit(2);
+    process.exit(EXIT_ERROR);  // Exit code 1 for fatal errors
   });
 }
 

@@ -318,7 +318,7 @@ class GDDDriftPredictor {
         const points = 15;
         risk += points;
         factors.push(`+${points} pts: Coverage ${coverageNum}% (<80%)`);
-        recommendations.push(`Increase test coverage to 80%+ (currently ${coverageNum}%)`);
+        recommendations.push(`Increase test coverage to 80%+ (declared: ${coverageNum}%, actual: N/A)`);
       }
     }
 
@@ -329,7 +329,7 @@ class GDDDriftPredictor {
         const points = 25;
         risk += points;
         factors.push(`+${points} pts: Health score ${healthData.score} (<70)`);
-        recommendations.push(`Improve health score to 70+ (currently ${healthData.score})`);
+        recommendations.push(`Improve health score to 70+ (declared: ${healthData.score}, actual: N/A)`);
       }
     }
 
@@ -341,7 +341,8 @@ class GDDDriftPredictor {
       if (daysSinceCommit < 7) {
         const points = -10;
         risk += points;
-        factors.push(`${points} pts: Recent commit (${daysSinceCommit} days ago)`);
+        const dayLabel = daysSinceCommit === 0 ? 'today' : daysSinceCommit === 1 ? '1 day ago' : `${daysSinceCommit} days ago`;
+        factors.push(`${points} pts: Recent commit (${dayLabel})`);
       }
     }
 
@@ -360,7 +361,7 @@ class GDDDriftPredictor {
           : null
       },
       health_score: healthData?.score || null,
-      coverage: coverage || null
+      coverage: coverage ? parseInt(coverage) : null
     };
   }
 
@@ -382,9 +383,9 @@ class GDDDriftPredictor {
    * Get drift status from score
    */
   getDriftStatus(score) {
-    if (score <= this.thresholds.healthy) return 'healthy';
-    if (score <= this.thresholds.atRisk) return 'at_risk';
-    return 'likely_drift';
+    if (score <= this.thresholds.healthy) return 'HEALTHY';
+    if (score <= this.thresholds.atRisk) return 'AT_RISK';
+    return 'LIKELY_DRIFT';
   }
 
   /**

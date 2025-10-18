@@ -175,7 +175,9 @@ class AnalyzeToxicityWorker extends BaseWorker {
       if (process.env.OPENAI_API_KEY) {
         const { OpenAI } = require('openai');
         this.openaiClient = new OpenAI({
-          apiKey: process.env.OPENAI_API_KEY
+          apiKey: process.env.OPENAI_API_KEY,
+          maxRetries: 2,
+          timeout: 30000
         });
         this.log('info', 'OpenAI Moderation API client initialized');
       }
@@ -1332,6 +1334,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
    */
   async analyzeOpenAI(text) {
     const response = await this.openaiClient.moderations.create({
+      model: process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest',
       input: text
     });
     

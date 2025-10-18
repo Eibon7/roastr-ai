@@ -1,0 +1,5 @@
+# === AI Services ===
+# OPENAI_API_KEY=sk-your-openai-key
+OPENAI_MODERATION_MODEL=omni-moderation-latest
+# PERSPECTIVE_API_KEY=your-perspective-key
+

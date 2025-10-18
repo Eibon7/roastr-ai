@@ -24,7 +24,11 @@ class ModelAvailabilityService {
         // Initialize OpenAI client if API key is available
         const apiKey = process.env.OPENAI_API_KEY;
         if (apiKey) {
-            this.openai = new OpenAI({ apiKey });
+            this.openai = new OpenAI({
+                apiKey,
+                maxRetries: 2,  // Standard resilience config (CodeRabbit #3343936799)
+                timeout: 30000  // 30 second timeout
+            });
         }
         
         // Plan-specific model preferences (Issue #326)
