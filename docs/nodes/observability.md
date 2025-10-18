@@ -153,6 +153,56 @@ return {
 
 **Commit:** `435b2aa3` - "fix(gdd): Fix false positive detection for 0% coverage"
 
+### 7. Logger Migration (PR #591)
+
+**Migration Completed:** 2025-10-18
+**Review:** CodeRabbit #3351792121
+
+Migrated all verification scripts from console.* to utils/logger.js for consistent logging across the entire observability stack.
+
+**Scripts Migrated:**
+- `scripts/verify-openai-api.js` (~30 console calls → logger.*)
+- `scripts/verify-perspective-api.js` (~25 console calls → logger.*)
+- `scripts/verify-twitter-api.js` (~35 console calls → logger.*)
+- `scripts/verify-youtube-api.js` (~30 console calls → logger.*)
+- `scripts/verify-supabase-tables.js` (~20 console calls → logger.*)
+
+**Benefits:**
+- **Centralized log level control** - All scripts use same logger configuration
+- **Consistent timestamp formatting** - ISO 8601 timestamps across all logs
+- **Better CI/CD integration** - Structured logs readable by log aggregation tools
+- **Unified error handling** - Errors use same format as application logs
+- **Production-ready** - All verification scripts follow best practices
+
+**Implementation Pattern:**
+```javascript
+// Added to top of each verification script
+const logger = require('../src/utils/logger');
+
+// Replaced throughout:
+console.log()   → logger.info()
+console.error() → logger.error()
+console.warn()  → logger.warn()
+```
+
+**Validation:**
+- 0 console.* calls remain in verification scripts
+- All scripts run successfully with no output changes
+- Logger preserves emoji, newlines, and formatting
+- All 5 scripts tested individually
+
+**Related Changes:**
+- **C1:** Fixed RLS verification logic (dual-client architecture)
+  - Admin client checks table existence (bypasses RLS)
+  - Anon client verifies RLS enforcement (PGRST301, 403, permission denied)
+  - Prevents false positives from service role bypassing RLS
+- **C2:** Fixed Twitter rate limit API
+  - Changed `rateLimitStatuses(['tweets'])` → `rateLimitStatus()` (singular)
+  - Fixed resource family keys: `tweets` → `statuses` + `search`
+  - Broadened HTTP error detection (status ?? code)
+
+**Commit:** `b13a79fc` - "fix(verify): Fix RLS verification and rate limit API + migrate to logger - Review #3351792121"
+
 ## Architecture
 
 ### Components
@@ -892,9 +942,9 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 **Test Coverage:** 3% (19/19 integration tests + 17/17 E2E tests passing)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
-**Last Updated:** 2025-10-17
+**Last Updated:** 2025-10-18
 **Coverage Source:** auto
-**Related PRs:** #515 (Issue #417), #574 (Issue #419), #584 (Issue #490)
+**Related PRs:** #515 (Issue #417), #574 (Issue #419), #584 (Issue #490), #591 (CodeRabbit Review #3351792121)
 
 ## Node Metadata
 
