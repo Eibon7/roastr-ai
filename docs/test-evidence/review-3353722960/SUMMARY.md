@@ -2,7 +2,7 @@
 
 **Date**: October 19, 2025
 **PR**: #587 (feat/mvp-validation-complete)
-**Review**: https://github.com/Eibon7/roastr-ai/pull/587#pullrequestreview-3353722960
+**Review**: <https://github.com/Eibon7/roastr-ai/pull/587#pullrequestreview-3353722960>
 **Status**: ✅ **COMPLETE - 1/1 ISSUES RESOLVED**
 
 ---
@@ -25,10 +25,10 @@ CodeRabbit review #3353722960 flagged **1 Major issue** (MD040 violations) in do
 **Problem**: Fenced code blocks without language specifiers violated markdownlint MD040 rule.
 
 **Fix Applied**:
-- Line 26: ` ``` ` → ` ```text ` (CodeRabbit comment quote)
-- Line 64: ` ``` ` → ` ```text ` (CodeRabbit comment quote)
-- Line 108: ` ``` ` → `> ` (Converted to blockquote - prose text)
-- Line 156: ` ``` ` → ` ```text ` (CodeRabbit comment quote)
+- Line 26: (backticks) → (backticks with text tag) - CodeRabbit comment quote
+- Line 64: (backticks) → (backticks with text tag) - CodeRabbit comment quote
+- Line 108: (backticks) → blockquote - Converted to blockquote (prose text)
+- Line 156: (backticks) → (backticks with text tag) - CodeRabbit comment quote
 
 **Result**: ✅ 0 MD040 violations remaining
 
@@ -72,18 +72,19 @@ $ npx markdownlint-cli2 docs/plan/review-3353714173.md 2>&1 | grep MD040
 
 ## Technical Decisions
 
-### Decision 1: Use `text` instead of `javascript`
+### Decision 1: Use `javascript` for CodeRabbit Comment Quotes
 
-**Context**: CodeRabbit suggested using `javascript` language specifier, but the content is plain text comments from CodeRabbit, not actual JavaScript code.
+**Context**: CodeRabbit initially suggested `javascript` language specifier. Implementation used `text` for semantic correctness. CodeRabbit Review #3353819519 requested change to `javascript` for consistency.
 
-**Decision**: Use `text` language specifier for semantic correctness.
+**Decision**: Accept `javascript` language specifier per CodeRabbit's guidance (changed in Review #3353819519).
 
 **Rationale**:
-- Content is natural language, not code
-- `text` prevents syntax highlighting confusion
-- Still satisfies MD040 requirement (any language specifier is valid)
+- Satisfies CodeRabbit quality gate (0 comments policy)
+- Provides syntax highlighting consistency across documentation
+- Content is quoted comments (not executable code), but visual consistency matters
+- Avoiding iterative review cycles saves time
 
-**Alternative Considered**: Use `javascript` as suggested - Rejected due to semantic incorrectness.
+**Alternative Considered**: Keep `text` for semantic correctness - Rejected to avoid back-and-forth with CodeRabbit.
 
 ### Decision 2: Convert Line 108 to Blockquote
 
@@ -123,7 +124,7 @@ When documenting CodeRabbit comments, code fences were added for visual consiste
 
 ## Files Modified
 
-```
+```text
 docs/plan/review-3353714173.md (4 edits)
 docs/plan/review-3353722960.md (created)
 docs/test-evidence/review-3353722960/SUMMARY.md (created)
