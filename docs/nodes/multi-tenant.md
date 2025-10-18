@@ -647,6 +647,50 @@ const { data } = await supabaseClient
   .eq('platform', req.query.platform); // Safe
 ```
 
+### 5. JWT Secret Management
+
+**CRITICAL:** Never hardcode JWT secrets. Use crypto-generated secrets for tests, environment variables for production.
+
+```javascript
+const crypto = require('crypto');
+
+// ❌ BAD: Hardcoded JWT secret fallback
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token';
+
+// ✅ GOOD: Secure fallback with crypto, fail-fast in production
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === 'test'
+    ? crypto.randomBytes(32).toString('hex')  // Random secret for test environment
+    : (() => { throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production'); })()
+  );
+```
+
+**Rationale:**
+- **Hardcoded secrets are security vulnerabilities** - Predictable, visible in version control
+- **Test environments need randomization** - Different secret for each test run prevents test interference
+- **Production environments must fail-fast** - No fallback, require explicit configuration
+- **Priority chain**: SUPABASE_JWT_SECRET (Supabase-specific) > JWT_SECRET (generic) > crypto (test only) > fail-fast (production)
+
+**Token Signing Example:**
+```javascript
+const jwt = require('jsonwebtoken');
+
+const token = jwt.sign(
+  {
+    sub: userId,
+    organization_id: organizationId,
+    role: 'authenticated',
+    aud: 'authenticated',
+    exp: Math.floor(Date.now() / 1000) + 3600
+  },
+  JWT_SECRET,  // ✅ Uses secure secret from above
+  { algorithm: 'HS256' }
+);
+```
+
+**Related Fix:** CodeRabbit Review #3353722960 (2025-10-18)
+
 ## Testing
 
 ### Unit Tests

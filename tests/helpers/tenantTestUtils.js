@@ -9,11 +9,20 @@
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token-with-at-least-32-characters-long';
+
+// JWT secret with secure fallback pattern
+// Priority: SUPABASE_JWT_SECRET > JWT_SECRET > crypto-generated (test only) > fail-fast
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === 'test'
+    ? crypto.randomBytes(32).toString('hex')
+    : (() => { throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production'); })()
+  );
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !SUPABASE_ANON_KEY) {
   throw new Error('Missing required Supabase environment variables');

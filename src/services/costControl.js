@@ -7,8 +7,14 @@ class CostControlService {
     if (mockMode.isMockMode) {
       this.supabase = mockMode.generateMockSupabaseClient();
     } else {
+      // CostControlService performs admin operations (usage tracking, billing)
+      // and requires SERVICE_KEY to bypass RLS for multi-tenant data management
+      if (!process.env.SUPABASE_SERVICE_KEY) {
+        throw new Error('SUPABASE_SERVICE_KEY is required for admin operations in CostControlService');
+      }
+
       this.supabaseUrl = process.env.SUPABASE_URL;
-      this.supabaseKey = process.env.SUPABASE_ANON_KEY;
+      this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
       this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
     }
     

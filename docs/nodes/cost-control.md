@@ -28,6 +28,35 @@ Cost Control manages usage tracking, billing integration, and limit enforcement 
 
 ## Architecture
 
+### Authentication Requirements
+
+**IMPORTANT:** `CostControlService` performs admin operations (usage tracking, billing management) and **requires `SUPABASE_SERVICE_KEY`** to bypass Row Level Security (RLS) for multi-tenant data management.
+
+```javascript
+constructor() {
+  if (mockMode.isMockMode) {
+    this.supabase = mockMode.generateMockSupabaseClient();
+  } else {
+    // Fail-fast validation for admin operations
+    if (!process.env.SUPABASE_SERVICE_KEY) {
+      throw new Error('SUPABASE_SERVICE_KEY is required for admin operations in CostControlService');
+    }
+
+    this.supabaseUrl = process.env.SUPABASE_URL;
+    this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;  // ✅ Uses SERVICE_KEY, not ANON_KEY
+    this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+  }
+}
+```
+
+**Rationale:**
+- **ANON_KEY** has limited RLS permissions (user-level access only)
+- **SERVICE_KEY** bypasses RLS and allows admin operations across all tenants
+- Cost control needs to track usage for ALL organizations, not just one
+- Billing operations require cross-tenant visibility
+
+**Related Fix:** CodeRabbit Review #3353722960 (2025-10-18)
+
 ### Operation Costs (in cents)
 
 | Operation | Cost | Type |

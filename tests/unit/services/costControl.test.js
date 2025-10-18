@@ -1,17 +1,16 @@
 /**
  * Cost Control Service Tests
- * 
+ *
  * Tests for multi-tenant cost management and usage tracking
  */
 
-const CostControlService = require('../../../src/services/costControl');
-
-// Create comprehensive mocks for Supabase query builder pattern
+// Create comprehensive mocks for Supabase query builder pattern BEFORE importing
 const mockSelectSingle = jest.fn();
 const mockSelectOrder = jest.fn();
 const mockSelect = jest.fn(() => ({
   eq: jest.fn(() => ({
     single: mockSelectSingle,
+    limit: jest.fn(() => Promise.resolve({ data: [], error: null })),
     eq: jest.fn(() => ({
       eq: jest.fn(() => ({
         single: mockSelectSingle
@@ -23,7 +22,8 @@ const mockSelect = jest.fn(() => ({
         order: mockSelectOrder
       }))
     }))
-  }))
+  })),
+  limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
 }));
 
 const mockInsertSelect = jest.fn();
@@ -55,10 +55,20 @@ const mockSupabaseClient = {
   rpc: mockRpc
 };
 
-// Mock Supabase
+// Mock Supabase BEFORE importing services
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => mockSupabaseClient)
 }));
+
+// Mock mockMode to prevent initialization errors
+jest.mock('../../../src/config/mockMode', () => ({
+  mockMode: {
+    isMockMode: false,
+    generateMockSupabaseClient: jest.fn(() => mockSupabaseClient)
+  }
+}));
+
+const CostControlService = require('../../../src/services/costControl');
 
 describe('CostControlService', () => {
   let costControl;
@@ -66,11 +76,11 @@ describe('CostControlService', () => {
   beforeEach(() => {
     // Mock environment variables
     process.env.SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_ANON_KEY = 'test-key';
-    
+    process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
+
     // Clear all mocks
     jest.clearAllMocks();
-    
+
     costControl = new CostControlService();
   });
 
@@ -386,5 +396,32 @@ describe('CostControlService', () => {
         costControl.canPerformOperation('test-org-123')
       ).rejects.toThrow('Database error');
     });
+  });
+
+  describe('Authentication', () => {
+    test('should require SERVICE_KEY for admin operations in non-mock mode', () => {
+      // Clear environment
+      delete process.env.SUPABASE_SERVICE_KEY;
+      delete process.env.MOCK_MODE;
+      process.env.SUPABASE_URL = 'https://test.supabase.co';
+
+      // Should throw error when SERVICE_KEY missing in non-mock mode
+      expect(() => {
+        new CostControlService();
+      }).toThrow('SUPABASE_SERVICE_KEY is required for admin operations in CostControlService');
+    });
+
+    test('should use SERVICE_KEY when available', () => {
+      process.env.SUPABASE_URL = 'https://test.supabase.co';
+      process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
+      delete process.env.MOCK_MODE;
+
+      const service = new CostControlService();
+
+      expect(service.supabaseKey).toBe('test-service-key');
+    });
+
+    // Note: Mock mode behavior is tested separately in integration tests
+    // where mockMode.isMockMode can be properly controlled
   });
 });
