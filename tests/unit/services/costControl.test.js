@@ -42,10 +42,18 @@ const mockUpdate = jest.fn(() => ({
   }))
 }));
 
+const mockUpsertSelect = jest.fn();
+const mockUpsert = jest.fn(() => ({
+  select: jest.fn(() => ({
+    single: mockUpsertSelect
+  }))
+}));
+
 const mockFrom = jest.fn(() => ({
   select: mockSelect,
   insert: mockInsert,
-  update: mockUpdate
+  update: mockUpdate,
+  upsert: mockUpsert
 }));
 
 const mockRpc = jest.fn();
@@ -68,6 +76,12 @@ jest.mock('../../../src/config/mockMode', () => ({
   }
 }));
 
+// Mock planLimitsService (CodeRabbit #3353894295 - Missing mock)
+const mockGetPlanLimits = jest.fn();
+jest.mock('../../../src/services/planLimitsService', () => ({
+  getPlanLimits: mockGetPlanLimits
+}));
+
 const CostControlService = require('../../../src/services/costControl');
 
 describe('CostControlService', () => {
@@ -81,61 +95,58 @@ describe('CostControlService', () => {
     // Clear all mocks
     jest.clearAllMocks();
 
+    // Reset specific mocks that use mockResolvedValueOnce (CodeRabbit #3353894295)
+    mockSelectSingle.mockReset();
+    mockGetPlanLimits.mockReset();
+
     costControl = new CostControlService();
   });
 
   describe('canPerformOperation', () => {
     test('should allow operation when under limit', async () => {
-      // Mock organization data (first call)
-      mockSelectSingle
-        .mockResolvedValueOnce({
-          data: {
-            plan_id: 'free',
-            monthly_responses_limit: 100,
-            monthly_responses_used: 50
-          },
-          error: null
-        })
-        // Mock monthly usage data (second call)
-        .mockResolvedValueOnce({
-          data: {
-            total_responses: 50
-          },
-          error: null
-        });
+      // Mock RPC can_perform_operation response (CodeRabbit #3353894295 M4)
+      mockRpc.mockResolvedValueOnce({
+        data: { allowed: true, current_usage: 50, monthly_limit: 100, percentage_used: 50 },
+        error: null
+      });
 
       const result = await costControl.canPerformOperation('test-org-123');
 
       expect(result.allowed).toBe(true);
-      expect(result.currentUsage).toBe(50);
-      expect(result.limit).toBe(100);
-      expect(result.percentage).toBe(50);
+      expect(result.current_usage).toBe(50);
+      expect(result.monthly_limit).toBe(100);
+      expect(result.percentage_used).toBe(50);
+      expect(mockRpc).toHaveBeenCalledWith('can_perform_operation', {
+        org_id: 'test-org-123',
+        resource_type_param: 'roasts',
+        quantity_param: 1
+      });
     });
 
     test('should deny operation when over limit', async () => {
-      // Mock organization data (first call) and monthly usage data (second call)
-      mockSelectSingle
-        .mockResolvedValueOnce({
-          data: {
-            plan_id: 'free',
-            monthly_responses_limit: 100,
-            monthly_responses_used: 105
-          },
-          error: null
-        })
-        .mockResolvedValueOnce({
-          data: {
-            total_responses: 105
-          },
-          error: null
-        });
+      // Mock RPC can_perform_operation response (CodeRabbit #3353894295 M5)
+      mockRpc.mockResolvedValueOnce({
+        data: {
+          allowed: false,
+          reason: 'monthly_limit_exceeded',
+          current_usage: 105,
+          monthly_limit: 100,
+          remaining: 0
+        },
+        error: null
+      });
 
       const result = await costControl.canPerformOperation('test-org-123');
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe('monthly_limit_exceeded');
-      expect(result.currentUsage).toBe(105);
-      expect(result.limit).toBe(100);
+      expect(result.current_usage).toBe(105);
+      expect(result.monthly_limit).toBe(100);
+      expect(mockRpc).toHaveBeenCalledWith('can_perform_operation', {
+        org_id: 'test-org-123',
+        resource_type_param: 'roasts',
+        quantity_param: 1
+      });
     });
   });
 
@@ -196,7 +207,7 @@ describe('CostControlService', () => {
       });
     });
 
-    test('should record free operations without incrementing counters', async () => {
+    test('should record free operations with RPC tracking', async () => {
       const mockUsageRecord = {
         id: 'test-usage-124',
         organization_id: 'test-org-123',
@@ -212,6 +223,19 @@ describe('CostControlService', () => {
         error: null
       });
 
+      // Mock RPC record_usage (CodeRabbit #3353894295 M6)
+      // Implementation always calls RPC, even for free ops
+      mockRpc.mockResolvedValue({
+        data: {
+          success: true,
+          current_usage: 1,
+          monthly_limit: 200,
+          percentage_used: 0.5,
+          limit_exceeded: false
+        },
+        error: null
+      });
+
       const result = await costControl.recordUsage(
         'test-org-123',
         'twitter',
@@ -220,17 +244,31 @@ describe('CostControlService', () => {
 
       expect(result.recorded).toBe(true);
       expect(result.cost).toBe(0); // Free operation
-      expect(mockRpc).not.toHaveBeenCalled(); // No counter increment for free ops
+      expect(mockRpc).toHaveBeenCalledWith('record_usage', {
+        org_id: 'test-org-123',
+        resource_type_param: 'api_calls',
+        platform_param: 'twitter',
+        user_id_param: null,
+        quantity_param: 1,
+        cost_param: 0,
+        tokens_param: 0,
+        metadata_param: {}
+      });
     });
   });
 
   describe('canUseShield', () => {
     test('should allow Shield for pro plan', async () => {
-      mockSelectSingle.mockResolvedValue({
+      mockSelectSingle.mockResolvedValueOnce({
         data: {
           plan_id: 'pro'
         },
         error: null
+      });
+
+      // Mock planLimitsService response (CodeRabbit #3353894295 - Missing mock)
+      mockGetPlanLimits.mockResolvedValueOnce({
+        shieldEnabled: true
       });
 
       const result = await costControl.canUseShield('test-org-123');
@@ -241,11 +279,16 @@ describe('CostControlService', () => {
     });
 
     test('should deny Shield for free plan', async () => {
-      mockSelectSingle.mockResolvedValue({
+      mockSelectSingle.mockResolvedValueOnce({
         data: {
           plan_id: 'free'
         },
         error: null
+      });
+
+      // Mock planLimitsService response (CodeRabbit #3353894295 - Missing mock)
+      mockGetPlanLimits.mockResolvedValueOnce({
+        shieldEnabled: false
       });
 
       const result = await costControl.canUseShield('test-org-123');
@@ -266,9 +309,21 @@ describe('CostControlService', () => {
         subscription_status: 'active'
       };
 
+      // Mock planLimitsService response (CodeRabbit #3353894295 - Missing mock)
+      mockGetPlanLimits.mockResolvedValue({
+        monthlyResponsesLimit: 1000,
+        shieldEnabled: true
+      });
+
       // Mock the update operation for organizations table
       mockUpdateSelect.mockResolvedValueOnce({
         data: mockOrg,
+        error: null
+      });
+
+      // Mock upsert operations for updatePlanUsageLimits (4 resource types)
+      mockUpsertSelect.mockResolvedValue({
+        data: { organization_id: 'test-org-123' },
         error: null
       });
 
@@ -362,17 +417,27 @@ describe('CostControlService', () => {
 
   describe('Plan configurations', () => {
     test('should have correct plan configurations', () => {
-      expect(costControl.plans.free.monthlyResponsesLimit).toBe(100);
-      expect(costControl.plans.free.shieldEnabled).toBe(false);
-      
-      expect(costControl.plans.pro.monthlyResponsesLimit).toBe(1000);
-      expect(costControl.plans.pro.shieldEnabled).toBe(true);
-      
-      expect(costControl.plans.creator_plus.monthlyResponsesLimit).toBe(5000);
-      expect(costControl.plans.creator_plus.shieldEnabled).toBe(true);
-      
-      expect(costControl.plans.custom.monthlyResponsesLimit).toBe(999999);
-      expect(costControl.plans.custom.shieldEnabled).toBe(true);
+      // Test plan metadata (CodeRabbit #3353894295 N4)
+      // Plans only contain id, name, and features (not limits)
+      expect(costControl.plans.free.id).toBe('free');
+      expect(costControl.plans.free.name).toBe('Free');
+      expect(costControl.plans.free.features).toContain('basic_integrations');
+      expect(costControl.plans.free.features).toContain('community_support');
+
+      expect(costControl.plans.pro.id).toBe('pro');
+      expect(costControl.plans.pro.name).toBe('Pro');
+      expect(costControl.plans.pro.features).toContain('shield_mode');
+      expect(costControl.plans.pro.features).toContain('analytics');
+
+      expect(costControl.plans.creator_plus.id).toBe('creator_plus');
+      expect(costControl.plans.creator_plus.name).toBe('Creator Plus');
+      expect(costControl.plans.creator_plus.features).toContain('unlimited_integrations');
+      expect(costControl.plans.creator_plus.features).toContain('custom_tones');
+
+      expect(costControl.plans.custom.id).toBe('custom');
+      expect(costControl.plans.custom.name).toBe('Custom');
+      expect(costControl.plans.custom.features).toContain('everything');
+      expect(costControl.plans.custom.features).toContain('sla');
     });
 
     test('should have correct operation costs', () => {
@@ -385,9 +450,9 @@ describe('CostControlService', () => {
 
   describe('Error handling', () => {
     test('should handle database errors gracefully', async () => {
-      // Mock error from first database call
+      // Mock error from RPC call (CodeRabbit #3353894295 - Fix mock target)
       const dbError = new Error('Database error');
-      mockSelectSingle.mockResolvedValue({
+      mockRpc.mockResolvedValue({
         data: null,
         error: dbError
       });

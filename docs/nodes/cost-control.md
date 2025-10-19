@@ -37,6 +37,8 @@ constructor() {
   if (mockMode.isMockMode) {
     this.supabase = mockMode.generateMockSupabaseClient();
   } else {
+    // Assign Supabase credentials (CodeRabbit #3353894295 Mi1)
+    this.supabaseUrl = process.env.SUPABASE_URL;
     this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
     // Fail fast if SERVICE_KEY is missing
@@ -80,7 +82,10 @@ constructor() {
   if (mockMode.isMockMode) {
     this.supabase = mockMode.generateMockSupabaseClient();
   } else {
-    // Fail-fast validation for admin operations
+    // Fail-fast validation for admin operations (CodeRabbit #3353894295 N3)
+    if (!process.env.SUPABASE_URL) {
+      throw new Error('SUPABASE_URL is required for CostControlService');
+    }
     if (!process.env.SUPABASE_SERVICE_KEY) {
       throw new Error('SUPABASE_SERVICE_KEY is required for admin operations in CostControlService');
     }

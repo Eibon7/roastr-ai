@@ -10,6 +10,7 @@ const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
+const logger = require('../../src/utils/logger');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -24,8 +25,15 @@ const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
     : (() => { throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production'); })()
   );
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !SUPABASE_ANON_KEY) {
-  throw new Error('Missing required Supabase environment variables');
+// Better error reporting (CodeRabbit #3353894295 N5)
+const missing = [
+  !SUPABASE_URL && 'SUPABASE_URL',
+  !SUPABASE_SERVICE_KEY && 'SUPABASE_SERVICE_KEY',
+  !SUPABASE_ANON_KEY && 'SUPABASE_ANON_KEY'
+].filter(Boolean);
+
+if (missing.length > 0) {
+  throw new Error(`Missing required Supabase environment variables: ${missing.join(', ')}`);
 }
 
 // Service client (bypasses RLS)
@@ -43,7 +51,7 @@ let currentTenantContext = null;
  * Creates 2 test organizations with users
  */
 async function createTestTenants() {
-  console.log('🏗️  Creating test tenants...');
+  logger.debug('🏗️  Creating test tenants...');
 
   // Create users first (required for owner_id FK)
   const userA = {
@@ -133,8 +141,8 @@ async function createTestTenants() {
   tenantUsers.set(tenantA.id, createdUserA.id);
   tenantUsers.set(tenantB.id, createdUserB.id);
 
-  console.log(`✅ Tenant A: ${tenantA.id} (owner: ${createdUserA.id})`);
-  console.log(`✅ Tenant B: ${tenantB.id} (owner: ${createdUserB.id})`);
+  logger.debug(`✅ Tenant A: ${tenantA.id} (owner: ${createdUserA.id})`);
+  logger.debug(`✅ Tenant B: ${tenantB.id} (owner: ${createdUserB.id})`);
 
   return { tenantA, tenantB };
 }
@@ -143,7 +151,7 @@ async function createTestTenants() {
  * Seeds test data for a tenant
  */
 async function createTestData(tenantId, type = 'all') {
-  console.log(`📊 Creating test data for tenant ${tenantId}...`);
+  logger.debug(`📊 Creating test data for tenant ${tenantId}...`);
 
   const testData = { posts: [], comments: [], roasts: [] };
 
@@ -174,7 +182,7 @@ async function createTestData(tenantId, type = 'all') {
 
     if (error) throw new Error(`Failed to create posts: ${error.message}`);
     testData.posts = data;
-    console.log(`  ✅ Created ${data.length} posts`);
+    logger.debug(`  ✅ Created ${data.length} posts`);
   }
 
   if ((type === 'comments' || type === 'all') && testData.posts.length > 0) {
@@ -196,7 +204,7 @@ async function createTestData(tenantId, type = 'all') {
 
     if (error) throw new Error(`Failed to create comments: ${error.message}`);
     testData.comments = data;
-    console.log(`  ✅ Created ${data.length} comments`);
+    logger.debug(`  ✅ Created ${data.length} comments`);
   }
 
   if ((type === 'roasts' || type === 'all') && testData.comments.length > 0) {
@@ -218,7 +226,7 @@ async function createTestData(tenantId, type = 'all') {
 
     if (error) throw new Error(`Failed to create roasts: ${error.message}`);
     testData.roasts = data;
-    console.log(`  ✅ Created ${data.length} roasts`);
+    logger.debug(`  ✅ Created ${data.length} roasts`);
   }
 
   return testData;
@@ -228,7 +236,7 @@ async function createTestData(tenantId, type = 'all') {
  * Switches RLS context via JWT
  */
 async function setTenantContext(tenantId) {
-  console.log(`🔄 Switching to tenant: ${tenantId}`);
+  logger.debug(`🔄 Switching to tenant: ${tenantId}`);
 
   // Get tenant owner's user ID
   const userId = tenantUsers.get(tenantId);
@@ -264,7 +272,7 @@ async function setTenantContext(tenantId) {
 
   if (!data) throw new Error(`Failed to verify context for ${tenantId}`);
 
-  console.log(`✅ Context set to: ${tenantId}`);
+  logger.debug(`✅ Context set to: ${tenantId}`);
 }
 
 /**
@@ -279,7 +287,7 @@ function getTenantContext() {
  * Order: roasts → comments → posts → organizations → users
  */
 async function cleanupTestData() {
-  console.log('🧹 Cleaning up...');
+  logger.debug('🧹 Cleaning up...');
 
   if (testTenants.length === 0 && testUsers.length === 0) return;
 
@@ -295,7 +303,7 @@ async function cleanupTestData() {
   currentTenantContext = null;
   await testClient.auth.signOut();
 
-  console.log('✅ Cleanup complete');
+  logger.debug('✅ Cleanup complete');
 }
 
 module.exports = {

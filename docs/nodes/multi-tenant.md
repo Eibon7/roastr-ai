@@ -689,6 +689,24 @@ const token = jwt.sign(
 );
 ```
 
+**Operational Note** (CodeRabbit #3353894295 N1):
+
+For testing RLS context switching, use `supabase.auth.setSession(...)`:
+```javascript
+// Switch to tenant context for testing
+await testClient.auth.setSession({
+  access_token: token,
+  refresh_token: 'fake-refresh-token'
+});
+
+// Verify context
+const { data } = await testClient
+  .from('organizations')
+  .select('id')
+  .eq('id', tenantId)
+  .single();
+```
+
 **Related Fix:** CodeRabbit Review #3353722960 (2025-10-18)
 
 ## Testing
