@@ -25,14 +25,44 @@ const jwt = require('jsonwebtoken');
 jest.mock('../../src/services/PersonaService');
 jest.mock('../../src/utils/logger');
 
-// Create test app
-const app = express();
-app.use(bodyParser.json());
-app.use(personaRoutes);
+// Mock auth middleware to parse JWT locally
+jest.mock('../../src/middleware/auth', () => ({
+  authenticateToken: (req, res, next) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
+
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required'
+        });
+      }
+
+      // Parse JWT locally for testing (require inside mock to avoid scope issues)
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(token, 'test-secret-key');
+      req.user = { id: decoded.id, plan: decoded.plan };
+      req.accessToken = token;
+
+      next();
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid or expired token'
+      });
+    }
+  }
+}));
 
 // JWT secret for test tokens
 const JWT_SECRET = 'test-secret-key';
 process.env.JWT_SECRET = JWT_SECRET;
+
+// Create test app
+const app = express();
+app.use(bodyParser.json());
+app.use(personaRoutes);
 
 /**
  * Generate test JWT token
@@ -513,9 +543,14 @@ describe('Persona API Integration Tests', () => {
 
       expect(response.status).toBe(200);
 
-      // Verify sanitization happened
+      // Verify sanitization happened (HTML escaping)
+      // express-validator's .escape() converts dangerous HTML chars
       const updateCall = PersonaService.updatePersona.mock.calls[0][1];
-      expect(updateCall.lo_que_me_define).not.toContain('DROP TABLE');
+      expect(updateCall.lo_que_me_define).toContain('&#x27;'); // Escaped single quote
+      expect(updateCall.lo_que_me_define).not.toContain("'"); // Original quote removed
+
+      // Note: SQL keywords like "DROP TABLE" remain because we use parameterized queries
+      // which prevent SQL injection regardless of content. HTML escaping prevents XSS.
     });
   });
 });

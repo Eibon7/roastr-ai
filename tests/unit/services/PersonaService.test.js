@@ -394,12 +394,15 @@ describe('PersonaService', () => {
       const plaintext = 'Original text';
       const encrypted = encryptField(plaintext);
 
-      mockSupabase.single.mockResolvedValue({
-        data: {
-          lo_que_me_define_encrypted: encrypted,
-          plan: 'pro'
-        },
-        error: null
+      // Mock the complete chain for getPersona
+      mockSupabase.eq.mockReturnValue({
+        single: jest.fn().mockResolvedValue({
+          data: {
+            lo_que_me_define_encrypted: encrypted,
+            plan: 'pro'
+          },
+          error: null
+        })
       });
 
       const persona = await PersonaService.getPersona(userId);
@@ -473,8 +476,11 @@ describe('PersonaService', () => {
       const userId = 'user-123';
       const fields = { lo_que_me_define: 'Test' };
 
+      // Mock database failure on update
+      const dbError = new Error('Connection timeout');
       mockSupabase.eq.mockResolvedValue({
-        error: { message: 'Connection timeout' }
+        data: null,
+        error: dbError
       });
 
       await expect(
@@ -548,12 +554,12 @@ describe('PersonaService', () => {
     });
 
     it('should return unhealthy status on database failure', async () => {
-      mockSupabase.limit.mockReturnValue({
-        ...mockSupabase,
-        single: jest.fn().mockResolvedValue({
-          count: null,
-          error: { message: 'Connection refused' }
-        })
+      // Mock database connection failure
+      // healthCheck uses: .from('users').select(...).limit(1)
+      // The final result should have an error
+      mockSupabase.limit.mockResolvedValue({
+        count: null,
+        error: { message: 'Connection refused' }
       });
 
       const health = await PersonaService.healthCheck();

@@ -166,9 +166,13 @@ class PersonaService {
    */
   async updatePersona(userId, fields, userPlan) {
     try {
-      // Validate plan access for each field
+      // Known persona fields
+      const knownFields = ['lo_que_me_define', 'lo_que_no_tolero', 'lo_que_me_da_igual'];
+
+      // Validate plan access for each KNOWN field
       for (const fieldName of Object.keys(fields)) {
         if (!fields[fieldName]) continue; // Skip null/empty fields
+        if (!knownFields.includes(fieldName)) continue; // Skip unknown fields
 
         this._validatePlanAccess(userPlan, fieldName);
         this._validateCharacterLimit(fieldName, fields[fieldName]);
