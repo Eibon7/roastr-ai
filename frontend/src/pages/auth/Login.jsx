@@ -47,13 +47,11 @@ const Login = () => {
 
       if (result.success) {
         // Success - navigation will be handled by useEffect when auth state changes
-        console.log('Login successful');
       } else {
         setError(result.message);
         setShowRecovery(true);
       }
     } catch (error) {
-      console.error('Login error:', error);
       setError(error.message || 'An unexpected error occurred. Please try again.');
       setShowRecovery(true);
     } finally {
@@ -80,7 +78,6 @@ const Login = () => {
         setError(result.message);
       }
     } catch (error) {
-      console.error('Recovery email error:', error);
       setError(error.message || 'Failed to send recovery email. Please try again.');
     } finally {
       setRecoveryLoading(false);
