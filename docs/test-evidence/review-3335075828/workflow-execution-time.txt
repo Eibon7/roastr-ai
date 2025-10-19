@@ -1,0 +1,15 @@
+# Workflow Execution Time
+
+## gdd-repair.yml workflow
+
+No executions found for branch feat/gdd-issue-deduplication-cleanup yet.
+
+**Note:** The workflow changes will be tested when the PR is merged or when manually triggered.
+
+**Changes made:**
+1. Added exit code capture and checking (lines 70-99)
+2. Added exit code checks to issue creation (line 262-263)
+3. Replaced listForRepo with Search API (lines 289-325)
+4. Added exit code checks to final failure (line 357-361)
+
+**Performance impact:** Minimal (<10ms overhead for exit code capture)

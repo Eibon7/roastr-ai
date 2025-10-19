@@ -4,15 +4,58 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-09
-**Coverage:** 5%
+**Last Updated:** 2025-10-18
+**Coverage:** 0%
 **Coverage Source:** auto
-**Related PRs:** #499
+**Related PRs:** #499, #587
 
 ## Dependencies
 
 - `multi-tenant` - Row Level Security (RLS) and organization isolation
 - `plan-features` - Subscription plan limits and feature gates
+
+## Security Requirements
+
+### Supabase Service Key (CRITICAL)
+
+**⚠️ IMPORTANT**: Cost Control Service **MUST** use `SUPABASE_SERVICE_KEY` for all database operations.
+
+**Why**: Cost control performs privileged operations (usage tracking, billing, limit enforcement) that require admin-level database access. Using `SUPABASE_ANON_KEY` will cause permission errors and security violations.
+
+**Configuration**:
+```bash
+# Required environment variable
+SUPABASE_SERVICE_KEY=your-service-key-here
+
+# ❌ NEVER use ANON key as fallback
+# ✅ Fail fast if SERVICE_KEY is missing
+```
+
+**Implementation** (`src/services/costControl.js:11-20`):
+```javascript
+constructor() {
+  if (mockMode.isMockMode) {
+    this.supabase = mockMode.generateMockSupabaseClient();
+  } else {
+    this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+    // Fail fast if SERVICE_KEY is missing
+    if (!this.supabaseKey) {
+      throw new Error(
+        'SUPABASE_SERVICE_KEY is required for CostControlService. ' +
+        'This service requires admin privileges for usage tracking, billing, and cost control operations. ' +
+        'SUPABASE_ANON_KEY is NOT sufficient and will cause permission errors.'
+      );
+    }
+
+    this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
+  }
+}
+```
+
+**Impact**: If SERVICE_KEY is not configured, the service will throw an error on initialization, preventing silent failures.
+
+**Related**: CodeRabbit Review #3352743882 (Critical Issue C1)
 
 ## Overview
 
@@ -461,11 +504,11 @@ describe('CostControlService', () => {
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
 - **Billing Specialist**
+- **Documentation Agent**
 - **Orchestrator**
+- **Test Engineer**
 
 
 ## Related Nodes

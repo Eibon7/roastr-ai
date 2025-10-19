@@ -8,8 +8,6 @@
 **Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499
-**Coverage:** 50%
-**Coverage:** 50%
 
 ## Dependencies
 
@@ -842,11 +840,11 @@ describe('Multi-Platform Workflow', () => {
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
-- **Backend Developer**
-- **Integration Specialist**
 - **API Specialist**
+- **Backend Developer**
+- **Documentation Agent**
+- **Integration Specialist**
+- **Test Engineer**
 
 
 ## Related Nodes

@@ -172,7 +172,7 @@ class GDDDriftPredictor {
         if (line.startsWith('COMMIT:')) {
           const [hash, timestamp] = line.replace('COMMIT:', '').split('|');
           currentCommit = hash;
-          currentTimestamp = parseInt(timestamp);
+          currentTimestamp = Number.parseInt(timestamp, 10);
           activity.totalCommits++;
         } else if (currentCommit && line.trim()) {
           // Check if file is related to a node
@@ -313,12 +313,12 @@ class GDDDriftPredictor {
     // Factor 3: Coverage
     const coverage = nodeData.metadata.coverage;
     if (coverage !== undefined) {
-      const coverageNum = parseInt(coverage);
+      const coverageNum = Number.parseInt(coverage, 10);
       if (coverageNum < 80) {
         const points = 15;
         risk += points;
         factors.push(`+${points} pts: Coverage ${coverageNum}% (<80%)`);
-        recommendations.push(`Increase test coverage to 80%+ (currently ${coverageNum}%)`);
+        recommendations.push(`Increase test coverage to 80%+ (declared: ${coverageNum}%, actual: N/A)`);
       }
     }
 
@@ -329,7 +329,7 @@ class GDDDriftPredictor {
         const points = 25;
         risk += points;
         factors.push(`+${points} pts: Health score ${healthData.score} (<70)`);
-        recommendations.push(`Improve health score to 70+ (currently ${healthData.score})`);
+        recommendations.push(`Improve health score to 70+ (declared: ${healthData.score}, actual: N/A)`);
       }
     }
 
@@ -341,7 +341,8 @@ class GDDDriftPredictor {
       if (daysSinceCommit < 7) {
         const points = -10;
         risk += points;
-        factors.push(`${points} pts: Recent commit (${daysSinceCommit} days ago)`);
+        const dayLabel = daysSinceCommit === 0 ? 'today' : daysSinceCommit === 1 ? '1 day ago' : `${daysSinceCommit} days ago`;
+        factors.push(`${points} pts: Recent commit (${dayLabel})`);
       }
     }
 
@@ -360,7 +361,7 @@ class GDDDriftPredictor {
           : null
       },
       health_score: healthData?.score || null,
-      coverage: coverage || null
+      coverage: coverage ? parseInt(coverage) : null
     };
   }
 
@@ -382,15 +383,16 @@ class GDDDriftPredictor {
    * Get drift status from score
    */
   getDriftStatus(score) {
-    if (score <= this.thresholds.healthy) return 'healthy';
-    if (score <= this.thresholds.atRisk) return 'at_risk';
-    return 'likely_drift';
+    if (score <= this.thresholds.healthy) return 'HEALTHY';
+    if (score <= this.thresholds.atRisk) return 'AT_RISK';
+    return 'LIKELY_DRIFT';
   }
 
   /**
    * Get emoji for drift status
    */
   getDriftEmoji(status) {
+    const s = String(status || '').toLowerCase();
     const emojis = {
       healthy: '🟢',
       at_risk: '🟡',
@@ -398,7 +400,7 @@ class GDDDriftPredictor {
       warning: '🟡',
       critical: '🔴'
     };
-    return emojis[status] || '⚪';
+    return emojis[s] || '⚪';
   }
 
   /**
@@ -407,9 +409,10 @@ class GDDDriftPredictor {
   calculateOverallStats() {
     const nodes = Object.values(this.driftData.nodes);
 
-    this.driftData.high_risk_count = nodes.filter(n => n.status === 'likely_drift').length;
-    this.driftData.at_risk_count = nodes.filter(n => n.status === 'at_risk').length;
-    this.driftData.healthy_count = nodes.filter(n => n.status === 'healthy').length;
+    const toU = s => String(s || '').toUpperCase();
+    this.driftData.high_risk_count = nodes.filter(n => toU(n.status) === 'LIKELY_DRIFT').length;
+    this.driftData.at_risk_count = nodes.filter(n => toU(n.status) === 'AT_RISK').length;
+    this.driftData.healthy_count = nodes.filter(n => toU(n.status) === 'HEALTHY').length;
 
     this.driftData.average_drift_risk = nodes.length > 0
       ? Math.round(nodes.reduce((sum, n) => sum + n.drift_risk, 0) / nodes.length)

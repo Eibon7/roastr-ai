@@ -1,0 +1,104 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/unit/utils/textNormalizer.test.js
+
+PASS node-tests tests/unit/utils/textNormalizer.test.js
+  textNormalizer
+    normalizeUnicode
+      ✓ should normalize "café" to NFC: Composed form (é as single character) (1 ms)
+      ✓ should normalize "café" to NFD: Decomposed form (é as e + combining accent)
+      ✓ should normalize "Å" to NFC: Latin capital A with ring above (composed)
+      ✓ should normalize "Å" to NFD: Latin capital A with ring above (decomposed)
+      ✓ should normalize "①②③" to NFKC: Circled numbers to ASCII
+      ✓ should normalize "ﬁle" to NFKC: Ligature to separate letters (1 ms)
+      ✓ should normalize "🔥" to NFC: Emoji normalization
+      ✓ should normalize "👨‍👩‍👧‍👦" to NFC: Family emoji with ZWJ
+      ✓ should handle empty string
+      ✓ should handle non-string input (1 ms)
+      ✓ should throw error for invalid normalization form (8 ms)
+      ✓ should handle combining characters
+      ✓ should handle multiple combining marks
+      ✓ should produce consistent results for repeated normalization
+      ✓ should normalize large text efficiently
+    sanitizeUrl
+      ✓ should accept Valid HTTPS URL: "https://example.com"
+      ✓ should accept Valid HTTP URL with path: "http://example.com/path" (1 ms)
+      ✓ should reject XSS javascript protocol: "javascript:alert(1)"
+      ✓ should reject XSS data protocol: "data:text/html,<script>alert(1)</script>"
+      ✓ should reject XSS vbscript protocol: "vbscript:msgbox(1)"
+      ✓ should reject File protocol (security risk): "file:///etc/passwd"
+      ✓ should reject FTP protocol (not allowed by default): "ftp://example.com"
+      ✓ should reject Malformed URL: "not-a-url"
+      ✓ should reject Protocol-relative URL (missing protocol): "//example.com"
+      ✓ should handle empty string
+      ✓ should handle whitespace-only string
+      ✓ should handle null and undefined
+      ✓ should handle non-string input
+      ✓ should remove query params when option is set
+      ✓ should remove fragment when option is set
+      ✓ should allow custom protocols
+      ✓ should handle URLs with special characters
+      ✓ should handle international domain names
+      ✓ should produce same result when sanitized twice
+      ✓ should sanitize URLs efficiently (1 ms)
+    normalizeQuotes
+      ✓ should normalize Smart double quotes to straight
+      ✓ should normalize Smart single quotes to straight
+      ✓ should normalize Low-9 quote to straight
+      ✓ should normalize Double low-9 quote to straight
+      ✓ should normalize Prime marks to straight quotes (1 ms)
+      ✓ should normalize Straight to smart double quotes
+      ✓ should normalize Straight to smart single quotes
+      ✓ should handle empty string
+      ✓ should handle string without quotes
+      ✓ should handle non-string input
+      ✓ should handle nested quotes
+      ✓ should handle mixed quote types
+      ✓ should produce consistent results
+      ✓ should normalize large text with many quotes efficiently
+    normalizeSpaces
+      ✓ should Trim leading/trailing spaces (1 ms)
+      ✓ should Collapse multiple spaces
+      ✓ should Collapse multiple tabs
+      ✓ should Remove non-breaking spaces
+      ✓ should Normalize CRLF to LF
+      ✓ should Normalize CR to LF
+      ✓ should Keep leading/trailing with trim=false (but still collapse) (1 ms)
+      ✓ should Keep multiple spaces with collapseMultiple=false
+      ✓ should handle empty string
+      ✓ should handle string with only spaces
+      ✓ should handle non-string input
+      ✓ should handle various whitespace types
+      ✓ should preserve regular spaces when not collapsing
+      ✓ should produce consistent results
+      ✓ should normalize large text efficiently (1 ms)
+    normalizeText (combined)
+      ✓ should apply all normalizations by default
+      ✓ should handle unicode + quotes + spaces together
+      ✓ should allow selective normalization
+      ✓ should handle non-string input gracefully
+      ✓ should produce same result when normalized multiple times
+      ✓ should normalize large complex text efficiently
+    Integration scenarios
+      ✓ should normalize user input for database storage
+      ✓ should sanitize URL while normalizing surrounding text
+      ✓ should handle mixed content with unicode, quotes, and spaces
+    Security edge cases
+      ✓ should not break on malicious unicode sequences (2 ms)
+      ✓ should reject URLs with XSS attempts
+      ✓ should block blob: URLs (can contain malicious content)
+      ✓ should block filesystem: URLs (filesystem access)
+      ✓ should block jar: URLs (Java Archive protocol)
+      ✓ should block chrome: URLs (browser internal)
+      ✓ should block chrome-extension: URLs (extension URIs)
+      ✓ should block view-source: URLs (can nest dangerous protocols) (1 ms)
+      ✓ should block percent-encoded javascript: protocol (obfuscation bypass)
+      ✓ should block percent-encoded dangerous protocols
+      ✓ should handle extremely long input without crashing (1 ms)
+      ✓ should handle text with zero-width characters
+
+Test Suites: 1 passed, 1 total
+Tests:       85 passed, 85 total
+Snapshots:   0 total
+Time:        0.564 s, estimated 1 s
+Ran all test suites matching tests/unit/utils/textNormalizer.test.js.

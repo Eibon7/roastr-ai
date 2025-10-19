@@ -1,0 +1,37 @@
+docs/nodes/analytics.md:8:**Coverage:** 70%
+docs/nodes/analytics.md:9:**Coverage Source:** auto
+docs/nodes/billing.md:14:**Coverage:** 70%
+docs/nodes/billing.md:15:**Coverage Source:** auto
+docs/nodes/cost-control.md:8:**Coverage:** 0%
+docs/nodes/cost-control.md:9:**Coverage Source:** auto
+docs/nodes/guardian.md:674:**Coverage:** 50%
+docs/nodes/guardian.md:675:**Coverage Source:** auto
+docs/nodes/guardian.md:676:**Coverage Source:** mocked
+docs/nodes/multi-tenant.md:8:**Coverage:** 70%
+docs/nodes/multi-tenant.md:9:**Coverage Source:** auto
+docs/nodes/multi-tenant.md:10:**Coverage Source:** mocked
+docs/nodes/observability.md:170:**Coverage:** 19 tests across 8 suites (100% passing)
+docs/nodes/observability.md:205:**Coverage:** 17 tests across 5 acceptance criteria (100% passing)
+docs/nodes/observability.md:737:**Coverage Source:** auto
+docs/nodes/persona.md:8:**Coverage:** 70%
+docs/nodes/persona.md:9:**Coverage Source:** auto
+docs/nodes/persona.md:10:**Coverage Source:** mocked
+docs/nodes/plan-features.md:8:**Coverage:** 3%
+docs/nodes/plan-features.md:9:**Coverage Source:** auto
+docs/nodes/platform-constraints.md:8:**Coverage:** 100%
+docs/nodes/platform-constraints.md:9:**Coverage Source:** auto
+docs/nodes/platform-constraints.md:10:**Coverage Source:** mocked
+docs/nodes/queue-system.md:8:**Coverage:** 6%
+docs/nodes/queue-system.md:9:**Coverage Source:** auto
+docs/nodes/roast.md:8:**Coverage:** 0%
+docs/nodes/roast.md:9:**Coverage Source:** auto
+docs/nodes/shield.md:8:**Coverage:** 2%
+docs/nodes/shield.md:9:**Coverage Source:** auto
+docs/nodes/social-platforms.md:8:**Coverage:** 0%
+docs/nodes/social-platforms.md:9:**Coverage Source:** auto
+docs/nodes/tone.md:8:**Coverage:** 70%
+docs/nodes/tone.md:9:**Coverage Source:** auto
+docs/nodes/tone.md:10:**Coverage Source:** mocked
+docs/nodes/trainer.md:8:**Coverage:** 50%
+docs/nodes/trainer.md:9:**Coverage Source:** auto
+docs/nodes/trainer.md:10:**Coverage Source:** mocked

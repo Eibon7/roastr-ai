@@ -1,18 +1,16 @@
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseServiceClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
 
 /**
  * Shield Settings Service
- * 
+ *
  * Handles Shield configuration management for organizations and platforms.
  * Implements the business logic for Issue #362 - Shield Settings configuration.
  */
 class ShieldSettingsService {
   constructor(config = {}) {
-    this.supabase = config.supabase || createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
+    // Use centralized Supabase client with mock mode support
+    this.supabase = config.supabase || supabaseServiceClient;
     
     this.logger = config.logger || logger;
     

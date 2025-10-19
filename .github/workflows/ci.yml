@@ -172,6 +172,12 @@ jobs:
         echo "ENABLE_RQC: $ENABLE_RQC"
         echo "SKIP_E2E: $SKIP_E2E"
         npm run test:ci
+
+    - name: Run Perspective-Shield integration test
+      run: |
+        echo "🛡️ Running Perspective API → Shield integration validation..."
+        node scripts/test-perspective-shield-integration.js
+        echo "✅ Integration test completed"
     
     - name: Run frontend linting
       working-directory: ./frontend

@@ -17,6 +17,11 @@ on:
         default: 'false'
         type: boolean
 
+# Prevent race conditions when multiple runs try to push to same branch
+concurrency:
+  group: gdd-repair-${{ github.head_ref || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   auto-repair:
     runs-on: ubuntu-latest
@@ -69,10 +74,12 @@ jobs:
 
       - name: Run auto-repair (apply fixes)
         id: repair
+        continue-on-error: true
         if: steps.config.outputs.auto_fix == 'true' && github.event.inputs.dry_run != 'true'
         run: |
           echo "🔧 Running auto-repair with fixes..."
           node scripts/auto-repair-gdd.js --auto-fix --ci
+          EXIT_CODE=$?
 
           # Count applied fixes (check if file exists first)
           if [ -f gdd-repair.json ]; then
@@ -82,9 +89,22 @@ jobs:
             FIXES=0
             ERRORS=0
           fi
+
+          # Check exit code for rollback (exit code 2 = rollback)
+          if [ $EXIT_CODE -eq 2 ]; then
+            echo "rollback=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Rollback detected (exit code 2) - fixes would decrease health score"
+          else
+            echo "rollback=false" >> $GITHUB_OUTPUT
+          fi
+
           echo "fixes_applied=$FIXES" >> $GITHUB_OUTPUT
           echo "errors=$ERRORS" >> $GITHUB_OUTPUT
-          echo "Applied $FIXES fixes, encountered $ERRORS errors"
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "Applied $FIXES fixes, encountered $ERRORS errors, exit code: $EXIT_CODE"
+
+          # Pass through the exit code
+          exit $EXIT_CODE
 
       - name: Re-validate after repair
         id: revalidate
@@ -239,8 +259,8 @@ jobs:
               body: comment
             });
 
-      - name: Create issue for manual review
-        if: failure() || steps.repair.outputs.errors > 0
+      - name: Create or update issue for manual review
+        if: (failure() || steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code != '0' && steps.repair.outputs.exit_code != '2')) && steps.repair.outputs.rollback != 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -255,6 +275,7 @@ jobs:
             const errors = repair.details?.errors || [];
             const errorList = errors.map(e => `- **${e.type}** (${e.node}): ${e.error}`).join('\n');
 
+            const issueTitle = '[GDD] Auto-Repair Failed - PR #' + context.issue.number;
             const issueBody = `## 🔴 GDD Auto-Repair Failed
 
             Automated repair encountered errors that require manual intervention.
@@ -274,15 +295,48 @@ jobs:
             ### Related Links
             - [Workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             - [PR #${{ github.event.pull_request.number }}](../pull/${{ github.event.pull_request.number }})
+
+            ---
+            *Last updated: ${new Date().toISOString()}*
             `;
 
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '[GDD] Auto-Repair Failed - Manual Review Required',
-              body: issueBody,
-              labels: ['documentation', 'gdd', 'manual-review', 'priority:P2']
+            // Check if issue already exists (use Search API for efficiency)
+            const { data: searchResults } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:gdd label:manual-review in:title "${issueTitle}"`,
+              per_page: 1
             });
+
+            const existingIssue = searchResults.items[0];
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🔄 **Revalidated on ${new Date().toISOString()}**\n\nErrors: ${errors.length}\n\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'gdd', 'manual-review', 'priority:P2']
+              });
+
+              console.log(`Created new issue #${newIssue.number}`);
+            }
 
       - name: Upload repair artifacts
         if: always()
@@ -298,7 +352,14 @@ jobs:
           if-no-files-found: ignore
 
       - name: Fail if errors occurred
-        if: steps.repair.outputs.errors > 0
+        if: (steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code != '0' && steps.repair.outputs.exit_code != '2')) && steps.repair.outputs.rollback != 'true'
         run: |
           echo "❌ Auto-repair completed with errors"
           exit 1
+
+      - name: Report rollback (non-critical)
+        if: steps.repair.outputs.rollback == 'true'
+        run: |
+          echo "ℹ️ Auto-repair rolled back changes due to health score degradation"
+          echo "This is normal behavior - fixes would have decreased system health"
+          echo "No manual action required"

@@ -29,17 +29,17 @@ const createMockClient = () => ({
                                 single: () => {
                                     // Return mock user data for users table queries
                                     if (tableName === 'users') {
-                                        return Promise.resolve({ 
-                                            data: { 
-                                                id: val, 
-                                                email: 'test@example.com', 
+                                        return Promise.resolve({
+                                            data: {
+                                                id: val,
+                                                email: 'test@example.com',
                                                 name: 'Test User',
                                                 plan: 'free',
                                                 is_admin: false,
                                                 active: true,
                                                 created_at: new Date().toISOString()
-                                            }, 
-                                            error: null 
+                                            },
+                                            error: null
                                         });
                                     }
                                     // For other tables, return null (like account_deletion_requests)
@@ -49,21 +49,41 @@ const createMockClient = () => ({
                             };
                             return eqBuilder;
                         },
+                        in: (col, values) => {
+                            // Mock implementation of .in() method for WHERE column IN (values)
+                            const baseResponse = { data: [], error: null };
+
+                            const inBuilder = {
+                                eq: (col2, val2) => ({
+                                    single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } })
+                                }),
+                                single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } }),
+                                limit: (n) => Promise.resolve({ data: [], error: null }),
+                                order: (col, opts) => ({
+                                    limit: (n) => ({
+                                        single: () => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } })
+                                    })
+                                }),
+                                // Make it thenable so it can be awaited directly (for kill switch service)
+                                then: (resolve, reject) => Promise.resolve(baseResponse).then(resolve, reject)
+                            };
+                            return inBuilder;
+                        },
                         limit: (n) => Promise.resolve({ data: [], error: null }),
                         single: () => {
                             // Return mock user data for users table queries
                             if (tableName === 'users') {
-                                return Promise.resolve({ 
-                                    data: { 
-                                        id: 'test-user-id', 
-                                        email: 'test@example.com', 
+                                return Promise.resolve({
+                                    data: {
+                                        id: 'test-user-id',
+                                        email: 'test@example.com',
                                         name: 'Test User',
                                         plan: 'free',
                                         is_admin: false,
                                         active: true,
                                         created_at: new Date().toISOString()
-                                    }, 
-                                    error: null 
+                                    },
+                                    error: null
                                 });
                             }
                             return Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'Mock mode - no data' } });

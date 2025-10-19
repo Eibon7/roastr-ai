@@ -78,6 +78,11 @@ function sleep(ms) {
  * @returns {boolean} Whether to retry
  */
 function isRetryableError(error) {
+  // Handle null/undefined
+  if (!error) {
+    return false;
+  }
+
   // Network errors
   if (error.code === 'ECONNREFUSED' || 
       error.code === 'ETIMEDOUT' || 

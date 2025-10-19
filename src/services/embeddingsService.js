@@ -51,7 +51,9 @@ class EmbeddingsService {
       this.logger?.info('Mock embeddings client initialized');
     } else if (process.env.OPENAI_API_KEY) {
       this.client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
+        apiKey: process.env.OPENAI_API_KEY,
+        maxRetries: 2,  // Standard resilience config (CodeRabbit #3343936799)
+        timeout: 30000  // 30 second timeout
       });
       this.logger?.info('OpenAI embeddings client initialized');
     } else {

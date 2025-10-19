@@ -1,0 +1,132 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose AnalyzeToxicityWorker
+
+FAIL node-tests tests/unit/workers/AnalyzeToxicityWorker-semantic.test.js
+  AnalyzeToxicityWorker - Semantic Matching (Issue #151)
+    checkAutoBlock with semantic matching
+      ✓ should use exact matching first (5 ms)
+      ✓ should fall back to semantic matching when no exact matches (2 ms)
+      ✓ should not block when semantic similarity is below threshold (1 ms)
+      ✓ should handle semantic matching errors gracefully (1 ms)
+      ✓ should prioritize exact matches over semantic matches (2 ms)
+    checkTolerance with semantic matching
+      ✓ should use exact matching first for tolerance (1 ms)
+      ✓ should fall back to semantic matching for tolerance (1 ms)
+      ✓ should not ignore when tolerance similarity is below threshold
+    getUserIntolerancePreferences with embeddings
+      ✓ should return both text and embeddings when available (1 ms)
+      ✓ should handle missing embeddings gracefully (1 ms)
+      ✓ should handle corrupted embeddings gracefully (1 ms)
+    getUserTolerancePreferences with embeddings
+      ✓ should return both text and embeddings when available (1 ms)
+    integration with processJob
+      ✕ should use semantic matching in auto-block flow (4 ms)
+      ✕ should use semantic matching in tolerance flow (2 ms)
+    performance considerations
+      ✓ should not call embeddings service when no embeddings are available (1 ms)
+      ✓ should skip semantic matching when exact matches are found (1 ms)
+      ✕ should track semantic matching performance (1 ms)
+
+  ● AnalyzeToxicityWorker - Semantic Matching (Issue #151) › integration with processJob › should use semantic matching in auto-block flow
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "auto-blocked"
+    Received string:    "Comment blocked by Gatekeeper: malicious_content"
+
+      374 |
+      375 |       expect(result.success).toBe(true);
+    > 376 |       expect(result.summary).toContain('auto-blocked');
+          |                              ^
+      377 |       expect(result.autoBlocked).toBe(true);
+      378 |       expect(worker.getUserIntolerancePreferences).toHaveBeenCalledWith('org-123');
+      379 |     });
+
+      at Object.toContain (tests/unit/workers/AnalyzeToxicityWorker-semantic.test.js:376:30)
+
+  ● AnalyzeToxicityWorker - Semantic Matching (Issue #151) › integration with processJob › should use semantic matching in tolerance flow
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "ignored"
+    Received string:    "Comment blocked by Gatekeeper: malicious_content"
+
+      410 |
+      411 |       expect(result.success).toBe(true);
+    > 412 |       expect(result.summary).toContain('ignored');
+          |                              ^
+      413 |       expect(result.toleranceIgnored).toBe(true);
+      414 |       expect(worker.getUserTolerancePreferences).toHaveBeenCalledWith('org-123');
+      415 |     });
+
+      at Object.toContain (tests/unit/workers/AnalyzeToxicityWorker-semantic.test.js:412:30)
+
+  ● AnalyzeToxicityWorker - Semantic Matching (Issue #151) › performance considerations › should track semantic matching performance
+
+    expect(received).toBeGreaterThan(expected)
+
+    Expected: > 0
+    Received:   0
+
+      454 |       const result = await worker.checkAutoBlock(text, intoleranceData, intoleranceEmbeddings);
+      455 |
+    > 456 |       expect(result.analysisTime).toBeGreaterThan(0);
+          |                                   ^
+      457 |       expect(mockEmbeddingsService.findSemanticMatches).toHaveBeenCalled();
+      458 |     });
+      459 |   });
+
+      at Object.toBeGreaterThan (tests/unit/workers/AnalyzeToxicityWorker-semantic.test.js:456:35)
+
+FAIL node-tests tests/unit/workers/analyzeToxicityWorker-fallback.test.js
+  AnalyzeToxicityWorker - Basic Fallback Tests
+    Worker Initialization
+      ✓ should initialize correctly (1 ms)
+      ✓ should have fallback patterns configured
+      ✓ should have toxicity thresholds (1 ms)
+    Service Dependencies
+      ✓ should have cost control service (1 ms)
+      ✓ should have shield service
+      ✓ should have embeddings service (1 ms)
+    Fallback Logic Components
+      ✕ should have pattern matching for toxicity detection (2 ms)
+      ✓ should not match safe content (1 ms)
+      ✓ should have analyzeToxicity method for fallback analysis (1 ms)
+    Error Handling Capabilities
+      ✓ should handle invalid inputs gracefully in pattern matching (1 ms)
+      ✓ should have proper threshold validation (1 ms)
+    Configuration and Setup
+      ✓ should have appropriate concurrency settings (1 ms)
+      ✓ should have retry configuration (1 ms)
+      ✓ should initialize in mock mode (1 ms)
+    Health Check Capabilities
+      ✓ should have health check method
+      ✓ should provide basic health information (1 ms)
+
+  ● AnalyzeToxicityWorker - Basic Fallback Tests › Fallback Logic Components › should have pattern matching for toxicity detection
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      78 |           pattern.pattern.test(text)
+      79 |         );
+    > 80 |         expect(matches).toBe(true);
+         |                         ^
+      81 |       });
+      82 |     });
+      83 |
+
+      at toBe (tests/unit/workers/analyzeToxicityWorker-fallback.test.js:80:25)
+          at Array.forEach (<anonymous>)
+      at Object.forEach (tests/unit/workers/analyzeToxicityWorker-fallback.test.js:76:18)
+
+/Users/emiliopostigo/roastr-ai/src/services/queueService.js:93
+        this.supabase = mockMode.generateMockSupabaseClient();
+                                 ^
+
+[TypeError: mockMode.generateMockSupabaseClient is not a function]
+
+Node.js v22.18.0

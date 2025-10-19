@@ -1,5 +1,233 @@
 # Auto-Repair Changelog
 
+## 2025-10-16T20:03:04.701Z
+
+**Repair ID:** 2025-10-16T20:03:04Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T20-03-04-476Z`
+
+---
+
+## 2025-10-16T16:24:24.138Z
+
+**Repair ID:** 2025-10-16T16:24:24Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T16-24-23-947Z`
+
+---
+
+## 2025-10-16T15:58:16.033Z
+
+**Repair ID:** 2025-10-16T15:58:16Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T15-58-15-746Z`
+
+---
+
+## 2025-10-16T14:47:46.217Z
+
+**Repair ID:** 2025-10-16T14:47:46Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T14-47-46-012Z`
+
+---
+
+## 2025-10-16T11:05:24.813Z
+
+**Repair ID:** 2025-10-16T11:05:24Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T11-05-24-589Z`
+
+---
+
+## 2025-10-16T07:27:40.381Z
+
+**Repair ID:** 2025-10-16T07:27:40Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T07-27-40-183Z`
+
+---
+
+## 2025-10-15T22:29:31.493Z
+
+**Repair ID:** 2025-10-15T22:29:31Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T22-29-31-279Z`
+
+---
+
+## 2025-10-15T19:26:35.176Z
+
+**Repair ID:** 2025-10-15T19:26:35Z
+**Triggered by:** CI/CD
+**Nodes affected:** cost-control, roast, social-platforms
+
+**Fixes applied:**
+- Added coverage to cost-control
+- Added coverage to roast
+- Added coverage to social-platforms
+
+**Outcome:**
+- Health score: 88.5 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T19-26-34-934Z`
+
+---
+
+## 2025-10-15T17:18:40.505Z
+
+**Repair ID:** 2025-10-15T17:18:40Z
+**Triggered by:** Manual
+**Nodes affected:** cost-control, observability, queue-system, roast, social-platforms
+
+**Fixes applied:**
+- Reset coverage to 0% for cost-control (was 5%)
+- Reset coverage to 3% for observability (was 14%)
+- Reset coverage to 6% for queue-system (was 12%)
+- Reset coverage to 0% for roast (was 50%)
+- Reset coverage to 0% for social-platforms (was 50%)
+
+**Outcome:**
+- Health score: 87.7 → 88.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T17-18-40-395Z`
+
+---
+
+## 2025-10-13T18:16:46.557Z
+
+**Repair ID:** 2025-10-13T18:16:46Z
+**Triggered by:** CI/CD
+**Nodes affected:** roast
+
+**Fixes applied:**
+- Added coverage to roast
+
+**Outcome:**
+- Health score: 89.9 → 89.9
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T18-16-46-342Z`
+
+---
+
+## 2025-10-13T18:02:43.830Z
+
+**Repair ID:** 2025-10-13T18:02:43Z
+**Triggered by:** CI/CD
+**Nodes affected:** roast
+
+**Fixes applied:**
+- Added coverage to roast
+
+**Outcome:**
+- Health score: 89.9 → 89.9
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T18-02-43-600Z`
+
+---
+
+## 2025-10-13T17:03:37.104Z
+
+**Repair ID:** 2025-10-13T17:03:37Z
+**Triggered by:** CI/CD
+**Nodes affected:** roast
+
+**Fixes applied:**
+- Added coverage to roast
+
+**Outcome:**
+- Health score: 88.7 → 89.9
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T17-03-36-895Z`
+
+---
+
+## 2025-10-13T16:47:00.710Z
+
+**Repair ID:** 2025-10-13T16:47:00Z
+**Triggered by:** CI/CD
+**Nodes affected:** roast
+
+**Fixes applied:**
+- Added coverage to roast
+
+**Outcome:**
+- Health score: 88.7 → 89.9
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T16-47-00-508Z`
+
+---
+
 ## 2025-10-13T15:14:07.914Z
 
 **Repair ID:** 2025-10-13T15:14:07Z

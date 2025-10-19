@@ -4,8 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-09
-**Coverage:** 17%
+**Last Updated:** 2025-10-14
+**Coverage:** 6%
 **Coverage Source:** auto
 **Version:** 1.2.0
 **Related PRs:** #458, #499
@@ -113,11 +113,11 @@ CREATE TABLE job_queue (
 async addJob(jobType, payload, options = {}) {
   const job = {
     id: uuid(),
-    organizationId: payload.organization_id,
-    jobType,
-    priority: options.priority || 5,
+    organization_id: payload.organization_id,
+    job_type: jobType,
+    priority: options.priority ?? 5,
     payload,
-    max_attempts: options.maxAttempts || 3,
+    max_attempts: options.maxAttempts ?? 3,
     scheduled_at: options.delay
       ? new Date(Date.now() + options.delay).toISOString()
       : new Date().toISOString(),
@@ -218,19 +218,20 @@ async getNextJob(queueName, workerId) {
 ### Complete Job
 
 ```javascript
-async completeJob(jobId, result) {
+async completeJob(queueName, jobId, result) {
   if (this.isRedisAvailable) {
     await this.redis.del(`roastr:jobs:processing:${jobId}`);
     await this.redis.del(`roastr:locks:${jobId}`);
     await this.incrementMetric(queueName, 'completed');
   } else {
+    const update = {
+      status: 'completed',
+      completed_at: new Date().toISOString()
+    };
+    if (typeof result !== 'undefined') update.result = result; // requires schema support
     await this.supabase
       .from('job_queue')
-      .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        result
-      })
+      .update(update)
       .eq('id', jobId);
   }
 }
@@ -345,7 +346,9 @@ async getQueueStats(queueName) {
     const stats = await this.redis.hgetall(`roastr:metrics:${queueName}`);
 
     // Get queue sizes
-    const pending = await this.redis.zcard(`roastr:jobs:${queueName}:*`);
+    const pending = await Promise.all(
+      [1, 2, 3, 4, 5].map(p => this.redis.zcard(`roastr:jobs:${queueName}:${p}`))
+    ).then(arr => arr.reduce((sum, n) => sum + n, 0));
     const processing = await this.redis.hlen(`roastr:jobs:${queueName}:processing`);
     const dlq = await this.redis.llen(`roastr:dlq:${queueName}`);
 
@@ -373,7 +376,9 @@ async getQueueStats(queueName) {
 
 ```javascript
 calculateHealthStatus(stats) {
-  const failureRate = stats.failed / stats.total;
+  const total = Number(stats.total) || 0;
+  const failed = Number(stats.failed) || 0;
+  const failureRate = total > 0 ? failed / total : 0;
   const dlqSize = stats.dlq || 0;
   const avgProcessingTime = stats.avgProcessingTime || 0;
 
@@ -473,11 +478,13 @@ WORKER_POLL_INTERVAL=1000  # ms
 
 ### Coverage
 
-**Overall:** 17% (updated 2025-10-12)
-- Lines: 17%
-- Statements: 17%
-- Functions: 15%
-- Branches: 14%
+**Overall:** 6% (updated 2025-10-14)
+- queueService.js: 11.91% lines (28/235 lines covered)
+- BaseWorker.js: 0% (needs test coverage)
+- Lines: 12%
+- Statements: 12%
+- Functions: 13%
+- Branches: 7%
 
 ### Unit Tests
 
@@ -594,11 +601,11 @@ test('should process fixtures through complete pipeline', async () => {
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
-- **Performance Monitor**
+- **Documentation Agent**
 - **Orchestrator**
+- **Performance Monitor**
+- **Test Engineer**
 
 
 ## Related Nodes
@@ -648,9 +655,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - Regression prevention: Job payload malformations now caught by tests
 - Validates both return value AND internal job structure
 - Uses `toMatchObject()` for flexible matching (allows extra fields)
-
-**Coverage:** 87%
-**Coverage Source:** auto overall (4 enhanced tests with +16 assertions)
 
 ---
 
