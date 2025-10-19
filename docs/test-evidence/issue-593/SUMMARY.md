@@ -1,7 +1,7 @@
 # Issue #593: Complete Login & Registration Flow - Implementation Summary
 
 **Issue:** #593
-**PR:** #<to-be-created>
+**PR:** #599
 **Branch:** `feat/complete-login-registration-593`
 **Completed:** 2025-10-19
 **Time Spent:** ~2.5 hours
