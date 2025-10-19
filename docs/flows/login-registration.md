@@ -1,9 +1,10 @@
 # Flow: Login & Registration
 
 **Created:** 2025-10-19
-**Status:** Documented
+**Updated:** 2025-10-19 (Issue #593)
+**Status:** Production Ready
 **Related Nodes:** `multi-tenant`, `billing`
-**Implementation:** 80% Complete
+**Implementation:** 100% Complete
 
 ---
 
@@ -648,15 +649,80 @@ test('session persistence after page reload', async ({ page }) => {
 
 ---
 
+## Email Notifications (Issue #593)
+
+### Welcome Email
+
+Sent automatically upon successful registration using SendGrid.
+
+**Template:** `src/templates/emails/welcome.hbs`
+
+**Variables:**
+- `userName` - User's display name
+- `dashboardUrl` - Link to dashboard (APP_URL from env)
+- `supportEmail` - Support contact email
+- `language` - User's preferred language (default: 'es')
+
+**Example:**
+```javascript
+await emailService.sendWelcomeEmail('user@example.com', {
+  userName: 'John Doe',
+  language: 'es'
+});
+```
+
+### Password Reset Email
+
+Sent when user requests password reset via "Forgot Password" link.
+
+**Template:** `src/templates/emails/password_reset.hbs`
+
+**Variables:**
+- `userName` - User's display name
+- `resetLink` - One-time password reset link (expires in 24h)
+- `expiryTime` - Time until link expires
+- `supportEmail` - Support contact email
+
+**Flow:**
+1. User clicks "Forgot Password"
+2. Enter email address
+3. System sends reset link via SendGrid
+4. User clicks link → Redirected to reset password page
+5. Enter new password → Password updated
+
+### Email Configuration
+
+**Environment Variables:**
+```bash
+SENDGRID_API_KEY=<your-sendgrid-api-key>
+SENDGRID_FROM_EMAIL=noreply@roastr.ai
+SENDGRID_FROM_NAME=Roastr.ai Team
+SUPPORT_EMAIL=support@roastr.ai
+APP_URL=http://localhost:5173  # or production URL
+ENABLE_EMAIL_NOTIFICATIONS=true
+```
+
+**Service Status:**
+```javascript
+const status = emailService.getStatus();
+// {
+//   configured: true,
+//   provider: 'SendGrid',
+//   templatesLoaded: 9,
+//   featureFlag: true
+// }
+```
+
+---
+
 ## Current Gaps
 
-### Documented but Not Implemented
+### To Be Implemented
 
 1. **Token Rotation** - Refresh token should rotate on each refresh (security best practice)
 2. **Account Lockout** - No account lockout after failed login attempts (rate limiting only)
-3. **Email Verification** - Users can access dashboard without verifying email
-4. **Password Reset Flow** - Forgot password functionality missing
-5. **2FA Support** - No two-factor authentication option
+3. **Email Verification** - Users can access dashboard without verifying email (optional)
+4. **2FA Support** - No two-factor authentication option (future enhancement)
 
 ### Needs Documentation
 
@@ -668,15 +734,14 @@ test('session persistence after page reload', async ({ page }) => {
 
 ## Next Steps
 
-1. **Implement Email Verification** (Issue to be created)
-2. **Add Password Reset Flow** (Issue to be created)
-3. **Document OAuth Integration** (Update this doc)
-4. **Add E2E Tests** (See tests section above)
-5. **Implement Token Rotation** (Security enhancement)
+1. **Implement Email Verification** (Optional - Issue to be created)
+2. **Document OAuth Integration** (Google, GitHub, etc.)
+3. **Implement Token Rotation** (Security enhancement)
+4. **Add 2FA Support** (Future enhancement)
 
 ---
 
-**Last Updated:** 2025-10-19
+**Last Updated:** 2025-10-19 (Issue #593)
 **Maintained By:** Backend Developer, Documentation Agent
-**Related Issues:** None yet
-**Related PRs:** None yet
+**Related Issues:** #593 (Completed)
+**Related PRs:** PR #<to-be-created>
