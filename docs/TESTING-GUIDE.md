@@ -437,11 +437,13 @@ export $(cat .env.test | xargs) && npm test
 
 ### Demo Mode Fixtures (Issue #420)
 
-Realistic demo data for manual testing and demos.
+> ⚠️ **Status:** NOT YET IMPLEMENTED - The demo fixture system described below is planned but not yet available. The `data/fixtures/` directory and npm scripts do not exist yet. Refer to Backend Integration Fixtures (below) for currently available fixture functionality.
 
-**Location:** `data/fixtures/`
+Realistic demo data for manual testing and demos (planned feature).
 
-**Commands:**
+**Planned Location:** `data/fixtures/`
+
+**Planned Commands:**
 ```bash
 # Validate fixtures against JSON schema
 npm run demo:validate
@@ -459,12 +461,12 @@ npm run demo:reset
 npm run demo:reset:dry
 ```
 
-**What gets seeded:**
+**Planned Data:**
 - 2 demo organizations (Spanish, English)
 - 6 demo users (Free/Starter/Pro × 2 languages)
 - 35 realistic comment fixtures (18 Spanish, 17 English)
 
-**Demo credentials:** All users have password `demo123`
+**Planned Demo Credentials:** All users with password `demo123`
 - `demo-free-es@demo.roastr.ai`
 - `demo-starter-es@demo.roastr.ai`
 - `demo-pro-es@demo.roastr.ai`
@@ -472,12 +474,12 @@ npm run demo:reset:dry
 - `demo-starter-en@demo.roastr.ai`
 - `demo-pro-en@demo.roastr.ai`
 
-**When to use:**
+**Intended Use Cases:**
 - Manual testing with realistic data
 - Demos and presentations
 - Exploring Shield triage scenarios
 
-**Documentation:** `data/fixtures/README.md`
+**Documentation:** Will be available at `data/fixtures/README.md` when implemented
 
 ### Backend Integration Fixtures
 
@@ -634,7 +636,7 @@ CMD ["npm", "run", "test:e2e"]
 
 ### Individual Test Suites (Examples)
 
-```
+```text
 Test Suites: 5 passed, 5 total
 Tests:       178 passed, 178 total
 Snapshots:   0 total
@@ -791,9 +793,9 @@ npm run test:coverage          # Check coverage
 npm run test:integration-backend:fixtures  # Integration
 npm run test:e2e                           # E2E headless
 
-# Demo data
-npm run demo:seed              # Seed demo data
-npm run demo:reset             # Clean up
+# Demo data (NOT YET IMPLEMENTED)
+# npm run demo:seed            # Seed demo data (coming soon)
+# npm run demo:reset           # Clean up (coming soon)
 ```
 
 ### File Locations
