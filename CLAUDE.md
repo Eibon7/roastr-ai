@@ -271,6 +271,56 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 - Platform-specific constraints (character limits, style guides)
 - Plan differentiation (Free excludes references, Pro+ includes full examples)
 
+## Persona Setup System (Issue #595)
+
+The Persona Setup feature allows users to define their identity, intolerances, and tolerances for personalized roast filtering and generation.
+
+**Key Features:**
+- 3 encrypted persona fields: identity (lo_que_me_define), intolerance (lo_que_no_tolero), tolerance (lo_que_me_da_igual)
+- AES-256-GCM encryption for data at rest
+- OpenAI embeddings (text-embedding-3-small, 1536 dimensions) for semantic matching
+- Plan-based access control (Free blocked, Starter: 2 fields, Pro+: 3 fields)
+- Full REST API with JWT authentication
+- GDPR compliance (full deletion capability)
+
+**Security Features:**
+- Industry-standard AES-256-GCM encryption with unique IVs
+- Authentication tags prevent tampering
+- No plaintext logging of sensitive data
+- Input sanitization (XSS, SQL injection prevention)
+- Character limits (300 chars plaintext, 500 encrypted)
+
+**API Endpoints:**
+- `GET /api/persona` - Retrieve user's persona (decrypted)
+- `POST /api/persona` - Create/update persona (encrypted storage)
+- `DELETE /api/persona` - Delete persona (GDPR compliance)
+- `GET /api/persona/health` - Service health check
+
+**Database Schema:**
+- 18 persona columns in `users` table (3 fields × 6 columns each)
+- pgvector extension for embedding storage and similarity search
+- Helper functions: `user_has_embeddings()`, `get_user_embeddings_metadata()`, `embeddings_need_regeneration()`
+
+**Plan Access Matrix:**
+- Free/Basic: No access (blocked)
+- Starter: `lo_que_me_define`, `lo_que_no_tolero` (2 fields)
+- Pro/Plus/Enterprise: All 3 fields including `lo_que_me_da_igual`
+
+**Implementation Files:**
+- Service: `src/services/PersonaService.js`
+- Routes: `src/routes/persona.js`
+- Encryption: `src/utils/encryption.js`
+- Migration: `database/migrations/001_add_persona_fields.sql`
+- Tests: `tests/unit/services/PersonaService.test.js`, `tests/integration/persona-api.test.js`
+
+**Environment Variable:**
+- `PERSONA_ENCRYPTION_KEY` - 64-character hex key (generate with `node scripts/generate-persona-key.js`)
+- ⚠️ CRITICAL: Never change this key after data is encrypted or all personas will be lost
+
+**Test Coverage:** 97% (149/154 tests passing)
+
+🔗 **Full documentation**: `docs/plan/issue-595.md`, `docs/test-evidence/issue-595/SUMMARY.md`
+
 ## Orquestación y Reglas
 
 ### Función de Orquestador
