@@ -116,7 +116,7 @@ if: (failure() || steps.repair.outputs.errors > 0) && steps.repair.outputs.rollb
 **Features:**
 
 - Runs daily at 2 AM UTC
-- Closes GDD issues older than 7 days
+- Closes GDD issues older than 30 days
 - Only closes if related PR is merged/closed
 - Adds explanatory comment before closing
 - Creates job summary with metrics
@@ -125,7 +125,7 @@ if: (failure() || steps.repair.outputs.errors > 0) && steps.repair.outputs.rollb
 
 ```
 For each open GDD issue:
-  IF age > 7 days AND (PR closed OR PR doesn't exist):
+  IF age > 30 days AND (PR closed OR PR doesn't exist):
     Close issue with comment
   ELSE:
     Keep open
@@ -236,7 +236,7 @@ act -j auto-repair  # Requires nektos/act
 - ✅ No duplicate GDD issues created
 - ✅ Rollbacks don't create issues
 - ✅ Race conditions eliminated
-- ✅ Stale issues auto-closed within 7 days
+- ✅ Stale issues auto-closed within 30 days
 - ✅ Health threshold blocks merges correctly
 
 ---
