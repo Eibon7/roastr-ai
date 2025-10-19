@@ -18,13 +18,23 @@
  * Exit codes:
  *   0 - All required agents have receipts
  *   1 - Missing receipts or validation errors
+ *
+ * @note LOGGING GUIDELINE EXCEPTION
+ * This CI script uses console.log with ANSI colors instead of utils/logger.js.
+ * Rationale:
+ * - CI scripts require colored terminal output for readability
+ * - utils/logger.js does not currently support ANSI color codes
+ * - Colored output is critical for quick visual scanning of CI results
+ * - This is a CI tool, not production logging (different requirements)
+ * Exception approved: CodeRabbit Review #3354598820 (C1 comment)
+ * Future: Consider extending logger with color support for CI tools
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// ANSI colors for output
+// ANSI colors for terminal output (CI script exception)
 const colors = {
   reset: '\x1b[0m',
   green: '\x1b[32m',
@@ -35,6 +45,7 @@ const colors = {
 };
 
 function log(message, color = 'reset') {
+  // Using console.log here is intentional (see header comment for exception rationale)
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 

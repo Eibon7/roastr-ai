@@ -372,13 +372,15 @@ The Persona Setup feature allows users to define their identity, intolerances, a
 
 **For each required agent:**
 
-**Option A: Invoke the agent**
+### Option A: Invoke the agent
+
 1. Invoke via `Task` tool (Claude Code agents) or execute script (Guardian)
 2. Record decisions, artifacts, guardrails verified
 3. Generate receipt: `docs/agents/receipts/<pr>-<AgentName>.md`
 4. Use template: `docs/agents/receipts/_TEMPLATE.md`
 
-**Option B: Skip with justification**
+### Option B: Skip with justification
+
 1. Document why agent not needed despite trigger match
 2. Assess risks of skipping
 3. Get approval if required (Product Owner for CRITICAL Guardian skips)
@@ -431,8 +433,9 @@ The Persona Setup feature allows users to define their identity, intolerances, a
 
 #### 7. Examples
 
-**Example 1: Simple Backend Fix**
-```
+### Example 1: Simple Backend Fix
+
+```bash
 PR #700: Fix billing calculation bug
 Changed: src/services/billing.js, tests/unit/services/billing.test.js
 Labels: area:backend, priority:P1
@@ -446,8 +449,9 @@ Receipts generated:
 - docs/agents/receipts/700-Guardian.md ✅ (exit 0, no violations)
 ```
 
-**Example 2: Frontend Feature with Branding**
-```
+### Example 2: Frontend Feature with Branding
+
+```bash
 PR #701: New dashboard UI with microcopy
 Changed: frontend/components/Dashboard.jsx, frontend/styles/dashboard.css
 Labels: area:frontend, area:ui, branding
@@ -465,8 +469,9 @@ Receipts generated:
 - docs/agents/receipts/701-TestEngineer.md ✅
 ```
 
-**Example 3: Docs-Only Change**
-```
+### Example 3: Docs-Only Change
+
+```bash
 PR #702: Update integration guide
 Changed: docs/INTEGRATIONS.md
 Labels: docs

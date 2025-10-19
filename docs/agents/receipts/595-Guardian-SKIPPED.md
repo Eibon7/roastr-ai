@@ -103,7 +103,7 @@ When implementing the governance system itself, normal governance rules don't ap
    - Guardian will require Product Owner approval
 
 **Expected Guardian Behavior:**
-```
+```bash
 # When manifest is modified (future PR):
 node scripts/guardian-gdd.js --full
 > 🟡 MAJOR: Modified agents/manifest.yaml (trigger definitions changed)
