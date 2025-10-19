@@ -330,6 +330,186 @@ The Persona Setup feature allows users to define their identity, intolerances, a
 - **Cuando un subagente cree un *.md táctico**: añadir bloque en spec.md para coherencia
 - **Invocar Test Engineer Agent**: tras cambios en src/ o docs de diseño para tests + evidencias visuales con Playwright
 
+### 🎯 Lead Orchestrator Rules (ENFORCEMENT)
+
+**📋 Full agent definitions:** `agents/manifest.yaml`
+**📊 Quick reference:** `docs/agents/INVENTORY.md`
+
+**CRITICAL: Every PR must follow this protocol:**
+
+#### 1. Pre-Implementation (FASE 0)
+
+**Before any implementation:**
+- ✅ **Resolve GDD nodes needed** using `node scripts/resolve-graph.js <nodes>`
+- ✅ **Use Explore agent for research** (NEVER load spec.md completely)
+- ✅ **Read `docs/patterns/coderabbit-lessons.md`** to avoid known mistakes
+- ✅ **If AC ≥3 or multi-area changes:** Create mini-plan in `docs/plan/<issue>.md`
+
+#### 2. Agent Identification
+
+**For each PR, identify required agents by:**
+
+**Labels:**
+- `area:frontend`, `area:ui` → **FrontendDev**, **UIDesigner**
+- `area:ui` + `branding`, `copy` → **WhimsyInjector**
+- `test:*`, `qa`, `validation` → **TestEngineer**
+- `priority:P0`, `priority:P1` + AC ≥3 → **TaskAssessor**
+- `critical`, `security`, `billing` → **Guardian**
+
+**Diff patterns:**
+- `*.jsx`, `*.tsx`, `*.css` → **FrontendDev**
+- `src/`, `tests/`, `*.test.js` → **TestEngineer**
+- `src/services/costControl.js`, `database/schema.sql`, `docs/nodes/*.md` → **Guardian**
+- Research needed, unclear structure → **Explore**
+
+**Conditions:**
+- AC ≥3 → **TaskAssessor**
+- Complex multi-step tasks → **general-purpose**
+- UI/UX changes → **UIDesigner** (may skip if already designed)
+- Branding/microcopy → **WhimsyInjector** (NEVER in /legal, /billing, /admin)
+
+#### 3. Agent Invocation & Receipts
+
+**For each required agent:**
+
+**Option A: Invoke the agent**
+1. Invoke via `Task` tool (Claude Code agents) or execute script (Guardian)
+2. Record decisions, artifacts, guardrails verified
+3. Generate receipt: `docs/agents/receipts/<pr>-<AgentName>.md`
+4. Use template: `docs/agents/receipts/_TEMPLATE.md`
+
+**Option B: Skip with justification**
+1. Document why agent not needed despite trigger match
+2. Assess risks of skipping
+3. Get approval if required (Product Owner for CRITICAL Guardian skips)
+4. Generate SKIPPED receipt: `docs/agents/receipts/<pr>-<AgentName>-SKIPPED.md`
+5. Use template: `docs/agents/receipts/_TEMPLATE-SKIPPED.md`
+
+#### 4. Guardrails (NEVER VIOLATE)
+
+**Orchestrator-specific:**
+- ❌ NEVER load spec.md completely (use resolved nodes via `resolve-graph.js`)
+- ❌ NEVER expose secrets, API keys, or .env variable names in receipts/docs
+- ❌ NEVER skip FASE 0 assessment
+- ❌ NEVER proceed without receipts for required agents
+- ✅ ALWAYS generate receipts (normal or SKIPPED) for triggered agents
+- ✅ ALWAYS update "Agentes Relevantes" in affected GDD nodes
+- ✅ ALWAYS validate GDD before commit: `node scripts/resolve-graph.js --validate`
+
+**Agent-specific guardrails:** See `agents/manifest.yaml` for each agent
+
+#### 5. CI Enforcement
+
+**Script:** `scripts/ci/require-agent-receipts.js`
+
+**What it does:**
+1. Reads `agents/manifest.yaml`
+2. Discovers changed files and labels
+3. Matches against agent triggers
+4. Verifies receipt exists (normal OR skipped) for each required agent
+5. **Fails build (exit 1) if receipts missing**
+
+**PR cannot merge without:**
+- ✅ All required agents have receipts
+- ✅ Receipts follow template format
+- ✅ Guardrails verified in receipts
+
+#### 6. Planning Thresholds
+
+**When to create mini-plan in `docs/plan/<issue>.md`:**
+- AC ≥3 (3 or more acceptance criteria)
+- Changes span multiple areas (e.g., frontend + backend + tests)
+- Complex integrations or refactors
+- Multiple agents required
+
+**Mini-plan must include:**
+- Estado Actual (current state assessment)
+- Agents to be invoked and why
+- Files affected per agent
+- Validation criteria
+- Risk assessment
+
+#### 7. Examples
+
+**Example 1: Simple Backend Fix**
+```
+PR #700: Fix billing calculation bug
+Changed: src/services/billing.js, tests/unit/services/billing.test.js
+Labels: area:backend, priority:P1
+
+Required agents:
+- TestEngineer (diff: tests/)
+- Guardian (diff: billing.js - sensitive)
+
+Receipts generated:
+- docs/agents/receipts/700-TestEngineer.md ✅
+- docs/agents/receipts/700-Guardian.md ✅ (exit 0, no violations)
+```
+
+**Example 2: Frontend Feature with Branding**
+```
+PR #701: New dashboard UI with microcopy
+Changed: frontend/components/Dashboard.jsx, frontend/styles/dashboard.css
+Labels: area:frontend, area:ui, branding
+
+Required agents:
+- FrontendDev (diff: *.jsx, *.css)
+- UIDesigner (label: area:ui)
+- WhimsyInjector (label: branding)
+- TestEngineer (AC: Must have E2E tests)
+
+Receipts generated:
+- docs/agents/receipts/701-FrontendDev.md ✅
+- docs/agents/receipts/701-UIDesigner-SKIPPED.md (Design pre-approved in #695)
+- docs/agents/receipts/701-WhimsyInjector.md ✅
+- docs/agents/receipts/701-TestEngineer.md ✅
+```
+
+**Example 3: Docs-Only Change**
+```
+PR #702: Update integration guide
+Changed: docs/INTEGRATIONS.md
+Labels: docs
+
+Required agents: NONE (no triggers match)
+
+Receipts: None needed
+CI: Passes with 0 required agents
+```
+
+#### 8. Violations & Consequences
+
+**If receipts missing:**
+- ❌ CI fails with exit 1
+- ❌ PR cannot merge
+- ❌ Must generate missing receipts and re-push
+
+**If guardrails violated:**
+- ❌ Code review rejects PR
+- ❌ Must fix violations before re-review
+- ❌ Guardian CRITICAL violations require Product Owner approval
+
+**If secrets exposed:**
+- 🚨 CRITICAL SECURITY VIOLATION
+- 🚨 Immediate PR close and secret rotation
+- 🚨 Incident report required
+
+#### 9. Receipt Review Checklist
+
+**For code reviewers:**
+- [ ] All required agents identified correctly
+- [ ] Receipts exist (normal or SKIPPED) for each required agent
+- [ ] SKIPPED receipts have valid justification
+- [ ] Guardrails verified in normal receipts
+- [ ] No secrets or .env variables exposed
+- [ ] Artifacts listed in receipts actually exist
+- [ ] GDD nodes updated with agents in "Agentes Relevantes"
+
+---
+
+**Enforcement Status:** ✅ Active (scripts/ci/require-agent-receipts.js)
+**Last Updated:** 2025-10-19
+
 ### Configuración MCP Playwright
 
 **Para cambios de frontend:**
