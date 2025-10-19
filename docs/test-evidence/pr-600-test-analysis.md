@@ -69,8 +69,8 @@
 
 **Security Tests (5 failures):**
 3. **"should reject malformed JWT tokens"**
-   - Expected: 401, Received: 500
-   - Issue: JWT validation throwing 500 instead of 401
+- Expected: 401, Received: 500
+- Issue: JWT validation throwing 500 instead of 401
 
 4. **"should reject expired JWT tokens"**
    - Expected: 401, Received: 500
@@ -82,8 +82,8 @@
    - Issue: JWT parsing not extracting correct userId
 
 6. **"should sanitize SQL injection attempts"**
-   - Expected: 200, Received: 500
-   - Issue: Sanitization causing server error
+- Expected: 200, Received: 500
+- Issue: Sanitization causing server-error
 
 **Rate Limiting Tests (? failures)**
 **Plan Gating Tests (? failures)**
