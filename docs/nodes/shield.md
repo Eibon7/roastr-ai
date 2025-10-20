@@ -7,7 +7,7 @@
 **Last Updated:** 2025-10-20
 **Coverage:** 2%
 **Coverage Source:** auto
-**Related PRs:** #499, #587 (Issue #487 - Flow Validation)
+**Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script)
 
 ## Dependencies
 
@@ -1106,7 +1106,7 @@ const stats = await shieldService.getShieldStats('org_123', 30);
 - [ ] Cross-platform identity linking (same user on multiple platforms)
 - [ ] Shield action effectiveness scoring
 - [ ] Automated A/B testing of thresholds
-- [ ] Real-time dashboard for Shield operations
+- [x] Real-time dashboard for Shield operations (✅ Completed in #617: ShieldValidation dashboard)
 - [ ] Integration with external moderation services (ModAPI, Hive)
 
 
@@ -1161,6 +1161,14 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 **Visual Tests** (1 archivo):
 - `tests/unit/visual/shield-round5-stability.test.js` - Visual regression testing
+
+**E2E Flow Validation** (Issue #487):
+- `scripts/validate-flow-shield.js` - End-to-end Shield flow validation (15 test cases)
+  - 9 decision matrix tests (toxicity + user risk → action)
+  - 6 edge case tests (timeouts, idempotency, priority, failures)
+- `admin-dashboard/src/pages/ShieldValidation/index.tsx` - Validation dashboard UI
+- `admin-dashboard/src/pages/ShieldSettings/index.tsx` - Shield configuration UI
+- `docs/test-evidence/flow-shield/` - Validation evidence and screenshots
 
 ### Cobertura de Tests
 
@@ -1246,5 +1254,5 @@ npm test -- shield --coverage
 
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Weekly or on critical incidents
-**Last Reviewed:** 2025-10-06
+**Last Reviewed:** 2025-10-20
 **Version:** 1.0.0

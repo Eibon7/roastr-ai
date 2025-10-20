@@ -3,6 +3,7 @@
  * Analyzes text toxicity and provides safety scores
  */
 
+const crypto = require('crypto');
 const { google } = require('googleapis');
 const { logger } = require('../utils/logger');
 const flags = require('../config/flags');
@@ -11,7 +12,7 @@ class PerspectiveService {
     constructor() {
         this.apiKey = process.env.PERSPECTIVE_API_KEY;
         this.enabled = flags.isEnabled('ENABLE_PERSPECTIVE_API') && !!this.apiKey;
-        
+
         if (!this.enabled) {
             logger.warn('Perspective API disabled or API key not configured');
             return;
@@ -22,7 +23,7 @@ class PerspectiveService {
                 version: 'v1alpha1',
                 auth: this.apiKey
             });
-            
+
             logger.info('✅ Perspective API service initialized');
         } catch (error) {
             logger.error('Failed to initialize Perspective API:', error);
@@ -62,10 +63,13 @@ class PerspectiveService {
             return this.parseResponse(response.data);
 
         } catch (error) {
+            // Create non-reversible hash for debugging without exposing user data (GDPR compliance)
+            const textHash = crypto.createHash('sha256').update(text).digest('hex').substring(0, 16);
+
             logger.error('Perspective API analysis failed:', {
                 error: error.message,
                 textLength: text.length,
-                textPreview: text.substring(0, 100)
+                textHash // Non-reversible hash instead of textPreview
             });
 
             // Return safe defaults on error
@@ -139,22 +143,22 @@ class PerspectiveService {
     getMockAnalysis(text, isError = false) {
         // Simple heuristic-based analysis for fallback
         const lowerText = text.toLowerCase();
-        
+
         // Basic profanity detection
         const profanityWords = ['fuck', 'shit', 'damn', 'hell', 'ass', 'bitch'];
         const hasProfanity = profanityWords.some(word => lowerText.includes(word));
-        
+
         // Basic toxicity indicators
         const toxicIndicators = ['hate', 'kill', 'die', 'stupid', 'idiot', 'moron'];
         const hasToxicContent = toxicIndicators.some(word => lowerText.includes(word));
-        
+
         // Calculate mock scores
         let toxicity = 0.1;
         if (hasProfanity) toxicity += 0.3;
         if (hasToxicContent) toxicity += 0.2;
         if (text.includes('!'.repeat(3))) toxicity += 0.1; // Multiple exclamations
         if (text.toUpperCase() === text && text.length > 10) toxicity += 0.1; // ALL CAPS
-        
+
         toxicity = Math.min(toxicity, 0.9);
 
         const categories = [];
@@ -194,7 +198,7 @@ class PerspectiveService {
         for (let i = 0; i < texts.length; i += batchSize) {
             const batch = texts.slice(i, i + batchSize);
             const batchPromises = batch.map(text => this.analyzeText(text, options));
-            
+
             try {
                 const batchResults = await Promise.all(batchPromises);
                 results.push(...batchResults);
