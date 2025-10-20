@@ -16,6 +16,10 @@ export EMAIL="test-manual-$(date +%s)@test.com"
 export PASSWORD="Test123!@#Strong"
 export NAME="Manual Test User"
 
+# Initialize test counters
+PASS_COUNT=0
+FAIL_COUNT=0
+
 echo ""
 echo "📧 Test User: $EMAIL"
 echo "🔗 API URL: $API_URL"
@@ -35,8 +39,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "201" ]; then
   echo "✅ TEST 1 PASSED: Registration successful"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 1 FAILED: Expected 201, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -62,8 +68,10 @@ if [ "$HTTP_CODE" = "200" ] && [ -n "$ACCESS_TOKEN" ]; then
   echo "✅ TEST 2 PASSED: Login successful"
   echo "📝 Access Token: ${ACCESS_TOKEN:0:20}..."
   echo "📝 Refresh Token: ${REFRESH_TOKEN:0:20}..."
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 2 FAILED: Expected 200, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -82,8 +90,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "200" ]; then
   echo "✅ TEST 3 PASSED: Protected route accessible"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 3 FAILED: Expected 200, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -106,8 +116,10 @@ NEW_ACCESS_TOKEN=$(echo "$REFRESH_RESPONSE" | grep -v HTTP_STATUS | jq -r '.data
 if [ "$HTTP_CODE" = "200" ] && [ -n "$NEW_ACCESS_TOKEN" ] && [ "$NEW_ACCESS_TOKEN" != "$ACCESS_TOKEN" ]; then
   echo "✅ TEST 4 PASSED: Token refresh successful"
   echo "📝 New Access Token: ${NEW_ACCESS_TOKEN:0:20}..."
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 4 FAILED: Expected 200 and new token, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -126,8 +138,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "200" ]; then
   echo "✅ TEST 5 PASSED: Logout successful"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 5 FAILED: Expected 200, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -146,8 +160,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "401" ]; then
   echo "✅ TEST 6 PASSED: Token invalidated after logout"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 6 FAILED: Expected 401, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -167,8 +183,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "400" ]; then
   echo "✅ TEST 7 PASSED: Duplicate email rejected"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 7 FAILED: Expected 400, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -188,8 +206,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "400" ]; then
   echo "✅ TEST 8 PASSED: Weak password rejected"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 8 FAILED: Expected 400, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -209,8 +229,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "401" ]; then
   echo "✅ TEST 9 PASSED: Invalid password rejected"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 9 FAILED: Expected 401, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -230,8 +252,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "200" ]; then
   echo "✅ TEST 10 PASSED: Password reset request accepted"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 10 FAILED: Expected 200, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -251,8 +275,10 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "400" ]; then
   echo "✅ TEST 11 PASSED: Missing email rejected"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 11 FAILED: Expected 400, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
@@ -272,32 +298,36 @@ echo "HTTP Status: $HTTP_CODE"
 
 if [ "$HTTP_CODE" = "400" ]; then
   echo "✅ TEST 12 PASSED: Missing password rejected"
+  ((PASS_COUNT++))
 else
   echo "❌ TEST 12 FAILED: Expected 400, got $HTTP_CODE"
+  ((FAIL_COUNT++))
 fi
 echo ""
 
 # Summary
 echo "================================================================"
-echo "🎉 All manual tests completed!"
+echo "🎉 Manual testing completed!"
 echo "================================================================"
 echo ""
 echo "📧 Test user email: $EMAIL"
 echo "🔗 API URL: $API_URL"
 echo ""
 echo "📊 Test Summary:"
-echo "  TEST 1: Registration ..................... ✅"
-echo "  TEST 2: Login ............................ ✅"
-echo "  TEST 3: Protected route .................. ✅"
-echo "  TEST 4: Token refresh .................... ✅"
-echo "  TEST 5: Logout ........................... ✅"
-echo "  TEST 6: Token invalidation ............... ✅"
-echo "  TEST 7: Duplicate email .................. ✅"
-echo "  TEST 8: Weak password .................... ✅"
-echo "  TEST 9: Invalid password ................. ✅"
-echo "  TEST 10: Password reset .................. ✅"
-echo "  TEST 11: Missing email ................... ✅"
-echo "  TEST 12: Missing password ................ ✅"
+echo "  ✅ Passed: $PASS_COUNT/12"
+echo "  ❌ Failed: $FAIL_COUNT/12"
+echo "  📊 Total:  $((PASS_COUNT + FAIL_COUNT))/12"
+echo ""
+
+# Dynamic status message based on results
+if [ $PASS_COUNT -eq 12 ]; then
+  echo "🎉 All tests passed!"
+elif [ $PASS_COUNT -ge 6 ]; then
+  echo "⚠️  Some tests failed - review output above for details"
+else
+  echo "❌ Most tests failed - check configuration and server logs"
+fi
+
 echo ""
 echo "💡 Check detailed responses above for verification"
 echo "📝 Results saved to: docs/test-evidence/manual-testing-results.txt"
