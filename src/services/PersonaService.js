@@ -20,7 +20,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { encryptField, decryptField } = require('../utils/encryption');
 const EmbeddingsService = require('./embeddingsService');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger'); // Issue #618 - destructure logger from module
 const { mockMode } = require('../config/mockMode');
 
 // Plan-based access control configuration
