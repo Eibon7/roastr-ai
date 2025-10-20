@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-10-20
 **Coverage:** 2%
 **Coverage Source:** auto
-**Related PRs:** #499
+**Related PRs:** #499, #587 (Issue #487 - Flow Validation)
 
 ## Dependencies
 
@@ -913,6 +913,41 @@ console.log(history);
 **Critical Validation (Issue #408 AC3):** 50+ explicit assertions that `shouldGenerateResponse === false` across all test files, ensuring **NO roast generation when Shield acts**.
 
 **Test Evidence Report:** See `docs/test-evidence/shield-issue-408-evidence.md` for detailed validation.
+
+### Flow Validation
+
+**Issue #487 - Shield Automated Moderation Flow Validation:**
+
+Complete end-to-end flow validation from toxic comment detection to automated action execution.
+
+**Validation Results:**
+- **Test Cases:** 3/3 passed (100% of tested scenarios)
+- **Performance:** 0.54s - 0.71s per test (target: <3s) ✅
+- **Total Execution Time:** 3.00s
+- **Evidence:** See `docs/test-evidence/flow-shield/VALIDATION.md`
+- **UI Screenshots:** 6 screenshots across mobile/tablet/desktop viewports
+  - Shield Settings UI: `/shield/settings`
+  - Shield Validation Dashboard: `/shield/validation`
+
+**Validated Components:**
+- ✅ Shield activation for toxic comments (≥0.65 toxicity)
+- ✅ Action determination (decision matrix: toxicity + offense level)
+- ✅ Offense level detection (first-time vs repeat offenders)
+- ✅ App logging (shield category logs)
+- ✅ Performance requirements (<3s per test)
+- ✅ Test data cleanup
+- ✅ UI operational and accessible
+
+**Coverage Status:**
+- **Core Scenarios:** 3/9 decision matrix scenarios tested (20% coverage)
+- **Edge Cases:** 0/6 scenarios implemented (Phase 2)
+- **Worker Execution:** Deferred to Phase 2
+- **Platform API Integration:** Deferred to Phase 2
+
+**Approval Status:** ⚠️ APPROVED WITH CONDITIONS
+- Core functionality validated and operational
+- Requires expansion to 15 test cases before production deployment
+- UI validation complete with comprehensive screenshots
 
 ### Test Utilities
 
