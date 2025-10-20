@@ -328,6 +328,15 @@ export default function ShieldValidation() {
     }));
   };
 
+  /**
+   * Stops the validation run prematurely.
+   *
+   * Terminates the validation execution, marks the end time,
+   * and preserves partial results for user review.
+   *
+   * @function stopValidation
+   * @returns {void}
+   */
   const stopValidation = () => {
     setState({
       ...state,
@@ -336,6 +345,15 @@ export default function ShieldValidation() {
     });
   };
 
+  /**
+   * Resets validation state to initial values.
+   *
+   * Clears all test results, resets counters, and reloads
+   * test cases from the defined test suites.
+   *
+   * @function resetValidation
+   * @returns {void}
+   */
   const resetValidation = () => {
     setState({
       isRunning: false,
@@ -348,6 +366,20 @@ export default function ShieldValidation() {
     });
   };
 
+  /**
+   * Returns the appropriate icon component for a test case status.
+   *
+   * Maps test status to Material-UI icon components with semantic colors:
+   * - passed → green check circle
+   * - failed → red error icon
+   * - warning → yellow warning icon
+   * - running → linear progress bar
+   * - pending → grey circle placeholder
+   *
+   * @function getStatusIcon
+   * @param {TestCase['status']} status - Current test case status
+   * @returns {JSX.Element} Icon component
+   */
   const getStatusIcon = (status: TestCase['status']) => {
     switch (status) {
       case 'passed':
@@ -363,6 +395,19 @@ export default function ShieldValidation() {
     }
   };
 
+  /**
+   * Maps toxicity score to Material-UI color scheme.
+   *
+   * Applies semantic color coding based on Shield toxicity thresholds:
+   * - ≥0.98 (critical) → error (red)
+   * - ≥0.95 (high) → warning (yellow)
+   * - ≥0.90 (moderate) → info (blue)
+   * - <0.90 (low) → success (green)
+   *
+   * @function getSeverityColor
+   * @param {number} toxicity - Toxicity score (0.00-1.00)
+   * @returns {'error' | 'warning' | 'info' | 'success'} Material-UI color
+   */
   const getSeverityColor = (toxicity: number) => {
     if (toxicity >= 0.98) return 'error';
     if (toxicity >= 0.95) return 'warning';
