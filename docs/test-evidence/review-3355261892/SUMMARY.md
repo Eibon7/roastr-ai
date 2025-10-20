@@ -29,7 +29,7 @@
 **Pattern:** Pedagogical documentation showing WRONG examples (❌ markdown) alongside correct ones (✅ Markdown) triggers LanguageTool warnings because linters don't understand context.
 
 **Lines 40, 148:**
-```
+```text
 - ✅ Markdown, Python, JavaScript, GitHub
 - ❌ markdown, python, javascript, github (except in code/URLs)
 ```
@@ -145,7 +145,7 @@ Linters flag intentional anti-patterns in documentation explaining past mistakes
 ### Examples
 
 **Documentation of errors:**
-```markdown
+```text
 Line 17: "markdown formatting" → "Markdown formatting"
 ```
 LanguageTool: "markdown" → "Markdown" (MARKDOWN_NNP) ⚠️
