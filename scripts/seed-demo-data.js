@@ -28,6 +28,15 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
+// Validate required environment variables
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+  const colors = { red: '\x1b[31m', reset: '\x1b[0m' };
+  console.error(`${colors.red}Error: Missing required environment variables${colors.reset}`);
+  console.error('Required: SUPABASE_URL, SUPABASE_SERVICE_KEY');
+  console.error('Copy .env.example to .env and configure your credentials');
+  process.exit(1);
+}
+
 // Parse CLI args
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
@@ -506,8 +515,13 @@ async function main() {
     } else if (!dryRun) {
       console.log(`${colors.yellow}\nForce mode: Clearing existing demo data...${colors.reset}`);
       const { clearDemoOrganizations, clearDemoUsers } = require('./clear-demo-data.js');
-      await clearDemoOrganizations();
-      await clearDemoUsers();
+      try {
+        await clearDemoOrganizations();
+        await clearDemoUsers();
+      } catch (error) {
+        console.error(`${colors.red}Failed to clear existing data: ${error.message}${colors.reset}`);
+        process.exit(1);
+      }
     }
 
     // Seed data

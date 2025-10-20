@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft-07/schema#",
   "$id": "https://roastr.ai/schemas/comment-fixture.json",
   "title": "Comment Fixture",
   "description": "Schema for demo mode comment fixtures",
