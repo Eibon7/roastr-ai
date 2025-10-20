@@ -1,0 +1,197 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/e2e/auth-complete-flow.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (43) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+  console.info
+    🎭 Mock Mode ENABLED - Using fake data for all external APIs
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+  console.warn
+    superagent: double callback bug
+
+      at Test.warn [as callback] (node_modules/superagent/src/node/index.js:869:35)
+      at callback (node_modules/superagent/src/node/index.js:1178:25)
+      at IncomingMessage.fn (node_modules/superagent/src/node/parsers/json.js:19:7)
+
+FAIL integration-tests tests/e2e/auth-complete-flow.test.js
+  Auth Complete Flow E2E
+    1. Full Registration Flow
+      ✕ should complete full registration flow successfully (16 ms)
+      ✓ should reject duplicate email registration (4 ms)
+      ✓ should reject weak passwords (4 ms)
+    2. Full Login Flow
+      ✓ should login successfully with valid credentials (3 ms)
+      ✕ should reject login with invalid password (3 ms)
+      ✓ should reject login with non-existent email (2 ms)
+    3. Session Management & Token Refresh
+      ✕ should access protected route with valid token (2 ms)
+      ✓ should reject protected route without token (2 ms)
+      ✕ should refresh access token successfully (5 ms)
+      ✕ should reject refresh with invalid token (3 ms)
+      ✕ should logout successfully (6 ms)
+    4. Password Reset Flow
+      ✕ should send password reset email (2 ms)
+      ✓ should handle password reset for non-existent email gracefully (2 ms)
+      ✓ should update password successfully (1 ms)
+    5. Rate Limiting
+      ✕ should enforce rate limiting on login attempts (8 ms)
+    6. Edge Cases & Error Handling
+      ✓ should handle missing email in registration (2 ms)
+      ✓ should handle missing password in registration (1 ms)
+      ✕ should handle malformed email (1 ms)
+      ✓ should handle empty request body (1 ms)
+      ✓ should handle SQL injection attempts (3 ms)
+    7. Email Service Integration
+      ✓ should gracefully handle email service failure on registration (1 ms)
+      ✓ should gracefully handle email service failure on password reset (1 ms)
+
+  ● Auth Complete Flow E2E › 1. Full Registration Flow › should complete full registration flow successfully
+
+    ReferenceError: supabaseServiceClient is not defined
+
+      283 |
+      284 |       // Step 3: Verify user exists in database
+    > 285 |       const { data: user } = await supabaseServiceClient
+          |                              ^
+      286 |         .from('users')
+      287 |         .select('*')
+      288 |         .eq('email', testEmail)
+
+      at Object.<anonymous> (tests/e2e/auth-complete-flow.test.js:285:30)
+
+  ● Auth Complete Flow E2E › 2. Full Login Flow › should reject login with invalid password
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 200
+
+      372 |         });
+      373 |
+    > 374 |       expect(loginResponse.status).toBe(401);
+          |                                    ^
+      375 |       expect(loginResponse.body.success).toBe(false);
+      376 |     });
+      377 |
+
+      at Object.toBe (tests/e2e/auth-complete-flow.test.js:374:36)
+
+  ● Auth Complete Flow E2E › 3. Session Management & Token Refresh › should access protected route with valid token
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 401
+
+      416 |         .set('Authorization', `Bearer ${accessToken}`);
+      417 |
+    > 418 |       expect(response.status).toBe(200);
+          |                               ^
+      419 |       expect(response.body.data.email).toBe(testEmail);
+      420 |     });
+      421 |
+
+      at Object.toBe (tests/e2e/auth-complete-flow.test.js:418:31)
+
+  ● Auth Complete Flow E2E › 3. Session Management & Token Refresh › should refresh access token successfully
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 503
+
+      434 |         });
+      435 |
+    > 436 |       expect(refreshResponse.status).toBe(200);
+          |                                      ^
+      437 |       expect(refreshResponse.body.success).toBe(true);
+      438 |       expect(refreshResponse.body.data.access_token).toBeDefined();
+      439 |       expect(refreshResponse.body.data.access_token).not.toBe(accessToken);
+
+      at Object.toBe (tests/e2e/auth-complete-flow.test.js:436:38)
+
+  ● Auth Complete Flow E2E › 3. Session Management & Token Refresh › should reject refresh with invalid token
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 503
+
+      455 |         });
+      456 |
+    > 457 |       expect(refreshResponse.status).toBe(401);
+          |                                      ^
+      458 |       expect(refreshResponse.body.success).toBe(false);
+      459 |     });
+      460 |
+
+      at Object.toBe (tests/e2e/auth-complete-flow.test.js:457:38)
+
+  ● Auth Complete Flow E2E › 3. Session Management & Token Refresh › should logout successfully
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 401
+
+      464 |         .set('Authorization', `Bearer ${accessToken}`);
+      465 |
+    > 466 |       expect(logoutResponse.status).toBe(200);
+          |                                     ^
+      467 |
+      468 |       // Verify token no longer works after logout
+      469 |       const meResponse = await request(app)
+
+      at Object.toBe (tests/e2e/auth-complete-flow.test.js:466:37)
+
+  ● Auth Complete Flow E2E › 4. Password Reset Flow › should send password reset email
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "test-1760970506038-clq87e@test.com", ObjectContaining {"resetLink": StringContaining "http"}
+
+    Number of calls: 0
+
+      498 |
+      499 |       // Verify password reset email was sent
+    > 500 |       expect(emailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+          |                                                   ^
+      501 |         testEmail,
+      502 |         expect.objectContaining({
+      503 |           resetLink: expect.stringContaining('http')
+
+      at Object.toHaveBeenCalledWith (tests/e2e/auth-complete-flow.test.js:500:51)
+
+  ● Auth Complete Flow E2E › 5. Rate Limiting › should enforce rate limiting on login attempts
+
+    Parse Error: Data after `Connection: close`
+
+
+  ● Auth Complete Flow E2E › 6. Edge Cases & Error Handling › should handle malformed email
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 201
+
+      595 |         });
+      596 |
+    > 597 |       expect(response.status).toBe(400);
+          |                               ^
+      598 |     });
+      599 |
+      600 |     it('should handle empty request body', async () => {
+
+      at Object.toBe (tests/e2e/auth-complete-flow.test.js:597:31)
+
+Test Suites: 1 failed, 1 total
+Tests:       9 failed, 13 passed, 22 total
+Snapshots:   0 total
+Time:        0.684 s, estimated 1 s
+Ran all test suites matching tests/e2e/auth-complete-flow.test.js.
