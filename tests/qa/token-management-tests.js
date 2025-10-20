@@ -6,7 +6,7 @@
  */
 
 const request = require('supertest');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const { OAuthProviderFactory } = require('../../src/services/oauthProvider');
 const { flags } = require('../../src/config/flags');
 const { logger } = require('../../src/utils/logger');
