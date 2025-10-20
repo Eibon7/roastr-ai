@@ -6,12 +6,22 @@
 const crypto = require('crypto');
 const { google } = require('googleapis');
 const { logger } = require('../utils/logger');
-const flags = require('../config/flags');
+const { flags } = require('../config/flags');
+
+// Helper function to safely check flags (Issue #618 - Jest compatibility)
+const isFlagEnabled = (flagName) => {
+    try {
+        return flags && typeof flags.isEnabled === 'function' && flags.isEnabled(flagName);
+    } catch (error) {
+        logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
+        return false;
+    }
+};
 
 class PerspectiveService {
     constructor() {
         this.apiKey = process.env.PERSPECTIVE_API_KEY;
-        this.enabled = flags.isEnabled('ENABLE_PERSPECTIVE_API') && !!this.apiKey;
+        this.enabled = isFlagEnabled('ENABLE_PERSPECTIVE_API') && !!this.apiKey;
 
         if (!this.enabled) {
             logger.warn('Perspective API disabled or API key not configured');
@@ -19,6 +29,13 @@ class PerspectiveService {
         }
 
         try {
+            // Check if google.commentanalyzer is available (Issue #618 - Jest compatibility)
+            if (!google || typeof google.commentanalyzer !== 'function') {
+                logger.warn('Google Perspective API client not available (likely test environment)');
+                this.enabled = false;
+                return;
+            }
+
             this.client = google.commentanalyzer({
                 version: 'v1alpha1',
                 auth: this.apiKey
@@ -26,7 +43,7 @@ class PerspectiveService {
 
             logger.info('✅ Perspective API service initialized');
         } catch (error) {
-            logger.error('Failed to initialize Perspective API:', error);
+            logger.warn('⚠️ Failed to initialize Perspective API:', error.message);
             this.enabled = false;
         }
     }
@@ -233,7 +250,7 @@ class PerspectiveService {
         return {
             enabled: this.enabled,
             hasApiKey: !!this.apiKey,
-            flagEnabled: flags.isEnabled('ENABLE_PERSPECTIVE_API'),
+            flagEnabled: isFlagEnabled('ENABLE_PERSPECTIVE_API'),
             ready: this.enabled && !!this.client
         };
     }

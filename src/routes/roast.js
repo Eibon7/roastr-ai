@@ -46,8 +46,19 @@ let roastGenerator;
 let roastEngine;
 let perspectiveService;
 
+// Helper function to safely check flags (Issue #618 - Jest compatibility)
+// In Jest test environment, flags.isEnabled might not be available during module initialization
+const isFlagEnabled = (flagName) => {
+    try {
+        return flags && typeof flags.isEnabled === 'function' && flags.isEnabled(flagName);
+    } catch (error) {
+        logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
+        return false;
+    }
+};
+
 // Initialize roast generator based on flags
-if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
+if (isFlagEnabled('ENABLE_REAL_OPENAI')) {
     try {
         roastGenerator = new RoastGeneratorEnhanced();
         logger.info('✅ Real OpenAI roast generator initialized');
@@ -61,7 +72,7 @@ if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
 }
 
 // Initialize roast engine (SPEC 7 - Issue #363) with feature flag guard
-if (flags.isEnabled('ENABLE_ROAST_ENGINE')) {
+if (isFlagEnabled('ENABLE_ROAST_ENGINE')) {
     try {
         roastEngine = new RoastEngine();
         logger.info('🔥 Roast Engine initialized for SPEC 7 implementation');
@@ -76,7 +87,7 @@ if (flags.isEnabled('ENABLE_ROAST_ENGINE')) {
 }
 
 // Initialize Perspective API service
-if (flags.isEnabled('ENABLE_PERSPECTIVE_API')) {
+if (isFlagEnabled('ENABLE_PERSPECTIVE_API')) {
     try {
         perspectiveService = new PerspectiveService();
         logger.info('✅ Perspective API service initialized');
