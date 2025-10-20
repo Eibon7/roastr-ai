@@ -341,6 +341,9 @@ chmod +x .git/hooks/pre-push
 | Generic errors | 6 | -50% | 2025-10-11 |
 | Unauthorized merge | 1 | N/A | 2025-10-15 |
 | Cherry-pick reviews | 1 | N/A | 2025-10-16 |
+| Jest integration tests | 7 | -100% (fixed) | 2025-10-20 |
+| fs-extra deprecated | 4 | -100% (fixed) | 2025-10-20 |
+| logger import pattern | 2 | -100% (fixed) | 2025-10-20 |
 
 **Objetivo:** Reducir tasa de repetición <10% en todos los patrones
 
@@ -534,6 +537,82 @@ try {
 
 ---
 
+### 10. fs-extra Deprecated Methods & Logger Import Patterns
+
+**Pattern:** Tests failing with "fs.remove is not a function" and "logger.info is not a function" due to incorrect library usage and import patterns.
+
+**Issue:** Test Fixing Session #2 (2025-10-20) - Fixed 6 more errors after roast.test.js success
+
+**❌ Mistake 1: Using deprecated fs-extra methods**
+```javascript
+// Wrong: fs.remove() deprecated/unavailable in fs-extra 11.x
+const fs = require('fs-extra');
+
+afterAll(async () => {
+  await fs.remove(tempLogDir); // Error: fs.remove is not a function
+});
+```
+
+**✅ Fix:**
+```javascript
+// Correct: Use Node's built-in fs/promises.rm()
+const fs = require('fs-extra');
+const { rm } = require('fs/promises'); // Node built-in (Issue #618)
+
+afterAll(async () => {
+  await rm(tempLogDir, { recursive: true, force: true });
+});
+```
+
+**❌ Mistake 2: Logger import not matching Jest mock structure**
+```javascript
+// Wrong: Import entire module when tests export { logger: {...} }
+const logger = require('../utils/logger');
+
+constructor() {
+  logger.info('Initializing...'); // Error: logger.info is not a function
+}
+```
+
+**✅ Fix:**
+```javascript
+// Correct: Destructure logger to match Jest mock structure
+const { logger } = require('../utils/logger'); // Issue #618 - destructure
+
+constructor() {
+  logger.info('Initializing...'); // ✅ Works!
+}
+```
+
+**Impact:**
+- **Before:** 6 errors blocking multiple test suites
+- **After:** fs.remove errors resolved (4), logger.info errors resolved (2)
+- **Tests unblocked:** logCommands.test.js, autoApprovalSecurityV2.test.js
+
+**Files affected:**
+- tests/integration/cli/logCommands.test.js (fs.remove → rm)
+- src/services/PersonaService.js (logger import destructured)
+
+**Prevention checklist:**
+- [ ] Check library version supports the method you're using
+- [ ] Prefer Node built-ins over library methods when available
+- [ ] Ensure imports match Jest mock structure (destructure if mock exports object)
+- [ ] Test import pattern: `const { export } = require(...)` vs `const export = require(...)`
+- [ ] Check if method exists in library changelog/docs before using
+- [ ] When errors say "is not a function", verify import/export pattern match
+
+**Occurrences:**
+- fs.remove: 4 (all in logCommands.test.js)
+- logger incorrect import: 2 (PersonaService.js affected multiple tests)
+
+**Last occurrence:** 2025-10-20 (Issue #618, commit 9d4cede1)
+
+**Related patterns:**
+- Jest Integration Tests (#9) - Module-level calls need defensive checks
+- Testing Patterns (#2) - Use production code paths in tests
+
+---
+
 ## 📚 Related Documentation
 
 - [Quality Standards](../QUALITY-STANDARDS.md) - Non-negotiable requirements for merge
@@ -546,4 +625,4 @@ try {
 **Maintained by:** Orchestrator
 **Review Frequency:** Weekly or after significant reviews
 **Last Reviewed:** 2025-10-20
-**Version:** 1.3.0
+**Version:** 1.4.0 (Added pattern #10: fs-extra + logger imports)
