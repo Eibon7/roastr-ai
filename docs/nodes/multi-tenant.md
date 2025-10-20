@@ -4,12 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-10-18
 **Coverage:** 70%
 **Coverage Source:** auto
-**Coverage Source:** mocked
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
-**Related PRs:** #499
+**Related PRs:** #499, #587
 
 ## Dependencies
 
@@ -648,6 +647,68 @@ const { data } = await supabaseClient
   .eq('platform', req.query.platform); // Safe
 ```
 
+### 5. JWT Secret Management
+
+**CRITICAL:** Never hardcode JWT secrets. Use crypto-generated secrets for tests, environment variables for production.
+
+```javascript
+const crypto = require('crypto');
+
+// ❌ BAD: Hardcoded JWT secret fallback
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token';
+
+// ✅ GOOD: Secure fallback with crypto, fail-fast in production
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === 'test'
+    ? crypto.randomBytes(32).toString('hex')  // Random secret for test environment
+    : (() => { throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production'); })()
+  );
+```
+
+**Rationale:**
+- **Hardcoded secrets are security vulnerabilities** - Predictable, visible in version control
+- **Test environments need randomization** - Different secret for each test run prevents test interference
+- **Production environments must fail-fast** - No fallback, require explicit configuration
+- **Priority chain**: SUPABASE_JWT_SECRET (Supabase-specific) > JWT_SECRET (generic) > crypto (test only) > fail-fast (production)
+
+**Token Signing Example:**
+```javascript
+const jwt = require('jsonwebtoken');
+
+const token = jwt.sign(
+  {
+    sub: userId,
+    organization_id: organizationId,
+    role: 'authenticated',
+    aud: 'authenticated',
+    exp: Math.floor(Date.now() / 1000) + 3600
+  },
+  JWT_SECRET,  // ✅ Uses secure secret from above
+  { algorithm: 'HS256' }
+);
+```
+
+**Operational Note** (CodeRabbit #3353894295 N1):
+
+For testing RLS context switching, use `supabase.auth.setSession(...)`:
+```javascript
+// Switch to tenant context for testing
+await testClient.auth.setSession({
+  access_token: token,
+  refresh_token: 'fake-refresh-token'
+});
+
+// Verify context
+const { data } = await testClient
+  .from('organizations')
+  .select('id')
+  .eq('id', tenantId)
+  .single();
+```
+
+**Related Fix:** CodeRabbit Review #3353722960 (2025-10-18)
+
 ## Testing
 
 ### Unit Tests
@@ -782,6 +843,48 @@ Provides helper functions for RLS testing:
 - Creates users with required fields (email, name, plan)
 - Creates organizations with slug (UNIQUE) and owner_id (FK)
 - Respects all foreign key constraints
+
+### Test Security Requirements
+
+**⚠️ IMPORTANT**: All test utilities MUST use environment-based JWT secrets, NEVER hardcoded secrets.
+
+**JWT Secret Configuration** (`tests/helpers/tenantTestUtils.js:18-23`):
+```javascript
+// Use TEST_JWT_SECRET from env, fallback to SUPABASE_JWT_SECRET, or generate random
+// NEVER use hardcoded secrets
+const JWT_SECRET = process.env.TEST_JWT_SECRET ||
+                   process.env.SUPABASE_JWT_SECRET ||
+                   process.env.JWT_SECRET ||
+                   crypto.randomBytes(32).toString('hex');
+
+// Log warning if using generated secret (test may not work with real Supabase)
+if (!process.env.TEST_JWT_SECRET && !process.env.SUPABASE_JWT_SECRET && !process.env.JWT_SECRET) {
+  console.warn('⚠️  No TEST_JWT_SECRET env var found. Using randomly generated secret for tests.');
+  console.warn('   Set TEST_JWT_SECRET in .env for consistent test behavior.');
+}
+```
+
+**Why This Matters**:
+- ❌ **Hardcoded secrets**: Security vulnerability, inconsistent test behavior
+- ✅ **Environment-based**: Secure, configurable per environment
+- ✅ **Random fallback**: Prevents tests from accidentally using weak default secret
+- ✅ **Warning on fallback**: Alerts developers to configure TEST_JWT_SECRET
+
+**Configuration**:
+```bash
+# Recommended: Use dedicated test secret
+TEST_JWT_SECRET=your-test-jwt-secret-here
+
+# Alternative: Use Supabase JWT secret (if compatible)
+SUPABASE_JWT_SECRET=your-supabase-jwt-secret
+
+# Fallback: Random generation (may not work with real Supabase)
+# (No configuration needed, but logs warning)
+```
+
+**Impact**: Tests using JWT signing (RLS context switching) will use secure, configurable secrets instead of weak hardcoded defaults.
+
+**Related**: CodeRabbit Review #3352743882 (Major Issue M2), PR #587
 
 ### Integration Tests
 

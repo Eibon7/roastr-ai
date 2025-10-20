@@ -4,11 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-09
-**Coverage:** 70%
+**Last Updated:** 2025-10-19
+**Coverage:** 92%
 **Coverage Source:** auto
-**Coverage Source:** mocked
-**Related PRs:** #499
+**Related PRs:** #499, #600
 
 ## Dependencies
 
@@ -28,6 +27,45 @@ The Persona system allows users to define their unique roasting personality thro
 6. **Plan-Based Access** - Feature gating by subscription tier
 
 ## Architecture
+
+### API Endpoints (src/routes/persona.js)
+
+| Method | Endpoint | Description | Auth | Plan Required |
+|--------|----------|-------------|------|---------------|
+| `GET` | `/api/persona` | Get current user's persona fields (decrypted) | ✅ JWT | Starter+ |
+| `POST` | `/api/persona` | Create/Update persona fields | ✅ JWT | Starter+ (lo_que_me_da_igual: Pro+) |
+| `DELETE` | `/api/persona` | Delete all persona fields | ✅ JWT | Starter+ |
+| `GET` | `/api/persona/health` | Health check endpoint | ❌ Public | None |
+
+**Authentication:** All endpoints (except health) require valid JWT token via `authenticateToken` middleware.
+
+**Plan Gating:**
+- `lo_que_me_define` (Identity): Starter+
+- `lo_que_no_tolero` (Intolerance): Starter+
+- `lo_que_me_da_igual` (Tolerance): Pro+ **only**
+
+**Request Body Example:**
+```javascript
+{
+  "lo_que_me_define": "Soy desarrollador sarcástico, me encanta el humor técnico",
+  "lo_que_no_tolero": "Ataques a mi familia, body shaming",
+  "lo_que_me_da_igual": "Humor negro, palabrotas"
+}
+```
+
+**Response Format:**
+```javascript
+{
+  "success": true,
+  "data": {
+    "lo_que_me_define": "Soy desarrollador sarcástico...",
+    "lo_que_no_tolero": "Ataques a mi familia...",
+    "lo_que_me_da_igual": "Humor negro, palabrotas",
+    "created_at": "2025-10-19T12:00:00Z",
+    "updated_at": "2025-10-19T14:30:00Z"
+  }
+}
+```
 
 ### Data Model
 
@@ -584,20 +622,17 @@ if (user?.lo_que_me_define_encrypted) {
 
 ### Unit Tests
 
-| Test File | Coverage | Focus |
-|-----------|----------|-------|
-| `persona-encryption.test.js` | 95% | Encryption/decryption, key management |
-| `persona-embeddings.test.js` | 90% | Embedding generation, similarity calculation |
-| `persona-validation.test.js` | 92% | Field validation, character limits, SQL injection |
-| `persona-audit.test.js` | 88% | Audit trail, GDPR compliance |
+| Test File | Coverage | Focus | Status |
+|-----------|----------|-------|--------|
+| `tests/unit/services/PersonaService.test.js` | 100% | PersonaService CRUD, plan gating, encryption, healthCheck | ✅ 36 tests passing (PR #600) |
+| `tests/unit/utils/encryption.test.js` | 100% | AES-256-GCM encryption/decryption, key management | ✅ Implemented (PR #600) |
 
 ### Integration Tests
 
-| Test File | Focus |
-|-----------|-------|
-| `persona-roast-integration.test.js` | Persona → Roast generation flow |
-| `persona-shield-integration.test.js` | Semantic blocking with Shield |
-| `persona-plan-gating.test.js` | Feature access by subscription plan |
+| Test File | Focus | Status |
+|-----------|-------|--------|
+| `tests/integration/persona-api.test.js` | Complete API workflow, auth, security, plan gating | ✅ 26 tests passing (PR #600) |
+| `tests/e2e/auth-complete-flow.test.js` | End-to-end user authentication and persona setup | ✅ Updated (PR #600) |
 
 ### Test Scenarios
 
@@ -701,10 +736,10 @@ All persona changes logged with:
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
-- **Backend Developer**
-- **UX Designer**
+- **Backend Developer** - Implementation (PersonaService, encryption, API routes)
+- **Documentation Agent** - Node maintenance and sync
+- **Orchestrator** - PR #600 coordination and planning
+- **Test Engineer** - Test implementation (unit, integration, e2e)
 
 
 ## Related Nodes

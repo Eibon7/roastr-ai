@@ -30,6 +30,9 @@ npm run roast "your message"     # CLI tool
 npm test                         # Run all tests
 npm run test:coverage            # Tests with coverage
 
+# 📚 For complete testing guide: docs/TESTING-GUIDE.md
+# Includes: test commands, env variables, fixtures, CI/CD config, benchmarks
+
 # Multi-tenant worker system
 npm run workers:start            # Start all workers
 npm run workers:status           # Check worker status
@@ -53,9 +56,6 @@ npm run demo:seed:force          # Force reseed (delete + recreate)
 npm run demo:validate            # Validate fixture files
 npm run demo:reset               # Clear all demo data
 npm run demo:reset:dry           # Preview what would be deleted
-
-# Twitter bot
-npm run twitter                  # Run Twitter bot
 ```
 
 ### GDD Command Reference
@@ -157,20 +157,44 @@ tests/
 - `ROAST_API_URL` - URL of roast API (defaults to production)
 - `SHIELD_ENABLED` - Enable Shield moderation (default: true for Pro+ plans)
 
-### Setting up OpenAI API
+### Setting up Integrations
 
+**Platform integrations** (Twitter, YouTube, Instagram, etc.):
+- 🔗 **Full details**: `docs/INTEGRATIONS.md`
+- Setup instructions for all 9 supported platforms
+- API credentials, rate limits, and architecture
+
+**OpenAI API setup:**
 1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Create `.env` file: `OPENAI_API_KEY=your_key_here`
-3. Run: `npm run roast "tu comentario aquí"`
+2. Add to `.env`: `OPENAI_API_KEY=your_key_here`
+3. Test: `npm run roast "tu comentario aquí"`
 
-### Setting up Twitter Integration
+### API Verification Scripts (Issue #490)
 
-1. Create Twitter Developer account at [developer.twitter.com](https://developer.twitter.com)
-2. Create project and application
-3. Configure permissions to "Read and Write"
-4. Generate OAuth 1.0a tokens + Bearer Token
-5. Add credentials to `.env`
-6. Run: `npm run twitter`
+Comprehensive verification scripts for all configured APIs:
+
+```bash
+# Core P0 APIs (Required for MVP)
+node scripts/verify-supabase-tables.js      # Database: core tables, RLS policies
+node scripts/verify-openai-api.js           # AI: available GPT models, moderation
+node scripts/verify-twitter-api.js          # Platform: OAuth 1.0a/2.0, @Roastr_ai
+node scripts/verify-perspective-api.js      # Toxicity: analysis attributes, fallback
+
+# Platform Integrations (P1)
+node scripts/verify-youtube-api.js          # Video platform: search, comments
+
+# Database deployment
+node scripts/deploy-supabase-schema.js      # Deploy schema to Supabase
+```
+
+**Features:**
+- ✅ Comprehensive error handling with troubleshooting guidance
+- ✅ Rate limit detection and reporting
+- ✅ Clear success/failure indicators
+- ✅ Verification of all critical functionality
+- ✅ Fallback system validation
+
+**Status:** All P0 APIs verified and production-ready. See Issue #490 for full configuration checklist.
 
 ## Multi-Tenant Architecture
 
@@ -254,11 +278,55 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 - Platform-specific constraints (character limits, style guides)
 - Plan differentiation (Free excludes references, Pro+ includes full examples)
 
-## Twitter Bot Features
+## Persona Setup System (Issue #595)
 
-- Mention monitoring, toxicity filtering, roast generation
-- Duplicate prevention via `data/processed_tweets.json`
-- Rate limiting and error handling
+The Persona Setup feature allows users to define their identity, intolerances, and tolerances for personalized roast filtering and generation.
+
+**Key Features:**
+- 3 encrypted persona fields: identity (lo_que_me_define), intolerance (lo_que_no_tolero), tolerance (lo_que_me_da_igual)
+- AES-256-GCM encryption for data at rest
+- OpenAI embeddings (text-embedding-3-small, 1536 dimensions) for semantic matching
+- Plan-based access control (Free blocked, Starter: 2 fields, Pro+: 3 fields)
+- Full REST API with JWT authentication
+- GDPR compliance (full deletion capability)
+
+**Security Features:**
+- Industry-standard AES-256-GCM encryption with unique IVs
+- Authentication tags prevent tampering
+- No plaintext logging of sensitive data
+- Input sanitization (XSS, SQL injection prevention)
+- Character limits (300 chars plaintext, 500 encrypted)
+
+**API Endpoints:**
+- `GET /api/persona` - Retrieve user's persona (decrypted)
+- `POST /api/persona` - Create/update persona (encrypted storage)
+- `DELETE /api/persona` - Delete persona (GDPR compliance)
+- `GET /api/persona/health` - Service health check
+
+**Database Schema:**
+- 18 persona columns in `users` table (3 fields × 6 columns each)
+- pgvector extension for embedding storage and similarity search
+- Helper functions: `user_has_embeddings()`, `get_user_embeddings_metadata()`, `embeddings_need_regeneration()`
+
+**Plan Access Matrix:**
+- Free/Basic: No access (blocked)
+- Starter: `lo_que_me_define`, `lo_que_no_tolero` (2 fields)
+- Pro/Plus/Enterprise: All 3 fields including `lo_que_me_da_igual`
+
+**Implementation Files:**
+- Service: `src/services/PersonaService.js`
+- Routes: `src/routes/persona.js`
+- Encryption: `src/utils/encryption.js`
+- Migration: `database/migrations/001_add_persona_fields.sql`
+- Tests: `tests/unit/services/PersonaService.test.js`, `tests/integration/persona-api.test.js`
+
+**Environment Variable:**
+- `PERSONA_ENCRYPTION_KEY` - 64-character hex key (generate with `node scripts/generate-persona-key.js`)
+- ⚠️ CRITICAL: Never change this key after data is encrypted or all personas will be lost
+
+**Test Coverage:** 97% (149/154 tests passing)
+
+🔗 **Full documentation**: `docs/plan/issue-595.md`, `docs/test-evidence/issue-595/SUMMARY.md`
 
 ## Orquestación y Reglas
 
@@ -268,6 +336,191 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 - **Mantener spec.md actualizado**: Gestionar documento central del sistema
 - **Cuando un subagente cree un *.md táctico**: añadir bloque en spec.md para coherencia
 - **Invocar Test Engineer Agent**: tras cambios en src/ o docs de diseño para tests + evidencias visuales con Playwright
+
+### 🎯 Lead Orchestrator Rules (ENFORCEMENT)
+
+**📋 Full agent definitions:** `agents/manifest.yaml`
+**📊 Quick reference:** `docs/agents/INVENTORY.md`
+
+**CRITICAL: Every PR must follow this protocol:**
+
+#### 1. Pre-Implementation (FASE 0)
+
+**Before any implementation:**
+- ✅ **Resolve GDD nodes needed** using `node scripts/resolve-graph.js <nodes>`
+- ✅ **Use Explore agent for research** (NEVER load spec.md completely)
+- ✅ **Read `docs/patterns/coderabbit-lessons.md`** to avoid known mistakes
+- ✅ **If AC ≥3 or multi-area changes:** Create mini-plan in `docs/plan/<issue>.md`
+
+#### 2. Agent Identification
+
+**For each PR, identify required agents by:**
+
+**Labels:**
+- `area:frontend`, `area:ui` → **FrontendDev**, **UIDesigner**
+- `area:ui` + `branding`, `copy` → **WhimsyInjector**
+- `test:*`, `qa`, `validation` → **TestEngineer**
+- `priority:P0`, `priority:P1` + AC ≥3 → **TaskAssessor**
+- `critical`, `security`, `billing` → **Guardian**
+
+**Diff patterns:**
+- `*.jsx`, `*.tsx`, `*.css` → **FrontendDev**
+- `src/`, `tests/`, `*.test.js` → **TestEngineer**
+- `src/services/costControl.js`, `database/schema.sql`, `docs/nodes/*.md` → **Guardian**
+- Research needed, unclear structure → **Explore**
+
+**Conditions:**
+- AC ≥3 → **TaskAssessor**
+- Complex multi-step tasks → **general-purpose**
+- UI/UX changes → **UIDesigner** (may skip if already designed)
+- Branding/microcopy → **WhimsyInjector** (NEVER in /legal, /billing, /admin)
+
+#### 3. Agent Invocation & Receipts
+
+**For each required agent:**
+
+### Option A: Invoke the agent
+
+1. Invoke via `Task` tool (Claude Code agents) or execute script (Guardian)
+2. Record decisions, artifacts, guardrails verified
+3. Generate receipt: `docs/agents/receipts/<pr>-<AgentName>.md`
+4. Use template: `docs/agents/receipts/_TEMPLATE.md`
+
+### Option B: Skip with justification
+
+1. Document why agent not needed despite trigger match
+2. Assess risks of skipping
+3. Get approval if required (Product Owner for CRITICAL Guardian skips)
+4. Generate SKIPPED receipt: `docs/agents/receipts/<pr>-<AgentName>-SKIPPED.md`
+5. Use template: `docs/agents/receipts/_TEMPLATE-SKIPPED.md`
+
+#### 4. Guardrails (NEVER VIOLATE)
+
+**Orchestrator-specific:**
+- ❌ NEVER load spec.md completely (use resolved nodes via `resolve-graph.js`)
+- ❌ NEVER expose secrets, API keys, or .env variable names in receipts/docs
+- ❌ NEVER skip FASE 0 assessment
+- ❌ NEVER proceed without receipts for required agents
+- ✅ ALWAYS generate receipts (normal or SKIPPED) for triggered agents
+- ✅ ALWAYS update "Agentes Relevantes" in affected GDD nodes
+- ✅ ALWAYS validate GDD before commit: `node scripts/resolve-graph.js --validate`
+
+**Agent-specific guardrails:** See `agents/manifest.yaml` for each agent
+
+#### 5. CI Enforcement
+
+**Script:** `scripts/ci/require-agent-receipts.js`
+
+**What it does:**
+1. Reads `agents/manifest.yaml`
+2. Discovers changed files and labels
+3. Matches against agent triggers
+4. Verifies receipt exists (normal OR skipped) for each required agent
+5. **Fails build (exit 1) if receipts missing**
+
+**PR cannot merge without:**
+- ✅ All required agents have receipts
+- ✅ Receipts follow template format
+- ✅ Guardrails verified in receipts
+
+#### 6. Planning Thresholds
+
+**When to create mini-plan in `docs/plan/<issue>.md`:**
+- AC ≥3 (3 or more acceptance criteria)
+- Changes span multiple areas (e.g., frontend + backend + tests)
+- Complex integrations or refactors
+- Multiple agents required
+
+**Mini-plan must include:**
+- Estado Actual (current state assessment)
+- Agents to be invoked and why
+- Files affected per agent
+- Validation criteria
+- Risk assessment
+
+#### 7. Examples
+
+### Example 1: Simple Backend Fix
+
+```bash
+PR #700: Fix billing calculation bug
+Changed: src/services/billing.js, tests/unit/services/billing.test.js
+Labels: area:backend, priority:P1
+
+Required agents:
+- TestEngineer (diff: tests/)
+- Guardian (diff: billing.js - sensitive)
+
+Receipts generated:
+- docs/agents/receipts/700-TestEngineer.md ✅
+- docs/agents/receipts/700-Guardian.md ✅ (exit 0, no violations)
+```
+
+### Example 2: Frontend Feature with Branding
+
+```bash
+PR #701: New dashboard UI with microcopy
+Changed: frontend/components/Dashboard.jsx, frontend/styles/dashboard.css
+Labels: area:frontend, area:ui, branding
+
+Required agents:
+- FrontendDev (diff: *.jsx, *.css)
+- UIDesigner (label: area:ui)
+- WhimsyInjector (label: branding)
+- TestEngineer (AC: Must have E2E tests)
+
+Receipts generated:
+- docs/agents/receipts/701-FrontendDev.md ✅
+- docs/agents/receipts/701-UIDesigner-SKIPPED.md (Design pre-approved in #695)
+- docs/agents/receipts/701-WhimsyInjector.md ✅
+- docs/agents/receipts/701-TestEngineer.md ✅
+```
+
+### Example 3: Docs-Only Change
+
+```bash
+PR #702: Update integration guide
+Changed: docs/INTEGRATIONS.md
+Labels: docs
+
+Required agents: NONE (no triggers match)
+
+Receipts: None needed
+CI: Passes with 0 required agents
+```
+
+#### 8. Violations & Consequences
+
+**If receipts missing:**
+- ❌ CI fails with exit 1
+- ❌ PR cannot merge
+- ❌ Must generate missing receipts and re-push
+
+**If guardrails violated:**
+- ❌ Code review rejects PR
+- ❌ Must fix violations before re-review
+- ❌ Guardian CRITICAL violations require Product Owner approval
+
+**If secrets exposed:**
+- 🚨 CRITICAL SECURITY VIOLATION
+- 🚨 Immediate PR close and secret rotation
+- 🚨 Incident report required
+
+#### 9. Receipt Review Checklist
+
+**For code reviewers:**
+- [ ] All required agents identified correctly
+- [ ] Receipts exist (normal or SKIPPED) for each required agent
+- [ ] SKIPPED receipts have valid justification
+- [ ] Guardrails verified in normal receipts
+- [ ] No secrets or .env variables exposed
+- [ ] Artifacts listed in receipts actually exist
+- [ ] GDD nodes updated with agents in "Agentes Relevantes"
+
+---
+
+**Enforcement Status:** ✅ Active (scripts/ci/require-agent-receipts.js)
+**Last Updated:** 2025-10-19
 
 ### Configuración MCP Playwright
 
@@ -319,6 +572,95 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 - **Si código nuevo sin tests → coordinar con Test Engineer** antes de cerrar
 - **Cambios en UI/frontend deben incluir evidencias visuales**: capturas + report.md en docs/test-evidence/
 
+### Integration Workflow & Error Prevention
+
+**⚠️ CRITICAL: Before implementing ANY platform integration, follow this protocol to prevent past mistakes.**
+
+**Phase 1: Pre-Implementation (MANDATORY)**
+
+1. **Read integration documentation FIRST:**
+   ```bash
+   # ALWAYS read before starting
+   docs/INTEGRATIONS.md
+   docs/nodes/social-platforms.md
+   ```
+
+2. **Verify naming conventions:**
+   - Service file: `<platform>Service.js` (e.g., `twitterService.js`)
+   - Class name: PascalCase (e.g., `TwitterService`)
+   - Env vars: `<PLATFORM>_<PROPERTY>` (e.g., `TWITTER_API_KEY`)
+   - Test file: `<platform>.test.js`
+
+3. **Check for existing implementation:**
+   ```bash
+   grep -r "class <Platform>Service" src/integrations/
+   ls src/integrations/<platform>/
+   ```
+
+**Phase 2: Implementation Checklist**
+
+- [ ] Service implements required interface: `authenticate()`, `fetchComments()`, `postReply()`, `blockUser()`
+- [ ] Added platform routing in `FetchCommentsWorker.js`
+- [ ] Created integration tests in `tests/integration/<platform>.test.js`
+- [ ] NO hardcoded credentials (use env vars only)
+- [ ] NO env var examples in public docs (use "🔐 Requires environment variables" line)
+- [ ] Error handling for rate limits implemented
+- [ ] Logging uses `utils/logger.js` (not `console.log`)
+
+**Phase 3: Post-Implementation (MANDATORY)**
+
+1. **Update documentation:**
+   - [ ] Added platform section to `docs/INTEGRATIONS.md` following established format
+   - [ ] Updated `docs/nodes/social-platforms.md` with new platform entry
+   - [ ] Added to integration status check in `scripts/update-integration-status.js`
+
+2. **Validate naming consistency:**
+   ```bash
+   # Service file exists
+   ls src/integrations/<platform>/<platform>Service.js
+
+   # Worker routing added
+   grep -i "<platform>" src/workers/FetchCommentsWorker.js
+
+   # Tests exist
+   ls tests/integration/<platform>.test.js
+   ```
+
+**Common Past Mistakes (Learn from CodeRabbit):**
+
+❌ **Mistake 1: Duplicated naming**
+- Issue: Created `twitterIntegration.js` when `twitterService.js` existed
+- Fix: Always search codebase first, follow naming convention
+
+❌ **Mistake 2: Forgotten service registration**
+- Issue: Created service but forgot to register in FetchCommentsWorker
+- Fix: Follow checklist, grep for platform name in worker files
+
+❌ **Mistake 3: Token leakage in docs**
+- Issue: Added `YOUTUBE_API_KEY=your_key_here` to public docs
+- Fix: NEVER include env var examples in docs/INTEGRATIONS.md
+
+❌ **Mistake 4: Inconsistent error handling**
+- Issue: Each integration handled rate limits differently
+- Fix: Follow existing patterns in other services, use shared utilities
+
+❌ **Mistake 5: Missing tests**
+- Issue: Integration deployed without integration tests
+- Fix: Checklist item mandatory, tests must exist before PR
+
+❌ **Mistake 6: Outdated documentation**
+- Issue: Implemented integration but forgot to update docs/INTEGRATIONS.md
+- Fix: Phase 3 checklist mandatory, no PR without doc updates
+
+**Enforcement:**
+
+- ✅ This checklist is part of Pre-Flight Checklist
+- ✅ CodeRabbit will flag violations
+- ✅ 0 comments rule applies (fix ALL suggestions)
+- ✅ GDD validation includes integration documentation check
+
+**Principle:** "Hacer las cosas bien y escalables" - Take time to do it right the first time. Self-document, follow conventions, maintain consistency.
+
 ### Task Assessment (FASE 0 - OBLIGATORIA)
 
 **IMPORTANTE**: Antes de cualquier planning o implementación, SIEMPRE evalúa el estado actual de la tarea.
@@ -338,11 +680,41 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 
 **Workflow:**
 1. Identificar tipo (contar AC, determinar complejidad)
-2. Ejecutar assessment (inline o agent)
-3. Recibir recomendación: CREATE | FIX | ENHANCE | CLOSE
-4. Actuar según recomendación
+2. **LEER `docs/patterns/coderabbit-lessons.md`** (patrones conocidos)
+3. Ejecutar assessment (inline o agent)
+4. Recibir recomendación: CREATE | FIX | ENHANCE | CLOSE
+5. Actuar según recomendación
 
-🔗 **Ejemplos detallados**: Ver sección completa en líneas 448-468 del archivo original
+🔗 **Patrones aprendidos**: `docs/patterns/coderabbit-lessons.md`
+
+### CodeRabbit Lessons - Workflow de Aprendizaje
+
+**OBLIGATORIO: Leer antes de TODA implementación (FASE 0 o FASE 2)**
+
+**Antes de implementar:**
+1. **Leer:** `docs/patterns/coderabbit-lessons.md`
+2. **Consultar:** Patrones conocidos (ESLint, testing, GDD, security)
+3. **Aplicar:** Checklist pre-implementación del documento
+
+**Durante implementación:**
+- Seguir reglas documentadas
+- Evitar patrones conocidos (semicolons, const/let, console.log, etc.)
+- Aplicar fixes preventivos
+
+**Después de review CodeRabbit:**
+1. **Identificar nuevos patrones** (≥2 ocurrencias del mismo error)
+2. **Actualizar:** `docs/patterns/coderabbit-lessons.md`
+   - Añadir sección ❌ Mistake / ✅ Fix
+   - Actualizar estadísticas
+3. **Generar SUMMARY:** Usar `docs/templates/SUMMARY-template.md`
+   - Enfoque en patrones, NO cronología
+   - Máximo 50 líneas (vs 300+ antes)
+   - Extraer root causes y acciones correctivas
+4. **Commit:** `docs(patterns): Add CodeRabbit lesson - <patrón>`
+
+**Objetivo:** Reducir tasa de repetición <10% en todos los patrones
+
+**Beneficio:** Menos idas y venidas con CodeRabbit = menos tokens + faster reviews
 
 ### Planning Mode
 
@@ -414,88 +786,31 @@ node scripts/auto-repair-gdd.js --auto-fix
 
 **CI/CD**: Blocks merge if coverage integrity violations detected
 
-### 🎓 GDD Health Score Management - Critical Lessons Learned
+### 🎓 GDD Health Score Management - Principios Fundamentales
 
-**⚠️ NUNCA ajustar thresholds sin investigación exhaustiva. Esto es BÁSICO y FUNDAMENTAL para GDD.**
+**⚠️ NUNCA ajustar thresholds sin investigación exhaustiva.**
 
-**Workflow OBLIGATORIO cuando CI GDD falla:**
+**Workflow cuando CI GDD falla:**
 
-1. **NUNCA hacer shortcuts**:
-   - ❌ NO ajustar `.gddrc.json` threshold sin más
-   - ❌ NO bajar números solo para pasar CI
-   - ❌ NO asumir que el problema es solo el threshold
-   - ✅ SÍ investigar root cause primero
+1. **Ver score real:** `node scripts/score-gdd-health.js --ci`
+2. **Mapear cambios:** test files → source files → GDD nodes
+3. **Calcular coverage real:** `npm test -- --coverage` → revisar `coverage-summary.json`
+4. **Actualizar nodos:** Editar `docs/nodes/*.md` con valores reales
+5. **Regenerar score:** Verificar si threshold es alcanzable matemáticamente
+6. **Solo entonces ajustar threshold** con justificación técnica detallada en `.gddrc.json`
 
-2. **Proceso correcto (metodología GDD fundamental):**
-   ```bash
-   # Paso 1: Ver health score REAL
-   node scripts/score-gdd-health.js --ci
+**Principios:**
+- ❌ NO shortcuts: No bajar números solo para pasar CI
+- ❌ NO exponer keys: NUNCA incluir API keys, tokens, passwords en código o docs públicas
+- ✅ Tests fallidos = oportunidades: Arreglar ANTES de continuar
+- ✅ Documentar decisiones: Incluir `note` + `temporary_until` en `.gddrc.json`
+- ✅ **Hacer las cosas bien y escalables:** Investigar root cause, no parches rápidos
 
-   # Paso 2: Identificar qué nodos corresponden a tests nuevos
-   # - Mapear test files → source files → GDD nodes
-   # - Ejemplo: tierValidation.test.js → src/middleware/tierValidation.js → node "plan-features"
+**Mentalidad:** GDD threshold es indicador de salud del sistema, no obstáculo burocrático.
 
-   # Paso 3: Calcular coverage REAL desde tests
-   npm test -- --coverage
-   # Revisar coverage/coverage-summary.json para valores exactos
+**Security:** Todas las credenciales en env vars. Docs públicas: usar "🔐 Requires environment variables"
 
-   # Paso 4: Actualizar nodos con coverage real
-   # Editar docs/nodes/*.md con valores de coverage-summary.json
-
-   # Paso 5: Regenerar health score
-   node scripts/score-gdd-health.js --ci
-
-   # Paso 6: Verificar si se alcanza threshold
-   # Si NO se alcanza después de actualización correcta:
-   # - Analizar matemáticamente si es posible (gap, puntos necesarios)
-   # - Solo entonces ajustar threshold con justificación TÉCNICA detallada
-   ```
-
-3. **Tests fallidos son oportunidades**:
-   - ✅ Arreglar tests fallidos ANTES de continuar
-   - ✅ Bugs encontrados en producción → arreglar ahora
-   - ✅ False positives → arreglar lógica de validación
-   - ✅ Contribuye a health score y calidad general
-
-4. **Coverage Integrity Violations**:
-   - Si hay critical violations, verificar `coverage-summary.json`
-   - Puede estar desactualizado si solo corriste tests específicos
-   - Opciones:
-     - A) Correr full test suite: `npm test -- --coverage`
-     - B) Sincronizar valores con realidad actual
-     - C) Ajustar `fail_on_coverage_integrity: false` si violations son reales
-
-5. **Documentar decisiones**:
-   - Threshold adjustments deben tener `note` detallado en `.gddrc.json`
-   - Incluir: razón técnica, estado actual, plan de recuperación
-   - Establecer `temporary_until` date para recordar restaurar
-
-6. **Actualizar CI workflow si es necesario**:
-   - El workflow debe respetar configuración de `.gddrc.json`
-   - Verificar que flags como `fail_on_coverage_integrity` se lean correctamente
-   - Testear cambios localmente antes de push
-
-**Ejemplo Real (Issue #540 - 2025-10-13):**
-
-❌ **Primer intento (incorrecto):**
-- CI falla con health 87.9 < threshold 90
-- Cambié threshold de 90 → 89 sin investigar
-- Usuario preguntó: "has cambiado el número sin más?"
-- **Lección:** Shortcuts violan principios fundamentales de GDD
-
-✅ **Segundo intento (correcto):**
-- Ejecuté `node scripts/score-gdd-health.js --ci` → 88.2 real
-- Identifiqué tests → nodos: tierValidation → plan-features
-- Actualicé coverage con datos de `coverage-summary.json`
-- Arreglé 4 tests fallidos (encontrados bugs reales en `inputValidation.js`)
-- Regeneré score → 88.7/100
-- Analicé matemáticamente: imposible llegar a 90 sin más tests
-- Ajusté threshold a 88 con justificación técnica completa
-- Actualicé workflow para respetar `fail_on_coverage_integrity: false`
-
-**Resultado:** CI desbloqueado correctamente, siguiendo metodología GDD adecuada
-
-**Mentalidad:** El threshold GDD no es un obstáculo burocrático, es un indicador de salud del sistema. Bajarlo sin entender por qué es como ignorar el check engine light de un auto.
+🔗 **Lección completa con ejemplo:** `docs/lessons/gdd-threshold-management.md`
 
 ### GDD Activation - Issue Analysis & Context Loading
 
@@ -530,115 +845,21 @@ node scripts/auto-repair-gdd.js --auto-fix
 
 **Fallback**: Si no puedes determinar nodos → preguntar al usuario área de feature
 
-## GDD 2.0 Reference
+## GDD 2.0 - Quick Reference
 
-### Runtime Validation Workflow
+| Phase | Command | Threshold | Full Documentation |
+|-------|---------|-----------|-------------------|
+| **Validation** | `validate-gdd-runtime.js --full` | 🟢 HEALTHY | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#validation) |
+| **Health Score** | `score-gdd-health.js --ci` | ≥87 (temp until 2025-10-31) | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#health) |
+| **Drift Detection** | `predict-gdd-drift.js --full` | <60 risk | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#drift) |
+| **Auto-Repair** | `auto-repair-gdd.js --auto-fix` | N/A | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#repair) |
+| **CI/CD** | Automated workflows | Health ≥87 | [GDD-ACTIVATION-GUIDE.md](docs/GDD-ACTIVATION-GUIDE.md#cicd) |
+| **Telemetry** | `collect-gdd-telemetry.js` | N/A | [GDD-TELEMETRY.md](docs/GDD-TELEMETRY.md) |
+| **Cross-Val** | `validate-gdd-cross.js --full` | N/A | [GDD-PHASE-15.md](docs/GDD-PHASE-15.md) |
 
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#runtime-validation`
+**Before PR:** `Health ≥87`, `Drift <60`, `Tests 100%`, `Coverage: auto`
 
-GDD Runtime Validator monitors coherence between `system-map.yaml`, `docs/nodes/**`, `spec.md`, and `src/**`.
-
-**Key Commands:**
-```bash
-node scripts/validate-gdd-runtime.js --full    # Validate entire system
-node scripts/validate-gdd-runtime.js --ci      # CI mode (exit 1 on errors)
-node scripts/watch-gdd.js                      # Watch mode (development)
-```
-
-**Status Levels:** 🟢 HEALTHY | 🟡 WARNING | 🔴 CRITICAL
-
-**Before PR Merge:** Run full validation, ensure 🟢 HEALTHY or acceptable 🟡 WARNING
-
----
-
-### Node Health Scoring System (Phase 7)
-
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#health-scoring`
-
-Quantitative metrics (0-100) based on weighted factors: Sync Accuracy (30%), Update Freshness (20%), Dependency Integrity (20%), Coverage Evidence (20%), Agent Relevance (10%).
-
-**Commands:**
-```bash
-node scripts/score-gdd-health.js              # Standalone scoring
-node scripts/validate-gdd-runtime.js --score  # Combined validation + scoring
-```
-
-**Status:** 🟢 HEALTHY (80-100) | 🟡 DEGRADED (50-79) | 🔴 CRITICAL (<50)
-
-**Before PR:** Average score > 75, no critical nodes
-
----
-
-### Predictive Drift Detection (Phase 8)
-
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#drift-prediction`
-
-Calculates **Drift Risk Score (0-100)** based on: last updated, active warnings, test coverage, health score, recent activity.
-
-**Commands:**
-```bash
-node scripts/predict-gdd-drift.js --full         # Run drift prediction
-node scripts/predict-gdd-drift.js --ci           # CI mode (exit 1 if high-risk)
-node scripts/predict-gdd-drift.js --create-issues # Create issues for high-risk nodes
-```
-
-**Risk Levels:** 🟢 Healthy (0-30) | 🟡 At Risk (31-60) | 🔴 Likely Drift (61-100)
-
-**Before PR:** Check drift risk, address nodes with risk > 60
-
----
-
-### CI/CD GDD Automation (Phase 12)
-
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md#cicd-automation`
-
-**Configuration:** `.gddrc.json` (min_health_score: 95, auto_fix: true, block_merge_below_health: 95)
-
-**Workflows:**
-1. **GDD Validation** (`.github/workflows/gdd-validate.yml`) - Validates on PR, blocks merge if health < 95
-2. **GDD Auto-Repair** (`.github/workflows/gdd-repair.yml`) - Auto-fixes missing sections, broken links
-
-**Before PR:**
-```bash
-node scripts/validate-gdd-runtime.js --full
-node scripts/predict-gdd-drift.js --full
-node scripts/compute-gdd-health.js --threshold=95
-node scripts/auto-repair-gdd.js --auto-fix  # If needed
-```
-
-**Success Criteria:** Health ≥ 95, no critical nodes, drift < 60
-
----
-
-### Telemetry & Analytics Layer (Phase 13)
-
-🔗 **Full details**: `docs/GDD-TELEMETRY.md`
-
-Historical telemetry tracks system evolution over time.
-
-**Key Metrics:** Health Score (≥95), Drift Risk (<25), Stability Index (≥90), Auto-Fix Success (≥90%), Momentum (>0)
-
-**Commands:** See `docs/GDD-TELEMETRY.md` for complete reference
-
----
-
-### Cross-Validation & Extended Health Metrics (Phase 15)
-
-🔗 **Full details**: `docs/GDD-PHASE-15.md`
-
-**System Health Intelligence Layer** with cross-validation and connectivity metrics.
-
-**Three Enhancements:**
-1. **Cross-Validation Engine**: Validates consistency between node metadata and runtime data
-2. **Integration Status Tracking**: Monitors 9 external platform integrations
-3. **Unified Health Intelligence**: Composite health score combining doc health, cross-validation, connectivity
-
-**Commands:** See `docs/GDD-PHASE-15.md` for complete reference
-
-**Performance Targets:**
-- Cross-validate 13 nodes: <1s (~800ms) ✅
-- Update integration status: <2s (~1.2s) ✅
-- Extended health scoring: <1s (~600ms) ✅
+**Status Levels:** 🟢 HEALTHY (80-100) | 🟡 DEGRADED (50-79) | 🔴 CRITICAL (<50)
 
 ---
 

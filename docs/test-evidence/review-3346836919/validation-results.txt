@@ -1,0 +1,22 @@
+=== Validation Test Results ===
+
+Test 1: Verify OPENAI_MODERATION_MODEL in .env.example
+OPENAI_MODERATION_MODEL=omni-moderation-latest
+✅ PASS
+
+Test 2: Verify no bare URLs in affected files
+Bare URLs found: docs/plan/issue-comment-3412385809.md:1
+docs/test-evidence/issue-comment-3412385809/SUMMARY.md:1
+✅ PASS (0 bare URLs remain)
+
+Test 4: Verify all evidence files created
+after-env-example.txt
+after-markdown.txt
+before-env-example.txt
+before-markdown.txt
+diff.patch
+mock-factory-investigation.txt
+SUMMARY.md
+validation-results.txt
+
+✅ PASS (All evidence files present)

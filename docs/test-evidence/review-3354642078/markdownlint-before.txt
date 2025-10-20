@@ -1,0 +1,4 @@
+Before fixes - MD007 violations on lines 72-73:
+
+docs/test-evidence/pr-600-test-analysis.md:72 MD007/ul-indent Unordered list indentation [Expected: 0; Actual: 3]
+docs/test-evidence/pr-600-test-analysis.md:73 MD007/ul-indent Unordered list indentation [Expected: 0; Actual: 3]

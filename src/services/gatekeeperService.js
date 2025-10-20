@@ -31,7 +31,9 @@ class GatekeeperService {
     if (process.env.OPENAI_API_KEY) {
       const { OpenAI } = require('openai');
       return new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
+        apiKey: process.env.OPENAI_API_KEY,
+        maxRetries: 2,
+        timeout: 30000
       });
     }
 

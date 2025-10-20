@@ -1,0 +1,31 @@
+# AFTER: OpenAI Moderation API Call (src/workers/AnalyzeToxicityWorker.js)
+
+**File:** src/workers/AnalyzeToxicityWorker.js
+**Lines:** 1347-1350
+**Date:** 2025-10-16 (after fix)
+
+```javascript
+async analyzeOpenAI(text) {
+  const response = await this.openaiClient.moderations.create({
+    model: process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest',
+    input: text
+  });
+
+  const result = response.results[0];
+  // ... rest of method
+}
+```
+
+**Fix Applied:** Added explicit `model` parameter
+
+**Implementation:**
+- Uses environment variable: `OPENAI_MODERATION_MODEL`
+- Falls back to OpenAI's recommended default: `omni-moderation-latest`
+- Prevents future deprecation issues
+- Maintains backward compatibility via fallback
+
+**Benefits:**
+✅ Explicit model specification ensures API compatibility
+✅ Environment variable provides configuration flexibility
+✅ Sensible fallback prevents runtime errors
+✅ Follows OpenAI API v5+ requirements

@@ -1,0 +1,17 @@
+markdownlint-cli2 v0.18.1 (markdownlint v0.38.0)
+Finding: docs/test-evidence/review-3353722960/SUMMARY.md
+Linting: 1 file(s)
+Summary: 13 error(s)
+docs/test-evidence/review-3353722960/SUMMARY.md:12:81 MD013/line-length Line length [Expected: 80; Actual: 176]
+docs/test-evidence/review-3353722960/SUMMARY.md:25:81 MD013/line-length Line length [Expected: 80; Actual: 93]
+docs/test-evidence/review-3353722960/SUMMARY.md:28 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- Line 26: (backticks) → (back..."]
+docs/test-evidence/review-3353722960/SUMMARY.md:49 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- MD013 (line-length): 16 viol..."]
+docs/test-evidence/review-3353722960/SUMMARY.md:53:81 MD013/line-length Line length [Expected: 80; Actual: 142]
+docs/test-evidence/review-3353722960/SUMMARY.md:77:81 MD013/line-length Line length [Expected: 80; Actual: 209]
+docs/test-evidence/review-3353722960/SUMMARY.md:79:81 MD013/line-length Line length [Expected: 80; Actual: 111]
+docs/test-evidence/review-3353722960/SUMMARY.md:82 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- Satisfies CodeRabbit quality..."]
+docs/test-evidence/review-3353722960/SUMMARY.md:87:81 MD013/line-length Line length [Expected: 80; Actual: 116]
+docs/test-evidence/review-3353722960/SUMMARY.md:96 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "- Maintains visual distinction..."]
+docs/test-evidence/review-3353722960/SUMMARY.md:100:81 MD013/line-length Line length [Expected: 80; Actual: 106]
+docs/test-evidence/review-3353722960/SUMMARY.md:108:81 MD013/line-length Line length [Expected: 80; Actual: 127]
+docs/test-evidence/review-3353722960/SUMMARY.md:113 MD032/blanks-around-lists Lists should be surrounded by blank lines [Context: "1. **Blockquote** for prose: `..."]

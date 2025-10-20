@@ -1,0 +1,59 @@
+# Crash Detection Test
+
+## Test Scenario
+
+**Objective:** Verify that the workflow detects script crashes when `continue-on-error: true` is set.
+
+**Status:** Manual test pending
+
+**Test Plan:**
+
+1. **Force script crash** (exit code 1 before writing JSON):
+   ```bash
+   # Modify auto-repair-gdd.js temporarily:
+   # Add process.exit(1) before writeFileSync('gdd-repair.json', ...)
+   # Push to trigger workflow
+   ```
+
+2. **Expected behavior:**
+   - Issue created with title "[GDD] Auto-Repair Failed - PR #579"
+   - Workflow fails with exit code 1
+   - Job summary shows crash detected
+
+3. **Normal rollback** (exit code 2):
+   - Push changes that decrease health score
+   - Workflow should NOT create issue
+   - Workflow should NOT fail
+
+4. **Normal success** (exit code 0):
+   - Push changes that pass auto-repair
+   - Workflow succeeds
+   - No issue created
+
+## Changes Implemented
+
+**1. Exit code capture** (lines 70-93):
+```yaml
+EXIT_CODE=$?
+echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+exit $EXIT_CODE
+```
+
+**2. Issue creation condition** (line 262-263):
+```yaml
+if: (failure() || steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code \!= '0' && steps.repair.outputs.exit_code \!= '2'))
+```
+
+**3. Final failure condition** (line 357-361):
+```yaml
+if: (steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code \!= '0' && steps.repair.outputs.exit_code \!= '2'))
+```
+
+## Verification
+
+✅ Exit code capture logic added
+✅ Exit code checks added to 2 conditions
+✅ Rollback exit code (2) excluded from errors
+✅ Pattern documented in observability.md
+
+**Manual test execution:** Deferred to PR merge or manual workflow trigger

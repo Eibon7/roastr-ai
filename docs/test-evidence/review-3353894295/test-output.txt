@@ -1,0 +1,34 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/unit/services/costControl.test.js
+
+PASS unit-tests tests/unit/services/costControl.test.js
+  CostControlService
+    canPerformOperation
+      ✓ should allow operation when under limit (2 ms)
+      ✓ should deny operation when over limit (1 ms)
+    recordUsage
+      ✓ should record usage and increment counters for billable operations
+      ✓ should record free operations with RPC tracking (1 ms)
+    canUseShield
+      ✓ should allow Shield for pro plan
+      ✓ should deny Shield for free plan
+    upgradePlan
+      ✓ should upgrade organization plan successfully (2 ms)
+      ✓ should reject invalid plan upgrade (13 ms)
+    getUsageStats
+      ✓ should return comprehensive usage statistics (1 ms)
+    Plan configurations
+      ✓ should have correct plan configurations (1 ms)
+      ✓ should have correct operation costs
+    Error handling
+      ✓ should handle database errors gracefully
+    Authentication
+      ✓ should require SERVICE_KEY for admin operations in non-mock mode (1 ms)
+      ✓ should use SERVICE_KEY when available
+
+Test Suites: 1 passed, 1 total
+Tests:       14 passed, 14 total
+Snapshots:   0 total
+Time:        0.284 s, estimated 1 s
+Ran all test suites matching tests/unit/services/costControl.test.js.

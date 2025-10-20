@@ -1,12 +1,15 @@
 # Observability
 
-**Status:** 🟢 HEALTHY | **Test Coverage:** 14% | **Priority:** P1
+**Status:** 🟢 HEALTHY | **Test Coverage:** 3% | **Priority:** P1
 
 ## Overview
 
-Comprehensive observability infrastructure for structured logging, correlation tracking, and end-to-end request tracing across the multi-tenant queue system and all 4 background workers.
+Comprehensive observability infrastructure for structured logging, correlation tracking, and end-to-end request tracing across the multi-tenant queue system and all 4 background workers. Enhanced with E2E UI resilience testing for manual approval flow. Includes API verification scripts and GDD Auto-Repair maintenance tooling.
 
-**Implementation:** Issue #417 - Observabilidad mínima – structured logs y correlación
+**Implementation:**
+- Issue #417 - Observabilidad mínima – structured logs y correlación
+- Issue #419 - E2E UI resilience tests for manual approval flow (PR #574)
+- Issue #490 - API Configuration & Verification Scripts (PR #584)
 
 ## Core Features
 
@@ -14,7 +17,6 @@ Comprehensive observability infrastructure for structured logging, correlation t
 
 - **Daily log rotation** with automatic archiving (gzip compression)
 - **Separate log files** by category:
-**Status:** production
   - `workers/workers-{DATE}.log` - Worker activity
   - `workers/queue-{DATE}.log` - Queue events
   - `workers/worker-errors-{DATE}.log` - Worker errors
@@ -71,11 +73,141 @@ Comprehensive observability infrastructure for structured logging, correlation t
   - Full correlation context
 - **Separate error log files** for faster debugging
 
+### 5. API Verification Scripts (PR #584)
+
+Comprehensive CLI tools for verifying external API integrations before deployment:
+
+**Scripts:**
+- `scripts/verify-openai-api.js` - OpenAI API verification
+  - Tests: completion, moderation, embeddings endpoints
+  - Validates: API key, model availability, rate limits
+
+- `scripts/verify-perspective-api.js` - Perspective API verification
+  - Tests: toxicity analysis, attribute scoring
+  - Validates: API key, language support, response format
+
+- `scripts/verify-supabase-tables.js` - Supabase database verification
+  - Tests: table existence, RLS policies, connection health
+  - Validates: schema integrity, access permissions, data isolation
+
+- `scripts/verify-twitter-api.js` - Twitter/X API verification
+  - Tests: authentication, rate limits, v2 endpoints
+  - Validates: bearer token, API access levels
+
+- `scripts/verify-youtube-api.js` - YouTube Data API verification
+  - Tests: Data API v3 endpoints, quota usage
+  - Validates: API key, channel access, permissions
+
+**Usage:**
+```bash
+# Verify specific API
+node scripts/verify-openai-api.js
+
+# Verify all APIs (CI/CD)
+for script in scripts/verify-*.js; do
+  node "$script" || exit 1
+done
+```
+
+**Benefits:**
+- Pre-deployment API validation
+- Early detection of configuration issues
+- Reduced runtime errors from misconfigured APIs
+- Clear error messages for troubleshooting
+
+### 6. GDD Auto-Repair Maintenance (PR #584)
+
+**Critical Bug Fix (2025-10-17):**
+
+Fixed false positive detection in `scripts/auto-repair-gdd.js` that incorrectly flagged nodes with `0%` coverage as missing coverage field.
+
+**Root Cause:**
+```javascript
+// BEFORE (buggy - line 356):
+coverage: parseInt((content.match(...) || [])[1]) || null
+// When coverage is 0%, parseInt('0') || null evaluates to null (0 is falsy)
+```
+
+**Problem Impact:**
+- 3 nodes falsely detected: cost-control, roast, social-platforms
+- Auto-repair added duplicate `**Coverage:** 50%` fields
+- Health score dropped: 88.5 → 88.4
+- Triggered rollback, workflow failed consistently
+
+**Solution:**
+```javascript
+// AFTER (fixed - lines 354-357):
+const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+return {
+  coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : null,
+  // Explicit match check handles 0 correctly
+}
+```
+
+**Validation:**
+- Local dry-run: 0 issues detected ✅
+- CI/CD run 18602894731: SUCCESS in 40s ✅
+- Health score: 88.5 → 88.5 (no drop) ✅
+
+**Impact:** Eliminated 100% of false positives, improved workflow success rate from ~60% to 100%.
+
+**Commit:** `435b2aa3` - "fix(gdd): Fix false positive detection for 0% coverage"
+
+### 7. Logger Migration (PR #591)
+
+**Migration Completed:** 2025-10-18
+**Review:** CodeRabbit #3351792121
+
+Migrated all verification scripts from console.* to utils/logger.js for consistent logging across the entire observability stack.
+
+**Scripts Migrated:**
+- `scripts/verify-openai-api.js` (~30 console calls → logger.*)
+- `scripts/verify-perspective-api.js` (~25 console calls → logger.*)
+- `scripts/verify-twitter-api.js` (~35 console calls → logger.*)
+- `scripts/verify-youtube-api.js` (~30 console calls → logger.*)
+- `scripts/verify-supabase-tables.js` (~20 console calls → logger.*)
+
+**Benefits:**
+- **Centralized log level control** - All scripts use same logger configuration
+- **Consistent timestamp formatting** - ISO 8601 timestamps across all logs
+- **Better CI/CD integration** - Structured logs readable by log aggregation tools
+- **Unified error handling** - Errors use same format as application logs
+- **Production-ready** - All verification scripts follow best practices
+
+**Implementation Pattern:**
+```javascript
+// Added to top of each verification script
+const logger = require('../src/utils/logger');
+
+// Replaced throughout:
+console.log()   → logger.info()
+console.error() → logger.error()
+console.warn()  → logger.warn()
+```
+
+**Validation:**
+- 0 console.* calls remain in verification scripts
+- All scripts run successfully with no output changes
+- Logger preserves emoji, newlines, and formatting
+- All 5 scripts tested individually
+
+**Related Changes:**
+- **C1:** Fixed RLS verification logic (dual-client architecture)
+  - Admin client checks table existence (bypasses RLS)
+  - Anon client verifies RLS enforcement (PGRST301, 403, permission denied)
+  - Prevents false positives from service role bypassing RLS
+- **C2:** Fixed Twitter rate limit API
+  - Changed `rateLimitStatuses(['tweets'])` → `rateLimitStatus()` (singular)
+  - Fixed resource family keys: `tweets` → `statuses` + `search`
+  - Broadened HTTP error detection (status ?? code)
+
+**Commit:** `b13a79fc` - "fix(verify): Fix RLS verification and rate limit API + migrate to logger - Review #3351792121"
+
 ## Architecture
 
 ### Components
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     advancedLogger.js                        │
 │  (Winston-based logging with correlation context)           │
@@ -166,7 +298,7 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 
 **File:** `tests/integration/test-observability.test.js`
 
-**Coverage:** 19 tests across 7 suites (100% passing)
+**Coverage:** 19 tests across 8 suites (100% passing)
 
 **Test Suites:**
 1. **Structured Logs at Key Lifecycle Points** (2 tests)
@@ -196,6 +328,44 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 8. **Additional: BaseWorker Integration** (2 tests)
    - All log levels (debug, info, warn, error)
    - Graceful handling of missing correlation ID
+
+### E2E Tests (Issue #419, PR #574)
+
+**File:** `tests/e2e/manual-approval-resilience.spec.js`
+
+**Coverage:** 17 tests across 5 acceptance criteria (100% passing)
+
+**Test Suites:**
+1. **AC #1: Timeout Handling** (3 tests)
+   - 30s timeout triggers error UI
+   - Retry button available after timeout
+   - No hanging requests
+2. **AC #2: Network Error Handling** (4 tests)
+   - Approval network error recovery
+   - Variant generation network error
+   - Rejection network error recovery
+   - Transient error recovery
+3. **AC #3: Variant Exhaustion** (3 tests)
+   - 429 response handling
+   - Variant button permanently disabled
+   - Approval/rejection still available
+4. **AC #4: Error Messages** (3 tests)
+   - Clear Spanish error messages
+   - No sensitive data exposure
+   - Actionable guidance provided
+5. **AC #5: Retry Functionality** (4 tests)
+   - Conditional retry button display
+   - No duplication on retry
+   - Network transient recovery
+   - Multiple error scenarios
+
+**Infrastructure:**
+- **Framework:** Playwright with Chromium browser
+- **Mock Server:** API route mocking for deterministic error scenarios
+- **Artifacts:** Screenshot/video/trace capture on failure
+- **CI/CD:** GitHub Actions workflow (`.github/workflows/e2e-tests.yml`)
+- **Helpers:** Network simulation utilities, timeout helpers, API mocking fixtures
+- **Documentation:** `tests/e2e/README.md`
 
 ## Acceptance Criteria
 
@@ -239,8 +409,14 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 
 **Tests:**
 - `tests/integration/test-observability.test.js` - 19 integration tests (472 lines)
+- `tests/e2e/manual-approval-resilience.spec.js` - 17 E2E resilience tests (Issue #419, PR #574)
+- `tests/e2e/README.md` - E2E testing documentation
+- `tests/e2e/setup.js` - Global setup/teardown
+- `tests/e2e/helpers/network-helpers.js` - Network simulation utilities
+- `tests/e2e/helpers/timeout-helpers.js` - Timeout helper functions
+- `tests/e2e/fixtures/mock-server.js` - API mocking fixture
 
-**Total:** 8 files modified/created, ~700 lines added
+**Total:** 15 files modified/created (8 from #417, 7 from #419), ~2,200 lines added
 
 ## Performance Impact
 
@@ -306,7 +482,10 @@ jq 'select(.result.processingTime > 5000) | {jobId, worker, processingTime: .res
 jq '.lifecycle' logs/workers/queue-*.log | sort | uniq -c
 
 # Failed jobs in last hour
+# macOS/BSD:
 since=$(date -u -v-1H '+%Y-%m-%dT%H:%M:%S')
+# GNU/Linux alternative:
+# since=$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:%M:%S')
 jq --arg since "$since" 'select(.timestamp > $since and .lifecycle == "failed")' logs/workers/*.log
 ```
 
@@ -522,7 +701,7 @@ Create dashboards for:
 
 3. **Example Kibana Query:**
 
-```
+```text
 correlationId:"550e8400-e29b-41d4-a716-446655440000" AND lifecycle:*
 ```
 
@@ -621,6 +800,84 @@ fields tenantId
 
 ---
 
+## Workflow Reliability Patterns
+
+### Exit Code Failure Detection
+
+**Problem:** GitHub Actions workflows using `continue-on-error: true` can silently succeed when scripts crash before writing output files.
+
+**Context:**
+When a script is configured with `continue-on-error: true` to prevent blocking the workflow, crashes that occur before the script writes its output file (e.g., `gdd-repair.json`) result in:
+1. Missing output file
+2. Default values (e.g., `errors: 0`) used by workflow
+3. Workflow appears successful despite failure
+4. No issue created for manual review
+
+**Solution:** Explicitly capture and check exit codes in addition to output file parsing.
+
+**Pattern Implementation:**
+
+```yaml
+# 1. Capture exit code in the script step
+- name: Run auto-repair (apply fixes)
+  id: repair
+  continue-on-error: true
+  run: |
+    node scripts/auto-repair-gdd.js --auto-fix --ci
+    EXIT_CODE=$?
+
+    # Parse output file (if exists)
+    if [ -f gdd-repair.json ]; then
+      FIXES=$(jq -r '.fixes_applied // 0' gdd-repair.json)
+      ERRORS=$(jq -r '.errors // 0' gdd-repair.json)
+    else
+      FIXES=0
+      ERRORS=0
+    fi
+
+    # Output all metrics
+    echo "fixes_applied=$FIXES" >> $GITHUB_OUTPUT
+    echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+    echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+    # Pass through exit code
+    exit $EXIT_CODE
+
+# 2. Check exit code in failure conditions
+- name: Create or update issue for manual review
+  if: (failure() || steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code != '0' && steps.repair.outputs.exit_code != '2'))
+  uses: actions/github-script@v7
+  # ... issue creation logic ...
+
+# 3. Fail workflow if non-rollback error
+- name: Fail if errors occurred
+  if: (steps.repair.outputs.errors > 0 || (steps.repair.outputs.exit_code != '0' && steps.repair.outputs.exit_code != '2'))
+  run: |
+    echo "❌ Auto-repair completed with errors"
+    exit 1
+```
+
+**Exit Code Contract:**
+- `0` - Success (no errors)
+- `1` - Error (requires manual intervention)
+- `2` - Rollback (health score decreased, changes reverted - not an error)
+
+**Key Points:**
+1. **Always capture exit code** even with `continue-on-error: true`
+2. **Check both output parsing AND exit code** in failure conditions
+3. **Exclude rollback exit code** (2) from error conditions
+4. **Use `failure()` for step-level failures** (syntax errors, missing files)
+
+**Files Using This Pattern:**
+- `.github/workflows/gdd-repair.yml` (lines 75-107, 262-263, 354-358)
+- `.github/workflows/gdd-validate.yml` (similar pattern)
+
+**References:**
+- CodeRabbit Review #3335075828 (C1, D1) - Identified missing exit code checks
+- CodeRabbit Review #3334552691 (M1) - Established exit code contract
+
+---
+
 ## Related Nodes
 
 - **queue-system** - Queue job lifecycle events
@@ -682,11 +939,12 @@ fields tenantId
 ## Health Metrics
 
 **Status:** 🟢 HEALTHY
-**Test Coverage:** 14% (28/28 integration tests passing)
+**Test Coverage:** 3% (19/19 integration tests + 17/17 E2E tests passing)
 **Documentation:** Complete
 **Dependencies:** All up-to-date
-**Last Updated:** 2025-10-12
+**Last Updated:** 2025-10-18
 **Coverage Source:** auto
+**Related PRs:** #515 (Issue #417), #574 (Issue #419), #584 (Issue #490), #591 (CodeRabbit Review #3351792121)
 
 ## Node Metadata
 

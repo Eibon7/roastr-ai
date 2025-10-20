@@ -68,6 +68,7 @@ const roastRoutes = require('./routes/roast');
 const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
+const personaRoutes = require('./routes/persona');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -293,6 +294,9 @@ app.use('/api/comments', commentsRoutes);
 
 // Triage routes (for Issue #443) - authenticated access
 app.use('/api/triage', triageRoutes);
+
+// Persona routes (for Issue #595) - authenticated access
+app.use(personaRoutes);
 
 // Monitoring routes (authenticated) - Issue #396
 const monitoringRoutes = require('./routes/monitoring');
@@ -530,6 +534,11 @@ app.get('/', (req, res) => {
 // Mantener acceso directo a index.html si es necesario (legacy)
 app.get('/home', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Direct route for manual approval UI (Issue #419 - E2E tests)
+app.get('/manual-approval.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/manual-approval.html'));
 });
 
 // Ruta para generar un roast normal
@@ -865,13 +874,15 @@ if (require.main === module) {
     });
   });
 
-  // Start Model Availability Worker (Issue #326)
-  try {
-    const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
-    const worker = startModelAvailabilityWorker();
-    console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
-  } catch (error) {
-    console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+  // Start Model Availability Worker (Issue #326) - Skip in test/E2E mode
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
+      const worker = startModelAvailabilityWorker();
+      console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
+    } catch (error) {
+      console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+    }
   }
 
   server = app.listen(port, () => {

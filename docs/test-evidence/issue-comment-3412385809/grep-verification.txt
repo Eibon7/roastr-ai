@@ -1,0 +1,31 @@
+# Verification: All OpenAI Moderation Calls Include Model Parameter
+
+**Date:** 2025-10-16
+**Test:** Search entire codebase for `moderations.create` usage
+
+## Command Executed
+
+```bash
+grep -rn "moderations\.create" src/ scripts/ --include="*.js" -A 3
+```
+
+## Results
+
+```
+src/workers/AnalyzeToxicityWorker.js:1347:    const response = await this.openaiClient.moderations.create({
+src/workers/AnalyzeToxicityWorker.js-1348-      model: process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest',
+src/workers/AnalyzeToxicityWorker.js-1349-      input: text
+src/workers/AnalyzeToxicityWorker.js-1350-    });
+```
+
+## Verification Summary
+
+✅ **VERIFIED:** Only ONE occurrence of `moderations.create` in entire codebase
+✅ **VERIFIED:** The single occurrence includes `model` parameter (line 1348)
+✅ **VERIFIED:** Model parameter uses environment variable with fallback
+✅ **VERIFIED:** No other files call OpenAI moderation API
+
+## Conclusion
+
+All OpenAI moderation calls in the codebase now include the required `model` parameter.
+The fix is complete and comprehensive - no additional locations need updating.

@@ -1,0 +1,45 @@
+diff --git a/docs/nodes/cost-control.md b/docs/nodes/cost-control.md
+index 6bb8614d..b0781414 100644
+--- a/docs/nodes/cost-control.md
++++ b/docs/nodes/cost-control.md
+@@ -8,10 +8,6 @@
+ **Coverage:** 0%
+ **Coverage Source:** auto
+ **Related PRs:** #499
+-**Coverage:** 50%
+-**Coverage:** 50%
+-**Coverage:** 50%
+-**Coverage:** 50%
+ 
+ ## Dependencies
+ 
+diff --git a/docs/nodes/roast.md b/docs/nodes/roast.md
+index d48cbba2..a6d520a6 100644
+--- a/docs/nodes/roast.md
++++ b/docs/nodes/roast.md
+@@ -11,10 +11,6 @@
+ **Protected:** true
+ **Last Verified:** 2025-10-10
+ **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
+-**Coverage:** 50%
+-**Coverage:** 50%
+-**Coverage:** 50%
+-**Coverage:** 50%
+ 
+ ## Dependencies
+ 
+diff --git a/docs/nodes/social-platforms.md b/docs/nodes/social-platforms.md
+index 8e4ac5df..e44f9eee 100644
+--- a/docs/nodes/social-platforms.md
++++ b/docs/nodes/social-platforms.md
+@@ -8,10 +8,6 @@
+ **Coverage:** 0%
+ **Coverage Source:** auto
+ **Related PRs:** #499
+-**Coverage:** 50%
+-**Coverage:** 50%
+-**Coverage:** 50%
+-**Coverage:** 50%
+ 
+ ## Dependencies
+ 

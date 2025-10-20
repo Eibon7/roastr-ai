@@ -1,0 +1,187 @@
+# Auto-Repair Regression Cycle - Root Cause Analysis
+
+## Problem Statement
+
+CodeRabbit Review #3346841401 identified 2 Critical regressions where previously applied fixes from reviews #3345845777 and #3345744075 were reverted by auto-repair scripts.
+
+## Pattern Identified: Auto-Repair Regression Cycle
+
+### Cycle Observed
+
+1. ✅ Manual fix applied (remove duplicates, fix terminology)
+2. ✅ Commit pushed to remote
+3. ⚙️ Auto-repair script runs (GDD validation/repair or CI workflow)
+4. ❌ Script modifies files based on automated rules
+5. ❌ Reverts manual corrections
+6. ⚠️ CodeRabbit flags regression in next review
+
+### Why This Happens
+
+**C1 - Coverage Values Changed (50% instead of 0%):**
+- Auto-repair script reads `coverage-summary.json`
+- Finds coverage data for nodes (or lacks accurate data)
+- Updates Coverage values automatically
+- Overwrites manually set 0% with calculated 50% (incorrect calculation)
+
+**C2 - Terminology Reverted ("currently X%" instead of "declared: X%, actual: N/A"):**
+- Auto-repair script regenerates `docs/system-validation.md`
+- Uses template in `scripts/predict-gdd-drift.js` with "currently X%" format
+- Overwrites manually corrected "declared/actual" format
+- Creates ambiguity (does "currently" mean declared target or actual measured?)
+
+### Investigation Results
+
+**Coverage Data Source:**
+```bash
+$ cat coverage/coverage-summary.json | jq '.total.lines.pct'
+0.98
+```
+Actual total coverage: 0.98% (244/24,781 lines)
+Conclusion: 0% is correct for most individual nodes, 50% was incorrect.
+
+**Terminology Template Source:**
+```bash
+$ grep -n "currently.*%" scripts/predict-gdd-drift.js
+321:        recommendations.push(`Increase test coverage to 80%+ (currently ${coverageNum}%)`);
+332:        recommendations.push(`Improve health score to 70+ (currently ${healthData.score})`);
+```
+
+**Auto-Repair Commit Evidence:**
+```bash
+$ git log --oneline --grep="auto-repair" -5
+22e2f4c4 chore(gdd): Auto-repair - Update system-validation.md
+```
+
+This commit 22e2f4c4 had reverted the "declared/actual" format back to "currently X%".
+
+## Impact Assessment
+
+**Wasted Engineering Time:**
+- Manual fixes applied multiple times
+- Same issues flagged in multiple CodeRabbit reviews
+- Regression cycle creates endless loop
+
+**System Health:**
+- Incorrect Coverage values mislead developers
+- Ambiguous terminology reduces clarity
+- Trust in GDD system undermined
+
+## Solution Applied
+
+### Short-term (This Review)
+
+1. **C1 Fix:** Changed Coverage values from 50% to 0% in 3 nodes
+2. **C2 Fix:** Updated template in `scripts/predict-gdd-drift.js` (root cause)
+3. **Regeneration:** Re-ran drift prediction and validation to apply template fix
+
+### Long-term Prevention
+
+**Option A: Fix Auto-Repair Templates (APPLIED)**
+- ✅ Modified `scripts/predict-gdd-drift.js` lines 321, 332
+- ✅ Template now generates "declared: X%, actual: N/A" format
+- ✅ Future auto-repairs will use correct terminology
+
+**Option B: Add Exclusion Rules (FUTURE)**
+```json
+// .gddrc.json (potential future addition)
+{
+  "auto_repair": {
+    "enabled": true,
+    "exclude_files": [
+      "docs/system-validation.md"  // Manual regeneration only
+    ],
+    "exclude_fields": [
+      "Coverage"  // Don't auto-update Coverage values
+    ]
+  }
+}
+```
+
+**Option C: Add Pre-Commit Hooks (FUTURE)**
+```bash
+# .git/hooks/pre-commit (potential future addition)
+#!/bin/bash
+
+# Check for "currently X%" pattern
+if git diff --cached docs/system-validation.md | grep "currently [0-9]*%"; then
+  echo "❌ Found 'currently X%' pattern (should be 'declared: X%, actual: N/A')"
+  exit 1
+fi
+```
+
+## Lessons Learned
+
+### Pattern: Auto-Repair Regression Cycle
+
+**❌ Mistake:**
+- Apply manual fix
+- Don't investigate what auto-repair does
+- Auto-repair reverts manual fix
+- Repeat cycle endlessly
+
+**✅ Fix:**
+- Investigate auto-repair behavior BEFORE manual fix
+- Check if automation is correct or manual fix is correct
+- Align with automation OR modify automation
+- Add prevention measures (hooks, exclusions, template fixes)
+
+### Rule Extracted
+
+**"Before fixing auto-generated files, understand the automation. Align with it or fix it, don't fight it."**
+
+## Validation
+
+**C1 - Coverage Values:**
+```bash
+$ for file in docs/nodes/{social-platforms,cost-control,roast}.md; do
+  grep "^\*\*Coverage:\*\*" "$file"
+done
+**Coverage:** 0%
+**Coverage:** 0%
+**Coverage:** 0%
+```
+
+**C2 - Terminology:**
+```bash
+$ grep -c "currently" docs/system-validation.md
+0
+
+$ grep -c "declared.*actual" docs/system-validation.md
+13
+```
+
+## Recommendation
+
+**Action for docs/patterns/coderabbit-lessons.md:**
+Add new pattern section:
+
+```markdown
+### Pattern 9: Auto-Repair Regression Cycle
+
+**Context:** Auto-repair scripts regenerate files and revert manual corrections.
+
+**❌ Problem:**
+- Manual fix applied
+- Auto-repair runs after push
+- Reverts manual corrections
+- Creates regression cycle
+
+**✅ Solution:**
+- Understand what auto-repair modifies
+- Either align with automation or exclude files
+- Update auto-repair templates if incorrect
+- Add validation hooks to prevent regressions
+
+**Prevention:**
+- Before fixing auto-generated files, check the automation
+- Fix the template/script, not the output
+- Document auto-repair behavior
+- Add pre-commit hooks if needed
+```
+
+## Result
+
+✅ Root cause identified (template in predict-gdd-drift.js)
+✅ Template fixed to prevent future regressions
+✅ Pattern documented for future reference
+✅ Prevention strategy outlined

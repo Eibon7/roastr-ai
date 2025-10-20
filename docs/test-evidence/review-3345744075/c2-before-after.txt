@@ -1,0 +1,113 @@
+=== C2: Coverage Inconsistency - Before/After ===
+
+**Issue:** Coverage Integrity table shows "Actual: N/A%" but Drift Risk says "currently X%"
+**File:** docs/system-validation.md
+**Lines Affected:** 73-82 (Drift Risk table)
+**Changes Applied:** 10 nodes updated
+
+---
+
+## Before Changes (Inconsistent)
+
+**Coverage Integrity Table (Lines 36-50):**
+```
+| Node | Type | Declared | Actual | Diff | Severity |
+|------|------|----------|--------|------|----------|
+| analytics | missing_coverage_data | 70% | N/A% | N/A% | warning |
+| billing | missing_coverage_data | 70% | N/A% | N/A% | warning |
+| cost-control | missing_coverage_data | N/A% | N/A% | N/A% | warning |
+| guardian | missing_coverage_data | 50% | N/A% | N/A% | warning |
+| multi-tenant | missing_coverage_data | 70% | N/A% | N/A% | warning |
+| persona | missing_coverage_data | 70% | N/A% | N/A% | warning |
+| plan-features | missing_coverage_data | 3% | N/A% | N/A% | warning |
+| shield | missing_coverage_data | 2% | N/A% | N/A% | warning |
+| tone | missing_coverage_data | 70% | N/A% | N/A% | warning |
+| trainer | missing_coverage_data | 50% | N/A% | N/A% | warning |
+```
+
+**Drift Risk Recommendations (Lines 73-82) - BEFORE:**
+```
+| analytics | ... | Increase test coverage to 80%+ (currently 70%) |
+| billing | ... | Increase test coverage to 80%+ (currently 70%) |
+| cost-control | ... | Increase test coverage to 80%+ (currently 70%) |
+| guardian | ... | Increase test coverage to 80%+ (currently 50%) |
+| multi-tenant | ... | Increase test coverage to 80%+ (currently 70%) |
+| persona | ... | Increase test coverage to 80%+ (currently 70%) |
+| plan-features | ... | Increase test coverage to 80%+ (currently 70%) |
+| shield | ... | Increase test coverage to 80%+ (currently 70%) |
+| tone | ... | Increase test coverage to 80%+ (currently 70%) |
+| trainer | ... | Increase test coverage to 80%+ (currently 50%) |
+```
+
+**Problem Examples:**
+1. cost-control: Table says "Declared: N/A%" but Drift says "currently 70%"
+2. plan-features: Table says "Declared: 3%" but Drift says "currently 70%"
+3. shield: Table says "Declared: 2%" but Drift says "currently 70%"
+
+---
+
+## After Changes (Consistent)
+
+**Drift Risk Recommendations (Lines 73-82) - AFTER:**
+```
+| analytics | ... | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| billing | ... | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| cost-control | ... | Increase test coverage to 80%+ (declared: N/A, actual: N/A) |
+| guardian | ... | Increase test coverage to 80%+ (declared: 50%, actual: N/A) |
+| multi-tenant | ... | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| persona | ... | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| plan-features | ... | Increase test coverage to 80%+ (declared: 3%, actual: N/A) |
+| shield | ... | Increase test coverage to 80%+ (declared: 2%, actual: N/A) |
+| tone | ... | Increase test coverage to 80%+ (declared: 70%, actual: N/A) |
+| trainer | ... | Increase test coverage to 80%+ (declared: 50%, actual: N/A) |
+```
+
+**Now Consistent:**
+1. cost-control: Both show "N/A" ✅
+2. plan-features: Both show "3%" (declared) ✅
+3. shield: Both show "2%" (declared) ✅
+
+---
+
+## Terminology Change
+
+**Old (Confusing):**
+- "currently X%" - Implies actual measured coverage
+
+**New (Precise):**
+- "declared: X%, actual: N/A" - Clarifies target vs reality
+  - "declared" = Value from node files (target/aspirational)
+  - "actual" = Value from coverage-summary.json (measured)
+  - "N/A" = No actual coverage data available
+
+**Benefits:**
+- Transparency about missing coverage data
+- Clear distinction between targets and reality
+- Consistency with Coverage Integrity table
+- Eliminates misleading "currently" language
+
+---
+
+## Nodes Corrected (10)
+
+1. **analytics**: 70% → declared: 70%, actual: N/A
+2. **billing**: 70% → declared: 70%, actual: N/A
+3. **cost-control**: 70% → declared: N/A, actual: N/A ⚠️ (was incorrect)
+4. **guardian**: 50% → declared: 50%, actual: N/A
+5. **multi-tenant**: 70% → declared: 70%, actual: N/A
+6. **persona**: 70% → declared: 70%, actual: N/A
+7. **plan-features**: 70% → declared: 3%, actual: N/A ⚠️ (was incorrect)
+8. **shield**: 70% → declared: 2%, actual: N/A ⚠️ (was incorrect)
+9. **tone**: 70% → declared: 70%, actual: N/A
+10. **trainer**: 50% → declared: 50%, actual: N/A
+
+**Critical Corrections (3 nodes had wrong values):**
+- cost-control: "currently 70%" → "declared: N/A"
+- plan-features: "currently 70%" → "declared: 3%"
+- shield: "currently 70%" → "declared: 2%"
+
+---
+
+**Verification Date:** 2025-10-16
+**Changes Applied:** 10 lines modified
+**Consistency Achieved:** ✅ 100%

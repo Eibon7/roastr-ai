@@ -10,7 +10,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
   constructor(config = {}) {
     super('discord', config);
     this.mockLatency = config.mockLatency || { min: 150, max: 600 };
-    this.failureRate = config.failureRate || 0.04; // 4% failure rate
+    this.failureRate = config.failureRate !== undefined ? config.failureRate : 0.04; // 4% failure rate
     this.globalRateLimit = {
       requests: 0,
       resetTime: Date.now() + 1000, // Reset every second

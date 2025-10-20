@@ -608,4 +608,7 @@ class TriageService {
   }
 }
 
-module.exports = new TriageService();
+// Export the class, not a singleton instance
+// This prevents module-level blocking during import in E2E/test environments
+// Instance should be created when needed, not at module import time
+module.exports = TriageService;
