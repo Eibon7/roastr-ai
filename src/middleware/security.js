@@ -7,6 +7,7 @@
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // Issue #618 - IPv6 support
 const { logger } = require('../utils/logger');
 
 /**
@@ -76,6 +77,7 @@ const generalRateLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator, // Issue #618 - Proper IPv6 support
   handler: (req, res) => {
     logger.warn('Rate limit exceeded:', {
       ip: req.ip,
@@ -102,6 +104,7 @@ const authRateLimit = rateLimit({
     code: 'AUTH_RATE_LIMIT_EXCEEDED'
   },
   skipSuccessfulRequests: true,
+  keyGenerator: ipKeyGenerator, // Issue #618 - Proper IPv6 support
   handler: (req, res) => {
     logger.warn('Auth rate limit exceeded:', {
       ip: req.ip,
@@ -127,6 +130,7 @@ const billingRateLimit = rateLimit({
     error: 'Too many billing requests, please try again later',
     code: 'BILLING_RATE_LIMIT_EXCEEDED'
   },
+  keyGenerator: ipKeyGenerator, // Issue #618 - Proper IPv6 support
   handler: (req, res) => {
     logger.warn('Billing rate limit exceeded:', {
       ip: req.ip,

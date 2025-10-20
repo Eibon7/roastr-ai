@@ -4,6 +4,7 @@ const TriageService = require('../services/triageService');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // Issue #618 - IPv6 support
 
 /**
  * Lazy initialization of TriageService to prevent blocking during module import
@@ -32,7 +33,9 @@ const triageRateLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     // Rate limit by organization ID for multi-tenant isolation
-    return `triage_${req.organization?.id || req.ip}`;
+    // Issue #618 - Use ipKeyGenerator for proper IPv6 support
+    const ip = ipKeyGenerator(req);
+    return `triage_${req.organization?.id || ip}`;
   }
 });
 
@@ -47,7 +50,9 @@ const statsRateLimit = rateLimit({
     retryAfter: '5 minutes'
   },
   keyGenerator: (req) => {
-    return `triage_stats_${req.organization?.id || req.ip}`;
+    // Issue #618 - Use ipKeyGenerator for proper IPv6 support
+    const ip = ipKeyGenerator(req);
+    return `triage_stats_${req.organization?.id || ip}`;
   }
 });
 
