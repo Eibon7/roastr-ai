@@ -167,10 +167,11 @@ describe('Roast API Integration Tests (Production Mock Mode)', () => {
                 .set('Authorization', authToken)
                 .send({
                     text: 'Test with persona',
-                    persona: {
+                    // Persona must be sent as JSON string per API spec
+                    persona: JSON.stringify({
                         lo_que_me_define: 'Developer',
                         lo_que_no_tolero: 'Bad code'
-                    }
+                    })
                 });
 
             expect(response.status).toBe(200);
@@ -237,9 +238,11 @@ describe('Roast API Integration Tests (Production Mock Mode)', () => {
 
             if (response.status === 200) {
                 expect(response.body.success).toBe(true);
-                expect(response.body).toHaveProperty('plan');
-                expect(response.body).toHaveProperty('analysisCountRemaining');
-                expect(response.body).toHaveProperty('roastsRemaining');
+                // Credits endpoint returns nested structure: { data: { plan, credits, status } }
+                expect(response.body.data).toHaveProperty('plan');
+                expect(response.body.data).toHaveProperty('credits');
+                expect(response.body.data.credits).toHaveProperty('remaining');
+                expect(response.body.data.credits).toHaveProperty('limit');
             }
         });
 
@@ -357,7 +360,8 @@ describe('Roast API Integration Tests (Production Mock Mode)', () => {
                 return;
             }
 
-            const beforeAnalysis = initialCredits.body.analysisCountRemaining;
+            // Access nested structure: data.credits.remaining
+            const beforeAnalysis = initialCredits.body.data.credits.remaining;
 
             // Generate preview (consumes analysis credit)
             const preview = await request(app)
@@ -375,9 +379,9 @@ describe('Roast API Integration Tests (Production Mock Mode)', () => {
                 .set('Authorization', authToken);
 
             if (afterCredits.status === 200) {
-                const afterAnalysis = afterCredits.body.analysisCountRemaining;
+                const afterAnalysis = afterCredits.body.data.credits.remaining;
 
-                // Analysis credit should be consumed
+                // Analysis credit should be consumed (or remain same if unlimited)
                 expect(afterAnalysis).toBeLessThanOrEqual(beforeAnalysis);
             }
         });
