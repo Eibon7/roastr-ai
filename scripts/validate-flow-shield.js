@@ -38,7 +38,28 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 
 const client = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Test data - Decision Matrix (9 scenarios) + Edge Cases (6 scenarios)
+/**
+ * Shield validation test scenarios.
+ *
+ * Comprehensive test suite validating Shield automated moderation flow:
+ * - Decision Matrix (DM-01 to DM-09): Core toxicity + user risk → action mappings
+ * - Edge Cases (EDGE-01 to EDGE-06): Timeout, idempotency, priority, failures, thresholds
+ *
+ * Each scenario includes:
+ * - id: Unique test identifier
+ * - comment: Toxic content to test
+ * - toxicity: Score (0.00-1.00)
+ * - expectedSeverity: critical/high/medium/low
+ * - expectedPriority: Queue priority (1 = highest)
+ * - platform: Target platform
+ * - offenseLevel: first/repeat/high_risk/at_threshold
+ * - expectedAction: block/mute_temp/mute_permanent/warn/report
+ * - description: Human-readable test description
+ * - edgeCase: (optional) Edge case type
+ *
+ * @constant
+ * @type {Array<Object>}
+ */
 const TEST_SCENARIOS = [
   // === DECISION MATRIX SCENARIOS (DM-01 to DM-09) ===
 
@@ -246,6 +267,34 @@ const TEST_SCENARIOS = [
   }
 ];
 
+/**
+ * Main validation function for Shield automated moderation flow.
+ *
+ * Executes comprehensive end-to-end validation of Shield system:
+ * 1. Creates test organization and user
+ * 2. Iterates through all TEST_SCENARIOS (15 total: 9 decision matrix + 6 edge cases)
+ * 3. For each scenario:
+ *    - Seeds user behavior history (if repeat/high_risk/at_threshold offender)
+ *    - Stores toxic comment in database
+ *    - Invokes Shield analysis via ShieldService
+ *    - Verifies correct action determination
+ *    - Checks user behavior tracking
+ *    - Validates action job queued (priority 1)
+ *    - Confirms activity logging
+ *    - Measures execution time (<3s target)
+ * 4. Cleans up test data
+ * 5. Reports aggregated results (passed/failed/warnings)
+ *
+ * @async
+ * @function validateShieldFlow
+ * @returns {Promise<void>} Exits with code 0 (all passed) or 1 (any failed)
+ *
+ * @throws {Error} If Supabase connection fails or critical validation error occurs
+ *
+ * @example
+ * // Execute validation
+ * node scripts/validate-flow-shield.js
+ */
 async function validateShieldFlow() {
   console.log('🚀 Starting Shield Automated Moderation Flow Validation\n');
   console.log('=' .repeat(60));
