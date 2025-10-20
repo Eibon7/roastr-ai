@@ -36,8 +36,10 @@
 **Root Cause:** CodeRabbit's LanguageTool detected proper noun violations. While marked as "optional", maintaining consistency is part of 0-comments rule.
 
 **Lesson:** Capitalize proper nouns for formatting languages, programming languages, and platform names:
+```
 - ✅ Markdown, Python, JavaScript, GitHub
 - ❌ markdown, python, javascript, github (except in code/URLs)
+```
 
 ---
 
@@ -144,9 +146,11 @@ grep -rn "| .* | .*(7" docs/  # Finds "| Auto-Cleanup | Daily (7-day threshold) 
 ### Existing Pattern Reinforced: Proper Noun Capitalization
 
 Already documented in coderabbit-lessons.md, but reinforced:
+```
 - Markdown (not markdown)
 - GitHub (not github)
 - Python, JavaScript, etc.
+```
 
 **Note:** This pattern has low recurrence rate, but contributes to professionalism.
 
