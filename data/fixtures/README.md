@@ -223,7 +223,7 @@ npm run demo:reset
 
 ### CI/CD Integration
 
-```bash
+```yaml
 # In CI pipeline (e.g., GitHub Actions)
 - name: Validate Demo Fixtures
   run: npm run demo:validate
