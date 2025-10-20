@@ -12,6 +12,7 @@
 const { execSync, spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs-extra');
+const { rm } = require('fs/promises'); // Node built-in for fs.rm (Issue #618)
 
 // Test configuration
 const CLI_PATH = path.join(__dirname, '../../../cli.js');
@@ -382,8 +383,8 @@ describe('Log Commands CLI Integration', () => {
     });
 
     afterAll(async () => {
-      // Clean up temp directory
-      await fs.remove(tempLogDir);
+      // Clean up temp directory (Issue #618 - use Node's built-in fs/promises.rm)
+      await rm(tempLogDir, { recursive: true, force: true });
     });
 
     test('should perform complete backup and cleanup cycle', async () => {
@@ -458,8 +459,8 @@ describe('Log Commands CLI Integration', () => {
     });
 
     afterAll(async () => {
-      // Clean up temp directory
-      await fs.remove(tempLogDir);
+      // Clean up temp directory (Issue #618 - use Node's built-in fs/promises.rm)
+      await rm(tempLogDir, { recursive: true, force: true });
     });
 
     test('should perform complete backup and cleanup cycle', async () => {
