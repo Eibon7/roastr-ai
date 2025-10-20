@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const styleProfileService = require('../../src/services/styleProfileService');
 const queueService = require('../../src/services/queueService');
 const { supabaseServiceClient } = require('../../src/config/supabase');

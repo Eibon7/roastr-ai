@@ -11,7 +11,7 @@
  */
 
 const request = require('supertest');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const { supabaseServiceClient } = require('../../src/config/supabase');
 
 // Mock Supabase
