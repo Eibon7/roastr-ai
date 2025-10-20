@@ -11,11 +11,10 @@
 
 const { execSync, spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs').promises;
-const fsSync = require('fs');
+const fs = require('fs-extra');
 
 // Test configuration
-const CLI_PATH = path.join(__dirname, '../../../src/cli.js');
+const CLI_PATH = path.join(__dirname, '../../../cli.js');
 const TEST_TIMEOUT = 30000;
 
 describe('Log Commands CLI Integration', () => {
@@ -376,7 +375,7 @@ describe('Log Commands CLI Integration', () => {
     beforeAll(async () => {
       // Create temporary log directory for testing
       tempLogDir = path.join(__dirname, '../../../temp-test-logs');
-      await fs.mkdir(tempLogDir, { recursive: true });
+      await fs.ensureDir(tempLogDir);
 
       // Set up test environment with temp directory
       process.env.LOG_DIR = tempLogDir;
@@ -384,7 +383,7 @@ describe('Log Commands CLI Integration', () => {
 
     afterAll(async () => {
       // Clean up temp directory
-      await fs.rm(tempLogDir, { recursive: true, force: true });
+      await fs.remove(tempLogDir);
     });
 
     test('should perform complete backup and cleanup cycle', async () => {
@@ -452,7 +451,7 @@ describe('Log Commands CLI Integration', () => {
     beforeAll(async () => {
       // Create temporary log directory for testing
       tempLogDir = path.join(__dirname, '../../../temp-test-logs');
-      await fs.mkdir(tempLogDir, { recursive: true });
+      await fs.ensureDir(tempLogDir);
 
       // Set up test environment with temp directory
       process.env.LOG_DIR = tempLogDir;
@@ -460,7 +459,7 @@ describe('Log Commands CLI Integration', () => {
 
     afterAll(async () => {
       // Clean up temp directory
-      await fs.rm(tempLogDir, { recursive: true, force: true });
+      await fs.remove(tempLogDir);
     });
 
     test('should perform complete backup and cleanup cycle', async () => {
