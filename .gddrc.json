@@ -11,6 +11,9 @@
     "allow_warnings": true,
     "fail_on_coverage_integrity": false
   },
+  "validation_comments": {
+    "fail_on_coverage_integrity": "When true, validation fails if declared coverage differs from actual coverage by >3%. Set to false during coverage recovery to allow gradual improvements without blocking CI."
+  },
   "drift": {
     "max_allowed_risk": 60,
     "create_issues_above": 70
