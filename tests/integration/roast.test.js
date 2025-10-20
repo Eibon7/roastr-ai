@@ -3,15 +3,17 @@
  */
 
 const request = require('supertest');
-const { app } = require('../../src/index');
-const { supabaseServiceClient } = require('../../src/config/supabase');
-const flags = require('../../src/config/flags');
 
-// Mock dependencies
-jest.mock('../../src/config/supabase');
+// IMPORTANT: Mock service dependencies BEFORE requiring the app
+// Don't mock supabase - it has built-in mock mode via NODE_ENV
 jest.mock('../../src/services/roastGeneratorEnhanced');
 jest.mock('../../src/services/roastGeneratorMock');
 jest.mock('../../src/services/perspectiveService');
+
+// Now require the app - supabase will use mock mode from setupIntegration.js
+const { app } = require('../../src/index');
+const { supabaseServiceClient } = require('../../src/config/supabase');
+const flags = require('../../src/config/flags');
 
 describe('Roast API Integration Tests', () => {
     let mockServiceClient;
@@ -67,12 +69,8 @@ describe('Roast API Integration Tests', () => {
             }
         });
 
-        // Mock authentication middleware
-        const authMiddleware = require('../../src/middleware/auth');
-        authMiddleware.authenticateToken = jest.fn((req, res, next) => {
-            req.user = { id: testUserId };
-            next();
-        });
+        // Authentication is handled by built-in mock mode from setupIntegration.js
+        // getUserFromToken() returns mock user when NODE_ENV=test
     });
 
     describe('POST /api/roast/preview', () => {
