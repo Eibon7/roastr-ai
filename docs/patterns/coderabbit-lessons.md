@@ -2,7 +2,7 @@
 
 **Purpose:** Document recurring patterns from CodeRabbit reviews to prevent repetition and improve code quality.
 
-**Last Updated:** 2025-10-16
+**Last Updated:** 2025-10-20
 
 **Usage:** Read this file BEFORE implementing any feature (FASE 0 or FASE 2 of task workflow).
 
@@ -379,6 +379,161 @@ Antes de escribir código, verificar:
 
 ---
 
+### 9. Jest Integration Tests & Module Loading
+
+**Pattern:** Tests failing with "is not a function" errors, duplicate endpoints intercepting routes, rate limiters breaking tests
+
+**Issue:** Test Fixing Session (2025-10-20) - From 0% to 87.5% passing
+
+**❌ Mistake 1: Router Mounting Order**
+```javascript
+// Wrong: Generic routes registered before specific ones
+app.use('/api', dashboardRoutes);       // Has /roast/preview
+app.use('/api/roast', roastRoutes);     // Has /preview (intercepted!)
+```
+
+**✅ Fix:**
+```javascript
+// Correct: Most specific routes first, or remove duplicates
+// Option 1: Remove duplicate from dashboard
+// Option 2: Register specific routes first
+app.use('/api/roast', roastRoutes);     // Register first
+app.use('/api', dashboardRoutes);       // Generic last
+```
+
+**❌ Mistake 2: Module-level calls without defensive checks**
+```javascript
+// src/routes/roast.js
+const { flags } = require('../config/flags');
+
+// Called at module load time - breaks in Jest
+if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
+    roastGenerator = new RoastGeneratorEnhanced();
+}
+```
+
+**✅ Fix:**
+```javascript
+// Add defensive helper function
+const isFlagEnabled = (flagName) => {
+    try {
+        return flags && typeof flags.isEnabled === 'function' && flags.isEnabled(flagName);
+    } catch (error) {
+        logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
+        return false;
+    }
+};
+
+if (isFlagEnabled('ENABLE_REAL_OPENAI')) {
+    roastGenerator = new RoastGeneratorEnhanced();
+}
+```
+
+**❌ Mistake 3: Rate limiters in test environment**
+```javascript
+// express-rate-limit throws errors with trust proxy in Jest
+const roastRateLimit = createRoastRateLimiter();
+router.post('/preview', roastRateLimit, handler);
+// Error: ERR_ERL_PERMISSIVE_TRUST_PROXY
+```
+
+**✅ Fix:**
+```javascript
+function createRoastRateLimiter(options = {}) {
+    // Issue #618: Disable rate limiting in test environment
+    if (process.env.NODE_ENV === 'test') {
+        return (req, res, next) => next();
+    }
+
+    // Normal rate limiter setup for production
+    return (req, res, next) => { /* ... */ };
+}
+```
+
+**❌ Mistake 4: Global mocks interfering with integration tests**
+```javascript
+// tests/setupEnvOnly.js
+jest.mock('../src/config/flags', () => ({
+    flags: { isEnabled: jest.fn() }
+}));
+// This breaks ALL tests, including integration tests that need real behavior
+```
+
+**✅ Fix:**
+```javascript
+// Remove global mocks from setupEnvOnly.js
+// Let each unit test define its own mocks:
+// tests/unit/service.test.js
+jest.mock('../../src/config/flags', () => ({
+    flags: { isEnabled: jest.fn() }
+}));
+```
+
+**❌ Mistake 5: External dependencies not available in test**
+```javascript
+// src/services/perspectiveService.js
+this.client = google.commentanalyzer({  // Breaks in Jest
+    version: 'v1alpha1',
+    auth: this.apiKey
+});
+```
+
+**✅ Fix:**
+```javascript
+try {
+    // Check if available before using
+    if (!google || typeof google.commentanalyzer !== 'function') {
+        logger.warn('Google Perspective API client not available (likely test environment)');
+        this.enabled = false;
+        return;
+    }
+
+    this.client = google.commentanalyzer({
+        version: 'v1alpha1',
+        auth: this.apiKey
+    });
+} catch (error) {
+    logger.warn('⚠️ Failed to initialize Perspective API:', error.message);
+    this.enabled = false;
+}
+```
+
+**Impact:**
+- **Before:** 0/24 tests passing (100% failure)
+- **After:** 21/24 tests passing (87.5% success)
+- **Discovered:** Critical production bug (duplicate endpoint serving wrong responses)
+
+**Files affected:**
+- src/routes/dashboard.js (duplicate endpoint removed)
+- src/routes/roast.js (defensive flag checks)
+- src/services/perspectiveService.js (defensive initialization)
+- src/middleware/roastRateLimiter.js (test environment no-op)
+- tests/setupEnvOnly.js (global mock removed)
+- tests/integration/roast.test.js (rewritten for production quality)
+
+**Prevention checklist:**
+- [ ] Check router mounting order (specific before generic)
+- [ ] Add defensive checks for module-level calls
+- [ ] Disable rate limiters in test environment
+- [ ] Avoid global mocks in setup files
+- [ ] Check external dependencies availability before use
+- [ ] Test integration tests actually test production code paths
+- [ ] Verify no duplicate endpoints across route files
+
+**Occurrences:**
+- Router order: 1 (dashboard intercepting roast)
+- Module loading: 3 (flags, perspectiveService, roastEngine)
+- Rate limiter: Multiple (all routes with rate limiting)
+- Global mocks: 1 (flags mock in setupEnvOnly)
+
+**Last occurrence:** 2025-10-20 (Issue #618)
+
+**Related patterns:**
+- Testing Patterns (#2) - Write production-quality tests
+- Integration Workflow - Check for duplicates before adding endpoints
+
+---
+
 ## 📚 Related Documentation
 
 - [Quality Standards](../QUALITY-STANDARDS.md) - Non-negotiable requirements for merge
@@ -390,5 +545,5 @@ Antes de escribir código, verificar:
 
 **Maintained by:** Orchestrator
 **Review Frequency:** Weekly or after significant reviews
-**Last Reviewed:** 2025-10-16
-**Version:** 1.2.0
+**Last Reviewed:** 2025-10-20
+**Version:** 1.3.0
