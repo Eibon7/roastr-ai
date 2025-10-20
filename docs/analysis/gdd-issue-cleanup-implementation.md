@@ -191,7 +191,7 @@ For each open GDD issue:
 | Duplicate Issues | 0 (prevented by workflow) |
 | False Positive Failures | 0 (rollback suppression) |
 | Race Conditions | 0 (concurrency control) |
-| Auto-Cleanup | Daily (7-day threshold) |
+| Auto-Cleanup | Daily (30-day threshold) |
 
 **Expected Reduction:** 70-80% fewer GDD issues going forward
 
