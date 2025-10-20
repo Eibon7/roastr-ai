@@ -226,7 +226,7 @@ $ node scripts/score-gdd-health.js --ci
 4. If real issue → apply fix
 
 **Example:**
-```
+```text
 A1: Bare URL at line 3
 Note: "Likely an incorrect or invalid review comment"
 Verification: Line 3 = [#589](url) → ALREADY WRAPPED ✅

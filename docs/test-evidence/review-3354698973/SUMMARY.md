@@ -1,6 +1,6 @@
 # CodeRabbit Review #3354698973 - Evidence Summary
 
-**Review URL:** https://github.com/Eibon7/roastr-ai/pull/602#pullrequestreview-3354698973
+**Review URL:** [#3354698973](https://github.com/Eibon7/roastr-ai/pull/602#pullrequestreview-3354698973)
 **PR:** #602 (fix/coderabbit-review-3351087724)
 **Date:** 2025-10-20
 **Status:** ✅ COMPLETE (2/2 issues resolved)
@@ -36,7 +36,7 @@
 **Root Cause:** CodeRabbit's LanguageTool detected proper noun violations. While marked as "optional", maintaining consistency is part of 0-comments rule.
 
 **Lesson:** Capitalize proper nouns for formatting languages, programming languages, and platform names:
-```
+```text
 - ✅ Markdown, Python, JavaScript, GitHub
 - ❌ markdown, python, javascript, github (except in code/URLs)
 ```
@@ -146,7 +146,7 @@ grep -rn "| .* | .*(7" docs/  # Finds "| Auto-Cleanup | Daily (7-day threshold) 
 ### Existing Pattern Reinforced: Proper Noun Capitalization
 
 Already documented in coderabbit-lessons.md, but reinforced:
-```
+```text
 - Markdown (not markdown)
 - GitHub (not github)
 - Python, JavaScript, etc.
