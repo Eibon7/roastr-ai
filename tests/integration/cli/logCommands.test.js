@@ -15,7 +15,7 @@ const fs = require('fs-extra');
 const { rm } = require('fs/promises'); // Node built-in for fs.rm (Issue #618)
 
 // Test configuration
-const CLI_PATH = path.join(__dirname, '../../../cli.js');
+const CLI_PATH = path.join(__dirname, '../../../src/cli.js'); // Issue #618 - correct path
 const TEST_TIMEOUT = 30000;
 
 describe('Log Commands CLI Integration', () => {
