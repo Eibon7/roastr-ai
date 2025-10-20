@@ -13,6 +13,9 @@ class CostControlService {
       if (!process.env.SUPABASE_SERVICE_KEY) {
         throw new Error('SUPABASE_SERVICE_KEY is required for admin operations in CostControlService');
       }
+      if (!process.env.SUPABASE_URL) {
+        throw new Error('SUPABASE_URL is required for CostControlService');
+      }
 
       this.supabaseUrl = process.env.SUPABASE_URL;
       this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
@@ -574,7 +577,7 @@ class CostControlService {
             .from('usage_alerts')
             .update({
               last_sent_at: new Date().toISOString(),
-              sent_count: alert.sent_count + 1
+              sent_count: (alert.sent_count ?? 0) + 1
             })
             .eq('id', alert.id);
         }

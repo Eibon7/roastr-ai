@@ -1,0 +1,32 @@
+[36m🤖 Agent Receipt Validator[0m
+[36m==================================================[0m
+[36m📌 PR Number: #595[0m
+[36m
+📖 Loading agent manifest...[0m
+[32m   Found 9 agents in manifest[0m
+[36m📂 Found 94 changed files[0m
+[33m⚠️  WARNING: GITHUB_EVENT_PATH not found, cannot read labels[0m
+[36m
+🔎 Identifying required agents...[0m
+[36m
+📋 Validating agent receipts...[0m
+[34m
+🔍 Required agents (3):[0m
+[34m   • Orchestrator[0m
+[36m     └─ diff: * (94 files)[0m
+[34m   • Explore[0m
+[36m     └─ diff: * (94 files)[0m
+[34m   • Guardian[0m
+[36m     └─ diff: src/services/costControl.js (1 files)[0m
+[36m     └─ diff: database/schema.sql (1 files)[0m
+[36m     └─ diff: docs/nodes/*.md (3 files)[0m
+[36m
+📄 Checking receipts...[0m
+[32m   ✅ Orchestrator: docs/agents/receipts/595-Orchestrator.md[0m
+[33m   ⚠️  Explore: docs/agents/receipts/595-Explore-SKIPPED.md (SKIPPED)[0m
+[33m   ⚠️  Guardian: docs/agents/receipts/595-Guardian-SKIPPED.md (SKIPPED)[0m
+[32m
+✅ ALL RECEIPTS VALID[0m
+[32m   3 agent(s) have receipts[0m
+[32m
+✅ Validation complete[0m

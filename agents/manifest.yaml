@@ -1,0 +1,175 @@
+# Agent Manifest - Roastr AI
+# Canonical registry of invocable agents (NOT human roles)
+# Last updated: 2025-10-19
+
+agents:
+  - name: Orchestrator
+    type: built-in
+    status: implemented
+    purpose: Coordinate sub-agents, resolve GDD nodes, execute workflows per triggers and AC
+    triggers:
+      labels: ["area:*", "priority:*"]
+      diffIncludes: ["*"]
+    guardrails:
+      - "Never load spec.md completely (use resolved nodes only)"
+      - "Never expose secrets or .env variable names"
+      - "Always perform FASE 0 assessment before implementation"
+      - "Generate receipts for all invoked agents"
+      - "If AC ≥3 or multi-area changes, create mini-plan in docs/plan/"
+    outputs:
+      - "docs/plan/*.md"
+      - "docs/agents/receipts/*.md"
+      - "Updated GDD nodes"
+
+  - name: Explore
+    type: built-in
+    status: implemented
+    purpose: Fast codebase exploration for research, reduce context by finding specific patterns/files
+    triggers:
+      labels: ["area:*", "research", "investigation"]
+      diffIncludes: ["*"]
+      conditions: ["When research needed", "When codebase structure unclear", "When file location uncertain"]
+    guardrails:
+      - "Never use for needle queries (specific file/class)"
+      - "Must specify thoroughness level: quick/medium/very thorough"
+      - "Prefer over loading spec.md for research"
+    outputs:
+      - "File locations"
+      - "Architecture insights"
+      - "Pattern discoveries"
+
+  - name: TaskAssessor
+    type: built-in
+    status: implemented
+    purpose: Assess task state before implementation, recommend CREATE/FIX/ENHANCE/CLOSE
+    triggers:
+      labels: ["priority:P0", "priority:P1"]
+      diffIncludes: []
+      conditions: ["AC ≥3", "Complex features", "Integrations", "Refactors"]
+    guardrails:
+      - "Never invoke for simple tasks (≤2 AC)"
+      - "Must read docs/patterns/coderabbit-lessons.md first"
+      - "Assessment must include 'Estado Actual' section"
+    outputs:
+      - "docs/assessment/<issue>.md"
+
+  - name: TestEngineer
+    type: built-in
+    status: implemented
+    purpose: Generate tests, execute test suites, produce visual evidence (screenshots, reports)
+    triggers:
+      labels: ["test:unit", "test:integration", "test:e2e", "test:smoke", "qa", "validation"]
+      diffIncludes: ["src/", "tests/", "scripts/", "*.test.js", "*.spec.js"]
+    guardrails:
+      - "Never commit code without tests"
+      - "Never skip visual evidence for frontend changes"
+      - "Must coordinate with Orchestrator if tests missing before closing"
+      - "Must generate evidence in docs/test-evidence/"
+    outputs:
+      - "tests/unit/**/*.test.js"
+      - "tests/integration/**/*.test.js"
+      - "tests/e2e/**/*.spec.js"
+      - "docs/test-evidence/**/*"
+
+  - name: FrontendDev
+    type: built-in
+    status: implemented
+    purpose: Implement UI components, frontend logic, state management
+    triggers:
+      labels: ["area:frontend", "area:ui", "component"]
+      diffIncludes: ["frontend/", "src/components/", "*.jsx", "*.tsx", "*.css", "*.scss"]
+    guardrails:
+      - "Never skip visual evidence (screenshots + docs/ui-review.md)"
+      - "Must use Playwright MCP for validation"
+      - "Must capture multiple viewports (desktop, tablet, mobile)"
+      - "Must check browser console and network logs"
+    outputs:
+      - "Frontend components"
+      - "CSS/styling"
+      - "docs/ui-review.md"
+
+  - name: UIDesigner
+    type: built-in
+    status: implemented
+    purpose: Produce UI specs, design grids, component states, ensure accessibility
+    triggers:
+      labels: ["area:ui", "design", "accessibility"]
+      diffIncludes: ["frontend/", "design/"]
+    guardrails:
+      - "Never implement without approval"
+      - "Must align with existing design system"
+      - "Must follow WCAG 2.1 AA accessibility standards"
+    outputs:
+      - "Design specifications"
+      - "Component wireframes"
+      - "Accessibility guidelines"
+
+  - name: WhimsyInjector
+    type: built-in
+    status: implemented
+    purpose: Add microcopy, tone, branding WITHOUT touching legal/billing/admin areas
+    triggers:
+      labels: ["area:ui", "branding", "copy"]
+      diffIncludes: ["frontend/", "src/components/"]
+    guardrails:
+      - "NEVER modify /legal, /billing, /admin routes"
+      - "NEVER change error messages with security implications"
+      - "NEVER modify API documentation"
+      - "Must preserve technical accuracy"
+    outputs:
+      - "UI microcopy"
+      - "User-facing messages"
+      - "Branding elements"
+
+  - name: Guardian
+    type: custom
+    status: implemented
+    purpose: Automated governance for sensitive changes (pricing, quotas, auth, docs)
+    script: scripts/guardian-gdd.js
+    triggers:
+      labels: ["critical", "security", "billing"]
+      diffIncludes: ["src/services/costControl.js", "src/services/billing.js", "database/schema.sql", "docs/nodes/*.md", ".gddrc.json"]
+      conditions: ["Pricing changes", "Quota modifications", "Auth policy changes", "RLS policy changes"]
+    guardrails:
+      - "NEVER bypass CRITICAL violations without Product Owner approval"
+      - "NEVER merge PRs with exit code 2"
+      - "Must document approval in PR comments"
+      - "Must review all cases in docs/guardian/cases/"
+    outputs:
+      - "docs/guardian/guardian-report.md"
+      - "docs/guardian/cases/*.json"
+      - "docs/guardian/audit-log.md"
+      - "Exit code: 0 (pass), 1 (warnings), 2 (critical)"
+
+  - name: general-purpose
+    type: built-in
+    status: implemented
+    purpose: General-purpose research for complex multi-step questions and code search
+    triggers:
+      labels: []
+      diffIncludes: []
+      conditions: ["Complex multi-step tasks", "Uncertain file locations", "Multiple search attempts needed"]
+    guardrails:
+      - "Never use for simple file reads (use Read tool directly)"
+      - "Never use for specific class searches (use Glob directly)"
+      - "Never use for 2-3 file searches (use Read directly)"
+    outputs:
+      - "Research findings"
+      - "Code locations"
+      - "Recommendations"
+
+# Agent roles (NOT invocable, for documentation only)
+# These are conceptual roles fulfilled by humans or the Orchestrator
+# DO NOT add CI requirements for these
+conceptual_roles:
+  - BackendDeveloper
+  - SecurityEngineer
+  - DatabaseAdmin
+  - ProductOwner
+  - BillingSpecialist
+  - IntegrationSpecialist
+  - PerformanceMonitor
+  - DataAnalyst
+  - MLEngineer
+  - DataScientist
+  - ProductManager

@@ -1,0 +1,151 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose encryption
+
+FAIL unit-tests tests/unit/services/encryptionService.test.js
+  EncryptionService
+    encrypt()
+      ✓ should encrypt plaintext successfully (2 ms)
+      ✓ should produce different encrypted results for same input (1 ms)
+      ✓ should reject null or undefined input (10 ms)
+      ✓ should reject non-string input (1 ms)
+      ✓ should reject empty string
+      ✕ should reject input exceeding 300 characters (7 ms)
+      ✓ should handle exactly 300 characters (1 ms)
+      ✓ should handle special characters and Unicode
+    decrypt()
+      ✓ should decrypt encrypted data successfully
+      ✓ should reject null or undefined input
+      ✓ should reject non-string input
+      ✓ should reject empty string
+      ✓ should reject invalid base64 data
+      ✓ should reject corrupted encrypted data
+      ✓ should handle various text lengths (1 ms)
+    sanitizeForEncryption()
+      ✓ should trim whitespace
+      ✓ should remove control characters
+      ✓ should preserve newlines and tabs
+      ✓ should truncate to 300 characters
+      ✓ should handle null/undefined input
+      ✓ should handle non-string input
+    validateEncryptedData()
+      ✓ should validate correct encrypted data
+      ✓ should detect invalid encrypted data
+      ✓ should handle corrupted data
+    generateSearchHash()
+      ✓ should generate consistent hash for same input
+      ✓ should generate different hashes for different inputs
+      ✓ should be case insensitive
+      ✓ should trim whitespace
+      ✓ should return null for invalid input
+    secureCompare()
+      ✓ should return true for identical strings
+      ✓ should return false for different strings
+      ✓ should return false for different lengths
+      ✓ should handle null/undefined inputs
+      ✓ should be resistant to timing attacks
+    Error Handling and Edge Cases
+      ✓ should handle very short text
+      ✓ should handle text with only spaces (1 ms)
+      ✓ should handle text with newlines
+      ✓ should handle multilingual text
+      ✓ should maintain data integrity across multiple operations
+    Production Environment Checks
+      ✓ should use proper encryption key in development
+      ✓ should validate encryption key length (28 ms)
+
+  ● EncryptionService › encrypt() › should reject input exceeding 300 characters
+
+    expect(received).toThrow(expected)
+
+    Expected substring: "maximum length"
+    Received message:   "Failed to encrypt data"
+
+          102 |                 plaintextLength: plaintext?.length
+          103 |             });
+        > 104 |             throw new Error('Failed to encrypt data');
+              |                   ^
+          105 |         }
+          106 |     }
+          107 |
+
+      at EncryptionService.encrypt (src/services/encryptionService.js:104:19)
+      at encrypt (tests/unit/services/encryptionService.test.js:52:44)
+      at Object.<anonymous> (node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] (node_modules/expect/build/index.js:2235:93)
+      at Object.toThrow (tests/unit/services/encryptionService.test.js:52:63)
+      at Object.toThrow (tests/unit/services/encryptionService.test.js:52:63)
+
+PASS unit-tests tests/unit/utils/encryption.test.js
+  Encryption Utilities
+    encryptField
+      ✓ should encrypt plaintext successfully (1 ms)
+      ✓ should return null for null input (2 ms)
+      ✓ should return null for empty string (1 ms)
+      ✓ should handle long text (300 chars)
+      ✓ should generate unique IVs for same plaintext
+      ✓ should handle special characters
+    decryptField
+      ✓ should decrypt encrypted text correctly
+      ✓ should return null for null input (1 ms)
+      ✓ should return null for undefined input
+      ✓ should throw error for corrupted ciphertext (5 ms)
+      ✓ should throw error for tampered ciphertext (1 ms)
+      ✓ should throw error for invalid base64
+      ✓ should throw error for too short ciphertext
+    Round-trip Encryption
+      ✓ should preserve plaintext through encrypt/decrypt cycle (1 ms)
+      ✓ should handle multiple encrypt/decrypt cycles
+    validateEncryptionKey
+      ✓ should validate correct encryption key
+      ✓ should throw error if key not set (1 ms)
+      ✓ should throw error if key has wrong length
+      ✓ should validate key on first use
+    Security Properties
+      ✓ should not reveal plaintext length from ciphertext
+      ✓ should use 256-bit keys
+      ✓ should produce base64-encoded output
+      ✓ should include IV, tag, and ciphertext
+    Error Messages
+      ✓ should provide helpful error for missing key
+      ✓ should provide helpful error for decryption failure
+    Edge Cases
+      ✓ should handle newlines
+      ✓ should handle tabs
+      ✓ should handle unicode characters
+      ✓ should handle maximum plaintext length
+
+PASS unit-tests tests/unit/services/encryptionService.benchmark.test.js
+  EncryptionService Performance Benchmarks
+    Encryption Performance by Quantity
+      ✓ should encrypt 1 entry in reasonable time
+      ✓ should encrypt 10 entries in reasonable time
+      ✓ should encrypt 100 entries in reasonable time (1 ms)
+      ✓ should encrypt 1000 entries in reasonable time (9 ms)
+    Encryption Performance by Text Size
+      ✓ should encrypt 10-character text efficiently (1 ms)
+      ✓ should encrypt 100-character text efficiently
+      ✓ should encrypt 500-character text efficiently (1 ms)
+      ✓ should encrypt maximum 300-character text efficiently (1 ms)
+    Decryption Performance by Quantity
+      ✓ should decrypt 1 entry in reasonable time (1 ms)
+      ✓ should decrypt 10 entries in reasonable time
+      ✓ should decrypt 100 entries in reasonable time (3 ms)
+      ✓ should decrypt 1000 entries in reasonable time (6 ms)
+    Decryption Performance by Text Size
+      ✓ should decrypt 10-character texts efficiently (1 ms)
+      ✓ should decrypt 100-character texts efficiently
+      ✓ should decrypt 300-character texts efficiently (1 ms)
+    Round-trip Performance (Encrypt + Decrypt)
+      ✓ should handle complete round-trip operations efficiently
+      ✓ should handle concurrent operations efficiently (1 ms)
+    Memory and Resource Usage
+      ✓ should not cause excessive memory usage with many operations (11 ms)
+    Performance Summary and Validation
+      ✓ should document performance characteristics
+
+Test Suites: 1 failed, 2 passed, 3 total
+Tests:       1 failed, 88 passed, 89 total
+Snapshots:   0 total
+Time:        0.566 s, estimated 1 s
+Ran all test suites matching encryption.
