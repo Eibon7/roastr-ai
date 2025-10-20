@@ -2,7 +2,9 @@
   "case_id": "2025-10-12-19-47-38-565",
   "timestamp": "2025-10-12T19:47:38.565Z",
   "actor": "emiliopostigo",
-  "domains": [],
+  "domains": [
+    "test"
+  ],
   "files_changed": [
     "test.js"
   ],

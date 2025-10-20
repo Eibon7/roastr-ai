@@ -2,7 +2,9 @@
   "case_id": "2025-10-12-18-06-24-192",
   "timestamp": "2025-10-12T18:06:24.192Z",
   "actor": "emiliopostigo",
-  "domains": [],
+  "domains": [
+    "pricing"
+  ],
   "files_changed": [
     "src/services/costControl.js"
   ],
