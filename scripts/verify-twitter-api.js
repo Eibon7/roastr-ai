@@ -9,9 +9,10 @@
 
 const { TwitterApi } = require('twitter-api-v2');
 require('dotenv').config();
+const logger = require('../src/utils/logger');
 
 async function verifyTwitter() {
-  console.log('🐦 Verifying Twitter API Configuration...\n');
+  logger.info('🐦 Verifying Twitter API Configuration...\n');
 
   // Check environment variables
   const requiredVars = [
@@ -25,28 +26,28 @@ async function verifyTwitter() {
   const missing = requiredVars.filter(key => !process.env[key]);
 
   if (missing.length > 0) {
-    console.error('❌ ERROR: Missing required environment variables:\n');
+    logger.error('❌ ERROR: Missing required environment variables:\n');
     missing.forEach(varName => {
-      console.error(`   - ${varName}`);
+      logger.error(`   - ${varName}`);
     });
-    console.error('\n💡 How to get Twitter API credentials:\n');
-    console.error('1. Create Twitter Developer account: https://developer.twitter.com');
-    console.error('2. Create a new app (or use existing)');
-    console.error('3. Set app permissions to "Read and Write"');
-    console.error('4. Go to "Keys and tokens" tab');
-    console.error('5. Generate/copy the following:\n');
-    console.error('   For OAuth 1.0a User Authentication:');
-    console.error('   - API Key (TWITTER_APP_KEY)');
-    console.error('   - API Secret (TWITTER_APP_SECRET)');
-    console.error('   - Access Token (TWITTER_ACCESS_TOKEN)');
-    console.error('   - Access Token Secret (TWITTER_ACCESS_SECRET)\n');
-    console.error('   For OAuth 2.0 Bearer Token:');
-    console.error('   - Bearer Token (TWITTER_BEARER_TOKEN)\n');
-    console.error('6. Add them to your .env file\n');
+    logger.error('\n💡 How to get Twitter API credentials:\n');
+    logger.error('1. Create Twitter Developer account: https://developer.twitter.com');
+    logger.error('2. Create a new app (or use existing)');
+    logger.error('3. Set app permissions to "Read and Write"');
+    logger.error('4. Go to "Keys and tokens" tab');
+    logger.error('5. Generate/copy the following:\n');
+    logger.error('   For OAuth 1.0a User Authentication:');
+    logger.error('   - API Key (TWITTER_APP_KEY)');
+    logger.error('   - API Secret (TWITTER_APP_SECRET)');
+    logger.error('   - Access Token (TWITTER_ACCESS_TOKEN)');
+    logger.error('   - Access Token Secret (TWITTER_ACCESS_SECRET)\n');
+    logger.error('   For OAuth 2.0 Bearer Token:');
+    logger.error('   - Bearer Token (TWITTER_BEARER_TOKEN)\n');
+    logger.error('6. Add them to your .env file\n');
     process.exit(1);
   }
 
-  console.log('✅ All required environment variables found\n');
+  logger.info('✅ All required environment variables found\n');
 
   // Initialize Twitter clients
   let client, bearerClient;
@@ -63,30 +64,30 @@ async function verifyTwitter() {
     // OAuth 2.0 client (for reading)
     bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
 
-    console.log('✅ Twitter API clients initialized\n');
+    logger.info('✅ Twitter API clients initialized\n');
 
   } catch (error) {
-    console.error('❌ ERROR: Failed to initialize Twitter clients');
-    console.error('   Message:', error.message);
-    console.error('\n💡 Check that your credentials are valid\n');
+    logger.error('❌ ERROR: Failed to initialize Twitter clients');
+    logger.error('   Message:', error.message);
+    logger.error('\n💡 Check that your credentials are valid\n');
     process.exit(1);
   }
 
   try {
     // Test 1: Verify OAuth 1.0a authentication (user context)
-    console.log('🔐 Test 1: Verifying OAuth 1.0a authentication...');
+    logger.info('🔐 Test 1: Verifying OAuth 1.0a authentication...');
 
     const me = await client.v2.me();
     const botUserId = me.data.id;
     const botUsername = me.data.username;
     const botName = me.data.name;
 
-    console.log('✅ OAuth 1.0a authentication successful!');
-    console.log(`   Bot User: @${botUsername} (${botName})`);
-    console.log(`   User ID: ${botUserId}\n`);
+    logger.info('✅ OAuth 1.0a authentication successful!');
+    logger.info(`   Bot User: @${botUsername} (${botName})`);
+    logger.info(`   User ID: ${botUserId}\n`);
 
     // Test 2: Verify OAuth 2.0 Bearer Token (app context)
-    console.log('🔐 Test 2: Verifying OAuth 2.0 Bearer Token...');
+    logger.info('🔐 Test 2: Verifying OAuth 2.0 Bearer Token...');
 
     const mentionsResponse = await bearerClient.v2.userMentionTimeline(botUserId, {
       max_results: 5,
@@ -98,103 +99,112 @@ async function verifyTwitter() {
     const mentionsCount = Array.isArray(mentionsData) ? mentionsData.length : 0;
     const hasMore = mentionsResponse.meta?.next_token ? true : false;
 
-    console.log('✅ Bearer Token authentication successful!');
-    console.log(`   Recent mentions found: ${mentionsCount}`);
+    logger.info('✅ Bearer Token authentication successful!');
+    logger.info(`   Recent mentions found: ${mentionsCount}`);
     if (hasMore) {
-      console.log('   (More mentions available via pagination)');
+      logger.info('   (More mentions available via pagination)');
     }
-    console.log();
+    logger.info('');
 
     // Test 3: Check rate limits
-    console.log('📊 Test 3: Checking rate limits...');
+    logger.info('📊 Test 3: Checking rate limits...');
 
-    const rateLimits = await bearerClient.v1.rateLimitStatuses(['tweets']);
-    const tweetLimits = rateLimits.resources?.tweets;
+    const rateLimits = await bearerClient.v1.rateLimitStatus();
+    const families = rateLimits.resources || {};
+    const endpoints = {
+      ...(families.statuses || {}),
+      ...(families.search || {})
+    };
 
-    if (tweetLimits) {
-      console.log('✅ Rate limit information:');
-      Object.entries(tweetLimits).forEach(([endpoint, limits]) => {
+    if (Object.keys(endpoints).length) {
+      logger.info('✅ Rate limit information:');
+      Object.entries(endpoints).forEach(([endpoint, limits]) => {
         const remaining = limits.remaining;
         const limit = limits.limit;
         const resetTime = new Date(limits.reset * 1000).toLocaleTimeString();
 
-        console.log(`   ${endpoint}:`);
-        console.log(`     - Remaining: ${remaining}/${limit}`);
-        console.log(`     - Resets at: ${resetTime}`);
+        logger.info(`   ${endpoint}:`);
+        logger.info(`     - Remaining: ${remaining}/${limit}`);
+        logger.info(`     - Resets at: ${resetTime}`);
       });
-      console.log();
+      logger.info('');
+    } else {
+      logger.warn('⚠️  No v1 rate limit families (statuses/search) found in response.');
     }
 
     // Test 4: Verify write permissions
-    console.log('🔍 Test 4: Verifying write permissions...');
+    logger.info('🔍 Test 4: Verifying write permissions...');
 
     // We don't actually post a test tweet, just verify the client is configured for write access
     const hasWriteAccess = !!process.env.TWITTER_ACCESS_TOKEN && !!process.env.TWITTER_ACCESS_SECRET;
 
     if (hasWriteAccess) {
-      console.log('✅ Write permissions configured (OAuth 1.0a)');
-      console.log('   Note: Not posting test tweet to avoid spam\n');
+      logger.info('✅ Write permissions configured (OAuth 1.0a)');
+      logger.info('   Note: Not posting test tweet to avoid spam\n');
     } else {
-      console.log('⚠️  Write permissions not fully configured\n');
+      logger.info('⚠️  Write permissions not fully configured\n');
     }
 
     // Summary
-    console.log('📊 Summary:\n');
-    console.log('✅ OAuth 1.0a (Read + Write): Working');
-    console.log('✅ OAuth 2.0 Bearer Token (Read): Working');
-    console.log(`✅ Authenticated as: @${botUsername}`);
-    console.log(`✅ User ID: ${botUserId}`);
-    console.log(`✅ Recent mentions: ${mentionsCount} found`);
-    console.log();
+    logger.info('📊 Summary:\n');
+    logger.info('✅ OAuth 1.0a (Read + Write): Working');
+    logger.info('✅ OAuth 2.0 Bearer Token (Read): Working');
+    logger.info(`✅ Authenticated as: @${botUsername}`);
+    logger.info(`✅ User ID: ${botUserId}`);
+    logger.info(`✅ Recent mentions: ${mentionsCount} found`);
+    logger.info('');
 
     // Recommendations
-    console.log('💡 Next Steps:\n');
-    console.log('1. Test the bot in batch mode:');
-    console.log('   → npm run twitter:batch\n');
-    console.log('2. Check Twitter bot documentation:');
-    console.log('   → https://developer.twitter.com/en/docs/twitter-api\n');
-    console.log('3. Monitor API usage:');
-    console.log('   → https://developer.twitter.com/en/portal/dashboard\n');
-    console.log('4. Essential API tier limits:');
-    console.log('   - 1,500 tweets/month (read)');
-    console.log('   - 50 tweets/month (write)');
-    console.log('   - No streaming access\n');
+    logger.info('💡 Next Steps:\n');
+    logger.info('1. Test the bot in batch mode:');
+    logger.info('   → npm run twitter:batch\n');
+    logger.info('2. Check Twitter bot documentation:');
+    logger.info('   → https://developer.twitter.com/en/docs/twitter-api\n');
+    logger.info('3. Monitor API usage:');
+    logger.info('   → https://developer.twitter.com/en/portal/dashboard\n');
+    logger.info('4. Essential API tier limits:');
+    logger.info('   - 1,500 tweets/month (read)');
+    logger.info('   - 50 tweets/month (write)');
+    logger.info('   - No streaming access\n');
 
-    console.log('🎉 Twitter API verification complete!\n');
+    logger.info('🎉 Twitter API verification complete!\n');
 
   } catch (error) {
-    console.error('\n❌ ERROR during verification:');
+    logger.error('\n❌ ERROR during verification:');
 
-    if (error.code === 401) {
-      console.error('   Status: 401 Unauthorized');
-      console.error('   Message: Invalid credentials');
-      console.error('\n💡 Solution:');
-      console.error('   1. Verify your credentials are correct');
-      console.error('   2. Check that your Twitter app has proper permissions');
-      console.error('   3. Make sure tokens haven\'t been revoked');
-      console.error('   4. Regenerate tokens if necessary\n');
-    } else if (error.code === 403) {
-      console.error('   Status: 403 Forbidden');
-      console.error('   Message: Access denied');
-      console.error('\n💡 Solution:');
-      console.error('   1. Check app permissions (must be "Read and Write")');
-      console.error('   2. Verify app is not suspended');
-      console.error('   3. Check if you have Essential API access\n');
-    } else if (error.code === 429) {
-      console.error('   Status: 429 Rate Limited');
-      console.error('   Message: Too many requests');
-      console.error('\n💡 Solution:');
-      console.error('   1. Wait for rate limit to reset');
-      console.error('   2. Check your API tier limits');
-      console.error('   3. Monitor usage in developer portal\n');
+    // Broaden HTTP error detection to handle both code and status
+    const status = error.status ?? error.code;
+
+    if (status === 401) {
+      logger.error('   Status: 401 Unauthorized');
+      logger.error('   Message: Invalid credentials');
+      logger.error('\n💡 Solution:');
+      logger.error('   1. Verify your credentials are correct');
+      logger.error('   2. Check that your Twitter app has proper permissions');
+      logger.error('   3. Make sure tokens haven\'t been revoked');
+      logger.error('   4. Regenerate tokens if necessary\n');
+    } else if (status === 403) {
+      logger.error('   Status: 403 Forbidden');
+      logger.error('   Message: Access denied');
+      logger.error('\n💡 Solution:');
+      logger.error('   1. Check app permissions (must be "Read and Write")');
+      logger.error('   2. Verify app is not suspended');
+      logger.error('   3. Check if you have Essential API access\n');
+    } else if (status === 429) {
+      logger.error('   Status: 429 Rate Limited');
+      logger.error('   Message: Too many requests');
+      logger.error('\n💡 Solution:');
+      logger.error('   1. Wait for rate limit to reset');
+      logger.error('   2. Check your API tier limits');
+      logger.error('   3. Monitor usage in developer portal\n');
     } else {
-      console.error('   Status:', error.code || 'Unknown');
-      console.error('   Message:', error.message || 'Unknown error');
+      logger.error('   Status:', status || 'Unknown');
+      logger.error('   Message:', error.message || 'Unknown error');
 
       if (error.data) {
-        console.error('   Details:', JSON.stringify(error.data, null, 2));
+        logger.error('   Details:', JSON.stringify(error.data, null, 2));
       }
-      console.error();
+      logger.error('');
     }
 
     process.exit(1);
@@ -203,6 +213,6 @@ async function verifyTwitter() {
 
 // Run verification
 verifyTwitter().catch(error => {
-  console.error('\n❌ Unexpected error:', error.message);
+  logger.error('\n❌ Unexpected error:', error.message);
   process.exit(1);
 });

@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-20T16:40:04.663Z
+**Generated:** 2025-10-20T16:06:37.609Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 88.7/100
+**Average Score:** 88.3/100
 
 ---
 
@@ -19,15 +19,15 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
+| shield | 🟢 83 | healthy | 2025-10-09 | 2% | 0 | 0 |
 | social-platforms | 🟢 83 | healthy | 2025-10-09 | 0% | 0 | 0 |
 | plan-features | 🟢 84 | healthy | 2025-10-13 | 3% | 0 | 0 |
 | queue-system | 🟢 84 | healthy | 2025-10-14 | 6% | 0 | 0 |
 | roast | 🟢 84 | healthy | 2025-10-13 | 0% | 0 | 0 |
 | cost-control | 🟢 85 | healthy | 2025-10-18 | 0% | 0 | 0 |
 | observability | 🟢 85 | healthy | 2025-10-18 | 3% | 0 | 0 |
-| shield | 🟢 86 | healthy | 2025-10-20 | 2% | 0 | 0 |
+| guardian | 🟢 87 | healthy | 2025-10-09 | 50% | 0 | 0 |
 | trainer | 🟢 87 | healthy | 2025-10-09 | 50% | 0 | 0 |
-| guardian | 🟢 90 | healthy | 2025-10-20 | 50% | 0 | 0 |
 | analytics | 🟢 91 | healthy | 2025-10-09 | 70% | 0 | 0 |
 | billing | 🟢 91 | healthy | 2025-10-09 | 70% | 0 | 0 |
 | tone | 🟢 91 | healthy | 2025-10-09 | 70% | 0 | 0 |
@@ -38,6 +38,19 @@
 ---
 
 ## ⚠️ Top 5 Nodes to Review
+
+### shield (Score: 83)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 78/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
 
 ### social-platforms (Score: 83)
 
@@ -85,19 +98,6 @@
 **Score Breakdown:**
 - Sync Accuracy: 100/100
 - Update Freshness: 86/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 30/100
-- Agent Relevance: 100/100
-- Integrity Score: 100/100
-
-
-### cost-control (Score: 85)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 96/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100

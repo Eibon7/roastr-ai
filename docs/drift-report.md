@@ -1,9 +1,9 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-10-20T16:40:14.728Z
+**Generated:** 2025-10-20T16:06:44.138Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
-**Average Drift Risk:** 6/100
+**Average Drift Risk:** 5/100
 
 ---
 
@@ -21,15 +21,15 @@
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
 | analytics | 🟢 15 | healthy | 91 | 70% | 7d ago | 0 |
-| plan-features | 🟢 15 | healthy | 84 | 3% | 7d ago | 0 |
 | billing | 🟢 5 | healthy | 91 | 70% | 1d ago | 0 |
 | cost-control | 🟢 5 | healthy | 85 | 0% | 0d ago | 0 |
-| guardian | 🟢 5 | healthy | 90 | 50% | 3d ago | 0 |
+| guardian | 🟢 5 | healthy | 87 | 50% | 3d ago | 0 |
 | multi-tenant | 🟢 5 | healthy | 93 | 70% | 0d ago | 0 |
 | observability | 🟢 5 | healthy | 85 | 50% | 0d ago | 0 |
-| queue-system | 🟢 5 | healthy | 84 | 6% | 0d ago | 0 |
+| plan-features | 🟢 5 | healthy | 84 | 3% | 6d ago | 0 |
+| queue-system | 🟢 5 | healthy | 84 | 6% | 3d ago | 0 |
 | roast | 🟢 5 | healthy | 84 | 0% | 1d ago | 0 |
-| shield | 🟢 5 | healthy | 86 | 2% | 1d ago | 0 |
+| shield | 🟢 5 | healthy | 83 | 2% | 1d ago | 0 |
 | social-platforms | 🟢 5 | healthy | 83 | 0% | 3d ago | 0 |
 | tone | 🟢 5 | healthy | 91 | 70% | 3d ago | 0 |
 | trainer | 🟢 5 | healthy | 87 | 50% | 3d ago | 0 |
@@ -51,18 +51,6 @@
 - Increase test coverage to 80%+ (declared: 70%, actual: N/A)
 
 **Git Activity:** 16 commits in last 30 days
-
-### plan-features (Risk: 15)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +15 pts: Coverage 3% (<80%)
-
-**Recommendations:**
-- Increase test coverage to 80%+ (declared: 3%, actual: N/A)
-
-**Git Activity:** 13 commits in last 30 days
 
 ### billing (Risk: 5)
 
@@ -88,7 +76,7 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
-**Git Activity:** 18 commits in last 30 days
+**Git Activity:** 26 commits in last 30 days
 
 ### guardian (Risk: 5)
 
@@ -101,7 +89,20 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 50%, actual: N/A)
 
-**Git Activity:** 9 commits in last 30 days
+**Git Activity:** 10 commits in last 30 days
+
+### multi-tenant (Risk: 5)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +15 pts: Coverage 70% (<80%)
+- -10 pts: Recent commit (today)
+
+**Recommendations:**
+- Increase test coverage to 80%+ (declared: 70%, actual: N/A)
+
+**Git Activity:** 44 commits in last 30 days
 
 ---
 

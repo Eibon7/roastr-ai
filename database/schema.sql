@@ -1,8 +1,9 @@
 -- Roastr.ai Multi-Tenant Database Schema
 -- Compatible with Supabase PostgreSQL + Row Level Security (RLS)
 
--- Enable UUID extension
+-- Enable extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS vector; -- For persona embeddings (Issue #595)
 
 -- ============================================================================
 -- USERS & TENANTS
@@ -35,9 +36,39 @@ CREATE TABLE users (
     monthly_messages_sent INTEGER DEFAULT 0,
     monthly_tokens_consumed INTEGER DEFAULT 0,
     last_activity_at TIMESTAMPTZ DEFAULT NOW(),
-    
+
+    -- Persona fields (Issue #595)
+    -- Identity ("Lo que me define")
+    lo_que_me_define_encrypted TEXT,
+    lo_que_me_define_visible BOOLEAN DEFAULT FALSE,
+    lo_que_me_define_embedding VECTOR(1536),
+    lo_que_me_define_created_at TIMESTAMPTZ,
+    lo_que_me_define_updated_at TIMESTAMPTZ,
+
+    -- Intolerance ("Lo que no tolero")
+    lo_que_no_tolero_encrypted TEXT,
+    lo_que_no_tolero_visible BOOLEAN DEFAULT FALSE,
+    lo_que_no_tolero_embedding VECTOR(1536),
+    lo_que_no_tolero_created_at TIMESTAMPTZ,
+    lo_que_no_tolero_updated_at TIMESTAMPTZ,
+
+    -- Tolerance ("Lo que me da igual")
+    lo_que_me_da_igual_encrypted TEXT,
+    lo_que_me_da_igual_visible BOOLEAN DEFAULT FALSE,
+    lo_que_me_da_igual_embedding VECTOR(1536),
+    lo_que_me_da_igual_created_at TIMESTAMPTZ,
+    lo_que_me_da_igual_updated_at TIMESTAMPTZ,
+
+    -- Embeddings metadata
+    embeddings_generated_at TIMESTAMPTZ,
+    embeddings_model VARCHAR(100) DEFAULT 'text-embedding-3-small',
+    embeddings_version INTEGER DEFAULT 1,
+
     CONSTRAINT users_email_check CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT users_plan_check CHECK (plan IN ('basic', 'pro', 'creator_plus'))
+    CONSTRAINT users_plan_check CHECK (plan IN ('basic', 'pro', 'creator_plus')),
+    CONSTRAINT users_lo_que_me_define_encrypted_length_check CHECK (lo_que_me_define_encrypted IS NULL OR char_length(lo_que_me_define_encrypted) <= 500),
+    CONSTRAINT users_lo_que_no_tolero_encrypted_length_check CHECK (lo_que_no_tolero_encrypted IS NULL OR char_length(lo_que_no_tolero_encrypted) <= 500),
+    CONSTRAINT users_lo_que_me_da_igual_encrypted_length_check CHECK (lo_que_me_da_igual_encrypted IS NULL OR char_length(lo_que_me_da_igual_encrypted) <= 500)
 );
 
 -- Organizations/Tenants table

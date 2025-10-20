@@ -12,10 +12,10 @@ metadata:
   total_nodes: 15
   critical_nodes: 9
   high_priority_nodes: 4
-  production_nodes: 14
-  development_nodes: 1
-  pr: "#587"
-  changes: "MVP validation complete - Perspective API integration, Shield improvements, comprehensive testing"
+  production_nodes: 15
+  development_nodes: 0
+  pr: "#600"
+  changes: "Persona system implementation - encryption, embeddings, agent system with 100% test coverage"
   protected: true
   last_verified: 2025-10-19
   protection_reason: "GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze"
@@ -93,11 +93,11 @@ nodes:
       - src/workers/BaseWorker.js
 
   observability:
-    description: Structured logging, correlation tracking, and end-to-end request tracing
+    description: Structured logging, correlation tracking, end-to-end request tracing, and agent system governance
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-10-14
+    last_updated: 2025-10-19
     coverage: 13
     depends_on: []
     used_by:
@@ -119,16 +119,21 @@ nodes:
       - src/workers/AnalyzeToxicityWorker.js
       - src/workers/GenerateReplyWorker.js
       - src/workers/ShieldActionWorker.js
+      - scripts/ci/require-agent-receipts.js
+      - agents/manifest.yaml
     tests:
       - tests/integration/test-observability.test.js
+      - tests/unit/scripts/require-agent-receipts.test.js
+      - tests/unit/agents/manifest-validation.test.js
+      - tests/integration/agent-ci-workflow.test.js
 
   multi-tenant:
     description: Row Level Security (RLS) and organization isolation
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-10-06
-    coverage: 72
+    last_updated: 2025-10-19
+    coverage: 70
     depends_on:
       - observability
     used_by:
@@ -138,10 +143,13 @@ nodes:
       - billing
       - analytics
       - social-platforms
+      - persona
     docs:
       - docs/nodes/multi-tenant.md
     files:
       - database/schema.sql
+      - database/migrations/001_add_persona_fields.sql
+      - supabase/migrations/20251017000002_simple_rls.sql
 
   # Business Logic Nodes
   cost-control:
@@ -210,21 +218,28 @@ nodes:
 
   # Configuration Nodes
   persona:
-    description: User personality and roast style configuration
+    description: User personality and roast style configuration with encryption and semantic embeddings
     status: production
     priority: high
     owner: Back-end Dev
-    last_updated: 2025-10-06
-    coverage: 75
+    last_updated: 2025-10-19
+    coverage: 92
     depends_on:
       - plan-features
+      - multi-tenant
     used_by:
       - roast
       - tone
     docs:
       - docs/nodes/persona.md
     files:
-      - src/services/personaService.js
+      - src/services/PersonaService.js
+      - src/routes/persona.js
+      - src/utils/encryption.js
+    tests:
+      - tests/unit/services/PersonaService.test.js
+      - tests/unit/utils/encryption.test.js
+      - tests/integration/persona-api.test.js
 
   tone:
     description: Tone mapping and humor type configuration

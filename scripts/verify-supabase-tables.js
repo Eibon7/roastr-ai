@@ -8,33 +8,50 @@
 
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
+const logger = require('../src/utils/logger');
 
 async function verifyTables() {
-  console.log('🔍 Verifying Supabase Deployment...\n');
+  logger.info('🔍 Verifying Supabase Deployment...\n');
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !serviceKey) {
-    console.error('❌ ERROR: Missing Supabase credentials');
+    logger.error('❌ ERROR: Missing Supabase credentials');
     if (!supabaseUrl) {
-      console.error('   SUPABASE_URL not found in .env');
+      logger.error('   SUPABASE_URL not found in .env');
     }
     if (!serviceKey) {
-      console.error('   SUPABASE_SERVICE_KEY not found in .env');
+      logger.error('   SUPABASE_SERVICE_KEY not found in .env');
     }
-    console.error('   Add them to your .env file:');
-    console.error('   SUPABASE_URL=https://your-project.supabase.co');
-    console.error('   SUPABASE_SERVICE_KEY=your_service_key_here\n');
+    logger.error('   Add them to your .env file:');
+    logger.error('   SUPABASE_URL=https://your-project.supabase.co');
+    logger.error('   SUPABASE_SERVICE_KEY=your_service_key_here\n');
     process.exit(1);
   }
 
-  const supabase = createClient(supabaseUrl, serviceKey, {
+  // Create admin client (service role - bypasses RLS)
+  const admin = createClient(supabaseUrl, serviceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
   });
+
+  // Create anon client for RLS verification (if available)
+  let pub = null;
+  if (!anonKey) {
+    logger.warn('⚠️  SUPABASE_ANON_KEY not set; RLS checks will be skipped');
+    logger.warn('   Add to .env: SUPABASE_ANON_KEY=your_anon_key_here\n');
+  } else {
+    pub = createClient(supabaseUrl, anonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+  }
 
   // Expected tables from schema
   const expectedTables = [
@@ -58,26 +75,44 @@ async function verifyTables() {
   ];
 
   try {
-    console.log('📋 Checking tables...');
+    logger.info('📋 Checking tables...');
 
     // Check each table by trying to select from it
     const results = [];
 
     for (const table of expectedTables) {
       try {
-        const { error } = await supabase.from(table).select('id').limit(1);
+        // Existence check with admin client (bypasses RLS)
+        const { error: adminErr } = await admin.from(table).select('id').limit(1);
 
-        if (error) {
-          if (error.message.includes('does not exist')) {
+        if (adminErr) {
+          // Check if table doesn't exist
+          if ((adminErr.code === '42P01') || /does not exist/i.test(adminErr.message)) {
             results.push({ table, status: '❌', message: 'Not found' });
-          } else if (error.message.includes('RLS')) {
-            // RLS error means table exists but we can't access it (which is good!)
-            results.push({ table, status: '✅', message: 'Exists (RLS active)' });
           } else {
-            results.push({ table, status: '⚠️', message: error.message.substring(0, 50) });
+            // Unexpected admin error
+            results.push({ table, status: '⚠️', message: adminErr.message.substring(0, 80) });
           }
         } else {
-          results.push({ table, status: '✅', message: 'Exists and accessible' });
+          // Table exists, now check RLS with anon client
+          if (pub) {
+            const { error: anonErr } = await pub.from(table).select('id').limit(1);
+
+            if (anonErr) {
+              // Check if RLS is enforced
+              if (anonErr.code === 'PGRST301' || anonErr.status === 403 || /permission denied/i.test(anonErr.message)) {
+                results.push({ table, status: '✅', message: 'Exists (RLS enforced)' });
+              } else {
+                results.push({ table, status: '⚠️', message: `Anon error: ${anonErr.message.substring(0, 80)}` });
+              }
+            } else {
+              // Anon can read - RLS may be disabled or policies allow public read
+              results.push({ table, status: '⚠️', message: 'Anon can read; RLS may be disabled or policies allow public read' });
+            }
+          } else {
+            // No anon key available, skip RLS check
+            results.push({ table, status: '✅', message: 'Exists (RLS not checked)' });
+          }
         }
       } catch (err) {
         results.push({ table, status: '❌', message: err.message });
@@ -85,47 +120,47 @@ async function verifyTables() {
     }
 
     // Display results
-    console.log('\n📊 Table Status:\n');
+    logger.info('\n📊 Table Status:\n');
     results.forEach(r => {
-      console.log(`   ${r.status} ${r.table.padEnd(30)} ${r.message}`);
+      logger.info(`   ${r.status} ${r.table.padEnd(30)} ${r.message}`);
     });
 
     const successCount = results.filter(r => r.status === '✅').length;
     const failureCount = results.filter(r => r.status === '❌').length;
 
-    console.log(`\n📈 Summary: ${successCount}/${expectedTables.length} tables verified\n`);
+    logger.info(`\n📈 Summary: ${successCount}/${expectedTables.length} tables verified\n`);
 
     // Check for default plans data
-    console.log('🔍 Verifying default plans...');
-    const { data: plans, error: plansError } = await supabase
+    logger.info('🔍 Verifying default plans...');
+    const { data: plans, error: plansError } = await admin
       .from('plans')
       .select('id, name');
 
     if (plansError) {
-      console.log('   ⚠️  Cannot verify plans (may need service role access)');
+      logger.info('   ⚠️  Cannot verify plans (may need service role access)');
     } else if (plans && plans.length > 0) {
-      console.log(`   ✅ Found ${plans.length} plans:`);
-      plans.forEach(p => console.log(`      - ${p.id}: ${p.name}`));
+      logger.info(`   ✅ Found ${plans.length} plans:`);
+      plans.forEach(p => logger.info(`      - ${p.id}: ${p.name}`));
     } else {
-      console.log('   ❌ No plans found (INSERT may have failed)');
+      logger.info('   ❌ No plans found (INSERT may have failed)');
     }
 
-    console.log('\n🎉 Verification complete!\n');
+    logger.info('\n🎉 Verification complete!\n');
 
     if (failureCount === 0) {
-      console.log('✅ All tables created successfully');
-      console.log('✅ Supabase is fully configured');
-      console.log('\nNext step: Run RLS tests');
-      console.log('   npm test -- multi-tenant-rls\n');
+      logger.info('✅ All tables created successfully');
+      logger.info('✅ Supabase is fully configured');
+      logger.info('\nNext step: Run RLS tests');
+      logger.info('   npm test -- multi-tenant-rls\n');
       process.exit(0);
     } else {
-      console.log(`⚠️  ${failureCount} table(s) missing or inaccessible`);
-      console.log('   Review the SQL Editor for error messages\n');
+      logger.info(`⚠️  ${failureCount} table(s) missing or inaccessible`);
+      logger.info('   Review the SQL Editor for error messages\n');
       process.exit(1);
     }
 
   } catch (error) {
-    console.error('\n❌ ERROR during verification:', error.message);
+    logger.error('\n❌ ERROR during verification:', error.message);
     process.exit(1);
   }
 }

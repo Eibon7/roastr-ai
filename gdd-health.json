@@ -1,7 +1,7 @@
 {
-  "generated_at": "2025-10-20T16:40:04.663Z",
+  "generated_at": "2025-10-20T16:06:37.609Z",
   "status": "HEALTHY",
-  "overall_score": 88.7,
+  "overall_score": 88.3,
   "total_nodes": 15,
   "healthy_count": 15,
   "degraded_count": 0,
@@ -47,11 +47,11 @@
       "issues": []
     },
     "guardian": {
-      "score": 90,
+      "score": 87,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 100,
+        "updateFreshness": 78,
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
@@ -151,11 +151,11 @@
       "issues": []
     },
     "shield": {
-      "score": 86,
+      "score": 83,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 100,
+        "updateFreshness": 78,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,

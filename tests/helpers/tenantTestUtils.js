@@ -10,26 +10,30 @@ const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
+const logger = require('../../src/utils/logger');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-// Use TEST_JWT_SECRET from env, fallback to SUPABASE_JWT_SECRET, or generate random for tests
-// Never use hardcoded secrets
-const JWT_SECRET = process.env.TEST_JWT_SECRET ||
-                   process.env.SUPABASE_JWT_SECRET ||
-                   process.env.JWT_SECRET ||
-                   crypto.randomBytes(32).toString('hex');
+// JWT secret with secure fallback pattern
+// Priority: SUPABASE_JWT_SECRET > JWT_SECRET > crypto-generated (test only) > fail-fast
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === 'test'
+    ? crypto.randomBytes(32).toString('hex')
+    : (() => { throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production'); })()
+  );
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !SUPABASE_ANON_KEY) {
-  throw new Error('Missing required Supabase environment variables');
-}
+// Better error reporting (CodeRabbit #3353894295 N5)
+const missing = [
+  !SUPABASE_URL && 'SUPABASE_URL',
+  !SUPABASE_SERVICE_KEY && 'SUPABASE_SERVICE_KEY',
+  !SUPABASE_ANON_KEY && 'SUPABASE_ANON_KEY'
+].filter(Boolean);
 
-// Log warning if using generated secret (test may not work with real Supabase)
-if (!process.env.TEST_JWT_SECRET && !process.env.SUPABASE_JWT_SECRET && !process.env.JWT_SECRET) {
-  console.warn('⚠️  No TEST_JWT_SECRET env var found. Using randomly generated secret for tests.');
-  console.warn('   Set TEST_JWT_SECRET in .env for consistent test behavior.');
+if (missing.length > 0) {
+  throw new Error(`Missing required Supabase environment variables: ${missing.join(', ')}`);
 }
 
 // Service client (bypasses RLS)
@@ -47,74 +51,47 @@ let currentTenantContext = null;
  * Creates 2 test organizations with users
  */
 async function createTestTenants() {
-  console.log('🏗️  Creating test tenants...');
+  logger.debug('🏗️  Creating test tenants...');
 
-  // Create auth users using admin API (creates in both auth.users and public.users via trigger)
-  const userAEmail = `test-user-a-${Date.now()}@example.com`;
-  const userBEmail = `test-user-b-${Date.now()}@example.com`;
-
-  console.log('🔄 Creating auth user A with admin API...');
-  const { data: authUserA, error: authErrorA } = await serviceClient.auth.admin.createUser({
-    email: userAEmail,
-    email_confirm: true,
-    user_metadata: {
-      name: 'Test User A',
-      plan: 'pro'
-    }
-  });
-
-  if (authErrorA || !authUserA.user) {
-    throw new Error(`Failed to create auth user A: ${authErrorA?.message || 'No user returned'}`);
-  }
-
-  console.log(`✅ Auth user A created: ${authUserA.user.id}`);
-
-  console.log('🔄 Creating auth user B with admin API...');
-  const { data: authUserB, error: authErrorB } = await serviceClient.auth.admin.createUser({
-    email: userBEmail,
-    email_confirm: true,
-    user_metadata: {
-      name: 'Test User B',
-      plan: 'pro'
-    }
-  });
-
-  if (authErrorB || !authUserB.user) {
-    throw new Error(`Failed to create auth user B: ${authErrorB?.message || 'No user returned'}`);
-  }
-
-  console.log(`✅ Auth user B created: ${authUserB.user.id}`);
-
-  // Now create entries in public.users table (if not auto-created by trigger)
+  // Create users first (required for owner_id FK)
   const userA = {
-    id: authUserA.user.id,
-    email: userAEmail,
+    id: uuidv4(),
+    email: `test-user-a-${Date.now()}@example.com`,
     name: 'Test User A',
-    plan: 'pro'
+    plan: 'basic'
   };
 
   const userB = {
-    id: authUserB.user.id,
-    email: userBEmail,
+    id: uuidv4(),
+    email: `test-user-b-${Date.now()}@example.com`,
     name: 'Test User B',
-    plan: 'pro'
+    plan: 'basic'
   };
 
-  // Insert or update in public.users (in case trigger didn't create them)
-  await serviceClient.from('users').upsert(userA);
-  await serviceClient.from('users').upsert(userB);
+  const { data: createdUserA, error: errorUserA } = await serviceClient
+    .from('users')
+    .insert(userA)
+    .select()
+    .single();
 
-  const userAData = authUserA.user;
-  const userBData = authUserB.user;
+  if (errorUserA) throw new Error(`Failed to create User A: ${JSON.stringify(errorUserA)}`);
 
-  testUsers.push(userAData.id, userBData.id);
+  const { data: createdUserB, error: errorUserB } = await serviceClient
+    .from('users')
+    .insert(userB)
+    .select()
+    .single();
+
+  if (errorUserB) throw new Error(`Failed to create User B: ${JSON.stringify(errorUserB)}`);
+
+  testUsers.push(createdUserA.id, createdUserB.id);
 
   // Now create organizations with required fields
   const tenantA = {
     id: uuidv4(),
     name: 'Acme Corp Test',
     slug: `acme-test-${Date.now()}`,
-    owner_id: userAData.id,
+    owner_id: createdUserA.id,
     posts: [],
     comments: [],
     roasts: []
@@ -124,7 +101,7 @@ async function createTestTenants() {
     id: uuidv4(),
     name: 'Beta Inc Test',
     slug: `beta-test-${Date.now()}`,
-    owner_id: userBData.id,
+    owner_id: createdUserB.id,
     posts: [],
     comments: [],
     roasts: []
@@ -161,11 +138,11 @@ async function createTestTenants() {
   testTenants.push(tenantA.id, tenantB.id);
 
   // Map tenants to their owner user IDs for JWT context
-  tenantUsers.set(tenantA.id, userAData.id);
-  tenantUsers.set(tenantB.id, userBData.id);
+  tenantUsers.set(tenantA.id, createdUserA.id);
+  tenantUsers.set(tenantB.id, createdUserB.id);
 
-  console.log(`✅ Tenant A: ${tenantA.id} (owner: ${userAData.id})`);
-  console.log(`✅ Tenant B: ${tenantB.id} (owner: ${userBData.id})`);
+  logger.debug(`✅ Tenant A: ${tenantA.id} (owner: ${createdUserA.id})`);
+  logger.debug(`✅ Tenant B: ${tenantB.id} (owner: ${createdUserB.id})`);
 
   return { tenantA, tenantB };
 }
@@ -174,7 +151,7 @@ async function createTestTenants() {
  * Seeds test data for a tenant
  */
 async function createTestData(tenantId, type = 'all') {
-  console.log(`📊 Creating test data for tenant ${tenantId}...`);
+  logger.debug(`📊 Creating test data for tenant ${tenantId}...`);
 
   const testData = { posts: [], comments: [], roasts: [] };
 
@@ -198,25 +175,14 @@ async function createTestData(tenantId, type = 'all') {
       }
     ];
 
-    const response = await serviceClient
+    const { data, error } = await serviceClient
       .from('posts')
       .insert(posts)
       .select();
 
-    console.log('📦 Posts response:', JSON.stringify(response, null, 2));
-
-    const { data, error } = response;
-
-    if (error) {
-      console.error('❌ Posts error:', JSON.stringify(error, null, 2));
-      throw new Error(`Failed to create posts: ${JSON.stringify(error)}`);
-    }
-    if (!data || data.length === 0) {
-      console.error('❌ No posts data returned, data:', data);
-      throw new Error('Posts created but no data returned');
-    }
+    if (error) throw new Error(`Failed to create posts: ${error.message}`);
     testData.posts = data;
-    console.log(`  ✅ Created ${data.length} posts`);
+    logger.debug(`  ✅ Created ${data.length} posts`);
   }
 
   if ((type === 'comments' || type === 'all') && testData.posts.length > 0) {
@@ -226,30 +192,19 @@ async function createTestData(tenantId, type = 'all') {
       post_id: post.id,
       platform: 'twitter',
       platform_comment_id: `comment_${Date.now()}_${i}`,
-      original_text: `Test comment ${i + 1}`,
+      content: `Test comment ${i + 1}`,
       platform_username: `commenter${i + 1}`,
       toxicity_score: 0.5 + (i * 0.1)
     }));
 
-    const response = await serviceClient
+    const { data, error } = await serviceClient
       .from('comments')
       .insert(comments)
       .select();
 
-    console.log('📦 Comments response:', JSON.stringify(response, null, 2));
-
-    const { data, error } = response;
-
-    if (error) {
-      console.error('❌ Comments error:', JSON.stringify(error, null, 2));
-      throw new Error(`Failed to create comments: ${JSON.stringify(error)}`);
-    }
-    if (!data || data.length === 0) {
-      console.error('❌ No comments data returned');
-      throw new Error('Comments created but no data returned');
-    }
+    if (error) throw new Error(`Failed to create comments: ${error.message}`);
     testData.comments = data;
-    console.log(`  ✅ Created ${data.length} comments`);
+    logger.debug(`  ✅ Created ${data.length} comments`);
   }
 
   if ((type === 'roasts' || type === 'all') && testData.comments.length > 0) {
@@ -271,7 +226,7 @@ async function createTestData(tenantId, type = 'all') {
 
     if (error) throw new Error(`Failed to create roasts: ${error.message}`);
     testData.roasts = data;
-    console.log(`  ✅ Created ${data.length} roasts`);
+    logger.debug(`  ✅ Created ${data.length} roasts`);
   }
 
   return testData;
@@ -281,7 +236,7 @@ async function createTestData(tenantId, type = 'all') {
  * Switches RLS context via JWT
  */
 async function setTenantContext(tenantId) {
-  console.log(`🔄 Switching to tenant: ${tenantId}`);
+  logger.debug(`🔄 Switching to tenant: ${tenantId}`);
 
   // Get tenant owner's user ID
   const userId = tenantUsers.get(tenantId);
@@ -301,30 +256,23 @@ async function setTenantContext(tenantId) {
     { algorithm: 'HS256' }
   );
 
-  const sessionResult = await testClient.auth.setSession({
+  await testClient.auth.setSession({
     access_token: token,
     refresh_token: 'fake-refresh-token'
   });
 
-  console.log(`🔐 Session set result:`, JSON.stringify(sessionResult, null, 2));
-
   currentTenantContext = tenantId;
 
   // Verify
-  const verifyResponse = await testClient
+  const { data } = await testClient
     .from('organizations')
     .select('id')
     .eq('id', tenantId)
     .single();
 
-  console.log(`🔍 Verify response:`, JSON.stringify(verifyResponse, null, 2));
+  if (!data) throw new Error(`Failed to verify context for ${tenantId}`);
 
-  if (!verifyResponse.data) {
-    console.error(`❌ Failed to verify context. UserId: ${userId}, TenantId: ${tenantId}`);
-    throw new Error(`Failed to verify context for ${tenantId}`);
-  }
-
-  console.log(`✅ Context set to: ${tenantId}`);
+  logger.debug(`✅ Context set to: ${tenantId}`);
 }
 
 /**
@@ -339,26 +287,15 @@ function getTenantContext() {
  * Order: roasts → comments → posts → organizations → users
  */
 async function cleanupTestData() {
-  console.log('🧹 Cleaning up...');
+  logger.debug('🧹 Cleaning up...');
 
   if (testTenants.length === 0 && testUsers.length === 0) return;
 
-  // Delete in correct order (foreign key constraints)
   await serviceClient.from('roasts').delete().in('organization_id', testTenants);
   await serviceClient.from('comments').delete().in('organization_id', testTenants);
   await serviceClient.from('posts').delete().in('organization_id', testTenants);
   await serviceClient.from('organizations').delete().in('id', testTenants);
   await serviceClient.from('users').delete().in('id', testUsers);
-
-  // Delete auth users using admin API
-  for (const userId of testUsers) {
-    try {
-      await serviceClient.auth.admin.deleteUser(userId);
-      console.log(`  ✅ Deleted auth user: ${userId}`);
-    } catch (error) {
-      console.log(`  ⚠️  Failed to delete auth user ${userId}: ${error.message}`);
-    }
-  }
 
   testTenants.length = 0;
   testUsers.length = 0;
@@ -366,7 +303,7 @@ async function cleanupTestData() {
   currentTenantContext = null;
   await testClient.auth.signOut();
 
-  console.log('✅ Cleanup complete');
+  logger.debug('✅ Cleanup complete');
 }
 
 module.exports = {

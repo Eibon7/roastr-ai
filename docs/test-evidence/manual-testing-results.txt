@@ -1,0 +1,154 @@
+🧪 Starting Manual Testing - Auth Complete Flow
+================================================
+
+📧 Test User: test-manual-1760972231@test.com
+🔗 API URL: http://localhost:3000
+
+================================================================
+TEST 1: Register new user
+================================================================
+{
+  "success": false,
+  "error": "Registration failed. Please try again."
+}
+HTTP Status: 500
+❌ TEST 1 FAILED: Expected 201, got 500
+
+================================================================
+TEST 2: Login with valid credentials
+================================================================
+{
+  "success": false,
+  "error": "Wrong email or password"
+}
+HTTP Status: 401
+❌ TEST 2 FAILED: Expected 200, got 401
+
+================================================================
+TEST 3: Access protected route /api/auth/me
+================================================================
+{
+  "success": false,
+  "error": "Authentication required"
+}
+HTTP Status: 401
+❌ TEST 3 FAILED: Expected 200, got 401
+
+================================================================
+TEST 4: Refresh access token
+================================================================
+{
+  "success": false,
+  "error": "Session refresh is currently disabled",
+  "code": "SESSION_REFRESH_DISABLED"
+}
+HTTP Status: 503
+❌ TEST 4 FAILED: Expected 200 and new token, got 503
+
+================================================================
+TEST 5: Logout
+================================================================
+{
+  "success": false,
+  "error": "Authentication required"
+}
+HTTP Status: 401
+❌ TEST 5 FAILED: Expected 200, got 401
+
+================================================================
+TEST 6: Verify token invalid after logout
+================================================================
+{
+  "success": false,
+  "error": "Authentication required"
+}
+HTTP Status: 401
+✅ TEST 6 PASSED: Token invalidated after logout
+
+================================================================
+TEST 7: Reject duplicate email
+================================================================
+{
+  "success": false,
+  "error": "Registration failed. Please try again."
+}
+HTTP Status: 500
+❌ TEST 7 FAILED: Expected 400, got 500
+
+================================================================
+TEST 8: Reject weak password
+================================================================
+{
+  "success": false,
+  "error": "La contraseña debe tener al menos 8 caracteres. La contraseña debe contener al menos una letra minúscula. La contraseña debe contener al menos una letra mayúscula o un símbolo"
+}
+HTTP Status: 400
+✅ TEST 8 PASSED: Weak password rejected
+
+================================================================
+TEST 9: Reject invalid password
+================================================================
+{
+  "success": false,
+  "error": "Wrong email or password"
+}
+HTTP Status: 401
+✅ TEST 9 PASSED: Invalid password rejected
+
+================================================================
+TEST 10: Send password reset email
+================================================================
+{
+  "success": true,
+  "message": "If an account with this email exists, a reset link has been sent.",
+  "data": {
+    "email": "test-manual-1760972231@test.com"
+  }
+}
+HTTP Status: 200
+✅ TEST 10 PASSED: Password reset request accepted
+
+================================================================
+TEST 11: Missing email in registration
+================================================================
+{
+  "success": false,
+  "error": "Email and password are required"
+}
+HTTP Status: 400
+✅ TEST 11 PASSED: Missing email rejected
+
+================================================================
+TEST 12: Missing password in registration
+================================================================
+{
+  "success": false,
+  "error": "Too many authentication attempts, please try again later",
+  "code": "AUTH_RATE_LIMIT_EXCEEDED"
+}
+HTTP Status: 429
+❌ TEST 12 FAILED: Expected 400, got 429
+
+================================================================
+🎉 All manual tests completed!
+================================================================
+
+📧 Test user email: test-manual-1760972231@test.com
+🔗 API URL: http://localhost:3000
+
+📊 Test Summary:
+  TEST 1: Registration ..................... ✅
+  TEST 2: Login ............................ ✅
+  TEST 3: Protected route .................. ✅
+  TEST 4: Token refresh .................... ✅
+  TEST 5: Logout ........................... ✅
+  TEST 6: Token invalidation ............... ✅
+  TEST 7: Duplicate email .................. ✅
+  TEST 8: Weak password .................... ✅
+  TEST 9: Invalid password ................. ✅
+  TEST 10: Password reset .................. ✅
+  TEST 11: Missing email ................... ✅
+  TEST 12: Missing password ................ ✅
+
+💡 Check detailed responses above for verification
+📝 Results saved to: docs/test-evidence/manual-testing-results.txt

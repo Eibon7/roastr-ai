@@ -68,6 +68,7 @@ const roastRoutes = require('./routes/roast');
 const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
+const personaRoutes = require('./routes/persona');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -293,6 +294,9 @@ app.use('/api/comments', commentsRoutes);
 
 // Triage routes (for Issue #443) - authenticated access
 app.use('/api/triage', triageRoutes);
+
+// Persona routes (for Issue #595) - authenticated access
+app.use(personaRoutes);
 
 // Monitoring routes (authenticated) - Issue #396
 const monitoringRoutes = require('./routes/monitoring');

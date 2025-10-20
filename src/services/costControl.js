@@ -1,24 +1,24 @@
 const { createClient } = require('@supabase/supabase-js');
 const planLimitsService = require('./planLimitsService');
 const { mockMode } = require('../config/mockMode');
+const logger = require('../utils/logger');
 
 class CostControlService {
   constructor() {
     if (mockMode.isMockMode) {
       this.supabase = mockMode.generateMockSupabaseClient();
     } else {
-      this.supabaseUrl = process.env.SUPABASE_URL;
-      this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-
-      // Fail fast if SERVICE_KEY is missing (required for admin operations)
-      if (!this.supabaseKey) {
-        throw new Error(
-          'SUPABASE_SERVICE_KEY is required for CostControlService. ' +
-          'This service requires admin privileges for usage tracking, billing, and cost control operations. ' +
-          'SUPABASE_ANON_KEY is NOT sufficient and will cause permission errors.'
-        );
+      // CostControlService performs admin operations (usage tracking, billing)
+      // and requires SERVICE_KEY to bypass RLS for multi-tenant data management
+      if (!process.env.SUPABASE_SERVICE_KEY) {
+        throw new Error('SUPABASE_SERVICE_KEY is required for admin operations in CostControlService');
+      }
+      if (!process.env.SUPABASE_URL) {
+        throw new Error('SUPABASE_URL is required for CostControlService');
       }
 
+      this.supabaseUrl = process.env.SUPABASE_URL;
+      this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
       this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
     }
     
@@ -28,6 +28,11 @@ class CostControlService {
         id: 'free',
         name: 'Free',
         features: ['basic_integrations', 'community_support']
+      },
+      starter: {
+        id: 'starter',
+        name: 'Starter',
+        features: ['basic_integrations', 'shield_mode', 'community_support']
       },
       pro: {
         id: 'pro',
@@ -82,17 +87,22 @@ class CostControlService {
         });
       
       if (error) throw error;
-      
+
+      // Guard against null/invalid RPC result (CodeRabbit #3353894295 M1)
+      if (!result || typeof result.allowed !== 'boolean') {
+        throw new Error('Invalid response from can_perform_operation');
+      }
+
       // If operation not allowed, add contextual message
       if (!result.allowed) {
         const resourceName = this.getResourceDisplayName(resourceType);
         result.message = this.buildLimitMessage(result, resourceName);
       }
-      
+
       return result;
       
     } catch (error) {
-      console.error('Error checking operation permission:', error);
+      logger.error('Error checking operation permission:', error);
       throw error;
     }
   }
@@ -125,7 +135,8 @@ class CostControlService {
 
       const currentUsage = monthlyUsage?.total_responses || 0;
       const limit = org.monthly_responses_limit;
-      const percentage = (currentUsage / limit) * 100;
+      // Avoid division by zero (CodeRabbit #3353894295 M2)
+      const percentage = limit > 0 ? (currentUsage / limit) * 100 : 100;
 
       return {
         canUse: currentUsage < limit,
@@ -138,7 +149,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error checking usage limit:', error);
+      logger.error('Error checking usage limit:', error);
       throw error;
     }
   }
@@ -208,7 +219,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error recording usage:', error);
+      logger.error('Error recording usage:', error);
       throw error;
     }
   }
@@ -238,7 +249,7 @@ class CostControlService {
       return usageCheck;
 
     } catch (error) {
-      console.error('Error incrementing usage:', error);
+      logger.error('Error incrementing usage:', error);
       throw error;
     }
   }
@@ -269,9 +280,9 @@ class CostControlService {
       
       // Enhanced logging as per Issue 72 requirements
       const alertMessage = `🚨 Usage Alert: ${Math.round(usageData.percentage || 0)}% of monthly ${resourceType} limit reached (threshold: ${thresholdPercentage}%)`;
-      
-      // Log to console (Issue 72 requirement)
-      console.log(alertMessage, {
+
+      // Log to logger (Issue 72 requirement)
+      logger.info(alertMessage, {
         organizationId,
         organizationName: org.name,
         resourceType,
@@ -318,8 +329,8 @@ class CostControlService {
         timestamp: new Date().toISOString()
       };
 
-      console.log('🚨 Usage Alert Generated:', alertPayload);
-      
+      logger.info('🚨 Usage Alert Generated:', alertPayload);
+
       // TODO: Send email or in-app notification
       // await this.sendEmailAlert(alertPayload);
       // await this.sendWebhookAlert(alertPayload);
@@ -327,7 +338,7 @@ class CostControlService {
       return alertPayload;
 
     } catch (error) {
-      console.error('Error sending usage alert:', error);
+      logger.error('Error sending usage alert:', error);
       throw error;
     }
   }
@@ -427,7 +438,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error getting usage stats:', error);
+      logger.error('Error getting usage stats:', error);
       throw error;
     }
   }
@@ -503,13 +514,13 @@ class CostControlService {
 
         if (insertError) throw insertError;
 
-        console.log(`Created ${defaultAlerts.length} default usage alerts for org ${organizationId}`);
+        logger.info(`Created ${defaultAlerts.length} default usage alerts for org ${organizationId}`);
       }
 
       return defaultAlerts;
 
     } catch (error) {
-      console.error('Error creating default usage alerts:', error);
+      logger.error('Error creating default usage alerts:', error);
       // Don't throw - this is not critical for operation
       return [];
     }
@@ -524,18 +535,19 @@ class CostControlService {
         (usageData.current_usage / usageData.monthly_limit) * 100;
       
       // Get alert configurations for this org and resource
-      const { data: alerts, error } = await this.supabase
+      const { data: _alerts, error } = await this.supabase
         .from('usage_alerts')
         .select('*')
         .eq('organization_id', organizationId)
         .eq('resource_type', resourceType)
         .eq('is_active', true)
         .lte('threshold_percentage', Math.ceil(percentage));
-      
+
       if (error) throw error;
-      
-      // Create default alerts if none exist
-      if (!alerts || alerts.length === 0) {
+
+      // Create default alerts if none exist (CodeRabbit #3353894295 C1)
+      let alerts = _alerts || [];
+      if (alerts.length === 0) {
         await this.createDefaultUsageAlerts(organizationId);
         // Retry getting alerts after creating defaults
         const { data: newAlerts } = await this.supabase
@@ -545,10 +557,8 @@ class CostControlService {
           .eq('resource_type', resourceType)
           .eq('is_active', true)
           .lte('threshold_percentage', Math.ceil(percentage));
-        
-        if (newAlerts && newAlerts.length > 0) {
-          alerts = newAlerts;
-        }
+
+        if (newAlerts && newAlerts.length > 0) alerts = newAlerts;
       }
       
       for (const alert of alerts || []) {
@@ -567,14 +577,14 @@ class CostControlService {
             .from('usage_alerts')
             .update({
               last_sent_at: new Date().toISOString(),
-              sent_count: alert.sent_count + 1
+              sent_count: (alert.sent_count ?? 0) + 1
             })
             .eq('id', alert.id);
         }
       }
       
     } catch (error) {
-      console.error('Error checking usage alerts:', error);
+      logger.error('Error checking usage alerts:', error);
       // Don't throw - alerts are not critical for operation
     }
   }
@@ -722,7 +732,7 @@ class CostControlService {
       };
       
     } catch (error) {
-      console.error('Error getting enhanced usage stats:', error);
+      logger.error('Error getting enhanced usage stats:', error);
       throw error;
     }
   }
@@ -762,7 +772,7 @@ class CostControlService {
       return data;
       
     } catch (error) {
-      console.error('Error setting usage limit:', error);
+      logger.error('Error setting usage limit:', error);
       throw error;
     }
   }
@@ -823,7 +833,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error upgrading plan:', error);
+      logger.error('Error upgrading plan:', error);
       throw error;
     }
   }
@@ -842,8 +852,12 @@ class CostControlService {
       if (error) throw error;
 
       const plan = this.plans[org.plan_id];
+      if (!plan) {
+        throw new Error(`Plan not found for plan_id: ${org.plan_id}`);
+      }
+
       const planLimits = await planLimitsService.getPlanLimits(org.plan_id);
-      
+
       return {
         allowed: planLimits.shieldEnabled,
         planId: org.plan_id,
@@ -851,7 +865,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error checking Shield access:', error);
+      logger.error('Error checking Shield access:', error);
       throw error;
     }
   }
@@ -892,7 +906,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error getting billing summary:', error);
+      logger.error('Error getting billing summary:', error);
       throw error;
     }
   }
@@ -951,7 +965,7 @@ class CostControlService {
       }
       
     } catch (error) {
-      console.error('Error updating plan usage limits:', error);
+      logger.error('Error updating plan usage limits:', error);
       throw error;
     }
   }
@@ -965,9 +979,9 @@ class CostControlService {
         .rpc('reset_monthly_usage');
       
       if (error) throw error;
-      
-      console.log(`Monthly usage reset completed for ${resetCount} organizations`);
-      
+
+      logger.info(`Monthly usage reset completed for ${resetCount} organizations`);
+
       return {
         success: true,
         organizationsReset: resetCount,
@@ -975,7 +989,7 @@ class CostControlService {
       };
       
     } catch (error) {
-      console.error('Error resetting monthly usage:', error);
+      logger.error('Error resetting monthly usage:', error);
       throw error;
     }
   }
@@ -1051,7 +1065,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error getting alert history:', error);
+      logger.error('Error getting alert history:', error);
       throw error;
     }
   }
@@ -1105,7 +1119,7 @@ class CostControlService {
       };
 
     } catch (error) {
-      console.error('Error getting alert stats:', error);
+      logger.error('Error getting alert stats:', error);
       throw error;
     }
   }
