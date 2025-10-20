@@ -18,6 +18,18 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 
 ---
 
+## Estado Actual
+
+**Test Status:** 31/44 tests passing (70%)
+
+**Main Problem Areas:**
+- Order processing: 3 tests failing (priority ordering, concurrent processing not implemented in mock)
+- Error handling: 10 tests failing (retry logic, error classification, batch processing issues)
+
+**Architectural Constraints:** Mock queue implementation does not fully replicate Redis/Upstash behavior for priority ordering and error scenarios. Changes required in test infrastructure only, no production code changes.
+
+---
+
 ## 1. Análisis de Issues Restantes
 
 ### Order-Processing Tests (3 tests - 2-3 horas)
