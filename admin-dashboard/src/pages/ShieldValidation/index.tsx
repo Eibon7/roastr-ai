@@ -32,6 +32,15 @@ import {
   Timeline as TimelineIcon
 } from '@mui/icons-material';
 
+/**
+ * Test case definition for Shield validation.
+ *
+ * Represents a single test scenario in the Shield validation suite,
+ * including input parameters (toxicity, user risk), expected behavior,
+ * actual results, and execution metadata.
+ *
+ * @interface TestCase
+ */
 interface TestCase {
   id: string;
   description: string;
@@ -44,6 +53,14 @@ interface TestCase {
   error?: string;
 }
 
+/**
+ * State container for Shield validation test execution.
+ *
+ * Tracks the overall validation run state including progress,
+ * timing, results aggregation, and all test case instances.
+ *
+ * @interface ValidationState
+ */
 interface ValidationState {
   isRunning: boolean;
   currentTest: number;
@@ -56,6 +73,17 @@ interface ValidationState {
   testCases: TestCase[];
 }
 
+/**
+ * Decision matrix test scenarios.
+ *
+ * Core test cases validating Shield's decision matrix logic:
+ * toxicity level + user risk level → moderation action.
+ * Covers all combinations of toxicity thresholds (critical, high, medium, low)
+ * and user risk levels (low, medium, high).
+ *
+ * @constant
+ * @type {TestCase[]}
+ */
 const DECISION_MATRIX_TESTS: TestCase[] = [
   {
     id: 'DM-01',
@@ -131,6 +159,20 @@ const DECISION_MATRIX_TESTS: TestCase[] = [
   }
 ];
 
+/**
+ * Edge case test scenarios.
+ *
+ * Advanced test cases validating Shield's behavior in exceptional situations:
+ * - Platform API timeouts
+ * - Duplicate comment handling (idempotency)
+ * - Queue priority verification
+ * - Database failure resilience
+ * - Escalation thresholds
+ * - Multi-platform independence
+ *
+ * @constant
+ * @type {TestCase[]}
+ */
 const EDGE_CASE_TESTS: TestCase[] = [
   {
     id: 'EDGE-01',
@@ -182,6 +224,33 @@ const EDGE_CASE_TESTS: TestCase[] = [
   }
 ];
 
+/**
+ * Shield Validation Dashboard component.
+ *
+ * Admin page for executing and monitoring Shield automated moderation flow validation.
+ * Provides:
+ * - Test suite execution interface (15 test cases total)
+ * - Real-time progress tracking and results display
+ * - Performance metrics (execution time per test, total time)
+ * - Pass/Fail/Warning status for each test
+ * - Test filtering (Decision Matrix, Edge Cases, All)
+ * - Evidence links to validation logs
+ *
+ * Executes simulated test scenarios against Shield decision logic and validates:
+ * - Decision matrix correctness (toxicity + user risk → action)
+ * - Edge case handling (timeouts, idempotency, failures)
+ * - Performance requirements (<3s per test)
+ * - System integration (queue, database, logging)
+ *
+ * Results are displayed in real-time as tests execute.
+ *
+ * @component
+ * @returns {JSX.Element} Shield Validation Dashboard UI
+ *
+ * @example
+ * // Route configuration
+ * <Route path="/shield/validation" element={<ShieldValidation />} />
+ */
 export default function ShieldValidation() {
   const [state, setState] = useState<ValidationState>({
     isRunning: false,

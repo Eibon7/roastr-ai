@@ -18,6 +18,14 @@ import {
 } from '@mui/material';
 import { Security, Settings, Save, Refresh } from '@mui/icons-material';
 
+/**
+ * Shield Settings configuration interface.
+ *
+ * Defines the structure for Shield automated moderation configuration including
+ * global settings, toxicity thresholds, and platform-specific overrides.
+ *
+ * @interface ShieldSettings
+ */
 interface ShieldSettings {
   enabled: boolean;
   autoActions: boolean;
@@ -41,6 +49,15 @@ interface ShieldSettings {
   };
 }
 
+/**
+ * Supported social media platforms for Shield moderation.
+ *
+ * Each platform includes an ID (used internally), display name, and brand color
+ * for UI rendering.
+ *
+ * @constant
+ * @type {Array<{id: string, name: string, color: string}>}
+ */
 const PLATFORMS = [
   { id: 'twitter', name: 'Twitter/X', color: '#1DA1F2' },
   { id: 'youtube', name: 'YouTube', color: '#FF0000' },
@@ -53,6 +70,19 @@ const PLATFORMS = [
   { id: 'bluesky', name: 'Bluesky', color: '#0085FF' }
 ];
 
+/**
+ * Default Shield configuration settings.
+ *
+ * Applied when no saved settings exist or after reset operation. Includes:
+ * - Shield enabled globally
+ * - Manual action approval (autoActions: false)
+ * - 2-offense reincidence threshold
+ * - Industry-standard toxicity thresholds
+ * - All platforms enabled with global thresholds
+ *
+ * @constant
+ * @type {ShieldSettings}
+ */
 const DEFAULT_SETTINGS: ShieldSettings = {
   enabled: true,
   autoActions: false,
@@ -69,6 +99,26 @@ const DEFAULT_SETTINGS: ShieldSettings = {
   }), {})
 };
 
+/**
+ * Shield Settings page component.
+ *
+ * Admin dashboard page for configuring Shield automated moderation system.
+ * Allows administrators to:
+ * - Enable/disable Shield globally and per-platform
+ * - Configure toxicity thresholds (Critical, High, Moderate, Corrective)
+ * - Set auto-execution preferences
+ * - Adjust reincidence thresholds
+ * - Apply platform-specific overrides
+ *
+ * Settings are persisted via API (or localStorage in demo mode).
+ *
+ * @component
+ * @returns {JSX.Element} Shield Settings dashboard UI
+ *
+ * @example
+ * // Route configuration
+ * <Route path="/shield/settings" element={<ShieldSettings />} />
+ */
 export default function ShieldSettings() {
   const [settings, setSettings] = useState<ShieldSettings>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
@@ -79,6 +129,17 @@ export default function ShieldSettings() {
     loadSettings();
   }, []);
 
+  /**
+   * Loads Shield settings from backend API.
+   *
+   * In production, fetches from /api/shield/settings endpoint.
+   * In demo mode, loads from localStorage for persistence across sessions.
+   *
+   * @async
+   * @function loadSettings
+   * @returns {Promise<void>}
+   * @throws {Error} If API call fails (error is logged but not re-thrown)
+   */
   const loadSettings = async () => {
     setLoading(true);
     try {
@@ -99,6 +160,17 @@ export default function ShieldSettings() {
     }
   };
 
+  /**
+   * Saves current Shield settings to backend API.
+   *
+   * In production, sends PUT request to /api/shield/settings with current settings.
+   * In demo mode, persists to localStorage. Shows success alert for 3 seconds after save.
+   *
+   * @async
+   * @function handleSave
+   * @returns {Promise<void>}
+   * @throws {Error} If API call fails (error is logged but not re-thrown)
+   */
   const handleSave = async () => {
     setLoading(true);
     setSaved(false);
@@ -121,10 +193,33 @@ export default function ShieldSettings() {
     }
   };
 
+  /**
+   * Resets Shield settings to default values.
+   *
+   * Discards all custom configuration and reverts to DEFAULT_SETTINGS.
+   * Does not persist changes until user explicitly saves.
+   *
+   * @function handleReset
+   * @returns {void}
+   */
   const handleReset = () => {
     setSettings(DEFAULT_SETTINGS);
   };
 
+  /**
+   * Updates a specific toxicity threshold value.
+   *
+   * Modifies one of the four global toxicity thresholds (critical, high, moderate, corrective)
+   * while preserving other settings. Changes are not persisted until user saves.
+   *
+   * @function updateThreshold
+   * @param {keyof typeof settings.thresholds} key - Threshold level to update
+   * @param {number} value - New threshold value (0.00-1.00)
+   * @returns {void}
+   *
+   * @example
+   * updateThreshold('critical', 0.98);  // Set critical threshold to 0.98
+   */
   const updateThreshold = (key: keyof typeof settings.thresholds, value: number) => {
     setSettings({
       ...settings,
@@ -135,6 +230,22 @@ export default function ShieldSettings() {
     });
   };
 
+  /**
+   * Updates platform-specific Shield configuration.
+   *
+   * Modifies settings for a specific social media platform (enabled status,
+   * custom thresholds, etc.) while preserving other platform settings.
+   * Changes are not persisted until user saves.
+   *
+   * @function updatePlatform
+   * @param {string} platformId - Platform identifier (e.g., 'twitter', 'youtube')
+   * @param {Partial<typeof settings.platforms[string]>} updates - Partial settings to update
+   * @returns {void}
+   *
+   * @example
+   * updatePlatform('twitter', { enabled: false });  // Disable Shield for Twitter
+   * updatePlatform('discord', { customThresholds: true });  // Enable custom thresholds for Discord
+   */
   const updatePlatform = (platformId: string, updates: Partial<typeof settings.platforms[string]>) => {
     setSettings({
       ...settings,
