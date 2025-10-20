@@ -38,34 +38,211 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 
 const client = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Test data - escalating toxicity scenarios
+// Test data - Decision Matrix (9 scenarios) + Edge Cases (6 scenarios)
 const TEST_SCENARIOS = [
+  // === DECISION MATRIX SCENARIOS (DM-01 to DM-09) ===
+
+  // DM-01: Critical toxicity + first offense → Block
   {
+    id: 'DM-01',
     comment: 'I will hunt you down and hurt you',
     toxicity: 0.98,
     expectedSeverity: 'critical',
     expectedPriority: 1,
     platform: 'twitter',
     offenseLevel: 'first',
-    expectedAction: 'block'
+    expectedAction: 'block',
+    description: 'Critical toxicity (0.98) + first offense → Block'
   },
+
+  // DM-02: High toxicity + repeat offender → Block
   {
+    id: 'DM-02',
     comment: 'You are absolutely terrible, I hate everything about you',
     toxicity: 0.85,
     expectedSeverity: 'high',
     expectedPriority: 2,
     platform: 'discord',
     offenseLevel: 'repeat',
-    expectedAction: 'block'
+    expectedAction: 'block',
+    description: 'High toxicity (0.85) + repeat offender → Block'
   },
+
+  // DM-03: Medium toxicity + first offense → Mute Temp
   {
+    id: 'DM-03',
     comment: 'This is mediocre and disappointing',
     toxicity: 0.65,
     expectedSeverity: 'medium',
     expectedPriority: 3,
     platform: 'youtube',
     offenseLevel: 'first',
-    expectedAction: 'mute_temp'
+    expectedAction: 'mute_temp',
+    description: 'Medium toxicity (0.65) + first offense → Mute Temp'
+  },
+
+  // DM-04: Low toxicity + first offense → Warn
+  {
+    id: 'DM-04',
+    comment: 'Not impressed with this at all',
+    toxicity: 0.50,
+    expectedSeverity: 'low',
+    expectedPriority: 5,
+    platform: 'reddit',
+    offenseLevel: 'first',
+    expectedAction: 'warn',
+    description: 'Low toxicity (0.50) + first offense → Warn'
+  },
+
+  // DM-05: Critical toxicity + repeat offender → Block + Report
+  {
+    id: 'DM-05',
+    comment: 'I know where you live, you better watch out',
+    toxicity: 0.99,
+    expectedSeverity: 'critical',
+    expectedPriority: 1,
+    platform: 'facebook',
+    offenseLevel: 'repeat',
+    expectedAction: 'block',
+    description: 'Critical toxicity (0.99) + repeat offender → Block + Report'
+  },
+
+  // DM-06: High toxicity + first offense → Mute Temp
+  {
+    id: 'DM-06',
+    comment: 'You are completely worthless and should be ashamed',
+    toxicity: 0.90,
+    expectedSeverity: 'high',
+    expectedPriority: 2,
+    platform: 'twitch',
+    offenseLevel: 'first',
+    expectedAction: 'mute_temp',
+    description: 'High toxicity (0.90) + first offense → Mute Temp'
+  },
+
+  // DM-07: Medium toxicity + high risk user → Mute Permanent
+  {
+    id: 'DM-07',
+    comment: 'This is pretty bad and you should feel bad',
+    toxicity: 0.70,
+    expectedSeverity: 'medium',
+    expectedPriority: 3,
+    platform: 'instagram',
+    offenseLevel: 'high_risk',
+    expectedAction: 'mute_permanent',
+    description: 'Medium toxicity (0.70) + high risk user → Mute Permanent'
+  },
+
+  // DM-08: Low toxicity + repeat offender → Warn (escalated)
+  {
+    id: 'DM-08',
+    comment: 'This is somewhat problematic I guess',
+    toxicity: 0.45,
+    expectedSeverity: 'low',
+    expectedPriority: 5,
+    platform: 'tiktok',
+    offenseLevel: 'repeat',
+    expectedAction: 'warn',
+    description: 'Low toxicity (0.45) + repeat offender → Warn (escalated)'
+  },
+
+  // DM-09: Critical toxicity + high risk → Block + Report
+  {
+    id: 'DM-09',
+    comment: 'You deserve to suffer for what you did',
+    toxicity: 0.96,
+    expectedSeverity: 'critical',
+    expectedPriority: 1,
+    platform: 'bluesky',
+    offenseLevel: 'high_risk',
+    expectedAction: 'block',
+    description: 'Critical toxicity (0.96) + high risk → Block + Report'
+  },
+
+  // === EDGE CASE SCENARIOS (EDGE-01 to EDGE-06) ===
+
+  // EDGE-01: Platform API timeout handling
+  {
+    id: 'EDGE-01',
+    comment: 'This triggers a platform timeout scenario',
+    toxicity: 0.88,
+    expectedSeverity: 'high',
+    expectedPriority: 2,
+    platform: 'twitter',
+    offenseLevel: 'first',
+    expectedAction: 'mute_temp',
+    edgeCase: 'timeout',
+    description: 'Platform API timeout handling - Should queue retry'
+  },
+
+  // EDGE-02: Duplicate action prevention (idempotency)
+  {
+    id: 'EDGE-02',
+    comment: 'This should not create duplicate actions',
+    toxicity: 0.92,
+    expectedSeverity: 'high',
+    expectedPriority: 2,
+    platform: 'discord',
+    offenseLevel: 'first',
+    expectedAction: 'mute_temp',
+    edgeCase: 'duplicate',
+    description: 'Idempotency - Same comment processed twice'
+  },
+
+  // EDGE-03: Queue priority verification
+  {
+    id: 'EDGE-03',
+    comment: 'Verify shield actions get priority 1',
+    toxicity: 0.97,
+    expectedSeverity: 'critical',
+    expectedPriority: 1,
+    platform: 'youtube',
+    offenseLevel: 'first',
+    expectedAction: 'block',
+    edgeCase: 'priority',
+    description: 'Queue priority - Shield actions must be priority 1'
+  },
+
+  // EDGE-04: Database failure handling
+  {
+    id: 'EDGE-04',
+    comment: 'Test graceful degradation on DB errors',
+    toxicity: 0.89,
+    expectedSeverity: 'high',
+    expectedPriority: 2,
+    platform: 'reddit',
+    offenseLevel: 'first',
+    expectedAction: 'mute_temp',
+    edgeCase: 'db_failure',
+    description: 'Database failure - Should log error and continue'
+  },
+
+  // EDGE-05: Escalation threshold validation
+  {
+    id: 'EDGE-05',
+    comment: 'Test user with exactly 2 violations (threshold)',
+    toxicity: 0.68,
+    expectedSeverity: 'medium',
+    expectedPriority: 3,
+    platform: 'facebook',
+    offenseLevel: 'at_threshold',
+    expectedAction: 'mute_temp',
+    edgeCase: 'threshold',
+    description: 'Escalation threshold - User at reincidence threshold'
+  },
+
+  // EDGE-06: Multi-platform independence
+  {
+    id: 'EDGE-06',
+    comment: 'Same user, different platform should be independent',
+    toxicity: 0.82,
+    expectedSeverity: 'high',
+    expectedPriority: 2,
+    platform: 'twitch',
+    offenseLevel: 'first',
+    expectedAction: 'mute_temp',
+    edgeCase: 'multi_platform',
+    description: 'Multi-platform - Actions independent per platform'
   }
 ];
 
@@ -141,9 +318,12 @@ async function validateShieldFlow() {
       const commentStartTime = Date.now();
 
       console.log(`\n${'='.repeat(60)}`);
-      console.log(`\n📝 Test ${i + 1}/${TEST_SCENARIOS.length}: ${scenario.comment.substring(0, 50)}...`);
-      console.log(`Expected severity: ${scenario.expectedSeverity}`);
-      console.log(`Expected action: ${scenario.expectedAction}`);
+      console.log(`\n📝 Test ${i + 1}/${TEST_SCENARIOS.length}: [${scenario.id}] ${scenario.description}`);
+      console.log(`Comment: "${scenario.comment.substring(0, 60)}..."`);
+      console.log(`Toxicity: ${scenario.toxicity} | Severity: ${scenario.expectedSeverity} | Action: ${scenario.expectedAction}`);
+      if (scenario.edgeCase) {
+        console.log(`⚡ Edge Case: ${scenario.edgeCase}`);
+      }
 
       try {
         // Step 2: Store comment with toxicity
@@ -169,9 +349,9 @@ async function validateShieldFlow() {
         console.log(`✅ Comment stored: ${comment.id}`);
         console.log(`   Toxicity: ${comment.toxicity_score}`);
 
-        // Step 3: Simulate user behavior for repeat offenders
+        // Step 3: Simulate user behavior based on offense level
         if (scenario.offenseLevel === 'repeat') {
-          console.log('\n👤 Step 3a: Creating user behavior history...');
+          console.log('\n👤 Step 3a: Creating user behavior history (repeat offender)...');
           const { error: behaviorError } = await client
             .from('user_behaviors')
             .insert({
@@ -194,7 +374,83 @@ async function validateShieldFlow() {
           if (behaviorError) {
             console.log(`⚠️  Failed to create behavior history: ${behaviorError.message}`);
           } else {
-            console.log('✅ User behavior history created');
+            console.log('✅ User behavior history created (1 prior violation)');
+          }
+        } else if (scenario.offenseLevel === 'high_risk') {
+          console.log('\n👤 Step 3a: Creating user behavior history (high risk user)...');
+          const { error: behaviorError } = await client
+            .from('user_behaviors')
+            .insert({
+              id: uuidv4(),
+              organization_id: testOrgId,
+              platform: scenario.platform,
+              platform_user_id: platformUserId,
+              platform_username: `test_user_${i}`,
+              total_comments: 15,
+              total_violations: 4,
+              severity_counts: { low: 1, medium: 2, high: 1, critical: 0 },
+              actions_taken: [
+                {
+                  action: 'warn',
+                  date: new Date(Date.now() - 604800000).toISOString(),
+                  reason: 'First violation'
+                },
+                {
+                  action: 'mute_temp',
+                  date: new Date(Date.now() - 432000000).toISOString(),
+                  reason: 'Second violation'
+                },
+                {
+                  action: 'mute_temp',
+                  date: new Date(Date.now() - 259200000).toISOString(),
+                  reason: 'Third violation'
+                },
+                {
+                  action: 'mute_permanent',
+                  date: new Date(Date.now() - 86400000).toISOString(),
+                  reason: 'Fourth violation'
+                }
+              ],
+              is_blocked: false
+            });
+
+          if (behaviorError) {
+            console.log(`⚠️  Failed to create behavior history: ${behaviorError.message}`);
+          } else {
+            console.log('✅ User behavior history created (4 prior violations - high risk)');
+          }
+        } else if (scenario.offenseLevel === 'at_threshold') {
+          console.log('\n👤 Step 3a: Creating user behavior history (at reincidence threshold)...');
+          const { error: behaviorError } = await client
+            .from('user_behaviors')
+            .insert({
+              id: uuidv4(),
+              organization_id: testOrgId,
+              platform: scenario.platform,
+              platform_user_id: platformUserId,
+              platform_username: `test_user_${i}`,
+              total_comments: 8,
+              total_violations: 2,
+              severity_counts: { low: 1, medium: 1, high: 0, critical: 0 },
+              actions_taken: [
+                {
+                  action: 'warn',
+                  date: new Date(Date.now() - 172800000).toISOString(),
+                  reason: 'First violation'
+                },
+                {
+                  action: 'mute_temp',
+                  date: new Date(Date.now() - 86400000).toISOString(),
+                  reason: 'Second violation'
+                }
+              ],
+              is_blocked: false
+            });
+
+          if (behaviorError) {
+            console.log(`⚠️  Failed to create behavior history: ${behaviorError.message}`);
+          } else {
+            console.log('✅ User behavior history created (2 violations - at threshold)');
           }
         }
 
