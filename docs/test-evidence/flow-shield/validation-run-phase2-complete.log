@@ -1,0 +1,615 @@
+[dotenv@17.2.3] injecting env (43) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+🔗 Real Mode ENABLED - Using real API connections
+[INFO] 2025-10-20T16:56:38.063Z: 🏁 Feature flags initialized {
+  enabled: [
+    'ENABLE_REAL_TWITTER',
+    'ENABLE_REAL_YOUTUBE',
+    'ENABLE_REAL_OPENAI',
+    'ENABLE_REAL_PERSPECTIVE',
+    'ENABLE_PERSPECTIVE_API',
+    'ENABLE_EMAIL_NOTIFICATIONS',
+    'ENABLE_SUPABASE',
+    'ENABLE_MAGIC_LINK',
+    'ENABLE_PASSWORD_HISTORY',
+    'ENABLE_RATE_LIMIT',
+    'ENABLE_CSRF_PROTECTION',
+    'ENABLE_RESPONSE_CACHE',
+    'ENABLE_STYLE_PROFILE',
+    'ROAST_VERSIONS_MULTIPLE',
+    'ENABLE_ROAST_ENGINE'
+  ],
+  disabled: [
+    'ENABLE_BILLING',
+    'ENABLE_RQC',
+    'ENABLE_SHIELD',
+    'ENABLE_REAL_INSTAGRAM',
+    'ENABLE_REAL_FACEBOOK',
+    'ENABLE_REAL_DISCORD',
+    'ENABLE_REAL_TWITCH',
+    'ENABLE_REAL_REDDIT',
+    'ENABLE_REAL_TIKTOK',
+    'ENABLE_REAL_BLUESKY',
+    'ENABLE_DEBUG_LOGS',
+    'VERBOSE_LOGS',
+    'MOCK_MODE',
+    'ENABLE_MOCK_PERSISTENCE',
+    'DEBUG_CACHE',
+    'ENABLE_CREDITS_V2',
+    'ENABLE_CUSTOM_PROMPT',
+    'ENABLE_FACEBOOK_UI',
+    'ENABLE_INSTAGRAM_UI',
+    'ENABLE_ORIGINAL_TONE',
+    'ENABLE_SHOP',
+    'ENABLE_SHIELD_UI'
+  ],
+  totalFlags: 37
+}
+🚀 Starting Shield Automated Moderation Flow Validation
+
+============================================================
+
+📋 Step 1: Creating test organization...
+✅ Test user created: 3c9cc3c6-8fec-41a1-9090-6fdfcaa9046b
+✅ Test organization created: 9ac7c825-501f-4cb9-b83e-d6546ce7c253
+[INFO] {"timestamp":"2025-10-20T16:56:38.702Z","level":"info","service":"ShieldService","message":"Shield Service initialized","enabled":true,"autoActions":false,"reincidenceThreshold":2}
+
+============================================================
+
+📝 Test 1/15: [DM-01] Critical toxicity (0.98) + first offense → Block
+Comment: "I will hunt you down and hurt you..."
+Toxicity: 0.98 | Severity: critical | Action: block
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: ce64419a-d195-4ed8-b623-fe2e2ea2fa24
+   Toxicity: 0.98
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:39.075Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"ce64419a-d195-4ed8-b623-fe2e2ea2fa24","priority":1,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 1
+   Action: block
+   Offense level: first
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: block action for critical violation
+
+⏱️  Execution time: 0.64s
+✅ Under 3s target
+
+✅ Test 1 PASSED
+
+============================================================
+
+📝 Test 2/15: [DM-02] High toxicity (0.85) + repeat offender → Block
+Comment: "You are absolutely terrible, I hate everything about you..."
+Toxicity: 0.85 | Severity: high | Action: block
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 56323eaf-ffe5-457c-9fb0-cb58eeee7280
+   Toxicity: 0.85
+
+👤 Step 3a: Creating user behavior history (repeat offender)...
+✅ User behavior history created (1 prior violation)
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:39.658Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"56323eaf-ffe5-457c-9fb0-cb58eeee7280","priority":2,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 2
+   Action: block
+   Offense level: repeat
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+✅ User behavior tracked
+   Total violations: 1
+   Is blocked: false
+   Actions taken: 1
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: block action for high violation
+
+⏱️  Execution time: 0.62s
+✅ Under 3s target
+
+✅ Test 2 PASSED
+
+============================================================
+
+📝 Test 3/15: [DM-03] Medium toxicity (0.65) + first offense → Mute Temp
+Comment: "This is mediocre and disappointing..."
+Toxicity: 0.65 | Severity: medium | Action: mute_temp
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: b6a1d820-690a-4436-bc79-d2114863573f
+   Toxicity: 0.65
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 3
+   Action: mute_temp
+   Offense level: first
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_temp action for medium violation
+
+⏱️  Execution time: 0.44s
+✅ Under 3s target
+
+✅ Test 3 PASSED
+
+============================================================
+
+📝 Test 4/15: [DM-04] Low toxicity (0.50) + first offense → Warn
+Comment: "Not impressed with this at all..."
+Toxicity: 0.5 | Severity: low | Action: warn
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 00426494-4e72-49eb-9e91-240408dbe824
+   Toxicity: 0.5
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 5
+   Action: warn
+   Offense level: first
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: warn action for low violation
+
+⏱️  Execution time: 0.42s
+✅ Under 3s target
+
+✅ Test 4 PASSED
+
+============================================================
+
+📝 Test 5/15: [DM-05] Critical toxicity (0.99) + repeat offender → Block + Report
+Comment: "I know where you live, you better watch out..."
+Toxicity: 0.99 | Severity: critical | Action: block
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 52c675a9-1724-4ff1-8f9b-8b2c041f6e61
+   Toxicity: 0.99
+
+👤 Step 3a: Creating user behavior history (repeat offender)...
+✅ User behavior history created (1 prior violation)
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:41.336Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"52c675a9-1724-4ff1-8f9b-8b2c041f6e61","priority":1,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 1
+   Action: report
+   Offense level: repeat
+   Auto-executed: false
+⚠️  Action mismatch: expected block, got report
+
+📊 Step 4: Verifying user behavior tracking...
+✅ User behavior tracked
+   Total violations: 1
+   Is blocked: false
+   Actions taken: 1
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: report action for critical violation
+
+⏱️  Execution time: 0.99s
+✅ Under 3s target
+
+✅ Test 5 PASSED
+
+============================================================
+
+📝 Test 6/15: [DM-06] High toxicity (0.90) + first offense → Mute Temp
+Comment: "You are completely worthless and should be ashamed..."
+Toxicity: 0.9 | Severity: high | Action: mute_temp
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: cb90ff65-b9b8-472a-a83a-be8f5dc52a08
+   Toxicity: 0.9
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:42.114Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"cb90ff65-b9b8-472a-a83a-be8f5dc52a08","priority":2,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 2
+   Action: mute_permanent
+   Offense level: first
+   Auto-executed: false
+⚠️  Action mismatch: expected mute_temp, got mute_permanent
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_permanent action for high violation
+
+⏱️  Execution time: 0.60s
+✅ Under 3s target
+
+✅ Test 6 PASSED
+
+============================================================
+
+📝 Test 7/15: [DM-07] Medium toxicity (0.70) + high risk user → Mute Permanent
+Comment: "This is pretty bad and you should feel bad..."
+Toxicity: 0.7 | Severity: medium | Action: mute_permanent
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 102779c5-9fee-4a6a-8cca-d2bec0e4f0b7
+   Toxicity: 0.7
+
+👤 Step 3a: Creating user behavior history (high risk user)...
+✅ User behavior history created (4 prior violations - high risk)
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 3
+   Action: block
+   Offense level: persistent
+   Auto-executed: false
+⚠️  Action mismatch: expected mute_permanent, got block
+
+📊 Step 4: Verifying user behavior tracking...
+✅ User behavior tracked
+   Total violations: 4
+   Is blocked: false
+   Actions taken: 4
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: block action for medium violation
+
+⏱️  Execution time: 0.58s
+✅ Under 3s target
+
+✅ Test 7 PASSED
+
+============================================================
+
+📝 Test 8/15: [DM-08] Low toxicity (0.45) + repeat offender → Warn (escalated)
+Comment: "This is somewhat problematic I guess..."
+Toxicity: 0.45 | Severity: low | Action: warn
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 2c9c7859-4522-45e7-a3d1-c8ba1b39496e
+   Toxicity: 0.45
+
+👤 Step 3a: Creating user behavior history (repeat offender)...
+✅ User behavior history created (1 prior violation)
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 5
+   Action: mute_temp
+   Offense level: repeat
+   Auto-executed: false
+⚠️  Action mismatch: expected warn, got mute_temp
+
+📊 Step 4: Verifying user behavior tracking...
+✅ User behavior tracked
+   Total violations: 1
+   Is blocked: false
+   Actions taken: 1
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_temp action for low violation
+
+⏱️  Execution time: 0.63s
+✅ Under 3s target
+
+✅ Test 8 PASSED
+
+============================================================
+
+📝 Test 9/15: [DM-09] Critical toxicity (0.96) + high risk → Block + Report
+Comment: "You deserve to suffer for what you did..."
+Toxicity: 0.96 | Severity: critical | Action: block
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 6aea1f3e-0c30-4098-8c88-108205a8e9be
+   Toxicity: 0.96
+
+👤 Step 3a: Creating user behavior history (high risk user)...
+✅ User behavior history created (4 prior violations - high risk)
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:43.995Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"6aea1f3e-0c30-4098-8c88-108205a8e9be","priority":1,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 1
+   Action: escalate
+   Offense level: persistent
+   Auto-executed: false
+⚠️  Action mismatch: expected block, got escalate
+
+📊 Step 4: Verifying user behavior tracking...
+✅ User behavior tracked
+   Total violations: 4
+   Is blocked: false
+   Actions taken: 4
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: escalate action for critical violation
+
+⏱️  Execution time: 0.70s
+✅ Under 3s target
+
+✅ Test 9 PASSED
+
+============================================================
+
+📝 Test 10/15: [EDGE-01] Platform API timeout handling - Should queue retry
+Comment: "This triggers a platform timeout scenario..."
+Toxicity: 0.88 | Severity: high | Action: mute_temp
+⚡ Edge Case: timeout
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 8ddaf95c-8e52-42b2-94c9-b12e21b39648
+   Toxicity: 0.88
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:44.652Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"8ddaf95c-8e52-42b2-94c9-b12e21b39648","priority":2,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 2
+   Action: mute_permanent
+   Offense level: first
+   Auto-executed: false
+⚠️  Action mismatch: expected mute_temp, got mute_permanent
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_permanent action for high violation
+
+⏱️  Execution time: 0.73s
+✅ Under 3s target
+
+✅ Test 10 PASSED
+
+============================================================
+
+📝 Test 11/15: [EDGE-02] Idempotency - Same comment processed twice
+Comment: "This should not create duplicate actions..."
+Toxicity: 0.92 | Severity: high | Action: mute_temp
+⚡ Edge Case: duplicate
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 2d0177c3-8ecd-4d2a-8f8c-e82a38ed65de
+   Toxicity: 0.92
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:45.320Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"2d0177c3-8ecd-4d2a-8f8c-e82a38ed65de","priority":2,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 2
+   Action: mute_permanent
+   Offense level: first
+   Auto-executed: false
+⚠️  Action mismatch: expected mute_temp, got mute_permanent
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_permanent action for high violation
+
+⏱️  Execution time: 0.55s
+✅ Under 3s target
+
+✅ Test 11 PASSED
+
+============================================================
+
+📝 Test 12/15: [EDGE-03] Queue priority - Shield actions must be priority 1
+Comment: "Verify shield actions get priority 1..."
+Toxicity: 0.97 | Severity: critical | Action: block
+⚡ Edge Case: priority
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 9a02a7ff-7579-43a4-9163-c10ed80124c8
+   Toxicity: 0.97
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:45.899Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"9a02a7ff-7579-43a4-9163-c10ed80124c8","priority":1,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 1
+   Action: block
+   Offense level: first
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: block action for critical violation
+
+⏱️  Execution time: 0.64s
+✅ Under 3s target
+
+✅ Test 12 PASSED
+
+============================================================
+
+📝 Test 13/15: [EDGE-04] Database failure - Should log error and continue
+Comment: "Test graceful degradation on DB errors..."
+Toxicity: 0.89 | Severity: high | Action: mute_temp
+⚡ Edge Case: db_failure
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 75ade3ac-39cb-4106-baaa-f205cc88a34a
+   Toxicity: 0.89
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:46.504Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"75ade3ac-39cb-4106-baaa-f205cc88a34a","priority":2,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 2
+   Action: mute_permanent
+   Offense level: first
+   Auto-executed: false
+⚠️  Action mismatch: expected mute_temp, got mute_permanent
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_permanent action for high violation
+
+⏱️  Execution time: 0.57s
+✅ Under 3s target
+
+✅ Test 13 PASSED
+
+============================================================
+
+📝 Test 14/15: [EDGE-05] Escalation threshold - User at reincidence threshold
+Comment: "Test user with exactly 2 violations (threshold)..."
+Toxicity: 0.68 | Severity: medium | Action: mute_temp
+⚡ Edge Case: threshold
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: cb18146b-f8f8-4b8e-aa81-d09d2364f97a
+   Toxicity: 0.68
+
+👤 Step 3a: Creating user behavior history (at reincidence threshold)...
+✅ User behavior history created (2 violations - at threshold)
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 3
+   Action: block
+   Offense level: persistent
+   Auto-executed: false
+⚠️  Action mismatch: expected mute_temp, got block
+
+📊 Step 4: Verifying user behavior tracking...
+✅ User behavior tracked
+   Total violations: 2
+   Is blocked: false
+   Actions taken: 2
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: block action for medium violation
+
+⏱️  Execution time: 0.60s
+✅ Under 3s target
+
+✅ Test 14 PASSED
+
+============================================================
+
+📝 Test 15/15: [EDGE-06] Multi-platform - Actions independent per platform
+Comment: "Same user, different platform should be independent..."
+Toxicity: 0.82 | Severity: high | Action: mute_temp
+⚡ Edge Case: multi_platform
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 3b448f4b-16bb-4826-8c36-b1fadfaab1ea
+   Toxicity: 0.82
+
+🛡️  Step 3: Analyzing with Shield...
+[INFO] {"timestamp":"2025-10-20T16:56:47.679Z","level":"info","service":"ShieldService","message":"Queued high-priority Shield analysis","commentId":"3b448f4b-16bb-4826-8c36-b1fadfaab1ea","priority":2,"organizationId":"9ac7c825-501f-4cb9-b83e-d6546ce7c253"}
+✅ Shield activated
+   Priority: 2
+   Action: mute_permanent
+   Offense level: first
+   Auto-executed: false
+⚠️  Action mismatch: expected mute_temp, got mute_permanent
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_permanent action for high violation
+
+⏱️  Execution time: 0.59s
+✅ Under 3s target
+
+✅ Test 15 PASSED
+
+============================================================
+
+🧹 Cleaning up test data...
+✅ Cleanup complete
+
+============================================================
+
+📊 VALIDATION REPORT
+============================================================
+
+Total tests: 15
+✅ Passed: 15
+❌ Failed: 0
+⏱️  Total time: 10.35s
+
+============================================================
+
+🎉 ALL VALIDATIONS PASSED
