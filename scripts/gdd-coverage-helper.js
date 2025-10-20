@@ -11,6 +11,10 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 
+// Stdout/stderr wrappers to avoid console.* usage
+const out = (...args) => process.stdout.write(`${args.join(' ')}\n`);
+const err = (...args) => process.stderr.write(`${args.join(' ')}\n`);
+
 class CoverageHelper {
   constructor() {
     this.rootDir = path.resolve(__dirname, '..');
@@ -224,9 +228,9 @@ class CoverageHelper {
     const verbose = options.verbose || false;
     const specificNode = options.node || null;
 
-    console.log('📊 GDD Coverage Sync');
-    console.log('━'.repeat(60));
-    console.log('');
+    out('📊 GDD Coverage Sync');
+    out('━'.repeat(60));
+    out('');
 
     // Load data
     const coverageData = await this.loadCoverageData();
@@ -240,12 +244,12 @@ class CoverageHelper {
       throw new Error('System map not available or invalid');
     }
 
-    console.log('✓ Reading coverage data: coverage/coverage-summary.json');
-    console.log('✓ Reading system map: docs/system-map.yaml');
-    console.log('');
-    console.log('Analyzing nodes...');
-    console.log('');
-    console.log('Node Updates:');
+    out('✓ Reading coverage data: coverage/coverage-summary.json');
+    out('✓ Reading system map: docs/system-map.yaml');
+    out('');
+    out('Analyzing nodes...');
+    out('');
+    out('Node Updates:');
 
     const updates = [];
     const nodesDir = path.join(this.rootDir, 'docs', 'nodes');
@@ -264,7 +268,7 @@ class CoverageHelper {
         const exists = await fs.access(nodeFilePath).then(() => true).catch(() => false);
         if (!exists) {
           if (verbose) {
-            console.log(`  ⚠  ${nodeName}: Node file not found, skipping`);
+            out(`  ⚠  ${nodeName}: Node file not found, skipping`);
           }
           continue;
         }
@@ -324,7 +328,7 @@ class CoverageHelper {
           ? `(Source: ${currentSource} → ${newSource})`
           : `(Source: ${newSource})`;
 
-        console.log(`  ${changeIndicator} ${nodeName}: ${coverageChange} ${sourceChange}`);
+        out(`  ${changeIndicator} ${nodeName}: ${coverageChange} ${sourceChange}`);
 
         updates.push({
           node: nodeName,
@@ -337,28 +341,28 @@ class CoverageHelper {
         });
 
       } catch (error) {
-        console.log(`  ❌ ${nodeName}: Error - ${error.message}`);
+        out(`  ❌ ${nodeName}: Error - ${error.message}`);
       }
     }
 
     // Generate summary report
-    console.log('');
-    console.log('Summary:');
+    out('');
+    out('Summary:');
     const totalNodes = updates.length;
     const nodesUpdated = updates.filter(u => u.changed).length;
     const autoSources = updates.filter(u => u.newSource === 'auto').length;
 
-    console.log(`  Nodes Analyzed: ${totalNodes}`);
-    console.log(`  Nodes Updated: ${nodesUpdated}`);
-    console.log(`  Coverage Source: auto (${autoSources}/${totalNodes})`);
+    out(`  Nodes Analyzed: ${totalNodes}`);
+    out(`  Nodes Updated: ${nodesUpdated}`);
+    out(`  Coverage Source: auto (${autoSources}/${totalNodes})`);
 
     // Estimate health score improvement
     const currentAvgScore = 94.1; // From current state
     const estimatedNewScore = currentAvgScore + (nodesUpdated > 0 ? 1.0 : 0);
-    console.log(`  Health Score (estimated): ${currentAvgScore} → ${estimatedNewScore.toFixed(1)}`);
+    out(`  Health Score (estimated): ${currentAvgScore} → ${estimatedNewScore.toFixed(1)}`);
 
-    console.log('');
-    console.log(dryRun ? '🔍 Dry run complete (no files modified)' : '✅ Sync complete');
+    out('');
+    out(dryRun ? '🔍 Dry run complete (no files modified)' : '✅ Sync complete');
 
     return updates;
   }
@@ -376,7 +380,7 @@ if (require.main === module) {
   };
 
   if (options.help) {
-    console.log(`
+    out(`
 GDD Coverage Helper - Sync coverage data to GDD nodes
 
 Usage:
@@ -414,11 +418,11 @@ Requirements:
         process.exit(0);
       })
       .catch(error => {
-        console.error('❌ Fatal error:', error.message);
+        err('❌ Fatal error:', error.message);
         process.exit(1);
       });
   } else {
-    console.error('Error: No action specified. Use --update-from-report or --help');
+    err('Error: No action specified. Use --update-from-report or --help');
     process.exit(1);
   }
 }
