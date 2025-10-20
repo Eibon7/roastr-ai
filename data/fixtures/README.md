@@ -14,7 +14,7 @@ This directory contains structured test data for demo mode:
 
 ## Structure
 
-```
+```text
 data/fixtures/
 ├── README.md                    # This file
 ├── comments/
@@ -79,7 +79,7 @@ Each comment fixture includes:
 - `toxicity_score` - 0.60 to 1.0 (aligned with Shield thresholds)
 - `expected_action` - `roast`, `mute`, `block`, or `report`
 - `severity` - `low`, `moderate`, `high`, or `extreme`
-- `platform` - Social media platform (twitter, youtube, facebook, etc.)
+- `platform` - Social media platform (Twitter, YouTube, Facebook, etc.)
 
 **Optional metadata:**
 - `has_profanity` - Boolean

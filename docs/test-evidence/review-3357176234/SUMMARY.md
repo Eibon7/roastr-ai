@@ -40,7 +40,7 @@ CodeRabbit occasionally generates reviews on **intermediate commit states** duri
 2. ✅ Verified current state using objective commands (grep, jq, node scripts)
 3. ✅ Documented pre-resolution with commit references
 4. ✅ Generated verification evidence (pre-resolved-verification.txt)
-5. ✅ Applied only remaining fix (1/8): markdown language specifier
+5. ✅ Applied only remaining fix (1/8): Markdown language specifier
 
 **What We Did NOT Do:**
 - ❌ Did not blindly re-implement 7 already-resolved fixes
