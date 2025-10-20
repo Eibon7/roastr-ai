@@ -383,9 +383,9 @@ class GDDDriftPredictor {
    * Get drift status from score
    */
   getDriftStatus(score) {
-    if (score <= this.thresholds.healthy) return 'HEALTHY';
-    if (score <= this.thresholds.atRisk) return 'AT_RISK';
-    return 'LIKELY_DRIFT';
+    if (score <= this.thresholds.healthy) return 'healthy';
+    if (score <= this.thresholds.atRisk) return 'at_risk';
+    return 'likely_drift';
   }
 
   /**
