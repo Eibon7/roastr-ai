@@ -14,7 +14,7 @@ const path = require('path');
 const fs = require('fs-extra');
 
 // Test configuration
-const CLI_PATH = path.join(__dirname, '../../../cli.js');
+const CLI_PATH = path.join(__dirname, '../../../src/cli.js');
 const TEST_TIMEOUT = 30000;
 
 describe('Log Commands CLI Integration', () => {
