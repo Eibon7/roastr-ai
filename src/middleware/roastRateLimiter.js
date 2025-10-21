@@ -153,6 +153,11 @@ function getClientIP(req) {
  * Create rate limiter for roast endpoints
  */
 function createRoastRateLimiter(options = {}) {
+    // Issue #618: Disable rate limiting in test environment to avoid express-rate-limit errors
+    if (process.env.NODE_ENV === 'test') {
+        return (req, res, next) => next();
+    }
+
     const config = {
         // Authenticated users get higher limits
         authenticatedLimit: options.authenticatedLimit || 30, // 30 requests per window

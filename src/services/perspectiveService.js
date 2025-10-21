@@ -19,6 +19,13 @@ class PerspectiveService {
         }
 
         try {
+            // Check if google.commentanalyzer is available (Issue #618 - Jest compatibility)
+            if (!google || typeof google.commentanalyzer !== 'function') {
+                logger.warn('Google Perspective API client not available (likely test environment)');
+                this.enabled = false;
+                return;
+            }
+
             this.client = google.commentanalyzer({
                 version: 'v1alpha1',
                 auth: this.apiKey
@@ -26,7 +33,7 @@ class PerspectiveService {
             
             logger.info('✅ Perspective API service initialized');
         } catch (error) {
-            logger.error('Failed to initialize Perspective API:', error);
+            logger.warn('⚠️ Failed to initialize Perspective API:', error.message);
             this.enabled = false;
         }
     }

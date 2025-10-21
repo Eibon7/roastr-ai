@@ -10,6 +10,7 @@
 
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // Issue #618 - IPv6 support
 const crypto = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
 const { supabaseServiceClient } = require('../config/supabase');
@@ -28,11 +29,12 @@ const generalShieldLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator, // Issue #618 - Proper IPv6 support
   skip: (req) => process.env.NODE_ENV === 'test'
 });
 
 const revertActionLimit = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes  
+  windowMs: 5 * 60 * 1000, // 5 minutes
   max: 10, // 10 revert actions per window
   message: {
     error: 'Too many revert attempts. Please try again later.',
@@ -40,6 +42,7 @@ const revertActionLimit = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: ipKeyGenerator, // Issue #618 - Proper IPv6 support
   skip: (req) => process.env.NODE_ENV === 'test'
 });
 

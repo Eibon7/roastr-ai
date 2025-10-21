@@ -28,48 +28,15 @@ global.TextDecoder = require('util').TextDecoder;
 // Mock fetch globally for all tests
 global.fetch = jest.fn();
 
-// Global mock for feature flags - RQC always disabled in tests
-jest.mock('../src/config/flags', () => ({
-  __esModule: true,
-  flags: {
-    isEnabled: jest.fn((flag) => {
-      if (flag === 'ENABLE_RQC') return false;
-      if (flag === 'ENABLE_SHIELD') return false;
-      if (flag === 'ENABLE_BILLING') return false;
-      if (flag === 'ENABLE_REAL_OPENAI') return true; // Keep basic functionality
-      if (flag === 'ENABLE_MOCK_PERSISTENCE') return true;
-      return false; // All other flags disabled by default
-    }),
-    getAllFlags: jest.fn(() => ({
-      ENABLE_RQC: false,
-      ENABLE_SHIELD: false,
-      ENABLE_BILLING: false,
-      ENABLE_REAL_OPENAI: true,
-      ENABLE_MOCK_PERSISTENCE: true,
-      ENABLE_DEBUG_LOGS: false
-    })),
-    getServiceStatus: jest.fn(() => ({
-      billing: 'unavailable',
-      ai: { openai: 'available', perspective: 'mock' },
-      database: 'mock',
-      integrations: { twitter: 'mock', youtube: 'mock' },
-      features: { rqc: 'disabled', shield: 'disabled' }
-    }))
-  },
-  FeatureFlags: class MockFeatureFlags {
-    constructor() {
-      this.flags = {
-        ENABLE_RQC: false,
-        ENABLE_SHIELD: false,
-        ENABLE_BILLING: false,
-        ENABLE_REAL_OPENAI: true,
-        ENABLE_MOCK_PERSISTENCE: true
-      };
-    }
-    isEnabled(flag) { return this.flags[flag] || false; }
-    getAllFlags() { return { ...this.flags }; }
-  }
-}));
+// NOTE: Global mock for feature flags REMOVED (Issue #618)
+// Why: This global mock was interfering with integration tests that need
+// the real FeatureFlags behavior. Unit tests that need mocks should use
+// their own jest.mock() calls specific to their needs.
+//
+// If you need to mock flags in a unit test, add this to your test file:
+//   jest.mock('../../../src/config/flags', () => ({
+//     flags: { isEnabled: jest.fn(), ... }
+//   }));
 
 // Global test teardown to prevent Jest from hanging
 afterAll(async () => {

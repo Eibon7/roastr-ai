@@ -10,7 +10,7 @@
 
 const request = require('supertest');
 const crypto = require('crypto');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const { logger } = require('../../src/utils/logger');
 const { flags } = require('../../src/config/flags');
 

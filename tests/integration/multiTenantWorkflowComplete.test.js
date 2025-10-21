@@ -11,7 +11,7 @@
  */
 
 const request = require('supertest');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const { createClient } = require('@supabase/supabase-js');
 const BaseWorker = require('../../src/workers/BaseWorker');
 const AnalyzeToxicityWorker = require('../../src/workers/AnalyzeToxicityWorker');

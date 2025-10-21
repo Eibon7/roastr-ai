@@ -33,6 +33,14 @@ npm run test:coverage            # Tests with coverage
 # 📚 For complete testing guide: docs/TESTING-GUIDE.md
 # Includes: test commands, env variables, fixtures, CI/CD config, benchmarks
 
+# CodeRabbit CLI - Automated Code Review
+npm run coderabbit:review        # Full detailed review (--plain mode)
+npm run coderabbit:review:quick  # Quick token-efficient review (--prompt-only)
+npm run coderabbit:auth          # Check authentication status
+npm run coderabbit:login         # Authenticate with CodeRabbit
+npm run coderabbit:logout        # Logout from CodeRabbit
+# ⚡ Auto-executes on every commit via pre-commit hook
+
 # Multi-tenant worker system
 npm run workers:start            # Start all workers
 npm run workers:status           # Check worker status

@@ -21,7 +21,7 @@ try {
         }
     };
 }
-const { 
+const {
     VALIDATION_CONSTANTS,
     isValidStyle,
     isValidLanguage,
