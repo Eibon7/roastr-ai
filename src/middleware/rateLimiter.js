@@ -234,6 +234,11 @@ function getClientIP(req) {
  * @param {Function} next - Next middleware function
  */
 function loginRateLimiter(req, res, next) {
+  // Issue #628: Disable rate limiting in test environment (pattern from #618)
+  if (process.env.NODE_ENV === 'test') {
+    return next();
+  }
+
   if (!flags.isEnabled('ENABLE_RATE_LIMIT')) {
     return next();
   }

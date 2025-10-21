@@ -18,7 +18,7 @@ jest.mock('../../src/utils/logger', () => ({
   }
 }));
 
-// Mock Supabase for reliable testing
+// Mock Supabase for reliable testing (Issue #628: Fix supabaseServiceClient import)
 jest.mock('../../src/config/supabase', () => {
   const mockUsers = new Map();
   const mockSessions = new Map();
@@ -223,8 +223,10 @@ jest.mock('../../src/services/emailService', () => ({
   getStatus: jest.fn().mockReturnValue({ configured: true })
 }));
 
+// Import mocked modules after jest.mock() (Issue #628)
 const emailService = require('../../src/services/emailService');
 const { flags } = require('../../src/config/flags');
+const { supabaseServiceClient } = require('../../src/config/supabase');
 
 describe('Auth Complete Flow E2E', () => {
   let app;
