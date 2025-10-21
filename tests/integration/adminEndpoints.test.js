@@ -224,7 +224,8 @@ describe('Admin Endpoints Integration Tests', () => {
         password: 'password123'
       });
     
-    adminToken = adminLogin.body.data.session.access_token;
+    // Issue #618 - Fix response structure access (route returns data.access_token, not data.session.access_token)
+    adminToken = adminLogin.body.data.access_token;
 
     // Login regular user
     const userLogin = await request(app)
@@ -234,7 +235,8 @@ describe('Admin Endpoints Integration Tests', () => {
         password: 'password123'
       });
     
-    userToken = userLogin.body.data.session.access_token;
+    // Issue #618 - Fix response structure access (route returns data.access_token, not data.session.access_token)
+    userToken = userLogin.body.data.access_token;
   });
 
   describe('GET /api/auth/admin/users', () => {
