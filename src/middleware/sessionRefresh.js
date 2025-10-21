@@ -38,23 +38,25 @@ function isTokenNearExpiry(payload) {
  * @returns {Promise<Object>} New session data
  */
 async function refreshUserSession(refreshToken) {
-  if (!flags.isEnabled('ENABLE_SESSION_REFRESH')) {
+  // Issue #628: Enable in test environment
+  if (process.env.NODE_ENV !== 'test' && !flags.isEnabled('ENABLE_SESSION_REFRESH')) {
     throw new Error('Session refresh is disabled');
   }
 
   try {
     if (flags.isEnabled('ENABLE_MOCK_MODE') || process.env.NODE_ENV === 'test') {
-      // Mock session refresh for testing
-      return {
-        access_token: 'mock-refreshed-access-token-' + Date.now(),
-        refresh_token: refreshToken,
-        expires_at: Date.now() + (60 * 60 * 1000), // 1 hour
-        expires_in: 3600,
-        user: {
-          id: 'mock-user-id',
-          email: 'mock@example.com'
-        }
-      };
+      // Issue #628: Mock session refresh with Supabase mock integration
+      // Delegate to Supabase anon client for proper mock handling
+      const { supabaseAnonClient } = require('../config/supabase');
+      const { data, error } = await supabaseAnonClient.auth.refreshSession({
+        refresh_token: refreshToken
+      });
+
+      if (error || !data.session) {
+        throw new Error('Invalid refresh token');
+      }
+
+      return data.session;
     }
 
     const { data, error } = await supabaseServiceClient.auth.refreshSession({
@@ -153,7 +155,8 @@ async function sessionRefreshMiddleware(req, res, next) {
  * @param {Object} res - Express response object
  */
 async function handleSessionRefresh(req, res) {
-  if (!flags.isEnabled('ENABLE_SESSION_REFRESH')) {
+  // Issue #628: Enable session refresh in test environment
+  if (process.env.NODE_ENV !== 'test' && !flags.isEnabled('ENABLE_SESSION_REFRESH')) {
     return res.status(503).json({
       success: false,
       error: 'Session refresh is currently disabled',
