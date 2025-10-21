@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
-const { flags } = require('../config/flags');
+const { isFlagEnabled } = require('../utils/featureFlags');
 // CodeRabbit Round 6: Optional Sentry integration for error capture
 let Sentry;
 try {
@@ -47,7 +47,7 @@ let roastEngine;
 let perspectiveService;
 
 // Initialize roast generator based on flags
-if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
+if (isFlagEnabled('ENABLE_REAL_OPENAI')) {
     try {
         roastGenerator = new RoastGeneratorEnhanced();
         logger.info('✅ Real OpenAI roast generator initialized');
@@ -61,7 +61,7 @@ if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
 }
 
 // Initialize roast engine (SPEC 7 - Issue #363) with feature flag guard
-if (flags.isEnabled('ENABLE_ROAST_ENGINE')) {
+if (isFlagEnabled('ENABLE_ROAST_ENGINE')) {
     try {
         roastEngine = new RoastEngine();
         logger.info('🔥 Roast Engine initialized for SPEC 7 implementation');
@@ -76,7 +76,7 @@ if (flags.isEnabled('ENABLE_ROAST_ENGINE')) {
 }
 
 // Initialize Perspective API service
-if (flags.isEnabled('ENABLE_PERSPECTIVE_API')) {
+if (isFlagEnabled('ENABLE_PERSPECTIVE_API')) {
     try {
         perspectiveService = new PerspectiveService();
         logger.info('✅ Perspective API service initialized');

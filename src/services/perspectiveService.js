@@ -3,15 +3,16 @@
  * Analyzes text toxicity and provides safety scores
  */
 
+const crypto = require('crypto');
 const { google } = require('googleapis');
 const { logger } = require('../utils/logger');
-const flags = require('../config/flags');
+const { isFlagEnabled } = require('../utils/featureFlags');
 
 class PerspectiveService {
     constructor() {
         this.apiKey = process.env.PERSPECTIVE_API_KEY;
-        this.enabled = flags.isEnabled('ENABLE_PERSPECTIVE_API') && !!this.apiKey;
-        
+        this.enabled = isFlagEnabled('ENABLE_PERSPECTIVE_API') && !!this.apiKey;
+
         if (!this.enabled) {
             logger.warn('Perspective API disabled or API key not configured');
             return;
@@ -62,10 +63,13 @@ class PerspectiveService {
             return this.parseResponse(response.data);
 
         } catch (error) {
+            // Create non-reversible hash for debugging without exposing user data (GDPR compliance)
+            const textHash = crypto.createHash('sha256').update(text).digest('hex').substring(0, 16);
+
             logger.error('Perspective API analysis failed:', {
                 error: error.message,
                 textLength: text.length,
-                textPreview: text.substring(0, 100)
+                textHash // Non-reversible hash instead of textPreview
             });
 
             // Return safe defaults on error
@@ -194,16 +198,23 @@ class PerspectiveService {
         for (let i = 0; i < texts.length; i += batchSize) {
             const batch = texts.slice(i, i + batchSize);
             const batchPromises = batch.map(text => this.analyzeText(text, options));
-            
-            try {
-                const batchResults = await Promise.all(batchPromises);
-                results.push(...batchResults);
-            } catch (error) {
-                logger.error('Batch analysis failed:', error);
-                // Add mock results for failed batch
-                const mockResults = batch.map(text => this.getMockAnalysis(text, true));
-                results.push(...mockResults);
-            }
+
+            // Use Promise.allSettled to preserve successful results when some fail
+            const batchResults = await Promise.allSettled(batchPromises);
+
+            batchResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    results.push(result.value);
+                } else {
+                    logger.warn('Individual analysis failed in batch:', {
+                        batchIndex: i,
+                        itemIndex: index,
+                        error: result.reason?.message
+                    });
+                    // Add mock result for failed item only
+                    results.push(this.getMockAnalysis(batch[index], true));
+                }
+            });
 
             // Add delay between batches to respect rate limits
             if (i + batchSize < texts.length) {
@@ -229,7 +240,7 @@ class PerspectiveService {
         return {
             enabled: this.enabled,
             hasApiKey: !!this.apiKey,
-            flagEnabled: flags.isEnabled('ENABLE_PERSPECTIVE_API'),
+            flagEnabled: isFlagEnabled('ENABLE_PERSPECTIVE_API'),
             ready: this.enabled && !!this.client
         };
     }
