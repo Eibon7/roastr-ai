@@ -400,6 +400,8 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         .post('/api/shield/revert/action-123')
         .send({ reason: 'False positive detection' });
 
+      // Issue #618 - Add defensive check for mock.calls array
+      expect(mockSupabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
       const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
       expect(updateCall.metadata).toEqual({
         reverted: true,
@@ -430,6 +432,8 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         .post('/api/shield/revert/action-123')
         .send({});
 
+      // Issue #618 - Add defensive check for mock.calls array
+      expect(mockSupabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
       const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
       expect(updateCall.metadata.revertReason).toBe('Manual revert via UI');
     });

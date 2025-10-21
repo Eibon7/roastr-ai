@@ -144,13 +144,37 @@ git push
 4. Review manual adicional antes de PR: `npm run coderabbit:review`
 5. Solo crear PR cuando 0 sugerencias
 
-**Si CodeRabbit comenta en GitHub (no debería pasar si usas CLI):**
-1. NO pedir merge
-2. Implementar TODAS las sugerencias
-3. Re-verificar checklist
-4. Push de correcciones
-5. Esperar nueva review de CodeRabbit
-6. Repetir hasta 0 comentarios
+**Ciclo Completo de Review (OBLIGATORIO):**
+
+Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
+
+1. **Arreglar TODAS las issues de CodeRabbit inmediatamente**
+   - Leer cada comentario/sugerencia
+   - Implementar TODAS (no "casi todas", TODAS)
+   - Commit + push fixes
+
+2. **Inspeccionar PR en GitHub con agente**
+   - Invocar `Task` tool con `subagent_type: general-purpose`
+   - Prompt: "Inspect PR #XXX on GitHub - report mergeable status, CI/CD jobs, CodeRabbit comments, checks summary"
+   - Obtener reporte detallado de:
+     - ✅ Conflicts (debe ser 0)
+     - ✅ CI/CD jobs status (todos deben pasar)
+     - ✅ CodeRabbit comments (debe ser 0)
+     - ✅ Required checks (todos passing)
+
+3. **SI hay issues o jobs failing:**
+   - Volver al paso 1
+   - NO preguntar si continuar
+   - NO pedir merge
+
+4. **SOLO cuando todo está verde:**
+   - 0 conflictos
+   - 0 comentarios CodeRabbit
+   - Todos los CI/CD jobs passing
+   - Entonces informar: "PR lista para merge"
+   - Usuario hace el merge (solo usuario puede mergear)
+
+**Mentalidad:** Calidad > Velocidad. Producto monetizable, no proyecto de instituto.
 
 ### Test Engineer Agent
 
