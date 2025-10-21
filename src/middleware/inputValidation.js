@@ -23,25 +23,25 @@ const DOMPurify = require('isomorphic-dompurify');
 const { logger } = require('../utils/logger');
 const { SafeUtils } = require('../utils/logger');
 
-// Malicious pattern detection
+// Malicious pattern detection (removed 'g' flag to avoid stateful regex issues)
 const MALICIOUS_PATTERNS = [
     // SQL Injection patterns
-    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi,
-    /(\'|\"|;|--|\/\*|\*\/|xp_|sp_)/gi,
-    
-    // XSS patterns  
-    /(<script|javascript:|vbscript:|onload|onerror|onclick)/gi,
-    /(<iframe|<object|<embed|<form)/gi,
-    
+    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/i,
+    /(\'|\"|;|--|\/\*|\*\/|xp_|sp_)/i,
+
+    // XSS patterns
+    /(<script|javascript:|vbscript:|onload|onerror|onclick)/i,
+    /(<iframe|<object|<embed|<form)/i,
+
     // Command injection patterns
-    /(\||;|&|`|\$\(|\${)/gi,
-    /(wget|curl|nc|netcat|bash|sh|cmd|powershell)/gi,
-    
+    /(\||;|&|`|\$\(|\${)/i,
+    /(wget|curl|nc|netcat|bash|sh|cmd|powershell)/i,
+
     // Path traversal patterns
-    /(\.\.\/|\.\.\\|%2e%2e%2f|%2e%2e%5c)/gi,
-    
+    /(\.\.\/|\.\.\\|%2e%2e%2f|%2e%2e%5c)/i,
+
     // Server-side template injection
-    /(\{\{|\}\}|\$\{|\<%|\%\>)/gi
+    /(\{\{|\}\}|\$\{|\<%|\%\>)/i
 ];
 
 // Suspicious User-Agent patterns (no 'g' flag to avoid stateful regex issues)
@@ -221,14 +221,22 @@ function securityValidation(options = {}) {
         if (checkMaliciousPatterns) {
             const valuesToCheck = [];
 
-            // Extract string values from body, query, params
-            const extractStrings = (obj) => {
+            // Extract string values from body, query, params (with depth limit)
+            const extractStrings = (obj, depth = 0, maxDepth = 10) => {
                 if (!obj || typeof obj !== 'object') return;
+                if (depth > maxDepth) {
+                    logger.warn('Maximum object depth exceeded during extraction', {
+                        depth,
+                        maxDepth,
+                        endpoint: req.path
+                    });
+                    return;
+                }
                 for (const value of Object.values(obj)) {
                     if (typeof value === 'string') {
                         valuesToCheck.push(value);
                     } else if (typeof value === 'object' && value !== null) {
-                        extractStrings(value);
+                        extractStrings(value, depth + 1, maxDepth);
                     }
                 }
             };

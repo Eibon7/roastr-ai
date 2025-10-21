@@ -18,6 +18,7 @@
 
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // Issue #618 - IPv6 support
 const { logger } = require('../utils/logger');
 const { SafeUtils } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
@@ -42,11 +43,10 @@ const WEBHOOK_CONSTANTS = {
 const webhookRateLimit = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute window
     max: 100, // Max 100 webhooks per minute per IP
-    keyGenerator: (req, options) => {
-        // Rate limit by IP and webhook source with IPv6 support
-        const { ipKeyGenerator } = options;
+    keyGenerator: (req) => {
+        // Rate limit by IP and webhook source with IPv6 support (Issue #618)
         const ip = ipKeyGenerator(req);
-        const source = req.headers['stripe-signature'] ? 'stripe' : 
+        const source = req.headers['stripe-signature'] ? 'stripe' :
                       req.headers['x-hub-signature-256'] ? 'github' : 'unknown';
         return `webhook:${ip}:${source}`;
     },

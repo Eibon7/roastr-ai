@@ -4,11 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-14
+**Last Updated:** 2025-10-20
 **Coverage:** 6%
 **Coverage Source:** auto
 **Version:** 1.2.0
-**Related PRs:** #458, #499
+**Related PRs:** #458, #499, #617 (Shield flow validation via queues)
 
 ## Dependencies
 
@@ -481,10 +481,10 @@ WORKER_POLL_INTERVAL=1000  # ms
 **Overall:** 6% (updated 2025-10-14)
 - queueService.js: 11.91% lines (28/235 lines covered)
 - BaseWorker.js: 0% (needs test coverage)
-- Lines: 12%
-- Statements: 12%
-- Functions: 13%
-- Branches: 7%
+- Lines: 11.91%
+- Statements: 11.66%
+- Functions: 13.33%
+- Branches: 7.18%
 
 ### Unit Tests
 

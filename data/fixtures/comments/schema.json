@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://roastr.ai/schemas/comment-fixture.json",
+  "title": "Comment Fixture",
+  "description": "Schema for demo mode comment fixtures",
+  "type": "object",
+  "required": [
+    "id",
+    "language",
+    "topic",
+    "comment_text",
+    "toxicity_score",
+    "expected_action",
+    "severity",
+    "platform"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^fixture-[0-9]{3}$",
+      "description": "Unique fixture identifier in format 'fixture-XXX'"
+    },
+    "language": {
+      "type": "string",
+      "enum": ["es", "en"],
+      "description": "Comment language: Spanish (es) or English (en)"
+    },
+    "topic": {
+      "type": "string",
+      "enum": ["politics", "sports", "technology", "social", "entertainment"],
+      "description": "Comment topic category"
+    },
+    "comment_text": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "The actual comment text"
+    },
+    "toxicity_score": {
+      "type": "number",
+      "minimum": 0.60,
+      "maximum": 1.0,
+      "description": "Toxicity score from 0.60 (low) to 1.0 (extreme)"
+    },
+    "expected_action": {
+      "type": "string",
+      "enum": ["roast", "mute", "block", "report"],
+      "description": "Expected Shield action based on toxicity score"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "moderate", "high", "extreme"],
+      "description": "Shield severity level: low (0.60-0.75), moderate (0.75-0.85), high (0.85-0.95), extreme (0.95-1.0)"
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["twitter", "youtube", "instagram", "facebook", "discord", "twitch", "reddit", "tiktok", "bluesky"],
+      "description": "Social media platform"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "has_profanity": {
+          "type": "boolean",
+          "description": "Whether comment contains profanity"
+        },
+        "sentiment": {
+          "type": "string",
+          "enum": ["negative", "neutral", "positive"],
+          "description": "Overall sentiment"
+        },
+        "context": {
+          "type": "string",
+          "description": "Context or subcategory (e.g., 'team-criticism', 'political-complaint')"
+        },
+        "intensity": {
+          "type": "string",
+          "enum": ["mild", "moderate", "strong", "extreme"],
+          "description": "Intensity of toxicity"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "toxicity_score": { "minimum": 0.60, "maximum": 0.75 }
+        }
+      },
+      "then": {
+        "properties": {
+          "severity": { "const": "low" },
+          "expected_action": { "const": "roast" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "toxicity_score": { "minimum": 0.75, "maximum": 0.85 }
+        }
+      },
+      "then": {
+        "properties": {
+          "severity": { "const": "moderate" },
+          "expected_action": { "const": "mute" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "toxicity_score": { "minimum": 0.85, "maximum": 0.95 }
+        }
+      },
+      "then": {
+        "properties": {
+          "severity": { "const": "high" },
+          "expected_action": { "const": "block" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "toxicity_score": { "minimum": 0.95, "maximum": 1.0 }
+        }
+      },
+      "then": {
+        "properties": {
+          "severity": { "const": "extreme" },
+          "expected_action": { "const": "report" }
+        }
+      }
+    }
+  ]
+}
