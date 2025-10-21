@@ -423,6 +423,7 @@ Options:
   --dry-run               Preview changes without modifying files
   --ci                    CI mode (silent, JSON output only)
   --metric=<name>         Sync specific metric only
+                          Accepted values: lighthouse, node, health, coverage
   --validate              Validate metric consistency
   --help, -h              Show this help
 
@@ -475,29 +476,54 @@ Exit Codes:
 
     const metrics = await collector.collectAll();
 
+    // Issue #621, CodeRabbit Major: Implement --metric filter
+    const metricKey = this.options.metric && this.options.metric.toLowerCase();
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    let filtered = metrics;
+    if (metricKey && aliases[metricKey]) {
+      const k = aliases[metricKey];
+      filtered = {
+        lighthouse: null,
+        nodeCount: null,
+        healthScore: null,
+        coverage: null,
+        timestamp: metrics.timestamp
+      };
+      filtered[k] = metrics[k];
+    }
+
     if (!ciMode) {
       out('');
       out('Collected Metrics:');
-      if (metrics.lighthouse) {
-        out(`  ✓ Lighthouse: ${metrics.lighthouse.score}/100 (from ${metrics.lighthouse.source})`);
+      if (filtered.lighthouse) {
+        out(`  ✓ Lighthouse: ${filtered.lighthouse.score}/100 (from ${filtered.lighthouse.source})`);
       } else {
         out(`  ⚠ Lighthouse: Not available`);
       }
 
-      if (metrics.nodeCount) {
-        out(`  ✓ Node Count: ${metrics.nodeCount.healthy}/${metrics.nodeCount.total} (${metrics.nodeCount.orphans} orphans)`);
+      if (filtered.nodeCount) {
+        out(`  ✓ Node Count: ${filtered.nodeCount.healthy}/${filtered.nodeCount.total} (${filtered.nodeCount.orphans} orphans)`);
       } else {
         out(`  ⚠ Node Count: Not available`);
       }
 
-      if (metrics.healthScore) {
-        out(`  ✓ Health Score: ${metrics.healthScore.score.toFixed(1)}/100`);
+      if (filtered.healthScore) {
+        out(`  ✓ Health Score: ${filtered.healthScore.score.toFixed(1)}/100`);
       } else {
         out(`  ⚠ Health Score: Not available`);
       }
 
-      if (metrics.coverage) {
-        out(`  ✓ Coverage: ${metrics.coverage.lines.toFixed(1)}% lines, ${metrics.coverage.branches.toFixed(1)}% branches`);
+      if (filtered.coverage) {
+        out(`  ✓ Coverage: ${filtered.coverage.lines.toFixed(1)}% lines, ${filtered.coverage.branches.toFixed(1)}% branches`);
       } else {
         out(`  ⚠ Coverage: Not available`);
       }
@@ -507,10 +533,10 @@ Exit Codes:
     // Validate mode
     if (this.options.validate) {
       const updater = new DocumentUpdater(this.rootDir, { dryRun: true });
-      const issues = await updater.validate(metrics);
+      const issues = await updater.validate(filtered);
 
       if (ciMode) {
-        process.stdout.write(JSON.stringify({ validation: issues, metrics }, null, 2));
+        process.stdout.write(JSON.stringify({ validation: issues, metrics: filtered }, null, 2));
         return issues.length === 0 ? 0 : 1;
       }
 
@@ -530,12 +556,12 @@ Exit Codes:
 
     // Update mode
     const updater = new DocumentUpdater(this.rootDir, { dryRun: this.options.dryRun });
-    const results = await updater.updateAll(metrics);
+    const results = await updater.updateAll(filtered);
 
     // Check for errors (Issue #621, CodeRabbit P1)
     if (results.summary.error) {
       if (ciMode) {
-        process.stdout.write(JSON.stringify({ error: results.summary.error, results, metrics }, null, 2));
+        process.stdout.write(JSON.stringify({ error: results.summary.error, results, metrics: filtered }, null, 2));
         return 1;
       }
       err('');
@@ -545,7 +571,7 @@ Exit Codes:
     }
 
     if (ciMode) {
-      process.stdout.write(JSON.stringify({ results, metrics }, null, 2));
+      process.stdout.write(JSON.stringify({ results, metrics: filtered }, null, 2));
       return 0;
     }
 

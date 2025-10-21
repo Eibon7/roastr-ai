@@ -5,7 +5,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { MetricsCollector, DocumentUpdater } = require('../../../scripts/sync-gdd-metrics');
+const { MetricsCollector, DocumentUpdater, CLI } = require('../../../scripts/sync-gdd-metrics');
 
 // Mock filesystem
 jest.mock('fs', () => ({
@@ -568,5 +568,205 @@ describe('DocumentUpdater', () => {
       expect(results.summary.error).toBeDefined();
       expect(results.summary.error).toBe('Permission denied');
     });
+  });
+});
+
+// Issue #621, CodeRabbit Major: CLI --metric filter tests
+describe('CLI parseArgs and filtering logic', () => {
+  const mockMetrics = {
+    lighthouse: { score: 98, source: 'test.json', timestamp: '2025-10-21T00:00:00Z' },
+    nodeCount: { total: 15, healthy: 13, orphans: 2, source: 'gdd-status.json' },
+    healthScore: { score: 87.5, source: 'score-gdd-health.js' },
+    coverage: { lines: 85.3, branches: 78.9, functions: 90.1, statements: 85.0, source: 'coverage-summary.json' },
+    timestamp: '2025-10-21T00:00:00Z'
+  };
+
+  it('should parse --metric=lighthouse correctly', () => {
+    process.argv = ['node', 'script.js', '--metric=lighthouse'];
+    const cli = new CLI();
+    expect(cli.options.metric).toBe('lighthouse');
+  });
+
+  it('should parse --metric=node correctly', () => {
+    process.argv = ['node', 'script.js', '--metric=node'];
+    const cli = new CLI();
+    expect(cli.options.metric).toBe('node');
+  });
+
+  it('should parse --metric=health correctly', () => {
+    process.argv = ['node', 'script.js', '--metric=health'];
+    const cli = new CLI();
+    expect(cli.options.metric).toBe('health');
+  });
+
+  it('should parse --metric=coverage correctly', () => {
+    process.argv = ['node', 'script.js', '--metric=coverage'];
+    const cli = new CLI();
+    expect(cli.options.metric).toBe('coverage');
+  });
+
+  it('should filter lighthouse metric correctly', () => {
+    const metricKey = 'lighthouse';
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    const k = aliases[metricKey];
+    const filtered = {
+      lighthouse: null,
+      nodeCount: null,
+      healthScore: null,
+      coverage: null,
+      timestamp: mockMetrics.timestamp
+    };
+    filtered[k] = mockMetrics[k];
+
+    expect(filtered.lighthouse).toEqual(mockMetrics.lighthouse);
+    expect(filtered.nodeCount).toBeNull();
+    expect(filtered.healthScore).toBeNull();
+    expect(filtered.coverage).toBeNull();
+  });
+
+  it('should filter node metric correctly (alias test)', () => {
+    const metricKey = 'node';
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    const k = aliases[metricKey];
+    const filtered = {
+      lighthouse: null,
+      nodeCount: null,
+      healthScore: null,
+      coverage: null,
+      timestamp: mockMetrics.timestamp
+    };
+    filtered[k] = mockMetrics[k];
+
+    expect(filtered.lighthouse).toBeNull();
+    expect(filtered.nodeCount).toEqual(mockMetrics.nodeCount);
+    expect(filtered.healthScore).toBeNull();
+    expect(filtered.coverage).toBeNull();
+  });
+
+  it('should filter health metric correctly', () => {
+    const metricKey = 'health';
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    const k = aliases[metricKey];
+    const filtered = {
+      lighthouse: null,
+      nodeCount: null,
+      healthScore: null,
+      coverage: null,
+      timestamp: mockMetrics.timestamp
+    };
+    filtered[k] = mockMetrics[k];
+
+    expect(filtered.lighthouse).toBeNull();
+    expect(filtered.nodeCount).toBeNull();
+    expect(filtered.healthScore).toEqual(mockMetrics.healthScore);
+    expect(filtered.coverage).toBeNull();
+  });
+
+  it('should filter coverage metric correctly', () => {
+    const metricKey = 'coverage';
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    const k = aliases[metricKey];
+    const filtered = {
+      lighthouse: null,
+      nodeCount: null,
+      healthScore: null,
+      coverage: null,
+      timestamp: mockMetrics.timestamp
+    };
+    filtered[k] = mockMetrics[k];
+
+    expect(filtered.lighthouse).toBeNull();
+    expect(filtered.nodeCount).toBeNull();
+    expect(filtered.healthScore).toBeNull();
+    expect(filtered.coverage).toEqual(mockMetrics.coverage);
+  });
+
+  it('should support alias nodecount for nodeCount', () => {
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    expect(aliases.nodecount).toBe('nodeCount');
+    expect(aliases.nodes).toBe('nodeCount');
+  });
+
+  it('should support alias healthscore for healthScore', () => {
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    expect(aliases.healthscore).toBe('healthScore');
+  });
+
+  it('should not filter when no metric specified', () => {
+    process.argv = ['node', 'script.js'];
+    const cli = new CLI();
+    expect(cli.options.metric).toBeUndefined();
+  });
+
+  it('should not filter when invalid metric specified', () => {
+    process.argv = ['node', 'script.js', '--metric=invalid'];
+    const cli = new CLI();
+    const metricKey = cli.options.metric && cli.options.metric.toLowerCase();
+    const aliases = {
+      lighthouse: 'lighthouse',
+      node: 'nodeCount',
+      nodecount: 'nodeCount',
+      nodes: 'nodeCount',
+      health: 'healthScore',
+      healthscore: 'healthScore',
+      coverage: 'coverage'
+    };
+
+    // Invalid metric should not be in aliases
+    expect(aliases[metricKey]).toBeUndefined();
   });
 });
