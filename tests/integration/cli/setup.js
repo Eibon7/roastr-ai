@@ -7,6 +7,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { rm } = require('fs/promises'); // Node built-in for fs.rm (Issue #618)
+const { logger } = require('../../../src/utils/logger');
 
 // Global test configuration
 global.TEST_TIMEOUT = 30000;
@@ -40,7 +41,7 @@ afterAll(async () => {
     try {
       await rm(dir, { recursive: true, force: true }); // Issue #618 - use Node built-in
     } catch (error) {
-      console.warn(`Failed to clean up ${dir}:`, error.message);
+      logger.warn(`Failed to clean up ${dir}:`, error.message);
     }
   }
 });
