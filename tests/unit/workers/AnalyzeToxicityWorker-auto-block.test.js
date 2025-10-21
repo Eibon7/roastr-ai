@@ -63,7 +63,10 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
     jest.mock('../../../src/config/mockMode', () => ({
       mockMode: { isMockMode: true },
       generateMockPerspective: jest.fn(),
-      generateMockOpenAI: jest.fn()
+      generateMockOpenAI: jest.fn(),
+      generateMockSupabaseClient: jest.fn(() => ({  // Issue #618 - Add missing mock function
+        from: jest.fn()
+      }))
     }));
 
     // Create worker instance

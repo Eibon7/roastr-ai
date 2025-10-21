@@ -20,7 +20,10 @@ jest.mock('../../../src/config/mockMode', () => ({
           create: jest.fn()
         }
       }
-    })
+    }),
+    generateMockSupabaseClient: jest.fn(() => ({  // Issue #618 - Add missing mock function
+      from: jest.fn()
+    }))
   }
 }));
 

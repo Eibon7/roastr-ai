@@ -568,12 +568,29 @@ CI: Passes with 0 required agents
 - Code quality (sin console.logs, TODOs, código muerto)
 - Self-review exhaustivo (como si fueras CodeRabbit)
 
-**Si CodeRabbit comenta:**
-- NO pedir merge
-- Implementar TODAS las sugerencias
-- Push de correcciones
-- Esperar nueva review
-- Repetir hasta 0 comentarios
+**Ciclo Completo de Review (OBLIGATORIO después de crear PR):**
+
+1. **Arreglar TODAS las issues de CodeRabbit inmediatamente**
+   - Leer cada comentario/sugerencia
+   - Implementar TODAS (no "casi todas", TODAS)
+   - Commit + push fixes
+
+2. **Inspeccionar PR en GitHub con agente general-purpose**
+   - Invocar `Task` tool: "Inspect PR #XXX - report mergeable, jobs, comments, checks"
+   - Verificar:
+     - ✅ 0 conflictos
+     - ✅ Todos CI/CD jobs passing
+     - ✅ 0 CodeRabbit comments
+     - ✅ All required checks passing
+
+3. **SI hay issues o jobs failing:**
+   - Volver al paso 1
+   - NO preguntar si continuar
+   - NO pedir merge
+
+4. **SOLO cuando todo verde:**
+   - Informar: "PR lista para merge"
+   - Usuario hace merge (solo usuario puede mergear)
 
 **Mentalidad:** Producto monetizable, no proyecto de instituto. **Calidad > Velocidad.**
 

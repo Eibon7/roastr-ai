@@ -73,7 +73,10 @@ const mockOpenAIClient = {
 jest.mock('../../../src/config/mockMode', () => ({
   mockMode: {
     isMockMode: true,
-    generateMockOpenAI: jest.fn(() => mockOpenAIClient)
+    generateMockOpenAI: jest.fn(() => mockOpenAIClient),
+    generateMockSupabaseClient: jest.fn(() => ({  // Issue #618 - Add missing mock function
+      from: jest.fn()
+    }))
   }
 }));
 
