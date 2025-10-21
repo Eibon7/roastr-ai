@@ -23,6 +23,7 @@ jest.mock('../../src/config/supabase', () => {
   const mockUsers = new Map();
   const mockSessions = new Map();
   const mockOrganizations = new Map();
+  const mockPasswords = new Map(); // Issue #628: Store passwords for validation
 
   let userIdCounter = 1;
   let orgIdCounter = 1;
@@ -123,6 +124,9 @@ jest.mock('../../src/config/supabase', () => {
           const session = { access_token: sessionToken, refresh_token: `refresh-${userId}`, user };
 
           mockSessions.set(sessionToken, user);
+          // Issue #628: Store user and password for validation in signIn
+          mockUsers.set(userId, user);
+          mockPasswords.set(userData.email, userData.password);
 
           return Promise.resolve({
             data: { user, session },
@@ -130,6 +134,17 @@ jest.mock('../../src/config/supabase', () => {
           });
         },
         signInWithPassword: (credentials) => {
+          // Issue #628: Validate password before allowing login
+          const storedPassword = mockPasswords.get(credentials.email);
+
+          // Check if user exists (via password map) and password matches
+          if (!storedPassword || storedPassword !== credentials.password) {
+            return Promise.resolve({
+              data: { user: null, session: null },
+              error: { message: 'Invalid login credentials' }
+            });
+          }
+
           // Find user by email in mockUsers
           const user = Array.from(mockUsers.values()).find(u => u.email === credentials.email);
           if (!user) {
