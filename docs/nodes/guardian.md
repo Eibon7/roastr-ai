@@ -3,8 +3,8 @@
 **Node Type:** Governance Layer
 **Status:** active
 **Version:** 1.0.0
-**Last Updated:** 2025-10-09
-**Related PR:** #515
+**Last Updated:** 2025-10-20
+**Related PR:** #515, #587 (Issue #487 - Shield Flow Validation with UI evidence)
 
 ---
 

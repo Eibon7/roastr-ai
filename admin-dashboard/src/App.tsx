@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SnakeEaterThemeProvider } from '@theme/SnakeEaterThemeProvider';
 import GDDDashboard from '@pages/GDDDashboard';
+import ShieldSettings from '@pages/ShieldSettings';
+import ShieldValidation from '@pages/ShieldValidation';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -31,6 +33,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<GDDDashboard />} />
+            <Route path="/shield/settings" element={<ShieldSettings />} />
+            <Route path="/shield/validation" element={<ShieldValidation />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Router>
