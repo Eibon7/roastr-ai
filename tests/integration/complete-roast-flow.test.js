@@ -125,7 +125,7 @@ describe('Complete Roast Flow Integration', () => {
       };
 
       // Mock user configuration fetch
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
             single: jest.fn().mockResolvedValue({
@@ -187,7 +187,7 @@ describe('Complete Roast Flow Integration', () => {
 
     test('should handle missing user configuration gracefully', async () => {
       // Mock missing configuration
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
             single: jest.fn().mockResolvedValue({
@@ -304,7 +304,7 @@ describe('Complete Roast Flow Integration', () => {
       workers.push(worker);
 
       // Mock organization with transparency enabled
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
             single: jest.fn().mockResolvedValue({

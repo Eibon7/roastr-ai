@@ -18,7 +18,7 @@
 - Decision matrix implemented (toxicity thresholds + user risk levels)
 - Platform integration for 9 platforms (mute, block, report actions)
 - 30+ integration test files covering component-level functionality
-- Perspective API configured (`PERSPECTIVE_API_KEY`)
+- Perspective API configured (env var)
 - OpenAI fallback configured and operational
 - Queue system (Redis/Upstash + Database) operational
 

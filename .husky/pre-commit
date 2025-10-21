@@ -3,16 +3,23 @@
 
 # Case sensitivity guard - basic frontend build check
 echo "🔍 Checking for case-sensitive import issues..."
-cd frontend && npm run build:ci --if-present
-cd ..
+(cd frontend && npm run build:ci --if-present) || exit 1
 
 # CodeRabbit CLI review (automatic - runs if authenticated)
 echo ""
 echo "🐰 Running CodeRabbit CLI review..."
+# Try to find coderabbit binary dynamically
+CODERABBIT_BIN=""
 if command -v coderabbit >/dev/null 2>&1; then
-  if coderabbit auth status >/dev/null 2>&1; then
+  CODERABBIT_BIN=$(command -v coderabbit)
+elif [ -f "$HOME/.local/bin/coderabbit" ]; then
+  CODERABBIT_BIN="$HOME/.local/bin/coderabbit"
+fi
+
+if [ -n "$CODERABBIT_BIN" ]; then
+  if $CODERABBIT_BIN auth status >/dev/null 2>&1; then
     echo "✅ CodeRabbit authenticated - running review..."
-    coderabbit review --prompt-only || echo "⚠️  CodeRabbit review had issues, continuing..."
+    $CODERABBIT_BIN review --prompt-only || echo "⚠️  CodeRabbit review had issues, continuing..."
   else
     echo "⚠️  CodeRabbit not authenticated. Run: npm run coderabbit:login"
   fi

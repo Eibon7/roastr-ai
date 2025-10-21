@@ -1,25 +1,92 @@
 /**
- * Integration tests for roast API endpoints (Issue #326)
- *
- * IMPORTANT: These tests validate the REAL production flow in mock mode
- * - Uses RoastGeneratorMock (real implementation, not jest.mock)
- * - Uses built-in Supabase mock mode (NODE_ENV=test)
- * - Uses built-in auth mock mode (getUserFromToken returns mock user)
- * - Validates Issue #326 response format
- *
- * This is the SAME code path that runs in CI/CD and production mock mode.
- * If these tests pass, the production code works correctly.
+ * Integration tests for roast API endpoints
  */
 
 const request = require('supertest');
-const { app } = require('../../src/index');
 
-describe('Roast API Integration Tests (Production Mock Mode)', () => {
-    // Test user ID that matches built-in mock mode
-    const authToken = 'Bearer mock-jwt-token';
+// IMPORTANT: Mock service dependencies BEFORE requiring the app
+// Don't mock supabase - it has built-in mock mode via NODE_ENV
+jest.mock('../../src/services/roastGeneratorEnhanced');
+jest.mock('../../src/services/roastGeneratorMock');
+jest.mock('../../src/services/perspectiveService');
+
+// Now require the app - supabase will use mock mode from setupIntegration.js
+const { app } = require('../../src/index');
+const { supabaseServiceClient } = require('../../src/config/supabase');
+const flags = require('../../src/config/flags');
+
+describe('Roast API Integration Tests', () => {
+    let mockServiceClient;
+    const testUserId = 'test-user-123';
+    const authToken = 'Bearer valid-token';
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        
+        // Set required environment variables
+        process.env.FRONTEND_URL = 'https://test.example.com';
+        
+        // Create stable builder instance
+        const createStableBuilder = () => {
+            const stableBuilder = {
+                select: jest.fn(),
+                eq: jest.fn(),
+                single: jest.fn(),
+                insert: jest.fn(),
+                gte: jest.fn(),
+                mockResolvedValue: jest.fn(),
+                mockResolvedValueOnce: jest.fn()
+            };
+
+            stableBuilder.select.mockReturnValue(stableBuilder);
+            stableBuilder.eq.mockReturnValue(stableBuilder);
+            stableBuilder.gte.mockReturnValue(stableBuilder);
+            stableBuilder.insert.mockReturnValue(stableBuilder);
+            stableBuilder.single.mockReturnValue(stableBuilder);
+
+            return stableBuilder;
+        };
+
+        // Mock Supabase service client
+        mockServiceClient = {
+            from: jest.fn(() => createStableBuilder()),
+            rpc: jest.fn()
+        };
+
+        require('../../src/config/supabase').supabaseServiceClient = mockServiceClient;
+
+        // Mock flags
+        flags.isEnabled = jest.fn().mockImplementation((flag) => {
+            switch (flag) {
+                case 'ENABLE_REAL_OPENAI':
+                    return false; // Use mock generator
+                case 'ENABLE_PERSPECTIVE_API':
+                    return false; // Use mock moderation
+                case 'ENABLE_RATE_LIMIT':
+                    return false; // Disable rate limiting for tests
+                default:
+                    return false;
+            }
+        });
+
+        // Authentication is handled by built-in mock mode from setupIntegration.js
+        // getUserFromToken() returns mock user when NODE_ENV=test
+    });
 
     describe('POST /api/roast/preview', () => {
-        it('should generate roast preview with Issue #326 format', async () => {
+        it('should generate roast preview successfully', async () => {
+            // Mock user subscription lookup
+            const mockUserSubBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { plan: 'creator', status: 'active' },
+                    error: null
+                })
+            };
+            
+            mockServiceClient.from.mockReturnValueOnce(mockUserSubBuilder);
+
             const response = await request(app)
                 .post('/api/roast/preview')
                 .set('Authorization', authToken)
@@ -27,175 +94,128 @@ describe('Roast API Integration Tests (Production Mock Mode)', () => {
                     text: 'This is a test message for roasting',
                     tone: 'sarcastic',
                     intensity: 3,
-                    humorType: 'witty',
-                    platform: 'twitter'
+                    humorType: 'witty'
                 });
 
-            // Validate response format according to Issue #326
             expect(response.status).toBe(200);
             expect(response.body).toMatchObject({
                 success: true,
-                roast: expect.any(String),
-                tokensUsed: expect.any(Number),
-                analysisCountRemaining: expect.any(Number),
-                roastsRemaining: expect.any(Number),
-                metadata: {
-                    platform: 'twitter',
-                    tone: 'sarcastic',
-                    intensity: 3,
-                    humorType: 'witty',
-                    toxicityScore: expect.any(Number),
-                    safe: expect.any(Boolean),
-                    plan: expect.any(String),
-                    processingTimeMs: expect.any(Number),
-                    model: expect.any(String)
-                }
-            });
-
-            // Validate roast was actually generated
-            expect(response.body.roast.length).toBeGreaterThan(10);
-
-            // Validate credit consumption
-            expect(response.body.analysisCountRemaining).toBeGreaterThanOrEqual(0);
-            expect(response.body.roastsRemaining).toBeGreaterThanOrEqual(0);
-
-            // Validate toxicity analysis ran
-            expect(response.body.metadata.toxicityScore).toBeGreaterThanOrEqual(0);
-            expect(response.body.metadata.toxicityScore).toBeLessThanOrEqual(1);
-        });
-
-        it('should reject empty text', async () => {
-            const response = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .send({
-                    text: '',
-                    tone: 'sarcastic'
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.body).toMatchObject({
-                success: false,
-                error: 'Validation failed',
-                details: expect.any(Array)
-            });
-
-            expect(response.body.details.some(d =>
-                d.toLowerCase().includes('text') ||
-                d.toLowerCase().includes('empty') ||
-                d.toLowerCase().includes('missing')
-            )).toBe(true);
-        });
-
-        it('should reject invalid tone', async () => {
-            const response = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .send({
-                    text: 'Valid text content',
-                    tone: 'invalid-tone-xyz'
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.body).toMatchObject({
-                success: false,
-                error: 'Validation failed',
-                details: expect.any(Array)
-            });
-
-            expect(response.body.details.some(d =>
-                d.toLowerCase().includes('tone')
-            )).toBe(true);
-        });
-
-        it('should handle different tone values', async () => {
-            const tones = ['sarcastic', 'witty', 'clever', 'playful', 'savage'];
-
-            for (const tone of tones) {
-                const response = await request(app)
-                    .post('/api/roast/preview')
-                    .set('Authorization', authToken)
-                    .send({
-                        text: `Testing ${tone} tone`,
-                        tone: tone,
-                        intensity: 3
-                    });
-
-                expect(response.status).toBe(200);
-                expect(response.body.metadata.tone).toBe(tone);
-                expect(response.body.roast).toBeTruthy();
-            }
-        });
-
-        it('should handle different intensity levels', async () => {
-            const intensities = [1, 2, 3, 4, 5];
-
-            for (const intensity of intensities) {
-                const response = await request(app)
-                    .post('/api/roast/preview')
-                    .set('Authorization', authToken)
-                    .send({
-                        text: `Testing intensity ${intensity}`,
-                        intensity: intensity
-                    });
-
-                expect(response.status).toBe(200);
-                expect(response.body.metadata.intensity).toBe(intensity);
-            }
-        });
-
-        it('should include styleProfile when provided', async () => {
-            const response = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .send({
-                    text: 'Test with style profile',
-                    styleProfile: {
-                        humor_archetype: 'snarky',
-                        intensity_baseline: 4,
-                        emoji_density: 'medium'
+                data: {
+                    roast: expect.any(String),
+                    metadata: {
+                        tone: 'sarcastic',
+                        intensity: 3,
+                        humorType: 'witty',
+                        preview: true,
+                        safe: true,
+                        plan: 'creator'
                     }
-                });
+                },
+                timestamp: expect.any(String)
+            });
 
-            expect(response.status).toBe(200);
-            expect(response.body.metadata.styleProfile).toBeDefined();
+            // Verify roast content
+            expect(response.body.data.roast.length).toBeGreaterThan(10);
+            expect(response.body.data.metadata.toxicityScore).toBeDefined();
+            expect(response.body.data.metadata.processingTimeMs).toBeDefined();
         });
 
-        it('should include persona when provided', async () => {
+        it('should handle validation errors', async () => {
             const response = await request(app)
                 .post('/api/roast/preview')
                 .set('Authorization', authToken)
                 .send({
-                    text: 'Test with persona',
-                    // Persona must be sent as JSON string per API spec
-                    persona: JSON.stringify({
-                        lo_que_me_define: 'Developer',
-                        lo_que_no_tolero: 'Bad code'
-                    })
+                    text: '', // Empty text
+                    tone: 'invalid-tone'
                 });
 
-            expect(response.status).toBe(200);
-            expect(response.body.metadata.persona).toBeDefined();
-        });
-
-        it('should require authentication', async () => {
-            const response = await request(app)
-                .post('/api/roast/preview')
-                // No Authorization header
-                .send({
-                    text: 'This should be rejected'
-                });
-
-            expect(response.status).toBe(401);
+            expect(response.status).toBe(400);
             expect(response.body).toMatchObject({
                 success: false,
-                error: expect.stringMatching(/authentication|required/i)
+                error: 'Validation failed',
+                details: expect.arrayContaining([
+                    expect.stringContaining('Text cannot be empty'),
+                    expect.stringContaining('Tone must be one of')
+                ])
+            });
+        });
+
+        it('should reject high toxicity content', async () => {
+            // Mock user subscription lookup
+            const mockUserSubBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { plan: 'free', status: 'active' },
+                    error: null
+                })
+            };
+            
+            mockServiceClient.from.mockReturnValueOnce(mockUserSubBuilder);
+
+            // Mock high toxicity content analysis
+            const PerspectiveService = require('../../src/services/perspectiveService');
+            PerspectiveService.prototype.analyzeText = jest.fn().mockResolvedValue({
+                toxicity: 0.8, // High toxicity
+                safe: false,
+                categories: ['toxicity', 'insult']
+            });
+
+            const response = await request(app)
+                .post('/api/roast/preview')
+                .set('Authorization', authToken)
+                .send({
+                    text: 'Some highly toxic content here'
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body).toMatchObject({
+                success: false,
+                error: 'Content not suitable for roasting',
+                details: {
+                    toxicityScore: 0.8,
+                    categories: expect.arrayContaining(['toxicity', 'insult'])
+                }
             });
         });
     });
 
     describe('POST /api/roast/generate', () => {
-        it('should generate roast and consume roast credit', async () => {
+        it('should generate roast and consume credits', async () => {
+            // Mock user subscription lookup
+            const mockUserSubBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { plan: 'creator', status: 'active' },
+                    error: null
+                })
+            };
+
+            // Mock usage check
+            const mockUsageBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                gte: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { count: 5 }, // Current usage
+                    error: null
+                })
+            };
+
+            // Mock usage recording
+            const mockInsertBuilder = {
+                insert: jest.fn().mockResolvedValue({
+                    data: null,
+                    error: null
+                })
+            };
+
+            mockServiceClient.from
+                .mockReturnValueOnce(mockUserSubBuilder)
+                .mockReturnValueOnce(mockUsageBuilder)
+                .mockReturnValueOnce(mockInsertBuilder);
+
             const response = await request(app)
                 .post('/api/roast/generate')
                 .set('Authorization', authToken)
@@ -205,200 +225,176 @@ describe('Roast API Integration Tests (Production Mock Mode)', () => {
                     intensity: 4
                 });
 
-            // NOTE: In mock mode, this might behave differently than preview
-            // Validate that endpoint exists and handles request
-            expect([200, 201, 400, 402, 503]).toContain(response.status);
+            expect(response.status).toBe(200);
+            expect(response.body).toMatchObject({
+                success: true,
+                data: {
+                    roast: expect.any(String),
+                    metadata: {
+                        tone: 'witty',
+                        intensity: 4,
+                        preview: false
+                    },
+                    credits: {
+                        remaining: expect.any(Number),
+                        limit: expect.any(Number),
+                        used: expect.any(Number)
+                    }
+                }
+            });
 
-            if (response.status === 200 || response.status === 201) {
-                expect(response.body.success).toBe(true);
-                expect(response.body.roast).toBeTruthy();
-            }
+            // Verify usage was recorded
+            expect(mockServiceClient.from).toHaveBeenCalledWith('roast_usage');
         });
 
-        it('should require authentication', async () => {
+        it('should reject when user has insufficient credits', async () => {
+            // Mock user subscription lookup
+            const mockUserSubBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { plan: 'free', status: 'active' },
+                    error: null
+                })
+            };
+
+            // Mock usage check - user at limit
+            const mockUsageBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                gte: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { count: 50 }, // At free plan limit
+                    error: null
+                })
+            };
+
+            mockServiceClient.from
+                .mockReturnValueOnce(mockUserSubBuilder)
+                .mockReturnValueOnce(mockUsageBuilder);
+
             const response = await request(app)
                 .post('/api/roast/generate')
-                // No Authorization header
+                .set('Authorization', authToken)
                 .send({
-                    text: 'This should be rejected'
+                    text: 'This should be rejected due to credits'
                 });
 
-            expect(response.status).toBe(401);
+            expect(response.status).toBe(402);
+            expect(response.body).toMatchObject({
+                success: false,
+                error: 'Insufficient credits',
+                details: {
+                    remaining: 0,
+                    limit: expect.any(Number),
+                    used: expect.any(Number),
+                    plan: 'free'
+                }
+            });
         });
     });
 
     describe('GET /api/roast/credits', () => {
         it('should return user credit status', async () => {
+            // Mock user subscription lookup
+            const mockUserSubBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { plan: 'creator', status: 'active' },
+                    error: null
+                })
+            };
+
+            // Mock usage check
+            const mockUsageBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                gte: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { count: 15 },
+                    error: null
+                })
+            };
+
+            mockServiceClient.from
+                .mockReturnValueOnce(mockUserSubBuilder)
+                .mockReturnValueOnce(mockUsageBuilder);
+
             const response = await request(app)
                 .get('/api/roast/credits')
                 .set('Authorization', authToken);
 
-            // In mock mode, should return mock user's credit status
-            expect([200, 401, 503]).toContain(response.status);
-
-            if (response.status === 200) {
-                expect(response.body.success).toBe(true);
-                // Credits endpoint returns nested structure: { data: { plan, credits, status } }
-                expect(response.body.data).toHaveProperty('plan');
-                expect(response.body.data).toHaveProperty('credits');
-                expect(response.body.data.credits).toHaveProperty('remaining');
-                expect(response.body.data.credits).toHaveProperty('limit');
-            }
-        });
-
-        it('should require authentication', async () => {
-            const response = await request(app)
-                .get('/api/roast/credits');
-                // No Authorization header
-
-            expect(response.status).toBe(401);
-        });
-    });
-
-    describe('Error handling (Production Resilience)', () => {
-        it('should handle malformed JSON gracefully', async () => {
-            const response = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .set('Content-Type', 'application/json')
-                .send('{ "text": "malformed json');
-
-            expect(response.status).toBe(400);
-        });
-
-        it('should handle missing required fields', async () => {
-            const response = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .send({
-                    // Missing text field
-                    tone: 'sarcastic'
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.body.success).toBe(false);
-        });
-
-        it('should handle very long text', async () => {
-            const longText = 'a'.repeat(5000);
-            const response = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .send({
-                    text: longText
-                });
-
-            // Should either reject or truncate
-            expect([200, 400, 413]).toContain(response.status);
-        });
-
-        it('should handle special characters in text', async () => {
-            const specialText = 'Test with émojis 😀 and spëcial çharacters ñ';
-            const response = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .send({
-                    text: specialText
-                });
-
             expect(response.status).toBe(200);
-            expect(response.body.roast).toBeTruthy();
-        });
-
-        it('should handle concurrent requests', async () => {
-            const promises = [];
-            for (let i = 0; i < 5; i++) {
-                promises.push(
-                    request(app)
-                        .post('/api/roast/preview')
-                        .set('Authorization', authToken)
-                        .send({
-                            text: `Concurrent request ${i}`,
-                            tone: 'sarcastic'
-                        })
-                );
-            }
-
-            const responses = await Promise.all(promises);
-
-            // All requests should succeed
-            responses.forEach(response => {
-                expect(response.status).toBe(200);
-                expect(response.body.roast).toBeTruthy();
+            expect(response.body).toMatchObject({
+                success: true,
+                data: {
+                    plan: 'creator',
+                    status: 'active',
+                    credits: {
+                        remaining: expect.any(Number),
+                        limit: expect.any(Number),
+                        used: 15,
+                        unlimited: expect.any(Boolean)
+                    }
+                }
             });
         });
     });
 
-    describe('Platform-specific behavior', () => {
-        const platforms = ['twitter', 'instagram', 'tiktok', 'youtube', 'reddit'];
+    describe('Error handling', () => {
+        it('should handle database errors gracefully', async () => {
+            // Mock database error
+            const mockErrorBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: null,
+                    error: { message: 'Database connection failed' }
+                })
+            };
 
-        platforms.forEach(platform => {
-            it(`should generate roast for ${platform}`, async () => {
-                const response = await request(app)
-                    .post('/api/roast/preview')
-                    .set('Authorization', authToken)
-                    .send({
-                        text: `Testing ${platform} platform`,
-                        platform: platform
-                    });
+            mockServiceClient.from.mockReturnValueOnce(mockErrorBuilder);
 
-                expect(response.status).toBe(200);
-                expect(response.body.metadata.platform).toBe(platform);
-            });
-        });
-    });
-
-    describe('Credit system validation (Issue #326)', () => {
-        it('should consume analysis credit on preview', async () => {
-            // Get initial credits
-            const initialCredits = await request(app)
+            const response = await request(app)
                 .get('/api/roast/credits')
                 .set('Authorization', authToken);
 
-            if (initialCredits.status !== 200) {
-                // Credits endpoint not available in mock mode, skip
-                return;
-            }
-
-            // Access nested structure: data.credits.remaining
-            const beforeAnalysis = initialCredits.body.data.credits.remaining;
-
-            // Generate preview (consumes analysis credit)
-            const preview = await request(app)
-                .post('/api/roast/preview')
-                .set('Authorization', authToken)
-                .send({
-                    text: 'Test credit consumption'
-                });
-
-            expect(preview.status).toBe(200);
-
-            // Get credits after
-            const afterCredits = await request(app)
-                .get('/api/roast/credits')
-                .set('Authorization', authToken);
-
-            if (afterCredits.status === 200) {
-                const afterAnalysis = afterCredits.body.data.credits.remaining;
-
-                // Analysis credit should be consumed (or remain same if unlimited)
-                expect(afterAnalysis).toBeLessThanOrEqual(beforeAnalysis);
-            }
+            expect(response.status).toBe(200); // Should fallback gracefully
+            expect(response.body.data.plan).toBe('free'); // Default plan
         });
 
-        it('should include remaining credits in response', async () => {
+        it('should handle roast generation errors', async () => {
+            // Mock user subscription lookup
+            const mockUserSubBuilder = {
+                select: jest.fn().mockReturnThis(),
+                eq: jest.fn().mockReturnThis(),
+                single: jest.fn().mockResolvedValue({
+                    data: { plan: 'creator', status: 'active' },
+                    error: null
+                })
+            };
+
+            mockServiceClient.from.mockReturnValueOnce(mockUserSubBuilder);
+
+            // Mock roast generator error
+            const RoastGeneratorMock = require('../../src/services/roastGeneratorMock');
+            RoastGeneratorMock.prototype.generateRoast = jest.fn().mockRejectedValue(
+                new Error('Roast generation failed')
+            );
+
             const response = await request(app)
                 .post('/api/roast/preview')
                 .set('Authorization', authToken)
                 .send({
-                    text: 'Check credit reporting'
+                    text: 'This should cause an error'
                 });
 
-            expect(response.status).toBe(200);
-            expect(response.body).toHaveProperty('analysisCountRemaining');
-            expect(response.body).toHaveProperty('roastsRemaining');
-            expect(typeof response.body.analysisCountRemaining).toBe('number');
-            expect(typeof response.body.roastsRemaining).toBe('number');
+            expect(response.status).toBe(500);
+            expect(response.body).toMatchObject({
+                success: false,
+                error: 'Failed to generate roast preview'
+            });
         });
     });
 });

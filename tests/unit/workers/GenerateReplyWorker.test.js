@@ -395,7 +395,7 @@ describe('GenerateReplyWorker', () => {
       };
       const generationTime = 1500;
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         insert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -420,7 +420,7 @@ describe('GenerateReplyWorker', () => {
       const generationTime = 1000;
 
       const mockError = new Error('Insert failed');
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         insert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -500,7 +500,7 @@ describe('GenerateReplyWorker', () => {
         response_frequency: 0.8
       };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -523,7 +523,7 @@ describe('GenerateReplyWorker', () => {
       const organizationId = 'org-123';
       const configId = 'missing-config';
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -570,7 +570,7 @@ describe('GenerateReplyWorker', () => {
         allowed: true
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({

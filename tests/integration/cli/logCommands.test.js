@@ -11,11 +11,11 @@
 
 const { execSync, spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs-extra');
-const { rm } = require('fs/promises'); // Node built-in for fs.rm (Issue #618)
+const fs = require('fs').promises;
+const fsSync = require('fs');
 
 // Test configuration
-const CLI_PATH = path.join(__dirname, '../../../src/cli.js'); // Issue #618 - correct path
+const CLI_PATH = path.join(__dirname, '../../../src/cli.js');
 const TEST_TIMEOUT = 30000;
 
 describe('Log Commands CLI Integration', () => {
@@ -376,15 +376,15 @@ describe('Log Commands CLI Integration', () => {
     beforeAll(async () => {
       // Create temporary log directory for testing
       tempLogDir = path.join(__dirname, '../../../temp-test-logs');
-      await fs.ensureDir(tempLogDir);
+      await fs.mkdir(tempLogDir, { recursive: true });
 
       // Set up test environment with temp directory
       process.env.LOG_DIR = tempLogDir;
     });
 
     afterAll(async () => {
-      // Clean up temp directory (Issue #618 - use Node's built-in fs/promises.rm)
-      await rm(tempLogDir, { recursive: true, force: true });
+      // Clean up temp directory
+      await fs.rm(tempLogDir, { recursive: true, force: true });
     });
 
     test('should perform complete backup and cleanup cycle', async () => {
@@ -452,15 +452,15 @@ describe('Log Commands CLI Integration', () => {
     beforeAll(async () => {
       // Create temporary log directory for testing
       tempLogDir = path.join(__dirname, '../../../temp-test-logs');
-      await fs.ensureDir(tempLogDir);
+      await fs.mkdir(tempLogDir, { recursive: true });
 
       // Set up test environment with temp directory
       process.env.LOG_DIR = tempLogDir;
     });
 
     afterAll(async () => {
-      // Clean up temp directory (Issue #618 - use Node's built-in fs/promises.rm)
-      await rm(tempLogDir, { recursive: true, force: true });
+      // Clean up temp directory
+      await fs.rm(tempLogDir, { recursive: true, force: true });
     });
 
     test('should perform complete backup and cleanup cycle', async () => {
