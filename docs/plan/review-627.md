@@ -1,7 +1,7 @@
 # CodeRabbit Review Plan - PR #627
 
 **PR:** #627 - Document mandatory PR review cycle workflow
-**CodeRabbit Review:** https://github.com/Eibon7/roastr-ai/pull/627#issuecomment-3427134811
+**CodeRabbit Review:** [Review Comment](https://github.com/Eibon7/roastr-ai/pull/627#issuecomment-3427134811)
 **Date:** 2025-10-21
 **Status:** In Progress
 

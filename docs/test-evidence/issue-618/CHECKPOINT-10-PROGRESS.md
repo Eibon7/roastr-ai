@@ -94,7 +94,10 @@ const updateData = rpcCall[1].p_update_data;
 expect(updateData.lo_que_me_define_encrypted).toBe(null);
 ```
 
-**Lines fixed:** 3 test cases (249, 264, 282)
+**Lines fixed:** Multiple RPC assertion test cases (line numbers shifted after subsequent edits)
+- Original assertion updates: Test cases checking `.rpc()` calls
+- Current locations: Lines 292-298, 310-316, 330-337, 432-445, 456-461
+- Note: Line numbers may vary as code evolves
 
 ### 3. Added Feature Flags Mock
 
@@ -111,26 +114,43 @@ jest.mock('../../../src/config/flags', () => ({
 
 ---
 
-## ⚠️ Current Blocker
+## ✅ Blocker Resolution
 
-**Status:** Tests return 500 error instead of 200
-**Cause:** Missing service mocks cause route execution to fail
+**Status:** ✅ RESOLVED - All mocks added (Issue #618)
 
-**Route Dependencies (src/routes/user.js):**
-```javascript
-const { logger, SafeUtils } = require('../utils/logger');
-const encryptionService = require('../services/encryptionService');
-const EmbeddingsService = require('../services/embeddingsService');
-const PersonaInputSanitizer = require('../services/personaInputSanitizer');
-const transparencyService = require('../services/transparencyService');
-// + rate limiters
-```
+All previously missing service mocks have been implemented in test file:
 
-**Missing Mocks in Test:**
-- `PersonaInputSanitizer.sanitizePersonaInput()` → used at route lines 1948, 1984, 2020
-- `SafeUtils.safeUserIdPrefix()` → used for logging
-- `EmbeddingsService` → called via `generateEmbeddingsForPersona()` at line 2232
-- Rate limiter middlewares → `roastrPersonaWriteLimiter`
+**Mocks Added:**
+- ✅ `PersonaInputSanitizer` → mocked at test line 78-80 (Issue #618)
+  ```javascript
+  jest.mock('../../../src/services/personaInputSanitizer', () => ({
+      sanitizePersonaInput: jest.fn((input) => input) // Pass-through mock
+  }));
+  ```
+
+- ✅ `SafeUtils` → mocked at test line 66-68 (Issue #618)
+  ```javascript
+  jest.mock('../../../src/utils/logger', () => ({
+      logger: { /* ... */ },
+      SafeUtils: { safeUserIdPrefix: jest.fn((id) => id) }
+  }));
+  ```
+
+- ✅ `EmbeddingsService` → mocked at test line 86-88 (Issue #618)
+  ```javascript
+  const EmbeddingsService = require('../../../src/services/embeddingsService');
+  jest.mock('../../../src/services/embeddingsService');
+  ```
+
+- ✅ `roastrPersonaWriteLimiter` (and other rate limiters) → mocked at test line 94-98 (Issue #618)
+  ```javascript
+  jest.mock('../../../src/middleware/roastrPersonaRateLimiters', () => ({
+      roastrPersonaWriteLimiter: (req, res, next) => next(),
+      // ... other limiters
+  }));
+  ```
+
+**Next Steps:** Verify tests pass with all mocks in place, update test status accordingly
 
 ---
 
