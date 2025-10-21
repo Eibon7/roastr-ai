@@ -48,8 +48,8 @@ describe('Triage System Integration Tests', () => {
     AnalyzeToxicityWorker.mockImplementation(() => mockToxicityWorker);
     CostControlService.mockImplementation(() => mockCostControl);
 
-    // Create fresh service instance
-    triageService = new (require('../../src/services/triageService').constructor)();
+    // Create fresh service instance (Issue #618 - TriageService exports class directly)
+    triageService = new TriageService();
   });
 
   afterEach(() => {
@@ -130,9 +130,9 @@ describe('Triage System Integration Tests', () => {
       // First service instance
       const result1 = await triageService.analyzeAndRoute(comment, organization, user);
 
-      // Create new service instance (simulating restart)
-      const newTriageService = new (require('../../src/services/triageService').constructor)();
-      
+      // Create new service instance (simulating restart) - Issue #618
+      const newTriageService = new TriageService();
+
       const result2 = await newTriageService.analyzeAndRoute(comment, organization, user);
 
       expect(result1.action).toBe(result2.action);
