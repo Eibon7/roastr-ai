@@ -30,7 +30,7 @@ class PerspectiveService {
                 version: 'v1alpha1',
                 auth: this.apiKey
             });
-
+            
             logger.info('✅ Perspective API service initialized');
         } catch (error) {
             logger.warn('⚠️ Failed to initialize Perspective API:', error.message);
@@ -150,22 +150,22 @@ class PerspectiveService {
     getMockAnalysis(text, isError = false) {
         // Simple heuristic-based analysis for fallback
         const lowerText = text.toLowerCase();
-
+        
         // Basic profanity detection
         const profanityWords = ['fuck', 'shit', 'damn', 'hell', 'ass', 'bitch'];
         const hasProfanity = profanityWords.some(word => lowerText.includes(word));
-
+        
         // Basic toxicity indicators
         const toxicIndicators = ['hate', 'kill', 'die', 'stupid', 'idiot', 'moron'];
         const hasToxicContent = toxicIndicators.some(word => lowerText.includes(word));
-
+        
         // Calculate mock scores
         let toxicity = 0.1;
         if (hasProfanity) toxicity += 0.3;
         if (hasToxicContent) toxicity += 0.2;
         if (text.includes('!'.repeat(3))) toxicity += 0.1; // Multiple exclamations
         if (text.toUpperCase() === text && text.length > 10) toxicity += 0.1; // ALL CAPS
-
+        
         toxicity = Math.min(toxicity, 0.9);
 
         const categories = [];
