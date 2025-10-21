@@ -108,6 +108,41 @@ class AuthService {
   }
 
   /**
+   * Refresh access token using refresh token
+   * Issue #628: Proactive token refresh 15 minutes before expiry
+   * @param {string} refreshToken - Refresh token
+   * @returns {Promise<{success: boolean, data?: any, error?: boolean, message?: string}>}
+   */
+  async refreshToken(refreshToken) {
+    try {
+      const response = await fetch('/api/auth/refresh-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to refresh token');
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.data, // { access_token, refresh_token, expires_at, expires_in, user }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: true,
+        message: error?.message || 'Session expired. Please sign in again.',
+      };
+    }
+  }
+
+  /**
    * Get user-friendly error messages
    * @private
    */

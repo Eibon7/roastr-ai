@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase, authHelpers } from '../lib/supabaseClient';
 import { isMockModeEnabled } from '../lib/mockMode';
 import apiClient from '../lib/api';
+import authService from '../services/authService';
 
 const AuthContext = createContext({});
 
@@ -19,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [mockMode] = useState(isMockModeEnabled());
+  const refreshIntervalRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -124,6 +126,74 @@ export const AuthProvider = ({ children }) => {
       subscription.unsubscribe();
     };
   }, [mockMode]);
+
+  // Issue #628: Proactive token refresh - refresh 15 minutes before expiry
+  useEffect(() => {
+    // Clear any existing refresh interval
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+      refreshIntervalRef.current = null;
+    }
+
+    // If no session, nothing to refresh
+    if (!session || mockMode) {
+      return;
+    }
+
+    const checkAndRefreshToken = async () => {
+      try {
+        // Get current session to check expiry
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+        if (!currentSession) {
+          return;
+        }
+
+        // Calculate time until expiry in milliseconds
+        const expiresAt = currentSession.expires_at * 1000; // Convert to milliseconds
+        const now = Date.now();
+        const timeUntilExpiry = expiresAt - now;
+        const fifteenMinutes = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+        // If token expires in less than 15 minutes, refresh it
+        if (timeUntilExpiry < fifteenMinutes && timeUntilExpiry > 0) {
+          console.log('[Auth] Token expiring soon, refreshing proactively...');
+
+          const result = await authService.refreshToken(currentSession.refresh_token);
+
+          if (result.success) {
+            console.log('[Auth] Token refreshed successfully');
+            // Update session with new tokens
+            const newSession = {
+              ...currentSession,
+              access_token: result.data.access_token,
+              refresh_token: result.data.refresh_token,
+              expires_at: result.data.expires_at / 1000, // Convert back to seconds
+              expires_in: result.data.expires_in,
+            };
+            setSession(newSession);
+          } else {
+            console.error('[Auth] Failed to refresh token:', result.message);
+          }
+        }
+      } catch (error) {
+        console.error('[Auth] Error checking token expiry:', error);
+      }
+    };
+
+    // Check immediately
+    checkAndRefreshToken();
+
+    // Then check every 5 minutes
+    refreshIntervalRef.current = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    };
+  }, [session, mockMode]);
 
   const signUp = async (email, password, name) => {
     setLoading(true);

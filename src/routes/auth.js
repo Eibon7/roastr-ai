@@ -31,6 +31,15 @@ router.post('/register', async (req, res) => {
             });
         }
 
+        // Issue #628: Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email format'
+            });
+        }
+
         // Validate password strength
         const passwordValidation = validatePassword(password);
         if (!passwordValidation.isValid) {

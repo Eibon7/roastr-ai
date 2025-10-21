@@ -139,7 +139,23 @@ class ApiClient {
       }
 
       const response = await fetch(url, options);
-      
+
+      // Issue #628: Enhanced error handling for auth errors
+
+      // Handle 403 Forbidden - Access denied
+      if (response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Access denied. You do not have permission to access this resource.');
+      }
+
+      // Handle 429 Too Many Requests - Rate limit exceeded
+      if (response.status === 429) {
+        const errorData = await response.json().catch(() => ({}));
+        const retryAfter = response.headers.get('retry-after') || errorData.retryAfter || 60;
+        const waitTime = parseInt(retryAfter, 10);
+        throw new Error(`Rate limit exceeded. Please wait ${Math.ceil(waitTime / 60)} minutes before trying again.`);
+      }
+
       // Check if token expired during request - retry once with refresh
       if (response.status === 401 && !endpoint.includes('/auth/login')) {
         try {
