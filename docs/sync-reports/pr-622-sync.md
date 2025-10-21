@@ -230,7 +230,7 @@ Defensive feature flag checking with Jest compatibility.
 
 ### 1. **Security Section**
 **Add:**
-- IPv6 Rate Limiting Support
+- IPv6 rate-limiting support
   - `ipKeyGenerator` function in middleware/security
   - Applied to all rate-limited routes
   - Handles IPv4 and IPv6 addresses correctly
@@ -375,7 +375,7 @@ nodes:
    - Update responsibilities, dependencies
 
 3. **Update spec.md** (4 sections)
-   - Security: IPv6 rate limiting
+   - Security: IPv6 rate-limiting
    - Toxicity Detection: Batch resilience
    - Testing Infrastructure: Jest milestone
    - Observability: Logging standards
