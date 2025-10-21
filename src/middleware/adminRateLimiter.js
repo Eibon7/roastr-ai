@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // Issue #618 - IPv6 support
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 
@@ -35,12 +36,11 @@ const createAdminRateLimiter = (options = {}) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req, options) => {
-      // Use user ID if authenticated, otherwise fall back to IP with IPv6 support
+    keyGenerator: (req) => {
+      // Use user ID if authenticated, otherwise fall back to IP with IPv6 support (Issue #618)
       if (req.user?.id) {
         return `user:${req.user.id}`;
       }
-      const { ipKeyGenerator } = options;
       return `ip:${ipKeyGenerator(req)}`;
     },
     handler: (req, res) => {

@@ -6,12 +6,12 @@
 const crypto = require('crypto');
 const { google } = require('googleapis');
 const { logger } = require('../utils/logger');
-const flags = require('../config/flags');
+const { isFlagEnabled } = require('../utils/featureFlags');
 
 class PerspectiveService {
     constructor() {
         this.apiKey = process.env.PERSPECTIVE_API_KEY;
-        this.enabled = flags.isEnabled('ENABLE_PERSPECTIVE_API') && !!this.apiKey;
+        this.enabled = isFlagEnabled('ENABLE_PERSPECTIVE_API') && !!this.apiKey;
 
         if (!this.enabled) {
             logger.warn('Perspective API disabled or API key not configured');
@@ -23,7 +23,7 @@ class PerspectiveService {
                 version: 'v1alpha1',
                 auth: this.apiKey
             });
-
+            
             logger.info('✅ Perspective API service initialized');
         } catch (error) {
             logger.error('Failed to initialize Perspective API:', error);
@@ -143,22 +143,22 @@ class PerspectiveService {
     getMockAnalysis(text, isError = false) {
         // Simple heuristic-based analysis for fallback
         const lowerText = text.toLowerCase();
-
+        
         // Basic profanity detection
         const profanityWords = ['fuck', 'shit', 'damn', 'hell', 'ass', 'bitch'];
         const hasProfanity = profanityWords.some(word => lowerText.includes(word));
-
+        
         // Basic toxicity indicators
         const toxicIndicators = ['hate', 'kill', 'die', 'stupid', 'idiot', 'moron'];
         const hasToxicContent = toxicIndicators.some(word => lowerText.includes(word));
-
+        
         // Calculate mock scores
         let toxicity = 0.1;
         if (hasProfanity) toxicity += 0.3;
         if (hasToxicContent) toxicity += 0.2;
         if (text.includes('!'.repeat(3))) toxicity += 0.1; // Multiple exclamations
         if (text.toUpperCase() === text && text.length > 10) toxicity += 0.1; // ALL CAPS
-
+        
         toxicity = Math.min(toxicity, 0.9);
 
         const categories = [];
@@ -199,15 +199,22 @@ class PerspectiveService {
             const batch = texts.slice(i, i + batchSize);
             const batchPromises = batch.map(text => this.analyzeText(text, options));
 
-            try {
-                const batchResults = await Promise.all(batchPromises);
-                results.push(...batchResults);
-            } catch (error) {
-                logger.error('Batch analysis failed:', error);
-                // Add mock results for failed batch
-                const mockResults = batch.map(text => this.getMockAnalysis(text, true));
-                results.push(...mockResults);
-            }
+            // Use Promise.allSettled to preserve successful results when some fail
+            const batchResults = await Promise.allSettled(batchPromises);
+
+            batchResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    results.push(result.value);
+                } else {
+                    logger.warn('Individual analysis failed in batch:', {
+                        batchIndex: i,
+                        itemIndex: index,
+                        error: result.reason?.message
+                    });
+                    // Add mock result for failed item only
+                    results.push(this.getMockAnalysis(batch[index], true));
+                }
+            });
 
             // Add delay between batches to respect rate limits
             if (i + batchSize < texts.length) {
@@ -233,7 +240,7 @@ class PerspectiveService {
         return {
             enabled: this.enabled,
             hasApiKey: !!this.apiKey,
-            flagEnabled: flags.isEnabled('ENABLE_PERSPECTIVE_API'),
+            flagEnabled: isFlagEnabled('ENABLE_PERSPECTIVE_API'),
             ready: this.enabled && !!this.client
         };
     }

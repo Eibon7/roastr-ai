@@ -114,9 +114,8 @@ jest.mock('../../../src/config/mockMode', () => ({
       }))
     })),
     generateMockPerspective: jest.fn(() => ({
-      comments: {
-        analyze: jest.fn()
-      }
+      analyzeToxicity: jest.fn(),  // Issue #618 - Match PerspectiveService interface
+      initialize: jest.fn()
     })),
     generateMockOpenAI: jest.fn(() => ({
       moderations: {

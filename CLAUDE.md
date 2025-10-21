@@ -75,6 +75,9 @@ npm run demo:reset:dry           # Preview what would be deleted
 | | `node scripts/predict-gdd-drift.js --create-issues` | Create GitHub issues for drift |
 | **Auto-Repair** | `node scripts/auto-repair-gdd.js --dry-run` | Show what would be fixed |
 | | `node scripts/auto-repair-gdd.js --auto-fix` | Apply fixes automatically |
+| **Metrics Sync** | `node scripts/sync-gdd-metrics.js --dry-run` | Preview metrics sync from JSON files |
+| | `node scripts/sync-gdd-metrics.js --auto` | Auto-sync all metrics to docs |
+| | `node scripts/sync-gdd-metrics.js --validate` | Validate metric consistency |
 | **Cross-Validation** | `node scripts/validate-gdd-cross.js --full` | Cross-validate all nodes |
 | | `node scripts/update-integration-status.js` | Update integration status |
 | **Telemetry** | `node scripts/collect-gdd-telemetry.js` | Collect telemetry snapshot |

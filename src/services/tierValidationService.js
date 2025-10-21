@@ -1487,5 +1487,9 @@ class TierValidationService {
     }
 }
 
-// Export singleton instance
-module.exports = new TierValidationService();
+// Export singleton instance for production use
+const instance = new TierValidationService();
+
+// Export both instance (default) and class (for testing) - Issue #618
+module.exports = instance;
+module.exports.TierValidationService = TierValidationService;
