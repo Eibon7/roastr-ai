@@ -168,7 +168,7 @@ export const AuthProvider = ({ children }) => {
               ...currentSession,
               access_token: result.data.access_token,
               refresh_token: result.data.refresh_token,
-              expires_at: result.data.expires_at / 1000, // Convert back to seconds
+              expires_at: result.data.expires_at, // Already in seconds from Supabase
               expires_in: result.data.expires_in,
             };
             setSession(newSession);

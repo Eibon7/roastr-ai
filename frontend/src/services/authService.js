@@ -115,7 +115,7 @@ class AuthService {
    */
   async refreshToken(refreshToken) {
     try {
-      const response = await fetch('/api/auth/refresh-session', {
+      const response = await fetch('/api/auth/session/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
