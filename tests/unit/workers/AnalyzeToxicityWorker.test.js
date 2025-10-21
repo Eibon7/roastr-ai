@@ -190,7 +190,7 @@ describe('AnalyzeToxicityWorker', () => {
       mockPerspectiveService.analyzeToxicity.mockResolvedValue(perspectiveResult);
 
       // Mock comment update
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({
             error: null
@@ -260,7 +260,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       mockOpenAIService.moderateContent.mockResolvedValue(openaiResult);
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({
             error: null
@@ -307,7 +307,7 @@ describe('AnalyzeToxicityWorker', () => {
         new Error('OpenAI API down')
       );
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({
             error: null
@@ -355,7 +355,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       mockPerspectiveService.analyzeToxicity.mockResolvedValue(perspectiveResult);
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({
             error: null
@@ -496,7 +496,7 @@ describe('AnalyzeToxicityWorker', () => {
         confidence: 0.92
       };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({
             error: null
@@ -520,7 +520,7 @@ describe('AnalyzeToxicityWorker', () => {
       const commentId = 'comment-456';
       const analysis = { toxicity_score: 0.5 };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({
             error: { message: 'Update failed' }
@@ -641,7 +641,7 @@ describe('AnalyzeToxicityWorker', () => {
         categories: ['TOXICITY']
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockResolvedValue({ error: null })
         })

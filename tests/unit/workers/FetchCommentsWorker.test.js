@@ -172,7 +172,7 @@ describe('FetchCommentsWorker', () => {
       });
 
       // Mock comment insertion
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         insert: jest.fn().mockResolvedValue({ error: null }),
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
@@ -229,7 +229,7 @@ describe('FetchCommentsWorker', () => {
         hasMore: true
       });
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         insert: jest.fn().mockResolvedValue({ error: null }),
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
@@ -401,7 +401,7 @@ describe('FetchCommentsWorker', () => {
       };
 
       // Mock comment already exists
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -422,7 +422,7 @@ describe('FetchCommentsWorker', () => {
       const comment = { id: 'comment-error', text: 'Test' };
       const job = { organization_id: 'org-123', platform: 'twitter' };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({

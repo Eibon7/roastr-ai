@@ -324,7 +324,7 @@ describe('ShieldActionWorker - Fixed Tests', () => {
       };
 
       // Mock database to fail
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
             single: jest.fn().mockResolvedValue({

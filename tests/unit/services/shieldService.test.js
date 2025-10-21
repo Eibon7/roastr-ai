@@ -94,7 +94,7 @@ describe('ShieldService', () => {
       };
 
       // Mock user behavior lookup
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -135,7 +135,7 @@ describe('ShieldService', () => {
       };
 
       // Mock no previous violations
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -201,7 +201,7 @@ describe('ShieldService', () => {
       };
 
       // Mock Shield action recording
-      mockSupabase.from.mockReturnValueOnce({
+      mockSupabase.from = jest.fn().mockReturnValueOnce({
         insert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -213,7 +213,7 @@ describe('ShieldService', () => {
       });
 
       // Mock user behavior update
-      mockSupabase.from.mockReturnValueOnce({
+      mockSupabase.from = jest.fn().mockReturnValueOnce({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -266,7 +266,7 @@ describe('ShieldService', () => {
         toxicity_score: 0.9
       };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -298,7 +298,7 @@ describe('ShieldService', () => {
       };
 
       // Mock user with multiple violations
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -333,7 +333,7 @@ describe('ShieldService', () => {
       };
 
       // Mock no behavior record
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -503,7 +503,7 @@ describe('ShieldService', () => {
       const content = { text: 'test', toxicity_score: 0.8 };
       const user = { user_id: 'user-123', platform: 'twitter' };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -543,7 +543,7 @@ describe('ShieldService', () => {
       const mockUpsert = jest.fn().mockReturnValue({ select: mockSelect });
       const mockInsert = jest.fn().mockReturnValue({ select: mockSelect });
       
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         insert: mockInsert,
         upsert: mockUpsert
       });

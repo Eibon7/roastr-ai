@@ -96,7 +96,7 @@ describe('CostControlService', () => {
         last_reset_date: new Date().toISOString()
       };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -117,7 +117,7 @@ describe('CostControlService', () => {
     });
 
     it('should handle user not found', async () => {
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -143,7 +143,7 @@ describe('CostControlService', () => {
     it('should handle database errors', async () => {
       const dbError = { message: 'Database connection failed' };
       
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -286,7 +286,7 @@ describe('CostControlService', () => {
         cost_this_month: 255
       };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -314,7 +314,7 @@ describe('CostControlService', () => {
       ];
 
       for (const { type, expectedCost } of operations) {
-        mockSupabase.from.mockReturnValue({
+        mockSupabase.from = jest.fn().mockReturnValue({
           upsert: jest.fn().mockReturnValue({
             select: jest.fn().mockReturnValue({
               single: jest.fn().mockResolvedValue({
@@ -340,7 +340,7 @@ describe('CostControlService', () => {
     it('should handle database errors during tracking', async () => {
       const dbError = { message: 'Insert failed' };
       
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -360,7 +360,7 @@ describe('CostControlService', () => {
     });
 
     it('should handle unknown operation types gracefully', async () => {
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -385,7 +385,7 @@ describe('CostControlService', () => {
         subscription_status: 'active'
       };
 
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -403,7 +403,7 @@ describe('CostControlService', () => {
     });
 
     it('should return default plan for user not found', async () => {
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -423,7 +423,7 @@ describe('CostControlService', () => {
     });
 
     it('should handle database errors', async () => {
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -473,7 +473,7 @@ describe('CostControlService', () => {
 
   describe('resetMonthlyUsage', () => {
     it('should reset usage for specified user', async () => {
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             select: jest.fn().mockReturnValue({
@@ -495,7 +495,7 @@ describe('CostControlService', () => {
     it('should handle errors during reset', async () => {
       const dbError = { message: 'Update failed' };
       
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             select: jest.fn().mockReturnValue({

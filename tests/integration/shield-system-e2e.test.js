@@ -286,7 +286,7 @@ describe('Shield System - End-to-End Integration', () => {
 
     test('should handle database failures without losing data integrity', async () => {
       // Mock database to fail
-      mockSupabase.from.mockReturnValue({
+      mockSupabase.from = jest.fn().mockReturnValue({
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
             single: jest.fn().mockResolvedValue({
