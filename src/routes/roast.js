@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
-const { flags } = require('../config/flags');
+const { isFlagEnabled } = require('../utils/featureFlags');
 // CodeRabbit Round 6: Optional Sentry integration for error capture
 let Sentry;
 try {
@@ -21,7 +21,7 @@ try {
         }
     };
 }
-const { 
+const {
     VALIDATION_CONSTANTS,
     isValidStyle,
     isValidLanguage,
@@ -45,17 +45,6 @@ const PerspectiveService = require('../services/perspectiveService');
 let roastGenerator;
 let roastEngine;
 let perspectiveService;
-
-// Helper function to safely check flags (Issue #618 - Jest compatibility)
-// In Jest test environment, flags.isEnabled might not be available during module initialization
-const isFlagEnabled = (flagName) => {
-    try {
-        return flags && typeof flags.isEnabled === 'function' && flags.isEnabled(flagName);
-    } catch (error) {
-        logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
-        return false;
-    }
-};
 
 // Initialize roast generator based on flags
 if (isFlagEnabled('ENABLE_REAL_OPENAI')) {
