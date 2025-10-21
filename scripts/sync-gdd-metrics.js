@@ -101,8 +101,9 @@ class MetricsCollector {
       const data = JSON.parse(content);
 
       const total = data.nodes_validated || 0;
-      const orphans = (data.orphans || []).length;
-      const healthy = total - orphans;
+      // Issue #621, CodeRabbit Minor: Clamp to valid bounds
+      const orphans = Math.max(0, (data.orphans || []).length);
+      const healthy = Math.max(0, Math.min(total, total - orphans));
 
       return {
         total,
@@ -531,9 +532,21 @@ Exit Codes:
     const updater = new DocumentUpdater(this.rootDir, { dryRun: this.options.dryRun });
     const results = await updater.updateAll(metrics);
 
+    // Check for errors (Issue #621, CodeRabbit P1)
+    if (results.summary.error) {
+      if (ciMode) {
+        process.stdout.write(JSON.stringify({ error: results.summary.error, results, metrics }, null, 2));
+        return 1;
+      }
+      err('');
+      err('❌ Update failed:');
+      err(`   ${results.summary.error}`);
+      return 1;
+    }
+
     if (ciMode) {
       process.stdout.write(JSON.stringify({ results, metrics }, null, 2));
-      return results.summary.updated ? 0 : 0;
+      return 0;
     }
 
     // Report results

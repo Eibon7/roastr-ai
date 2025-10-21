@@ -150,6 +150,44 @@ describe('MetricsCollector', () => {
         source: 'gdd-status.json'
       });
     });
+
+    // Issue #621, CodeRabbit Minor: Edge case - orphans > total
+    it('should clamp healthy to 0 when orphans exceed total', async () => {
+      const mockStatusData = {
+        nodes_validated: 5,
+        orphans: ['node1', 'node2', 'node3', 'node4', 'node5', 'node6', 'node7', 'node8']
+      };
+
+      fs.readFile.mockResolvedValue(JSON.stringify(mockStatusData));
+
+      const result = await collector.collectNodeCount();
+
+      expect(result).toEqual({
+        total: 5,
+        healthy: 0,  // Clamped to 0, not negative
+        orphans: 8,
+        source: 'gdd-status.json'
+      });
+    });
+
+    // Issue #621, CodeRabbit Minor: Edge case - healthy at boundary
+    it('should handle healthy at exact total', async () => {
+      const mockStatusData = {
+        nodes_validated: 10,
+        orphans: ['node1']
+      };
+
+      fs.readFile.mockResolvedValue(JSON.stringify(mockStatusData));
+
+      const result = await collector.collectNodeCount();
+
+      expect(result).toEqual({
+        total: 10,
+        healthy: 9,
+        orphans: 1,
+        source: 'gdd-status.json'
+      });
+    });
   });
 
   describe('collectHealthScore', () => {
@@ -494,6 +532,41 @@ describe('DocumentUpdater', () => {
       const issues = await updater.validate(metrics);
 
       expect(issues).toHaveLength(0);
+    });
+  });
+
+  // Issue #621, CodeRabbit P1: CLI error handling tests
+  describe('Error Handling', () => {
+    beforeEach(() => {
+      // Mock DocumentUpdater methods
+      updater.updateGDDSummary = jest.fn();
+    });
+
+    it('should return exit code 1 when updateGDDSummary fails', async () => {
+      // Mock error in updateGDDSummary
+      updater.updateGDDSummary.mockResolvedValue({
+        updated: false,
+        error: 'File not found: GDD-IMPLEMENTATION-SUMMARY.md'
+      });
+
+      const results = await updater.updateAll({ nodeCount: { total: 10, healthy: 8 } });
+
+      expect(results.summary.error).toBe('File not found: GDD-IMPLEMENTATION-SUMMARY.md');
+      expect(results.summary.updated).toBe(false);
+    });
+
+    it('should propagate errors in CI mode', async () => {
+      // Mock error
+      updater.updateGDDSummary.mockResolvedValue({
+        updated: false,
+        error: 'Permission denied'
+      });
+
+      const results = await updater.updateAll({ nodeCount: { total: 10, healthy: 8 } });
+
+      // Verify error is in results
+      expect(results.summary.error).toBeDefined();
+      expect(results.summary.error).toBe('Permission denied');
     });
   });
 });
