@@ -1,4 +1,4 @@
-const TierValidationService = require('../../../src/services/tierValidationService');
+const { TierValidationService } = require('../../../src/services/tierValidationService'); // Issue #618 - Import class for testing
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const tierConfig = require('../../../src/config/tierConfig');
 
