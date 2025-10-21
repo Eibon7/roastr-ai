@@ -6,17 +6,7 @@
 const crypto = require('crypto');
 const { google } = require('googleapis');
 const { logger } = require('../utils/logger');
-const { flags } = require('../config/flags');
-
-// Helper function to safely check flags (Issue #618 - Jest compatibility)
-const isFlagEnabled = (flagName) => {
-    try {
-        return flags && typeof flags.isEnabled === 'function' && flags.isEnabled(flagName);
-    } catch (error) {
-        logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
-        return false;
-    }
-};
+const { isFlagEnabled } = require('../utils/featureFlags');
 
 class PerspectiveService {
     constructor() {
@@ -216,15 +206,22 @@ class PerspectiveService {
             const batch = texts.slice(i, i + batchSize);
             const batchPromises = batch.map(text => this.analyzeText(text, options));
 
-            try {
-                const batchResults = await Promise.all(batchPromises);
-                results.push(...batchResults);
-            } catch (error) {
-                logger.error('Batch analysis failed:', error);
-                // Add mock results for failed batch
-                const mockResults = batch.map(text => this.getMockAnalysis(text, true));
-                results.push(...mockResults);
-            }
+            // Use Promise.allSettled to preserve successful results when some fail
+            const batchResults = await Promise.allSettled(batchPromises);
+
+            batchResults.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    results.push(result.value);
+                } else {
+                    logger.warn('Individual analysis failed in batch:', {
+                        batchIndex: i,
+                        itemIndex: index,
+                        error: result.reason?.message
+                    });
+                    // Add mock result for failed item only
+                    results.push(this.getMockAnalysis(batch[index], true));
+                }
+            });
 
             // Add delay between batches to respect rate limits
             if (i + batchSize < texts.length) {
