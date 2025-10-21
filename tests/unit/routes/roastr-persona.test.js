@@ -24,7 +24,18 @@ const mockSupabaseServiceClient = {
     eq: jest.fn().mockReturnThis(),
     single: jest.fn(),
     update: jest.fn().mockReturnThis(),
-    insert: jest.fn()
+    insert: jest.fn(),
+    rpc: jest.fn().mockResolvedValue({  // Issue #618 - Add rpc method for update_roastr_persona_transactional
+        data: {
+            success: true,
+            updated_fields: {
+                lo_que_me_define_encrypted: null,
+                lo_que_no_tolero_encrypted: null,
+                lo_que_me_da_igual_encrypted: null
+            }
+        },
+        error: null
+    })
 };
 
 const mockCreateUserClient = jest.fn(() => mockSupabaseServiceClient);
@@ -44,13 +55,46 @@ jest.mock('../../../src/middleware/auth', () => ({
     authenticateToken: mockAuthenticateToken
 }));
 
+// Issue #618 - Mock logger and SafeUtils together
 jest.mock('../../../src/utils/logger', () => ({
-    logger: { 
-        info: jest.fn(), 
-        error: jest.fn(), 
+    logger: {
+        info: jest.fn(),
+        error: jest.fn(),
         warn: jest.fn(),
         debug: jest.fn()
+    },
+    SafeUtils: {
+        safeUserIdPrefix: jest.fn((userId) => `${userId.substring(0, 8)}...`)
     }
+}));
+
+// Issue #618 - Mock feature flags to enable ENABLE_SUPABASE
+jest.mock('../../../src/config/flags', () => ({
+    flags: {
+        isEnabled: jest.fn((flag) => flag === 'ENABLE_SUPABASE')  // Enable SUPABASE flag
+    }
+}));
+
+// Issue #618 - Mock PersonaInputSanitizer
+jest.mock('../../../src/services/personaInputSanitizer', () => {
+    return jest.fn().mockImplementation(() => ({
+        sanitizePersonaInput: jest.fn((text) => text),  // Pass through for tests
+        getValidationErrorMessage: jest.fn(() => 'Invalid input')
+    }));
+});
+
+// Issue #618 - Mock EmbeddingsService (not used in simple update tests)
+jest.mock('../../../src/services/embeddingsService', () => {
+    return jest.fn().mockImplementation(() => ({
+        generateEmbedding: jest.fn().mockResolvedValue([0.1, 0.2, 0.3])
+    }));
+});
+
+// Issue #618 - Mock rate limiters (middleware pass-through)
+jest.mock('../../../src/middleware/roastrPersonaRateLimiter', () => ({
+    roastrPersonaReadLimiter: (req, res, next) => next(),
+    roastrPersonaWriteLimiter: (req, res, next) => next(),
+    roastrPersonaDeleteLimiter: (req, res, next) => next()
 }));
 
 const userRoutes = require('../../../src/routes/user');
@@ -245,9 +289,12 @@ describe('Roastr Persona API Endpoints', () => {
                 });
 
             expect(response.status).toBe(200);
-            
-            const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
-            expect(updateCall.lo_que_me_define_encrypted).toBe(null);
+
+            // Issue #618 - Check rpc call instead of update (route uses .rpc() transactional update)
+            const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
+            expect(rpcCall).toBeDefined();
+            const updateData = rpcCall[1].p_update_data;
+            expect(updateData.lo_que_me_define_encrypted).toBe(null);
         });
 
         it('should clear persona when null provided', async () => {
@@ -260,9 +307,12 @@ describe('Roastr Persona API Endpoints', () => {
                 });
 
             expect(response.status).toBe(200);
-            
-            const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
-            expect(updateCall.lo_que_me_define_encrypted).toBe(null);
+
+            // Issue #618 - Check rpc call instead of update (route uses .rpc() transactional update)
+            const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
+            expect(rpcCall).toBeDefined();
+            const updateData = rpcCall[1].p_update_data;
+            expect(updateData.lo_que_me_define_encrypted).toBe(null);
         });
 
         it('should sanitize input', async () => {
@@ -277,10 +327,13 @@ describe('Roastr Persona API Endpoints', () => {
                 });
 
             expect(response.status).toBe(200);
-            
+
             // Verify the input was sanitized (no null bytes, trimmed)
-            const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
-            expect(updateCall.lo_que_me_define_encrypted).toBeTruthy();
+            // Issue #618 - Check rpc call instead of update (route uses .rpc() transactional update)
+            const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
+            expect(rpcCall).toBeDefined();
+            const updateData = rpcCall[1].p_update_data;
+            expect(updateData.lo_que_me_define_encrypted).toBeTruthy();
         });
 
         it('should handle database errors during update', async () => {
@@ -376,13 +429,16 @@ describe('Roastr Persona API Endpoints', () => {
                     isVisible: false
                 });
 
-            const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
-            const encryptedData = updateCall.lo_que_me_define_encrypted;
-            
+            // Issue #618 - Check rpc call instead of update (route uses .rpc() transactional update)
+            const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
+            expect(rpcCall).toBeDefined();
+            const updateData = rpcCall[1].p_update_data;
+            const encryptedData = updateData.lo_que_me_define_encrypted;
+
             // Encrypted data should not contain the original text
             expect(encryptedData).not.toContain(testPersona);
             expect(encryptedData).toBeTruthy();
-            
+
             // Should be able to decrypt it back
             const decrypted = encryptionService.decrypt(encryptedData);
             expect(decrypted).toBe(testPersona);
@@ -397,8 +453,11 @@ describe('Roastr Persona API Endpoints', () => {
                     // isVisible not provided
                 });
 
-            const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
-            expect(updateCall.lo_que_me_define_visible).toBe(false);
+            // Issue #618 - Check rpc call instead of update (route uses .rpc() transactional update)
+            const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
+            expect(rpcCall).toBeDefined();
+            const updateData = rpcCall[1].p_update_data;
+            expect(updateData.lo_que_me_define_visible).toBe(false);
         });
 
         it('should log security events without exposing sensitive data', async () => {
