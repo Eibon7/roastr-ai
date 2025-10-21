@@ -1,0 +1,20 @@
+[32m   ✅ All edges bidirectional[0m
+[34m💾 Scanning source code for @GDD tags...[0m
+[32m   ✅ 0 @GDD tags validated[0m
+[34m🔢 Validating coverage authenticity...[0m
+[33m   ⚠️  8/15 nodes missing coverage data[0m
+[36m
+📄 Report written to: docs/system-validation.md[0m
+[36m📊 JSON status: gdd-status.json[0m
+
+═══════════════════════════════════════
+         VALIDATION SUMMARY
+═══════════════════════════════════════
+
+✔ 15 nodes validated
+⚠ 8 coverage integrity issue(s)
+
+⏱  Completed in 0.10s
+
+🟢 Overall Status: HEALTHY
+

@@ -140,9 +140,9 @@
 ✅ **GDD nodes updated and synchronized** → N/A (no changes required)
 ✅ **spec.md updated** → N/A (no architectural changes)
 ✅ **system-map.yaml validated** → VALID (0 cycles, 0 orphans, 0 broken links)
-✅ **TODOs without issue → issues created** → N/A (no new TODOs)
+✅ **TODOs without issues → issues created** → N/A (no new TODOs)
 ✅ **Orphan nodes → issues created** → N/A (0 orphans)
-✅ **Coverage from actual reports (not manual)** → CONFIRMED (all nodes use auto)
+✅ **Coverage from real reports (no manual)** → CONFIRMED (all nodes use auto)
 ✅ **Timestamps updated** → N/A (nodes reflect current state)
 ✅ **Documentation commit pushed** → PENDING (this sync report)
 
