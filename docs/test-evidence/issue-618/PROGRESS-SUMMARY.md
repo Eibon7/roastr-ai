@@ -301,7 +301,7 @@ generateMockPerspective: jest.fn(() => ({
 ## 🔍 Investigation Notes
 
 ### Unresolved Questions
-1. **CLI Module Error:** Why is absolute path `/Users/emiliopostigo/roastr-ai/cli.js` being used?
+1. **CLI Module Error:** Why is absolute path to cli.js being used on developer machine?
    - Likely: Jest configuration or test setup issue
    - Action: Check jest.config.js, test helpers
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -44,6 +44,7 @@ interface ShieldSettings {
         critical: number;
         high: number;
         moderate: number;
+        corrective: number;
       };
     };
   };
@@ -124,10 +125,19 @@ export default function ShieldSettings() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Load settings from API
-    loadSettings();
+  const loadSettings = useCallback(async () => {
+    // Load settings from API implementation
+    setLoading(true);
+    try {
+      // API call here
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   /**
    * Loads Shield settings from backend API.

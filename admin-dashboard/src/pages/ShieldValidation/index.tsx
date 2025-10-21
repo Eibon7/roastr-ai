@@ -338,11 +338,11 @@ export default function ShieldValidation() {
    * @returns {void}
    */
   const stopValidation = () => {
-    setState({
-      ...state,
+    setState((prevState) => ({
+      ...prevState,
       isRunning: false,
       endTime: Date.now()
-    });
+    }));
   };
 
   /**
@@ -523,7 +523,7 @@ export default function ShieldValidation() {
                 {totalDuration}s
               </Typography>
               <Typography variant="caption" color={parseFloat(totalDuration) > 45 ? 'error.main' : 'success.main'}>
-                Target: &lt;45s
+                {"Target: <45s"}
               </Typography>
             </CardContent>
           </Card>
