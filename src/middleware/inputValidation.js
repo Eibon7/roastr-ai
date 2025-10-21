@@ -17,6 +17,7 @@
  */
 
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // Issue #618 - IPv6 support
 const { body, param, query, validationResult } = require('express-validator');
 const DOMPurify = require('isomorphic-dompurify');
 const { logger } = require('../utils/logger');
@@ -62,6 +63,12 @@ const createRateLimiter = (windowMs, max, message) => rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: (req) => {
+        // Use ipKeyGenerator for proper IPv6 support (Issue #618)
+        const ip = ipKeyGenerator(req);
+        const userId = req.user?.id || 'anonymous';
+        return `${ip}:${userId}`;
+    },
     handler: (req, res) => {
         logger.warn('Rate limit exceeded', {
             ip: req.ip,

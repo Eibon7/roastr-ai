@@ -1,0 +1,25 @@
+**Files Removed (41 total):**
+
+**Guardian Cases (17 files):**
+- All docs/guardian/cases/2025-10-20-*.json files
+
+**Previous Review Artifacts (15 files):**
+- docs/plan/issue-420.md
+- docs/plan/review-3356892723.md
+- docs/plan/review-3357176234.md
+- docs/plan/review-3357285302.md
+- docs/plan/review-3422291095.md
+- All associated docs/test-evidence/review-*/ directories (10 files)
+
+**Authentication Testing (2 files):**
+- quick-auth-test.sh
+- manual-test-auth.sh
+
+**Fixture Validation (2 files):**
+- scripts/validate-comment-fixtures.js
+- scripts/validate-comment-fixtures-simple.js
+
+**Other Test Evidence (5 files):**
+- docs/test-evidence/checkpoint-*.txt/md
+- docs/test-evidence/manual-testing-results*
+- docs/test-evidence/pr-1.1-summary.md

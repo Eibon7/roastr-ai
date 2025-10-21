@@ -1,0 +1,128 @@
+🚀 Starting Shield Automated Moderation Flow Validation
+
+============================================================
+
+📋 Step 1: Creating test organization...
+✅ Test user created: 10e33e14-d76f-4073-8305-ee6b2c2d3ed2
+✅ Test organization created: 691a2392-8ad4-425c-932d-f5f9a06cdeac
+
+============================================================
+
+📝 Test 1/3: I will hunt you down and hurt you...
+Expected severity: critical
+Expected action: block
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 1ed7c738-ad61-49ee-8c9f-d715db9ec5a6
+   Toxicity: 0.98
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 1
+   Action: block
+   Offense level: first
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: block action for critical violation
+
+⏱️  Execution time: 0.71s
+✅ Under 3s target
+
+✅ Test 1 PASSED
+
+============================================================
+
+📝 Test 2/3: You are absolutely terrible, I hate everything abo...
+Expected severity: high
+Expected action: block
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: 8ed5ebd3-d481-4f80-aa0c-e093881c6642
+   Toxicity: 0.85
+
+👤 Step 3a: Creating user behavior history...
+✅ User behavior history created
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 2
+   Action: block
+   Offense level: repeat
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+✅ User behavior tracked
+   Total violations: 1
+   Is blocked: false
+   Actions taken: 1
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: block action for high violation
+
+⏱️  Execution time: 0.63s
+✅ Under 3s target
+
+✅ Test 2 PASSED
+
+============================================================
+
+📝 Test 3/3: This is mediocre and disappointing...
+Expected severity: medium
+Expected action: mute_temp
+
+💾 Step 2: Storing toxic comment...
+✅ Comment stored: af8f1d99-34b6-461e-973f-4a27b9478dd9
+   Toxicity: 0.65
+
+🛡️  Step 3: Analyzing with Shield...
+✅ Shield activated
+   Priority: 3
+   Action: mute_temp
+   Offense level: first
+   Auto-executed: false
+
+📊 Step 4: Verifying user behavior tracking...
+⚠️  No user behavior record found (may be created async)
+
+📬 Step 5: Verifying action job queued...
+⚠️  No shield_action job found in queue
+
+📝 Step 6: Verifying Shield activity logged...
+✅ Shield activity logged
+   Message: Shield activated: mute_temp action for medium violation
+
+⏱️  Execution time: 0.54s
+✅ Under 3s target
+
+✅ Test 3 PASSED
+
+============================================================
+
+🧹 Cleaning up test data...
+✅ Cleanup complete
+
+============================================================
+
+📊 VALIDATION REPORT
+============================================================
+
+Total tests: 3
+✅ Passed: 3
+❌ Failed: 0
+⏱️  Total time: 3.00s
+
+============================================================
+
+🎉 ALL VALIDATIONS PASSED

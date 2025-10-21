@@ -6,10 +6,12 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const { rm } = require('fs/promises'); // Node built-in for fs.rm (Issue #618)
+const { logger } = require('../../../src/utils/logger');
 
 // Global test configuration
 global.TEST_TIMEOUT = 30000;
-global.CLI_PATH = path.join(__dirname, '../../../cli.js');
+global.CLI_PATH = path.join(__dirname, '../../../src/cli.js'); // Issue #618 - correct path
 
 // Setup before all tests
 beforeAll(async () => {
@@ -37,9 +39,9 @@ afterAll(async () => {
   
   for (const dir of tempDirs) {
     try {
-      await fs.remove(dir);
+      await rm(dir, { recursive: true, force: true }); // Issue #618 - use Node built-in
     } catch (error) {
-      console.warn(`Failed to clean up ${dir}:`, error.message);
+      logger.warn(`Failed to clean up ${dir}:`, error.message);
     }
   }
 });
