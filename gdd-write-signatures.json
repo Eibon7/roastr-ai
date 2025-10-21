@@ -14,7 +14,7 @@
       "metadata": {
         "test": true
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "cb15e3e621e26fe501a1e59c62570397ac4062af8eb859eb90d70d91229f0fec"
     },
     {
@@ -44,7 +44,7 @@
         "reason": "testing_rollback",
         "original_signature": "16e2605b-e560-4fcb-99a2-49f9df05b53a"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "829d989d5e63c420c41a92e32c20d9bda53393f53d857dd7e8524eebe5f790be"
     },
     {
@@ -80,7 +80,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "e3fc27a48a2bc657a55aa7843611d8edc412cd5d7f54780213a0ff2c5868cb90"
     },
     {
@@ -92,7 +92,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "ad3dd388d9a41c34805d873a77889f1f68f83ffa1927a42a420e7eb8c5b95454"
     },
     {
@@ -104,7 +104,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "4887eed2e40da90673fc25e228331250212111563ffd0af527b76524fcf3afdb"
     },
     {
@@ -116,7 +116,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "fc40307110bd45319900da8ca1743363e360eaeca9542b1d035876b61113e613"
     },
     {
@@ -128,7 +128,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "abd7d330dafc41f842e841d70e83f16b8077d1cf0622c8b970a66452afc1c9a3"
     },
     {
@@ -140,7 +140,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "b50a6e0baae7d3e83cee934976faf4d0badd00b4d0d8620f132bf2ffe867fcfb"
     },
     {
@@ -167,7 +167,7 @@
         "reason": "security_test_rollback",
         "original_signature": "72766e20-695e-49e8-bf08-2d7a8cd7ad48"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "eee7641044ddaa97dd5ee74087b7d9acc93fa92bc9f42dd7733270dff6afda32"
     },
     {
@@ -179,7 +179,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "dc9b1795e6b395ffce0dcf9bcf20dbdec36f5d7a6289662301ea235990d629c7"
     },
     {
@@ -191,7 +191,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "95baff35fc6d4a82871663e9a34b61bc2090def89530b26993a06f8ede0994e0"
     },
     {
@@ -203,7 +203,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "2dade3cbe0e3961122632910ebbde9ee7e6f4b3fcb72fa5f98acbe58d4cd78d8"
     },
     {
@@ -215,7 +215,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "78eec017bd9dfeaa1a4dd899b903893348430d143d1e5975bbdfd3a862e6c914"
     },
     {
@@ -227,7 +227,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "760c7221b7623fe717891ebcf81171c342c0e35567dcd98063f1bf980c894658"
     },
     {
@@ -239,7 +239,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "714f4a4829d92a6008546e8ff41df039cadbbe951e53b9fb292bfeff695c2a34"
     },
     {
@@ -266,7 +266,7 @@
         "reason": "security_test_rollback",
         "original_signature": "cc603911-8b24-43ef-8755-f5969a43820f"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "001666893ec8ec1139d19ae259a79a4f38adcee6e55fb032e3424030d50fd5d9"
     },
     {
@@ -278,7 +278,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "8b64adced11a3b5f28c23c7e7fc17ce98b366004140d601b5d6442cc5b806951"
     },
     {
@@ -290,7 +290,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "e66e63f4613227cf5ac4bd1be387d74eaa3ea5756ea07216c276461504840f1e"
     },
     {
@@ -302,7 +302,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "62658257a0cc9efb2e773ab6e7a966576837a4a3b04d23c68dfcc4fe198df64c"
     },
     {
@@ -314,7 +314,7 @@
       "hashBefore": null,
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "de97d9846f82414722aa638dc6ede246c19956ecee4f385182ffa9489d4cf446"
     },
     {
@@ -326,7 +326,7 @@
       "hashBefore": null,
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "e475fa2cbf016d60cd84aae1c7cfce765bf7274868b5ef727c24142d566d6e95"
     },
     {
@@ -338,7 +338,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "89789abdad6b4d2e7b0b1192c998f5db41ebf5b21a27a255327c81025a3d8e38"
     },
     {
@@ -350,7 +350,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "ac3d0d7f5f14a9d096293899a14e3081e56f01e42cbced9ca8c324f28a620963"
     },
     {
@@ -362,7 +362,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "35fdca94ff8492922cea1a7dc631d494aea48196fffb395fb20cc80a48bed577"
     },
     {
@@ -398,7 +398,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "d3199ada0403a2925ca7e9c1be233f5d3235556b0689fb864839cac48cd0e373"
     },
     {
@@ -410,7 +410,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "d7e9b6c59b190f6a19a7b406f1c5e147ae1e084e14ed03aff430dfe2bfc41061"
     },
     {
@@ -422,7 +422,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "813b8c8c5155e784ca2135af5a0acd7a186689fc7052c5faf80ff49137dd9f4e"
     },
     {
@@ -434,7 +434,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "70fd2c4999e80b8d043870100905b5871fdf2645f1fc165fbcd4ba714e0285a7"
     },
     {
@@ -446,7 +446,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "7e15c5a6821df97f38c3914c51bf5df6e80d77574f4c74922c2586f14ecdd2e6"
     },
     {
@@ -458,7 +458,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "6cf489f2264206eeeb0c0128de79826cd71976c79e1e8eab6ee421930fcf10a5"
     },
     {
@@ -485,7 +485,7 @@
         "reason": "security_test_rollback",
         "original_signature": "baaa532e-4c57-42aa-873f-2d9a09cd5679"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "dda4821936a21fd175df6ae049b4058e825288ec1cc026d237e83a6ec898aa0a"
     },
     {
@@ -497,7 +497,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "f461edf37e7be5fd4b749b5ea2a7b405e2f917ef85fac427e8523717bb6e1707"
     },
     {
@@ -509,7 +509,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "0ac22b901cf5f64b623f40d85946deee05149bb416107b1dee149a0933215b06"
     },
     {
@@ -521,7 +521,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "08e417a6493b82e34dc421f2be5942f34726042faede657af70816d13e20c806"
     },
     {
@@ -557,7 +557,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "426c64a30bb0f7803b5c026dc0a69871816f6ef999421e2393088b93470bb65c"
     },
     {
@@ -569,7 +569,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "cbf4673236555abbf33d4405666f60517ce4305c1396db22b27669f495f46292"
     },
     {
@@ -581,7 +581,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "5406d657c37fba27ab1e599dcb3d17e3217efb20c67541f78a2380a4a1010814"
     },
     {
@@ -593,7 +593,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "b86243062f6cc3e4d0a44002b97ccebad40b81db1cc0bb1a937a5be288c5c4a3"
     },
     {
@@ -605,7 +605,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "5adaf6e9c263cf1b43b10032932482cefb7d399bf390c4821062633d86a7e691"
     },
     {
@@ -617,7 +617,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "d3c41b0d5e04d79c57c6350bdd2c4cdee0c89264981018f5c238683674fde683"
     },
     {
@@ -644,7 +644,7 @@
         "reason": "security_test_rollback",
         "original_signature": "3e90f353-7d22-4f31-b6d9-1adab8c60d97"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "ede16de13d342799583e5031995f7664e49e70ba5d8a30b7474b6172e54cee7b"
     },
     {
@@ -656,7 +656,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "741739eb20bb7059d7c589245d61b292a9746f192fdc169e6aab0f7715ed0666"
     },
     {
@@ -668,7 +668,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "9d0c9e4d84fb018b9f136c84c40d1c3ae8663119bd16a9470090ce03910d1a69"
     },
     {
@@ -680,7 +680,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "ec4a28facab234ebfde9affb12246aba385cc15a31d6ba09144ee8c8cabcf3b2"
     },
     {
@@ -716,7 +716,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "52a2f5557dece0373c5d995bee94de07318ff7c940555f3e3a88867f7f3c14e2"
     },
     {
@@ -728,7 +728,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "20f60181e441e24c7eebd5219fff5fcd0da8fb98e79cb8cb77a4c320fccd93ac"
     },
     {
@@ -740,7 +740,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "e04e758ba9f09e97c00acb5c3705d3cacd398bbc23ac99fef0b2137bb4d75451"
     },
     {
@@ -752,7 +752,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "887f836e2650cbc0b410ba08e320bd18ad0b8f11e68447183b0f452bdecec05f"
     },
     {
@@ -764,7 +764,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "b052c249cb505a00d461b3584fc7299e0af41db25da9c3edb6d8779e45cac544"
     },
     {
@@ -776,7 +776,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "57360660cdcf787b4dcaad5bb56f1d99621e6a0e736c05189b419fb9e4281ec5"
     },
     {
@@ -803,7 +803,7 @@
         "reason": "security_test_rollback",
         "original_signature": "ba8f2da2-daa5-4060-a56a-b458e4245220"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "62c426a51b652505179ccfc36a049ead0b621d4db5a9396a4df0550e6ccd3510"
     },
     {
@@ -815,7 +815,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "eca064b78761369d1494761932a09b7fe7edda0f2006ca7306918c36c123f761"
     },
     {
@@ -827,7 +827,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "1411c451c82cb3bb9603ea810acec5b4bb656b3ec2c1f74f3d23d3580ec29d6b"
     },
     {
@@ -839,7 +839,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "3a59bf3ed50902ad9cbb6573d87d187a974b50885bff781afa84e63ab74d5219"
     },
     {
@@ -875,7 +875,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "c792e884e3229ac36ce656c57d3772f5629ac98e8b29da1029f435ae31f763fc"
     },
     {
@@ -887,7 +887,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "b125092be802416fa86af57be6e571439dce331bb7a695265ef82f5c3295be04"
     },
     {
@@ -899,7 +899,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "7a6bc22a38a9805829a76caf2bb1449ae3a081731a6939ecc617ad02c8e8fa73"
     },
     {
@@ -911,7 +911,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "387b6979691ef706c36f1f4f34fa149feb618670ea461a8dbfd310efa4affd9e"
     },
     {
@@ -923,7 +923,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "b3a7395bae2d832046e8fa3cc462d310cd4b38df66f14d6fbca2c54280e85c65"
     },
     {
@@ -935,7 +935,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "e959d39cd5367cf78626c378f257698c0b2c595f7b0eadfe47e4660a9b6d9604"
     },
     {
@@ -962,7 +962,7 @@
         "reason": "security_test_rollback",
         "original_signature": "d9d463bc-743e-4155-8ad3-e9e9a0efafb1"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "2f661383fbaa0ae87b30bd38e271fd86b60ae2e111179359bdc8bb99d72d2ddb"
     },
     {
@@ -974,7 +974,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "dfbd9e6f8f1fc41c46d4df08d6aa66274ca0f0f25a1cd34d4fbb3289b26c893d"
     },
     {
@@ -986,7 +986,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "c6f62abeb3b4dba50a1d80fa98568a9127842a8fbdf4f4e3768ec8d369477440"
     },
     {
@@ -998,7 +998,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "cad9a5327f7d15a2f71d4d8ab59c1bca31074ddef502f885689ac7c96eacfcb8"
     },
     {
@@ -1034,7 +1034,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "ece332f51ae2479ffe527a7edbb0783921b581a5112ade5817cba9de4c3368af"
     },
     {
@@ -1046,7 +1046,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "3a63ca9d69a3bf74209259a9a4cf8fb0cf5816d1f92688f3ff2aba19a35b75d6"
     },
     {
@@ -1058,7 +1058,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "e9b095528660cf617f99593556d87acd55250b3cbeaa5f8adb840bc73ae0c73a"
     },
     {
@@ -1070,7 +1070,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "83f66fe31fa45b58c033833440a404a8eef8581d5d39ecf1a3dcb1209911f9ab"
     },
     {
@@ -1082,7 +1082,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "640cc418e06d05bacf8b6163ed794d1b19d822dc2c8806edd05f23c40a7f8002"
     },
     {
@@ -1094,7 +1094,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "1ca69a7aefd2b38d351c16a31899a8e3f3bfa05bf70d8d7d5c48108d2ebff408"
     },
     {
@@ -1121,7 +1121,7 @@
         "reason": "security_test_rollback",
         "original_signature": "6c4a57a0-7026-4653-a2f1-f45928cb9d61"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "357025da2a6dc7fbd7dc6fd1be10307fb7a69f5ea2c572f561d606125ed7c468"
     },
     {
@@ -1133,7 +1133,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "1b0f8a6531232cba41121d44a4f978067a881f35ab2a048e1c49875e93f4f1c6"
     },
     {
@@ -1145,7 +1145,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "cef0729139a1c5111a3a40a40e91fd602efcb69320b2f3fa9a598d9fb51c269a"
     },
     {
@@ -1157,7 +1157,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "f4a39cf58fddccbed8d6b5143f34243c6063376e29f4152e30644ea946d164db"
     },
     {
@@ -1193,7 +1193,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "ceca2ea4229c46cd6656ba57449f151af5fbccbc793d5f84a884951185b578bb"
     },
     {
@@ -1205,7 +1205,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "9e8696fead2dce43619b783501f104fbc364ff880445ea37f999691105f1ebdd"
     },
     {
@@ -1217,7 +1217,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "f7297eb3271310bc008907cf551e7a4590f60bf4a6cdd5fa0388b33a9c7f9f26"
     },
     {
@@ -1229,7 +1229,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "89fd7f265ed9cc5a6de7232af4dd758451f2e972a1d0f3eca32aae8a6fbb6f8a"
     },
     {
@@ -1241,7 +1241,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "82257e502f977600ea5aaa6d69e0a87af07d4e5685f61a8e556427e7ba15547f"
     },
     {
@@ -1253,7 +1253,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "4835cad53f90303b520766b103b76a31443267fff0bde0e6c1f325b447ead969"
     },
     {
@@ -1280,7 +1280,7 @@
         "reason": "security_test_rollback",
         "original_signature": "0bbed126-d5d8-40f1-87e2-da0dbf44a30f"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "467e5411fc145b84c24d7a33db2510fe03ccdc658c11b94a00dd40ac346f4518"
     },
     {
@@ -1292,7 +1292,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "41cf4c9711db19c463fab377b3af1128988701c8c0d64ac0b4b64aca461765cf"
     },
     {
@@ -1304,7 +1304,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "dce9d38811a74f3819884facf52acc49a9d5f26ea15adc107e0ace15b980e2c7"
     },
     {
@@ -1316,7 +1316,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "5256f2e074fa9ced55eb85db7fa87374cb20f2d917a2ab58a4afeb9e1347eb73"
     },
     {
@@ -1328,7 +1328,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__repo__..__Windows__system.ini.2025-10-21T13-07-42-619Z.backup",
+      "backupPath": ".gdd-backups/C:__repo__..__Windows__system.ini.2025-10-21T13-07-42-619Z.backup",
       "signature": "ebc95fa336382f5a440f5098d343d5babd59dd8b98a68d8bb48c947821901a05"
     },
     {
@@ -1340,7 +1340,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__Windows__System32__config__sam.2025-10-21T13-07-42-623Z.backup",
+      "backupPath": ".gdd-backups/C:__Windows__System32__config__sam.2025-10-21T13-07-42-623Z.backup",
       "signature": "b972c1a81453441977bc3614908ddcc1e364dead7ad686980962a965c5c85613"
     },
     {
@@ -1352,7 +1352,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "57be087e14d01bf090964e64b792d8075605d5dd9ee4f23e3dc74473cfb06c2a"
     },
     {
@@ -1364,7 +1364,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "12cb504bd5d5644b70b0e22a4a145d44fb11433a79166c72d31ac78887bc9242"
     },
     {
@@ -1376,7 +1376,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "00ca81ed0cd7a7f7eb5a06f3987a3237a49de9991f46afe245d74a589f4ae6d8"
     },
     {
@@ -1388,7 +1388,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "560d1cbfc7bd935e8292a465c0f1dda3792b83e8de1a5cbfc4ecb61367fea264"
     },
     {
@@ -1400,7 +1400,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "8f13abe77d9eafa9af2e7771fa6f05a33154b7d2e81a80bf4fe683142ba12fc4"
     },
     {
@@ -1412,7 +1412,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "31bb1c6c6ce10ae7401410fb4604b63e298728719592aaaed7e4b59c937452da"
     },
     {
@@ -1424,7 +1424,7 @@
       "hashBefore": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "hashAfter": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/.gdd-test-security.txt.2025-10-21T13-08-01-922Z.backup",
+      "backupPath": ".gdd-backups/.gdd-test-security.txt.2025-10-21T13-08-01-922Z.backup",
       "signature": "f03bb87fe749f9fef7bcafc0b100661966a22b9798a8636214764aa8f5b9c262"
     },
     {
@@ -1439,7 +1439,7 @@
         "reason": "security_test_rollback",
         "original_signature": "4cc33a66-443d-466f-90b7-28feeea67aa7"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "fc7be0dda9157b939d9b8c520b04f435a3d5a556c36f99a8106c252f4398804e"
     },
     {
@@ -1451,7 +1451,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "808810a0404ea07f577f51f4d40d1a24a24d3d2da818fba4485a6ac350ef1fae"
     },
     {
@@ -1463,7 +1463,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "7c6a2bd1e615a64dcf830b5ac02fd197e5200c9a9d992c62e420b96cd573ffc3"
     },
     {
@@ -1475,7 +1475,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "6cbbd585452109e371bc6f39c172ca3b791f6af332f61d40ccca37038292930f"
     },
     {
@@ -1487,7 +1487,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__repo__..__Windows__system.ini.2025-10-21T13-19-43-576Z.backup",
+      "backupPath": ".gdd-backups/C:__repo__..__Windows__system.ini.2025-10-21T13-19-43-576Z.backup",
       "signature": "3528a07152933bf2b161a13e2b7cb7b4f02fdf5c316aefbf34d209cbc50cad1f"
     },
     {
@@ -1499,7 +1499,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__Windows__System32__config__sam.2025-10-21T13-19-43-580Z.backup",
+      "backupPath": ".gdd-backups/C:__Windows__System32__config__sam.2025-10-21T13-19-43-580Z.backup",
       "signature": "41266f6df3802917ca0d6c5058aa399603ae4d24a8aefd34ccae99df8290d67d"
     },
     {
@@ -1511,7 +1511,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "6d3022736d2534fcc947846eb681a01f6f1bf1d5e14f45a7478c5b40c33413c6"
     },
     {
@@ -1523,7 +1523,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "8826cfaa05b8b979fac5c95f7f3f99bfcb5be40dd1d8fed723779e7c5a48ffaa"
     },
     {
@@ -1535,7 +1535,7 @@
       "hashBefore": null,
       "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "34ef19a01014f3f9951738a62f2d9ea935ad3d9613ce708938e9e5887ef71d7b"
     },
     {
@@ -1547,7 +1547,7 @@
       "hashBefore": null,
       "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "52ef7968130a3461c6ff246cfa407972ddc3097303b15ac8ada934decf6e4dc3"
     },
     {
@@ -1559,7 +1559,7 @@
       "hashBefore": null,
       "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "44af852689eefdbbfdcb35d474e8ff647625a35c3c4065a5d9b48b5cb19c03b1"
     },
     {
@@ -1571,7 +1571,7 @@
       "hashBefore": null,
       "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "cd08e2f2b5c92ac0ebba786e105c1da34531059ff9f4056029d0666a0ca67b2f"
     },
     {
@@ -1583,7 +1583,7 @@
       "hashBefore": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "hashAfter": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/.gdd-test-security.txt.2025-10-21T13-19-57-480Z.backup",
+      "backupPath": ".gdd-backups/.gdd-test-security.txt.2025-10-21T13-19-57-480Z.backup",
       "signature": "9e7e02c11f8fdc173fb0c05849c3ec0574ab47211e1bfc8f10a49616068cc104"
     },
     {
@@ -1598,7 +1598,7 @@
         "reason": "security_test_rollback",
         "original_signature": "8fe1487f-ae4f-4283-a91d-31fdb30212c8"
       },
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "a88d4b9544adf3b7a498e5393bdfe87abaa7d02cafd774cc15aecea182c28793"
     },
     {
@@ -1610,7 +1610,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "169a6197e6082259c291860688f921ab618c2adb1f060d258221e8d361b31b50"
     },
     {
@@ -1622,7 +1622,7 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "7f6eac6f14760eac08c87e9e4255a1868fea8199abdc6ac5dc7b3e6e6bdfc0ab"
     },
     {
@@ -1634,10 +1634,328 @@
       "hashBefore": null,
       "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
       "metadata": {},
-      "backupPath": null,
+      "backupPath": ".gdd-backups/.backup",
       "signature": "ad06a89c7c96b88f9f0c4a5e173f9297b0b0fe42adecd87dd82cddf43dcc629a"
+    },
+    {
+      "id": "f055dbab-726b-4ff4-8436-879f8cc79429",
+      "timestamp": "2025-10-21T13:21:03.769Z",
+      "agent": "Attacker",
+      "action": "exploit",
+      "path": "/C:\\repo\\..\\Windows\\system.ini",
+      "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "metadata": {},
+      "backupPath": ".gdd-backups/C:__repo__..__Windows__system.ini.2025-10-21T13-21-03-768Z.backup",
+      "signature": "a029b52d432426483c30c2a956fd07eccc8897a890fc971d5557d9c8b9aa4ffe"
+    },
+    {
+      "id": "8e4b06b8-a496-4421-bbbc-04f559b01c8a",
+      "timestamp": "2025-10-21T13:21:03.772Z",
+      "agent": "Attacker",
+      "action": "exploit",
+      "path": "/C:\\Windows\\System32\\config\\sam",
+      "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "metadata": {},
+      "backupPath": ".gdd-backups/C:__Windows__System32__config__sam.2025-10-21T13-21-03-772Z.backup",
+      "signature": "8f3337ba2f97e5c8048e910a6e60a7ed588cb1d15cd4f334b799b6e7a8526f35"
+    },
+    {
+      "id": "1ded1fcb-0afb-4737-a057-9e56b79988da",
+      "timestamp": "2025-10-21T13:21:03.775Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "fe5b20aae4dc5b3e9e3e72565d6aadf1c58746a99fbe280f8054fff2a87ff028"
+    },
+    {
+      "id": "0c01a622-195d-4258-87d1-529669407528",
+      "timestamp": "2025-10-21T13:21:03.780Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "e4a2596ee1ce2e2c390dfba85e6f4f36dfde49d1731fa52514e2c25bf698156a"
+    },
+    {
+      "id": "769fc7f7-c2c1-4164-a535-7628338e49fc",
+      "timestamp": "2025-10-21T13:21:03.782Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "48d07fe0028964da4aa0fe0207035a83ad3fd5a46c4cc904e81058be7dd393dd"
+    },
+    {
+      "id": "a0dd36ff-7170-47d7-ac6c-1c0436c68cfd",
+      "timestamp": "2025-10-21T13:21:18.961Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "999f91e90bb4bb1140696b08a9285f1bec492ee28c1ef31838c96c37d9bcba5b"
+    },
+    {
+      "id": "2f6d7c9b-54a1-40bc-b968-6f9dc9d6cc83",
+      "timestamp": "2025-10-21T13:21:18.963Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "b1dc8005efa50c9b0409ecbcaecd6f73c83688960c97f9f862d80ad76c8efa43"
+    },
+    {
+      "id": "d18c6faa-e4d1-4087-b4fc-966012fac91c",
+      "timestamp": "2025-10-21T13:21:18.967Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "27f563d6cb319a9624567dac5c4b6ab0c86faf0ea08014e820b192358bd7edf3"
+    },
+    {
+      "id": "969af9c1-ccdc-4dd0-bda2-49d4c44f6972",
+      "timestamp": "2025-10-21T13:21:18.968Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "hashAfter": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.gdd-test-security.txt.2025-10-21T13-21-18-968Z.backup",
+      "signature": "941500e7350f05284fdf053d5ed2ea9dd28dc904941ac7e2c7bb31f95c93d3ff"
+    },
+    {
+      "id": "cef2bf79-f578-4652-8fc0-b37ca61da5e8",
+      "timestamp": "2025-10-21T13:21:18.969Z",
+      "agent": "TestAgent",
+      "action": "rollback",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
+      "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "metadata": {
+        "reason": "security_test_rollback",
+        "original_signature": "969af9c1-ccdc-4dd0-bda2-49d4c44f6972"
+      },
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "394ede9d4e03da5175824ab40452c8695481086a99a271a7164a15b143f9517a"
+    },
+    {
+      "id": "14957330-0155-487a-b1e3-017deb08f69b",
+      "timestamp": "2025-10-21T13:21:18.970Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "b0dd3eff7fb56566e1a189f12c4f24b0898041f32d0d605b45728400b16bae94"
+    },
+    {
+      "id": "997a3f25-83eb-4fd7-914d-176064ee109d",
+      "timestamp": "2025-10-21T13:21:18.970Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "ed9c012ac4645684f8f1bc33b7bc6778ad5370c85d471a96727236aa114e348a"
+    },
+    {
+      "id": "24eb1afa-9285-4a65-b632-ab54fab9bf40",
+      "timestamp": "2025-10-21T13:21:18.974Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "c731358baf6cfe65e980fa8ef500dec860f8188be04b0a5fb97455375d50292e"
+    },
+    {
+      "id": "267207ff-2045-4df7-b9e4-b96cf5713e9f",
+      "timestamp": "2025-10-21T14:05:38.996Z",
+      "agent": "Attacker",
+      "action": "exploit",
+      "path": "/C:\\repo\\..\\Windows\\system.ini",
+      "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "metadata": {},
+      "backupPath": ".gdd-backups/C:__repo__..__Windows__system.ini.2025-10-21T14-05-38-996Z.backup",
+      "signature": "6e6d92055f506c30223836c34eecc1fe07da72f517f3ba9e3020fce534af7b73"
+    },
+    {
+      "id": "f6d363c5-f9ec-4054-a229-b66644e09e30",
+      "timestamp": "2025-10-21T14:05:39.000Z",
+      "agent": "Attacker",
+      "action": "exploit",
+      "path": "/C:\\Windows\\System32\\config\\sam",
+      "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "metadata": {},
+      "backupPath": ".gdd-backups/C:__Windows__System32__config__sam.2025-10-21T14-05-38-999Z.backup",
+      "signature": "7e06d6892e40e93038700d7ac5b4d78277b793a95bd0571e2bed061fe713982a"
+    },
+    {
+      "id": "5fe5f436-634d-4b87-83bb-ca793e17a140",
+      "timestamp": "2025-10-21T14:05:39.004Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "9bdc4c39bde4f87a8886c738c61a4c35136a19ddf952c5b33decb270cc73d285"
+    },
+    {
+      "id": "6fa01642-0fa4-4fa3-8765-e66292de4c91",
+      "timestamp": "2025-10-21T14:05:39.006Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "2eff5a4db2fca70ef382f10db11f4b2af0fb02d4c685af2e88ab478abadd3f5b"
+    },
+    {
+      "id": "67d9935a-308d-433c-9ce7-1c76346ef6b5",
+      "timestamp": "2025-10-21T14:05:39.007Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "8829b60b12cf7d974df2663811b57cf02b930cc034b5fbfd727834d125f5606b"
+    },
+    {
+      "id": "9c22a6f2-8e16-42f7-8b53-dfb132a4c4b1",
+      "timestamp": "2025-10-21T14:05:52.836Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "ace26242a65d12ac7e22b108bbde32c974f775ca981507188f9d7ea1cf7cb170"
+    },
+    {
+      "id": "fe0ac890-79b3-42b6-91c5-2aeaa7852309",
+      "timestamp": "2025-10-21T14:05:52.838Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "54dfbaa07558825298e271623c472105f18c37c6f409d83e793200b06e07e287"
+    },
+    {
+      "id": "2341b0de-ee90-4eef-b7d4-bf1793fe0b0b",
+      "timestamp": "2025-10-21T14:05:52.839Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "5b05f1b28f34b09817d9958b7dbda67e5d3431719105e65cb95f52d75ff00a55"
+    },
+    {
+      "id": "ec7efe55-2729-47f1-9f65-e746392760bc",
+      "timestamp": "2025-10-21T14:05:52.840Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "hashAfter": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.gdd-test-security.txt.2025-10-21T14-05-52-839Z.backup",
+      "signature": "c994388f4e4b26b5ecc651dda350079b1562188effb36821863191170aeb94cf"
+    },
+    {
+      "id": "feb9c9f6-f5a1-464f-ae89-3bf571ecf3f5",
+      "timestamp": "2025-10-21T14:05:52.841Z",
+      "agent": "TestAgent",
+      "action": "rollback",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
+      "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "metadata": {
+        "reason": "security_test_rollback",
+        "original_signature": "ec7efe55-2729-47f1-9f65-e746392760bc"
+      },
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "34530318710c1148f64904af4cf31ba2263dd7e6bb424723fee1417466eff3af"
+    },
+    {
+      "id": "f447e79a-fffd-41ff-b3fb-1c9a42cfeec9",
+      "timestamp": "2025-10-21T14:05:52.842Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "c1ccb130802d7ed5805c427c382c859e826d105afd8c5589fc12f1b9c8a662f9"
+    },
+    {
+      "id": "18a72e58-c948-4902-bad5-55e7f21d0baf",
+      "timestamp": "2025-10-21T14:05:52.843Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "f1e068b5abba1206ac4dc7f317d2007b7edd50f729a72fcf74ae4471e269f510"
+    },
+    {
+      "id": "90ecc59b-efe7-4f46-b274-095e48038aa5",
+      "timestamp": "2025-10-21T14:05:52.846Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": ".gdd-backups/.backup",
+      "signature": "eb8f472278ec19f7a8564c1314a5656e7986aaf4abcee54b6c909d0c46490171"
     }
   ],
-  "last_updated": "2025-10-21T13:19:57.492Z",
-  "total_signatures": 133
+  "last_updated": "2025-10-21T14:05:52.846Z",
+  "total_signatures": 159
 }

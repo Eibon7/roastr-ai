@@ -1,8 +1,8 @@
 {
-  "case_id": "2025-10-21-13-01-30-997",
-  "timestamp": "2025-10-21T13:01:30.997Z",
+  "case_id": "2025-10-21-13-21-02-859",
+  "timestamp": "2025-10-21T13:21:02.859Z",
   "actor": "emiliopostigo",
-  "domains": ["pricing"],
+  "domains": [],
   "files_changed": [
     "src/services/costControl.js"
   ],

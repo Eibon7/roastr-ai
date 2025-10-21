@@ -83,7 +83,7 @@ service = new TierValidationService();  // ✅ Now instantiates the class
 - All tests fail immediately
 
 **After Fix:**
-```
+```bash
 Test Suites: 1 failed, 1 total
 Tests:       2 failed, 14 passed, 16 total
 ```
@@ -121,7 +121,7 @@ npm test tests/unit/services/tierValidationService-coderabbit-round6.test.js
 ```
 
 **Overall suite impact:**
-```
+```bash
 Test Suites: 174 failed, 145 passed, 319 total
 Tests:       1174 failed, 4027 passed, 5256 total
 ```
