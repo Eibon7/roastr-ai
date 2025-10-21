@@ -208,8 +208,14 @@ describe('Style Profile Routes', () => {
       const profileResponse = await request(app)
         .get('/api/style-profile')
         .set('Authorization', `Bearer ${creatorAuthToken}`);
-      
-      availableLanguage = profileResponse.body.data.profiles[0].lang;
+
+      // Issue #618 - Add defensive check for profiles array
+      if (profileResponse.body.data.profiles && profileResponse.body.data.profiles.length > 0) {
+        availableLanguage = profileResponse.body.data.profiles[0].lang;
+      } else {
+        // Fallback to 'es' if no profiles available (test will fail appropriately)
+        availableLanguage = 'es';
+      }
     });
 
     it('should require authentication', async () => {
