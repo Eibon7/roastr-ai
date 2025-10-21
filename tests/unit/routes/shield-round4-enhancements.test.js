@@ -435,8 +435,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      
+
       // Verify update was called with preserved metadata
+      // Issue #618 - Add defensive check for mock.calls array
+      expect(supabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
       const updateCall = supabaseServiceClient.update.mock.calls[0][0];
       expect(updateCall.metadata).toEqual(expect.objectContaining({
         source: 'automated',
