@@ -6,6 +6,7 @@
 const jwt = require('jsonwebtoken');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
+const logger = require('../utils/logger');
 
 /**
  * Extract JWT token from Authorization header
@@ -65,7 +66,7 @@ async function refreshUserSession(refreshToken) {
 
     if (error) {
       if (flags.isEnabled('DEBUG_SESSION')) {
-        console.error('Session refresh error:', error);
+        logger.error('Session refresh error:', error);
       }
       throw error;
     }
@@ -73,7 +74,7 @@ async function refreshUserSession(refreshToken) {
     return data.session;
   } catch (error) {
     if (flags.isEnabled('DEBUG_SESSION')) {
-      console.error('Failed to refresh session:', error.message);
+      logger.error('Failed to refresh session:', error.message);
     }
     throw error;
   }
@@ -108,7 +109,7 @@ async function sessionRefreshMiddleware(req, res, next) {
       
       if (!refreshToken) {
         if (flags.isEnabled('DEBUG_SESSION')) {
-          console.log('Token near expiry but no refresh token provided');
+          logger.info('Token near expiry but no refresh token provided');
         }
         return next();
       }
@@ -128,11 +129,11 @@ async function sessionRefreshMiddleware(req, res, next) {
         req.headers.authorization = `Bearer ${newSession.access_token}`;
 
         if (flags.isEnabled('DEBUG_SESSION')) {
-          console.log('Session refreshed automatically');
+          logger.info('Session refreshed automatically');
         }
       } catch (refreshError) {
         if (flags.isEnabled('DEBUG_SESSION')) {
-          console.error('Auto refresh failed:', refreshError.message);
+          logger.error('Auto refresh failed:', refreshError.message);
         }
         
         // Don't block the request, let auth middleware handle expired token
@@ -143,7 +144,7 @@ async function sessionRefreshMiddleware(req, res, next) {
     next();
   } catch (error) {
     if (flags.isEnabled('DEBUG_SESSION')) {
-      console.error('Session middleware error:', error.message);
+      logger.error('Session middleware error:', error.message);
     }
     next();
   }
@@ -189,7 +190,7 @@ async function handleSessionRefresh(req, res) {
     });
   } catch (error) {
     if (flags.isEnabled('DEBUG_SESSION')) {
-      console.error('Session refresh endpoint error:', error);
+      logger.error('Session refresh endpoint error:', error);
     }
 
     res.status(401).json({

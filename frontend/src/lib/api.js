@@ -58,8 +58,8 @@ class ApiClient {
     if (isMockModeEnabled()) {
       const mockSession = JSON.parse(localStorage.getItem('mock_supabase_session') || '{}');
       if (mockSession.access_token) {
-        // Extend mock session by 24 hours
-        mockSession.expires_at = Date.now() + (24 * 60 * 60 * 1000);
+        // Extend mock session by 24 hours (expires_at in seconds, not milliseconds)
+        mockSession.expires_at = Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000);
         localStorage.setItem('mock_supabase_session', JSON.stringify(mockSession));
         return mockSession;
       }
@@ -78,12 +78,14 @@ class ApiClient {
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/auth/session/refresh`, {
+      const response = await fetch(`${this.baseURL}/auth/refresh-session`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${currentSession.data.session.access_token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          refresh_token: currentSession.data.session.refresh_token
+        }),
       });
 
       if (!response.ok) {
