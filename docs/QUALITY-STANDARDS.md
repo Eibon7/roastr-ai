@@ -66,6 +66,73 @@ Antes de ejecutar `gh pr create`, verificar:
   - Agentes Relevantes actualizados alfabéticamente
   - Evidencias de tests en docs/test-evidence/
 
+- [ ] **CodeRabbit CLI Pre-Review** (AUTOMÁTICO en cada commit)
+  - Pre-commit hook ejecuta `coderabbit review --prompt-only`
+  - Detecta issues ANTES de push
+  - Review manual adicional si commit falla: `npm run coderabbit:review`
+  - 0 sugerencias = listo para push
+
+## 🐰 CodeRabbit CLI - Integración Automática
+
+### ¿Cómo funciona?
+
+**Pre-commit hook automático** ejecuta CodeRabbit en cada `git commit`:
+
+```bash
+# Al hacer commit, automáticamente ejecuta:
+git commit -m "feat: mi feature"
+# ↓
+# 🐰 Running CodeRabbit CLI review...
+# ✅ CodeRabbit authenticated - running review...
+# [Análisis de cambios staged...]
+# ✅ Pre-commit checks passed!
+```
+
+**Si encuentra issues:**
+- Hook muestra sugerencias
+- Commit continúa (no bloquea)
+- DEBES fixear antes de push
+- Re-commit después de fixes
+
+### Comandos Disponibles
+
+| Comando | Uso | Cuándo |
+|---------|-----|--------|
+| `npm run coderabbit:review` | Review detallado completo | Pre-PR, análisis profundo |
+| `npm run coderabbit:review:quick` | Review rápido | Verificación rápida |
+| `npm run coderabbit:auth` | Estado autenticación | Troubleshooting |
+| Pre-commit hook | Automático | Cada commit |
+
+### Workflow Automático
+
+```bash
+# 1. Hacer cambios
+vim src/myfile.js
+
+# 2. Stagear cambios
+git add .
+
+# 3. Commit (hook ejecuta review automáticamente)
+git commit -m "feat: nueva funcionalidad"
+# → CodeRabbit analiza y reporta issues si hay
+
+# 4. Si hay issues, fixear y re-commit
+# ... aplicar fixes ...
+git add .
+git commit -m "feat: nueva funcionalidad (fixed review issues)"
+
+# 5. Push cuando 0 issues
+git push
+```
+
+### Ventajas de la Automatización
+
+- ✅ **Detección temprana** - Issues antes de push, no después de PR
+- ✅ **Menos ciclos de review** - Fix local antes de GitHub
+- ✅ **Sin olvidar** - Siempre ejecuta, no depende de memoria
+- ✅ **Feedback inmediato** - Segundos, no minutos/horas
+- ✅ **Soluciona problema original** - CodeRabbit siempre activo localmente
+
 ## 🤖 Responsabilidades de Agentes
 
 ### Back-end Dev Agent
@@ -73,10 +140,11 @@ Antes de ejecutar `gh pr create`, verificar:
 **Antes de completar tarea:**
 1. Ejecutar pre-flight checklist completo
 2. Correr tests localmente
-3. Verificar que CodeRabbit no comentaría (self-review)
-4. Solo entonces crear PR
+3. **CodeRabbit review automático en cada commit** (hook)
+4. Review manual adicional antes de PR: `npm run coderabbit:review`
+5. Solo crear PR cuando 0 sugerencias
 
-**Si CodeRabbit comenta:**
+**Si CodeRabbit comenta en GitHub (no debería pasar si usas CLI):**
 1. NO pedir merge
 2. Implementar TODAS las sugerencias
 3. Re-verificar checklist
