@@ -327,8 +327,10 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
         commentsPerMonth: -1,
         platformIntegrations: 9
       });
-      
+
       // Verify organization was updated with unlimited limit (999999)
+      // Issue #618 - Add defensive check for mock.calls array (checking second call [1])
+      expect(supabaseServiceClient.from().update.mock.calls.length).toBeGreaterThan(1);
       const updateCall = supabaseServiceClient.from().update.mock.calls[1][0];
       expect(updateCall.monthly_responses_limit).toBe(999999);
     });
@@ -350,7 +352,9 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
       });
 
       const result = await applyPlanLimits(mockUserId, 'test-plan', 'active');
-      
+
+      // Issue #618 - Add defensive check for mock.calls array (checking second call [1])
+      expect(supabaseServiceClient.from().update.mock.calls.length).toBeGreaterThan(1);
       const updateCall = supabaseServiceClient.from().update.mock.calls[1][0];
       expect(updateCall.monthly_responses_limit).toBe(0);
     });
