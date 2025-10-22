@@ -45,7 +45,10 @@ class ApiClient {
 
       return session;
     } catch (error) {
-      console.error('Session validation error:', error);
+      // Issue #628 - CodeRabbit: Remove console.* from production
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Session validation error:', error);
+      }
       throw new Error('Failed to get valid session');
     }
   }
@@ -58,8 +61,8 @@ class ApiClient {
     if (isMockModeEnabled()) {
       const mockSession = JSON.parse(localStorage.getItem('mock_supabase_session') || '{}');
       if (mockSession.access_token) {
-        // Extend mock session by 24 hours
-        mockSession.expires_at = Date.now() + (24 * 60 * 60 * 1000);
+        // Extend mock session by 24 hours (expires_at in seconds, not milliseconds)
+        mockSession.expires_at = Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000);
         localStorage.setItem('mock_supabase_session', JSON.stringify(mockSession));
         return mockSession;
       }
@@ -81,9 +84,11 @@ class ApiClient {
       const response = await fetch(`${this.baseURL}/auth/session/refresh`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${currentSession.data.session.access_token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          refresh_token: currentSession.data.session.refresh_token
+        }),
       });
 
       if (!response.ok) {
@@ -104,7 +109,10 @@ class ApiClient {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      // Issue #628 - CodeRabbit: Remove console.* from production
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Token refresh failed:', error);
+      }
       // If refresh fails, sign out the user
       await supabase.auth.signOut();
       throw error;
@@ -139,34 +147,79 @@ class ApiClient {
       }
 
       const response = await fetch(url, options);
-      
+
+      // Issue #628: Enhanced error handling for auth errors
+
+      // Handle 403 Forbidden - Access denied
+      if (response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Access denied. You do not have permission to access this resource.');
+      }
+
+      // Handle 429 Too Many Requests - Rate limit exceeded
+      if (response.status === 429) {
+        const errorData = await response.json().catch(() => ({}));
+        const retryAfterHeader = response.headers.get('retry-after') || errorData.retryAfter;
+        let waitSeconds = 60;
+
+        // Issue #628 - CodeRabbit: Support both delta-seconds and HTTP-date formats
+        if (retryAfterHeader) {
+          const delta = parseInt(retryAfterHeader, 10);
+          if (!Number.isNaN(delta)) {
+            // Delta-seconds format
+            waitSeconds = delta;
+          } else {
+            // HTTP-date format
+            const dateMs = Date.parse(retryAfterHeader);
+            if (!Number.isNaN(dateMs)) {
+              waitSeconds = Math.max(0, Math.ceil((dateMs - Date.now()) / 1000));
+            }
+          }
+        }
+
+        throw new Error(`Rate limit exceeded. Please wait ${Math.ceil(waitSeconds / 60)} minutes before trying again.`);
+      }
+
       // Check if token expired during request - retry once with refresh
       if (response.status === 401 && !endpoint.includes('/auth/login')) {
         try {
-          const newSession = await this.refreshSession();
-          
-          // Retry with new token
-          const retryResponse = await fetch(url, {
-            ...options,
-            headers: {
-              ...options.headers,
-              'Authorization': `Bearer ${newSession.access_token}`,
-            },
-          });
-
-          if (!retryResponse.ok) {
-            const errorData = await retryResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+          // Issue #628 - CodeRabbit: Coalesce concurrent 401s to avoid multiple refreshes
+          if (!this.refreshPromise) {
+            this.refreshPromise = this.refreshSession();
           }
 
-          // Handle different response types for retry
-          const contentType = retryResponse.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            return await retryResponse.json();
+          try {
+            const newSession = await this.refreshPromise;
+
+            // Retry with new token
+            const retryResponse = await fetch(url, {
+              ...options,
+              headers: {
+                ...options.headers,
+                'Authorization': `Bearer ${newSession.access_token}`,
+              },
+            });
+
+            if (!retryResponse.ok) {
+              const errorData = await retryResponse.json().catch(() => ({}));
+              throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+            }
+
+            // Handle different response types for retry
+            const contentType = retryResponse.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              return await retryResponse.json();
+            }
+            return await retryResponse.text();
+          } finally {
+            // Always clear promise whether success or error
+            this.refreshPromise = null;
           }
-          return await retryResponse.text();
         } catch (refreshError) {
-          console.error('Token refresh and retry failed:', refreshError);
+          // Issue #628 - CodeRabbit: Remove console.* from production
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Token refresh and retry failed:', refreshError);
+          }
           throw refreshError;
         }
       }
@@ -187,13 +240,16 @@ class ApiClient {
 
       return responseData;
     } catch (error) {
-      console.error(`API ${method} ${endpoint} error:`, error);
-      
+      // Issue #628 - CodeRabbit: Remove console.* from production
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(`API ${method} ${endpoint} error:`, error);
+      }
+
       // Handle mock mode fallbacks for Account Management endpoints
       if (isMockModeEnabled()) {
         return this.handleMockRequest(method, endpoint, data, error);
       }
-      
+
       throw error;
     }
   }
@@ -202,8 +258,11 @@ class ApiClient {
    * Handle mock requests with fallbacks for Account Management features
    */
   async handleMockRequest(method, endpoint, data, originalError) {
-    console.log('🎭 Mock API request:', { method, endpoint, data });
-    
+    // Issue #628 - CodeRabbit: Remove console.* from production (mock mode is dev-only)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🎭 Mock API request:', { method, endpoint, data });
+    }
+
     // Mock responses for Account Management endpoints
     if (endpoint === '/auth/change-email') {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
@@ -301,10 +360,11 @@ export const apiClient = new ApiClient();
 export default apiClient;
 
 // Export convenience functions for compatibility with main branch
+// Issue #628 - CodeRabbit: Remove unused options parameters
 export const api = {
-  get: (url, options) => apiClient.get(url, options),
-  post: (url, data, options) => apiClient.post(url, data, options),
-  put: (url, data, options) => apiClient.put(url, data, options),
-  patch: (url, data, options) => apiClient.patch(url, data, options),
-  delete: (url, options) => apiClient.delete(url, options),
+  get: (url) => apiClient.get(url),
+  post: (url, data) => apiClient.post(url, data),
+  put: (url, data) => apiClient.put(url, data),
+  patch: (url, data) => apiClient.patch(url, data),
+  delete: (url) => apiClient.delete(url),
 };

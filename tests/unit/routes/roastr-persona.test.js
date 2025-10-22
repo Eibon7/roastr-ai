@@ -231,11 +231,13 @@ describe('Roastr Persona API Endpoints', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.message).toContain('updated successfully');
             
-            // Check that update was called with encrypted data
-            expect(mockSupabaseServiceClient.update).toHaveBeenCalled();
-            const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
-            expect(updateCall.lo_que_me_define_encrypted).toBeTruthy();
-            expect(updateCall.lo_que_me_define_visible).toBe(false);
+            // Check that RPC was called with encrypted data (Issue #618 - CodeRabbit fix)
+            expect(mockSupabaseServiceClient.rpc).toHaveBeenCalled();
+            const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
+            expect(rpcCall[0]).toBe('update_roastr_persona_transactional');
+            const updateData = rpcCall[1].p_update_data;
+            expect(updateData.lo_que_me_define_encrypted).toBeTruthy();
+            expect(updateData.lo_que_me_define_visible).toBe(false);
         });
 
         it('should validate input length', async () => {
@@ -334,6 +336,11 @@ describe('Roastr Persona API Endpoints', () => {
             expect(rpcCall).toBeDefined();
             const updateData = rpcCall[1].p_update_data;
             expect(updateData.lo_que_me_define_encrypted).toBeTruthy();
+
+            // Review #3366641810: Assert sanitizer invocation for stronger guarantees
+            const PersonaInputSanitizer = require('../../../src/services/personaInputSanitizer');
+            const sanitizerInstance = PersonaInputSanitizer.mock.results.at(-1)?.value;
+            expect(sanitizerInstance.sanitizePersonaInput).toHaveBeenCalled();
         });
 
         it('should handle database errors during update', async () => {
@@ -373,11 +380,13 @@ describe('Roastr Persona API Endpoints', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.message).toContain('eliminada exitosamente');
             
-            // Check that update was called to clear the fields
-            expect(mockSupabaseServiceClient.update).toHaveBeenCalled();
-            const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
-            expect(updateCall.lo_que_me_define_encrypted).toBe(null);
-            expect(updateCall.lo_que_me_define_visible).toBe(false);
+            // Check that RPC was called to clear the fields (Issue #618 - CodeRabbit fix)
+            expect(mockSupabaseServiceClient.rpc).toHaveBeenCalled();
+            const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
+            expect(rpcCall[0]).toBe('update_roastr_persona_transactional');
+            const updateData = rpcCall[1].p_update_data;
+            expect(updateData.lo_que_me_define_encrypted).toBe(null);
+            expect(updateData.lo_que_me_define_visible).toBe(false);
         });
 
         it('should handle database errors during deletion', async () => {
@@ -397,23 +406,47 @@ describe('Roastr Persona API Endpoints', () => {
 
     describe('Authentication', () => {
         it('should require authentication for all endpoints', async () => {
+            // Review #3366641810: Override mock to actually enforce auth check
+            const originalMock = mockAuthenticateToken.getMockImplementation();
+            mockAuthenticateToken.mockImplementation((req, res, next) => {
+                if (!req.headers.authorization) {
+                    return res.status(401).json({ error: 'Unauthorized' });
+                }
+                req.user = { id: 'test-user-id' };
+                req.accessToken = 'mock-token';
+                next();
+            });
+
             const app = express();
             app.use(express.json());
             app.use('/api/user', userRoutes);
 
-            // Test without authorization header
-            const getResponse = await request(app)
-                .get('/api/user/roastr-persona');
-            expect(getResponse.status).toBe(401);
+            try {
+                // Test without authorization header
+                const getResponse = await request(app)
+                    .get('/api/user/roastr-persona');
+                expect(getResponse.status).toBe(401);
 
-            const postResponse = await request(app)
-                .post('/api/user/roastr-persona')
-                .send({ loQueMeDefine: 'test' });
-            expect(postResponse.status).toBe(401);
+                const postResponse = await request(app)
+                    .post('/api/user/roastr-persona')
+                    .send({ loQueMeDefine: 'test' });
+                expect(postResponse.status).toBe(401);
 
-            const deleteResponse = await request(app)
-                .delete('/api/user/roastr-persona');
-            expect(deleteResponse.status).toBe(401);
+                const deleteResponse = await request(app)
+                    .delete('/api/user/roastr-persona');
+                expect(deleteResponse.status).toBe(401);
+            } finally {
+                // Review #3366641810: Restore original mock implementation
+                if (originalMock) {
+                    mockAuthenticateToken.mockImplementation(originalMock);
+                } else {
+                    mockAuthenticateToken.mockImplementation((req, res, next) => {
+                        req.user = { id: 'test-user-id' };
+                        req.accessToken = 'mock-token';
+                        next();
+                    });
+                }
+            }
         });
     });
 

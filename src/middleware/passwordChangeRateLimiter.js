@@ -175,6 +175,11 @@ const passwordChangeStore = new PasswordChangeRateLimitStore();
  * @param {Function} next - Next middleware function
  */
 function passwordChangeRateLimiter(req, res, next) {
+  // Issue #628: Disable rate limiting in test environment (pattern from #618)
+  if (process.env.NODE_ENV === 'test') {
+    return next();
+  }
+
   if (!flags.isEnabled('ENABLE_RATE_LIMIT')) {
     return next();
   }

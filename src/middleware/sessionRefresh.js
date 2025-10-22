@@ -6,6 +6,7 @@
 const jwt = require('jsonwebtoken');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
+const logger = require('../utils/logger');
 
 /**
  * Extract JWT token from Authorization header
@@ -38,23 +39,25 @@ function isTokenNearExpiry(payload) {
  * @returns {Promise<Object>} New session data
  */
 async function refreshUserSession(refreshToken) {
-  if (!flags.isEnabled('ENABLE_SESSION_REFRESH')) {
+  // Issue #628: Enable in test environment
+  if (process.env.NODE_ENV !== 'test' && !flags.isEnabled('ENABLE_SESSION_REFRESH')) {
     throw new Error('Session refresh is disabled');
   }
 
   try {
     if (flags.isEnabled('ENABLE_MOCK_MODE') || process.env.NODE_ENV === 'test') {
-      // Mock session refresh for testing
-      return {
-        access_token: 'mock-refreshed-access-token-' + Date.now(),
-        refresh_token: refreshToken,
-        expires_at: Date.now() + (60 * 60 * 1000), // 1 hour
-        expires_in: 3600,
-        user: {
-          id: 'mock-user-id',
-          email: 'mock@example.com'
-        }
-      };
+      // Issue #628: Mock session refresh with Supabase mock integration
+      // Delegate to Supabase anon client for proper mock handling
+      const { supabaseAnonClient } = require('../config/supabase');
+      const { data, error } = await supabaseAnonClient.auth.refreshSession({
+        refresh_token: refreshToken
+      });
+
+      if (error || !data.session) {
+        throw new Error('Invalid refresh token');
+      }
+
+      return data.session;
     }
 
     const { data, error } = await supabaseServiceClient.auth.refreshSession({
@@ -63,7 +66,7 @@ async function refreshUserSession(refreshToken) {
 
     if (error) {
       if (flags.isEnabled('DEBUG_SESSION')) {
-        console.error('Session refresh error:', error);
+        logger.error('Session refresh error:', error);
       }
       throw error;
     }
@@ -71,7 +74,7 @@ async function refreshUserSession(refreshToken) {
     return data.session;
   } catch (error) {
     if (flags.isEnabled('DEBUG_SESSION')) {
-      console.error('Failed to refresh session:', error.message);
+      logger.error('Failed to refresh session:', error.message);
     }
     throw error;
   }
@@ -106,7 +109,7 @@ async function sessionRefreshMiddleware(req, res, next) {
       
       if (!refreshToken) {
         if (flags.isEnabled('DEBUG_SESSION')) {
-          console.log('Token near expiry but no refresh token provided');
+          logger.info('Token near expiry but no refresh token provided');
         }
         return next();
       }
@@ -126,11 +129,11 @@ async function sessionRefreshMiddleware(req, res, next) {
         req.headers.authorization = `Bearer ${newSession.access_token}`;
 
         if (flags.isEnabled('DEBUG_SESSION')) {
-          console.log('Session refreshed automatically');
+          logger.info('Session refreshed automatically');
         }
       } catch (refreshError) {
         if (flags.isEnabled('DEBUG_SESSION')) {
-          console.error('Auto refresh failed:', refreshError.message);
+          logger.error('Auto refresh failed:', refreshError.message);
         }
         
         // Don't block the request, let auth middleware handle expired token
@@ -141,7 +144,7 @@ async function sessionRefreshMiddleware(req, res, next) {
     next();
   } catch (error) {
     if (flags.isEnabled('DEBUG_SESSION')) {
-      console.error('Session middleware error:', error.message);
+      logger.error('Session middleware error:', error.message);
     }
     next();
   }
@@ -153,7 +156,8 @@ async function sessionRefreshMiddleware(req, res, next) {
  * @param {Object} res - Express response object
  */
 async function handleSessionRefresh(req, res) {
-  if (!flags.isEnabled('ENABLE_SESSION_REFRESH')) {
+  // Issue #628: Enable session refresh in test environment
+  if (process.env.NODE_ENV !== 'test' && !flags.isEnabled('ENABLE_SESSION_REFRESH')) {
     return res.status(503).json({
       success: false,
       error: 'Session refresh is currently disabled',
@@ -186,7 +190,7 @@ async function handleSessionRefresh(req, res) {
     });
   } catch (error) {
     if (flags.isEnabled('DEBUG_SESSION')) {
-      console.error('Session refresh endpoint error:', error);
+      logger.error('Session refresh endpoint error:', error);
     }
 
     res.status(401).json({

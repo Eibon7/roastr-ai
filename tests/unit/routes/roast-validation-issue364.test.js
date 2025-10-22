@@ -550,6 +550,9 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .post('/api/roast/test-roast-id/validate')
                 .send({ text: 'Private user content', platform: 'twitter' });
 
+            // Issue #618 - Add defensive check for mock.calls array
+            // Issue #628 - CodeRabbit: Use idiomatic Jest matcher
+            expect(supabaseServiceClient.insert).toHaveBeenCalled();
             const insertCall = supabaseServiceClient.insert.mock.calls[0][0];
             expect(JSON.stringify(insertCall)).not.toContain('Private user content');
             expect(insertCall.metadata.textLength).toBe(20); // Only length, not content

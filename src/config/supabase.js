@@ -14,7 +14,34 @@ if (!isSupabaseConfigured) {
 // Create mock client for when Supabase is not configured
 const createMockClient = () => ({
     auth: {
-        getUser: async () => ({ data: { user: null }, error: new Error('Mock mode - no user') })
+        getUser: async () => ({ data: { user: null }, error: new Error('Mock mode - no user') }),
+        refreshSession: async ({ refresh_token }) => {
+            // Issue #628: Mock session refresh for testing
+            if (!refresh_token || refresh_token === 'invalid-token') {
+                return {
+                    data: { session: null },
+                    error: new Error('Invalid refresh token')
+                };
+            }
+            return {
+                data: {
+                    session: {
+                        access_token: 'mock-refreshed-access-token',
+                        refresh_token: refresh_token,
+                        expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+                        expires_in: 3600,
+                        user: {
+                            id: 'mock-user-123',
+                            email: 'test@example.com',
+                            user_metadata: { full_name: 'Test User' },
+                            app_metadata: { role: 'user' },
+                            created_at: new Date().toISOString()
+                        }
+                    }
+                },
+                error: null
+            };
+        }
     },
     from: (table) => {
         const createQueryBuilder = (tableName) => {
