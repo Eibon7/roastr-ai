@@ -12,7 +12,7 @@ Fixed all 7 "worker.processJob is not a function" errors in `tests/unit/workers/
 
 **Error Count:** 7 occurrences
 **Error Message:**
-```
+```text
 TypeError: worker.processJob is not a function
 ```
 
@@ -111,7 +111,7 @@ Added `processJob` method to mock BaseWorker class:
 ## Results
 
 ### Before Fix
-```
+```text
 TypeError: worker.processJob is not a function
     at tests/unit/workers/FetchCommentsWorker.test.js:187
     at tests/unit/workers/FetchCommentsWorker.test.js:244
@@ -121,7 +121,7 @@ TypeError: worker.processJob is not a function
 All 7 tests failing with "worker.processJob is not a function".
 
 ### After Fix
-```
+```bash
 Verification: npm test -- tests/unit/workers/FetchCommentsWorker.test.js 2>&1 | grep -i "processJob is not a function" | wc -l
 Result: 0
 ```
