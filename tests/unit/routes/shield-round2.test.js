@@ -401,8 +401,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         .send({ reason: 'False positive detection' });
 
       // Issue #618 - Add defensive check for mock.calls array
-      // Issue #628 - CodeRabbit: Use idiomatic Jest matcher
-      expect(mockSupabaseServiceClient.update).toHaveBeenCalled();
+      expect(mockSupabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
       const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
       expect(updateCall.metadata).toEqual({
         reverted: true,
@@ -434,8 +433,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         .send({});
 
       // Issue #618 - Add defensive check for mock.calls array
-      // Issue #628 - CodeRabbit: Use idiomatic Jest matcher
-      expect(mockSupabaseServiceClient.update).toHaveBeenCalled();
+      expect(mockSupabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
       const updateCall = mockSupabaseServiceClient.update.mock.calls[0][0];
       expect(updateCall.metadata.revertReason).toBe('Manual revert via UI');
     });

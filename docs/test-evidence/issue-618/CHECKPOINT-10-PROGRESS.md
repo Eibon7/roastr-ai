@@ -144,7 +144,7 @@ All previously missing service mocks have been implemented in test file:
 
 - ✅ `roastrPersonaWriteLimiter` (and other rate limiters) → mocked at test line 94-98 (Issue #618)
   ```javascript
-  jest.mock('../../../src/middleware/roastrPersonaRateLimiter', () => ({
+  jest.mock('../../../src/middleware/roastrPersonaRateLimiters', () => ({
       roastrPersonaWriteLimiter: (req, res, next) => next(),
       // ... other limiters
   }));
