@@ -17,6 +17,103 @@ The platform operates on a subscription-based model with multiple tiers:
 
 *Note: Enterprise plans are not currently available but may be considered for future releases.*
 
+## 🎯 POLÍTICA OBLIGATORIA: Uso de GDD, Agentes, Skills y MCPs
+
+**⚠️ CRÍTICO: Esta política es OBLIGATORIA para TODA tarea, sin excepciones.**
+
+### Orchestrator: Responsabilidad de Selección
+
+Como **Orchestrator** (Lead Agent), es MI RESPONSABILIDAD en CADA tarea:
+
+1. **FASE 0 - Assessment con GDD:**
+   - ✅ **SIEMPRE** resolver nodos GDD relevantes: `node scripts/resolve-graph.js <nodes>`
+   - ✅ **SIEMPRE** leer nodos resueltos (NO spec.md completo)
+   - ✅ **SIEMPRE** identificar dependencias y edges
+
+2. **Selección de Recursos:**
+   - ✅ **SIEMPRE** evaluar qué agentes se necesitan (ver `agents/manifest.yaml`)
+   - ✅ **SIEMPRE** invocar agentes con `Task` tool cuando se cumplen triggers
+   - ✅ **SIEMPRE** considerar skills disponibles (`.claude/skills/`)
+   - ✅ **SIEMPRE** usar MCPs apropiados (Playwright para UI, etc.)
+
+3. **Invocación Obligatoria:**
+   - ✅ **Explore** - Para research de codebase, arquitectura unclear
+   - ✅ **TaskAssessor** - Para AC ≥3, features complejas, P0/P1
+   - ✅ **TestEngineer** - Para cambios en `src/`, `tests/`, nuevos features
+   - ✅ **FrontendDev** - Para cambios UI (`*.jsx`, `*.tsx`, `*.css`)
+   - ✅ **Guardian** - Para cambios sensibles (billing, auth, security, GDD nodes)
+   - ✅ **general-purpose** - Para PR status, research complejo, multi-step tasks
+
+4. **Generación de Receipts:**
+   - ✅ **SIEMPRE** generar receipt en `docs/agents/receipts/<pr>-<Agent>.md`
+   - ✅ **O** generar SKIPPED receipt con justificación detallada
+   - ✅ CI bloqueará merge si faltan receipts
+
+### Principios de Trabajo
+
+**❌ NUNCA:**
+- Trabajar sin resolver nodos GDD primero
+- Implementar sin invocar agentes cuando triggers se cumplen
+- Ignorar skills o MCPs disponibles
+- Hacer research sin usar Explore agent
+- Crear PR sin receipts de agentes
+
+**✅ SIEMPRE:**
+- GDD primero → Agentes apropiados → Skills/MCPs → Implementación
+- Invocar con `Task` tool para ver tags: `<command-message>Agent loading...</command-message>`
+- Documentar decisiones en receipts
+- Seguir guardrails de cada agente (ver `agents/manifest.yaml`)
+
+### Workflow Estándar
+
+```
+[FASE 0] Assessment
+├── Resolver nodos GDD → node scripts/resolve-graph.js <nodes>
+├── Leer nodos (docs/nodes/*.md)
+├── Identificar agentes necesarios (agents/manifest.yaml)
+└── Leer coderabbit-lessons.md (patrones conocidos)
+
+[FASE 1] Planning
+├── Invocar TaskAssessor si AC ≥3
+├── Crear plan en docs/plan/<issue>.md si multi-área
+└── Invocar Explore si codebase unclear
+
+[FASE 2] Implementation
+├── Invocar agentes especializados (FrontendDev, TestEngineer, etc.)
+├── Usar skills apropiados (.claude/skills/)
+├── Usar MCPs apropiados (Playwright, etc.)
+└── Generar receipts para cada agente
+
+[FASE 3] Validation
+├── TestEngineer genera tests + evidencia visual
+├── Guardian valida cambios sensibles
+├── general-purpose inspecciona PR status
+└── Verificar 0 conflictos, 0 CodeRabbit comments
+
+[FASE 4] Commit & PR
+├── Todos los receipts generados
+├── CI pasa (scripts/ci/require-agent-receipts.js)
+└── PR lista para merge
+```
+
+### Consecuencias de Violación
+
+**Si NO sigo esta política:**
+- ❌ CI fallará (receipts faltantes)
+- ❌ PR no puede mergear
+- ❌ Calidad comprometida
+- ❌ No hay audit trail de decisiones
+
+**Enforcement:** CI script `scripts/ci/require-agent-receipts.js` verifica receipts obligatorios.
+
+🔗 **Referencias:**
+- Manifest de agentes: `agents/manifest.yaml`
+- Inventario de agentes: `docs/agents/INVENTORY.md`
+- Skills disponibles: `.claude/skills/` (cuando existan)
+- GDD Activation Guide: `docs/GDD-ACTIVATION-GUIDE.md`
+
+---
+
 ## Development Commands
 
 ```bash
