@@ -438,7 +438,8 @@ describe('Shield Routes - Round 4 Enhancements', () => {
 
       // Verify update was called with preserved metadata
       // Issue #618 - Add defensive check for mock.calls array
-      expect(supabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
+      // Issue #628 - CodeRabbit: Use idiomatic Jest matcher
+      expect(supabaseServiceClient.update).toHaveBeenCalled();
       const updateCall = supabaseServiceClient.update.mock.calls[0][0];
       expect(updateCall.metadata).toEqual(expect.objectContaining({
         source: 'automated',

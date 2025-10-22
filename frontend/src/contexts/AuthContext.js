@@ -83,8 +83,11 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      console.log('Auth state change:', event, session ? 'session present' : 'no session');
-      
+      // Issue #628 - CodeRabbit: Gate debug logs behind dev env
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth state change:', event, session ? 'session present' : 'no session');
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -157,12 +160,18 @@ export const AuthProvider = ({ children }) => {
 
         // If token expires in less than 15 minutes, refresh it
         if (timeUntilExpiry < fifteenMinutes && timeUntilExpiry > 0) {
-          console.log('[Auth] Token expiring soon, refreshing proactively...');
+          // Issue #628 - CodeRabbit: Gate debug logs behind dev env
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('[Auth] Token expiring soon, refreshing proactively...');
+          }
 
           const result = await authService.refreshToken(currentSession.refresh_token);
 
           if (result.success) {
-            console.log('[Auth] Token refreshed successfully');
+            // Issue #628 - CodeRabbit: Gate debug logs behind dev env
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('[Auth] Token refreshed successfully');
+            }
             // Update session with new tokens
             const newSession = {
               ...currentSession,
