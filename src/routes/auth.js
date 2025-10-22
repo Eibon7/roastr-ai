@@ -780,6 +780,14 @@ router.delete('/admin/users/:userId', authenticateToken, requireAdmin, async (re
  */
 const updateUserPlanHandler = async (userId, newPlan, adminId, res) => {
     try {
+        // Review #3366641810: Validate adminId presence before service call
+        if (!adminId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Admin ID is required'
+            });
+        }
+
         if (!userId || !newPlan) {
             return res.status(400).json({
                 success: false,

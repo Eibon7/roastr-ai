@@ -336,6 +336,11 @@ describe('Roastr Persona API Endpoints', () => {
             expect(rpcCall).toBeDefined();
             const updateData = rpcCall[1].p_update_data;
             expect(updateData.lo_que_me_define_encrypted).toBeTruthy();
+
+            // Review #3366641810: Assert sanitizer invocation for stronger guarantees
+            const PersonaInputSanitizer = require('../../../src/services/personaInputSanitizer');
+            const sanitizerInstance = PersonaInputSanitizer.mock.results.at(-1)?.value;
+            expect(sanitizerInstance.sanitizePersonaInput).toHaveBeenCalled();
         });
 
         it('should handle database errors during update', async () => {
@@ -401,23 +406,47 @@ describe('Roastr Persona API Endpoints', () => {
 
     describe('Authentication', () => {
         it('should require authentication for all endpoints', async () => {
+            // Review #3366641810: Override mock to actually enforce auth check
+            const originalMock = mockAuthenticateToken.getMockImplementation();
+            mockAuthenticateToken.mockImplementation((req, res, next) => {
+                if (!req.headers.authorization) {
+                    return res.status(401).json({ error: 'Unauthorized' });
+                }
+                req.user = { id: 'test-user-id' };
+                req.accessToken = 'mock-token';
+                next();
+            });
+
             const app = express();
             app.use(express.json());
             app.use('/api/user', userRoutes);
 
-            // Test without authorization header
-            const getResponse = await request(app)
-                .get('/api/user/roastr-persona');
-            expect(getResponse.status).toBe(401);
+            try {
+                // Test without authorization header
+                const getResponse = await request(app)
+                    .get('/api/user/roastr-persona');
+                expect(getResponse.status).toBe(401);
 
-            const postResponse = await request(app)
-                .post('/api/user/roastr-persona')
-                .send({ loQueMeDefine: 'test' });
-            expect(postResponse.status).toBe(401);
+                const postResponse = await request(app)
+                    .post('/api/user/roastr-persona')
+                    .send({ loQueMeDefine: 'test' });
+                expect(postResponse.status).toBe(401);
 
-            const deleteResponse = await request(app)
-                .delete('/api/user/roastr-persona');
-            expect(deleteResponse.status).toBe(401);
+                const deleteResponse = await request(app)
+                    .delete('/api/user/roastr-persona');
+                expect(deleteResponse.status).toBe(401);
+            } finally {
+                // Review #3366641810: Restore original mock implementation
+                if (originalMock) {
+                    mockAuthenticateToken.mockImplementation(originalMock);
+                } else {
+                    mockAuthenticateToken.mockImplementation((req, res, next) => {
+                        req.user = { id: 'test-user-id' };
+                        req.accessToken = 'mock-token';
+                        next();
+                    });
+                }
+            }
         });
     });
 

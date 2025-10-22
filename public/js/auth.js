@@ -4,6 +4,11 @@
 // API base URL
 const API_BASE = '/api/auth';
 
+// Debug flag for development logging (Review #3366641810)
+const DEBUG_AUTH = false;
+const debug = (...args) => { if (DEBUG_AUTH) console.log(...args); };
+const debugErr = (...args) => { if (DEBUG_AUTH) console.error(...args); };
+
 // Utility functions
 function showMessage(message, type = 'error') {
     const successEl = document.getElementById('success-message');
@@ -43,14 +48,18 @@ function showMessage(message, type = 'error') {
 function setLoading(buttonId, loading = true) {
     const button = document.getElementById(buttonId);
     if (!button) return;
-    
+
     if (loading) {
+        // Review #3366641810: Cache original HTML to preserve icons/nested nodes
+        if (!button.dataset.origHtml) button.dataset.origHtml = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<span class="spinner"></span>' + button.textContent;
+        button.innerHTML = '<span class="spinner"></span>' + (button.textContent || '');
         button.classList.add('loading');
     } else {
         button.disabled = false;
-        button.innerHTML = button.textContent.replace('<span class="spinner"></span>', '');
+        // Review #3366641810: Restore original HTML
+        button.innerHTML = button.dataset.origHtml || button.textContent || '';
+        delete button.dataset.origHtml;
         button.classList.remove('loading');
     }
 }
@@ -88,7 +97,7 @@ async function apiCall(endpoint, method = 'POST', data = null) {
 
         return result;
     } catch (error) {
-        console.error('API call failed:', error);
+        debugErr('API call failed:', error);
         throw error;
     }
 }
@@ -104,8 +113,9 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
             }
         };
 
-        // Add auth header if token exists (except for login/register)
-        if (token && endpoint !== '/login' && endpoint !== '/register' && endpoint !== '/reset-password') {
+        // Review #3366641810: Skip auth header on anonymous endpoints
+        const anonymousEndpoints = ['/login', '/register', '/reset-password', '/magic-link', '/update-password'];
+        if (token && !anonymousEndpoints.includes(endpoint)) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
 
@@ -117,14 +127,14 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 
         // Handle 401 Unauthorized (expired token)
         if (response.status === 401 && !isRetry) {
-            console.log('Token expired, attempting refresh...');
+            debug('Token expired, attempting refresh...');
 
             // Try to refresh token
             const refreshSuccess = await refreshAuthToken();
 
             if (refreshSuccess) {
                 // Retry original request with new token
-                console.log('Token refreshed, retrying request...');
+                debug('Token refreshed, retrying request...');
                 return await apiCallWithRetry(endpoint, method, data, true);
             } else {
                 // Refresh failed, force logout
@@ -163,19 +173,45 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
                 }
             }
 
-            showMessage(`Too many requests. Please wait ${retryAfter} seconds and try again.`, 'warning');
+            // Review #3366641810: Disable submit buttons during rate limit
+            const retrySeconds = Math.ceil(retryAfter);
+            showMessage(`Too many requests. Please wait ${retrySeconds} seconds and try again.`, 'warning');
+
+            const form = document.querySelector('form');
+            if (form) {
+                const buttons = form.querySelectorAll('button, [type="submit"]');
+                buttons.forEach(b => b.disabled = true);
+                setTimeout(() => buttons.forEach(b => b.disabled = false), retrySeconds * 1000);
+            }
+
             throw new Error(`Rate limit exceeded. Retry after ${retryAfter}s`);
         }
 
-        const result = await response.json();
+        // Review #3366641810: Guard JSON parsing for 204 No Content and empty responses
+        let result = null;
+        const contentType = response.headers.get('content-type');
+        const hasJsonContent = contentType && contentType.includes('application/json');
+
+        // Only attempt JSON parsing if response has content and is JSON
+        if (response.status !== 204 && hasJsonContent) {
+            const text = await response.text();
+            if (text && text.trim()) {
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    debugErr('JSON parse error:', e);
+                    throw new Error('Invalid JSON response');
+                }
+            }
+        }
 
         if (!response.ok) {
-            throw new Error(result.error || `HTTP ${response.status}`);
+            throw new Error((result && result.error) || `HTTP ${response.status}`);
         }
 
         return result;
     } catch (error) {
-        console.error('API call failed:', error);
+        debugErr('API call failed:', error);
         throw error;
     }
 }
@@ -508,54 +544,74 @@ async function logout() {
 function setupTokenRefresh() {
     const refreshToken = localStorage.getItem('refresh_token');
     const expiresAt = localStorage.getItem('token_expires_at');
-    
+
     if (!refreshToken || !expiresAt) return;
-    
-    const now = Date.now() / 1000;
-    const expiry = parseInt(expiresAt);
+
+    // Review #3366641810: Harden timer scheduling for edge cases
+    const now = Math.floor(Date.now() / 1000);
+    const expiry = Number(expiresAt);
+    if (!Number.isFinite(expiry)) return; // Guard against NaN/Infinity
+
     const refreshTime = expiry - 300; // Refresh 5 minutes before expiry
-    
+
     if (now < refreshTime) {
         setTimeout(() => {
             refreshAuthToken();
-        }, (refreshTime - now) * 1000);
+        }, Math.max(0, (refreshTime - now) * 1000)); // Guard negative delays
     }
 }
+
+// Review #3366641810: Coalesce concurrent refresh requests to prevent race conditions
+let __refreshInFlight = null;
 
 // Refresh authentication token
 // Returns true on success, false on failure
 async function refreshAuthToken() {
+    // Review #3366641810: If refresh already in progress, await it instead of creating duplicate request
+    if (__refreshInFlight) {
+        debug('Refresh already in flight, awaiting existing request');
+        return await __refreshInFlight;
+    }
+
     const refreshToken = localStorage.getItem('refresh_token');
 
     if (!refreshToken) {
-        console.log('No refresh token available');
+        debug('No refresh token available');
         return false;
     }
 
-    try {
-        const response = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ refresh_token: refreshToken })
-        });
+    // Review #3366641810: Create in-flight promise to coalesce concurrent calls
+    __refreshInFlight = (async () => {
+        try {
+            const response = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh_token: refreshToken })
+            });
 
-        if (response.ok) {
-            const result = await response.json();
-            saveAuthData(result.data);
-            setupTokenRefresh(); // Setup next refresh
-            console.log('Token refresh successful');
-            return true;
-        } else {
-            console.error('Token refresh failed with status:', response.status);
+            if (response.ok) {
+                const result = await response.json();
+                saveAuthData(result.data);
+                setupTokenRefresh(); // Setup next refresh
+                debug('Token refresh successful');
+                return true;
+            } else {
+                debugErr('Token refresh failed with status:', response.status);
+                return false;
+            }
+
+        } catch (error) {
+            debugErr('Token refresh error:', error);
             return false;
+        } finally {
+            // Review #3366641810: Clear in-flight promise after completion
+            __refreshInFlight = null;
         }
+    })();
 
-    } catch (error) {
-        console.error('Token refresh error:', error);
-        return false;
-    }
+    return await __refreshInFlight;
 }
 
 // Initialize token refresh on page load
