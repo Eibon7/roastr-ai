@@ -114,6 +114,15 @@ class AuthService {
    * @returns {Promise<{success: boolean, data?: any, error?: boolean, message?: string}>}
    */
   async refreshToken(refreshToken) {
+    // Input validation
+    if (typeof refreshToken !== 'string' || !refreshToken.trim()) {
+      return {
+        success: false,
+        error: true,
+        message: 'Invalid refresh token provided',
+      };
+    }
+
     try {
       const response = await fetch('/api/auth/session/refresh', {
         method: 'POST',

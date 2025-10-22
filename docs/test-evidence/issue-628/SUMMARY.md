@@ -13,7 +13,7 @@
 **File:** `tests/e2e/auth-complete-flow.test.js`
 **Result:** ✅ **22/22 PASSING (100%)**
 
-```
+```text
 Test Suites: 1 passed, 1 total
 Tests:       22 passed, 22 total
 Time:        0.472s

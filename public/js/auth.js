@@ -56,8 +56,9 @@ function setLoading(buttonId, loading = true) {
 }
 
 function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
+    // Improved regex: prevents double @, consecutive dots, invalid chars
+    const re = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    return re.test(email) && !email.includes('..') && !email.includes('@@');
 }
 
 function validatePassword(password) {
@@ -144,7 +145,24 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 
         // Handle 429 Rate Limit
         if (response.status === 429) {
-            const retryAfter = response.headers.get('Retry-After') || 60;
+            let retryAfter = 60; // Default fallback
+            const retryAfterHeader = response.headers.get('Retry-After');
+
+            if (retryAfterHeader) {
+                // Try parsing as numeric seconds
+                const numericValue = Number(retryAfterHeader);
+                if (!isNaN(numericValue) && numericValue > 0) {
+                    retryAfter = numericValue;
+                } else {
+                    // Try parsing as HTTP-date
+                    const dateValue = Date.parse(retryAfterHeader);
+                    if (!isNaN(dateValue)) {
+                        const secondsUntilDate = Math.max(0, Math.floor((dateValue - Date.now()) / 1000));
+                        retryAfter = secondsUntilDate || 60; // Fallback if date is in past
+                    }
+                }
+            }
+
             showMessage(`Too many requests. Please wait ${retryAfter} seconds and try again.`, 'warning');
             throw new Error(`Rate limit exceeded. Retry after ${retryAfter}s`);
         }

@@ -231,7 +231,7 @@ describe('Roastr Persona API Endpoints', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.message).toContain('updated successfully');
             
-            // Check that RPC was called with encrypted data (Issue #628 - CodeRabbit fix)
+            // Check that RPC was called with encrypted data (Issue #618 - CodeRabbit fix)
             expect(mockSupabaseServiceClient.rpc).toHaveBeenCalled();
             const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
             expect(rpcCall[0]).toBe('update_roastr_persona_transactional');
@@ -375,7 +375,7 @@ describe('Roastr Persona API Endpoints', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.message).toContain('eliminada exitosamente');
             
-            // Check that RPC was called to clear the fields (Issue #628 - CodeRabbit fix)
+            // Check that RPC was called to clear the fields (Issue #618 - CodeRabbit fix)
             expect(mockSupabaseServiceClient.rpc).toHaveBeenCalled();
             const rpcCall = mockSupabaseServiceClient.rpc.mock.calls[0];
             expect(rpcCall[0]).toBe('update_roastr_persona_transactional');

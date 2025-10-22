@@ -187,29 +187,34 @@ class ApiClient {
           if (!this.refreshPromise) {
             this.refreshPromise = this.refreshSession();
           }
-          const newSession = await this.refreshPromise;
-          this.refreshPromise = null;
-          
-          // Retry with new token
-          const retryResponse = await fetch(url, {
-            ...options,
-            headers: {
-              ...options.headers,
-              'Authorization': `Bearer ${newSession.access_token}`,
-            },
-          });
 
-          if (!retryResponse.ok) {
-            const errorData = await retryResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
-          }
+          try {
+            const newSession = await this.refreshPromise;
 
-          // Handle different response types for retry
-          const contentType = retryResponse.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            return await retryResponse.json();
+            // Retry with new token
+            const retryResponse = await fetch(url, {
+              ...options,
+              headers: {
+                ...options.headers,
+                'Authorization': `Bearer ${newSession.access_token}`,
+              },
+            });
+
+            if (!retryResponse.ok) {
+              const errorData = await retryResponse.json().catch(() => ({}));
+              throw new Error(errorData.error || `HTTP error! status: ${retryResponse.status}`);
+            }
+
+            // Handle different response types for retry
+            const contentType = retryResponse.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              return await retryResponse.json();
+            }
+            return await retryResponse.text();
+          } finally {
+            // Always clear promise whether success or error
+            this.refreshPromise = null;
           }
-          return await retryResponse.text();
         } catch (refreshError) {
           // Issue #628 - CodeRabbit: Remove console.* from production
           if (process.env.NODE_ENV !== 'production') {
