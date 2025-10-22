@@ -12,7 +12,7 @@ Fixed all 10 "TypeError: argument handler must be a function" errors in `tests/u
 
 **Error Count:** 10 occurrences
 **Error Message:**
-```
+```javascript
 TypeError: argument handler must be a function
     at Route.<computed> [as get] (node_modules/express/lib/router/route.js:202:15)
     at Router.<computed> [as get] (node_modules/express/lib/router/index.js:535:15)
@@ -83,7 +83,7 @@ Added `optionalAuth` mock to match route requirements.
 ## Results
 
 ### Before Fix
-```
+```text
 Test Suites: 1 failed, 1 total
 Tests:       10 failed, 10 total
 ```
@@ -91,7 +91,7 @@ Tests:       10 failed, 10 total
 All 10 tests failing with "argument handler must be a function".
 
 ### After Fix
-```
+```text
 PASS unit-tests tests/unit/routes/roast-preview-issue326.test.js
 Test Suites: 1 passed, 1 total
 Tests:       10 passed, 10 total
@@ -189,7 +189,7 @@ All 10 test cases in `roast-preview-issue326.test.js` now passing:
 ## Commit Information
 
 **Commit Message:**
-```
+```text
 fix(tests): Add missing optionalAuth middleware mock - Issue #618
 
 - Added optionalAuth mock to auth middleware mock in roast-preview-issue326.test.js
