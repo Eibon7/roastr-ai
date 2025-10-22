@@ -8,25 +8,36 @@ const API_BASE = '/api/auth';
 function showMessage(message, type = 'error') {
     const successEl = document.getElementById('success-message');
     const errorEl = document.getElementById('error-message');
-    
+
     // Hide both first
     if (successEl) successEl.classList.add('hidden');
     if (errorEl) errorEl.classList.add('hidden');
-    
+
     // Show appropriate message
     if (type === 'success' && successEl) {
         successEl.textContent = message;
         successEl.classList.remove('hidden');
-    } else if (type === 'error' && errorEl) {
+    } else if ((type === 'error' || type === 'warning') && errorEl) {
         errorEl.textContent = message;
         errorEl.classList.remove('hidden');
+
+        // Add warning style for rate limits
+        if (type === 'warning') {
+            errorEl.style.backgroundColor = '#ff9800';
+            errorEl.style.borderColor = '#f57c00';
+        } else {
+            // Reset to error style
+            errorEl.style.backgroundColor = '';
+            errorEl.style.borderColor = '';
+        }
     }
-    
-    // Auto-hide after 10 seconds
+
+    // Auto-hide duration depends on type
+    const hideDelay = type === 'warning' ? 15000 : 10000;
     setTimeout(() => {
         if (successEl) successEl.classList.add('hidden');
         if (errorEl) errorEl.classList.add('hidden');
-    }, 10000);
+    }, hideDelay);
 }
 
 function setLoading(buttonId, loading = true) {
@@ -53,7 +64,7 @@ function validatePassword(password) {
     return password && password.length >= 6;
 }
 
-// API helper function
+// API helper function (basic, used internally)
 async function apiCall(endpoint, method = 'POST', data = null) {
     try {
         const config = {
@@ -62,18 +73,88 @@ async function apiCall(endpoint, method = 'POST', data = null) {
                 'Content-Type': 'application/json',
             }
         };
-        
+
         if (data) {
             config.body = JSON.stringify(data);
         }
-        
+
         const response = await fetch(`${API_BASE}${endpoint}`, config);
         const result = await response.json();
-        
+
         if (!response.ok) {
             throw new Error(result.error || `HTTP ${response.status}`);
         }
-        
+
+        return result;
+    } catch (error) {
+        console.error('API call failed:', error);
+        throw error;
+    }
+}
+
+// Enhanced API call with 401 retry and comprehensive error handling
+async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry = false) {
+    try {
+        const token = localStorage.getItem('auth_token');
+        const config = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        };
+
+        // Add auth header if token exists (except for login/register)
+        if (token && endpoint !== '/login' && endpoint !== '/register' && endpoint !== '/reset-password') {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        if (data) {
+            config.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(`${API_BASE}${endpoint}`, config);
+
+        // Handle 401 Unauthorized (expired token)
+        if (response.status === 401 && !isRetry) {
+            console.log('Token expired, attempting refresh...');
+
+            // Try to refresh token
+            const refreshSuccess = await refreshAuthToken();
+
+            if (refreshSuccess) {
+                // Retry original request with new token
+                console.log('Token refreshed, retrying request...');
+                return await apiCallWithRetry(endpoint, method, data, true);
+            } else {
+                // Refresh failed, force logout
+                showMessage('Session expired. Please log in again.');
+                setTimeout(() => {
+                    clearAuthData();
+                    window.location.href = '/login.html';
+                }, 2000);
+                throw new Error('Session expired');
+            }
+        }
+
+        // Handle 403 Forbidden
+        if (response.status === 403) {
+            showMessage('Access denied. You do not have permission for this action.');
+            throw new Error('Access denied');
+        }
+
+        // Handle 429 Rate Limit
+        if (response.status === 429) {
+            const retryAfter = response.headers.get('Retry-After') || 60;
+            showMessage(`Too many requests. Please wait ${retryAfter} seconds and try again.`, 'warning');
+            throw new Error(`Rate limit exceeded. Retry after ${retryAfter}s`);
+        }
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || `HTTP ${response.status}`);
+        }
+
         return result;
     } catch (error) {
         console.error('API call failed:', error);
@@ -163,9 +244,9 @@ function initLoginPage() {
         }
         
         setLoading('login-btn', true);
-        
+
         try {
-            const result = await apiCall('/login', 'POST', {
+            const result = await apiCallWithRetry('/login', 'POST', {
                 email,
                 password,
                 keepLogged
@@ -222,9 +303,9 @@ function initLoginPage() {
         }
         
         setLoading('magic-link-btn', true);
-        
+
         try {
-            const result = await apiCall('/magic-link', 'POST', { email });
+            const result = await apiCallWithRetry('/magic-link', 'POST', { email });
             showMessage(result.message, 'success');
         } catch (error) {
             showMessage(error.message);
@@ -243,7 +324,7 @@ function initLoginPage() {
         }
         
         try {
-            const result = await apiCall('/reset-password', 'POST', { email });
+            const result = await apiCallWithRetry('/reset-password', 'POST', { email });
             showMessage(result.message, 'success');
             
             // Hide recovery section
@@ -290,9 +371,9 @@ function initRegisterPage() {
         }
         
         setLoading('register-btn', true);
-        
+
         try {
-            const result = await apiCall('/register', 'POST', {
+            const result = await apiCallWithRetry('/register', 'POST', {
                 email,
                 password
             });
@@ -361,9 +442,9 @@ function initPasswordResetPage() {
         }
         
         setLoading('reset-btn', true);
-        
+
         try {
-            const result = await apiCall('/update-password', 'POST', {
+            const result = await apiCallWithRetry('/update-password', 'POST', {
                 access_token: accessToken,
                 password
             });
@@ -424,15 +505,15 @@ function setupTokenRefresh() {
 }
 
 // Refresh authentication token
+// Returns true on success, false on failure
 async function refreshAuthToken() {
     const refreshToken = localStorage.getItem('refresh_token');
-    
+
     if (!refreshToken) {
-        clearAuthData();
-        window.location.href = '/login.html';
-        return;
+        console.log('No refresh token available');
+        return false;
     }
-    
+
     try {
         const response = await fetch('/api/auth/refresh', {
             method: 'POST',
@@ -441,19 +522,21 @@ async function refreshAuthToken() {
             },
             body: JSON.stringify({ refresh_token: refreshToken })
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             saveAuthData(result.data);
             setupTokenRefresh(); // Setup next refresh
+            console.log('Token refresh successful');
+            return true;
         } else {
-            throw new Error('Token refresh failed');
+            console.error('Token refresh failed with status:', response.status);
+            return false;
         }
-        
+
     } catch (error) {
-        console.error('Token refresh failed:', error);
-        clearAuthData();
-        window.location.href = '/login.html';
+        console.error('Token refresh error:', error);
+        return false;
     }
 }
 

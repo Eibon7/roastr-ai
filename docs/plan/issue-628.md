@@ -8,180 +8,106 @@
 
 ---
 
-## Estado Actual (Assessment)
+## Estado Actual (Updated Assessment - 2025-10-22)
 
-### Tests Fallando: 9/22 (41% failure rate)
+### ✅ Tests: 22/22 PASSING (100%)
 
-**Root Causes Identified:**
+**Backend completamente funcional:**
+- All E2E auth flow tests passing
+- `/api/auth/refresh` endpoint working
+- Session management functional
+- Password reset working
+- Rate limiting working
+- Email validation working
 
-1. **Missing Supabase Client** (1 test)
-   - Test: "should complete full registration flow successfully"
-   - Error: `ReferenceError: supabaseServiceClient is not defined`
-   - Fix: Import `supabaseServiceClient` in test file
+### ✅ Auto-Refresh Already Implemented
 
-2. **Auth Middleware Issues** (3 tests)
-   - Tests: "should access protected route", "should logout successfully"
-   - Error: Expected 200, got 401
-   - Cause: JWT verification or middleware config
-   - Fix: Verify `authMiddleware` in test environment
+**Location:** `public/js/auth.js:409-463`
 
-3. **Session Refresh Endpoint Returns 503** (2 tests)
-   - Tests: "should refresh access token", "should reject refresh with invalid token"
-   - Error: Expected 200/401, got 503
-   - Cause: Endpoint disabled or service unavailable
-   - Fix: Enable session refresh endpoint or mock properly
+**Functions:**
+- `setupTokenRefresh()` - Configures proactive refresh
+- `refreshAuthToken()` - Calls `/api/auth/refresh` endpoint
+- Refresh happens 5 minutes BEFORE expiry (not 15 as specified in issue)
+- Auto-logout on refresh failure
+- Re-configures next refresh after success
 
-4. **Invalid Password NOT Rejected** (1 test)
-   - Test: "should reject login with invalid password"
-   - Error: Expected 401, got 200
-   - Cause: Password validation bypassed
-   - Fix: Enable bcrypt comparison in test environment
+### ❌ Frontend Functionality PENDING
 
-5. **Email Service Not Called** (1 test)
-   - Test: "should send password reset email"
-   - Error: `emailService.sendPasswordResetEmail` not called
-   - Cause: Mock not set up or endpoint skip email
-   - Fix: Verify mock setup and endpoint logic
+**What's Missing:**
+1. **HTTP Interceptor with 401 auto-retry** (CRITICAL)
+   - Current: `apiCall()` does NOT retry on 401
+   - Needed: Detect 401 → refresh token → retry request (1x max)
+   - Prevent infinite loops
 
-6. **Rate Limiting Parse Error** (1 test)
-   - Test: "should enforce rate limiting on login attempts"
-   - Error: `Parse Error: Data after Connection: close`
-   - Cause: Middleware issue with multiple requests
-   - Fix: Similar to #618 - disable rate limiting in test or fix middleware
+2. **Enhanced Error Handling**:
+   - 401: Add "Session expired" message + auto-redirect
+   - 403: Add specific "Access denied" handling
+   - 429: Add exponential backoff + disable button
 
-7. **Malformed Email Accepted** (1 test)
-   - Test: "should handle malformed email"
-   - Error: Expected 400, got 201
-   - Cause: Email validation not enforced
-   - Fix: Enable email format validation
-
-### Frontend Functionality Missing
-
-**NOT implemented in #593:**
-- ❌ Auto-refresh 15 minutes before token expiry
-- ❌ HTTP interceptor with 401 retry
-- ❌ Error handling for 401/403/429
+3. **Documentation**:
+   - Document auto-refresh strategy in `docs/flows/`
+   - Update GDD node `multi-tenant.md` with frontend integration
 
 ---
 
-## Plan de Implementación
+## Plan de Implementación (Actualizado)
 
-### FASE 3.1: Fix Failing Tests (PRIORITY 1)
+### FASE 3: Implement HTTP Interceptor + Error Handling
 
-**Estimated:** 1.5 hours
+**Estimated:** 1 hour total
 
-**Tasks:**
+**File:** `public/js/auth.js`
 
-1. **Fix Supabase Client Import** (5 min)
-   - File: `tests/e2e/auth-complete-flow.test.js`
-   - Import `supabaseServiceClient` from setup or create inline
+#### Task 1: Create `apiCallWithRetry()` Function (30 min)
 
-2. **Fix Auth Middleware in Tests** (15 min)
-   - Files: `tests/setupIntegration.js`, `src/middleware/auth.js`
-   - Verify JWT verification enabled in test mode
-   - Check mock token generation matches real JWT format
+**Location:** After existing `apiCall()` (line 82)
 
-3. **Enable Session Refresh Endpoint** (20 min)
-   - File: `src/routes/auth.js`
-   - Verify `POST /api/auth/session/refresh` is registered
-   - Enable in test environment (check feature flags)
-   - Or: Mock endpoint properly in tests
+**Implementation:**
+```javascript
+/**
+ * Enhanced API call with 401 retry and comprehensive error handling
+ * @param {string} endpoint - API endpoint
+ * @param {string} method - HTTP method
+ * @param {object} data - Request body
+ * @param {boolean} isRetry - Internal flag to prevent infinite loop
+ */
+async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry = false) {
+    // Implementation details in plan below
+}
+```
 
-4. **Fix Password Validation** (10 min)
-   - File: `src/routes/auth.js` (login endpoint)
-   - Verify bcrypt comparison enabled in test mode
-   - Check mock user passwords are hashed correctly
+**Key Features:**
+- Add Authorization header if token exists
+- Detect 401 → attempt `refreshAuthToken()` → retry request once
+- Detect 403 → throw specific error
+- Detect 429 → parse Retry-After → throw with delay info
+- Prevent infinite loops with `isRetry` flag
 
-5. **Fix Email Service Mock** (10 min)
-   - File: `tests/e2e/auth-complete-flow.test.js`
-   - Verify `emailService.sendPasswordResetEmail` mock setup
-   - Check password reset endpoint actually calls service
+#### Task 2: Modify `refreshAuthToken()` to Return Boolean (10 min)
 
-6. **Fix Rate Limiting in Tests** (15 min)
-   - File: `src/middleware/rateLimiters.js` or auth routes
-   - Apply pattern from #618: Disable in test environment
-   - Or: Fix superagent connection handling
+**Current:** Returns `void`, throws on error
+**New:** Returns `boolean` (true/false)
 
-7. **Fix Email Validation** (10 min)
-   - File: `src/routes/auth.js` (register endpoint)
-   - Add email format validation (regex or validator library)
-   - Return 400 for malformed emails
+**Changes:**
+- Line 447: Return `true` on success
+- Line 454: Return `false` on error (instead of redirecting)
+- Caller decides whether to redirect
 
-8. **Re-run Tests** (5 min)
-   - `npm test -- tests/e2e/auth-complete-flow.test.js`
-   - Verify 22/22 passing (100%)
+#### Task 3: Update Error Handling in `showMessage()` (10 min)
 
-### FASE 3.2: Implement Frontend Auto-Refresh (PRIORITY 2)
+**Add support for:**
+- `type='warning'` for 429 rate limits (orange color)
+- Auto-redirect after 2 seconds for 401 errors
+- Different auto-hide timers per type
 
-**Estimated:** 1 hour
+#### Task 4: Replace `apiCall()` with `apiCallWithRetry()` (10 min)
 
-**Tasks:**
+**Files affected:**
+- Lines 168, 207, 227, 246, 295, 366 in `auth.js`
 
-1. **Create `refreshToken()` Function** (20 min)
-   - File: `frontend/src/services/authService.js` (or create)
-   - Function signature: `async refreshToken(refreshToken): Promise<{token, expiresAt}>`
-   - API call: `POST /api/auth/session/refresh`
-   - Handle success: Store new token in localStorage
-   - Handle failure: Force logout
+**Keep original** `apiCall()` for internal use (e.g., in `refreshAuthToken`)
 
-2. **Implement Proactive Refresh Strategy** (30 min)
-   - File: `frontend/src/contexts/AuthContext.jsx` or `frontend/src/App.jsx`
-   - Add `useEffect` hook with interval (5 minutes)
-   - Check token expiry: `const minutesUntilExpiry = (expiresAt - now) / 1000 / 60`
-   - If `minutesUntilExpiry < 15 && minutesUntilExpiry > 0`: Call `refreshToken()`
-   - Cleanup interval on unmount
 
-3. **Test Manual** (10 min)
-   - Login → Wait 45 minutes → Verify auto-refresh happens at 15 min mark
-   - Or: Mock short expiry (5 min token, 2 min refresh) for faster testing
-
-### FASE 3.3: Implement HTTP Interceptor (PRIORITY 2)
-
-**Estimated:** 45 min
-
-**Tasks:**
-
-1. **Create Fetch Interceptor** (30 min)
-   - File: `frontend/src/utils/apiClient.js` (create)
-   - Wrap native `fetch` or use library (axios has built-in interceptors)
-   - Intercept response: If status 401
-     - Attempt `refreshToken()` (1 retry max)
-     - If refresh succeeds: Re-execute original request with new token
-     - If refresh fails: Force logout
-   - Prevent infinite loops: Track retry attempts
-
-2. **Replace All fetch Calls** (10 min)
-   - Files: `frontend/src/services/*.js`, `frontend/src/pages/auth/*.jsx`
-   - Replace `fetch(...)` with `apiClient.fetch(...)`
-   - Ensure consistent usage
-
-3. **Test Manual** (5 min)
-   - Login → Manually expire token → Make API call → Verify auto-retry
-
-### FASE 3.4: Complete Error Handling (PRIORITY 3)
-
-**Estimated:** 30 min
-
-**Tasks:**
-
-1. **Handle 401 Unauthorized** (10 min)
-   - File: `frontend/src/utils/apiClient.js`
-   - Show toast: "Session expired, redirecting to login..."
-   - Clear localStorage
-   - Redirect to `/login`
-
-2. **Handle 403 Forbidden** (5 min)
-   - File: `frontend/src/utils/apiClient.js`
-   - Show toast: "Access denied"
-   - Log event (console.warn or analytics)
-   - Do NOT attempt refresh (permission issue)
-
-3. **Handle 429 Rate Limit** (15 min)
-   - File: `frontend/src/utils/apiClient.js`
-   - Parse `Retry-After` header if present
-   - Show toast: "Too many attempts, wait X seconds"
-   - Implement exponential backoff: `delay = 500 * attempt`
-   - Disable login button temporarily (state management)
 
 ---
 
