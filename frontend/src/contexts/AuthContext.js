@@ -168,21 +168,26 @@ export const AuthProvider = ({ children }) => {
           const result = await authService.refreshToken(currentSession.refresh_token);
 
           if (result.success) {
+            // Issue #628 - CodeRabbit: Update Supabase session first (canonical source)
+            await supabase.auth.setSession({
+              access_token: result.data.access_token,
+              refresh_token: result.data.refresh_token,
+            });
+
+            // Read back the updated session from Supabase
+            const { data: { session: updatedSession } } = await supabase.auth.getSession();
+
             // Issue #628 - CodeRabbit: Gate debug logs behind dev env
             if (process.env.NODE_ENV !== 'production') {
               console.log('[Auth] Token refreshed successfully');
             }
-            // Update session with new tokens
-            const newSession = {
-              ...currentSession,
-              access_token: result.data.access_token,
-              refresh_token: result.data.refresh_token,
-              expires_at: result.data.expires_at, // Already in seconds from Supabase
-              expires_in: result.data.expires_in,
-            };
-            setSession(newSession);
+
+            // Update React state
+            setSession(updatedSession);
           } else {
             console.error('[Auth] Failed to refresh token:', result.message);
+            // Issue #628 - CodeRabbit: Force logout on refresh failure
+            await authHelpers.signOut();
           }
         }
       } catch (error) {

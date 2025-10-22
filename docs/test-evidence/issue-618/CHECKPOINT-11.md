@@ -135,7 +135,7 @@ npm test 2>&1 | grep "Cannot read properties of undefined (reading 'access_token
 ```
 
 **Test run results:**
-```
+```text
 FAIL integration-tests tests/integration/adminEndpoints.test.js
   Admin Endpoints Integration Tests
     GET /api/auth/admin/users
@@ -217,7 +217,7 @@ The auth route transforms Supabase's response structure because:
 **Commit:** `fix(tests): Fix auth response structure access - Issue #618`
 
 **Full message:**
-```
+```text
 fix(tests): Fix auth response structure access - Issue #618
 
 - Fixed incorrect response structure access in adminEndpoints.test.js

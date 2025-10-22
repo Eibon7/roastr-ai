@@ -137,10 +137,12 @@ class AuthService {
         throw new Error(errorData.error || 'Failed to refresh token');
       }
 
-      const data = await response.json();
+      // Issue #628 - CodeRabbit: Support both response shapes (root-level or nested)
+      const payload = await response.json().catch(() => ({}));
+      const data = payload.data || payload;
       return {
         success: true,
-        data: data.data, // { access_token, refresh_token, expires_at, expires_in, user }
+        data, // { access_token, refresh_token, expires_at, expires_in, user }
       };
     } catch (error) {
       return {
