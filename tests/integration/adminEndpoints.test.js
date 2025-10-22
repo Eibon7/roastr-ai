@@ -342,10 +342,6 @@ describe('Admin Endpoints Integration Tests', () => {
           userId: 'user-1'
         });
 
-      if (response.status !== 200) {
-        console.log('Response body:', response.body);
-      }
-
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('message');
