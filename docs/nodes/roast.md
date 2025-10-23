@@ -4,12 +4,12 @@
 **Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-13
+**Last Updated:** 2025-10-23
 **Coverage:** 0%
 **Coverage Source:** auto
-**Related PRs:** #499
+**Related PRs:** #499, #632 (Unified Analysis Department)
 **Protected:** true
-**Last Verified:** 2025-10-10
+**Last Verified:** 2025-10-23
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
 
 ## Dependencies
@@ -38,7 +38,21 @@ The roast generation system is the core feature of Roastr.ai, responsible for cr
 ```
 Comment Detection
     ↓
-RoastEngine.generateRoast()
+AnalyzeToxicityWorker → Analysis Department (Issue #632)
+    ↓
+[PARALLEL EXECUTION]
+    ├─ Gatekeeper Service (Security)
+    │  └─ Prompt injection detection
+    └─ Perspective API (Toxicity)
+       └─ Toxicity score + Platform violations
+    ↓
+AnalysisDecisionEngine → Unified Decision
+    ↓
+    - SHIELD (critical/high toxicity) → Shield Service
+    - PUBLISH (<0.30 toxicity) → Publish normally
+    - ROAST (0.30-0.94 toxicity) → Continue below ✅
+    ↓
+RoastEngine.generateRoast() [Only if direction=ROAST]
     ↓
 [Validation] → Input validation, user config fetch
     ↓
@@ -52,6 +66,37 @@ RoastEngine.generateRoast()
     ↓
 [Metadata] → Persist metadata only (GDPR compliant)
 ```
+
+**Analysis Department Integration (Issue #632):**
+
+Before roast generation begins, the Analysis Department runs parallel Gatekeeper + Perspective analysis to determine if the comment should be:
+- **SHIELD** (≥0.95 toxicity OR platform violations) → Blocked, no roast generated
+- **PUBLISH** (<0.30 toxicity) → Published normally, no roast needed
+- **ROAST** (0.30-0.94 toxicity) → Proceed to roast generation
+
+This ensures platform violations (threats, identity attacks) are caught and reported BEFORE roast generation, preventing ToS violations.
+
+**Key Change:** Roast generation is now **conditional** on Analysis Department returning `direction: 'ROAST'`. This is determined by:
+- Combined Gatekeeper + Perspective results
+- Platform violation detection (threat ≥0.8, identity_attack ≥0.8)
+- Toxicity thresholds (roast_lower: 0.30, roast_upper: 0.94)
+
+**Fallback Mode (CodeRabbit Review #634):**
+
+When Gatekeeper service is unavailable, the decision matrix includes a conservative fallback:
+
+```text
+RULE 0: Gatekeeper Fallback Mode → SHIELD (highest priority)
+    ↓
+Condition: Gatekeeper unavailable + fallback=true
+    ↓
+Action: Force SHIELD regardless of toxicity scores
+Result: NO roast generation (security over convenience)
+```
+
+This fail-safe ensures that during Gatekeeper outages, low-toxicity prompt injections cannot bypass security by routing to ROAST. All fallback-mode comments are blocked and flagged for manual review.
+
+See `docs/nodes/shield.md` for full Analysis Department decision matrix and fallback security policy.
 
 ### Component Files
 

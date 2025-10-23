@@ -86,8 +86,11 @@ class RoastPromptTemplate {
 """
 
 🎭 CATEGORÍA DEL COMENTARIO:
-{{comment_category}}  
+{{comment_category}}
 *(Ejemplos: ataque personal, body shaming, comentario machista, insulto genérico, afirmación absurda, intento fallido de burla...)*
+
+🎯 CONTEXTO DEL USUARIO:
+{{persona_context}}
 
 🔥 CARACTERÍSTICAS DE UN BUEN ROAST APLICADAS:
 - Inteligente, con doble sentido o ironía
@@ -337,6 +340,44 @@ class RoastPromptTemplate {
   }
 
   /**
+   * Build persona context for prompt injection (Issue #615)
+   * Formats user persona fields into structured context for roast generation.
+   * Handles null/partial personas gracefully with fallback values.
+   *
+   * @param {Object|null} persona - User persona object with fields:
+   *   - lo_que_me_define: User's identity/definition
+   *   - lo_que_no_tolero: User's intolerances/boundaries
+   *   - lo_que_me_da_igual: User's tolerances (Pro+ only)
+   * @returns {string} Formatted persona context or "No especificado" if null/empty
+   */
+  buildPersonaContext(persona) {
+    // Return fallback for null/undefined/non-object personas
+    if (!persona || typeof persona !== 'object' || Array.isArray(persona)) {
+      return 'No especificado';
+    }
+
+    const contextParts = [];
+
+    // Add lo_que_me_define if present and non-empty
+    if (persona.lo_que_me_define && persona.lo_que_me_define.trim()) {
+      contextParts.push(`- Lo que define al usuario: ${persona.lo_que_me_define.trim()}`);
+    }
+
+    // Add lo_que_no_tolero if present and non-empty
+    if (persona.lo_que_no_tolero && persona.lo_que_no_tolero.trim()) {
+      contextParts.push(`- Lo que NO tolera: ${persona.lo_que_no_tolero.trim()}`);
+    }
+
+    // Add lo_que_me_da_igual if present and non-empty (Pro+ only)
+    if (persona.lo_que_me_da_igual && persona.lo_que_me_da_igual.trim()) {
+      contextParts.push(`- Lo que le da igual: ${persona.lo_que_me_da_igual.trim()}`);
+    }
+
+    // Return formatted context or fallback if no valid fields
+    return contextParts.length > 0 ? contextParts.join('\n') : 'No especificado';
+  }
+
+  /**
    * Sanitize input text to prevent prompt injection attacks using centralized patterns
    * @param {string} input - Input text to sanitize
    * @returns {string} Sanitized text
@@ -402,28 +443,34 @@ class RoastPromptTemplate {
         originalComment,
         toxicityData = {},
         userConfig = {},
-        includeReferences = true
+        includeReferences = true,
+        persona = null // Issue #615: Add persona parameter (optional)
       } = params;
 
       // Sanitize inputs to prevent injection attacks
       const sanitizedComment = this.sanitizeInput(originalComment);
-      
+
       // Get dynamic field values
       const category = this.categorizeComment(sanitizedComment, toxicityData);
-      const references = includeReferences 
-        ? await this.getReferenceRoasts(sanitizedComment) 
+      const references = includeReferences
+        ? await this.getReferenceRoasts(sanitizedComment)
         : 'Referencias desactivadas para este modo.';
       const userTone = this.mapUserTone(userConfig);
+
+      // Issue #615: Build and sanitize persona context
+      const personaContext = this.buildPersonaContext(persona);
 
       // Sanitize all dynamic content
       const sanitizedCategory = this.sanitizeInput(category);
       const sanitizedReferences = this.sanitizeInput(references);
       const sanitizedUserTone = this.sanitizeInput(userTone);
+      const sanitizedPersonaContext = this.sanitizeInput(personaContext); // Issue #615
 
       // Replace placeholders in master prompt
       let prompt = this.masterPrompt
         .replace('{{original_comment}}', sanitizedComment)
         .replace('{{comment_category}}', sanitizedCategory)
+        .replace('{{persona_context}}', sanitizedPersonaContext) // Issue #615
         .replace('{{reference_roasts_from_CSV}}', sanitizedReferences)
         .replace('{{user_tone}}', sanitizedUserTone);
 
@@ -431,6 +478,7 @@ class RoastPromptTemplate {
         version: this.version,
         category: sanitizedCategory,
         hasReferences: includeReferences,
+        hasPersona: !!persona, // Issue #615: Log if persona present
         userTone: userConfig.tone,
         sanitized: true
       });
