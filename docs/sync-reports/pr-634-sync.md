@@ -3,7 +3,7 @@
 **Generated:** 2025-10-23
 **PR:** #634 - CodeRabbit Security Fix - Conservative Gatekeeper Fallback
 **Triggered By:** Manual execution (post-merge doc-sync workflow)
-**Commit:** ddf058c1 (CodeRabbit Review #634 implementation)
+**Commit:** 147f8805 (Squash merge of PR #634 to main)
 
 ---
 
@@ -26,7 +26,7 @@ All documentation successfully synchronized following the CodeRabbit security fi
 
 ## Phase 1: File Detection → Node Mapping
 
-### Changed Files (Commit ddf058c1)
+### Changed Files (Commit 147f8805)
 
 | File | Node(s) Affected | Type |
 |------|-----------------|------|
