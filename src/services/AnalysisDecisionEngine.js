@@ -444,7 +444,7 @@ class AnalysisDecisionEngine {
           primary_reason: reason,
           secondary_reasons: [],
           thresholds_used: thresholds,
-          persona_adjusted: !!userContext.persona,
+          persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
           reincidence_factor: userContext.reincidenceFactor || 0
         },
         platform_violations: platformViolations
@@ -493,7 +493,7 @@ class AnalysisDecisionEngine {
           primary_reason: reason,
           secondary_reasons: [],
           thresholds_used: thresholds,
-          persona_adjusted: !!userContext.persona,
+          persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
           reincidence_factor: userContext.reincidenceFactor || 0,
           roast_style: roastStyle
         },
@@ -542,7 +542,7 @@ class AnalysisDecisionEngine {
           primary_reason: reason,
           secondary_reasons: [],
           thresholds_used: thresholds,
-          persona_adjusted: !!userContext.persona,
+          persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
           reincidence_factor: userContext.reincidenceFactor || 0
         },
         platform_violations: platformViolations
@@ -602,7 +602,7 @@ class AnalysisDecisionEngine {
       services.push('gatekeeper');
     }
 
-    if (perspectiveResult?.status === 'fulfilled' || perspectiveResult?.toxicityScore !== undefined) {
+    if (perspectiveResult?.status === 'fulfilled' || perspectiveResult?.scores !== undefined) {
       services.push('perspective');
     }
 
