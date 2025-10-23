@@ -102,16 +102,21 @@ class AnalysisDecisionEngine {
 
     // Handle failed promise
     if (result?.status === 'rejected') {
-      logger.warn('Gatekeeper failed, using fallback classification', {
+      logger.warn('Gatekeeper failed, using conservative fallback classification', {
         error: result.reason?.message
       });
+      // SECURITY FIX (CodeRabbit Review #634): Conservative fallback
+      // When Gatekeeper unavailable, default to MALICIOUS to prevent
+      // prompt injections from passing through during service outages.
+      // This prevents the security gap that Issue #632 aims to close.
       return {
-        classification: 'NEUTRAL', // Safe default
-        is_prompt_injection: false,
-        injection_score: 0,
+        classification: 'MALICIOUS',     // Conservative default
+        is_prompt_injection: true,       // Treat as potential threat
+        injection_score: 0.5,            // Moderate risk indicator
         injection_patterns: [],
-        injection_categories: [],
-        fallback: true
+        injection_categories: ['fallback_mode'],
+        fallback: true,
+        fallback_reason: 'Gatekeeper unavailable - conservative classification applied'
       };
     }
 
@@ -254,8 +259,29 @@ class AnalysisDecisionEngine {
     thresholds,
     userContext
   ) {
-    const { classification, is_prompt_injection } = gatekeeperData;
+    const { classification, is_prompt_injection, fallback } = gatekeeperData;
     const { final_toxicity } = combinedScores;
+
+    // RULE 0: Gatekeeper fallback mode - Conservative SHIELD
+    // (CodeRabbit Review #634 - Explicit fallback handling)
+    if (fallback && gatekeeperData.fallback_reason) {
+      logger.info('Gatekeeper fallback detected - forcing conservative SHIELD', {
+        fallback_reason: gatekeeperData.fallback_reason,
+        final_toxicity
+      });
+
+      return this.createShieldDecision(
+        gatekeeperData.fallback_reason,
+        ['hide_comment', 'require_manual_review', 'gatekeeper_unavailable'],
+        'critical',
+        gatekeeperData,
+        perspectiveData,
+        platformViolations,
+        combinedScores,
+        thresholds,
+        userContext
+      );
+    }
 
     // RULE 1: MALICIOUS classification (prompt injection)
     if (classification === 'MALICIOUS' || is_prompt_injection) {
