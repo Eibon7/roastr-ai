@@ -171,6 +171,21 @@ Tests:       10 passed, 10 total
 - PR: #630 (Session #11+)
 - Previous Checkpoint: CHECKPOINT-11.md (fixed auth response access)
 
+## Test Evidence
+
+**Test Command:**
+```bash
+npm test -- tests/integration/adminEndpoints.test.js
+```
+
+**Before Fix:** 8/10 passing (80%)
+**After Fix:** 10/10 passing (100%)
+
+**Verification:**
+- Test output documented in sections above (error messages + fixes)
+- Changes committed successfully (see git log for commit hash)
+- All tests green in test run output
+
 ## Next Steps
 
 - Continue with remaining Jest compatibility issues in other test files
