@@ -2,9 +2,9 @@
 
 **Node Type:** Governance Layer
 **Status:** active
-**Version:** 1.0.0
-**Last Updated:** 2025-10-20
-**Related PR:** #515, #587 (Issue #487 - Shield Flow Validation with UI evidence)
+**Version:** 1.1.0
+**Last Updated:** 2025-10-23
+**Related PR:** #515, #587 (Issue #487 - Shield Flow Validation with UI evidence), Guardian Completion Validation (user request)
 
 ---
 
@@ -19,6 +19,7 @@ Guardian Agent is the **Product Governance Layer** for GDD 2.0, providing automa
 - Enforce approval workflows based on domain ownership
 - Integrate with CI/CD pipelines via semantic exit codes (0=safe, 1=review, 2=block)
 - Filter test fixtures and false positives using ignore patterns
+- **Validate PR completion** - Ensures 100% task completion before merge (7 automated checks)
 
 **Business Impact:**
 - Prevents accidental pricing changes that could impact revenue (CRITICAL protection)
@@ -630,6 +631,73 @@ npm run guardian:check
 
 ---
 
+## Completion Validation (NEW - Phase 19)
+
+Guardian now includes **automated PR completion validation** to ensure NO PR is merged until it's 100% complete. This prevents half-finished features from reaching main.
+
+### Validation Checks (7 automated)
+
+1. **Acceptance Criteria** - Parses issue body, validates all checkboxes marked `[x]`
+2. **Test Coverage** - Requires ≥90% average (lines, statements, functions, branches)
+3. **Tests Passing** - `npm test` must exit with code 0
+4. **Agent Receipts** - Validates all required agents have receipts (from `agents/manifest.yaml`)
+5. **Documentation** - GDD nodes valid, test evidence present
+6. **CodeRabbit** - 0 unresolved comments
+7. **CI/CD** - All checks passing, none pending
+
+### Exit Codes
+
+- `0` - 100% complete, ready to merge
+- `1` - Incomplete, continue implementation
+- `2` - Critical issues (failing tests/CI), do NOT merge
+
+### CLI Usage
+
+```bash
+# Manual validation (run before requesting merge)
+npm run validate:completion -- --pr=628
+
+# With custom coverage threshold
+npm run validate:completion -- --pr=628 --threshold=95
+
+# Direct script invocation
+node scripts/ci/validate-completion.js --pr=628
+```
+
+### CI Integration
+
+**Workflow:** `.github/workflows/pre-merge-validation.yml`
+
+**Triggers:**
+- Label: `ready-to-merge` or `validate-completion`
+- Workflow dispatch (manual trigger)
+
+**Behavior:**
+- Runs all 7 validation checks
+- Posts PR comment with results
+- Blocks merge if validation fails (exit 1 or 2)
+- Uploads coverage report as artifact (7 days retention)
+
+### Test File
+
+`tests/unit/scripts/validate-completion.test.js` (269 lines, 18 tests)
+
+**Test Coverage:**
+- Script execution and exit codes
+- CLI output format and colored text
+- Error handling (invalid PR, missing coverage, GitHub CLI failures)
+- NPM integration (`validate:completion` script)
+- Documentation compliance (CLAUDE.md, completion-validation.md, workflow file)
+
+### Related Documentation
+
+- **Policy:** `docs/policies/completion-validation.md` (comprehensive guide)
+- **CLI Script:** `scripts/ci/validate-completion.js` (500 lines)
+- **CI Workflow:** `.github/workflows/pre-merge-validation.yml`
+- **Agent Manifest:** `agents/manifest.yaml` (Guardian capabilities section)
+
+---
+
 ## TODOs
 
 ### Phase 17: Guardian Notifications & Workflows
@@ -659,15 +727,18 @@ npm run guardian:check
 - **Guardian Ignore Config:** `config/guardian-ignore.yaml`
 - **Audit Log:** `docs/guardian/audit-log.md`
 - **Test Suite:** `tests/unit/scripts/guardian-gdd.test.js`
+- **Completion Validation Policy:** `docs/policies/completion-validation.md` (Phase 19)
+- **Completion Validation Script:** `scripts/ci/validate-completion.js`
+- **Completion Validation Tests:** `tests/unit/scripts/validate-completion.test.js`
 
 ---
 
 ## Agentes Relevantes
 
 - **Documentation Agent** - Maintains Guardian node documentation, ensures spec.md Guardian section remains synchronized
-- **Orchestrator Agent** - Coordinates Guardian integration into CI/CD pipelines, manages approval workflows
+- **Orchestrator Agent** - Coordinates Guardian integration into CI/CD pipelines, manages approval workflows, implements completion validation system (Phase 19)
 - **Product Owner** - Reviews and approves CRITICAL violations affecting pricing, quotas, and auth policies
-- **Test Engineer** - Created 14 unit tests for all Guardian methods, validated fixes from CodeRabbit reviews #3319715250 and #3319862956
+- **Test Engineer** - Created 14 unit tests for Guardian methods (Phase 16), 18 integration tests for completion validation (Phase 19), validated fixes from CodeRabbit reviews
 
 ---
 
@@ -678,6 +749,7 @@ npm run guardian:check
 
 ---
 
-*Last Validated:* 2025-10-09
+*Last Validated:* 2025-10-23
 *Node Created:* 2025-10-09 (GDD 2.0 Phase 16)
+*Node Updated:* 2025-10-23 (Phase 19 - Completion Validation)
 *Owner:* Product Owner (governance layer)
