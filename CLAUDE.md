@@ -196,17 +196,12 @@ tests/
 
 ## Environment Variables
 
-**Core (P0):**
-- Supabase: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_ANON_KEY`
-- Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `REDIS_URL` (fallback)
-- AI: `OPENAI_API_KEY`, `PERSPECTIVE_API_KEY`
-- Config: `NODE_ENV`, `DEBUG`
+**Required categories:**
+- Core (P0): Database, Redis queues, AI APIs, configuration
+- Platform Integrations (P1): Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit
+- Optional: Custom API keys, feature flags, Shield moderation
 
-**Platform Integrations (P1):** Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit
-
-**Optional:** `ROASTR_API_KEY`, `ROAST_API_URL`, `SHIELD_ENABLED`, `PERSONA_ENCRYPTION_KEY`
-
-🔗 **Full list + setup**: `docs/INTEGRATIONS.md`, `.env.example`
+🔗 **See `.env.example` and `docs/INTEGRATIONS.md` for required and optional environment variables and integration setup**
 
 ### Setting up Integrations
 
