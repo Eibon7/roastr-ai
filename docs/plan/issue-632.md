@@ -14,7 +14,7 @@
 
 **Flow:** Sequential execution with early return
 
-```
+```text
 AnalyzeToxicityWorker.processJob()
   ↓
 Gatekeeper.classifyComment(text)
