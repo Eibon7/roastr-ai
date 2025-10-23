@@ -141,7 +141,7 @@ class AnalysisDecisionEngine {
         error: result.reason?.message
       });
       return {
-        toxicity_score: 0.5, // Medium toxicity (roastable)
+        toxicity_score: 0.1, // Conservative default to prevent false escalations on API failures
         threat_score: 0,
         identity_attack_score: 0,
         insult_score: 0,
@@ -573,6 +573,17 @@ class AnalysisDecisionEngine {
    */
   determineRoastStyle(toxicityScore, thresholds) {
     const roastRange = thresholds.shield - thresholds.roast_lower;
+
+    // Guard against division by zero or negative range
+    if (roastRange <= 0) {
+      logger.warn('Invalid roast range (shield ≤ roast_lower), defaulting to roast_balanced', {
+        shield: thresholds.shield,
+        roast_lower: thresholds.roast_lower,
+        roastRange
+      });
+      return 'roast_balanced';
+    }
+
     const normalizedScore = (toxicityScore - thresholds.roast_lower) / roastRange;
 
     if (normalizedScore < 0.33) return 'roast_soft';
