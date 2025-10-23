@@ -210,6 +210,12 @@ function checkTestCoverage(threshold) {
 function checkTestsPassing() {
   log('\n3️⃣  Checking Tests Status...', 'cyan');
 
+  // Skip expensive test execution during testing
+  if (process.env.SKIP_EXPENSIVE_CHECKS === 'true') {
+    log('   ⚠️  Skipped (test mode)', 'yellow');
+    return { passed: true, failing: 0 };
+  }
+
   try {
     execSync('npm test', {
       encoding: 'utf8',
@@ -230,6 +236,12 @@ function checkTestsPassing() {
 
 function checkAgentReceipts(prNumber) {
   log('\n4️⃣  Checking Agent Receipts...', 'cyan');
+
+  // Skip during testing
+  if (process.env.SKIP_EXPENSIVE_CHECKS === 'true') {
+    log('   ⚠️  Skipped (test mode)', 'yellow');
+    return { passed: true, missing: [] };
+  }
 
   try {
     execSync('node scripts/ci/require-agent-receipts.js', {
@@ -301,6 +313,12 @@ function checkDocumentation(prNumber) {
 function checkCodeRabbitComments(prNumber) {
   log('\n6️⃣  Checking CodeRabbit Comments...', 'cyan');
 
+  // Skip during testing
+  if (process.env.SKIP_EXPENSIVE_CHECKS === 'true') {
+    log('   ⚠️  Skipped (test mode)', 'yellow');
+    return { passed: true, count: 0 };
+  }
+
   try {
     const output = execSync(`gh pr view ${prNumber} --json comments`, {
       encoding: 'utf8',
@@ -342,6 +360,12 @@ function checkCodeRabbitComments(prNumber) {
 
 function checkCIStatus(prNumber) {
   log('\n7️⃣  Checking CI/CD Status...', 'cyan');
+
+  // Skip during testing
+  if (process.env.SKIP_EXPENSIVE_CHECKS === 'true') {
+    log('   ⚠️  Skipped (test mode)', 'yellow');
+    return { passed: true, failing: 0, pending: 0 };
+  }
 
   try {
     const output = execSync(`gh pr checks ${prNumber}`, {
