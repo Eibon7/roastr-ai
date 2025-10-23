@@ -66,35 +66,11 @@ Como **Orchestrator** (Lead Agent), es MI RESPONSABILIDAD en CADA tarea:
 
 ### Workflow Estándar
 
-```
-[FASE 0] Assessment
-├── Resolver nodos GDD → node scripts/resolve-graph.js <nodes>
-├── Leer nodos (docs/nodes/*.md)
-├── Identificar agentes necesarios (agents/manifest.yaml)
-└── Leer coderabbit-lessons.md (patrones conocidos)
-
-[FASE 1] Planning
-├── Invocar TaskAssessor si AC ≥3
-├── Crear plan en docs/plan/<issue>.md si multi-área
-└── Invocar Explore si codebase unclear
-
-[FASE 2] Implementation
-├── Invocar agentes especializados (FrontendDev, TestEngineer, etc.)
-├── Usar skills apropiados (.claude/skills/)
-├── Usar MCPs apropiados (Playwright, etc.)
-└── Generar receipts para cada agente
-
-[FASE 3] Validation
-├── TestEngineer genera tests + evidencia visual
-├── Guardian valida cambios sensibles
-├── general-purpose inspecciona PR status
-└── Verificar 0 conflictos, 0 CodeRabbit comments
-
-[FASE 4] Commit & PR
-├── Todos los receipts generados
-├── CI pasa (scripts/ci/require-agent-receipts.js)
-└── PR lista para merge
-```
+**FASE 0:** Assessment → Resolver nodos GDD → Leer nodos → Identificar agentes → Leer coderabbit-lessons.md
+**FASE 1:** Planning → TaskAssessor (AC ≥3) → Plan en docs/plan/ → Explore (si unclear)
+**FASE 2:** Implementation → Invocar agentes → Skills/MCPs → Generar receipts
+**FASE 3:** Validation → Tests + evidencia visual → Guardian → PR status → 0 conflictos + 0 CodeRabbit comments
+**FASE 4:** Commit & PR → Receipts completos → CI pasa → Merge
 
 ### Consecuencias de Violación
 
@@ -167,33 +143,13 @@ npm run demo:reset:dry           # Preview what would be deleted
 
 🔗 **Full GDD documentation**: `docs/GDD-ACTIVATION-GUIDE.md`
 
-| Category | Command | Description |
-|----------|---------|-------------|
-| **Validation** | `node scripts/validate-gdd-runtime.js --full` | Validate entire system |
-| | `node scripts/validate-gdd-runtime.js --diff` | Validate changed nodes only |
-| | `node scripts/validate-gdd-runtime.js --node=<name>` | Validate specific node |
-| | `node scripts/validate-gdd-runtime.js --ci` | CI mode (exit 1 on errors) |
-| **Health & Scoring** | `node scripts/score-gdd-health.js --ci` | Score all nodes |
-| | `node scripts/compute-gdd-health.js --threshold=95` | Check health threshold |
-| **Drift Prediction** | `node scripts/predict-gdd-drift.js --full` | Predict drift for all nodes |
-| | `node scripts/predict-gdd-drift.js --ci` | CI mode (exit 1 if high-risk) |
-| | `node scripts/predict-gdd-drift.js --create-issues` | Create GitHub issues for drift |
-| **Auto-Repair** | `node scripts/auto-repair-gdd.js --dry-run` | Show what would be fixed |
-| | `node scripts/auto-repair-gdd.js --auto-fix` | Apply fixes automatically |
-| **Metrics Sync** | `node scripts/sync-gdd-metrics.js --dry-run` | Preview metrics sync from JSON files |
-| | `node scripts/sync-gdd-metrics.js --auto` | Auto-sync all metrics to docs |
-| | `node scripts/sync-gdd-metrics.js --validate` | Validate metric consistency |
-| **Cross-Validation** | `node scripts/validate-gdd-cross.js --full` | Cross-validate all nodes |
-| | `node scripts/update-integration-status.js` | Update integration status |
-| **Telemetry** | `node scripts/collect-gdd-telemetry.js` | Collect telemetry snapshot |
-| | `node scripts/collect-gdd-telemetry.js --ci` | CI mode (silent) |
-| **Watch Mode** | `node scripts/watch-gdd.js` | Watch mode (development) |
-| | `node scripts/watch-gdd.js --agents-active` | With autonomous agents |
-| | `node scripts/watch-gdd.js --telemetry` | With telemetry display |
-| | `node scripts/watch-gdd.js --cross` | With cross-validation |
-| **Guardian** | `node scripts/guardian-gdd.js --full` | Full governance scan |
-| | `node scripts/guardian-gdd.js --ci` | CI mode (exit 0/1/2) |
-| | `node scripts/collect-diff.js --verbose` | Generate structured diffs |
+**Most used commands:**
+- `node scripts/validate-gdd-runtime.js --full` - Validate system
+- `node scripts/score-gdd-health.js --ci` - Check health score
+- `node scripts/auto-repair-gdd.js --auto-fix` - Auto-fix issues
+- `node scripts/guardian-gdd.js --full` - Governance scan
+
+See `docs/GDD-ACTIVATION-GUIDE.md` for complete command reference.
 
 ## Multi-Tenant Project Structure
 
@@ -240,30 +196,17 @@ tests/
 
 ## Environment Variables
 
-**Core Database & Queue:**
-- `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_ANON_KEY` - Supabase configuration
-- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` - Upstash Redis for serverless queues
-- `REDIS_URL` - Standard Redis URL (fallback)
+**Core (P0):**
+- Supabase: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_ANON_KEY`
+- Redis: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `REDIS_URL` (fallback)
+- AI: `OPENAI_API_KEY`, `PERSPECTIVE_API_KEY`
+- Config: `NODE_ENV`, `DEBUG`
 
-**AI & Moderation APIs:**
-- `OPENAI_API_KEY` - OpenAI API for roast generation and moderation
-- `PERSPECTIVE_API_KEY` - Google Perspective API for toxicity detection
-- `NODE_ENV` - Set to 'production' to disable debug logging
-- `DEBUG` - Set to 'true' to enable detailed logging
+**Platform Integrations (P1):** Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit
 
-**Platform Integrations:**
-- Twitter: `TWITTER_BEARER_TOKEN`, `TWITTER_APP_KEY`, `TWITTER_APP_SECRET`, `TWITTER_ACCESS_TOKEN`, `TWITTER_ACCESS_SECRET`
-- YouTube: `YOUTUBE_API_KEY`
-- Instagram: `INSTAGRAM_ACCESS_TOKEN`
-- Facebook: `FACEBOOK_ACCESS_TOKEN`
-- Discord: `DISCORD_BOT_TOKEN`
-- Twitch: `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`
-- Reddit: `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`
+**Optional:** `ROASTR_API_KEY`, `ROAST_API_URL`, `SHIELD_ENABLED`, `PERSONA_ENCRYPTION_KEY`
 
-**Optional:**
-- `ROASTR_API_KEY` - Custom API key for /roast endpoint
-- `ROAST_API_URL` - URL of roast API (defaults to production)
-- `SHIELD_ENABLED` - Enable Shield moderation (default: true for Pro+ plans)
+🔗 **Full list + setup**: `docs/INTEGRATIONS.md`, `.env.example`
 
 ### Setting up Integrations
 
@@ -279,162 +222,47 @@ tests/
 
 ### API Verification Scripts (Issue #490)
 
-Comprehensive verification scripts for all configured APIs:
+**P0 scripts:** `verify-supabase-tables.js`, `verify-openai-api.js`, `verify-twitter-api.js`, `verify-perspective-api.js`
+**P1 scripts:** `verify-youtube-api.js`
+**Deployment:** `deploy-supabase-schema.js`
 
-```bash
-# Core P0 APIs (Required for MVP)
-node scripts/verify-supabase-tables.js      # Database: core tables, RLS policies
-node scripts/verify-openai-api.js           # AI: available GPT models, moderation
-node scripts/verify-twitter-api.js          # Platform: OAuth 1.0a/2.0, @Roastr_ai
-node scripts/verify-perspective-api.js      # Toxicity: analysis attributes, fallback
+**Features:** Error handling, rate limit detection, fallback validation
 
-# Platform Integrations (P1)
-node scripts/verify-youtube-api.js          # Video platform: search, comments
-
-# Database deployment
-node scripts/deploy-supabase-schema.js      # Deploy schema to Supabase
-```
-
-**Features:**
-- ✅ Comprehensive error handling with troubleshooting guidance
-- ✅ Rate limit detection and reporting
-- ✅ Clear success/failure indicators
-- ✅ Verification of all critical functionality
-- ✅ Fallback system validation
-
-**Status:** All P0 APIs verified and production-ready. See Issue #490 for full configuration checklist.
+🔗 **Full checklist**: Issue #490
 
 ## Multi-Tenant Architecture
 
-The system is built on a comprehensive multi-tenant architecture designed for scale:
+**Core:** Express + PostgreSQL (RLS) + Redis/Upstash queues + Background workers + Cost control + Shield moderation
 
-**Core Components:**
-- **API Layer**: Express server with multi-tenant authentication and organization-scoped endpoints
-- **Database Layer**: PostgreSQL with Row Level Security (RLS) for complete tenant isolation
-- **Queue System**: Unified Redis/Upstash + Database queue management with priority support
-- **Worker System**: Dedicated background workers for scalable comment processing
-- **Cost Control**: Usage tracking, billing integration, and automatic limit enforcement
-- **Shield System**: Automated content moderation with escalating actions
+**Workers:** FetchComments → AnalyzeToxicity → GenerateReply → ShieldAction
 
-**Worker Architecture:**
-1. **FetchCommentsWorker**: Fetches comments from 9 social media platforms
-2. **AnalyzeToxicityWorker**: Analyzes content toxicity using Perspective API + OpenAI fallback
-3. **GenerateReplyWorker**: Generates AI roast responses with cost control
-4. **ShieldActionWorker**: Executes automated moderation actions (mute, block, report)
+**Data flow:** Detection → Fetch → Analyze + Shield → Reply → Moderation (priority queue)
 
-**Data Flow:**
-```
-Comment Detection → fetch_comments queue
-  ↓
-Comment Fetching → Database → analyze_toxicity queue
-  ↓
-Toxicity Analysis → generate_reply queue + Shield Analysis
-  ↓
-Response Generation → post_response queue
-  ↓
-Shield Actions (if needed) → shield_action queue [Priority 1]
-  ↓
-Platform Actions → Moderation Complete
-```
+**Scaling:** Horizontal workers, priority queues, Redis/DB failover, cost throttling, monitoring
 
-**Scaling Features:**
-- Horizontal scaling via multiple worker instances
-- Priority-based job processing (Shield actions get priority 1)
-- Automatic failover from Redis to Database queues
-- Cost-based throttling to prevent overages
-- Real-time monitoring and alerting
+🔗 **Full architecture**: `docs/nodes/` (roast.md, shield.md, queue.md)
 
 ## Master Prompt Template System (v1-roast-prompt)
 
-The roast generation system uses a comprehensive master prompt template for consistency, quality, and personalization.
+**Essentials:**
+- Dynamic field replacement: comment, category, references, tone
+- 🔒 Security: Prompt injection protection, 2000 char limit, input validation
+- GDPR rate limiting: 3-10 requests/hour (disabled in test env)
+- Plan differentiation: Free (no refs), Pro+ (full examples)
 
-**Key Features:**
-- Dynamic field replacement (comment, category, references, tone)
-- Automatic comment categorization (insults, body shaming, political, etc.)
-- Reference integration from CSV database
-- User tone mapping based on preferences and plan features
-- Version control for future improvements
-- 🔒 Security: Prompt injection protection, input validation, error traceability, length limits
-
-**Security Features (Issue #127):**
-- Sanitizes malicious template placeholders
-- Strict validation for inputs (type, length, content)
-- 2000 character limit to prevent DoS
-- Graceful fallback system
-
-**GDPR Rate Limiting (Issue #115):**
-- Account Deletion: 3/hour (`DELETE /api/user/account`)
-- Data Export: 5/hour (`GET /api/user/data-export`)
-- Data Download: 10/hour (`GET /api/user/data-export/download/:token`)
-- Deletion Cancellation: 5/hour (`POST /api/user/account/deletion/cancel`)
-- Global GDPR Limit: 20/hour across all endpoints
-
-Rate limiters disabled in test environment.
-
-**Template Structure:**
-```
-Tu tarea es generar una respuesta sarcástica e ingeniosa...
-💬 COMENTARIO ORIGINAL: {{original_comment}}
-🎭 CATEGORÍA: {{comment_category}}
-📚 EJEMPLOS: {{reference_roasts_from_CSV}}
-👤 TONO: {{user_tone}}
-```
-
-**Integration Points:**
-- RoastGeneratorEnhanced (basic moderation + advanced RQC modes)
-- GenerateReplyWorker (queue processing)
-- Platform-specific constraints (character limits, style guides)
-- Plan differentiation (Free excludes references, Pro+ includes full examples)
+🔗 **Security details**: Issue #127, Issue #115
 
 ## Persona Setup System (Issue #595)
 
-The Persona Setup feature allows users to define their identity, intolerances, and tolerances for personalized roast filtering and generation.
+Encrypted persona fields for personalized roast filtering: identity, intolerances, tolerances.
 
-**Key Features:**
-- 3 encrypted persona fields: identity (lo_que_me_define), intolerance (lo_que_no_tolero), tolerance (lo_que_me_da_igual)
-- AES-256-GCM encryption for data at rest
-- OpenAI embeddings (text-embedding-3-small, 1536 dimensions) for semantic matching
-- Plan-based access control (Free blocked, Starter: 2 fields, Pro+: 3 fields)
-- Full REST API with JWT authentication
-- GDPR compliance (full deletion capability)
+**Essentials:**
+- AES-256-GCM encryption + OpenAI embeddings (1536-dim)
+- Plan-based access: Free (blocked), Starter (2 fields), Pro+ (3 fields)
+- API: `/api/persona` (GET/POST/DELETE + health check)
+- Env var: `PERSONA_ENCRYPTION_KEY` (⚠️ NEVER change after encryption)
 
-**Security Features:**
-- Industry-standard AES-256-GCM encryption with unique IVs
-- Authentication tags prevent tampering
-- No plaintext logging of sensitive data
-- Input sanitization (XSS, SQL injection prevention)
-- Character limits (300 chars plaintext, 500 encrypted)
-
-**API Endpoints:**
-- `GET /api/persona` - Retrieve user's persona (decrypted)
-- `POST /api/persona` - Create/update persona (encrypted storage)
-- `DELETE /api/persona` - Delete persona (GDPR compliance)
-- `GET /api/persona/health` - Service health check
-
-**Database Schema:**
-- 18 persona columns in `users` table (3 fields × 6 columns each)
-- pgvector extension for embedding storage and similarity search
-- Helper functions: `user_has_embeddings()`, `get_user_embeddings_metadata()`, `embeddings_need_regeneration()`
-
-**Plan Access Matrix:**
-- Free/Basic: No access (blocked)
-- Starter: `lo_que_me_define`, `lo_que_no_tolero` (2 fields)
-- Pro/Plus/Enterprise: All 3 fields including `lo_que_me_da_igual`
-
-**Implementation Files:**
-- Service: `src/services/PersonaService.js`
-- Routes: `src/routes/persona.js`
-- Encryption: `src/utils/encryption.js`
-- Migration: `database/migrations/001_add_persona_fields.sql`
-- Tests: `tests/unit/services/PersonaService.test.js`, `tests/integration/persona-api.test.js`
-
-**Environment Variable:**
-- `PERSONA_ENCRYPTION_KEY` - 64-character hex key (generate with `node scripts/generate-persona-key.js`)
-- ⚠️ CRITICAL: Never change this key after data is encrypted or all personas will be lost
-
-**Test Coverage:** 97% (149/154 tests passing)
-
-🔗 **Full documentation**: `docs/plan/issue-595.md`, `docs/test-evidence/issue-595/SUMMARY.md`
+🔗 **Full documentation**: `docs/plan/issue-595.md`
 
 ## Orquestación y Reglas
 
@@ -548,54 +376,9 @@ The Persona Setup feature allows users to define their identity, intolerances, a
 
 #### 7. Examples
 
-### Example 1: Simple Backend Fix
-
-```bash
-PR #700: Fix billing calculation bug
-Changed: src/services/billing.js, tests/unit/services/billing.test.js
-Labels: area:backend, priority:P1
-
-Required agents:
-- TestEngineer (diff: tests/)
-- Guardian (diff: billing.js - sensitive)
-
-Receipts generated:
-- docs/agents/receipts/700-TestEngineer.md ✅
-- docs/agents/receipts/700-Guardian.md ✅ (exit 0, no violations)
-```
-
-### Example 2: Frontend Feature with Branding
-
-```bash
-PR #701: New dashboard UI with microcopy
-Changed: frontend/components/Dashboard.jsx, frontend/styles/dashboard.css
-Labels: area:frontend, area:ui, branding
-
-Required agents:
-- FrontendDev (diff: *.jsx, *.css)
-- UIDesigner (label: area:ui)
-- WhimsyInjector (label: branding)
-- TestEngineer (AC: Must have E2E tests)
-
-Receipts generated:
-- docs/agents/receipts/701-FrontendDev.md ✅
-- docs/agents/receipts/701-UIDesigner-SKIPPED.md (Design pre-approved in #695)
-- docs/agents/receipts/701-WhimsyInjector.md ✅
-- docs/agents/receipts/701-TestEngineer.md ✅
-```
-
-### Example 3: Docs-Only Change
-
-```bash
-PR #702: Update integration guide
-Changed: docs/INTEGRATIONS.md
-Labels: docs
-
-Required agents: NONE (no triggers match)
-
-Receipts: None needed
-CI: Passes with 0 required agents
-```
+- **Backend fix** (billing.js, tests/) → TestEngineer + Guardian receipts
+- **Frontend feature** (*.jsx, *.css, branding label) → FrontendDev + UIDesigner + WhimsyInjector + TestEngineer
+- **Docs-only** → No agents required if no triggers match
 
 #### 8. Violations & Consequences
 
@@ -751,40 +534,14 @@ CI: Passes with 0 required agents
    ls tests/integration/<platform>.test.js
    ```
 
-**Common Past Mistakes (Learn from CodeRabbit):**
+**Common Past Mistakes:**
+- ❌ Duplicated naming (search first)
+- ❌ Forgotten worker registration
+- ❌ Token leakage in docs
+- ❌ Missing tests before PR
+- ❌ Outdated documentation
 
-❌ **Mistake 1: Duplicated naming**
-- Issue: Created `twitterIntegration.js` when `twitterService.js` existed
-- Fix: Always search codebase first, follow naming convention
-
-❌ **Mistake 2: Forgotten service registration**
-- Issue: Created service but forgot to register in FetchCommentsWorker
-- Fix: Follow checklist, grep for platform name in worker files
-
-❌ **Mistake 3: Token leakage in docs**
-- Issue: Added `YOUTUBE_API_KEY=your_key_here` to public docs
-- Fix: NEVER include env var examples in docs/INTEGRATIONS.md
-
-❌ **Mistake 4: Inconsistent error handling**
-- Issue: Each integration handled rate limits differently
-- Fix: Follow existing patterns in other services, use shared utilities
-
-❌ **Mistake 5: Missing tests**
-- Issue: Integration deployed without integration tests
-- Fix: Checklist item mandatory, tests must exist before PR
-
-❌ **Mistake 6: Outdated documentation**
-- Issue: Implemented integration but forgot to update docs/INTEGRATIONS.md
-- Fix: Phase 3 checklist mandatory, no PR without doc updates
-
-**Enforcement:**
-
-- ✅ This checklist is part of Pre-Flight Checklist
-- ✅ CodeRabbit will flag violations
-- ✅ 0 comments rule applies (fix ALL suggestions)
-- ✅ GDD validation includes integration documentation check
-
-**Principle:** "Hacer las cosas bien y escalables" - Take time to do it right the first time. Self-document, follow conventions, maintain consistency.
+🔗 **Full checklist & lessons**: `docs/patterns/coderabbit-lessons.md`
 
 ### Task Assessment (FASE 0 - OBLIGATORIA)
 
@@ -814,45 +571,19 @@ CI: Passes with 0 required agents
 
 ### CodeRabbit Lessons - Workflow de Aprendizaje
 
-**OBLIGATORIO: Leer antes de TODA implementación (FASE 0 o FASE 2)**
+**OBLIGATORIO: Leer `docs/patterns/coderabbit-lessons.md` en FASE 0.**
 
-**Antes de implementar:**
-1. **Leer:** `docs/patterns/coderabbit-lessons.md`
-2. **Consultar:** Patrones conocidos (ESLint, testing, GDD, security)
-3. **Aplicar:** Checklist pre-implementación del documento
+**Workflow:**
+- **Antes:** Leer patrones conocidos, aplicar checklist
+- **Durante:** Evitar patrones conocidos (semicolons, const/let, console.log)
+- **Después:** Identificar nuevos (≥2 ocurrencias) → Actualizar lessons.md → Commit
 
-**Durante implementación:**
-- Seguir reglas documentadas
-- Evitar patrones conocidos (semicolons, const/let, console.log, etc.)
-- Aplicar fixes preventivos
-
-**Después de review CodeRabbit:**
-1. **Identificar nuevos patrones** (≥2 ocurrencias del mismo error)
-2. **Actualizar:** `docs/patterns/coderabbit-lessons.md`
-   - Añadir sección ❌ Mistake / ✅ Fix
-   - Actualizar estadísticas
-3. **Generar SUMMARY:** Usar `docs/templates/SUMMARY-template.md`
-   - Enfoque en patrones, NO cronología
-   - Máximo 50 líneas (vs 300+ antes)
-   - Extraer root causes y acciones correctivas
-4. **Commit:** `docs(patterns): Add CodeRabbit lesson - <patrón>`
-
-**Objetivo:** Reducir tasa de repetición <10% en todos los patrones
-
-**Beneficio:** Menos idas y venidas con CodeRabbit = menos tokens + faster reviews
+**Meta:** Reducir repetición <10% = menos tokens + faster reviews
 
 ### Planning Mode
 
-- **Antes de implementar, genera siempre un plan en modo texto**
-- **El plan debe incluir "Estado Actual"** basado en assessment
-- **Describir**: pasos, subagentes, archivos afectados, criterios de validación
-- **Guardar en**: `docs/plan/<issue>.md`
-- **⚠️ CRÍTICO: Después de guardar, CONTINÚA AUTOMÁTICAMENTE con implementación**
-  - NO esperes confirmación del usuario
-  - NO preguntes "¿procedemos?"
-  - El plan es para documentar, no pedir permiso
-  - EJECUTA inmediatamente
-  - Solo detenerse por bloqueador técnico real
+- Generar plan en `docs/plan/<issue>.md` con: Estado Actual, pasos, agentes, archivos, validación
+- **⚠️ CRÍTICO:** Después de guardar, CONTINUAR inmediatamente con implementación (NO pedir permiso)
 
 ### Gestión de Agentes Relevantes (GDD Phase 4)
 
@@ -875,100 +606,47 @@ CI: Passes with 0 required agents
 
 ### Coverage Authenticity Rules (GDD Phase 15.1)
 
-**NEVER modify `**Coverage:**` values manually. Coverage must be derived from automated reports.**
+**CRITICAL: NEVER modify coverage values manually.**
 
-- **Coverage Source**: All nodes must have `**Coverage Source:** auto`
-- **Automated Enforcement**: Validation and Auto-Repair enforce authenticity
-- **Manual modifications = integrity violations** → CI failure
-- **Data sources**: Primary: `coverage/coverage-summary.json`, Secondary: `lcov.info`
-- **Tolerance**: 3% difference allowed
-- **Violations**: Mismatch >3% triggers critical violation
+- All nodes: `**Coverage Source:** auto` (from `coverage-summary.json`)
+- Automated workflow: `npm test --coverage` → `auto-repair-gdd.js --auto` → commit
+- Manual source discouraged (triggers warning, -20 health points)
+- Mismatch >3% = CI failure
 
-**Validation:**
-```bash
-node scripts/validate-gdd-runtime.js --full
-node scripts/auto-repair-gdd.js --auto-fix
-```
+🔗 **Full rules**: GDD Phase 15.1 documentation
 
-**Coverage Update Workflow:**
-1. `npm test -- --coverage`
-2. Coverage report auto-generated
-3. `node scripts/auto-repair-gdd.js --auto`
-4. Auto-repair reads actual coverage and updates nodes
-5. Commit updated nodes
-
-**Manual Override (discouraged):**
-- Use `**Coverage Source:** manual` only if data unavailable
-- Triggers warning (not error)
-- Must justify in PR description
-- Switch back to `auto` when available
-
-**Integrity Score:**
-- Coverage authenticity = 10% of node health score
-- Manual source: -20 points
-- Missing source: -10 points
-- Mismatch: penalty up to -50 points
-
-**CI/CD**: Blocks merge if coverage integrity violations detected
-
-### 🎓 GDD Health Score Management - Principios Fundamentales
+### 🎓 GDD Health Score Management
 
 **⚠️ NUNCA ajustar thresholds sin investigación exhaustiva.**
 
-**Workflow cuando CI GDD falla:**
-
-1. **Ver score real:** `node scripts/score-gdd-health.js --ci`
-2. **Mapear cambios:** test files → source files → GDD nodes
-3. **Calcular coverage real:** `npm test -- --coverage` → revisar `coverage-summary.json`
-4. **Actualizar nodos:** Editar `docs/nodes/*.md` con valores reales
-5. **Regenerar score:** Verificar si threshold es alcanzable matemáticamente
-6. **Solo entonces ajustar threshold** con justificación técnica detallada en `.gddrc.json`
+**Workflow cuando CI falla:**
+1. Ver score: `score-gdd-health.js --ci`
+2. Actualizar nodos con valores reales
+3. Solo entonces ajustar threshold con justificación en `.gddrc.json`
 
 **Principios:**
-- ❌ NO shortcuts: No bajar números solo para pasar CI
-- ❌ NO exponer keys: NUNCA incluir API keys, tokens, passwords en código o docs públicas
-- ✅ Tests fallidos = oportunidades: Arreglar ANTES de continuar
-- ✅ Documentar decisiones: Incluir `note` + `temporary_until` en `.gddrc.json`
-- ✅ **Hacer las cosas bien y escalables:** Investigar root cause, no parches rápidos
+- ❌ NO shortcuts (no bajar números para pasar CI)
+- ✅ Arreglar tests ANTES de continuar
+- ✅ Documentar con `note` + `temporary_until`
 
-**Mentalidad:** GDD threshold es indicador de salud del sistema, no obstáculo burocrático.
-
-**Security:** Todas las credenciales en env vars. Docs públicas: usar "🔐 Requires environment variables"
-
-🔗 **Lección completa con ejemplo:** `docs/lessons/gdd-threshold-management.md`
+🔗 **Full guide**: `docs/lessons/gdd-threshold-management.md`
 
 ### GDD Activation - Issue Analysis & Context Loading
 
-🔗 **Full details**: `docs/GDD-ACTIVATION-GUIDE.md`
+**CRÍTICO: Cargar SOLO nodos relevantes (NO spec.md completo).**
 
-**IMPORTANTE**: El Orchestrator debe usar GDD para **todas las issues**, cargando solo nodos relevantes (NO spec.md completo).
+**Workflow:**
+1. Fetch issue: `gh issue view <#> --json labels,title,body`
+2. Map labels → nodes
+3. Resolve: `node scripts/resolve-graph.js <nodes>`
+4. Load resolved nodes only
 
-**When user mentions issue number** (e.g., "Issue #408"):
+**During development:**
+- ✅ Update affected nodes + "Agentes Relevantes"
+- ✅ Validate before commits
+- ❌ NEVER load entire spec.md
 
-1. **Fetch metadata**: `gh issue view 408 --json labels,title,body`
-2. **Map labels → nodes** (ver tabla completa en líneas 561-577)
-3. **Keyword fallback** si no hay label `area:*` (ver tabla líneas 579-591)
-4. **Resolve dependencies**: `node scripts/resolve-graph.js <nodes>`
-5. **Load ONLY resolved nodes** (NO spec.md)
-6. **Announce context loaded** (ver ejemplo líneas 601-618)
-
-**During Development:**
-- ✅ Read nodes, NOT spec.md (unless `test:e2e` or `area:observability`)
-- ✅ Update affected nodes when code changes
-- ✅ Add agents to "Agentes Relevantes" if invoked but not listed
-- ✅ Run validation before commits
-- ❌ NEVER load entire spec.md unless explicitly required
-- ❌ NEVER skip node updates
-- ❌ NEVER commit without validation
-
-**Before Closing PR:**
-- [ ] Verified "Agentes Relevantes" reflects agents used
-- [ ] Added missing agents, removed irrelevant
-- [ ] Ran `node scripts/resolve-graph.js --validate` → no errors
-- [ ] Generated report with `--report`
-- [ ] Included GDD summary in PR description
-
-**Fallback**: Si no puedes determinar nodos → preguntar al usuario área de feature
+🔗 **Full workflow + label mapping**: `docs/GDD-ACTIVATION-GUIDE.md`
 
 ## GDD 2.0 - Quick Reference
 
@@ -990,33 +668,15 @@ node scripts/auto-repair-gdd.js --auto-fix
 
 ## Documentation Integrity Policy (Phase 15.3)
 
-### GDD Implementation Summary Governance
+**GDD Implementation Summary modularized to prevent token limits.**
 
-**Effective:** October 8, 2025
+**Size limits:**
+- Index (`GDD-IMPLEMENTATION-SUMMARY.md`): 350 lines max
+- Phase docs (`GDD-PHASE-*.md`): 1,000 lines max
 
-The GDD Implementation Summary has been modularized to prevent token limit errors.
+**When adding phase:** Create file, update index, update `.gddindex.json`, verify size.
 
-**Size Limits:**
-- **GDD Implementation Summary Index** (`docs/GDD-IMPLEMENTATION-SUMMARY.md`): 350 lines max (~5,000 tokens)
-- **Phase Documentation** (`docs/implementation/GDD-PHASE-*.md`): 1,000 lines max per file
-
-**Mandatory Structure:** All phase docs must include header with back-link, content sections (objective, implementation, results, testing, files), footer with navigation.
-
-**Update Requirements:** When adding new phase, MUST update:
-1. ✅ Create phase file: `docs/implementation/GDD-PHASE-<number>.md`
-2. ✅ Update index: `docs/GDD-IMPLEMENTATION-SUMMARY.md`
-3. ✅ Update metadata: `docs/.gddindex.json`
-4. ✅ Verify size: Ensure index <350 lines
-
-**Enforcement:**
-- CI/CD validation checks index size
-- Auto-Repair can fix missing references
-- Health scoring monitors doc size
-- Manual edits require Orchestrator approval
-
-**Rationale:** Previous monolithic file (3,069 lines) caused token limit errors. Phase 15.3 reduced index to 249 lines (93% reduction), eliminated errors, improved read time from 800ms+ to <50ms.
-
-🔗 **Full details**: `docs/GDD-PHASE-15.3-MODULARIZATION.md`
+🔗 **Full policy**: `docs/GDD-PHASE-15.3-MODULARIZATION.md`
 
 ---
 
