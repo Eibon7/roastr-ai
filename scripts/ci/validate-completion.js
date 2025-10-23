@@ -24,22 +24,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-
-// ANSI color codes for terminal output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  dim: '\x1b[2m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m'
-};
-
-function log(message, color = 'reset') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
-}
+const logger = require('../../src/utils/logger');
 
 /**
  * Returns the baseline number of failing test suites from main branch.
@@ -99,15 +84,15 @@ function parseFailingSuites(output) {
  * @returns {Object} Test result with baseline comparison
  */
 function checkTestsPassing() {
-  log('\n3️⃣  Checking Tests Status (Baseline Mode)...', 'cyan');
+  logger.info('\n3️⃣  Checking Tests Status (Baseline Mode)...');
 
   if (process.env.SKIP_EXPENSIVE_CHECKS === 'true') {
-    log('   ⚠️  Skipped (test mode)', 'yellow');
+    logger.warn('   ⚠️  Skipped (test mode)');
     return { passed: true, failing: 0, baseline: 0, improvement: 0, regression: false };
   }
 
   const baseline = getBaselineFailures();
-  log(`   📊 Main branch baseline: ${baseline} failing suites`, 'blue');
+  logger.info(`   📊 Main branch baseline: ${baseline} failing suites`);
 
   try {
     // Run full test suite
@@ -117,15 +102,16 @@ function checkTestsPassing() {
     });
 
     // All tests passing!
-    log('   ✅ All tests passing (100% improvement!)', 'green');
+    logger.info('   ✅ All tests passing (100% improvement!)');
     return { passed: true, failing: 0, baseline, improvement: baseline, regression: false };
   } catch (error) {
     const output = error.stdout || error.stderr || '';
     const failingSuites = parseFailingSuites(output);
 
     if (failingSuites === null) {
-      log('   ⚠️  Could not parse test output', 'yellow');
-      return { passed: true, failing: 'unknown', baseline, improvement: 0, regression: false };
+      logger.error('   ❌ Could not parse test output - test system may be broken');
+      logger.error('   🚨 FAILING validation to prevent silent errors');
+      return { passed: false, failing: 'unknown', baseline, improvement: 0, regression: false };
     }
 
     // Compare with baseline
@@ -133,16 +119,16 @@ function checkTestsPassing() {
     const isRegression = failingSuites > baseline;
 
     if (isRegression) {
-      log(`   ❌ Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} NEW failures vs baseline)`, 'red');
-      log(`   🚨 REGRESSION DETECTED - PR introduces new test failures`, 'red');
+      logger.error(`   ❌ Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} NEW failures vs baseline)`);
+      logger.error(`   🚨 REGRESSION DETECTED - PR introduces new test failures`);
       return { passed: false, failing: failingSuites, baseline, improvement, regression: true };
     } else if (improvement > 0) {
-      log(`   ✅ Tests failing: ${failingSuites} suites (-${improvement} vs baseline - IMPROVEMENT!)`, 'green');
+      logger.info(`   ✅ Tests failing: ${failingSuites} suites (-${improvement} vs baseline - IMPROVEMENT!)`);
       return { passed: true, failing: failingSuites, baseline, improvement, regression: false };
     } else {
       // Same as baseline
-      log(`   ⚠️  Tests failing: ${failingSuites} suites (same as baseline)`, 'yellow');
-      log(`   ✅ No regression - PR maintains baseline`, 'green');
+      logger.warn(`   ⚠️  Tests failing: ${failingSuites} suites (same as baseline)`);
+      logger.info(`   ✅ No regression - PR maintains baseline`);
       return { passed: true, failing: failingSuites, baseline, improvement: 0, regression: false };
     }
   }
@@ -152,54 +138,64 @@ function checkTestsPassing() {
  * Main validation function
  */
 function main() {
-  log('\n============================================================', 'cyan');
-  log('🛡️  GUARDIAN COMPLETION VALIDATOR (BASELINE MODE)', 'bright');
-  log('============================================================', 'cyan');
+  logger.info('\n============================================================');
+  logger.info('🛡️  GUARDIAN COMPLETION VALIDATOR (BASELINE MODE)');
+  logger.info('============================================================');
 
   const args = process.argv.slice(2);
   const prArg = args.find(arg => arg.startsWith('--pr='));
   const prNumber = prArg ? prArg.split('=')[1] : 'unknown';
 
-  log(`\n🎯 Validating PR #${prNumber} with baseline comparison...\n`, 'cyan');
+  logger.info(`\n🎯 Validating PR #${prNumber} with baseline comparison...\n`);
 
   // Run test validation with baseline comparison
   const testResult = checkTestsPassing();
 
   // Summary
-  log('\n============================================================', 'cyan');
-  log('📊 VALIDATION SUMMARY', 'bright');
-  log('============================================================', 'cyan');
+  logger.info('\n============================================================');
+  logger.info('📊 VALIDATION SUMMARY');
+  logger.info('============================================================');
 
-  log(`\nPR: #${prNumber}`, 'blue');
-  log(`Date: ${new Date().toISOString().split('T')[0]}`, 'blue');
+  logger.info(`\nPR: #${prNumber}`);
+  logger.info(`Date: ${new Date().toISOString().split('T')[0]}`);
 
-  log('\n🎯 Test Results:', 'cyan');
-  log(`   Baseline: ${testResult.baseline} failing suites (main branch)`, 'blue');
-  log(`   Current:  ${testResult.failing} failing suites (this PR)`, testResult.passed ? 'green' : 'red');
-
-  if (testResult.improvement > 0) {
-    log(`   📈 Improvement: -${testResult.improvement} suites fixed! ✅`, 'green');
-  } else if (testResult.improvement < 0) {
-    log(`   📉 Regression: +${Math.abs(testResult.improvement)} NEW failures ❌`, 'red');
+  logger.info('\n🎯 Test Results:');
+  logger.info(`   Baseline: ${testResult.baseline} failing suites (main branch)`);
+  if (testResult.passed) {
+    logger.info(`   Current:  ${testResult.failing} failing suites (this PR)`);
   } else {
-    log(`   ➡️  No change: maintaining baseline`, 'yellow');
+    logger.error(`   Current:  ${testResult.failing} failing suites (this PR)`);
   }
 
-  log('\n============================================================', 'cyan');
+  if (testResult.improvement > 0) {
+    logger.info(`   📈 Improvement: -${testResult.improvement} suites fixed! ✅`);
+  } else if (testResult.improvement < 0) {
+    logger.error(`   📉 Regression: +${Math.abs(testResult.improvement)} NEW failures ❌`);
+  } else {
+    logger.warn(`   ➡️  No change: maintaining baseline`);
+  }
 
-  if (testResult.regression) {
-    log('🚨 VALIDATION FAILED - REGRESSION DETECTED', 'red');
-    log('   This PR introduces new test failures vs baseline', 'red');
-    log('   Fix new failures before merge', 'red');
+  logger.info('\n============================================================');
+
+  if (!testResult.passed) {
+    if (testResult.regression) {
+      logger.error('🚨 VALIDATION FAILED - REGRESSION DETECTED');
+      logger.error('   This PR introduces new test failures vs baseline');
+      logger.error('   Fix new failures before merge');
+    } else {
+      logger.error('🚨 VALIDATION FAILED - CRITICAL ERROR');
+      logger.error('   Could not parse test output or test system broken');
+      logger.error('   Fix test infrastructure before merge');
+    }
     process.exit(1);
   } else {
-    log('✅ VALIDATION PASSED', 'green');
+    logger.info('✅ VALIDATION PASSED');
     if (testResult.failing === 0) {
-      log('   All tests passing! Perfect PR ⭐', 'green');
+      logger.info('   All tests passing! Perfect PR ⭐');
     } else if (testResult.improvement > 0) {
-      log(`   PR improves baseline by ${testResult.improvement} suites!`, 'green');
+      logger.info(`   PR improves baseline by ${testResult.improvement} suites!`);
     } else {
-      log('   No regression - PR maintains baseline', 'green');
+      logger.info('   No regression - PR maintains baseline');
     }
     process.exit(0);
   }
