@@ -147,11 +147,11 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       expect(calledPrompt).toContain('- Lo que NO tolera: Faltas de respeto injustificadas');
       expect(calledPrompt).toContain('- Lo que le da igual: Opiniones sin fundamento');
 
-      // Verify result structure
+      // Verify result structure (returns string directly)
       expect(result).toBeDefined();
-      expect(result.roast).toBeDefined();
-      expect(typeof result.roast).toBe('string');
-      expect(result.roast.length).toBeGreaterThan(0);
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+      expect(result).toBe('Tu comentario necesita una clase de lógica básica.');
     });
   });
 
@@ -214,10 +214,11 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       expect(calledPrompt).toContain('🎯 CONTEXTO DEL USUARIO:');
       expect(calledPrompt).toContain('No especificado');
 
-      // Verify result structure
+      // Verify result structure (returns string directly)
       expect(result).toBeDefined();
-      expect(result.roast).toBeDefined();
-      expect(typeof result.roast).toBe('string');
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+      expect(result).toBe('Comentario genérico de respuesta.');
     });
 
     test('should show "No especificado" when persona is null', async () => {
@@ -341,11 +342,11 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       expect(calledPrompt).toContain('Código sin tests');
       expect(calledPrompt).toContain('tabs vs spaces');
 
-      // Verify final result
+      // Verify final result (returns string directly)
       expect(result).toBeDefined();
-      expect(result.roast).toBeDefined();
-      expect(typeof result.roast).toBe('string');
-      expect(result.model).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+      expect(result).toBe('Tu código es tan frágil como tus argumentos.');
     });
   });
 });
