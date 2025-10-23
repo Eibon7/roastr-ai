@@ -6,10 +6,19 @@
 const request = require('supertest');
 const express = require('express');
 
+// Issue #618 - Mock express-rate-limit FIRST (before route file loads)
+jest.mock('express-rate-limit', () => {
+    return jest.fn(() => (req, res, next) => next());
+});
+
 // Mock all external dependencies
 jest.mock('../../../src/middleware/auth', () => ({
     authenticateToken: (req, res, next) => {
         req.user = { id: 'test-user-123' };
+        next();
+    },
+    optionalAuth: (req, res, next) => {
+        // Optional auth - may or may not set req.user
         next();
     }
 }));

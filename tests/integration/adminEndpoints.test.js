@@ -12,6 +12,44 @@ jest.mock('../../src/utils/logger', () => ({
   }
 }));
 
+// Mock subscriptionService and planService dependencies (Issue #618)
+jest.mock('../../src/services/subscriptionService', () => ({
+  getUserUsage: jest.fn().mockResolvedValue({
+    monthly_messages_sent: 10,
+    monthly_tokens_consumed: 1000
+  }),
+  applyPlanLimits: jest.fn().mockResolvedValue({
+    success: true,
+    message: 'Plan limits applied successfully'
+  })
+}));
+
+jest.mock('../../src/services/planValidation', () => ({
+  isChangeAllowed: jest.fn().mockResolvedValue({
+    allowed: true,
+    reason: null,
+    warnings: []
+  })
+}));
+
+jest.mock('../../src/services/planService', () => ({
+  getPlanFeatures: jest.fn().mockReturnValue({
+    duration: { days: 30 }
+  }),
+  calculatePlanEndDate: jest.fn().mockImplementation((plan, startDate) => {
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 30);
+    return endDate;
+  })
+}));
+
+// Mock auditService (Issue #618)
+jest.mock('../../src/services/auditService', () => ({
+  logEvent: jest.fn().mockResolvedValue({}),
+  logAdminAction: jest.fn().mockResolvedValue({}),
+  logPlanChange: jest.fn().mockResolvedValue({})
+}));
+
 // Mock Supabase
 jest.mock('../../src/config/supabase', () => {
   const mockUsers = new Map();
@@ -24,24 +62,32 @@ jest.mock('../../src/config/supabase', () => {
         if (table === 'users') {
           return {
             select: (fields) => {
-              if (fields === 'email') {
-                return {
-                  eq: (field, value) => ({
-                    single: () => {
-                      if (value === 'user-1') {
-                        return Promise.resolve({
-                          data: { email: 'admin@test.com' },
-                          error: null
-                        });
-                      }
-                      return Promise.resolve({ data: null, error: { message: 'Not found' } });
+              // Issue #618: Support both .eq().single() and .order().range() query patterns
+              const queryChain = {
+                eq: (field, value) => ({
+                  single: () => {
+                    // Return specific user for .eq('id', userId).single() pattern (updateUserPlan needs this)
+                    if (field === 'id' && value === 'user-1') {
+                      return Promise.resolve({
+                        data: {
+                          id: 'user-1',
+                          email: 'admin@test.com',
+                          name: 'Admin User',
+                          plan: 'pro',
+                          is_admin: true
+                        },
+                        error: null
+                      });
                     }
-                  })
-                };
-              }
-              return {
-                eq: () => ({
-                  single: () => Promise.resolve({ data: null, error: { message: 'Not found' } })
+                    // For email lookup
+                    if (field === 'email' || (fields === 'email' && value === 'user-1')) {
+                      return Promise.resolve({
+                        data: { email: 'admin@test.com' },
+                        error: null
+                      });
+                    }
+                    return Promise.resolve({ data: null, error: { message: 'Not found' } });
+                  }
                 }),
                 order: () => ({
                   range: () => Promise.resolve({
@@ -79,15 +125,45 @@ jest.mock('../../src/config/supabase', () => {
                   })
                 })
               };
+              return queryChain;
             },
             update: (updates) => ({
-              eq: () => ({
+              eq: (field, value) => ({
                 select: () => ({
                   single: () => Promise.resolve({
-                    data: { id: 'user-1', ...updates },
+                    data: { id: value, plan: updates.plan, ...updates },
                     error: null
                   })
                 })
+              })
+            })
+          };
+        }
+        if (table === 'user_subscriptions') {
+          // Issue #618: Support user_subscriptions table for updateUserPlan
+          return {
+            select: () => ({
+              eq: (field, value) => ({
+                single: () => Promise.resolve({
+                  data: {
+                    user_id: value,
+                    plan: 'pro',
+                    status: 'active',
+                    stripe_customer_id: null,
+                    stripe_subscription_id: null
+                  },
+                  error: null
+                })
+              })
+            }),
+            upsert: () => ({
+              select: () => Promise.resolve({
+                data: [{
+                  user_id: 'user-1',
+                  plan: 'plus',
+                  status: 'active'
+                }],
+                error: null
               })
             })
           };
@@ -247,11 +323,14 @@ describe('Admin Endpoints Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeInstanceOf(Array);
-      expect(response.body.data).toHaveLength(2);
-      expect(response.body.data[0]).toHaveProperty('email');
-      expect(response.body.data[0]).toHaveProperty('plan');
-      expect(response.body.data[0]).toHaveProperty('is_admin');
+      // Issue #618: authService.listUsers() returns { users: [...], pagination: {...} }
+      expect(response.body.data).toHaveProperty('users');
+      expect(response.body.data).toHaveProperty('pagination');
+      expect(response.body.data.users).toBeInstanceOf(Array);
+      expect(response.body.data.users).toHaveLength(2);
+      expect(response.body.data.users[0]).toHaveProperty('email');
+      expect(response.body.data.users[0]).toHaveProperty('plan');
+      expect(response.body.data.users[0]).toHaveProperty('is_admin');
     });
 
     it('should deny access to regular users', async () => {
@@ -341,10 +420,6 @@ describe('Admin Endpoints Integration Tests', () => {
         .send({
           userId: 'user-1'
         });
-
-      if (response.status !== 200) {
-        console.log('Response body:', response.body);
-      }
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

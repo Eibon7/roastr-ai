@@ -691,6 +691,69 @@ CI: Passes with 0 required agents
 
 **Mentalidad:** Producto monetizable, no proyecto de instituto. **Calidad > Velocidad.**
 
+### 🛡️ Completion Validation (MANDATORY BEFORE MERGE)
+
+**NEVER merge a PR without 100% completion validation.**
+
+The Guardian agent has been extended with automated completion validation to ensure NO PR is merged incomplete.
+
+**Automated Validation Checks:**
+
+1. **Acceptance Criteria**: All AC from issue body marked as complete
+2. **Test Coverage**: ≥90% coverage (or specified threshold)
+3. **Tests Passing**: npm test exits with code 0 (zero failures)
+4. **Agent Receipts**: All required agents have receipts (normal or SKIPPED)
+5. **Documentation**: GDD nodes updated, test evidence generated
+6. **CodeRabbit**: 0 comments pending (absolutely zero)
+7. **CI/CD Status**: All checks passing, no failures or pending jobs
+
+**Workflow:**
+
+```bash
+# Before marking PR as "ready to merge"
+npm run validate:completion -- --pr=628
+
+# Expected output if complete (exit 0):
+# ✅ PR IS 100% COMPLETE AND READY TO MERGE
+
+# If incomplete (exit 1):
+# ⚠️  PR IS INCOMPLETE - CONTINUE IMPLEMENTATION
+# (Shows pending items with actionable next steps)
+
+# If critical issues (exit 2):
+# 🚨 CRITICAL ISSUES DETECTED - DO NOT MERGE
+# (Failing tests or CI - must fix immediately)
+```
+
+**Integration Points:**
+
+- **Manual trigger**: Developer runs before requesting merge
+- **CI automation**: `.github/workflows/pre-merge-validation.yml`
+- **Guardian agent**: Invoked via completion_script in manifest.yaml
+- **Quality gate**: Cannot merge if exit code ≠ 0
+
+**Exit Codes:**
+
+- `0`: 100% complete, ready to merge
+- `1`: Incomplete, continue implementation
+- `2`: Critical blockers (failing tests/CI), do NOT merge
+
+**Violations:**
+
+- ❌ Merging incomplete PR = immediate PR rejection + re-work
+- ❌ Bypassing validation = violation of "hacer las cosas bien" principle
+- ❌ Ignoring critical exit code (2) = unacceptable technical debt
+
+**Why This Matters:**
+
+- Prevents half-finished features from reaching main
+- Ensures systematic completion (no "90% done" PRs)
+- Enforces documentation and test requirements
+- Maintains high-quality standards for monetizable product
+- Reduces re-work and technical debt
+
+**🔗 Full documentation**: `docs/policies/completion-validation.md`
+
 ### Reglas de Commits y Tests
 
 - **Commit sin tests no permitido**: Todo código nuevo debe incluir pruebas

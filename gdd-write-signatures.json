@@ -1636,8 +1636,167 @@
       "metadata": {},
       "backupPath": null,
       "signature": "ad06a89c7c96b88f9f0c4a5e173f9297b0b0fe42adecd87dd82cddf43dcc629a"
+    },
+    {
+      "id": "18b54e2e-f1fa-4149-90a4-cea0f4201a76",
+      "timestamp": "2025-10-22T22:45:31.765Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "99d5e9e0dc50e56ad7c9ecd0a0feea56fcb81d0ba7a27b7fa1e971c5dadd452b",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "da30fa79d572adcfb372f9a569ab1fc4bf8022965e7a54dda0f2d451712f8b1a"
+    },
+    {
+      "id": "fca902e3-0182-4c22-b4a4-f6ae76a5405b",
+      "timestamp": "2025-10-22T22:45:31.767Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "42e741c7f928262fd9fd94251d8b79f3b48a903eafc053a81279134ccf025c3f",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "22469f820a9cea3ae30c7d176f34659b4d160c61c191b4272c030979aa186c0c"
+    },
+    {
+      "id": "4fa226ad-4e4e-4140-a8b9-ceadbe4336c5",
+      "timestamp": "2025-10-22T22:45:31.768Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "f84ac1076f3530860a28290af81f07043cb2517b448b45e11af23fd7bcc8f048"
+    },
+    {
+      "id": "0b4fc4b9-e2e8-4813-b61e-c3477b0deeac",
+      "timestamp": "2025-10-22T22:45:31.769Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "hashAfter": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
+      "metadata": {},
+      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/.gdd-test-security.txt.2025-10-22T22-45-31-769Z.backup",
+      "signature": "0302b4f92cbd39af5200f52d5a1714e7fb99696bf2b03738314abbaf190bd081"
+    },
+    {
+      "id": "60745877-3978-4ddb-b89c-d217f26d299e",
+      "timestamp": "2025-10-22T22:45:31.770Z",
+      "agent": "TestAgent",
+      "action": "rollback",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
+      "hashAfter": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+      "metadata": {
+        "reason": "security_test_rollback",
+        "original_signature": "0b4fc4b9-e2e8-4813-b61e-c3477b0deeac"
+      },
+      "backupPath": null,
+      "signature": "43a713b27bdc7d3acffd8367dc929698ca4acc1fbb857c9131346efad80a4b1a"
+    },
+    {
+      "id": "80529b95-8ca3-4a43-8bc8-eec0b1b9f057",
+      "timestamp": "2025-10-22T22:45:31.771Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "a8f5a4ff56187b3b9dd42b7458b2ed967d2347d367821f53114d2b3587562542"
+    },
+    {
+      "id": "ec240b31-36e4-406a-8af0-b7ecfda5cf72",
+      "timestamp": "2025-10-22T22:45:31.774Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/docs/test-security.md",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "8bbe3a43a1c0baffea78952673ab0e59110ca5b085c627cf182aebba7173ca95"
+    },
+    {
+      "id": "c78fba15-cc6d-4683-8fb8-279501254124",
+      "timestamp": "2025-10-22T22:45:31.777Z",
+      "agent": "TestAgent",
+      "action": "security_test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "8b3369944dd2a3fab39e32d1aeb1f763946a458ae3e6368a46432adc8f3a0860",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "d220d047f06e5416713f5df845b899f06b9521a860bdcf9df9d9a7137796f4a8"
+    },
+    {
+      "id": "917910c8-e57d-4a4d-855d-2510dc4ce7a4",
+      "timestamp": "2025-10-22T22:45:33.349Z",
+      "agent": "Attacker",
+      "action": "exploit",
+      "path": "/C:\\repo\\..\\Windows\\system.ini",
+      "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "metadata": {},
+      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__repo__..__Windows__system.ini.2025-10-22T22-45-33-348Z.backup",
+      "signature": "ec197c995faaa9e92a5e9107997bc301f7c4ecac01d310a809885fc4117e5f0d"
+    },
+    {
+      "id": "28feba07-5db9-416f-aed4-9f5d7932f26c",
+      "timestamp": "2025-10-22T22:45:33.352Z",
+      "agent": "Attacker",
+      "action": "exploit",
+      "path": "/C:\\Windows\\System32\\config\\sam",
+      "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
+      "metadata": {},
+      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__Windows__System32__config__sam.2025-10-22T22-45-33-351Z.backup",
+      "signature": "ba3b7aca97694e59766c831e1da49e97ffe0eb19bec2c250810f7c6c3dce5d9d"
+    },
+    {
+      "id": "5ce7c74c-ee67-4da5-b612-7f136f67a268",
+      "timestamp": "2025-10-22T22:45:33.354Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "a4d4a0e963fa69e5bf8d4631844510662f095e03067eaf84d1bdc5cde57a3f9f"
+    },
+    {
+      "id": "0874fc1c-5199-4109-b5e0-85bb706fa4f0",
+      "timestamp": "2025-10-22T22:45:33.355Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "e9067f353b7f36c72a9266dfd36ff5e2567dd6deac672a22edbda0b566429433"
+    },
+    {
+      "id": "484326a5-0b91-4871-a218-46f7684c8869",
+      "timestamp": "2025-10-22T22:45:33.360Z",
+      "agent": "TestAgent",
+      "action": "test",
+      "path": "/.gdd-test-security.txt",
+      "hashBefore": null,
+      "hashAfter": "3ad0ec5b9dd0e5669dd78b65bb5a76f09f468bf158762a921596cc30b85521c5",
+      "metadata": {},
+      "backupPath": null,
+      "signature": "48a38d42452406469b554173b0998398850529d52988de607ce3eafab2079650"
     }
   ],
-  "last_updated": "2025-10-21T13:19:57.492Z",
-  "total_signatures": 133
+  "last_updated": "2025-10-22T22:45:33.360Z",
+  "total_signatures": 146
 }

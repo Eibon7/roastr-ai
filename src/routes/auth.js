@@ -907,7 +907,7 @@ router.get('/admin/users/:id', authenticateToken, requireAdmin, async (req, res)
         
     } catch (error) {
         logger.error('Get user details endpoint error:', error.message);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
             error: error.message
         });
@@ -1041,7 +1041,7 @@ router.get('/admin/users/:id/stats', authenticateToken, requireAdmin, async (req
         
     } catch (error) {
         logger.error('Get user stats endpoint error:', error.message);
-        res.status(400).json({
+        res.status(500).json({
             success: false,
             error: error.message
         });

@@ -51,6 +51,12 @@ jest.mock('../../../src/workers/BaseWorker', () => {
       this.initializeConnections = jest.fn();
       this.setupGracefulShutdown = jest.fn();
     }
+
+    // Issue #618 - Add missing processJob method
+    // BaseWorker defines processJob which calls _processJobInternal (defined by subclass)
+    async processJob(job) {
+      return await this._processJobInternal(job);
+    }
   };
 });
 

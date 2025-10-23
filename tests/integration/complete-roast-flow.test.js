@@ -142,6 +142,13 @@ describe('Complete Roast Flow Integration', () => {
       const worker = new GenerateReplyWorker();
       worker.supabase = mockSupabase;
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(worker);
 
       const job = {
@@ -201,6 +208,13 @@ describe('Complete Roast Flow Integration', () => {
       const worker = new GenerateReplyWorker();
       worker.supabase = mockSupabase;
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(worker);
 
       const job = {
@@ -227,6 +241,13 @@ describe('Complete Roast Flow Integration', () => {
       const worker = new GenerateReplyWorker();
       worker.supabase = mockSupabase;
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(worker);
 
       // Mock OpenAI response
@@ -269,6 +290,13 @@ describe('Complete Roast Flow Integration', () => {
       const worker = new GenerateReplyWorker();
       worker.supabase = mockSupabase;
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(worker);
 
       const testCases = [
@@ -301,6 +329,13 @@ describe('Complete Roast Flow Integration', () => {
       const worker = new GenerateReplyWorker();
       worker.supabase = mockSupabase;
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(worker);
 
       // Mock organization with transparency enabled
@@ -344,6 +379,13 @@ describe('Complete Roast Flow Integration', () => {
       const worker = new GenerateReplyWorker();
       worker.supabase = mockSupabase;
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(worker);
 
       // Mock OpenAI failure
@@ -376,6 +418,13 @@ describe('Complete Roast Flow Integration', () => {
     test('should handle database connection failures', async () => {
       const worker = new GenerateReplyWorker();
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
 
       // Mock database failure
       worker.supabase = {
@@ -403,6 +452,13 @@ describe('Complete Roast Flow Integration', () => {
       const worker = new GenerateReplyWorker();
       worker.supabase = mockSupabase;
       worker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      worker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(worker);
 
       const malformedJobs = [
@@ -440,6 +496,13 @@ describe('Complete Roast Flow Integration', () => {
       toxicityWorker.costControl = global.mockCostControl;
       replyWorker.supabase = mockSupabase;
       replyWorker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      replyWorker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
 
       // Mock Perspective API
       toxicityWorker.perspectiveClient = {
@@ -517,6 +580,13 @@ describe('Complete Roast Flow Integration', () => {
       const replyWorker = new GenerateReplyWorker();
       replyWorker.supabase = mockSupabase;
       replyWorker.costControl = global.mockCostControl;
+      // Issue #618 - Add missing logger mock (GenerateReplyWorker uses this.logger.warn at line 301)
+      replyWorker.logger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn()
+      };
       workers.push(replyWorker);
 
       // Mock OpenAI with variable response times
