@@ -13,6 +13,7 @@ const { logger } = require('../utils/logger');
 const RQCService = require('./rqcService');
 const RoastGeneratorMock = require('./roastGeneratorMock');
 const RoastPromptTemplate = require('./roastPromptTemplate');
+const PersonaService = require('./PersonaService'); // Issue #615: Import PersonaService
 const transparencyService = require('./transparencyService');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
@@ -40,6 +41,7 @@ class RoastGeneratorEnhanced {
     });
     this.rqcService = new RQCService(this.openai);
     this.promptTemplate = new RoastPromptTemplate();
+    this.personaService = PersonaService; // Issue #615: Use PersonaService singleton
     this.isMockMode = false;
   }
 
@@ -295,7 +297,10 @@ class RoastGeneratorEnhanced {
   async generateWithBasicModeration(text, toxicityScore, tone, rqcConfig) {
     // Get model based on plan (Issue #326)
     const model = await this.getModelForPlan(rqcConfig.plan);
-    
+
+    // Issue #615: Load user persona for personalized roast generation
+    const persona = await this.personaService.getPersona(rqcConfig.user_id);
+
     // Build prompt using the master template
     const systemPrompt = await this.promptTemplate.buildPrompt({
       originalComment: text,
@@ -309,7 +314,8 @@ class RoastGeneratorEnhanced {
         intensity_level: rqcConfig.intensity_level,
         custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
       },
-      includeReferences: rqcConfig.plan !== 'free' // Include references for Pro+ plans
+      includeReferences: rqcConfig.plan !== 'free', // Include references for Pro+ plans
+      persona: persona // Issue #615: Pass persona to buildPrompt
     });
     
     const completion = await this.openai.chat.completions.create({
@@ -432,7 +438,10 @@ class RoastGeneratorEnhanced {
   async generateInitialRoast(text, tone, rqcConfig) {
     // Get model based on plan (Issue #326)
     const model = await this.getModelForPlan(rqcConfig.plan);
-    
+
+    // Issue #615: Load user persona for personalized roast generation
+    const persona = await this.personaService.getPersona(rqcConfig.user_id);
+
     // Build prompt using the master template with advanced options
     const systemPrompt = await this.promptTemplate.buildPrompt({
       originalComment: text,
@@ -445,7 +454,8 @@ class RoastGeneratorEnhanced {
         intensity_level: rqcConfig.intensity_level,
         custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
       },
-      includeReferences: true // Always include references for Creator+ plans
+      includeReferences: true, // Always include references for Creator+ plans
+      persona: persona // Issue #615: Pass persona to buildPrompt
     });
 
     const completion = await this.openai.chat.completions.create({

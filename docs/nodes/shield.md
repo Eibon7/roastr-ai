@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-20
+**Last Updated:** 2025-10-23
 **Coverage:** 2%
 **Coverage Source:** auto
-**Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script)
+**Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script), #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback)
 
 ## Dependencies
 
@@ -99,6 +99,62 @@ Shield receives toxicity analysis from Perspective API via AnalyzeToxicityWorker
 **Important:** Shield uses Perspective's `severity_level` directly (not toxicity_score) for priority calculation. This ensures Perspective's multi-factor analysis (considering severeToxicity, threat, multiple thresholds) drives Shield decisions.
 
 **Validation:** See `docs/test-evidence/perspective-shield-validation.md` for integration test results.
+
+### Fallback Security Policy (CodeRabbit Review #634)
+
+**Critical Security Enhancement:** Conservative fallback when security services unavailable.
+
+**Issue:** When Gatekeeper service fails, the system must default to a secure state rather than allowing potentially malicious content through.
+
+**Conservative Fallback Strategy:**
+
+When Gatekeeper service is unavailable (timeout, API error, service outage):
+
+```javascript
+// SECURITY FIX (CodeRabbit Review #634)
+return {
+  classification: 'MALICIOUS',     // Conservative default
+  is_prompt_injection: true,       // Treat as potential threat
+  injection_score: 0.5,            // Moderate risk indicator
+  injection_categories: ['fallback_mode'],
+  fallback: true,
+  fallback_reason: 'Gatekeeper unavailable - conservative classification applied'
+};
+```
+
+**Decision Matrix Integration:**
+
+The Analysis Department's decision matrix includes explicit fallback detection as **RULE 0** (highest priority):
+
+```text
+RULE 0: Gatekeeper Fallback Mode → SHIELD
+    ↓
+Condition: fallback=true AND fallback_reason present
+    ↓
+Action: Force SHIELD regardless of toxicity scores
+Action Tags: ['hide_comment', 'require_manual_review', 'gatekeeper_unavailable']
+Severity: critical
+```
+
+**Rationale:**
+- **Fail-safe principle**: When security service unavailable, block rather than allow
+- **Security over convenience**: False positives (blocked clean comments) < False negatives (published injections)
+- **Manual review required**: All fallback-mode comments flagged for human oversight
+- **Monitoring**: Track `gatekeeper_unavailable` action tag to detect service issues
+
+**Fallback Action Tags:**
+- `hide_comment` - Hide potentially malicious comment from public view
+- `require_manual_review` - Queue for human moderator review
+- `gatekeeper_unavailable` - Service availability flag for monitoring
+
+**Monitoring Recommendations:**
+- Alert if `gatekeeper_unavailable` appears in >5% of comments (indicates service issue)
+- Track Gatekeeper service SLA and uptime
+- Dashboard for fallback frequency by time period
+
+**Implementation:** `src/services/AnalysisDecisionEngine.js:103-121` (fallback classification), `lines 265-284` (fallback detection in decision matrix)
+
+**Test Coverage:** `tests/integration/analysis-department.test.js` - Edge 2, Edge 7, Edge 8 validate fallback behavior
 
 ### Component Files
 

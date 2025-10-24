@@ -2,6 +2,7 @@ const BaseWorker = require('./BaseWorker');
 const CostControlService = require('../services/costControl');
 const ShieldService = require('../services/shieldService');
 const GatekeeperService = require('../services/gatekeeperService');
+const AnalysisDepartmentService = require('../services/AnalysisDepartmentService');
 const { mockMode } = require('../config/mockMode');
 const encryptionService = require('../services/encryptionService');
 const EmbeddingsService = require('../services/embeddingsService');
@@ -33,7 +34,8 @@ class AnalyzeToxicityWorker extends BaseWorker {
     this.shieldService = new ShieldService();
     this.gatekeeperService = new GatekeeperService();
     this.embeddingsService = new EmbeddingsService();
-    
+    this.analysisDepartment = new AnalysisDepartmentService();
+
     // Initialize toxicity detection services
     this.initializeToxicityServices();
     
@@ -220,96 +222,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
     if (!comment) {
       throw new Error(`Comment ${comment_id} not found`);
     }
-    
-    // GATEKEEPER CHECK (Issue #203): First line of defense against prompt injection
+
+    // Get comment text
     const commentText = text || comment.original_text;
-    const gatekeeperResult = await this.gatekeeperService.classifyComment(commentText);
-    
-    this.log('debug', 'Gatekeeper classification complete', {
-      commentId: comment_id,
-      classification: gatekeeperResult.classification,
-      isPromptInjection: gatekeeperResult.isPromptInjection,
-      injectionScore: gatekeeperResult.injectionScore,
-      method: gatekeeperResult.method
-    });
-    
-    // If Gatekeeper detects malicious content or prompt injection, route directly to Shield
-    if (gatekeeperResult.classification === 'MALICIOUS' || gatekeeperResult.isPromptInjection) {
-      const gatekeeperAnalysisResult = {
-        toxicity_score: 1.0, // Maximum toxicity for malicious content
-        severity_level: 'critical',
-        categories: ['gatekeeper_malicious', 'prompt_injection'],
-        service: 'gatekeeper',
-        gatekeeper_blocked: true,
-        gatekeeper_reason: gatekeeperResult.isPromptInjection ? 'prompt_injection_detected' : 'malicious_content',
-        injection_score: gatekeeperResult.injectionScore,
-        injection_patterns: gatekeeperResult.injectionPatterns,
-        classification: gatekeeperResult.classification
-      };
-      
-      // Update comment with gatekeeper analysis
-      await this.updateCommentAnalysis(comment_id, gatekeeperAnalysisResult);
-      
-      // Record usage for gatekeeper blocking
-      const tokensUsed = this.estimateTokens(commentText);
-      await this.costControl.recordUsage(
-        organization_id,
-        platform,
-        'gatekeeper_block',
-        {
-          commentId: comment_id,
-          tokensUsed,
-          analysisService: 'gatekeeper',
-          severity: 'critical',
-          toxicityScore: 1.0,
-          categories: gatekeeperAnalysisResult.categories,
-          textLength: commentText.length,
-          processingTime: gatekeeperResult.processingTime,
-          injectionScore: gatekeeperResult.injectionScore
-        },
-        null,
-        1
-      );
-      
-      // Immediately trigger Shield action for gatekeeper-blocked content
-      await this.handleGatekeeperShieldAction(organization_id, comment, gatekeeperAnalysisResult);
-      
-      return {
-        success: true,
-        summary: `Comment blocked by Gatekeeper: ${gatekeeperAnalysisResult.gatekeeper_reason}`,
-        commentId: comment_id,
-        toxicityScore: 1.0,
-        severityLevel: 'critical',
-        categories: gatekeeperAnalysisResult.categories,
-        service: 'gatekeeper',
-        gatekeeperBlocked: true,
-        classification: gatekeeperResult.classification
-      };
-    }
-    
-    // If comment is positive or neutral and not suspicious, skip heavy analysis
-    if (gatekeeperResult.classification === 'POSITIVE' && !gatekeeperResult.isPromptInjection) {
-      const positiveAnalysisResult = {
-        toxicity_score: 0.0,
-        severity_level: 'none',
-        categories: ['positive'],
-        service: 'gatekeeper',
-        gatekeeper_classification: 'POSITIVE'
-      };
-      
-      await this.updateCommentAnalysis(comment_id, positiveAnalysisResult);
-      
-      return {
-        success: true,
-        summary: 'Comment classified as positive by Gatekeeper',
-        commentId: comment_id,
-        toxicityScore: 0.0,
-        severityLevel: 'none',
-        categories: ['positive'],
-        service: 'gatekeeper'
-      };
-    }
-    
+
     // Get user's Roastr Persona for enhanced analysis (Issue #148) and auto-blocking (Issue #149)
     const roastrPersona = await this.getUserRoastrPersona(organization_id);
     
@@ -435,54 +351,39 @@ class AnalyzeToxicityWorker extends BaseWorker {
       };
     }
     
-    // If not auto-blocked or tolerance-ignored, proceed with normal toxicity analysis
-    const analysisResult = await this.analyzeToxicity(
-      text || comment.original_text, 
-      roastrPersona
-    );
-    
-    // Update comment with analysis results
-    await this.updateCommentAnalysis(comment_id, analysisResult);
-    
-    // Record usage and cost with enhanced tracking
-    const textToAnalyze = text || comment.original_text;
-    const tokensUsed = this.estimateTokens(textToAnalyze);
-    await this.costControl.recordUsage(
-      organization_id,
+    // ✅ UNIFIED ANALYSIS DEPARTMENT (Issue #632)
+    // Runs Gatekeeper + Perspective in PARALLEL
+    const userContext = {
+      userId: null, // Not available at worker level
+      organizationId: organization_id,
       platform,
-      'analyze_toxicity',
-      {
-        commentId: comment_id,
-        tokensUsed,
-        analysisService: analysisResult.service,
-        severity: analysisResult.severity_level,
-        toxicityScore: analysisResult.toxicity_score,
-        categories: analysisResult.categories,
-        textLength: textToAnalyze.length,
-        analysisTime: analysisResult.analysisTime || 0
-      },
-      null, // userId - not applicable for toxicity analysis
-      1 // quantity
-    );
-    
-    // Queue response generation if comment meets criteria
-    if (this.shouldGenerateResponse(analysisResult, comment)) {
-      await this.queueResponseGeneration(organization_id, comment, analysisResult, correlationId);
-    }
-    
-    // Handle Shield mode actions for medium+ severity
-    if (['medium', 'high', 'critical'].includes(analysisResult.severity_level)) {
-      await this.handleShieldAnalysis(organization_id, comment, analysisResult);
-    }
+      persona: roastrPersona,
+      tau_roast_lower: this.thresholds.low,
+      tau_shield: this.thresholds.high,
+      tau_critical: this.thresholds.critical,
+      autoApprove: false // Default
+    };
+
+    const analysisDecision = await this.analysisDepartment.analyzeComment(commentText, userContext);
+
+    // Update comment with unified analysis decision
+    await this.updateCommentWithAnalysisDecision(comment_id, analysisDecision);
+
+    // Record usage with unified analysis metadata
+    await this.recordAnalysisUsage(organization_id, platform, comment_id, commentText, analysisDecision);
+
+    // Route based on direction (SHIELD, ROAST, PUBLISH)
+    await this.routeByDirection(organization_id, comment, analysisDecision, correlationId);
 
     const result = {
       success: true,
-      summary: `Analyzed comment toxicity: ${analysisResult.severity_level} (${analysisResult.toxicity_score})`,
+      summary: `Analysis complete: ${analysisDecision.direction} (score: ${analysisDecision.scores.final_toxicity})`,
       commentId: comment_id,
-      toxicityScore: analysisResult.toxicity_score,
-      severityLevel: analysisResult.severity_level,
-      categories: analysisResult.categories,
-      service: analysisResult.service
+      direction: analysisDecision.direction,
+      action_tags: analysisDecision.action_tags,
+      toxicityScore: analysisDecision.scores.final_toxicity,
+      severityLevel: analysisDecision.metadata.decision.severity_level,
+      platformViolations: analysisDecision.metadata.platform_violations.has_violations
     };
 
     // Log job completion with correlation context (Issue #417)
@@ -490,8 +391,9 @@ class AnalyzeToxicityWorker extends BaseWorker {
       correlationId,
       tenantId: organization_id,
       commentId: comment_id,
-      toxicityScore: analysisResult.toxicity_score,
-      severityLevel: analysisResult.severity_level
+      direction: analysisDecision.direction,
+      toxicityScore: analysisDecision.scores.final_toxicity,
+      severityLevel: analysisDecision.metadata.decision.severity_level
     }, result);
 
     return result;
@@ -1129,56 +1031,6 @@ class AnalyzeToxicityWorker extends BaseWorker {
     
     return false;
   }
-  
-  /**
-   * Handle Shield actions for gatekeeper-blocked content (Issue #203)
-   * Gatekeeper-blocked content gets the highest priority Shield treatment
-   */
-  async handleGatekeeperShieldAction(organizationId, comment, analysis) {
-    try {
-      this.log('info', 'Processing immediate Shield action for gatekeeper-blocked content', {
-        commentId: comment.id,
-        classification: analysis.classification,
-        injectionScore: analysis.injection_score
-      });
-      
-      // Create special Shield analysis for gatekeeper-blocked content
-      const gatekeeperShieldAnalysis = {
-        ...analysis,
-        shield_priority: 0, // Highest possible priority
-        gatekeeper_shield: true,
-        immediate_action: true,
-        block_reason: 'prompt_injection_attempt'
-      };
-      
-      // Delegate to Shield service with maximum priority
-      const shieldResult = await this.shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        gatekeeperShieldAnalysis
-      );
-      
-      if (shieldResult.shieldActive) {
-        this.log('info', 'Shield activated for gatekeeper-blocked content', {
-          commentId: comment.id,
-          priority: shieldResult.priority,
-          actions: shieldResult.actions?.primary,
-          autoExecuted: shieldResult.autoExecuted
-        });
-      }
-      
-      return shieldResult;
-      
-    } catch (error) {
-      this.log('error', 'Failed to handle gatekeeper Shield action', {
-        commentId: comment.id,
-        error: error.message
-      });
-      
-      // Don't throw error to avoid breaking the gatekeeper flow
-      return { shieldActive: false, error: error.message };
-    }
-  }
 
   /**
    * Handle Shield actions for auto-blocked content (Issue #149)
@@ -1639,6 +1491,128 @@ class AnalyzeToxicityWorker extends BaseWorker {
   estimateTokens(text) {
     // Rough estimation: ~4 characters per token for English
     return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * Update comment with unified analysis decision (Issue #632)
+   * @param {string} commentId - Comment ID
+   * @param {Object} decision - Analysis Department decision
+   */
+  async updateCommentWithAnalysisDecision(commentId, decision) {
+    const analysisResult = {
+      toxicity_score: decision.scores.final_toxicity,
+      severity_level: decision.metadata.decision.severity_level,
+      categories: [
+        ...decision.metadata.security.injection_categories,
+        ...decision.metadata.toxicity.flagged_categories
+      ],
+      service: decision.analysis.services_used.join('+'),
+      direction: decision.direction,
+      action_tags: decision.action_tags,
+      security_classification: decision.metadata.security.classification,
+      is_prompt_injection: decision.metadata.security.is_prompt_injection,
+      platform_violations: decision.metadata.platform_violations
+    };
+
+    await this.updateCommentAnalysis(commentId, analysisResult);
+  }
+
+  /**
+   * Record usage for unified analysis (Issue #632)
+   * @param {string} organizationId - Organization ID
+   * @param {string} platform - Platform name
+   * @param {string} commentId - Comment ID
+   * @param {string} text - Comment text
+   * @param {Object} decision - Analysis Department decision
+   */
+  async recordAnalysisUsage(organizationId, platform, commentId, text, decision) {
+    const tokensUsed = this.estimateTokens(text);
+
+    await this.costControl.recordUsage(
+      organizationId,
+      platform,
+      'unified_analysis',
+      {
+        commentId,
+        tokensUsed,
+        analysisService: decision.analysis.services_used.join('+'),
+        direction: decision.direction,
+        severity: decision.metadata.decision.severity_level,
+        toxicityScore: decision.scores.final_toxicity,
+        categories: decision.metadata.toxicity.flagged_categories,
+        textLength: text.length,
+        processingTime: decision.analysis.processing_time_ms,
+        platformViolations: decision.metadata.platform_violations.has_violations
+      },
+      null,
+      1
+    );
+  }
+
+  /**
+   * Route analysis decision to appropriate action (Issue #632)
+   * @param {string} organizationId - Organization ID
+   * @param {Object} comment - Comment object
+   * @param {Object} decision - Analysis Department decision
+   * @param {string} correlationId - Correlation ID for logging
+   */
+  async routeByDirection(organizationId, comment, decision, correlationId) {
+    switch (decision.direction) {
+      case 'SHIELD':
+        // Route to Shield with action_tags
+        await this.handleShieldAction(organizationId, comment, decision);
+        break;
+
+      case 'ROAST':
+        // Queue roast generation
+        await this.queueResponseGeneration(organizationId, comment, decision, correlationId);
+        break;
+
+      case 'PUBLISH':
+        // No action needed, comment is safe
+        this.log('info', 'Comment safe to publish', {
+          commentId: comment.id,
+          toxicityScore: decision.scores.final_toxicity
+        });
+        break;
+
+      default:
+        this.log('warn', 'Unknown direction from Analysis Department', {
+          direction: decision.direction,
+          commentId: comment.id
+        });
+    }
+  }
+
+  /**
+   * Handle Shield action using action_tags from Analysis Department (Issue #632)
+   * @param {string} organizationId - Organization ID
+   * @param {Object} comment - Comment object
+   * @param {Object} decision - Analysis Department decision with action_tags
+   */
+  async handleShieldAction(organizationId, comment, decision) {
+    try {
+      // Pass action_tags to Shield Service (Issue #632)
+      await this.shieldService.executeActionsFromTags(
+        organizationId,
+        comment,
+        decision.action_tags,
+        decision.metadata
+      );
+
+      this.log('info', 'Shield actions executed', {
+        commentId: comment.id,
+        action_tags: decision.action_tags,
+        platform_violations: decision.metadata.platform_violations.has_violations
+      });
+    } catch (error) {
+      this.log('error', 'Failed to execute Shield actions', {
+        commentId: comment.id,
+        action_tags: decision.action_tags,
+        error: error.message
+      });
+      // Don't throw to avoid breaking main flow
+    }
   }
 }
 
