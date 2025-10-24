@@ -179,25 +179,20 @@ describe('ShieldService', () => {
     });
   });
 
-  describe('executeActions', () => {
+  describe('executeActionsFromTags', () => {
     test('should execute Shield actions and record them', async () => {
-      const analysis = {
-        shouldTakeAction: true,
-        actionLevel: 'medium',
-        recommendedActions: ['warning', 'content_removal'],
-        userRisk: 'medium',
-        confidence: 0.85
-      };
-
-      const user = {
-        user_id: 'user-123',
+      const organizationId = 'org-123';
+      const comment = {
+        id: 'comment-456',
         platform: 'twitter',
-        organization_id: 'org-123'
-      };
-
-      const content = {
-        comment_id: 'comment-456',
+        platform_user_id: 'user-123',
+        platform_username: 'testuser',
         text: 'Inappropriate content'
+      };
+      const action_tags = ['warning', 'content_removal'];
+      const metadata = {
+        toxicity_score: 0.85,
+        decision_level: 'medium'
       };
 
       // Mock Shield action recording
@@ -224,30 +219,30 @@ describe('ShieldService', () => {
         })
       });
 
-      const result = await shieldService.executeActions(analysis, user, content);
+      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
 
       expect(result.success).toBe(true);
-      expect(result.actionsExecuted).toContain('warning');
-      expect(result.actionsExecuted).toContain('content_removal');
+      expect(result.actions_executed).toHaveLength(2);
+      expect(result.actions_executed.some(a => a.tag === 'warning')).toBe(true);
+      expect(result.actions_executed.some(a => a.tag === 'content_removal')).toBe(true);
       expect(mockQueueService.addJob).toHaveBeenCalledTimes(2); // One job per action
-      expect(mockSupabase.from).toHaveBeenCalledWith('shield_actions');
     });
 
-    test('should skip execution when no actions recommended', async () => {
-      const analysis = {
-        shouldTakeAction: false,
-        actionLevel: 'none',
-        recommendedActions: [],
-        userRisk: 'low'
+    test('should skip execution when no actions in tags', async () => {
+      const organizationId = 'org-123';
+      const comment = {
+        id: 'comment-456',
+        platform: 'twitter',
+        platform_user_id: 'user-123',
+        platform_username: 'testuser'
       };
+      const action_tags = [];
+      const metadata = { toxicity_score: 0.2 };
 
-      const user = { user_id: 'user-123', platform: 'twitter' };
-      const content = { comment_id: 'comment-456' };
-
-      const result = await shieldService.executeActions(analysis, user, content);
+      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
 
       expect(result.success).toBe(true);
-      expect(result.actionsExecuted).toHaveLength(0);
+      expect(result.actions_executed).toHaveLength(0);
       expect(mockQueueService.addJob).not.toHaveBeenCalled();
     });
   });
@@ -524,16 +519,18 @@ describe('ShieldService', () => {
     });
 
     test('should handle queue service errors gracefully', async () => {
-      const analysis = {
-        shouldTakeAction: true,
-        recommendedActions: ['warning'],
-        actionLevel: 'low'
+      const organizationId = 'org-123';
+      const comment = {
+        id: 'comment-456',
+        platform: 'twitter',
+        platform_user_id: 'user-123',
+        platform_username: 'testuser'
       };
-      const user = { user_id: 'user-123' };
-      const content = { comment_id: 'comment-456' };
+      const action_tags = ['warning'];
+      const metadata = { toxicity_score: 0.7 };
 
       mockQueueService.addJob.mockRejectedValue(new Error('Queue error'));
-      
+
       // Mock Supabase chain for this test
       const mockSingle = jest.fn().mockResolvedValue({
         data: { id: 'action-123' },
@@ -542,13 +539,13 @@ describe('ShieldService', () => {
       const mockSelect = jest.fn().mockReturnValue({ single: mockSingle });
       const mockUpsert = jest.fn().mockReturnValue({ select: mockSelect });
       const mockInsert = jest.fn().mockReturnValue({ select: mockSelect });
-      
+
       mockSupabase.from = jest.fn().mockReturnValue({
         insert: mockInsert,
         upsert: mockUpsert
       });
 
-      const result = await shieldService.executeActions(analysis, user, content);
+      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Queue error');

@@ -1270,71 +1270,9 @@ class ShieldService {
     };
   }
 
-  /**
-   * Execute Shield actions and record them (test stub)
-   *
-   * @deprecated Use executeActionsFromTags() instead (Issue #650)
-   * This legacy method uses the old analysis-based API and will be removed in a future version.
-   * The new executeActionsFromTags() method consumes action_tags array from AnalysisDecisionEngine.
-   *
-   * @see executeActionsFromTags()
-   */
-  async executeActions(analysis, user, content) {
-    if (!analysis.shouldTakeAction) {
-      return {
-        success: true,
-        actionsExecuted: []
-      };
-    }
-
-    try {
-      // Record Shield actions in database
-      await this.supabase
-        .from('shield_actions')
-        .insert({
-          user_id: user.user_id,
-          action_type: analysis.actionLevel,
-          comment_id: content.comment_id,
-          timestamp: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      // Update user behavior
-      await this.supabase
-        .from('user_behavior')
-        .upsert({
-          user_id: user.user_id,
-          total_violations: 1,
-          platform: user.platform,
-          organization_id: user.organization_id
-        })
-        .select()
-        .single();
-      
-      // Queue jobs for each action
-      if (this.queueService && analysis.recommendedActions) {
-        for (const action of analysis.recommendedActions) {
-          await this.queueService.addJob('shield_action', {
-            action,
-            userId: user.user_id,
-            contentId: content.comment_id
-          });
-        }
-      }
-      
-      return {
-        success: true,
-        actionsExecuted: analysis.recommendedActions || []
-      };
-      
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
+  // [M4] REMOVED: Legacy executeActions() method (Issue #653 - Phase 2)
+  // Deprecated since Issue #650, removed in CodeRabbit Review #3375358448
+  // Use executeActionsFromTags() instead for tag-based Shield action execution
 
   /**
    * Update user behavior statistics (test stub)
