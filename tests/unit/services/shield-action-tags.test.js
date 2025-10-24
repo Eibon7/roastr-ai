@@ -2,7 +2,8 @@
  * ShieldService - executeActionsFromTags() Tests
  * Tests the action_tags consumer API (Issue #650)
  *
- * Test Coverage: 25/25 tests
+ * Test Coverage: 26/26 tests
+ * [C1] Added autoActions gate test per CodeRabbit Review #3376314227
  */
 
 const ShieldService = require('../../../src/services/shieldService');
@@ -63,7 +64,9 @@ describe('ShieldService - executeActionsFromTags()', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    shieldService = new ShieldService();
+    // Create ShieldService with autoActions enabled for testing
+    // (defaults to false unless SHIELD_AUTO_ACTIONS='true' env var is set)
+    shieldService = new ShieldService({ autoActions: true });
     mockQueueService.addJob.mockResolvedValue({ id: 'mock-job-id' });
   });
 
@@ -150,6 +153,28 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed).toHaveLength(1);
       expect(result.actions_executed[0].status).toBe('executed');
     });
+
+    it('[C1] should skip action execution when autoActions flag is disabled', async () => {
+      // Create ShieldService instance with autoActions disabled
+      const shieldServiceDisabled = new ShieldService({ autoActions: false });
+
+      const result = await shieldServiceDisabled.executeActionsFromTags(
+        mockOrgId,
+        mockComment,
+        ['hide_comment', 'block_user'],
+        mockMetadata
+      );
+
+      // Should return success but skip all actions
+      expect(result.success).toBe(true);
+      expect(result.skipped).toBe(true);
+      expect(result.reason).toBe('autoActions_disabled');
+      expect(result.actions_executed).toHaveLength(0);
+      expect(result.failed_actions).toHaveLength(0);
+
+      // Verify no queue jobs were added (actions were not executed)
+      expect(mockQueueService.addJob).not.toHaveBeenCalled();
+    });
   });
 
   // ==========================================
@@ -170,10 +195,10 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed[0].tag).toBe('hide_comment');
       expect(result.actions_executed[0].status).toBe('executed');
 
-      expect(queueService.addJob).toHaveBeenCalledWith(
+      expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
         expect.objectContaining({
-          action_type: 'hide_comment',
+          action: 'hide_comment',
           organization_id: mockOrgId,
           comment: mockComment
         }),
@@ -193,10 +218,10 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed[0].tag).toBe('block_user');
       expect(result.actions_executed[0].status).toBe('executed');
 
-      expect(queueService.addJob).toHaveBeenCalledWith(
+      expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
         expect.objectContaining({
-          action_type: 'block_user'
+          action: 'block_user'
         }),
         { priority: 1 }
       );
@@ -219,10 +244,10 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed[0].tag).toBe('report_to_platform');
       expect(result.actions_executed[0].status).toBe('executed');
 
-      expect(queueService.addJob).toHaveBeenCalledWith(
+      expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
         expect.objectContaining({
-          action_type: 'report_to_platform'
+          action: 'report_to_platform'
         }),
         { priority: 1 }
       );
@@ -240,10 +265,10 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed[0].tag).toBe('mute_temp');
       expect(result.actions_executed[0].status).toBe('executed');
 
-      expect(queueService.addJob).toHaveBeenCalledWith(
+      expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
         expect.objectContaining({
-          action_type: 'mute_temp'
+          action: 'mute_temp'
         }),
         { priority: 1 }
       );
@@ -318,10 +343,10 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed[0].tag).toBe('require_manual_review');
       expect(result.actions_executed[0].status).toBe('executed');
 
-      expect(queueService.addJob).toHaveBeenCalledWith(
+      expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
         expect.objectContaining({
-          action_type: 'require_manual_review'
+          action: 'require_manual_review'
         }),
         { priority: 1 }
       );
@@ -368,7 +393,7 @@ describe('ShieldService - executeActionsFromTags()', () => {
       });
 
       // Verify NO queue job was added
-      expect(queueService.addJob).not.toHaveBeenCalled();
+      expect(mockQueueService.addJob).not.toHaveBeenCalled();
     });
   });
 
@@ -399,8 +424,8 @@ describe('ShieldService - executeActionsFromTags()', () => {
 
     it('should handle individual action failures without blocking others', async () => {
       // Mock queue failure for one action
-      queueService.addJob.mockImplementation((jobType, data) => {
-        if (data.action_type === 'block_user') {
+      mockQueueService.addJob.mockImplementation((jobType, data) => {
+        if (data.action === 'block_user') {
           return Promise.reject(new Error('Queue service unavailable'));
         }
         return Promise.resolve({ id: 'mock-job-id' });
@@ -426,7 +451,7 @@ describe('ShieldService - executeActionsFromTags()', () => {
     });
 
     it('should set success=false when all actions fail', async () => {
-      queueService.addJob.mockRejectedValue(new Error('Complete failure'));
+      mockQueueService.addJob.mockRejectedValue(new Error('Complete failure'));
 
       const result = await shieldService.executeActionsFromTags(
         mockOrgId,
@@ -487,7 +512,7 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(fromMock.insert).toHaveBeenCalledWith(
         expect.objectContaining({
           organization_id: mockOrgId,
-          user_id: mockComment.author_id,
+          user_id: mockComment.platform_user_id,
           comment_id: mockComment.id,
           action_tag: 'hide_comment',
           platform: mockComment.platform
@@ -545,7 +570,7 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed[0].status).toBe('executed');
 
       // Queue job should still be added
-      expect(queueService.addJob).toHaveBeenCalled();
+      expect(mockQueueService.addJob).toHaveBeenCalled();
     });
   });
 
@@ -576,10 +601,10 @@ describe('ShieldService - executeActionsFromTags()', () => {
       });
 
       // Verify queue jobs added (hide_comment queued)
-      expect(queueService.addJob).toHaveBeenCalledWith(
+      expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
         expect.objectContaining({
-          action_type: 'hide_comment'
+          action: 'hide_comment'
         }),
         { priority: 1 }
       );
@@ -591,8 +616,8 @@ describe('ShieldService - executeActionsFromTags()', () => {
 
     it('should handle mixed success/skip/fail scenarios', async () => {
       // Mock partial failure
-      queueService.addJob.mockImplementation((jobType, data) => {
-        if (data.action_type === 'mute_temp') {
+      mockQueueService.addJob.mockImplementation((jobType, data) => {
+        if (data.action === 'mute_temp') {
           return Promise.reject(new Error('Queue error'));
         }
         return Promise.resolve({ id: 'mock-job-id' });

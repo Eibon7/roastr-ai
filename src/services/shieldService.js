@@ -606,6 +606,26 @@ class ShieldService {
       };
     }
 
+    // [A1] Gate execution by autoActions flag
+    // This ensures automated actions only execute when explicitly enabled
+    // aligning with PR objective A1: "Add explicit autoActions flag gate"
+    if (!this.options.autoActions) {
+      this.log('info', 'Shield autoActions disabled - skipping action execution', {
+        organizationId,
+        commentId: comment.id,
+        platform: comment.platform,
+        actionTags: action_tags,
+        reason: 'autoActions flag disabled'
+      });
+      return {
+        success: true,
+        actions_executed: [],
+        failed_actions: [],
+        skipped: true,
+        reason: 'autoActions_disabled'
+      };
+    }
+
     this.log('info', 'Executing Shield actions from tags', {
       organizationId,
       commentId: comment.id,
@@ -671,7 +691,7 @@ class ShieldService {
             comment_id: comment.id,
             platform: comment.platform,
             platform_user_id: comment.platform_user_id,
-            action_type: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action: tag.replace(/_/g, ' '), // Legacy format for compatibility
             action_tag: tag, // New granular tag
             result: result,
             metadata: {
@@ -716,7 +736,7 @@ class ShieldService {
             comment_id: comment.id,
             platform: comment.platform,
             platform_user_id: comment.platform_user_id,
-            action_type: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action: tag.replace(/_/g, ' '), // Legacy format for compatibility
             action_tag: tag, // New granular tag
             result: result,
             metadata: {
@@ -800,7 +820,7 @@ class ShieldService {
     // Queue platform-specific job to hide comment
     const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'hide_comment',
+      action: 'hide_comment',
       comment: comment
     }, {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
@@ -821,7 +841,7 @@ class ShieldService {
     // Queue platform-specific job to block user
     const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'block_user',
+      action: 'block_user',
       comment: comment  // Whole comment object
     }, {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
@@ -865,7 +885,7 @@ class ShieldService {
     // Queue platform-specific report job
     const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'report_to_platform',
+      action: 'report_to_platform',
       comment: comment  // Whole comment object
     }, {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
@@ -887,7 +907,7 @@ class ShieldService {
     // Queue platform-specific mute job
     const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'mute_temp',
+      action: 'mute_temp',
       comment: comment  // Whole comment object
     }, {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
@@ -908,7 +928,7 @@ class ShieldService {
     // Queue platform-specific permanent mute job
     const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'mute_permanent',
+      action: 'mute_permanent',
       comment: comment  // Whole comment object
     }, {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
@@ -1052,7 +1072,7 @@ class ShieldService {
     // Create manual review job
     const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'require_manual_review',
+      action: 'require_manual_review',
       comment: comment  // Whole comment object
     }, {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
@@ -1073,7 +1093,7 @@ class ShieldService {
     // Apply conservative fallback: queue for manual review
     const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'gatekeeper_unavailable',
+      action: 'gatekeeper_unavailable',
       comment: comment  // Whole comment object
     }, {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
@@ -1128,7 +1148,7 @@ class ShieldService {
           comment_id: comment.id,
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
-          action_type: actionTag.replace(/_/g, ' '), // Legacy format for compatibility
+          action: actionTag.replace(/_/g, ' '), // Legacy format for compatibility
           action_tag: actionTag, // New granular tag
           result: result,
           metadata: {
@@ -1411,44 +1431,6 @@ class ShieldService {
       return 'low'; // New user
     }
     return 'low'; // Default
-  }
-
-  /**
-   * Get comprehensive Shield statistics (test stub)
-   */
-  async getShieldStats(organizationId, days = 30) {
-    // Mock data based on test expectations
-    const mockStats = {
-      organizationId,
-      totalActions: 2,
-      actionsByType: {
-        warning: 1,
-        temporary_mute: 1
-      },
-      actionsByPlatform: {
-        twitter: 2
-      },
-      riskDistribution: {
-        high: 1,
-        medium: 0,
-        low: 1
-      },
-      timeline: []
-    };
-
-    // Handle empty organization case
-    if (organizationId === 'org-empty') {
-      return {
-        organizationId,
-        totalActions: 0,
-        actionsByType: {},
-        actionsByPlatform: {},
-        riskDistribution: { high: 0, medium: 0, low: 0 },
-        timeline: []
-      };
-    }
-
-    return mockStats;
   }
 
   /**
