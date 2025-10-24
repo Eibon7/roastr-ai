@@ -6,7 +6,6 @@
 const request = require('supertest');
 const { app } = require('../../src/index');
 const { flags } = require('../../src/config/flags');
-const oauthRouter = require('../../src/routes/oauth');
 
 describe('OAuth Mock Integration Tests', () => {
   let authToken;
@@ -110,7 +109,6 @@ describe('OAuth Mock Integration Tests', () => {
   describe('OAuth Connect Flow', () => {
     const testPlatform = 'twitter';
 
-
     it('should initiate connection successfully', async () => {
       const response = await request(app)
         .post(`/api/auth/${testPlatform}/connect`)
@@ -167,12 +165,6 @@ describe('OAuth Mock Integration Tests', () => {
 
       state = connectResponse.body.data.state;
       mockCode = 'mock_auth_code_' + Date.now();
-    });
-
-    afterEach(() => {
-      // Issue #638: Clear twitter connections to prevent test pollution
-      // OAuth Callback Flow tests use twitter, need to clear for Complete OAuth Flow
-      oauthRouter.mockStore.clearAll();
     });
 
     it('should handle successful callback', async () => {
@@ -266,9 +258,6 @@ describe('OAuth Mock Integration Tests', () => {
     const testPlatform = 'twitter';
 
     beforeEach(async () => {
-      // Issue #638: Clear all connections to prevent test pollution from earlier tests
-      oauthRouter.mockStore.clearAll();
-
       // Setup a connected platform
       const connectResponse = await request(app)
         .post(`/api/auth/${testPlatform}/connect`)
@@ -316,10 +305,8 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should handle refresh for non-existent connection', async () => {
-      // Issue #638: Use valid platform (youtube) with no connection, not "nonexistent"
-      // Valid platform + no connection = 404, Invalid platform = 400
       const response = await request(app)
-        .post('/api/auth/youtube/refresh')
+        .post('/api/auth/nonexistent/refresh')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
@@ -328,10 +315,8 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should handle disconnect for non-existent connection', async () => {
-      // Issue #638: Use valid platform (linkedin) with no connection, not "nonexistent"
-      // Valid platform + no connection = 404, Invalid platform = 400
       const response = await request(app)
-        .post('/api/auth/linkedin/disconnect')
+        .post('/api/auth/nonexistent/disconnect')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
@@ -415,11 +400,6 @@ describe('OAuth Mock Integration Tests', () => {
   });
 
   describe('Error Handling & Edge Cases', () => {
-    afterEach(() => {
-      // Issue #638: Clear all connections to prevent test pollution
-      oauthRouter.mockStore.clearAll();
-    });
-
     it('should handle malformed state parameter', async () => {
       const response = await request(app)
         .get('/api/auth/twitter/callback?code=testcode&state=invalid_base64!@#');
@@ -466,20 +446,9 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should validate platform parameter format', async () => {
-      // Issue #638: Empty string doesn't match route (404)
-      // Space and unsupported platforms match route but fail validation (400)
-      const routeMismatchPlatforms = [''];  // 404 - route doesn't match
-      const unsupportedPlatforms = [' ', 'nonexistent', 'fakeplatform'];  // 400 - route matches, validation fails
+      const invalidPlatforms = ['', ' ', 'platform with spaces', 'platform-with-dashes!'];
 
-      for (const platform of routeMismatchPlatforms) {
-        const response = await request(app)
-          .post(`/api/auth/${encodeURIComponent(platform)}/connect`)
-          .set('Authorization', `Bearer ${authToken}`);
-
-        expect(response.status).toBe(404);
-      }
-
-      for (const platform of unsupportedPlatforms) {
+      for (const platform of invalidPlatforms) {
         const response = await request(app)
           .post(`/api/auth/${encodeURIComponent(platform)}/connect`)
           .set('Authorization', `Bearer ${authToken}`);
