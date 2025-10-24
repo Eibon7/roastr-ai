@@ -1164,6 +1164,7 @@ class ShieldService {
 
   /**
    * Update user behavior after actions from tags
+   * [M3] Uses atomic RPC function to prevent race conditions
    */
   async _updateUserBehaviorFromTags(organizationId, comment, action_tags, metadata) {
     try {
@@ -1174,45 +1175,29 @@ class ShieldService {
       else if (toxicityScore >= 0.6) severity = 'high';
       else if (toxicityScore >= 0.4) severity = 'medium';
 
-      // Get current behavior
-      const { data: currentBehavior } = await this.supabase
-        .from('user_behaviors')
-        .select('total_violations, severity_counts, actions_taken')
-        .eq('organization_id', organizationId)
-        .eq('platform', comment.platform)
-        .eq('platform_user_id', comment.platform_user_id)
-        .single();
-
-      const totalViolations = (currentBehavior?.total_violations || 0) + 1;
-      const severityCounts = currentBehavior?.severity_counts || { low: 0, medium: 0, high: 0, critical: 0 };
-      severityCounts[severity] = (severityCounts[severity] || 0) + 1;
-
-      const actionRecord = {
-        timestamp: new Date().toISOString(),
-        comment_id: comment.id,
-        action_tags,
-        severity,
-        toxicity_score: toxicityScore
-      };
-
-      const actionsTaken = [...(currentBehavior?.actions_taken || []), actionRecord];
-
-      // Upsert user behavior
-      await this.supabase
-        .from('user_behaviors')
-        .upsert({
-          organization_id: organizationId,
-          platform: comment.platform,
-          platform_user_id: comment.platform_user_id,
-          platform_username: comment.platform_username,
-          total_violations: totalViolations,
-          severity_counts: severityCounts,
-          actions_taken: actionsTaken,
-          last_violation_at: new Date().toISOString(),
-          last_seen_at: new Date().toISOString()
-        }, {
-          onConflict: 'organization_id,platform,platform_user_id'
+      // [M3] Call atomic RPC function instead of read-update-write cycle
+      // This uses INSERT...ON CONFLICT with atomic increments to prevent race conditions
+      const { data: result, error } = await this.supabase
+        .rpc('atomic_update_user_behavior', {
+          p_organization_id: organizationId,
+          p_platform: comment.platform,
+          p_platform_user_id: comment.platform_user_id,
+          p_platform_username: comment.platform_username,
+          p_violation_data: {
+            comment_id: comment.id,
+            action_tags,
+            severity,
+            toxicity_score: toxicityScore
+          }
         });
+
+      if (error) throw error;
+
+      this.log('info', 'Updated user behavior atomically', {
+        userId: comment.platform_user_id,
+        totalViolations: result?.total_violations,
+        severity
+      });
 
     } catch (error) {
       this.log('error', 'Failed to update user behavior from tags', {
