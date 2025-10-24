@@ -877,6 +877,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Backend Developer**
 - **Documentation Agent**
 - **Front-end Dev** (Issue #419 - Manual approval UI)
+- **Guardian** (PR #640 - Validated Fallback Mode documentation)
 - **Orchestrator**
 - **Test Engineer** (Issue #419 - E2E resilience tests)
 

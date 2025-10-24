@@ -1170,11 +1170,12 @@ const stats = await shieldService.getShieldStats('org_123', 30);
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
-- **Security Engineer**
+- **Documentation Agent**
+- **Guardian** (PR #640 - Validated Fallback Security Policy)
 - **Orchestrator**
+- **Security Engineer**
+- **Test Engineer**
 
 
 ## Related Nodes
