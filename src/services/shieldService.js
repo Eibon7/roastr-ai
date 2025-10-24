@@ -625,6 +625,8 @@ class ShieldService {
       const readOnlyTags = action_tags.filter(tag => !stateMutatingHandlers.has(tag));
 
       const actionResults = [];
+      // [M2] Prepare array to batch record all shield_actions at once
+      const actionsToRecord = [];
 
       // [M1] Execute state-mutating handlers sequentially to prevent race conditions
       for (const tag of stateMutatingTags) {
@@ -639,8 +641,22 @@ class ShieldService {
         try {
           const result = await handler(organizationId, comment, metadata);
 
-          // Record action to database
-          await this._recordShieldAction(organizationId, comment, tag, result, metadata);
+          // [M2] Accumulate action record for batch insert
+          actionsToRecord.push({
+            organization_id: organizationId,
+            comment_id: comment.id,
+            platform: comment.platform,
+            platform_user_id: comment.platform_user_id,
+            action_type: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action_tag: tag, // New granular tag
+            result: result,
+            metadata: {
+              toxicity_score: metadata.toxicity?.toxicity_score,
+              security_score: metadata.security?.security_score,
+              platform_violations: metadata.platform_violations
+            },
+            created_at: new Date().toISOString()
+          });
 
           actionResults.push({ tag, status: 'executed', result });
         } catch (error) {
@@ -665,10 +681,24 @@ class ShieldService {
         try {
           const result = await handler(organizationId, comment, metadata);
 
-          // Record action to database
-          await this._recordShieldAction(organizationId, comment, tag, result, metadata);
+          // [M2] Accumulate action record for batch insert
+          const actionRecord = {
+            organization_id: organizationId,
+            comment_id: comment.id,
+            platform: comment.platform,
+            platform_user_id: comment.platform_user_id,
+            action_type: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action_tag: tag, // New granular tag
+            result: result,
+            metadata: {
+              toxicity_score: metadata.toxicity?.toxicity_score,
+              security_score: metadata.security?.security_score,
+              platform_violations: metadata.platform_violations
+            },
+            created_at: new Date().toISOString()
+          };
 
-          return { tag, status: 'executed', result };
+          return { tag, status: 'executed', result, actionRecord };
         } catch (error) {
           this.log('error', `Failed to execute Shield action: ${tag}`, {
             commentId: comment.id,
@@ -680,7 +710,21 @@ class ShieldService {
       });
 
       const readOnlyResults = await Promise.all(readOnlyPromises);
+
+      // [M2] Extract action records from parallel results and add to batch
+      readOnlyResults.forEach(result => {
+        if (result.actionRecord) {
+          actionsToRecord.push(result.actionRecord);
+          delete result.actionRecord; // Clean up before pushing to actionResults
+        }
+      });
+
       actionResults.push(...readOnlyResults);
+
+      // [M2] Batch insert all shield_actions in a single database operation
+      if (actionsToRecord.length > 0) {
+        await this._batchRecordShieldActions(actionsToRecord);
+      }
 
       // Separate successful and failed actions
       actionResults.forEach(result => {
@@ -1051,6 +1095,40 @@ class ShieldService {
 
   /**
    * Record Shield action to database
+   */
+  /**
+   * [M2] Batch record multiple Shield actions in a single database operation
+   * @param {Array} actionsToRecord - Array of action records to insert
+   */
+  async _batchRecordShieldActions(actionsToRecord) {
+    if (!actionsToRecord || actionsToRecord.length === 0) {
+      return;
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('shield_actions')
+        .insert(actionsToRecord);
+
+      if (error) throw error;
+
+      this.log('info', 'Batch recorded Shield actions', {
+        count: actionsToRecord.length,
+        comment_ids: [...new Set(actionsToRecord.map(a => a.comment_id))]
+      });
+
+    } catch (error) {
+      this.log('error', 'Failed to batch record Shield actions', {
+        count: actionsToRecord.length,
+        error: error.message
+      });
+      // Don't throw - recording failure shouldn't block action execution
+    }
+  }
+
+  /**
+   * Record a single Shield action to database
+   * @deprecated Use _batchRecordShieldActions for better performance
    */
   async _recordShieldAction(organizationId, comment, actionTag, result, metadata) {
     try {
