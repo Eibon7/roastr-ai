@@ -10,67 +10,28 @@
  * - End-to-end data flow through all layers
  */
 
-// Mock OpenAI SDK BEFORE importing services
-const mockCreate = jest.fn();
-jest.mock('openai', () => {
-  return jest.fn().mockImplementation(() => ({
-    chat: {
-      completions: {
-        create: mockCreate
-      }
-    },
-    models: {
-      list: jest.fn().mockResolvedValue({
-        data: [
-          { id: 'gpt-4o-mini', created: 1677649963, object: 'model', owned_by: 'openai' },
-          { id: 'gpt-4', created: 1687882411, object: 'model', owned_by: 'openai' }
-        ]
-      })
-    }
-  }));
-});
+const RoastGeneratorEnhanced = require('../../src/services/roastGeneratorEnhanced');
+const PersonaService = require('../../src/services/PersonaService');
+const RoastPromptTemplate = require('../../src/services/roastPromptTemplate');
 
-jest.mock('../../src/services/csvRoastService', () => {
-  return jest.fn().mockImplementation(() => ({
-    loadRoasts: jest.fn().mockResolvedValue([
-      { comment: 'Test comment 1', roast: 'Test roast 1' },
-      { comment: 'Test comment 2', roast: 'Test roast 2' },
-      { comment: 'Test comment 3', roast: 'Test roast 3' }
-    ]),
-    getReferenceRoasts: jest.fn().mockReturnValue(['Ref 1', 'Ref 2', 'Ref 3']),
-    loadCsvData: jest.fn().mockResolvedValue(undefined)
-  }));
-});
-
-jest.mock('../../src/services/costControl', () => ({
-  trackUsage: jest.fn().mockResolvedValue(undefined),
-  checkLimit: jest.fn().mockResolvedValue({ allowed: true })
-}));
-
+// Mock dependencies
+jest.mock('../../src/services/openai');
+jest.mock('../../src/services/csvRoastService');
+jest.mock('../../src/services/costControl');
 jest.mock('../../src/utils/featureFlags', () => ({
   isEnabled: jest.fn().mockReturnValue(false),
   initialize: jest.fn(),
 }));
 
-const RoastGeneratorEnhanced = require('../../src/services/roastGeneratorEnhanced');
-const PersonaService = require('../../src/services/PersonaService');
-const RoastPromptTemplate = require('../../src/services/roastPromptTemplate');
-
 describe('Roast-Persona Integration (Issue #615)', () => {
   let roastGenerator;
+  let personaService;
   let promptTemplate;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Setup default OpenAI mock for all tests
-    mockCreate.mockResolvedValue({
-      choices: [{ message: { content: 'Mock roast response' } }],
-      usage: { prompt_tokens: 100, completion_tokens: 20 },
-      model: 'gpt-4o-mini'
-    });
-
     roastGenerator = new RoastGeneratorEnhanced();
+    personaService = new PersonaService();
     promptTemplate = new RoastPromptTemplate();
   });
 
@@ -83,7 +44,16 @@ describe('Roast-Persona Integration (Issue #615)', () => {
         lo_que_me_da_igual: 'Críticas a mi código si son constructivas'
       };
 
-      jest.spyOn(PersonaService, 'getPersona').mockResolvedValue(mockPersona);
+      jest.spyOn(personaService, 'getPersona').mockResolvedValue(mockPersona);
+
+      // Mock OpenAI response
+      const mockOpenAI = require('../../src/services/openai');
+      mockOpenAI.generateRoast = jest.fn().mockResolvedValue({
+        roast: 'Tu comentario es tan básico que ni merece respuesta inteligente.',
+        model: 'gpt-4o-mini',
+        promptTokens: 100,
+        completionTokens: 20
+      });
 
       // Build prompt manually to verify persona injection
       const prompt = await promptTemplate.buildPrompt({
@@ -114,10 +84,12 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       // Override personaService.getPersona for roastGenerator
       roastGenerator.personaService.getPersona = jest.fn().mockResolvedValue(mockPersona);
 
-      mockCreate.mockResolvedValueOnce({
-        choices: [{ message: { content: 'Tu comentario necesita una clase de lógica básica.' } }],
-        usage: { prompt_tokens: 120, completion_tokens: 25 },
-        model: 'gpt-4o-mini'
+      const mockOpenAI = require('../../src/services/openai');
+      mockOpenAI.generateRoast = jest.fn().mockResolvedValue({
+        roast: 'Tu comentario necesita una clase de lógica básica.',
+        model: 'gpt-4o-mini',
+        promptTokens: 120,
+        completionTokens: 25
       });
 
       const result = await roastGenerator.generateWithBasicModeration(
@@ -136,10 +108,10 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       expect(roastGenerator.personaService.getPersona).toHaveBeenCalledWith('test-user-123');
 
       // Verify OpenAI was called
-      expect(mockCreate).toHaveBeenCalled();
+      expect(mockOpenAI.generateRoast).toHaveBeenCalled();
 
       // Get the prompt that was sent to OpenAI
-      const calledPrompt = mockCreate.mock.calls[0][0].messages[0].content;
+      const calledPrompt = mockOpenAI.generateRoast.mock.calls[0][0];
 
       // Verify persona context is in the prompt
       expect(calledPrompt).toContain('🎯 CONTEXTO DEL USUARIO:');
@@ -147,11 +119,9 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       expect(calledPrompt).toContain('- Lo que NO tolera: Faltas de respeto injustificadas');
       expect(calledPrompt).toContain('- Lo que le da igual: Opiniones sin fundamento');
 
-      // Verify result structure (returns string directly)
+      // Verify result
       expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-      expect(result).toBe('Tu comentario necesita una clase de lógica básica.');
+      expect(result.roast).toBe('Tu comentario necesita una clase de lógica básica.');
     });
   });
 
@@ -186,10 +156,12 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       // Override personaService to return null (Free plan blocked)
       roastGenerator.personaService.getPersona = jest.fn().mockResolvedValue(null);
 
-      mockCreate.mockResolvedValueOnce({
-        choices: [{ message: { content: 'Comentario genérico de respuesta.' } }],
-        usage: { prompt_tokens: 80, completion_tokens: 15 },
-        model: 'gpt-4o-mini'
+      const mockOpenAI = require('../../src/services/openai');
+      mockOpenAI.generateRoast = jest.fn().mockResolvedValue({
+        roast: 'Comentario genérico de respuesta.',
+        model: 'gpt-4o-mini',
+        promptTokens: 80,
+        completionTokens: 15
       });
 
       const result = await roastGenerator.generateWithBasicModeration(
@@ -208,17 +180,15 @@ describe('Roast-Persona Integration (Issue #615)', () => {
       expect(roastGenerator.personaService.getPersona).toHaveBeenCalledWith('free-user-123');
 
       // Get the prompt sent to OpenAI
-      const calledPrompt = mockCreate.mock.calls[0][0].messages[0].content;
+      const calledPrompt = mockOpenAI.generateRoast.mock.calls[0][0];
 
       // Verify persona section shows "No especificado"
       expect(calledPrompt).toContain('🎯 CONTEXTO DEL USUARIO:');
       expect(calledPrompt).toContain('No especificado');
 
-      // Verify result structure (returns string directly)
+      // Verify result
       expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-      expect(result).toBe('Comentario genérico de respuesta.');
+      expect(result.roast).toBe('Comentario genérico de respuesta.');
     });
 
     test('should show "No especificado" when persona is null', async () => {
@@ -243,7 +213,15 @@ describe('Roast-Persona Integration (Issue #615)', () => {
         new Error('Database connection failed')
       );
 
-      // Should throw error (no silent failure for DB errors)
+      const mockOpenAI = require('../../src/services/openai');
+      mockOpenAI.generateRoast = jest.fn().mockResolvedValue({
+        roast: 'Fallback roast without persona.',
+        model: 'gpt-4o-mini',
+        promptTokens: 70,
+        completionTokens: 12
+      });
+
+      // Should not throw, should continue with null persona
       await expect(
         roastGenerator.generateWithBasicModeration(
           'Test comment',
@@ -312,10 +290,12 @@ describe('Roast-Persona Integration (Issue #615)', () => {
 
       roastGenerator.personaService.getPersona = jest.fn().mockResolvedValue(mockPersona);
 
-      mockCreate.mockResolvedValueOnce({
-        choices: [{ message: { content: 'Tu código es tan frágil como tus argumentos.' } }],
-        usage: { prompt_tokens: 150, completion_tokens: 30 },
-        model: 'gpt-4o-mini'
+      const mockOpenAI = require('../../src/services/openai');
+      mockOpenAI.generateRoast = jest.fn().mockResolvedValue({
+        roast: 'Tu código es tan frágil como tus argumentos.',
+        model: 'gpt-4o-mini',
+        promptTokens: 150,
+        completionTokens: 30
       });
 
       // Execute full generation flow
@@ -333,20 +313,19 @@ describe('Roast-Persona Integration (Issue #615)', () => {
 
       // Verify full flow executed
       expect(roastGenerator.personaService.getPersona).toHaveBeenCalledWith('test-engineer-456');
-      expect(mockCreate).toHaveBeenCalled();
+      expect(mockOpenAI.generateRoast).toHaveBeenCalled();
 
       // Verify prompt contains persona
-      const calledPrompt = mockCreate.mock.calls[0][0].messages[0].content;
+      const calledPrompt = mockOpenAI.generateRoast.mock.calls[0][0];
       expect(calledPrompt).toContain('🎯 CONTEXTO DEL USUARIO:');
       expect(calledPrompt).toContain('ingeniero de software');
       expect(calledPrompt).toContain('Código sin tests');
       expect(calledPrompt).toContain('tabs vs spaces');
 
-      // Verify final result (returns string directly)
+      // Verify final result
       expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-      expect(result).toBe('Tu código es tan frágil como tus argumentos.');
+      expect(result.roast).toBe('Tu código es tan frágil como tus argumentos.');
+      expect(result.model).toBe('gpt-4o-mini');
     });
   });
 });

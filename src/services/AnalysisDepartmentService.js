@@ -48,8 +48,8 @@ class AnalysisDepartmentService {
   async analyzeComment(commentText, userContext = {}) {
     const startTime = Date.now();
 
-    // Validate input
-    if (!commentText || typeof commentText !== 'string') {
+    // Validate input (reject empty, non-string, and whitespace-only)
+    if (typeof commentText !== 'string' || commentText.trim().length === 0) {
       throw new Error('Invalid comment text: must be a non-empty string');
     }
 

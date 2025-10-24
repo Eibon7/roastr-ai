@@ -1,0 +1,24 @@
+
+🔍 Guardian Agent - Scanning for sensitive changes...
+
+✅ Configuration loaded successfully
+✅ Loaded 12 ignore patterns
+📊 Detected 1 changed file(s) (0 ignored)
+
+╔═══════════════════════════════════════════════════════════════╗
+║                  Guardian Scan Results                        ║
+╠═══════════════════════════════════════════════════════════════╣
+║ Total Files Changed: 1                                        ║
+║ Lines Added: 0                                                ║
+║ Lines Removed: 0                                              ║
+║ Domains Affected:                                             ║
+╠═══════════════════════════════════════════════════════════════╣
+║ 🟢 SAFE: 1 change(s) - APPROVED                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ All changes approved - Safe to merge
+
+📝 Audit log updated: /Users/emiliopostigo/roastr-ai/docs/guardian/audit-log.md
+📁 Case file created: /Users/emiliopostigo/roastr-ai/docs/guardian/cases/2025-10-23-19-08-06-139.json
+
+Exit code: 0

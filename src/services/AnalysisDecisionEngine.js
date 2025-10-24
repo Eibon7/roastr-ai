@@ -102,16 +102,21 @@ class AnalysisDecisionEngine {
 
     // Handle failed promise
     if (result?.status === 'rejected') {
-      logger.warn('Gatekeeper failed, using fallback classification', {
+      logger.warn('Gatekeeper failed, using conservative fallback classification', {
         error: result.reason?.message
       });
+      // SECURITY FIX (CodeRabbit Review #634): Conservative fallback
+      // When Gatekeeper unavailable, default to MALICIOUS to prevent
+      // prompt injections from passing through during service outages.
+      // This prevents the security gap that Issue #632 aims to close.
       return {
-        classification: 'NEUTRAL', // Safe default
-        is_prompt_injection: false,
-        injection_score: 0,
+        classification: 'MALICIOUS',     // Conservative default
+        is_prompt_injection: true,       // Treat as potential threat
+        injection_score: 0.5,            // Moderate risk indicator
         injection_patterns: [],
-        injection_categories: [],
-        fallback: true
+        injection_categories: ['fallback_mode'],
+        fallback: true,
+        fallback_reason: 'Gatekeeper unavailable - conservative classification applied'
       };
     }
 
@@ -141,7 +146,7 @@ class AnalysisDecisionEngine {
         error: result.reason?.message
       });
       return {
-        toxicity_score: 0.5, // Medium toxicity (roastable)
+        toxicity_score: 0.1, // Conservative default to prevent false escalations on API failures
         threat_score: 0,
         identity_attack_score: 0,
         insult_score: 0,
@@ -254,8 +259,29 @@ class AnalysisDecisionEngine {
     thresholds,
     userContext
   ) {
-    const { classification, is_prompt_injection } = gatekeeperData;
+    const { classification, is_prompt_injection, fallback } = gatekeeperData;
     const { final_toxicity } = combinedScores;
+
+    // RULE 0: Gatekeeper fallback mode - Conservative SHIELD
+    // (CodeRabbit Review #634 - Explicit fallback handling)
+    if (fallback && gatekeeperData.fallback_reason) {
+      logger.info('Gatekeeper fallback detected - forcing conservative SHIELD', {
+        fallback_reason: gatekeeperData.fallback_reason,
+        final_toxicity
+      });
+
+      return this.createShieldDecision(
+        gatekeeperData.fallback_reason,
+        ['hide_comment', 'require_manual_review', 'gatekeeper_unavailable'],
+        'critical',
+        gatekeeperData,
+        perspectiveData,
+        platformViolations,
+        combinedScores,
+        thresholds,
+        userContext
+      );
+    }
 
     // RULE 1: MALICIOUS classification (prompt injection)
     if (classification === 'MALICIOUS' || is_prompt_injection) {
@@ -444,7 +470,7 @@ class AnalysisDecisionEngine {
           primary_reason: reason,
           secondary_reasons: [],
           thresholds_used: thresholds,
-          persona_adjusted: !!userContext.persona,
+          persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
           reincidence_factor: userContext.reincidenceFactor || 0
         },
         platform_violations: platformViolations
@@ -493,7 +519,7 @@ class AnalysisDecisionEngine {
           primary_reason: reason,
           secondary_reasons: [],
           thresholds_used: thresholds,
-          persona_adjusted: !!userContext.persona,
+          persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
           reincidence_factor: userContext.reincidenceFactor || 0,
           roast_style: roastStyle
         },
@@ -542,7 +568,7 @@ class AnalysisDecisionEngine {
           primary_reason: reason,
           secondary_reasons: [],
           thresholds_used: thresholds,
-          persona_adjusted: !!userContext.persona,
+          persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
           reincidence_factor: userContext.reincidenceFactor || 0
         },
         platform_violations: platformViolations
@@ -573,6 +599,17 @@ class AnalysisDecisionEngine {
    */
   determineRoastStyle(toxicityScore, thresholds) {
     const roastRange = thresholds.shield - thresholds.roast_lower;
+
+    // Guard against division by zero or negative range
+    if (roastRange <= 0) {
+      logger.warn('Invalid roast range (shield ≤ roast_lower), defaulting to roast_balanced', {
+        shield: thresholds.shield,
+        roast_lower: thresholds.roast_lower,
+        roastRange
+      });
+      return 'roast_balanced';
+    }
+
     const normalizedScore = (toxicityScore - thresholds.roast_lower) / roastRange;
 
     if (normalizedScore < 0.33) return 'roast_soft';
@@ -602,7 +639,7 @@ class AnalysisDecisionEngine {
       services.push('gatekeeper');
     }
 
-    if (perspectiveResult?.status === 'fulfilled' || perspectiveResult?.toxicityScore !== undefined) {
+    if (perspectiveResult?.status === 'fulfilled' || perspectiveResult?.scores !== undefined) {
       services.push('perspective');
     }
 
