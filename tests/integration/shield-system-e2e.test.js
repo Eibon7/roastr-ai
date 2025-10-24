@@ -128,19 +128,28 @@ describe('Shield System - End-to-End Integration', () => {
 
       // Step 2: Execute recommended actions (if any)
       if (analysisResult.recommendedActions && analysisResult.recommendedActions.length > 0) {
-        const executionResult = await shieldService.executeActions(
-          analysisResult.recommendedActions,
-          {
-            commentId: toxicComment.id,
-            platform: toxicComment.platform,
-            platformUserId: toxicComment.platform_user_id,
-            platformUsername: toxicComment.platform_username,
-            organizationId: toxicComment.organization_id
-          }
+        const comment = {
+          id: toxicComment.id,
+          platform: toxicComment.platform,
+          platform_user_id: toxicComment.platform_user_id,
+          platform_username: toxicComment.platform_username,
+          text: toxicComment.content
+        };
+        const action_tags = analysisResult.recommendedActions;
+        const metadata = {
+          toxicity_score: analysisResult.confidence,
+          decision_level: analysisResult.actionLevel
+        };
+
+        const executionResult = await shieldService.executeActionsFromTags(
+          toxicComment.organization_id,
+          comment,
+          action_tags,
+          metadata
         );
 
         expect(executionResult.success).toBe(true);
-        expect(executionResult.actionsExecuted).toBeGreaterThan(0);
+        expect(executionResult.actions_executed.length).toBeGreaterThan(0);
       } else {
         // No actions recommended by Shield system
         expect(analysisResult.shouldTakeAction).toBe(false);
