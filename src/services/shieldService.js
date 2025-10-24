@@ -703,7 +703,12 @@ class ShieldService {
         }
 
         try {
-          const result = await handler(organizationId, comment, metadata);
+          const result = await handler(organizationId, comment, metadata || {});
+
+          // Check if action was skipped by the handler
+          if (result && result.skipped === true) {
+            return { tag, status: 'skipped', result };
+          }
 
           // [M2] Accumulate action record for batch insert
           const actionRecord = {
@@ -715,9 +720,9 @@ class ShieldService {
             action_tag: tag, // New granular tag
             result: result,
             metadata: {
-              toxicity_score: metadata.toxicity?.toxicity_score,
-              security_score: metadata.security?.security_score,
-              platform_violations: metadata.platform_violations
+              toxicity_score: metadata?.toxicity?.toxicity_score,
+              security_score: metadata?.security?.security_score,
+              platform_violations: metadata?.platform_violations
             },
             created_at: new Date().toISOString()
           };
@@ -822,20 +827,13 @@ class ShieldService {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    // Update user behavior to mark as blocked (graceful degradation on DB errors)
-    try {
-      await this.supabase
-        .from('user_behavior')
-        .update({ is_blocked: true, blocked_at: new Date().toISOString() })
-        .eq('organization_id', organizationId)
-        .eq('platform', comment.platform)
-        .eq('platform_user_id', comment.platform_user_id);
-    } catch (error) {
-      this.log('warn', 'Failed to update user behavior for block_user, but action queued successfully', {
-        userId: comment.platform_user_id,
-        error: error.message
-      });
-    }
+    // Update user behavior to mark as blocked
+    await this.supabase
+      .from('user_behavior')
+      .update({ is_blocked: true, blocked_at: new Date().toISOString() })
+      .eq('organization_id', organizationId)
+      .eq('platform', comment.platform)
+      .eq('platform_user_id', comment.platform_user_id);
 
     return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
