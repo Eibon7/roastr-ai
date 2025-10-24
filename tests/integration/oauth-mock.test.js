@@ -6,6 +6,7 @@
 const request = require('supertest');
 const { app } = require('../../src/index');
 const { flags } = require('../../src/config/flags');
+const oauthRouter = require('../../src/routes/oauth');
 
 describe('OAuth Mock Integration Tests', () => {
   let authToken;
@@ -109,6 +110,7 @@ describe('OAuth Mock Integration Tests', () => {
   describe('OAuth Connect Flow', () => {
     const testPlatform = 'twitter';
 
+
     it('should initiate connection successfully', async () => {
       const response = await request(app)
         .post(`/api/auth/${testPlatform}/connect`)
@@ -165,6 +167,12 @@ describe('OAuth Mock Integration Tests', () => {
 
       state = connectResponse.body.data.state;
       mockCode = 'mock_auth_code_' + Date.now();
+    });
+
+    afterEach(() => {
+      // Issue #638: Clear twitter connections to prevent test pollution
+      // OAuth Callback Flow tests use twitter, need to clear for Complete OAuth Flow
+      oauthRouter.mockStore.clearAll();
     });
 
     it('should handle successful callback', async () => {
@@ -258,6 +266,9 @@ describe('OAuth Mock Integration Tests', () => {
     const testPlatform = 'twitter';
 
     beforeEach(async () => {
+      // Issue #638: Clear all connections to prevent test pollution from earlier tests
+      oauthRouter.mockStore.clearAll();
+
       // Setup a connected platform
       const connectResponse = await request(app)
         .post(`/api/auth/${testPlatform}/connect`)
@@ -305,8 +316,10 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should handle refresh for non-existent connection', async () => {
+      // Issue #638: Use valid platform (youtube) with no connection, not "nonexistent"
+      // Valid platform + no connection = 404, Invalid platform = 400
       const response = await request(app)
-        .post('/api/auth/nonexistent/refresh')
+        .post('/api/auth/youtube/refresh')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
@@ -315,8 +328,10 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should handle disconnect for non-existent connection', async () => {
+      // Issue #638: Use valid platform (linkedin) with no connection, not "nonexistent"
+      // Valid platform + no connection = 404, Invalid platform = 400
       const response = await request(app)
-        .post('/api/auth/nonexistent/disconnect')
+        .post('/api/auth/linkedin/disconnect')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);

@@ -111,6 +111,13 @@ class MockConnectionStore {
 
     return connection.status === 'connected';
   }
+
+  /**
+   * Clear all connections (for testing) - Issue #638
+   */
+  clearAll() {
+    this.connections.clear();
+  }
 }
 
 // Global mock store (in production, this would be Redis or database)
@@ -589,8 +596,10 @@ router.put('/:platform/config', authenticateToken, async (req, res) => {
  * Reset all mock connections (testing only)
  */
 router.post('/mock/reset', authenticateToken, async (req, res) => {
-  // Issue #638: Check mock mode without test environment bypass
-  if (!flags.shouldUseMockOAuth()) {
+  // Issue #638: Check ENABLE_MOCK_MODE env var directly
+  // This allows the test to verify the endpoint can be disabled
+  // Don't use flags.isEnabled() because it checks mockMode.isMockMode which is evaluated once at module load
+  if (process.env.ENABLE_MOCK_MODE !== 'true') {
     return res.status(403).json({
       success: false,
       error: 'Mock reset only available in mock mode'
@@ -851,3 +860,6 @@ function validatePlatformConfig(platform, config) {
 }
 
 module.exports = router;
+
+// Export mockStore for testing (Issue #638)
+router.mockStore = mockStore;
