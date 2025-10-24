@@ -597,6 +597,15 @@ class ShieldService {
     };
 
     try {
+      // [M1] Define state-mutating vs read-only handlers
+      // State-mutating handlers modify user_behavior and must execute sequentially
+      // to prevent race conditions when updating the same user record
+      const stateMutatingHandlers = new Set([
+        'add_strike_1',
+        'add_strike_2',
+        'check_reincidence'
+      ]);
+
       // Map action tags to handler methods
       const actionHandlers = {
         hide_comment: this._handleHideComment.bind(this),
@@ -611,8 +620,41 @@ class ShieldService {
         gatekeeper_unavailable: this._handleGatekeeperUnavailable.bind(this)
       };
 
-      // Execute handlers in parallel for performance
-      const actionPromises = action_tags.map(async (tag) => {
+      // [M1] Separate tags into state-mutating and read-only groups
+      const stateMutatingTags = action_tags.filter(tag => stateMutatingHandlers.has(tag));
+      const readOnlyTags = action_tags.filter(tag => !stateMutatingHandlers.has(tag));
+
+      const actionResults = [];
+
+      // [M1] Execute state-mutating handlers sequentially to prevent race conditions
+      for (const tag of stateMutatingTags) {
+        const handler = actionHandlers[tag];
+
+        if (!handler) {
+          this.log('warn', 'Unknown Shield action tag', { tag, commentId: comment.id });
+          actionResults.push({ tag, status: 'skipped', reason: 'unknown_tag' });
+          continue;
+        }
+
+        try {
+          const result = await handler(organizationId, comment, metadata);
+
+          // Record action to database
+          await this._recordShieldAction(organizationId, comment, tag, result, metadata);
+
+          actionResults.push({ tag, status: 'executed', result });
+        } catch (error) {
+          this.log('error', `Failed to execute Shield action: ${tag}`, {
+            commentId: comment.id,
+            tag,
+            error: error.message
+          });
+          actionResults.push({ tag, status: 'failed', error: error.message });
+        }
+      }
+
+      // [M1] Execute read-only handlers in parallel for performance
+      const readOnlyPromises = readOnlyTags.map(async (tag) => {
         const handler = actionHandlers[tag];
 
         if (!handler) {
@@ -637,7 +679,8 @@ class ShieldService {
         }
       });
 
-      const actionResults = await Promise.all(actionPromises);
+      const readOnlyResults = await Promise.all(readOnlyPromises);
+      actionResults.push(...readOnlyResults);
 
       // Separate successful and failed actions
       actionResults.forEach(result => {

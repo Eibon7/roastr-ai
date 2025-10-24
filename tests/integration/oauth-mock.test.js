@@ -415,6 +415,11 @@ describe('OAuth Mock Integration Tests', () => {
   });
 
   describe('Error Handling & Edge Cases', () => {
+    afterEach(() => {
+      // Issue #638: Clear all connections to prevent test pollution
+      oauthRouter.mockStore.clearAll();
+    });
+
     it('should handle malformed state parameter', async () => {
       const response = await request(app)
         .get('/api/auth/twitter/callback?code=testcode&state=invalid_base64!@#');
@@ -461,9 +466,20 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should validate platform parameter format', async () => {
-      const invalidPlatforms = ['', ' ', 'platform with spaces', 'platform-with-dashes!'];
+      // Issue #638: Empty string doesn't match route (404)
+      // Space and unsupported platforms match route but fail validation (400)
+      const routeMismatchPlatforms = [''];  // 404 - route doesn't match
+      const unsupportedPlatforms = [' ', 'nonexistent', 'fakeplatform'];  // 400 - route matches, validation fails
 
-      for (const platform of invalidPlatforms) {
+      for (const platform of routeMismatchPlatforms) {
+        const response = await request(app)
+          .post(`/api/auth/${encodeURIComponent(platform)}/connect`)
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(404);
+      }
+
+      for (const platform of unsupportedPlatforms) {
         const response = await request(app)
           .post(`/api/auth/${encodeURIComponent(platform)}/connect`)
           .set('Authorization', `Bearer ${authToken}`);
