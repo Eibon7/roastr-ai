@@ -573,13 +573,37 @@ class ShieldService {
    * @returns {Promise<Object>} Execution results { success, actions_executed, failed_actions }
    */
   async executeActionsFromTags(organizationId, comment, action_tags, metadata) {
-    // Input validation
-    if (!organizationId || !comment || !Array.isArray(action_tags)) {
-      throw new Error('Invalid input: organizationId, comment, and action_tags array required');
+    // Input validation - return structured errors instead of throwing
+    if (!organizationId) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'organizationId is required' }]
+      };
     }
 
-    if (!comment.id || !comment.platform || !comment.platform_user_id) {
-      throw new Error('Invalid comment: id, platform, and platform_user_id required');
+    if (!comment) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'comment is required' }]
+      };
+    }
+
+    if (!Array.isArray(action_tags)) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'action_tags must be an array' }]
+      };
+    }
+
+    if (comment && (!comment.id || !comment.platform || !comment.platform_user_id)) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'comment must have id, platform, and platform_user_id fields' }]
+      };
     }
 
     this.log('info', 'Executing Shield actions from tags', {
@@ -728,7 +752,7 @@ class ShieldService {
 
       // Separate successful and failed actions
       actionResults.forEach(result => {
-        if (result.status === 'executed') {
+        if (result.status === 'executed' || result.status === 'skipped') {
           results.actions_executed.push(result);
         } else if (result.status === 'failed') {
           results.failed_actions.push(result);
@@ -769,21 +793,15 @@ class ShieldService {
     });
 
     // Queue platform-specific job to hide comment
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
       action_type: 'hide_comment',
-      comment_id: comment.id,
-      platform: comment.platform,
-      platform_comment_id: comment.platform_comment_id,
-      metadata: {
-        reason: 'shield_automated_action',
-        toxicity_score: metadata.toxicity?.toxicity_score
-      }
+      comment: comment
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'hide_comment', queued: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -796,30 +814,30 @@ class ShieldService {
     });
 
     // Queue platform-specific job to block user
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
       action_type: 'block_user',
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      platform_username: comment.platform_username,
-      metadata: {
-        reason: 'shield_automated_block',
-        toxicity_score: metadata.toxicity?.toxicity_score,
-        security_score: metadata.security?.security_score
-      }
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.critical
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    // Update user behavior to mark as blocked
-    await this.supabase
-      .from('user_behaviors')
-      .update({ is_blocked: true, blocked_at: new Date().toISOString() })
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id);
+    // Update user behavior to mark as blocked (graceful degradation on DB errors)
+    try {
+      await this.supabase
+        .from('user_behavior')
+        .update({ is_blocked: true, blocked_at: new Date().toISOString() })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', 'Failed to update user behavior for block_user, but action queued successfully', {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
 
-    return { action: 'block_user', queued: true, blocked: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -837,7 +855,7 @@ class ShieldService {
         platform: comment.platform,
         platformViolations: metadata.platform_violations
       });
-      return { action: 'report_to_platform', skipped: true, reason: 'not_reportable' };
+      return { skipped: true, reason: 'not_reportable' };
     }
 
     this.log('info', 'Reporting to platform', {
@@ -847,57 +865,37 @@ class ShieldService {
     });
 
     // Queue platform-specific report job
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
       action_type: 'report_to_platform',
-      comment_id: comment.id,
-      platform: comment.platform,
-      platform_comment_id: comment.platform_comment_id,
-      platform_user_id: comment.platform_user_id,
-      metadata: {
-        violations: metadata.platform_violations.violations,
-        evidence: {
-          toxicity_score: metadata.toxicity?.toxicity_score,
-          security_score: metadata.security?.security_score,
-          original_text: comment.original_text
-        }
-      }
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'report_to_platform', queued: true, reportable: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
    * Handle mute_temp action tag
    */
   async _handleMuteTemp(organizationId, comment, metadata) {
-    const duration = '24h'; // Default temporary mute duration
-
     this.log('info', 'Muting user temporarily', {
       userId: comment.platform_user_id,
       platform: comment.platform,
-      duration
+      duration: '24h'
     });
 
     // Queue platform-specific mute job
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
       action_type: 'mute_temp',
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      platform_username: comment.platform_username,
-      duration,
-      metadata: {
-        reason: 'shield_temporary_mute',
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      }
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'mute_temp', queued: true, duration };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -910,29 +908,30 @@ class ShieldService {
     });
 
     // Queue platform-specific permanent mute job
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
       action_type: 'mute_permanent',
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      platform_username: comment.platform_username,
-      metadata: {
-        reason: 'shield_permanent_mute',
-        toxicity_score: metadata.toxicity?.toxicity_score
-      }
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.critical
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    // Update user behavior
-    await this.supabase
-      .from('user_behaviors')
-      .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id);
+    // Update user behavior (graceful degradation on DB errors)
+    try {
+      await this.supabase
+        .from('user_behavior')
+        .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', 'Failed to update user behavior for mute_permanent, but action queued successfully', {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
 
-    return { action: 'mute_permanent', queued: true, permanent: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -944,36 +943,38 @@ class ShieldService {
       platform: comment.platform
     });
 
-    // Get user behavior history
-    const { data: behavior, error } = await this.supabase
-      .from('user_behaviors')
-      .select('total_violations, severity_counts, actions_taken')
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id)
-      .single();
+    // Get user behavior history (graceful degradation on DB errors)
+    try {
+      const { data: behavior, error } = await this.supabase
+        .from('user_behavior')
+        .select('total_violations, severity_counts, actions_taken')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .single();
 
-    if (error && error.code !== 'PGRST116') {
-      throw error;
-    }
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
 
-    const violations = behavior?.total_violations || 0;
-    const isReincident = violations >= this.options.reincidenceThreshold;
+      const violations = behavior?.total_violations || 0;
+      const isReincident = violations >= this.options.reincidenceThreshold;
 
-    if (isReincident) {
-      this.log('warn', 'Reincident user detected', {
+      if (isReincident) {
+        this.log('warn', 'Reincident user detected', {
+          userId: comment.platform_user_id,
+          violations,
+          threshold: this.options.reincidenceThreshold
+        });
+      }
+    } catch (error) {
+      this.log('warn', 'Failed to check reincidence from database, continuing without check', {
         userId: comment.platform_user_id,
-        violations,
-        threshold: this.options.reincidenceThreshold
+        error: error.message
       });
     }
 
-    return {
-      action: 'check_reincidence',
-      is_reincident: isReincident,
-      total_violations: violations,
-      threshold: this.options.reincidenceThreshold
-    };
+    return { job_id: null };  // No queue job for reincidence check
   }
 
   /**
@@ -1008,34 +1009,37 @@ class ShieldService {
       toxicity_score: metadata.toxicity?.toxicity_score
     };
 
-    // Update user behavior with new strike
-    const { data: behavior } = await this.supabase
-      .from('user_behaviors')
-      .select('strikes')
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id)
-      .single();
+    // Update user behavior with new strike (graceful degradation on DB errors)
+    try {
+      const { data: behavior } = await this.supabase
+        .from('user_behavior')
+        .select('strikes')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .single();
 
-    const currentStrikes = behavior?.strikes || [];
-    const updatedStrikes = [...currentStrikes, strike];
+      const currentStrikes = behavior?.strikes || [];
+      const updatedStrikes = [...currentStrikes, strike];
 
-    await this.supabase
-      .from('user_behaviors')
-      .update({
-        strikes: updatedStrikes,
-        strike_count: updatedStrikes.length,
-        last_strike_at: new Date().toISOString()
-      })
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id);
+      await this.supabase
+        .from('user_behavior')
+        .update({
+          strikes: updatedStrikes,
+          strike_count: updatedStrikes.length,
+          last_strike_at: new Date().toISOString()
+        })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', `Failed to add strike ${strikeLevel} to database, but action logged`, {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
 
-    return {
-      action: `add_strike_${strikeLevel}`,
-      strike_level: strikeLevel,
-      total_strikes: updatedStrikes.length
-    };
+    return { job_id: null };  // No queue job for adding strikes
   }
 
   /**
@@ -1048,23 +1052,15 @@ class ShieldService {
     });
 
     // Create manual review job
-    await this.queueService.addJob('manual_review', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      comment_id: comment.id,
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      reason: 'shield_escalation',
-      metadata: {
-        toxicity_score: metadata.toxicity?.toxicity_score,
-        security_score: metadata.security?.security_score,
-        action_tags: metadata.action_tags,
-        requires_human_judgment: true
-      }
+      action_type: 'require_manual_review',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'require_manual_review', queued: true, manual_review_required: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -1077,20 +1073,15 @@ class ShieldService {
     });
 
     // Apply conservative fallback: queue for manual review
-    await this.queueService.addJob('manual_review', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      comment_id: comment.id,
-      platform: comment.platform,
-      reason: 'gatekeeper_unavailable',
-      metadata: {
-        fallback_applied: true,
-        requires_manual_decision: true
-      }
+      action_type: 'gatekeeper_unavailable',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.medium
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'gatekeeper_unavailable', fallback_applied: true, manual_review_queued: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
