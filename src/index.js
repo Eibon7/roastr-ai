@@ -235,8 +235,10 @@ app.use(express.static(path.join(__dirname, '../frontend/build'), {
 // Auth routes
 app.use('/api/auth', authRoutes);
 
-// OAuth routes (for social media connections)
-app.use('/api/integrations', oauthRoutes);
+// OAuth routes (for social media connections) - Issue #638
+// Fix: OAuth callbacks must be under /api/auth, not /api/integrations
+// Routes in oauth.js generate redirectUri as /api/auth/:platform/callback
+app.use('/api/auth', oauthRoutes);
 
 // Webhook routes (for platform event handling)
 app.use('/api/webhooks', webhooksRoutes);

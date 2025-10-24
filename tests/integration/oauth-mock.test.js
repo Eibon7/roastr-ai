@@ -32,7 +32,7 @@ describe('OAuth Mock Integration Tests', () => {
   describe('Platform Support', () => {
     it('should return all supported platforms', async () => {
       const response = await request(app)
-        .get('/api/integrations/platforms')
+        .get('/api/auth/platforms')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -55,7 +55,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should have correct platform configurations', async () => {
       const response = await request(app)
-        .get('/api/integrations/platforms')
+        .get('/api/auth/platforms')
         .set('Authorization', `Bearer ${authToken}`);
 
       const platforms = response.body.data.platforms;
@@ -80,7 +80,7 @@ describe('OAuth Mock Integration Tests', () => {
   describe('Connection Status', () => {
     it('should return empty connections initially', async () => {
       const response = await request(app)
-        .get('/api/integrations/connections')
+        .get('/api/auth/connections')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -100,7 +100,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should require authentication', async () => {
       const response = await request(app)
-        .get('/api/integrations/connections');
+        .get('/api/auth/connections');
 
       expect(response.status).toBe(401);
     });
@@ -111,7 +111,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should initiate connection successfully', async () => {
       const response = await request(app)
-        .post(`/api/integrations/${testPlatform}/connect`)
+        .post(`/api/auth/${testPlatform}/connect`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -128,7 +128,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should reject unsupported platform', async () => {
       const response = await request(app)
-        .post('/api/integrations/unsupported/connect')
+        .post('/api/auth/unsupported/connect')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
@@ -138,14 +138,14 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should require authentication for connect', async () => {
       const response = await request(app)
-        .post(`/api/integrations/${testPlatform}/connect`);
+        .post(`/api/auth/${testPlatform}/connect`);
 
       expect(response.status).toBe(401);
     });
 
     it('should sanitize platform parameter', async () => {
       const response = await request(app)
-        .post('/api/integrations/twitter<script>/connect')
+        .post('/api/auth/twitter<script>/connect')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
@@ -160,7 +160,7 @@ describe('OAuth Mock Integration Tests', () => {
     beforeEach(async () => {
       // First initiate a connection to get valid state
       const connectResponse = await request(app)
-        .post('/api/integrations/twitter/connect')
+        .post('/api/auth/twitter/connect')
         .set('Authorization', `Bearer ${authToken}`);
 
       state = connectResponse.body.data.state;
@@ -222,7 +222,7 @@ describe('OAuth Mock Integration Tests', () => {
         it('should complete full connect -> callback -> status cycle', async () => {
           // Step 1: Initiate connection
           const connectResponse = await request(app)
-            .post(`/api/integrations/${platform}/connect`)
+            .post(`/api/auth/${platform}/connect`)
             .set('Authorization', `Bearer ${authToken}`);
 
           expect(connectResponse.status).toBe(200);
@@ -238,7 +238,7 @@ describe('OAuth Mock Integration Tests', () => {
 
           // Step 3: Check connection status
           const statusResponse = await request(app)
-            .get('/api/integrations/connections')
+            .get('/api/auth/connections')
             .set('Authorization', `Bearer ${authToken}`);
 
           expect(statusResponse.status).toBe(200);
@@ -260,7 +260,7 @@ describe('OAuth Mock Integration Tests', () => {
     beforeEach(async () => {
       // Setup a connected platform
       const connectResponse = await request(app)
-        .post(`/api/integrations/${testPlatform}/connect`)
+        .post(`/api/auth/${testPlatform}/connect`)
         .set('Authorization', `Bearer ${authToken}`);
 
       const { state } = connectResponse.body.data;
@@ -272,7 +272,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should refresh tokens successfully', async () => {
       const response = await request(app)
-        .post(`/api/integrations/${testPlatform}/refresh`)
+        .post(`/api/auth/${testPlatform}/refresh`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -284,7 +284,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should disconnect successfully', async () => {
       const response = await request(app)
-        .post(`/api/integrations/${testPlatform}/disconnect`)
+        .post(`/api/auth/${testPlatform}/disconnect`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -295,7 +295,7 @@ describe('OAuth Mock Integration Tests', () => {
 
       // Verify disconnection
       const statusResponse = await request(app)
-        .get('/api/integrations/connections')
+        .get('/api/auth/connections')
         .set('Authorization', `Bearer ${authToken}`);
 
       const platformConnection = statusResponse.body.data.connections
@@ -306,7 +306,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should handle refresh for non-existent connection', async () => {
       const response = await request(app)
-        .post('/api/integrations/nonexistent/refresh')
+        .post('/api/auth/nonexistent/refresh')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
@@ -316,7 +316,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should handle disconnect for non-existent connection', async () => {
       const response = await request(app)
-        .post('/api/integrations/nonexistent/disconnect')
+        .post('/api/auth/nonexistent/disconnect')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
@@ -329,7 +329,7 @@ describe('OAuth Mock Integration Tests', () => {
     beforeEach(async () => {
       // Connect to twitter for testing reset
       const connectResponse = await request(app)
-        .post('/api/integrations/twitter/connect')
+        .post('/api/auth/twitter/connect')
         .set('Authorization', `Bearer ${authToken}`);
 
       const { state } = connectResponse.body.data;
@@ -341,7 +341,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should reset specific platform connection', async () => {
       const response = await request(app)
-        .post('/api/integrations/mock/reset')
+        .post('/api/auth/mock/reset')
         .set('Authorization', `Bearer ${authToken}`)
         .send({ platform: 'twitter' });
 
@@ -351,7 +351,7 @@ describe('OAuth Mock Integration Tests', () => {
 
       // Verify reset
       const statusResponse = await request(app)
-        .get('/api/integrations/connections')
+        .get('/api/auth/connections')
         .set('Authorization', `Bearer ${authToken}`);
 
       const twitterConnection = statusResponse.body.data.connections
@@ -362,7 +362,7 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should reset all connections', async () => {
       const response = await request(app)
-        .post('/api/integrations/mock/reset')
+        .post('/api/auth/mock/reset')
         .set('Authorization', `Bearer ${authToken}`)
         .send({});
 
@@ -372,7 +372,7 @@ describe('OAuth Mock Integration Tests', () => {
 
       // Verify all connections are reset
       const statusResponse = await request(app)
-        .get('/api/integrations/connections')
+        .get('/api/auth/connections')
         .set('Authorization', `Bearer ${authToken}`);
 
       statusResponse.body.data.connections.forEach(connection => {
@@ -386,7 +386,7 @@ describe('OAuth Mock Integration Tests', () => {
       flags.reload();
 
       const response = await request(app)
-        .post('/api/integrations/mock/reset')
+        .post('/api/auth/mock/reset')
         .set('Authorization', `Bearer ${authToken}`)
         .send({ platform: 'twitter' });
 
@@ -411,7 +411,7 @@ describe('OAuth Mock Integration Tests', () => {
     it('should handle platform mismatch in state', async () => {
       // Create state for twitter but use in instagram callback
       const connectResponse = await request(app)
-        .post('/api/integrations/twitter/connect')
+        .post('/api/auth/twitter/connect')
         .set('Authorization', `Bearer ${authToken}`);
 
       const { state } = connectResponse.body.data;
@@ -426,7 +426,7 @@ describe('OAuth Mock Integration Tests', () => {
     it('should handle already connected platform', async () => {
       // First connection
       const connectResponse1 = await request(app)
-        .post('/api/integrations/twitter/connect')
+        .post('/api/auth/twitter/connect')
         .set('Authorization', `Bearer ${authToken}`);
 
       const { state } = connectResponse1.body.data;
@@ -437,7 +437,7 @@ describe('OAuth Mock Integration Tests', () => {
 
       // Attempt second connection
       const connectResponse2 = await request(app)
-        .post('/api/integrations/twitter/connect')
+        .post('/api/auth/twitter/connect')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(connectResponse2.status).toBe(200);
@@ -450,7 +450,7 @@ describe('OAuth Mock Integration Tests', () => {
 
       for (const platform of invalidPlatforms) {
         const response = await request(app)
-          .post(`/api/integrations/${encodeURIComponent(platform)}/connect`)
+          .post(`/api/auth/${encodeURIComponent(platform)}/connect`)
           .set('Authorization', `Bearer ${authToken}`);
 
         expect(response.status).toBe(400);
@@ -465,7 +465,7 @@ describe('OAuth Mock Integration Tests', () => {
       for (const platform of platforms) {
         // Connect platform
         const connectResponse = await request(app)
-          .post(`/api/integrations/${platform}/connect`)
+          .post(`/api/auth/${platform}/connect`)
           .set('Authorization', `Bearer ${authToken}`);
 
         const { state } = connectResponse.body.data;
@@ -476,7 +476,7 @@ describe('OAuth Mock Integration Tests', () => {
 
         // Check user info
         const statusResponse = await request(app)
-          .get('/api/integrations/connections')
+          .get('/api/auth/connections')
           .set('Authorization', `Bearer ${authToken}`);
 
         const connection = statusResponse.body.data.connections

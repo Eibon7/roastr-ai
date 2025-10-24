@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
 const { mockMode } = require('../config/mockMode');
+const { logger } = require('../utils/logger');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
@@ -1383,7 +1384,7 @@ class ShieldService {
   /**
    * Get comprehensive Shield statistics (test stub)
    */
-  async getShieldStats(organizationId, days = 30) {
+  async getShieldStatsMock(organizationId, days = 30) {
     // Mock data based on test expectations
     const mockStats = {
       organizationId,
@@ -1471,13 +1472,12 @@ class ShieldService {
   log(level, message, metadata = {}) {
     const logEntry = {
       timestamp: new Date().toISOString(),
-      level,
       service: 'ShieldService',
       message,
       ...metadata
     };
-    
-    console.log(`[${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
+    const fn = typeof logger[level] === 'function' ? level : 'info';
+    logger[fn](logEntry);
   }
 }
 
