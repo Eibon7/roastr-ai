@@ -97,7 +97,7 @@ PR #630's completion validation is failing, but NOT because the PR broke tests. 
    - Concurrent operation tests failing
 
 **Root Causes (Hypothesis):**
-- Environment/configuration issues (DATABASE_URL, API keys, etc.)
+- Requires environment variables for database and external services
 - Test infrastructure problems (mocking, fixtures)
 - Real bugs in the codebase (likely)
 

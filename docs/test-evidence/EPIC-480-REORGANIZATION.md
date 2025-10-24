@@ -75,7 +75,7 @@ Passing test suites: 144 (45% passing)
 1. **Main branch rota**: 179 failing suites en main (baseline)
 2. **Completion validation bloqueada**: Requiere 100% passing (imposible)
 3. **Sin baseline tracking**: No hay mecanismo para evitar regresiones
-4. **Environment issues**: DATABASE_URL, API keys, mocking issues
+4. **Environment issues**: Requires environment variables (see configuration documentation)
 
 ## Nueva Estrategia (2025-10-23)
 
@@ -248,7 +248,7 @@ Database security and RLS policy tests failing - multi-tenant data isolation not
 ## Root Causes (Hypothesis)
 1. **RLS policies not applied** in test environment
 2. **Database schema mismatch** between test and production
-3. **Missing environment variables**: SUPABASE_URL, SERVICE_KEY
+3. **Missing environment variables**: Requires environment variables for database configuration.
 
 ## Impact
 🔴 **SECURITY CRITICAL** - Sin validación de aislamiento multi-tenant, riesgo de data leaks
@@ -261,7 +261,7 @@ Database security and RLS policy tests failing - multi-tenant data isolation not
 - [ ] 100% passing rate in database/security.test.js
 
 ## Blocker
-⚠️ Requires Supabase test environment setup (DATABASE_URL, credentials)
+⚠️ Requires test environment setup (see environment configuration guide)
 ```
 
 #### Issue #NEW-3: Fix Integration Routes Test Suite (P1)
@@ -463,7 +463,7 @@ Test timeout issues (327ms timeout exceeded)
 - **Con Claude Code asistido:** 2-3 semanas (más eficiente)
 
 ### Environment Setup
-- ✅ Supabase test database credentials
+- ✅ Test environment credentials configured.
 - ✅ API keys para servicios externos (opcional para mocks)
 - ✅ CI/CD pipeline ajustado para baseline comparison
 
