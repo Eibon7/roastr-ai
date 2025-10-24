@@ -1272,6 +1272,12 @@ class ShieldService {
 
   /**
    * Execute Shield actions and record them (test stub)
+   *
+   * @deprecated Use executeActionsFromTags() instead (Issue #650)
+   * This legacy method uses the old analysis-based API and will be removed in a future version.
+   * The new executeActionsFromTags() method consumes action_tags array from AnalysisDecisionEngine.
+   *
+   * @see executeActionsFromTags()
    */
   async executeActions(analysis, user, content) {
     if (!analysis.shouldTakeAction) {
