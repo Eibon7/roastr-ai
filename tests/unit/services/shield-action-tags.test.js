@@ -6,11 +6,19 @@
  */
 
 const ShieldService = require('../../../src/services/shieldService');
-const queueService = require('../../../src/services/queueService');
 const { supabase } = require('../../../src/config/supabase');
 
-// Mock dependencies
-jest.mock('../../../src/services/queueService');
+// Mock QueueService
+const mockQueueService = {
+  addJob: jest.fn(),
+  initialize: jest.fn(),
+  shutdown: jest.fn()
+};
+
+jest.mock('../../../src/services/queueService', () => {
+  return jest.fn().mockImplementation(() => mockQueueService);
+});
+
 jest.mock('../../../src/config/supabase', () => ({
   supabase: {
     from: jest.fn(() => ({
@@ -42,7 +50,7 @@ describe('ShieldService - executeActionsFromTags()', () => {
   const mockComment = {
     id: 'comment-456',
     platform: 'twitter',
-    author_id: 'user-789',
+    platform_user_id: 'user-789',
     content: 'toxic comment'
   };
   const mockMetadata = {
@@ -56,7 +64,7 @@ describe('ShieldService - executeActionsFromTags()', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     shieldService = new ShieldService();
-    queueService.addJob.mockResolvedValue({ id: 'mock-job-id' });
+    mockQueueService.addJob.mockResolvedValue({ id: 'mock-job-id' });
   });
 
   // ==========================================
