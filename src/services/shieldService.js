@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
 const { mockMode } = require('../config/mockMode');
+const logger = require('../utils/logger');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
@@ -1489,7 +1490,11 @@ class ShieldService {
       ...metadata
     };
 
-    console.log(`[${level.toUpperCase()}] ${message}`, logData);
+    if (logger[level]) {
+      logger[level](message, logData);
+    } else {
+      logger.info(message, logData);
+    }
   }
 }
 
