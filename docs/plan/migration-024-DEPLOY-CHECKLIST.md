@@ -33,8 +33,7 @@
   ```
 
 - [ ] **Environment Variables Configured**
-  - [ ] SUPABASE_URL set
-  - [ ] SUPABASE_SERVICE_KEY set
+  - [ ] 🔐 Requires environment variables configured (see configuration documentation)
   - [ ] Database credentials valid
 
 - [ ] **DevOps Team Notified**

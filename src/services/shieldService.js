@@ -1484,15 +1484,12 @@ class ShieldService {
    * Logging utility
    */
   log(level, message, metadata = {}) {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      level,
+    const logData = {
       service: 'ShieldService',
-      message,
       ...metadata
     };
-    
-    console.log(`[${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
+
+    logger[level](message, logData);
   }
 }
 
