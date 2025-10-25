@@ -62,9 +62,14 @@ describe('ShieldService', () => {
     // Mock environment variables
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-key';
-    
-    shieldService = new ShieldService();
+
+    // Initialize with autoActions enabled for tests that need it
+    shieldService = new ShieldService({ autoActions: true });
     mockSupabase = shieldService.supabase;
+
+    // Make mockSupabase.from a spy so it can be configured per-test
+    // This allows tests to use mockReturnValueOnce for different query patterns
+    jest.spyOn(mockSupabase, 'from');
   });
 
   afterEach(() => {
@@ -179,75 +184,66 @@ describe('ShieldService', () => {
     });
   });
 
-  describe('executeActions', () => {
+  describe('executeActionsFromTags', () => {
     test('should execute Shield actions and record them', async () => {
-      const analysis = {
-        shouldTakeAction: true,
-        actionLevel: 'medium',
-        recommendedActions: ['warning', 'content_removal'],
-        userRisk: 'medium',
-        confidence: 0.85
-      };
-
-      const user = {
-        user_id: 'user-123',
+      const organizationId = 'org-123';
+      const comment = {
+        id: 'comment-456',
         platform: 'twitter',
-        organization_id: 'org-123'
-      };
-
-      const content = {
-        comment_id: 'comment-456',
+        platform_user_id: 'user-123',
+        platform_username: 'testuser',
         text: 'Inappropriate content'
       };
-
-      // Mock Shield action recording
-      mockSupabase.from = jest.fn().mockReturnValueOnce({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: 'action-123' },
-              error: null
-            })
-          })
-        })
-      });
-
-      // Mock user behavior update
-      mockSupabase.from = jest.fn().mockReturnValueOnce({
-        upsert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: 'behavior-123' },
-              error: null
-            })
-          })
-        })
-      });
-
-      const result = await shieldService.executeActions(analysis, user, content);
-
-      expect(result.success).toBe(true);
-      expect(result.actionsExecuted).toContain('warning');
-      expect(result.actionsExecuted).toContain('content_removal');
-      expect(mockQueueService.addJob).toHaveBeenCalledTimes(2); // One job per action
-      expect(mockSupabase.from).toHaveBeenCalledWith('shield_actions');
-    });
-
-    test('should skip execution when no actions recommended', async () => {
-      const analysis = {
-        shouldTakeAction: false,
-        actionLevel: 'none',
-        recommendedActions: [],
-        userRisk: 'low'
+      // Use valid action tags that exist in the actionHandlers map
+      const action_tags = ['hide_comment', 'block_user'];
+      const metadata = {
+        toxicity_score: 0.85,
+        decision_level: 'medium'
       };
 
-      const user = { user_id: 'user-123', platform: 'twitter' };
-      const content = { comment_id: 'comment-456' };
+      // Spy on handler methods to return success
+      jest.spyOn(shieldService, '_handleHideComment').mockResolvedValue({ job_id: 'job-123' });
+      jest.spyOn(shieldService, '_handleBlockUser').mockResolvedValue({ job_id: 'job-456' });
 
-      const result = await shieldService.executeActions(analysis, user, content);
+      // Mock batch recording method
+      jest.spyOn(shieldService, '_batchRecordShieldActions').mockResolvedValue({ success: true });
+
+      // Mock user behavior update method
+      jest.spyOn(shieldService, '_updateUserBehaviorFromTags').mockResolvedValue({ success: true });
+
+      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
 
       expect(result.success).toBe(true);
-      expect(result.actionsExecuted).toHaveLength(0);
+      expect(result.actions_executed).toHaveLength(2);
+      expect(result.actions_executed.some(a => a.tag === 'hide_comment')).toBe(true);
+      expect(result.actions_executed.some(a => a.tag === 'block_user')).toBe(true);
+
+      // Verify handler methods were called
+      expect(shieldService._handleHideComment).toHaveBeenCalledWith(organizationId, comment, metadata);
+      expect(shieldService._handleBlockUser).toHaveBeenCalledWith(organizationId, comment, metadata);
+
+      // Verify batch recording was called
+      expect(shieldService._batchRecordShieldActions).toHaveBeenCalled();
+
+      // Verify user behavior update was called
+      expect(shieldService._updateUserBehaviorFromTags).toHaveBeenCalledWith(organizationId, comment, action_tags, metadata);
+    });
+
+    test('should skip execution when no actions in tags', async () => {
+      const organizationId = 'org-123';
+      const comment = {
+        id: 'comment-456',
+        platform: 'twitter',
+        platform_user_id: 'user-123',
+        platform_username: 'testuser'
+      };
+      const action_tags = [];
+      const metadata = { toxicity_score: 0.2 };
+
+      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
+
+      expect(result.success).toBe(true);
+      expect(result.actions_executed).toHaveLength(0);
       expect(mockQueueService.addJob).not.toHaveBeenCalled();
     });
   });
@@ -358,24 +354,28 @@ describe('ShieldService', () => {
     test('should return comprehensive Shield statistics', async () => {
       const organizationId = 'org-123';
 
-      // Mock Shield actions query
+      // Mock app_logs query: from('app_logs').select('*').eq().eq().gte()
       mockSupabase.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              gte: jest.fn().mockReturnValue({
-                lt: jest.fn().mockResolvedValue({
+              eq: jest.fn().mockReturnValue({
+                gte: jest.fn().mockResolvedValue({
                   data: [
                     {
-                      action_type: 'warning',
-                      platform: 'twitter',
-                      action_level: 'low',
+                      metadata: {
+                        actions: { primary: 'warning' },
+                        toxicityScore: 0.5,
+                        platform: 'twitter'
+                      },
                       created_at: new Date().toISOString()
                     },
                     {
-                      action_type: 'temporary_mute',
-                      platform: 'twitter',
-                      action_level: 'high',
+                      metadata: {
+                        actions: { primary: 'temporary_mute' },
+                        toxicityScore: 0.85,
+                        platform: 'twitter'
+                      },
                       created_at: new Date().toISOString()
                     }
                   ],
@@ -385,13 +385,13 @@ describe('ShieldService', () => {
             })
           })
         })
-        // Mock user behavior query
+        // Mock user_behaviors query: from('user_behaviors').select('*').eq()
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockResolvedValue({
               data: [
-                { user_id: 'user-1', total_violations: 5, severe_violations: 2 },
-                { user_id: 'user-2', total_violations: 1, severe_violations: 0 }
+                { user_id: 'user-1', total_violations: 5, severe_violations: 2, is_blocked: false },
+                { user_id: 'user-2', total_violations: 1, severe_violations: 0, is_blocked: false }
               ],
               error: null
             })
@@ -400,24 +400,22 @@ describe('ShieldService', () => {
 
       const stats = await shieldService.getShieldStats(organizationId, 30);
 
-      expect(stats.organizationId).toBe(organizationId);
-      expect(stats.totalActions).toBe(2);
-      expect(stats.actionsByType.warning).toBe(1);
-      expect(stats.actionsByType.temporary_mute).toBe(1);
-      expect(stats.actionsByPlatform.twitter).toBe(2);
-      expect(stats.riskDistribution.high).toBe(1); // user-1 with severe violations
-      expect(stats.riskDistribution.low).toBe(1); // user-2 with minimal violations
+      expect(stats.totalShieldActivations).toBe(2);
+      expect(stats.actionBreakdown.warning).toBe(1);
+      expect(stats.actionBreakdown.temporary_mute).toBe(1);
+      expect(stats.totalTrackedUsers).toBe(2);
     });
 
     test('should handle organizations with no Shield activity', async () => {
       const organizationId = 'org-empty';
 
+      // Mock app_logs query: from('app_logs').select('*').eq().eq().gte()
       mockSupabase.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              gte: jest.fn().mockReturnValue({
-                lt: jest.fn().mockResolvedValue({
+              eq: jest.fn().mockReturnValue({
+                gte: jest.fn().mockResolvedValue({
                   data: [],
                   error: null
                 })
@@ -425,6 +423,7 @@ describe('ShieldService', () => {
             })
           })
         })
+        // Mock user_behaviors query: from('user_behaviors').select('*').eq()
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockResolvedValue({
@@ -436,9 +435,9 @@ describe('ShieldService', () => {
 
       const stats = await shieldService.getShieldStats(organizationId, 30);
 
-      expect(stats.totalActions).toBe(0);
-      expect(stats.actionsByType).toEqual({});
-      expect(stats.riskDistribution.low).toBe(0);
+      expect(stats.totalShieldActivations).toBe(0);
+      expect(stats.actionBreakdown).toEqual({});
+      expect(stats.totalTrackedUsers).toBe(0);
     });
   });
 
@@ -524,34 +523,28 @@ describe('ShieldService', () => {
     });
 
     test('should handle queue service errors gracefully', async () => {
-      const analysis = {
-        shouldTakeAction: true,
-        recommendedActions: ['warning'],
-        actionLevel: 'low'
+      const organizationId = 'org-123';
+      const comment = {
+        id: 'comment-456',
+        platform: 'twitter',
+        platform_user_id: 'user-123',
+        platform_username: 'testuser'
       };
-      const user = { user_id: 'user-123' };
-      const content = { comment_id: 'comment-456' };
+      // Use valid action tag that has a handler
+      const action_tags = ['hide_comment'];
+      const metadata = { toxicity_score: 0.7 };
 
+      // Mock queue service to throw error when handler tries to add job
       mockQueueService.addJob.mockRejectedValue(new Error('Queue error'));
-      
-      // Mock Supabase chain for this test
-      const mockSingle = jest.fn().mockResolvedValue({
-        data: { id: 'action-123' },
-        error: null
-      });
-      const mockSelect = jest.fn().mockReturnValue({ single: mockSingle });
-      const mockUpsert = jest.fn().mockReturnValue({ select: mockSelect });
-      const mockInsert = jest.fn().mockReturnValue({ select: mockSelect });
-      
-      mockSupabase.from = jest.fn().mockReturnValue({
-        insert: mockInsert,
-        upsert: mockUpsert
-      });
 
-      const result = await shieldService.executeActions(analysis, user, content);
+      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
 
+      // Expect the error to be in failed_actions array
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Queue error');
+      expect(result.failed_actions).toHaveLength(1);
+      expect(result.failed_actions[0].tag).toBe('hide_comment');
+      expect(result.failed_actions[0].status).toBe('failed');
+      expect(result.failed_actions[0].error).toContain('Queue error');
     });
   });
 

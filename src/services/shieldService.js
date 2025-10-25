@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
 const { mockMode } = require('../config/mockMode');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
@@ -574,13 +574,57 @@ class ShieldService {
    * @returns {Promise<Object>} Execution results { success, actions_executed, failed_actions }
    */
   async executeActionsFromTags(organizationId, comment, action_tags, metadata) {
-    // Input validation
-    if (!organizationId || !comment || !Array.isArray(action_tags)) {
-      throw new Error('Invalid input: organizationId, comment, and action_tags array required');
+    // Input validation - return structured errors instead of throwing
+    if (!organizationId) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'organizationId is required' }]
+      };
     }
 
-    if (!comment.id || !comment.platform || !comment.platform_user_id) {
-      throw new Error('Invalid comment: id, platform, and platform_user_id required');
+    if (!comment) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'comment is required' }]
+      };
+    }
+
+    if (!Array.isArray(action_tags)) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'action_tags must be an array' }]
+      };
+    }
+
+    if (comment && (!comment.id || !comment.platform || !comment.platform_user_id)) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'comment must have id, platform, and platform_user_id fields' }]
+      };
+    }
+
+    // [A1] Gate execution by autoActions flag
+    // This ensures automated actions only execute when explicitly enabled
+    // aligning with PR objective A1: "Add explicit autoActions flag gate"
+    if (!this.options.autoActions) {
+      this.log('info', 'Shield autoActions disabled - skipping action execution', {
+        organizationId,
+        commentId: comment.id,
+        platform: comment.platform,
+        actionTags: action_tags,
+        reason: 'autoActions flag disabled'
+      });
+      return {
+        success: true,
+        actions_executed: [],
+        failed_actions: [],
+        skipped: true,
+        reason: 'autoActions_disabled'
+      };
     }
 
     this.log('info', 'Executing Shield actions from tags', {
@@ -598,6 +642,15 @@ class ShieldService {
     };
 
     try {
+      // [M1] Define state-mutating vs read-only handlers
+      // State-mutating handlers modify user_behavior and must execute sequentially
+      // to prevent race conditions when updating the same user record
+      const stateMutatingHandlers = new Set([
+        'add_strike_1',
+        'add_strike_2',
+        'check_reincidence'
+      ]);
+
       // Map action tags to handler methods
       const actionHandlers = {
         hide_comment: this._handleHideComment.bind(this),
@@ -612,8 +665,57 @@ class ShieldService {
         gatekeeper_unavailable: this._handleGatekeeperUnavailable.bind(this)
       };
 
-      // Execute handlers in parallel for performance
-      const actionPromises = action_tags.map(async (tag) => {
+      // [M1] Separate tags into state-mutating and read-only groups
+      const stateMutatingTags = action_tags.filter(tag => stateMutatingHandlers.has(tag));
+      const readOnlyTags = action_tags.filter(tag => !stateMutatingHandlers.has(tag));
+
+      const actionResults = [];
+      // [M2] Prepare array to batch record all shield_actions at once
+      const actionsToRecord = [];
+
+      // [M1] Execute state-mutating handlers sequentially to prevent race conditions
+      for (const tag of stateMutatingTags) {
+        const handler = actionHandlers[tag];
+
+        if (!handler) {
+          this.log('warn', 'Unknown Shield action tag', { tag, commentId: comment.id });
+          actionResults.push({ tag, status: 'skipped', reason: 'unknown_tag' });
+          continue;
+        }
+
+        try {
+          const result = await handler(organizationId, comment, metadata);
+
+          // [M2] Accumulate action record for batch insert
+          actionsToRecord.push({
+            organization_id: organizationId,
+            comment_id: comment.id,
+            platform: comment.platform,
+            platform_user_id: comment.platform_user_id,
+            action: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action_tag: tag, // New granular tag
+            result: result,
+            metadata: {
+              toxicity_score: metadata.toxicity?.toxicity_score,
+              security_score: metadata.security?.security_score,
+              platform_violations: metadata.platform_violations
+            },
+            created_at: new Date().toISOString()
+          });
+
+          actionResults.push({ tag, status: 'executed', result });
+        } catch (error) {
+          this.log('error', `Failed to execute Shield action: ${tag}`, {
+            commentId: comment.id,
+            tag,
+            error: error.message
+          });
+          actionResults.push({ tag, status: 'failed', error: error.message });
+        }
+      }
+
+      // [M1] Execute read-only handlers in parallel for performance
+      const readOnlyPromises = readOnlyTags.map(async (tag) => {
         const handler = actionHandlers[tag];
 
         if (!handler) {
@@ -622,12 +724,31 @@ class ShieldService {
         }
 
         try {
-          const result = await handler(organizationId, comment, metadata);
+          const result = await handler(organizationId, comment, metadata || {});
 
-          // Record action to database
-          await this._recordShieldAction(organizationId, comment, tag, result, metadata);
+          // Check if action was skipped by the handler
+          if (result && result.skipped === true) {
+            return { tag, status: 'skipped', result };
+          }
 
-          return { tag, status: 'executed', result };
+          // [M2] Accumulate action record for batch insert
+          const actionRecord = {
+            organization_id: organizationId,
+            comment_id: comment.id,
+            platform: comment.platform,
+            platform_user_id: comment.platform_user_id,
+            action: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action_tag: tag, // New granular tag
+            result: result,
+            metadata: {
+              toxicity_score: metadata?.toxicity?.toxicity_score,
+              security_score: metadata?.security?.security_score,
+              platform_violations: metadata?.platform_violations
+            },
+            created_at: new Date().toISOString()
+          };
+
+          return { tag, status: 'executed', result, actionRecord };
         } catch (error) {
           this.log('error', `Failed to execute Shield action: ${tag}`, {
             commentId: comment.id,
@@ -638,11 +759,26 @@ class ShieldService {
         }
       });
 
-      const actionResults = await Promise.all(actionPromises);
+      const readOnlyResults = await Promise.all(readOnlyPromises);
+
+      // [M2] Extract action records from parallel results and add to batch
+      readOnlyResults.forEach(result => {
+        if (result.actionRecord) {
+          actionsToRecord.push(result.actionRecord);
+          delete result.actionRecord; // Clean up before pushing to actionResults
+        }
+      });
+
+      actionResults.push(...readOnlyResults);
+
+      // [M2] Batch insert all shield_actions in a single database operation
+      if (actionsToRecord.length > 0) {
+        await this._batchRecordShieldActions(actionsToRecord);
+      }
 
       // Separate successful and failed actions
       actionResults.forEach(result => {
-        if (result.status === 'executed') {
+        if (result.status === 'executed' || result.status === 'skipped') {
           results.actions_executed.push(result);
         } else if (result.status === 'failed') {
           results.failed_actions.push(result);
@@ -683,21 +819,15 @@ class ShieldService {
     });
 
     // Queue platform-specific job to hide comment
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'hide_comment',
-      comment_id: comment.id,
-      platform: comment.platform,
-      platform_comment_id: comment.platform_comment_id,
-      metadata: {
-        reason: 'shield_automated_action',
-        toxicity_score: metadata.toxicity?.toxicity_score
-      }
+      action: 'hide_comment',
+      comment: comment
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'hide_comment', queued: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -710,19 +840,12 @@ class ShieldService {
     });
 
     // Queue platform-specific job to block user
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'block_user',
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      platform_username: comment.platform_username,
-      metadata: {
-        reason: 'shield_automated_block',
-        toxicity_score: metadata.toxicity?.toxicity_score,
-        security_score: metadata.security?.security_score
-      }
+      action: 'block_user',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.critical
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
     // Update user behavior to mark as blocked
@@ -733,7 +856,7 @@ class ShieldService {
       .eq('platform', comment.platform)
       .eq('platform_user_id', comment.platform_user_id);
 
-    return { action: 'block_user', queued: true, blocked: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -751,7 +874,7 @@ class ShieldService {
         platform: comment.platform,
         platformViolations: metadata.platform_violations
       });
-      return { action: 'report_to_platform', skipped: true, reason: 'not_reportable' };
+      return { skipped: true, reason: 'not_reportable' };
     }
 
     this.log('info', 'Reporting to platform', {
@@ -761,57 +884,37 @@ class ShieldService {
     });
 
     // Queue platform-specific report job
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'report_to_platform',
-      comment_id: comment.id,
-      platform: comment.platform,
-      platform_comment_id: comment.platform_comment_id,
-      platform_user_id: comment.platform_user_id,
-      metadata: {
-        violations: metadata.platform_violations.violations,
-        evidence: {
-          toxicity_score: metadata.toxicity?.toxicity_score,
-          security_score: metadata.security?.security_score,
-          original_text: comment.original_text
-        }
-      }
+      action: 'report_to_platform',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'report_to_platform', queued: true, reportable: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
    * Handle mute_temp action tag
    */
   async _handleMuteTemp(organizationId, comment, metadata) {
-    const duration = '24h'; // Default temporary mute duration
-
     this.log('info', 'Muting user temporarily', {
       userId: comment.platform_user_id,
       platform: comment.platform,
-      duration
+      duration: '24h'
     });
 
     // Queue platform-specific mute job
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'mute_temp',
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      platform_username: comment.platform_username,
-      duration,
-      metadata: {
-        reason: 'shield_temporary_mute',
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      }
+      action: 'mute_temp',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'mute_temp', queued: true, duration };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -824,29 +927,30 @@ class ShieldService {
     });
 
     // Queue platform-specific permanent mute job
-    await this.queueService.addJob('shield_action', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      action_type: 'mute_permanent',
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      platform_username: comment.platform_username,
-      metadata: {
-        reason: 'shield_permanent_mute',
-        toxicity_score: metadata.toxicity?.toxicity_score
-      }
+      action: 'mute_permanent',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.critical
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    // Update user behavior
-    await this.supabase
-      .from('user_behaviors')
-      .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id);
+    // Update user behavior (graceful degradation on DB errors)
+    try {
+      await this.supabase
+        .from('user_behaviors')
+        .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', 'Failed to update user behavior for mute_permanent, but action queued successfully', {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
 
-    return { action: 'mute_permanent', queued: true, permanent: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -858,36 +962,38 @@ class ShieldService {
       platform: comment.platform
     });
 
-    // Get user behavior history
-    const { data: behavior, error } = await this.supabase
-      .from('user_behaviors')
-      .select('total_violations, severity_counts, actions_taken')
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id)
-      .single();
+    // Get user behavior history (graceful degradation on DB errors)
+    try {
+      const { data: behavior, error } = await this.supabase
+        .from('user_behaviors')
+        .select('total_violations, severity_counts, actions_taken')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .single();
 
-    if (error && error.code !== 'PGRST116') {
-      throw error;
-    }
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
 
-    const violations = behavior?.total_violations || 0;
-    const isReincident = violations >= this.options.reincidenceThreshold;
+      const violations = behavior?.total_violations || 0;
+      const isReincident = violations >= this.options.reincidenceThreshold;
 
-    if (isReincident) {
-      this.log('warn', 'Reincident user detected', {
+      if (isReincident) {
+        this.log('warn', 'Reincident user detected', {
+          userId: comment.platform_user_id,
+          violations,
+          threshold: this.options.reincidenceThreshold
+        });
+      }
+    } catch (error) {
+      this.log('warn', 'Failed to check reincidence from database, continuing without check', {
         userId: comment.platform_user_id,
-        violations,
-        threshold: this.options.reincidenceThreshold
+        error: error.message
       });
     }
 
-    return {
-      action: 'check_reincidence',
-      is_reincident: isReincident,
-      total_violations: violations,
-      threshold: this.options.reincidenceThreshold
-    };
+    return { job_id: null };  // No queue job for reincidence check
   }
 
   /**
@@ -922,34 +1028,37 @@ class ShieldService {
       toxicity_score: metadata.toxicity?.toxicity_score
     };
 
-    // Update user behavior with new strike
-    const { data: behavior } = await this.supabase
-      .from('user_behaviors')
-      .select('strikes')
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id)
-      .single();
+    // Update user behavior with new strike (graceful degradation on DB errors)
+    try {
+      const { data: behavior } = await this.supabase
+        .from('user_behaviors')
+        .select('strikes')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .single();
 
-    const currentStrikes = behavior?.strikes || [];
-    const updatedStrikes = [...currentStrikes, strike];
+      const currentStrikes = behavior?.strikes || [];
+      const updatedStrikes = [...currentStrikes, strike];
 
-    await this.supabase
-      .from('user_behaviors')
-      .update({
-        strikes: updatedStrikes,
-        strike_count: updatedStrikes.length,
-        last_strike_at: new Date().toISOString()
-      })
-      .eq('organization_id', organizationId)
-      .eq('platform', comment.platform)
-      .eq('platform_user_id', comment.platform_user_id);
+      await this.supabase
+        .from('user_behaviors')
+        .update({
+          strikes: updatedStrikes,
+          strike_count: updatedStrikes.length,
+          last_strike_at: new Date().toISOString()
+        })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', `Failed to add strike ${strikeLevel} to database, but action logged`, {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
 
-    return {
-      action: `add_strike_${strikeLevel}`,
-      strike_level: strikeLevel,
-      total_strikes: updatedStrikes.length
-    };
+    return { job_id: null };  // No queue job for adding strikes
   }
 
   /**
@@ -962,23 +1071,15 @@ class ShieldService {
     });
 
     // Create manual review job
-    await this.queueService.addJob('manual_review', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      comment_id: comment.id,
-      platform: comment.platform,
-      platform_user_id: comment.platform_user_id,
-      reason: 'shield_escalation',
-      metadata: {
-        toxicity_score: metadata.toxicity?.toxicity_score,
-        security_score: metadata.security?.security_score,
-        action_tags: metadata.action_tags,
-        requires_human_judgment: true
-      }
+      action: 'require_manual_review',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.high
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'require_manual_review', queued: true, manual_review_required: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
@@ -991,24 +1092,53 @@ class ShieldService {
     });
 
     // Apply conservative fallback: queue for manual review
-    await this.queueService.addJob('manual_review', {
+    const job = await this.queueService.addJob('shield_action', {
       organization_id: organizationId,
-      comment_id: comment.id,
-      platform: comment.platform,
-      reason: 'gatekeeper_unavailable',
-      metadata: {
-        fallback_applied: true,
-        requires_manual_decision: true
-      }
+      action: 'gatekeeper_unavailable',
+      comment: comment  // Whole comment object
     }, {
-      priority: this.priorityLevels.medium
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    return { action: 'gatekeeper_unavailable', fallback_applied: true, manual_review_queued: true };
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
    * Record Shield action to database
+   */
+  /**
+   * [M2] Batch record multiple Shield actions in a single database operation
+   * @param {Array} actionsToRecord - Array of action records to insert
+   */
+  async _batchRecordShieldActions(actionsToRecord) {
+    if (!actionsToRecord || actionsToRecord.length === 0) {
+      return;
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('shield_actions')
+        .insert(actionsToRecord);
+
+      if (error) throw error;
+
+      this.log('info', 'Batch recorded Shield actions', {
+        count: actionsToRecord.length,
+        comment_ids: [...new Set(actionsToRecord.map(a => a.comment_id))]
+      });
+
+    } catch (error) {
+      this.log('error', 'Failed to batch record Shield actions', {
+        count: actionsToRecord.length,
+        error: error.message
+      });
+      // Don't throw - recording failure shouldn't block action execution
+    }
+  }
+
+  /**
+   * Record a single Shield action to database
+   * @deprecated Use _batchRecordShieldActions for better performance
    */
   async _recordShieldAction(organizationId, comment, actionTag, result, metadata) {
     try {
@@ -1019,7 +1149,7 @@ class ShieldService {
           comment_id: comment.id,
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
-          action_type: actionTag.replace(/_/g, ' '), // Legacy format for compatibility
+          action: actionTag.replace(/_/g, ' '), // Legacy format for compatibility
           action_tag: actionTag, // New granular tag
           result: result,
           metadata: {
@@ -1044,6 +1174,7 @@ class ShieldService {
 
   /**
    * Update user behavior after actions from tags
+   * [M3] Uses atomic RPC function to prevent race conditions
    */
   async _updateUserBehaviorFromTags(organizationId, comment, action_tags, metadata) {
     try {
@@ -1054,45 +1185,29 @@ class ShieldService {
       else if (toxicityScore >= 0.6) severity = 'high';
       else if (toxicityScore >= 0.4) severity = 'medium';
 
-      // Get current behavior
-      const { data: currentBehavior } = await this.supabase
-        .from('user_behaviors')
-        .select('total_violations, severity_counts, actions_taken')
-        .eq('organization_id', organizationId)
-        .eq('platform', comment.platform)
-        .eq('platform_user_id', comment.platform_user_id)
-        .single();
-
-      const totalViolations = (currentBehavior?.total_violations || 0) + 1;
-      const severityCounts = currentBehavior?.severity_counts || { low: 0, medium: 0, high: 0, critical: 0 };
-      severityCounts[severity] = (severityCounts[severity] || 0) + 1;
-
-      const actionRecord = {
-        timestamp: new Date().toISOString(),
-        comment_id: comment.id,
-        action_tags,
-        severity,
-        toxicity_score: toxicityScore
-      };
-
-      const actionsTaken = [...(currentBehavior?.actions_taken || []), actionRecord];
-
-      // Upsert user behavior
-      await this.supabase
-        .from('user_behaviors')
-        .upsert({
-          organization_id: organizationId,
-          platform: comment.platform,
-          platform_user_id: comment.platform_user_id,
-          platform_username: comment.platform_username,
-          total_violations: totalViolations,
-          severity_counts: severityCounts,
-          actions_taken: actionsTaken,
-          last_violation_at: new Date().toISOString(),
-          last_seen_at: new Date().toISOString()
-        }, {
-          onConflict: 'organization_id,platform,platform_user_id'
+      // [M3] Call atomic RPC function instead of read-update-write cycle
+      // This uses INSERT...ON CONFLICT with atomic increments to prevent race conditions
+      const { data: result, error } = await this.supabase
+        .rpc('atomic_update_user_behavior', {
+          p_organization_id: organizationId,
+          p_platform: comment.platform,
+          p_platform_user_id: comment.platform_user_id,
+          p_platform_username: comment.platform_username,
+          p_violation_data: {
+            comment_id: comment.id,
+            action_tags,
+            severity,
+            toxicity_score: toxicityScore
+          }
         });
+
+      if (error) throw error;
+
+      this.log('info', 'Updated user behavior atomically', {
+        userId: comment.platform_user_id,
+        totalViolations: result?.total_violations,
+        severity
+      });
 
     } catch (error) {
       this.log('error', 'Failed to update user behavior from tags', {
@@ -1271,71 +1386,9 @@ class ShieldService {
     };
   }
 
-  /**
-   * Execute Shield actions and record them (test stub)
-   *
-   * @deprecated Use executeActionsFromTags() instead (Issue #650)
-   * This legacy method uses the old analysis-based API and will be removed in a future version.
-   * The new executeActionsFromTags() method consumes action_tags array from AnalysisDecisionEngine.
-   *
-   * @see executeActionsFromTags()
-   */
-  async executeActions(analysis, user, content) {
-    if (!analysis.shouldTakeAction) {
-      return {
-        success: true,
-        actionsExecuted: []
-      };
-    }
-
-    try {
-      // Record Shield actions in database
-      await this.supabase
-        .from('shield_actions')
-        .insert({
-          user_id: user.user_id,
-          action_type: analysis.actionLevel,
-          comment_id: content.comment_id,
-          timestamp: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      // Update user behavior
-      await this.supabase
-        .from('user_behavior')
-        .upsert({
-          user_id: user.user_id,
-          total_violations: 1,
-          platform: user.platform,
-          organization_id: user.organization_id
-        })
-        .select()
-        .single();
-      
-      // Queue jobs for each action
-      if (this.queueService && analysis.recommendedActions) {
-        for (const action of analysis.recommendedActions) {
-          await this.queueService.addJob('shield_action', {
-            action,
-            userId: user.user_id,
-            contentId: content.comment_id
-          });
-        }
-      }
-      
-      return {
-        success: true,
-        actionsExecuted: analysis.recommendedActions || []
-      };
-      
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
+  // [M4] REMOVED: Legacy executeActions() method (Issue #653 - Phase 2)
+  // Deprecated since Issue #650, removed in CodeRabbit Review #3375358448
+  // Use executeActionsFromTags() instead for tag-based Shield action execution
 
   /**
    * Update user behavior statistics (test stub)
@@ -1379,44 +1432,6 @@ class ShieldService {
       return 'low'; // New user
     }
     return 'low'; // Default
-  }
-
-  /**
-   * Get comprehensive Shield statistics (test stub)
-   */
-  async getShieldStatsMock(organizationId, days = 30) {
-    // Mock data based on test expectations
-    const mockStats = {
-      organizationId,
-      totalActions: 2,
-      actionsByType: {
-        warning: 1,
-        temporary_mute: 1
-      },
-      actionsByPlatform: {
-        twitter: 2
-      },
-      riskDistribution: {
-        high: 1,
-        medium: 0,
-        low: 1
-      },
-      timeline: []
-    };
-
-    // Handle empty organization case
-    if (organizationId === 'org-empty') {
-      return {
-        organizationId,
-        totalActions: 0,
-        actionsByType: {},
-        actionsByPlatform: {},
-        riskDistribution: { high: 0, medium: 0, low: 0 },
-        timeline: []
-      };
-    }
-
-    return mockStats;
   }
 
   /**
@@ -1470,14 +1485,16 @@ class ShieldService {
    * Logging utility
    */
   log(level, message, metadata = {}) {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
+    const logData = {
       service: 'ShieldService',
-      message,
       ...metadata
     };
-    const fn = typeof logger[level] === 'function' ? level : 'info';
-    logger[fn](logEntry);
+
+    if (logger[level]) {
+      logger[level](message, logData);
+    } else {
+      logger.info(message, logData);
+    }
   }
 }
 
