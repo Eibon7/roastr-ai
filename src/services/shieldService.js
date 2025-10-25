@@ -849,7 +849,7 @@ class ShieldService {
 
     // Update user behavior to mark as blocked
     await this.supabase
-      .from('user_behavior')
+      .from('user_behaviors')
       .update({ is_blocked: true, blocked_at: new Date().toISOString() })
       .eq('organization_id', organizationId)
       .eq('platform', comment.platform)
@@ -937,7 +937,7 @@ class ShieldService {
     // Update user behavior (graceful degradation on DB errors)
     try {
       await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
@@ -964,7 +964,7 @@ class ShieldService {
     // Get user behavior history (graceful degradation on DB errors)
     try {
       const { data: behavior, error } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('total_violations, severity_counts, actions_taken')
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
@@ -1030,7 +1030,7 @@ class ShieldService {
     // Update user behavior with new strike (graceful degradation on DB errors)
     try {
       const { data: behavior } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('strikes')
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
@@ -1041,7 +1041,7 @@ class ShieldService {
       const updatedStrikes = [...currentStrikes, strike];
 
       await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .update({
           strikes: updatedStrikes,
           strike_count: updatedStrikes.length,
@@ -1489,7 +1489,7 @@ class ShieldService {
       ...metadata
     };
 
-    logger[level](message, logData);
+    console.log(`[${level.toUpperCase()}] ${message}`, logData);
   }
 }
 
