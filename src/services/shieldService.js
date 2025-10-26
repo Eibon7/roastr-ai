@@ -47,6 +47,7 @@ class ShieldService {
     };
     
     // Action escalation matrix
+    // Issue #482: Progressive escalation path (warn → mute_temp → mute_permanent → block → report)
     this.actionMatrix = {
       low: {
         first: 'warn',
@@ -56,12 +57,12 @@ class ShieldService {
       medium: {
         first: 'mute_temp',
         repeat: 'mute_permanent',
-        persistent: 'block'
+        persistent: 'block'  // Escalates from mute to block
       },
       high: {
         first: 'mute_permanent',
         repeat: 'block',
-        persistent: 'report'
+        persistent: 'report'  // Highest escalation: report to platform
       },
       critical: {
         first: 'block',
@@ -244,11 +245,16 @@ class ShieldService {
     const { severity_level } = analysisResult;
     const violationCount = userBehavior.total_violations || 0;
 
+    // Issue #482: Calculate offense level using NEW count (including current violation)
+    // BEFORE: Used OLD count from database, causing off-by-one error
+    // Example: 2 existing + 1 new = 3 total → should be 'persistent' if threshold=3
+    const totalViolations = violationCount + 1;
+
     // Determine offense level
     let offenseLevel = 'first';
-    if (violationCount >= this.options.reincidenceThreshold) {
+    if (totalViolations >= this.options.reincidenceThreshold) {
       offenseLevel = 'persistent';
-    } else if (violationCount > 0) {
+    } else if (totalViolations > 1) {
       offenseLevel = 'repeat';
     }
 

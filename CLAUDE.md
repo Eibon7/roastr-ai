@@ -187,12 +187,14 @@ tests/                   # unit/, integration/, helpers/
 
 #### 3. Agent Invocation & Receipts
 
-**Option A: Invoke**
+##### Option A: Invoke
+
 1. Use `Task` tool or execute script (Guardian)
 2. Record decisions, artifacts, guardrails
 3. Generate: `docs/agents/receipts/<pr>-<Agent>.md`
 
-**Option B: Skip**
+##### Option B: Skip
+
 1. Document why + assess risks
 2. Get approval if needed (Product Owner for CRITICAL)
 3. Generate SKIPPED: `docs/agents/receipts/<pr>-<Agent>-SKIPPED.md`
@@ -279,12 +281,14 @@ tests/                   # unit/, integration/, helpers/
 
 **⚠️ CRITICAL: Before ANY platform integration:**
 
-**Phase 1: Pre-Implementation**
+#### Phase 1: Pre-Implementation
+
 1. Read: `docs/INTEGRATIONS.md`, `docs/nodes/social-platforms.md`
 2. Verify naming: `<platform>Service.js`, PascalCase class, `<PLATFORM>_<PROPERTY>`
 3. Check existing: `grep -r "class <Platform>Service" src/integrations/`
 
-**Phase 2: Checklist**
+#### Phase 2: Checklist
+
 - [ ] Implements interface: authenticate, fetchComments, postReply, blockUser
 - [ ] Platform routing in FetchCommentsWorker.js
 - [ ] Integration tests
@@ -293,7 +297,8 @@ tests/                   # unit/, integration/, helpers/
 - [ ] Rate limit handling
 - [ ] Uses utils/logger.js
 
-**Phase 3: Post-Implementation**
+#### Phase 3: Post-Implementation
+
 - [ ] Update `docs/INTEGRATIONS.md`
 - [ ] Update `docs/nodes/social-platforms.md`
 - [ ] Add to `scripts/update-integration-status.js`

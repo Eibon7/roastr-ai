@@ -107,8 +107,8 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           step: 3,
           priorViolations: 2,
           severity: 'medium',
-          expectedAction: 'mute_permanent',  // medium/repeat = mute_permanent (2 < reincidenceThreshold(3), so repeat)
-          expectedLevel: 'repeat'
+          expectedAction: 'block',  // medium/persistent = block (2 prior + 1 current = 3 >= threshold(3))
+          expectedLevel: 'persistent'
         },
         {
           step: 4,
@@ -234,25 +234,26 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       const userId = 'user_frequency_escalation';
       const organizationId = 'org_123';
 
-      // Mock user with recent frequent violations (within 24 hours)
+      // Issue #482: Use centralized factory correctly (like Test 1)
       const recentDate = new Date(Date.now() - 2 * 3600000).toISOString(); // 2 hours ago
-      const mockBehavior = {
-        organization_id: organizationId,
+
+      mockSupabase._mockData.userBehavior = []; // Clear previous data
+      const userBehavior = createUserBehaviorData({
+        userId,
+        organizationId,
         platform: 'twitter',
-        platform_user_id: userId,
-        total_violations: 3,
-        actions_taken: [
+        username: 'frequencyuser',
+        violationCount: 2, // Issue #482: 2 EXISTING + 1 new = 3 total
+        actionsTaken: [
           { action: 'warn', date: new Date(Date.now() - 23 * 3600000).toISOString() },
           { action: 'warn', date: new Date(Date.now() - 12 * 3600000).toISOString() },
           { action: 'mute_temp', date: recentDate }
         ],
-        last_seen_at: recentDate
-      };
-
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: mockBehavior,
-        error: null
+        lastViolation: recentDate,
+        lastSeen: recentDate
       });
+
+      mockSupabase._mockData.userBehavior.push(userBehavior);
 
       const comment = {
         id: 'comment_frequency_test',
@@ -335,25 +336,27 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       const userId = 'user_cooling_off_test';
       const organizationId = 'org_123';
 
-      // Mock user with recent violation still in cooling-off period
+      // Issue #482: Use centralized factory correctly
       const recentDate = new Date(Date.now() - 3600000).toISOString(); // 1 hour ago
-      const mockBehavior = {
-        organization_id: organizationId,
+
+      mockSupabase._mockData.userBehavior = [];
+      const userBehavior = createUserBehaviorData({
+        userId,
+        organizationId,
         platform: 'twitter',
-        platform_user_id: userId,
-        total_violations: 1,
-        actions_taken: [
+        username: 'coolingoffuser',
+        violationCount: 1,
+        isMuted: true, // Issue #482: Preserve is_muted field
+        actionsTaken: [
           { action: 'mute_temp', severity: 'medium', date: recentDate, duration: '24h' }
         ],
-        is_muted: true,
-        mute_expires_at: new Date(Date.now() + 23 * 3600000).toISOString(), // 23 hours from now
-        last_seen_at: recentDate
-      };
-
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: mockBehavior,
-        error: null
+        lastViolation: recentDate,
+        lastSeen: recentDate
       });
+
+      // Add mute_expires_at field
+      userBehavior.mute_expires_at = new Date(Date.now() + 23 * 3600000).toISOString();
+      mockSupabase._mockData.userBehavior.push(userBehavior);
 
       const comment = {
         id: 'comment_cooling_off',
