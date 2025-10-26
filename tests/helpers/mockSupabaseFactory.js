@@ -463,6 +463,8 @@ function createUserBehaviorData(options = {}) {
     last_seen_at: options.lastSeen || new Date().toISOString(),
     risk_score: options.riskScore || 0,
     strikes: options.strikes || 0,
+    is_muted: options.isMuted !== undefined ? options.isMuted : false,  // Optional field for mute status tests
+    user_type: options.userType || 'standard',  // Optional field for special user type tests (verified_creator, etc.)
     created_at: options.createdAt || new Date().toISOString(),
     updated_at: options.updatedAt || new Date().toISOString()
   };

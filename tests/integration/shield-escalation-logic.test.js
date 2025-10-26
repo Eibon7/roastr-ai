@@ -224,7 +224,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      expect(result.actions.primary).toBe('report'); // Skip to report for critical
+      expect(result.actions.primary).toBe('block'); // critical/first = block (per action matrix)
       expect(result.actions.escalate).toBe(true);
       expect(result.actions.severity).toBe('critical');
       expect(result.priority).toBe(1); // Highest priority
@@ -696,7 +696,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      expect(result.actions.primary).toBe('report');
+      expect(result.actions.primary).toBe('block'); // critical/first = block (per action matrix)
       expect(result.actions.escalate).toBe(true);
       expect(result.actions.emergency).toBe(true);
       expect(result.priority).toBe(1); // Highest priority
@@ -728,7 +728,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      expect(result.actions.primary).toBe('report');
+      expect(result.actions.primary).toBe('block'); // critical/first = block (per action matrix)
       expect(result.actions.legal_compliance).toBe(true);
       expect(result.actions.jurisdiction).toBe('EU');
       expect(result.priority).toBe(1);
@@ -829,7 +829,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.shieldActive).toBe(true);
       // Should default to first-time user behavior when data is corrupted
       expect(result.actions.offenseLevel).toBe('first');
-      expect(result.actions.primary).toBe('warn');
+      expect(result.actions.primary).toBe('mute_temp'); // medium/first = mute_temp (per action matrix)
     });
 
     it('should complete escalation analysis within performance thresholds', async () => {

@@ -40,9 +40,15 @@ jobs:
 
       - name: Detect changed files
         id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Get list of files changed in the merged PR
-          gh pr diff ${{ steps.pr.outputs.number }} --name-only > changed-files.txt
+          # Get the merge commit SHA
+          MERGE_SHA="${{ github.event.pull_request.merge_commit_sha }}"
+
+          # Get list of files changed in the merged PR using git
+          # Compare merge commit with its first parent (main before merge)
+          git diff --name-only "${MERGE_SHA}^1" "${MERGE_SHA}" > changed-files.txt
 
           # Count files
           FILE_COUNT=$(wc -l < changed-files.txt)
