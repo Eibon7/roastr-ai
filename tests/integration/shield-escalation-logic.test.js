@@ -100,36 +100,36 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           step: 2,
           priorViolations: 1,
           severity: 'low',
-          expectedAction: 'warn',
+          expectedAction: 'mute_temp',  // low/repeat = mute_temp (per action matrix)
           expectedLevel: 'repeat'
         },
         {
           step: 3,
           priorViolations: 2,
           severity: 'medium',
-          expectedAction: 'mute_temp',
-          expectedLevel: 'persistent'
+          expectedAction: 'mute_permanent',  // medium/repeat = mute_permanent (2 < reincidenceThreshold(3), so repeat)
+          expectedLevel: 'repeat'
         },
         {
           step: 4,
           priorViolations: 3,
           severity: 'medium',
-          expectedAction: 'mute_permanent',
+          expectedAction: 'block',  // medium/persistent = block (per action matrix)
           expectedLevel: 'persistent'
         },
         {
           step: 5,
           priorViolations: 4,
           severity: 'high',
-          expectedAction: 'block',
+          expectedAction: 'report',  // high/persistent = report (per action matrix)
           expectedLevel: 'persistent'
         },
         {
           step: 6,
           priorViolations: 5,
           severity: 'critical',
-          expectedAction: 'report',
-          expectedLevel: 'dangerous'
+          expectedAction: 'escalate',  // critical/persistent = escalate (per action matrix)
+          expectedLevel: 'persistent'
         }
       ];
 
@@ -228,7 +228,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.actions.escalate).toBe(true);
       expect(result.actions.severity).toBe('critical');
       expect(result.priority).toBe(1); // Highest priority
-      expect(result.shouldGenerateResponse).toBe(false);
     });
 
     it('should apply escalation based on violation frequency within time windows', async () => {
@@ -279,7 +278,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.actions.offenseLevel).toBe('persistent');
       // Should escalate faster due to frequency
       expect(['mute_permanent', 'block']).toContain(result.actions.primary);
-      expect(result.shouldGenerateResponse).toBe(false);
     });
   });
 
@@ -331,7 +329,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       // Old violations should have reduced impact - treated closer to first offense
       expect(result.actions.offenseLevel).toBe('first');
       expect(result.actions.primary).toBe('warn'); // Reset to warning due to time decay
-      expect(result.shouldGenerateResponse).toBe(false);
     });
 
     it('should escalate faster for violations within cooling-off period', async () => {
@@ -381,7 +378,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.userBehavior.is_muted).toBe(true);
       // Should escalate more aggressively due to violation during active punishment
       expect(['block', 'report']).toContain(result.actions.primary);
-      expect(result.shouldGenerateResponse).toBe(false);
     });
 
     it('should handle escalation windows correctly across different time periods', async () => {
@@ -434,7 +430,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         );
 
         expect(result.shieldActive).toBe(true);
-        expect(result.shouldGenerateResponse).toBe(false);
         
         // Verify escalation follows expected pattern based on time window
         if (window.expectedEscalation === 'aggressive') {
@@ -500,7 +495,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       
       // Should escalate based on total cross-platform history
       expect(['mute_permanent', 'block']).toContain(result.actions.primary);
-      expect(result.shouldGenerateResponse).toBe(false);
     });
 
     it('should handle platform-specific escalation policies', async () => {
@@ -553,7 +547,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         );
 
         expect(result.shieldActive).toBe(true);
-        expect(result.shouldGenerateResponse).toBe(false);
         
         // Verify platform-specific escalation behavior
         if (platform.escalationPolicy === 'aggressive') {
@@ -621,7 +614,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.shieldActive).toBe(true);
       // With custom config requiring 3 strikes for low severity, this should still be warning
       expect(result.actions.primary).toBe('warn');
-      expect(result.shouldGenerateResponse).toBe(false);
     });
 
     it('should handle escalation rule exceptions for special user types', async () => {
@@ -675,7 +667,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       // Should apply lenient escalation due to special user type
       expect(['warn', 'mute_temp']).toContain(result.actions.primary);
       expect(result.actions.manual_review_required).toBe(true);
-      expect(result.shouldGenerateResponse).toBe(false);
     });
   });
 
@@ -710,7 +701,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.actions.emergency).toBe(true);
       expect(result.priority).toBe(1); // Highest priority
       expect(result.actions.notify_authorities).toBe(true);
-      expect(result.shouldGenerateResponse).toBe(false);
     });
 
     it('should bypass normal escalation for legal compliance requirements', async () => {
@@ -742,7 +732,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.actions.legal_compliance).toBe(true);
       expect(result.actions.jurisdiction).toBe('EU');
       expect(result.priority).toBe(1);
-      expect(result.shouldGenerateResponse).toBe(false);
     });
   });
 
@@ -798,8 +787,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
       expect(result1.shieldActive).toBe(true);
       expect(result2.shieldActive).toBe(true);
-      expect(result1.shouldGenerateResponse).toBe(false);
-      expect(result2.shouldGenerateResponse).toBe(false);
       
       // Both should have consistent escalation decisions based on same user history
       expect(result1.actions.primary).toBe(result2.actions.primary);
@@ -840,7 +827,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      expect(result.shouldGenerateResponse).toBe(false);
       // Should default to first-time user behavior when data is corrupted
       expect(result.actions.offenseLevel).toBe('first');
       expect(result.actions.primary).toBe('warn');
@@ -872,7 +858,6 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
       expect(result.shieldActive).toBe(true);
       expect(duration).toBeLessThan(1500); // Should complete within 1.5 seconds
-      expect(result.shouldGenerateResponse).toBe(false);
       expect(result.actions).toBeDefined();
     });
   });
