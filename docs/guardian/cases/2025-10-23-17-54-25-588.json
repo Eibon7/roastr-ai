@@ -15,7 +15,11 @@
   },
   "details": [
     {
-      "file": "test.js"
+      "file": "test.js",
+      "domains": ["test"],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
     }
   ],
   "approval_required": false,

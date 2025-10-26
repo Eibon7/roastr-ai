@@ -952,9 +952,8 @@ class ShieldService {
         }
       });
 
-      // Success is false only if there ARE actions AND all of them failed
-      if (results.actions_executed.length > 0 &&
-          results.failed_actions.length === results.actions_executed.length) {
+      // Success is false if ANY action failed (partial failures count as failures)
+      if (results.failed_actions.length > 0) {
         results.success = false;
       }
 
