@@ -48,6 +48,7 @@ function createShieldSupabaseMock(options = {}) {
   /**
    * Mock select() operation with chaining support
    * Issue #482: Complete chain for user_behavior queries
+   * Supports multiple .eq() chaining (e.g., .eq('org').eq('platform').eq('userId'))
    */
   const selectMock = jest.fn((columns = '*') => {
     if (enableLogging) {
@@ -56,25 +57,37 @@ function createShieldSupabaseMock(options = {}) {
 
     operations.select.push({ columns, timestamp: Date.now() });
 
-    return {
-      eq: jest.fn((column, value) => {
+    /**
+     * Create chainable eq() that filters data progressively
+     * @param {Array} currentData - Data to filter
+     * @param {Object} filters - Accumulated filter conditions
+     */
+    const createEqChain = (currentData, filters = {}) => {
+      return jest.fn((column, value) => {
         if (enableLogging) {
-          logger.debug('[Mock] .eq() called', { column, value });
+          logger.debug('[Mock] .eq() called', { column, value, filtersSoFar: filters });
         }
 
+        const newFilters = { ...filters, [column]: value };
+
         return {
+          // Support chaining multiple .eq() calls
+          eq: createEqChain(currentData, newFilters),
+
           single: jest.fn(() => {
-            // Find matching record in mockData
             const table = getCurrentTable();
             const data = mockData[table] || [];
-            const match = data.find(row => row[column] === value);
+
+            // Apply all accumulated filters
+            const match = data.find(row =>
+              Object.keys(newFilters).every(key => row[key] === newFilters[key])
+            );
 
             if (enableLogging) {
               logger.debug('[Mock] .single() called', {
                 table,
-                found: !!match,
-                column,
-                value
+                filters: newFilters,
+                found: !!match
               });
             }
 
@@ -95,11 +108,16 @@ function createShieldSupabaseMock(options = {}) {
           then: jest.fn((resolve) => {
             const table = getCurrentTable();
             const data = mockData[table] || [];
-            const matches = data.filter(row => row[column] === value);
+
+            // Apply all accumulated filters
+            const matches = data.filter(row =>
+              Object.keys(newFilters).every(key => row[key] === newFilters[key])
+            );
 
             if (enableLogging) {
               logger.debug('[Mock] .eq().then() called', {
                 table,
+                filters: newFilters,
                 matchCount: matches.length
               });
             }
@@ -111,7 +129,11 @@ function createShieldSupabaseMock(options = {}) {
             }).then(resolve);
           })
         };
-      }),
+      });
+    };
+
+    return {
+      eq: createEqChain(mockData[getCurrentTable()] || []),
 
       gte: jest.fn((column, value) => {
         if (enableLogging) {
@@ -273,8 +295,10 @@ function createShieldSupabaseMock(options = {}) {
     }
 
     // Map table names to mockData keys
+    // Issue #482: Handle both singular and plural table names
     const tableMap = {
       'user_behavior': 'userBehavior',
+      'user_behaviors': 'userBehavior',      // Shield uses plural
       'shield_actions': 'shieldActions',
       'job_queue': 'jobQueue',
       'app_logs': 'appLogs'
