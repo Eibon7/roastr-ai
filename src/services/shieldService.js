@@ -874,7 +874,7 @@ class ShieldService {
         platform: comment.platform,
         platformViolations: metadata.platform_violations
       });
-      return { skipped: true, reason: 'not_reportable' };
+      return { skipped: true, reason: 'not reportable' };
     }
 
     this.log('info', 'Reporting to platform', {
