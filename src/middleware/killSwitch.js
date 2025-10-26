@@ -214,9 +214,13 @@ class KillSwitchService {
 
             this.lastCacheUpdate = Date.now();
 
+            // Compute kill switch status synchronously from cache
+            const killSwitchFlag = this.cache.get('KILL_SWITCH_AUTOPOST');
+            const killSwitchActive = killSwitchFlag?.is_enabled === true && killSwitchFlag?.flag_value === true;
+
             logger.debug('Kill switch cache refreshed', {
                 flagsCount: flags.length,
-                killSwitchActive: this.isKillSwitchActive()
+                killSwitchActive
             });
 
         } catch (error) {

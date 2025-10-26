@@ -1,10 +1,29 @@
 #!/usr/bin/env node
 
 /**
- * Apply feature_flags migration via Supabase REST API
+ * Feature Flags Migration Helper (Recommended)
  *
- * This script attempts to execute the SQL migration using Supabase's
- * PostgREST API by executing statements individually.
+ * This script provides instructions and guidance for manually applying
+ * the feature_flags migration via the Supabase Dashboard SQL Editor.
+ * It does not execute the migration automatically.
+ *
+ * @module scripts/apply-feature-flags-via-api
+ * @requires fs
+ * @requires path
+ * @requires dotenv
+ * @example
+ * // Run from command line:
+ * // node scripts/apply-feature-flags-via-api.js
+ *
+ * @description
+ * Displays step-by-step instructions for applying the feature_flags
+ * migration manually. Includes:
+ * - Direct link to Supabase SQL Editor
+ * - Migration file location
+ * - SQL preview
+ * - Verification steps
+ *
+ * This is the recommended approach due to Supabase API limitations.
  */
 
 const fs = require('fs');
