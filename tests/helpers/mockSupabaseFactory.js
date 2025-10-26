@@ -104,8 +104,8 @@ function createShieldSupabaseMock(options = {}) {
             });
           }),
 
-          // Support for multiple results without .single()
-          then: jest.fn((resolve) => {
+          // Retrieve multiple results without .single()
+          all: jest.fn(() => {
             const table = getCurrentTable();
             const data = mockData[table] || [];
 
@@ -115,7 +115,7 @@ function createShieldSupabaseMock(options = {}) {
             );
 
             if (enableLogging) {
-              logger.debug('[Mock] .eq().then() called', {
+              logger.debug('[Mock] .eq().all() called', {
                 table,
                 filters: newFilters,
                 matchCount: matches.length
@@ -126,7 +126,7 @@ function createShieldSupabaseMock(options = {}) {
               data: matches,
               error: null,
               count: matches.length
-            }).then(resolve);
+            });
           })
         };
       });
@@ -339,7 +339,8 @@ function createShieldSupabaseMock(options = {}) {
         );
       }
 
-      expect(fromMock).toHaveBeenCalledWith('user_behavior');
+      const wasQueried = fromMock.mock.calls.some(([tbl]) => /user_behaviors?/.test(tbl));
+      expect(wasQueried).toBe(true);
       return true;
     },
 

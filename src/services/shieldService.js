@@ -725,7 +725,7 @@ class ShieldService {
    * //   failed_actions: []
    * // }
    */
-  async executeActionsFromTags(organizationId, comment, action_tags, metadata) {
+  async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}) {
     // Input validation - return structured errors instead of throwing
     if (!organizationId) {
       return {
@@ -1633,8 +1633,9 @@ class ShieldService {
         stats.actionBreakdown[action] = (stats.actionBreakdown[action] || 0) + 1;
         
         // Severity breakdown
-        const severity = metadata.toxicityScore >= 0.8 ? 'high' : 
-                        metadata.toxicityScore >= 0.6 ? 'medium' : 'low';
+        const toxicityScore = metadata?.toxicityScore ?? metadata?.toxicity?.toxicity_score ?? 0;
+        const severity = toxicityScore >= 0.8 ? 'high' :
+                        toxicityScore >= 0.6 ? 'medium' : 'low';
         stats.severityBreakdown[severity] = (stats.severityBreakdown[severity] || 0) + 1;
         
         // Platform breakdown

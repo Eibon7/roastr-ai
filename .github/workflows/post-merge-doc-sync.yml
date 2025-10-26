@@ -43,12 +43,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Get the merge commit SHA
+          set -euo pipefail
+          # Get the merge commit SHA (may be empty for rebase-and-merge)
           MERGE_SHA="${{ github.event.pull_request.merge_commit_sha }}"
-
-          # Get list of files changed in the merged PR using git
-          # Compare merge commit with its first parent (main before merge)
-          git diff --name-only "${MERGE_SHA}^1" "${MERGE_SHA}" > changed-files.txt
+          : > changed-files.txt
+          if [ -n "${MERGE_SHA}" ] && git cat-file -e "${MERGE_SHA}^{commit}" 2>/dev/null; then
+            # Compare merge commit with its first parent (main before merge)
+            git diff --name-only "${MERGE_SHA}^1" "${MERGE_SHA}" > changed-files.txt
+          else
+            echo "MERGE_SHA missing or not a merge commit; falling back to GitHub API"
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              "repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.number }}/files" \
+              --paginate --jq '.[].filename' > changed-files.txt
+          fi
 
           # Count files
           FILE_COUNT=$(wc -l < changed-files.txt)
