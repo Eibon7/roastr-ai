@@ -1196,9 +1196,76 @@
         "phase": 13,
         "collector": "collect-gdd-telemetry.js"
       }
+    },
+    {
+      "timestamp": "2025-10-26T00:55:42.881Z",
+      "date": "2025-10-26",
+      "metrics": {
+        "health": {
+          "overall_score": 87.5,
+          "average_score": 87.5,
+          "healthy_count": 15,
+          "degraded_count": 0,
+          "critical_count": 0,
+          "total_nodes": 15,
+          "status": "healthy"
+        },
+        "drift": {
+          "average_drift_risk": 8,
+          "high_risk_count": 0,
+          "at_risk_count": 0,
+          "healthy_count": 15,
+          "overall_status": "HEALTHY"
+        },
+        "validation": {
+          "nodes_validated": 15,
+          "orphans": 0,
+          "missing_refs": 0,
+          "cycles": 0,
+          "status": "healthy"
+        },
+        "repair": {
+          "total_fixes_attempted": 1,
+          "successful_fixes": 1,
+          "failed_fixes": 0,
+          "success_rate": 100
+        },
+        "coverage": {
+          "avg_coverage": 42,
+          "nodes_with_coverage": 15,
+          "total_nodes": 15
+        },
+        "derived": {
+          "stability_index": 93,
+          "health_variance": 15,
+          "auto_fix_efficiency": 100,
+          "system_status": "DEGRADED"
+        },
+        "momentum": {
+          "trend": "stable",
+          "delta": 0,
+          "current_health": 87.5,
+          "previous_health": 87.5,
+          "message": "Health stable by 0.0 points"
+        }
+      },
+      "alerts": [
+        {
+          "type": "health",
+          "severity": "critical",
+          "message": "Health score 87.5 below threshold 90",
+          "value": 87.5,
+          "threshold": 90
+        }
+      ],
+      "metadata": {
+        "version": "1.0.0",
+        "phase": 13,
+        "collector": "collect-gdd-telemetry.js"
+      }
     }
   ],
-  "last_updated": "2025-10-25T00:50:42.472Z",
-  "total_snapshots": 19,
+  "last_updated": "2025-10-26T00:55:42.881Z",
+  "total_snapshots": 20,
   "retention_days": 90
 }
