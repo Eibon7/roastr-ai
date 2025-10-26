@@ -57,13 +57,15 @@ console.log('━━━━━━━━━━━━━━━━━━━━━━�
 console.log('Due to Supabase API limitations, this migration must be applied manually.\n');
 console.log('👉 Follow these steps:\n');
 console.log('1. Open Supabase SQL Editor:');
-console.log('   https://supabase.com/dashboard/project/rpkhiemljhncddmhrilk/sql/new\n');
+const projectRef = (SUPABASE_URL || '').match(/^https:\/\/([^.]+)\./)?.[1] || '<your-project-ref>';
+console.log(`   https://supabase.com/dashboard/project/${projectRef}/sql/new\n`);
 console.log('2. Copy the SQL from:');
 console.log('   database/migrations/add_feature_flags_and_audit_system.sql\n');
 console.log('3. Paste into the editor\n');
 console.log('4. Click "Run" button\n');
 console.log('5. Verify success:');
 console.log('   SELECT COUNT(*) FROM feature_flags;\n');
+console.log('6. Restart your server to initialize kill switch normally.\n');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 console.log('📄 SQL Preview (first 500 chars):');
