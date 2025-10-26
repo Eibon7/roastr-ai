@@ -40,6 +40,17 @@ jest.mock('../../../src/config/supabase', () => ({
           }))
         }))
       })),
+      update: jest.fn(() => {
+        // Create a thenable chain object that can be awaited
+        const thenable = Promise.resolve({ data: null, error: null });
+        const eqChain = {
+          eq: jest.fn(() => eqChain),  // Returns itself for chaining
+          then: thenable.then.bind(thenable),  // Makes it awaitable
+          catch: thenable.catch.bind(thenable),
+          finally: thenable.finally.bind(thenable)
+        };
+        return eqChain;
+      }),
       upsert: jest.fn(() => Promise.resolve({ data: null, error: null }))
     }))
   }
