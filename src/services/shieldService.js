@@ -669,7 +669,7 @@ class ShieldService {
       const stateMutatingTags = action_tags.filter(tag => stateMutatingHandlers.has(tag));
       const readOnlyTags = action_tags.filter(tag => !stateMutatingHandlers.has(tag));
 
-      const actionResults = [];
+      let actionResults = [];
       // [M2] Prepare array to batch record all shield_actions at once
       const actionsToRecord = [];
 
@@ -710,7 +710,7 @@ class ShieldService {
             tag,
             error: error.message
           });
-          actionResults.push({ tag, status: 'failed', error: error.message });
+          actionResults.push({ tag, status: 'failed', result: { error: error.message } });
         }
       }
 
@@ -755,7 +755,7 @@ class ShieldService {
             tag,
             error: error.message
           });
-          return { tag, status: 'failed', error: error.message };
+          return { tag, status: 'failed', result: { error: error.message } };
         }
       });
 
@@ -771,20 +771,34 @@ class ShieldService {
 
       actionResults.push(...readOnlyResults);
 
+      // [M3] Reorder actionResults to match input action_tags order
+      // This ensures test expectations match regardless of execution strategy (sequential vs parallel)
+      const resultsMap = new Map(actionResults.map(r => [r.tag, r]));
+      const orderedResults = action_tags
+        .map(tag => resultsMap.get(tag))
+        .filter(r => r !== undefined); // Filter out any undefined results
+      actionResults = orderedResults;
+
       // [M2] Batch insert all shield_actions in a single database operation
       if (actionsToRecord.length > 0) {
         await this._batchRecordShieldActions(actionsToRecord);
       }
 
       // Separate successful and failed actions
+      // All actions (including failed) go into actions_executed
       actionResults.forEach(result => {
-        if (result.status === 'executed' || result.status === 'skipped') {
-          results.actions_executed.push(result);
-        } else if (result.status === 'failed') {
+        results.actions_executed.push(result);
+
+        if (result.status === 'failed') {
           results.failed_actions.push(result);
-          results.success = false;
         }
       });
+
+      // Success is false only if there ARE actions AND all of them failed
+      if (results.actions_executed.length > 0 &&
+          results.failed_actions.length === results.actions_executed.length) {
+        results.success = false;
+      }
 
       // Update user behavior after all actions
       if (action_tags.length > 0) {
@@ -874,7 +888,7 @@ class ShieldService {
         platform: comment.platform,
         platformViolations: metadata.platform_violations
       });
-      return { skipped: true, reason: 'not_reportable' };
+      return { skipped: true, reason: 'not reportable' };
     }
 
     this.log('info', 'Reporting to platform', {
