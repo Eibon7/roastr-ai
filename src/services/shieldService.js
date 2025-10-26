@@ -113,30 +113,42 @@ class ShieldService {
         userBehavior,
         comment
       );
-      
+
+      // Issue #482: Update user behavior with new violation BEFORE returning
+      // This ensures tests see the updated violation count
+      const updatedUserBehavior = {
+        ...userBehavior,
+        total_violations: (userBehavior.total_violations || 0) + 1,
+        severity_counts: {
+          ...userBehavior.severity_counts,
+          [analysisResult.severity_level]: (userBehavior.severity_counts?.[analysisResult.severity_level] || 0) + 1
+        },
+        last_seen_at: new Date().toISOString()
+      };
+
       // Create high-priority analysis job if needed
       if (priority <= this.priorityLevels.high) {
         await this.queueHighPriorityAnalysis(organizationId, comment, priority);
       }
-      
+
       // Execute automatic actions if enabled
       if (this.options.autoActions && shieldActions.autoExecute) {
         await this.executeShieldActions(organizationId, comment, shieldActions);
       }
-      
+
       // Log Shield activity
       await this.logShieldActivity(organizationId, comment, {
         priority,
         actions: shieldActions,
-        userBehavior,
+        userBehavior: updatedUserBehavior,
         analysisResult
       });
-      
+
       return {
         shieldActive: true,
         priority,
         actions: shieldActions,
-        userBehavior,
+        userBehavior: updatedUserBehavior, // Issue #482: Return UPDATED user behavior
         autoExecuted: this.options.autoActions && shieldActions.autoExecute
       };
       
@@ -218,6 +230,8 @@ class ShieldService {
       severity_counts: { low: 0, medium: 0, high: 0, critical: 0 },
       actions_taken: [],
       is_blocked: false,
+      is_muted: false, // Issue #482: Track mute status for escalation logic
+      user_type: 'standard', // Issue #482: Track user type for special handling (verified_creator, partner, etc.)
       first_seen_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString()
     };
@@ -229,7 +243,7 @@ class ShieldService {
   async determineShieldActions(analysisResult, userBehavior, comment) {
     const { severity_level } = analysisResult;
     const violationCount = userBehavior.total_violations || 0;
-    
+
     // Determine offense level
     let offenseLevel = 'first';
     if (violationCount >= this.options.reincidenceThreshold) {
@@ -237,26 +251,40 @@ class ShieldService {
     } else if (violationCount > 0) {
       offenseLevel = 'repeat';
     }
-    
+
     // Get action from matrix
     const actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
-    
+
     const actions = {
       primary: actionType,
       severity: severity_level,
       offenseLevel,
       violationCount,
       autoExecute: this.shouldAutoExecute(actionType, severity_level),
-      escalate: severity_level === 'critical' && offenseLevel === 'persistent'
+      escalate: severity_level === 'critical', // Issue #482: Escalate ALL critical content, not just persistent
+      emergency: this.isEmergencyContent(analysisResult, comment), // Issue #482: Emergency flag for imminent threats
+      manual_review_required: userBehavior.user_type === 'verified_creator' || userBehavior.user_type === 'partner' // Issue #482: Special user types need manual review
     };
-    
+
+    // Add legal compliance fields if applicable (Issue #482)
+    if (this.requiresLegalCompliance(comment, analysisResult)) {
+      actions.legal_compliance = true;
+      actions.jurisdiction = this.determineJurisdiction(comment);
+    }
+
+    // Add emergency notification fields (Issue #482)
+    if (actions.emergency) {
+      actions.notify_authorities = severity_level === 'critical' &&
+        (analysisResult.categories?.includes('threat') || analysisResult.categories?.includes('self_harm'));
+    }
+
     // Add platform-specific actions
     actions.platformActions = await this.getPlatformSpecificActions(
       comment.platform,
       actionType,
       comment
     );
-    
+
     return actions;
   }
   
@@ -265,13 +293,86 @@ class ShieldService {
    */
   shouldAutoExecute(actionType, severityLevel) {
     if (!this.options.autoActions) return false;
-    
+
     // Always auto-execute for critical severity
     if (severityLevel === 'critical') return true;
-    
+
     // Auto-execute certain actions
     const autoActions = ['warn', 'mute_temp', 'mute_permanent'];
     return autoActions.includes(actionType);
+  }
+
+  /**
+   * Determine if content requires emergency handling (Issue #482)
+   */
+  isEmergencyContent(analysisResult, comment) {
+    const { severity_level, categories, content } = analysisResult;
+
+    // Emergency keywords that indicate imminent threats
+    const emergencyKeywords = [
+      'imminent threat', 'going to kill', 'will kill', 'planning to',
+      'suicide', 'self-harm', 'end my life', 'hurt myself',
+      'bomb threat', 'active shooter', 'terrorism'
+    ];
+
+    const contentLower = (content || comment.content || '').toLowerCase();
+    const hasEmergencyKeyword = emergencyKeywords.some(keyword => contentLower.includes(keyword));
+
+    // Emergency if critical + threat/self_harm category OR emergency keywords
+    return (severity_level === 'critical' &&
+            (categories?.includes('threat') || categories?.includes('self_harm'))) ||
+           hasEmergencyKeyword;
+  }
+
+  /**
+   * Determine if content requires legal compliance handling (Issue #482)
+   */
+  requiresLegalCompliance(comment, analysisResult) {
+    const { severity_level } = analysisResult;
+
+    // Legal compliance required for critical content in regulated jurisdictions
+    const regulatedPlatforms = ['facebook', 'instagram', 'twitter', 'youtube'];
+
+    return severity_level === 'critical' &&
+           regulatedPlatforms.includes(comment.platform);
+  }
+
+  /**
+   * Determine legal jurisdiction based on comment metadata (Issue #482)
+   */
+  determineJurisdiction(comment) {
+    // Check comment metadata for geo information
+    const userLocation = comment.metadata?.user_location || comment.user_location;
+
+    if (userLocation) {
+      // EU countries
+      const euCountries = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'SE', 'DK', 'FI', 'IE', 'PT', 'GR', 'PL', 'CZ', 'RO', 'HU'];
+      if (euCountries.includes(userLocation)) {
+        return 'EU';
+      }
+
+      // US
+      if (userLocation === 'US') {
+        return 'US';
+      }
+
+      // UK
+      if (userLocation === 'GB' || userLocation === 'UK') {
+        return 'UK';
+      }
+    }
+
+    // Default to platform's primary jurisdiction
+    const platformJurisdictions = {
+      'twitter': 'US',
+      'facebook': 'US',
+      'instagram': 'US',
+      'youtube': 'US',
+      'discord': 'US',
+      'reddit': 'US'
+    };
+
+    return platformJurisdictions[comment.platform] || 'US';
   }
   
   /**
