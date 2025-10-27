@@ -146,8 +146,11 @@ function createShieldSupabaseMock(options = {}) {
               logger.debug('[Mock] .lte() called', { column: column2, value: value2 });
             }
 
+            const currentTable = getCurrentTable();
+            const tableData = mockData[currentTable] || [];
+
             return Promise.resolve({
-              data: mockData.userBehavior.filter(row =>
+              data: tableData.filter(row =>
                 row[column] >= value && row[column2] <= value2
               ),
               error: null

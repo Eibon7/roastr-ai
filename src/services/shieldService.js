@@ -318,26 +318,50 @@ class ShieldService {
   isEmergencyContent(analysisResult, comment) {
     const { severity_level, categories, content } = analysisResult;
 
-    // Emergency keywords that indicate imminent threats
+    // Emergency keywords that indicate imminent threats - expanded with common variants
     const emergencyKeywords = [
       'imminent threat', 'going to kill', 'will kill', 'planning to',
+      'i\'m going to kill', 'shoot up', 'going to stab', 'going to attack',
+      'going to bomb', 'kms', 'i want to die', 'i want to end it all',
+      'going to end it', 'cutting', 'end it',
       'suicide', 'self-harm', 'end my life', 'hurt myself',
       'bomb threat', 'active shooter', 'terrorism'
     ];
 
-    const contentLower = (content || comment.content || comment.original_text || '').toLowerCase();
-    const hasEmergencyKeyword = emergencyKeywords.some(keyword => contentLower.includes(keyword));
+    const contentText = (content || comment.content || comment.original_text || '').toLowerCase();
+    
+    // Use case-insensitive word boundary matching to avoid partial matches
+    const hasEmergencyKeyword = emergencyKeywords.some(keyword => {
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'i');
+      return regex.test(contentText);
+    });
+
+    // Time context proximity checks - patterns that suggest urgency
+    const timeContextPatterns = [
+      /\b(?:tomorrow|tonight|today|now|soon)\b.{0,100}(going to kill|will kill|suicide|kms|end it)/i,
+      /\b(going to kill|will kill|suicide|kms|end it).{0,100}\b(?:tomorrow|tonight|today|now|soon)\b/i,
+      /\b(?:this weekend|tomorrow morning|tomorrow night)\b.{0,100}(attack|bomb|shoot)/i,
+      /\b(attack|bomb|shoot).{0,100}\b(?:this weekend|tomorrow morning|tomorrow night)\b/i
+    ];
+    
+    const hasTimeProximity = timeContextPatterns.some(pattern => pattern.test(contentText));
 
     // Issue #482: Case-insensitive category checking (Perspective returns uppercase like 'THREAT')
     const categoriesLower = Array.isArray(categories)
       ? categories.map(c => c.toLowerCase())
       : [];
 
-    // Emergency if critical + threat/self_harm category OR emergency keywords
+    // Emergency if:
+    // 1. Critical severity + threat/self_harm category OR severe toxicity
+    // 2. Emergency keywords detected (with context-aware matching)
+    // 3. Time-proximity patterns suggest imminent threat
+    const hasEmergencyKeyword_processed = hasEmergencyKeyword || hasTimeProximity;
+    
     return (severity_level === 'critical' &&
             (categoriesLower.includes('threat') || categoriesLower.includes('self_harm') ||
              categoriesLower.includes('severe_toxicity'))) ||
-           hasEmergencyKeyword;
+           hasEmergencyKeyword_processed;
   }
 
   /**
