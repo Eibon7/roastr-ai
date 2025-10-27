@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -e
+
+if [ ! -f .issue_lock ]; then
+  echo "⚠️  Falta .issue_lock (rama esperada). Crea el fichero con: echo \"<branch>\" > .issue_lock"
+  exit 1
+fi
+
+EXPECTED_BRANCH="$(tr -d '[:space:]' < .issue_lock)"
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ "$EXPECTED_BRANCH" != "$CURRENT_BRANCH" ]; then
+  echo "❌ Rama incorrecta: estás en '$CURRENT_BRANCH' pero .issue_lock exige '$EXPECTED_BRANCH'."
+  echo "   Cambia con: git checkout $EXPECTED_BRANCH"
+  exit 1
+fi
+
+

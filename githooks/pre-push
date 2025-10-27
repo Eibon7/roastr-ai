@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+if [ ! -f .issue_lock ]; then
+  echo "⚠️  Falta .issue_lock. Aborto push."
+  exit 1
+fi
+
+EXPECTED_BRANCH="$(tr -d '[:space:]' < .issue_lock)"
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ "$EXPECTED_BRANCH" != "$CURRENT_BRANCH" ]; then
+  echo "❌ No puedes pushear desde '$CURRENT_BRANCH'. Esperado: '$EXPECTED_BRANCH'."
+  exit 1
+fi
+
+# Bloqueo opcional a main/master
+if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+  echo "❌ Push directo a main/master bloqueado."
+  exit 1
+fi
+
+
