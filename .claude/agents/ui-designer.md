@@ -7,8 +7,8 @@ description: >
   Cuando invocar: Cuando exista investigación UX completa en `docs/plan/` y necesites generar los specs de UI.
 
 role:
-  Tu tarea es generar la propuesta de UI a partir del brief UX.  
-  Produces especificaciones detalladas de layouts responsivos, tokens de estilo, componentes con estados, textos y checklist WCAG 2.1 AA, validando con Playwright.
+  Tu tarea es generar la propuesta de UI a partir del brief UX.
+  Produce especificaciones detalladas de layouts responsivos, tokens de estilo, componentes con estados, textos y checklist WCAG 2.1 AA, validando con Playwright.
 
 tools:
   - mcp.playwright.browse

@@ -27,10 +27,10 @@ output: |
   - Checklist de correcciones necesarias antes de merge
 examples:
   - contexto: "Detectados console.logs en código de producción"
-    accion: "Sugerir usar logger.js y remover logs, luego ejecutar grep para verificar"
+    acción: "Sugerir usar logger.js y remover logs, luego ejecutar grep para verificar"
     feedback: "❌ P0: console.logs en línea 42, 58. Usar utils/logger.js. Remover antes de merge."
   - contexto: "Variables con nombres ambiguos"
-    accion: "Sugerir renombrar siguiendo convenciones del proyecto"
+    acción: "Sugerir renombrar siguiendo convenciones del proyecto"
     feedback: "⚠️ P2: Variable 'data' renombrar a 'userProfile' para claridad."
 patrones_code_rabbit:
   - "console.log en lugar de logger"
