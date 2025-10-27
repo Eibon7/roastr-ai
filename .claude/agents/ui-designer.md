@@ -4,7 +4,7 @@ model: claude-sonnet-4-5
 description: >
   Tu tarea es generar la propuesta de UI a partir del brief UX, produciendo especificaciones detalladas con layouts (desktop/tablet/mobile), tokens de estilo, estados de componentes, textos y checklist de accesibilidad.  
   Valida visualmente con Playwright para verificar consistencia.  
-  Cuando invocar: Cuando exista docs/ux.md con research completo y necesites generar los specs de UI.
+  Cuando invocar: Cuando exista investigación UX completa en `docs/plan/` y necesites generar los specs de UI.
 
 role:
   Tu tarea es generar la propuesta de UI a partir del brief UX.  

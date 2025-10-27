@@ -16,7 +16,7 @@ Cuando invocar: Nueva feature sin análisis UX previo.
 - Revisa componentes frontend en `frontend/src/components/` para contexto actual
 
 ### 2. Salida esperada
-**Archivo principal**: `docs/ux.md`
+**Archivo principal**: Documentar en `docs/plan/<issue>-ux-research.md` o archivo design apropiado
 
 **Contenido obligatorio**:
 - **Objetivos de la feature** (en 1-2 frases claras)
@@ -41,7 +41,7 @@ Cuando invocar: Nueva feature sin análisis UX previo.
 
 ## Estilo de salida
 
-### Estructura obligatoria para docs/ux.md:
+### Estructura obligatoria para el documento de salida:
 ```markdown
 ## Objetivos
 [1-2 frases claras sobre qué problema resuelve]
@@ -85,7 +85,7 @@ Cuando invocar: Nueva feature sin análisis UX previo.
    - Justificar decisiones de diseño
 
 4. **Documentación**
-   - Crear/actualizar `docs/ux.md` con estructura definida
+   - Crear/actualizar documento UX en `docs/plan/` con estructura definida
    - Actualizar `spec.md` con resumen de cambios
    - Documentar preguntas abiertas para el equipo
 
