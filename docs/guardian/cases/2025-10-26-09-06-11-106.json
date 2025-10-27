@@ -1,0 +1,108 @@
+{
+  "case_id": "2025-10-26-09-06-11-106",
+  "timestamp": "2025-10-26T09:06:11.106Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    ".env.backup",
+    "docs/guardian/audit-log.md",
+    "docs/guardian/guardian-report.md",
+    "docs/system-health.md",
+    "docs/system-validation.md",
+    "frontend/.env.production.backup",
+    "gdd-health.json",
+    "gdd-status.json",
+    "gdd-write-signatures.json",
+    "package-lock.json",
+    "package.json"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 11
+  },
+  "details": [
+    {
+      "file": ".env.backup",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/audit-log.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/guardian/guardian-report.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/system-health.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "docs/system-validation.md",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "frontend/.env.production.backup",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "gdd-health.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "gdd-status.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "gdd-write-signatures.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "package-lock.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    },
+    {
+      "file": "package.json",
+      "domains": [],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

@@ -187,12 +187,14 @@ tests/                   # unit/, integration/, helpers/
 
 #### 3. Agent Invocation & Receipts
 
-**Option A: Invoke**
+##### Option A: Invoke
+
 1. Use `Task` tool or execute script (Guardian)
 2. Record decisions, artifacts, guardrails
 3. Generate: `docs/agents/receipts/<pr>-<Agent>.md`
 
-**Option B: Skip**
+##### Option B: Skip
+
 1. Document why + assess risks
 2. Get approval if needed (Product Owner for CRITICAL)
 3. Generate SKIPPED: `docs/agents/receipts/<pr>-<Agent>-SKIPPED.md`
@@ -279,12 +281,14 @@ tests/                   # unit/, integration/, helpers/
 
 **⚠️ CRITICAL: Before ANY platform integration:**
 
-**Phase 1: Pre-Implementation**
+#### Phase 1: Pre-Implementation
+
 1. Read: `docs/INTEGRATIONS.md`, `docs/nodes/social-platforms.md`
 2. Verify naming: `<platform>Service.js`, PascalCase class, `<PLATFORM>_<PROPERTY>`
 3. Check existing: `grep -r "class <Platform>Service" src/integrations/`
 
-**Phase 2: Checklist**
+#### Phase 2: Checklist
+
 - [ ] Implements interface: authenticate, fetchComments, postReply, blockUser
 - [ ] Platform routing in FetchCommentsWorker.js
 - [ ] Integration tests
@@ -293,7 +297,8 @@ tests/                   # unit/, integration/, helpers/
 - [ ] Rate limit handling
 - [ ] Uses utils/logger.js
 
-**Phase 3: Post-Implementation**
+#### Phase 3: Post-Implementation
+
 - [ ] Update `docs/INTEGRATIONS.md`
 - [ ] Update `docs/nodes/social-platforms.md`
 - [ ] Add to `scripts/update-integration-status.js`
@@ -451,3 +456,149 @@ tests/                   # unit/, integration/, helpers/
 - Arregla AHORA
 - Re-ejecuta
 - Solo entonces procede
+
+### 🔐 Rama protegida / Candado por issue
+- Antes de cualquier acción: leer `.issue_lock` y comparar con la rama actual (`git rev-parse --abbrev-ref HEAD`).
+- Si no coincide: DETENER y reportar. No hacer commits ni push.
+- Hooks activos: `pre-commit`, `commit-msg`, `pre-push`.
+- Flujo recomendado por issue:
+  1) Crear rama: `git checkout -b feature/issue-<id>`
+  2) Fijar candado: `echo "feature/issue-<id>" > .issue_lock`
+  3) Trabajar normalmente. Los hooks impiden desvíos.
+  4) Al cerrar la issue: borrar o actualizar `.issue_lock`.
+
+### 🧠 Memory Hints (Roastr)
+- Este proyecto usa subagentes especializados por tarea (ver Task Routing Map).
+- Cada issue se ejecuta en su propia rama (ver política Branch Guard).
+- Commit sin tests → prohibido.
+- Siempre ejecutar /new-pr antes de feature nueva.
+- Actualizar spec.md + docs/test-evidence/ al finalizar issue.
+- Asignaciones rápidas:
+  • UX analysis → @ux-researcher
+  • UI generation → @ui-designer
+  • Animations → @whimsy-injector
+  • Implementation (frontend) → @frontend-dev
+  • Implementation (backend) → @back-end-dev
+  • Testing → @test-engineer
+  • PR & compliance → @github-monitor
+  • Task assessment → @task-assessor
+- No tocar rama distinta a la fijada en .issue_lock.
+
+---
+
+## 🧩 Claude Skills Integradas
+
+Las skills son rutinas internas que Claude invoca automáticamente según el contexto de trabajo.
+Permiten aplicar procedimientos estandarizados sin necesidad de prompts adicionales ni subagentes separados.
+
+---
+
+### 🧱 Lista de Skills Activas
+
+**1️⃣ test-generation-skill**
+- **Función**: Genera tests unitarios, de integración y E2E según cambios detectados.
+- **Invocación**: Cada vez que se detecta código nuevo o cambios sin tests.
+- **Usado por**: front-end-dev, back-end-dev, test-engineer.
+- **Output**: Tests + `docs/test-evidence/issue-{id}/summary.md`
+
+**2️⃣ security-audit-skill**
+- **Función**: Audita seguridad, exposición de secretos y políticas RLS.
+- **Invocación**: En commits o archivos que afecten auth, DB o config.
+- **Usado por**: github-guardian, back-end-dev.
+- **Output**: `docs/audit/security-report-{id}.md`
+
+**3️⃣ code-review-skill**
+- **Función**: Revisión automatizada de calidad y feedback de CodeRabbit.
+- **Invocación**: En revisiones de PR o fases previas a merge.
+- **Usado por**: github-guardian, orchestrator.
+- **Output**: `docs/review/issue-{id}.md`
+
+**4️⃣ visual-validation-skill**
+- **Función**: Ejecuta validación visual con Playwright MCP (screenshots + accesibilidad).
+- **Invocación**: Ante cambios en UI o componentes visuales.
+- **Usado por**: ui-designer, front-end-dev, test-engineer.
+- **Output**: `docs/test-evidence/issue-{id}/screenshots/` + `ui-report.md`
+
+**5️⃣ gdd-sync-skill**
+- **Función**: Sincroniza nodos GDD, cobertura y health tras cambios en código o arquitectura.
+- **Invocación**: Cuando se modifica un nodo o se valida GDD.
+- **Usado por**: orchestrator, test-engineer.
+- **Output**: `docs/gdd/validation-report-{id}.md`
+
+**6️⃣ spec-update-skill**
+- **Función**: Actualiza spec.md y changelogs tras features, merges o refactors.
+- **Invocación**: En cierres de issue o PR mergeadas.
+- **Usado por**: orchestrator, documentation-agent.
+- **Output**: spec.md actualizado + `docs/changelog/issue-{id}.md`
+
+**7️⃣ systematic-debugging-skill** *(Nueva - superpowers-skills)*
+- **Función**: Framework de 4 fases para debugging sistemático (root cause → pattern → hypothesis → fix).
+- **Invocación**: Cualquier bug, test failure o comportamiento inesperado.
+- **Usado por**: test-engineer, back-end-dev, front-end-dev, github-monitor.
+- **Output**: Root cause identificado + failing test + fix en fuente
+
+**8️⃣ root-cause-tracing-skill** *(Nueva - superpowers-skills)*
+- **Función**: Traza errores hacia atrás en call stack para encontrar trigger original.
+- **Invocación**: Errores profundos, invalid data, wrong values.
+- **Usado por**: systematic-debugging-skill, test-engineer, back-end-dev.
+- **Output**: Original trigger + trace completo + defense-in-depth
+
+**9️⃣ test-driven-development-skill** *(Nueva - superpowers-skills)*
+- **Función**: RED→GREEN→REFACTOR - Enforcea escribir tests antes que código.
+- **Invocación**: Cualquier feature o bugfix, antes de código de producción.
+- **Usado por**: test-engineer, back-end-dev, front-end-dev.
+- **Output**: Tests que verifican comportamiento + código minimal
+
+**🔟 verification-before-completion-skill** *(Nueva - superpowers-skills)*
+- **Función**: Evidence antes de claims - requiere ejecutar comandos de verificación.
+- **Invocación**: Antes de "complete", "done", "passing", "ready".
+- **Usado por**: todos los agentes.
+- **Output**: Claims basados en evidencia con verificación real
+
+**1️⃣1️⃣ dispatching-parallel-agents-skill** *(Nueva - superpowers-skills)*
+- **Función**: Despacha múltiples agentes en paralelo para problemas independientes.
+- **Invocación**: 3+ fallos independientes sin shared state.
+- **Usado por**: test-engineer, orchestrator.
+- **Output**: Problemas resueltos en paralelo + summary por agente
+
+**1️⃣2️⃣ using-git-worktrees-skill** *(Nueva - superpowers-skills)*
+- **Función**: Crea workspaces aislados con verificación .gitignore y setup automático.
+- **Invocación**: Feature work que necesita aislamiento, antes de implementation plans.
+- **Usado por**: orchestrator, writing-plans-skill, executing-plans-skill.
+- **Output**: Worktree aislado con tests pasando
+
+**1️⃣3️⃣ finishing-a-development-branch-skill** *(Nueva - superpowers-skills)*
+- **Función**: Cierra branches limpiamente presentando 4 opciones estructuradas.
+- **Invocación**: Implementation complete, todos los tests pasando.
+- **Usado por**: executing-plans-skill, orchestrator.
+- **Output**: Work integrado según elección (Merge/PR/Keep/Discard)
+
+**1️⃣4️⃣ writing-plans-skill + executing-plans-skill** *(Nueva - superpowers-skills)*
+- **Función**: Crea plans detallados con exact paths, code examples, verification steps.
+- **Invocación**: Design completo, need implementation tasks.
+- **Usado por**: orchestrator, task-assessor.
+- **Output**: Plan completo en docs/plans/ + execution handoff
+
+**1️⃣5️⃣ requesting-code-review-skill + receiving-code-review-skill** *(Nueva - superpowers-skills)*
+- **Función**: Estándar para pedir/aplicar review con rigor técnico, no agreement performativo.
+- **Invocación**: After each task, major feature, before merge.
+- **Usado por**: orchestrator, all-agents.
+- **Output**: Review feedback estructurado + implementation con verification
+
+---
+
+### ⚙️ Reglas de Uso
+
+- Claude invoca automáticamente las skills según contexto, sin intervención manual.
+- Los subagentes pueden delegar tareas a las skills cuando se requiera precisión o consistencia.
+- Cada skill deja trazabilidad en su output asociado.
+- El orchestrator valida y sincroniza resultados entre skills y nodos GDD.
+
+**📁 Ubicación de Skills:** `.claude/skills/`  
+**📄 Configuración:** `.claude/settings.local.json` → `setting_sources: ["project", "user"]`
+
+---
+
+## Agents Configuration
+
+<!-- import: .claude/AGENTS.md -->

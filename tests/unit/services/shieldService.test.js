@@ -281,7 +281,7 @@ describe('ShieldService', () => {
       const result = await shieldService.trackUserBehavior(user, violation);
 
       expect(result.success).toBe(true);
-      expect(mockSupabase.from).toHaveBeenCalledWith('user_behavior');
+      expect(mockSupabase.from).toHaveBeenCalledWith('user_behaviors');
     });
   });
 

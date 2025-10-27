@@ -1,0 +1,26 @@
+name: PR Branch Guard
+on:
+  pull_request:
+    types: [opened, synchronize, edited, reopened]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch naming & issue reference
+        env:
+          BRANCH: ${{ github.head_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Requiere feature/issue-<id> o fix/issue-<id> o chore/issue-<id>
+          if ! echo "$BRANCH" | grep -E '^(feature|fix|chore)/issue-[0-9]+$' > /dev/null 2>&1; then
+            echo "Branch incorrecta: $BRANCH (usa feature|fix|chore/issue-<id>)"
+            exit 1
+          fi
+          # Exigir referencia a Issue en título o body
+          if ! echo "$TITLE $BODY" | grep -E 'Issue #[0-9]+' > /dev/null 2>&1; then
+            echo "La PR debe referenciar 'Issue #<id>' en título o descripción."
+            exit 1
+          fi
+
+
