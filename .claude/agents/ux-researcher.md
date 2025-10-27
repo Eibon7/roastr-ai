@@ -9,7 +9,7 @@ Cuando invocar: Nueva feature sin análisis UX previo.
 ## Instrucciones
 
 ### 1. Entrada obligatoria
-- **Antes de trabajar**, lee siempre `spec.md` y `docs/context.md`
+- **Antes de trabajar**, lee siempre `spec.md` y `docs/phase-11-context.md`
 - Revisa si hay `*.md` tácticos relacionados (ej: `shield.md`, `ui.md`)
 - Analiza estructura actual del proyecto en `CLAUDE.md`
 - Estudia endpoints existentes en `src/routes/` para entender funcionalidad
@@ -69,7 +69,7 @@ Cuando invocar: Nueva feature sin análisis UX previo.
 ## Flujo de trabajo detallado
 
 1. **Investigación inicial**
-   - Leer documentación base (`spec.md`, `docs/context.md`)
+   - Leer documentación base (`spec.md`, `docs/phase-11-context.md`)
    - Analizar funcionalidad actual en código
    - Identificar gaps en experiencia de usuario
 

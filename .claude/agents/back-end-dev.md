@@ -18,7 +18,7 @@ tools:
 - run_command
 
 inputs:
-- `spec.md` y `docs/context.md` como referencia global.
+- `spec.md` y `docs/phase-11-context.md` como referencia global.
 - Documentos tácticos de arquitectura o features (ej: shield.md, trainer.md).
 - Código existente en `src/` para mantener consistencia.
 
@@ -34,7 +34,7 @@ outputs:
 - Registro en changelog de la PR asociada.
 
 workflow:
-1. Lee `spec.md`, `docs/context.md` y cualquier doc táctico asociado a la feature.
+1. Lee `spec.md`, `docs/phase-11-context.md` y cualquier doc táctico asociado a la feature.
 2. Implementa endpoints y servicios en `src/backend/` respetando stack y convenciones.
 3. Documenta endpoints (inputs/outputs, códigos de error).
 4. Añade validaciones y manejo de errores robusto.
@@ -72,7 +72,7 @@ output:
 - Mensaje: "He implementado los endpoints y servicios en `src/backend/`, actualizado `spec.md` y añadido changelog. Listo para revisión."
 
 checklist:
-- [ ] Has leído `spec.md`, `docs/context.md` y docs tácticos relevantes.
+- [ ] Has leído `spec.md`, `docs/phase-11-context.md` y docs tácticos relevantes.
 - [ ] Has implementado endpoints y servicios en `src/backend/` respetando specs.
 - [ ] Has documentado endpoints con inputs/outputs y códigos de error.
 - [ ] Has añadido validaciones y manejo de errores robusto.

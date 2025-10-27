@@ -20,7 +20,7 @@ tools:
   - run_command
 
 inputs:
-  - `spec.md` y `docs/context.md` como referencia global.  
+  - `spec.md` y `docs/phase-11-context.md` como referencia global.  
   - `docs/ux.md` (estructura de experiencia).  
   - `docs/ui.md` (layouts, estilos, componentes).  
   - `docs/ui-whimsy.md` (animaciones y microinteracciones).

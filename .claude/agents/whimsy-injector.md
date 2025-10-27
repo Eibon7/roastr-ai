@@ -20,7 +20,7 @@ tools:
   - list_files
 
 inputs:
-  - Lee siempre `spec.md`, `docs/context.md`, `docs/ui.md` y `docs/ux.md` antes de empezar.  
+  - Lee siempre `spec.md`, `docs/phase-11-context.md`, `docs/ui.md` y `docs/ux.md` antes de empezar.  
   - Verifica si existe `docs/ui.md` con layouts base.
 
 outputs:

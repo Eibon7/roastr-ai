@@ -21,7 +21,7 @@ tools:
   - run_command
 
 inputs:
-  - spec.md y docs/context.md como referencia global.
+  - spec.md y docs/phase-11-context.md como referencia global.
   - Código nuevo o modificado en src/ (identificado a partir de diffs).
   - Documentos tácticos de diseño y desarrollo: ux.md, ui.md, ui-whimsy.md.
 
