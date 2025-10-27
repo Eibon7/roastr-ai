@@ -89,7 +89,7 @@ jobs:
           skip_checkout: false
 
       - name: Upload telemetry artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: gdd-telemetry-${{ github.run_number }}
           path: |
