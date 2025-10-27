@@ -8,7 +8,7 @@ Las Skills de Claude son instrucciones especializadas que se cargan automáticam
 
 ## Estructura de una Skill
 
-```
+```text
 nombre-de-la-skill/
 ├── SKILL.md          # Archivo principal con metadatos y contenido
 ├── examples.md       # Ejemplos opcionales de uso
@@ -45,8 +45,8 @@ description: Breve descripción que determina cuándo se activará
 **Cuándo se activa**: Cuando necesites revisar código para asegurar calidad, seguridad y documentación.
 
 **Uso**:
-```
-Revisar el código de esta feature para validar calidad
+```bash
+# Revisar el código de esta feature para validar calidad
 ```
 
 ## Configuración
