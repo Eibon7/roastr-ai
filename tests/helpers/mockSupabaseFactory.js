@@ -287,6 +287,66 @@ function createShieldSupabaseMock(options = {}) {
   });
 
   /**
+   * Mock rpc() operation for database functions
+   * CodeRabbit: Add RPC mock support for atomic_update_user_behavior
+   */
+  const rpcMock = jest.fn((functionName, params) => {
+    if (enableLogging) {
+      logger.debug('[Mock] rpc() called', { functionName, params });
+    }
+
+    // Handle atomic_update_user_behavior RPC
+    if (functionName === 'atomic_update_user_behavior') {
+      const { p_organization_id, p_platform, p_platform_user_id, p_platform_username } = params;
+      
+      // Simulate RPC call - update or insert user behavior
+      const table = 'userBehavior';
+      const conflictKey = `${p_organization_id}-${p_platform}-${p_platform_user_id}`;
+      
+      const index = mockData[table].findIndex(row =>
+        row.organization_id === p_organization_id &&
+        row.platform === p_platform &&
+        row.platform_user_id === p_platform_user_id
+      );
+
+      if (index !== -1) {
+        // Update existing
+        mockData[table][index] = { 
+          ...mockData[table][index], 
+          ...params,
+          updated_at: new Date().toISOString()
+        };
+        return Promise.resolve({
+          data: mockData[table][index],
+          error: null
+        });
+      } else {
+        // Insert new
+        const newRecord = {
+          organization_id: p_organization_id,
+          platform: p_platform,
+          platform_user_id: p_platform_user_id,
+          platform_username: p_platform_username,
+          ...params,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        mockData[table].push(newRecord);
+        return Promise.resolve({
+          data: newRecord,
+          error: null
+        });
+      }
+    }
+
+    // Default: return success for unknown RPCs
+    return Promise.resolve({
+      data: null,
+      error: null
+    });
+  });
+
+  /**
    * Mock from() operation - entry point for all queries
    * Issue #482: Routes to correct table mock data
    */
@@ -315,6 +375,46 @@ function createShieldSupabaseMock(options = {}) {
       update: updateMock,
       upsert: upsertMock
     };
+  });
+
+  /**
+   * Mock update() operation needs to support .eq().select() chains
+   * CodeRabbit: Fix incomplete update mock chain for Shield tests
+   */
+  const updateChain = {
+    eq: jest.fn((column, value) => {
+      if (enableLogging) {
+        logger.debug('[Mock] .update().eq() called', { column, value });
+      }
+
+      return {
+        select: jest.fn(() => {
+          const table = getCurrentTable();
+          const data = mockData[table] || [];
+          const updated = data.map(row => {
+            if (row[column] === value) {
+              return Promise.resolve({ data: { ...row }, error: null });
+            }
+            return Promise.resolve({ data: null, error: null });
+          }).filter(Boolean);
+          
+          return Promise.resolve({
+            data: updated.length > 0 ? updated : [],
+            error: null
+          });
+        })
+      };
+    })
+  };
+
+  // Update the updateMock to support chaining
+  const updateMockExtended = jest.fn((data) => {
+    if (enableLogging) {
+      logger.debug('[Mock] update() called', { data });
+    }
+
+    operations.update.push({ data, timestamp: Date.now() });
+    return updateChain;
   });
 
   /**
@@ -437,6 +537,7 @@ function createShieldSupabaseMock(options = {}) {
 
   return {
     from: fromMock,
+    rpc: rpcMock,
     verify,
     // Expose operations for advanced verification
     _operations: operations,

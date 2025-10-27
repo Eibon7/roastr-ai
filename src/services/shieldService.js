@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
 const { mockMode } = require('../config/mockMode');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
@@ -650,6 +650,19 @@ class ShieldService {
         comment_id: comment.id
       };
       
+      // Merge actions_taken instead of overwriting
+      const { data: existing } = await this.supabase
+        .from('user_behaviors')
+        .select('actions_taken')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .single();
+        
+      const mergedActions = Array.isArray(existing?.actions_taken)
+        ? [...existing.actions_taken, actionRecord]
+        : [actionRecord];
+      
       const { error } = await this.supabase
         .from('user_behaviors')
         .upsert({
@@ -657,12 +670,11 @@ class ShieldService {
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
           platform_username: comment.platform_username,
-          actions_taken: [actionRecord], // Will be merged with existing
+          actions_taken: mergedActions,
           is_blocked: ['block', 'ban_user'].includes(shieldActions.primary),
           last_seen_at: new Date().toISOString()
         }, {
-          onConflict: 'organization_id,platform,platform_user_id',
-          ignoreDuplicates: false
+          onConflict: 'organization_id,platform,platform_user_id'
         });
       
       if (error) throw error;
@@ -1192,6 +1204,24 @@ class ShieldService {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
+    // Persist temp mute state for cooling-off logic
+    try {
+      await this.supabase
+        .from('user_behaviors')
+        .update({
+          is_muted: true,
+          mute_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', 'Failed to update mute state, but action queued successfully', {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
+
     return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
@@ -1235,7 +1265,11 @@ class ShieldService {
     try {
       await this.supabase
         .from('user_behaviors')
-        .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
+        .update({
+          is_muted: true,
+          is_muted_permanent: true,
+          muted_at: new Date().toISOString()
+        })
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id);
@@ -1406,14 +1440,16 @@ class ShieldService {
 
       await this.supabase
         .from('user_behaviors')
-        .update({
+        .upsert({
+          organization_id: organizationId,
+          platform: comment.platform,
+          platform_user_id: comment.platform_user_id,
           strikes: updatedStrikes,
           strike_count: updatedStrikes.length,
           last_strike_at: new Date().toISOString()
-        })
-        .eq('organization_id', organizationId)
-        .eq('platform', comment.platform)
-        .eq('platform_user_id', comment.platform_user_id);
+        }, {
+          onConflict: 'organization_id,platform,platform_user_id'
+        });
     } catch (error) {
       this.log('warn', `Failed to add strike ${strikeLevel} to database, but action logged`, {
         userId: comment.platform_user_id,
@@ -1795,7 +1831,7 @@ class ShieldService {
   async trackUserBehavior(user, violation) {
     try {
       const result = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .upsert({
           user_id: user.user_id,
           platform: user.platform,
