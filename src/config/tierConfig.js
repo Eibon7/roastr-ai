@@ -12,7 +12,7 @@
 const TIER_PRICING = {
     currency: '€',
     monthly: {
-        free: 0,
+        starter_trial: 0, // 30-day trial
         starter: 5,
         pro: 15,
         plus: 50
@@ -27,16 +27,16 @@ const TIER_PRICING = {
  */
 const UPGRADE_CONFIG = {
     upgradePaths: {
-        free: ['starter', 'pro', 'plus'],
+        starter_trial: ['starter', 'pro', 'plus'],
         starter: ['pro', 'plus'],
         pro: ['plus'],
         plus: []
     },
     downgradePaths: {
-        plus: ['pro', 'starter', 'free'],
-        pro: ['starter', 'free'],
-        starter: ['free'],
-        free: []
+        plus: ['pro', 'starter', 'starter_trial'],
+        pro: ['starter', 'starter_trial'],
+        starter: ['starter_trial'],
+        starter_trial: []
     },
     getNextTier: (currentTier) => {
         const paths = UPGRADE_CONFIG.upgradePaths[currentTier] || [];
@@ -115,11 +115,12 @@ const FEATURE_MAPPINGS = {
  * Plan benefits descriptions for user messaging
  */
 const PLAN_BENEFITS = {
-    free: [
-        '100 análisis por mes',
-        '10 roasts por mes',
+    starter_trial: [
+        '30 días gratis',
+        'Límites de Starter durante trial',
         '1 cuenta por red social',
-        'Funcionalidades básicas'
+        'Shield habilitado',
+        'Requiere tarjeta'
     ],
     starter: [
         '1,000 análisis por mes',
@@ -145,7 +146,7 @@ const PLAN_BENEFITS = {
  * Feature requirements mapping
  */
 const FEATURE_REQUIREMENTS = {
-    'shield': ['starter', 'pro', 'plus'],
+    'shield': ['starter_trial', 'starter', 'pro', 'plus'],
     'custom_tones': ['pro', 'plus'],
     'ENABLE_ORIGINAL_TONE': ['pro', 'plus'],
     'embedded_judge': ['plus'],
@@ -160,13 +161,13 @@ const FEATURE_REQUIREMENTS = {
  * Default tier limits exactly per SPEC 10
  */
 const DEFAULT_TIER_LIMITS = {
-    free: {
+    starter_trial: {
         maxRoasts: 10,
         monthlyResponsesLimit: 10,
-        monthlyAnalysisLimit: 100,
+        monthlyAnalysisLimit: 1000,
         maxPlatforms: 1,
         integrationsLimit: 1,
-        shieldEnabled: false,
+        shieldEnabled: true,
         customPrompts: false,
         prioritySupport: false,
         apiAccess: false,
@@ -174,9 +175,11 @@ const DEFAULT_TIER_LIMITS = {
         customTones: false,
         dedicatedSupport: false,
         embeddedJudge: false,
-        monthlyTokensLimit: 50000,
-        dailyApiCallsLimit: 100,
-        ai_model: 'gpt-3.5-turbo'
+        monthlyTokensLimit: 100000,
+        dailyApiCallsLimit: 500,
+        ai_model: 'gpt-4o',
+        isTrial: true,
+        trialDays: 30
     },
     starter: {
         maxRoasts: 10,
@@ -280,7 +283,7 @@ const SECURITY_CONFIG = {
  */
 const VALIDATION_HELPERS = {
     isValidPlan: (plan) => {
-        return ['free', 'starter', 'pro', 'plus', 'custom'].includes(plan);
+        return ['starter_trial', 'starter', 'pro', 'plus', 'custom'].includes(plan);
     },
     
     isValidFeature: (feature) => {
@@ -292,9 +295,9 @@ const VALIDATION_HELPERS = {
     },
     
     normalizePlan: (plan) => {
-        if (typeof plan !== 'string') return 'free';
+        if (typeof plan !== 'string') return 'starter_trial';
         const normalized = plan.toLowerCase().trim();
-        return VALIDATION_HELPERS.isValidPlan(normalized) ? normalized : 'free';
+        return VALIDATION_HELPERS.isValidPlan(normalized) ? normalized : 'starter_trial';
     },
     
     getFeatureProperty: (feature) => {
@@ -319,16 +322,15 @@ const VALIDATION_HELPERS = {
 function getUpgradeRecommendation(usageType, currentLimit) {
     const recommendations = {
         analysis: {
-            100: 'starter',    // Free -> Starter
-            1000: 'pro',       // Starter -> Pro
+            1000: 'pro',       // Starter Trial/Starter -> Pro
             10000: 'plus'      // Pro -> Plus
         },
         roast: {
-            10: 'pro',         // Free/Starter -> Pro (both have 10 roasts)
+            10: 'pro',         // Starter Trial/Starter -> Pro (both have 10 roasts)
             1000: 'plus'       // Pro -> Plus (1000 roasts)
         },
         platform: {
-            1: 'pro'           // Free/Starter -> Pro (2 accounts per platform)
+            1: 'pro'           // Starter Trial/Starter -> Pro (2 accounts per platform)
         }
     };
     
@@ -346,7 +348,7 @@ function getUpgradeRecommendation(usageType, currentLimit) {
  * @returns {Array} Array of benefit strings
  */
 function getPlanBenefits(plan) {
-    return PLAN_BENEFITS[plan] || PLAN_BENEFITS.free;
+    return PLAN_BENEFITS[plan] || PLAN_BENEFITS.starter_trial;
 }
 
 /**
