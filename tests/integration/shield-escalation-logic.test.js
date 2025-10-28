@@ -22,24 +22,25 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
+    // Create shared single mock that tests can override
+    const singleMock = jest.fn().mockResolvedValue({ data: null, error: null });
+
+    // Create chainable eq structure supporting 3 levels deep
+    const createEqChain = (depth = 0) => {
+      if (depth >= 3) {
+        return { single: singleMock };
+      }
+      return {
+        eq: jest.fn(() => createEqChain(depth + 1)),
+        single: singleMock // Expose at every level for test access
+      };
+    };
+
     // Mock Supabase client with escalation-focused operations
     mockSupabase = {
       from: jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn().mockResolvedValue({ data: null, error: null }),
-            order: jest.fn(() => ({
-              limit: jest.fn().mockResolvedValue({ data: [], error: null })
-            }))
-          })),
-          gte: jest.fn(() => ({
-            lte: jest.fn().mockResolvedValue({ data: [], error: null })
-          })),
-          order: jest.fn(() => ({
-            limit: jest.fn().mockResolvedValue({ data: [], error: null })
-          }))
-        })),
+        select: jest.fn(() => createEqChain(0)),
         insert: jest.fn().mockResolvedValue({ data: [{ id: 'mock_escalation_id' }], error: null }),
         upsert: jest.fn().mockResolvedValue({ data: [{ id: 'mock_escalation_id' }], error: null }),
         update: jest.fn(() => ({
@@ -48,9 +49,12 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       }))
     };
 
-    // Initialize services
-    shieldService = new ShieldService();
+    // Initialize services with Shield enabled for testing
+    shieldService = new ShieldService({ enabled: true, autoActions: false });
     shieldService.supabase = mockSupabase;
+
+    // Mock CostControl to allow Shield access
+    shieldService.costControl.canUseShield = jest.fn().mockResolvedValue({ allowed: true });
   });
 
   afterEach(async () => {
