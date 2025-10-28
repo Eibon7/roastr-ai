@@ -12,6 +12,7 @@ const { supabaseServiceClient } = require('../config/supabase');
 const StripeWrapper = require('./stripeWrapper');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const { PLAN_IDS, TRIAL_DURATION, DEFAULT_CONVERSION_PLAN } = require('../config/trialConfig');
 
 class EntitlementsService {
     constructor() {
@@ -584,9 +585,10 @@ class EntitlementsService {
     }
 
     /**
-     * Get user subscription data (basic organization info)
-     * @param {string} userId - User ID
-     * @returns {Promise<Object>} User subscription data
+     * Get subscription details for a user
+     * @param {string} userId - User/Organization ID
+     * @returns {Promise<Object|null>} Subscription data or null if not found
+     * @throws {Error} If database query fails
      */
     async getSubscription(userId) {
         try {
@@ -594,7 +596,7 @@ class EntitlementsService {
                 .from('organizations')
                 .select('plan_id, trial_starts_at, trial_ends_at, created_at')
                 .eq('id', userId)
-                .single();
+                .maybeSingle(); // Issue #678: Use maybeSingle() for robust null handling
 
             if (error) {
                 throw new Error(`Failed to get subscription: ${error.message}`);
@@ -615,9 +617,9 @@ class EntitlementsService {
     // ============================================================================
 
     /**
-     * Check if user is in trial period
-     * @param {string} userId - User ID
-     * @returns {Promise<boolean>} True if user has active trial
+     * Check if a user is currently in an active trial period
+     * @param {string} userId - User/Organization ID
+     * @returns {Promise<boolean>} True if user has an active trial, false otherwise
      */
     async isInTrial(userId) {
         try {
@@ -638,12 +640,13 @@ class EntitlementsService {
     }
 
     /**
-     * Start trial for user
-     * @param {string} userId - User ID
+     * Start a trial period for a user
+     * @param {string} userId - User/Organization ID
      * @param {number} durationDays - Trial duration in days (default: 30)
-     * @returns {Promise<Object>} Trial start result
+     * @returns {Promise<Object>} Result with trial start/end dates
+     * @throws {Error} If user is already in trial or database update fails
      */
-    async startTrial(userId, durationDays = 30) {
+    async startTrial(userId, durationDays = TRIAL_DURATION.DEFAULT_DAYS) {
         try {
             // Validate user has no active trial
             const isAlreadyInTrial = await this.isInTrial(userId);
@@ -654,10 +657,10 @@ class EntitlementsService {
             const trialEndsAt = new Date();
             trialEndsAt.setDate(trialEndsAt.getDate() + durationDays);
 
-            const { error } = await supabaseServiceClient
+            const { error} = await supabaseServiceClient
                 .from('organizations')
                 .update({
-                    plan_id: 'starter_trial',
+                    plan_id: PLAN_IDS.STARTER_TRIAL, // Issue #678: Use constant
                     trial_starts_at: new Date().toISOString(),
                     trial_ends_at: trialEndsAt.toISOString()
                 })
@@ -690,9 +693,9 @@ class EntitlementsService {
     }
 
     /**
-     * Check if trial has expired and needs conversion
-     * @param {string} userId - User ID
-     * @returns {Promise<boolean>} True if trial has expired
+     * Check if a user's trial period has expired
+     * @param {string} userId - User/Organization ID
+     * @returns {Promise<boolean>} True if trial has expired, false otherwise
      */
     async checkTrialExpiration(userId) {
         try {
@@ -713,16 +716,17 @@ class EntitlementsService {
     }
 
     /**
-     * Cancel trial for user
-     * @param {string} userId - User ID
-     * @returns {Promise<Object>} Cancel result
+     * Cancel an active trial and convert to paid Starter plan immediately
+     * @param {string} userId - User/Organization ID
+     * @returns {Promise<Object>} Cancellation result with success and cancelled flags
+     * @throws {Error} If database update fails
      */
     async cancelTrial(userId) {
         try {
             const { error } = await supabaseServiceClient
                 .from('organizations')
                 .update({
-                    plan_id: 'starter', // Convert to paid immediately
+                    plan_id: DEFAULT_CONVERSION_PLAN, // Issue #678: Use constant for conversion
                     trial_starts_at: null,
                     trial_ends_at: null
                 })
@@ -747,9 +751,10 @@ class EntitlementsService {
     }
 
     /**
-     * Convert trial to paid starter
-     * @param {string} userId - User ID
-     * @returns {Promise<Object>} Conversion result
+     * Convert an expired trial to a paid Starter plan
+     * @param {string} userId - User/Organization ID
+     * @returns {Promise<Object>} Conversion result with success, converted, and new_plan
+     * @throws {Error} If database update fails
      */
     async convertTrialToPaid(userId) {
         try {
@@ -759,7 +764,7 @@ class EntitlementsService {
             const { error } = await supabaseServiceClient
                 .from('organizations')
                 .update({
-                    plan_id: 'starter',
+                    plan_id: DEFAULT_CONVERSION_PLAN, // Issue #678: Use constant
                     trial_starts_at: null,
                     trial_ends_at: null
                 })
@@ -774,7 +779,7 @@ class EntitlementsService {
             return {
                 success: true,
                 converted: true,
-                new_plan: 'starter'
+                new_plan: DEFAULT_CONVERSION_PLAN
             };
 
         } catch (error) {
@@ -788,9 +793,10 @@ class EntitlementsService {
     }
 
     /**
-     * Get trial status details
-     * @param {string} userId - User ID
-     * @returns {Promise<Object>} Trial status details
+     * Get comprehensive trial status information for a user
+     * @param {string} userId - User/Organization ID
+     * @returns {Promise<Object>} Trial status with in_trial, trial_starts_at, trial_ends_at, days_left, expired
+     * @throws {Error} If database query fails
      */
     async getTrialStatus(userId) {
         try {

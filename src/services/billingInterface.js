@@ -10,6 +10,7 @@
  */
 
 const { logger } = require('../utils/logger');
+const { PLAN_PRICING } = require('../config/trialConfig');
 
 class BillingInterface {
     constructor(config = {}) {
@@ -148,21 +149,24 @@ class BillingInterface {
     /**
      * Get plan pricing information
      * @param {string} planId - Plan ID
-     * @returns {Promise<Object>} Plan pricing data
+     * @returns {Promise<Object>} Plan pricing data from trialConfig
      */
     async getPlanPricing(planId) {
         this.logger.info('TODO:Polar - Get plan pricing', { planId });
 
-        // TODO:Polar - Implement plan pricing lookup
-        // For now, return mock data
-        const mockPricing = {
-            starter_trial: { price: 0, currency: 'EUR', trial_days: 30 },
-            starter: { price: 5, currency: 'EUR' },
-            pro: { price: 15, currency: 'EUR' },
-            plus: { price: 50, currency: 'EUR' }
-        };
+        // TODO:Polar - Implement plan pricing lookup from Polar API
+        // For now, use trialConfig constants (Issue #678)
+        const pricing = PLAN_PRICING[planId];
+        
+        if (!pricing) {
+            return null;
+        }
 
-        return mockPricing[planId] || null;
+        return {
+            monthly: pricing.monthly / 100, // Convert cents to euros
+            currency: 'EUR',
+            trial_days: planId === 'starter_trial' ? 30 : 0
+        };
     }
 
     /**
