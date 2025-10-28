@@ -5,7 +5,7 @@
 **Priority:** High
 **Status:** Production
 **Last Updated:** 2025-10-28
-**Coverage:** 0%
+**Coverage:** 90%
 **Coverage Source:** auto
 **Related PRs:** #499, #600, #633 (Issue #615: Persona-Roast Integration)
 

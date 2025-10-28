@@ -5,7 +5,7 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-10-28
-**Coverage:** 8%
+**Coverage:** 65%
 **Coverage Source:** auto
 **Related PRs:** #499, #542
 
