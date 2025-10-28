@@ -185,7 +185,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         expect(result.actions.offenseLevel).toBe(step.expectedLevel);
         expect(result.priority).toBeDefined();
         expect(result.userBehavior).toBeDefined();
-        
+
         // Verify escalate flag is set for critical severity
         if (step.severity === 'critical') {
           expect(result.actions.escalate).toBe(true);

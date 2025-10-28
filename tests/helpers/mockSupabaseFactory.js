@@ -298,11 +298,11 @@ function createShieldSupabaseMock(options = {}) {
     // Handle atomic_update_user_behavior RPC
     if (functionName === 'atomic_update_user_behavior') {
       const { p_organization_id, p_platform, p_platform_user_id, p_platform_username } = params;
-      
+
       // Simulate RPC call - update or insert user behavior
       const table = 'userBehavior';
       const conflictKey = `${p_organization_id}-${p_platform}-${p_platform_user_id}`;
-      
+
       const index = mockData[table].findIndex(row =>
         row.organization_id === p_organization_id &&
         row.platform === p_platform &&
@@ -311,8 +311,8 @@ function createShieldSupabaseMock(options = {}) {
 
       if (index !== -1) {
         // Update existing
-        mockData[table][index] = { 
-          ...mockData[table][index], 
+        mockData[table][index] = {
+          ...mockData[table][index],
           ...params,
           updated_at: new Date().toISOString()
         };
@@ -397,7 +397,7 @@ function createShieldSupabaseMock(options = {}) {
             }
             return Promise.resolve({ data: null, error: null });
           }).filter(Boolean);
-          
+
           return Promise.resolve({
             data: updated.length > 0 ? updated : [],
             error: null
@@ -454,9 +454,9 @@ function createShieldSupabaseMock(options = {}) {
     actionRecorded: (actionType) => {
       const insertOps = operations.insert.filter(op => {
         const payloads = Array.isArray(op.data) ? op.data : [op.data];
-        return payloads.some(d => 
-          d?.action === actionType || 
-          d?.action_tag === actionType || 
+        return payloads.some(d =>
+          d?.action === actionType ||
+          d?.action_tag === actionType ||
           d?.action_type === actionType
         );
       });
@@ -474,10 +474,10 @@ function createShieldSupabaseMock(options = {}) {
         .find(d => d?.action === actionType || d?.action_tag === actionType || d?.action_type === actionType);
 
       expect(actionData).toBeDefined();
-      
+
       // Assert on the field that actually exists
-      const hasMatch = actionData?.action === actionType || 
-                       actionData?.action_tag === actionType || 
+      const hasMatch = actionData?.action === actionType ||
+                       actionData?.action_tag === actionType ||
                        actionData?.action_type === actionType;
       expect(hasMatch).toBe(true);
 
@@ -548,7 +548,10 @@ function createShieldSupabaseMock(options = {}) {
 
   return {
     from: fromMock,
+<<<<<<< HEAD
+=======
     rpc: rpcMock,
+>>>>>>> origin/main
     verify,
     // Expose operations for advanced verification
     _operations: operations,

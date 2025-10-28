@@ -332,7 +332,7 @@ class ShieldService {
     ];
 
     const contentText = (content || comment.content || comment.original_text || '').toLowerCase();
-    
+
     // Use case-insensitive word boundary matching to avoid partial matches
     const hasEmergencyKeyword = emergencyKeywords.some(keyword => {
       const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -347,7 +347,7 @@ class ShieldService {
       /\b(?:this weekend|tomorrow morning|tomorrow night)\b.{0,100}(attack|bomb|shoot)/i,
       /\b(attack|bomb|shoot).{0,100}\b(?:this weekend|tomorrow morning|tomorrow night)\b/i
     ];
-    
+
     const hasTimeProximity = timeContextPatterns.some(pattern => pattern.test(contentText));
 
     // Issue #482: Case-insensitive category checking (Perspective returns uppercase like 'THREAT')
@@ -360,7 +360,7 @@ class ShieldService {
     // 2. Emergency keywords detected (with context-aware matching)
     // 3. Time-proximity patterns suggest imminent threat
     const hasEmergencyKeyword_processed = hasEmergencyKeyword || hasTimeProximity;
-    
+
     return (severity_level === 'critical' &&
             (categoriesLower.includes('threat') || categoriesLower.includes('self_harm') ||
              categoriesLower.includes('severe_toxicity'))) ||
