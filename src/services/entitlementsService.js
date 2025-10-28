@@ -583,6 +583,33 @@ class EntitlementsService {
         }
     }
 
+    /**
+     * Get user subscription data (basic organization info)
+     * @param {string} userId - User ID
+     * @returns {Promise<Object>} User subscription data
+     */
+    async getSubscription(userId) {
+        try {
+            const { data, error } = await supabaseServiceClient
+                .from('organizations')
+                .select('plan_id, trial_starts_at, trial_ends_at, created_at')
+                .eq('id', userId)
+                .single();
+
+            if (error) {
+                throw new Error(`Failed to get subscription: ${error.message}`);
+            }
+
+            return data;
+        } catch (error) {
+            logger.error('Failed to get subscription', {
+                userId,
+                error: error.message
+            });
+            throw error;
+        }
+    }
+
     // ============================================================================
     // TRIAL MANAGEMENT METHODS - Issue #678
     // ============================================================================
