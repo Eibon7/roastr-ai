@@ -353,10 +353,16 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         last_seen_at: recentDate
       };
 
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: mockBehavior,
-        error: null
+      // Issue #482: Reinitialize mockSupabase with cooling-off period data
+      const testMockSupabase = createShieldSupabaseMock({
+        userBehavior: [mockBehavior]
       });
+
+      // Create new ShieldService with test-specific mock
+      const testShieldService = new ShieldService({ enabled: true, autoActions: false });
+      testShieldService.supabase = testMockSupabase;
+      testShieldService.costControl = mockCostControl;
+      testShieldService.queueService = mockQueueService;
 
       const comment = {
         id: 'comment_cooling_off',
@@ -371,7 +377,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         toxicity_score: 0.6
       };
 
-      const result = await shieldService.analyzeForShield(
+      const result = await testShieldService.analyzeForShield(
         organizationId,
         comment,
         analysisResult
@@ -645,10 +651,16 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         ]
       };
 
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: mockBehavior,
-        error: null
+      // Issue #482: Reinitialize mockSupabase with special user type data
+      const testMockSupabase = createShieldSupabaseMock({
+        userBehavior: [mockBehavior]
       });
+
+      // Create new ShieldService with test-specific mock
+      const testShieldService = new ShieldService({ enabled: true, autoActions: false });
+      testShieldService.supabase = testMockSupabase;
+      testShieldService.costControl = mockCostControl;
+      testShieldService.queueService = mockQueueService;
 
       const comment = {
         id: 'comment_special_user',
@@ -664,7 +676,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         toxicity_score: 0.65
       };
 
-      const result = await shieldService.analyzeForShield(
+      const result = await testShieldService.analyzeForShield(
         organizationId,
         comment,
         analysisResult
