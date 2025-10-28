@@ -5,8 +5,7 @@
 
 // Plan ID constants
 const PLAN_IDS = {
-  FREE: 'free',
-  BASIC: 'basic', // Legacy alias for free
+  STARTER_TRIAL: 'starter_trial',
   STARTER: 'starter',
   PRO: 'pro',
   PLUS: 'plus',
@@ -16,14 +15,13 @@ const PLAN_IDS = {
 
 // Valid plan arrays for different contexts
 const VALID_PLANS = {
-  ALL: ['free', 'basic', 'starter', 'pro', 'plus', 'creator_plus', 'custom'],
-  ADMIN_ASSIGNABLE: ['free', 'basic', 'pro', 'plus', 'creator_plus']
+  ALL: ['starter_trial', 'starter', 'pro', 'plus', 'creator_plus', 'custom'],
+  ADMIN_ASSIGNABLE: ['starter_trial', 'starter', 'pro', 'plus', 'creator_plus']
 };
 
-// Stripe price lookup key to plan ID mapping
-const STRIPE_PLAN_MAPPINGS = {
-  'plan_free': PLAN_IDS.FREE,
-  'plan_basic': PLAN_IDS.FREE, // Legacy mapping
+// TODO:Polar - Price lookup key to plan ID mapping (formerly Stripe)
+const PLAN_MAPPINGS = {
+  'plan_starter_trial': PLAN_IDS.STARTER_TRIAL,
   'plan_starter': PLAN_IDS.STARTER,
   'plan_pro': PLAN_IDS.PRO,
   'plan_plus': PLAN_IDS.PLUS,
@@ -31,6 +29,7 @@ const STRIPE_PLAN_MAPPINGS = {
   'plan_custom': PLAN_IDS.CUSTOM,
   
   // Alternative formats
+  'starter_trial': PLAN_IDS.STARTER_TRIAL,
   'starter': PLAN_IDS.STARTER,
   'pro': PLAN_IDS.PRO,
   'plus': PLAN_IDS.PLUS,
@@ -40,7 +39,7 @@ const STRIPE_PLAN_MAPPINGS = {
 
 // Plan hierarchy for upgrades/downgrades
 const PLAN_HIERARCHY = {
-  [PLAN_IDS.FREE]: 0,
+  [PLAN_IDS.STARTER_TRIAL]: 0,
   [PLAN_IDS.STARTER]: 1,
   [PLAN_IDS.PRO]: 2,
   [PLAN_IDS.PLUS]: 3,
@@ -48,16 +47,16 @@ const PLAN_HIERARCHY = {
 };
 
 /**
- * Get plan ID from Stripe lookup key
- * @param {string} lookupKey - Stripe price lookup key
+ * Get plan ID from lookup key (TODO:Polar integration)
+ * @param {string} lookupKey - Price lookup key
  * @returns {string} - Normalized plan ID
  */
-function getPlanFromStripeLookupKey(lookupKey) {
+function getPlanFromLookupKey(lookupKey) {
   if (!lookupKey || typeof lookupKey !== 'string') {
-    return PLAN_IDS.FREE;
+    return PLAN_IDS.STARTER_TRIAL;
   }
   
-  return STRIPE_PLAN_MAPPINGS[lookupKey.toLowerCase()] || PLAN_IDS.FREE;
+  return PLAN_MAPPINGS[lookupKey.toLowerCase()] || PLAN_IDS.STARTER_TRIAL;
 }
 
 /**
@@ -67,16 +66,16 @@ function getPlanFromStripeLookupKey(lookupKey) {
  */
 function normalizePlanId(planId) {
   if (!planId || typeof planId !== 'string') {
-    return PLAN_IDS.FREE;
+    return PLAN_IDS.STARTER_TRIAL;
   }
   
   const normalized = planId.toLowerCase().trim();
   
   // Handle variations
   switch (normalized) {
-    case 'free':
-    case 'gratuito':
-      return PLAN_IDS.FREE;
+    case 'starter_trial':
+    case 'trial':
+      return PLAN_IDS.STARTER_TRIAL;
     case 'starter':
     case 'starter_plan':
       return PLAN_IDS.STARTER;
@@ -90,11 +89,14 @@ function normalizePlanId(planId) {
     case 'creator':
     case 'creatorplus':
       return PLAN_IDS.CREATOR_PLUS;
+    // Legacy mappings
+    case 'free':
+    case 'gratuito':
     case 'basic':
     case 'basico':
-      return PLAN_IDS.BASIC;
+      return PLAN_IDS.STARTER_TRIAL;
     default:
-      return PLAN_IDS.FREE;
+      return PLAN_IDS.STARTER_TRIAL;
   }
 }
 
@@ -159,9 +161,9 @@ function isDowngrade(currentPlan, newPlan) {
 module.exports = {
   PLAN_IDS,
   VALID_PLANS,
-  STRIPE_PLAN_MAPPINGS,
+  PLAN_MAPPINGS, // Renamed from STRIPE_PLAN_MAPPINGS
   PLAN_HIERARCHY,
-  getPlanFromStripeLookupKey,
+  getPlanFromLookupKey, // Renamed from getPlanFromStripeLookupKey
   normalizePlanId,
   isValidPlan,
   getPlanLevel,
