@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
 const { mockMode } = require('../config/mockMode');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
@@ -168,6 +168,9 @@ class ShieldService {
   calculateShieldPriority(analysisResult) {
     const { severity_level, toxicity_score, categories } = analysisResult;
     
+    // Normalize categories to lowercase for case-insensitive comparison
+    const categoriesLower = Array.isArray(categories) ? categories.map(c => c.toLowerCase()) : [];
+    
     // Critical priority for severe threats
     if (severity_level === 'critical' || toxicity_score >= 0.95) {
       return this.priorityLevels.critical;
@@ -175,7 +178,7 @@ class ShieldService {
     
     // High priority for high toxicity or threat categories
     if (severity_level === 'high' || 
-        categories?.some(cat => ['threat', 'hate', 'harassment'].includes(cat))) {
+        categoriesLower.some(cat => ['threat', 'hate', 'harassment'].includes(cat))) {
       return this.priorityLevels.high;
     }
     
@@ -199,9 +202,9 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', platform)
         .eq('platform_user_id', platformUserId)
-        .single();
+        .maybeSingle(); // Use maybeSingle() to avoid throwing on not-found
       
-      if (error && error.code !== 'PGRST116') { // Not found is OK
+      if (error) {
         throw error;
       }
       
@@ -318,26 +321,50 @@ class ShieldService {
   isEmergencyContent(analysisResult, comment) {
     const { severity_level, categories, content } = analysisResult;
 
-    // Emergency keywords that indicate imminent threats
+    // Emergency keywords that indicate imminent threats - expanded with common variants
     const emergencyKeywords = [
       'imminent threat', 'going to kill', 'will kill', 'planning to',
+      'i\'m going to kill', 'shoot up', 'going to stab', 'going to attack',
+      'going to bomb', 'kms', 'i want to die', 'i want to end it all',
+      'going to end it', 'cutting', 'end it',
       'suicide', 'self-harm', 'end my life', 'hurt myself',
       'bomb threat', 'active shooter', 'terrorism'
     ];
 
-    const contentLower = (content || comment.content || comment.original_text || '').toLowerCase();
-    const hasEmergencyKeyword = emergencyKeywords.some(keyword => contentLower.includes(keyword));
+    const contentText = (content || comment.content || comment.original_text || '').toLowerCase();
+
+    // Use case-insensitive word boundary matching to avoid partial matches
+    const hasEmergencyKeyword = emergencyKeywords.some(keyword => {
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'i');
+      return regex.test(contentText);
+    });
+
+    // Time context proximity checks - patterns that suggest urgency
+    const timeContextPatterns = [
+      /\b(?:tomorrow|tonight|today|now|soon)\b.{0,100}(going to kill|will kill|suicide|kms|end it)/i,
+      /\b(going to kill|will kill|suicide|kms|end it).{0,100}\b(?:tomorrow|tonight|today|now|soon)\b/i,
+      /\b(?:this weekend|tomorrow morning|tomorrow night)\b.{0,100}(attack|bomb|shoot)/i,
+      /\b(attack|bomb|shoot).{0,100}\b(?:this weekend|tomorrow morning|tomorrow night)\b/i
+    ];
+
+    const hasTimeProximity = timeContextPatterns.some(pattern => pattern.test(contentText));
 
     // Issue #482: Case-insensitive category checking (Perspective returns uppercase like 'THREAT')
     const categoriesLower = Array.isArray(categories)
       ? categories.map(c => c.toLowerCase())
       : [];
 
-    // Emergency if critical + threat/self_harm category OR emergency keywords
+    // Emergency if:
+    // 1. Critical severity + threat/self_harm category OR severe toxicity
+    // 2. Emergency keywords detected (with context-aware matching)
+    // 3. Time-proximity patterns suggest imminent threat
+    const hasEmergencyKeyword_processed = hasEmergencyKeyword || hasTimeProximity;
+
     return (severity_level === 'critical' &&
             (categoriesLower.includes('threat') || categoriesLower.includes('self_harm') ||
              categoriesLower.includes('severe_toxicity'))) ||
-           hasEmergencyKeyword;
+           hasEmergencyKeyword_processed;
   }
 
   /**
@@ -626,6 +653,19 @@ class ShieldService {
         comment_id: comment.id
       };
       
+      // Merge actions_taken instead of overwriting
+      const { data: existing, error: queryError } = await this.supabase
+        .from('user_behaviors')
+        .select('actions_taken')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .maybeSingle();
+        
+      const mergedActions = Array.isArray(existing?.actions_taken)
+        ? [...existing.actions_taken, actionRecord]
+        : [actionRecord];
+      
       const { error } = await this.supabase
         .from('user_behaviors')
         .upsert({
@@ -633,12 +673,11 @@ class ShieldService {
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
           platform_username: comment.platform_username,
-          actions_taken: [actionRecord], // Will be merged with existing
+          actions_taken: mergedActions,
           is_blocked: ['block', 'ban_user'].includes(shieldActions.primary),
           last_seen_at: new Date().toISOString()
         }, {
-          onConflict: 'organization_id,platform,platform_user_id',
-          ignoreDuplicates: false
+          onConflict: 'organization_id,platform,platform_user_id'
         });
       
       if (error) throw error;
@@ -1168,6 +1207,24 @@ class ShieldService {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
+    // Persist temp mute state for cooling-off logic
+    try {
+      await this.supabase
+        .from('user_behaviors')
+        .update({
+          is_muted: true,
+          mute_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', 'Failed to update mute state, but action queued successfully', {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
+
     return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
@@ -1211,7 +1268,11 @@ class ShieldService {
     try {
       await this.supabase
         .from('user_behaviors')
-        .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
+        .update({
+          is_muted: true,
+          is_muted_permanent: true,
+          muted_at: new Date().toISOString()
+        })
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id);
@@ -1261,9 +1322,9 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
@@ -1375,21 +1436,23 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
-        .single();
+        .maybeSingle();
 
       const currentStrikes = behavior?.strikes || [];
       const updatedStrikes = [...currentStrikes, strike];
 
       await this.supabase
         .from('user_behaviors')
-        .update({
+        .upsert({
+          organization_id: organizationId,
+          platform: comment.platform,
+          platform_user_id: comment.platform_user_id,
           strikes: updatedStrikes,
           strike_count: updatedStrikes.length,
           last_strike_at: new Date().toISOString()
-        })
-        .eq('organization_id', organizationId)
-        .eq('platform', comment.platform)
-        .eq('platform_user_id', comment.platform_user_id);
+        }, {
+          onConflict: 'organization_id,platform,platform_user_id'
+        });
     } catch (error) {
       this.log('warn', `Failed to add strike ${strikeLevel} to database, but action logged`, {
         userId: comment.platform_user_id,
@@ -1706,9 +1769,9 @@ class ShieldService {
         .eq('organization_id', user.organization_id)
         .eq('platform', user.platform)
         .eq('platform_user_id', user.user_id)
-        .single();
+        .maybeSingle();
       
-      if (result.error && result.error.message) {
+      if (result.error) {
         throw new Error(result.error.message);
       }
       
@@ -1771,14 +1834,16 @@ class ShieldService {
   async trackUserBehavior(user, violation) {
     try {
       const result = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .upsert({
-          user_id: user.user_id,
+          platform_user_id: user.user_id, // Use platform_user_id for composite key
           platform: user.platform,
           organization_id: user.organization_id,
           total_violations: 3,
           severe_violations: violation.severity === 'high' ? 2 : 1,
           last_violation: new Date().toISOString()
+        }, {
+          onConflict: 'organization_id,platform,platform_user_id'
         })
         .select()
         .single();

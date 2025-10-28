@@ -68,3 +68,6 @@ docs/backup/
 # Guardian security test backups (should never be committed)
 .gdd-backups/
 
+
+# Branch Guard - issue lock file
+.issue_lock
