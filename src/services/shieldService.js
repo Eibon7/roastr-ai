@@ -137,7 +137,8 @@ class ShieldService {
         priority,
         actions: shieldActions,
         userBehavior,
-        autoExecuted: this.options.autoActions && shieldActions.autoExecute
+        autoExecuted: this.options.autoActions && shieldActions.autoExecute,
+        shouldGenerateResponse: false // Shield actions block roast generation
       };
       
     } catch (error) {
