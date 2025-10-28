@@ -242,12 +242,39 @@ class ShieldService {
     const muteExpiresAt = userBehavior.mute_expires_at;
     const isInCoolingOff = isMuted && muteExpiresAt && new Date(muteExpiresAt) > new Date();
 
+    // Issue #482: Calculate time window escalation (Test 6)
+    const timeWindowModifier = this.calculateTimeWindowEscalation(userBehavior);
+
     // Determine offense level
     let offenseLevel = 'first';
     if (violationCount >= this.options.reincidenceThreshold) {
       offenseLevel = 'persistent';
     } else if (violationCount > 0) {
       offenseLevel = 'repeat';
+    }
+
+    // Issue #482: Apply time window escalation (Test 6)
+    if (timeWindowModifier === 'aggressive' && violationCount > 0) {
+      // Force escalation for recent violation spike (< 1h)
+      offenseLevel = 'persistent';
+      this.logger?.warn('Aggressive escalation: recent violation spike detected', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        hoursElapsed: '< 1h',
+        escalatedTo: 'persistent'
+      });
+    } else if (timeWindowModifier === 'minimal') {
+      // Downgrade for significant time decay (30+ days)
+      if (offenseLevel === 'persistent') {
+        offenseLevel = 'repeat';
+      } else if (offenseLevel === 'repeat') {
+        offenseLevel = 'first';
+      }
+      this.logger?.info('Minimal escalation: significant time decay applied', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        timeDecay: '30+ days'
+      });
     }
 
     // Issue #482: Escalate aggressively if violating during cooling-off period (Test 5)
@@ -404,6 +431,56 @@ class ShieldService {
     return actions[actionType] || { action: actionType, available: false };
   }
   
+  /**
+   * Calculate time window escalation modifier
+   * Issue #482 - Test 6: Time window escalation
+   * @param {Object} userBehavior - User behavior data with actions_taken
+   * @returns {string} - Modifier: 'aggressive', 'standard', 'reduced', 'minimal'
+   */
+  calculateTimeWindowEscalation(userBehavior) {
+    try {
+      const actionsTaken = userBehavior.actions_taken || [];
+
+      // No prior violations - use standard logic
+      if (actionsTaken.length === 0) {
+        return 'standard';
+      }
+
+      // Find most recent violation timestamp
+      const timestamps = actionsTaken
+        .map(action => action.timestamp || action.created_at || action.date)
+        .filter(ts => ts)
+        .map(ts => new Date(ts).getTime())
+        .filter(time => !isNaN(time));
+
+      if (timestamps.length === 0) {
+        return 'standard';
+      }
+
+      const mostRecentTime = Math.max(...timestamps);
+      const now = Date.now();
+      const hoursElapsed = (now - mostRecentTime) / (1000 * 60 * 60);
+
+      // Time windows (Issue #482 - Test 6)
+      if (hoursElapsed < 1) {
+        // < 1 hour: Aggressive (recent violation spike)
+        return 'aggressive';
+      } else if (hoursElapsed < 24) {
+        // 1-24 hours: Standard escalation
+        return 'standard';
+      } else if (hoursElapsed < 168) {
+        // 24h-7 days (168 hours): Reduced escalation
+        return 'reduced';
+      } else {
+        // 30+ days (720 hours): Minimal escalation (significant time decay)
+        return 'minimal';
+      }
+    } catch (error) {
+      this.logger?.warn('Error calculating time window escalation, using standard', { error: error.message });
+      return 'standard';
+    }
+  }
+
   /**
    * Execute Shield actions automatically
    */
