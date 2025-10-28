@@ -13,15 +13,9 @@ ALTER TABLE organizations
 ADD COLUMN IF NOT EXISTS trial_starts_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ;
 
--- Add computed column for trial status
-ALTER TABLE organizations
-ADD COLUMN IF NOT EXISTS is_in_trial BOOLEAN 
-GENERATED ALWAYS AS (
-  CASE 
-    WHEN trial_ends_at IS NOT NULL AND trial_ends_at > NOW() THEN TRUE
-    ELSE FALSE
-  END
-) STORED;
+-- Note: is_in_trial is computed in application layer via:
+-- WHERE trial_ends_at IS NOT NULL AND trial_ends_at > NOW()
+-- Postgres generated columns cannot use volatile functions like NOW()
 
 -- Remove Stripe subscription field (no longer needed for Polar)
 ALTER TABLE organizations
@@ -45,21 +39,22 @@ ALTER TABLE organizations
 ADD CONSTRAINT organizations_plan_check 
 CHECK (plan_id IN ('starter_trial', 'starter', 'pro', 'plus', 'custom'));
 
--- Update default plan_id from 'free' to 'starter_trial'
-ALTER TABLE organizations
-ALTER COLUMN plan_id SET DEFAULT 'starter_trial';
-
 -- ============================================================================
 -- STEP 3: Update existing 'free' organizations to 'starter_trial'
 -- ============================================================================
 
 -- Convert existing free users to starter_trial with 30-day trial
+-- MUST do this BEFORE adding the CHECK constraint
 UPDATE organizations
 SET 
   plan_id = 'starter_trial',
   trial_starts_at = NOW(),
   trial_ends_at = NOW() + INTERVAL '30 days'
 WHERE plan_id = 'free';
+
+-- Update default plan_id from 'free' to 'starter_trial'
+ALTER TABLE organizations
+ALTER COLUMN plan_id SET DEFAULT 'starter_trial';
 
 -- ============================================================================
 -- STEP 4: Update plans table (if exists)
@@ -110,11 +105,12 @@ BEGIN
     plan_id = 'starter',
     trial_starts_at = NULL,
     trial_ends_at = NULL
-  WHERE is_in_trial = FALSE 
+  WHERE plan_id = 'starter_trial' 
+    AND trial_ends_at IS NOT NULL
     AND trial_ends_at < NOW()
   RETURNING 
     organizations.id,
-    organizations.plan_id,
+    'starter_trial'::VARCHAR,
     'starter'::VARCHAR;
 END;
 $$ LANGUAGE plpgsql;
