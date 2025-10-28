@@ -582,6 +582,222 @@ class EntitlementsService {
             throw error;
         }
     }
+
+    // ============================================================================
+    // TRIAL MANAGEMENT METHODS - Issue #678
+    // ============================================================================
+
+    /**
+     * Check if user is in trial period
+     * @param {string} userId - User ID
+     * @returns {Promise<boolean>} True if user has active trial
+     */
+    async isInTrial(userId) {
+        try {
+            const subscription = await this.getSubscription(userId);
+            if (!subscription?.trial_ends_at) return false;
+
+            const now = new Date();
+            const trialEnd = new Date(subscription.trial_ends_at);
+
+            return trialEnd > now;
+        } catch (error) {
+            logger.error('Failed to check trial status', {
+                userId,
+                error: error.message
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Start trial for user
+     * @param {string} userId - User ID
+     * @param {number} durationDays - Trial duration in days (default: 30)
+     * @returns {Promise<Object>} Trial start result
+     */
+    async startTrial(userId, durationDays = 30) {
+        try {
+            // Validate user has no active trial
+            const isAlreadyInTrial = await this.isInTrial(userId);
+            if (isAlreadyInTrial) {
+                throw new Error('User is already in trial period');
+            }
+
+            const trialEndsAt = new Date();
+            trialEndsAt.setDate(trialEndsAt.getDate() + durationDays);
+
+            const { error } = await supabaseServiceClient
+                .from('organizations')
+                .update({
+                    plan_id: 'starter_trial',
+                    trial_starts_at: new Date().toISOString(),
+                    trial_ends_at: trialEndsAt.toISOString()
+                })
+                .eq('id', userId);
+
+            if (error) {
+                throw new Error(`Failed to start trial: ${error.message}`);
+            }
+
+            logger.info('Trial started successfully', {
+                userId,
+                trialEndsAt: trialEndsAt.toISOString(),
+                durationDays
+            });
+
+            return {
+                success: true,
+                trial_ends_at: trialEndsAt.toISOString(),
+                duration_days: durationDays
+            };
+
+        } catch (error) {
+            logger.error('Failed to start trial', {
+                userId,
+                error: error.message
+            });
+
+            throw error;
+        }
+    }
+
+    /**
+     * Check if trial has expired and needs conversion
+     * @param {string} userId - User ID
+     * @returns {Promise<boolean>} True if trial has expired
+     */
+    async checkTrialExpiration(userId) {
+        try {
+            const subscription = await this.getSubscription(userId);
+            if (!subscription?.trial_ends_at) return false;
+
+            const now = new Date();
+            const trialEnd = new Date(subscription.trial_ends_at);
+
+            return trialEnd < now;
+        } catch (error) {
+            logger.error('Failed to check trial expiration', {
+                userId,
+                error: error.message
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Cancel trial for user
+     * @param {string} userId - User ID
+     * @returns {Promise<Object>} Cancel result
+     */
+    async cancelTrial(userId) {
+        try {
+            const { error } = await supabaseServiceClient
+                .from('organizations')
+                .update({
+                    plan_id: 'starter', // Convert to paid immediately
+                    trial_starts_at: null,
+                    trial_ends_at: null
+                })
+                .eq('id', userId);
+
+            if (error) {
+                throw new Error(`Failed to cancel trial: ${error.message}`);
+            }
+
+            logger.info('Trial cancelled successfully', { userId });
+
+            return { success: true, cancelled: true };
+
+        } catch (error) {
+            logger.error('Failed to cancel trial', {
+                userId,
+                error: error.message
+            });
+
+            throw error;
+        }
+    }
+
+    /**
+     * Convert trial to paid starter
+     * @param {string} userId - User ID
+     * @returns {Promise<Object>} Conversion result
+     */
+    async convertTrialToPaid(userId) {
+        try {
+            // TODO:Polar - Integrate with Polar billing when ready
+            // For now, just update the plan_id
+
+            const { error } = await supabaseServiceClient
+                .from('organizations')
+                .update({
+                    plan_id: 'starter',
+                    trial_starts_at: null,
+                    trial_ends_at: null
+                })
+                .eq('id', userId);
+
+            if (error) {
+                throw new Error(`Failed to convert trial to paid: ${error.message}`);
+            }
+
+            logger.info('Trial converted to paid successfully', { userId });
+
+            return {
+                success: true,
+                converted: true,
+                new_plan: 'starter'
+            };
+
+        } catch (error) {
+            logger.error('Failed to convert trial to paid', {
+                userId,
+                error: error.message
+            });
+
+            throw error;
+        }
+    }
+
+    /**
+     * Get trial status details
+     * @param {string} userId - User ID
+     * @returns {Promise<Object>} Trial status details
+     */
+    async getTrialStatus(userId) {
+        try {
+            const subscription = await this.getSubscription(userId);
+
+            if (!subscription?.trial_starts_at) {
+                return { in_trial: false };
+            }
+
+            const now = new Date();
+            const trialStart = new Date(subscription.trial_starts_at);
+            const trialEnd = new Date(subscription.trial_ends_at);
+            const isActive = trialEnd > now;
+
+            const daysLeft = isActive ?
+                Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)) : 0;
+
+            return {
+                in_trial: isActive,
+                trial_starts_at: subscription.trial_starts_at,
+                trial_ends_at: subscription.trial_ends_at,
+                days_left: daysLeft,
+                expired: trialEnd < now
+            };
+
+        } catch (error) {
+            logger.error('Failed to get trial status', {
+                userId,
+                error: error.message
+            });
+
+            throw error;
+        }
+    }
 }
 
 module.exports = EntitlementsService;
