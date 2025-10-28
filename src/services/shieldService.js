@@ -219,6 +219,8 @@ class ShieldService {
       severity_counts: { low: 0, medium: 0, high: 0, critical: 0 },
       actions_taken: [],
       is_blocked: false,
+      is_muted: false,              // Issue #482: Track mute status for cooling-off logic
+      user_type: 'standard',        // Issue #482: Track special users (verified_creator, partner)
       first_seen_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString()
     };
@@ -230,7 +232,16 @@ class ShieldService {
   async determineShieldActions(analysisResult, userBehavior, comment) {
     const { severity_level } = analysisResult;
     const violationCount = userBehavior.total_violations || 0;
-    
+
+    // Issue #482: Check for special user types (Test 10)
+    const userType = userBehavior.user_type || 'standard';
+    const isSpecialUser = ['verified_creator', 'partner'].includes(userType);
+
+    // Issue #482: Check cooling-off period (Test 5)
+    const isMuted = userBehavior.is_muted === true;
+    const muteExpiresAt = userBehavior.mute_expires_at;
+    const isInCoolingOff = isMuted && muteExpiresAt && new Date(muteExpiresAt) > new Date();
+
     // Determine offense level
     let offenseLevel = 'first';
     if (violationCount >= this.options.reincidenceThreshold) {
@@ -238,10 +249,33 @@ class ShieldService {
     } else if (violationCount > 0) {
       offenseLevel = 'repeat';
     }
-    
+
+    // Issue #482: Escalate aggressively if violating during cooling-off period (Test 5)
+    if (isInCoolingOff && offenseLevel !== 'first') {
+      // Force escalation to more severe actions
+      offenseLevel = 'persistent';
+      this.logger?.warn('Aggressive escalation: violation during cooling-off period', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        originalLevel: violationCount > 0 ? 'repeat' : 'first',
+        escalatedTo: 'persistent'
+      });
+    }
+
     // Get action from matrix
-    const actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
-    
+    let actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
+
+    // Issue #482: Apply lenient escalation for special users (Test 10)
+    if (isSpecialUser && severity_level !== 'critical') {
+      // Downgrade action for special users (except critical severity)
+      const lenientActions = {
+        'mute_permanent': 'mute_temp',
+        'block': 'mute_permanent',
+        'report': 'block'
+      };
+      actionType = lenientActions[actionType] || actionType;
+    }
+
     const actions = {
       primary: actionType,
       severity: severity_level,
@@ -250,14 +284,19 @@ class ShieldService {
       autoExecute: this.shouldAutoExecute(actionType, severity_level),
       escalate: severity_level === 'critical' && offenseLevel === 'persistent'
     };
-    
+
+    // Issue #482: Add manual review flag for special users (Test 10)
+    if (isSpecialUser) {
+      actions.manual_review_required = true;
+    }
+
     // Add platform-specific actions
     actions.platformActions = await this.getPlatformSpecificActions(
       comment.platform,
       actionType,
       comment
     );
-    
+
     return actions;
   }
   
