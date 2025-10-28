@@ -168,6 +168,9 @@ class ShieldService {
   calculateShieldPriority(analysisResult) {
     const { severity_level, toxicity_score, categories } = analysisResult;
     
+    // Normalize categories to lowercase for case-insensitive comparison
+    const categoriesLower = Array.isArray(categories) ? categories.map(c => c.toLowerCase()) : [];
+    
     // Critical priority for severe threats
     if (severity_level === 'critical' || toxicity_score >= 0.95) {
       return this.priorityLevels.critical;
@@ -175,7 +178,7 @@ class ShieldService {
     
     // High priority for high toxicity or threat categories
     if (severity_level === 'high' || 
-        categories?.some(cat => ['threat', 'hate', 'harassment'].includes(cat))) {
+        categoriesLower.some(cat => ['threat', 'hate', 'harassment'].includes(cat))) {
       return this.priorityLevels.high;
     }
     
@@ -199,9 +202,9 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', platform)
         .eq('platform_user_id', platformUserId)
-        .single();
+        .maybeSingle(); // Use maybeSingle() to avoid throwing on not-found
       
-      if (error && error.code !== 'PGRST116') { // Not found is OK
+      if (error) {
         throw error;
       }
       
@@ -651,13 +654,13 @@ class ShieldService {
       };
       
       // Merge actions_taken instead of overwriting
-      const { data: existing } = await this.supabase
+      const { data: existing, error: queryError } = await this.supabase
         .from('user_behaviors')
         .select('actions_taken')
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
-        .single();
+        .maybeSingle();
         
       const mergedActions = Array.isArray(existing?.actions_taken)
         ? [...existing.actions_taken, actionRecord]
@@ -1319,9 +1322,9 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
@@ -1433,7 +1436,7 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
-        .single();
+        .maybeSingle();
 
       const currentStrikes = behavior?.strikes || [];
       const updatedStrikes = [...currentStrikes, strike];
@@ -1766,9 +1769,9 @@ class ShieldService {
         .eq('organization_id', user.organization_id)
         .eq('platform', user.platform)
         .eq('platform_user_id', user.user_id)
-        .single();
+        .maybeSingle();
       
-      if (result.error && result.error.message) {
+      if (result.error) {
         throw new Error(result.error.message);
       }
       
@@ -1833,12 +1836,14 @@ class ShieldService {
       const result = await this.supabase
         .from('user_behaviors')
         .upsert({
-          user_id: user.user_id,
+          platform_user_id: user.user_id, // Use platform_user_id for composite key
           platform: user.platform,
           organization_id: user.organization_id,
           total_violations: 3,
           severe_violations: violation.severity === 'high' ? 2 : 1,
           last_violation: new Date().toISOString()
+        }, {
+          onConflict: 'organization_id,platform,platform_user_id'
         })
         .select()
         .single();

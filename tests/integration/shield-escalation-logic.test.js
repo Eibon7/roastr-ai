@@ -128,7 +128,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           step: 6,
           priorViolations: 5,
           severity: 'critical',
-          expectedAction: 'escalate',  // critical/persistent = escalate (per action matrix)
+          expectedAction: 'block',  // critical/persistent = block (primary action)
           expectedLevel: 'persistent'
         }
       ];
@@ -185,10 +185,14 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         expect(result.actions.offenseLevel).toBe(step.expectedLevel);
         expect(result.priority).toBeDefined();
         expect(result.userBehavior).toBeDefined();
+        
+        // Verify escalate flag is set for critical severity
+        if (step.severity === 'critical') {
+          expect(result.actions.escalate).toBe(true);
+        }
 
         // Validate audit trail was recorded (production requirement)
-        // Note: We can add mockSupabase.verify.actionRecorded(step.expectedAction) here
-        // if Shield implementation actually records actions
+        mockSupabase.verify.actionRecorded(step.expectedAction);
       }
     });
 
