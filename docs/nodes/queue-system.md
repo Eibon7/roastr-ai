@@ -4,8 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-20
-**Coverage:** 6%
+**Last Updated:** 2025-10-28
+**Coverage:** 0%
 **Coverage Source:** auto
 **Version:** 1.2.0
 **Related PRs:** #458, #499, #617 (Shield flow validation via queues)

@@ -4,8 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-23
-**Coverage:** 92%
+**Last Updated:** 2025-10-28
+**Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499, #600, #633 (Issue #615: Persona-Roast Integration)
 
