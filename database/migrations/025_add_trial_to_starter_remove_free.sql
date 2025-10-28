@@ -43,7 +43,7 @@ DROP CONSTRAINT IF EXISTS organizations_plan_check;
 -- Add new constraint with updated plan names
 ALTER TABLE organizations
 ADD CONSTRAINT organizations_plan_check 
-CHECK (plan_id IN ('starter_trial', 'starter', 'pro', 'creator_plus', 'custom'));
+CHECK (plan_id IN ('starter_trial', 'starter', 'pro', 'plus', 'custom'));
 
 -- Update default plan_id from 'free' to 'starter_trial'
 ALTER TABLE organizations
@@ -86,13 +86,12 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
--- Update starter plan if it exists
+-- Update starter plan if it exists (only non-trial starter)
 UPDATE plans
 SET 
   name = 'Starter',
   description = 'Entry plan with GPT-5 and Shield'
-WHERE id = 'starter'
-  OR id = 'starter_trial';  -- Handle both cases
+WHERE id = 'starter';
 
 -- ============================================================================
 -- STEP 5: Create helper function for trial conversion
