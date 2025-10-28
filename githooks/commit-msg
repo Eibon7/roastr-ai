@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-MSG_FILE="$1"
-if ! grep -E -q 'Issue #[0-9]+' "$MSG_FILE"; then
-  echo "❌ El commit debe incluir 'Issue #<id>' en el mensaje."
-  echo "   Ejemplo: feat(settings): sliders shield — Issue #362"
-  exit 1
-fi
-
-
