@@ -134,8 +134,7 @@ $$ LANGUAGE plpgsql;
 -- ============================================================================
 
 COMMENT ON COLUMN organizations.trial_starts_at IS 'When the trial period started';
-COMMENT ON COLUMN organizations.trial_ends_at IS 'When the trial period expires. User auto-converts to paid Starter if not cancelled';
-COMMENT ON COLUMN organizations.is_in_trial IS 'Computed: TRUE if trial_ends_at exists and is in the future';
+COMMENT ON COLUMN organizations.trial_ends_at IS 'When the trial period expires. User auto-converts to paid Starter if not cancelled. Application-computed: is_in_trial = TRUE if trial_ends_at exists and is in the future';
 
 COMMENT ON FUNCTION convert_trial_to_starter() IS 
 'Converts all expired trials to paid starter plan. Run this periodically via cron job';
