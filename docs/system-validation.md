@@ -4,6 +4,8 @@
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
+> **Status Note:** While 7 coverage integrity warnings exist, they are all non-critical (severity: warning) and represent missing coverage data rather than mismatches. System status is HEALTHY because: (1) health score 90.5 exceeds minimum threshold (87), (2) no critical violations detected (all warnings have severity: "warning"), and (3) drift risk (5/100) is well below acceptable bounds (<60). HEALTHY vs WARNING status is determined by critical violation count and health threshold, not warning count.
+
 ---
 
 ## Summary
@@ -18,7 +20,8 @@
 
 ### 🔮 Drift Risk Summary
 
-- **Average Drift Risk:** 5/100
+- **Average Drift Risk:** 5/100 (acceptable, threshold: <60)
+  - Change from 4→5 is within acceptable bounds and expected during normal operation
 - **High Risk Nodes (>60):** 0
 - **At Risk Nodes (31-60):** 0
 - **Healthy Nodes (0-30):** 15
