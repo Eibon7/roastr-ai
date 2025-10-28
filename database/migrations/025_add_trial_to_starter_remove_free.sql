@@ -43,14 +43,28 @@ CHECK (plan_id IN ('starter_trial', 'starter', 'pro', 'plus', 'custom'));
 -- STEP 3: Update existing 'free' organizations to 'starter_trial'
 -- ============================================================================
 
--- Convert existing free users to starter_trial with 30-day trial
+-- Convert existing free and basic users to starter_trial with 30-day trial
 -- MUST do this BEFORE adding the CHECK constraint
 UPDATE organizations
 SET 
   plan_id = 'starter_trial',
   trial_starts_at = NOW(),
   trial_ends_at = NOW() + INTERVAL '30 days'
-WHERE plan_id = 'free';
+WHERE plan_id IN ('free', 'basic');
+
+-- Safety check: fail if any unexpected plan_ids remain
+DO $$
+DECLARE
+  unexpected_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO unexpected_count
+  FROM organizations
+  WHERE plan_id NOT IN ('starter_trial', 'starter', 'pro', 'plus', 'custom');
+  
+  IF unexpected_count > 0 THEN
+    RAISE EXCEPTION 'Migration failed: % organizations have unexpected plan_ids. Expected: starter_trial, starter, pro, plus, custom', unexpected_count;
+  END IF;
+END $$;
 
 -- Update default plan_id from 'free' to 'starter_trial'
 ALTER TABLE organizations
