@@ -484,10 +484,16 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         last_seen_at: '2024-09-15T00:00:00Z'
       };
 
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: mockBehavior,
-        error: null
+      // Issue #482: Reinitialize mockSupabase with cross-platform violation data
+      const testMockSupabase = createShieldSupabaseMock({
+        userBehavior: [mockBehavior]
       });
+
+      // Create new ShieldService with test-specific mock
+      const testShieldService = new ShieldService({ enabled: true, autoActions: false });
+      testShieldService.supabase = testMockSupabase;
+      testShieldService.costControl = mockCostControl;
+      testShieldService.queueService = mockQueueService;
 
       const comment = {
         id: 'comment_cross_platform_escalation',
@@ -502,7 +508,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         toxicity_score: 0.65
       };
 
-      const result = await shieldService.analyzeForShield(
+      const result = await testShieldService.analyzeForShield(
         organizationId,
         comment,
         analysisResult
@@ -542,10 +548,16 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           ]
         };
 
-        mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-          data: mockBehavior,
-          error: null
+        // Issue #482: Reinitialize mockSupabase with platform-specific policy
+        const testMockSupabase = createShieldSupabaseMock({
+          userBehavior: [mockBehavior]
         });
+
+        // Create new ShieldService with test-specific mock
+        const testShieldService = new ShieldService({ enabled: true, autoActions: false });
+        testShieldService.supabase = testMockSupabase;
+        testShieldService.costControl = mockCostControl;
+        testShieldService.queueService = mockQueueService;
 
         const comment = {
           id: `comment_${platform.name}_policy`,
@@ -560,7 +572,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           toxicity_score: 0.6
         };
 
-        const result = await shieldService.analyzeForShield(
+        const result = await testShieldService.analyzeForShield(
           organizationId,
           comment,
           analysisResult

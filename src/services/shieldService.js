@@ -219,8 +219,12 @@ class ShieldService {
       severity_counts: { low: 0, medium: 0, high: 0, critical: 0 },
       actions_taken: [],
       is_blocked: false,
-      is_muted: false,              // Issue #482: Track mute status for cooling-off logic
-      user_type: 'standard',        // Issue #482: Track special users (verified_creator, partner)
+      is_muted: false,                  // Issue #482: Track mute status for cooling-off logic
+      user_type: 'standard',            // Issue #482: Track special users (verified_creator, partner)
+      cross_platform_violations: {},    // Issue #482: Track violations per platform (Test 7)
+      platform_specific_config: {       // Issue #482: Platform-specific escalation policies (Test 8)
+        escalation_policy: 'standard'   // Options: 'aggressive', 'standard', 'lenient'
+      },
       first_seen_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString()
     };
@@ -291,6 +295,39 @@ class ShieldService {
 
     // Get action from matrix
     let actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
+
+    // Issue #482: Apply platform-specific escalation policy (Test 8)
+    const escalationPolicy = userBehavior.platform_specific_config?.escalation_policy || 'standard';
+
+    if (escalationPolicy === 'aggressive' && violationCount > 0) {
+      // Aggressive policy: Escalate action one level
+      const actionHierarchy = ['warn', 'mute_temp', 'mute_permanent', 'block', 'report'];
+      const currentIndex = actionHierarchy.indexOf(actionType);
+      if (currentIndex >= 0 && currentIndex < actionHierarchy.length - 1) {
+        const escalatedAction = actionHierarchy[currentIndex + 1];
+        this.logger?.info('Platform-specific policy: aggressive escalation', {
+          platform: comment.platform,
+          policy: 'aggressive',
+          original: actionType,
+          escalatedTo: escalatedAction
+        });
+        actionType = escalatedAction;
+      }
+    } else if (escalationPolicy === 'lenient' && violationCount > 0 && severity_level !== 'critical') {
+      // Lenient policy: Downgrade action one level (except critical severity)
+      const actionHierarchy = ['warn', 'mute_temp', 'mute_permanent', 'block', 'report'];
+      const currentIndex = actionHierarchy.indexOf(actionType);
+      if (currentIndex > 0) {
+        const downgradedAction = actionHierarchy[currentIndex - 1];
+        this.logger?.info('Platform-specific policy: lenient downgrade', {
+          platform: comment.platform,
+          policy: 'lenient',
+          original: actionType,
+          downgradedTo: downgradedAction
+        });
+        actionType = downgradedAction;
+      }
+    }
 
     // Issue #482: Apply lenient escalation for special users (Test 10)
     if (isSpecialUser && severity_level !== 'critical') {
