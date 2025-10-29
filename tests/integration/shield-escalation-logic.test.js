@@ -394,11 +394,13 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       const userId = 'user_time_windows';
       const organizationId = 'org_123';
 
+      // Issue #482: Use time values that clearly fall into each escalation window
+      // Service logic: <1h=aggressive, 1-24h=standard, 24-168h=reduced, 168+h=minimal
       const timeWindows = [
-        { hours: 1, expectedEscalation: 'aggressive' },   // Very recent
-        { hours: 24, expectedEscalation: 'standard' },    // Within day
-        { hours: 168, expectedEscalation: 'reduced' },    // Within week
-        { hours: 720, expectedEscalation: 'minimal' }     // Within month
+        { hours: 0.5, expectedEscalation: 'aggressive' },  // 30 min ago (< 1 hour)
+        { hours: 12, expectedEscalation: 'standard' },     // 12h ago (1-24 hours)
+        { hours: 72, expectedEscalation: 'reduced' },      // 3 days ago (24-168 hours)
+        { hours: 360, expectedEscalation: 'minimal' }      // 15 days ago (168+ hours)
       ];
 
       for (const window of timeWindows) {
@@ -415,10 +417,16 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           last_seen_at: violationDate
         };
 
-        mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-          data: mockBehavior,
-          error: null
+        // Issue #482: Reinitialize mockSupabase with time window data
+        const testMockSupabase = createShieldSupabaseMock({
+          userBehavior: [mockBehavior]
         });
+
+        // Create new ShieldService with test-specific mock
+        const testShieldService = new ShieldService({ enabled: true, autoActions: false });
+        testShieldService.supabase = testMockSupabase;
+        testShieldService.costControl = mockCostControl;
+        testShieldService.queueService = mockQueueService;
 
         const comment = {
           id: `comment_window_${window.hours}h`,
@@ -433,7 +441,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           toxicity_score: 0.6
         };
 
-        const result = await shieldService.analyzeForShield(
+        const result = await testShieldService.analyzeForShield(
           organizationId,
           comment,
           analysisResult
