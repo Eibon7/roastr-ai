@@ -1616,7 +1616,7 @@ class ShieldService {
       const result = await this.supabase
         .from('user_behaviors')
         .upsert({
-          user_id: user.user_id,
+          platform_user_id: user.user_id,
           platform: user.platform,
           organization_id: user.organization_id,
           total_violations: 3,
