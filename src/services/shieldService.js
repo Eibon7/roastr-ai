@@ -250,7 +250,7 @@ class ShieldService {
         });
       }
 
-      this.logger?.info('Cross-platform aggregation completed', {
+      this.log('info', 'Cross-platform aggregation completed', {
         organizationId,
         platformUserId,
         totalViolations: total,
@@ -325,7 +325,7 @@ class ShieldService {
     if (timeWindowModifier === 'aggressive' && violationCount > 0) {
       // Force escalation for recent violation spike (< 1h)
       offenseLevel = 'persistent';
-      this.logger?.warn('Aggressive escalation: recent violation spike detected', {
+      this.log('warn', 'Aggressive escalation: recent violation spike detected', {
         userId: comment.platform_user_id,
         platform: comment.platform,
         hoursElapsed: '< 1h',
@@ -338,10 +338,10 @@ class ShieldService {
       } else if (offenseLevel === 'repeat') {
         offenseLevel = 'first';
       }
-      this.logger?.info('Minimal escalation: significant time decay applied', {
+      this.log('info', 'Minimal escalation: significant time decay applied', {
         userId: comment.platform_user_id,
         platform: comment.platform,
-        timeDecay: '30+ days'
+        timeDecay: '7+ days'
       });
     }
 
@@ -349,7 +349,7 @@ class ShieldService {
     if (isInCoolingOff && offenseLevel !== 'first') {
       // Force escalation to more severe actions
       offenseLevel = 'persistent';
-      this.logger?.warn('Aggressive escalation: violation during cooling-off period', {
+      this.log('warn', 'Aggressive escalation: violation during cooling-off period', {
         userId: comment.platform_user_id,
         platform: comment.platform,
         originalLevel: violationCount > 0 ? 'repeat' : 'first',
@@ -369,7 +369,7 @@ class ShieldService {
       const currentIndex = actionHierarchy.indexOf(actionType);
       if (currentIndex >= 0 && currentIndex < actionHierarchy.length - 1) {
         const escalatedAction = actionHierarchy[currentIndex + 1];
-        this.logger?.info('Platform-specific policy: aggressive escalation', {
+        this.log('info', 'Platform-specific policy: aggressive escalation', {
           platform: comment.platform,
           policy: 'aggressive',
           original: actionType,
@@ -383,7 +383,7 @@ class ShieldService {
       const currentIndex = actionHierarchy.indexOf(actionType);
       if (currentIndex > 0) {
         const downgradedAction = actionHierarchy[currentIndex - 1];
-        this.logger?.info('Platform-specific policy: lenient downgrade', {
+        this.log('info', 'Platform-specific policy: lenient downgrade', {
           platform: comment.platform,
           policy: 'lenient',
           original: actionType,
@@ -573,11 +573,11 @@ class ShieldService {
         // 24h-7 days (168 hours): Reduced escalation
         return 'reduced';
       } else {
-        // 30+ days (720 hours): Minimal escalation (significant time decay)
+        // 7+ days (>=168 hours): Minimal escalation (significant time decay)
         return 'minimal';
       }
     } catch (error) {
-      this.logger?.warn('Error calculating time window escalation, using standard', { error: error.message });
+      this.log('warn', 'Error calculating time window escalation, using standard', { error: error.message });
       return 'standard';
     }
   }
