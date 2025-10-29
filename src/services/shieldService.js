@@ -455,6 +455,42 @@ class ShieldService {
       };
     }
 
+    // Issue #482: Apply time window escalation (Test 6)
+    if (timeWindowModifier === 'aggressive' && violationCount > 0) {
+      // Force escalation for recent violation spike (< 1h)
+      offenseLevel = 'persistent';
+      this.log('warn', 'Aggressive escalation: recent violation spike detected', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        hoursElapsed: '< 1h',
+        escalatedTo: 'persistent'
+      });
+    } else if (timeWindowModifier === 'minimal') {
+      // Downgrade for significant time decay (7+ days: >=168 hours)
+      if (offenseLevel === 'persistent') {
+        offenseLevel = 'repeat';
+      } else if (offenseLevel === 'repeat') {
+        offenseLevel = 'first';
+      }
+      this.log('info', 'Minimal escalation: significant time decay applied', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        timeDecay: '7+ days'
+      });
+    }
+
+    // Issue #482: Escalate aggressively if violating during cooling-off period (Test 5)
+    if (isInCoolingOff && offenseLevel !== 'first') {
+      // Force escalation to more severe actions
+      offenseLevel = 'persistent';
+      this.log('warn', 'Aggressive escalation: violation during cooling-off period', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        originalLevel: violationCount > 0 ? 'repeat' : 'first',
+        escalatedTo: 'persistent'
+      });
+    }
+
     // Get action from matrix
     let actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
 
