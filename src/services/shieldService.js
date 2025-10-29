@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
 const { mockMode } = require('../config/mockMode');
-const { logger } = require('../utils/logger');
+const logger = require('../utils/logger');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
@@ -47,7 +47,6 @@ class ShieldService {
     };
     
     // Action escalation matrix
-    // Issue #482: Progressive escalation path (warn → mute_temp → mute_permanent → block → report)
     this.actionMatrix = {
       low: {
         first: 'warn',
@@ -57,12 +56,12 @@ class ShieldService {
       medium: {
         first: 'mute_temp',
         repeat: 'mute_permanent',
-        persistent: 'block'  // Escalates from mute to block
+        persistent: 'block'
       },
       high: {
         first: 'mute_permanent',
         repeat: 'block',
-        persistent: 'report'  // Highest escalation: report to platform
+        persistent: 'report'
       },
       critical: {
         first: 'block',
@@ -107,50 +106,49 @@ class ShieldService {
         comment.platform,
         comment.platform_user_id
       );
-      
+
+      // Issue #482: Aggregate cross-platform violations (Test 7)
+      const crossPlatformViolations = await this.getCrossPlatformViolations(
+        organizationId,
+        comment.platform_user_id
+      );
+
+      // Merge cross-platform data into userBehavior
+      userBehavior.total_violations = crossPlatformViolations.total;
+      userBehavior.cross_platform_violations = crossPlatformViolations.byPlatform;
+
       // Determine Shield actions
       const shieldActions = await this.determineShieldActions(
         analysisResult,
         userBehavior,
         comment
       );
-
-      // Issue #482: Update user behavior with new violation BEFORE returning
-      // This ensures tests see the updated violation count
-      const updatedUserBehavior = {
-        ...userBehavior,
-        total_violations: (userBehavior.total_violations || 0) + 1,
-        severity_counts: {
-          ...userBehavior.severity_counts,
-          [analysisResult.severity_level]: (userBehavior.severity_counts?.[analysisResult.severity_level] || 0) + 1
-        },
-        last_seen_at: new Date().toISOString()
-      };
-
+      
       // Create high-priority analysis job if needed
       if (priority <= this.priorityLevels.high) {
         await this.queueHighPriorityAnalysis(organizationId, comment, priority);
       }
-
+      
       // Execute automatic actions if enabled
       if (this.options.autoActions && shieldActions.autoExecute) {
         await this.executeShieldActions(organizationId, comment, shieldActions);
       }
-
+      
       // Log Shield activity
       await this.logShieldActivity(organizationId, comment, {
         priority,
         actions: shieldActions,
-        userBehavior: updatedUserBehavior,
+        userBehavior,
         analysisResult
       });
-
+      
       return {
         shieldActive: true,
         priority,
         actions: shieldActions,
-        userBehavior: updatedUserBehavior, // Issue #482: Return UPDATED user behavior
-        autoExecuted: this.options.autoActions && shieldActions.autoExecute
+        userBehavior,
+        autoExecuted: this.options.autoActions && shieldActions.autoExecute,
+        shouldGenerateResponse: false // Shield actions block roast generation
       };
       
     } catch (error) {
@@ -168,9 +166,6 @@ class ShieldService {
   calculateShieldPriority(analysisResult) {
     const { severity_level, toxicity_score, categories } = analysisResult;
     
-    // Normalize categories to lowercase for case-insensitive comparison
-    const categoriesLower = Array.isArray(categories) ? categories.map(c => c.toLowerCase()) : [];
-    
     // Critical priority for severe threats
     if (severity_level === 'critical' || toxicity_score >= 0.95) {
       return this.priorityLevels.critical;
@@ -178,7 +173,7 @@ class ShieldService {
     
     // High priority for high toxicity or threat categories
     if (severity_level === 'high' || 
-        categoriesLower.some(cat => ['threat', 'hate', 'harassment'].includes(cat))) {
+        categories?.some(cat => ['threat', 'hate', 'harassment'].includes(cat))) {
       return this.priorityLevels.high;
     }
     
@@ -202,14 +197,14 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', platform)
         .eq('platform_user_id', platformUserId)
-        .maybeSingle(); // Use maybeSingle() to avoid throwing on not-found
-      
-      if (error) {
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // Not found is OK
         throw error;
       }
-      
+
       return behavior || this.createNewUserBehavior(organizationId, platform, platformUserId);
-      
+
     } catch (error) {
       this.log('error', 'Failed to get user behavior', {
         organizationId,
@@ -218,6 +213,60 @@ class ShieldService {
         error: error.message
       });
       return this.createNewUserBehavior(organizationId, platform, platformUserId);
+    }
+  }
+
+  /**
+   * Get cross-platform violation aggregation (Issue #482 - Test 7)
+   * Query ALL platforms for this user and aggregate total violations
+   */
+  async getCrossPlatformViolations(organizationId, platformUserId) {
+    try {
+      const { data: allPlatformData, error } = await this.supabase
+        .from('user_behaviors')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('platform_user_id', platformUserId);
+
+      if (error) {
+        this.log('warn', 'Failed to get cross-platform violations', {
+          organizationId,
+          platformUserId,
+          error: error.message
+        });
+        return { total: 0, byPlatform: {} };
+      }
+
+      // Aggregate violations across all platforms
+      const byPlatform = {};
+      let total = 0;
+
+      if (allPlatformData && allPlatformData.length > 0) {
+        allPlatformData.forEach(behavior => {
+          const platform = behavior.platform;
+          const violations = behavior.total_violations || 0;
+          byPlatform[platform] = violations;
+          total += violations;
+        });
+      }
+
+      this.log('info', 'Cross-platform aggregation completed', {
+        organizationId,
+        platformUserId,
+        totalViolations: total,
+        platforms: Object.keys(byPlatform).length,
+        breakdown: byPlatform
+      });
+
+      return { total, byPlatform };
+
+    } catch (error) {
+      this.log('error', 'Cross-platform aggregation failed', {
+        organizationId,
+        platformUserId,
+        error: error.message
+      });
+      return { total: 0, byPlatform: {} };
     }
   }
   
@@ -234,8 +283,12 @@ class ShieldService {
       severity_counts: { low: 0, medium: 0, high: 0, critical: 0 },
       actions_taken: [],
       is_blocked: false,
-      is_muted: false, // Issue #482: Track mute status for escalation logic
-      user_type: 'standard', // Issue #482: Track user type for special handling (verified_creator, partner, etc.)
+      is_muted: false,                  // Issue #482: Track mute status for cooling-off logic
+      user_type: 'standard',            // Issue #482: Track special users (verified_creator, partner)
+      cross_platform_violations: {},    // Issue #482: Track violations per platform (Test 7)
+      platform_specific_config: {       // Issue #482: Platform-specific escalation policies (Test 8)
+        escalation_policy: 'standard'   // Options: 'aggressive', 'standard', 'lenient'
+      },
       first_seen_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString()
     };
@@ -248,21 +301,108 @@ class ShieldService {
     const { severity_level } = analysisResult;
     const violationCount = userBehavior.total_violations || 0;
 
-    // Issue #482: Calculate offense level using NEW count (including current violation)
-    // BEFORE: Used OLD count from database, causing off-by-one error
-    // Example: 2 existing + 1 new = 3 total → should be 'persistent' if threshold=3
-    const totalViolations = violationCount + 1;
+    // Issue #482: Check for special user types (Test 10)
+    const userType = userBehavior.user_type || 'standard';
+    const isSpecialUser = ['verified_creator', 'partner'].includes(userType);
+
+    // Issue #482: Check cooling-off period (Test 5)
+    const isMuted = userBehavior.is_muted === true;
+    const muteExpiresAt = userBehavior.mute_expires_at;
+    const isInCoolingOff = isMuted && muteExpiresAt && new Date(muteExpiresAt) > new Date();
+
+    // Issue #482: Calculate time window escalation (Test 6)
+    const timeWindowModifier = this.calculateTimeWindowEscalation(userBehavior);
 
     // Determine offense level
     let offenseLevel = 'first';
-    if (totalViolations >= this.options.reincidenceThreshold) {
+    if (violationCount >= this.options.reincidenceThreshold) {
       offenseLevel = 'persistent';
-    } else if (totalViolations > 1) {
+    } else if (violationCount > 0) {
       offenseLevel = 'repeat';
     }
 
+    // Issue #482: Apply time window escalation (Test 6)
+    if (timeWindowModifier === 'aggressive' && violationCount > 0) {
+      // Force escalation for recent violation spike (< 1h)
+      offenseLevel = 'persistent';
+      this.log('warn', 'Aggressive escalation: recent violation spike detected', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        hoursElapsed: '< 1h',
+        escalatedTo: 'persistent'
+      });
+    } else if (timeWindowModifier === 'minimal') {
+      // Downgrade for significant time decay (7+ days: >=168 hours)
+      if (offenseLevel === 'persistent') {
+        offenseLevel = 'repeat';
+      } else if (offenseLevel === 'repeat') {
+        offenseLevel = 'first';
+      }
+      this.log('info', 'Minimal escalation: significant time decay applied', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        timeDecay: '7+ days'
+      });
+    }
+
+    // Issue #482: Escalate aggressively if violating during cooling-off period (Test 5)
+    if (isInCoolingOff && offenseLevel !== 'first') {
+      // Force escalation to more severe actions
+      offenseLevel = 'persistent';
+      this.log('warn', 'Aggressive escalation: violation during cooling-off period', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        originalLevel: violationCount > 0 ? 'repeat' : 'first',
+        escalatedTo: 'persistent'
+      });
+    }
+
     // Get action from matrix
-    const actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
+    let actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
+
+    // Issue #482: Apply platform-specific escalation policy (Test 8)
+    const escalationPolicy = userBehavior.platform_specific_config?.escalation_policy || 'standard';
+
+    if (escalationPolicy === 'aggressive' && violationCount > 0) {
+      // Aggressive policy: Escalate action one level
+      const actionHierarchy = ['warn', 'mute_temp', 'mute_permanent', 'block', 'report'];
+      const currentIndex = actionHierarchy.indexOf(actionType);
+      if (currentIndex >= 0 && currentIndex < actionHierarchy.length - 1) {
+        const escalatedAction = actionHierarchy[currentIndex + 1];
+        this.log('info', 'Platform-specific policy: aggressive escalation', {
+          platform: comment.platform,
+          policy: 'aggressive',
+          original: actionType,
+          escalatedTo: escalatedAction
+        });
+        actionType = escalatedAction;
+      }
+    } else if (escalationPolicy === 'lenient' && violationCount > 0 && severity_level !== 'critical') {
+      // Lenient policy: Downgrade action one level (except critical severity)
+      const actionHierarchy = ['warn', 'mute_temp', 'mute_permanent', 'block', 'report'];
+      const currentIndex = actionHierarchy.indexOf(actionType);
+      if (currentIndex > 0) {
+        const downgradedAction = actionHierarchy[currentIndex - 1];
+        this.log('info', 'Platform-specific policy: lenient downgrade', {
+          platform: comment.platform,
+          policy: 'lenient',
+          original: actionType,
+          downgradedTo: downgradedAction
+        });
+        actionType = downgradedAction;
+      }
+    }
+
+    // Issue #482: Apply lenient escalation for special users (Test 10)
+    if (isSpecialUser && severity_level !== 'critical') {
+      // Downgrade action for special users (except critical severity)
+      const lenientActions = {
+        'mute_permanent': 'mute_temp',
+        'block': 'mute_permanent',
+        'report': 'block'
+      };
+      actionType = lenientActions[actionType] || actionType;
+    }
 
     const actions = {
       primary: actionType,
@@ -270,25 +410,12 @@ class ShieldService {
       offenseLevel,
       violationCount,
       autoExecute: this.shouldAutoExecute(actionType, severity_level),
-      escalate: severity_level === 'critical', // Issue #482: Escalate ALL critical content, not just persistent
-      emergency: this.isEmergencyContent(analysisResult, comment), // Issue #482: Emergency flag for imminent threats
-      manual_review_required: userBehavior.user_type === 'verified_creator' || userBehavior.user_type === 'partner' // Issue #482: Special user types need manual review
+      escalate: severity_level === 'critical' && offenseLevel === 'persistent'
     };
 
-    // Add legal compliance fields if applicable (Issue #482)
-    if (this.requiresLegalCompliance(comment, analysisResult)) {
-      actions.legal_compliance = true;
-      actions.jurisdiction = this.determineJurisdiction(comment, analysisResult); // Issue #482: Pass analysisResult for Test 11
-    }
-
-    // Add emergency notification fields (Issue #482)
-    if (actions.emergency) {
-      // Issue #482: Case-insensitive category checking for notify_authorities
-      const categoriesLower = Array.isArray(analysisResult.categories)
-        ? analysisResult.categories.map(c => c.toLowerCase())
-        : [];
-      actions.notify_authorities = severity_level === 'critical' &&
-        (categoriesLower.includes('threat') || categoriesLower.includes('self_harm'));
+    // Issue #482: Add manual review flag for special users (Test 10)
+    if (isSpecialUser) {
+      actions.manual_review_required = true;
     }
 
     // Add platform-specific actions
@@ -306,122 +433,13 @@ class ShieldService {
    */
   shouldAutoExecute(actionType, severityLevel) {
     if (!this.options.autoActions) return false;
-
+    
     // Always auto-execute for critical severity
     if (severityLevel === 'critical') return true;
-
+    
     // Auto-execute certain actions
     const autoActions = ['warn', 'mute_temp', 'mute_permanent'];
     return autoActions.includes(actionType);
-  }
-
-  /**
-   * Determine if content requires emergency handling (Issue #482)
-   */
-  isEmergencyContent(analysisResult, comment) {
-    const { severity_level, categories, content } = analysisResult;
-
-    // Emergency keywords that indicate imminent threats - expanded with common variants
-    const emergencyKeywords = [
-      'imminent threat', 'going to kill', 'will kill', 'planning to',
-      'i\'m going to kill', 'shoot up', 'going to stab', 'going to attack',
-      'going to bomb', 'kms', 'i want to die', 'i want to end it all',
-      'going to end it', 'cutting', 'end it',
-      'suicide', 'self-harm', 'end my life', 'hurt myself',
-      'bomb threat', 'active shooter', 'terrorism'
-    ];
-
-    const contentText = (content || comment.content || comment.original_text || '').toLowerCase();
-
-    // Use case-insensitive word boundary matching to avoid partial matches
-    const hasEmergencyKeyword = emergencyKeywords.some(keyword => {
-      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'i');
-      return regex.test(contentText);
-    });
-
-    // Time context proximity checks - patterns that suggest urgency
-    const timeContextPatterns = [
-      /\b(?:tomorrow|tonight|today|now|soon)\b.{0,100}(going to kill|will kill|suicide|kms|end it)/i,
-      /\b(going to kill|will kill|suicide|kms|end it).{0,100}\b(?:tomorrow|tonight|today|now|soon)\b/i,
-      /\b(?:this weekend|tomorrow morning|tomorrow night)\b.{0,100}(attack|bomb|shoot)/i,
-      /\b(attack|bomb|shoot).{0,100}\b(?:this weekend|tomorrow morning|tomorrow night)\b/i
-    ];
-
-    const hasTimeProximity = timeContextPatterns.some(pattern => pattern.test(contentText));
-
-    // Issue #482: Case-insensitive category checking (Perspective returns uppercase like 'THREAT')
-    const categoriesLower = Array.isArray(categories)
-      ? categories.map(c => c.toLowerCase())
-      : [];
-
-    // Emergency if:
-    // 1. Critical severity + threat/self_harm category OR severe toxicity
-    // 2. Emergency keywords detected (with context-aware matching)
-    // 3. Time-proximity patterns suggest imminent threat
-    const hasEmergencyKeyword_processed = hasEmergencyKeyword || hasTimeProximity;
-
-    return (severity_level === 'critical' &&
-            (categoriesLower.includes('threat') || categoriesLower.includes('self_harm') ||
-             categoriesLower.includes('severe_toxicity'))) ||
-           hasEmergencyKeyword_processed;
-  }
-
-  /**
-   * Determine if content requires legal compliance handling (Issue #482)
-   */
-  requiresLegalCompliance(comment, analysisResult) {
-    const { severity_level } = analysisResult;
-
-    // Legal compliance required for critical content in regulated jurisdictions
-    // Issue #482: Added discord to regulated platforms for Test 11
-    const regulatedPlatforms = ['facebook', 'instagram', 'twitter', 'youtube', 'discord'];
-
-    return severity_level === 'critical' &&
-           regulatedPlatforms.includes(comment.platform);
-  }
-
-  /**
-   * Determine legal jurisdiction based on comment metadata (Issue #482)
-   */
-  determineJurisdiction(comment, analysisResult) {
-    // Issue #482: If analysisResult already has jurisdiction, use it (Test 11)
-    if (analysisResult && analysisResult.jurisdiction) {
-      return analysisResult.jurisdiction;
-    }
-
-    // Check comment metadata for geo information
-    const userLocation = comment.metadata?.user_location || comment.user_location;
-
-    if (userLocation) {
-      // EU countries
-      const euCountries = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'SE', 'DK', 'FI', 'IE', 'PT', 'GR', 'PL', 'CZ', 'RO', 'HU'];
-      if (euCountries.includes(userLocation)) {
-        return 'EU';
-      }
-
-      // US
-      if (userLocation === 'US') {
-        return 'US';
-      }
-
-      // UK
-      if (userLocation === 'GB' || userLocation === 'UK') {
-        return 'UK';
-      }
-    }
-
-    // Default to platform's primary jurisdiction
-    const platformJurisdictions = {
-      'twitter': 'US',
-      'facebook': 'US',
-      'instagram': 'US',
-      'youtube': 'US',
-      'discord': 'US',
-      'reddit': 'US'
-    };
-
-    return platformJurisdictions[comment.platform] || 'US';
   }
   
   /**
@@ -514,6 +532,56 @@ class ShieldService {
     return actions[actionType] || { action: actionType, available: false };
   }
   
+  /**
+   * Calculate time window escalation modifier
+   * Issue #482 - Test 6: Time window escalation
+   * @param {Object} userBehavior - User behavior data with actions_taken
+   * @returns {string} - Modifier: 'aggressive', 'standard', 'reduced', 'minimal'
+   */
+  calculateTimeWindowEscalation(userBehavior) {
+    try {
+      const actionsTaken = userBehavior.actions_taken || [];
+
+      // No prior violations - use standard logic
+      if (actionsTaken.length === 0) {
+        return 'standard';
+      }
+
+      // Find most recent violation timestamp
+      const timestamps = actionsTaken
+        .map(action => action.timestamp || action.created_at || action.date)
+        .filter(ts => ts)
+        .map(ts => new Date(ts).getTime())
+        .filter(time => !isNaN(time));
+
+      if (timestamps.length === 0) {
+        return 'standard';
+      }
+
+      const mostRecentTime = Math.max(...timestamps);
+      const now = Date.now();
+      const hoursElapsed = (now - mostRecentTime) / (1000 * 60 * 60);
+
+      // Time windows (Issue #482 - Test 6)
+      if (hoursElapsed < 1) {
+        // < 1 hour: Aggressive (recent violation spike)
+        return 'aggressive';
+      } else if (hoursElapsed < 24) {
+        // 1-24 hours: Standard escalation
+        return 'standard';
+      } else if (hoursElapsed < 168) {
+        // 24h-7 days (168 hours): Reduced escalation
+        return 'reduced';
+      } else {
+        // 7+ days (>=168 hours): Minimal escalation (significant time decay)
+        return 'minimal';
+      }
+    } catch (error) {
+      this.log('warn', 'Error calculating time window escalation, using standard', { error: error.message });
+      return 'standard';
+    }
+  }
+
   /**
    * Execute Shield actions automatically
    */
@@ -653,19 +721,26 @@ class ShieldService {
         comment_id: comment.id
       };
       
-      // Merge actions_taken instead of overwriting
-      const { data: existing, error: queryError } = await this.supabase
+      // Fetch existing actions_taken to preserve history
+      const { data: existing, error: fetchErr } = await this.supabase
         .from('user_behaviors')
         .select('actions_taken')
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
         .maybeSingle();
-        
+
+      // Handle fetch errors (except "not found" which is OK for new users)
+      if (fetchErr && fetchErr.code && fetchErr.code !== 'PGRST116') {
+        throw fetchErr;
+      }
+
+      // Merge new action with existing history
       const mergedActions = Array.isArray(existing?.actions_taken)
         ? [...existing.actions_taken, actionRecord]
         : [actionRecord];
-      
+
+      // Upsert with merged actions
       const { error } = await this.supabase
         .from('user_behaviors')
         .upsert({
@@ -673,13 +748,14 @@ class ShieldService {
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
           platform_username: comment.platform_username,
-          actions_taken: mergedActions,
+          actions_taken: mergedActions, // Preserves existing history
           is_blocked: ['block', 'ban_user'].includes(shieldActions.primary),
           last_seen_at: new Date().toISOString()
         }, {
-          onConflict: 'organization_id,platform,platform_user_id'
+          onConflict: 'organization_id,platform,platform_user_id',
+          ignoreDuplicates: false
         });
-      
+
       if (error) throw error;
       
     } catch (error) {
@@ -728,49 +804,14 @@ class ShieldService {
    *
    * This is the new interface for Shield action execution, consuming the action_tags
    * array generated by AnalysisDecisionEngine. Replaces the legacy executeActions().
-   * Executes handlers in parallel for performance, with state-mutating handlers running
-   * sequentially to prevent race conditions. All actions are recorded in a single batch
-   * database operation for efficiency.
    *
-   * @async
    * @param {string} organizationId - Organization ID
    * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {string} comment.platform_user_id - Platform-specific user ID
    * @param {Array<string>} action_tags - Array of action tags from AnalysisDecisionEngine
    * @param {Object} metadata - Decision metadata (security, toxicity, platform_violations)
-   * @param {Object} [metadata.toxicity] - Toxicity analysis data
-   * @param {number} [metadata.toxicity.toxicity_score] - Toxicity score (0-1)
-   * @param {Object} [metadata.security] - Security analysis data
-   * @param {number} [metadata.security.security_score] - Security score (0-1)
-   * @param {Object} [metadata.platform_violations] - Platform violation data
-   * @param {boolean} [metadata.platform_violations.reportable] - If violations are reportable
-   * @returns {Promise<Object>} Execution results
-   * @returns {boolean} return.success - Overall execution success
-   * @returns {Array<Object>} return.actions_executed - Actions executed with status
-   * @returns {Array<Object>} return.failed_actions - Actions that failed
-   * @returns {boolean} [return.skipped] - If execution was skipped (autoActions disabled)
-   * @returns {string} [return.reason] - Reason for skip
-   *
-   * @example
-   * const result = await service.executeActionsFromTags(
-   *   'org123',
-   *   { id: 'comment123', platform: 'twitter', platform_user_id: 'user123' },
-   *   ['hide_comment', 'add_strike_1', 'check_reincidence'],
-   *   { toxicity: { toxicity_score: 0.85 }, platform_violations: { reportable: true } }
-   * );
-   * // Returns: {
-   * //   success: true,
-   * //   actions_executed: [
-   * //     { tag: 'hide_comment', status: 'executed', result: { job_id: 'shield_action_123' } },
-   * //     { tag: 'add_strike_1', status: 'executed', result: { job_id: null } },
-   * //     { tag: 'check_reincidence', status: 'executed', result: { job_id: null } }
-   * //   ],
-   * //   failed_actions: []
-   * // }
+   * @returns {Promise<Object>} Execution results { success, actions_executed, failed_actions }
    */
-  async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}) {
+  async executeActionsFromTags(organizationId, comment, action_tags, metadata) {
     // Input validation - return structured errors instead of throwing
     if (!organizationId) {
       return {
@@ -866,7 +907,7 @@ class ShieldService {
       const stateMutatingTags = action_tags.filter(tag => stateMutatingHandlers.has(tag));
       const readOnlyTags = action_tags.filter(tag => !stateMutatingHandlers.has(tag));
 
-      let actionResults = [];
+      const actionResults = [];
       // [M2] Prepare array to batch record all shield_actions at once
       const actionsToRecord = [];
 
@@ -907,7 +948,7 @@ class ShieldService {
             tag,
             error: error.message
           });
-          actionResults.push({ tag, status: 'failed', result: { error: error.message } });
+          actionResults.push({ tag, status: 'failed', error: error.message });
         }
       }
 
@@ -952,7 +993,7 @@ class ShieldService {
             tag,
             error: error.message
           });
-          return { tag, status: 'failed', result: { error: error.message } };
+          return { tag, status: 'failed', error: error.message };
         }
       });
 
@@ -968,33 +1009,20 @@ class ShieldService {
 
       actionResults.push(...readOnlyResults);
 
-      // [M3] Reorder actionResults to match input action_tags order
-      // This ensures test expectations match regardless of execution strategy (sequential vs parallel)
-      const resultsMap = new Map(actionResults.map(r => [r.tag, r]));
-      const orderedResults = action_tags
-        .map(tag => resultsMap.get(tag))
-        .filter(r => r !== undefined); // Filter out any undefined results
-      actionResults = orderedResults;
-
       // [M2] Batch insert all shield_actions in a single database operation
       if (actionsToRecord.length > 0) {
         await this._batchRecordShieldActions(actionsToRecord);
       }
 
       // Separate successful and failed actions
-      // All actions (including failed) go into actions_executed
       actionResults.forEach(result => {
-        results.actions_executed.push(result);
-
-        if (result.status === 'failed') {
+        if (result.status === 'executed' || result.status === 'skipped') {
+          results.actions_executed.push(result);
+        } else if (result.status === 'failed') {
           results.failed_actions.push(result);
+          results.success = false;
         }
       });
-
-      // Success is false if ANY action failed (partial failures count as failures)
-      if (results.failed_actions.length > 0) {
-        results.success = false;
-      }
 
       // Update user behavior after all actions
       if (action_tags.length > 0) {
@@ -1021,22 +1049,6 @@ class ShieldService {
 
   /**
    * Handle hide_comment action tag
-   *
-   * Queues a platform-specific job to hide/delete the comment. Uses Priority 1 (critical)
-   * queue to ensure immediate processing of content removal actions.
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {Object} metadata - Metadata from Gatekeeper analysis (unused)
-   * @returns {Promise<Object>} Execution result
-   * @returns {string} return.job_id - Queue job ID for tracking
-   *
-   * @example
-   * const result = await service._handleHideComment('org123', comment, metadata);
-   * // Returns: { job_id: 'shield_action_1698765432123' }
    */
   async _handleHideComment(organizationId, comment, metadata) {
     this.log('info', 'Hiding comment', {
@@ -1058,24 +1070,6 @@ class ShieldService {
 
   /**
    * Handle block_user action tag
-   *
-   * Queues a platform-specific job to block the user and updates user_behaviors table
-   * to mark the user as blocked. Uses Priority 1 (critical) queue for immediate processing.
-   * Follows graceful degradation pattern - database update failure doesn't block queue job.
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {string} comment.platform_user_id - Platform-specific user ID
-   * @param {Object} metadata - Metadata from Gatekeeper analysis (unused)
-   * @returns {Promise<Object>} Execution result
-   * @returns {string} return.job_id - Queue job ID for tracking
-   *
-   * @example
-   * const result = await service._handleBlockUser('org123', comment, metadata);
-   * // Returns: { job_id: 'shield_action_1698765432456' }
    */
   async _handleBlockUser(organizationId, comment, metadata) {
     this.log('info', 'Blocking user', {
@@ -1106,38 +1100,7 @@ class ShieldService {
   /**
    * Handle report_to_platform action tag
    *
-   * CRITICAL SAFEGUARD: Only executes if metadata.platform_violations.reportable === true.
-   * This prevents false reports to platforms which could harm the organization's standing.
-   * If violations are not reportable, returns a skip result without queuing any job.
-   * Uses Priority 1 (critical) queue when reportable.
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {Object} metadata - Metadata from Gatekeeper analysis
-   * @param {Object} metadata.platform_violations - Platform violation data
-   * @param {boolean} metadata.platform_violations.reportable - If violations are reportable (REQUIRED)
-   * @param {Array<string>} [metadata.platform_violations.violations] - List of violated platform policies
-   * @returns {Promise<Object>} Execution result
-   * @returns {string} [return.job_id] - Queue job ID for tracking (only if reportable)
-   * @returns {boolean} [return.skipped] - True if action was skipped
-   * @returns {string} [return.reason] - Reason for skip (if skipped)
-   *
-   * @example
-   * // Example 1: Reportable violations - action executes
-   * const result = await service._handleReportToPlatform('org123', comment, {
-   *   platform_violations: { reportable: true, violations: ['hate_speech', 'harassment'] }
-   * });
-   * // Returns: { job_id: 'shield_action_1698765432789' }
-   *
-   * @example
-   * // Example 2: Non-reportable violations - action skipped
-   * const result = await service._handleReportToPlatform('org123', comment, {
-   *   platform_violations: { reportable: false, violations: [] }
-   * });
-   * // Returns: { skipped: true, reason: 'not reportable' }
+   * CRITICAL SAFEGUARD: Only executes if metadata.platform_violations.reportable === true
    */
   async _handleReportToPlatform(organizationId, comment, metadata) {
     // SAFEGUARD: Check if platform violations are reportable
@@ -1172,24 +1135,6 @@ class ShieldService {
 
   /**
    * Handle mute_temp action tag
-   *
-   * Queues a platform-specific job to temporarily mute the user for 24 hours.
-   * Uses Priority 1 (critical) queue for immediate processing. Platform-specific
-   * implementations handle the actual mute duration and mechanics.
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {string} comment.platform_user_id - Platform-specific user ID
-   * @param {Object} metadata - Metadata from Gatekeeper analysis (unused)
-   * @returns {Promise<Object>} Execution result
-   * @returns {string} return.job_id - Queue job ID for tracking
-   *
-   * @example
-   * const result = await service._handleMuteTemp('org123', comment, metadata);
-   * // Returns: { job_id: 'shield_action_1698765433000' }
    */
   async _handleMuteTemp(organizationId, comment, metadata) {
     this.log('info', 'Muting user temporarily', {
@@ -1207,47 +1152,11 @@ class ShieldService {
       priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
     });
 
-    // Persist temp mute state for cooling-off logic
-    try {
-      await this.supabase
-        .from('user_behaviors')
-        .update({
-          is_muted: true,
-          mute_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        })
-        .eq('organization_id', organizationId)
-        .eq('platform', comment.platform)
-        .eq('platform_user_id', comment.platform_user_id);
-    } catch (error) {
-      this.log('warn', 'Failed to update mute state, but action queued successfully', {
-        userId: comment.platform_user_id,
-        error: error.message
-      });
-    }
-
     return { job_id: job?.id || `shield_action_${Date.now()}` };
   }
 
   /**
    * Handle mute_permanent action tag
-   *
-   * Queues a platform-specific job to permanently mute the user. Updates user_behaviors
-   * table to mark the user as permanently muted. Uses Priority 1 (critical) queue.
-   * Follows graceful degradation pattern - database update failure doesn't block queue job.
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {string} comment.platform_user_id - Platform-specific user ID
-   * @param {Object} metadata - Metadata from Gatekeeper analysis (unused)
-   * @returns {Promise<Object>} Execution result
-   * @returns {string} return.job_id - Queue job ID for tracking
-   *
-   * @example
-   * const result = await service._handleMutePermanent('org123', comment, metadata);
-   * // Returns: { job_id: 'shield_action_1698765433222' }
    */
   async _handleMutePermanent(organizationId, comment, metadata) {
     this.log('info', 'Muting user permanently', {
@@ -1268,11 +1177,7 @@ class ShieldService {
     try {
       await this.supabase
         .from('user_behaviors')
-        .update({
-          is_muted: true,
-          is_muted_permanent: true,
-          muted_at: new Date().toISOString()
-        })
+        .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id);
@@ -1288,25 +1193,6 @@ class ShieldService {
 
   /**
    * Handle check_reincidence action tag
-   *
-   * Queries user_behaviors table to check violation history and detect reincident behavior.
-   * Compares total_violations against configured reincidenceThreshold. Logs a warning if
-   * user is detected as reincident. Follows graceful degradation pattern - database errors
-   * are logged but don't fail the action. This is a read-only handler (no queue job).
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {string} comment.platform_user_id - Platform-specific user ID
-   * @param {Object} metadata - Metadata from Gatekeeper analysis (unused)
-   * @returns {Promise<Object>} Execution result
-   * @returns {null} return.job_id - Always null (no queue job for reincidence check)
-   *
-   * @example
-   * const result = await service._handleCheckReincidence('org123', comment, metadata);
-   * // Returns: { job_id: null }
-   * // Logs warning if user.total_violations >= reincidenceThreshold
    */
   async _handleCheckReincidence(organizationId, comment, metadata) {
     this.log('info', 'Checking user reincidence', {
@@ -1322,9 +1208,9 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
-        .maybeSingle();
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
@@ -1350,30 +1236,6 @@ class ShieldService {
 
   /**
    * Handle add_strike_1 action tag
-   *
-   * Adds a Level 1 strike to the user's behavior record. Strikes are stored in the
-   * user_behaviors table with timestamp, comment_id, and toxicity_score. Follows graceful
-   * degradation pattern - database errors are logged but don't fail the action.
-   * This is a database operation (no queue job).
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {string} comment.platform_user_id - Platform-specific user ID
-   * @param {Object} metadata - Metadata from Gatekeeper analysis
-   * @param {Object} [metadata.toxicity] - Toxicity analysis data
-   * @param {number} [metadata.toxicity.toxicity_score] - Toxicity score stored with strike
-   * @returns {Promise<Object>} Execution result
-   * @returns {null} return.job_id - Always null (no queue job for strikes)
-   *
-   * @example
-   * const result = await service._handleAddStrike1('org123', comment, {
-   *   toxicity: { toxicity_score: 0.75 }
-   * });
-   * // Returns: { job_id: null }
-   * // Updates user_behaviors: strikes array + strike_count + last_strike_at
    */
   async _handleAddStrike1(organizationId, comment, metadata) {
     return await this._addStrike(organizationId, comment, 1, metadata);
@@ -1381,30 +1243,6 @@ class ShieldService {
 
   /**
    * Handle add_strike_2 action tag
-   *
-   * Adds a Level 2 strike to the user's behavior record. Strikes are stored in the
-   * user_behaviors table with timestamp, comment_id, and toxicity_score. Level 2 strikes
-   * indicate more severe violations. Follows graceful degradation pattern - database errors
-   * are logged but don't fail the action. This is a database operation (no queue job).
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {string} comment.platform_user_id - Platform-specific user ID
-   * @param {Object} metadata - Metadata from Gatekeeper analysis
-   * @param {Object} [metadata.toxicity] - Toxicity analysis data
-   * @param {number} [metadata.toxicity.toxicity_score] - Toxicity score stored with strike
-   * @returns {Promise<Object>} Execution result
-   * @returns {null} return.job_id - Always null (no queue job for strikes)
-   *
-   * @example
-   * const result = await service._handleAddStrike2('org123', comment, {
-   *   toxicity: { toxicity_score: 0.88 }
-   * });
-   * // Returns: { job_id: null }
-   * // Updates user_behaviors: strikes array + strike_count + last_strike_at
    */
   async _handleAddStrike2(organizationId, comment, metadata) {
     return await this._addStrike(organizationId, comment, 2, metadata);
@@ -1436,23 +1274,21 @@ class ShieldService {
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
         .eq('platform_user_id', comment.platform_user_id)
-        .maybeSingle();
+        .single();
 
       const currentStrikes = behavior?.strikes || [];
       const updatedStrikes = [...currentStrikes, strike];
 
       await this.supabase
         .from('user_behaviors')
-        .upsert({
-          organization_id: organizationId,
-          platform: comment.platform,
-          platform_user_id: comment.platform_user_id,
+        .update({
           strikes: updatedStrikes,
           strike_count: updatedStrikes.length,
           last_strike_at: new Date().toISOString()
-        }, {
-          onConflict: 'organization_id,platform,platform_user_id'
-        });
+        })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
     } catch (error) {
       this.log('warn', `Failed to add strike ${strikeLevel} to database, but action logged`, {
         userId: comment.platform_user_id,
@@ -1465,23 +1301,6 @@ class ShieldService {
 
   /**
    * Handle require_manual_review action tag
-   *
-   * Flags the comment for manual review by queuing a shield_action job. Used when
-   * automated decision-making is uncertain and human judgment is required. Uses Priority 1
-   * (critical) queue to ensure reviewers are notified promptly.
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {Object} metadata - Metadata from Gatekeeper analysis (unused)
-   * @returns {Promise<Object>} Execution result
-   * @returns {string} return.job_id - Queue job ID for tracking
-   *
-   * @example
-   * const result = await service._handleRequireManualReview('org123', comment, metadata);
-   * // Returns: { job_id: 'shield_action_1698765434000' }
    */
   async _handleRequireManualReview(organizationId, comment, metadata) {
     this.log('info', 'Flagging for manual review', {
@@ -1503,24 +1322,6 @@ class ShieldService {
 
   /**
    * Handle gatekeeper_unavailable action tag
-   *
-   * Applies conservative fallback logic when Gatekeeper service is unavailable. Logs a
-   * warning and queues the comment for manual review to ensure no harmful content is missed.
-   * Uses Priority 1 (critical) queue for immediate attention.
-   *
-   * @async
-   * @param {string} organizationId - Organization ID
-   * @param {Object} comment - Comment object with platform details
-   * @param {string} comment.id - Unique comment identifier
-   * @param {string} comment.platform - Platform name (twitter, discord, etc.)
-   * @param {Object} metadata - Metadata from Gatekeeper analysis (unused)
-   * @returns {Promise<Object>} Execution result
-   * @returns {string} return.job_id - Queue job ID for tracking
-   *
-   * @example
-   * const result = await service._handleGatekeeperUnavailable('org123', comment, metadata);
-   * // Returns: { job_id: 'shield_action_1698765434222' }
-   * // Logs warning about Gatekeeper unavailability
    */
   async _handleGatekeeperUnavailable(organizationId, comment, metadata) {
     this.log('warn', 'Gatekeeper unavailable - applying fallback logic', {
@@ -1701,9 +1502,8 @@ class ShieldService {
         stats.actionBreakdown[action] = (stats.actionBreakdown[action] || 0) + 1;
         
         // Severity breakdown
-        const toxicityScore = metadata?.toxicityScore ?? metadata?.toxicity?.toxicity_score ?? 0;
-        const severity = toxicityScore >= 0.8 ? 'high' :
-                        toxicityScore >= 0.6 ? 'medium' : 'low';
+        const severity = metadata.toxicityScore >= 0.8 ? 'high' : 
+                        metadata.toxicityScore >= 0.6 ? 'medium' : 'low';
         stats.severityBreakdown[severity] = (stats.severityBreakdown[severity] || 0) + 1;
         
         // Platform breakdown
@@ -1769,9 +1569,9 @@ class ShieldService {
         .eq('organization_id', user.organization_id)
         .eq('platform', user.platform)
         .eq('platform_user_id', user.user_id)
-        .maybeSingle();
+        .single();
       
-      if (result.error) {
+      if (result.error && result.error.message) {
         throw new Error(result.error.message);
       }
       
@@ -1836,14 +1636,12 @@ class ShieldService {
       const result = await this.supabase
         .from('user_behaviors')
         .upsert({
-          platform_user_id: user.user_id, // Use platform_user_id for composite key
+          platform_user_id: user.user_id,
           platform: user.platform,
           organization_id: user.organization_id,
           total_violations: 3,
           severe_violations: violation.severity === 'high' ? 2 : 1,
           last_violation: new Date().toISOString()
-        }, {
-          onConflict: 'organization_id,platform,platform_user_id'
         })
         .select()
         .single();
