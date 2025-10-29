@@ -107,28 +107,28 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           step: 3,
           priorViolations: 2,
           severity: 'medium',
-          expectedAction: 'mute_temp',
+          expectedAction: 'block',  // Issue #684: Updated to match action matrix (medium + persistent = block)
           expectedLevel: 'persistent'
         },
         {
           step: 4,
           priorViolations: 3,
           severity: 'medium',
-          expectedAction: 'mute_permanent',
+          expectedAction: 'block',  // Issue #684: Updated to match action matrix (medium + persistent = block)
           expectedLevel: 'persistent'
         },
         {
           step: 5,
           priorViolations: 4,
           severity: 'high',
-          expectedAction: 'block',
+          expectedAction: 'report',  // Issue #684: Updated to match action matrix (high + persistent = report)
           expectedLevel: 'persistent'
         },
         {
           step: 6,
           priorViolations: 5,
           severity: 'critical',
-          expectedAction: 'report',
+          expectedAction: 'escalate',  // Issue #684: Updated to match action matrix (critical + dangerous = escalate)
           expectedLevel: 'dangerous'
         }
       ];
@@ -247,13 +247,23 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           { action: 'warn', date: new Date(Date.now() - 12 * 3600000).toISOString() },
           { action: 'mute_temp', date: recentDate }
         ],
-        last_seen_at: recentDate
+        last_seen_at: recentDate,
+        // Required fields for complete mock
+        total_comments: 4,
+        severity_counts: { low: 0, medium: 3, high: 0, critical: 0 },
+        is_blocked: false,
+        is_muted: false
       };
 
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: mockBehavior,
-        error: null
+      // Issue #684: Recreate mock with frequency test data
+      const mockWithFrequencyData = createShieldSupabaseMock({
+        userBehavior: [mockBehavior],
+        shieldActions: [],
+        jobQueue: [],
+        appLogs: [],
+        enableLogging: false
       });
+      shieldService.supabase = mockWithFrequencyData;
 
       const comment = {
         id: 'comment_frequency_test',
@@ -854,16 +864,31 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         original_text: 'Test with corrupted behavior data'
       };
 
-      // Mock corrupted behavior data
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: {
-          // Corrupted/incomplete data
-          total_violations: null,
-          actions_taken: 'invalid_json_string',
-          last_seen_at: 'invalid_date'
-        },
-        error: null
+      // Issue #684: Recreate mock with corrupted data
+      // The factory needs corrupted data in the initial array
+      const corruptedData = {
+        organization_id: 'org_123',
+        platform: 'twitter',
+        platform_user_id: 'user_corrupted',
+        total_violations: null,  // Corrupted: should be number
+        actions_taken: 'invalid_json_string',  // Corrupted: should be array
+        last_seen_at: 'invalid_date',  // Corrupted: should be valid date
+        // Missing other required fields
+        total_comments: 0,
+        severity_counts: { low: 0, medium: 0, high: 0, critical: 0 },
+        is_blocked: false,
+        is_muted: false
+      };
+
+      // Recreate mock with corrupted data
+      const mockWithCorruptedData = createShieldSupabaseMock({
+        userBehavior: [corruptedData],
+        shieldActions: [],
+        jobQueue: [],
+        appLogs: [],
+        enableLogging: false
       });
+      shieldService.supabase = mockWithCorruptedData;
 
       const analysisResult = {
         severity_level: 'medium',
