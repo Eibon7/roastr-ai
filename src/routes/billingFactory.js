@@ -3,9 +3,9 @@
  * Issue #413 - Enables dependency injection for testability
  */
 
-const StripeWrapper = require('../services/stripeWrapper');
+const BillingInterface = require('../services/billingInterface'); // TODO:Polar - Replaces StripeWrapper
 const EntitlementsService = require('../services/entitlementsService');
-const StripeWebhookService = require('../services/stripeWebhookService');
+// const StripeWebhookService = require('../services/stripeWebhookService'); // TODO:Polar - Remove when webhook service is updated
 const QueueService = require('../services/queueService');
 const { flags } = require('../config/flags');
 const { logger } = require('../utils/logger');
@@ -18,14 +18,16 @@ const BillingController = require('./billingController');
 
 // Plan configuration using shared constants
 const PLAN_CONFIG = {
-  [PLAN_IDS.FREE]: {
-    name: 'Free',
-    price: 0,
+  [PLAN_IDS.STARTER_TRIAL]: {
+    name: 'Starter Trial',
+    price: 0, // Free during trial
     currency: 'eur',
-    description: 'Perfect for getting started',
-    features: ['10 roasts per month', '1 platform integration', 'Basic support'],
+    description: '30-day trial (card required)',
+    features: ['10 roasts per month', '1,000 analyses', 'Shield protection', 'Trial support'],
     maxPlatforms: 1,
-    maxRoasts: 10
+    maxRoasts: 10,
+    trialDays: 30,
+    requiresCard: true
   },
   [PLAN_IDS.STARTER]: {
     name: 'Starter',
@@ -35,7 +37,7 @@ const PLAN_CONFIG = {
     features: ['10 roasts per month', '1,000 analyses', 'Shield protection', 'Email support'],
     maxPlatforms: 1,
     maxRoasts: 10,
-    lookupKey: process.env.STRIPE_PRICE_LOOKUP_STARTER || 'starter_monthly'
+    lookupKey: process.env.POLAR_PRICE_LOOKUP_STARTER || 'starter_monthly' // TODO:Polar
   },
   [PLAN_IDS.PRO]: {
     name: 'Pro',
@@ -70,12 +72,12 @@ class BillingFactory {
   static createController(dependencies = {}) {
     // Allow override of dependencies (for tests)
     const {
-      stripeWrapper = flags.isEnabled('ENABLE_BILLING')
-        ? new StripeWrapper(process.env.STRIPE_SECRET_KEY)
+      billingInterface = flags.isEnabled('ENABLE_BILLING')
+        ? new BillingInterface() // TODO:Polar - Add config when ready
         : null,
       queueService = new QueueService(),
       entitlementsService = new EntitlementsService(),
-      webhookService = new StripeWebhookService(),
+      webhookService = null, // TODO:Polar - Replace with Polar webhook service
       supabaseClient = supabaseServiceClient,
       loggerInstance = logger,
       emailServiceInstance = emailService,
@@ -90,7 +92,7 @@ class BillingFactory {
     }
 
     return new BillingController({
-      stripeWrapper,
+      billingInterface, // TODO:Polar - Replaces stripeWrapper
       queueService,
       entitlementsService,
       webhookService,

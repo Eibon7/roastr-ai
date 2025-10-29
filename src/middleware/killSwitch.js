@@ -187,6 +187,21 @@ class KillSwitchService {
                 ]);
 
             if (error) {
+                // Check if table doesn't exist (graceful degradation)
+                // Use Postgres error code 42P01 + case-insensitive message matching for reliability
+                const msg = (error.message || '') + ' ' + (error.details || '');
+                if (error.code === '42P01' || /does not exist/i.test(msg)) {
+                    logger.warn('⚠️  Kill switch table not found - feature disabled until migration applied', {
+                        error: error.message,
+                        errorCode: error.code,
+                        migration: 'database/migrations/add_feature_flags_and_audit_system.sql'
+                    });
+                    // Initialize with safe defaults (all autopost disabled)
+                    this.cache.set('KILL_SWITCH_AUTOPOST', { is_enabled: false, flag_value: false, cached_at: Date.now() });
+                    this.cache.set('ENABLE_AUTOPOST', { is_enabled: false, flag_value: false, cached_at: Date.now() });
+                    this.lastCacheUpdate = Date.now();
+                    return; // Don't throw, allow server to continue
+                }
                 throw error;
             }
 
@@ -201,15 +216,26 @@ class KillSwitchService {
             });
 
             this.lastCacheUpdate = Date.now();
-            
+
+            // Compute kill switch status synchronously from cache
+            // Use same semantics as isKillSwitchActive() - check only is_enabled
+            const killSwitchFlag = this.cache.get('KILL_SWITCH_AUTOPOST');
+            const killSwitchActive = killSwitchFlag?.is_enabled === true;
+
             logger.debug('Kill switch cache refreshed', {
                 flagsCount: flags.length,
-                killSwitchActive: this.isKillSwitchActive()
+                killSwitchActive
             });
 
         } catch (error) {
             logger.error('Failed to refresh kill switch cache', { error: error.message });
-            throw error;
+            // Don't throw - allow graceful degradation
+            // Initialize with safe defaults if not already set
+            if (this.cache.size === 0) {
+                this.cache.set('KILL_SWITCH_AUTOPOST', { is_enabled: false, flag_value: false, cached_at: Date.now() });
+                this.cache.set('ENABLE_AUTOPOST', { is_enabled: false, flag_value: false, cached_at: Date.now() });
+                this.lastCacheUpdate = Date.now();
+            }
         }
     }
 

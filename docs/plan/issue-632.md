@@ -14,7 +14,7 @@
 
 **Flow:** Sequential execution with early return
 
-```
+```text
 AnalyzeToxicityWorker.processJob()
   ↓
 Gatekeeper.classifyComment(text)
@@ -564,3 +564,102 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 **Created by:** Orchestrator Agent
 **Date:** 2025-10-23
 **Next Steps:** Proceed with Sprint 1 (Core Services implementation)
+
+---
+
+## 🔒 Post-Merge Security Enhancement (CodeRabbit Review #634)
+
+**Date:** 2025-10-23
+**PR:** #634 - Unified Analysis Department
+**Review:** https://github.com/Eibon7/roastr-ai/pull/634#issuecomment-3437346199
+**Severity:** P1 Critical (Security)
+
+### Issue Identified
+
+**CodeRabbit Finding:** Gatekeeper fallback returns `classification: 'NEUTRAL'` and `is_prompt_injection: false`, allowing low-toxicity prompt injections to bypass security during Gatekeeper outages.
+
+**Attack Vector:**
+1. Transient Gatekeeper outage occurs
+2. User submits comment with prompt injection + low toxicity
+3. Gatekeeper fails → fallback returns NEUTRAL
+4. Perspective succeeds with low toxicity score (e.g., 0.30)
+5. Decision matrix routes to ROAST (bypassing security)
+
+### Security Gap Closed
+
+**Root Cause:** Fallback logic assumed safety (NEUTRAL) when security service unavailable. Downstream decision logic ignored the `fallback` flag.
+
+**Fix Applied:**
+
+1. **Conservative Fallback Classification** (`AnalysisDecisionEngine.js:103-121`):
+   - Changed from `classification: 'NEUTRAL'` to `'MALICIOUS'`
+   - Set `is_prompt_injection: true` (conservative assumption)
+   - Added `fallback_reason` for audit trail
+
+2. **Explicit Fallback Detection** (`AnalysisDecisionEngine.js:265-284`):
+   - Added RULE 0 to decision matrix (highest priority)
+   - Explicit check for `fallback && fallback_reason`
+   - Forces SHIELD with action_tags: `['gatekeeper_unavailable', 'require_manual_review']`
+
+### Test Coverage
+
+**New Tests Added** (`tests/integration/analysis-department.test.js`):
+
+- **Edge 2 (updated):** Gatekeeper fails, Perspective detects clean comment → SHIELD (conservative)
+- **Edge 7 (new):** Gatekeeper fails + injection-like text → SHIELD
+- **Edge 8 (new):** Gatekeeper fails + high toxicity + platform violations → SHIELD
+
+**Test Results:** 20/20 passing (18 original + 2 new)
+
+### Documentation Updates
+
+**GDD Nodes Updated:**
+
+1. **`docs/nodes/shield.md`** - Added "Fallback Security Policy" section
+   - Conservative fallback strategy documented
+   - Action tags specification (`gatekeeper_unavailable`)
+   - Monitoring recommendations
+
+2. **`docs/nodes/roast.md`** - Added "Fallback Mode" in decision matrix
+   - RULE 0 documentation (fallback → SHIELD)
+   - Security principle: fail-safe over convenience
+
+### Impact Assessment
+
+**Security Improvement:**
+- ✅ Closes security gap identified by CodeRabbit
+- ✅ Fail-safe principle consistently applied
+- ✅ All fallback scenarios now route to SHIELD (manual review required)
+
+**User Impact:**
+- ⚠️ False positives increase during Gatekeeper outages (intentional)
+- ✅ Manual review ensures no malicious content published
+- ✅ Monitoring alerts detect service degradation
+
+**Performance Impact:**
+- ✅ No latency increase (decision logic adjustment only)
+- ✅ No additional API calls
+
+### Monitoring & Alerting
+
+**Action Tags for Monitoring:**
+- `gatekeeper_unavailable` - Track fallback frequency
+- `require_manual_review` - Queue depth monitoring
+
+**Recommended Alerts:**
+- Alert if `gatekeeper_unavailable` appears in >5% of comments (service issue)
+- Alert if manual review queue depth exceeds threshold
+- Dashboard for Gatekeeper service SLA and uptime
+
+### Architectural Principle
+
+**Fail-Safe Design:** When security services unavailable, default to blocking rather than allowing. Security over convenience.
+
+**Trade-off Accepted:** Increased false positives during outages (clean comments blocked) is preferable to false negatives (malicious content published).
+
+---
+
+**Fix Status:** ✅ Complete
+**Tests:** 20/20 passing
+**Documentation:** Updated
+**Review:** CodeRabbit issue resolved

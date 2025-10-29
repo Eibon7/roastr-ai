@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase, authHelpers } from '../lib/supabaseClient';
 import { isMockModeEnabled } from '../lib/mockMode';
 import apiClient from '../lib/api';
+import authService from '../services/authService';
 
 const AuthContext = createContext({});
 
@@ -19,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [mockMode] = useState(isMockModeEnabled());
+  const refreshIntervalRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -81,8 +83,11 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      console.log('Auth state change:', event, session ? 'session present' : 'no session');
-      
+      // Issue #628 - CodeRabbit: Gate debug logs behind dev env
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth state change:', event, session ? 'session present' : 'no session');
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -124,6 +129,85 @@ export const AuthProvider = ({ children }) => {
       subscription.unsubscribe();
     };
   }, [mockMode]);
+
+  // Issue #628: Proactive token refresh - refresh 15 minutes before expiry
+  useEffect(() => {
+    // Clear any existing refresh interval
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+      refreshIntervalRef.current = null;
+    }
+
+    // If no session, nothing to refresh
+    if (!session || mockMode) {
+      return;
+    }
+
+    const checkAndRefreshToken = async () => {
+      try {
+        // Get current session to check expiry
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+        if (!currentSession) {
+          return;
+        }
+
+        // Calculate time until expiry in milliseconds
+        const expiresAt = currentSession.expires_at * 1000; // Convert to milliseconds
+        const now = Date.now();
+        const timeUntilExpiry = expiresAt - now;
+        const fifteenMinutes = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+        // If token expires in less than 15 minutes, refresh it
+        if (timeUntilExpiry < fifteenMinutes && timeUntilExpiry > 0) {
+          // Issue #628 - CodeRabbit: Gate debug logs behind dev env
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('[Auth] Token expiring soon, refreshing proactively...');
+          }
+
+          const result = await authService.refreshToken(currentSession.refresh_token);
+
+          if (result.success) {
+            // Issue #628 - CodeRabbit: Update Supabase session first (canonical source)
+            await supabase.auth.setSession({
+              access_token: result.data.access_token,
+              refresh_token: result.data.refresh_token,
+            });
+
+            // Read back the updated session from Supabase
+            const { data: { session: updatedSession } } = await supabase.auth.getSession();
+
+            // Issue #628 - CodeRabbit: Gate debug logs behind dev env
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('[Auth] Token refreshed successfully');
+            }
+
+            // Update React state
+            setSession(updatedSession);
+          } else {
+            console.error('[Auth] Failed to refresh token:', result.message);
+            // Issue #628 - CodeRabbit: Force logout on refresh failure
+            await authHelpers.signOut();
+          }
+        }
+      } catch (error) {
+        console.error('[Auth] Error checking token expiry:', error);
+      }
+    };
+
+    // Check immediately
+    checkAndRefreshToken();
+
+    // Then check every 5 minutes
+    refreshIntervalRef.current = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    };
+  }, [session, mockMode]);
 
   const signUp = async (email, password, name) => {
     setLoading(true);

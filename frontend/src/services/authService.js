@@ -108,6 +108,52 @@ class AuthService {
   }
 
   /**
+   * Refresh access token using refresh token
+   * Issue #628: Proactive token refresh 15 minutes before expiry
+   * @param {string} refreshToken - Refresh token
+   * @returns {Promise<{success: boolean, data?: any, error?: boolean, message?: string}>}
+   */
+  async refreshToken(refreshToken) {
+    // Input validation
+    if (typeof refreshToken !== 'string' || !refreshToken.trim()) {
+      return {
+        success: false,
+        error: true,
+        message: 'Invalid refresh token provided',
+      };
+    }
+
+    try {
+      const response = await fetch('/api/auth/session/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to refresh token');
+      }
+
+      // Issue #628 - CodeRabbit: Support both response shapes (root-level or nested)
+      const payload = await response.json().catch(() => ({}));
+      const data = payload.data || payload;
+      return {
+        success: true,
+        data, // { access_token, refresh_token, expires_at, expires_in, user }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: true,
+        message: error?.message || 'Session expired. Please sign in again.',
+      };
+    }
+  }
+
+  /**
    * Get user-friendly error messages
    * @private
    */

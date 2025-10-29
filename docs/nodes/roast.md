@@ -4,8 +4,8 @@
 **Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-23
-**Coverage:** 0%
+**Last Updated:** 2025-10-28
+**Coverage:** 60%
 **Coverage Source:** auto
 **Related PRs:** #499, #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback)
 **Protected:** true
@@ -81,7 +81,22 @@ This ensures platform violations (threats, identity attacks) are caught and repo
 - Platform violation detection (threat ≥0.8, identity_attack ≥0.8)
 - Toxicity thresholds (roast_lower: 0.30, roast_upper: 0.94)
 
-See `docs/nodes/shield.md` for full Analysis Department decision matrix.
+**Fallback Mode (CodeRabbit Review #634):**
+
+When Gatekeeper service is unavailable, the decision matrix includes a conservative fallback:
+
+```text
+RULE 0: Gatekeeper Fallback Mode → SHIELD (highest priority)
+    ↓
+Condition: Gatekeeper unavailable + fallback=true
+    ↓
+Action: Force SHIELD regardless of toxicity scores
+Result: NO roast generation (security over convenience)
+```
+
+This fail-safe ensures that during Gatekeeper outages, low-toxicity prompt injections cannot bypass security by routing to ROAST. All fallback-mode comments are blocked and flagged for manual review.
+
+See `docs/nodes/shield.md` for full Analysis Department decision matrix and fallback security policy.
 
 ### Component Files
 
@@ -862,6 +877,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Backend Developer**
 - **Documentation Agent**
 - **Front-end Dev** (Issue #419 - Manual approval UI)
+- **Guardian** (PR #640 - Validated Fallback Mode documentation)
 - **Orchestrator**
 - **Test Engineer** (Issue #419 - E2E resilience tests)
 

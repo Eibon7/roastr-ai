@@ -12,7 +12,7 @@ class BillingController {
    * @param {Object} dependencies - All service dependencies
    */
   constructor({
-    stripeWrapper,
+    billingInterface, // TODO:Polar - Replaces stripeWrapper
     queueService,
     entitlementsService,
     webhookService,
@@ -23,7 +23,7 @@ class BillingController {
     workerNotificationService,
     PLAN_CONFIG
   }) {
-    this.stripeWrapper = stripeWrapper;
+    this.billingInterface = billingInterface; // TODO:Polar - Replaces stripeWrapper
     this.queueService = queueService;
     this.entitlementsService = entitlementsService;
     this.webhookService = webhookService;
@@ -108,7 +108,8 @@ class BillingController {
           let newPlan = PLAN_IDS.FREE;
           if (webhookData.items?.data?.length > 0) {
             const price = webhookData.items.data[0].price;
-            const prices = await this.stripeWrapper.prices.list({ limit: 100 });
+            // TODO:Polar - Replace with billingInterface.getPrices()
+            const prices = await this.billingInterface.getPrices?.({ limit: 100 }) || { data: [] };
             const priceData = prices.data.find(p => p.id === price.id);
 
             if (priceData?.lookup_key) {
@@ -208,8 +209,9 @@ class BillingController {
       return;
     }
 
-    const subscription = await this.stripeWrapper.subscriptions.retrieve(session.subscription);
-    const customer = await this.stripeWrapper.customers.retrieve(session.customer);
+    // TODO:Polar - Replace with billingInterface methods
+    const subscription = await this.billingInterface.getSubscription?.(session.subscription) || session;
+    const customer = await this.billingInterface.getCustomer?.(session.customer) || { email: 'unknown@example.com' };
 
     // Get the price ID from the subscription for entitlements update
     const priceId = subscription.items?.data?.[0]?.price?.id;
@@ -326,7 +328,8 @@ class BillingController {
       // Determine plan from subscription items using shared mappings
       let newPlan = PLAN_IDS.FREE;
       if (priceId) {
-        const prices = await this.stripeWrapper.prices.list({ limit: 100 });
+        // TODO:Polar - Replace with billingInterface.getPrices()
+        const prices = await this.billingInterface.getPrices?.({ limit: 100 }) || { data: [] };
         const priceData = prices.data.find(p => p.id === priceId);
 
         if (priceData?.lookup_key) {
@@ -451,7 +454,8 @@ class BillingController {
 
     // Send subscription canceled email notification (non-critical, outside transaction)
     try {
-      const customer = await this.stripeWrapper.customers.retrieve(customerId);
+      // TODO:Polar - Replace with billingInterface.getCustomer()
+      const customer = await this.billingInterface.getCustomer?.(customerId) || { email: 'unknown@example.com' };
       const userEmail = customer.email;
 
       // Get the canceled plan info from transaction result
@@ -583,7 +587,8 @@ class BillingController {
 
       // Send payment failed email notification (non-critical, outside transaction)
       try {
-        const customer = await this.stripeWrapper.customers.retrieve(customerId);
+        // TODO:Polar - Replace with billingInterface.getCustomer()
+      const customer = await this.billingInterface.getCustomer?.(customerId) || { email: 'unknown@example.com' };
         const userEmail = customer.email;
 
         const planConfig = this.PLAN_CONFIG[transactionResult.data?.plan_name] || {};

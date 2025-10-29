@@ -1,0 +1,196 @@
+name: Post-Merge Documentation Sync
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  doc-sync:
+    name: Sync Documentation
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get merged PR details
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+
+      - name: Detect changed files
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Get the merge commit SHA (may be empty for rebase-and-merge)
+          MERGE_SHA="${{ github.event.pull_request.merge_commit_sha }}"
+          : > changed-files.txt
+          if [ -n "${MERGE_SHA}" ] && git cat-file -e "${MERGE_SHA}^{commit}" 2>/dev/null; then
+            # Compare merge commit with its first parent (main before merge)
+            git diff --name-only "${MERGE_SHA}^1" "${MERGE_SHA}" > changed-files.txt
+          else
+            echo "MERGE_SHA missing or not a merge commit; falling back to GitHub API"
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              "repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.number }}/files" \
+              --paginate --jq '.[].filename' > changed-files.txt
+          fi
+
+          # Count files
+          FILE_COUNT=$(wc -l < changed-files.txt)
+          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
+
+          # Check if any source files changed (needs doc sync)
+          if grep -qE '(src/|tests/|docs/nodes/|system-map.yaml|spec.md)' changed-files.txt; then
+            echo "needs_sync=true" >> $GITHUB_OUTPUT
+          else
+            echo "needs_sync=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Map changed files to GDD nodes
+        if: steps.changes.outputs.needs_sync == 'true'
+        id: nodes
+        run: |
+          echo "📋 Mapping changed files to GDD nodes..."
+          node scripts/resolve-graph.js --from-files changed-files.txt --format=json > affected-nodes.json
+
+          NODE_COUNT=$(jq -r '.nodes | length' affected-nodes.json)
+          echo "count=$NODE_COUNT" >> $GITHUB_OUTPUT
+          echo "Affected nodes: $NODE_COUNT"
+
+      - name: Sync GDD nodes
+        if: steps.changes.outputs.needs_sync == 'true'
+        run: |
+          echo "🔄 Synchronizing GDD nodes..."
+          node scripts/sync-gdd-nodes.js --pr ${{ steps.pr.outputs.number }} --nodes affected-nodes.json
+
+      - name: Sync spec.md
+        if: steps.changes.outputs.needs_sync == 'true'
+        run: |
+          echo "📖 Synchronizing spec.md..."
+          node scripts/sync-spec-md.js --nodes affected-nodes.json
+
+      - name: Validate system-map.yaml
+        if: steps.changes.outputs.needs_sync == 'true'
+        run: |
+          echo "🗺️ Validating system-map.yaml..."
+          node scripts/validate-gdd-cross.js --full
+
+      - name: Run drift prediction
+        if: steps.changes.outputs.needs_sync == 'true'
+        run: |
+          echo "🔮 Running drift prediction..."
+          node scripts/predict-gdd-drift.js --full
+
+          # Check for high-risk nodes
+          HIGH_RISK=$(jq -r '.high_risk_count' gdd-drift.json)
+          echo "high_risk_nodes=$HIGH_RISK" >> $GITHUB_OUTPUT
+
+      - name: Generate sync report
+        if: steps.changes.outputs.needs_sync == 'true'
+        run: |
+          echo "📊 Generating sync report..."
+          node scripts/generate-sync-report.js \
+            --pr ${{ steps.pr.outputs.number }} \
+            --nodes affected-nodes.json \
+            --output docs/sync-reports/pr-${{ steps.pr.outputs.number }}-sync.md
+
+      - name: Create doc-sync PR
+        if: steps.changes.outputs.needs_sync == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="docs/sync-pr-${{ steps.pr.outputs.number }}"
+          PR_TITLE="📚 Docs Sync - PR #${{ steps.pr.outputs.number }}"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create and switch to new branch
+          git checkout -b $BRANCH
+
+          # Stage all documentation changes
+          git add docs/nodes/
+          git add docs/sync-reports/
+          git add spec.md
+          git add system-map.yaml
+          git add gdd-status.json
+          git add gdd-health.json
+          git add gdd-drift.json
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "ℹ️ No documentation changes needed"
+            exit 0
+          fi
+
+          # Commit changes
+          git commit -m "docs: Sync documentation - PR #${{ steps.pr.outputs.number }}
+
+          ### Updates
+          - Nodes: $(jq -r '.nodes | join(", ")' affected-nodes.json)
+          - spec.md: Updated affected sections
+          - system-map.yaml: Validated and synced
+          - Drift analysis: $(jq -r '.high_risk_count' gdd-drift.json) high-risk nodes
+
+          Report: docs/sync-reports/pr-${{ steps.pr.outputs.number }}-sync.md
+
+          Auto-generated by doc-sync workflow
+          Related PR: #${{ steps.pr.outputs.number }}"
+
+          # Push branch
+          git push origin $BRANCH
+
+          # Create PR with sync report as body
+          gh pr create \
+            --title "$PR_TITLE" \
+            --body-file docs/sync-reports/pr-${{ steps.pr.outputs.number }}-sync.md \
+            --label "documentation,automated,post-merge-sync" \
+            --assignee "${{ steps.pr.outputs.author }}" \
+            --base main \
+            --head $BRANCH
+
+      - name: Notify if doc-sync skipped
+        if: steps.changes.outputs.needs_sync == 'false'
+        run: |
+          echo "ℹ️ No documentation sync needed for this PR"
+          echo "Changed files did not affect source code or documentation structure"
+
+      - name: Comment on original PR
+        if: steps.changes.outputs.needs_sync == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ steps.pr.outputs.number }} --body "## 📚 Documentation Sync
+
+          A documentation sync PR has been automatically created based on your merged changes.
+
+          **Affected nodes:** $(jq -r '.nodes | length' affected-nodes.json)
+          **High-risk drift:** $(jq -r '.high_risk_count' gdd-drift.json) nodes
+
+          Please review and merge the doc-sync PR: [docs/sync-pr-${{ steps.pr.outputs.number }}]
+
+          📊 Full report: \`docs/sync-reports/pr-${{ steps.pr.outputs.number }}-sync.md\`"

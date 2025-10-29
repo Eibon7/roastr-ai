@@ -181,12 +181,15 @@ async routeByDirection(organizationId, comment, decision, correlationId) {
 
 ```javascript
 async handleShieldAction(organizationId, comment, decision) {
-  // Pass action_tags to Shield Service (Issue #632)
-  await this.shieldService.executeActionsFromTags(
-    organizationId,
-    comment,
-    decision.action_tags,
-    decision.metadata
+  // Pass analysis decision to Shield Service (Issue #632)
+  // Method signature: executeActions(analysis, user, content)
+  await this.shieldService.executeActions(
+    decision, // analysis object with action_tags and metadata
+    comment.user || { id: comment.user_id }, // user object
+    {
+      action_tags: decision.action_tags,
+      metadata: decision.metadata
+    } // actionable payload
   );
 
   this.log('info', 'Shield actions executed', {
