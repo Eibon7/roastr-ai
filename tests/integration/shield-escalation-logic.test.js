@@ -783,7 +783,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       const userId = 'user_concurrent_escalation';
       const organizationId = 'org_123';
 
-      // Mock existing behavior for concurrent scenario
+      // Issue #482: Mock existing behavior for concurrent scenario
       const mockBehavior = {
         organization_id: organizationId,
         platform: 'twitter',
@@ -795,10 +795,16 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         ]
       };
 
-      mockSupabase.from().select().eq().single.mockResolvedValue({
-        data: mockBehavior,
-        error: null
+      // Issue #482: Reinitialize mockSupabase with factory
+      const testMockSupabase = createShieldSupabaseMock({
+        userBehavior: [mockBehavior]
       });
+
+      // Create new ShieldService with test-specific mock
+      const testShieldService = new ShieldService({ enabled: true, autoActions: false });
+      testShieldService.supabase = testMockSupabase;
+      testShieldService.costControl = mockCostControl;
+      testShieldService.queueService = mockQueueService;
 
       // Simulate concurrent escalation analyses
       const comment1 = {
@@ -824,8 +830,8 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
       // Run concurrent analyses
       const [result1, result2] = await Promise.all([
-        shieldService.analyzeForShield(organizationId, comment1, analysisResult),
-        shieldService.analyzeForShield(organizationId, comment2, analysisResult)
+        testShieldService.analyzeForShield(organizationId, comment1, analysisResult),
+        testShieldService.analyzeForShield(organizationId, comment2, analysisResult)
       ]);
 
       expect(result1.shieldActive).toBe(true);
