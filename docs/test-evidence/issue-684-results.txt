@@ -1,0 +1,83 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/shield-escalation-logic.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (43) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+  console.info
+    🎭 Mock Mode ENABLED - Using fake data for all external APIs
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+  console.warn
+    [WARN] 2025-10-29T14:03:29.186Z: Aggressive escalation: violation during cooling-off period {
+      service: 'ShieldService',
+      userId: 'user_cooling_off_test',
+      platform: 'twitter',
+      originalLevel: 'repeat',
+      escalatedTo: 'persistent'
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at ShieldService.log (src/services/shieldService.js:1831:20)
+      at ShieldService.log [as determineShieldActions] (src/services/shieldService.js:408:12)
+      at ShieldService.determineShieldActions [as analyzeForShield] (src/services/shieldService.js:129:40)
+      at Object.<anonymous> (tests/integration/shield-escalation-logic.test.js:380:22)
+
+  console.warn
+    [WARN] 2025-10-29T14:03:29.193Z: Aggressive escalation: recent violation spike detected {
+      service: 'ShieldService',
+      userId: 'user_time_windows',
+      platform: 'twitter',
+      hoursElapsed: '< 1h',
+      escalatedTo: 'persistent'
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at ShieldService.log (src/services/shieldService.js:1831:20)
+      at ShieldService.log [as determineShieldActions] (src/services/shieldService.js:381:12)
+      at ShieldService.determineShieldActions [as analyzeForShield] (src/services/shieldService.js:129:40)
+      at Object.<anonymous> (tests/integration/shield-escalation-logic.test.js:444:24)
+
+  console.warn
+    [WARN] 2025-10-29T14:03:29.272Z: Legal compliance escalation triggered {
+      service: 'ShieldService',
+      userId: 'user_legal',
+      platform: 'discord',
+      jurisdiction: 'EU',
+      requires_reporting: true
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at ShieldService.log (src/services/shieldService.js:1831:20)
+      at ShieldService.log [as determineShieldActions] (src/services/shieldService.js:439:12)
+      at ShieldService.determineShieldActions [as analyzeForShield] (src/services/shieldService.js:129:40)
+      at Object.<anonymous> (tests/integration/shield-escalation-logic.test.js:766:22)
+
