@@ -4,8 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-09
-**Coverage:** 100%
+**Last Updated:** 2025-10-29
+**Coverage:** 67%
 **Coverage Source:** auto
 **Related PRs:** #499
 
