@@ -108,7 +108,7 @@ function checkTestsPassing() {
     logger.info('   🧪 Running test suite (this may take several minutes)...');
     try {
       // Run full test suite with proper output capture
-      const result = execSync('npm test 2>&1', {
+      const result = execSync('npm test', {
         encoding: 'utf8',
         maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large test outputs
         stdio: ['pipe', 'pipe', 'pipe']
@@ -143,22 +143,21 @@ function checkTestsPassing() {
   }
 
   // Compare with baseline
-    const improvement = baseline - failingSuites;
-    const isRegression = failingSuites > baseline;
+  const improvement = baseline - failingSuites;
+  const isRegression = failingSuites > baseline;
 
-    if (isRegression) {
-      logger.error(`   ❌ Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} NEW failures vs baseline)`);
-      logger.error(`   🚨 REGRESSION DETECTED - PR introduces new test failures`);
-      return { passed: false, failing: failingSuites, baseline, improvement, regression: true };
-    } else if (improvement > 0) {
-      logger.info(`   ✅ Tests failing: ${failingSuites} suites (-${improvement} vs baseline - IMPROVEMENT!)`);
-      return { passed: true, failing: failingSuites, baseline, improvement, regression: false };
-    } else {
-      // Same as baseline
-      logger.warn(`   ⚠️  Tests failing: ${failingSuites} suites (same as baseline)`);
-      logger.info(`   ✅ No regression - PR maintains baseline`);
-      return { passed: true, failing: failingSuites, baseline, improvement: 0, regression: false };
-    }
+  if (isRegression) {
+    logger.error(`   ❌ Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} NEW failures vs baseline)`);
+    logger.error(`   🚨 REGRESSION DETECTED - PR introduces new test failures`);
+    return { passed: false, failing: failingSuites, baseline, improvement, regression: true };
+  } else if (improvement > 0) {
+    logger.info(`   ✅ Tests failing: ${failingSuites} suites (-${improvement} vs baseline - IMPROVEMENT!)`);
+    return { passed: true, failing: failingSuites, baseline, improvement, regression: false };
+  } else {
+    // Same as baseline
+    logger.warn(`   ⚠️  Tests failing: ${failingSuites} suites (same as baseline)`);
+    logger.info(`   ✅ No regression - PR maintains baseline`);
+    return { passed: true, failing: failingSuites, baseline, improvement: 0, regression: false };
   }
 }
 
