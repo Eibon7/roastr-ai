@@ -94,35 +94,55 @@ function checkTestsPassing() {
   const baseline = getBaselineFailures();
   logger.info(`   📊 Main branch baseline: ${baseline} failing suites`);
 
-  try {
-    // Run full test suite with proper output capture
-    const result = execSync('npm test 2>&1', {
-      encoding: 'utf8',
-      maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large test outputs
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+  let output = '';
+  let testsRan = false;
 
-    // All tests passing!
+  // Check if test output was provided via file (CI workflow optimization)
+  const fs = require('fs');
+  if (process.env.TEST_OUTPUT_FILE && fs.existsSync(process.env.TEST_OUTPUT_FILE)) {
+    logger.info('   📄 Using pre-executed test results from workflow...');
+    output = fs.readFileSync(process.env.TEST_OUTPUT_FILE, 'utf8');
+    testsRan = true;
+  } else {
+    // Fall back to running tests
+    logger.info('   🧪 Running test suite (this may take several minutes)...');
+    try {
+      // Run full test suite with proper output capture
+      const result = execSync('npm test 2>&1', {
+        encoding: 'utf8',
+        maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large test outputs
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+
+      // All tests passing!
+      logger.info('   ✅ All tests passing (100% improvement!)');
+      return { passed: true, failing: 0, baseline, improvement: baseline, regression: false };
+    } catch (error) {
+      // Capture both stdout and stderr, merge them
+      if (error.stdout) output += error.stdout;
+      if (error.stderr) output += error.stderr;
+      if (error.output) output += error.output.join('');
+      testsRan = true;
+    }
+  }
+
+  const failingSuites = parseFailingSuites(output);
+
+  if (failingSuites === null) {
+    logger.error('   ❌ Could not parse test output - test system may be broken');
+    logger.error('   🚨 FAILING validation to prevent silent errors');
+    logger.error(`   Debug: Output length: ${output.length} bytes`);
+    logger.error(`   Debug: First 200 chars: ${output.substring(0, 200)}`);
+    return { passed: false, failing: 'unknown', baseline, improvement: 0, regression: false };
+  }
+
+  // If tests passed (no failures found)
+  if (failingSuites === 0) {
     logger.info('   ✅ All tests passing (100% improvement!)');
     return { passed: true, failing: 0, baseline, improvement: baseline, regression: false };
-  } catch (error) {
-    // Capture both stdout and stderr, merge them
-    let output = '';
-    if (error.stdout) output += error.stdout;
-    if (error.stderr) output += error.stderr;
-    if (error.output) output += error.output.join('');
+  }
 
-    const failingSuites = parseFailingSuites(output);
-
-    if (failingSuites === null) {
-      logger.error('   ❌ Could not parse test output - test system may be broken');
-      logger.error('   🚨 FAILING validation to prevent silent errors');
-      logger.error(`   Debug: Output length: ${output.length} bytes`);
-      logger.error(`   Debug: First 200 chars: ${output.substring(0, 200)}`);
-      return { passed: false, failing: 'unknown', baseline, improvement: 0, regression: false };
-    }
-
-    // Compare with baseline
+  // Compare with baseline
     const improvement = baseline - failingSuites;
     const isRegression = failingSuites > baseline;
 
