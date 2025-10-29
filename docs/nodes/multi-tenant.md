@@ -4,9 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-18
-**Coverage:** 70%
+**Last Updated:** 2025-10-29
+**Coverage:** 0%
 **Coverage Source:** auto
+**Note:** Coverage is 0% for SQL files - tested via RLS integration tests
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready)
 **Related PRs:** #499, #587
 
