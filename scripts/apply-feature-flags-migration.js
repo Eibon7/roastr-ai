@@ -1,10 +1,37 @@
 #!/usr/bin/env node
 
+/**
+ * Alternative Feature Flags Migration Script
+ *
+ * Attempts to apply the feature_flags migration programmatically.
+ * Falls back to manual instructions if direct SQL execution is not available.
+ *
+ * @module scripts/apply-feature-flags-migration
+ * @requires @supabase/supabase-js
+ * @requires dotenv
+ */
+
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+/**
+ * Applies the feature_flags migration to Supabase database.
+ *
+ * Attempts to execute the SQL migration using Supabase RPC.
+ * If RPC is not available, verifies table existence and provides
+ * manual migration instructions.
+ *
+ * @async
+ * @function applyMigration
+ * @returns {Promise<void>}
+ * @throws {Error} When environment variables are missing
+ * @throws {Error} When migration file is not found
+ * @example
+ * // Run from command line:
+ * // node scripts/apply-feature-flags-migration.js
+ */
 async function applyMigration() {
   console.log('🚀 Applying feature_flags migration...\n');
 
@@ -47,8 +74,7 @@ async function applyMigration() {
       // For now, let's just check if table exists
       const { data: checkData, error: checkError } = await supabase
         .from('feature_flags')
-        .select('count')
-        .limit(1);
+        .select('*', { count: 'exact', head: true });
 
       if (checkError && checkError.message.includes('does not exist')) {
         console.error('❌ Table feature_flags does not exist.');

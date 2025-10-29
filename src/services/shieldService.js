@@ -192,7 +192,7 @@ class ShieldService {
   async getUserBehavior(organizationId, platform, platformUserId) {
     try {
       const { data: behavior, error } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('*')
         .eq('organization_id', organizationId)
         .eq('platform', platform)
@@ -223,7 +223,7 @@ class ShieldService {
   async getCrossPlatformViolations(organizationId, platformUserId) {
     try {
       const { data: allPlatformData, error } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('*')
         .eq('organization_id', organizationId)
         .eq('platform_user_id', platformUserId);
@@ -722,7 +722,7 @@ class ShieldService {
       };
       
       const { error } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .upsert({
           organization_id: organizationId,
           platform: comment.platform,
@@ -1068,7 +1068,7 @@ class ShieldService {
 
     // Update user behavior to mark as blocked
     await this.supabase
-      .from('user_behavior')
+      .from('user_behaviors')
       .update({ is_blocked: true, blocked_at: new Date().toISOString() })
       .eq('organization_id', organizationId)
       .eq('platform', comment.platform)
@@ -1156,7 +1156,7 @@ class ShieldService {
     // Update user behavior (graceful degradation on DB errors)
     try {
       await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
@@ -1183,7 +1183,7 @@ class ShieldService {
     // Get user behavior history (graceful degradation on DB errors)
     try {
       const { data: behavior, error } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('total_violations, severity_counts, actions_taken')
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
@@ -1249,7 +1249,7 @@ class ShieldService {
     // Update user behavior with new strike (graceful degradation on DB errors)
     try {
       const { data: behavior } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('strikes')
         .eq('organization_id', organizationId)
         .eq('platform', comment.platform)
@@ -1260,7 +1260,7 @@ class ShieldService {
       const updatedStrikes = [...currentStrikes, strike];
 
       await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .update({
           strikes: updatedStrikes,
           strike_count: updatedStrikes.length,
@@ -1456,7 +1456,7 @@ class ShieldService {
       
       // Get user behaviors
       const { data: userBehaviors, error: behaviorsError } = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('*')
         .eq('organization_id', organizationId);
       
@@ -1544,7 +1544,7 @@ class ShieldService {
     let userBehavior = null;
     try {
       const result = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .select('*')
         .eq('organization_id', user.organization_id)
         .eq('platform', user.platform)
@@ -1614,7 +1614,7 @@ class ShieldService {
   async trackUserBehavior(user, violation) {
     try {
       const result = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .upsert({
           user_id: user.user_id,
           platform: user.platform,

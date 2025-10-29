@@ -1,10 +1,29 @@
 #!/usr/bin/env node
 
 /**
- * Apply feature_flags migration via Supabase REST API
+ * Feature Flags Migration Helper (Recommended)
  *
- * This script attempts to execute the SQL migration using Supabase's
- * PostgREST API by executing statements individually.
+ * This script provides instructions and guidance for manually applying
+ * the feature_flags migration via the Supabase Dashboard SQL Editor.
+ * It does not execute the migration automatically.
+ *
+ * @module scripts/apply-feature-flags-via-api
+ * @requires fs
+ * @requires path
+ * @requires dotenv
+ * @example
+ * // Run from command line:
+ * // node scripts/apply-feature-flags-via-api.js
+ *
+ * @description
+ * Displays step-by-step instructions for applying the feature_flags
+ * migration manually. Includes:
+ * - Direct link to Supabase SQL Editor
+ * - Migration file location
+ * - SQL preview
+ * - Verification steps
+ *
+ * This is the recommended approach due to Supabase API limitations.
  */
 
 const fs = require('fs');
@@ -38,13 +57,15 @@ console.log('━━━━━━━━━━━━━━━━━━━━━━�
 console.log('Due to Supabase API limitations, this migration must be applied manually.\n');
 console.log('👉 Follow these steps:\n');
 console.log('1. Open Supabase SQL Editor:');
-console.log('   https://supabase.com/dashboard/project/rpkhiemljhncddmhrilk/sql/new\n');
+const projectRef = (SUPABASE_URL || '').match(/^https:\/\/([^.]+)\./)?.[1] || '<your-project-ref>';
+console.log(`   https://supabase.com/dashboard/project/${projectRef}/sql/new\n`);
 console.log('2. Copy the SQL from:');
 console.log('   database/migrations/add_feature_flags_and_audit_system.sql\n');
 console.log('3. Paste into the editor\n');
 console.log('4. Click "Run" button\n');
 console.log('5. Verify success:');
 console.log('   SELECT COUNT(*) FROM feature_flags;\n');
+console.log('6. Restart your server to initialize kill switch normally.\n');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 console.log('📄 SQL Preview (first 500 chars):');
