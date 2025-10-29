@@ -106,7 +106,17 @@ class ShieldService {
         comment.platform,
         comment.platform_user_id
       );
-      
+
+      // Issue #482: Aggregate cross-platform violations (Test 7)
+      const crossPlatformViolations = await this.getCrossPlatformViolations(
+        organizationId,
+        comment.platform_user_id
+      );
+
+      // Merge cross-platform data into userBehavior
+      userBehavior.total_violations = crossPlatformViolations.total;
+      userBehavior.cross_platform_violations = crossPlatformViolations.byPlatform;
+
       // Determine Shield actions
       const shieldActions = await this.determineShieldActions(
         analysisResult,
@@ -188,13 +198,13 @@ class ShieldService {
         .eq('platform', platform)
         .eq('platform_user_id', platformUserId)
         .single();
-      
+
       if (error && error.code !== 'PGRST116') { // Not found is OK
         throw error;
       }
-      
+
       return behavior || this.createNewUserBehavior(organizationId, platform, platformUserId);
-      
+
     } catch (error) {
       this.log('error', 'Failed to get user behavior', {
         organizationId,
@@ -203,6 +213,60 @@ class ShieldService {
         error: error.message
       });
       return this.createNewUserBehavior(organizationId, platform, platformUserId);
+    }
+  }
+
+  /**
+   * Get cross-platform violation aggregation (Issue #482 - Test 7)
+   * Query ALL platforms for this user and aggregate total violations
+   */
+  async getCrossPlatformViolations(organizationId, platformUserId) {
+    try {
+      const { data: allPlatformData, error } = await this.supabase
+        .from('user_behavior')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('platform_user_id', platformUserId);
+
+      if (error) {
+        this.log('warn', 'Failed to get cross-platform violations', {
+          organizationId,
+          platformUserId,
+          error: error.message
+        });
+        return { total: 0, byPlatform: {} };
+      }
+
+      // Aggregate violations across all platforms
+      const byPlatform = {};
+      let total = 0;
+
+      if (allPlatformData && allPlatformData.length > 0) {
+        allPlatformData.forEach(behavior => {
+          const platform = behavior.platform;
+          const violations = behavior.total_violations || 0;
+          byPlatform[platform] = violations;
+          total += violations;
+        });
+      }
+
+      this.logger?.info('Cross-platform aggregation completed', {
+        organizationId,
+        platformUserId,
+        totalViolations: total,
+        platforms: Object.keys(byPlatform).length,
+        breakdown: byPlatform
+      });
+
+      return { total, byPlatform };
+
+    } catch (error) {
+      this.log('error', 'Cross-platform aggregation failed', {
+        organizationId,
+        platformUserId,
+        error: error.message
+      });
+      return { total: 0, byPlatform: {} };
     }
   }
   
