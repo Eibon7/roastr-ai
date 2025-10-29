@@ -332,7 +332,7 @@ class ShieldService {
         escalatedTo: 'persistent'
       });
     } else if (timeWindowModifier === 'minimal') {
-      // Downgrade for significant time decay (30+ days)
+      // Downgrade for significant time decay (7+ days: >=168 hours)
       if (offenseLevel === 'persistent') {
         offenseLevel = 'repeat';
       } else if (offenseLevel === 'repeat') {
@@ -721,6 +721,26 @@ class ShieldService {
         comment_id: comment.id
       };
       
+      // Fetch existing actions_taken to preserve history
+      const { data: existing, error: fetchErr } = await this.supabase
+        .from('user_behaviors')
+        .select('actions_taken')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .maybeSingle();
+
+      // Handle fetch errors (except "not found" which is OK for new users)
+      if (fetchErr && fetchErr.code && fetchErr.code !== 'PGRST116') {
+        throw fetchErr;
+      }
+
+      // Merge new action with existing history
+      const mergedActions = Array.isArray(existing?.actions_taken)
+        ? [...existing.actions_taken, actionRecord]
+        : [actionRecord];
+
+      // Upsert with merged actions
       const { error } = await this.supabase
         .from('user_behaviors')
         .upsert({
@@ -728,14 +748,14 @@ class ShieldService {
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
           platform_username: comment.platform_username,
-          actions_taken: [actionRecord], // Will be merged with existing
+          actions_taken: mergedActions, // Preserves existing history
           is_blocked: ['block', 'ban_user'].includes(shieldActions.primary),
           last_seen_at: new Date().toISOString()
         }, {
           onConflict: 'organization_id,platform,platform_user_id',
           ignoreDuplicates: false
         });
-      
+
       if (error) throw error;
       
     } catch (error) {
