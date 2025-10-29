@@ -362,17 +362,29 @@ class ShieldService {
       });
     }
 
-    // Apply explicit severity override last (CodeRabbit Review #3394182951)
+    // Apply explicit severity override last (CodeRabbit Review #3394182951, #3394330716)
     // Allows external analysis systems to force severity even with corrupted data
     // Useful for emergency procedures or legal compliance that must override defaults
-    if (analysisResult.severity_override || analysisResult.override_severity) {
+    const overrideValue = analysisResult.severity_override || analysisResult.override_severity;
+    const allowedSeverities = new Set(['low', 'medium', 'high', 'critical']);
+
+    if (overrideValue && allowedSeverities.has(String(overrideValue).toLowerCase())) {
       const originalSeverity = severity_level;
-      severity_level = analysisResult.severity_override || analysisResult.override_severity;
+      severity_level = String(overrideValue).toLowerCase();
       this.log('info', 'Severity explicitly overridden by analysis', {
         userId: comment.platform_user_id,
         platform: comment.platform,
         originalSeverity,
         overriddenTo: severity_level
+      });
+    } else if (overrideValue) {
+      // Invalid override value - reject and log warning for audit trail
+      this.log('warn', 'Invalid severity override rejected', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        attemptedValue: overrideValue,
+        currentSeverity: severity_level,
+        allowedValues: Array.from(allowedSeverities)
       });
     }
 
