@@ -96,6 +96,7 @@ jobs:
 
       - name: Post success comment (if complete)
         if: steps.validate.outcome == 'success'
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
@@ -115,6 +116,7 @@ jobs:
 
       - name: Post failure comment (if incomplete)
         if: steps.validate.outcome == 'failure'
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
