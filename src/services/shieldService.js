@@ -74,7 +74,21 @@ class ShieldService {
         dangerous: 'escalate'          // Issue #684: Added dangerous level
       }
     };
-    
+
+    // Action matrix 3D extension - Count-specific overrides (CodeRabbit Review #3394182951)
+    // Allows precise control for specific violation counts without changing base tiers
+    // Structure: { severity: { offenseLevel: { count: 'action' } } }
+    // Example: medium.persistent.2 = 'mute_permanent' (instead of base 'block')
+    this.actionMatrixByCount = {
+      // Optional overrides go here - if not defined, falls back to base actionMatrix
+      // medium: {
+      //   persistent: { 2: 'mute_permanent', 3: 'block', 4: 'block' }
+      // },
+      // high: {
+      //   persistent: { 2: 'block', 3: 'report', 4: 'report' }
+      // }
+    };
+
     this.log('info', 'Shield Service initialized', {
       enabled: this.options.enabled,
       autoActions: this.options.autoActions,
@@ -348,6 +362,20 @@ class ShieldService {
       });
     }
 
+    // Apply explicit severity override last (CodeRabbit Review #3394182951)
+    // Allows external analysis systems to force severity even with corrupted data
+    // Useful for emergency procedures or legal compliance that must override defaults
+    if (analysisResult.severity_override || analysisResult.override_severity) {
+      const originalSeverity = severity_level;
+      severity_level = analysisResult.severity_override || analysisResult.override_severity;
+      this.log('info', 'Severity explicitly overridden by analysis', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        originalSeverity,
+        overriddenTo: severity_level
+      });
+    }
+
     // Issue #482: Check for special user types (Test 10)
     const userType = userBehavior.user_type || 'standard';
     const isSpecialUser = ['verified_creator', 'partner'].includes(userType);
@@ -455,44 +483,10 @@ class ShieldService {
       };
     }
 
-    // Issue #482: Apply time window escalation (Test 6)
-    if (timeWindowModifier === 'aggressive' && violationCount > 0) {
-      // Force escalation for recent violation spike (< 1h)
-      offenseLevel = 'persistent';
-      this.log('warn', 'Aggressive escalation: recent violation spike detected', {
-        userId: comment.platform_user_id,
-        platform: comment.platform,
-        hoursElapsed: '< 1h',
-        escalatedTo: 'persistent'
-      });
-    } else if (timeWindowModifier === 'minimal') {
-      // Downgrade for significant time decay (7+ days: >=168 hours)
-      if (offenseLevel === 'persistent') {
-        offenseLevel = 'repeat';
-      } else if (offenseLevel === 'repeat') {
-        offenseLevel = 'first';
-      }
-      this.log('info', 'Minimal escalation: significant time decay applied', {
-        userId: comment.platform_user_id,
-        platform: comment.platform,
-        timeDecay: '7+ days'
-      });
-    }
-
-    // Issue #482: Escalate aggressively if violating during cooling-off period (Test 5)
-    if (isInCoolingOff && offenseLevel !== 'first') {
-      // Force escalation to more severe actions
-      offenseLevel = 'persistent';
-      this.log('warn', 'Aggressive escalation: violation during cooling-off period', {
-        userId: comment.platform_user_id,
-        platform: comment.platform,
-        originalLevel: violationCount > 0 ? 'repeat' : 'first',
-        escalatedTo: 'persistent'
-      });
-    }
-
-    // Get action from matrix
-    let actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
+    // Get action from matrix (with optional count-specific override - CodeRabbit #3394182951)
+    // First check for exact count override (3D matrix), then fall back to base matrix
+    const countOverride = this.actionMatrixByCount[severity_level]?.[offenseLevel]?.[violationCount];
+    let actionType = countOverride || this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
 
     // Issue #482: Apply platform-specific escalation policy (Test 8)
     const escalationPolicy = userBehavior.platform_specific_config?.escalation_policy || 'standard';

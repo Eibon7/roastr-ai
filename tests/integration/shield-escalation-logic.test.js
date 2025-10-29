@@ -464,7 +464,9 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         if (window.expectedEscalation === 'aggressive') {
           expect(['block', 'report']).toContain(result.actions.primary);
         } else if (window.expectedEscalation === 'minimal') {
-          expect(['warn', 'mute_temp']).toContain(result.actions.primary);
+          // CodeRabbit #3394182951: After removing duplicate time-window logic,
+          // minimal escalation with 2 violations (persistent→repeat) + medium severity = mute_permanent
+          expect(['mute_permanent', 'block']).toContain(result.actions.primary);
         }
       }
     });
