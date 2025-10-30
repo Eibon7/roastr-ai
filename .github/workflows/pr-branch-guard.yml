@@ -13,8 +13,9 @@ jobs:
           BODY: ${{ github.event.pull_request.body }}
         run: |
           # Requiere feature/issue-<id> o fix/issue-<id> o chore/issue-<id>
-          if ! echo "$BRANCH" | grep -E '^(feature|fix|chore)/issue-[0-9]+$' > /dev/null 2>&1; then
-            echo "Branch incorrecta: $BRANCH (usa feature|fix|chore/issue-<id>)"
+          # También permite feat/epic-<id>-week-<N> para trabajo de epics por semana
+          if ! echo "$BRANCH" | grep -E '^(feature|fix|chore)/issue-[0-9]+$|^feat/epic-[0-9]+-week-[0-9]+$' > /dev/null 2>&1; then
+            echo "Branch incorrecta: $BRANCH (usa feature|fix|chore/issue-<id> o feat/epic-<id>-week-<N>)"
             exit 1
           fi
           # Exigir referencia a Issue en título o body
