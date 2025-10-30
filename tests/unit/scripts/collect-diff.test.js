@@ -356,7 +356,7 @@ index 1234567..89abcdef 100644
       expect(collector.diffData.files_changed).toHaveLength(2);
       expect(collector.diffData.severity).toBe('CRITICAL'); // Highest severity
       expect(collector.diffData.domains_affected).toContain('pricing');
-      expect(collector.diffData.domains_affected).toContain('authentication');
+      expect(collector.diffData.domains_affected).toContain('auth_policies'); // Domain renamed from 'authentication'
     });
   });
 });

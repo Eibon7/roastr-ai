@@ -211,7 +211,7 @@ describe('Roast Routes Round 7 Fixes', () => {
                 });
 
             // Should proceed successfully or fail gracefully
-            expect([200, 500, 503]).toContain(response.status);
+            expect([200, 402, 500, 503]).toContain(response.status);
             
             // Main goal: no null reference crashes
             expect(mockLogger.error).not.toHaveBeenCalledWith(

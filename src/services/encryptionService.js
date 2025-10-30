@@ -101,7 +101,8 @@ class EncryptionService {
                 error: error.message,
                 plaintextLength: plaintext?.length
             });
-            throw new Error('Failed to encrypt data');
+            // Re-throw the original error to preserve validation messages
+            throw error;
         }
     }
 

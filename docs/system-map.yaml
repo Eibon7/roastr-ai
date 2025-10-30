@@ -6,19 +6,19 @@
 
 # Metadata
 metadata:
-  version: 2.0.1
+  version: 2.0.0
   created: 2025-10-03
-  last_updated: 2025-10-29
+  last_updated: 2025-10-23
   total_nodes: 15
   critical_nodes: 9
   high_priority_nodes: 4
-  production_nodes: 14
-  roadmap_nodes: 1
-  pr: "#677"
-  changes: "Fixed coverage integrity violations - Updated file mappings to reflect real implementation (Issue #677)"
+  production_nodes: 15
+  development_nodes: 0
+  pr: "#634"
+  changes: "CodeRabbit Security Fix - Conservative Gatekeeper fallback for Analysis Department (Issue #632, PR #634)"
   protected: true
-  last_verified: 2025-10-29
-  protection_reason: "GDD 2.0 Maintenance Mode - Coverage integrity corrections"
+  last_verified: 2025-10-23
+  protection_reason: "GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze"
 
 # Node Definitions
 nodes:
@@ -132,8 +132,8 @@ nodes:
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-10-29
-    coverage: 0
+    last_updated: 2025-10-19
+    coverage: 70
     depends_on:
       - observability
     used_by:
@@ -150,7 +150,6 @@ nodes:
       - database/schema.sql
       - database/migrations/001_add_persona_fields.sql
       - supabase/migrations/20251017000002_simple_rls.sql
-    notes: "Coverage is 0% for SQL files - tested via RLS integration tests"
 
   # Business Logic Nodes
   cost-control:
@@ -201,8 +200,8 @@ nodes:
     status: production
     priority: critical
     owner: Back-end Dev
-    last_updated: 2025-10-29
-    coverage: 72
+    last_updated: 2025-10-06
+    coverage: 65
     depends_on:
       - cost-control
       - queue-system
@@ -214,10 +213,8 @@ nodes:
     docs:
       - docs/nodes/billing.md
     files:
-      - src/services/billingInterface.js
-      - src/services/stripeWebhookService.js
-      - src/services/stripeWrapper.js
-      - src/routes/billing.js
+      - src/services/billingService.js
+      - src/services/stripeService.js
 
   # Configuration Nodes
   persona:
@@ -249,8 +246,8 @@ nodes:
     status: production
     priority: high
     owner: Back-end Dev
-    last_updated: 2025-10-29
-    coverage: 100
+    last_updated: 2025-10-06
+    coverage: 73
     depends_on:
       - persona
       - plan-features
@@ -259,16 +256,15 @@ nodes:
     docs:
       - docs/nodes/tone.md
     files:
-      - src/config/tones.js
-      - src/config/constants.js
+      - src/services/toneService.js
 
   platform-constraints:
     description: Platform-specific character limits and style guides
     status: production
     priority: high
     owner: Back-end Dev
-    last_updated: 2025-10-29
-    coverage: 67
+    last_updated: 2025-10-06
+    coverage: 80
     depends_on:
       - social-platforms
     used_by:
@@ -276,8 +272,7 @@ nodes:
     docs:
       - docs/nodes/platform-constraints.md
     files:
-      - src/config/platforms.js
-      - src/config/integrations.js
+      - src/services/platformConstraints.js
 
   social-platforms:
     description: 9 platform integrations (Twitter, YouTube, Instagram, etc.)
@@ -307,8 +302,8 @@ nodes:
     status: production
     priority: medium
     owner: Back-end Dev
-    last_updated: 2025-10-29
-    coverage: 49
+    last_updated: 2025-10-06
+    coverage: 60
     depends_on:
       - cost-control
       - multi-tenant
@@ -321,22 +316,23 @@ nodes:
     docs:
       - docs/nodes/analytics.md
     files:
-      - src/routes/analytics.js
+      - src/services/analyticsService.js
 
   trainer:
     description: AI model fine-tuning and training data management
-    status: roadmap
+    status: development
     priority: medium
     owner: Back-end Dev
-    last_updated: 2025-10-29
-    coverage: 0
+    last_updated: 2025-10-06
+    coverage: 45
     depends_on:
       - roast
       - shield
     used_by: []
     docs:
       - docs/nodes/trainer.md
-    # No files defined - feature not implemented yet
+    files:
+      - src/services/trainerService.js
 
   # Governance Nodes
   guardian:
@@ -344,8 +340,8 @@ nodes:
     status: production
     priority: critical
     owner: Product Owner
-    last_updated: 2025-10-29
-    coverage: 0
+    last_updated: 2025-10-09
+    coverage: 80
     depends_on: []
     used_by: []
     protected_domains:
@@ -362,7 +358,6 @@ nodes:
       - config/guardian-ignore.yaml
     tests:
       - tests/unit/scripts/guardian-gdd.test.js
-    notes: "Coverage is 0% because files are scripts/config, not imported in Jest coverage"
 
 # Validation Rules
 validation:
