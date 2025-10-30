@@ -37,6 +37,14 @@ jest.mock('../../../src/utils/logger', () => ({
     }
 }));
 
+// Mock QueueService to prevent database initialization
+jest.mock('../../../src/services/queueService', () => {
+    return jest.fn().mockImplementation(() => ({
+        addJob: jest.fn().mockResolvedValue({ success: true, jobId: 'mock-job-id' }),
+        initialize: jest.fn().mockResolvedValue(undefined)
+    }));
+});
+
 const oauthRoutes = require('../../../src/routes/oauth');
 const { OAuthProviderFactory } = require('../../../src/services/oauthProvider');
 const { flags } = require('../../../src/config/flags');
@@ -435,6 +443,7 @@ describe('OAuth Routes Unit Tests', () => {
 
         it('should deny reset when not in mock mode', async () => {
             flags.isEnabled.mockReturnValue(false);
+            flags.shouldUseMockOAuth.mockReturnValue(false); // Explicitly disable mock mode
             process.env.NODE_ENV = 'production';
 
             const response = await request(app)
