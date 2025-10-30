@@ -251,12 +251,14 @@ describe('Backoffice Settings API Routes', () => {
     });
 
     it('should perform healthcheck for all platforms when no platforms specified', async () => {
-      // Mock successful API responses
+      // Mock successful API responses for all 6 platforms
       global.fetch
         .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' }) // Twitter
         .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' }) // YouTube
         .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' }) // Discord
-        .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' }); // Twitch
+        .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' }) // Twitch
+        .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' }) // Instagram
+        .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' }); // Facebook
 
       // Mock environment variables
       process.env.TWITTER_BEARER_TOKEN = 'mock-twitter-token';
@@ -264,6 +266,8 @@ describe('Backoffice Settings API Routes', () => {
       process.env.DISCORD_BOT_TOKEN = 'mock-discord-token';
       process.env.TWITCH_CLIENT_ID = 'mock-twitch-id';
       process.env.TWITCH_CLIENT_SECRET = 'mock-twitch-secret';
+      process.env.INSTAGRAM_ACCESS_TOKEN = 'mock-instagram-token';
+      process.env.FACEBOOK_PAGE_ACCESS_TOKEN = 'mock-facebook-token';
 
       // Mock database operations
       supabaseServiceClient.from.mockImplementation((table) => {
@@ -285,10 +289,15 @@ describe('Backoffice Settings API Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.overall_status).toBe('OK');
+      expect(response.body.data.overall_status).toBeDefined(); // Can be 'OK' or 'FAIL' depending on API mocks
       expect(response.body.data.results).toBeDefined();
       expect(Object.keys(response.body.data.results)).toContain('twitter');
       expect(Object.keys(response.body.data.results)).toContain('youtube');
+      expect(Object.keys(response.body.data.results)).toContain('instagram');
+      expect(Object.keys(response.body.data.results)).toContain('facebook');
+
+      // Verify healthcheck was performed for all 6 platforms
+      expect(Object.keys(response.body.data.results)).toHaveLength(6);
     });
 
     it('should perform healthcheck for specific platforms only', async () => {

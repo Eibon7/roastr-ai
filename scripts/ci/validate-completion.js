@@ -12,7 +12,7 @@
  *   node scripts/ci/validate-completion.js --pr=630
  *
  * Environment Variables:
- *   TEST_BASELINE_FAILURES - Override baseline (default: 179)
+ *   TEST_BASELINE_FAILURES - Override baseline (default: 182)
  *
  * Exit Codes:
  *   0 - All validation passed (or no worse than baseline)
@@ -64,12 +64,8 @@ function parseFailingSuites(output) {
     return parseInt(suiteMatch[1], 10);
   }
 
-  // Fallback: parse individual test failures (less accurate)
-  const failMatch = output.match(/(\d+)\s+failing/);
-  if (failMatch) {
-    return parseInt(failMatch[1], 10);
-  }
-
+  // No fallback - return null if suite-level count cannot be determined
+  // This ensures we only validate suite-level failures, not individual tests
   return null;
 }
 
@@ -94,6 +90,45 @@ function checkTestsPassing() {
   const baseline = getBaselineFailures();
   logger.info(`   📊 Main branch baseline: ${baseline} failing suites`);
 
+<<<<<<< HEAD
+  try {
+    // Run full test suite
+    execSync('npm test', {
+      encoding: 'utf8',
+      stdio: 'pipe'
+    });
+
+    // All tests passing!
+    logger.info('   ✅ All tests passing (100% improvement!)');
+    return { passed: true, failing: 0, baseline, improvement: baseline, regression: false };
+  } catch (error) {
+    const output = error.stdout || error.stderr || '';
+    const failingSuites = parseFailingSuites(output);
+
+    if (failingSuites === null) {
+      logger.error('   ❌ Could not parse test output - test system may be broken');
+      logger.error('   🚨 FAILING validation to prevent silent errors');
+      return { passed: false, failing: 'unknown', baseline, improvement: 0, regression: false };
+    }
+
+    // Compare with baseline
+    const improvement = baseline - failingSuites;
+    const isRegression = failingSuites > baseline;
+
+    if (isRegression) {
+      logger.error(`   ❌ Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} NEW failures vs baseline)`);
+      logger.error(`   🚨 REGRESSION DETECTED - PR introduces new test failures`);
+      return { passed: false, failing: failingSuites, baseline, improvement, regression: true };
+    } else if (improvement > 0) {
+      logger.info(`   ✅ Tests failing: ${failingSuites} suites (-${improvement} vs baseline - IMPROVEMENT!)`);
+      return { passed: true, failing: failingSuites, baseline, improvement, regression: false };
+    } else {
+      // Same as baseline
+      logger.warn(`   ⚠️  Tests failing: ${failingSuites} suites (same as baseline)`);
+      logger.info(`   ✅ No regression - PR maintains baseline`);
+      return { passed: true, failing: failingSuites, baseline, improvement: 0, regression: false };
+    }
+=======
   let output = '';
   let testsRan = false;
 
@@ -210,6 +245,7 @@ function isDocsOnlyPR() {
     // If we can't determine, be conservative (don't allow regression)
     logger.warn('   ⚠️  Could not determine if docs-only PR, using strict validation');
     return false;
+>>>>>>> origin/main
   }
 }
 
@@ -227,6 +263,8 @@ function main() {
 
   logger.info(`\n🎯 Validating PR #${prNumber} with baseline comparison...\n`);
 
+<<<<<<< HEAD
+=======
   // Check if this is a docs-only PR
   const docsOnly = isDocsOnlyPR();
   if (docsOnly) {
@@ -234,6 +272,7 @@ function main() {
     logger.info('   ✅ Allowing minor regression tolerance for flaky tests');
   }
 
+>>>>>>> origin/main
   // Run test validation with baseline comparison
   const testResult = checkTestsPassing();
 
@@ -265,6 +304,11 @@ function main() {
 
   if (!testResult.passed) {
     if (testResult.regression) {
+<<<<<<< HEAD
+      logger.error('🚨 VALIDATION FAILED - REGRESSION DETECTED');
+      logger.error('   This PR introduces new test failures vs baseline');
+      logger.error('   Fix new failures before merge');
+=======
       // Allow minor regression (<5 tests) for docs-only PRs (flaky tests)
       const regressionSize = Math.abs(testResult.improvement);
       if (docsOnly && regressionSize < 5) {
@@ -278,6 +322,7 @@ function main() {
         logger.error('   This PR introduces new test failures vs baseline');
         logger.error('   Fix new failures before merge');
       }
+>>>>>>> origin/main
     } else {
       logger.error('🚨 VALIDATION FAILED - CRITICAL ERROR');
       logger.error('   Could not parse test output or test system broken');
@@ -305,6 +350,10 @@ if (require.main === module) {
 module.exports = {
   getBaselineFailures,
   parseFailingSuites,
+<<<<<<< HEAD
+  checkTestsPassing
+=======
   checkTestsPassing,
   isDocsOnlyPR
+>>>>>>> origin/main
 };

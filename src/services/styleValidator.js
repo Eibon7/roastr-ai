@@ -18,8 +18,9 @@ class StyleValidator {
             ],
             disclaimerPatterns: [
                 /\b(powered\s+by\s+roastr(?:\.ai)?|by\s+roastr(?:\.ai)?)\b/i,
-                /\b(generad[oa]\s+por\s+ia|generated\s+by\s+ai)\b/i,
+                /\b(generad[oa]\s+por\s+(?:ia|roastr(?:\.ai)?)|generated\s+by\s+(?:ai|roastr(?:\.ai)?))\b/i,
                 /\[(?:roastr|ai)\]/i
+                // Removed #roastr pattern to allow legitimate hashtag mentions (CodeRabbit Round 4)
                 // Improved specificity to avoid blocking legitimate mentions like "visita roastr.ai"
             ],
             explicitPatterns: [

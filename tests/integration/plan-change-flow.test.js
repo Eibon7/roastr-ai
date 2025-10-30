@@ -443,7 +443,7 @@ describe('Plan Change Flow Integration', () => {
             const result = await subscriptionService.processSubscriptionUpdate(mockSubscription);
 
             expect(result.success).toBe(false);
-            expect(result.reason).toContain('Current monthly roasts (150) exceeds new plan limit (50)');
+            expect(result.reason).toContain('Current monthly roasts (150) exceeds new plan limit (10)');
 
             // Verify blocked notification was sent
             expect(notificationService.createPlanChangeBlockedNotification).toHaveBeenCalledWith(

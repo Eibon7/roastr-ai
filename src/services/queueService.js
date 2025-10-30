@@ -183,16 +183,27 @@ class QueueService {
     }
     
     this.supabase = createClient(supabaseUrl, supabaseKey);
-    
+
     // Test database connection
-    const { error } = await this.supabase
-      .from('job_queue')
-      .select('id')
-      .limit(1);
-    
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found, which is OK
-      const errorMessage = error.message || error.toString() || 'Unknown database error';
-      throw new Error(`Database connection failed: ${errorMessage}`);
+    try {
+      const { error } = await this.supabase
+        .from('job_queue')
+        .select('id')
+        .limit(1);
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found, which is OK
+        // Safely extract error message from Supabase error object
+        let errorMessage = 'Unknown database error';
+        try {
+          errorMessage = error.message || error.code || error.hint || 'Supabase connection error';
+        } catch (e) {
+          errorMessage = 'Error extracting Supabase error details';
+        }
+        throw new Error(`Database connection failed: ${errorMessage}`);
+      }
+    } catch (err) {
+      // Handle any errors during connection test
+      throw new Error(`Database connection failed: ${err.message || err}`);
     }
   }
   
