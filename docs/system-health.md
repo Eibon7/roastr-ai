@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-10-20T21:49:00.134Z
+**Generated:** 2025-10-30T09:59:09.863Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 88.3/100
+**Average Score:** 90.8/100
 
 ---
 
@@ -19,53 +19,40 @@
 
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
-| shield | 🟢 83 | healthy | 2025-10-09 | 2% | 0 | 0 |
-| social-platforms | 🟢 83 | healthy | 2025-10-09 | 0% | 0 | 0 |
-| plan-features | 🟢 84 | healthy | 2025-10-13 | 3% | 0 | 0 |
-| queue-system | 🟢 84 | healthy | 2025-10-14 | 6% | 0 | 0 |
-| roast | 🟢 84 | healthy | 2025-10-13 | 0% | 0 | 0 |
-| cost-control | 🟢 85 | healthy | 2025-10-18 | 0% | 0 | 0 |
-| observability | 🟢 85 | healthy | 2025-10-18 | 3% | 0 | 0 |
-| guardian | 🟢 87 | healthy | 2025-10-09 | 50% | 0 | 0 |
-| trainer | 🟢 87 | healthy | 2025-10-09 | 50% | 0 | 0 |
-| analytics | 🟢 91 | healthy | 2025-10-09 | 70% | 0 | 0 |
-| billing | 🟢 91 | healthy | 2025-10-09 | 70% | 0 | 0 |
-| tone | 🟢 91 | healthy | 2025-10-09 | 70% | 0 | 0 |
-| multi-tenant | 🟢 93 | healthy | 2025-10-18 | 70% | 0 | 0 |
-| platform-constraints | 🟢 97 | healthy | 2025-10-09 | 100% | 0 | 0 |
-| persona | 🟢 100 | healthy | 2025-10-19 | 92% | 0 | 0 |
+| social-platforms | 🟢 80 | healthy | 2025-10-09 | 0% | 0 | 0 |
+| guardian | 🟢 84 | healthy | 2025-10-23 | 0% | 0 | 0 |
+| cost-control | 🟢 85 | healthy | 2025-10-28 | 38% | 0 | 0 |
+| multi-tenant | 🟢 86 | healthy | 2025-10-29 | 0% | 0 | 0 |
+| observability | 🟢 86 | healthy | 2025-10-18 | 46% | 0 | 0 |
+| trainer | 🟢 86 | healthy | 2025-10-29 | 0% | 0 | 0 |
+| analytics | 🟢 90 | healthy | 2025-10-29 | 49% | 0 | 0 |
+| plan-features | 🟢 93 | healthy | 2025-10-28 | 65% | 0 | 0 |
+| queue-system | 🟢 93 | healthy | 2025-10-28 | 68% | 0 | 0 |
+| roast | 🟢 93 | healthy | 2025-10-28 | 60% | 0 | 0 |
+| billing | 🟢 94 | healthy | 2025-10-29 | 72% | 0 | 0 |
+| platform-constraints | 🟢 94 | healthy | 2025-10-29 | 67% | 0 | 0 |
+| persona | 🟢 99 | healthy | 2025-10-28 | 90% | 0 | 0 |
+| shield | 🟢 99 | healthy | 2025-10-28 | 86% | 0 | 0 |
+| tone | 🟢 100 | healthy | 2025-10-29 | 100% | 0 | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes to Review
 
-### shield (Score: 83)
+### social-platforms (Score: 80)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 78/100
+- Update Freshness: 58/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
 
-### social-platforms (Score: 83)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 78/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 30/100
-- Agent Relevance: 100/100
-- Integrity Score: 100/100
-
-
-### plan-features (Score: 84)
+### guardian (Score: 84)
 
 **Status:** 🟢 HEALTHY
 
@@ -78,28 +65,41 @@
 - Integrity Score: 100/100
 
 
-### queue-system (Score: 84)
+### cost-control (Score: 85)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 88/100
+- Update Freshness: 96/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
 
-### roast (Score: 84)
+### multi-tenant (Score: 86)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 86/100
+- Update Freshness: 98/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### observability (Score: 86)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 76/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 

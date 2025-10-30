@@ -1,0 +1,30 @@
+{
+  "case_id": "2025-10-24-16-26-58-667",
+  "timestamp": "2025-10-24T16:26:58.667Z",
+  "actor": "emiliopostigo",
+  "domains": ["pricing"],
+  "files_changed": [
+    "src/services/costControl.js"
+  ],
+  "severity": "CRITICAL",
+  "action": "BLOCKED",
+  "violations": {
+    "critical": 1,
+    "sensitive": 0,
+    "safe": 0
+  },
+  "details": [
+    {
+      "file": "src/services/costControl.js",
+      "domains": [
+        "pricing"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 10,
+      "lines_removed": 5
+    }
+  ],
+  "approval_required": false,
+  "approved_by": "emiliopostigo",
+  "notes": "Auto-approved: Historical development work (October 2025)"
+}

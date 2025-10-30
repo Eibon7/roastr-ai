@@ -1,0 +1,172 @@
+name: Pre-Merge Completion Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to validate'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  validate-completion:
+    name: Validate PR Completion
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'ready-to-merge') ||
+      contains(github.event.pull_request.labels.*.name, 'validate-completion')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test suite with coverage
+        id: tests
+        run: |
+          npm test -- --coverage > test-output.txt 2>&1 || true
+          echo "test_output<<EOF" >> $GITHUB_OUTPUT
+          cat test-output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+        env:
+          NODE_ENV: test
+
+      - name: Setup GitHub CLI
+        run: |
+          type -p gh >/dev/null || {
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt update
+            sudo apt install gh -y
+          }
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Install js-yaml (required for validation scripts)
+        run: npm install js-yaml
+
+      - name: Run Completion Validation
+        id: validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          COVERAGE_THRESHOLD: 90
+          TEST_OUTPUT_FILE: test-output.txt
+        run: |
+          echo "🛡️ Running Guardian Completion Validation..."
+          node scripts/ci/validate-completion.js --pr=$PR_NUMBER
+        continue-on-error: true
+
+      - name: Check validation result
+        if: steps.validate.outcome == 'failure'
+        run: |
+          echo "❌ PR is not 100% complete"
+          echo "Review the validation output above for specific issues"
+          echo ""
+          echo "Common issues:"
+          echo "  - Acceptance criteria incomplete"
+          echo "  - Test coverage below threshold"
+          echo "  - Tests failing"
+          echo "  - Missing agent receipts"
+          echo "  - Documentation not updated"
+          echo "  - CodeRabbit comments pending"
+          echo ""
+          echo "Fix all issues and re-push to trigger validation again"
+          exit 1
+
+      - name: Post success comment (if complete)
+        if: steps.validate.outcome == 'success'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+        run: |
+          gh pr comment $PR_NUMBER --body "✅ **Guardian Completion Validation: PASSED**
+
+          This PR is 100% complete and ready to merge:
+          - ✅ All acceptance criteria met
+          - ✅ Test coverage ≥90%
+          - ✅ All tests passing
+          - ✅ Agent receipts present
+          - ✅ Documentation updated
+          - ✅ CodeRabbit: 0 comments
+          - ✅ CI/CD: All checks passing
+
+          🎉 User may proceed with merge when ready."
+
+      - name: Post failure comment (if incomplete)
+        if: steps.validate.outcome == 'failure'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+        run: |
+          gh pr comment $PR_NUMBER --body "⚠️ **Guardian Completion Validation: INCOMPLETE**
+
+          This PR is not ready to merge. Review the CI logs for specific issues.
+
+          **Next steps:**
+          1. Review validation output in the CI job logs
+          2. Fix all pending items
+          3. Re-push changes to re-trigger validation
+
+          **Common fixes:**
+          - Complete remaining acceptance criteria
+          - Increase test coverage
+          - Fix failing tests
+          - Generate missing agent receipts
+          - Update GDD nodes and documentation
+          - Resolve CodeRabbit comments
+
+          See \`docs/policies/completion-validation.md\` for full guidelines."
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # Require this check to pass before allowing merge
+  completion-required:
+    name: Completion Validation Required
+    runs-on: ubuntu-latest
+    needs: validate-completion
+    if: always()
+    steps:
+      - name: Check completion validation passed
+        run: |
+          RESULT="${{ needs.validate-completion.result }}"
+          echo "Validation job result: $RESULT"
+
+          # Pass if validation succeeded OR was skipped (not required for this PR)
+          if [ "$RESULT" == "success" ] || [ "$RESULT" == "skipped" ]; then
+            echo "✅ Completion validation passed (result: $RESULT)"
+            exit 0
+          fi
+
+          # Fail only if validation actually ran and failed
+          echo "❌ Completion validation did not pass (result: $RESULT)"
+          echo "PR cannot be merged until validation succeeds"
+          exit 1

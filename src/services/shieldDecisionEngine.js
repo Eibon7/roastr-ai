@@ -256,10 +256,10 @@ class ShieldDecisionEngine {
     };
     
     // Use database settings if available, otherwise fall back to legacy user aggressiveness
-    const adjustedThresholds = shieldSettings 
+    const adjustedThresholds = shieldSettings
       ? this.getThresholdsFromSettings(shieldSettings)
       : this.adjustThresholds(userAggressiveness);
-    
+
     // Check user-defined red lines first
     const redLineViolation = this.checkRedLineViolations(toxicityLabels, primaryCategory, userRedLines, input.originalText, toxicityScore);
     if (redLineViolation) {
@@ -275,11 +275,11 @@ class ShieldDecisionEngine {
         metadata: { redLineViolation, userDefined: true }
       });
     }
-    
+
     // Apply escalation based on recidivism
     const escalationAdjustment = this.calculateRecidivismAdjustment(history);
     const adjustedScore = Math.min(1.0, toxicityScore + escalationAdjustment);
-    
+
     // Critical threshold - immediate severe action
     if (adjustedScore >= adjustedThresholds.critical) {
       return this.createDecision({
@@ -849,9 +849,15 @@ class ShieldDecisionEngine {
    */
   async loadShieldSettings(organizationId, platform) {
     try {
+      // Check if settingsService is properly initialized
+      if (!this.settingsService || typeof this.settingsService.getEffectiveSettings !== 'function') {
+        this.logger.warn('ShieldSettingsService not available, will use legacy thresholds');
+        return null;
+      }
+
       // Load effective settings (with inheritance) for the platform
       const effectiveSettings = await this.settingsService.getEffectiveSettings(organizationId, platform);
-      
+
       this.logger.debug('Loaded Shield settings from database', {
         organizationId,
         platform,
@@ -859,18 +865,18 @@ class ShieldDecisionEngine {
         shield_enabled: effectiveSettings.shield_enabled,
         source: effectiveSettings.source
       });
-      
+
       return effectiveSettings;
-      
+
     } catch (error) {
-      this.logger.warn('Failed to load Shield settings from database, using defaults', {
+      this.logger.warn('Failed to load Shield settings from database, will use legacy thresholds', {
         organizationId,
         platform,
         error: error.message
       });
-      
-      // Return default settings as fallback
-      return this.settingsService.getDefaultOrganizationSettings();
+
+      // Return null to fall back to legacy threshold adjustment
+      return null;
     }
   }
   
@@ -878,14 +884,14 @@ class ShieldDecisionEngine {
    * Get decision thresholds from Shield settings
    */
   getThresholdsFromSettings(shieldSettings) {
-    const tauRoastLower = shieldSettings.tau_roast_lower || 0.25;
-    const tauShield = shieldSettings.tau_shield || 0.70;
-    
-    // Calculate moderate threshold as midpoint between roast_lower and shield
-    const moderateThreshold = tauRoastLower + ((tauShield - tauRoastLower) * 0.6);
-    
+    const tauRoastLower = shieldSettings.tau_roast_lower || 0.85;
+    const tauShield = shieldSettings.tau_shield || 0.95;
+
+    // Calculate moderate threshold as midpoint between high and critical
+    const moderateThreshold = shieldSettings.tau_moderate || 0.90;
+
     return {
-      critical: shieldSettings.tau_critical || 0.90,
+      critical: shieldSettings.tau_critical || 0.98,
       high: tauShield,
       moderate: moderateThreshold,
       corrective: tauRoastLower

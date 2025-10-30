@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
 const { mockMode } = require('../config/mockMode');
+const logger = require('../utils/logger');
 
 /**
  * Shield Service for Roastr.ai Multi-Tenant Architecture
@@ -46,29 +47,48 @@ class ShieldService {
     };
     
     // Action escalation matrix
+    // Offense levels: first (0 violations) → repeat (1) → persistent (2-4) → dangerous (5+)
     this.actionMatrix = {
       low: {
         first: 'warn',
-        repeat: 'mute_temp',
-        persistent: 'mute_permanent'
+        repeat: 'warn',                // Issue #684: Fixed from 'mute_temp'
+        persistent: 'mute_temp',
+        dangerous: 'mute_permanent'    // Issue #684: Added dangerous level
       },
       medium: {
         first: 'mute_temp',
         repeat: 'mute_permanent',
-        persistent: 'block'
+        persistent: 'block',
+        dangerous: 'report'            // Issue #684: Added dangerous level
       },
       high: {
         first: 'mute_permanent',
         repeat: 'block',
-        persistent: 'report'
+        persistent: 'report',
+        dangerous: 'escalate'          // Issue #684: Added dangerous level
       },
       critical: {
-        first: 'block',
+        first: 'report',               // Issue #684: Fixed from 'block'
         repeat: 'report',
-        persistent: 'escalate'
+        persistent: 'escalate',
+        dangerous: 'escalate'          // Issue #684: Added dangerous level
       }
     };
-    
+
+    // Action matrix 3D extension - Count-specific overrides (CodeRabbit Review #3394182951)
+    // Allows precise control for specific violation counts without changing base tiers
+    // Structure: { severity: { offenseLevel: { count: 'action' } } }
+    // Example: medium.persistent.2 = 'mute_permanent' (instead of base 'block')
+    this.actionMatrixByCount = {
+      // Optional overrides go here - if not defined, falls back to base actionMatrix
+      // medium: {
+      //   persistent: { 2: 'mute_permanent', 3: 'block', 4: 'block' }
+      // },
+      // high: {
+      //   persistent: { 2: 'block', 3: 'report', 4: 'report' }
+      // }
+    };
+
     this.log('info', 'Shield Service initialized', {
       enabled: this.options.enabled,
       autoActions: this.options.autoActions,
@@ -105,7 +125,20 @@ class ShieldService {
         comment.platform,
         comment.platform_user_id
       );
-      
+
+      // Issue #482: Aggregate cross-platform violations (Test 7)
+      const crossPlatformViolations = await this.getCrossPlatformViolations(
+        organizationId,
+        comment.platform_user_id
+      );
+
+      // Merge cross-platform data into userBehavior
+      // Issue #684: Only merge if cross-platform query found data (Test 3 compatibility)
+      if (crossPlatformViolations.total > 0 || Object.keys(crossPlatformViolations.byPlatform).length > 0) {
+        userBehavior.total_violations = crossPlatformViolations.total;
+        userBehavior.cross_platform_violations = crossPlatformViolations.byPlatform;
+      }
+
       // Determine Shield actions
       const shieldActions = await this.determineShieldActions(
         analysisResult,
@@ -136,7 +169,8 @@ class ShieldService {
         priority,
         actions: shieldActions,
         userBehavior,
-        autoExecuted: this.options.autoActions && shieldActions.autoExecute
+        autoExecuted: this.options.autoActions && shieldActions.autoExecute,
+        shouldGenerateResponse: false // Shield actions block roast generation
       };
       
     } catch (error) {
@@ -186,13 +220,13 @@ class ShieldService {
         .eq('platform', platform)
         .eq('platform_user_id', platformUserId)
         .single();
-      
+
       if (error && error.code !== 'PGRST116') { // Not found is OK
         throw error;
       }
-      
+
       return behavior || this.createNewUserBehavior(organizationId, platform, platformUserId);
-      
+
     } catch (error) {
       this.log('error', 'Failed to get user behavior', {
         organizationId,
@@ -201,6 +235,60 @@ class ShieldService {
         error: error.message
       });
       return this.createNewUserBehavior(organizationId, platform, platformUserId);
+    }
+  }
+
+  /**
+   * Get cross-platform violation aggregation (Issue #482 - Test 7)
+   * Query ALL platforms for this user and aggregate total violations
+   */
+  async getCrossPlatformViolations(organizationId, platformUserId) {
+    try {
+      const { data: allPlatformData, error } = await this.supabase
+        .from('user_behaviors')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('platform_user_id', platformUserId);
+
+      if (error) {
+        this.log('warn', 'Failed to get cross-platform violations', {
+          organizationId,
+          platformUserId,
+          error: error.message
+        });
+        return { total: 0, byPlatform: {} };
+      }
+
+      // Aggregate violations across all platforms
+      const byPlatform = {};
+      let total = 0;
+
+      if (allPlatformData && allPlatformData.length > 0) {
+        allPlatformData.forEach(behavior => {
+          const platform = behavior.platform;
+          const violations = behavior.total_violations || 0;
+          byPlatform[platform] = violations;
+          total += violations;
+        });
+      }
+
+      this.log('info', 'Cross-platform aggregation completed', {
+        organizationId,
+        platformUserId,
+        totalViolations: total,
+        platforms: Object.keys(byPlatform).length,
+        breakdown: byPlatform
+      });
+
+      return { total, byPlatform };
+
+    } catch (error) {
+      this.log('error', 'Cross-platform aggregation failed', {
+        organizationId,
+        platformUserId,
+        error: error.message
+      });
+      return { total: 0, byPlatform: {} };
     }
   }
   
@@ -217,6 +305,12 @@ class ShieldService {
       severity_counts: { low: 0, medium: 0, high: 0, critical: 0 },
       actions_taken: [],
       is_blocked: false,
+      is_muted: false,                  // Issue #482: Track mute status for cooling-off logic
+      user_type: 'standard',            // Issue #482: Track special users (verified_creator, partner)
+      cross_platform_violations: {},    // Issue #482: Track violations per platform (Test 7)
+      platform_specific_config: {       // Issue #482: Platform-specific escalation policies (Test 8)
+        escalation_policy: 'standard'   // Options: 'aggressive', 'standard', 'lenient'
+      },
       first_seen_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString()
     };
@@ -226,36 +320,252 @@ class ShieldService {
    * Determine Shield actions based on analysis and user history
    */
   async determineShieldActions(analysisResult, userBehavior, comment) {
-    const { severity_level } = analysisResult;
-    const violationCount = userBehavior.total_violations || 0;
-    
-    // Determine offense level
-    let offenseLevel = 'first';
-    if (violationCount >= this.options.reincidenceThreshold) {
-      offenseLevel = 'persistent';
-    } else if (violationCount > 0) {
-      offenseLevel = 'repeat';
+    let { severity_level } = analysisResult;
+
+    // Issue #684: Validate userBehavior data (Test 14: corrupted data handling)
+    let violationCount = 0;
+    let isDataCorrupted = false;
+
+    if (typeof userBehavior.total_violations !== 'number' ||
+        userBehavior.total_violations === null ||
+        isNaN(userBehavior.total_violations)) {
+      isDataCorrupted = true;
+      violationCount = 0;
+    } else {
+      violationCount = userBehavior.total_violations;
     }
-    
-    // Get action from matrix
-    const actionType = this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
-    
+
+    // Ensure actions_taken is an array
+    if (!Array.isArray(userBehavior.actions_taken)) {
+      isDataCorrupted = true;
+      userBehavior.actions_taken = [];
+    }
+
+    // Validate last_seen_at is a valid date
+    if (userBehavior.last_seen_at) {
+      const lastSeenDate = new Date(userBehavior.last_seen_at);
+      if (isNaN(lastSeenDate.getTime())) {
+        isDataCorrupted = true;
+        userBehavior.last_seen_at = null;
+      }
+    }
+
+    // For corrupted data, fall back to safest defaults
+    if (isDataCorrupted) {
+      severity_level = 'low';  // Override to low severity for safety
+      this.log('warn', 'Corrupted user behavior data detected, using safe defaults', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        originalViolations: userBehavior.total_violations,
+        fallbackSeverity: 'low',
+        fallbackViolations: 0
+      });
+    }
+
+    // Apply explicit severity override last (CodeRabbit Review #3394182951, #3394330716)
+    // Allows external analysis systems to force severity even with corrupted data
+    // Useful for emergency procedures or legal compliance that must override defaults
+    const overrideValue = analysisResult.severity_override || analysisResult.override_severity;
+    const allowedSeverities = new Set(['low', 'medium', 'high', 'critical']);
+
+    if (overrideValue && allowedSeverities.has(String(overrideValue).toLowerCase())) {
+      const originalSeverity = severity_level;
+      severity_level = String(overrideValue).toLowerCase();
+      this.log('info', 'Severity explicitly overridden by analysis', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        originalSeverity,
+        overriddenTo: severity_level
+      });
+    } else if (overrideValue) {
+      // Invalid override value - reject and log warning for audit trail
+      this.log('warn', 'Invalid severity override rejected', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        attemptedValue: overrideValue,
+        currentSeverity: severity_level,
+        allowedValues: Array.from(allowedSeverities)
+      });
+    }
+
+    // Issue #482: Check for special user types (Test 10)
+    const userType = userBehavior.user_type || 'standard';
+    const isSpecialUser = ['verified_creator', 'partner'].includes(userType);
+
+    // Issue #482: Check cooling-off period (Test 5)
+    const isMuted = userBehavior.is_muted === true;
+    const muteExpiresAt = userBehavior.mute_expires_at;
+    const isInCoolingOff = isMuted && muteExpiresAt && new Date(muteExpiresAt) > new Date();
+
+    // Issue #482: Calculate time window escalation (Test 6)
+    const timeWindowModifier = this.calculateTimeWindowEscalation(userBehavior);
+
+    // Determine offense level based on violation count
+    // Issue #684: Updated thresholds to support dangerous level
+    // Thresholds: 0 → first, 1 → repeat, 2-4 → persistent, 5+ → dangerous
+    let offenseLevel;
+    if (violationCount === 0) {
+      offenseLevel = 'first';
+    } else if (violationCount === 1) {
+      offenseLevel = 'repeat';
+    } else if (violationCount >= 2 && violationCount < 5) {
+      offenseLevel = 'persistent';
+    } else { // violationCount >= 5
+      offenseLevel = 'dangerous';
+    }
+
+    // Issue #482: Apply time window escalation (Test 6)
+    if (timeWindowModifier === 'aggressive' && violationCount > 0) {
+      // Force escalation for recent violation spike (< 1h)
+      offenseLevel = 'persistent';
+      this.log('warn', 'Aggressive escalation: recent violation spike detected', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        hoursElapsed: '< 1h',
+        escalatedTo: 'persistent'
+      });
+    } else if (timeWindowModifier === 'minimal') {
+      // Downgrade for significant time decay (7+ days: >=168 hours)
+      // Issue #684: Updated to handle dangerous level
+      if (offenseLevel === 'dangerous') {
+        offenseLevel = 'persistent';
+      } else if (offenseLevel === 'persistent') {
+        offenseLevel = 'repeat';
+      } else if (offenseLevel === 'repeat') {
+        offenseLevel = 'first';
+      }
+      this.log('info', 'Minimal escalation: significant time decay applied', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        timeDecay: '7+ days'
+      });
+    }
+
+    // Issue #482: Escalate aggressively if violating during cooling-off period (Test 5)
+    if (isInCoolingOff && offenseLevel !== 'first') {
+      // Force escalation to more severe actions
+      offenseLevel = 'persistent';
+      this.log('warn', 'Aggressive escalation: violation during cooling-off period', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        originalLevel: violationCount > 0 ? 'repeat' : 'first',
+        escalatedTo: 'persistent'
+      });
+    }
+
+    // Issue #684: Emergency escalation procedures (Test 11)
+    if (analysisResult.immediate_threat || analysisResult.emergency_keywords?.length > 0) {
+      this.log('critical', 'Emergency escalation triggered', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        immediate_threat: analysisResult.immediate_threat,
+        emergency_keywords: analysisResult.emergency_keywords
+      });
+
+      return {
+        primary: 'report',
+        offenseLevel,
+        severity: severity_level,
+        escalate: true,
+        emergency: true,
+        notify_authorities: true,
+        autoExecute: true,
+        reason: 'emergency_escalation'
+      };
+    }
+
+    // Issue #684: Legal compliance requirements (Test 12)
+    if (analysisResult.legal_compliance_trigger) {
+      this.log('warn', 'Legal compliance escalation triggered', {
+        userId: comment.platform_user_id,
+        platform: comment.platform,
+        jurisdiction: analysisResult.jurisdiction,
+        requires_reporting: analysisResult.requires_reporting
+      });
+
+      return {
+        primary: 'report',
+        offenseLevel,
+        severity: severity_level,
+        escalate: true,
+        legal_compliance: true,
+        jurisdiction: analysisResult.jurisdiction || 'UNKNOWN',
+        autoExecute: true,
+        reason: 'legal_compliance'
+      };
+    }
+
+    // Get action from matrix (with optional count-specific override - CodeRabbit #3394182951)
+    // First check for exact count override (3D matrix), then fall back to base matrix
+    const countOverride = this.actionMatrixByCount[severity_level]?.[offenseLevel]?.[violationCount];
+    let actionType = countOverride || this.actionMatrix[severity_level]?.[offenseLevel] || 'warn';
+
+    // Issue #482: Apply platform-specific escalation policy (Test 8)
+    const escalationPolicy = userBehavior.platform_specific_config?.escalation_policy || 'standard';
+
+    if (escalationPolicy === 'aggressive' && violationCount > 0) {
+      // Aggressive policy: Escalate action one level
+      const actionHierarchy = ['warn', 'mute_temp', 'mute_permanent', 'block', 'report'];
+      const currentIndex = actionHierarchy.indexOf(actionType);
+      if (currentIndex >= 0 && currentIndex < actionHierarchy.length - 1) {
+        const escalatedAction = actionHierarchy[currentIndex + 1];
+        this.log('info', 'Platform-specific policy: aggressive escalation', {
+          platform: comment.platform,
+          policy: 'aggressive',
+          original: actionType,
+          escalatedTo: escalatedAction
+        });
+        actionType = escalatedAction;
+      }
+    } else if (escalationPolicy === 'lenient' && violationCount > 0 && severity_level !== 'critical') {
+      // Lenient policy: Downgrade action one level (except critical severity)
+      const actionHierarchy = ['warn', 'mute_temp', 'mute_permanent', 'block', 'report'];
+      const currentIndex = actionHierarchy.indexOf(actionType);
+      if (currentIndex > 0) {
+        const downgradedAction = actionHierarchy[currentIndex - 1];
+        this.log('info', 'Platform-specific policy: lenient downgrade', {
+          platform: comment.platform,
+          policy: 'lenient',
+          original: actionType,
+          downgradedTo: downgradedAction
+        });
+        actionType = downgradedAction;
+      }
+    }
+
+    // Issue #482: Apply lenient escalation for special users (Test 10)
+    if (isSpecialUser && severity_level !== 'critical') {
+      // Downgrade action for special users (except critical severity)
+      const lenientActions = {
+        'mute_permanent': 'mute_temp',
+        'block': 'mute_permanent',
+        'report': 'block'
+      };
+      actionType = lenientActions[actionType] || actionType;
+    }
+
     const actions = {
       primary: actionType,
       severity: severity_level,
       offenseLevel,
       violationCount,
       autoExecute: this.shouldAutoExecute(actionType, severity_level),
-      escalate: severity_level === 'critical' && offenseLevel === 'persistent'
+      // Issue #684: Escalate for critical severity OR report/escalate actions (Test 2)
+      escalate: severity_level === 'critical' || ['report', 'escalate'].includes(actionType)
     };
-    
+
+    // Issue #482: Add manual review flag for special users (Test 10)
+    if (isSpecialUser) {
+      actions.manual_review_required = true;
+    }
+
     // Add platform-specific actions
     actions.platformActions = await this.getPlatformSpecificActions(
       comment.platform,
       actionType,
       comment
     );
-    
+
     return actions;
   }
   
@@ -363,6 +673,56 @@ class ShieldService {
     return actions[actionType] || { action: actionType, available: false };
   }
   
+  /**
+   * Calculate time window escalation modifier
+   * Issue #482 - Test 6: Time window escalation
+   * @param {Object} userBehavior - User behavior data with actions_taken
+   * @returns {string} - Modifier: 'aggressive', 'standard', 'reduced', 'minimal'
+   */
+  calculateTimeWindowEscalation(userBehavior) {
+    try {
+      const actionsTaken = userBehavior.actions_taken || [];
+
+      // No prior violations - use standard logic
+      if (actionsTaken.length === 0) {
+        return 'standard';
+      }
+
+      // Find most recent violation timestamp
+      const timestamps = actionsTaken
+        .map(action => action.timestamp || action.created_at || action.date)
+        .filter(ts => ts)
+        .map(ts => new Date(ts).getTime())
+        .filter(time => !isNaN(time));
+
+      if (timestamps.length === 0) {
+        return 'standard';
+      }
+
+      const mostRecentTime = Math.max(...timestamps);
+      const now = Date.now();
+      const hoursElapsed = (now - mostRecentTime) / (1000 * 60 * 60);
+
+      // Time windows (Issue #482 - Test 6)
+      if (hoursElapsed < 1) {
+        // < 1 hour: Aggressive (recent violation spike)
+        return 'aggressive';
+      } else if (hoursElapsed < 24) {
+        // 1-24 hours: Standard escalation
+        return 'standard';
+      } else if (hoursElapsed < 168) {
+        // 24h-7 days (168 hours): Reduced escalation
+        return 'reduced';
+      } else {
+        // 7+ days (>=168 hours): Minimal escalation (significant time decay)
+        return 'minimal';
+      }
+    } catch (error) {
+      this.log('warn', 'Error calculating time window escalation, using standard', { error: error.message });
+      return 'standard';
+    }
+  }
+
   /**
    * Execute Shield actions automatically
    */
@@ -502,6 +862,26 @@ class ShieldService {
         comment_id: comment.id
       };
       
+      // Fetch existing actions_taken to preserve history
+      const { data: existing, error: fetchErr } = await this.supabase
+        .from('user_behaviors')
+        .select('actions_taken')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .maybeSingle();
+
+      // Handle fetch errors (except "not found" which is OK for new users)
+      if (fetchErr && fetchErr.code && fetchErr.code !== 'PGRST116') {
+        throw fetchErr;
+      }
+
+      // Merge new action with existing history
+      const mergedActions = Array.isArray(existing?.actions_taken)
+        ? [...existing.actions_taken, actionRecord]
+        : [actionRecord];
+
+      // Upsert with merged actions
       const { error } = await this.supabase
         .from('user_behaviors')
         .upsert({
@@ -509,14 +889,14 @@ class ShieldService {
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
           platform_username: comment.platform_username,
-          actions_taken: [actionRecord], // Will be merged with existing
+          actions_taken: mergedActions, // Preserves existing history
           is_blocked: ['block', 'ban_user'].includes(shieldActions.primary),
           last_seen_at: new Date().toISOString()
         }, {
           onConflict: 'organization_id,platform,platform_user_id',
           ignoreDuplicates: false
         });
-      
+
       if (error) throw error;
       
     } catch (error) {
@@ -551,7 +931,7 @@ class ShieldService {
             autoExecuted: shieldData.autoExecuted
           }
         });
-        
+
     } catch (error) {
       this.log('error', 'Failed to log Shield activity', {
         commentId: comment.id,
@@ -559,7 +939,664 @@ class ShieldService {
       });
     }
   }
-  
+
+  /**
+   * Execute Shield actions based on action_tags array (NEW API from Issue #632)
+   *
+   * This is the new interface for Shield action execution, consuming the action_tags
+   * array generated by AnalysisDecisionEngine. Replaces the legacy executeActions().
+   *
+   * @param {string} organizationId - Organization ID
+   * @param {Object} comment - Comment object with platform details
+   * @param {Array<string>} action_tags - Array of action tags from AnalysisDecisionEngine
+   * @param {Object} metadata - Decision metadata (security, toxicity, platform_violations)
+   * @returns {Promise<Object>} Execution results { success, actions_executed, failed_actions }
+   */
+  async executeActionsFromTags(organizationId, comment, action_tags, metadata) {
+    // Input validation - return structured errors instead of throwing
+    if (!organizationId) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'organizationId is required' }]
+      };
+    }
+
+    if (!comment) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'comment is required' }]
+      };
+    }
+
+    if (!Array.isArray(action_tags)) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'action_tags must be an array' }]
+      };
+    }
+
+    if (comment && (!comment.id || !comment.platform || !comment.platform_user_id)) {
+      return {
+        success: false,
+        actions_executed: [],
+        failed_actions: [{ error: 'comment must have id, platform, and platform_user_id fields' }]
+      };
+    }
+
+    // [A1] Gate execution by autoActions flag
+    // This ensures automated actions only execute when explicitly enabled
+    // aligning with PR objective A1: "Add explicit autoActions flag gate"
+    if (!this.options.autoActions) {
+      this.log('info', 'Shield autoActions disabled - skipping action execution', {
+        organizationId,
+        commentId: comment.id,
+        platform: comment.platform,
+        actionTags: action_tags,
+        reason: 'autoActions flag disabled'
+      });
+      return {
+        success: true,
+        actions_executed: [],
+        failed_actions: [],
+        skipped: true,
+        reason: 'autoActions_disabled'
+      };
+    }
+
+    this.log('info', 'Executing Shield actions from tags', {
+      organizationId,
+      commentId: comment.id,
+      platform: comment.platform,
+      actionTags: action_tags,
+      tagCount: action_tags.length
+    });
+
+    const results = {
+      success: true,
+      actions_executed: [],
+      failed_actions: []
+    };
+
+    try {
+      // [M1] Define state-mutating vs read-only handlers
+      // State-mutating handlers modify user_behavior and must execute sequentially
+      // to prevent race conditions when updating the same user record
+      const stateMutatingHandlers = new Set([
+        'add_strike_1',
+        'add_strike_2',
+        'check_reincidence'
+      ]);
+
+      // Map action tags to handler methods
+      const actionHandlers = {
+        hide_comment: this._handleHideComment.bind(this),
+        block_user: this._handleBlockUser.bind(this),
+        report_to_platform: this._handleReportToPlatform.bind(this),
+        mute_temp: this._handleMuteTemp.bind(this),
+        mute_permanent: this._handleMutePermanent.bind(this),
+        check_reincidence: this._handleCheckReincidence.bind(this),
+        add_strike_1: this._handleAddStrike1.bind(this),
+        add_strike_2: this._handleAddStrike2.bind(this),
+        require_manual_review: this._handleRequireManualReview.bind(this),
+        gatekeeper_unavailable: this._handleGatekeeperUnavailable.bind(this)
+      };
+
+      // [M1] Separate tags into state-mutating and read-only groups
+      const stateMutatingTags = action_tags.filter(tag => stateMutatingHandlers.has(tag));
+      const readOnlyTags = action_tags.filter(tag => !stateMutatingHandlers.has(tag));
+
+      const actionResults = [];
+      // [M2] Prepare array to batch record all shield_actions at once
+      const actionsToRecord = [];
+
+      // [M1] Execute state-mutating handlers sequentially to prevent race conditions
+      for (const tag of stateMutatingTags) {
+        const handler = actionHandlers[tag];
+
+        if (!handler) {
+          this.log('warn', 'Unknown Shield action tag', { tag, commentId: comment.id });
+          actionResults.push({ tag, status: 'skipped', reason: 'unknown_tag' });
+          continue;
+        }
+
+        try {
+          const result = await handler(organizationId, comment, metadata);
+
+          // [M2] Accumulate action record for batch insert
+          actionsToRecord.push({
+            organization_id: organizationId,
+            comment_id: comment.id,
+            platform: comment.platform,
+            platform_user_id: comment.platform_user_id,
+            action: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action_tag: tag, // New granular tag
+            result: result,
+            metadata: {
+              toxicity_score: metadata.toxicity?.toxicity_score,
+              security_score: metadata.security?.security_score,
+              platform_violations: metadata.platform_violations
+            },
+            created_at: new Date().toISOString()
+          });
+
+          actionResults.push({ tag, status: 'executed', result });
+        } catch (error) {
+          this.log('error', `Failed to execute Shield action: ${tag}`, {
+            commentId: comment.id,
+            tag,
+            error: error.message
+          });
+          actionResults.push({ tag, status: 'failed', error: error.message });
+        }
+      }
+
+      // [M1] Execute read-only handlers in parallel for performance
+      const readOnlyPromises = readOnlyTags.map(async (tag) => {
+        const handler = actionHandlers[tag];
+
+        if (!handler) {
+          this.log('warn', 'Unknown Shield action tag', { tag, commentId: comment.id });
+          return { tag, status: 'skipped', reason: 'unknown_tag' };
+        }
+
+        try {
+          const result = await handler(organizationId, comment, metadata || {});
+
+          // Check if action was skipped by the handler
+          if (result && result.skipped === true) {
+            return { tag, status: 'skipped', result };
+          }
+
+          // [M2] Accumulate action record for batch insert
+          const actionRecord = {
+            organization_id: organizationId,
+            comment_id: comment.id,
+            platform: comment.platform,
+            platform_user_id: comment.platform_user_id,
+            action: tag.replace(/_/g, ' '), // Legacy format for compatibility
+            action_tag: tag, // New granular tag
+            result: result,
+            metadata: {
+              toxicity_score: metadata?.toxicity?.toxicity_score,
+              security_score: metadata?.security?.security_score,
+              platform_violations: metadata?.platform_violations
+            },
+            created_at: new Date().toISOString()
+          };
+
+          return { tag, status: 'executed', result, actionRecord };
+        } catch (error) {
+          this.log('error', `Failed to execute Shield action: ${tag}`, {
+            commentId: comment.id,
+            tag,
+            error: error.message
+          });
+          return { tag, status: 'failed', error: error.message };
+        }
+      });
+
+      const readOnlyResults = await Promise.all(readOnlyPromises);
+
+      // [M2] Extract action records from parallel results and add to batch
+      readOnlyResults.forEach(result => {
+        if (result.actionRecord) {
+          actionsToRecord.push(result.actionRecord);
+          delete result.actionRecord; // Clean up before pushing to actionResults
+        }
+      });
+
+      actionResults.push(...readOnlyResults);
+
+      // [M2] Batch insert all shield_actions in a single database operation
+      if (actionsToRecord.length > 0) {
+        await this._batchRecordShieldActions(actionsToRecord);
+      }
+
+      // Separate successful and failed actions
+      actionResults.forEach(result => {
+        if (result.status === 'executed' || result.status === 'skipped') {
+          results.actions_executed.push(result);
+        } else if (result.status === 'failed') {
+          results.failed_actions.push(result);
+          results.success = false;
+        }
+      });
+
+      // Update user behavior after all actions
+      if (action_tags.length > 0) {
+        await this._updateUserBehaviorFromTags(organizationId, comment, action_tags, metadata);
+      }
+
+      this.log('info', 'Shield actions execution complete', {
+        commentId: comment.id,
+        executed: results.actions_executed.length,
+        failed: results.failed_actions.length,
+        success: results.success
+      });
+
+      return results;
+
+    } catch (error) {
+      this.log('error', 'Shield actions execution failed', {
+        commentId: comment.id,
+        error: error.message
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Handle hide_comment action tag
+   */
+  async _handleHideComment(organizationId, comment, metadata) {
+    this.log('info', 'Hiding comment', {
+      commentId: comment.id,
+      platform: comment.platform
+    });
+
+    // Queue platform-specific job to hide comment
+    const job = await this.queueService.addJob('shield_action', {
+      organization_id: organizationId,
+      action: 'hide_comment',
+      comment: comment
+    }, {
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
+    });
+
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
+  }
+
+  /**
+   * Handle block_user action tag
+   */
+  async _handleBlockUser(organizationId, comment, metadata) {
+    this.log('info', 'Blocking user', {
+      userId: comment.platform_user_id,
+      platform: comment.platform
+    });
+
+    // Queue platform-specific job to block user
+    const job = await this.queueService.addJob('shield_action', {
+      organization_id: organizationId,
+      action: 'block_user',
+      comment: comment  // Whole comment object
+    }, {
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
+    });
+
+    // Update user behavior to mark as blocked
+    await this.supabase
+      .from('user_behaviors')
+      .update({ is_blocked: true, blocked_at: new Date().toISOString() })
+      .eq('organization_id', organizationId)
+      .eq('platform', comment.platform)
+      .eq('platform_user_id', comment.platform_user_id);
+
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
+  }
+
+  /**
+   * Handle report_to_platform action tag
+   *
+   * CRITICAL SAFEGUARD: Only executes if metadata.platform_violations.reportable === true
+   */
+  async _handleReportToPlatform(organizationId, comment, metadata) {
+    // SAFEGUARD: Check if platform violations are reportable
+    const isReportable = metadata.platform_violations?.reportable === true;
+
+    if (!isReportable) {
+      this.log('warn', 'Skipping report_to_platform: not reportable', {
+        commentId: comment.id,
+        platform: comment.platform,
+        platformViolations: metadata.platform_violations
+      });
+      return { skipped: true, reason: 'not reportable' };
+    }
+
+    this.log('info', 'Reporting to platform', {
+      commentId: comment.id,
+      platform: comment.platform,
+      violations: metadata.platform_violations.violations
+    });
+
+    // Queue platform-specific report job
+    const job = await this.queueService.addJob('shield_action', {
+      organization_id: organizationId,
+      action: 'report_to_platform',
+      comment: comment  // Whole comment object
+    }, {
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
+    });
+
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
+  }
+
+  /**
+   * Handle mute_temp action tag
+   */
+  async _handleMuteTemp(organizationId, comment, metadata) {
+    this.log('info', 'Muting user temporarily', {
+      userId: comment.platform_user_id,
+      platform: comment.platform,
+      duration: '24h'
+    });
+
+    // Queue platform-specific mute job
+    const job = await this.queueService.addJob('shield_action', {
+      organization_id: organizationId,
+      action: 'mute_temp',
+      comment: comment  // Whole comment object
+    }, {
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
+    });
+
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
+  }
+
+  /**
+   * Handle mute_permanent action tag
+   */
+  async _handleMutePermanent(organizationId, comment, metadata) {
+    this.log('info', 'Muting user permanently', {
+      userId: comment.platform_user_id,
+      platform: comment.platform
+    });
+
+    // Queue platform-specific permanent mute job
+    const job = await this.queueService.addJob('shield_action', {
+      organization_id: organizationId,
+      action: 'mute_permanent',
+      comment: comment  // Whole comment object
+    }, {
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
+    });
+
+    // Update user behavior (graceful degradation on DB errors)
+    try {
+      await this.supabase
+        .from('user_behaviors')
+        .update({ is_muted_permanent: true, muted_at: new Date().toISOString() })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', 'Failed to update user behavior for mute_permanent, but action queued successfully', {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
+
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
+  }
+
+  /**
+   * Handle check_reincidence action tag
+   */
+  async _handleCheckReincidence(organizationId, comment, metadata) {
+    this.log('info', 'Checking user reincidence', {
+      userId: comment.platform_user_id,
+      platform: comment.platform
+    });
+
+    // Get user behavior history (graceful degradation on DB errors)
+    try {
+      const { data: behavior, error } = await this.supabase
+        .from('user_behaviors')
+        .select('total_violations, severity_counts, actions_taken')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      const violations = behavior?.total_violations || 0;
+      const isReincident = violations >= this.options.reincidenceThreshold;
+
+      if (isReincident) {
+        this.log('warn', 'Reincident user detected', {
+          userId: comment.platform_user_id,
+          violations,
+          threshold: this.options.reincidenceThreshold
+        });
+      }
+    } catch (error) {
+      this.log('warn', 'Failed to check reincidence from database, continuing without check', {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
+
+    return { job_id: null };  // No queue job for reincidence check
+  }
+
+  /**
+   * Handle add_strike_1 action tag
+   */
+  async _handleAddStrike1(organizationId, comment, metadata) {
+    return await this._addStrike(organizationId, comment, 1, metadata);
+  }
+
+  /**
+   * Handle add_strike_2 action tag
+   */
+  async _handleAddStrike2(organizationId, comment, metadata) {
+    return await this._addStrike(organizationId, comment, 2, metadata);
+  }
+
+  /**
+   * Add strike to user behavior (helper method)
+   */
+  async _addStrike(organizationId, comment, strikeLevel, metadata) {
+    this.log('info', `Adding strike ${strikeLevel} to user`, {
+      userId: comment.platform_user_id,
+      platform: comment.platform,
+      strikeLevel
+    });
+
+    const strike = {
+      level: strikeLevel,
+      timestamp: new Date().toISOString(),
+      comment_id: comment.id,
+      reason: `Strike ${strikeLevel}: toxicity violation`,
+      toxicity_score: metadata.toxicity?.toxicity_score
+    };
+
+    // Update user behavior with new strike (graceful degradation on DB errors)
+    try {
+      const { data: behavior } = await this.supabase
+        .from('user_behaviors')
+        .select('strikes')
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id)
+        .single();
+
+      const currentStrikes = behavior?.strikes || [];
+      const updatedStrikes = [...currentStrikes, strike];
+
+      await this.supabase
+        .from('user_behaviors')
+        .update({
+          strikes: updatedStrikes,
+          strike_count: updatedStrikes.length,
+          last_strike_at: new Date().toISOString()
+        })
+        .eq('organization_id', organizationId)
+        .eq('platform', comment.platform)
+        .eq('platform_user_id', comment.platform_user_id);
+    } catch (error) {
+      this.log('warn', `Failed to add strike ${strikeLevel} to database, but action logged`, {
+        userId: comment.platform_user_id,
+        error: error.message
+      });
+    }
+
+    return { job_id: null };  // No queue job for adding strikes
+  }
+
+  /**
+   * Handle require_manual_review action tag
+   */
+  async _handleRequireManualReview(organizationId, comment, metadata) {
+    this.log('info', 'Flagging for manual review', {
+      commentId: comment.id,
+      platform: comment.platform
+    });
+
+    // Create manual review job
+    const job = await this.queueService.addJob('shield_action', {
+      organization_id: organizationId,
+      action: 'require_manual_review',
+      comment: comment  // Whole comment object
+    }, {
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
+    });
+
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
+  }
+
+  /**
+   * Handle gatekeeper_unavailable action tag
+   */
+  async _handleGatekeeperUnavailable(organizationId, comment, metadata) {
+    this.log('warn', 'Gatekeeper unavailable - applying fallback logic', {
+      commentId: comment.id,
+      platform: comment.platform
+    });
+
+    // Apply conservative fallback: queue for manual review
+    const job = await this.queueService.addJob('shield_action', {
+      organization_id: organizationId,
+      action: 'gatekeeper_unavailable',
+      comment: comment  // Whole comment object
+    }, {
+      priority: this.priorityLevels.critical  // Priority 1 (highest) per documentation
+    });
+
+    return { job_id: job?.id || `shield_action_${Date.now()}` };
+  }
+
+  /**
+   * Record Shield action to database
+   */
+  /**
+   * [M2] Batch record multiple Shield actions in a single database operation
+   * @param {Array} actionsToRecord - Array of action records to insert
+   */
+  async _batchRecordShieldActions(actionsToRecord) {
+    if (!actionsToRecord || actionsToRecord.length === 0) {
+      return;
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('shield_actions')
+        .insert(actionsToRecord);
+
+      if (error) throw error;
+
+      this.log('info', 'Batch recorded Shield actions', {
+        count: actionsToRecord.length,
+        comment_ids: [...new Set(actionsToRecord.map(a => a.comment_id))]
+      });
+
+    } catch (error) {
+      this.log('error', 'Failed to batch record Shield actions', {
+        count: actionsToRecord.length,
+        error: error.message
+      });
+      // Don't throw - recording failure shouldn't block action execution
+    }
+  }
+
+  /**
+   * Record a single Shield action to database
+   * @deprecated Use _batchRecordShieldActions for better performance
+   */
+  async _recordShieldAction(organizationId, comment, actionTag, result, metadata) {
+    try {
+      const { error } = await this.supabase
+        .from('shield_actions')
+        .insert({
+          organization_id: organizationId,
+          comment_id: comment.id,
+          platform: comment.platform,
+          platform_user_id: comment.platform_user_id,
+          action: actionTag.replace(/_/g, ' '), // Legacy format for compatibility
+          action_tag: actionTag, // New granular tag
+          result: result,
+          metadata: {
+            toxicity_score: metadata.toxicity?.toxicity_score,
+            security_score: metadata.security?.security_score,
+            platform_violations: metadata.platform_violations
+          },
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+    } catch (error) {
+      this.log('error', 'Failed to record Shield action', {
+        commentId: comment.id,
+        actionTag,
+        error: error.message
+      });
+      // Don't throw - recording failure shouldn't block action execution
+    }
+  }
+
+  /**
+   * Update user behavior after actions from tags
+   * [M3] Uses atomic RPC function to prevent race conditions
+   */
+  async _updateUserBehaviorFromTags(organizationId, comment, action_tags, metadata) {
+    try {
+      // Determine violation severity from metadata
+      const toxicityScore = metadata.toxicity?.toxicity_score || 0;
+      let severity = 'low';
+      if (toxicityScore >= 0.8) severity = 'critical';
+      else if (toxicityScore >= 0.6) severity = 'high';
+      else if (toxicityScore >= 0.4) severity = 'medium';
+
+      // [M3] Call atomic RPC function instead of read-update-write cycle
+      // This uses INSERT...ON CONFLICT with atomic increments to prevent race conditions
+      const { data: result, error } = await this.supabase
+        .rpc('atomic_update_user_behavior', {
+          p_organization_id: organizationId,
+          p_platform: comment.platform,
+          p_platform_user_id: comment.platform_user_id,
+          p_platform_username: comment.platform_username,
+          p_violation_data: {
+            comment_id: comment.id,
+            action_tags,
+            severity,
+            toxicity_score: toxicityScore
+          }
+        });
+
+      if (error) throw error;
+
+      this.log('info', 'Updated user behavior atomically', {
+        userId: comment.platform_user_id,
+        totalViolations: result?.total_violations,
+        severity
+      });
+
+    } catch (error) {
+      this.log('error', 'Failed to update user behavior from tags', {
+        commentId: comment.id,
+        error: error.message
+      });
+      // Don't throw - behavior update failure shouldn't block action execution
+    }
+  }
+
   /**
    * Get Shield statistics for organization
    */
@@ -728,65 +1765,9 @@ class ShieldService {
     };
   }
 
-  /**
-   * Execute Shield actions and record them (test stub)
-   */
-  async executeActions(analysis, user, content) {
-    if (!analysis.shouldTakeAction) {
-      return {
-        success: true,
-        actionsExecuted: []
-      };
-    }
-
-    try {
-      // Record Shield actions in database
-      await this.supabase
-        .from('shield_actions')
-        .insert({
-          user_id: user.user_id,
-          action_type: analysis.actionLevel,
-          comment_id: content.comment_id,
-          timestamp: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      // Update user behavior
-      await this.supabase
-        .from('user_behavior')
-        .upsert({
-          user_id: user.user_id,
-          total_violations: 1,
-          platform: user.platform,
-          organization_id: user.organization_id
-        })
-        .select()
-        .single();
-      
-      // Queue jobs for each action
-      if (this.queueService && analysis.recommendedActions) {
-        for (const action of analysis.recommendedActions) {
-          await this.queueService.addJob('shield_action', {
-            action,
-            userId: user.user_id,
-            contentId: content.comment_id
-          });
-        }
-      }
-      
-      return {
-        success: true,
-        actionsExecuted: analysis.recommendedActions || []
-      };
-      
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
+  // [M4] REMOVED: Legacy executeActions() method (Issue #653 - Phase 2)
+  // Deprecated since Issue #650, removed in CodeRabbit Review #3375358448
+  // Use executeActionsFromTags() instead for tag-based Shield action execution
 
   /**
    * Update user behavior statistics (test stub)
@@ -794,9 +1775,9 @@ class ShieldService {
   async trackUserBehavior(user, violation) {
     try {
       const result = await this.supabase
-        .from('user_behavior')
+        .from('user_behaviors')
         .upsert({
-          user_id: user.user_id,
+          platform_user_id: user.user_id,
           platform: user.platform,
           organization_id: user.organization_id,
           total_violations: 3,
@@ -830,44 +1811,6 @@ class ShieldService {
       return 'low'; // New user
     }
     return 'low'; // Default
-  }
-
-  /**
-   * Get comprehensive Shield statistics (test stub)
-   */
-  async getShieldStats(organizationId, days = 30) {
-    // Mock data based on test expectations
-    const mockStats = {
-      organizationId,
-      totalActions: 2,
-      actionsByType: {
-        warning: 1,
-        temporary_mute: 1
-      },
-      actionsByPlatform: {
-        twitter: 2
-      },
-      riskDistribution: {
-        high: 1,
-        medium: 0,
-        low: 1
-      },
-      timeline: []
-    };
-
-    // Handle empty organization case
-    if (organizationId === 'org-empty') {
-      return {
-        organizationId,
-        totalActions: 0,
-        actionsByType: {},
-        actionsByPlatform: {},
-        riskDistribution: { high: 0, medium: 0, low: 0 },
-        timeline: []
-      };
-    }
-
-    return mockStats;
   }
 
   /**
@@ -921,15 +1864,16 @@ class ShieldService {
    * Logging utility
    */
   log(level, message, metadata = {}) {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      level,
+    const logData = {
       service: 'ShieldService',
-      message,
       ...metadata
     };
-    
-    console.log(`[${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
+
+    if (logger[level]) {
+      logger[level](message, logData);
+    } else {
+      logger.info(message, logData);
+    }
   }
 }
 

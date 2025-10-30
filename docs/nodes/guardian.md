@@ -742,8 +742,9 @@ node scripts/ci/validate-completion.js --pr=628
 
 ---
 
-**Coverage:** 50%
+**Coverage:** 0%
 **Coverage Source:** auto
+**Note:** Coverage is 0% for scripts/config files which are not imported in Jest coverage
 **Health Score:** TBD (pending first validation run with coverage)
 **Drift Risk:** 0 (newly created node)
 

@@ -30,8 +30,8 @@ function getController() {
 const PLAN_CONFIG = BillingFactory.getPlanConfig();
 
 // Get services from controller for backward compatibility (lazy getters)
-Object.defineProperty(router, 'stripeWrapper', {
-  get: () => getController().stripeWrapper
+Object.defineProperty(router, 'billingInterface', {
+  get: () => getController().billingInterface // TODO:Polar - Replaces stripeWrapper
 });
 Object.defineProperty(router, 'queueService', {
   get: () => getController().queueService
@@ -639,6 +639,48 @@ async function handlePaymentFailed(invoice) {
 async function applyPlanLimits(userId, plan, status) {
   return getController().applyPlanLimits(userId, plan, status);
 }
+
+/*
+ * POST /api/billing/start-trial
+ * Start trial period for user (Issue #678)
+ */
+router.post('/start-trial', authenticateToken, requireBilling, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Check if user is already in trial
+    const isInTrial = await getController().entitlementsService.isInTrial(userId);
+    if (isInTrial) {
+      return res.status(400).json({
+        success: false,
+        error: 'User is already in trial period'
+      });
+    }
+
+    // Start trial
+    const trialResult = await getController().entitlementsService.startTrial(userId, 30);
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Trial started successfully',
+        trial_ends_at: trialResult.trial_ends_at,
+        duration_days: trialResult.duration_days
+      }
+    });
+
+  } catch (error) {
+    logger.error('Trial start failed:', {
+      userId: req.user?.id,
+      error: error.message
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to start trial'
+    });
+  }
+});
 
 // LEGACY IMPLEMENTATION BELOW - REPLACED WITH CONTROLLER
 

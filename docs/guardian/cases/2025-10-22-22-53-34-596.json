@@ -1,0 +1,30 @@
+{
+  "case_id": "2025-10-22-22-53-34-596",
+  "timestamp": "2025-10-22T22:53:34.596Z",
+  "actor": "emiliopostigo",
+  "domains": [],
+  "files_changed": [
+    "src/services/costControl.js"
+  ],
+  "severity": "CRITICAL",
+  "action": "BLOCKED",
+  "violations": {
+    "critical": 1,
+    "sensitive": 0,
+    "safe": 0
+  },
+  "details": [
+    {
+      "file": "src/services/costControl.js",
+      "domains": [
+        "pricing"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 10,
+      "lines_removed": 5
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Product Owner approval"
+}

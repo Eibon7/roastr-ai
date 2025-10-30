@@ -35,7 +35,7 @@ non_goals:
 inputs:
   - Issue number o descripción de tarea
   - Criterios de aceptación de la issue
-  - spec.md y docs/context.md como referencia
+  - spec.md y docs/phase-11-context.md como referencia
 
 outputs:
   - docs/assessment/<issue-number>.md con análisis completo

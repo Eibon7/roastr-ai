@@ -7,16 +7,16 @@ import { Check, Crown, Zap, Star, Shield, Sparkles } from 'lucide-react';
 import { createMockFetch } from '../lib/mockMode';
 
 const PLAN_ICONS = {
-  free: <Zap className="h-8 w-8" />,
+  starter_trial: <Sparkles className="h-8 w-8" />, // Trial with sparkles
   starter: <Star className="h-8 w-8" />,
   pro: <Shield className="h-8 w-8" />,
   plus: <Crown className="h-8 w-8" />
 };
 
 const PLAN_COLORS = {
-  free: 'text-green-600',
+  starter_trial: 'text-purple-600', // Purple for trial
   starter: 'text-blue-600',
-  pro: 'text-purple-600', 
+  pro: 'text-purple-600',
   plus: 'text-yellow-600'
 };
 
@@ -37,7 +37,7 @@ export default function Pricing() {
       const response = await fetchApi('/api/user');
       if (response.ok) {
         const data = await response.json();
-        setCurrentPlan(data.plan || 'free');
+        setCurrentPlan(data.plan || 'starter_trial');
       }
     } catch (error) {
       console.error('Failed to fetch current plan:', error);
@@ -51,16 +51,24 @@ export default function Pricing() {
     setError(null); // Clear any previous errors
     
     try {
-      if (planId === 'free') {
-        // Handle downgrade through billing portal
-        const response = await fetchApi('/api/billing/portal', {
-          method: 'POST'
+      if (planId === 'starter_trial') {
+        // Handle trial start (card required)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const response = await fetchApi('/api/billing/start-trial', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
+
         if (response.ok) {
           const data = await response.json();
-          window.open(data.url, '_blank');
+          // Trial started successfully, refresh the page
+          window.location.reload();
         } else {
-          // Check for specific error conditions
           if (response.status === 401) {
             setError('Your session has expired. Please log in again.');
             return;
@@ -68,22 +76,22 @@ export default function Pricing() {
             setError('Service temporarily unavailable. Please try again later.');
             return;
           }
-          throw new Error('Failed to create billing portal session');
+          throw new Error('Failed to start trial');
         }
       } else {
         // Handle upgrade through checkout with timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-        
+
         const response = await fetchApi('/api/billing/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ plan: planId }),
           signal: controller.signal
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         if (response.ok) {
           const data = await response.json();
           window.location.href = data.url;
@@ -119,24 +127,27 @@ export default function Pricing() {
 
   const plans = [
     {
-      id: 'free',
-      name: 'Free',
+      id: 'starter_trial',
+      name: 'Starter Trial',
       price: 0,
       currency: '€',
-      period: 'forever',
-      description: 'Perfect for getting started',
+      period: '30 days',
+      description: '30-day trial (card required)',
+      trial: true,
+      requiresCard: true,
       features: [
-        'GPT-3.5-turbo model',
-        '100 analyses per month',
-        '50 roasts per month',
-        'Basic toxicity detection',
-        'Community support',
-        '1 platform integration'
+        'GPT-4 model',
+        'Shield protection',
+        '1,000 analyses per month',
+        '10 roasts per month',
+        'Advanced toxicity detection',
+        'Email support',
+        '1 platform integration',
+        'Trial period - auto converts to Starter'
       ],
       limitations: [
-        'No Shield protection',
-        'Basic prompts only',
-        'No RQC embedded'
+        'Trial ends after 30 days',
+        'Card required to start'
       ]
     },
     {
@@ -146,15 +157,15 @@ export default function Pricing() {
       currency: '€',
       period: 'month',
       description: 'Great for regular users',
-      popular: false,
+      popular: true,
       features: [
         'GPT-4 model',
         'Shield protection',
         '1,000 analyses per month',
-        '100 roasts per month',
+        '10 roasts per month',
         'Advanced toxicity detection',
         'Email support',
-        '2 platform integrations'
+        '1 platform integration'
       ],
       limitations: [
         'No RQC embedded',
@@ -384,28 +395,28 @@ export default function Pricing() {
                   <tbody>
                     <tr className="border-t">
                       <td className="p-4 font-medium">AI Model</td>
-                      <td className="p-4 text-center">GPT-3.5</td>
+                      <td className="p-4 text-center">GPT-4</td>
                       <td className="p-4 text-center">GPT-4</td>
                       <td className="p-4 text-center">GPT-4</td>
                       <td className="p-4 text-center">GPT-4</td>
                     </tr>
                     <tr className="border-t bg-gray-25">
                       <td className="p-4 font-medium">Monthly Analyses</td>
-                      <td className="p-4 text-center">100</td>
+                      <td className="p-4 text-center">1,000</td>
                       <td className="p-4 text-center">1,000</td>
                       <td className="p-4 text-center">10,000</td>
                       <td className="p-4 text-center">100,000</td>
                     </tr>
                     <tr className="border-t">
                       <td className="p-4 font-medium">Monthly Roasts</td>
-                      <td className="p-4 text-center">50</td>
-                      <td className="p-4 text-center">100</td>
+                      <td className="p-4 text-center">10</td>
+                      <td className="p-4 text-center">10</td>
                       <td className="p-4 text-center">1,000</td>
                       <td className="p-4 text-center">5,000</td>
                     </tr>
                     <tr className="border-t bg-gray-25">
                       <td className="p-4 font-medium">Shield Protection</td>
-                      <td className="p-4 text-center">✗</td>
+                      <td className="p-4 text-center">✓</td>
                       <td className="p-4 text-center">✓</td>
                       <td className="p-4 text-center">✓</td>
                       <td className="p-4 text-center">✓</td>
