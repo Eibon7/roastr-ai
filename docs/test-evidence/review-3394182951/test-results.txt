@@ -1,0 +1,136 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/shield-escalation-logic.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (43) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+  console.info
+    🎭 Mock Mode ENABLED - Using fake data for all external APIs
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+  console.warn
+    [WARN] 2025-10-29T15:23:24.307Z: Aggressive escalation: violation during cooling-off period {
+      service: 'ShieldService',
+      userId: 'user_cooling_off_test',
+      platform: 'twitter',
+      originalLevel: 'repeat',
+      escalatedTo: 'persistent'
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at ShieldService.log (src/services/shieldService.js:1861:20)
+      at ShieldService.log [as determineShieldActions] (src/services/shieldService.js:436:12)
+      at ShieldService.determineShieldActions [as analyzeForShield] (src/services/shieldService.js:143:40)
+      at Object.<anonymous> (tests/integration/shield-escalation-logic.test.js:390:22)
+
+  console.warn
+    [WARN] 2025-10-29T15:23:24.311Z: Aggressive escalation: recent violation spike detected {
+      service: 'ShieldService',
+      userId: 'user_time_windows',
+      platform: 'twitter',
+      hoursElapsed: '< 1h',
+      escalatedTo: 'persistent'
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at ShieldService.log (src/services/shieldService.js:1861:20)
+      at ShieldService.log [as determineShieldActions] (src/services/shieldService.js:409:12)
+      at ShieldService.determineShieldActions [as analyzeForShield] (src/services/shieldService.js:143:40)
+      at Object.<anonymous> (tests/integration/shield-escalation-logic.test.js:454:24)
+
+  console.warn
+    [WARN] 2025-10-29T15:23:24.328Z: Legal compliance escalation triggered {
+      service: 'ShieldService',
+      userId: 'user_legal',
+      platform: 'discord',
+      jurisdiction: 'EU',
+      requires_reporting: true
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at ShieldService.log (src/services/shieldService.js:1861:20)
+      at ShieldService.log [as determineShieldActions] (src/services/shieldService.js:467:12)
+      at ShieldService.determineShieldActions [as analyzeForShield] (src/services/shieldService.js:143:40)
+      at Object.<anonymous> (tests/integration/shield-escalation-logic.test.js:778:22)
+
+  console.warn
+    [WARN] 2025-10-29T15:23:24.330Z: Corrupted user behavior data detected, using safe defaults {
+      service: 'ShieldService',
+      userId: 'user_corrupted',
+      platform: 'twitter',
+      originalViolations: 0,
+      fallbackSeverity: 'low',
+      fallbackViolations: 0
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at ShieldService.log (src/services/shieldService.js:1861:20)
+      at ShieldService.log [as determineShieldActions] (src/services/shieldService.js:356:12)
+      at ShieldService.determineShieldActions [as analyzeForShield] (src/services/shieldService.js:143:40)
+      at Object.<anonymous> (tests/integration/shield-escalation-logic.test.js:901:22)
+
+PASS integration-tests tests/integration/shield-escalation-logic.test.js
+  Shield Escalation Logic Tests - Issue #408
+    Escalation Matrix Validation
+      ✓ should follow escalation path: warn → mute_temp → mute_permanent → block → report (11 ms)
+      ✓ should handle severity-based immediate escalation for critical content (1 ms)
+      ✓ should apply escalation based on violation frequency within time windows (1 ms)
+    Time-Based Escalation Logic
+      ✓ should apply time decay for old violations in escalation calculations (2 ms)
+      ✓ should escalate faster for violations within cooling-off period (4 ms)
+      ✓ should handle escalation windows correctly across different time periods (9 ms)
+    Cross-Platform Escalation Tracking
+      ✓ should aggregate violations across platforms for escalation decisions (1 ms)
+      ✓ should handle platform-specific escalation policies (4 ms)
+    Configuration-Based Escalation Rules
+      ✓ should respect organization-specific escalation configurations (1 ms)
+      ✓ should handle escalation rule exceptions for special user types
+    Emergency Escalation Procedures
+      ✓ should trigger emergency escalation for imminent threats
+      ✓ should bypass normal escalation for legal compliance requirements (1 ms)
+    Escalation Performance and Edge Cases
+      ✓ should handle concurrent escalation decisions without race conditions (1 ms)
+      ✓ should handle escalation with missing or corrupted behavior data (2 ms)
+      ✓ should complete escalation analysis within performance thresholds
+
+Test Suites: 1 passed, 1 total
+Tests:       15 passed, 15 total
+Snapshots:   0 total
+Time:        0.549 s, estimated 1 s
+Ran all test suites matching tests/integration/shield-escalation-logic.test.js.

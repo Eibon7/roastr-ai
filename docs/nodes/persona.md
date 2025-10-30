@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-19
-**Coverage:** 92%
+**Last Updated:** 2025-10-28
+**Coverage:** 90%
 **Coverage Source:** auto
-**Related PRs:** #499, #600
+**Related PRs:** #499, #600, #633 (Issue #615: Persona-Roast Integration)
 
 ## Dependencies
 
@@ -298,22 +298,145 @@ if (flags.isEnabled('ENABLE_CUSTOM_PROMPT') && userPlan === 'plus') {
 
 ## Integration with Roast Generation
 
-**Dependency:** `roast` node via `tone` node
+**Dependency:** `roast` node via `roastGeneratorEnhanced` and `roastPromptTemplate`
+**Implemented:** PR #633 (Issue #615)
+
+### Complete Integration Flow
+
+```
+RoastGeneratorEnhanced.generateWithBasicModeration()
+    ↓
+PersonaService.getPersona(user_id)  // Load user's persona
+    ↓
+RoastPromptTemplate.buildPrompt()   // Inject persona context
+    ↓
+buildPersonaContext()                // Format persona fields
+    ↓
+OpenAI API with persona-enhanced prompt
+```
 
 ### Prompt Template Integration
 
-```javascript
-// RoastPromptTemplate.buildPrompt()
-const userTone = this.mapUserTone({
-  tone: userConfig.tone,                    // From tone node
-  humor_type: userConfig.humor_type,        // From persona
-  intensity_level: userConfig.intensity_level,
-  custom_style_prompt: userConfig.custom_style_prompt  // Plus plan only
-});
+**File:** `src/services/roastPromptTemplate.js`
 
-// Example output:
-// "Sarcástico con humor técnico, directo y sin filtros. Estilo personalizado: Fan de los 90s, referencias retro"
+```javascript
+// RoastPromptTemplate.buildPrompt() - Issue #615
+async buildPrompt(params) {
+  const {
+    originalComment,
+    toxicityData,
+    userConfig,
+    includeReferences,
+    persona  // New parameter from PersonaService
+  } = params;
+
+  // Build persona context section
+  const personaContext = this.buildPersonaContext(persona);
+
+  // Replace {{persona_context}} placeholder with actual persona data
+  return masterPrompt
+    .replace('{{original_comment}}', sanitizedComment)
+    .replace('{{comment_category}}', category)
+    .replace('{{reference_roasts_from_CSV}}', references)
+    .replace('{{user_tone}}', tone)
+    .replace('{{persona_context}}', personaContext);  // Issue #615
+}
+
+// Build persona context with plan-based field availability
+buildPersonaContext(persona) {
+  if (!persona || !this.hasAnyPersonaField(persona)) {
+    return 'No especificado';
+  }
+
+  const sections = [];
+
+  if (persona.lo_que_me_define) {
+    sections.push(`- Lo que define al usuario: ${sanitize(persona.lo_que_me_define)}`);
+  }
+
+  if (persona.lo_que_no_tolero) {
+    sections.push(`- Lo que NO tolera: ${sanitize(persona.lo_que_no_tolero)}`);
+  }
+
+  if (persona.lo_que_me_da_igual) {
+    sections.push(`- Lo que le da igual: ${sanitize(persona.lo_que_me_da_igual)}`);
+  }
+
+  return sections.join('\n');
+}
 ```
+
+### Roast Generator Integration
+
+**File:** `src/services/roastGeneratorEnhanced.js`
+
+```javascript
+// RoastGeneratorEnhanced.generateWithBasicModeration() - Issue #615
+async generateWithBasicModeration(text, toxicityScore, tone, rqcConfig) {
+  // Get model based on plan
+  const model = await this.getModelForPlan(rqcConfig.plan);
+
+  // Issue #615: Load user persona for personalized roast generation
+  const persona = await this.personaService.getPersona(rqcConfig.user_id);
+
+  // Build prompt using the master template with persona
+  const systemPrompt = await this.promptTemplate.buildPrompt({
+    originalComment: text,
+    toxicityData: {
+      score: toxicityScore,
+      categories: []
+    },
+    userConfig: {
+      tone: tone,
+      humor_type: rqcConfig.humor_type || 'witty',
+      intensity_level: rqcConfig.intensity_level,
+      custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT')
+        ? rqcConfig.custom_style_prompt
+        : null
+    },
+    includeReferences: rqcConfig.plan !== 'free',
+    persona: persona  // Issue #615: Pass persona to buildPrompt
+  });
+
+  // Generate roast with OpenAI
+  const completion = await this.openai.chat.completions.create({
+    model: model,
+    messages: [{ role: "system", content: systemPrompt }],
+    max_tokens: 120,
+    temperature: 0.8,
+  });
+
+  return completion.choices[0].message.content.trim();
+}
+```
+
+### Master Prompt Template
+
+**Template Section:** `🎯 CONTEXTO DEL USUARIO`
+
+```
+...previous sections...
+
+🎯 CONTEXTO DEL USUARIO:
+{{persona_context}}
+
+...additional sections...
+```
+
+**Plan-Based Persona Context:**
+
+- **Free Plan:** "No especificado" (no persona access)
+- **Starter Plan (2 fields):**
+  ```
+  - Lo que define al usuario: [lo_que_me_define]
+  - Lo que NO tolera: [lo_que_no_tolero]
+  ```
+- **Pro+ Plan (3 fields):**
+  ```
+  - Lo que define al usuario: [lo_que_me_define]
+  - Lo que NO tolera: [lo_que_no_tolero]
+  - Lo que le da igual: [lo_que_me_da_igual]
+  ```
 
 ### Custom Style Prompt (Plus Plan)
 
@@ -632,6 +755,7 @@ if (user?.lo_que_me_define_encrypted) {
 | Test File | Focus | Status |
 |-----------|-------|--------|
 | `tests/integration/persona-api.test.js` | Complete API workflow, auth, security, plan gating | ✅ 26 tests passing (PR #600) |
+| `tests/integration/roast-persona-integration.test.js` | **Persona-Roast Integration**, E2E flow PersonaService → RoastGenerator → Prompt | ✅ **9/9 tests passing (PR #633)** |
 | `tests/e2e/auth-complete-flow.test.js` | End-to-end user authentication and persona setup | ✅ Updated (PR #600) |
 
 ### Test Scenarios

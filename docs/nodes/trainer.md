@@ -4,9 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Planned
 **Status:** Roadmap
-**Last Updated:** 2025-10-09
-**Coverage:** 50%
+**Last Updated:** 2025-10-29
+**Coverage:** 0%
 **Coverage Source:** auto
+**Note:** Feature not implemented yet - no source files
 **Related PRs:** #499
 
 ## Dependencies

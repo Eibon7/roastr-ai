@@ -124,22 +124,39 @@ agents:
   - name: Guardian
     type: custom
     status: implemented
-    purpose: Automated governance for sensitive changes (pricing, quotas, auth, docs)
+    purpose: Automated governance for sensitive changes (pricing, quotas, auth, docs) + pre-merge completion validation
     script: scripts/guardian-gdd.js
+    completion_script: scripts/ci/validate-completion.js
     triggers:
-      labels: ["critical", "security", "billing"]
+      labels: ["critical", "security", "billing", "ready-to-merge"]
       diffIncludes: ["src/services/costControl.js", "src/services/billing.js", "database/schema.sql", "docs/nodes/*.md", ".gddrc.json"]
-      conditions: ["Pricing changes", "Quota modifications", "Auth policy changes", "RLS policy changes"]
+      conditions: ["Pricing changes", "Quota modifications", "Auth policy changes", "RLS policy changes", "Pre-merge validation"]
     guardrails:
       - "NEVER bypass CRITICAL violations without Product Owner approval"
       - "NEVER merge PRs with exit code 2"
+      - "NEVER merge incomplete PRs (completion < 100%)"
       - "Must document approval in PR comments"
       - "Must review all cases in docs/guardian/cases/"
+      - "Must validate completion before merge (all AC, tests, docs, receipts)"
+    capabilities:
+      governance:
+        - "Validates sensitive code changes (billing, auth, quotas)"
+        - "Enforces approval workflow for CRITICAL violations"
+        - "Generates audit trail and governance reports"
+      completion:
+        - "Validates all acceptance criteria completed (issue body parsing)"
+        - "Verifies test coverage ≥90% (or specified threshold)"
+        - "Confirms all tests passing (npm test exit 0)"
+        - "Validates agent receipts present (all required agents)"
+        - "Checks documentation updated (GDD nodes, test evidence)"
+        - "Confirms CodeRabbit comments = 0 (no pending reviews)"
+        - "Verifies CI/CD status (all checks passing)"
     outputs:
       - "docs/guardian/guardian-report.md"
       - "docs/guardian/cases/*.json"
       - "docs/guardian/audit-log.md"
-      - "Exit code: 0 (pass), 1 (warnings), 2 (critical)"
+      - "Completion validation report (stdout)"
+      - "Exit code: 0 (pass), 1 (warnings/incomplete), 2 (critical)"
 
   - name: general-purpose
     type: built-in

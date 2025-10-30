@@ -1,0 +1,28 @@
+{
+  "case_id": "2025-10-22-22-53-04-868",
+  "timestamp": "2025-10-22T22:53:04.868Z",
+  "actor": "emiliopostigo",
+  "domains": ["test"],
+  "files_changed": [
+    "test.js"
+  ],
+  "severity": "SAFE",
+  "action": "APPROVED",
+  "violations": {
+    "critical": 0,
+    "sensitive": 0,
+    "safe": 1
+  },
+  "details": [
+    {
+      "file": "test.js",
+      "domains": ["test"],
+      "severity": "SAFE",
+      "lines_added": 0,
+      "lines_removed": 0
+    }
+  ],
+  "approval_required": false,
+  "approved_by": null,
+  "notes": "Auto-approved"
+}

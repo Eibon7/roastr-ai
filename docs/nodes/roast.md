@@ -4,8 +4,8 @@
 **Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-23
-**Coverage:** 0%
+**Last Updated:** 2025-10-28
+**Coverage:** 60%
 **Coverage Source:** auto
 **Related PRs:** #499, #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback)
 **Protected:** true
@@ -877,6 +877,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Backend Developer**
 - **Documentation Agent**
 - **Front-end Dev** (Issue #419 - Manual approval UI)
+- **Guardian** (PR #640 - Validated Fallback Mode documentation)
 - **Orchestrator**
 - **Test Engineer** (Issue #419 - E2E resilience tests)
 

@@ -4,8 +4,8 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-23
-**Coverage:** 2%
+**Last Updated:** 2025-10-28
+**Coverage:** 86%
 **Coverage Source:** auto
 **Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script), #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback)
 
@@ -1170,11 +1170,12 @@ const stats = await shieldService.getShieldStats('org_123', 30);
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
 - **Backend Developer**
-- **Security Engineer**
+- **Documentation Agent**
+- **Guardian** (PR #640 - Validated Fallback Security Policy)
 - **Orchestrator**
+- **Security Engineer**
+- **Test Engineer**
 
 
 ## Related Nodes

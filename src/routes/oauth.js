@@ -589,7 +589,8 @@ router.put('/:platform/config', authenticateToken, async (req, res) => {
  * Reset all mock connections (testing only)
  */
 router.post('/mock/reset', authenticateToken, async (req, res) => {
-  if (!flags.isEnabled('ENABLE_MOCK_MODE') && process.env.NODE_ENV !== 'test') {
+  // Issue #638: Check mock mode without test environment bypass
+  if (!flags.shouldUseMockOAuth()) {
     return res.status(403).json({
       success: false,
       error: 'Mock reset only available in mock mode'

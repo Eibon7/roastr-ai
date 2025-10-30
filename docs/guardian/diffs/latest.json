@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-10-24T11:57:53.559Z",
+  "base_commit": "a1f7c94f81c6132a7021213661edc88289211390",
+  "current_commit": "a1f7c94f81c6132a7021213661edc88289211390",
+  "domains_affected": [],
+  "files_changed": [],
+  "severity": "SAFE",
+  "summary": {
+    "total_files": 0,
+    "total_lines_added": 0,
+    "total_lines_removed": 0,
+    "by_domain": {}
+  }
+}
