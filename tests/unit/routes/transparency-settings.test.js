@@ -69,7 +69,7 @@ describe('Transparency Settings API', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
       expect(response.body.data.transparency_mode).toBe('bio');
-      expect(response.body.data.bio_text).toBe('Respuestas a comentarios inapropiados proporcionados por @Roastr.AI');
+      expect(response.body.data.bio_text).toBe('Algunos mensajes de hate son respondidos automáticamente por @Roastr');
       expect(response.body.data.options).toHaveLength(3);
       
       const bioOption = response.body.data.options.find(opt => opt.value === 'bio');
@@ -134,7 +134,7 @@ describe('Transparency Settings API', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.transparency_mode).toBe('bio');
-      expect(response.body.data.bio_text).toBe('Respuestas a comentarios inapropiados proporcionados por @Roastr.AI');
+      expect(response.body.data.bio_text).toBe('Algunos mensajes de hate son respondidos automáticamente por @Roastr');
     });
 
     it('should reject invalid transparency modes', async () => {
