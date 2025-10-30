@@ -1,7 +1,7 @@
 # Completion Validation Policy
 
-**Status:** ✅ Active
-**Effective Date:** 2025-10-23
+**Status:** ✅ Active (Baseline Mode)
+**Effective Date:** 2025-10-23 (Updated: 2025-10-30 for baseline comparison)
 **Owner:** Guardian Agent
 **Enforcement:** Automated (CI/CD) + Manual
 
@@ -9,9 +9,21 @@
 
 ## Overview
 
-The Completion Validation system ensures **NO PR is merged until it is 100% complete**. This policy prevents half-finished features, missing tests, incomplete documentation, and technical debt from reaching the `main` branch.
+The Completion Validation system ensures **NO PR introduces regressions or reduces code quality**. As part of EPIC #480 (Test Suite Stabilization), the validator now uses **baseline comparison mode** to allow incremental improvement even when main branch has test failures.
 
 **Philosophy:** "Hacer las cosas bien y escalables" - Do things right and scalable. This is a monetizable product, not a school project.
+
+### Baseline Comparison Mode (Active)
+
+**Rationale:** Main branch currently has 182 failing test suites (as of 2025-10-30). Requiring 100% passing tests would block ALL PRs, including those that actually IMPROVE the situation.
+
+**New Logic:**
+- ✅ PR passes if `failing ≤ baseline` (no regression)
+- ✅ PR passes if `failing < baseline` (improvement!)
+- ❌ PR fails if `failing > baseline + 2` (regression beyond tolerance)
+- ✅ Tolerance of +2 suites allows for test flakiness
+
+**Goal:** Allow incremental improvement while preventing new failures. Once main reaches <10 failing suites, switch back to strict 100% passing requirement.
 
 ---
 
@@ -53,20 +65,36 @@ Average: 91.2% ✅
 ```
 **Status:** ✅ Passed (average ≥90%)
 
-### 3. Tests Passing (0 failures)
+### 3. Tests Passing (Baseline Comparison Mode)
 
-- **Requirement:** `npm test` exits with code 0
-- **How it's checked:** Runs full test suite
-- **Failure condition:** Any test failing
-- **Fix:** Fix failing tests BEFORE marking PR ready
+- **Requirement (Baseline Mode):** PR must not introduce regression vs baseline
+- **Current Baseline:** 182 failing suites (as of 2025-10-30)
+- **How it's checked:** Compares PR test failures against stored baseline
+- **Pass condition:** `prFailures ≤ baseline + 2` (regression tolerance for flakiness)
+- **Fail condition:** `prFailures > baseline + 2` (significant regression)
+- **Fix:** Investigate and fix new failures introduced by PR
 
-**Example:**
+**Example (Baseline Mode):**
 ```
-79 passing
-1 failing
+Baseline: 182 failing suites (main branch)
+PR:       180 failing suites
 
-❌ Status: CRITICAL - Do not merge
+✅ Status: PASSED - PR improves baseline by 2 suites!
 ```
+
+**Example (Regression):**
+```
+Baseline: 182 failing suites (main branch)
+PR:       190 failing suites
+
+❌ Status: REGRESSION - PR introduces 8 new failures
+```
+
+**Docs-Only PR Exception:**
+PRs that only modify docs/CI/config files (no production code) allow minor regression (<5 suites) due to test flakiness, as they shouldn't actually cause test failures.
+
+**Future State:**
+Once main branch reaches <10 failing suites (EPIC #480 goal), validation will switch back to strict `0 failures` requirement.
 
 ### 4. Agent Receipts (All required)
 

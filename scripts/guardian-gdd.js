@@ -27,6 +27,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const yaml = require('yaml');
 const { minimatch } = require('minimatch');
+const crypto = require('crypto');
 
 // ============================================================
 // Configuration
@@ -70,6 +71,49 @@ class GuardianEngine {
       total_lines_removed: 0,
       domains_affected: new Set()
     };
+  }
+
+  /**
+   * Generate deterministic deduplication key for a case
+   * Format: hash of (files + severity + action + domains)
+   */
+  generateCaseKey(files, severity, action, domains) {
+    const sortedFiles = [...files].sort().join('|');
+    const sortedDomains = [...domains].sort().join('|');
+    const keyString = `${sortedFiles}:${severity}:${action}:${sortedDomains}`;
+    return crypto.createHash('sha256').update(keyString).digest('hex').substring(0, 16);
+  }
+
+  /**
+   * Check if a case with this key already exists
+   */
+  caseExists(caseKey) {
+    if (!fs.existsSync(CASES_DIR)) {
+      return { exists: false };
+    }
+
+    const caseFiles = fs.readdirSync(CASES_DIR).filter(f => f.endsWith('.json'));
+
+    for (const file of caseFiles) {
+      try {
+        const caseData = JSON.parse(fs.readFileSync(path.join(CASES_DIR, file), 'utf8'));
+        const existingKey = this.generateCaseKey(
+          caseData.files_changed || [],
+          caseData.severity || 'SAFE',
+          caseData.action || 'APPROVED',
+          caseData.domains || []
+        );
+
+        if (existingKey === caseKey) {
+          return { exists: true, caseId: caseData.case_id, file };
+        }
+      } catch (error) {
+        // Skip malformed case files
+        continue;
+      }
+    }
+
+    return { exists: false };
   }
 
   /**
@@ -419,6 +463,18 @@ This file contains a chronological record of all Guardian Agent events.
                    severity === 'SENSITIVE' ? 'REVIEW' : 'APPROVED';
     const notes = severity === 'CRITICAL' ? 'Requires Product Owner approval' :
                   severity === 'SENSITIVE' ? 'Requires Tech Lead review' : 'Auto-approved';
+
+    // ⭐ Deduplication check
+    const filesChanged = allViolations.map(v => v.file);
+    const domainsArray = Array.from(this.changesSummary.domains_affected);
+    const caseKey = this.generateCaseKey(filesChanged, severity, action, domainsArray);
+    const existingCase = this.caseExists(caseKey);
+
+    if (existingCase.exists) {
+      console.log(`ℹ️  Case already exists: ${existingCase.caseId} (${existingCase.file})`);
+      console.log(`   Skipping duplicate case creation\n`);
+      return; // Skip creation - case already logged
+    }
 
     const logEntry = `| ${timestamp} | ${caseId} | ${actor} | ${domains} | ${files} | ${severity} | ${action} | ${notes} |\n`;
 
