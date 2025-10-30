@@ -157,9 +157,16 @@ jobs:
     steps:
       - name: Check completion validation passed
         run: |
-          if [ "${{ needs.validate-completion.result }}" != "success" ]; then
-            echo "❌ Completion validation did not pass"
-            echo "PR cannot be merged until validation succeeds"
-            exit 1
+          RESULT="${{ needs.validate-completion.result }}"
+          echo "Validation job result: $RESULT"
+
+          # Pass if validation succeeded OR was skipped (not required for this PR)
+          if [ "$RESULT" == "success" ] || [ "$RESULT" == "skipped" ]; then
+            echo "✅ Completion validation passed (result: $RESULT)"
+            exit 0
           fi
-          echo "✅ Completion validation passed"
+
+          # Fail only if validation actually ran and failed
+          echo "❌ Completion validation did not pass (result: $RESULT)"
+          echo "PR cannot be merged until validation succeeds"
+          exit 1
