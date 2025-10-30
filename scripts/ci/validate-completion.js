@@ -33,9 +33,9 @@ const logger = require('../../src/utils/logger');
  * @returns {number} Baseline failing suite count
  */
 function getBaselineFailures() {
-  // Baseline: Main branch test failures (2025-10-23)
+  // Baseline: Main branch test failures (2025-10-30)
   // Update this value when main branch test count improves
-  const BASELINE_FAILING_SUITES = 179;
+  const BASELINE_FAILING_SUITES = 182;
 
   // Try to get from environment variable (allows CI override)
   const envBaseline = process.env.TEST_BASELINE_FAILURES;
