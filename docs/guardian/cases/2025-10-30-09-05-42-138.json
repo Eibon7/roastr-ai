@@ -1,6 +1,6 @@
 {
-  "case_id": "2025-10-29-20-05-24-058",
-  "timestamp": "2025-10-29T20:05:24.058Z",
+  "case_id": "2025-10-30-09-05-42-138",
+  "timestamp": "2025-10-30T09:05:42.138Z",
   "actor": "emiliopostigo",
   "domains": [],
   "files_changed": [
@@ -15,13 +15,7 @@
   },
   "details": [
     {
-      "file": "test.js",
-      "domains": [
-        "test"
-      ],
-      "severity": "SAFE",
-      "lines_added": 5,
-      "lines_removed": 2
+      "file": "test.js"
     }
   ],
   "approval_required": false,
