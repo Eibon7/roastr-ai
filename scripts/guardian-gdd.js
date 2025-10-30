@@ -89,7 +89,7 @@ class GuardianEngine {
    */
   caseExists(caseKey) {
     if (!fs.existsSync(CASES_DIR)) {
-      return false;
+      return { exists: false };
     }
 
     const caseFiles = fs.readdirSync(CASES_DIR).filter(f => f.endsWith('.json'));

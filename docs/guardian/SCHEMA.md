@@ -101,7 +101,7 @@ The Guardian generator script (`scripts/guardian-gdd.js`) enforces complete sche
 As of 2025-10-30, Guardian implements case deduplication using:
 
 **Deduplication Key Formula:**
-```
+```text
 SHA256(sorted_files + severity + action + sorted_domains)[0:16]
 ```
 
