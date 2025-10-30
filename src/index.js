@@ -235,7 +235,10 @@ app.use(express.static(path.join(__dirname, '../frontend/build'), {
 // Auth routes
 app.use('/api/auth', authRoutes);
 
-// OAuth routes (for social media connections)
+// OAuth routes (for OAuth callbacks - must come after authRoutes to avoid conflicts)
+app.use('/api/auth', oauthRoutes);
+
+// OAuth routes (for social media connections - same router, different base path)
 app.use('/api/integrations', oauthRoutes);
 
 // Webhook routes (for platform event handling)
