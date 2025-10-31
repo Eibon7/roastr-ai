@@ -257,10 +257,10 @@ describe('Roast API Integration Tests', () => {
                 if (callCount === 3 && tableName === 'roast_usage') {
                     const builder = originalFrom._createBuilderWithData(tableName, { data: null, error: null });
                     builder.insert = jest.fn().mockResolvedValue({
-                        data: createRoastUsageData({
+                        data: [createRoastUsageData({  // CodeRabbit #3405814750: Supabase insert returns array
                             userId: testUserId,
                             count: 6
-                        }),
+                        })],
                         error: null
                     });
                     return builder;
