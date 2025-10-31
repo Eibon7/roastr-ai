@@ -350,10 +350,6 @@ if (require.main === module) {
 module.exports = {
   getBaselineFailures,
   parseFailingSuites,
-<<<<<<< HEAD
-  checkTestsPassing
-=======
   checkTestsPassing,
   isDocsOnlyPR
->>>>>>> origin/main
 };
