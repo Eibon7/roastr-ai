@@ -56,15 +56,52 @@ describe('Roast API Integration Tests', () => {
         };
 
         // Mock Supabase service client with flexible builder creation
+        // Issue #698: Comprehensive mocking for all tables + RPC
         mockServiceClient = {
             from: jest.fn((tableName) => {
-                // Return a default builder - tests will override this with spies
-                return createBuilder({
-                    data: { plan: 'free', status: 'active', count: 0 },
-                    error: null
+                // Return table-specific default data (Issue #698)
+                if (tableName === 'user_subscriptions') {
+                    return createBuilder({
+                        data: { plan: 'free', status: 'active' },
+                        error: null
+                    });
+                }
+                if (tableName === 'analysis_usage') {
+                    return createBuilder({
+                        data: { count: 0 },  // No usage by default
+                        error: null
+                    });
+                }
+                if (tableName === 'roast_usage') {
+                    return createBuilder({
+                        data: { count: 0 },  // No usage by default
+                        error: null
+                    });
+                }
+                // Default for unknown tables
+                return createBuilder({ data: null, error: null });
+            }),
+            rpc: jest.fn((functionName, params) => {
+                // Issue #698: Mock RPC calls for stored procedures
+                if (functionName === 'consume_roast_credits') {
+                    return Promise.resolve({
+                        data: {
+                            success: true,
+                            hasCredits: true,
+                            remaining: 45,
+                            limit: 50,
+                            used: 5,
+                            unlimited: false
+                        },
+                        error: null
+                    });
+                }
+                // Default: RPC not mocked
+                return Promise.resolve({
+                    data: null,
+                    error: { message: `RPC ${functionName} not mocked` }
                 });
             }),
-            rpc: jest.fn(),
             _createBuilder: createBuilder // Expose for test use
         };
 
@@ -119,11 +156,23 @@ describe('Roast API Integration Tests', () => {
 
     describe('POST /api/roast/preview', () => {
         it('should generate roast preview successfully', async () => {
-            // Mock user subscription lookup - override default
+            // Mock database calls - Issue #698: Mock ALL tables needed
             mockServiceClient.from = jest.fn((tableName) => {
                 if (tableName === 'user_subscriptions') {
                     return mockServiceClient._createBuilder({
                         data: { plan: 'creator', status: 'active' },
+                        error: null
+                    });
+                }
+                if (tableName === 'analysis_usage') {
+                    return mockServiceClient._createBuilder({
+                        data: { count: 5 },  // Low usage
+                        error: null
+                    });
+                }
+                if (tableName === 'roast_usage') {
+                    return mockServiceClient._createBuilder({
+                        data: { count: 10 },  // Some usage
                         error: null
                     });
                 }
@@ -184,11 +233,23 @@ describe('Roast API Integration Tests', () => {
         });
 
         it('should reject high toxicity content', async () => {
-            // Mock user subscription lookup - override default
+            // Mock database calls - Issue #698: Mock ALL tables needed
             mockServiceClient.from = jest.fn((tableName) => {
                 if (tableName === 'user_subscriptions') {
                     return mockServiceClient._createBuilder({
                         data: { plan: 'free', status: 'active' },
+                        error: null
+                    });
+                }
+                if (tableName === 'analysis_usage') {
+                    return mockServiceClient._createBuilder({
+                        data: { count: 5 },
+                        error: null
+                    });
+                }
+                if (tableName === 'roast_usage') {
+                    return mockServiceClient._createBuilder({
+                        data: { count: 0 },
                         error: null
                     });
                 }
@@ -224,41 +285,45 @@ describe('Roast API Integration Tests', () => {
 
     describe('POST /api/roast/generate', () => {
         it('should generate roast and consume credits', async () => {
-            // Track which call we're on
-            let callCount = 0;
-
-            // Mock sequential database calls
+            // Mock database calls - Issue #698: Simplified table-based mocking
             mockServiceClient.from = jest.fn((tableName) => {
-                callCount++;
-
-                // First call: user_subscriptions lookup
-                if (callCount === 1 && tableName === 'user_subscriptions') {
+                if (tableName === 'user_subscriptions') {
                     return mockServiceClient._createBuilder({
                         data: { plan: 'creator', status: 'active' },
                         error: null
                     });
                 }
-
-                // Second call: roast_usage count
-                if (callCount === 2 && tableName === 'roast_usage') {
+                if (tableName === 'analysis_usage') {
                     return mockServiceClient._createBuilder({
-                        data: { count: 5 },
+                        data: { count: 3 },  // Low usage
                         error: null
                     });
                 }
-
-                // Third call: roast_usage insert
-                if (callCount === 3 && tableName === 'roast_usage') {
-                    return {
-                        insert: jest.fn().mockResolvedValue({
-                            data: null,
-                            error: null
-                        })
-                    };
+                if (tableName === 'roast_usage') {
+                    return mockServiceClient._createBuilder({
+                        data: { count: 5 },  // Low usage, has credits
+                        error: null
+                    });
                 }
-
-                // Default
                 return mockServiceClient._createBuilder({ data: null, error: null });
+            });
+
+            // Issue #698: Mock RPC call for credit consumption (CRITICAL!)
+            mockServiceClient.rpc = jest.fn((functionName, params) => {
+                if (functionName === 'consume_roast_credits') {
+                    return Promise.resolve({
+                        data: {
+                            success: true,
+                            hasCredits: true,
+                            remaining: 44,  // Had 50, consumed 1, now 44 (plus previous 5)
+                            limit: 50,
+                            used: 6,
+                            unlimited: false
+                        },
+                        error: null
+                    });
+                }
+                return Promise.resolve({ data: null, error: { message: 'RPC not mocked' } });
             });
 
             const response = await request(app)
@@ -343,30 +408,21 @@ describe('Roast API Integration Tests', () => {
 
     describe('GET /api/roast/credits', () => {
         it('should return user credit status', async () => {
-            // Track which call we're on
-            let callCount = 0;
-
-            // Mock sequential database calls
+            // Mock database calls - Issue #698: Simplified table-based mocking
             mockServiceClient.from = jest.fn((tableName) => {
-                callCount++;
-
-                // First call: user_subscriptions lookup
-                if (callCount === 1 && tableName === 'user_subscriptions') {
+                if (tableName === 'user_subscriptions') {
                     return mockServiceClient._createBuilder({
                         data: { plan: 'creator', status: 'active' },
                         error: null
                     });
                 }
-
-                // Second call: roast_usage count
-                if (callCount === 2 && tableName === 'roast_usage') {
+                if (tableName === 'roast_usage') {
                     return mockServiceClient._createBuilder({
-                        data: { count: 15 },
+                        data: { count: 15 },  // Used 15 credits
                         error: null
                     });
                 }
-
-                // Default
+                // Return defaults for other tables
                 return mockServiceClient._createBuilder({ data: null, error: null });
             });
 
