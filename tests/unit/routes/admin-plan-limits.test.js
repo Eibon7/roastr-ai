@@ -4,12 +4,9 @@ const adminRoutes = require('../../../src/routes/admin');
 const planLimitsService = require('../../../src/services/planLimitsService');
 
 // Mock dependencies
-jest.mock('../../../src/services/planLimitsService');
-jest.mock('../../../src/middleware/isAdmin', () => ({
-    isAdminMiddleware: (req, res, next) => {
-        req.user = { id: 'admin-123', is_admin: true };
-        next();
-    }
+jest.mock('../../../src/services/planLimitsService', () => ({
+    getAllPlanLimits: jest.fn(),
+    getPlanLimits: jest.fn()
 }));
 
 jest.mock('../../../src/config/supabase', () => ({
@@ -83,6 +80,7 @@ describe('Admin Plan Limits Routes', () => {
 
             const response = await request(app)
                 .get('/api/admin/plan-limits')
+                .set('Authorization', 'Bearer mock-admin-token-for-testing')
                 .expect(200);
 
             expect(response.body.success).toBe(true);
@@ -95,6 +93,7 @@ describe('Admin Plan Limits Routes', () => {
 
             const response = await request(app)
                 .get('/api/admin/plan-limits')
+                .set('Authorization', 'Bearer mock-admin-token-for-testing')
                 .expect(500);
 
             expect(response.body.success).toBe(false);
