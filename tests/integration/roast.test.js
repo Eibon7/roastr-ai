@@ -25,9 +25,19 @@ const { app } = require('../../src/index');
 const { supabaseServiceClient } = require('../../src/config/supabase');
 const flags = require('../../src/config/flags');
 
+// Issue #680: Import roast mock factory for test isolation
+const {
+    createRoastSupabaseMock,
+    createUserSubscriptionData,
+    createRoastUsageData,
+    createAnalysisUsageData  // Issue #680: Support analysis_usage table
+} = require('../helpers/roastMockFactory');
+
 describe('Roast API Integration Tests', () => {
     let mockServiceClient;
-    const testUserId = 'test-user-123';
+    // Issue #680: userId must match what getUserFromToken returns for 'valid-token'
+    // getUserFromToken creates: 'mock-user-' + token.substring(0, 8) = 'mock-user-valid-to'
+    const testUserId = 'mock-user-valid-to';
     const authToken = 'Bearer valid-token';
 
     beforeEach(() => {
@@ -36,39 +46,23 @@ describe('Roast API Integration Tests', () => {
         // Set required environment variables
         process.env.FRONTEND_URL = 'https://test.example.com';
 
-        // Create builder factory that can be customized per-test
-        const createBuilder = (resolveValue = { data: null, error: null }) => {
-            const builder = {
-                select: jest.fn(),
-                eq: jest.fn(),
-                single: jest.fn(),
-                insert: jest.fn(),
-                gte: jest.fn()
-            };
+        // Issue #680: Get reference to the actual client used by routes
+        const supabaseConfig = require('../../src/config/supabase');
+        mockServiceClient = supabaseConfig.supabaseServiceClient;
 
-            builder.select.mockReturnValue(builder);
-            builder.eq.mockReturnValue(builder);
-            builder.gte.mockReturnValue(builder);
-            builder.insert.mockReturnValue(builder);
-            builder.single.mockResolvedValue(resolveValue);
+        // Issue #680: Create default mock for all tests (can be overridden per test)
+        const defaultMock = createRoastSupabaseMock({
+            userSubscriptions: [
+                createUserSubscriptionData({
+                    userId: testUserId,
+                    plan: 'free',
+                    status: 'active'
+                })
+            ]
+        });
 
-            return builder;
-        };
-
-        // Mock Supabase service client with flexible builder creation
-        mockServiceClient = {
-            from: jest.fn((tableName) => {
-                // Return a default builder - tests will override this with spies
-                return createBuilder({
-                    data: { plan: 'free', status: 'active', count: 0 },
-                    error: null
-                });
-            }),
-            rpc: jest.fn(),
-            _createBuilder: createBuilder // Expose for test use
-        };
-
-        require('../../src/config/supabase').supabaseServiceClient = mockServiceClient;
+        // Mutate the existing client's methods
+        mockServiceClient.from = defaultMock.from;
 
         // Mock flags
         flags.isEnabled = jest.fn().mockImplementation((flag) => {
@@ -119,16 +113,19 @@ describe('Roast API Integration Tests', () => {
 
     describe('POST /api/roast/preview', () => {
         it('should generate roast preview successfully', async () => {
-            // Mock user subscription lookup - override default
-            mockServiceClient.from = jest.fn((tableName) => {
-                if (tableName === 'user_subscriptions') {
-                    return mockServiceClient._createBuilder({
-                        data: { plan: 'creator', status: 'active' },
-                        error: null
-                    });
-                }
-                return mockServiceClient._createBuilder({ data: null, error: null });
+            // Issue #680: Create fresh mock with pre-configured data for this test
+            const testMock = createRoastSupabaseMock({
+                userSubscriptions: [
+                    createUserSubscriptionData({
+                        userId: testUserId,
+                        plan: 'creator',
+                        status: 'active'
+                    })
+                ]
             });
+
+            // Mutate the existing client's methods (routes have const reference to it)
+            mockServiceClient.from = testMock.from;
 
             const response = await request(app)
                 .post('/api/roast/preview')
@@ -177,23 +174,25 @@ describe('Roast API Integration Tests', () => {
                 success: false,
                 error: 'Validation failed',
                 details: expect.arrayContaining([
-                    expect.stringContaining('Text cannot be empty'),
+                    expect.stringContaining('Text is required'),
                     expect.stringContaining('Tone must be one of')
                 ])
             });
         });
 
         it('should reject high toxicity content', async () => {
-            // Mock user subscription lookup - override default
-            mockServiceClient.from = jest.fn((tableName) => {
-                if (tableName === 'user_subscriptions') {
-                    return mockServiceClient._createBuilder({
-                        data: { plan: 'free', status: 'active' },
-                        error: null
-                    });
-                }
-                return mockServiceClient._createBuilder({ data: null, error: null });
+            // Issue #680: Fresh mock with test-specific data
+            const testMock = createRoastSupabaseMock({
+                userSubscriptions: [
+                    createUserSubscriptionData({
+                        userId: testUserId,
+                        plan: 'free',
+                        status: 'active'
+                    })
+                ]
             });
+
+            mockServiceClient.from = testMock.from;
 
             // Mock high toxicity content analysis
             const PerspectiveService = require('../../src/services/perspectiveService');
@@ -224,24 +223,29 @@ describe('Roast API Integration Tests', () => {
 
     describe('POST /api/roast/generate', () => {
         it('should generate roast and consume credits', async () => {
-            // Track which call we're on
+            // Issue #680: Fresh mock for this test with sequential call handling
+            const testMock = createRoastSupabaseMock();
             let callCount = 0;
 
-            // Mock sequential database calls
-            mockServiceClient.from = jest.fn((tableName) => {
+            // Customize from() for sequential calls (only affects this test)
+            testMock.from = jest.fn((tableName) => {
                 callCount++;
 
                 // First call: user_subscriptions lookup
                 if (callCount === 1 && tableName === 'user_subscriptions') {
-                    return mockServiceClient._createBuilder({
-                        data: { plan: 'creator', status: 'active' },
+                    return testMock.from._createBuilderWithData(tableName, {
+                        data: createUserSubscriptionData({
+                            userId: testUserId,
+                            plan: 'creator',
+                            status: 'active'
+                        }),
                         error: null
                     });
                 }
 
                 // Second call: roast_usage count
                 if (callCount === 2 && tableName === 'roast_usage') {
-                    return mockServiceClient._createBuilder({
+                    return testMock.from._createBuilderWithData(tableName, {
                         data: { count: 5 },
                         error: null
                     });
@@ -249,17 +253,22 @@ describe('Roast API Integration Tests', () => {
 
                 // Third call: roast_usage insert
                 if (callCount === 3 && tableName === 'roast_usage') {
-                    return {
-                        insert: jest.fn().mockResolvedValue({
-                            data: null,
-                            error: null
-                        })
-                    };
+                    const builder = testMock.from._createBuilderWithData(tableName, { data: null, error: null });
+                    builder.insert = jest.fn().mockResolvedValue({
+                        data: createRoastUsageData({
+                            userId: testUserId,
+                            count: 6
+                        }),
+                        error: null
+                    });
+                    return builder;
                 }
 
                 // Default
-                return mockServiceClient._createBuilder({ data: null, error: null });
+                return testMock.from._createBuilderWithData(tableName, { data: null, error: null });
             });
+
+            mockServiceClient.from = testMock.from;
 
             const response = await request(app)
                 .post('/api/roast/generate')
@@ -289,36 +298,42 @@ describe('Roast API Integration Tests', () => {
             });
 
             // Verify usage was recorded
-            expect(mockServiceClient.from).toHaveBeenCalledWith('roast_usage');
+            expect(testMock.from).toHaveBeenCalledWith('roast_usage');
         });
 
         it('should reject when user has insufficient credits', async () => {
-            // Track which call we're on
+            // Issue #680: Fresh mock for this test
+            const testMock = createRoastSupabaseMock();
             let callCount = 0;
 
-            // Mock sequential database calls
-            mockServiceClient.from = jest.fn((tableName) => {
+            testMock.from = jest.fn((tableName) => {
                 callCount++;
 
                 // First call: user_subscriptions lookup
                 if (callCount === 1 && tableName === 'user_subscriptions') {
-                    return mockServiceClient._createBuilder({
-                        data: { plan: 'free', status: 'active' },
+                    return testMock.from._createBuilderWithData(tableName, {
+                        data: createUserSubscriptionData({
+                            userId: testUserId,
+                            plan: 'free',
+                            status: 'active'
+                        }),
                         error: null
                     });
                 }
 
                 // Second call: roast_usage count - user at limit
                 if (callCount === 2 && tableName === 'roast_usage') {
-                    return mockServiceClient._createBuilder({
+                    return testMock.from._createBuilderWithData(tableName, {
                         data: { count: 50 }, // At free plan limit
                         error: null
                     });
                 }
 
                 // Default
-                return mockServiceClient._createBuilder({ data: null, error: null });
+                return testMock.from._createBuilderWithData(tableName, { data: null, error: null });
             });
+
+            mockServiceClient.from = testMock.from;
 
             const response = await request(app)
                 .post('/api/roast/generate')
@@ -343,32 +358,38 @@ describe('Roast API Integration Tests', () => {
 
     describe('GET /api/roast/credits', () => {
         it('should return user credit status', async () => {
-            // Track which call we're on
+            // Issue #680: Fresh mock for this test
+            const testMock = createRoastSupabaseMock();
             let callCount = 0;
 
-            // Mock sequential database calls
-            mockServiceClient.from = jest.fn((tableName) => {
+            testMock.from = jest.fn((tableName) => {
                 callCount++;
 
                 // First call: user_subscriptions lookup
                 if (callCount === 1 && tableName === 'user_subscriptions') {
-                    return mockServiceClient._createBuilder({
-                        data: { plan: 'creator', status: 'active' },
+                    return testMock.from._createBuilderWithData(tableName, {
+                        data: createUserSubscriptionData({
+                            userId: testUserId,
+                            plan: 'creator',
+                            status: 'active'
+                        }),
                         error: null
                     });
                 }
 
                 // Second call: roast_usage count
                 if (callCount === 2 && tableName === 'roast_usage') {
-                    return mockServiceClient._createBuilder({
+                    return testMock.from._createBuilderWithData(tableName, {
                         data: { count: 15 },
                         error: null
                     });
                 }
 
                 // Default
-                return mockServiceClient._createBuilder({ data: null, error: null });
+                return testMock.from._createBuilderWithData(tableName, { data: null, error: null });
             });
+
+            mockServiceClient.from = testMock.from;
 
             const response = await request(app)
                 .get('/api/roast/credits')
@@ -393,6 +414,9 @@ describe('Roast API Integration Tests', () => {
 
     describe('Error handling', () => {
         it('should handle database errors gracefully', async () => {
+            // Issue #680: Fresh mock for error handling test
+            const testMock = createRoastSupabaseMock();
+
             // Mock database error
             const mockErrorBuilder = {
                 select: jest.fn().mockReturnThis(),
@@ -403,7 +427,8 @@ describe('Roast API Integration Tests', () => {
                 })
             };
 
-            mockServiceClient.from.mockReturnValueOnce(mockErrorBuilder);
+            testMock.from.mockReturnValueOnce(mockErrorBuilder);
+            mockServiceClient.from = testMock.from;
 
             const response = await request(app)
                 .get('/api/roast/credits')
@@ -414,17 +439,25 @@ describe('Roast API Integration Tests', () => {
         });
 
         it('should handle roast generation errors', async () => {
+            // Issue #680: Fresh mock for error handling test
+            const testMock = createRoastSupabaseMock();
+
             // Mock user subscription lookup
             const mockUserSubBuilder = {
                 select: jest.fn().mockReturnThis(),
                 eq: jest.fn().mockReturnThis(),
                 single: jest.fn().mockResolvedValue({
-                    data: { plan: 'creator', status: 'active' },
+                    data: createUserSubscriptionData({
+                        userId: testUserId,
+                        plan: 'creator',
+                        status: 'active'
+                    }),
                     error: null
                 })
             };
 
-            mockServiceClient.from.mockReturnValueOnce(mockUserSubBuilder);
+            testMock.from.mockReturnValueOnce(mockUserSubBuilder);
+            mockServiceClient.from = testMock.from;
 
             // Mock roast generator error
             const RoastGeneratorMock = require('../../src/services/roastGeneratorMock');
