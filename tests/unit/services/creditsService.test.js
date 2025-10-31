@@ -16,7 +16,9 @@ const planService = require('../../../src/services/planService');
 // Mock dependencies
 jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/config/flags');
-jest.mock('../../../src/services/planService');
+jest.mock('../../../src/services/planService', () => ({
+  getUserPlan: jest.fn()
+}));
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
     debug: jest.fn(),

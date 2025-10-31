@@ -20,8 +20,20 @@ jest.mock('../../src/config/supabase', () => ({
     }
 }));
 
-jest.mock('../../src/services/planLimitsService');
-jest.mock('../../src/utils/logger');
+jest.mock('../../src/services/planLimitsService', () => ({
+    getPlanLimits: jest.fn()
+}));
+jest.mock('../../src/utils/logger', () => ({
+    logger: {
+        debug: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn()
+    }
+}));
+jest.mock('../../src/config/flags', () => ({
+    isEnabled: jest.fn()
+}));
 
 describe('Tier Limits Enforcement Integration', () => {
     let app;

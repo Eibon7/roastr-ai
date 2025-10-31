@@ -429,7 +429,7 @@ describe('Shield System - End-to-End Integration', () => {
       });
 
       // Verify behavior tracking
-      expect(mockSupabase.from).toHaveBeenCalledWith('user_behavior');
+      expect(mockSupabase.from).toHaveBeenCalledWith('user_behaviors');
     });
   });
 
