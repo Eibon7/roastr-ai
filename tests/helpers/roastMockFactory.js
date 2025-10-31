@@ -25,10 +25,11 @@ const { logger } = require('../../src/utils/logger');
  * @returns {Object} Complete Supabase mock with fresh state
  */
 function createRoastSupabaseMock(options = {}) {
+  // Issue #680 + CodeRabbit Review #697: Clone arrays to prevent reference mutation
   const mockData = {
-    userSubscriptions: options.userSubscriptions || [],
-    roastUsage: options.roastUsage || [],
-    analysisUsage: options.analysisUsage || []  // Issue #680: Support analysis_usage table
+    userSubscriptions: [...(options.userSubscriptions || [])],
+    roastUsage: [...(options.roastUsage || [])],
+    analysisUsage: [...(options.analysisUsage || [])]  // Issue #680: Support analysis_usage table
   };
 
   const enableLogging = options.enableLogging || false;
@@ -301,10 +302,10 @@ function createRoastUsageData(options = {}) {
     organization_id: options.organizationId || 'test-org',
     plan: options.plan || 'free',
     roast_id: options.roastId || `roast_${Date.now()}`,
-    tokens_used: options.tokensUsed || 100,
-    cost: options.cost || 0.002,
+    tokens_used: options.tokensUsed ?? 100,  // CodeRabbit #697: Preserve explicit 0 values
+    cost: options.cost ?? 0.002,              // CodeRabbit #697: Preserve explicit 0 values
     created_at: options.createdAt || new Date().toISOString(),
-    count: options.count || 1
+    count: options.count ?? 1                 // CodeRabbit #697: Preserve explicit 0 values
   };
 }
 
@@ -324,10 +325,10 @@ function createAnalysisUsageData(options = {}) {
     has_style_profile: options.hasStyleProfile || false,
     has_persona: options.hasPersona || false,
     tone: options.tone || 'sarcastic',
-    intensity: options.intensity || 3,
+    intensity: options.intensity ?? 3,        // CodeRabbit #697: Preserve explicit 0 values
     humor_type: options.humorType || 'witty',
     created_at: options.createdAt || new Date().toISOString(),
-    count: options.count || 1
+    count: options.count ?? 1                 // CodeRabbit #697: Preserve explicit 0 values
   };
 }
 

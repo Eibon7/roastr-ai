@@ -225,6 +225,8 @@ describe('Roast API Integration Tests', () => {
         it('should generate roast and consume credits', async () => {
             // Issue #680: Fresh mock for this test with sequential call handling
             const testMock = createRoastSupabaseMock();
+            // CodeRabbit #697: Preserve helper functions before overriding
+            const originalFrom = testMock.from;
             let callCount = 0;
 
             // Customize from() for sequential calls (only affects this test)
@@ -233,7 +235,7 @@ describe('Roast API Integration Tests', () => {
 
                 // First call: user_subscriptions lookup
                 if (callCount === 1 && tableName === 'user_subscriptions') {
-                    return testMock.from._createBuilderWithData(tableName, {
+                    return originalFrom._createBuilderWithData(tableName, {
                         data: createUserSubscriptionData({
                             userId: testUserId,
                             plan: 'creator',
@@ -245,7 +247,7 @@ describe('Roast API Integration Tests', () => {
 
                 // Second call: roast_usage count
                 if (callCount === 2 && tableName === 'roast_usage') {
-                    return testMock.from._createBuilderWithData(tableName, {
+                    return originalFrom._createBuilderWithData(tableName, {
                         data: { count: 5 },
                         error: null
                     });
@@ -253,7 +255,7 @@ describe('Roast API Integration Tests', () => {
 
                 // Third call: roast_usage insert
                 if (callCount === 3 && tableName === 'roast_usage') {
-                    const builder = testMock.from._createBuilderWithData(tableName, { data: null, error: null });
+                    const builder = originalFrom._createBuilderWithData(tableName, { data: null, error: null });
                     builder.insert = jest.fn().mockResolvedValue({
                         data: createRoastUsageData({
                             userId: testUserId,
@@ -265,8 +267,10 @@ describe('Roast API Integration Tests', () => {
                 }
 
                 // Default
-                return testMock.from._createBuilderWithData(tableName, { data: null, error: null });
+                return originalFrom._createBuilderWithData(tableName, { data: null, error: null });
             });
+            // CodeRabbit #697: Copy helpers to new function
+            Object.assign(testMock.from, originalFrom);
 
             mockServiceClient.from = testMock.from;
 
@@ -304,6 +308,8 @@ describe('Roast API Integration Tests', () => {
         it('should reject when user has insufficient credits', async () => {
             // Issue #680: Fresh mock for this test
             const testMock = createRoastSupabaseMock();
+            // CodeRabbit #697: Preserve helper functions before overriding
+            const originalFrom = testMock.from;
             let callCount = 0;
 
             testMock.from = jest.fn((tableName) => {
@@ -311,7 +317,7 @@ describe('Roast API Integration Tests', () => {
 
                 // First call: user_subscriptions lookup
                 if (callCount === 1 && tableName === 'user_subscriptions') {
-                    return testMock.from._createBuilderWithData(tableName, {
+                    return originalFrom._createBuilderWithData(tableName, {
                         data: createUserSubscriptionData({
                             userId: testUserId,
                             plan: 'free',
@@ -323,15 +329,17 @@ describe('Roast API Integration Tests', () => {
 
                 // Second call: roast_usage count - user at limit
                 if (callCount === 2 && tableName === 'roast_usage') {
-                    return testMock.from._createBuilderWithData(tableName, {
+                    return originalFrom._createBuilderWithData(tableName, {
                         data: { count: 50 }, // At free plan limit
                         error: null
                     });
                 }
 
                 // Default
-                return testMock.from._createBuilderWithData(tableName, { data: null, error: null });
+                return originalFrom._createBuilderWithData(tableName, { data: null, error: null });
             });
+            // CodeRabbit #697: Copy helpers to new function
+            Object.assign(testMock.from, originalFrom);
 
             mockServiceClient.from = testMock.from;
 
@@ -360,6 +368,8 @@ describe('Roast API Integration Tests', () => {
         it('should return user credit status', async () => {
             // Issue #680: Fresh mock for this test
             const testMock = createRoastSupabaseMock();
+            // CodeRabbit #697: Preserve helper functions before overriding
+            const originalFrom = testMock.from;
             let callCount = 0;
 
             testMock.from = jest.fn((tableName) => {
@@ -367,7 +377,7 @@ describe('Roast API Integration Tests', () => {
 
                 // First call: user_subscriptions lookup
                 if (callCount === 1 && tableName === 'user_subscriptions') {
-                    return testMock.from._createBuilderWithData(tableName, {
+                    return originalFrom._createBuilderWithData(tableName, {
                         data: createUserSubscriptionData({
                             userId: testUserId,
                             plan: 'creator',
@@ -379,15 +389,17 @@ describe('Roast API Integration Tests', () => {
 
                 // Second call: roast_usage count
                 if (callCount === 2 && tableName === 'roast_usage') {
-                    return testMock.from._createBuilderWithData(tableName, {
+                    return originalFrom._createBuilderWithData(tableName, {
                         data: { count: 15 },
                         error: null
                     });
                 }
 
                 // Default
-                return testMock.from._createBuilderWithData(tableName, { data: null, error: null });
+                return originalFrom._createBuilderWithData(tableName, { data: null, error: null });
             });
+            // CodeRabbit #697: Copy helpers to new function
+            Object.assign(testMock.from, originalFrom);
 
             mockServiceClient.from = testMock.from;
 
