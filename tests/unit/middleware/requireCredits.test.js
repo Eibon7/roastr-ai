@@ -15,8 +15,16 @@ const creditsService = require('../../../src/services/creditsService');
 const { flags } = require('../../../src/config/flags');
 
 // Mock dependencies
-jest.mock('../../../src/services/creditsService');
-jest.mock('../../../src/config/flags');
+jest.mock('../../../src/services/creditsService', () => ({
+    canConsume: jest.fn(),
+    consume: jest.fn(),
+    getOrCreateActivePeriod: jest.fn()
+}));
+jest.mock('../../../src/config/flags', () => ({
+    flags: {
+        isEnabled: jest.fn()
+    }
+}));
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
     debug: jest.fn(),
