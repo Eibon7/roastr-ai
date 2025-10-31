@@ -258,11 +258,11 @@ app.use('/api/shop', shopRoutes);
 // Dashboard routes (public/authenticated)
 app.use('/api', dashboardRoutes);
 
-// User integrations routes (authenticated)
-app.use('/api/integrations', integrationsRoutes);
-
-// New integrations routes for style profile flow
+// New integrations routes for style profile flow (mounted FIRST to avoid auth conflict - Issue #480 Week 3)
 app.use('/api/integrations', newIntegrationsRoutes);
+
+// User integrations routes (authenticated) (mounted SECOND - legacy routes)
+app.use('/api/integrations', integrationsRoutes);
 
 // Style profile routes (authenticated, Creator+ only)
 app.use('/api/style-profile', styleProfileRoutes);
