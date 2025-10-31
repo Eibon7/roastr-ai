@@ -116,10 +116,10 @@ function validateRoastRequest(req) {
     const { text, tone, intensity, humorType, styleProfile, persona, platform } = req.body;
     const errors = [];
 
-    // Validate text
-    if (!text || typeof text !== 'string') {
+    // Validate text - Issue #698: Fix empty string validation order
+    if (typeof text !== 'string') {
         errors.push('Text is required and must be a string');
-    } else if (text.trim().length === 0) {
+    } else if (!text || text.trim().length === 0) {
         errors.push('Text cannot be empty');
     } else if (text.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
         errors.push(`Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);

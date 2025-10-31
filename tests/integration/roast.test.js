@@ -70,13 +70,13 @@ describe('Roast API Integration Tests', () => {
 
         require('../../src/config/supabase').supabaseServiceClient = mockServiceClient;
 
-        // Mock flags
+        // Mock flags - Issue #698: Enable PerspectiveService so mocks work
         flags.isEnabled = jest.fn().mockImplementation((flag) => {
             switch (flag) {
                 case 'ENABLE_REAL_OPENAI':
                     return false; // Use mock generator
                 case 'ENABLE_PERSPECTIVE_API':
-                    return false; // Use mock moderation
+                    return true; // Enable to allow perspective mocks to work (Issue #698)
                 case 'ENABLE_RATE_LIMIT':
                     return false; // Disable rate limiting for tests
                 default:
