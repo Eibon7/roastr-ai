@@ -19,6 +19,31 @@ GDD optimizes context loading by:
 
 **Your role:** Load the minimal context needed for an issue.
 
+## ⚠️ Critical Success Factor: Node Synchronization
+
+**GDD funciona mejor cuanto mejor sincronizada esté la información entre nodos.**
+
+Before loading nodes, verify synchronization:
+```bash
+node scripts/validate-gdd-runtime.js --full
+# Expected: 🟢 HEALTHY
+```
+
+**Why synchronization matters:**
+- Stale nodes → Wrong decisions (status: "planned" but actually "implemented")
+- Missing dependencies → Incomplete context (auth-system without updated database schema)
+- Coverage drift → False confidence (node says 85% but reality is 65%)
+
+**If drift detected:**
+1. Run: `node scripts/auto-repair-gdd.js --auto-fix`
+2. Validate: `node scripts/validate-gdd-runtime.js --full`
+3. Only then proceed with loading nodes
+
+**Synchronization checkpoints:**
+- ✅ Post-merge: Automatic via `.github/workflows/post-merge-doc-sync.yml`
+- ✅ Pre-commit: `validate-gdd-runtime.js --full`
+- ✅ Pre-merge: `score-gdd-health.js --ci` (≥87 required)
+
 ## Your Responsibilities
 
 ### 1. Fetch Issue Metadata
@@ -160,7 +185,43 @@ Generate a structured announcement with this **exact format**:
 ---
 **Ready for FASE 2: Planning** 📝
 Use loaded context to create `docs/plan/issue-{id}.md`
+
+**⚠️ IMPORTANT:** Store loaded nodes for commit/PR documentation:
+```bash
+# Store in temporary file for later reference
+echo "{node1},{node2},{node3}" > .gdd-nodes-active
 ```
+```
+
+### 8. Document Nodes in Commits/PRs
+
+**When committing changes, include activated nodes in commit message:**
+
+```bash
+git commit -m "feat(area): Description
+
+GDD Nodes Activated: auth-system, database-layer, api-layer
+GDD Nodes Modified: auth-system (updated OAuth flow)
+
+[rest of commit message]"
+```
+
+**When creating PR, include in PR body:**
+
+```markdown
+## GDD Context
+
+**Nodes Activated:** auth-system, database-layer, api-layer
+**Nodes Modified:** auth-system (OAuth flow updated), database-layer (RLS policies)
+**Assessment:** ENHANCE (3 AC)
+**Health Score:** 87 (🟢 HEALTHY)
+```
+
+**Why this matters:**
+- Trazabilidad completa de qué contexto se usó
+- Facilita doc-sync post-merge (sabe qué nodos afectados)
+- Permite auditar decisiones basadas en contexto cargado
+- Ayuda a futuros desarrolladores entender scope de cambio
 
 ---
 

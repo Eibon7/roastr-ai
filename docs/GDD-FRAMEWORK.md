@@ -103,6 +103,231 @@ spec.md:
 
 ---
 
+## 🎬 GDD Activation & Orchestration
+
+**Principio crítico:** GDD funciona mejor cuanto mejor sincronizada esté la información entre nodos.
+
+### Cuándo Activar GDD
+
+**Decision Tree para Orchestrator:**
+
+```
+START: New work requested
+  ↓
+Is it a NEW ISSUE?
+  ↓ YES
+  Count AC in issue body
+    ↓
+    AC ≥3?
+      ↓ YES → ✅ ACTIVATE /gdd {issue_number}
+      ↓ NO
+      Priority P0/P1?
+        ↓ YES → ✅ ACTIVATE /gdd {issue_number}
+        ↓ NO
+        Has area:* labels?
+          ↓ YES → ✅ ACTIVATE /gdd {issue_number}
+          ↓ NO
+          Multi-area keywords in title/body?
+            ↓ YES → ✅ ACTIVATE /gdd {issue_number}
+            ↓ NO → Inline assessment + direct file load
+
+  ↓ NO (Continuation of work)
+  Is it SCOPE EXPANSION?
+    ↓ YES
+    New areas affected?
+      ↓ YES → ✅ RE-EXECUTE resolve-graph with new nodes
+      ↓ NO → Continue with current context
+
+  ↓ NO
+  Is it CODERABBIT REVIEW?
+    ↓ YES
+    Mentions new area not loaded?
+      ↓ YES → ✅ LOAD additional node
+      ↓ NO → Fix with current context
+
+  ↓ NO
+  Is it CONTINUATION of current work?
+    ↓ YES → ❌ NO GDD (already have context)
+
+  ↓ NO
+  Is it TRIVIAL task?
+    ↓ YES (typo, docs, formatting)
+    → ❌ NO GDD (direct fix)
+```
+
+### Activation Scenarios
+
+#### ✅ ALWAYS Activate (Mandatory)
+
+1. **New issue with AC ≥3**
+   ```
+   User: "Vamos con #750 - Implementar usage-based pricing"
+   Orchestrator: /gdd 750
+   → Assessment: ENHANCE (≥3 AC detected)
+   → Nodes: billing, cost-control, subscription-tiers, database-layer
+   → Patterns: Multi-tenant context, Cost control validation
+   ```
+
+2. **Priority P0/P1 issues**
+   ```
+   User: "Issue #755 es P0 - Bug crítico en autenticación"
+   Orchestrator: /gdd 755
+   → Assessment: FIX (P0 = critical)
+   → Nodes: auth-system, database-layer, api-layer
+   → Patterns: Security audit, Multi-tenant context
+   ```
+
+3. **Multi-area features**
+   ```
+   User: "Añadir OAuth Facebook + guardar en DB + notificar usuario"
+   Orchestrator: /gdd {issue}
+   → Nodes: integrations-layer, facebook-integration, database-layer, notification-system
+   → Patterns: Integration workflow, Multi-tenant context
+   ```
+
+#### 🔶 CONDITIONAL Activate (Case by Case)
+
+4. **Scope expansion mid-implementation**
+   ```
+   INITIAL:
+   User: "Implementa generación de roasts"
+   Orchestrator: /gdd XXX → Nodes: roast, openai-integration
+
+   EXPANSION:
+   User: "Ahora también guarda analytics en base de datos"
+   Orchestrator: node scripts/resolve-graph.js roast database-layer analytics
+   → Load additional nodes: database-layer, analytics
+   ```
+
+5. **CodeRabbit review mentions new area**
+   ```
+   CodeRabbit: "This change affects cost-control.js - verify tier limits"
+   Orchestrator: Check if cost-control node loaded
+     → If NO: node scripts/resolve-graph.js cost-control
+     → If YES: Continue
+   ```
+
+#### ❌ NEVER Activate (Skip GDD)
+
+6. **Trivial tasks**
+   - Typos in documentation
+   - Formatting/linting fixes
+   - Dependency version updates
+   - Simple config changes
+
+7. **Continuation of current work**
+   ```
+   Already working on issue #750 with nodes loaded
+   → Continue implementation
+   → NO need to re-execute /gdd
+   ```
+
+### Activation Commands
+
+**Manual activation:**
+```bash
+/gdd 750
+```
+
+**Programmatic activation (from orchestrator):**
+```javascript
+// In orchestrator logic
+if (shouldActivateGDD(issue)) {
+  await invokeSkill('gdd', { issueNumber: issue.number });
+}
+
+function shouldActivateGDD(issue) {
+  const acCount = countAcceptanceCriteria(issue.body);
+  const priority = extractPriority(issue.labels);
+  const hasAreaLabel = issue.labels.some(l => l.startsWith('area:'));
+
+  return acCount >= 3 ||
+         ['P0', 'P1'].includes(priority) ||
+         hasAreaLabel;
+}
+```
+
+### Importance of Node Synchronization
+
+**CRITICAL:** GDD effectiveness depends on node synchronization quality.
+
+**Why synchronization matters:**
+
+1. **Stale nodes = Wrong decisions**
+   ```
+   Node says: "Status: planned"
+   Reality: "Status: implemented"
+   → Orchestrator makes wrong assessment
+   ```
+
+2. **Missing dependencies = Incomplete context**
+   ```
+   auth-system depends_on: [database-layer]
+   But database-layer schema changed
+   → Load auth-system without updated database context
+   → Risk of incompatible implementation
+   ```
+
+3. **Coverage drift = False health score**
+   ```
+   Node says: "Coverage: 85% (manual)"
+   Reality: "Coverage: 65% (tests removed)"
+   → False confidence in test quality
+   ```
+
+**Synchronization checkpoints:**
+
+- ✅ **Post-merge:** Automatic via `.github/workflows/post-merge-doc-sync.yml`
+- ✅ **Pre-commit:** Validate with `node scripts/validate-gdd-runtime.js --full`
+- ✅ **Pre-merge:** Check health score `node scripts/score-gdd-health.js --ci`
+- ✅ **Weekly:** Review drift predictions `node scripts/predict-gdd-drift.js --full`
+
+**Preventing drift:**
+
+```bash
+# Before starting work (FASE 0)
+node scripts/validate-gdd-runtime.js --full
+# Expected: 🟢 HEALTHY
+
+# After implementation (FASE 4)
+node scripts/auto-repair-gdd.js --auto-fix
+node scripts/validate-gdd-runtime.js --full
+# Expected: 🟢 HEALTHY, all nodes synced
+```
+
+### Re-Activation During Development
+
+**When to re-load nodes:**
+
+1. **Scope expands to new area:**
+   ```bash
+   # Initially loaded: roast, openai-integration
+   # Scope expands to include: database-layer, analytics
+
+   node scripts/resolve-graph.js roast database-layer analytics
+   # Load additional nodes without losing current context
+   ```
+
+2. **Dependencies change:**
+   ```bash
+   # Working on auth-system
+   # Someone merges PR changing database-layer schema
+
+   # Re-load database-layer to get latest
+   Read: docs/nodes/database-layer.md  # Fresh version
+   ```
+
+3. **CodeRabbit identifies missing area:**
+   ```bash
+   # CodeRabbit: "This affects shield-system"
+   # Currently loaded: roast, openai-integration
+
+   node scripts/resolve-graph.js shield-system
+   Read: docs/nodes/shield-system.md
+   ```
+
+---
+
 ## 🔄 Flujo Bidireccional
 
 ### spec.md → nodos (Extracción Inicial)
