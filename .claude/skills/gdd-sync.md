@@ -224,15 +224,27 @@ git add gdd-drift.json
 
 git commit -m "docs: Sync documentation - PR #700
 
+### GDD Context
+- Nodes Activated: auth-system, integrations-layer, facebook-integration
+- Nodes Modified: auth-system (OAuth flow), integrations-layer (Facebook added)
+- Health Score: 87 (🟢 HEALTHY)
+
 ### Updates
-- Nodes: auth-system, integrations-layer, facebook-integration
 - spec.md: Updated affected sections
 - system-map.yaml: Validated and synced
+- Coverage: Synced from coverage-summary.json
 
 Report: docs/sync-reports/pr-700-sync.md
 
 [sync]"
 ```
+
+**⚠️ IMPORTANT:** Always include GDD context in commits:
+- **Nodes Activated:** What nodes were loaded for this work
+- **Nodes Modified:** What nodes actually changed (with brief description)
+- **Health Score:** GDD health after changes
+
+**Why:** Provides complete traceability of context used and changes made.
 
 ## Success Criteria
 

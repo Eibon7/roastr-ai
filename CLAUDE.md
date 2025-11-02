@@ -442,22 +442,50 @@ npm run validate:completion -- --pr=628
 
 🔗 **Guide:** `docs/lessons/gdd-threshold-management.md`
 
-### GDD Activation - Issue Analysis
+### GDD Activation - When & How
 
-**CRÍTICO: Cargar SOLO nodos relevantes (NO spec.md completo).**
+**CRÍTICO: GDD funciona mejor cuanto mejor sincronizada esté la información entre nodos.**
 
-**Workflow:**
+**Cuándo activar GDD (Orchestrator decision tree):**
+
+✅ **SIEMPRE activar:**
+- Nueva issue con AC ≥3
+- Priority P0/P1
+- Multi-area features (labels `area:*` o keywords multi-área)
+
+🔶 **CONDICIONAL (evaluar):**
+- Scope expansion (nuevas áreas → re-ejecutar resolve-graph)
+- CodeRabbit menciona área no cargada (cargar nodo adicional)
+
+❌ **NUNCA activar:**
+- Tareas triviales (typos, formatting, deps update)
+- Continuación de trabajo actual (ya tienes contexto)
+
+**Workflow completo:**
 1. Fetch: `gh issue view <#> --json labels,title,body`
-2. Map labels → nodes
-3. Resolve: `node scripts/resolve-graph.js <nodes>`
-4. Load resolved only
+2. Evaluar: AC count + priority + labels
+3. **SI activar:** `/gdd {issue_number}` (skill automática)
+4. Map labels → nodes
+5. Resolve: `node scripts/resolve-graph.js <nodes>`
+6. Load SOLO resolved nodes (NUNCA spec.md completo)
 
-**During dev:**
+**Durante desarrollo:**
 - ✅ Update nodes + "Agentes Relevantes"
-- ✅ Validate before commits
+- ✅ Validate antes de commits: `node scripts/validate-gdd-runtime.js --full`
+- ✅ Check health score antes de merge: `node scripts/score-gdd-health.js --ci`
 - ❌ NEVER load entire spec.md
+- ❌ NEVER edit spec.md directly (sync automático post-merge)
 
-🔗 **Full workflow:** `docs/GDD-ACTIVATION-GUIDE.md`
+**Sincronización (crítica para éxito):**
+- Post-merge: Automático via `.github/workflows/post-merge-doc-sync.yml`
+- Pre-commit: `validate-gdd-runtime.js --full`
+- Pre-merge: `score-gdd-health.js --ci` (≥87 required)
+- Weekly: `predict-gdd-drift.js --full` (<60 risk)
+
+🔗 **Full documentation:**
+- Framework: `docs/GDD-FRAMEWORK.md`
+- Activation guide: `docs/GDD-ACTIVATION-GUIDE.md`
+- Skills: `.claude/skills/gdd/` (FASE 0), `.claude/skills/gdd-sync.md` (FASE 4)
 
 ## GDD 2.0 - Quick Reference
 
