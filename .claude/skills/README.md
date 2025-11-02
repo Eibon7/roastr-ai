@@ -36,6 +36,45 @@ description: Breve descripción que determina cuándo se activará
 
 ## Skills Actuales
 
+### GDD (Graph Driven Development)
+
+**Ubicación**: `gdd/`
+
+**Propósito**: Carga contexto GDD para un issue específico (FASE 0).
+
+**Cuándo se activa**: Al iniciar desarrollo de cualquier issue que requiera contexto arquitectónico.
+
+**Uso**:
+```bash
+/gdd 680  # Carga contexto para issue #680
+```
+
+**Output**: Nodos GDD cargados, patrones conocidos, checklist pre-implementación.
+
+**Relacionado**: `docs/GDD-FRAMEWORK.md` - Framework completo
+
+---
+
+### GDD Sync
+
+**Ubicación**: `gdd-sync.md`
+
+**Propósito**: Sincroniza nodos modificados → spec.md (FASE 4).
+
+**Cuándo se activa**: Post-merge automático o manual tras implementación.
+
+**Uso**:
+```bash
+# Automático: workflow post-merge-doc-sync.yml
+# Manual: "Sync nodes to spec.md"
+```
+
+**Output**: spec.md actualizado, metadata sincronizada, reporte de sync.
+
+**Relacionado**: `.github/workflows/post-merge-doc-sync.yml`
+
+---
+
 ### Code Review Helper
 
 **Ubicación**: `code-review-helper/`

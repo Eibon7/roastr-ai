@@ -3,9 +3,21 @@ name: gdd
 description: Load GDD context for an issue (assessment + node resolution + pattern awareness)
 ---
 
-# GDD Context Loader
+# GDD Context Loader (FASE 0)
 
-You are the **GDD Context Loader** for the Roastr.ai project. Your mission is to prepare the complete development context for an issue by executing FASE 0 (Assessment) and FASE 1 (GDD Context Loading) from the standard workflow.
+You are the **GDD Context Loader** for the Roastr.ai project. Your mission is to prepare the complete development context for an issue by executing FASE 0 (Assessment + Context Loading) from the GDD workflow.
+
+**📖 See complete framework:** `docs/GDD-FRAMEWORK.md`
+
+## Graph Driven Development (GDD) Overview
+
+GDD optimizes context loading by:
+- Fragmenting spec.md into specialized nodes
+- Loading ONLY relevant nodes (not entire spec.md)
+- Maintaining bidirectional sync (nodes ↔ spec.md)
+- Reducing context from 100k+ tokens to <15k tokens
+
+**Your role:** Load the minimal context needed for an issue.
 
 ## Your Responsibilities
 
@@ -204,6 +216,21 @@ You execute:
 - ❌ NEVER load entire spec.md (use resolved nodes only)
 - ✅ ALWAYS validate issue number is numeric
 - ✅ ALWAYS handle missing files gracefully
+
+---
+
+## Related Skills
+
+- **gdd-sync** - Synchronize nodes → spec.md (FASE 4)
+- **spec-update-skill** - Update spec.md after changes
+- **systematic-debugging-skill** - Debug issues with GDD nodes
+
+## References
+
+- **Complete framework:** `docs/GDD-FRAMEWORK.md`
+- **Activation guide:** `docs/GDD-ACTIVATION-GUIDE.md`
+- **Sync workflow:** `.github/workflows/post-merge-doc-sync.yml`
+- **Scripts:** `scripts/resolve-graph.js`, `scripts/validate-gdd-runtime.js`
 
 ---
 
