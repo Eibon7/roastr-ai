@@ -21,11 +21,26 @@ const {
 
 // Mock all external dependencies
 jest.mock('../../../src/services/tierValidationService');
-jest.mock('../../../src/utils/logger');
 jest.mock('../../../src/config/supabase', () => ({
   supabaseServiceClient: {
     rpc: jest.fn(),
     from: jest.fn()
+  }
+}));
+
+// Mock logger to prevent winston module loading issues
+jest.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
   }
 }));
 
