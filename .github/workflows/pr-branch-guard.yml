@@ -12,6 +12,12 @@ jobs:
           TITLE: ${{ github.event.pull_request.title }}
           BODY: ${{ github.event.pull_request.body }}
         run: |
+          # Permitir ramas de Dependabot sin validación (no tienen issues asociadas)
+          if echo "$BRANCH" | grep -E '^dependabot/' > /dev/null 2>&1; then
+            echo "✅ Rama de Dependabot detectada - omitiendo validación"
+            exit 0
+          fi
+
           # Requiere <prefijo>/issue-<id> con prefijos estándar
           # También permite feat/epic-<id>-week-<N> para trabajo de epics por semana
           # Prefijos permitidos: feature, fix, chore, docs, test, refactor, perf, ci, build, style
