@@ -36,6 +36,7 @@ Sistema de protección que impide trabajar en ramas incorrectas mediante candado
 **Validaciones:**
 - Formato de rama: `(feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>` o `feat/epic-<id>-week-<N>`
 - Referencia obligatoria a Issue en título o descripción
+- **Excepción:** Ramas de Dependabot (`dependabot/*`) se omiten automáticamente (no tienen issues asociadas)
 
 ### 4. Script de Ayuda (`scripts/use-issue.sh`)
 
