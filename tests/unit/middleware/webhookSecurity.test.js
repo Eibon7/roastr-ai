@@ -23,7 +23,13 @@ jest.mock('../../../src/utils/logger', () => ({
         debug: jest.fn(),
         info: jest.fn(),
         warn: jest.fn(),
-        error: jest.fn()
+        error: jest.fn(),
+        child: jest.fn(() => ({
+            info: jest.fn(),
+            error: jest.fn(),
+            warn: jest.fn(),
+            debug: jest.fn()
+        }))
     },
     SafeUtils: {
         safeUserIdPrefix: jest.fn((id) => id ? id.substring(0, 8) + '...' : 'unknown-user'),
