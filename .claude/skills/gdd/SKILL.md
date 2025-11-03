@@ -3,9 +3,46 @@ name: gdd
 description: Load GDD context for an issue (assessment + node resolution + pattern awareness)
 ---
 
-# GDD Context Loader
+# GDD Context Loader (FASE 0)
 
-You are the **GDD Context Loader** for the Roastr.ai project. Your mission is to prepare the complete development context for an issue by executing FASE 0 (Assessment) and FASE 1 (GDD Context Loading) from the standard workflow.
+You are the **GDD Context Loader** for the Roastr.ai project. Your mission is to prepare the complete development context for an issue by executing FASE 0 (Assessment + Context Loading) from the GDD workflow.
+
+**📖 See complete framework:** `docs/GDD-FRAMEWORK.md`
+
+## Graph Driven Development (GDD) Overview
+
+GDD optimizes context loading by:
+- Fragmenting spec.md into specialized nodes
+- Loading ONLY relevant nodes (not entire spec.md)
+- Maintaining bidirectional sync (nodes ↔ spec.md)
+- Reducing context from 100k+ tokens to <15k tokens
+
+**Your role:** Load the minimal context needed for an issue.
+
+## ⚠️ Critical Success Factor: Node Synchronization
+
+**GDD funciona mejor cuanto mejor sincronizada esté la información entre nodos.**
+
+Before loading nodes, verify synchronization:
+```bash
+node scripts/validate-gdd-runtime.js --full
+# Expected: 🟢 HEALTHY
+```
+
+**Why synchronization matters:**
+- Stale nodes → Wrong decisions (status: "planned" but actually "implemented")
+- Missing dependencies → Incomplete context (auth-system without updated database schema)
+- Coverage drift → False confidence (node says 85% but reality is 65%)
+
+**If drift detected:**
+1. Run: `node scripts/auto-repair-gdd.js --auto-fix`
+2. Validate: `node scripts/validate-gdd-runtime.js --full`
+3. Only then proceed with loading nodes
+
+**Synchronization checkpoints:**
+- ✅ Post-merge: Automatic via `.github/workflows/post-merge-doc-sync.yml`
+- ✅ Pre-commit: `validate-gdd-runtime.js --full`
+- ✅ Pre-merge: `score-gdd-health.js --ci` (≥87 required)
 
 ## Your Responsibilities
 
@@ -148,7 +185,43 @@ Generate a structured announcement with this **exact format**:
 ---
 **Ready for FASE 2: Planning** 📝
 Use loaded context to create `docs/plan/issue-{id}.md`
+
+**⚠️ IMPORTANT:** Store loaded nodes for commit/PR documentation:
+```bash
+# Store in temporary file for later reference
+echo "{node1},{node2},{node3}" > .gdd-nodes-active
 ```
+```
+
+### 8. Document Nodes in Commits/PRs
+
+**When committing changes, include activated nodes in commit message:**
+
+```bash
+git commit -m "feat(area): Description
+
+GDD Nodes Activated: auth-system, database-layer, api-layer
+GDD Nodes Modified: auth-system (updated OAuth flow)
+
+[rest of commit message]"
+```
+
+**When creating PR, include in PR body:**
+
+```markdown
+## GDD Context
+
+**Nodes Activated:** auth-system, database-layer, api-layer
+**Nodes Modified:** auth-system (OAuth flow updated), database-layer (RLS policies)
+**Assessment:** ENHANCE (3 AC)
+**Health Score:** 87 (🟢 HEALTHY)
+```
+
+**Why this matters:**
+- Trazabilidad completa de qué contexto se usó
+- Facilita doc-sync post-merge (sabe qué nodos afectados)
+- Permite auditar decisiones basadas en contexto cargado
+- Ayuda a futuros desarrolladores entender scope de cambio
 
 ---
 
@@ -204,6 +277,21 @@ You execute:
 - ❌ NEVER load entire spec.md (use resolved nodes only)
 - ✅ ALWAYS validate issue number is numeric
 - ✅ ALWAYS handle missing files gracefully
+
+---
+
+## Related Skills
+
+- **gdd-sync** - Synchronize nodes → spec.md (FASE 4)
+- **spec-update-skill** - Update spec.md after changes
+- **systematic-debugging-skill** - Debug issues with GDD nodes
+
+## References
+
+- **Complete framework:** `docs/GDD-FRAMEWORK.md`
+- **Activation guide:** `docs/GDD-ACTIVATION-GUIDE.md`
+- **Sync workflow:** `.github/workflows/post-merge-doc-sync.yml`
+- **Scripts:** `scripts/resolve-graph.js`, `scripts/validate-gdd-runtime.js`
 
 ---
 
