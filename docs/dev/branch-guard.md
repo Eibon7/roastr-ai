@@ -34,7 +34,7 @@ Sistema de protección que impide trabajar en ramas incorrectas mediante candado
 **Trigger:** Pull Request (abrir/actualizar)
 
 **Validaciones:**
-- Formato de rama: `feature/issue-<id>` | `fix/issue-<id>` | `chore/issue-<id>`
+- Formato de rama: `(feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>` o `feat/epic-<id>-week-<N>`
 - Referencia obligatoria a Issue en título o descripción
 
 ### 4. Script de Ayuda (`scripts/use-issue.sh`)
@@ -83,8 +83,19 @@ El hook `pre-push` verifica:
 ### Paso 5: Crear Pull Request
 
 Formato requerido:
-- **Rama:** `feature/issue-362` (o `fix/issue-362`, `chore/issue-362`)
-- **Título/Descripción:** Debe incluir `Issue #362`
+- **Rama:** `<prefijo>/issue-<id>` donde `<prefijo>` puede ser:
+  - `feature` - Nueva funcionalidad
+  - `fix` - Corrección de errores
+  - `chore` - Tareas de mantenimiento
+  - `docs` - Cambios en documentación
+  - `test` - Añadir o modificar tests
+  - `refactor` - Refactorización de código
+  - `perf` - Mejoras de rendimiento
+  - `ci` - Cambios en CI/CD
+  - `build` - Cambios en sistema de build
+  - `style` - Cambios de formato (sin afectar funcionalidad)
+  - `feat/epic-<id>-week-<N>` - Trabajo de épicas por semana
+- **Título/Descripción:** Debe incluir `Issue #<id>`
 
 El workflow `.github/workflows/pr-branch-guard.yml` valida ambos requisitos.
 
@@ -106,9 +117,12 @@ El workflow `.github/workflows/pr-branch-guard.yml` valida ambos requisitos.
 
 ### Error: Branch incorrecta en PR
 ```
-Branch incorrecta: feat/issue-362 (usa feature|fix|chore/issue-<id>)
+Branch incorrecta: myfeature/issue-362
+Formatos válidos:
+  - (feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>
+  - feat/epic-<id>-week-<N>
 ```
-**Solución:** Renombrar rama con prefijo correcto (`feature`, `fix`, o `chore`).
+**Solución:** Renombrar rama con uno de los prefijos válidos.
 
 ## Liberar Candado
 
