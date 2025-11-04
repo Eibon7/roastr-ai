@@ -15,8 +15,14 @@ const { authenticateToken } = require('../../src/middleware/auth');
 const creditsService = require('../../src/services/creditsService');
 
 // Mock dependencies
-jest.mock('../../src/middleware/auth');
-jest.mock('../../src/services/creditsService');
+jest.mock('../../src/middleware/auth', () => ({
+  authenticateToken: jest.fn((req, res, next) => next())
+}));
+jest.mock('../../src/services/creditsService', () => ({
+  getCreditStatus: jest.fn(),
+  getConsumptionHistory: jest.fn(),
+  canConsume: jest.fn()
+}));
 jest.mock('../../src/utils/logger', () => ({
   logger: {
     info: jest.fn(),

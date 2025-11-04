@@ -27,8 +27,8 @@ describe('Connection Limits by Tier - Issue #366', () => {
             allowed: currentConnections < maxConnections,
             currentConnections,
             maxConnections,
-            message: currentConnections >= maxConnections 
-                ? `Plan ${userPlan} permite máximo ${maxConnections} conexión${maxConnections > 1 ? 'es' : ''}. Actualiza tu plan para conectar más plataformas.`
+            message: currentConnections >= maxConnections
+                ? `Plan ${userPlan} permite máximo ${maxConnections} ${maxConnections === 1 ? 'conexión' : 'conexiones'}. Actualiza tu plan para conectar más plataformas.`
                 : 'Connection allowed'
         };
     };

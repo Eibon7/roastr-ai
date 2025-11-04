@@ -7,10 +7,23 @@ const request = require('supertest');
 const express = require('express');
 
 // Mock dependencies
-jest.mock('../../../src/services/styleValidator');
+jest.mock('../../../src/services/styleValidator', () => ({
+    validateTone: jest.fn(),
+    validateComment: jest.fn(),
+    getToneCategory: jest.fn()
+}));
 jest.mock('../../../src/config/supabase');
-jest.mock('../../../src/services/planService');
-jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/services/planService', () => ({
+    getPlanFeatures: jest.fn()
+}));
+jest.mock('../../../src/utils/logger', () => ({
+    logger: {
+        debug: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn()
+    }
+}));
 
 const StyleValidator = require('../../../src/services/styleValidator');
 const { supabaseServiceClient } = require('../../../src/config/supabase');

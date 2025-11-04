@@ -184,8 +184,8 @@ describe('Plan Duration Configuration (Issue #125)', () => {
         price: 0,
         currency: 'eur',
         limits: {
-          roastsPerMonth: 100,
-          commentsPerMonth: 500,
+          roastsPerMonth: 10,  // Updated to match current Free plan limits
+          commentsPerMonth: 100,  // Updated to match current Free plan limits
           platformIntegrations: 1
         },
         features: {
