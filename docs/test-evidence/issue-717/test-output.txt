@@ -1,0 +1,191 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/unit/config/validationConstants-humor.test.js tests/unit/config/validationConstants-intensity.test.js tests/unit/services/roastPromptTemplate-tone.test.js
+
+PASS unit-tests tests/unit/config/validationConstants-humor.test.js
+  Humor Type Validation
+    VALIDATION_CONSTANTS.VALID_HUMOR_TYPES
+      ✓ should be frozen to prevent mutation (3 ms)
+      ✓ should contain exactly 5 humor types
+      ✓ should include all expected humor types
+      ✓ should be lowercase for consistency (1 ms)
+    normalizeHumorType()
+      valid humor types
+        ✓ should normalize case-insensitive input (2 ms)
+        ✓ should handle whitespace
+        ✓ should handle mixed case with whitespace
+      invalid humor types
+        ✓ should return null for invalid humor types
+        ✓ should return null for empty strings (1 ms)
+        ✓ should return null for null/undefined
+        ✓ should be type-safe for non-strings
+      performance
+        ✓ should complete in O(1) time (10 ms)
+    isValidHumorType()
+      valid humor types
+        ✓ should accept all valid humor types (1 ms)
+        ✓ should be case-insensitive
+        ✓ should handle whitespace
+      invalid humor types
+        ✓ should reject invalid humor types
+        ✓ should reject empty strings
+        ✓ should be type-safe for null/undefined
+        ✓ should be type-safe for non-strings
+    getValidHumorTypes()
+      ✓ should return array of valid humor types (1 ms)
+      ✓ should return all expected types
+      ✓ should return frozen array
+      ✓ should return same reference on multiple calls
+    Integration with defaults
+      ✓ DEFAULT HUMOR_TYPE should be valid
+      ✓ DEFAULT HUMOR_TYPE should be witty
+    Edge cases and security
+      ✓ should handle very long strings
+      ✓ should handle special characters
+      ✓ should handle unicode characters
+      ✓ should handle SQL injection attempts
+
+PASS unit-tests tests/unit/services/roastPromptTemplate-tone.test.js
+  RoastPromptTemplate - Tone Mapping Integration
+    mapUserTone() - Basic functionality
+      ✓ should return default tone for empty config (4 ms)
+      ✓ should map valid tone from config
+      ✓ should handle invalid tone by falling back to default
+      ✓ should handle null tone by falling back to default (1 ms)
+    mapUserTone() - Tone variations
+      ✓ should map sarcastic tone (2 ms)
+      ✓ should map ironic tone
+      ✓ should map absurd tone
+      ✓ should map witty tone (1 ms)
+      ✓ should map clever tone
+      ✓ should map playful tone
+    mapUserTone() - Humor type modifiers
+      ✓ should add witty humor modifier
+      ✓ should add clever humor modifier (1 ms)
+      ✓ should add playful humor modifier (4 ms)
+      ✓ should handle invalid humor_type gracefully
+      ✓ should handle null humor_type gracefully
+    mapUserTone() - Tone + Humor combinations (matrix)
+      ✓ should combine sarcastic + witty
+      ✓ should combine sarcastic + clever
+      ✓ should combine sarcastic + playful (1 ms)
+      ✓ should combine ironic + witty
+      ✓ should combine ironic + clever
+      ✓ should combine ironic + playful
+      ✓ should combine absurd + witty
+      ✓ should combine absurd + clever
+      ✓ should combine absurd + playful
+      ✓ should combine witty + witty
+      ✓ should combine witty + clever
+      ✓ should combine witty + playful
+      ✓ should combine clever + witty
+      ✓ should combine clever + clever
+      ✓ should combine clever + playful
+      ✓ should combine playful + witty
+      ✓ should combine playful + clever (1 ms)
+      ✓ should combine playful + playful
+    mapUserTone() - Intensity level modifiers
+      low intensity (1-2)
+        ✓ should add "suave y amigable" for level 1
+        ✓ should add "suave y amigable" for level 2
+      medium intensity (3)
+        ✓ should NOT add intensity modifier for level 3
+      high intensity (4-5)
+        ✓ should add "directo y sin filtros" for level 4
+        ✓ should add "directo y sin filtros" for level 5
+      invalid intensity
+        ✓ should handle intensity 0 gracefully (1 ms)
+        ✓ should handle intensity 6 gracefully
+        ✓ should handle null intensity gracefully
+    mapUserTone() - Full combinations
+      ✓ should combine tone + humor + low intensity
+      ✓ should combine tone + humor + high intensity
+      ✓ should combine tone + humor + medium intensity (no modifier)
+      ✓ should handle all fields null/undefined
+    mapUserTone() - Custom style prompt
+      ✓ should append custom style prompt if provided
+      ✓ should handle custom style with humor_type (1 ms)
+      ✓ should handle custom style with intensity
+      ✓ should handle empty custom style prompt (1 ms)
+      ✓ should handle null custom style prompt
+    mapUserTone() - Edge cases
+      ✓ should handle config with extra unexpected fields
+      ✓ should handle config with all fields present
+      ✓ should produce deterministic output for same config
+    mapUserTone() - Security
+      ✓ should handle custom_style_prompt with special characters
+      ✓ should handle very long custom_style_prompt (1 ms)
+      ✓ should handle SQL injection attempt in custom_style_prompt
+    mapUserTone() - Type safety
+      ✓ should handle numeric tone value
+      ✓ should handle boolean tone value
+      ✓ should handle object tone value
+      ✓ should handle string intensity_level
+    mapUserTone() - Performance
+      ✓ should complete 1000 mappings quickly
+
+PASS unit-tests tests/unit/config/validationConstants-intensity.test.js
+  Intensity Level Validation
+    VALIDATION_CONSTANTS intensity range
+      ✓ MIN_INTENSITY should be 1 (3 ms)
+      ✓ MAX_INTENSITY should be 5
+      ✓ DEFAULT INTENSITY should be within valid range
+      ✓ DEFAULT INTENSITY should be 3
+    normalizeIntensity()
+      valid intensities
+        ✓ should accept integers 1-5 (1 ms)
+        ✓ should convert string numbers to integers
+        ✓ should handle string numbers with whitespace
+      invalid intensities
+        ✓ should return null for out-of-range values (1 ms)
+        ✓ should return null for decimal values (1 ms)
+        ✓ should return null for null/undefined
+        ✓ should return null for non-numeric values
+        ✓ should return null for empty strings
+      boundary conditions
+        ✓ should accept exactly MIN_INTENSITY (1)
+        ✓ should accept exactly MAX_INTENSITY (5) (5 ms)
+        ✓ should reject MIN_INTENSITY - 1 (0)
+        ✓ should reject MAX_INTENSITY + 1 (6)
+    isValidIntensity()
+      valid intensities
+        ✓ should accept integers 1-5 (1 ms)
+        ✓ should accept string numbers
+        ✓ should handle whitespace in string numbers
+      invalid intensities
+        ✓ should reject out-of-range values (1 ms)
+        ✓ should reject decimal values
+        ✓ should reject non-numeric values
+    getIntensityDescription()
+      low intensity (1-2)
+        ✓ should return "suave y amigable" for level 1
+        ✓ should return "suave y amigable" for level 2
+      medium intensity (3)
+        ✓ should return empty string for level 3 (default)
+      high intensity (4-5)
+        ✓ should return "directo y sin filtros" for level 4
+        ✓ should return "directo y sin filtros" for level 5 (1 ms)
+      edge cases
+        ✓ should handle invalid levels gracefully
+        ✓ should handle string numbers
+    getIntensityRange()
+      ✓ should return min and max intensity
+      ✓ should return correct range values
+      ✓ should return frozen object
+    Integration tests
+      ✓ all levels should map to valid descriptions (1 ms)
+      ✓ normalization should be consistent with validation (1 ms)
+    Edge cases and security
+      ✓ should handle very large numbers
+      ✓ should handle Infinity
+      ✓ should handle NaN
+      ✓ should handle scientific notation
+      ✓ should handle string injection attempts
+    Performance
+      ✓ should complete validations in O(1) time (23 ms)
+
+Test Suites: 3 passed, 3 total
+Tests:       130 passed, 130 total
+Snapshots:   0 total
+Time:        0.991 s, estimated 13 s
+Ran all test suites matching tests/unit/config/validationConstants-humor.test.js|tests/unit/config/validationConstants-intensity.test.js|tests/unit/services/roastPromptTemplate-tone.test.js.

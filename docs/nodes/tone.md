@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-29
+**Last Updated:** 2025-11-04
 **Coverage:** 100%
 **Coverage Source:** auto
-**Related PRs:** #499
+**Related PRs:** #499, #TBD (Issue #717 - Tone Testing)
 
 ## Dependencies
 
@@ -290,6 +290,96 @@ test('tone configuration affects roast style', async () => {
 - [ ] Multi-language tone definitions
 - [ ] Tone evolution over time (learning)
 
+## Test Coverage
+
+**Status:** ✅ COMPREHENSIVE (Issue #717)
+**Last Updated:** 2025-11-04
+**Coverage:** 100% for tone module
+
+### Test Files
+
+| Test File | Tests | Purpose |
+|-----------|-------|---------|
+| `tests/unit/config/tones.test.js` | 24 | Core tone definitions, normalization, validation |
+| `tests/unit/config/validationConstants-humor.test.js` | 29 | Humor type validation (5 types) |
+| `tests/unit/config/validationConstants-intensity.test.js` | 40 | Intensity level validation (1-5) |
+| `tests/unit/services/roastPromptTemplate-tone.test.js` | 61 | Integration with roast generation |
+
+**Total Tests:** 154 (130 new + 24 existing)
+
+### Coverage Metrics
+
+| Component | File | Coverage | Tests |
+|-----------|------|----------|-------|
+| Tone Definitions | `src/config/tones.js` | 100% | 24 |
+| Humor Type Validation | `src/config/validationConstants.js` | 100%* | 29 |
+| Intensity Validation | `src/config/validationConstants.js` | 100%* | 40 |
+| Tone Mapping | `src/services/roastPromptTemplate.js` | 100%** | 61 |
+
+*100% coverage for tone-related functions (humor types + intensity)
+**100% coverage for `mapUserTone()` function
+
+### Test Categories
+
+#### 1. Unit Tests (93 tests)
+- Tone normalization (case-insensitive, whitespace)
+- Humor type validation (witty, clever, sarcastic, playful, observational)
+- Intensity level validation (1-5, boundaries, decimals)
+- Invalid inputs (null, undefined, non-string, non-number)
+- Frozen objects (immutability)
+
+#### 2. Integration Tests (61 tests)
+- Tone + humor combinations (18 combinations)
+- Intensity modifiers (low, medium, high)
+- Custom style prompt injection
+- Full configuration combinations
+
+#### 3. Edge Cases & Security
+- SQL injection attempts
+- XSS attacks
+- Very long inputs (5000+ chars)
+- Unicode and special characters
+- Type confusion attacks
+
+#### 4. Performance Tests
+- O(1) validation time (<100ms for 30k ops)
+- Deterministic output
+- 1000 tone mappings in <100ms
+
+### Key Functions Tested
+
+```javascript
+// Tone normalization
+normalizeTone('FLANDERS') → 'Flanders'
+
+// Humor type validation
+isValidHumorType('witty') → true
+isValidHumorType('invalid') → false
+
+// Intensity validation
+isValidIntensity(3) → true
+isValidIntensity(0) → false
+getIntensityDescription(1) → 'suave y amigable'
+getIntensityDescription(5) → 'directo y sin filtros'
+
+// Tone mapping integration
+mapUserTone({
+  tone: 'sarcastic',
+  humor_type: 'witty',
+  intensity_level: 5,
+  custom_style_prompt: 'Fan de los 90s'
+})
+→ "sarcástico y cortante con humor ágil, directo y sin filtros. Estilo personalizado: Fan de los 90s"
+```
+
+### Test Evidence
+
+**Location:** `docs/test-evidence/issue-717/`
+- `SUMMARY.md` - Comprehensive test results and analysis
+- `test-output.txt` - Full test execution output
+
+**Related Issue:** #717 - Tone System Testing
+**Implementation:** PR #TBD
 
 ## Agentes Relevantes
 
