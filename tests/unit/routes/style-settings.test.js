@@ -14,11 +14,17 @@ jest.mock('../../../src/middleware/auth', () => ({
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
-  logger: { 
-    info: jest.fn(), 
-    error: jest.fn(), 
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn()
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
   },
   SafeUtils: {
     safeUserIdPrefix: jest.fn(id => id?.substring(0, 8) + '...' || 'unknown')
