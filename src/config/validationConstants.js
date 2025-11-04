@@ -150,6 +150,139 @@ function getValidStylesForLanguage(language = 'es') {
     return VALIDATION_CONSTANTS.VALID_STYLES[normalizedLanguage] || VALIDATION_CONSTANTS.VALID_STYLES.es;
 }
 
+/**
+ * Normalize humor type to lowercase for validation
+ * Issue #717 - Humor type validation
+ * @param {string} humorType - Input humor type (any case, may have whitespace)
+ * @returns {string|null} - Normalized humor type or null if invalid
+ */
+function normalizeHumorType(humorType) {
+    if (!humorType || typeof humorType !== 'string') {
+        return null;
+    }
+
+    const normalized = humorType.trim().toLowerCase();
+
+    if (!normalized) {
+        return null;
+    }
+
+    // Check if normalized value is in valid humor types
+    return VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.includes(normalized) ? normalized : null;
+}
+
+/**
+ * Validate if a humor type is valid
+ * Issue #717 - Humor type validation
+ * @param {string} humorType - Humor type to validate
+ * @returns {boolean}
+ */
+function isValidHumorType(humorType) {
+    return normalizeHumorType(humorType) !== null;
+}
+
+/**
+ * Get array of valid humor types
+ * Issue #717 - Humor type validation
+ * @returns {Array<string>} - Frozen array of valid humor types
+ */
+function getValidHumorTypes() {
+    return VALIDATION_CONSTANTS.VALID_HUMOR_TYPES;
+}
+
+/**
+ * Normalize intensity level to integer within valid range
+ * Issue #717 - Intensity level validation
+ * @param {number|string} intensity - Input intensity (1-5)
+ * @returns {number|null} - Normalized intensity or null if invalid
+ */
+function normalizeIntensity(intensity) {
+    if (intensity === null || intensity === undefined) {
+        return null;
+    }
+
+    // Convert string to number
+    let normalized;
+    if (typeof intensity === 'string') {
+        const trimmed = intensity.trim();
+        if (!trimmed) {
+            return null;
+        }
+        normalized = Number(trimmed);
+    } else if (typeof intensity === 'number') {
+        normalized = intensity;
+    } else {
+        return null;
+    }
+
+    // Check if valid number (not NaN, not Infinity)
+    if (!Number.isFinite(normalized)) {
+        return null;
+    }
+
+    // Check if integer (no decimals)
+    if (!Number.isInteger(normalized)) {
+        return null;
+    }
+
+    // Check if within valid range
+    if (normalized < VALIDATION_CONSTANTS.MIN_INTENSITY || normalized > VALIDATION_CONSTANTS.MAX_INTENSITY) {
+        return null;
+    }
+
+    return normalized;
+}
+
+/**
+ * Validate if an intensity level is valid
+ * Issue #717 - Intensity level validation
+ * @param {number|string} intensity - Intensity to validate
+ * @returns {boolean}
+ */
+function isValidIntensity(intensity) {
+    return normalizeIntensity(intensity) !== null;
+}
+
+/**
+ * Get description for intensity level
+ * Issue #717 - Intensity level validation
+ * Maps intensity to descriptive text for roast generation
+ * @param {number|string} intensity - Intensity level (1-5)
+ * @returns {string} - Description text or empty string
+ */
+function getIntensityDescription(intensity) {
+    const normalized = normalizeIntensity(intensity);
+
+    if (normalized === null) {
+        return '';
+    }
+
+    // Low intensity (1-2): gentle
+    if (normalized <= 2) {
+        return 'suave y amigable';
+    }
+
+    // High intensity (4-5): aggressive
+    if (normalized >= 4) {
+        return 'directo y sin filtros';
+    }
+
+    // Medium intensity (3): no modifier
+    return '';
+}
+
+/**
+ * Get intensity range as frozen object
+ * Issue #717 - Intensity level validation
+ * @returns {Object} - Frozen object with min and max intensity
+ */
+function getIntensityRange() {
+    return Object.freeze({
+        min: VALIDATION_CONSTANTS.MIN_INTENSITY,
+        max: VALIDATION_CONSTANTS.MAX_INTENSITY
+    });
+}
+
 module.exports = {
     VALIDATION_CONSTANTS,
     normalizeStyle,
@@ -158,5 +291,12 @@ module.exports = {
     isValidStyle,
     isValidLanguage,
     isValidPlatform,
-    getValidStylesForLanguage
+    getValidStylesForLanguage,
+    normalizeHumorType,
+    isValidHumorType,
+    getValidHumorTypes,
+    normalizeIntensity,
+    isValidIntensity,
+    getIntensityDescription,
+    getIntensityRange
 };

@@ -1,0 +1,4 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/unit/config/tones.test.js tests/unit/config/validationConstants-humor.test.js tests/unit/config/validationConstants-intensity.test.js tests/unit/services/roastPromptTemplate-tone.test.js
+
