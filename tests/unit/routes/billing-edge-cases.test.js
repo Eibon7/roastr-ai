@@ -52,7 +52,20 @@ const mockAuthenticateToken = jest.fn((req, res, next) => {
 });
 jest.mock('../../../src/middleware/auth', () => ({ authenticateToken: mockAuthenticateToken }));
 
-jest.mock('../../../src/utils/logger', () => ({ logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn() } }));
+jest.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
+  }
+}));
 jest.mock('../../../src/config/flags');
 
 describe('Billing Webhook Edge Cases', () => {

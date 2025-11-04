@@ -33,9 +33,16 @@ const mockFlags = {
 };
 
 const mockLogger = {
-  error: jest.fn(),
   info: jest.fn(),
-  warn: jest.fn()
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  child: jest.fn(() => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  }))
 };
 
 const mockAuthenticateToken = jest.fn((req, res, next) => {

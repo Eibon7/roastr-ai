@@ -34,7 +34,14 @@ const mockFlags = {
 const mockLogger = {
   info: jest.fn(),
   error: jest.fn(),
-  warn: jest.fn()
+  warn: jest.fn(),
+  debug: jest.fn(),
+  child: jest.fn(() => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  }))
 };
 
 // Mock modules

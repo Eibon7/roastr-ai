@@ -2,11 +2,24 @@
  * Tests unitarios para middleware requirePlan
  */
 
-const { requirePlan, requirePlatformLimit, checkRoastLimit, PLAN_LIMITS, PLAN_HIERARCHY } = require('../../../src/middleware/requirePlan');
-
 // Mock dependencies
 jest.mock('../../../src/config/supabase');
-jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
+  }
+}));
+
+const { requirePlan, requirePlatformLimit, checkRoastLimit, PLAN_LIMITS, PLAN_HIERARCHY } = require('../../../src/middleware/requirePlan');
 
 describe('requirePlan Middleware Tests', () => {
     let mockReq, mockRes, mockNext;

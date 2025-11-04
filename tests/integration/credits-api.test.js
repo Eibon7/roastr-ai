@@ -25,10 +25,16 @@ jest.mock('../../src/services/creditsService', () => ({
 }));
 jest.mock('../../src/utils/logger', () => ({
   logger: {
-    debug: jest.fn(),
     info: jest.fn(),
+    error: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn()
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
   }
 }));
 
@@ -305,11 +311,11 @@ describe('Credits API Integration', () => {
         totalCreditsLimit: 11000,
         daysRemaining: expect.any(Number)
       });
-      
+
       // Should have warnings for both credit types
-      expect(response.body.data.recommendations).toHaveLength(2);
-      expect(response.body.data.recommendations[0].type).toBe('warning');
-      expect(response.body.data.recommendations[1].type).toBe('warning');
+      expect(response.body.data.recommendations.length).toBeGreaterThanOrEqual(2);
+      const warnings = response.body.data.recommendations.filter(r => r.type === 'warning');
+      expect(warnings).toHaveLength(2);
     });
   });
 

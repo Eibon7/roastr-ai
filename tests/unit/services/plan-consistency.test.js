@@ -10,7 +10,7 @@ describe('Plan Consistency Tests (Issue #110)', () => {
     describe('Integration limits consistency', () => {
         it('should have matching integration limits between planService and planValidation', () => {
             // Test all standard plans
-            const standardPlans = ['free', 'pro', 'creator_plus', 'custom'];
+            const standardPlans = ['free', 'pro', 'plus', 'custom'];
             
             standardPlans.forEach(planId => {
                 const planFeatures = getPlanFeatures(planId);
@@ -39,9 +39,9 @@ describe('Plan Consistency Tests (Issue #110)', () => {
         });
 
         it('should enforce business rule: Creator+ plan has exactly 2 integrations', () => {
-            const creatorPlan = getPlanFeatures('creator_plus');
-            const creatorValidationLimit = getMaxIntegrations('creator_plus');
-            
+            const creatorPlan = getPlanFeatures('plus');
+            const creatorValidationLimit = getMaxIntegrations('plus');
+
             expect(creatorPlan.limits.platformIntegrations).toBe(2);
             expect(creatorValidationLimit).toBe(2);
         });
@@ -58,8 +58,8 @@ describe('Plan Consistency Tests (Issue #110)', () => {
     describe('Plan tier consistency', () => {
         it('should have consistent plan tier ordering', () => {
             expect(getPlanTier('free')).toBeLessThan(getPlanTier('pro'));
-            expect(getPlanTier('pro')).toBeLessThan(getPlanTier('creator_plus'));
-            expect(getPlanTier('creator_plus')).toBeLessThan(getPlanTier('custom'));
+            expect(getPlanTier('pro')).toBeLessThan(getPlanTier('plus'));
+            expect(getPlanTier('plus')).toBeLessThan(getPlanTier('custom'));
         });
     });
 
@@ -91,7 +91,7 @@ describe('Plan Consistency Tests (Issue #110)', () => {
     describe('Business policy validation', () => {
         it('should not allow agency-style usage on any plan (max 2 integrations)', () => {
             // Business rule: No plan should support agencies managing multiple client accounts
-            const allPlans = ['free', 'pro', 'creator_plus', 'custom'];
+            const allPlans = ['free', 'pro', 'plus', 'custom'];
             
             allPlans.forEach(planId => {
                 const plan = getPlanFeatures(planId);
@@ -163,8 +163,8 @@ describe('Plan Consistency Tests (Issue #110)', () => {
             };
             
             // Should be blocked for any downgrade
-            const resultToFree = await isChangeAllowed('creator_plus', 'free', currentUsage);
-            const resultToPro = await isChangeAllowed('creator_plus', 'pro', currentUsage);
+            const resultToFree = await isChangeAllowed('plus', 'free', currentUsage);
+            const resultToPro = await isChangeAllowed('plus', 'pro', currentUsage);
             
             expect(resultToFree.allowed).toBe(false);
             expect(resultToFree.reason).toContain('integrations');
@@ -177,10 +177,10 @@ describe('Plan Consistency Tests (Issue #110)', () => {
             const { isChangeAllowed, getMaxIntegrations } = require('../../../src/services/planValidation');
             
             const testCases = [
-                { from: 'creator_plus', to: 'pro', integrations: 3, shouldBlock: true },
-                { from: 'creator_plus', to: 'pro', integrations: 2, shouldBlock: false },
-                { from: 'creator_plus', to: 'free', integrations: 2, shouldBlock: true },
-                { from: 'creator_plus', to: 'free', integrations: 1, shouldBlock: false },
+                { from: 'plus', to: 'pro', integrations: 3, shouldBlock: true },
+                { from: 'plus', to: 'pro', integrations: 2, shouldBlock: false },
+                { from: 'plus', to: 'free', integrations: 2, shouldBlock: true },
+                { from: 'plus', to: 'free', integrations: 1, shouldBlock: false },
                 { from: 'pro', to: 'free', integrations: 2, shouldBlock: true },
                 { from: 'pro', to: 'free', integrations: 1, shouldBlock: false },
             ];

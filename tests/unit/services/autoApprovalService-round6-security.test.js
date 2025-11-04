@@ -15,7 +15,20 @@ const { jest } = require('@jest/globals');
 
 // Mock external dependencies
 jest.mock('../../../src/config/supabase');
-jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
+  }
+}));
 jest.mock('../../../src/services/transparencyService');
 jest.mock('../../../src/services/planLimitsService');
 

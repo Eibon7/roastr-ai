@@ -613,6 +613,133 @@ constructor() {
 
 ---
 
+### 11. Supabase Mock Pattern (HIGH PRIORITY)
+
+**Pattern:** Tests attempt to reassign mock properties in `beforeEach()` after module resolution, causing "supabaseServiceClient.from is not a function" errors.
+
+**Error signature:**
+```
+TypeError: supabaseServiceClient.from is not a function
+```
+
+**Root Cause:** Jest mocks are frozen at module resolution time. When tests do:
+
+```javascript
+jest.mock('../../src/config/supabase');  // Creates empty mock {}
+
+beforeEach(() => {
+  supabaseServiceClient.from = jest.fn().mockReturnValue({...});
+  // ← This reassignment fails silently - import reference already frozen
+});
+```
+
+**❌ BROKEN Pattern:**
+```javascript
+// tests/unit/workers/ShieldActionWorker.test.js (BEFORE FIX)
+
+// Step 1: Create empty mock shell
+jest.mock('../../../src/config/database');
+
+// Step 2: Try to configure in beforeEach (TOO LATE)
+beforeEach(() => {
+  supabaseServiceClient.from = jest.fn().mockReturnValue({
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ data: null, error: null })
+    })
+  });
+});
+```
+
+**✅ CORRECT Pattern:**
+```javascript
+// Create mock BEFORE jest.mock() call
+const mockSupabase = {
+  from: jest.fn((tableName) => ({
+    select: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        single: jest.fn(() => Promise.resolve({
+          data: { id: '123', plan: 'pro' },
+          error: null
+        }))
+      }))
+    })),
+    insert: jest.fn(() => ({...})),
+    update: jest.fn(() => ({...}))
+  })),
+  rpc: jest.fn((functionName) => {
+    if (functionName === 'get_subscription_tier') {
+      return Promise.resolve({ data: 'PRO', error: null });
+    }
+    return Promise.resolve({ data: null, error: null });
+  })
+};
+
+// Reference pre-created mock in jest.mock()
+jest.mock('../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
+```
+
+**Even Better: Use Factory Helper:**
+```javascript
+const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
+
+// Step 1: Create mock with defaults
+const mockSupabase = createSupabaseMock({
+  user_subscriptions: { plan: 'pro', status: 'active' },
+  roast_usage: { count: 15 }
+}, {
+  get_subscription_tier: { data: 'PRO', error: null }
+});
+
+// Step 2: Reference in jest.mock()
+jest.mock('../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
+
+// Step 3: Customize per-test in beforeEach (safe, uses helper methods)
+beforeEach(() => {
+  mockSupabase._reset();
+  mockSupabase._setTableData('user_subscriptions', {
+    plan: 'creator',
+    status: 'active'
+  });
+});
+```
+
+**Rules to apply:**
+- **ALWAYS** create mocks BEFORE `jest.mock()` calls
+- **NEVER** reassign mock properties in `beforeEach()` - reference is frozen
+- **USE** `tests/helpers/supabaseMockFactory.js` for consistent mocking
+- **COPY** template from `tests/templates/service.test.template.js`
+- Mock logger to prevent winston issues: `jest.mock('../../src/utils/logger', () => ({...}))`
+- Verify mock calls in assertions: `expect(mockSupabase.from).toHaveBeenCalledWith('table_name')`
+
+**Affected Files (8 files, 75 errors):**
+- `tests/unit/workers/ShieldActionWorker.test.js` (19 errors)
+- `tests/unit/workers/FetchCommentsWorker.test.js` (15 errors)
+- `tests/unit/workers/AnalyzeToxicityWorker.test.js` (6 errors)
+- `tests/unit/services/referralService.test.js` (13 errors)
+- `tests/unit/services/usageService.test.js` (10 errors)
+- `tests/unit/services/shieldService.test.js` (8 errors)
+- `tests/unit/services/commentService.test.js` (2 errors)
+- `tests/unit/services/tokenRefreshService.test.js` (2 errors)
+
+**Reference Implementation:**
+- Working example: `tests/integration/roast.test.js` (lines 59-108)
+- Factory helper: `tests/helpers/supabaseMockFactory.js`
+- Test template: `tests/templates/service.test.template.js`
+
+**Related patterns:**
+- Jest Integration Tests (#9) - Module-level mock timing
+- Testing Patterns (#2) - Comprehensive test coverage + mock verification
+
+**Impact:** Fixing this pattern resolves 8 test suites with -8 failing suites improvement.
+
+**Related:** Issue #480 Week 3 Day 2 - Supabase Mock Pattern Investigation
+
+---
+
 ## 📚 Related Documentation
 
 - [Quality Standards](../QUALITY-STANDARDS.md) - Non-negotiable requirements for merge
@@ -624,5 +751,5 @@ constructor() {
 
 **Maintained by:** Orchestrator
 **Review Frequency:** Weekly or after significant reviews
-**Last Reviewed:** 2025-10-20
-**Version:** 1.4.0 (Added pattern #10: fs-extra + logger imports)
+**Last Reviewed:** 2025-11-02
+**Version:** 1.5.0 (Added pattern #11: Supabase Mock Pattern - HIGH PRIORITY)

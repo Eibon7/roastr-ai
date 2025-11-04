@@ -7,7 +7,20 @@ const tierValidationMonitoringService = require('../../../src/services/tierValid
 const { logger } = require('../../../src/utils/logger');
 
 // Mock dependencies
-jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/utils/logger', () => ({
+    logger: {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+        child: jest.fn(() => ({
+            info: jest.fn(),
+            error: jest.fn(),
+            warn: jest.fn(),
+            debug: jest.fn()
+        }))
+    }
+}));
 
 describe('TierValidationMonitoringService - Issue #396', () => {
     beforeEach(() => {

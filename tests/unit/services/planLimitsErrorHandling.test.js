@@ -11,7 +11,20 @@ const { logger } = require('../../../src/utils/logger');
 // Mock dependencies
 jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/services/planService');
-jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/utils/logger', () => ({
+    logger: {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+        child: jest.fn(() => ({
+            info: jest.fn(),
+            error: jest.fn(),
+            warn: jest.fn(),
+            debug: jest.fn()
+        }))
+    }
+}));
 
 describe('Plan Limits Error Handling (Issue #125)', () => {
   const mockUserId = 'test-user-123';

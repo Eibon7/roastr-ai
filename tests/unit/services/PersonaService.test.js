@@ -21,7 +21,20 @@ const crypto = require('crypto');
 
 // Mock dependencies
 jest.mock('../../../src/services/embeddingsService');
-jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
+  }
+}));
 
 describe('PersonaService', () => {
   // Setup encryption key for tests
