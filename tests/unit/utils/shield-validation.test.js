@@ -17,7 +17,18 @@ jest.mock('../../../src/config/flags', () => ({
   flags: { isEnabled: jest.fn() }
 }));
 jest.mock('../../../src/utils/logger', () => ({
-  logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() }
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
+  }
 }));
 jest.mock('../../../src/middleware/auth', () => ({
   authenticateToken: jest.fn()
