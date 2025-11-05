@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pago completado — Roastr</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d10;
+  --panel: #18181e;
+  --text: #f9f9fb;
+  --muted: #a6a6b3;
+  --accent: #8b5cf6;
+  --accent-2: #a78bfa;
+  --success: #3bd671;
+  --radius: 18px;
+  --shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(800px 500px at 10% 0%, rgba(139,92,246,.1), transparent 70%), var(--bg);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
+
+.card {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 40px 50px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,0.1);
+  animation: fadeIn 0.6s ease forwards;
+  max-width: 500px;
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.check {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 0 20px rgba(139,92,246,0.4);
+  animation: scaleIn 0.5s ease 0.2s forwards;
+  transform: scale(0);
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.check svg {
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  stroke-width: 3;
+}
+
+h1 {
+  margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+p {
+  color: var(--muted);
+  font-size: 15px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.checkout-id {
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+.checkout-id-label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.checkout-id-value {
+  color: var(--accent-2);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+button, .button {
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+button:hover, .button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(139,92,246,0.3);
+}
+
+button:active, .button:active {
+  transform: translateY(0);
+}
+
+.button-secondary {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.button-secondary:hover {
+  background: rgba(255,255,255,0.08);
+  filter: none;
+}
+
+.info-box {
+  background: rgba(59,214,113,0.1);
+  border: 1px solid rgba(59,214,113,0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.info-box-title {
+  color: var(--success);
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 32px 24px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  button, .button {
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="check">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  </div>
+
+  <h1>¡Pago completado!</h1>
+  <p>Tu suscripción está activa. ¡Bienvenido a Roastr!</p>
+
+  <!-- Checkout ID (si está presente en la URL) -->
+  <div id="checkout-id-container" class="checkout-id" style="display: none;">
+    <div class="checkout-id-label">ID de transacción</div>
+    <div class="checkout-id-value" id="checkout-id"></div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="window.location.href='/dashboard'">Ir al panel</button>
+    <a href="/billing" class="button button-secondary">Ver suscripción</a>
+  </div>
+
+  <div class="info-box">
+    <div class="info-box-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      Todo listo
+    </div>
+    <p style="margin: 0;">
+      Hemos enviado un email de confirmación a tu correo.<br>
+      Ya puedes disfrutar de todas las funciones premium.
+    </p>
+  </div>
+</div>
+
+<script>
+// Extraer checkout_id de la URL si está presente
+(function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const checkoutId = urlParams.get('checkout_id');
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('✅ Página de éxito cargada');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  if (checkoutId) {
+    console.log('🆔 Checkout ID:', checkoutId);
+
+    // Mostrar el ID en la página
+    const container = document.getElementById('checkout-id-container');
+    const idElement = document.getElementById('checkout-id');
+
+    if (container && idElement) {
+      idElement.textContent = checkoutId;
+      container.style.display = 'block';
+    }
+
+    // Opcionalmente, enviar evento de conversión a analytics
+    if (window.gtag) {
+      window.gtag('event', 'purchase', {
+        checkout_id: checkoutId,
+        timestamp: new Date().toISOString()
+      });
+      console.log('📊 Evento de conversión enviado a Analytics');
+    }
+
+    // Opcionalmente, notificar al backend que el usuario completó el pago
+    // (el webhook ya maneja esto, pero puedes usarlo como backup)
+    console.log('💡 El webhook de Polar ya notificó al backend');
+    console.log('   No es necesario hacer otra petición aquí');
+  } else {
+    console.warn('⚠️  No se encontró checkout_id en la URL');
+    console.log('   URL esperada: /success?checkout_id=xxxxx');
+  }
+
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+})();
+</script>
+
+</body>
+</html>

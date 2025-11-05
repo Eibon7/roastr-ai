@@ -69,6 +69,8 @@ const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
 const personaRoutes = require('./routes/persona');
+const checkoutRoutes = require('./routes/checkout');
+const polarWebhookRoutes = require('./routes/polarWebhook');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -184,7 +186,10 @@ app.use('/api', generalRateLimit);
 // Stripe webhook endpoint (needs raw body, before JSON parsing)
 app.use('/webhooks/stripe', billingRoutes);
 
-// Middleware para parsear JSON (after webhook to preserve raw body)
+// Polar webhook endpoint (needs raw body for HMAC verification, before JSON parsing)
+app.use('/api/polar/webhook', express.raw({ type: 'application/json' }), polarWebhookRoutes);
+
+// Middleware para parsear JSON (after webhooks to preserve raw body)
 app.use(bodyParser.json());
 
 // Apply auth-specific rate limiting
@@ -299,6 +304,12 @@ app.use('/api/triage', triageRoutes);
 
 // Persona routes (for Issue #595) - authenticated access
 app.use(personaRoutes);
+
+// Polar checkout routes - public access (handles its own auth)
+app.use('/api', checkoutRoutes);
+
+// Polar webhook routes - mounted earlier (line 190) before JSON parser to preserve raw body
+// See: CRITICAL fix for HMAC signature verification
 
 // Monitoring routes (authenticated) - Issue #396
 const monitoringRoutes = require('./routes/monitoring');
