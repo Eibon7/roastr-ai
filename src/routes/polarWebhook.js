@@ -35,11 +35,25 @@ function verifyWebhookSignature(payload, signature, secret) {
     return true; // Allow in development, but log warning
   }
 
+  if (!signature) {
+    logger.error('[Polar Webhook] Missing signature header');
+    return false;
+  }
+
   try {
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(payload)
       .digest('hex');
+
+    // Ensure buffers are same length before comparison to prevent crash
+    if (signature.length !== expectedSignature.length) {
+      logger.error('[Polar Webhook] Signature length mismatch', {
+        received: signature.length,
+        expected: expectedSignature.length
+      });
+      return false;
+    }
 
     return crypto.timingSafeEqual(
       Buffer.from(signature),
