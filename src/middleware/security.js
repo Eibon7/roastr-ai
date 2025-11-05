@@ -25,7 +25,9 @@ const helmetConfig = helmet({
       connectSrc: ["'self'", "https://api.stripe.com", "https://api.polar.sh", "https://polar.sh", "wss:"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
-      baseUri: ["'self'"]
+      baseUri: ["'self'"],
+      // Disable upgrade-insecure-requests in development to allow HTTP localhost
+      ...(process.env.NODE_ENV !== 'production' && { upgradeInsecureRequests: null })
     }
   },
   hsts: {

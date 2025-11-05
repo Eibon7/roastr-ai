@@ -465,6 +465,10 @@ async function startCheckout(planName) {
     const apiUrl = `http://${host}/api/checkout`;
     console.log('🔗 API URL:', apiUrl);
 
+    // Crear timeout para Safari (30 segundos)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -472,11 +476,22 @@ async function startCheckout(planName) {
         'Accept': 'application/json',
       },
       body: JSON.stringify(requestBody),
-      credentials: 'same-origin'
+      credentials: 'same-origin',
+      signal: controller.signal
     }).catch(err => {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        console.error('🚨 Request timeout (30s)');
+        throw new Error('Request timeout: El servidor tardó demasiado en responder');
+      }
       console.error('🚨 Fetch error (network):', err);
+      console.error('🚨 Error name:', err.name);
+      console.error('🚨 Error stack:', err.stack);
       throw new Error(`Network error: ${err.message}`);
     });
+
+    clearTimeout(timeoutId);
+    console.log('✅ Fetch completed successfully');
 
     console.log('📥 Response status:', response.status);
     console.log('📥 Response ok:', response.ok);

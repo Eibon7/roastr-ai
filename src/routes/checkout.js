@@ -19,6 +19,24 @@ const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN,
 });
 
+// Allowed Price IDs - only these can be used for checkout
+// This prevents authorization bypass where users could purchase arbitrary products
+const ALLOWED_PRICE_IDS = new Set(
+  (process.env.POLAR_ALLOWED_PRICE_IDS || '')
+    .split(',')
+    .map(id => id.trim())
+    .filter(Boolean)
+);
+
+// Log configuration status on startup
+if (ALLOWED_PRICE_IDS.size === 0) {
+  logger.warn('[Polar] POLAR_ALLOWED_PRICE_IDS not configured - price validation disabled (INSECURE!)');
+} else {
+  logger.info('[Polar] Price ID allowlist configured', {
+    allowedCount: ALLOWED_PRICE_IDS.size
+  });
+}
+
 /**
  * POST /api/checkout
  *
@@ -48,12 +66,37 @@ router.post('/checkout', async (req, res) => {
       });
     }
 
+    // Validate email format (M5 - CodeRabbit Review #3423197513)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customer_email)) {
+      logger.warn('[Polar] Invalid email format in checkout request', {
+        customer_email,
+      });
+      return res.status(400).json({
+        error: 'Invalid email',
+        message: 'Please provide a valid email address',
+      });
+    }
+
     // Validate environment variables
     if (!process.env.POLAR_ACCESS_TOKEN) {
       logger.error('[Polar] POLAR_ACCESS_TOKEN not configured');
       return res.status(500).json({
         error: 'Configuration error',
         message: 'Polar integration is not properly configured',
+      });
+    }
+
+    // Validate price_id against allowlist (Security: prevent authorization bypass)
+    if (ALLOWED_PRICE_IDS.size > 0 && !ALLOWED_PRICE_IDS.has(price_id)) {
+      logger.warn('[Polar] Rejected checkout with unauthorized price_id', {
+        price_id,
+        customer_email,
+        allowedCount: ALLOWED_PRICE_IDS.size
+      });
+      return res.status(400).json({
+        error: 'Invalid price_id',
+        message: 'The selected plan is not available for purchase.',
       });
     }
 
