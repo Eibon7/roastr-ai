@@ -22,6 +22,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const { sanitizePII } = require('../utils/piiSanitizer');
 const { supabaseServiceClient } = require('../config/supabase');
 const { getPlanFromPriceId } = require('../utils/polarHelpers');
 
@@ -73,10 +74,10 @@ function verifyWebhookSignature(payload, signature, secret) {
  * Handle checkout.created event
  */
 async function handleCheckoutCreated(event) {
-  logger.info('[Polar Webhook] Checkout created', {
+  logger.info('[Polar Webhook] Checkout created', sanitizePII({
     checkout_id: event.data.id,
     customer_email: event.data.customer_email,
-  });
+  }));
 
   // NOTE: No action needed for checkout.created
   // Wait for order.created event which confirms payment
@@ -97,13 +98,13 @@ async function handleOrderCreated(event) {
     currency
   } = event.data;
 
-  logger.info('[Polar Webhook] Processing order.created', {
+  logger.info('[Polar Webhook] Processing order.created', sanitizePII({
     order_id: orderId,
     customer_email,
     price_id: product_price_id,
     amount,
     currency,
-  });
+  }));
 
   try {
     // 1. Find user by email
@@ -114,10 +115,10 @@ async function handleOrderCreated(event) {
       .single();
 
     if (userError || !user) {
-      logger.error('[Polar Webhook] User not found', {
+      logger.error('[Polar Webhook] User not found', sanitizePII({
         customer_email,
         error: userError?.message
-      });
+      }));
       return;
     }
 
@@ -172,12 +173,12 @@ async function handleOrderCreated(event) {
     });
 
   } catch (error) {
-    logger.error('[Polar Webhook] ❌ Failed to process order.created', {
+    logger.error('[Polar Webhook] ❌ Failed to process order.created', sanitizePII({
       error: error.message,
       stack: error.stack,
       order_id: orderId,
       customer_email,
-    });
+    }));
     // Don't throw - webhook handler should not fail
   }
 }
