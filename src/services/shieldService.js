@@ -1,6 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const CostControlService = require('./costControl');
 const QueueService = require('./queueService');
+const levelConfigService = require('./levelConfigService'); // Issue #597: Import levelConfigService
 const { mockMode } = require('../config/mockMode');
 const logger = require('../utils/logger');
 
@@ -95,29 +96,87 @@ class ShieldService {
       reincidenceThreshold: this.options.reincidenceThreshold
     });
   }
-  
+
+  /**
+   * Apply shield level threshold adjustments (Issue #597)
+   * Lower shield levels (1-2) are more tolerant, higher levels (4-5) are stricter
+   *
+   * @param {Object} analysisResult - Original analysis result
+   * @param {number} shieldLevel - Shield level (1-5), defaults to 3
+   * @returns {Object} Adjusted analysis result
+   */
+  applyShieldLevelThreshold(analysisResult, shieldLevel = 3) {
+    try {
+      const levelConfig = levelConfigService.getShieldLevelConfig(shieldLevel);
+      const threshold = levelConfig.threshold;
+
+      // Clone the analysis result to avoid mutating original
+      const adjusted = { ...analysisResult };
+
+      // Adjust severity_level based on shield threshold
+      const toxicityScore = adjusted.toxicity_score || 0;
+
+      // Shield level determines what severity_level to assign
+      // More strict shields (lower thresholds) escalate severity more aggressively
+      if (toxicityScore >= threshold) {
+        // Content exceeds shield threshold - determine new severity
+        if (toxicityScore >= 0.95) {
+          adjusted.severity_level = 'critical';
+        } else if (toxicityScore >= 0.85) {
+          adjusted.severity_level = 'high';
+        } else if (toxicityScore >= threshold) {
+          // Between threshold and 0.85 - assign medium or high based on level
+          adjusted.severity_level = shieldLevel >= 4 ? 'high' : 'medium';
+        }
+      } else {
+        // Below threshold - low severity
+        adjusted.severity_level = 'low';
+      }
+
+      this.log('debug', 'Shield level threshold applied', {
+        shieldLevel,
+        threshold,
+        originalSeverity: analysisResult.severity_level,
+        adjustedSeverity: adjusted.severity_level,
+        toxicityScore
+      });
+
+      return adjusted;
+
+    } catch (error) {
+      this.log('warn', 'Failed to apply shield level threshold, using original analysis', {
+        shieldLevel,
+        error: error.message
+      });
+      return analysisResult;
+    }
+  }
+
   /**
    * Analyze comment for Shield-level threats
    */
-  async analyzeForShield(organizationId, comment, analysisResult) {
+  async analyzeForShield(organizationId, comment, analysisResult, shieldLevel = 3) {
     if (!this.options.enabled) {
       return { shieldActive: false, reason: 'disabled' };
     }
-    
+
     try {
       // Check if organization has Shield access
       const canUseShield = await this.costControl.canUseShield(organizationId);
-      
+
       if (!canUseShield.allowed) {
-        return { 
-          shieldActive: false, 
+        return {
+          shieldActive: false,
           reason: 'plan_restriction',
           planRequired: 'pro_or_higher'
         };
       }
-      
+
+      // Issue #597: Apply shield level threshold adjustment
+      const adjustedAnalysisResult = this.applyShieldLevelThreshold(analysisResult, shieldLevel);
+
       // Calculate Shield priority based on severity
-      const priority = this.calculateShieldPriority(analysisResult);
+      const priority = this.calculateShieldPriority(adjustedAnalysisResult);
       
       // Get user behavior history
       const userBehavior = await this.getUserBehavior(
@@ -141,33 +200,35 @@ class ShieldService {
 
       // Determine Shield actions
       const shieldActions = await this.determineShieldActions(
-        analysisResult,
+        adjustedAnalysisResult, // Issue #597: Use adjusted result with shield level
         userBehavior,
         comment
       );
-      
+
       // Create high-priority analysis job if needed
       if (priority <= this.priorityLevels.high) {
         await this.queueHighPriorityAnalysis(organizationId, comment, priority);
       }
-      
+
       // Execute automatic actions if enabled
       if (this.options.autoActions && shieldActions.autoExecute) {
         await this.executeShieldActions(organizationId, comment, shieldActions);
       }
-      
+
       // Log Shield activity
       await this.logShieldActivity(organizationId, comment, {
         priority,
         actions: shieldActions,
         userBehavior,
-        analysisResult
+        analysisResult: adjustedAnalysisResult, // Issue #597: Log adjusted result
+        shieldLevel // Issue #597: Log shield level used
       });
-      
+
       return {
         shieldActive: true,
         priority,
         actions: shieldActions,
+        shieldLevel, // Issue #597: Include shield level in response
         userBehavior,
         autoExecuted: this.options.autoActions && shieldActions.autoExecute,
         shouldGenerateResponse: false // Shield actions block roast generation
