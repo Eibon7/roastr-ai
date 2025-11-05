@@ -69,6 +69,8 @@ const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
 const personaRoutes = require('./routes/persona');
+const checkoutRoutes = require('./routes/checkout');
+const polarWebhookRoutes = require('./routes/polarWebhook');
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -299,6 +301,12 @@ app.use('/api/triage', triageRoutes);
 
 // Persona routes (for Issue #595) - authenticated access
 app.use(personaRoutes);
+
+// Polar checkout routes - public access (handles its own auth)
+app.use('/api', checkoutRoutes);
+
+// Polar webhook routes - public access (validates signatures)
+app.use('/api', polarWebhookRoutes);
 
 // Monitoring routes (authenticated) - Issue #396
 const monitoringRoutes = require('./routes/monitoring');
