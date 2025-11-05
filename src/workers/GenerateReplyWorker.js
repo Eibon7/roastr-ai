@@ -308,6 +308,46 @@ class GenerateReplyWorker extends BaseWorker {
       throw new Error(`Reply generation blocked: ${autopostCheck.message}`);
     }
 
+    // Issue #596: Check if roasting is enabled for this user
+    try {
+      const { supabaseServiceClient } = require('../config/supabase');
+      const { data: orgData } = await supabaseServiceClient
+        .from('organizations')
+        .select('owner_id')
+        .eq('id', organization_id)
+        .single();
+
+      if (orgData && orgData.owner_id) {
+        const { data: userData } = await supabaseServiceClient
+          .from('users')
+          .select('roasting_enabled')
+          .eq('id', orgData.owner_id)
+          .single();
+
+        if (userData && userData.roasting_enabled === false) {
+          this.log('info', 'Reply generation skipped - roasting disabled by user', {
+            comment_id,
+            organization_id,
+            platform,
+            userId: orgData.owner_id
+          });
+
+          return {
+            success: true,
+            summary: 'Reply generation skipped - roasting disabled',
+            skipped: true,
+            reason: 'roasting_disabled'
+          };
+        }
+      }
+    } catch (error) {
+      // Log error but don't fail the job - fail-open approach for backward compatibility
+      this.log('warn', 'Error checking roasting status, continuing with generation', {
+        error: error.message,
+        organization_id
+      });
+    }
+
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
       organization_id, 

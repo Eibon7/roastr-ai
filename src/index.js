@@ -65,6 +65,7 @@ const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
 const roastRoutes = require('./routes/roast');
+const roastingRoutes = require('./routes/roasting');
 const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
@@ -287,6 +288,9 @@ app.use('/api/notifications', notificationsRoutes);
 
 // Roast generation routes (authenticated)
 app.use('/api/roast', roastRoutes);
+
+// Roasting control routes (authenticated) - Issue #596
+app.use('/api/roasting', roastingRoutes);
 
 // Settings routes (authenticated) - Issue #362
 app.use('/api/settings', settingsRoutes);

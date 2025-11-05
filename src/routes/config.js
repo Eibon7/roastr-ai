@@ -3,6 +3,7 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
+const levelConfigService = require('../services/levelConfigService');
 
 const router = express.Router();
 
@@ -87,6 +88,8 @@ router.get('/:platform', async (req, res) => {
                 trigger_words: responseConfig.trigger_words,
                 shield_enabled: responseConfig.shield_enabled,
                 shield_config: responseConfig.shield_config,
+                roast_level: responseConfig.roast_level || 3,
+                shield_level: responseConfig.shield_level || 3,
                 updated_at: responseConfig.updated_at
             }
         });
@@ -108,15 +111,17 @@ router.put('/:platform', async (req, res) => {
     try {
         const { platform } = req.params;
         const { user } = req;
-        const { 
-            enabled, 
-            tone, 
+        const {
+            enabled,
+            tone,
             humor_type,
-            response_frequency, 
-            trigger_words, 
-            shield_enabled, 
+            response_frequency,
+            trigger_words,
+            shield_enabled,
             shield_config,
-            config 
+            config,
+            roast_level,
+            shield_level
         } = req.body;
 
         if (!VALID_PLATFORMS.includes(platform)) {
@@ -148,6 +153,46 @@ router.put('/:platform', async (req, res) => {
             });
         }
 
+        // Issue #597: Validate roast_level
+        if (roast_level !== undefined) {
+            if (typeof roast_level !== 'number' || roast_level < 1 || roast_level > 5) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Roast level must be a number between 1 and 5'
+                });
+            }
+        }
+
+        // Issue #597: Validate shield_level
+        if (shield_level !== undefined) {
+            if (typeof shield_level !== 'number' || shield_level < 1 || shield_level > 5) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Shield level must be a number between 1 and 5'
+                });
+            }
+        }
+
+        // Issue #597: Validate plan-based level access
+        if (roast_level !== undefined || shield_level !== undefined) {
+            const levelValidation = await levelConfigService.validateLevelAccess(
+                user.id,
+                roast_level,
+                shield_level
+            );
+
+            if (!levelValidation.allowed) {
+                return res.status(403).json({
+                    success: false,
+                    error: levelValidation.message,
+                    reason: levelValidation.reason,
+                    currentPlan: levelValidation.currentPlan,
+                    maxAllowedRoastLevel: levelValidation.maxAllowedRoastLevel,
+                    maxAllowedShieldLevel: levelValidation.maxAllowedShieldLevel
+                });
+            }
+        }
+
         // Get user's organization
         const { data: orgData } = await supabaseServiceClient
             .from('organizations')
@@ -172,6 +217,8 @@ router.put('/:platform', async (req, res) => {
         if (shield_enabled !== undefined) updateData.shield_enabled = shield_enabled;
         if (shield_config) updateData.shield_config = shield_config;
         if (config) updateData.config = config;
+        if (roast_level !== undefined) updateData.roast_level = roast_level;
+        if (shield_level !== undefined) updateData.shield_level = shield_level;
 
         // Upsert configuration
         const { data: updatedConfig, error } = await supabaseServiceClient
@@ -201,6 +248,8 @@ router.put('/:platform', async (req, res) => {
                 trigger_words: updatedConfig.trigger_words,
                 shield_enabled: updatedConfig.shield_enabled,
                 shield_config: updatedConfig.shield_config,
+                roast_level: updatedConfig.roast_level,
+                shield_level: updatedConfig.shield_level,
                 updated_at: updatedConfig.updated_at
             }
         });
@@ -394,6 +443,58 @@ router.get('/flags', (req, res) => {
                 ENABLE_BILLING: false,
                 ENABLE_MAGIC_LINK: false,
             }
+        });
+    }
+});
+
+/**
+ * GET /api/config/levels/available
+ * Get available roast and shield levels for authenticated user based on their plan
+ * Issue #597
+ */
+router.get('/levels/available', async (req, res) => {
+    try {
+        const { user } = req;
+
+        const availableLevels = await levelConfigService.getAvailableLevelsForUser(user.id);
+
+        res.status(200).json({
+            success: true,
+            data: availableLevels
+        });
+
+    } catch (error) {
+        logger.error('Get available levels error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve available levels'
+        });
+    }
+});
+
+/**
+ * GET /api/config/levels/definitions
+ * Get all level definitions (roast and shield)
+ * Issue #597
+ */
+router.get('/levels/definitions', async (req, res) => {
+    try {
+        const roastLevels = levelConfigService.getAllRoastLevels();
+        const shieldLevels = levelConfigService.getAllShieldLevels();
+
+        res.status(200).json({
+            success: true,
+            data: {
+                roast: roastLevels,
+                shield: shieldLevels
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get level definitions error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve level definitions'
         });
     }
 });
