@@ -30,9 +30,10 @@ const PLANS = [
     period: '/month',
     description: 'Perfect for individuals getting started',
     features: [
-      'Up to 100 roasts/month',
-      'Basic toxicity detection',
-      '1 social media account',
+      '10 roasts per month',
+      '1,000 analyses',
+      '1 platform integration',
+      'Shield protection',
       'Email support',
     ],
     priceId: POLAR_PRICE_IDS.starter,
@@ -45,11 +46,11 @@ const PLANS = [
     period: '/month',
     description: 'Best for growing creators',
     features: [
-      'Up to 1,000 roasts/month',
-      'Advanced AI models',
-      '3 social media accounts',
-      'Style profiles',
+      '1,000 roasts per month',
+      '2 platform integrations',
+      'Shield protection',
       'Priority support',
+      'Advanced analytics',
     ],
     priceId: POLAR_PRICE_IDS.pro,
     popular: true,
@@ -61,12 +62,12 @@ const PLANS = [
     period: '/month',
     description: 'For professional teams',
     features: [
-      'Unlimited roasts',
-      'Premium AI models',
-      'Unlimited accounts',
-      'Custom personas',
+      '5,000 roasts per month',
+      '2 platform integrations',
+      'Shield protection',
+      'Custom tones',
       'API access',
-      '24/7 priority support',
+      '24/7 support',
     ],
     priceId: POLAR_PRICE_IDS.plus,
     popular: false,
@@ -89,7 +90,7 @@ function PolarPricingExample() {
           Choose Your Plan
         </h1>
         <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto">
-          Select the perfect plan for your needs. All plans include a 14-day free trial.
+          Select the perfect plan for your needs. Start protecting your community today.
         </p>
       </div>
 
