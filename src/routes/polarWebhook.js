@@ -187,11 +187,11 @@ async function handleOrderCreated(event) {
  * Handle subscription.created event
  */
 async function handleSubscriptionCreated(event) {
-  logger.info('[Polar Webhook] Subscription created', {
+  logger.info('[Polar Webhook] Subscription created', sanitizePII({
     subscription_id: event.data.id,
     customer_email: event.data.customer_email,
     status: event.data.status,
-  });
+  }));
 
   // Polar sends both order.created and subscription.created
   // Delegate to handleOrderCreated to avoid duplication
@@ -204,11 +204,11 @@ async function handleSubscriptionCreated(event) {
 async function handleSubscriptionUpdated(event) {
   const { id: subscriptionId, customer_email, product_price_id, status } = event.data;
 
-  logger.info('[Polar Webhook] Processing subscription.updated', {
+  logger.info('[Polar Webhook] Processing subscription.updated', sanitizePII({
     subscription_id: subscriptionId,
     customer_email,
     status,
-  });
+  }));
 
   try {
     // 1. Find user
@@ -219,7 +219,7 @@ async function handleSubscriptionUpdated(event) {
       .single();
 
     if (userError || !user) {
-      logger.error('[Polar Webhook] User not found', { customer_email });
+      logger.error('[Polar Webhook] User not found', sanitizePII({ customer_email }));
       return;
     }
 
@@ -264,10 +264,10 @@ async function handleSubscriptionUpdated(event) {
 async function handleSubscriptionCanceled(event) {
   const { id: subscriptionId, customer_email } = event.data;
 
-  logger.info('[Polar Webhook] Processing subscription.canceled', {
+  logger.info('[Polar Webhook] Processing subscription.canceled', sanitizePII({
     subscription_id: subscriptionId,
     customer_email,
-  });
+  }));
 
   try {
     // 1. Find user
@@ -278,7 +278,7 @@ async function handleSubscriptionCanceled(event) {
       .single();
 
     if (userError || !user) {
-      logger.error('[Polar Webhook] User not found', { customer_email });
+      logger.error('[Polar Webhook] User not found', sanitizePII({ customer_email }));
       return;
     }
 
