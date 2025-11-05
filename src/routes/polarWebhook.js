@@ -14,12 +14,16 @@
  * - subscription.created: New subscription created
  * - subscription.updated: Subscription updated
  * - subscription.canceled: Subscription canceled
+ *
+ * Related: Issue #728 - Webhook business logic implementation
  */
 
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const { supabaseServiceClient } = require('../config/supabase');
+const { getPlanFromPriceId } = require('../utils/polarHelpers');
 
 /**
  * Verify Polar webhook signature
@@ -74,27 +78,108 @@ async function handleCheckoutCreated(event) {
     customer_email: event.data.customer_email,
   });
 
-  // TODO: Add your logic here
-  // Example: Create pending order in database
+  // NOTE: No action needed for checkout.created
+  // Wait for order.created event which confirms payment
 }
 
 /**
  * Handle order.created event (payment confirmed)
+ *
+ * This is the critical event that confirms payment was successful.
+ * Updates user plan and creates/updates subscription record in database.
  */
 async function handleOrderCreated(event) {
-  logger.info('[Polar Webhook] Order created - Payment confirmed', {
-    order_id: event.data.id,
-    customer_email: event.data.customer_email,
-    amount: event.data.amount,
-    currency: event.data.currency,
+  const {
+    id: orderId,
+    customer_email,
+    product_price_id,
+    amount,
+    currency
+  } = event.data;
+
+  logger.info('[Polar Webhook] Processing order.created', {
+    order_id: orderId,
+    customer_email,
+    price_id: product_price_id,
+    amount,
+    currency,
   });
 
-  // TODO: Add your logic here
-  // Example:
-  // 1. Update user's subscription status in database
-  // 2. Activate premium features
-  // 3. Send confirmation email
-  // 4. Update analytics
+  try {
+    // 1. Find user by email
+    const { data: user, error: userError } = await supabaseServiceClient
+      .from('users')
+      .select('id, plan')
+      .eq('email', customer_email)
+      .single();
+
+    if (userError || !user) {
+      logger.error('[Polar Webhook] User not found', {
+        customer_email,
+        error: userError?.message
+      });
+      return;
+    }
+
+    // 2. Map price_id to plan (handles starter→basic, plus→creator_plus)
+    const plan = getPlanFromPriceId(product_price_id);
+
+    logger.info('[Polar Webhook] Mapped plan from price_id', {
+      price_id: product_price_id,
+      plan,
+      user_id: user.id,
+      previous_plan: user.plan
+    });
+
+    // 3. Update user plan
+    const { error: updateError } = await supabaseServiceClient
+      .from('users')
+      .update({
+        plan,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      throw new Error(`Failed to update user plan: ${updateError.message}`);
+    }
+
+    // 4. Upsert subscription record
+    // NOTE: Reusing stripe_* columns for Polar data (temporary)
+    // Future migration will rename to payment_provider_* columns
+    const { error: subError } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .upsert({
+        user_id: user.id,
+        stripe_customer_id: customer_email, // Use email as identifier
+        stripe_subscription_id: orderId, // Store Polar order ID
+        plan,
+        status: 'active',
+        current_period_start: new Date().toISOString(),
+        current_period_end: null, // Polar may not provide this in order.created
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (subError) {
+      throw new Error(`Failed to create subscription: ${subError.message}`);
+    }
+
+    logger.info('[Polar Webhook] ✅ Subscription activated successfully', {
+      user_id: user.id,
+      plan,
+      order_id: orderId
+    });
+
+  } catch (error) {
+    logger.error('[Polar Webhook] ❌ Failed to process order.created', {
+      error: error.message,
+      stack: error.stack,
+      order_id: orderId,
+      customer_email,
+    });
+    // Don't throw - webhook handler should not fail
+  }
 }
 
 /**
@@ -107,37 +192,125 @@ async function handleSubscriptionCreated(event) {
     status: event.data.status,
   });
 
-  // TODO: Add your logic here
-  // Example: Update user's subscription in database
+  // Polar sends both order.created and subscription.created
+  // Delegate to handleOrderCreated to avoid duplication
+  return handleOrderCreated(event);
 }
 
 /**
  * Handle subscription.updated event
  */
 async function handleSubscriptionUpdated(event) {
-  logger.info('[Polar Webhook] Subscription updated', {
-    subscription_id: event.data.id,
-    status: event.data.status,
+  const { id: subscriptionId, customer_email, product_price_id, status } = event.data;
+
+  logger.info('[Polar Webhook] Processing subscription.updated', {
+    subscription_id: subscriptionId,
+    customer_email,
+    status,
   });
 
-  // TODO: Add your logic here
-  // Example: Update subscription status, handle plan changes
+  try {
+    // 1. Find user
+    const { data: user, error: userError } = await supabaseServiceClient
+      .from('users')
+      .select('id, plan')
+      .eq('email', customer_email)
+      .single();
+
+    if (userError || !user) {
+      logger.error('[Polar Webhook] User not found', { customer_email });
+      return;
+    }
+
+    // 2. Map new plan if price_id changed
+    const newPlan = product_price_id ? getPlanFromPriceId(product_price_id) : user.plan;
+
+    // 3. Update user plan if changed
+    if (newPlan !== user.plan) {
+      await supabaseServiceClient
+        .from('users')
+        .update({ plan: newPlan, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+    }
+
+    // 4. Update subscription status
+    await supabaseServiceClient
+      .from('user_subscriptions')
+      .update({
+        plan: newPlan,
+        status: status === 'active' ? 'active' : 'past_due',
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    logger.info('[Polar Webhook] ✅ Subscription updated successfully', {
+      user_id: user.id,
+      new_plan: newPlan,
+      status,
+    });
+
+  } catch (error) {
+    logger.error('[Polar Webhook] ❌ Failed to process subscription.updated', {
+      error: error.message,
+      subscription_id: subscriptionId,
+    });
+  }
 }
 
 /**
  * Handle subscription.canceled event
  */
 async function handleSubscriptionCanceled(event) {
-  logger.info('[Polar Webhook] Subscription canceled', {
-    subscription_id: event.data.id,
-    customer_email: event.data.customer_email,
+  const { id: subscriptionId, customer_email } = event.data;
+
+  logger.info('[Polar Webhook] Processing subscription.canceled', {
+    subscription_id: subscriptionId,
+    customer_email,
   });
 
-  // TODO: Add your logic here
-  // Example:
-  // 1. Update subscription status to 'canceled'
-  // 2. Schedule access revocation at end of billing period
-  // 3. Send cancellation confirmation email
+  try {
+    // 1. Find user
+    const { data: user, error: userError } = await supabaseServiceClient
+      .from('users')
+      .select('id')
+      .eq('email', customer_email)
+      .single();
+
+    if (userError || !user) {
+      logger.error('[Polar Webhook] User not found', { customer_email });
+      return;
+    }
+
+    // 2. Downgrade user to basic plan
+    await supabaseServiceClient
+      .from('users')
+      .update({
+        plan: 'basic',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    // 3. Update subscription status (DO NOT DELETE - retain for audit)
+    await supabaseServiceClient
+      .from('user_subscriptions')
+      .update({
+        status: 'canceled',
+        cancel_at_period_end: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    logger.info('[Polar Webhook] ✅ Subscription canceled successfully', {
+      user_id: user.id,
+      downgraded_to: 'basic',
+    });
+
+  } catch (error) {
+    logger.error('[Polar Webhook] ❌ Failed to process subscription.canceled', {
+      error: error.message,
+      subscription_id: subscriptionId,
+    });
+  }
 }
 
 /**
