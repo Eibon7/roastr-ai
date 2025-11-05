@@ -156,7 +156,11 @@ router.get('/stats', async (req, res) => {
         }
 
         // Get pending roast jobs count
-        const { data: pendingJobs, error: jobsError } = await supabaseServiceClient
+        // Issue #734: Fix count query - destructure count, not data (head: true returns count in metadata)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const { count: pendingJobs, error: jobsError } = await supabaseServiceClient
             .from('job_queue')
             .select('id', { count: 'exact', head: true })
             .eq('organization_id', orgData.id)
@@ -167,11 +171,7 @@ router.get('/stats', async (req, res) => {
             throw jobsError;
         }
 
-        // Get total roasts generated today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const { data: todayRoasts, error: roastsError } = await supabaseServiceClient
+        const { count: todayRoasts, error: roastsError } = await supabaseServiceClient
             .from('responses')
             .select('id', { count: 'exact', head: true })
             .eq('organization_id', orgData.id)
@@ -184,8 +184,8 @@ router.get('/stats', async (req, res) => {
         res.status(200).json({
             success: true,
             data: {
-                pending_jobs: pendingJobs || 0,
-                roasts_today: todayRoasts || 0
+                pending_jobs: pendingJobs ?? 0,
+                roasts_today: todayRoasts ?? 0
             }
         });
 

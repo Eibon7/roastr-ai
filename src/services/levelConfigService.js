@@ -16,6 +16,7 @@ const PLAN_LEVEL_LIMITS = {
   free: { maxRoastLevel: 3, maxShieldLevel: 3 },
   starter: { maxRoastLevel: 3, maxShieldLevel: 3 },
   pro: { maxRoastLevel: 4, maxShieldLevel: 4 },
+  plus: { maxRoastLevel: 5, maxShieldLevel: 5 }, // Issue #734: Added Plus plan mapping
   creator_plus: { maxRoastLevel: 5, maxShieldLevel: 5 }
 };
 
@@ -135,6 +136,23 @@ class LevelConfigService {
    */
   async validateLevelAccess(userId, roastLevel, shieldLevel) {
     try {
+      // Issue #734: Validate level bounds first (1-5 range)
+      if (roastLevel && (roastLevel < 1 || roastLevel > 5)) {
+        return {
+          allowed: false,
+          reason: 'invalid_roast_level',
+          message: `Roast level must be between 1 and 5 (received: ${roastLevel})`
+        };
+      }
+
+      if (shieldLevel && (shieldLevel < 1 || shieldLevel > 5)) {
+        return {
+          allowed: false,
+          reason: 'invalid_shield_level',
+          message: `Shield level must be between 1 and 5 (received: ${shieldLevel})`
+        };
+      }
+
       // Get user's plan
       const { data: userData, error } = await supabaseServiceClient
         .from('users')
@@ -149,7 +167,7 @@ class LevelConfigService {
       const userPlan = userData.plan || 'free';
       const planLimits = PLAN_LEVEL_LIMITS[userPlan] || PLAN_LEVEL_LIMITS.free;
 
-      // Validate roast level
+      // Validate roast level against plan limits
       if (roastLevel && roastLevel > planLimits.maxRoastLevel) {
         return {
           allowed: false,
@@ -191,7 +209,8 @@ class LevelConfigService {
    * @returns {string} Required plan name
    */
   getRequiredPlanForLevel(level, type) {
-    if (level <= 3) return 'starter';
+    // Issue #734: Fix inconsistency - Free plan supports levels 1-3
+    if (level <= 3) return 'free';
     if (level === 4) return 'pro';
     if (level === 5) return 'creator_plus';
     return 'free';
