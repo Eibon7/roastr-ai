@@ -20,12 +20,14 @@ jobs:
 
           # Requiere <prefijo>/issue-<id> con prefijos estándar
           # También permite feat/epic-<id>-week-<N> para trabajo de epics por semana
+          # También permite feat/epic-<id>-pattern-<N>-remaining para trabajo de patrones
           # Prefijos permitidos: feature, fix, chore, docs, test, refactor, perf, ci, build, style
-          if ! echo "$BRANCH" | grep -E '^(feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-[0-9]+$|^feat/epic-[0-9]+-week-[0-9]+$' > /dev/null 2>&1; then
+          if ! echo "$BRANCH" | grep -E '^(feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-[0-9]+$|^feat/epic-[0-9]+-week-[0-9]+$|^feat/epic-[0-9]+-pattern-[0-9]+-remaining$' > /dev/null 2>&1; then
             echo "Branch incorrecta: $BRANCH"
             echo "Formatos válidos:"
             echo "  - (feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>"
             echo "  - feat/epic-<id>-week-<N>"
+            echo "  - feat/epic-<id>-pattern-<N>-remaining"
             exit 1
           fi
           # Exigir referencia a Issue en título o body
