@@ -142,6 +142,11 @@ async function handleOrderCreated(event) {
       .eq('id', user.id);
 
     if (updateError) {
+      logger.error('[Polar Webhook] Failed to update user plan', {
+        user_id: user.id,
+        plan,
+        error: updateError.message
+      });
       throw new Error(`Failed to update user plan: ${updateError.message}`);
     }
 
@@ -163,6 +168,12 @@ async function handleOrderCreated(event) {
       }, { onConflict: 'user_id' });
 
     if (subError) {
+      logger.error('[Polar Webhook] Failed to upsert subscription', {
+        user_id: user.id,
+        plan,
+        order_id: orderId,
+        error: subError.message
+      });
       throw new Error(`Failed to create subscription: ${subError.message}`);
     }
 
@@ -228,14 +239,23 @@ async function handleSubscriptionUpdated(event) {
 
     // 3. Update user plan if changed
     if (newPlan !== user.plan) {
-      await supabaseServiceClient
+      const { error: userUpdateError } = await supabaseServiceClient
         .from('users')
         .update({ plan: newPlan, updated_at: new Date().toISOString() })
         .eq('id', user.id);
+
+      if (userUpdateError) {
+        logger.error('[Polar Webhook] Failed to update user plan', {
+          user_id: user.id,
+          new_plan: newPlan,
+          error: userUpdateError.message
+        });
+        throw new Error(`Failed to update user plan: ${userUpdateError.message}`);
+      }
     }
 
     // 4. Update subscription status
-    await supabaseServiceClient
+    const { error: subUpdateError } = await supabaseServiceClient
       .from('user_subscriptions')
       .update({
         plan: newPlan,
@@ -243,6 +263,16 @@ async function handleSubscriptionUpdated(event) {
         updated_at: new Date().toISOString()
       })
       .eq('user_id', user.id);
+
+    if (subUpdateError) {
+      logger.error('[Polar Webhook] Failed to update subscription', {
+        user_id: user.id,
+        new_plan: newPlan,
+        status,
+        error: subUpdateError.message
+      });
+      throw new Error(`Failed to update subscription: ${subUpdateError.message}`);
+    }
 
     logger.info('[Polar Webhook] ✅ Subscription updated successfully', {
       user_id: user.id,
@@ -282,17 +312,25 @@ async function handleSubscriptionCanceled(event) {
       return;
     }
 
-    // 2. Downgrade user to basic plan
-    await supabaseServiceClient
+    // 2. Downgrade user to free plan
+    const { error: userDowngradeError } = await supabaseServiceClient
       .from('users')
       .update({
-        plan: 'basic',
+        plan: 'free',
         updated_at: new Date().toISOString()
       })
       .eq('id', user.id);
 
+    if (userDowngradeError) {
+      logger.error('[Polar Webhook] Failed to downgrade user to free', {
+        user_id: user.id,
+        error: userDowngradeError.message
+      });
+      throw new Error(`Failed to downgrade user: ${userDowngradeError.message}`);
+    }
+
     // 3. Update subscription status (DO NOT DELETE - retain for audit)
-    await supabaseServiceClient
+    const { error: subCancelError } = await supabaseServiceClient
       .from('user_subscriptions')
       .update({
         status: 'canceled',
@@ -301,9 +339,17 @@ async function handleSubscriptionCanceled(event) {
       })
       .eq('user_id', user.id);
 
+    if (subCancelError) {
+      logger.error('[Polar Webhook] Failed to update subscription to canceled', {
+        user_id: user.id,
+        error: subCancelError.message
+      });
+      throw new Error(`Failed to cancel subscription: ${subCancelError.message}`);
+    }
+
     logger.info('[Polar Webhook] ✅ Subscription canceled successfully', {
       user_id: user.id,
-      downgraded_to: 'basic',
+      downgraded_to: 'free',
     });
 
   } catch (error) {

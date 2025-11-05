@@ -13,7 +13,7 @@ const { logger } = require('./logger');
 // Database uses: basic/pro/creator_plus
 // This mapping bridges the gap
 const PRICE_ID_TO_PLAN = {
-  [process.env.POLAR_STARTER_PRICE_ID]: 'basic',      // Maps starter → basic
+  [process.env.POLAR_STARTER_PRICE_ID]: 'free',       // Maps starter → free (matches DB schema)
   [process.env.POLAR_PRO_PRICE_ID]: 'pro',            // Direct mapping
   [process.env.POLAR_PLUS_PRICE_ID]: 'creator_plus',  // Maps plus → creator_plus
 };
@@ -59,7 +59,7 @@ function getPriceIdFromPlan(plan) {
  * @returns {boolean} - True if valid
  */
 function isValidPlan(plan) {
-  const validPlans = ['basic', 'pro', 'creator_plus'];
+  const validPlans = ['free', 'pro', 'creator_plus'];
   return validPlans.includes(plan);
 }
 
