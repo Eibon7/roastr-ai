@@ -15,20 +15,22 @@
 
 ## Overview
 
-Plan Features manages subscription-based feature gating and usage limits across four tiers (Free, Starter, Pro, Plus). It enforces monthly roast/analysis limits, platform access, and premium features like RQC and Shield.
+Plan Features manages subscription-based feature gating and usage limits across four tiers (Starter Trial, Starter, Pro, Plus). It enforces monthly roast/analysis limits, platform access, and premium features like RQC and Shield.
+
+**Note:** The "Free" plan has been replaced by "Starter Trial" (30-day trial with card required, auto-converts to paid Starter after expiration). See migration 025 and issue #678.
 
 ## Plan Tiers
 
-| Feature | Free | Starter (€5/mo) | Pro (€15/mo) | Plus (€50/mo) |
-|---------|------|-----------------|--------------|---------------|
+| Feature | Starter Trial (30 days) | Starter (€5/mo) | Pro (€15/mo) | Plus (€50/mo) |
+|---------|-------------------------|-----------------|--------------|---------------|
 | **Monthly Roasts** | 10 | 10 | 1,000 | 5,000 |
-| **Monthly Analysis** | 100 | 1,000 | 10,000 | 100,000 |
-| **Max Platforms** | 1 | 2 | 5 | 10 |
-| **AI Model** | GPT-3.5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 |
+| **Monthly Analysis** | 1,000 | 1,000 | 10,000 | 100,000 |
+| **Max Platforms** | 2 | 2 | 5 | 10 |
+| **AI Model** | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 |
 | **RQC (Quality Control)** | ❌ | ❌ | ✅ | ✅ Advanced |
-| **Shield (Moderation)** | ❌ | ✅ Basic | ✅ Full | ✅ Advanced |
+| **Shield (Moderation)** | ✅ Basic | ✅ Basic | ✅ Full | ✅ Advanced |
 | **Custom Styles** | ❌ | ❌ | ❌ | ✅ |
-| **Persona Fields** | ❌ | 1 field | 3 fields | 3 fields |
+| **Persona Fields** | 1 field | 1 field | 3 fields | 3 fields |
 | **Priority Support** | ❌ | ❌ | ✅ | ✅ 24/7 |
 
 ## Database Schema
@@ -38,7 +40,7 @@ Plan Features manages subscription-based feature gating and usage limits across 
 ```sql
 CREATE TABLE plan_limits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  plan_id VARCHAR(50) NOT NULL UNIQUE,  -- 'free', 'starter', 'pro', 'plus'
+  plan_id VARCHAR(50) NOT NULL UNIQUE,  -- 'starter_trial', 'starter', 'pro', 'plus'
   plan_name VARCHAR(100) NOT NULL,
   plan_description TEXT,
 
@@ -63,9 +65,9 @@ CREATE TABLE plan_limits (
 ### Plan Data
 
 ```sql
--- Free Plan
-('free', 'Free', 'Basic plan', 10, 10, 100, 1, FALSE, FALSE,
- '["basic_roasts", "single_platform"]')
+-- Starter Trial (30 days free, requires card)
+('starter_trial', 'Starter Trial', '30-day trial (card required)', 10, 10, 1000, 2, FALSE, TRUE,
+ '["gpt5_roasts", "shield_basic", "basic_integrations", "trial"]')
 
 -- Starter Plan
 ('starter', 'Starter', 'Entry plan with GPT-5 and Shield', 10, 10, 1000, 2, FALSE, TRUE,
@@ -156,26 +158,24 @@ async function checkRoastLimit(organizationId) {
 
 ### RQC (Roast Quality Control)
 
-- **Free/Starter:** ❌ Disabled
+- **Starter Trial/Starter:** ❌ Disabled
 - **Pro/Plus:** ✅ Enabled
 - **Plus Advanced:** 3 parallel reviewers, higher quality threshold
 
 ### Shield (Automated Moderation)
 
-- **Free:** ❌ Disabled
+- **Starter Trial:** ✅ Basic (essential actions only)
 - **Starter:** ✅ Basic (essential actions only)
 - **Pro:** ✅ Full (all Shield features)
 - **Plus:** ✅ Advanced (priority actions, custom rules)
 
 ### AI Models
 
-- **Free:** GPT-3.5 Turbo only
-- **Starter/Pro/Plus:** GPT-4o (auto-upgrades to GPT-5 when available)
+- **All Plans:** GPT-4o/GPT-5 (auto-upgrades to GPT-5 when available)
 
 ### Persona Fields
 
-- **Free:** ❌ No persona customization
-- **Starter:** ✅ 1 field ("Lo que me define")
+- **Starter Trial/Starter:** ✅ 1 field ("Lo que me define")
 - **Pro/Plus:** ✅ All 3 fields (identity, intolerance, tolerance)
 
 ## Integration with Cost Control
@@ -255,8 +255,8 @@ async function upgradePlan(organizationId, newPlanId) {
 
 ```javascript
 describe('Plan Features', () => {
-  test('Free plan blocks RQC access', async () => {
-    const result = await canUseFeature(freeOrgId, 'advanced_rqc');
+  test('Starter trial blocks RQC access', async () => {
+    const result = await canUseFeature(starterTrialOrgId, 'advanced_rqc');
 
     expect(result.allowed).toBe(false);
     expect(result.required_plan).toBe('pro');
@@ -269,10 +269,10 @@ describe('Plan Features', () => {
   });
 
   test('Monthly limit enforced correctly', async () => {
-    // Simulate 10 roasts used (Free plan limit)
-    await simulateUsage(freeOrgId, 'roast', 10);
+    // Simulate 10 roasts used (Starter trial limit)
+    await simulateUsage(starterTrialOrgId, 'roast', 10);
 
-    const result = await checkRoastLimit(freeOrgId);
+    const result = await checkRoastLimit(starterTrialOrgId);
 
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('monthly_limit_exceeded');
