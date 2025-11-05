@@ -101,16 +101,27 @@ function CheckoutButton({
   };
 
   return (
-    <div className="checkout-button-container">
+    <div className="flex flex-col gap-3">
       <button
         onClick={handleCheckout}
         disabled={loading || disabled}
-        className={`checkout-button ${className} ${loading ? 'loading' : ''} ${disabled ? 'disabled' : ''}`}
+        className={`
+          inline-flex items-center justify-center gap-2
+          px-6 py-3 text-base font-semibold text-white
+          bg-gradient-to-br from-indigo-500 to-purple-600
+          border-0 rounded-lg cursor-pointer
+          transition-all duration-200 ease-in-out
+          shadow-md
+          hover:shadow-lg hover:-translate-y-0.5
+          active:translate-y-0
+          disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none
+          ${className}
+        `}
         type="button"
       >
         {loading ? (
           <>
-            <span className="spinner"></span>
+            <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
             Creating checkout...
           </>
         ) : (
@@ -119,90 +130,14 @@ function CheckoutButton({
       </button>
 
       {error && (
-        <div className="checkout-error" role="alert">
-          <span className="error-icon">⚠️</span>
-          <span className="error-message">{error}</span>
+        <div
+          className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
+          role="alert"
+        >
+          <span className="text-xl flex-shrink-0">⚠️</span>
+          <span className="flex-1">{error}</span>
         </div>
       )}
-
-      <style jsx>{`
-        .checkout-button-container {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .checkout-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.5rem;
-          font-size: 1rem;
-          font-weight: 600;
-          color: white;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border: none;
-          border-radius: 0.5rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .checkout-button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .checkout-button:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        .checkout-button.loading,
-        .checkout-button.disabled,
-        .checkout-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .spinner {
-          display: inline-block;
-          width: 1rem;
-          height: 1rem;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .checkout-error {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
-          background-color: #fee;
-          border: 1px solid #fcc;
-          border-radius: 0.375rem;
-          color: #c33;
-          font-size: 0.875rem;
-        }
-
-        .error-icon {
-          font-size: 1.25rem;
-          flex-shrink: 0;
-        }
-
-        .error-message {
-          flex: 1;
-        }
-      `}</style>
     </div>
   );
 }

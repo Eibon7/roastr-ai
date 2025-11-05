@@ -34,7 +34,10 @@ Edit `.env` in root directory:
 # Add these lines
 POLAR_ACCESS_TOKEN=polar_oat_your_token_here
 POLAR_SUCCESS_URL=http://localhost:3001/success?checkout_id={CHECKOUT_ID}
+POLAR_ALLOWED_PRICE_IDS=price_your_starter_id,price_your_pro_id,price_your_plus_id
 ```
+
+**Important:** The `POLAR_ALLOWED_PRICE_IDS` list must match the price IDs you configure in the frontend (Step 4). This server-side allowlist prevents unauthorized price_id values from being used.
 
 ### Step 4: Configure Frontend
 
