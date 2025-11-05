@@ -30,6 +30,8 @@ const POLAR_PRICE_IDS = {
 };
 ```
 
+**⚠️ IMPORTANTE:** Los Price IDs en el HTML deben estar incluidos en `POLAR_ALLOWED_PRICE_IDS` en tu `.env`, de lo contrario el backend rechazará las solicitudes con error 400 (seguridad contra manipulación de precios).
+
 ---
 
 ## 🧪 Cómo Probar

@@ -35,11 +35,32 @@ jest.mock('@polar-sh/sdk', () => {
 describe('Checkout Route - Price ID Security (M1)', () => {
   let app;
   let checkoutRouter;
+  let originalPolarAccessToken;
+  let originalPolarAllowedPriceIds;
 
   beforeAll(() => {
-    // Set env vars before loading module
+    // Save original env vars
+    originalPolarAccessToken = process.env.POLAR_ACCESS_TOKEN;
+    originalPolarAllowedPriceIds = process.env.POLAR_ALLOWED_PRICE_IDS;
+
+    // Set test env vars before loading module
     process.env.POLAR_ACCESS_TOKEN = 'test_token_123';
     process.env.POLAR_ALLOWED_PRICE_IDS = `${VALID_STARTER_ID},${VALID_PRO_ID},${VALID_PLUS_ID}`;
+  });
+
+  afterAll(() => {
+    // Restore original env vars
+    if (originalPolarAccessToken === undefined) {
+      delete process.env.POLAR_ACCESS_TOKEN;
+    } else {
+      process.env.POLAR_ACCESS_TOKEN = originalPolarAccessToken;
+    }
+
+    if (originalPolarAllowedPriceIds === undefined) {
+      delete process.env.POLAR_ALLOWED_PRICE_IDS;
+    } else {
+      process.env.POLAR_ALLOWED_PRICE_IDS = originalPolarAllowedPriceIds;
+    }
   });
 
   beforeEach(() => {
@@ -231,6 +252,46 @@ describe('Checkout Route - Price ID Security (M1)', () => {
             user_id: 'user_123',
             source: 'web'
           }
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('checkout');
+      expect(res.body.checkout).toHaveProperty('url');
+    });
+  });
+
+  describe('Email Format Validation (M5)', () => {
+    it('should reject email without @ symbol', async () => {
+      const res = await request(app)
+        .post('/api/checkout')
+        .send({
+          customer_email: 'invalidemailtest.com',
+          price_id: VALID_STARTER_ID
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid email');
+      expect(res.body.message).toContain('valid email address');
+    });
+
+    it('should reject email without domain', async () => {
+      const res = await request(app)
+        .post('/api/checkout')
+        .send({
+          customer_email: 'invalid@',
+          price_id: VALID_STARTER_ID
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid email');
+    });
+
+    it('should accept valid email format', async () => {
+      const res = await request(app)
+        .post('/api/checkout')
+        .send({
+          customer_email: 'valid.user@example.com',
+          price_id: VALID_STARTER_ID
         });
 
       expect(res.status).toBe(200);

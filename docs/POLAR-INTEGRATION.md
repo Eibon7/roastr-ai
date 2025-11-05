@@ -17,7 +17,10 @@ Add these variables to your `.env` file:
 POLAR_ACCESS_TOKEN=your_access_token_here
 POLAR_SUCCESS_URL=http://localhost:3000/success?checkout_id={CHECKOUT_ID}
 POLAR_WEBHOOK_SECRET=your_webhook_secret_here  # Optional but highly recommended
+POLAR_ALLOWED_PRICE_IDS=price_id_1,price_id_2,price_id_3  # Server-side price validation (security)
 ```
+
+**Security Note:** `POLAR_ALLOWED_PRICE_IDS` is a comma-separated allowlist of valid price IDs. The backend will reject any checkout requests with price IDs not in this list, preventing price manipulation attacks. This is a server-side security control that prevents users from modifying price IDs in the frontend to access unauthorized plans.
 
 ### Available Endpoints
 

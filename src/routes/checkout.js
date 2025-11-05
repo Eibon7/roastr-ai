@@ -66,6 +66,18 @@ router.post('/checkout', async (req, res) => {
       });
     }
 
+    // Validate email format (M5 - CodeRabbit Review #3423197513)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customer_email)) {
+      logger.warn('[Polar] Invalid email format in checkout request', {
+        customer_email,
+      });
+      return res.status(400).json({
+        error: 'Invalid email',
+        message: 'Please provide a valid email address',
+      });
+    }
+
     // Validate environment variables
     if (!process.env.POLAR_ACCESS_TOKEN) {
       logger.error('[Polar] POLAR_ACCESS_TOKEN not configured');
