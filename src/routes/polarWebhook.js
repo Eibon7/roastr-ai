@@ -122,7 +122,7 @@ async function handleOrderCreated(event) {
       return;
     }
 
-    // 2. Map price_id to plan (handles starter→basic, plus→creator_plus)
+    // 2. Map price_id to plan (handles starter→free, plus→creator_plus) - CodeRabbit Review #3493981712
     const plan = getPlanFromPriceId(product_price_id);
 
     logger.info('[Polar Webhook] Mapped plan from price_id', {
