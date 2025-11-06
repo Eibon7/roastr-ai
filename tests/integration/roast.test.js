@@ -9,6 +9,23 @@
 const request = require('supertest');
 
 // Mock dependencies BEFORE requiring routes
+jest.mock('../../src/middleware/auth', () => ({
+  authenticateToken: jest.fn((req, res, next) => {
+    // Issue #483: Mock authentication - set test user
+    req.user = { id: 'test-user-123' };
+    next();
+  }),
+  requireAdmin: jest.fn((req, res, next) => next()),
+  optionalAuth: jest.fn((req, res, next) => {
+    req.user = { id: 'test-user-123' };
+    next();
+  })
+}));
+
+jest.mock('../../src/middleware/requirePlan', () => ({
+  requirePlan: jest.fn(() => (req, res, next) => next())
+}));
+
 jest.mock('../../src/config/supabase', () => {
   const mockSupabaseClient = {
     from: jest.fn().mockReturnThis(),
@@ -25,13 +42,23 @@ jest.mock('../../src/config/supabase', () => {
   };
 });
 
-jest.mock('../../src/services/roastGeneratorEnhanced', () => ({
-  generateRoast: jest.fn()
-}));
+// Issue #483: Mock RoastGeneratorEnhanced class properly
+const mockGenerateRoast = jest.fn();
+jest.mock('../../src/services/roastGeneratorEnhanced', () => {
+  return jest.fn().mockImplementation(() => ({
+    generateRoast: mockGenerateRoast,
+    generateRoastPreview: mockGenerateRoast, // Same mock for preview
+    isAvailable: jest.fn().mockReturnValue(true)
+  }));
+});
 
-jest.mock('../../src/services/perspectiveService', () => ({
-  analyzeContent: jest.fn()
-}));
+const mockAnalyzeContent = jest.fn();
+jest.mock('../../src/services/perspectiveService', () => {
+  return jest.fn().mockImplementation(() => ({
+    analyzeContent: mockAnalyzeContent,
+    isAvailable: jest.fn().mockReturnValue(true)
+  }));
+});
 
 jest.mock('../../src/utils/logger', () => ({
   logger: {
@@ -51,8 +78,6 @@ jest.mock('../../src/utils/logger', () => ({
 describe('Roast API Integration Tests', () => {
   let app;
   let supabaseServiceClient;
-  let generateRoast;
-  let analyzeContent;
 
   const testUserId = 'test-user-123';
   const authToken = 'Bearer mock-jwt-token';
@@ -62,6 +87,9 @@ describe('Roast API Integration Tests', () => {
     process.env.NODE_ENV = 'test';
     process.env.FRONTEND_URL = 'https://test.example.com';
     process.env.JWT_SECRET = 'test-secret';
+    // Issue #483: Disable real OpenAI to use mock generator
+    process.env.ENABLE_REAL_OPENAI = 'false';
+    process.env.ENABLE_ROAST_ENGINE = 'false';
 
     // Clear require cache to force fresh imports with mocks
     jest.resetModules();
@@ -72,24 +100,18 @@ describe('Roast API Integration Tests', () => {
 
     const supabaseModule = require('../../src/config/supabase');
     supabaseServiceClient = supabaseModule.supabaseServiceClient;
-
-    const roastModule = require('../../src/services/roastGeneratorEnhanced');
-    generateRoast = roastModule.generateRoast;
-
-    const perspectiveModule = require('../../src/services/perspectiveService');
-    analyzeContent = perspectiveModule.analyzeContent;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Default mock behaviors
-    analyzeContent.mockResolvedValue({
+    // Default mock behaviors - use global mocks defined at top of file
+    mockAnalyzeContent.mockResolvedValue({
       safe: true,
       attributes: {}
     });
 
-    generateRoast.mockResolvedValue({
+    mockGenerateRoast.mockResolvedValue({
       roast: 'This is a generated roast',
       tokensUsed: 150,
       model: 'gpt-3.5-turbo'
@@ -120,6 +142,12 @@ describe('Roast API Integration Tests', () => {
           humorType: 'witty'
         });
 
+      // Debug: Log response for investigation
+      if (response.status !== 200) {
+        console.error('DEBUG - Response status:', response.status);
+        console.error('DEBUG - Response body:', JSON.stringify(response.body, null, 2));
+      }
+
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         success: true,
@@ -128,8 +156,8 @@ describe('Roast API Integration Tests', () => {
       });
 
       // Verify interactions
-      expect(analyzeContent).toHaveBeenCalledWith('This is a test message for roasting');
-      expect(generateRoast).toHaveBeenCalledWith(
+      expect(mockAnalyzeContent).toHaveBeenCalledWith('This is a test message for roasting');
+      expect(mockGenerateRoast).toHaveBeenCalledWith(
         expect.objectContaining({
           text: 'This is a test message for roasting',
           tone: 'sarcastic',
@@ -160,7 +188,7 @@ describe('Roast API Integration Tests', () => {
 
     it('should reject toxic content properly', async () => {
       // Mock Perspective API rejecting content
-      analyzeContent.mockResolvedValueOnce({
+      mockAnalyzeContent.mockResolvedValueOnce({
         safe: false,
         attributes: {
           TOXICITY: 0.95,
@@ -185,11 +213,11 @@ describe('Roast API Integration Tests', () => {
       });
 
       // Verify roast generation was NOT called
-      expect(generateRoast).not.toHaveBeenCalled();
+      expect(mockGenerateRoast).not.toHaveBeenCalled();
     });
 
     it('should handle roast generation service errors gracefully', async () => {
-      generateRoast.mockRejectedValueOnce(new Error('OpenAI service unavailable'));
+      mockGenerateRoast.mockRejectedValueOnce(new Error('OpenAI service unavailable'));
 
       const response = await request(app)
         .post('/api/roast/preview')
@@ -279,7 +307,7 @@ describe('Roast API Integration Tests', () => {
       });
 
       // Verify roast generation was NOT called
-      expect(generateRoast).not.toHaveBeenCalled();
+      expect(mockGenerateRoast).not.toHaveBeenCalled();
     });
 
     it('should validate input before consuming credits', async () => {
