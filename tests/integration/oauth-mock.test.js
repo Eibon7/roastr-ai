@@ -217,6 +217,15 @@ describe('OAuth Mock Integration Tests', () => {
   describe('Complete OAuth Flow', () => {
     const platforms = ['twitter', 'instagram', 'youtube', 'facebook', 'bluesky'];
 
+    beforeAll(async () => {
+      // Issue #638: Reset all connections to ensure clean state
+      // Previous tests may have connected platforms
+      await request(app)
+        .post('/api/auth/mock/reset')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
+    });
+
     platforms.forEach(platform => {
       describe(`${platform} OAuth flow`, () => {
         it('should complete full connect -> callback -> status cycle', async () => {
@@ -309,9 +318,11 @@ describe('OAuth Mock Integration Tests', () => {
         .post('/api/auth/nonexistent/refresh')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(response.status).toBe(404);
+      // Issue #638 Fix: nonexistent platform returns 400 (invalid parameter) not 404
+      // sanitizePlatform() throws "Unsupported platform" before connection check
+      expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('No connection found');
+      expect(response.body.error).toContain('Unsupported platform');
     });
 
     it('should handle disconnect for non-existent connection', async () => {
@@ -319,9 +330,11 @@ describe('OAuth Mock Integration Tests', () => {
         .post('/api/auth/nonexistent/disconnect')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(response.status).toBe(404);
+      // Issue #638 Fix: nonexistent platform returns 400 (invalid parameter) not 404
+      // sanitizePlatform() throws "Unsupported platform" before connection check
+      expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('No connection found');
+      expect(response.body.error).toContain('Unsupported platform');
     });
   });
 
@@ -400,6 +413,14 @@ describe('OAuth Mock Integration Tests', () => {
   });
 
   describe('Error Handling & Edge Cases', () => {
+    beforeAll(async () => {
+      // Issue #638: Reset all connections to ensure clean state for platform mismatch test
+      await request(app)
+        .post('/api/auth/mock/reset')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
+    });
+
     it('should handle malformed state parameter', async () => {
       const response = await request(app)
         .get('/api/auth/twitter/callback?code=testcode&state=invalid_base64!@#');
