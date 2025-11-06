@@ -3,6 +3,7 @@ const { supabaseServiceClient } = require('../config/supabase');
 const { isAdminMiddleware } = require('../middleware/isAdmin');
 const { validateCsrfToken, setCsrfToken } = require('../middleware/csrf');
 const { cacheResponse, invalidateCache, invalidateAdminUsersCache } = require('../middleware/responseCache');  // M1 fix
+const { adminRateLimiter } = require('../middleware/adminRateLimiter');  // Issue #261 - Rate limiting
 const { logger } = require('../utils/logger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
@@ -22,6 +23,9 @@ const router = express.Router();
 // Apply admin authentication to all routes
 // Issue #261 - Security hardening for admin endpoints
 router.use(isAdminMiddleware);
+
+// Issue #261: Rate limiting for admin endpoints (50 requests per 5 minutes)
+router.use(adminRateLimiter);
 
 // Issue #261: CSRF protection for admin endpoints
 // Set CSRF token for all requests (exposes token in response header)
@@ -619,8 +623,9 @@ router.patch('/users/:userId/plan', async (req, res) => {
 /**
  * GET /api/admin/users/:userId
  * Obtener detalles completos de un usuario para vista de superusuario (Issue #235)
+ * Issue #261: Added response caching (60 seconds TTL)
  */
-router.get('/users/:userId', async (req, res) => {
+router.get('/users/:userId', cacheResponse({ ttl: 60 * 1000 }), async (req, res) => {
     try {
         const { userId } = req.params;
 

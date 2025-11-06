@@ -581,10 +581,10 @@ const AdminUsersPage = () => {
         </div>
 
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Filters and Search */}
+        {/* Filters and Search - Issue #261: Removed unused filter button (filters apply automatically) */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
           <div className="px-4 py-5 sm:p-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
                 <input
@@ -607,14 +607,6 @@ const AdminUsersPage = () => {
                   <option value="pro">Pro</option>
                   <option value="creator_plus">Creator Plus</option>
                 </select>
-              </div>
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-                >
-                  Filtrar
-                </button>
               </div>
             </div>
           </div>
