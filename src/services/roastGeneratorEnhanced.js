@@ -15,6 +15,7 @@ const RoastGeneratorMock = require('./roastGeneratorMock');
 const RoastPromptTemplate = require('./roastPromptTemplate');
 const PersonaService = require('./PersonaService'); // Issue #615: Import PersonaService
 const transparencyService = require('./transparencyService');
+const levelConfigService = require('./levelConfigService'); // Issue #597: Import levelConfigService
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 require('dotenv').config();
@@ -43,6 +44,31 @@ class RoastGeneratorEnhanced {
     this.promptTemplate = new RoastPromptTemplate();
     this.personaService = PersonaService; // Issue #615: Use PersonaService singleton
     this.isMockMode = false;
+  }
+
+  /**
+   * Get generation parameters based on roast level (Issue #597)
+   * @param {number} roastLevel - Roast level (1-5), defaults to 3
+   * @returns {Object} Generation parameters (temperature, max_tokens, etc.)
+   */
+  getRoastLevelParameters(roastLevel = 3) {
+    try {
+      const levelConfig = levelConfigService.getRoastLevelConfig(roastLevel);
+      return {
+        temperature: levelConfig.temperature,
+        max_tokens: Math.min(levelConfig.maxLength, 150), // Cap at 150 for cost control
+        allowProfanity: levelConfig.allowProfanity,
+        intensityMultiplier: levelConfig.intensityMultiplier
+      };
+    } catch (error) {
+      logger.warn('Invalid roast level, using default (3)', { roastLevel, error: error.message });
+      return {
+        temperature: 0.8,
+        max_tokens: 120,
+        allowProfanity: true,
+        intensityMultiplier: 0.9
+      };
+    }
   }
 
   /**
@@ -301,6 +327,10 @@ class RoastGeneratorEnhanced {
     // Issue #615: Load user persona for personalized roast generation
     const persona = await this.personaService.getPersona(rqcConfig.user_id);
 
+    // Issue #597: Get generation parameters based on roast_level
+    const roastLevel = rqcConfig.roast_level || 3;
+    const levelParams = this.getRoastLevelParameters(roastLevel);
+
     // Build prompt using the master template
     const systemPrompt = await this.promptTemplate.buildPrompt({
       originalComment: text,
@@ -311,13 +341,15 @@ class RoastGeneratorEnhanced {
       userConfig: {
         tone: tone,
         humor_type: rqcConfig.humor_type || 'witty',
-        intensity_level: rqcConfig.intensity_level,
-        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
+        intensity_level: rqcConfig.intensity_level || levelParams.intensityMultiplier,
+        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null,
+        roast_level: roastLevel, // Issue #597: Pass roast level to prompt
+        allow_profanity: levelParams.allowProfanity // Issue #597: Profanity control
       },
       includeReferences: rqcConfig.plan !== 'free', // Include references for Pro+ plans
       persona: persona // Issue #615: Pass persona to buildPrompt
     });
-    
+
     const completion = await this.openai.chat.completions.create({
       model: model,
       messages: [
@@ -326,8 +358,8 @@ class RoastGeneratorEnhanced {
           content: systemPrompt
         }
       ],
-      max_tokens: 120,
-      temperature: 0.8,
+      max_tokens: levelParams.max_tokens, // Issue #597: Level-based max tokens
+      temperature: levelParams.temperature, // Issue #597: Level-based temperature
     });
 
     const roast = completion.choices[0].message.content.trim();
