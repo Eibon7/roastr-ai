@@ -331,6 +331,41 @@ class WorkerNotificationService {
             return { success: false, error: error.message };
         }
     }
+
+    /**
+     * Notify workers of roasting state changes (Issue #596)
+     * @param {string} userId - User ID
+     * @param {boolean} enabled - Whether roasting is enabled
+     * @param {Object} metadata - Additional metadata (reason, etc.)
+     */
+    async notifyRoastingStateChange(userId, enabled, metadata = {}) {
+        const message = {
+            type: 'ROASTING_STATE_CHANGE',
+            userId,
+            enabled,
+            timestamp: new Date().toISOString(),
+            ...metadata
+        };
+
+        try {
+            if (process.env.NODE_ENV !== 'production') {
+                this.notifyInMemory('roasting_state_changes', message);
+            } else {
+                await this.publishToRedis('roasting_state_changes', message);
+            }
+
+            logger.info('🔄 Roasting state change notification sent:', {
+                userId,
+                enabled,
+                reason: metadata.reason
+            });
+
+            return { success: true };
+        } catch (error) {
+            logger.error('🔄 Failed to notify roasting state change:', error);
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 // Export singleton instance

@@ -42,7 +42,7 @@ const PLANS = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '€15',
+    price: '€12',
     period: '/month',
     description: 'Best for growing creators',
     features: [
@@ -58,7 +58,7 @@ const PLANS = [
   {
     id: 'plus',
     name: 'Plus',
-    price: '€50',
+    price: '€24',
     period: '/month',
     description: 'For professional teams',
     features: [
@@ -81,7 +81,10 @@ function PolarPricingExample() {
   // Get user email (fallback to empty string if not authenticated)
   const userEmail = user?.email || '';
 
-  console.log('[Polar Pricing] User email:', userEmail);
+  // PII protection: Do not log user email in production (CodeRabbit C3)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Polar Pricing] Debug: User authenticated:', !!userEmail);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-16">
