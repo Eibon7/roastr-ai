@@ -124,7 +124,7 @@
 ## Related Documentation
 
 - **Plan:** docs/plan/review-3430530237.md
-- **CodeRabbit Review:** https://github.com/Eibon7/roastr-ai/pull/744#pullrequestreview-3430530237
+- [**CodeRabbit Review #3430530237**](https://github.com/Eibon7/roastr-ai/pull/744#pullrequestreview-3430530237)
 - **Precedent:** PR #740 test evidence pattern
 
 ---
