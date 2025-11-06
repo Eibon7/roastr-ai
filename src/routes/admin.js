@@ -1,10 +1,13 @@
 const express = require('express');
 const { supabaseServiceClient } = require('../config/supabase');
 const { isAdminMiddleware } = require('../middleware/isAdmin');
+const { validateCsrfToken, setCsrfToken } = require('../middleware/csrf');
+const { cacheResponse, invalidateCache, invalidateAdminUsersCache } = require('../middleware/responseCache');  // M1 fix
 const { logger } = require('../utils/logger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
 const CostControlService = require('../services/costControl');
+const { auditLogger } = require('../services/auditLogService');
 const revenueRoutes = require('./revenue');
 const featureFlagsRoutes = require('./admin/featureFlags');
 const backofficeSettingsRoutes = require('./admin/backofficeSettings');
@@ -19,6 +22,12 @@ const router = express.Router();
 // Apply admin authentication to all routes
 // Issue #261 - Security hardening for admin endpoints
 router.use(isAdminMiddleware);
+
+// Issue #261: CSRF protection for admin endpoints
+// Set CSRF token for all requests (exposes token in response header)
+router.use(setCsrfToken);
+// Validate CSRF token for state-modifying requests (POST, PATCH, PUT, DELETE)
+router.use(validateCsrfToken);
 
 // Revenue dashboard routes (admin only)
 router.use('/revenue', revenueRoutes);
@@ -64,32 +73,34 @@ router.get('/dashboard', async (req, res) => {
  * GET /api/admin/users
  * Obtener lista de usuarios con filtros avanzados para backoffice
  * Issue #235: Implements comprehensive user search and filtering
- * Issue #261: Enhanced with detailed JSDoc documentation
- * 
+ * Issue #261: Enhanced with detailed JSDoc documentation + response caching
+ *
  * @description Retrieves paginated list of users with their social integrations, usage statistics, and account status.
  * Supports advanced filtering by email, plan, activity status, and search terms.
- * 
+ *
  * @param {number} [req.query.limit=25] - Number of users to return per page
- * @param {number} [req.query.offset=0] - Number of users to skip (for pagination)  
+ * @param {number} [req.query.offset=0] - Number of users to skip (for pagination)
  * @param {string} [req.query.search=''] - Search term to filter by email, user ID, or social handles
  * @param {string} [req.query.plan=''] - Filter by user plan (free, pro, plus, etc.)
  * @param {boolean} [req.query.active_only=false] - Only return active (non-suspended) users
  * @param {number} [req.query.page=1] - Page number (alternative to offset)
- * 
+ *
  * @returns {Object} Response object containing:
  *   - success: boolean
  *   - data: Object with users array, pagination info, and total count
  *   - users: Array of user objects with integrated social handles and usage stats
- * 
+ *
  * @throws {500} Internal server error if database query fails
- * 
+ *
  * @example
  * GET /api/admin/users?limit=10&search=john&plan=pro&active_only=true
- * 
+ *
  * @performance Contains N+1 query issue - fetches social integrations per user in loop
  * @todo Fix N+1 query by using JOIN or batch query for integrations
+ *
+ * @cache Response cached for 30 seconds (Issue #261)
  */
-router.get('/users', async (req, res) => {
+router.get('/users', cacheResponse({ ttl: 30 * 1000 }), async (req, res) => {
     try {
         const { 
             limit = 25, 
@@ -302,6 +313,9 @@ router.post('/users/:userId/toggle-admin', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
@@ -364,6 +378,9 @@ router.post('/users/:userId/toggle-active', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
@@ -390,9 +407,12 @@ router.post('/users/:userId/suspend', async (req, res) => {
     try {
         const { userId } = req.params;
         const { reason } = req.body;
-        
+
         const result = await authService.suspendUser(userId, req.user.id, reason);
-        
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: result
@@ -415,9 +435,12 @@ router.post('/users/:userId/suspend', async (req, res) => {
 router.post('/users/:userId/reactivate', async (req, res) => {
     try {
         const { userId } = req.params;
-        
+
         const result = await authService.unsuspendUser(userId, req.user.id);
-        
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: result
@@ -550,17 +573,14 @@ router.patch('/users/:userId/plan', async (req, res) => {
             organizationsUpdated: organizations?.length || 0
         });
 
-        // Security audit logging - temporarily disabled until service is available
-        logger.info('Admin plan change', {
-            actor_id: req.user.id,
-            actor_email: req.user.email,
-            target_id: userId,
-            target_email: currentUser.email,
-            old_plan: currentNormalizedPlan,
-            new_plan: normalizedPlan,
-            ip: req.ip || 'unknown',
-            userAgent: req.headers['user-agent'] || 'unknown'
-        });
+        // Security audit logging (Issue #261: Centralized admin action logging)
+        await auditLogger.logAdminPlanChange(
+            req.user.id,
+            userId,
+            currentNormalizedPlan,
+            normalizedPlan,
+            req.user.email
+        );
 
         // Create activity log entry
         await supabaseServiceClient
@@ -574,6 +594,9 @@ router.patch('/users/:userId/plan', async (req, res) => {
                     changed_by_admin: req.user.email
                 }
             });
+
+        // M1 fix: Use comprehensive cache invalidation (covers all query variants)
+        invalidateAdminUsersCache();
 
         res.json({
             success: true,
@@ -1630,6 +1653,9 @@ router.patch('/users/:userId/config', async (req, res) => {
             updatedBy: req.user.email,
             updates: Object.keys(updates)
         });
+
+        // Keep the admin users listing fresh after config changes (plan/toggles)
+        invalidateAdminUsersCache();
 
         res.json({
             success: true,
