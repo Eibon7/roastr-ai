@@ -38,7 +38,17 @@ class AuditLogService {
       'user.reactivate': { severity: 'info', description: 'User reactivated' },
       'user.created': { severity: 'info', description: 'User account created' },
       'user.deleted': { severity: 'warning', description: 'User account deleted' },
-      
+
+      // Admin actions (Issue #261: Centralized security audit logging)
+      'admin.user_plan_changed': { severity: 'warning', description: 'Admin changed user plan' },
+      'admin.user_suspended': { severity: 'warning', description: 'Admin suspended user' },
+      'admin.user_reactivated': { severity: 'info', description: 'Admin reactivated user' },
+      'admin.user_modified': { severity: 'info', description: 'Admin modified user data' },
+      'admin.bulk_action': { severity: 'warning', description: 'Admin performed bulk action' },
+      'admin.feature_flag_changed': { severity: 'info', description: 'Admin changed feature flag' },
+      'admin.backoffice_settings_changed': { severity: 'warning', description: 'Admin changed backoffice settings' },
+      'admin.access_denied': { severity: 'error', description: 'Admin access denied' },
+
       // System events
       'system.api_error': { severity: 'error', description: 'API error occurred' },
       'system.rate_limit': { severity: 'warning', description: 'Rate limit triggered' },
@@ -349,6 +359,50 @@ class AuditLogService {
       logger.error('Failed to clean old audit logs:', error);
       return false;
     }
+  }
+
+  /**
+   * Helper methods for admin events (Issue #261)
+   */
+  async logAdminPlanChange(adminId, targetUserId, oldPlan, newPlan, adminEmail) {
+    return this.logEvent('admin.user_plan_changed', {
+      userId: adminId,
+      targetUserId,
+      oldPlan,
+      newPlan,
+      adminEmail,
+      action: 'plan_change',
+      changeType: oldPlan < newPlan ? 'upgrade' : 'downgrade'
+    });
+  }
+
+  async logAdminUserModification(adminId, targetUserId, modifications, adminEmail) {
+    return this.logEvent('admin.user_modified', {
+      userId: adminId,
+      targetUserId,
+      modifications: JSON.stringify(modifications),
+      adminEmail,
+      action: 'user_modification'
+    });
+  }
+
+  async logAdminBulkAction(adminId, action, affectedCount, adminEmail, details = {}) {
+    return this.logEvent('admin.bulk_action', {
+      userId: adminId,
+      action,
+      affectedCount,
+      adminEmail,
+      ...details
+    });
+  }
+
+  async logAdminAccessDenied(userId, attemptedAction, reason, ipAddress) {
+    return this.logEvent('admin.access_denied', {
+      userId,
+      attemptedAction,
+      reason,
+      ipAddress
+    });
   }
 }
 
