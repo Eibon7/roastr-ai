@@ -485,6 +485,8 @@ class EmailService {
             'token_expired': 'Download token has expired',
             'expired_after_creation': 'File expired 24 hours after creation (not downloaded)',
             'expired_after_download': 'File expired 1 hour after first download',
+            'exceeded_max_age': 'File exceeded maximum retention age (7 days)',
+            'downloaded_and_expired': 'File expired after download period (1 hour)',
             'expired': 'File retention period expired',
             'manual_deletion': 'File was manually deleted by administrator'
         };
