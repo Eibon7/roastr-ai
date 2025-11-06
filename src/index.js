@@ -73,6 +73,7 @@ const triageRoutes = require('./routes/triage');
 const personaRoutes = require('./routes/persona');
 const checkoutRoutes = require('./routes/checkout');
 const polarWebhookRoutes = require('./routes/polarWebhook');
+const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -297,6 +298,9 @@ app.use('/api/notifications', notificationsRoutes);
 
 // Roast generation routes (authenticated)
 app.use('/api/roast', roastRoutes);
+
+// Credits API routes - QW9: Fix missing credits router mount
+app.use('/api/credits', creditsRoutes);
 
 // Roasting control routes (authenticated) - Issue #596
 app.use('/api/roasting', roastingRoutes);
