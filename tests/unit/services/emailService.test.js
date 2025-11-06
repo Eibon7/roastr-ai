@@ -246,11 +246,96 @@ describe('EmailService', () => {
         });
     });
 
+    describe('Export File Deletion Notification (Issue #278)', () => {
+        it('should send export file deletion notification successfully', async () => {
+            const userId = 'user-123';
+            const filename = 'user-data-export-abc-1234567890.zip';
+            const reason = 'security_cleanup';
+
+            const result = await emailService.sendExportFileDeletionNotification(userId, filename, reason);
+
+            expect(result.success).toBe(true);
+            expect(result.messageId).toBe('test-message-id');
+            expect(sgMail.send).toHaveBeenCalledWith(expect.objectContaining({
+                to: userId,
+                subject: '🗑️ Data Export File Deleted',
+                from: 'test@roastr.ai'
+            }));
+        });
+
+        it('should handle token expiration reason', async () => {
+            const userId = 'user-123';
+            const filename = 'user-data-export-abc-1234567890.zip';
+            const reason = 'token_expired';
+
+            const result = await emailService.sendExportFileDeletionNotification(userId, filename, reason);
+
+            expect(result.success).toBe(true);
+            expect(sgMail.send).toHaveBeenCalled();
+        });
+
+        it('should handle missing reason gracefully', async () => {
+            const userId = 'user-123';
+            const filename = 'user-data-export-abc-1234567890.zip';
+
+            const result = await emailService.sendExportFileDeletionNotification(userId, filename);
+
+            expect(result.success).toBe(true);
+            expect(sgMail.send).toHaveBeenCalled();
+        });
+    });
+
+    describe('Export File Cleanup Notification (Issue #278)', () => {
+        it('should send export file cleanup notification successfully', async () => {
+            const userId = 'user-123';
+            const filename = 'user-data-export-abc-1234567890.zip';
+            const reason = 'expired_after_download';
+
+            const result = await emailService.sendExportFileCleanupNotification(userId, filename, reason);
+
+            expect(result.success).toBe(true);
+            expect(result.messageId).toBe('test-message-id');
+            expect(sgMail.send).toHaveBeenCalledWith(expect.objectContaining({
+                to: userId,
+                subject: '🧹 Data Export Cleanup Complete',
+                from: 'test@roastr.ai'
+            }));
+        });
+
+        it('should handle expired after creation reason', async () => {
+            const userId = 'user-123';
+            const filename = 'user-data-export-abc-1234567890.zip';
+            const reason = 'expired_after_creation';
+
+            const result = await emailService.sendExportFileCleanupNotification(userId, filename, reason);
+
+            expect(result.success).toBe(true);
+            expect(sgMail.send).toHaveBeenCalled();
+        });
+
+        it('should handle service not configured', async () => {
+            emailService.isConfigured = false;
+
+            const result = await emailService.sendExportFileCleanupNotification(
+                'user-123',
+                'test-file.zip',
+                'expired'
+            );
+
+            expect(result.success).toBe(false);
+            expect(result.reason).toBe('Email service not configured');
+            expect(sgMail.send).not.toHaveBeenCalled();
+
+            // Restore configuration
+            emailService.isConfigured = true;
+        });
+    });
+
     describe('HTML to Plain Text Conversion', () => {
         it('should convert HTML to plain text', () => {
             const html = '<h1>Hello</h1><p>This is a <strong>test</strong></p>';
             const plainText = emailService.htmlToPlainText(html);
-            
+
             expect(plainText).toBe('HelloThis is a test');
         });
 

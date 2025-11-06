@@ -1,7 +1,7 @@
 const BaseWorker = require('./BaseWorker');
 const fs = require('fs').promises;
 const path = require('path');
-const { logger } = require('../utils/logger');
+const { logger, SafeUtils } = require('../utils/logger');
 const DataExportService = require('../services/dataExportService');
 const emailService = require('../services/emailService');
 
@@ -275,14 +275,14 @@ class ExportCleanupWorker extends BaseWorker {
                         await fs.unlink(filepath);
                         results.deleted++;
 
-                        // Clean up all associated download tokens, if any
-                        const removedCount = this.removeAllTokensForFile(filepath);
-                        if (removedCount > 0) {
-                            results.tokensCleanedUp += removedCount;
+                        // Clean up all associated download tokens, if any (Issue #278: capture userId)
+                        const tokenResult = this.removeAllTokensForFile(filepath);
+                        if (tokenResult.removed > 0) {
+                            results.tokensCleanedUp += tokenResult.removed;
                             logger.info('Removed download token(s) for deleted file', {
                                 workerName: this.workerName,
                                 filename,
-                                tokensRemoved: removedCount
+                                tokensRemoved: tokenResult.removed
                             });
                         }
 
@@ -293,8 +293,8 @@ class ExportCleanupWorker extends BaseWorker {
                             ageHours: shouldDelete.ageHours
                         });
 
-                        // Notify user if we can identify them from filename
-                        await this.notifyUserOfFileCleanup(filename, shouldDelete.reason);
+                        // Issue #278: Notify user using userId from token
+                        await this.notifyUserOfFileCleanup(filename, shouldDelete.reason, tokenResult.userId);
                     }
 
                 } catch (error) {
@@ -401,41 +401,53 @@ class ExportCleanupWorker extends BaseWorker {
 
     /**
      * Remove all download tokens that reference the given filepath.
-     * Returns the number of tokens removed.
+     * Issue #278: Also returns userId for notification emails
      * @param {string} filepath - The file path to clean up tokens for
-     * @returns {number} Number of tokens removed
+     * @returns {{removed: number, userId: string|null}} Number of tokens removed and userId if found
      */
     removeAllTokensForFile(filepath) {
-        if (!global.downloadTokens) return 0;
+        if (!global.downloadTokens) return { removed: 0, userId: null };
+
         let removed = 0;
+        let userId = null;
+
         for (const [token, dt] of Array.from(global.downloadTokens.entries())) {
             if (dt.filepath === filepath) {
+                // Capture userId from first token (all tokens for same file have same userId)
+                if (!userId && dt.userId) {
+                    userId = dt.userId;
+                }
                 global.downloadTokens.delete(token);
                 removed++;
             }
         }
-        return removed;
+
+        return { removed, userId };
     }
 
     /**
      * Notify user about file deletion
+     * Issue #278: Use userId from downloadToken instead of extracting from filename
      */
     async notifyUserOfFileDeletion(downloadToken) {
         try {
             const filename = path.basename(downloadToken.filepath);
-            const userId = this.extractUserIdFromFilename(filename);
-            
+            const userId = downloadToken.userId;  // Issue #278: Get userId directly from token
+
             logger.info('User notification: Export file deleted', {
                 workerName: this.workerName,
                 filename: filename,
-                userId: userId ? userId.substring(0, 8) + '...' : 'unknown',
-                reason: 'security_cleanup'
+                userId: userId ? SafeUtils.safeUserIdPrefix(userId) : 'unknown',
+                reason: 'token_expired'
             });
 
             if (userId) {
-                await emailService.sendExportFileDeletionNotification(userId, filename, 'security_cleanup');
+                await emailService.sendExportFileDeletionNotification(userId, filename, 'token_expired');
             } else {
-                logger.warn('Could not extract user ID from filename for notification', { filename });
+                logger.warn('downloadToken missing userId - cannot send notification', {
+                    filename,
+                    tokenCreatedAt: downloadToken.createdAt
+                });
             }
 
         } catch (error) {
@@ -448,22 +460,27 @@ class ExportCleanupWorker extends BaseWorker {
 
     /**
      * Notify user about file cleanup
+     * Issue #278: Use userId from downloadToken instead of extracting from filename
+     * @param {string} filename - Name of the cleaned up file
+     * @param {string} reason - Reason for cleanup
+     * @param {string|null} userId - User ID from download token
      */
-    async notifyUserOfFileCleanup(filename, reason) {
+    async notifyUserOfFileCleanup(filename, reason, userId = null) {
         try {
-            const userId = this.extractUserIdFromFilename(filename);
-            
             logger.info('User notification: Export file cleanup', {
                 workerName: this.workerName,
                 filename,
-                userId: userId ? userId.substring(0, 8) + '...' : 'unknown',
+                userId: userId ? SafeUtils.safeUserIdPrefix(userId) : 'unknown',
                 reason
             });
 
             if (userId) {
                 await emailService.sendExportFileCleanupNotification(userId, filename, reason);
             } else {
-                logger.warn('Could not extract user ID from filename for notification', { filename });
+                logger.warn('No userId available - cannot send cleanup notification', {
+                    filename,
+                    reason
+                });
             }
 
         } catch (error) {
