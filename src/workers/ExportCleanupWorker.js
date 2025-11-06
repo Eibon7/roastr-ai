@@ -275,7 +275,7 @@ class ExportCleanupWorker extends BaseWorker {
                         await fs.unlink(filepath);
                         results.deleted++;
 
-                        // Clean up all associated download tokens, if any (Issue #278: capture userId)
+                        // Clean up all associated download tokens, if any (Issue #278 - C3 fix: capture userEmail)
                         const tokenResult = this.removeAllTokensForFile(filepath);
                         if (tokenResult.removed > 0) {
                             results.tokensCleanedUp += tokenResult.removed;
@@ -293,8 +293,8 @@ class ExportCleanupWorker extends BaseWorker {
                             ageHours: shouldDelete.ageHours
                         });
 
-                        // Issue #278: Notify user using userId from token
-                        await this.notifyUserOfFileCleanup(filename, shouldDelete.reason, tokenResult.userId);
+                        // Issue #278 - C3 fix: Notify user using userEmail from token
+                        await this.notifyUserOfFileCleanup(filename, shouldDelete.reason, tokenResult.userEmail);
                     }
 
                 } catch (error) {
@@ -401,28 +401,28 @@ class ExportCleanupWorker extends BaseWorker {
 
     /**
      * Remove all download tokens that reference the given filepath.
-     * Issue #278: Also returns userId for notification emails
+     * Issue #278 - C3 fix: Returns userEmail for notification emails (not userId)
      * @param {string} filepath - The file path to clean up tokens for
-     * @returns {{removed: number, userId: string|null}} Number of tokens removed and userId if found
+     * @returns {{removed: number, userEmail: string|null}} Number of tokens removed and userEmail if found
      */
     removeAllTokensForFile(filepath) {
-        if (!global.downloadTokens) return { removed: 0, userId: null };
+        if (!global.downloadTokens) return { removed: 0, userEmail: null };
 
         let removed = 0;
-        let userId = null;
+        let userEmail = null;
 
         for (const [token, dt] of Array.from(global.downloadTokens.entries())) {
             if (dt.filepath === filepath) {
-                // Capture userId from first token (all tokens for same file have same userId)
-                if (!userId && dt.userId) {
-                    userId = dt.userId;
+                // CRITICAL FIX C3: Capture userEmail from first token (for GDPR notifications)
+                if (!userEmail && dt.userEmail) {
+                    userEmail = dt.userEmail;
                 }
                 global.downloadTokens.delete(token);
                 removed++;
             }
         }
 
-        return { removed, userId };
+        return { removed, userEmail };
     }
 
     /**
@@ -432,7 +432,8 @@ class ExportCleanupWorker extends BaseWorker {
     async notifyUserOfFileDeletion(downloadToken) {
         try {
             const filename = path.basename(downloadToken.filepath);
-            const userId = downloadToken.userId;  // Issue #278: Get userId directly from token
+            const userId = downloadToken.userId;  // For logging
+            const userEmail = downloadToken.userEmail;  // CRITICAL FIX C3: Extract email from token
 
             logger.info('User notification: Export file deleted', {
                 workerName: this.workerName,
@@ -441,12 +442,13 @@ class ExportCleanupWorker extends BaseWorker {
                 reason: 'token_expired'
             });
 
-            if (userId) {
-                await emailService.sendExportFileDeletionNotification(userId, filename, 'token_expired');
+            if (userEmail) {
+                await emailService.sendExportFileDeletionNotification(userEmail, filename, 'token_expired');
             } else {
-                logger.warn('downloadToken missing userId - cannot send notification', {
+                logger.warn('downloadToken missing userEmail - cannot send notification', {
                     filename,
-                    tokenCreatedAt: downloadToken.createdAt
+                    tokenCreatedAt: downloadToken.createdAt,
+                    hasUserId: !!userId
                 });
             }
 
@@ -460,24 +462,24 @@ class ExportCleanupWorker extends BaseWorker {
 
     /**
      * Notify user about file cleanup
-     * Issue #278: Use userId from downloadToken instead of extracting from filename
+     * Issue #278 - C3 fix: Use userEmail from downloadToken for notifications
      * @param {string} filename - Name of the cleaned up file
      * @param {string} reason - Reason for cleanup
-     * @param {string|null} userId - User ID from download token
+     * @param {string|null} userEmail - User email from download token (CRITICAL: must be email, not userId)
      */
-    async notifyUserOfFileCleanup(filename, reason, userId = null) {
+    async notifyUserOfFileCleanup(filename, reason, userEmail = null) {
         try {
             logger.info('User notification: Export file cleanup', {
                 workerName: this.workerName,
                 filename,
-                userId: userId ? SafeUtils.safeUserIdPrefix(userId) : 'unknown',
+                hasEmail: !!userEmail,
                 reason
             });
 
-            if (userId) {
-                await emailService.sendExportFileCleanupNotification(userId, filename, reason);
+            if (userEmail) {
+                await emailService.sendExportFileCleanupNotification(userEmail, filename, reason);
             } else {
-                logger.warn('No userId available - cannot send cleanup notification', {
+                logger.warn('No userEmail available - cannot send cleanup notification', {
                     filename,
                     reason
                 });

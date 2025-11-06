@@ -430,14 +430,14 @@ class EmailService {
 
     /**
      * Send export file deletion notification (Issue #278 - GDPR Export Cleanup)
-     * @param {string} userId - User ID or email address
+     * @param {string} userEmail - User email address (CRITICAL: must be email, not userId - C2 fix)
      * @param {string} filename - Name of deleted file
      * @param {string} reason - Reason for deletion
      * @returns {Promise<Object>} Send result
      */
-    async sendExportFileDeletionNotification(userId, filename, reason = 'security_cleanup') {
+    async sendExportFileDeletionNotification(userEmail, filename, reason = 'security_cleanup') {
         return await this.sendEmail({
-            to: userId,
+            to: userEmail,  // CRITICAL FIX C2: Now receives actual email, not userId
             subject: '🗑️ Data Export File Deleted',
             templateName: 'export_file_deletion',
             templateData: {
@@ -453,14 +453,14 @@ class EmailService {
 
     /**
      * Send export file cleanup notification (Issue #278 - GDPR Export Cleanup)
-     * @param {string} userId - User ID or email address
+     * @param {string} userEmail - User email address (CRITICAL: must be email, not userId - C2 fix)
      * @param {string} filename - Name of cleaned up file
      * @param {string} reason - Reason for cleanup
      * @returns {Promise<Object>} Send result
      */
-    async sendExportFileCleanupNotification(userId, filename, reason = 'expired') {
+    async sendExportFileCleanupNotification(userEmail, filename, reason = 'expired') {
         return await this.sendEmail({
-            to: userId,
+            to: userEmail,  // CRITICAL FIX C2: Now receives actual email, not userId
             subject: '🧹 Data Export Cleanup Complete',
             templateName: 'export_file_cleanup',
             templateData: {

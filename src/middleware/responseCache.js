@@ -111,7 +111,7 @@ class ResponseCache {
         }
 
         this.stats.invalidations += count;
-        logger.debug(\`Cache invalidation: \${count} entries removed\`, { pattern });
+        logger.debug(`Cache invalidation: ${count} entries removed`, { pattern });
         return count;
     }
 
@@ -122,7 +122,7 @@ class ResponseCache {
         const size = this.cache.size;
         this.cache.clear();
         this.stats.invalidations += size;
-        logger.info(\`Cache cleared: \${size} entries removed\`);
+        logger.info(`Cache cleared: ${size} entries removed`);
     }
 
     /**
@@ -138,7 +138,7 @@ class ResponseCache {
             maxSize: this.maxSize,
             hits: this.stats.hits,
             misses: this.stats.misses,
-            hitRate: \`\${hitRate}%\`,
+            hitRate: `${hitRate}%`,
             invalidations: this.stats.invalidations
         };
     }
@@ -229,6 +229,32 @@ function invalidateCache(pattern) {
 }
 
 /**
+ * Invalidate all admin users cache entries (Issue #739 - M1 fix)
+ * Called after any admin mutation that affects user list
+ * Clears both base endpoint and all query variants
+ */
+function invalidateAdminUsersCache() {
+    // Invalidate base endpoint + all query variants (page, filter, search, etc.)
+    const patterns = [
+        /^GET:\/api\/admin\/users$/,          // Base endpoint
+        /^GET:\/api\/admin\/users\?.*/        // With any query params
+    ];
+
+    let totalInvalidated = 0;
+    patterns.forEach(pattern => {
+        const count = responseCache.invalidate(pattern);
+        totalInvalidated += count;
+    });
+
+    logger.debug('Admin users cache invalidated', {
+        entriesRemoved: totalInvalidated,
+        patterns: patterns.map(p => p.toString())
+    });
+
+    return totalInvalidated;
+}
+
+/**
  * Get cache statistics
  */
 function getCacheStats() {
@@ -238,6 +264,7 @@ function getCacheStats() {
 module.exports = {
     cacheResponse,
     invalidateCache,
+    invalidateAdminUsersCache,  // M1 fix: Export new helper
     getCacheStats,
     responseCache
 };
