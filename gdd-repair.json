@@ -1,30 +1,14 @@
 {
-  "timestamp": "2025-10-16T20:03:04.702Z",
+  "timestamp": "2025-11-05T22:55:17.629Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 3,
+  "fixes_applied": 0,
   "errors": 0,
-  "health_before": 88.5,
-  "health_after": 88.5,
+  "health_before": 89.4,
+  "health_after": 89.4,
   "details": {
-    "fixes": [
-      {
-        "type": "auto",
-        "node": "cost-control",
-        "action": "Added coverage to cost-control"
-      },
-      {
-        "type": "auto",
-        "node": "roast",
-        "action": "Added coverage to roast"
-      },
-      {
-        "type": "auto",
-        "node": "social-platforms",
-        "action": "Added coverage to social-platforms"
-      }
-    ],
+    "fixes": [],
     "humanReview": [],
     "errors": []
   }

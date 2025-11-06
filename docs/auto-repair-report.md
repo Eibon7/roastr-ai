@@ -1,14 +1,12 @@
 # Auto-Repair Report
 
-**Generated:** 2025-10-16T20:03:04.701Z
-**Triggered by:** CI/CD
-**Health Score:** 88.5 → 88.5 (0.0)
+**Generated:** 2025-11-05T22:55:17.627Z
+**Triggered by:** Manual
+**Health Score:** 89.4 → 89.4 (±0)
 
-## ✅ Fixes Applied (3)
+## ✅ Fixes Applied (0)
 
-1. Added coverage to cost-control
-2. Added coverage to roast
-3. Added coverage to social-platforms
+
 
 ## ⚠️ Pending Human Review (0)
 
@@ -20,10 +18,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 88.5/100
-- ⚙️ Auto-fixes: 3 applied
+- 🟢 Health Score: 89.4/100
+- ⚙️ Auto-fixes: 0 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T20-03-04-476Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-05T22-55-17-546Z`
 
 ---
 
