@@ -11,7 +11,10 @@
 
 const { chromium } = require('playwright');
 
-describe('Shield Stability Integration Tests - CodeRabbit Round 2', () => {
+// Skip if server is not running (E2E tests require live server)
+const describeIfServerRunning = process.env.E2E_TESTS_ENABLED === 'true' ? describe : describe.skip;
+
+describeIfServerRunning('Shield Stability Integration Tests - CodeRabbit Round 2', () => {
   let browser;
   let context;
   let page;
@@ -21,7 +24,7 @@ describe('Shield Stability Integration Tests - CodeRabbit Round 2', () => {
       headless: process.env.CI === 'true',
       slowMo: 50 // Add small delay for stability
     });
-  });
+  }, 60000); // Increase timeout to 60s for browser launch
 
   afterAll(async () => {
     await browser?.close();

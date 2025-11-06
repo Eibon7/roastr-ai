@@ -1,15 +1,26 @@
 /**
  * Shield UI Complete Integration Tests
  * Issue #365 - Complete Shield UI implementation
- * 
+ *
  * Tests the complete Shield UI system including:
  * - Feature flag integration
- * - API endpoint integration  
+ * - API endpoint integration
  * - Frontend component integration
  * - Revert functionality
  * - 30-day filtering
  * - Real-time data updates
  */
+
+// Mock authentication middleware BEFORE loading routes (Issue #482)
+jest.mock('../../src/middleware/auth', () => ({
+  authenticateToken: (req, res, next) => {
+    req.user = {
+      id: 'test-user-123',
+      organizationId: 'test-org-456'
+    };
+    next();
+  }
+}));
 
 const request = require('supertest');
 const express = require('express');
@@ -19,16 +30,7 @@ const { supabaseServiceClient } = require('../../src/config/supabase');
 const app = express();
 app.use(express.json());
 
-// Mock authentication middleware
-const mockAuth = (req, res, next) => {
-  req.user = {
-    id: 'test-user-123',
-    organizationId: 'test-org-456'
-  };
-  next();
-};
-
-app.use('/api/shield', mockAuth);
+// Load Shield routes (auth middleware is mocked above)
 app.use('/api/shield', require('../../src/routes/shield'));
 
 // Mock Supabase responses
