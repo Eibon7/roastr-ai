@@ -50,21 +50,7 @@ Coverage authenticity issues detected:
 | trainer | missing_coverage_data | N/A% | N/A% | N/A% | warning |
 
 **Actions Required:**
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage data not available for validation
+- Coverage data not available for validation for: analytics, billing, cost-control, guardian, multi-tenant, observability, persona, plan-features, platform-constraints, queue-system, roast, shield, social-platforms, tone, trainer
 
 ### 🔮 Drift Risk Analysis
 

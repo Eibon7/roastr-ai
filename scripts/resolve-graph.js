@@ -67,6 +67,15 @@ class GraphResolver {
   }
 
   /**
+   * Get features/nodes from system map with fallback
+   * Handles both 'features' and 'nodes' property names for backward compatibility
+   * @returns {Object|null} - Features object or null if not found
+   */
+  getFeatures() {
+    return this.systemMap?.features || this.systemMap?.nodes || null;
+  }
+
+  /**
    * Resolve all dependencies for a given node
    * @param {string} nodeName - Name of the node to resolve
    * @returns {Object} - Resolved docs and dependency chain
@@ -76,7 +85,7 @@ class GraphResolver {
     this.resolvedDocs = [];
     this.dependencyChain = [];
 
-    const features = this.systemMap.features || this.systemMap.nodes;
+    const features = this.getFeatures();
     if (!features || !features[nodeName]) {
       throw new Error(`Node "${nodeName}" not found in system map`);
     }
@@ -100,7 +109,7 @@ class GraphResolver {
       throw new Error(`Circular dependency detected: ${nodeName} appears in its own dependency chain`);
     }
 
-    const features = this.systemMap.features || this.systemMap.nodes;
+    const features = this.getFeatures();
     const node = features[nodeName];
     if (!node) {
       throw new Error(`Node "${nodeName}" not found in system map`);
@@ -139,7 +148,7 @@ class GraphResolver {
       invalidAgents: []
     };
 
-    const features = this.systemMap.features || this.systemMap.nodes;
+    const features = this.getFeatures();
     if (!features) {
       throw new Error('System map does not contain features or nodes');
     }
@@ -298,7 +307,10 @@ class GraphResolver {
   generateMermaidDiagram() {
     let mermaid = 'graph TD\n';
 
-    const features = this.systemMap.features || this.systemMap.nodes;
+    const features = this.getFeatures();
+    if (!features) {
+      throw new Error('System map does not contain features or nodes');
+    }
 
     // Add nodes with styling based on priority
     for (const [nodeName, node] of Object.entries(features)) {
@@ -497,7 +509,13 @@ class GraphResolver {
     report += `| Node | Agents |\n`;
     report += `|------|--------|\n`;
 
-    const features = this.systemMap.features || this.systemMap.nodes;
+    const features = this.getFeatures();
+    if (!features) {
+      report += `| (no nodes) | *(n/a)* |\n`;
+      report += `\n---\n\n**Last validated:** ${now}\n`;
+      return report;
+    }
+
     for (const [nodeName, node] of Object.entries(features)) {
       if (node.docs && node.docs.length > 0) {
         const docPath = node.docs[0];
