@@ -72,9 +72,61 @@ CREATE TABLE users (
 );
 
 -- Indexes for users table (Issue #261: Performance optimization for admin panel)
-CREATE INDEX idx_users_plan ON users(plan);
-CREATE INDEX idx_users_active_plan ON users(active, plan) WHERE active = TRUE;
+-- Admin performance indices (Issue #261 via PR #739 - M3 fix)
+-- Applied via migration: database/migrations/026_add_admin_performance_indices.sql
+-- Do NOT run these CREATE INDEX statements manually on production - use the migration
+CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan);
+CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE active = TRUE;
 -- Note: email already has UNIQUE constraint which creates an index automatically
+
+-- ============================================================================
+-- POLAR SUBSCRIPTIONS (Issue #594)
+-- ============================================================================
+
+-- Polar subscriptions table
+-- Stores subscription information synced from Polar
+CREATE TABLE polar_subscriptions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    polar_subscription_id TEXT UNIQUE NOT NULL,
+    plan TEXT NOT NULL CHECK (plan IN ('free', 'starter', 'pro', 'plus')),
+    status TEXT NOT NULL CHECK (status IN ('active', 'trialing', 'past_due', 'canceled', 'unpaid')),
+    current_period_start TIMESTAMPTZ NOT NULL,
+    current_period_end TIMESTAMPTZ NOT NULL,
+    trial_end TIMESTAMPTZ,
+    cancel_at_period_end BOOLEAN DEFAULT FALSE,
+    canceled_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for polar_subscriptions
+CREATE INDEX idx_polar_subscriptions_user_id ON polar_subscriptions(user_id);
+CREATE INDEX idx_polar_subscriptions_status ON polar_subscriptions(status);
+CREATE INDEX idx_polar_subscriptions_plan ON polar_subscriptions(plan);
+
+-- Polar webhook events table
+-- Stores webhook events for idempotency and audit trail
+CREATE TABLE polar_webhook_events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    polar_event_id TEXT UNIQUE NOT NULL,
+    event_type TEXT NOT NULL,
+    payload JSONB NOT NULL,
+    processed BOOLEAN DEFAULT FALSE,
+    processed_at TIMESTAMPTZ,
+    error TEXT,
+    retry_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for polar_webhook_events
+CREATE INDEX idx_polar_webhook_events_processed ON polar_webhook_events(processed);
+CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
+CREATE INDEX idx_polar_webhook_events_created_at ON polar_webhook_events(created_at DESC);
+
+-- ============================================================================
+-- ORGANIZATIONS & TENANTS
+-- ============================================================================
 
 -- Organizations/Tenants table
 CREATE TABLE organizations (
@@ -550,6 +602,8 @@ ALTER TABLE password_history ENABLE ROW LEVEL SECURITY;
 
 -- Enable RLS on all tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE polar_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE polar_webhook_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organization_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE integration_configs ENABLE ROW LEVEL SECURITY;
@@ -567,6 +621,13 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 -- RLS Policies (users can only access their organization's data)
 -- Users can only see their own user record
 CREATE POLICY user_isolation ON users FOR ALL USING (id = auth.uid());
+
+-- Polar subscriptions: users can only see their own subscriptions
+CREATE POLICY user_isolation ON polar_subscriptions FOR ALL USING (user_id = auth.uid());
+
+-- Polar webhook events: only service role can access (no user access)
+-- This prevents users from seeing raw webhook data which may contain sensitive information
+CREATE POLICY service_role_only ON polar_webhook_events FOR ALL USING (false);
 
 CREATE POLICY org_isolation ON organizations FOR ALL USING (
     owner_id = auth.uid() OR 
