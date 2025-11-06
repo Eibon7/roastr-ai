@@ -2,7 +2,7 @@ const express = require('express');
 const { supabaseServiceClient } = require('../config/supabase');
 const { isAdminMiddleware } = require('../middleware/isAdmin');
 const { validateCsrfToken, setCsrfToken } = require('../middleware/csrf');
-const { cacheResponse, invalidateCache } = require('../middleware/responseCache');
+const { cacheResponse, invalidateCache, invalidateAdminUsersCache } = require('../middleware/responseCache');  // M1 fix
 const { logger } = require('../utils/logger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
@@ -313,6 +313,9 @@ router.post('/users/:userId/toggle-admin', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
@@ -375,6 +378,9 @@ router.post('/users/:userId/toggle-active', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
@@ -401,9 +407,12 @@ router.post('/users/:userId/suspend', async (req, res) => {
     try {
         const { userId } = req.params;
         const { reason } = req.body;
-        
+
         const result = await authService.suspendUser(userId, req.user.id, reason);
-        
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: result
@@ -426,9 +435,12 @@ router.post('/users/:userId/suspend', async (req, res) => {
 router.post('/users/:userId/reactivate', async (req, res) => {
     try {
         const { userId } = req.params;
-        
+
         const result = await authService.unsuspendUser(userId, req.user.id);
-        
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: result
@@ -583,8 +595,8 @@ router.patch('/users/:userId/plan', async (req, res) => {
                 }
             });
 
-        // Invalidate admin users list cache (Issue #261: Cache invalidation on data modification)
-        invalidateCache('/api/admin/users');
+        // M1 fix: Use comprehensive cache invalidation (covers all query variants)
+        invalidateAdminUsersCache();
 
         res.json({
             success: true,
