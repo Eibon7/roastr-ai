@@ -210,7 +210,7 @@ class BillingController {
   "data": {
     "subscription": {
       "user_id": "uuid",
-      "plan": "starter | pro | plus | free",
+      "plan": "starter_trial | starter | pro | plus",
       "status": "active | canceled | past_due",
       "stripe_customer_id": "cus_xxx",
       "stripe_subscription_id": "sub_xxx"
@@ -583,7 +583,7 @@ ENABLE_BILLING=true
 
 ```javascript
 const PLAN_IDS = {
-  FREE: 'free',
+  STARTER_TRIAL: 'starter_trial',
   STARTER: 'starter',
   PRO: 'pro',
   PLUS: 'plus'
@@ -591,11 +591,12 @@ const PLAN_IDS = {
 
 function getPlanFromStripeLookupKey(lookupKey) {
   const mapping = {
+    'plan_starter_trial': PLAN_IDS.STARTER_TRIAL,
     'plan_starter': PLAN_IDS.STARTER,
     'plan_pro': PLAN_IDS.PRO,
     'plan_plus': PLAN_IDS.PLUS
   };
-  return mapping[lookupKey] || PLAN_IDS.FREE;
+  return mapping[lookupKey] || PLAN_IDS.STARTER_TRIAL;
 }
 ```
 

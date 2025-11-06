@@ -1,7 +1,7 @@
 const BaseWorker = require('./BaseWorker');
 const fs = require('fs').promises;
 const path = require('path');
-const { logger } = require('../utils/logger');
+const { logger, SafeUtils } = require('../utils/logger');
 const DataExportService = require('../services/dataExportService');
 const emailService = require('../services/emailService');
 
@@ -275,14 +275,14 @@ class ExportCleanupWorker extends BaseWorker {
                         await fs.unlink(filepath);
                         results.deleted++;
 
-                        // Clean up all associated download tokens, if any
-                        const removedCount = this.removeAllTokensForFile(filepath);
-                        if (removedCount > 0) {
-                            results.tokensCleanedUp += removedCount;
+                        // Clean up all associated download tokens, if any (Issue #278 - C3 fix: capture userEmail)
+                        const tokenResult = this.removeAllTokensForFile(filepath);
+                        if (tokenResult.removed > 0) {
+                            results.tokensCleanedUp += tokenResult.removed;
                             logger.info('Removed download token(s) for deleted file', {
                                 workerName: this.workerName,
                                 filename,
-                                tokensRemoved: removedCount
+                                tokensRemoved: tokenResult.removed
                             });
                         }
 
@@ -293,8 +293,8 @@ class ExportCleanupWorker extends BaseWorker {
                             ageHours: shouldDelete.ageHours
                         });
 
-                        // Notify user if we can identify them from filename
-                        await this.notifyUserOfFileCleanup(filename, shouldDelete.reason);
+                        // Issue #278 - C3 fix: Notify user using userEmail from token
+                        await this.notifyUserOfFileCleanup(filename, shouldDelete.reason, tokenResult.userEmail);
                     }
 
                 } catch (error) {
@@ -401,41 +401,55 @@ class ExportCleanupWorker extends BaseWorker {
 
     /**
      * Remove all download tokens that reference the given filepath.
-     * Returns the number of tokens removed.
+     * Issue #278 - C3 fix: Returns userEmail for notification emails (not userId)
      * @param {string} filepath - The file path to clean up tokens for
-     * @returns {number} Number of tokens removed
+     * @returns {{removed: number, userEmail: string|null}} Number of tokens removed and userEmail if found
      */
     removeAllTokensForFile(filepath) {
-        if (!global.downloadTokens) return 0;
+        if (!global.downloadTokens) return { removed: 0, userEmail: null };
+
         let removed = 0;
+        let userEmail = null;
+
         for (const [token, dt] of Array.from(global.downloadTokens.entries())) {
             if (dt.filepath === filepath) {
+                // CRITICAL FIX C3: Capture userEmail from first token (for GDPR notifications)
+                if (!userEmail && dt.userEmail) {
+                    userEmail = dt.userEmail;
+                }
                 global.downloadTokens.delete(token);
                 removed++;
             }
         }
-        return removed;
+
+        return { removed, userEmail };
     }
 
     /**
      * Notify user about file deletion
+     * Issue #278: Use userId from downloadToken instead of extracting from filename
      */
     async notifyUserOfFileDeletion(downloadToken) {
         try {
             const filename = path.basename(downloadToken.filepath);
-            const userId = this.extractUserIdFromFilename(filename);
-            
+            const userId = downloadToken.userId;  // For logging
+            const userEmail = downloadToken.userEmail;  // CRITICAL FIX C3: Extract email from token
+
             logger.info('User notification: Export file deleted', {
                 workerName: this.workerName,
                 filename: filename,
-                userId: userId ? userId.substring(0, 8) + '...' : 'unknown',
-                reason: 'security_cleanup'
+                userId: userId ? SafeUtils.safeUserIdPrefix(userId) : 'unknown',
+                reason: 'token_expired'
             });
 
-            if (userId) {
-                await emailService.sendExportFileDeletionNotification(userId, filename, 'security_cleanup');
+            if (userEmail) {
+                await emailService.sendExportFileDeletionNotification(userEmail, filename, 'token_expired');
             } else {
-                logger.warn('Could not extract user ID from filename for notification', { filename });
+                logger.warn('downloadToken missing userEmail - cannot send notification', {
+                    filename,
+                    tokenCreatedAt: downloadToken.createdAt,
+                    hasUserId: !!userId
+                });
             }
 
         } catch (error) {
@@ -448,22 +462,27 @@ class ExportCleanupWorker extends BaseWorker {
 
     /**
      * Notify user about file cleanup
+     * Issue #278 - C3 fix: Use userEmail from downloadToken for notifications
+     * @param {string} filename - Name of the cleaned up file
+     * @param {string} reason - Reason for cleanup
+     * @param {string|null} userEmail - User email from download token (CRITICAL: must be email, not userId)
      */
-    async notifyUserOfFileCleanup(filename, reason) {
+    async notifyUserOfFileCleanup(filename, reason, userEmail = null) {
         try {
-            const userId = this.extractUserIdFromFilename(filename);
-            
             logger.info('User notification: Export file cleanup', {
                 workerName: this.workerName,
                 filename,
-                userId: userId ? userId.substring(0, 8) + '...' : 'unknown',
+                hasEmail: !!userEmail,
                 reason
             });
 
-            if (userId) {
-                await emailService.sendExportFileCleanupNotification(userId, filename, reason);
+            if (userEmail) {
+                await emailService.sendExportFileCleanupNotification(userEmail, filename, reason);
             } else {
-                logger.warn('Could not extract user ID from filename for notification', { filename });
+                logger.warn('No userEmail available - cannot send cleanup notification', {
+                    filename,
+                    reason
+                });
             }
 
         } catch (error) {
