@@ -317,6 +317,14 @@ router.post('/users/:userId/toggle-admin', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // Security audit logging
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            { is_admin: newAdminStatus },
+            req.user.email
+        );
+
         // M1 fix: Invalidate admin users cache after mutation
         invalidateAdminUsersCache();
 
@@ -382,6 +390,14 @@ router.post('/users/:userId/toggle-active', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // Security audit logging
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            { active: newActiveStatus },
+            req.user.email
+        );
+
         // M1 fix: Invalidate admin users cache after mutation
         invalidateAdminUsersCache();
 
@@ -414,6 +430,14 @@ router.post('/users/:userId/suspend', async (req, res) => {
 
         const result = await authService.suspendUser(userId, req.user.id, reason);
 
+        // Security audit logging
+        await auditLogger.logEvent('admin.user_suspended', {
+            userId: req.user.id,
+            targetUserId: userId,
+            adminEmail: req.user.email,
+            reason: reason || 'No reason provided'
+        });
+
         // M1 fix: Invalidate admin users cache after mutation
         invalidateAdminUsersCache();
 
@@ -441,6 +465,13 @@ router.post('/users/:userId/reactivate', async (req, res) => {
         const { userId } = req.params;
 
         const result = await authService.unsuspendUser(userId, req.user.id);
+
+        // Security audit logging
+        await auditLogger.logEvent('admin.user_reactivated', {
+            userId: req.user.id,
+            targetUserId: userId,
+            adminEmail: req.user.email
+        });
 
         // M1 fix: Invalidate admin users cache after mutation
         invalidateAdminUsersCache();
@@ -1658,6 +1689,14 @@ router.patch('/users/:userId/config', async (req, res) => {
             updatedBy: req.user.email,
             updates: Object.keys(updates)
         });
+
+        // Security audit logging
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            updates,
+            req.user.email
+        );
 
         // Keep the admin users listing fresh after config changes (plan/toggles)
         invalidateAdminUsersCache();

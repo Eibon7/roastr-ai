@@ -6,6 +6,7 @@
 -- Impact: ~90% faster queries on /api/admin/users endpoint
 --
 -- Performance improvements:
+--   - idx_users_email: Speeds up email-based searches/lookups (Issue #261)
 --   - idx_users_plan: Speeds up plan-based filtering (e.g., "show all pro users")
 --   - idx_users_active_plan: Optimizes common query pattern (active users by plan)
 --
@@ -15,11 +16,16 @@
 -- UP Migration
 -- =====================================================
 
--- Index 1: Plan-based queries
+-- Index 1: Email-based searches (Issue #261 - CodeRabbit requirement)
+-- Speeds up: SELECT * FROM users WHERE email = 'user@example.com'
+-- Note: email already has UNIQUE constraint, but explicit index improves performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Index 2: Plan-based queries
 -- Speeds up: SELECT * FROM users WHERE plan = 'pro'
 CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan);
 
--- Index 2: Active users by plan (partial index)
+-- Index 3: Active users by plan (partial index)
 -- Speeds up: SELECT * FROM users WHERE active = TRUE AND plan = 'pro'
 -- Uses partial index to reduce size (only indexes active users)
 CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE active = TRUE;
@@ -27,6 +33,15 @@ CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE ac
 -- Verify indices were created
 DO $$
 BEGIN
+    -- Check idx_users_email
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes
+        WHERE tablename = 'users'
+        AND indexname = 'idx_users_email'
+    ) THEN
+        RAISE EXCEPTION 'Index idx_users_email creation failed';
+    END IF;
+
     -- Check idx_users_plan
     IF NOT EXISTS (
         SELECT 1 FROM pg_indexes
@@ -45,7 +60,7 @@ BEGIN
         RAISE EXCEPTION 'Index idx_users_active_plan creation failed';
     END IF;
 
-    RAISE NOTICE 'Migration 026: Admin performance indices created successfully';
+    RAISE NOTICE 'Migration 026: Admin performance indices created successfully (3 indices)';
 END $$;
 
 -- =====================================================
@@ -53,6 +68,7 @@ END $$;
 -- =====================================================
 -- To rollback this migration, run:
 --
+-- DROP INDEX IF EXISTS idx_users_email;
 -- DROP INDEX IF EXISTS idx_users_plan;
 -- DROP INDEX IF EXISTS idx_users_active_plan;
 --
