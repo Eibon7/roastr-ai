@@ -1795,6 +1795,18 @@ router.post('/users/:userId/reauth-integrations', async (req, res) => {
             reason: 'admin_forced_reauth'
         });
 
+        // Audit log the token invalidation
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            {
+                action: 'invalidate_integration_tokens',
+                reason: 'admin_forced_reauth',
+                targetUser: user.email
+            },
+            req.user.email
+        );
+
         res.json({
             success: true,
             data: {
@@ -1967,6 +1979,13 @@ router.put('/backoffice/thresholds', async (req, res) => {
             });
         }
 
+        // Fetch existing settings for audit trail
+        const { data: existingSettings } = await supabaseServiceClient
+            .from('global_shield_settings')
+            .select('tau_roast_lower, tau_shield, tau_critical, aggressiveness')
+            .eq('id', 1)
+            .single();
+
         // Update global shield settings in database
         const { data: updatedSettings, error: updateError } = await supabaseServiceClient
             .from('global_shield_settings')
@@ -2028,6 +2047,25 @@ router.put('/backoffice/thresholds', async (req, res) => {
             tau_critical,
             aggressiveness,
             updatedBy: req.user.email
+        });
+
+        // Audit log the threshold changes
+        await auditLogger.logEvent('admin.backoffice_settings_changed', {
+            userId: req.user.id,
+            adminEmail: req.user.email,
+            action: 'update_shield_thresholds',
+            changes: {
+                tau_roast_lower,
+                tau_shield,
+                tau_critical,
+                aggressiveness
+            },
+            previousValues: existingSettings ? {
+                tau_roast_lower: existingSettings.tau_roast_lower,
+                tau_shield: existingSettings.tau_shield,
+                tau_critical: existingSettings.tau_critical,
+                aggressiveness: existingSettings.aggressiveness
+            } : null
         });
 
         res.json({
