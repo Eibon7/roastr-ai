@@ -404,7 +404,7 @@ class AuditLogService {
     return this.logEvent('admin.user_modified', {
       userId: adminId,
       targetUserId,
-      modifications: JSON.stringify(modifications),
+      modifications,  // logEvent() will stringify this in details field
       adminEmail,
       action: 'user_modification'
     });
