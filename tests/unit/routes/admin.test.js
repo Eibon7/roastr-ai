@@ -81,7 +81,9 @@ jest.mock('../../../src/services/authService', () => ({
 // Mock audit log service (Issue #261)
 jest.mock('../../../src/services/auditLogService', () => ({
     auditLogger: {
-        logAdminPlanChange: jest.fn(() => Promise.resolve())
+        logAdminPlanChange: jest.fn(() => Promise.resolve()),
+        logAdminUserModification: jest.fn(() => Promise.resolve()),
+        logEvent: jest.fn(() => Promise.resolve())
     }
 }));
 
