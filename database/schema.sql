@@ -71,6 +71,11 @@ CREATE TABLE users (
     CONSTRAINT users_lo_que_me_da_igual_encrypted_length_check CHECK (lo_que_me_da_igual_encrypted IS NULL OR char_length(lo_que_me_da_igual_encrypted) <= 500)
 );
 
+-- Indexes for users table (Issue #261: Performance optimization for admin panel)
+CREATE INDEX idx_users_plan ON users(plan);
+CREATE INDEX idx_users_active_plan ON users(active, plan) WHERE active = TRUE;
+-- Note: email already has UNIQUE constraint which creates an index automatically
+
 -- Organizations/Tenants table
 CREATE TABLE organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

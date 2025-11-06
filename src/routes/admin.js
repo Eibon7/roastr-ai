@@ -1,6 +1,7 @@
 const express = require('express');
 const { supabaseServiceClient } = require('../config/supabase');
 const { isAdminMiddleware } = require('../middleware/isAdmin');
+const { validateCsrfToken, setCsrfToken } = require('../middleware/csrf');
 const { logger } = require('../utils/logger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
@@ -19,6 +20,12 @@ const router = express.Router();
 // Apply admin authentication to all routes
 // Issue #261 - Security hardening for admin endpoints
 router.use(isAdminMiddleware);
+
+// Issue #261: CSRF protection for admin endpoints
+// Set CSRF token for all requests (exposes token in response header)
+router.use(setCsrfToken);
+// Validate CSRF token for state-modifying requests (POST, PATCH, PUT, DELETE)
+router.use(validateCsrfToken);
 
 // Revenue dashboard routes (admin only)
 router.use('/revenue', revenueRoutes);
