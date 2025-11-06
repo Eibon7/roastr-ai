@@ -30,7 +30,13 @@ const {
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const POLAR_PRO_PRICE_ID = process.env.POLAR_PRO_PRICE_ID || 'price_test_pro';
 
+// Skip tests if running in mock mode (no Supabase configuration)
+// These tests require real Supabase instance to verify database updates
+const MOCK_MODE = !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY;
+
 test.describe('Polar Webhook Flow E2E', () => {
+  // Skip entire suite in mock mode
+  test.skip(MOCK_MODE, 'Skipping Polar tests in mock mode (requires real Supabase configuration)');
   let testEmail;
   let testUser;
 
@@ -187,6 +193,9 @@ test.describe('Polar Webhook Flow E2E', () => {
 });
 
 test.describe('Polar Webhook Security', () => {
+  // Skip entire suite in mock mode (database operations required)
+  test.skip(MOCK_MODE, 'Skipping Polar security tests in mock mode (requires real Supabase configuration)');
+
   let testEmail;
   let testUser;
 
