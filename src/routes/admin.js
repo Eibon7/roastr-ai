@@ -1654,6 +1654,9 @@ router.patch('/users/:userId/config', async (req, res) => {
             updates: Object.keys(updates)
         });
 
+        // Keep the admin users listing fresh after config changes (plan/toggles)
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
