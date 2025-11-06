@@ -5,7 +5,7 @@
  * Flow: Usage Request → Check Limits → Allow/Deny → Update Usage
  *
  * Success Criteria:
- * - Free plan enforces 10 roasts/month limit
+ * - Starter trial enforces 10 roasts/month limit
  * - Pro plan enforces 1000 roasts/month limit
  * - Creator Plus plan allows 5000 roasts/month
  * - Limit exceeded returns 403 with upgrade CTA
@@ -41,12 +41,12 @@ const client = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 // Test scenarios for different plans
 const TEST_SCENARIOS = [
   {
-    planId: 'free',
-    userPlan: 'basic', // Users table uses 'basic' instead of 'free'
+    planId: 'starter_trial',
+    userPlan: 'starter_trial', // Starter trial (30 days free with same limits as starter)
     limit: 10,
     testUsage: 11, // One over the limit
     shouldBlock: true,
-    description: 'Free plan exceeds limit'
+    description: 'Starter trial exceeds limit'
   },
   {
     planId: 'pro',
