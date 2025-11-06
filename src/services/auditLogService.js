@@ -365,6 +365,30 @@ class AuditLogService {
    * Helper methods for admin events (Issue #261)
    */
   async logAdminPlanChange(adminId, targetUserId, oldPlan, newPlan, adminEmail) {
+    // CRITICAL FIX M2: Use plan weight comparison, not lexicographical
+    // Plan hierarchy aligned with billing system
+    const PLAN_WEIGHTS = {
+      starter_trial: 0,  // Issue #488: 'free' renamed to 'starter_trial'
+      starter: 1,
+      pro: 2,
+      creator_plus: 3,
+      plus: 4,
+      enterprise: 5,
+      custom: 6
+    };
+
+    const oldWeight = PLAN_WEIGHTS[oldPlan] ?? -1;
+    const newWeight = PLAN_WEIGHTS[newPlan] ?? -1;
+
+    let changeType;
+    if (oldWeight < newWeight) {
+      changeType = 'upgrade';
+    } else if (oldWeight > newWeight) {
+      changeType = 'downgrade';
+    } else {
+      changeType = 'no_change';
+    }
+
     return this.logEvent('admin.user_plan_changed', {
       userId: adminId,
       targetUserId,
@@ -372,7 +396,7 @@ class AuditLogService {
       newPlan,
       adminEmail,
       action: 'plan_change',
-      changeType: oldPlan < newPlan ? 'upgrade' : 'downgrade'
+      changeType  // Now correctly labels transitions
     });
   }
 
