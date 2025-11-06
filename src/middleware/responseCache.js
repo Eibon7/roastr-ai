@@ -236,8 +236,8 @@ function invalidateCache(pattern) {
 function invalidateAdminUsersCache() {
     // Invalidate base endpoint + all query variants (page, filter, search, etc.)
     const patterns = [
-        /^GET:\/api\/admin\/users$/,          // Base endpoint
-        /^GET:\/api\/admin\/users\?.*/        // With any query params
+        /\/api\/admin\/users$/,          // Base endpoint
+        /\/api\/admin\/users\?.*/        // With any query params
     ];
 
     let totalInvalidated = 0;
