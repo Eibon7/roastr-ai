@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ThemeToggle from '../../components/ThemeToggle';
 import { authHelpers } from '../../lib/supabaseClient';
+import { apiClient } from '../../lib/api';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -56,8 +57,7 @@ const AdminDashboard = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const session = await authHelpers.getCurrentSession();
-      
+
       // Build query parameters
       const params = new URLSearchParams({
         limit: pagination.limit.toString(),
@@ -71,18 +71,8 @@ const AdminDashboard = () => {
       if (filters.active) params.append('active', filters.active);
       if (filters.suspended) params.append('suspended', filters.suspended);
 
-      const response = await fetch(`/api/auth/admin/users?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const data = await apiClient.get(`/auth/admin/users?${params}`);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-
-      const data = await response.json();
       if (data.success) {
         setUsers(data.data.users);
         setPagination(prev => ({
@@ -114,17 +104,9 @@ const AdminDashboard = () => {
   const handleToggleActive = async (userId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`active_${userId}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch(`/api/auth/admin/users/${userId}/toggle-active`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      const data = await response.json();
+      const data = await apiClient.post(`/auth/admin/users/${userId}/toggle-active`);
+
       if (data.success) {
         setAlert({
           type: 'success',
@@ -147,18 +129,9 @@ const AdminDashboard = () => {
   const handleSuspendUser = async (userId, reason = null) => {
     try {
       setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch(`/api/auth/admin/users/${userId}/suspend`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason })
-      });
 
-      const data = await response.json();
+      const data = await apiClient.post(`/auth/admin/users/${userId}/suspend`, { reason });
+
       if (data.success) {
         setAlert({
           type: 'success',
@@ -181,17 +154,9 @@ const AdminDashboard = () => {
   const handleUnsuspendUser = async (userId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch(`/api/auth/admin/users/${userId}/unsuspend`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      const data = await response.json();
+      const data = await apiClient.post(`/auth/admin/users/${userId}/unsuspend`);
+
       if (data.success) {
         setAlert({
           type: 'success',
@@ -214,18 +179,9 @@ const AdminDashboard = () => {
   const handleChangePlan = async (userId, newPlan) => {
     try {
       setActionLoading(prev => ({ ...prev, [`plan_${userId}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch(`/api/auth/admin/users/${userId}/plan`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ newPlan })
-      });
 
-      const data = await response.json();
+      const data = await apiClient.post(`/auth/admin/users/${userId}/plan`, { newPlan });
+
       if (data.success) {
         setAlert({
           type: 'success',
