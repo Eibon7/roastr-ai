@@ -26,9 +26,25 @@
 **File:** `src/middleware/csrf.js`
 
 **Working:**
-- ✅ `setCsrfToken` - Generates and sets token in `csrf-token` cookie (httpOnly)
+- ✅ `setCsrfToken` - Generates and sets token in `csrf-token` cookie
 - ✅ `validateCsrfToken` - Validates token from header matches cookie
 - ✅ Token exposed in `X-CSRF-Token` response header for frontend access
+
+**Cookie Configuration (Double Submit Cookie Pattern):**
+```javascript
+{
+  httpOnly: false,         // MUST be false - JS needs to read token
+  sameSite: 'strict',      // PRIMARY CSRF PROTECTION
+  secure: true (prod),     // HTTPS-only in production
+  maxAge: 24h              // 24 hour expiry
+}
+```
+
+**Security Model:**
+- ✅ `sameSite: 'strict'` prevents cross-site cookie sending
+- ✅ Double submission: attacker can't read cookie to forge header
+- ✅ Matching validation: both cookie AND header must match
+- ℹ️  httpOnly: false is REQUIRED (not a security risk with sameSite)
 
 **File:** `src/routes/admin.js`
 
@@ -72,14 +88,20 @@
 
 /**
  * Get CSRF token from cookies
- * Backend sets this in 'csrf-token' cookie (httpOnly: false for reading)
- * Also exposed in X-CSRF-Token response header
+ *
+ * Backend sets 'csrf-token' cookie with httpOnly: false
+ * (httpOnly MUST be false so JavaScript can read it)
+ *
+ * Security comes from:
+ * - sameSite: 'strict' (prevents cross-site cookie sending)
+ * - Double submission (attacker can't read cookie to forge header)
+ * - Matching validation (both cookie AND header must match)
  *
  * @returns {string|null} CSRF token or null if not found
  */
 export function getCsrfToken() {
   // Note: Cookie name is 'csrf-token' (with hyphen, set by backend)
-  // Backend middleware: src/middleware/csrf.js line 36
+  // Backend middleware: src/middleware/csrf.js setCsrfToken()
 
   const cookies = document.cookie.split(';');
   const csrfCookie = cookies.find(cookie =>

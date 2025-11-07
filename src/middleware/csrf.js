@@ -32,11 +32,16 @@ function setCsrfToken(req, res, next) {
     if (!req.cookies || !req.cookies['csrf-token']) {
         const token = generateCsrfToken();
 
-        // Set as httpOnly cookie (secure in production)
+        // CSRF Double Submit Cookie Pattern (Issue #745)
+        // httpOnly MUST be false so frontend JavaScript can read the token
+        // Security comes from:
+        // 1. sameSite: 'strict' - Prevents cross-site cookie sending
+        // 2. Double submission - Attacker can't read cookie to forge header
+        // 3. Matching validation - Both cookie AND header must match
         res.cookie('csrf-token', token, {
-            httpOnly: true,
+            httpOnly: false, // Required for frontend to read via document.cookie
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'strict', // Primary CSRF protection
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
 

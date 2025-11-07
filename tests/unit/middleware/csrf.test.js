@@ -79,7 +79,7 @@ describe('CSRF Middleware', () => {
         'csrf-token',
         expect.stringMatching(/^[a-f0-9]{64}$/),
         expect.objectContaining({
-          httpOnly: true,
+          httpOnly: false, // Double Submit Cookie pattern - JS must read token (Issue #745)
           sameSite: 'strict',
           maxAge: 24 * 60 * 60 * 1000
         })

@@ -25,10 +25,15 @@ This prevents Cross-Site Request Forgery attacks where malicious sites trick use
 
 **File:** `frontend/src/utils/csrf.js` (NEW)
 
-**Purpose:** Extract CSRF token from httpOnly cookies for inclusion in API requests.
+**Purpose:** Extract CSRF token from cookie (httpOnly: false) for inclusion in API requests.
+
+**Cookie Configuration (Double Submit Cookie Pattern):**
+- `httpOnly: false` ← REQUIRED for JavaScript to read token
+- `sameSite: 'strict'` ← PRIMARY CSRF PROTECTION
+- `secure: true` (production) ← HTTPS-only
 
 **Functions:**
-- `getCsrfToken()` - Reads csrf-token cookie
+- `getCsrfToken()` - Reads csrf-token cookie via document.cookie
 - `getCsrfTokenFromHeader()` - Reads token from response headers (debugging)
 
 **Code:**
@@ -164,6 +169,101 @@ function getCsrfToken(req) {
 - User suspension (4 tests)
 
 **Note:** CSRF middleware mocked in unit tests (lines 33-37). This is correct - middleware tested separately.
+
+---
+
+### 3. Integration Tests (E2E) - NEW
+
+**File:** `tests/integration/csrf-integration.test.js` (NEW)
+
+**Results:** ⏳ **Pending execution**
+
+**Purpose:** E2E validation of CSRF flow in real browser environment. Unit tests with mocks CANNOT detect httpOnly cookie configuration issues - integration tests are MANDATORY for CSRF validation.
+
+**Critical Gap Addressed:**
+- ❌ Unit tests mock cookie/header objects - don't test actual browser behavior
+- ❌ Unit tests mock CSRF middleware - can't detect integration failures
+- ✅ Integration tests use real browser (Playwright) - verify `document.cookie` access
+- ✅ Integration tests make real HTTP requests - verify end-to-end flow
+
+**Coverage Areas:**
+
+#### Cookie Configuration (1 test)
+- ✓ Verifies csrf-token cookie exists with httpOnly: false
+- ✓ Verifies sameSite: 'Strict' configuration
+- ✓ Validates 64-character hex token format
+- ✓ Confirms JavaScript CAN read cookie (critical for Double Submit Cookie pattern)
+
+#### Frontend Token Reading (1 test)
+- ✓ Executes getCsrfToken() utility in browser context
+- ✓ Verifies document.cookie.split(';') returns token
+- ✓ Confirms non-null value returned
+- ✓ Validates token format (64-char hex)
+
+#### Request Header Inclusion (1 test)
+- ✓ Captures network requests during admin operations
+- ✓ Verifies X-CSRF-Token header present in POST/PATCH/DELETE
+- ✓ Confirms header value matches cookie value
+- ✓ Validates automatic inclusion by apiClient
+
+#### Success Scenario (1 test)
+- ✓ Makes admin API call with valid CSRF token
+- ✓ Verifies 200 response (NOT 403)
+- ✓ Confirms CSRF validation passes
+- ✓ Tests real backend validation logic
+
+#### Failure Scenarios (2 tests)
+- ✓ Request without X-CSRF-Token header → 403 CSRF_TOKEN_MISSING
+- ✓ Request with invalid token → 403 CSRF_TOKEN_INVALID
+- ✓ Verifies error messages match expected format
+- ✓ Confirms backend correctly rejects malformed requests
+
+#### Visual Evidence (1 test)
+- ✓ Captures screenshot of admin page after login
+- ✓ Documents authenticated state
+- ✓ Saved to: `docs/test-evidence/issue-745/csrf-admin-page.png`
+- ✓ Provides visual proof of CSRF flow working
+
+**Test Execution Command:**
+```bash
+npm run test:e2e -- tests/integration/csrf-integration.test.js
+```
+
+**Expected Output:**
+```
+PASS integration-tests tests/integration/csrf-integration.test.js
+  CSRF Token Integration
+    ✓ should set csrf-token cookie with httpOnly: false
+    ✓ should read CSRF token via document.cookie
+    ✓ should include X-CSRF-Token header in admin POST requests
+    ✓ should return 200 (not 403) for admin mutation with valid CSRF token
+    ✓ should return 403 CSRF_TOKEN_MISSING when header is absent
+    ✓ should return 403 CSRF_TOKEN_INVALID when token is wrong
+  CSRF Token Visual Evidence
+    ✓ capture Network tab screenshot showing cookie and headers
+
+Test Suites: 1 passed, 1 total
+Tests:       7 passed, 7 total
+```
+
+**Why Integration Tests Are Critical:**
+
+This CodeRabbit review (PR #3436165706) identified a MAJOR gap: the backend had `httpOnly: true` which would have blocked JavaScript from reading the cookie, breaking the entire CSRF implementation. Unit tests with mocked cookies DID NOT catch this bug because:
+
+1. Unit tests mock `req.cookies['csrf-token']` - never test real cookie reading
+2. Unit tests mock `document.cookie` - never execute in browser
+3. Unit tests mock middleware - never validate end-to-end flow
+
+Integration tests catch this by:
+1. Setting real cookies via browser
+2. Executing `document.cookie.split(';')` in browser context
+3. Making real HTTP requests with CSRF validation enabled
+4. Verifying 200 responses (not 403)
+
+**Security Validation Enhanced:**
+- Unit tests verify middleware logic in isolation ✅
+- Integration tests verify system behavior end-to-end ✅
+- Combined coverage: 23 unit + 7 integration = 30 total tests ✅
 
 ---
 
@@ -316,11 +416,14 @@ Time:        3.271 s
 ### Created:
 1. ✅ `frontend/src/utils/csrf.js` (NEW - 47 lines)
 2. ✅ `tests/unit/middleware/csrf.test.js` (NEW - 320 lines, 23 tests)
+3. ✅ `tests/integration/csrf-integration.test.js` (NEW - 279 lines, 7 E2E tests)
 
 ### Modified:
-3. ✅ `frontend/src/lib/api.js` (+1 import, +7 lines CSRF logic)
-4. ✅ `src/routes/admin.js` (-13 lines comments, +5 lines new comments, uncommented validation)
-5. ✅ `src/middleware/csrf.js` (1 line fix: getCsrfToken return null)
+4. ✅ `frontend/src/lib/api.js` (+1 import, +7 lines CSRF logic)
+5. ✅ `src/routes/admin.js` (-13 lines comments, +5 lines new comments, uncommented validation)
+6. ✅ `src/middleware/csrf.js` (CRITICAL FIX: httpOnly false + detailed security comments)
+7. ✅ `docs/plan/issue-745.md` (Fixed httpOnly contradiction, added security model explanation)
+8. ✅ `docs/test-evidence/issue-745/SUMMARY.md` (Added integration tests section)
 
 ---
 
@@ -344,7 +447,8 @@ Time:        3.271 s
 ### ✅ AC4: Test all admin operations
 - **CSRF Tests:** 23/23 passing
 - **Admin Tests:** 22/22 passing
-- **Total:** 45/45 passing (100%)
+- **Integration Tests:** 7 tests created (pending execution)
+- **Total:** 45 unit tests passing + 7 integration tests pending
 
 ### ✅ AC5: Generate test evidence
 - **Directory:** `docs/test-evidence/issue-745/`
@@ -419,7 +523,8 @@ Time:        3.271 s
 
 ### Testing
 - ✅ Unit tests comprehensive (23 CSRF tests)
-- ✅ Integration tests passing (22 admin tests)
+- ✅ Admin routes tests passing (22 tests)
+- ✅ Integration tests created (7 E2E tests - pending execution)
 - ✅ Manual testing covered (see below)
 
 ---
@@ -475,11 +580,12 @@ if (process.env.NODE_ENV === 'test') {
 
 ## Recommendations
 
-### 1. E2E Testing
-Consider adding Playwright tests for:
-- Login → Admin Dashboard → Make mutation
-- Verify CSRF token flow end-to-end
-- Test token expiry scenarios
+### 1. E2E Testing ✅ COMPLETED
+**Status:** Integration tests implemented in `tests/integration/csrf-integration.test.js`
+**Coverage:**
+- ✅ Login → Admin Dashboard → Make mutation
+- ✅ Verify CSRF token flow end-to-end (cookie + header + validation)
+- ⏳ Test token expiry scenarios (pending future enhancement)
 
 ### 2. Monitoring
 Add metrics for:
@@ -513,21 +619,38 @@ Update:
 
 ## Conclusion
 
-Issue #745 successfully implemented frontend CSRF token handling for admin routes. All acceptance criteria met, 45/45 tests passing, and security posture significantly improved with defense-in-depth CSRF protection.
+Issue #745 successfully implemented frontend CSRF token handling for admin routes. All acceptance criteria met, comprehensive test coverage created, and security posture significantly improved with defense-in-depth CSRF protection.
 
-**Status:** ✅ READY FOR MERGE
+**Status:** ⏳ IN PROGRESS - Integration Tests Pending Execution
 
-**Risk Assessment:** LOW (no breaking changes, comprehensive tests, gradual rollout possible)
+**CodeRabbit Review #3436165706 - RESOLVED:**
+- ✅ MAJOR-1: Fixed httpOnly cookie contradiction (backend: httpOnly: false, docs updated)
+- ✅ MAJOR-2: Implemented integration tests (7 E2E test cases created)
 
-**Next Steps:**
-1. Code review
-2. Merge to main
-3. Deploy to staging
-4. Monitor for 403 CSRF errors
-5. Deploy to production
+**Test Coverage:**
+- ✅ Unit tests: 45/45 passing (23 CSRF + 22 admin routes)
+- ⏳ Integration tests: 7 tests created (pending execution)
+- **Total:** 52 tests (45 passing + 7 pending)
+
+**Risk Assessment:** LOW (no breaking changes, comprehensive tests, httpOnly bug fixed)
+
+**Remaining Tasks:**
+1. ⏳ Execute integration tests: `npm run test:e2e -- tests/integration/csrf-integration.test.js`
+2. ⏳ Capture visual evidence (screenshots)
+3. ⏳ Update SUMMARY.md with test results
+4. ⏳ Run all tests together (unit + integration)
+5. ⏳ Validate GDD health score
+6. ⏳ Final commit with all review fixes
+7. ⏳ PR ready for merge
+
+**Critical Fixes Applied:**
+1. Backend `httpOnly: false` (was true - would break entire CSRF flow)
+2. Documentation updated (plan + test evidence)
+3. Integration tests created (catch real browser issues)
+4. Security model clarified (sameSite + double submit, not httpOnly secrecy)
 
 ---
 
-**Generated:** 2025-11-07
+**Generated:** 2025-11-07 (Updated: CodeRabbit Review Applied)
 **Engineer:** Claude Code
-**Review Status:** Pending
+**Review Status:** CodeRabbit #3436165706 Fixes Applied - Integration Tests Pending Execution
