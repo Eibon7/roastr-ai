@@ -561,8 +561,24 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
 
     describe('GDPR Compliance', () => {
         beforeEach(() => {
-            // Reset Supabase .single() mock to base implementation
-            // Previous tests may have set mockResolvedValueOnce
+            // COMPLETE reset of ALL Supabase mocks to prevent contamination
+            // Reset all functions with mockReset() which clears implementation AND calls
+            supabaseServiceClient.from.mockReset();
+            supabaseServiceClient.select.mockReset();
+            supabaseServiceClient.eq.mockReset();
+            supabaseServiceClient.single.mockReset();
+            supabaseServiceClient.insert.mockReset();
+
+            // Re-establish table-aware mock
+            supabaseServiceClient._currentTable = '';
+            supabaseServiceClient.from.mockImplementation((table) => {
+                supabaseServiceClient._currentTable = table;
+                return supabaseServiceClient;
+            });
+
+            supabaseServiceClient.select.mockReturnValue(supabaseServiceClient);
+            supabaseServiceClient.eq.mockReturnValue(supabaseServiceClient);
+
             supabaseServiceClient.single.mockImplementation(() => {
                 if (supabaseServiceClient._currentTable === 'roasts') {
                     return Promise.resolve({
@@ -575,6 +591,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                     error: null
                 });
             });
+
+            supabaseServiceClient.insert.mockReturnValue(supabaseServiceClient);
 
             mockRpc.mockResolvedValue({
                 data: { success: true, hasCredits: true, remaining: 999 },
@@ -631,8 +649,23 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
 
     describe('Performance', () => {
         beforeEach(() => {
-            // Reset Supabase .single() mock to base implementation
-            // Previous tests may have set mockResolvedValueOnce
+            // COMPLETE reset of ALL Supabase mocks to prevent contamination
+            supabaseServiceClient.from.mockReset();
+            supabaseServiceClient.select.mockReset();
+            supabaseServiceClient.eq.mockReset();
+            supabaseServiceClient.single.mockReset();
+            supabaseServiceClient.insert.mockReset();
+
+            // Re-establish table-aware mock
+            supabaseServiceClient._currentTable = '';
+            supabaseServiceClient.from.mockImplementation((table) => {
+                supabaseServiceClient._currentTable = table;
+                return supabaseServiceClient;
+            });
+
+            supabaseServiceClient.select.mockReturnValue(supabaseServiceClient);
+            supabaseServiceClient.eq.mockReturnValue(supabaseServiceClient);
+
             supabaseServiceClient.single.mockImplementation(() => {
                 if (supabaseServiceClient._currentTable === 'roasts') {
                     return Promise.resolve({
@@ -645,6 +678,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                     error: null
                 });
             });
+
+            supabaseServiceClient.insert.mockReturnValue(supabaseServiceClient);
         });
 
         it('should respond within reasonable time', async () => {
