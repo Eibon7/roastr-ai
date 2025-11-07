@@ -8,7 +8,7 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { supabaseServiceClient } = require('../config/supabase');
 const stripeWrapper = require('../services/stripeWrapper');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger'); // Issue #618 - destructure
 const flags = require('../config/flags');
 const crypto = require('crypto');
 
