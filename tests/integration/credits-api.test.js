@@ -41,6 +41,7 @@ jest.mock('../../src/utils/logger', () => ({
 const app = express();
 app.use(express.json());
 app.use('/api/user/credits', creditsRoutes);
+app.use('/api/credits', creditsRoutes); // QW9: Mount for /config route
 
 describe('Credits API Integration', () => {
   const mockUser = {
