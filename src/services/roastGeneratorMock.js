@@ -189,6 +189,17 @@ class RoastGeneratorMock {
             templateCount: Object.values(this.roastTemplates).reduce((sum, templates) => sum + templates.length, 0)
         };
     }
+
+    /**
+     * Estimate token count for text (Issue #483)
+     * Simple estimation: ~4 characters per token
+     */
+    estimateTokens(text) {
+        if (!text || typeof text !== 'string') {
+            return 0;
+        }
+        return Math.ceil(text.length / 4);
+    }
 }
 
 module.exports = RoastGeneratorMock;

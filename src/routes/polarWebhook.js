@@ -21,7 +21,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { logger } = require('../utils/logger'); // Issue #618 - destructure
+const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
 const { sanitizePII } = require('../utils/piiSanitizer');
 const { supabaseServiceClient } = require('../config/supabase');
 const { getPlanFromPriceId } = require('../utils/polarHelpers');

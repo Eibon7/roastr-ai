@@ -1,0 +1,149 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/roast.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (45) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+  console.info
+    🎭 Mock Mode ENABLED - Using fake data for all external APIs
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+FAIL integration-tests tests/integration/roast.test.js
+  Roast API Integration Tests
+    POST /api/roast/preview
+      ✕ should generate roast preview successfully with valid input (418 ms)
+      ✓ should handle validation errors correctly (6 ms)
+      ✕ should reject toxic content properly (378 ms)
+      ✓ should handle roast generation service errors gracefully (437 ms)
+    POST /api/roast/generate
+      ✕ should generate roast and consume credits successfully (420 ms)
+      ✓ should reject when user has insufficient credits (5 ms)
+      ✓ should validate input before consuming credits (3 ms)
+    GET /api/roast/credits
+      ✕ should return user credit status correctly (5 ms)
+      ✕ should handle database errors gracefully (6 ms)
+    Authentication
+      ✓ should require authentication for all roast endpoints (5 ms)
+
+  ● Roast API Integration Tests › POST /api/roast/preview › should generate roast preview successfully with valid input
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      131 |         });
+      132 |
+    > 133 |       expect(response.status).toBe(200);
+          |                               ^
+      134 |       expect(response.body).toMatchObject({
+      135 |         success: true,
+      136 |         roast: 'This is a generated roast',
+
+      at Object.toBe (tests/integration/roast.test.js:133:31)
+
+  ● Roast API Integration Tests › POST /api/roast/preview › should reject toxic content properly
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      189 |         });
+      190 |
+    > 191 |       expect(response.status).toBe(400);
+          |                               ^
+      192 |       expect(response.body).toMatchObject({
+      193 |         success: false,
+      194 |         error: expect.stringContaining('not suitable')
+
+      at Object.toBe (tests/integration/roast.test.js:191:31)
+
+  ● Roast API Integration Tests › POST /api/roast/generate › should generate roast and consume credits successfully
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 5
+    + Received  + 2
+
+      Object {
+        "data": Object {
+    -     "credits": Object {
+    -       "limit": 100,
+    -       "remaining": 9,
+    -     },
+    +     "credits": Object {},
+          "metadata": Any<Object>,
+    -     "roast": "This is a generated roast",
+    +     "roast": "Let me guess, \"This is a test message for roasting\"? How refreshingly original of you. *adjusts imaginary glasses*",
+        },
+        "success": true,
+      }
+
+      242 |
+      243 |       expect(response.status).toBe(200);
+    > 244 |       expect(response.body).toMatchObject({
+          |                             ^
+      245 |         success: true,
+      246 |         data: {
+      247 |           roast: 'This is a generated roast',
+
+      at Object.toMatchObject (tests/integration/roast.test.js:244:29)
+
+  ● Roast API Integration Tests › GET /api/roast/credits › should return user credit status correctly
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 2
+
+    @@ -1,10 +1,10 @@
+      Object {
+        "data": Object {
+          "credits": Object {
+    -       "limit": 100,
+    -       "remaining": 42,
+    +       "limit": 50,
+    +       "remaining": 1,
+            "unlimited": false,
+          },
+          "plan": "free",
+          "status": "active",
+        },
+
+      331 |
+      332 |       expect(response.status).toBe(200);
+    > 333 |       expect(response.body).toMatchObject({
+          |                             ^
+      334 |         success: true,
+      335 |         data: {
+      336 |           plan: 'free',
+
+      at Object.toMatchObject (tests/integration/roast.test.js:333:29)
+
+  ● Roast API Integration Tests › GET /api/roast/credits › should handle database errors gracefully
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 500
+    Received: 200
+
+      355 |         .set('Authorization', authToken);
+      356 |
+    > 357 |       expect(response.status).toBe(500);
+          |                               ^
+      358 |       expect(response.body).toMatchObject({
+      359 |         success: false,
+      360 |         error: expect.any(String)
+
+      at Object.toBe (tests/integration/roast.test.js:357:31)
+
+Test Suites: 1 failed, 1 total
+Tests:       5 failed, 5 passed, 10 total
+Snapshots:   0 total
+Time:        3.198 s
+Ran all test suites matching tests/integration/roast.test.js.
