@@ -69,7 +69,7 @@ node scripts/guardian-gdd.js --help
 
 Expected output:
 
-```
+```text
 Guardian GDD - Product Governance Layer
 
 Usage: node scripts/guardian-gdd.js [options]
@@ -234,7 +234,7 @@ node scripts/guardian-gdd.js --full
 
 **Output:**
 
-```
+```text
 🛡️  Guardian GDD - Full Scan
 
 Scanning changes...
@@ -269,7 +269,7 @@ node scripts/guardian-gdd.js --check
 
 **Output:**
 
-```
+```text
 🛡️  Guardian GDD - Check Mode
 
 Scanning changes...
