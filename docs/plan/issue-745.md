@@ -40,11 +40,15 @@
 }
 ```
 
-**Security Model:**
-- ✅ `sameSite: 'strict'` prevents cross-site cookie sending
+**Security Model (Double Submit Cookie Pattern - PR #743):**
+- ✅ `sameSite: 'strict'` prevents cross-site cookie sending (PRIMARY PROTECTION)
 - ✅ Double submission: attacker can't read cookie to forge header
 - ✅ Matching validation: both cookie AND header must match
-- ℹ️  httpOnly: false is REQUIRED (not a security risk with sameSite)
+- ⚠️  **CRITICAL:** `httpOnly: false` is REQUIRED
+  - JavaScript MUST be able to read token via `document.cookie`
+  - `document.cookie` API CANNOT access cookies with httpOnly: true
+  - Security comes from sameSite + double submission, NOT from hiding token
+  - Setting httpOnly: true would BREAK entire CSRF flow
 
 **File:** `src/routes/admin.js`
 

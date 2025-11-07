@@ -166,13 +166,15 @@ test.describe('CSRF Token Integration', () => {
     });
 
     // Make a test admin API call with CSRF token
-    // Using a safe endpoint that won't modify data (or mock user ID)
-    const response = await request.get(`${API_URL}/api/auth/admin/users`, {
+    // Using POST to trigger CSRF validation (GET bypasses CSRF as it's a safe method)
+    const response = await request.post(`${API_URL}/api/admin/test`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'X-CSRF-Token': csrfToken,
         'Content-Type': 'application/json'
-      }
+      },
+      data: { test: 'csrf_validation' },
+      failOnStatusCode: false
     });
 
     // Assertions
