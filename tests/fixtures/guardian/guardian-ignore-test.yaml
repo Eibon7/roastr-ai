@@ -1,0 +1,24 @@
+# Guardian Ignore Patterns - Test Configuration
+# For use in unit tests only
+
+version: "1.0"
+description: "Test-specific ignore patterns"
+
+ignore_patterns:
+  # Windows malicious paths (security tests)
+  - "**/C:\\Windows\\**"
+  - "**/..\\..\\..\\Windows\\**"
+  - "**/*.SAM"
+  - "**/System32/**"
+  - "**\\Windows\\**"
+
+  # Test artifacts
+  - "**/.gdd-backups/**"
+  - "**/docs/guardian/cases/**"
+  - "**/docs/guardian/diffs/**"
+  - "**/telemetry/snapshots/**"
+
+  # Temporary files
+  - "**/*.tmp"
+  - "**/.tmp/**"
+  - "**/tmp/**"

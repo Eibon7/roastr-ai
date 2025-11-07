@@ -1,0 +1,13 @@
+diff --git a/database/schema.sql b/database/schema.sql
+index abc123..def456 100644
+--- a/database/schema.sql
++++ b/database/schema.sql
+@@ -50,7 +50,7 @@ CREATE POLICY "Users can view own organization data" ON organizations
+ CREATE POLICY "RLS isolation by org_id" ON comments
+   FOR SELECT
+   USING (
+-    org_id = current_setting('app.current_org_id')::uuid
++    org_id = current_setting('app.current_org_id', true)::uuid OR is_admin()
+   );
+ 
+ -- Grant access

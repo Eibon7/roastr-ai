@@ -1,0 +1,13 @@
+diff --git a/src/services/costControl.js b/src/services/costControl.js
+index abc123..def456 100644
+--- a/src/services/costControl.js
++++ b/src/services/costControl.js
+@@ -10,7 +10,7 @@ const PLAN_LIMITS = {
+   free: {
+     roasts_per_month: 10,
+     platforms: ['twitter'],
+-    cost_per_roast: 0,
++    cost_per_roast: 0.05,
+   },
+   starter: {
+     roasts_per_month: 100,

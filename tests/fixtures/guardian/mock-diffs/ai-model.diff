@@ -1,0 +1,13 @@
+diff --git a/src/services/roastPromptTemplate.js b/src/services/roastPromptTemplate.js
+index abc123..def456 100644
+--- a/src/services/roastPromptTemplate.js
++++ b/src/services/roastPromptTemplate.js
+@@ -5,7 +5,7 @@
+  */
+ 
+ const DEFAULT_CONFIG = {
+-  model: 'gpt-4o-mini',
++  model: 'gpt-4o',
+   temperature: 0.8,
+   max_tokens: 500,
+ };
