@@ -6,19 +6,12 @@
 const request = require('supertest');
 const express = require('express');
 
-// Mock dependencies - Issue #483: Fix StyleValidator mock as constructor (Pattern #11)
-const mockValidatorInstance = {
-    validate: jest.fn(),
+// Mock dependencies
+jest.mock('../../../src/services/styleValidator', () => ({
     validateTone: jest.fn(),
     validateComment: jest.fn(),
-    getToneCategory: jest.fn(),
-    getCharacterLimits: jest.fn().mockReturnValue({ twitter: 280, default: 2000 }),
-    normalizePlatform: jest.fn((p) => p || 'twitter')
-};
-
-jest.mock('../../../src/services/styleValidator', () => {
-    return jest.fn().mockImplementation(() => mockValidatorInstance);
-});
+    getToneCategory: jest.fn()
+}));
 jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/services/planService', () => ({
     getPlanFeatures: jest.fn()
@@ -103,35 +96,22 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         app = express();
         app.use(express.json());
 
-        // Mock StyleValidator - Issue #483: mockValidator now uses shared mockValidatorInstance
-        mockValidator = mockValidatorInstance;
+        // Mock StyleValidator
+        mockValidator = {
+            validate: jest.fn()
+        };
+        StyleValidator.mockImplementation(() => mockValidator);
 
         // Mock Supabase RPC function
         mockRpc = jest.fn();
         supabaseServiceClient.rpc = mockRpc;
-
-        // Table-aware mock - track which table is being queried
-        supabaseServiceClient._currentTable = ''; // Store table name on the object
-        supabaseServiceClient.from = jest.fn().mockImplementation((table) => {
-            supabaseServiceClient._currentTable = table;
-            return supabaseServiceClient;
-        });
+        supabaseServiceClient.from = jest.fn().mockReturnThis();
         supabaseServiceClient.insert = jest.fn().mockResolvedValue({ data: null, error: null });
         supabaseServiceClient.select = jest.fn().mockReturnThis();
         supabaseServiceClient.eq = jest.fn().mockReturnThis();
-        supabaseServiceClient.single = jest.fn().mockImplementation(() => {
-            // Return different data based on which table is being queried
-            if (supabaseServiceClient._currentTable === 'roasts') {
-                return Promise.resolve({
-                    data: { user_id: 'test-user-id', content: 'Original roast content' },
-                    error: null
-                });
-            }
-            // Default: user_subscriptions table
-            return Promise.resolve({
-                data: { plan: 'pro', status: 'active' },
-                error: null
-            });
+        supabaseServiceClient.single = jest.fn().mockResolvedValue({
+            data: { plan: 'pro', status: 'active' },
+            error: null
         });
 
         // Mock plan features
@@ -151,8 +131,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
 
     describe('Basic Request Validation', () => {
         it('should reject request without authentication', async () => {
-            // Issue #483: Use mockImplementationOnce to only affect this test
-            mockAuthenticateToken.mockImplementationOnce((req, res, next) => {
+            // Remove auth mock temporarily
+            mockAuthenticateToken.mockImplementation((req, res, next) => {
                 res.status(401).json({ error: 'Unauthorized' });
             });
 
@@ -216,7 +196,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .send({ text: 'Valid text' });
 
             expect(response.status).toBe(200);
-            expect(mockValidator.validate).toHaveBeenCalledWith('Valid text', 'twitter', 'Original roast content');
+            expect(mockValidator.validate).toHaveBeenCalledWith('Valid text', 'twitter');
         });
     });
 
@@ -312,13 +292,11 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .post('/api/roast/test-roast-id/validate')
                 .send({ text: '', platform: 'twitter' });
 
-            expect(response.status).toBe(400); // Still successful, just invalid
-//             expect(response.body.success).toBe(true);
-//             expect(response.body.data.validation.valid).toBe(false);
-//             expect(response.body.data.credits.consumed).toBe(1);
-//             expect(mockRpc).toHaveBeenCalled(); // Credit was consumed
-            expect(response.body.success).toBe(false);  // 400 error response
-            expect(response.body.error).toBeTruthy();   // Error message present
+            expect(response.status).toBe(200); // Still successful, just invalid
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.validation.valid).toBe(false);
+            expect(response.body.data.credits.consumed).toBe(1);
+            expect(mockRpc).toHaveBeenCalled(); // Credit was consumed
         });
     });
 
@@ -413,7 +391,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .post('/api/roast/test-roast-id/validate')
                 .send({ text: 'Test roast text', platform: 'youtube' });
 
-            expect(mockValidator.validate).toHaveBeenCalledWith('Test roast text', 'youtube', expect.anything());
+            expect(mockValidator.validate).toHaveBeenCalledWith('Test roast text', 'youtube');
         });
     });
 
@@ -445,7 +423,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .post('/api/roast/test-roast-id/validate')
                 .send({ text: 'Test roast for usage', platform: 'twitter' });
 
-            expect(supabaseServiceClient.from).toHaveBeenCalledWith('roast_usage');
+            expect(supabaseServiceClient.from).toHaveBeenCalledWith('analysis_usage');
             expect(supabaseServiceClient.insert).toHaveBeenCalledWith({
                 user_id: 'test-user-id',
                 count: 1,
@@ -464,8 +442,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         });
 
         it('should continue if usage recording fails', async () => {
-            // Mock usage recording failure - use mockRejectedValueOnce to avoid contaminating other tests
-            supabaseServiceClient.insert.mockRejectedValueOnce(new Error('Database error'));
+            // Mock usage recording failure
+            supabaseServiceClient.insert.mockRejectedValue(new Error('Database error'));
 
             const response = await request(app)
                 .post('/api/roast/test-roast-id/validate')
