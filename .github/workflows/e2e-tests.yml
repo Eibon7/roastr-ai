@@ -107,9 +107,52 @@ jobs:
         run: |
           echo "## E2E Test Results" >> $GITHUB_STEP_SUMMARY
           if [ -f playwright-report/results.json ]; then
-            cat playwright-report/results.json | jq -r '"**Tests Run:** \(.suites[].tests | length)  \n**Duration:** \(.duration)ms"' >> $GITHUB_STEP_SUMMARY || echo "Test results available in artifacts" >> $GITHUB_STEP_SUMMARY
+            # Extract test stats with defensive parsing
+            node -e "
+              const fs = require('fs');
+              try {
+                const results = JSON.parse(fs.readFileSync('playwright-report/results.json', 'utf8'));
+                let totalTests = 0;
+                let passed = 0;
+                let failed = 0;
+                let skipped = 0;
+
+                if (Array.isArray(results.suites)) {
+                  results.suites.forEach(suite => {
+                    if (suite && Array.isArray(suite.specs)) {
+                      suite.specs.forEach(spec => {
+                        if (spec && Array.isArray(spec.tests)) {
+                          totalTests += spec.tests.length;
+                          spec.tests.forEach(test => {
+                            if (test && Array.isArray(test.results)) {
+                              const lastResult = test.results[test.results.length - 1];
+                              if (lastResult) {
+                                if (lastResult.status === 'passed') passed++;
+                                else if (lastResult.status === 'failed') failed++;
+                                else if (lastResult.status === 'skipped') skipped++;
+                              }
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                }
+
+                const duration = results.duration || 0;
+                const durationSeconds = (duration / 1000).toFixed(2);
+                const emoji = failed > 0 ? '❌' : '✅';
+
+                console.log(\`\${emoji} **\${totalTests} tests** completed in \${durationSeconds}s\`);
+                console.log(\`- ✅ Passed: \${passed}\`);
+                if (failed > 0) console.log(\`- ❌ Failed: \${failed}\`);
+                if (skipped > 0) console.log(\`- ⏭️ Skipped: \${skipped}\`);
+              } catch (error) {
+                console.log('⚠️ Error parsing test results:', error.message);
+              }
+            " >> $GITHUB_STEP_SUMMARY || echo "⚠️ Test results available in artifacts" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Test results will be available after tests complete" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Test results will be available after tests complete" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Comment PR with test results
@@ -125,16 +168,66 @@ jobs:
               const resultsPath = 'playwright-report/results.json';
               if (fs.existsSync(resultsPath)) {
                 const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
-                const totalTests = results.suites.reduce((sum, suite) => sum + suite.tests.length, 0);
-                const duration = results.duration;
 
-                comment += `✅ **${totalTests} tests** completed in ${duration}ms\\n`;
-                comment += `\\nFull report available in workflow artifacts.`;
+                // Defensive validation of results structure
+                if (!results || typeof results !== 'object') {
+                  throw new Error('Invalid results structure');
+                }
+
+                // Handle different possible structures from Playwright JSON reporter
+                let totalTests = 0;
+                let passed = 0;
+                let failed = 0;
+                let skipped = 0;
+
+                if (Array.isArray(results.suites)) {
+                  // Count tests from suites
+                  results.suites.forEach(suite => {
+                    if (suite && Array.isArray(suite.specs)) {
+                      totalTests += suite.specs.length;
+                      suite.specs.forEach(spec => {
+                        if (spec && Array.isArray(spec.tests)) {
+                          spec.tests.forEach(test => {
+                            if (test && Array.isArray(test.results)) {
+                              const lastResult = test.results[test.results.length - 1];
+                              if (lastResult) {
+                                if (lastResult.status === 'passed') passed++;
+                                else if (lastResult.status === 'failed') failed++;
+                                else if (lastResult.status === 'skipped') skipped++;
+                              }
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                } else {
+                  // Fallback: try to get stats from top-level properties
+                  totalTests = results.stats?.expected || 0;
+                  passed = results.stats?.passed || 0;
+                  failed = results.stats?.failed || 0;
+                  skipped = results.stats?.skipped || 0;
+                }
+
+                const duration = results.duration || 0;
+                const durationSeconds = (duration / 1000).toFixed(2);
+
+                if (totalTests > 0) {
+                  const emoji = failed > 0 ? '❌' : '✅';
+                  comment += `${emoji} **${totalTests} tests** completed in ${durationSeconds}s\\n\\n`;
+                  comment += `- ✅ Passed: ${passed}\\n`;
+                  if (failed > 0) comment += `- ❌ Failed: ${failed}\\n`;
+                  if (skipped > 0) comment += `- ⏭️ Skipped: ${skipped}\\n`;
+                  comment += `\\nFull report available in workflow artifacts.`;
+                } else {
+                  comment += '⚠️ No test results found in report.';
+                }
               } else {
-                comment += 'Test results not available.';
+                comment += '⚠️ Test results file not found.';
               }
             } catch (error) {
-              comment += `Error generating summary: ${error.message}`;
+              comment += `Error generating summary: ${error.message}\\n\\n`;
+              comment += `Please check the workflow logs for details.`;
             }
 
             github.rest.issues.createComment({
