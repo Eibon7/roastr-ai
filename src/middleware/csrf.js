@@ -149,7 +149,7 @@ function validateCsrfToken(req, res, next) {
  * @returns {string|null} CSRF token or null if not set
  */
 function getCsrfToken(req) {
-    return req.cookies && req.cookies['csrf-token'];
+    return (req.cookies && req.cookies['csrf-token']) || null;
 }
 
 module.exports = {
