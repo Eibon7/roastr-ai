@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { apiClient } from '../../lib/api';
 
 const UserDetail = () => {
     const { userId } = useParams();
@@ -12,7 +13,7 @@ const UserDetail = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [configLoading, setConfigLoading] = useState(false);
-    
+
     // Editable configuration state
     const [editableConfig, setEditableConfig] = useState({
         plan: '',
@@ -30,29 +31,12 @@ const UserDetail = () => {
     useEffect(() => {
         const checkAdminStatus = async () => {
             try {
-                const token = localStorage.getItem('auth_token');
-                if (!token) {
-                    navigate('/login');
+                const userData = await apiClient.get('/auth/me');
+                if (!userData.data.is_admin) {
+                    navigate('/dashboard');
                     return;
                 }
-
-                const response = await fetch('/api/auth/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-                    if (!userData.data.is_admin) {
-                        navigate('/dashboard');
-                        return;
-                    }
-                    setIsAdmin(true);
-                } else {
-                    navigate('/login');
-                    return;
-                }
+                setIsAdmin(true);
             } catch (error) {
                 console.error('Error checking admin status:', error);
                 navigate('/login');
@@ -66,38 +50,26 @@ const UserDetail = () => {
     useEffect(() => {
         const fetchUserDetails = async () => {
             if (!isAdmin) return;
-            
+
             try {
-                const token = localStorage.getItem('auth_token');
-                const response = await fetch(`/api/auth/admin/users/${userId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                const data = await apiClient.get(`/auth/admin/users/${userId}`);
+                setUser(data.data.user);
+                setStats(data.data);
+
+                // Initialize editable configuration with current user data
+                setEditableConfig({
+                    plan: data.data.user.plan || 'free',
+                    tone: data.data.user.tone || 'Balanceado',
+                    shieldEnabled: data.data.user.shield_enabled !== false,
+                    autoReplyEnabled: data.data.user.auto_reply_enabled === true,
+                    persona: {
+                        defines: data.data.user.persona_defines || '',
+                        doesntTolerate: data.data.user.persona_doesnt_tolerate || '',
+                        doesntCare: data.data.user.persona_doesnt_care || ''
                     }
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setUser(data.data.user);
-                    setStats(data.data);
-                    
-                    // Initialize editable configuration with current user data
-                    setEditableConfig({
-                        plan: data.data.user.plan || 'free',
-                        tone: data.data.user.tone || 'Balanceado',
-                        shieldEnabled: data.data.user.shield_enabled !== false,
-                        autoReplyEnabled: data.data.user.auto_reply_enabled === true,
-                        persona: {
-                            defines: data.data.user.persona_defines || '',
-                            doesntTolerate: data.data.user.persona_doesnt_tolerate || '',
-                            doesntCare: data.data.user.persona_doesnt_care || ''
-                        }
-                    });
-                } else {
-                    const errorData = await response.json();
-                    setError(errorData.error || 'Error fetching user details');
-                }
             } catch (error) {
-                setError('Network error occurred');
+                setError(error.message || 'Error fetching user details');
                 console.error('Error fetching user details:', error);
             } finally {
                 setLoading(false);
@@ -111,21 +83,10 @@ const UserDetail = () => {
     // Fetch detailed user activity
     const fetchUserActivity = async () => {
         if (!isAdmin) return;
-        
-        try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/admin/users/${userId}/activity`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
 
-            if (response.ok) {
-                const data = await response.json();
-                setActivity(data.data);
-            } else {
-                console.warn('Could not fetch user activity data');
-            }
+        try {
+            const data = await apiClient.get(`/admin/users/${userId}/activity`);
+            setActivity(data.data);
         } catch (error) {
             console.warn('Error fetching user activity:', error);
         }
@@ -134,25 +95,11 @@ const UserDetail = () => {
     const handleToggleActive = async () => {
         setActionLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/auth/admin/users/${userId}/toggle-active`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setUser(data.data.user);
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to update user status'));
-            }
+            const data = await apiClient.post(`/auth/admin/users/${userId}/toggle-active`);
+            setUser(data.data.user);
         } catch (error) {
             console.error('Error toggling user status:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to update user status'));
         } finally {
             setActionLoading(false);
         }
@@ -164,26 +111,14 @@ const UserDetail = () => {
 
         setActionLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/auth/admin/users/${userId}/suspend`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ reason: reason || null })
+            await apiClient.post(`/auth/admin/users/${userId}/suspend`, {
+                reason: reason || null
             });
-
-            if (response.ok) {
-                // Refresh user data
-                window.location.reload();
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to suspend user'));
-            }
+            // Refresh user data
+            window.location.reload();
         } catch (error) {
             console.error('Error suspending user:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to suspend user'));
         } finally {
             setActionLoading(false);
         }
@@ -192,25 +127,12 @@ const UserDetail = () => {
     const handleUnsuspend = async () => {
         setActionLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/auth/admin/users/${userId}/unsuspend`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                // Refresh user data
-                window.location.reload();
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to unsuspend user'));
-            }
+            await apiClient.post(`/auth/admin/users/${userId}/unsuspend`);
+            // Refresh user data
+            window.location.reload();
         } catch (error) {
             console.error('Error unsuspending user:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to unsuspend user'));
         } finally {
             setActionLoading(false);
         }
@@ -228,26 +150,14 @@ const UserDetail = () => {
 
         setActionLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/auth/admin/users/${userId}/plan`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ newPlan: newPlan.toLowerCase() })
+            await apiClient.post(`/auth/admin/users/${userId}/plan`, {
+                newPlan: newPlan.toLowerCase()
             });
-
-            if (response.ok) {
-                // Refresh user data
-                window.location.reload();
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to change user plan'));
-            }
+            // Refresh user data
+            window.location.reload();
         } catch (error) {
             console.error('Error changing user plan:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to change user plan'));
         } finally {
             setActionLoading(false);
         }
@@ -256,27 +166,12 @@ const UserDetail = () => {
     const handleSaveConfiguration = async () => {
         setConfigLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/admin/users/${userId}/config`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(editableConfig)
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setUser(data.data.user);
-                alert('Configuración actualizada exitosamente');
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to update configuration'));
-            }
+            const data = await apiClient.patch(`/admin/users/${userId}/config`, editableConfig);
+            setUser(data.data.user);
+            alert('Configuración actualizada exitosamente');
         } catch (error) {
             console.error('Error updating configuration:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to update configuration'));
         } finally {
             setConfigLoading(false);
         }
@@ -289,25 +184,11 @@ const UserDetail = () => {
 
         setActionLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch('/api/auth/admin/users/reset-password', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ userId })
-            });
-
-            if (response.ok) {
-                alert('Email de reset de contraseña enviado al usuario');
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to reset password'));
-            }
+            await apiClient.post('/auth/admin/users/reset-password', { userId });
+            alert('Email de reset de contraseña enviado al usuario');
         } catch (error) {
             console.error('Error resetting password:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to reset password'));
         } finally {
             setActionLoading(false);
         }
@@ -320,24 +201,11 @@ const UserDetail = () => {
 
         setActionLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/admin/users/${userId}/reauth-integrations`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                alert('Integraciones invalidadas. El usuario deberá reautenticar sus cuentas.');
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to reauth integrations'));
-            }
+            await apiClient.post(`/admin/users/${userId}/reauth-integrations`);
+            alert('Integraciones invalidadas. El usuario deberá reautenticar sus cuentas.');
         } catch (error) {
             console.error('Error reauth integrations:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to reauth integrations'));
         } finally {
             setActionLoading(false);
         }
@@ -346,31 +214,18 @@ const UserDetail = () => {
     const handleDeleteAccount = async () => {
         const confirm1 = window.confirm(`¿Estás seguro de que quieres eliminar la cuenta de ${user.email}?`);
         if (!confirm1) return;
-        
+
         const confirm2 = window.confirm('Esta acción NO se puede deshacer. ¿Continuar?');
         if (!confirm2) return;
 
         setActionLoading(true);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`/api/auth/admin/users/${userId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                alert('Cuenta eliminada exitosamente');
-                navigate('/admin/users');
-            } else {
-                const errorData = await response.json();
-                alert('Error: ' + (errorData.error || 'Failed to delete account'));
-            }
+            await apiClient.delete(`/auth/admin/users/${userId}`);
+            alert('Cuenta eliminada exitosamente');
+            navigate('/admin/users');
         } catch (error) {
             console.error('Error deleting account:', error);
-            alert('Network error occurred');
+            alert('Error: ' + (error.message || 'Failed to delete account'));
         } finally {
             setActionLoading(false);
         }
@@ -412,8 +267,8 @@ const UserDetail = () => {
                 <div className="text-center">
                     <div className="text-red-600 text-xl mb-4">❌ Error</div>
                     <p className="text-gray-600 mb-4">{error}</p>
-                    <Link 
-                        to="/admin" 
+                    <Link
+                        to="/admin"
                         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                     >
                         Volver al Panel de Administración
@@ -424,7 +279,7 @@ const UserDetail = () => {
     }
 
     return (
-        <>  
+        <>
             {/* Superuser Banner */}
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-4 mb-6">
                 <div className="flex">
@@ -440,7 +295,7 @@ const UserDetail = () => {
                     </div>
                 </div>
             </div>
-            
+
             {/* Header */}
             <div className="mb-6">
                 <nav className="flex" aria-label="Breadcrumb">
@@ -628,8 +483,8 @@ const UserDetail = () => {
                                 <div
                                     key={index}
                                     className={`p-4 rounded-md ${
-                                        alert.severity === 'high' 
-                                            ? 'bg-red-50 border border-red-200' 
+                                        alert.severity === 'high'
+                                            ? 'bg-red-50 border border-red-200'
                                             : 'bg-yellow-50 border border-yellow-200'
                                     }`}
                                 >
@@ -672,7 +527,7 @@ const UserDetail = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Plan</label>
-                                <select 
+                                <select
                                     className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                                     value={editableConfig.plan}
                                     onChange={(e) => setEditableConfig({...editableConfig, plan: e.target.value})}
@@ -685,7 +540,7 @@ const UserDetail = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tono</label>
-                                <select 
+                                <select
                                     className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                                     value={editableConfig.tone}
                                     onChange={(e) => setEditableConfig({...editableConfig, tone: e.target.value})}
@@ -849,7 +704,7 @@ const UserDetail = () => {
                             </div>
                         </div>
                     </div>
-                
+
                     {/* Integrations Status */}
                     <div className="bg-white shadow rounded-lg">
                         <div className="px-6 py-4 border-b border-gray-200">
@@ -864,7 +719,7 @@ const UserDetail = () => {
                                             <div className="flex items-center space-x-3">
                                                 <div className="flex-shrink-0">
                                                     <div className={`w-3 h-3 rounded-full ${
-                                                        integration.status === 'connected' ? 'bg-green-500' : 
+                                                        integration.status === 'connected' ? 'bg-green-500' :
                                                         integration.status === 'error' ? 'bg-red-500' : 'bg-gray-400'
                                                     }`}></div>
                                                 </div>
