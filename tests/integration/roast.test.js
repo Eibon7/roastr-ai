@@ -21,7 +21,8 @@ jest.mock('../../src/config/supabase', () => {
   };
 
   return {
-    supabaseServiceClient: mockSupabaseClient
+    supabaseServiceClient: mockSupabaseClient,
+    getUserFromToken: jest.fn() // Mock auth helper for middleware
   };
 });
 
@@ -51,6 +52,7 @@ jest.mock('../../src/utils/logger', () => ({
 describe('Roast API Integration Tests', () => {
   let app;
   let supabaseServiceClient;
+  let getUserFromToken;
   let generateRoast;
   let analyzeContent;
 
@@ -72,6 +74,7 @@ describe('Roast API Integration Tests', () => {
 
     const supabaseModule = require('../../src/config/supabase');
     supabaseServiceClient = supabaseModule.supabaseServiceClient;
+    getUserFromToken = supabaseModule.getUserFromToken;
 
     const roastModule = require('../../src/services/roastGeneratorEnhanced');
     generateRoast = roastModule.generateRoast;
@@ -82,6 +85,13 @@ describe('Roast API Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock authentication - return valid user for auth middleware
+    getUserFromToken.mockResolvedValue({
+      id: testUserId,
+      email: 'test@example.com',
+      plan: 'free'
+    });
 
     // Default mock behaviors
     analyzeContent.mockResolvedValue({

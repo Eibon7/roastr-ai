@@ -1,0 +1,32 @@
+{
+  "case_id": "2025-11-07-13-50-29-035",
+  "timestamp": "2025-11-07T13:50:29.035Z",
+  "actor": "emiliopostigo",
+  "domains": [
+    "pricing"
+  ],
+  "files_changed": [
+    "critical.js"
+  ],
+  "severity": "CRITICAL",
+  "action": "BLOCKED",
+  "violations": {
+    "critical": 1,
+    "sensitive": 0,
+    "safe": 0
+  },
+  "details": [
+    {
+      "file": "critical.js",
+      "domains": [
+        "pricing"
+      ],
+      "severity": "CRITICAL",
+      "lines_added": 5,
+      "lines_removed": 2
+    }
+  ],
+  "approval_required": true,
+  "approved_by": null,
+  "notes": "Requires Product Owner approval"
+}
