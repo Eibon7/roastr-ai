@@ -48,7 +48,53 @@ router.use('/', featureFlagsRoutes);
 // Backoffice settings routes (admin only) - Issue #371: SPEC 15
 router.use('/backoffice', backofficeSettingsRoutes);
 
-// CSRF token endpoint removed - middleware not available
+/**
+ * POST /api/admin/csrf-test
+ * CSRF Validation Test Endpoint (Testing Only)
+ *
+ * @description Lightweight endpoint for CSRF validation testing in integration tests.
+ * Does NOT modify any data or trigger side effects. Protected by validateCsrfToken middleware.
+ *
+ * Security:
+ * - Requires valid CSRF token (inherits from validateCsrfToken middleware on line 40)
+ * - Admin authentication required
+ * - Returns 403 if CSRF token missing or invalid
+ *
+ * Usage: Integration tests (tests/integration/csrf-integration.test.js)
+ *
+ * @route POST /api/admin/csrf-test
+ * @access Admin only
+ * @param {Object} req.body - Optional test data
+ * @returns {200} Success - CSRF validation passed
+ * @returns {403} Forbidden - CSRF token missing or invalid
+ * @returns {500} Internal Server Error
+ *
+ * @example
+ * POST /api/admin/csrf-test
+ * Headers: { "X-CSRF-Token": "valid-token", "Authorization": "Bearer ..." }
+ * Response: { success: true, message: "CSRF validation passed", timestamp: "2025-11-07T..." }
+ */
+router.post('/csrf-test', async (req, res) => {
+    try {
+        // If we reach here, CSRF validation passed (middleware on line 40)
+        logger.debug('CSRF test endpoint called', {
+            user: req.user?.email,
+            timestamp: new Date().toISOString()
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'CSRF validation passed',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        logger.error('CSRF test endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
 
 /**
  * GET /api/admin/dashboard
