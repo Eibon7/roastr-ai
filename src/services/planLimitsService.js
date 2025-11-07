@@ -55,7 +55,7 @@ class PlanLimitsService {
                         error: error.message,
                         timestamp: new Date().toISOString()
                     });
-                    return this.getDefaultLimits('free'); // Always use free plan limits for security
+                    return this.getDefaultLimits('starter_trial'); // Always use starter_trial (most restrictive) for security
                 }
                 
                 // Only allow fail-open in development with explicit flag
@@ -75,7 +75,7 @@ class PlanLimitsService {
                     planId,
                     error: error.message
                 });
-                return this.getDefaultLimits('free');
+                return this.getDefaultLimits('starter_trial');
             }
 
             // Transform database fields to match existing interface
@@ -116,7 +116,7 @@ class PlanLimitsService {
                     stack: error.stack,
                     timestamp: new Date().toISOString()
                 });
-                return this.getDefaultLimits('free');
+                return this.getDefaultLimits('starter_trial');
             }
             
             // Only allow fail-open in development with explicit flag
@@ -136,7 +136,7 @@ class PlanLimitsService {
                 planId,
                 error: error.message
             });
-            return this.getDefaultLimits('free');
+            return this.getDefaultLimits('starter_trial');
         }
     }
 
@@ -163,7 +163,7 @@ class PlanLimitsService {
                         error: error.message,
                         timestamp: new Date().toISOString()
                     });
-                    return { free: this.getDefaultLimits('free') };
+                    return { free: this.getDefaultLimits('starter_trial') };
                 }
                 
                 // Only allow fail-open in development with explicit flag
@@ -181,7 +181,7 @@ class PlanLimitsService {
                 logger.error('All plan limits fetch failed - failing closed for security (default)', {
                     error: error.message
                 });
-                return { free: this.getDefaultLimits('free') };
+                return { free: this.getDefaultLimits('starter_trial') };
             }
 
             // Transform to object keyed by plan_id
@@ -221,7 +221,7 @@ class PlanLimitsService {
                     stack: error.stack,
                     timestamp: new Date().toISOString()
                 });
-                return { free: this.getDefaultLimits('free') };
+                return { free: this.getDefaultLimits('starter_trial') };
             }
             
             // Only allow fail-open in development with explicit flag
@@ -239,7 +239,7 @@ class PlanLimitsService {
             logger.error('All plan limits service error - failing closed for security (default)', {
                 error: error.message
             });
-            return { free: this.getDefaultLimits('free') };
+            return { free: this.getDefaultLimits('starter_trial') };
         }
     }
 
@@ -465,7 +465,7 @@ class PlanLimitsService {
                 return {
                     daily: 0,
                     hourly: 0,
-                    plan: 'free',
+                    plan: 'starter_trial',
                     features: { autoApproval: false }
                 };
             }
@@ -504,7 +504,7 @@ class PlanLimitsService {
             return {
                 daily: 0,
                 hourly: 0,
-                plan: 'free',
+                plan: 'starter_trial',
                 features: { autoApproval: false }
             };
         }
@@ -677,7 +677,7 @@ class PlanLimitsService {
      */
     normalizePlan(plan) {
         if (!plan || typeof plan !== 'string') {
-            return 'free';
+            return 'starter_trial';
         }
 
         const normalized = plan.toLowerCase().trim();
