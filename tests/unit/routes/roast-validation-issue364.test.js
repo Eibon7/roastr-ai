@@ -453,7 +453,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                     type: 'style_validation',
                     roastId: 'test-roast-id',
                     platform: 'twitter',
-                    textLength: 19,
+                    textLength: 20, // "Test roast for usage" = 20 chars
                     valid: true,
                     errorsCount: 0,
                     warningsCount: 0,
