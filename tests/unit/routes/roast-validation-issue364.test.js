@@ -109,13 +109,29 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         // Mock Supabase RPC function
         mockRpc = jest.fn();
         supabaseServiceClient.rpc = mockRpc;
-        supabaseServiceClient.from = jest.fn().mockReturnThis();
+
+        // Table-aware mock - track which table is being queried
+        supabaseServiceClient._currentTable = ''; // Store table name on the object
+        supabaseServiceClient.from = jest.fn().mockImplementation((table) => {
+            supabaseServiceClient._currentTable = table;
+            return supabaseServiceClient;
+        });
         supabaseServiceClient.insert = jest.fn().mockResolvedValue({ data: null, error: null });
         supabaseServiceClient.select = jest.fn().mockReturnThis();
         supabaseServiceClient.eq = jest.fn().mockReturnThis();
-        supabaseServiceClient.single = jest.fn().mockResolvedValue({
-            data: { plan: 'pro', status: 'active' },
-            error: null
+        supabaseServiceClient.single = jest.fn().mockImplementation(() => {
+            // Return different data based on which table is being queried
+            if (supabaseServiceClient._currentTable === 'roasts') {
+                return Promise.resolve({
+                    data: { user_id: 'test-user-id', content: 'Original roast content' },
+                    error: null
+                });
+            }
+            // Default: user_subscriptions table
+            return Promise.resolve({
+                data: { plan: 'pro', status: 'active' },
+                error: null
+            });
         });
 
         // Mock plan features
@@ -200,7 +216,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .send({ text: 'Valid text' });
 
             expect(response.status).toBe(200);
-            expect(mockValidator.validate).toHaveBeenCalledWith('Valid text', 'twitter', undefined);
+            expect(mockValidator.validate).toHaveBeenCalledWith('Valid text', 'twitter', 'Original roast content');
         });
     });
 
@@ -429,7 +445,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .post('/api/roast/test-roast-id/validate')
                 .send({ text: 'Test roast for usage', platform: 'twitter' });
 
-            expect(supabaseServiceClient.from).toHaveBeenCalledWith('analysis_usage');
+            expect(supabaseServiceClient.from).toHaveBeenCalledWith('roast_usage');
             expect(supabaseServiceClient.insert).toHaveBeenCalledWith({
                 user_id: 'test-user-id',
                 count: 1,
@@ -448,8 +464,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         });
 
         it('should continue if usage recording fails', async () => {
-            // Mock usage recording failure
-            supabaseServiceClient.insert.mockRejectedValue(new Error('Database error'));
+            // Mock usage recording failure - use mockRejectedValueOnce to avoid contaminating other tests
+            supabaseServiceClient.insert.mockRejectedValueOnce(new Error('Database error'));
 
             const response = await request(app)
                 .post('/api/roast/test-roast-id/validate')
