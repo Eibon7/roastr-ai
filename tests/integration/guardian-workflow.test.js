@@ -127,7 +127,7 @@ describe('Guardian Workflow - Integration Tests', () => {
       // Verify report generated
       expect(fs.existsSync(testReportPath)).toBe(true);
       const reportContent = fs.readFileSync(testReportPath, 'utf-8');
-      expect(reportContent).toContain('=и CRITICAL');
+      expect(reportContent).toContain('ЁЯЪи CRITICAL');
       expect(reportContent).toContain('pricing');
 
       // Verify audit log generated
@@ -144,7 +144,7 @@ describe('Guardian Workflow - Integration Tests', () => {
       jest.spyOn(guardian, 'getGitDiff').mockReturnValue({
         'src/services/roastGeneratorEnhanced.js': {
           diff: fs.readFileSync(
-            path.join(__dirname, '../fixtures/guardian/mock-diffs/ai-model-change.diff'),
+            path.join(__dirname, '../fixtures/guardian/mock-diffs/ai-model.diff'),
             'utf-8'
           ),
           added: 1,
@@ -179,7 +179,7 @@ describe('Guardian Workflow - Integration Tests', () => {
 
       // Verify report contains warning
       const reportContent = fs.readFileSync(testReportPath, 'utf-8');
-      expect(reportContent).toContain('а SENSITIVE');
+      expect(reportContent).toContain('тЪая╕П  SENSITIVE');
     });
   });
 
@@ -217,7 +217,7 @@ describe('Guardian Workflow - Integration Tests', () => {
 
       // Verify report shows all clear
       const reportContent = fs.readFileSync(testReportPath, 'utf-8');
-      expect(reportContent).toContain(' All changes are SAFE');
+      expect(reportContent).toContain('All changes are SAFE');
     });
   });
 
@@ -420,8 +420,8 @@ describe('Guardian Workflow - Integration Tests', () => {
       expect(reportContent).toContain('## Summary');
 
       // Report should list both cases
-      expect(reportContent).toContain('=и CRITICAL');
-      expect(reportContent).toContain('а SENSITIVE');
+      expect(reportContent).toContain('ЁЯЪи CRITICAL');
+      expect(reportContent).toContain('тЪая╕П  SENSITIVE');
 
       // Report should include case details
       expect(reportContent).toContain('pricing');

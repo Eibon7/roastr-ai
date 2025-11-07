@@ -840,7 +840,7 @@ guardian.generateAuditLog([...cases]);
 
 ## Support
 
-**Issues:** [GitHub Issues](https://github.com/your-org/roastr-ai/issues)
+**Issues:** [GitHub Issues](https://github.com/Eibon7/roastr-ai/issues)
 **Documentation:** `docs/nodes/guardian.md`
 **Contact:** @guardian-lead
 
