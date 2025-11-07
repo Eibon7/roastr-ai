@@ -166,8 +166,8 @@ test.describe('CSRF Token Integration', () => {
     });
 
     // Make a test admin API call with CSRF token
-    // Using POST to trigger CSRF validation (GET bypasses CSRF as it's a safe method)
-    const response = await request.post(`${API_URL}/api/admin/test`, {
+    // Using POST /csrf-test to trigger CSRF validation (lightweight testing endpoint)
+    const response = await request.post(`${API_URL}/api/admin/csrf-test`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'X-CSRF-Token': csrfToken,
@@ -198,7 +198,7 @@ test.describe('CSRF Token Integration', () => {
     });
 
     // Make admin POST without CSRF token (should fail)
-    const response = await request.post(`${API_URL}/api/admin/test`, {
+    const response = await request.post(`${API_URL}/api/admin/csrf-test`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
@@ -232,7 +232,7 @@ test.describe('CSRF Token Integration', () => {
     });
 
     // Make admin POST with INVALID CSRF token
-    const response = await request.post(`${API_URL}/api/admin/test`, {
+    const response = await request.post(`${API_URL}/api/admin/csrf-test`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'X-CSRF-Token': 'invalid-token-12345', // Invalid token
