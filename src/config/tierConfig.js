@@ -161,6 +161,24 @@ const FEATURE_REQUIREMENTS = {
  * Default tier limits exactly per SPEC 10
  */
 const DEFAULT_TIER_LIMITS = {
+    free: {
+        maxRoasts: 100,
+        monthlyResponsesLimit: 100,
+        monthlyAnalysisLimit: 100,
+        maxPlatforms: 1,
+        integrationsLimit: 2,
+        shieldEnabled: false,
+        customPrompts: false,
+        prioritySupport: false,
+        apiAccess: false,
+        analyticsEnabled: false,
+        customTones: false,
+        dedicatedSupport: false,
+        embeddedJudge: false,
+        monthlyTokensLimit: 10000,
+        dailyApiCallsLimit: 100,
+        ai_model: 'gpt-4o-mini'
+    },
     starter_trial: {
         maxRoasts: 10,
         monthlyResponsesLimit: 10,
