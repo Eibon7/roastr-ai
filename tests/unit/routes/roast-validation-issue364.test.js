@@ -88,6 +88,12 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         // Reset all mocks
         jest.clearAllMocks();
 
+        // Reset auth mock to default authenticated behavior
+        mockAuthenticateToken.mockImplementation((req, res, next) => {
+            req.user = { id: 'test-user-id', orgId: 'test-org-id' };
+            next();
+        });
+
         // Setup express app
         app = express();
         app.use(express.json());
