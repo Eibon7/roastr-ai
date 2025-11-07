@@ -465,6 +465,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
 
         it('should continue if usage recording fails', async () => {
             // Mock usage recording failure - use mockRejectedValueOnce to avoid contaminating other tests
+            // Note: recordRoastUsage catches errors internally and logs to logger.error, doesn't re-throw
             supabaseServiceClient.insert.mockRejectedValueOnce(new Error('Database error'));
 
             const response = await request(app)
@@ -472,7 +473,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .send({ text: 'Test roast', platform: 'twitter' });
 
             expect(response.status).toBe(200); // Should still succeed
-            expect(logger.warn).toHaveBeenCalledWith('Failed to record validation usage', expect.any(Object));
+            // recordRoastUsage catches error and calls logger.error (not logger.warn)
+            expect(logger.error).toHaveBeenCalledWith('Error recording roast usage:', expect.any(Error));
         });
     });
 
@@ -533,8 +535,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         });
 
         it('should handle database connection errors', async () => {
-            // Mock database connection failure
-            supabaseServiceClient.single.mockRejectedValue(new Error('Database connection failed'));
+            // Mock database connection failure - use mockRejectedValueOnce for test isolation
+            supabaseServiceClient.single.mockRejectedValueOnce(new Error('Database connection failed'));
 
             const response = await request(app)
                 .post('/api/roast/test-roast-id/validate')
