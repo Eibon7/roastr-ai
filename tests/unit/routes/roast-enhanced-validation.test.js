@@ -12,7 +12,14 @@ jest.mock('../../../src/services/roastGeneratorEnhanced');
 jest.mock('../../../src/services/roastEngine');
 jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/utils/logger');
-jest.mock('../../../src/config/flags');
+jest.mock('../../../src/config/flags', () => ({
+    flags: {
+        isEnabled: jest.fn(() => true) // Enable all feature flags for tests
+    }
+}));
+jest.mock('../../../src/utils/featureFlags', () => ({
+    isFlagEnabled: jest.fn(() => true) // Enable all feature flags for tests
+}));
 
 describe('Roast Routes Enhanced Validation', () => {
     let app;
@@ -46,11 +53,6 @@ describe('Roast Routes Enhanced Validation', () => {
             warn: jest.fn()
         };
 
-        // Mock flags
-        require('../../../src/config/flags').flags = {
-            isEnabled: jest.fn(() => true)
-        };
-
         // Mock Supabase (CodeRabbit Round 7: Fix RPC mock structure)
         const mockRpcResponse = {
             data: {
@@ -78,6 +80,18 @@ describe('Roast Routes Enhanced Validation', () => {
                 'flanders': { name: 'Flanders', description: 'Test' },
                 'balanceado': { name: 'Balanceado', description: 'Test' },
                 'canalla': { name: 'Canalla', description: 'Test' }
+            }),
+            generateRoast: jest.fn().mockResolvedValue({
+                success: true,
+                roast: 'Test roast from engine',
+                metadata: {
+                    id: 'test-roast-id',
+                    versionsGenerated: 1
+                },
+                status: 'approved',
+                transparency: {
+                    applied: true
+                }
             })
         }));
         require('../../../src/services/roastEngine').mockImplementation(MockRoastEngine);
@@ -367,7 +381,7 @@ describe('Roast Routes Enhanced Validation', () => {
         describe('Style validation with language awareness', () => {
             test('should accept valid Spanish styles', async () => {
                 const spanishStyles = ['flanders', 'balanceado', 'canalla'];
-                
+
                 for (const style of spanishStyles) {
                     const response = await request(app)
                         .post('/api/roast/engine')
