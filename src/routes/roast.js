@@ -1192,16 +1192,16 @@ router.get('/styles', publicRateLimit, optionalAuth, async (req, res) => {
         }
 
         const styles = roastEngine.getAvailableStyles(language);
-        
+
         // Enhanced caching headers (CodeRabbit Round 6: Remove ineffective Vary header)
         res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
         // Note: Vary: Accept-Language removed as language is in query params, not headers
-        
+
         res.json({
             success: true,
             data: {
-                language: language,
-                originalLanguage: rawLanguage, // Show normalization result
+                language: rawLanguage, // Preserve BCP-47 locale codes (Issue #483)
+                normalizedLanguage: language, // Base language for engine
                 styles: styles,
                 normalized: rawLanguage !== language ? true : undefined
             },
