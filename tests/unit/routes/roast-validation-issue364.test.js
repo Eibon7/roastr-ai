@@ -84,6 +84,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
     let mockValidator;
     let mockRpc;
     let mockInsert;
+    let mockSingle;
 
     beforeEach(() => {
         // Reset all mocks
@@ -112,37 +113,55 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         // Create global mockInsert that can be verified in tests
         mockInsert = jest.fn().mockResolvedValue({ data: null, error: null });
 
+        // Track which tables are being queried for smart mocking
+        let tableContext = null;
+
+        // Create mockSingle that can be accessed in tests
+        mockSingle = jest.fn();
+
         // Mock Supabase from() to return different data based on table
         supabaseServiceClient.from = jest.fn((tableName) => {
+            tableContext = tableName;
             const selectMock = jest.fn();
             const eqMock = jest.fn();
-            const singleMock = jest.fn();
 
-            if (tableName === 'roasts') {
-                // Mock roast ownership query
-                singleMock.mockResolvedValue({
-                    data: {
-                        user_id: 'test-user-id',
-                        content: 'Original roast content for comparison'
-                    },
-                    error: null
-                });
-            } else {
-                // Default mock for other queries
-                singleMock.mockResolvedValue({
-                    data: { plan: 'pro', status: 'active' },
-                    error: null
-                });
-            }
+            // Return table-specific mock data based on table name
+            const smartSingle = jest.fn(() => {
+                // If test has overridden mockSingle, use that
+                if (mockSingle.getMockImplementation()) {
+                    return mockSingle();
+                }
+
+                // Otherwise, return table-specific defaults
+                if (tableName === 'roasts') {
+                    return Promise.resolve({
+                        data: {
+                            user_id: 'test-user-id',
+                            content: 'Original roast content for comparison'
+                        },
+                        error: null
+                    });
+                } else if (tableName === 'user_subscriptions') {
+                    return Promise.resolve({
+                        data: { plan: 'pro', status: 'active' },
+                        error: null
+                    });
+                } else {
+                    return Promise.resolve({
+                        data: null,
+                        error: null
+                    });
+                }
+            });
 
             selectMock.mockReturnValue({ eq: eqMock });
-            eqMock.mockReturnValue({ eq: eqMock, single: singleMock });
+            eqMock.mockReturnValue({ eq: eqMock, single: smartSingle });
 
             return {
                 select: selectMock,
                 insert: mockInsert,
                 eq: eqMock,
-                single: singleMock
+                single: smartSingle
             };
         });
 
@@ -543,8 +562,10 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         });
 
         it('should handle database connection errors', async () => {
-            // Mock database connection failure
-            supabaseServiceClient.single.mockRejectedValue(new Error('Database connection failed'));
+            // Mock database connection failure for all queries
+            mockSingle.mockImplementation(() => {
+                return Promise.reject(new Error('Database connection failed'));
+            });
 
             const response = await request(app)
                 .post('/api/roast/test-roast-id/validate')
@@ -651,7 +672,15 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .post('/api/roast/test-roast-id/validate')
                 .send({ text: 'Timing test', platform: 'twitter' });
 
-            expect(response.body.data.validation.metadata.processingTimeMs).toBeGreaterThan(0);
+            // Ensure response is successful before checking metadata
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+
+            // Processing time should be present and greater than 0
+            const processingTimeMs = response.body.data?.validation?.metadata?.processingTimeMs;
+            expect(processingTimeMs).toBeDefined();
+            expect(typeof processingTimeMs).toBe('number');
+            expect(processingTimeMs).toBeGreaterThanOrEqual(0); // Allow 0 for very fast execution
         });
     });
 });
