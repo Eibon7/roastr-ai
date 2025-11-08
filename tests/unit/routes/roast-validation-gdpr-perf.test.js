@@ -7,21 +7,32 @@
  * cause failures when run in the same suite as other tests, but pass individually.
  *
  * Solution: Separate file ensures isolated module loading context.
+ *
+ * CodeRabbit Review: Refactored to use shared test helpers (M1, M2)
+ * See: tests/helpers/roastValidationMocks.js, tests/helpers/setupRoastRouteMocks.js
  */
 
 const request = require('supertest');
 const express = require('express');
 
-// Mock dependencies - Issue #483: Fix StyleValidator mock as constructor (Pattern #11)
-const mockValidatorInstance = {
-    validate: jest.fn(),
-    validateTone: jest.fn(),
-    validateComment: jest.fn(),
-    getToneCategory: jest.fn(),
-    getCharacterLimits: jest.fn().mockReturnValue({ twitter: 280, default: 2000 }),
-    normalizePlatform: jest.fn((p) => p || 'twitter')
-};
+// Import shared mock factories - CodeRabbit Review M1: DRY refactoring
+const {
+    createMockValidatorInstance,
+    createMockAuthenticateToken,
+    createMockRoastRateLimit,
+    createValidationConstantsMock,
+    createLoggerMock
+} = require('../../helpers/roastValidationMocks');
 
+// Create mock instances using shared factories
+// Jest requires variables used in jest.mock() to have "mock" prefix
+const mockValidatorInstance = createMockValidatorInstance();
+const mockAuthenticateToken = createMockAuthenticateToken();
+const mockRoastRateLimit = createMockRoastRateLimit();
+const mockValidationConstants = createValidationConstantsMock();
+const mockLogger = createLoggerMock();
+
+// Jest mocks (must be at module level)
 jest.mock('../../../src/services/styleValidator', () => {
     return jest.fn().mockImplementation(() => mockValidatorInstance);
 });
@@ -29,72 +40,26 @@ jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/services/planService', () => ({
     getPlanFeatures: jest.fn()
 }));
-jest.mock('../../../src/utils/logger', () => ({
-    logger: {
-        info: jest.fn(),
-        error: jest.fn(),
-        warn: jest.fn(),
-        debug: jest.fn(),
-        child: jest.fn(() => ({
-            info: jest.fn(),
-            error: jest.fn(),
-            warn: jest.fn(),
-            debug: jest.fn()
-        }))
-    }
+jest.mock('../../../src/utils/logger', () => mockLogger);
+jest.mock('../../../src/middleware/auth', () => ({
+    authenticateToken: mockAuthenticateToken,
+    optionalAuth: jest.fn((req, res, next) => next())
 }));
+jest.mock('../../../src/middleware/roastRateLimiter', () => ({
+    createRoastRateLimiter: () => mockRoastRateLimit
+}));
+jest.mock('express-rate-limit', () => {
+    return jest.fn(() => (req, res, next) => next());
+});
+jest.mock('../../../src/config/validationConstants', () => mockValidationConstants);
 
 const StyleValidator = require('../../../src/services/styleValidator');
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const { getPlanFeatures } = require('../../../src/services/planService');
 const { logger } = require('../../../src/utils/logger');
 
-// Mock middleware
-const mockAuthenticateToken = jest.fn((req, res, next) => {
-    req.user = { id: 'test-user-id', orgId: 'test-org-id' };
-    next();
-});
-
-const mockRoastRateLimit = jest.fn((req, res, next) => next());
-
-jest.mock('../../../src/middleware/auth', () => ({
-    authenticateToken: mockAuthenticateToken,
-    optionalAuth: jest.fn((req, res, next) => next())
-}));
-
-jest.mock('../../../src/middleware/roastRateLimiter', () => ({
-    createRoastRateLimiter: () => mockRoastRateLimit
-}));
-
-// Mock express-rate-limit
-jest.mock('express-rate-limit', () => {
-    return jest.fn(() => (req, res, next) => next());
-});
-
-jest.mock('../../../src/config/validationConstants', () => ({
-    VALIDATION_CONSTANTS: {
-        MAX_COMMENT_LENGTH: 2000,
-        MIN_COMMENT_LENGTH: 1,
-        VALID_LANGUAGES: ['es', 'en'],
-        VALID_PLATFORMS: ['twitter', 'instagram', 'facebook'],
-        VALID_STYLES: {
-            es: ['flanders', 'balanceado', 'canalla'],
-            en: ['light', 'balanced', 'savage']
-        },
-        MIN_INTENSITY: 1,
-        MAX_INTENSITY: 5,
-        DEFAULTS: {
-            STYLE: 'balanceado'
-        }
-    },
-    isValidStyle: jest.fn(() => true),
-    isValidLanguage: jest.fn(() => true),
-    isValidPlatform: jest.fn(() => true),
-    normalizeLanguage: jest.fn((lang) => lang || 'es'),
-    normalizeStyle: jest.fn((style) => style || 'balanceado'),
-    normalizePlatform: jest.fn((platform) => platform || 'twitter'),
-    getValidStylesForLanguage: jest.fn(() => ['flanders', 'balanceado', 'canalla'])
-}));
+// Import shared setup helper - CodeRabbit Review M2: DRY refactoring
+const { setupRoastTestApp } = require('../../helpers/setupRoastRouteMocks');
 
 describe('POST /api/roast/:id/validate - GDPR & Performance Tests', () => {
     let app;
@@ -102,57 +67,14 @@ describe('POST /api/roast/:id/validate - GDPR & Performance Tests', () => {
     let mockRpc;
 
     beforeEach(() => {
-        // Reset all mocks
-        jest.clearAllMocks();
-
-        // Setup express app
-        app = express();
-        app.use(express.json());
-
-        // Mock StyleValidator
+        // Mock StyleValidator instance
         mockValidator = mockValidatorInstance;
 
         // Mock Supabase RPC function
         mockRpc = jest.fn();
-        supabaseServiceClient.rpc = mockRpc;
 
-        // Table-aware mock - track which table is being queried
-        supabaseServiceClient._currentTable = '';
-        supabaseServiceClient.from = jest.fn().mockImplementation((table) => {
-            supabaseServiceClient._currentTable = table;
-            return supabaseServiceClient;
-        });
-        supabaseServiceClient.insert = jest.fn().mockResolvedValue({ data: null, error: null });
-        supabaseServiceClient.select = jest.fn().mockReturnThis();
-        supabaseServiceClient.eq = jest.fn().mockReturnThis();
-        supabaseServiceClient.single = jest.fn().mockImplementation(() => {
-            // Return different data based on which table is being queried
-            if (supabaseServiceClient._currentTable === 'roasts') {
-                return Promise.resolve({
-                    data: { user_id: 'test-user-id', content: 'Original roast content' },
-                    error: null
-                });
-            }
-            // Default: user_subscriptions table
-            return Promise.resolve({
-                data: { plan: 'pro', status: 'active' },
-                error: null
-            });
-        });
-
-        // Mock plan features
-        getPlanFeatures.mockReturnValue({
-            limits: { roastsPerMonth: 1000 }
-        });
-
-        // Mock logger
-        logger.info = jest.fn();
-        logger.error = jest.fn();
-        logger.warn = jest.fn();
-
-        // Import and setup routes after mocks
-        const roastRoutes = require('../../../src/routes/roast');
-        app.use('/api/roast', roastRoutes);
+        // CodeRabbit Review M2: Use shared setup helper instead of duplicated logic
+        app = setupRoastTestApp(mockValidator, mockRpc);
     });
 
     describe('GDPR Compliance', () => {
