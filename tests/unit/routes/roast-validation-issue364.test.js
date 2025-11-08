@@ -87,6 +87,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
     let app;
     let mockValidator;
     let mockRpc;
+    let mockInsert;
 
     beforeEach(() => {
         // Reset all mocks
@@ -108,16 +109,45 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         };
         StyleValidator.mockImplementation(() => mockValidator);
 
-        // Mock Supabase RPC function
+        // Mock Supabase RPC function and queries
         mockRpc = jest.fn();
         supabaseServiceClient.rpc = mockRpc;
-        supabaseServiceClient.from = jest.fn().mockReturnThis();
-        supabaseServiceClient.insert = jest.fn().mockResolvedValue({ data: null, error: null });
-        supabaseServiceClient.select = jest.fn().mockReturnThis();
-        supabaseServiceClient.eq = jest.fn().mockReturnThis();
-        supabaseServiceClient.single = jest.fn().mockResolvedValue({
-            data: { plan: 'pro', status: 'active' },
-            error: null
+
+        // Create global mockInsert that can be verified in tests
+        mockInsert = jest.fn().mockResolvedValue({ data: null, error: null });
+
+        // Mock Supabase from() to return different data based on table
+        supabaseServiceClient.from = jest.fn((tableName) => {
+            const selectMock = jest.fn();
+            const eqMock = jest.fn();
+            const singleMock = jest.fn();
+
+            if (tableName === 'roasts') {
+                // Mock roast ownership query
+                singleMock.mockResolvedValue({
+                    data: {
+                        user_id: 'test-user-id',
+                        content: 'Original roast content for comparison'
+                    },
+                    error: null
+                });
+            } else {
+                // Default mock for other queries
+                singleMock.mockResolvedValue({
+                    data: { plan: 'pro', status: 'active' },
+                    error: null
+                });
+            }
+
+            selectMock.mockReturnValue({ eq: eqMock });
+            eqMock.mockReturnValue({ eq: eqMock, single: singleMock });
+
+            return {
+                select: selectMock,
+                insert: mockInsert,
+                eq: eqMock,
+                single: singleMock
+            };
         });
 
         // Mock plan features
@@ -202,7 +232,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .send({ text: 'Valid text' });
 
             expect(response.status).toBe(200);
-            expect(mockValidator.validate).toHaveBeenCalledWith('Valid text', 'twitter');
+            expect(mockValidator.validate).toHaveBeenCalledWith('Valid text', 'twitter', 'Original roast content for comparison');
         });
     });
 
@@ -397,7 +427,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .post('/api/roast/test-roast-id/validate')
                 .send({ text: 'Test roast text', platform: 'youtube' });
 
-            expect(mockValidator.validate).toHaveBeenCalledWith('Test roast text', 'youtube');
+            expect(mockValidator.validate).toHaveBeenCalledWith('Test roast text', 'youtube', 'Original roast content for comparison');
         });
     });
 
@@ -430,14 +460,14 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
                 .send({ text: 'Test roast for usage', platform: 'twitter' });
 
             expect(supabaseServiceClient.from).toHaveBeenCalledWith('analysis_usage');
-            expect(supabaseServiceClient.insert).toHaveBeenCalledWith({
+            expect(mockInsert).toHaveBeenCalledWith({
                 user_id: 'test-user-id',
                 count: 1,
                 metadata: {
                     type: 'style_validation',
                     roastId: 'test-roast-id',
                     platform: 'twitter',
-                    textLength: 19,
+                    textLength: 20, // 'Test roast for usage'.length
                     valid: true,
                     errorsCount: 0,
                     warningsCount: 0,
@@ -449,7 +479,7 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
 
         it('should continue if usage recording fails', async () => {
             // Mock usage recording failure
-            supabaseServiceClient.insert.mockRejectedValue(new Error('Database error'));
+            mockInsert.mockRejectedValue(new Error('Database error'));
 
             const response = await request(app)
                 .post('/api/roast/test-roast-id/validate')
@@ -577,8 +607,8 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
 
             // Issue #618 - Add defensive check for mock.calls array
             // Issue #628 - CodeRabbit: Use idiomatic Jest matcher
-            expect(supabaseServiceClient.insert).toHaveBeenCalled();
-            const insertCall = supabaseServiceClient.insert.mock.calls[0][0];
+            expect(mockInsert).toHaveBeenCalled();
+            const insertCall = mockInsert.mock.calls[0][0];
             expect(JSON.stringify(insertCall)).not.toContain('Private user content');
             expect(insertCall.metadata.textLength).toBe(20); // Only length, not content
         });
