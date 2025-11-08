@@ -557,7 +557,7 @@ class StripeWebhookService {
                 entitlementsReset: transactionResult?.entitlements_reset || false,
                 previousPlan: transactionResult?.previous_plan || 'unknown',
                 accessUntilDate: transactionResult?.access_until_date,
-                planName: 'starter_trial',
+                planName: transactionResult?.new_plan || transactionResult?.plan_name || 'starter_trial',
                 transactionResult
             };
 

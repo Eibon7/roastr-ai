@@ -24,9 +24,9 @@ class CostControlService {
     
     // Keep basic plan metadata (not limits)
     this.plans = {
-      free: {
+      starter_trial: {
         id: 'starter_trial',
-        name: 'Free',
+        name: 'Starter Trial',
         features: ['basic_integrations', 'community_support']
       },
       starter: {
@@ -921,7 +921,7 @@ class CostControlService {
       
       // Define limits by plan and resource type
       const planLimits = {
-        free: {
+        starter_trial: {
           roasts: { monthly: 10, overage: false, hard: true },
           integrations: { monthly: 1, overage: false, hard: true },
           api_calls: { monthly: 200, overage: false, hard: true },

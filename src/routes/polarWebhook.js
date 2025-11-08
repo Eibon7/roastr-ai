@@ -312,24 +312,8 @@ async function handleSubscriptionCanceled(event) {
       return;
     }
 
-    // 2. Downgrade user to free plan
-    const { error: userDowngradeError } = await supabaseServiceClient
-      .from('users')
-      .update({
-        plan: 'starter_trial',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id);
-
-    if (userDowngradeError) {
-      logger.error('[Polar Webhook] Failed to downgrade user to free', {
-        user_id: user.id,
-        error: userDowngradeError.message
-      });
-      throw new Error(`Failed to downgrade user: ${userDowngradeError.message}`);
-    }
-
-    // 3. Update subscription status (DO NOT DELETE - retain for audit)
+    // 2. Update subscription status (DO NOT DELETE - retain for audit)
+    // Per TRIAL-MODEL.md: Plan remains unchanged, only status = 'canceled'
     const { error: subCancelError } = await supabaseServiceClient
       .from('user_subscriptions')
       .update({
@@ -349,7 +333,7 @@ async function handleSubscriptionCanceled(event) {
 
     logger.info('[Polar Webhook] ✅ Subscription canceled successfully', {
       user_id: user.id,
-      downgraded_to: 'starter_trial',
+      status: 'canceled',
     });
 
   } catch (error) {
