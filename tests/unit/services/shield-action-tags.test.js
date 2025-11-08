@@ -20,9 +20,10 @@ jest.mock('../../../src/services/queueService', () => {
   return jest.fn().mockImplementation(() => mockQueueService);
 });
 
-jest.mock('../../../src/config/supabase', () => ({
-  supabase: {
-    from: jest.fn(() => ({
+jest.mock('../../../src/config/supabase', () => {
+  // Create a chainable mock object that can handle multiple .eq() calls
+  const createChainableMock = () => {
+    const mockChain = {
       insert: jest.fn(() => ({
         select: jest.fn(() => Promise.resolve({ data: [{ id: 'mock-action-id' }], error: null }))
       })),
@@ -40,10 +41,22 @@ jest.mock('../../../src/config/supabase', () => ({
           }))
         }))
       })),
-      upsert: jest.fn(() => Promise.resolve({ data: null, error: null }))
-    }))
-  }
-}));
+      update: jest.fn(() => mockChain),
+      eq: jest.fn(() => mockChain),
+      upsert: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      then: function(resolve) {
+        return Promise.resolve({ data: null, error: null }).then(resolve);
+      }
+    };
+    return mockChain;
+  };
+
+  return {
+    supabase: {
+      from: jest.fn(() => createChainableMock())
+    }
+  };
+});
 
 describe('ShieldService - executeActionsFromTags()', () => {
   let shieldService;
@@ -213,6 +226,13 @@ describe('ShieldService - executeActionsFromTags()', () => {
         ['block_user'],
         mockMetadata
       );
+
+      // Debug: show result structure if not successful
+      if (!result.success) {
+        expect(result).toEqual(expect.objectContaining({
+          success: true // This will fail and show the actual result
+        }));
+      }
 
       expect(result.success).toBe(true);
       expect(result.actions_executed[0].tag).toBe('block_user');
