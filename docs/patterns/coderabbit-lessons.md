@@ -344,6 +344,7 @@ chmod +x .git/hooks/pre-push
 | Jest integration tests | 7 | -100% (fixed) | 2025-10-20 |
 | fs-extra deprecated | 4 | -100% (fixed) | 2025-10-20 |
 | logger import pattern | 2 | -100% (fixed) | 2025-10-20 |
+| Jest module cache | 1 | -100% (fixed) | 2025-11-08 |
 
 **Objetivo:** Reducir tasa de repetición <10% en todos los patrones
 
@@ -740,6 +741,88 @@ beforeEach(() => {
 
 ---
 
+### 12. Jest Module Cache - Test File Separation (Issue #754)
+
+**Pattern:** Tests that modify module-level state fail in suite but pass individually
+
+**Root Cause:** Jest caches required modules. When tests modify mocks after the module is loaded, the module retains old mock references.
+
+**Symptoms:**
+- Tests ✅ PASS when executed individually
+- Tests ❌ FAIL when executed in full suite
+- `beforeEach` uses `mockReset()` or modifies mocks extensively
+- Different `describe` blocks need different mock configurations
+
+**❌ Mistake:**
+```javascript
+// tests/unit/routes/endpoint.test.js
+describe('Suite A', () => {
+  beforeEach(() => {
+    const routes = require('../src/routes');
+    app.use('/api', routes); // Module cached here
+  });
+  // Tests pass...
+});
+
+describe('Suite B', () => {
+  beforeEach(() => {
+    // Reset mocks - but module already cached with old references!
+    mockService.method.mockReset();
+  });
+  // Tests FAIL - module has old mock references
+});
+```
+
+**✅ Fix:**
+Separate into different files when tests need different module loading contexts:
+
+```javascript
+// tests/unit/routes/endpoint-suite-a.test.js
+describe('Suite A', () => {
+  beforeEach(() => {
+    // Fresh module load
+    const routes = require('../src/routes');
+    app.use('/api', routes);
+  });
+  // Tests pass
+});
+
+// tests/unit/routes/endpoint-suite-b.test.js
+describe('Suite B', () => {
+  beforeEach(() => {
+    // Fresh module load in isolated file
+    mockService.method.mockReturnValue(...);
+    const routes = require('../src/routes');
+    app.use('/api', routes);
+  });
+  // Tests pass
+});
+```
+
+**Prevention checklist:**
+- [ ] If tests pass individually but fail in suite → module cache issue
+- [ ] Separate test files when different `describe` blocks need different mock states
+- [ ] Avoid `mockReset()` in nested `beforeEach` - signals module reload needed
+- [ ] Use `mockClear()` to clear call history, not implementations
+- [ ] Add comment explaining why tests are separated (reference issue number)
+
+**Impact:**
+- **Before:** 18/22 tests passing (82%), 4 failing in suite but passing individually
+- **After:** 18+4 = 22/22 tests passing (100%) in 2 separate files
+- **Resolution:** Clean separation, no module cache interference
+
+**Files affected (Issue #754):**
+- `tests/unit/routes/roast-validation-issue364.test.js` (18 tests)
+- `tests/unit/routes/roast-validation-gdpr-perf.test.js` (4 tests - separated)
+
+**Last occurrence:** 2025-11-08 (Issue #754)
+
+**Related patterns:**
+- Jest Integration Tests (#9) - Module-level calls need defensive checks
+- Testing Patterns (#2) - Write production-quality tests
+
+---
+
 ## 📚 Related Documentation
 
 - [Quality Standards](../QUALITY-STANDARDS.md) - Non-negotiable requirements for merge
@@ -751,5 +834,5 @@ beforeEach(() => {
 
 **Maintained by:** Orchestrator
 **Review Frequency:** Weekly or after significant reviews
-**Last Reviewed:** 2025-11-02
-**Version:** 1.5.0 (Added pattern #11: Supabase Mock Pattern - HIGH PRIORITY)
+**Last Reviewed:** 2025-11-08
+**Version:** 1.6.0 (Added pattern #12: Jest Module Cache - Test File Separation)

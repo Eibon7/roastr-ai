@@ -144,7 +144,9 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         logger.error = jest.fn();
         logger.warn = jest.fn();
 
-        // Import and setup routes after mocks
+        // Issue #754: Force reload of roast module to prevent module cache issues
+        // Clear the module from cache to ensure fresh load with updated mocks
+        delete require.cache[require.resolve('../../../src/routes/roast')];
         const roastRoutes = require('../../../src/routes/roast');
         app.use('/api/roast', roastRoutes);
     });
@@ -559,170 +561,15 @@ describe('POST /api/roast/:id/validate - SPEC 8 Issue #364', () => {
         });
     });
 
-    describe('GDPR Compliance', () => {
-        beforeEach(() => {
-            // COMPLETE reset of ALL Supabase mocks to prevent contamination
-            // Reset all functions with mockReset() which clears implementation AND calls
-            supabaseServiceClient.from.mockReset();
-            supabaseServiceClient.select.mockReset();
-            supabaseServiceClient.eq.mockReset();
-            supabaseServiceClient.single.mockReset();
-            supabaseServiceClient.insert.mockReset();
-
-            // Re-establish table-aware mock
-            supabaseServiceClient._currentTable = '';
-            supabaseServiceClient.from.mockImplementation((table) => {
-                supabaseServiceClient._currentTable = table;
-                return supabaseServiceClient;
-            });
-
-            supabaseServiceClient.select.mockReturnValue(supabaseServiceClient);
-            supabaseServiceClient.eq.mockReturnValue(supabaseServiceClient);
-
-            supabaseServiceClient.single.mockImplementation(() => {
-                if (supabaseServiceClient._currentTable === 'roasts') {
-                    return Promise.resolve({
-                        data: { user_id: 'test-user-id', content: 'Original roast content' },
-                        error: null
-                    });
-                }
-                return Promise.resolve({
-                    data: { plan: 'pro', status: 'active' },
-                    error: null
-                });
-            });
-
-            supabaseServiceClient.insert.mockReturnValue(supabaseServiceClient);
-
-            mockRpc.mockResolvedValue({
-                data: { success: true, hasCredits: true, remaining: 999 },
-                error: null
-            });
-
-            mockValidator.validate.mockReturnValue({
-                valid: false,
-                errors: [{ rule: 'NO_SPAM', message: 'Spam detected' }],
-                warnings: [],
-                metadata: { textLength: 10, validationTime: 25 }
-            });
-        });
-
-        it('should log only metadata, not sensitive content', async () => {
-            await request(app)
-                .post('/api/roast/test-roast-id/validate')
-                .send({ text: 'Sensitive roast content', platform: 'twitter' });
-
-            // Check that logger.info was called with metadata only
-            expect(logger.info).toHaveBeenCalledWith('Style validation completed', expect.objectContaining({
-                userId: 'test-user-id',
-                roastId: 'test-roast-id',
-                platform: 'twitter',
-                textLength: 23,
-                valid: false,
-                errorsCount: 1,
-                warningsCount: 0,
-                processingTimeMs: expect.any(Number),
-                creditsConsumed: 1,
-                creditsRemaining: 999
-            }));
-
-            // Ensure no actual text content was logged
-            const logCalls = logger.info.mock.calls;
-            logCalls.forEach(call => {
-                expect(JSON.stringify(call)).not.toContain('Sensitive roast content');
-            });
-        });
-
-        it('should not include text content in usage recording', async () => {
-            await request(app)
-                .post('/api/roast/test-roast-id/validate')
-                .send({ text: 'Private user content', platform: 'twitter' });
-
-            // Issue #618 - Add defensive check for mock.calls array
-            // Issue #628 - CodeRabbit: Use idiomatic Jest matcher
-            expect(supabaseServiceClient.insert).toHaveBeenCalled();
-            const insertCall = supabaseServiceClient.insert.mock.calls[0][0];
-            expect(JSON.stringify(insertCall)).not.toContain('Private user content');
-            expect(insertCall.metadata.textLength).toBe(20); // Only length, not content
-        });
-    });
-
-    describe('Performance', () => {
-        beforeEach(() => {
-            // COMPLETE reset of ALL Supabase mocks to prevent contamination
-            supabaseServiceClient.from.mockReset();
-            supabaseServiceClient.select.mockReset();
-            supabaseServiceClient.eq.mockReset();
-            supabaseServiceClient.single.mockReset();
-            supabaseServiceClient.insert.mockReset();
-
-            // Re-establish table-aware mock
-            supabaseServiceClient._currentTable = '';
-            supabaseServiceClient.from.mockImplementation((table) => {
-                supabaseServiceClient._currentTable = table;
-                return supabaseServiceClient;
-            });
-
-            supabaseServiceClient.select.mockReturnValue(supabaseServiceClient);
-            supabaseServiceClient.eq.mockReturnValue(supabaseServiceClient);
-
-            supabaseServiceClient.single.mockImplementation(() => {
-                if (supabaseServiceClient._currentTable === 'roasts') {
-                    return Promise.resolve({
-                        data: { user_id: 'test-user-id', content: 'Original roast content' },
-                        error: null
-                    });
-                }
-                return Promise.resolve({
-                    data: { plan: 'pro', status: 'active' },
-                    error: null
-                });
-            });
-
-            supabaseServiceClient.insert.mockReturnValue(supabaseServiceClient);
-        });
-
-        it('should respond within reasonable time', async () => {
-            mockRpc.mockResolvedValue({
-                data: { success: true, hasCredits: true, remaining: 999 },
-                error: null
-            });
-
-            mockValidator.validate.mockReturnValue({
-                valid: true,
-                errors: [],
-                warnings: [],
-                metadata: { textLength: 10, validationTime: 25 }
-            });
-
-            const start = Date.now();
-            const response = await request(app)
-                .post('/api/roast/test-roast-id/validate')
-                .send({ text: 'Quick test', platform: 'twitter' });
-            const end = Date.now();
-
-            expect(response.status).toBe(200);
-            expect(end - start).toBeLessThan(1000); // Less than 1 second
-        });
-
-        it('should include processing time in response', async () => {
-            mockRpc.mockResolvedValue({
-                data: { success: true, hasCredits: true, remaining: 999 },
-                error: null
-            });
-
-            mockValidator.validate.mockReturnValue({
-                valid: true,
-                errors: [],
-                warnings: [],
-                metadata: { textLength: 10, validationTime: 25 }
-            });
-
-            const response = await request(app)
-                .post('/api/roast/test-roast-id/validate')
-                .send({ text: 'Timing test', platform: 'twitter' });
-
-            expect(response.body.data.validation.metadata.processingTimeMs).toBeGreaterThan(0);
-        });
-    });
+    /**
+     * NOTE: GDPR Compliance and Performance tests have been moved to a separate file
+     * File: tests/unit/routes/roast-validation-gdpr-perf.test.js
+     * Reason: Jest module cache issues (Issue #754)
+     *
+     * These tests passed individually but failed when run in the same suite as other tests
+     * due to Jest caching the roast module with references to mocks from previous tests.
+     *
+     * Solution: Separate file ensures isolated module loading context, preventing cache issues.
+     * Total tests: 18 in this file + 4 in gdpr-perf file = 22 total
+     */
 });
