@@ -20,7 +20,7 @@ router.use(authenticateToken);
 async function getPlanLimitsHealth() {
     try {
         // Test basic plan limits functionality
-        const testPlanLimits = await planLimitsService.getPlanLimits('free');
+        const testPlanLimits = await planLimitsService.getPlanLimits('starter_trial');
         
         const health = {
             status: 'healthy',

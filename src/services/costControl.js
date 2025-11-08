@@ -25,7 +25,7 @@ class CostControlService {
     // Keep basic plan metadata (not limits)
     this.plans = {
       free: {
-        id: 'free',
+        id: 'starter_trial',
         name: 'Free',
         features: ['basic_integrations', 'community_support']
       },

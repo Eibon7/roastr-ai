@@ -316,7 +316,7 @@ async function handleSubscriptionCanceled(event) {
     const { error: userDowngradeError } = await supabaseServiceClient
       .from('users')
       .update({
-        plan: 'free',
+        plan: 'starter_trial',
         updated_at: new Date().toISOString()
       })
       .eq('id', user.id);
@@ -349,7 +349,7 @@ async function handleSubscriptionCanceled(event) {
 
     logger.info('[Polar Webhook] ✅ Subscription canceled successfully', {
       user_id: user.id,
-      downgraded_to: 'free',
+      downgraded_to: 'starter_trial',
     });
 
   } catch (error) {

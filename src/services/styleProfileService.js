@@ -412,7 +412,7 @@ class StyleProfileService {
             .single();
 
         if (error || !data) {
-            return 'free';
+            return 'starter_trial';
         }
 
         return data.plan;

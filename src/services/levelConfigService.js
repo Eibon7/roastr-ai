@@ -164,7 +164,7 @@ class LevelConfigService {
         throw error;
       }
 
-      const userPlan = userData.plan || 'free';
+      const userPlan = userData.plan || 'starter_trial';
       const planLimits = PLAN_LEVEL_LIMITS[userPlan] || PLAN_LEVEL_LIMITS.free;
 
       // Validate roast level against plan limits
@@ -210,10 +210,10 @@ class LevelConfigService {
    */
   getRequiredPlanForLevel(level, type) {
     // Issue #734: Fix inconsistency - Free plan supports levels 1-3
-    if (level <= 3) return 'free';
+    if (level <= 3) return 'starter_trial';
     if (level === 4) return 'pro';
     if (level === 5) return 'creator_plus';
-    return 'free';
+    return 'starter_trial';
   }
 
   /**
@@ -258,7 +258,7 @@ class LevelConfigService {
         throw error;
       }
 
-      const userPlan = userData.plan || 'free';
+      const userPlan = userData.plan || 'starter_trial';
       const planLimits = PLAN_LEVEL_LIMITS[userPlan] || PLAN_LEVEL_LIMITS.free;
 
       // Get available roast levels

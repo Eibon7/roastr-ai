@@ -93,7 +93,7 @@ class UserIntegrationsService {
             }
 
             // Check plan limits
-            if (org.plan_id === 'free') {
+            if (org.plan_id === 'starter_trial') {
                 const { data: currentIntegrations } = await userClient
                     .from('integration_configs')
                     .select('id')
@@ -101,7 +101,7 @@ class UserIntegrationsService {
                     .eq('enabled', true);
 
                 if (currentIntegrations && currentIntegrations.length >= 2) {
-                    throw new Error('Free plan limited to 2 active integrations. Upgrade to add more.');
+                    throw new Error('Trial plan limited to 2 active integrations. Upgrade to add more.');
                 }
             }
 
@@ -246,12 +246,12 @@ class UserIntegrationsService {
             const platforms = [
                 { id: 'twitter', name: 'Twitter/X', available: true },
                 { id: 'youtube', name: 'YouTube', available: true },
-                { id: 'bluesky', name: 'Bluesky', available: org.plan_id !== 'free' },
-                { id: 'instagram', name: 'Instagram', available: org.plan_id !== 'free' },
-                { id: 'facebook', name: 'Facebook', available: org.plan_id !== 'free' },
-                { id: 'discord', name: 'Discord', available: org.plan_id !== 'free' },
-                { id: 'twitch', name: 'Twitch', available: org.plan_id !== 'free' },
-                { id: 'reddit', name: 'Reddit', available: org.plan_id !== 'free' },
+                { id: 'bluesky', name: 'Bluesky', available: org.plan_id !== 'starter_trial' },
+                { id: 'instagram', name: 'Instagram', available: org.plan_id !== 'starter_trial' },
+                { id: 'facebook', name: 'Facebook', available: org.plan_id !== 'starter_trial' },
+                { id: 'discord', name: 'Discord', available: org.plan_id !== 'starter_trial' },
+                { id: 'twitch', name: 'Twitch', available: org.plan_id !== 'starter_trial' },
+                { id: 'reddit', name: 'Reddit', available: org.plan_id !== 'starter_trial' },
                 { id: 'tiktok', name: 'TikTok', available: org.plan_id === 'creator_plus' || org.plan_id === 'custom' }
             ];
 
@@ -260,7 +260,7 @@ class UserIntegrationsService {
                 plan: org.plan_id,
                 activeIntegrations: activeCount,
                 limits: {
-                    free: 2,
+                    starter_trial: 2,
                     pro: 5,
                     creator_plus: 999,
                     custom: 999

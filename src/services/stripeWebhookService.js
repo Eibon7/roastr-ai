@@ -197,7 +197,7 @@ class StripeWebhookService {
 
             // Determine plan from lookup key
             const lookupKey = session.metadata?.lookup_key;
-            let plan = 'free';
+            let plan = 'starter_trial';
             
             if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
                 plan = 'pro';
@@ -449,8 +449,8 @@ class StripeWebhookService {
             // Get price details to determine plan
             const prices = await this.stripeWrapper.prices.list({ limit: 100 });
             const priceData = prices.data.find(p => p.id === priceId);
-            
-            let plan = 'free';
+
+            let plan = 'starter_trial';
             if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
                 plan = 'pro';
             } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
@@ -557,7 +557,7 @@ class StripeWebhookService {
                 entitlementsReset: transactionResult?.entitlements_reset || false,
                 previousPlan: transactionResult?.previous_plan || 'unknown',
                 accessUntilDate: transactionResult?.access_until_date,
-                planName: 'free',
+                planName: 'starter_trial',
                 transactionResult
             };
 
@@ -746,11 +746,11 @@ class StripeWebhookService {
     }
 
     /**
-     * Reset user to free plan entitlements
+     * Reset user to starter_trial plan entitlements (expired/suspended state)
      * @private
      */
     async _resetToFreePlan(userId, reason) {
-        const freeEntitlements = {
+        const trialEntitlements = {
             analysis_limit_monthly: 100,
             roast_limit_monthly: 10,
             model: 'gpt-3.5-turbo',
@@ -758,16 +758,16 @@ class StripeWebhookService {
             rqc_mode: 'basic',
             stripe_price_id: null,
             stripe_product_id: null,
-            plan_name: 'free',
+            plan_name: 'starter_trial',
             metadata: {
                 reset_reason: reason,
                 reset_at: new Date().toISOString()
             }
         };
 
-        const result = await this.entitlementsService.setEntitlements(userId, freeEntitlements);
-        
-        logger.info('User reset to free plan', {
+        const result = await this.entitlementsService.setEntitlements(userId, trialEntitlements);
+
+        logger.info('User reset to starter_trial plan', {
             userId,
             reason,
             success: result.success

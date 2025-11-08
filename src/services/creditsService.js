@@ -354,7 +354,7 @@ class CreditsService {
         userId,
         error: error.message
       });
-      return this._mapPlanToLimits('free');
+      return this._mapPlanToLimits('starter_trial');
     }
   }
 

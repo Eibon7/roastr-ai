@@ -550,7 +550,7 @@ class PlanLimitsService {
         };
 
         const normalizedPlan = this.normalizePlan(plan);
-        return autoApprovalMappings[normalizedPlan] || autoApprovalMappings.free;
+        return autoApprovalMappings[normalizedPlan] || autoApprovalMappings.starter_trial;
     }
 
     /**

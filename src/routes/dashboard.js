@@ -51,7 +51,7 @@ router.get('/user', (req, res) => {
     id: 'u_mock_user',
     name: 'Roastr User',
     email: 'user@roastr.ai',
-    plan: flags.isEnabled('MOCK_MODE') ? 'pro' : 'free',
+    plan: flags.isEnabled('MOCK_MODE') ? 'pro' : 'starter_trial',
     rqcEnabled: flags.isEnabled('ENABLE_RQC'),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=RoastrUser',
     joinedAt: '2024-01-15T10:00:00Z',

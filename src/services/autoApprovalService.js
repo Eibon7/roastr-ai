@@ -664,7 +664,7 @@ class AutoApprovalService {
     try {
       // Get organization plan from planLimitsService
       const planData = await planLimitsService.getUserPlan(organizationId);
-      const userPlan = planData?.plan || 'free';
+      const userPlan = planData?.plan || 'starter_trial';
       
       // Get plan-specific limits from config
       const planLimits = this.config.planLimits[userPlan] || this.config.planLimits.free;

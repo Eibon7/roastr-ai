@@ -109,12 +109,12 @@ class WorkerNotificationService {
             // Get limits from database via planLimitsService
             const planLimits = await planLimitsService.getPlanLimits(plan);
             
-            // If subscription is not active, apply free plan limits
+            // If subscription is not active, apply trial plan limits (most restrictive)
             if (status !== 'active') {
-                const freeLimits = await planLimitsService.getPlanLimits('free');
+                const trialLimits = await planLimitsService.getPlanLimits('starter_trial');
                 return {
                     ...planLimits,
-                    ...freeLimits,
+                    ...trialLimits,
                     suspended: true
                 };
             }

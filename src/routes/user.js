@@ -101,12 +101,12 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
         const connectedCount = currentIntegrations.data.filter(integration => integration.connected).length || 0;
         
         // Get user's plan from token or fetch from database
-        const userPlan = req.user?.plan || 'free';
+        const userPlan = req.user?.plan || 'starter_trial';
         let maxConnections;
         
         // Fixed connection limits logic (Issue #366 CodeRabbit fix)
         switch (userPlan.toLowerCase()) {
-            case 'free':
+            case 'starter_trial':
                 maxConnections = 1;
                 break;
             case 'pro':
@@ -854,7 +854,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
                         id: userId,
                         email: 'test@example.com',
                         name: 'Test User',
-                        plan: 'free',
+                        plan: 'starter_trial',
                         is_admin: false,
                         active: true,
                         onboarding_complete: true,
@@ -2605,7 +2605,7 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
                     model: 'gpt-3.5-turbo',
                     shield_enabled: false,
                     rqc_mode: 'basic',
-                    plan_name: 'free',
+                    plan_name: 'starter_trial',
                     stripe_price_id: null,
                     stripe_product_id: null
                 };
@@ -2630,7 +2630,7 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
                 model: 'gpt-3.5-turbo',
                 shield_enabled: false,
                 rqc_mode: 'basic',
-                plan_name: 'free',
+                plan_name: 'starter_trial',
                 stripe_price_id: null,
                 stripe_product_id: null
             };
@@ -2768,7 +2768,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
         const userResponse = {
             ...user,
-            plan: entitlements?.plan_name || user.plan || 'free',
+            plan: entitlements?.plan_name || user.plan || 'starter_trial',
             model: entitlements?.model || 'gpt-3.5-turbo',
             shield_enabled: entitlements?.shield_enabled || false,
             rqc_mode: entitlements?.rqc_mode || 'basic'
@@ -2784,7 +2784,7 @@ router.get('/', authenticateToken, async (req, res) => {
                 id: userId,
                 email: 'test@example.com',
                 full_name: 'Test User',
-                plan: 'free',
+                plan: 'starter_trial',
                 stripe_customer_id: null,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),

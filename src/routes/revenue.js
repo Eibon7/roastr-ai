@@ -68,7 +68,7 @@ router.get('/overview', authenticateToken, requireAdmin, async (req, res) => {
             .from('user_subscriptions')
             .select('plan, status, created_at, current_period_start, current_period_end')
             .gte('created_at', startDate.toISOString())
-            .neq('plan', 'free');
+            .neq('plan', 'starter_trial');
 
         if (currentError) {
             throw currentError;
@@ -80,7 +80,7 @@ router.get('/overview', authenticateToken, requireAdmin, async (req, res) => {
             .select('plan, status, created_at')
             .gte('created_at', previousStartDate.toISOString())
             .lt('created_at', startDate.toISOString())
-            .neq('plan', 'free');
+            .neq('plan', 'starter_trial');
 
         if (previousError) {
             throw previousError;
@@ -91,7 +91,7 @@ router.get('/overview', authenticateToken, requireAdmin, async (req, res) => {
             .from('user_subscriptions')
             .select('plan, status, current_period_start, current_period_end')
             .eq('status', 'active')
-            .neq('plan', 'free');
+            .neq('plan', 'starter_trial');
 
         if (activeError) {
             throw activeError;
@@ -214,7 +214,7 @@ router.get('/churn', authenticateToken, requireAdmin, async (req, res) => {
             .from('user_subscriptions')
             .select('user_id, plan, status, created_at, updated_at')
             .lt('created_at', startDate.toISOString())
-            .neq('plan', 'free');
+            .neq('plan', 'starter_trial');
 
         if (cohortError) {
             throw cohortError;
@@ -226,7 +226,7 @@ router.get('/churn', authenticateToken, requireAdmin, async (req, res) => {
             .select('user_id, plan, status, created_at, updated_at')
             .eq('status', 'canceled')
             .gte('updated_at', startDate.toISOString())
-            .neq('plan', 'free');
+            .neq('plan', 'starter_trial');
 
         if (canceledError) {
             throw canceledError;
@@ -322,7 +322,7 @@ router.get('/trends', authenticateToken, requireAdmin, async (req, res) => {
             .from('user_subscriptions')
             .select('plan, status, created_at, updated_at')
             .gte('created_at', startDate.toISOString())
-            .neq('plan', 'free');
+            .neq('plan', 'starter_trial');
 
         if (error) {
             throw error;
