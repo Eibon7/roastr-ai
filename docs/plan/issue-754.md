@@ -58,7 +58,7 @@
 
 **Separate problematic tests into independent file**
 
-**Rationale:**
+#### Rationale
 - Clean separation ensures isolated module loading
 - No interference between test suites
 - Maintainable and clear intent
@@ -155,7 +155,6 @@ Separate into different files when tests need different module loading contexts:
 - If tests pass individually but fail in suite → module cache issue
 - Separate test files when different describe blocks need different mock states
 - Avoid `mockReset()` in nested beforeEach - signals module reload needed
-```
 
 ## Next Steps
 
