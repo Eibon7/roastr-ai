@@ -421,7 +421,7 @@ class PlanLimitsService {
      * @private
      */
     getDefaultLimits(planId) {
-        return DEFAULT_TIER_LIMITS[planId] || DEFAULT_TIER_LIMITS.free;
+        return DEFAULT_TIER_LIMITS[planId] || DEFAULT_TIER_LIMITS.starter_trial;
     }
 
     /**
@@ -494,12 +494,12 @@ class PlanLimitsService {
             };
 
         } catch (error) {
-            logger.error('Error getting daily auto-approval limits - defaulting to free', {
+            logger.error('Error getting daily auto-approval limits - defaulting to starter_trial', {
                 organizationId,
                 error: error.message,
                 reason: 'system_error'
             });
-            
+
             // Fail closed - return most restrictive limits
             return {
                 daily: 0,
@@ -518,6 +518,11 @@ class PlanLimitsService {
         // ROUND 4 FIX: Plan-specific auto-approval caps
         const autoApprovalMappings = {
             free: {
+                features: { autoApproval: false },
+                daily: 0,
+                hourly: 0
+            },
+            starter_trial: {
                 features: { autoApproval: false },
                 daily: 0,
                 hourly: 0
