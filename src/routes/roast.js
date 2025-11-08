@@ -113,7 +113,8 @@ const publicRateLimit = require('express-rate-limit')({
  * Validate roast request parameters (Enhanced for Issue #326)
  */
 function validateRoastRequest(req) {
-    const { text, tone, intensity, humorType, styleProfile, persona, platform } = req.body;
+    const { text, tone, humorType, styleProfile, persona, platform } = req.body;
+    let { intensity } = req.body;
     const errors = [];
 
     // Validate text - Issue #698: Fix empty string validation order
@@ -134,8 +135,31 @@ function validateRoastRequest(req) {
         errors.push(`Humor type must be one of: ${VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.join(', ')}`);
     }
 
-    if (intensity && (typeof intensity !== 'number' || intensity < VALIDATION_CONSTANTS.MIN_INTENSITY || intensity > VALIDATION_CONSTANTS.MAX_INTENSITY)) {
-        errors.push(`Intensity must be a number between ${VALIDATION_CONSTANTS.MIN_INTENSITY} and ${VALIDATION_CONSTANTS.MAX_INTENSITY}`);
+    // Enhanced intensity validation: convert string numbers to numbers and handle edge cases
+    if (intensity !== undefined && intensity !== null && intensity !== '') {
+        // Try to convert string numbers to actual numbers
+        if (typeof intensity === 'string') {
+            const parsed = Number(intensity);
+            if (!isNaN(parsed)) {
+                intensity = parsed;
+            }
+        }
+
+        // Validate type and handle edge cases
+        if (typeof intensity === 'number') {
+            // Special case: normalize 0 to minimum (common edge case)
+            if (intensity === 0) {
+                intensity = VALIDATION_CONSTANTS.MIN_INTENSITY;
+                req.body.intensity = intensity;
+            } else if (intensity < VALIDATION_CONSTANTS.MIN_INTENSITY || intensity > VALIDATION_CONSTANTS.MAX_INTENSITY) {
+                // Reject other out-of-range values
+                errors.push(`Intensity must be a number between ${VALIDATION_CONSTANTS.MIN_INTENSITY} and ${VALIDATION_CONSTANTS.MAX_INTENSITY}`);
+            } else {
+                req.body.intensity = intensity; // Valid value, update request body
+            }
+        } else {
+            errors.push(`Intensity must be a number between ${VALIDATION_CONSTANTS.MIN_INTENSITY} and ${VALIDATION_CONSTANTS.MAX_INTENSITY}`);
+        }
     }
 
     // Validate new parameters for Issue #326
