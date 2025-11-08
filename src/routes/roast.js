@@ -1220,7 +1220,8 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res)
         const userId = req.user.id;
 
         // Validate request parameters
-        if (!text || typeof text !== 'string') {
+        // Allow empty strings - validator will handle validation, credit consumed regardless
+        if (text === undefined || text === null || typeof text !== 'string') {
             return res.status(400).json({
                 success: false,
                 error: 'Text is required and must be a string',
@@ -1310,18 +1311,25 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res)
             creditsRemaining: creditResult.remaining
         });
 
-        // Record validation usage for analytics (GDPR-compliant)
+        // Record validation usage for analytics (GDPR-compliant) - SPEC 8 Issue #364
         try {
-            await recordRoastUsage(userId, {
-                type: 'style_validation',
-                roastId: roastId,
-                platform: platform,
-                textLength: text.length,
-                valid: validationResult.valid,
-                errorsCount: validationResult.errors.length,
-                warningsCount: validationResult.warnings.length,
-                processingTimeMs: processingTime
-            });
+            await supabaseServiceClient
+                .from('analysis_usage')
+                .insert({
+                    user_id: userId,
+                    count: 1,
+                    metadata: {
+                        type: 'style_validation',
+                        roastId: roastId,
+                        platform: platform,
+                        textLength: text.length,
+                        valid: validationResult.valid,
+                        errorsCount: validationResult.errors.length,
+                        warningsCount: validationResult.warnings.length,
+                        processingTimeMs: processingTime
+                    },
+                    created_at: new Date().toISOString()
+                });
         } catch (usageError) {
             logger.warn('Failed to record validation usage', {
                 userId,
