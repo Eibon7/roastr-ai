@@ -7,11 +7,7 @@ const request = require('supertest');
 const express = require('express');
 
 // Mock dependencies
-jest.mock('../../../src/services/styleValidator', () => ({
-    validateTone: jest.fn(),
-    validateComment: jest.fn(),
-    getToneCategory: jest.fn()
-}));
+jest.mock('../../../src/services/styleValidator', () => jest.fn());
 jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/services/planService', () => ({
     getPlanFeatures: jest.fn()
