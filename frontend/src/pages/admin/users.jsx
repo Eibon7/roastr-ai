@@ -5,6 +5,7 @@ import SuspensionModal from '../../components/admin/SuspensionModal';
 import ToastNotification from '../../components/admin/ToastNotification';
 import VirtualScrollTable from '../../components/admin/VirtualScrollTable';
 import { authHelpers } from '../../lib/supabaseClient';
+import { apiClient } from '../../lib/api';
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -97,38 +98,18 @@ const AdminUsersPage = () => {
     try {
       setLoading(true);
       setAlert(null); // Clear any previous errors
-      
+
       // Build query parameters for new backend endpoint
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: usersPerPage.toString()
       });
-      
+
       if (searchTerm) params.append('search', searchTerm);
       if (selectedPlan) params.append('plan', selectedPlan);
-      
-      const response = await fetch(`/api/admin/users?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Sesión expirada. Por favor inicia sesión nuevamente.');
-        } else if (response.status === 403) {
-          throw new Error('No tienes permisos de administrador.');
-        } else if (response.status === 404) {
-          throw new Error('No se encontraron usuarios.');
-        } else if (response.status >= 500) {
-          throw new Error('Error del servidor. Intenta nuevamente más tarde.');
-        } else {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-      }
+      const data = await apiClient.get(`/admin/users?${params}`);
 
-      const data = await response.json();
       if (data.success) {
         setUsers(data.data.users || []);
         setTotalPages(data.data.pagination?.total_pages || 1);
@@ -140,11 +121,11 @@ const AdminUsersPage = () => {
       console.error('Failed to load users:', error);
       setAlert({
         type: 'error',
-        message: error.message
+        message: error.message || 'Error cargando usuarios'
       });
-      
+
       // If it's an auth error, redirect to login
-      if (error.message.includes('Sesión expirada') || error.message.includes('permisos de administrador')) {
+      if (error.message && (error.message.includes('Sesión expirada') || error.message.includes('permisos de administrador'))) {
         setTimeout(() => {
           navigate('/login');
         }, 3000);
@@ -169,21 +150,13 @@ const AdminUsersPage = () => {
 
     try {
       setActionLoading(prev => ({ ...prev, [`plan_${user.id}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch(`/api/admin/users/${user.id}/plan`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ plan: newPlan })
-      });
 
-      const data = await response.json();
+      const data = await apiClient.patch(`/admin/users/${user.id}/plan`, { plan: newPlan });
+
       if (data.success) {
         showToast(data.data.message, 'success');
         // Refresh users list
+        const session = await authHelpers.getCurrentSession();
         await loadUsers(session.access_token);
       } else {
         throw new Error(data.message || 'Error al actualizar plan');
@@ -226,18 +199,9 @@ const AdminUsersPage = () => {
   const resetUserPassword = useCallback(async (userId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`reset_${userId}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch('/api/auth/admin/users/reset-password', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId })
-      });
 
-      const data = await response.json();
+      const data = await apiClient.post('/auth/admin/users/reset-password', { userId });
+
       if (data.success) {
         showToast(`Email de recuperación enviado a ${data.data.email}`, 'success');
       } else {
@@ -253,21 +217,13 @@ const AdminUsersPage = () => {
   const suspendUser = useCallback(async (userId, reason = null) => {
     try {
       setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch(`/api/auth/admin/users/${userId}/suspend`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason })
-      });
 
-      const data = await response.json();
+      const data = await apiClient.post(`/auth/admin/users/${userId}/suspend`, { reason });
+
       if (data.success) {
         showToast('Usuario suspendido exitosamente', 'success');
         // Refresh users list
+        const session = await authHelpers.getCurrentSession();
         await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al suspender usuario');
@@ -282,20 +238,13 @@ const AdminUsersPage = () => {
   const unsuspendUser = useCallback(async (userId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: true }));
-      
-      const session = await authHelpers.getCurrentSession();
-      const response = await fetch(`/api/auth/admin/users/${userId}/unsuspend`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      const data = await response.json();
+      const data = await apiClient.post(`/auth/admin/users/${userId}/unsuspend`);
+
       if (data.success) {
         showToast('Usuario reactivado exitosamente', 'success');
         // Refresh users list
+        const session = await authHelpers.getCurrentSession();
         await loadUsers(session.access_token);
       } else {
         throw new Error(data.error || 'Error al reactivar usuario');

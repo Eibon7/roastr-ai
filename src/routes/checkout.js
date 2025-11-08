@@ -12,7 +12,7 @@
 const express = require('express');
 const router = express.Router();
 const { Polar } = require('@polar-sh/sdk');
-const { logger } = require('../utils/logger'); // Issue #618 - destructure
+const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
 const { sanitizePII } = require('../utils/piiSanitizer');
 
 // Initialize Polar client

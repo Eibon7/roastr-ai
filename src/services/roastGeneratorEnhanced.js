@@ -84,8 +84,10 @@ class RoastGeneratorEnhanced {
     
     // If in mock mode, use mock generator
     if (this.isMockMode) {
-      const rawRoast = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
-      
+      const mockResult = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
+      // Extract roast string from mock result (Issue #483)
+      const rawRoast = mockResult.roast || mockResult;
+
       // Apply unified transparency disclaimer (Issue #196)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
         rawRoast, 
@@ -264,7 +266,9 @@ class RoastGeneratorEnhanced {
         logger.error('Fallback generation failed, using mock/static roast', { error: fallbackErr.message });
         try {
           const mock = this.mockGenerator || new RoastGeneratorMock();
-          rawFallbackRoast = await mock.generateRoast(text, 0.2, tone);
+          const mockResult = await mock.generateRoast(text, 0.2, tone);
+          // Extract roast string from mock result (Issue #483)
+          rawFallbackRoast = mockResult.roast || mockResult;
         } catch {
           rawFallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
         }
@@ -448,7 +452,9 @@ class RoastGeneratorEnhanced {
       logger.error('RQC fallback generation failed, using mock/static roast', { error: fallbackErr.message });
       try {
         const mock = this.mockGenerator || new RoastGeneratorMock();
-        fallbackRoast = await mock.generateRoast(text, 0.2, tone);
+        const mockResult = await mock.generateRoast(text, 0.2, tone);
+        // Extract roast string from mock result (Issue #483)
+        fallbackRoast = mockResult.roast || mockResult;
       } catch {
         fallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
       }
@@ -544,7 +550,9 @@ Responde únicamente con el roast seguro, sin explicaciones.`;
       logger.error('OpenAI fallback failed, returning mock/static roast', { error: err.message });
       try {
         const mock = this.mockGenerator || new RoastGeneratorMock();
-        return await mock.generateRoast(text, 0.2, tone);
+        const mockResult = await mock.generateRoast(text, 0.2, tone);
+        // Extract roast string from mock result (Issue #483)
+        return mockResult.roast || mockResult;
       } catch {
         return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
       }
@@ -736,7 +744,9 @@ Configuración de usuario:
       } catch {
         const mock = this.mockGenerator || new RoastGeneratorMock();
         try {
-          return await mock.generateRoast(text, 0.2, 'sarcastic');
+          const mockResult = await mock.generateRoast(text, 0.2, 'sarcastic');
+          // Extract roast string from mock result (Issue #483)
+          return mockResult.roast || mockResult;
         } catch {
           return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
         }
