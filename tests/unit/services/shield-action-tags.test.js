@@ -21,34 +21,49 @@ jest.mock('../../../src/services/queueService', () => {
 });
 
 jest.mock('../../../src/config/supabase', () => {
-  // Create a chainable mock object that can handle multiple .eq() calls
+  // Create a Proxy-based chainable mock that supports infinite .eq() chains
   const createChainableMock = () => {
-    const mockChain = {
-      insert: jest.fn(() => ({
-        select: jest.fn(() => Promise.resolve({ data: [{ id: 'mock-action-id' }], error: null }))
-      })),
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({
-            data: {
-              total_violations: 2,
-              severe_violations: 1,
-              strikes_level_1: 1,
-              strikes_level_2: 0,
-              actions_taken: 3
-            },
-            error: null
-          }))
-        }))
-      })),
-      update: jest.fn(() => mockChain),
-      eq: jest.fn(() => mockChain),
-      upsert: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      then: function(resolve) {
-        return Promise.resolve({ data: null, error: null }).then(resolve);
+    const handler = {
+      get(target, prop) {
+        // Handle Promise-like behavior for await
+        if (prop === 'then') {
+          return (resolve) => resolve({ data: null, error: null });
+        }
+
+        // Handle specific methods with custom return values
+        if (prop === 'insert') {
+          return jest.fn(() => ({
+            select: jest.fn(() => Promise.resolve({ data: [{ id: 'mock-action-id' }], error: null }))
+          }));
+        }
+
+        if (prop === 'select') {
+          return jest.fn(() => ({
+            eq: jest.fn(() => ({
+              single: jest.fn(() => Promise.resolve({
+                data: {
+                  total_violations: 2,
+                  severe_violations: 1,
+                  strikes_level_1: 1,
+                  strikes_level_2: 0,
+                  actions_taken: 3
+                },
+                error: null
+              }))
+            }))
+          }));
+        }
+
+        if (prop === 'upsert') {
+          return jest.fn(() => Promise.resolve({ data: null, error: null }));
+        }
+
+        // For any other method (update, eq, etc.), return the proxy itself to allow chaining
+        return jest.fn(() => new Proxy({}, handler));
       }
     };
-    return mockChain;
+
+    return new Proxy({}, handler);
   };
 
   return {
@@ -226,13 +241,6 @@ describe('ShieldService - executeActionsFromTags()', () => {
         ['block_user'],
         mockMetadata
       );
-
-      // Debug: show result structure if not successful
-      if (!result.success) {
-        expect(result).toEqual(expect.objectContaining({
-          success: true // This will fail and show the actual result
-        }));
-      }
 
       expect(result.success).toBe(true);
       expect(result.actions_executed[0].tag).toBe('block_user');
