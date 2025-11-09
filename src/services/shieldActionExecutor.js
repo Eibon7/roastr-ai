@@ -780,7 +780,8 @@ class ShieldActionExecutorService {
       },
       youtube: {
         reportUser: 'Use YouTube Studio to report this user manually',
-        blockUser: 'Block user through YouTube Studio interface'
+        blockUser: 'Block user through YouTube Studio interface',
+        unblockUser: 'Unblock user through YouTube Studio interface'
       },
       discord: {
         reportUser: 'Report user to Discord through the web interface'

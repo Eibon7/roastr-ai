@@ -40,11 +40,12 @@ const mockYouTubeAdapter = {
   capabilities: () => ({
     hideComment: true,
     reportUser: false,
-    blockUser: false,
-    unblockUser: false,
+    blockUser: false,  // Not supported - has fallback to hideComment
+    unblockUser: false, // Not supported - NO fallback (manual review required)
     platform: 'youtube',
     fallbacks: {
-      blockUser: 'hideComment'
+      blockUser: 'hideComment'  // Fallback for blockUser
+      // unblockUser has NO fallback - requires manual review via YouTube Studio
     }
   })
 };
@@ -168,14 +169,14 @@ describe('ShieldActionExecutorService', () => {
     });
     
     test('should handle unsupported action without fallback', async () => {
-      const blockUserInput = {
+      const unblockUserInput = {
         ...validActionInput,
         platform: 'youtube',
-        action: 'blockUser'  // blockUser has no fallback and has YouTube Studio instructions
+        action: 'unblockUser'  // unblockUser has no fallback and requires YouTube Studio manual review
       };
-      
-      const result = await executor.executeAction(blockUserInput);
-      
+
+      const result = await executor.executeAction(unblockUserInput);
+
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
       expect(result.requiresManualReview).toBe(true);

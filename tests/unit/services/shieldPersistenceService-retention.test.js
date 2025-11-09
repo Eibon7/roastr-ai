@@ -201,17 +201,28 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     });
 
     test('should handle database errors gracefully', async () => {
-      mockSupabase.__setResult({
+      // Queue response for SELECT query (fails)
+      mockSupabase.__queueResponse({
         data: null,
         error: { message: 'Database connection failed' }
       });
 
-      mockSupabase.insert.mockResolvedValue({ error: null });
-
-      await expect(service.anonymizeShieldEvents()).rejects.toThrow('Database connection failed');
-      expect(mockLogger.error).toHaveBeenCalledWith('Shield events anonymization failed', {
-        error: 'Database connection failed'
+      // Queue response for INSERT query in logRetentionOperation (succeeds)
+      mockSupabase.__queueResponse({
+        data: null,
+        error: null
       });
+
+      try {
+        await service.anonymizeShieldEvents();
+        // Should not reach here
+        throw new Error('Expected anonymizeShieldEvents to throw, but it did not');
+      } catch (error) {
+        expect(error.message).toBe('Database connection failed');
+        expect(mockLogger.error).toHaveBeenCalledWith('Shield events anonymization failed', {
+          error: 'Database connection failed'
+        });
+      }
     });
 
     test('should handle partial failures in batch processing', async () => {
