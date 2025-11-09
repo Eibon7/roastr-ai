@@ -108,8 +108,8 @@ describe('Shield Action Executor Smoke Test', () => {
     expect(result).toBeDefined();
     expect(typeof result.success).toBe('boolean');
     expect(result.platform).toBe('twitter');
-    // Twitter supports hideComment via hide replies API
-    expect(result.action).toBe('hide_comment');
+    // Twitter supports hideComment via hide replies API (now using camelCase - Issue #482)
+    expect(result.action).toBe('hideComment');
     expect(result.success).toBe(true);
   });
 });
