@@ -471,8 +471,8 @@ function validateAuthentication(options = {}) {
         }
         
         // Check subscription requirement
-        if (requireActiveSubscription && req.user.plan === 'free') {
-            logger.warn('Active subscription required but user has free plan', {
+        if (requireActiveSubscription && req.user.plan === 'starter_trial') {
+            logger.warn('Active subscription required but user has trial plan', {
                 userId: SafeUtils.safeUserIdPrefix(req.user.id),
                 plan: req.user.plan,
                 endpoint: req.path

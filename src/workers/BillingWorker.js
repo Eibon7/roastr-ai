@@ -15,12 +15,12 @@ const { flags } = require('../config/flags');
 
 // Plan configuration (imported from billing.js pattern)
 const PLAN_CONFIG = {
-    free: {
-        name: 'Free',
+    starter_trial: {
+        name: 'Starter Trial',
         price: 0,
         currency: 'eur',
-        description: 'Perfect for getting started',
-        features: ['10 roasts per month', '1 platform integration', 'Basic support'],
+        description: '30-day trial with Starter features',
+        features: ['10 roasts per month', '1 platform integration', 'Basic support', 'Shield protection'],
         maxPlatforms: 1,
         maxRoasts: 10
     },
@@ -147,7 +147,7 @@ class BillingWorker extends BaseWorker {
                 customer = await this.stripeWrapper.customers.retrieve(customerId);
             }
 
-            const planConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.free;
+            const planConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.starter_trial;
             const userEmail = customer?.email || 'unknown@example.com';
             const userName = customer?.name || userEmail.split('@')[0];
 
@@ -262,13 +262,13 @@ class BillingWorker extends BaseWorker {
                 throw new Error(`User subscription not found for customer: ${customerId}`);
             }
 
-            const oldPlanConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.free;
+            const oldPlanConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.starter_trial;
 
             // Reset to free plan
             await this.supabase
                 .from('user_subscriptions')
                 .update({
-                    plan: 'free',
+                    plan: 'starter_trial',
                     status: 'canceled',
                     stripe_subscription_id: null,
                     current_period_start: null,
@@ -283,7 +283,7 @@ class BillingWorker extends BaseWorker {
             await this.supabase
                 .from('users')
                 .update({
-                    plan: 'free',
+                    plan: 'starter_trial',
                     monthly_messages_sent: 0,
                     monthly_tokens_consumed: 0,
                     updated_at: new Date().toISOString()
@@ -301,9 +301,9 @@ class BillingWorker extends BaseWorker {
                 await this.supabase
                     .from('organizations')
                     .update({
-                        plan_id: 'free',
+                        plan_id: 'starter_trial',
                         subscription_status: 'canceled',
-                        monthly_responses_limit: PLAN_CONFIG.free.maxRoasts,
+                        monthly_responses_limit: PLAN_CONFIG.starter_trial.maxRoasts,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', orgData.id);
@@ -360,7 +360,7 @@ class BillingWorker extends BaseWorker {
                 customerId,
                 subscriptionId,
                 oldPlan: userSub.plan,
-                newPlan: 'free',
+                newPlan: 'starter_trial',
                 cancelReason,
                 workerProcessed: this.workerName
             });
@@ -371,7 +371,7 @@ class BillingWorker extends BaseWorker {
                 details: {
                     userId: userSub.user_id,
                     oldPlan: userSub.plan,
-                    newPlan: 'free',
+                    newPlan: 'starter_trial',
                     cancelReason
                 }
             };
@@ -409,7 +409,7 @@ class BillingWorker extends BaseWorker {
                 .eq('stripe_customer_id', customerId)
                 .single();
 
-            const oldPlan = currentSub?.plan || 'free';
+            const oldPlan = currentSub?.plan || 'starter_trial';
             const planChanged = oldPlan !== newPlan;
 
             // Update subscription in database
@@ -431,8 +431,8 @@ class BillingWorker extends BaseWorker {
 
                 const userEmail = customer?.email || 'unknown@example.com';
                 const userName = customer?.name || userEmail.split('@')[0];
-                const oldPlanConfig = PLAN_CONFIG[oldPlan] || PLAN_CONFIG.free;
-                const newPlanConfig = PLAN_CONFIG[newPlan] || PLAN_CONFIG.free;
+                const oldPlanConfig = PLAN_CONFIG[oldPlan] || PLAN_CONFIG.starter_trial;
+                const newPlanConfig = PLAN_CONFIG[newPlan] || PLAN_CONFIG.starter_trial;
 
                 try {
                     await emailService.sendUpgradeSuccessNotification(userEmail, {
@@ -574,7 +574,7 @@ class BillingWorker extends BaseWorker {
                 customer = await this.stripeWrapper.customers.retrieve(customerId);
             }
 
-            const planConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.free;
+            const planConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.starter_trial;
             const userEmail = customer?.email || 'unknown@example.com';
             const userName = customer?.name || userEmail.split('@')[0];
 
@@ -663,7 +663,7 @@ class BillingWorker extends BaseWorker {
             await this.supabase
                 .from('user_subscriptions')
                 .update({
-                    plan: 'free',
+                    plan: 'starter_trial',
                     status: 'suspended',
                     updated_at: new Date().toISOString()
                 })
@@ -698,7 +698,7 @@ class BillingWorker extends BaseWorker {
                 customerId,
                 reason: 'payment_failed_final',
                 oldPlan: planConfig.name,
-                newPlan: 'free',
+                newPlan: 'starter_trial',
                 workerProcessed: this.workerName
             });
 

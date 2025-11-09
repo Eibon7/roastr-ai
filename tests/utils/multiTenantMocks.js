@@ -128,13 +128,13 @@ function createEnterpriseScenario() {
  * Mixed plans scenario: Organizations with different plan types
  */
 function createMixedPlansScenario() {
-  const freeOrg = createMockOrganization({ plan: 'free', name: 'Free Tier Org' });
+  const freeOrg = createMockOrganization({ plan: 'starter_trial', name: 'Starter Trial Org' });
   const starterOrg = createMockOrganization({ plan: 'starter', name: 'Starter Org' });
   const proOrg = createMockOrganization({ plan: 'pro', name: 'Pro Org' });
   const enterpriseOrg = createMockOrganization({ plan: 'enterprise', name: 'Enterprise Org' });
 
   const users = [
-    createMockUser(freeOrg.id, { role: 'admin', email: 'admin@free.com' }),
+    createMockUser(freeOrg.id, { role: 'admin', email: 'admin@trial.com' }),
     createMockUser(starterOrg.id, { role: 'admin', email: 'admin@starter.com' }),
     createMockUser(starterOrg.id, { role: 'member', email: 'user@starter.com' }),
     createMockUser(proOrg.id, { role: 'admin', email: 'admin@pro.com' }),

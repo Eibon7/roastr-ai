@@ -8,7 +8,7 @@ const { logger } = require('../utils/logger');
 
 // Plan hierarchy for upgrade checks
 const PLAN_HIERARCHY = {
-    'free': 0,
+    'starter_trial': 0,
     'starter': 1,
     'pro': 2,
     'creator_plus': 3
@@ -16,7 +16,7 @@ const PLAN_HIERARCHY = {
 
 // Plan limits and features
 const PLAN_LIMITS = {
-    free: {
+    starter_trial: {
         maxPlatforms: 1,
         maxRoastsPerMonth: 10,
         features: ['basic_roasts']
@@ -76,8 +76,8 @@ function requirePlan(requiredPlan, options = {}) {
                 });
             }
 
-            // Default to free plan if no subscription found
-            const userPlan = subscription?.plan || 'free';
+            // Default to trial plan if no subscription found
+            const userPlan = subscription?.plan || 'starter_trial';
             const userStatus = subscription?.status || 'active';
             const trialEnd = subscription?.trial_end ? new Date(subscription.trial_end) : null;
             const periodEnd = subscription?.current_period_end ? new Date(subscription.current_period_end) : null;
@@ -235,7 +235,7 @@ async function checkRoastLimit(userId, incrementBy = 1) {
             throw new Error(`Failed to fetch subscription: ${subError.message}`);
         }
 
-        const plan = subscription?.plan || 'free';
+        const plan = subscription?.plan || 'starter_trial';
         const limits = PLAN_LIMITS[plan];
         
         // Unlimited roasts for creator_plus

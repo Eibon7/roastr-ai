@@ -450,7 +450,7 @@ class EntitlementsService {
                 model: 'gpt-3.5-turbo',
                 shield_enabled: false,
                 rqc_mode: 'basic',
-                plan_name: 'free'
+                plan_name: 'starter_trial'
             };
         }
     }
@@ -496,7 +496,7 @@ class EntitlementsService {
             rqc_mode: 'basic',
             stripe_price_id: null,
             stripe_product_id: null,
-            plan_name: 'free',
+            plan_name: 'starter_trial',
             metadata: {},
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()

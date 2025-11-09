@@ -121,7 +121,7 @@ class RoastGeneratorEnhanced {
       
       return {
         roast: transparencyResult.finalText,
-        plan: userConfig.plan || 'free',
+        plan: userConfig.plan || 'starter_trial',
         rqcEnabled: false,
         rqcGloballyEnabled: false,
         processingTime: Date.now() - startTime,
@@ -261,7 +261,7 @@ class RoastGeneratorEnhanced {
       // Fallback to safe roast (never fail)
       let rawFallbackRoast;
       try {
-        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'free');
+        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'starter_trial');
       } catch (fallbackErr) {
         logger.error('Fallback generation failed, using mock/static roast', { error: fallbackErr.message });
         try {
@@ -308,7 +308,7 @@ class RoastGeneratorEnhanced {
       
       return {
         roast: transparencyResult.finalText,
-        plan: userConfig.plan || 'free',
+        plan: userConfig.plan || 'starter_trial',
         rqcEnabled: false,
         processingTime: Date.now() - startTime,
         tokensUsed: this.estimateTokens(text + transparencyResult.finalText),
@@ -350,7 +350,7 @@ class RoastGeneratorEnhanced {
         roast_level: roastLevel, // Issue #597: Pass roast level to prompt
         allow_profanity: levelParams.allowProfanity // Issue #597: Profanity control
       },
-      includeReferences: rqcConfig.plan !== 'free', // Include references for Pro+ plans
+      includeReferences: rqcConfig.plan !== 'starter_trial', // Include references for Starter+ plans
       persona: persona // Issue #615: Pass persona to buildPrompt
     });
 
@@ -514,7 +514,7 @@ class RoastGeneratorEnhanced {
   /**
    * Generate safe fallback roast
    */
-  async generateFallbackRoast(text, tone, plan = 'free') {
+  async generateFallbackRoast(text, tone, plan = 'starter_trial') {
     try {
       const model = await this.getModelForPlan(plan);
 
@@ -627,7 +627,7 @@ Configuración de usuario:
         logger.error('Error fetching user RQC config:', error);
         // Return default config
         return {
-          plan: 'free',
+          plan: 'starter_trial',
           rqc_enabled: false,
           intensity_level: 3,
           custom_style_prompt: null,
@@ -641,7 +641,7 @@ Configuración de usuario:
       if (!data || data.length === 0) {
         logger.warn('No RQC config found for user:', userId);
         return {
-          plan: 'free',
+          plan: 'starter_trial',
           rqc_enabled: false,
           intensity_level: 3,
           custom_style_prompt: null,
@@ -659,7 +659,7 @@ Configuración de usuario:
     } catch (error) {
       logger.error('Exception fetching user RQC config:', error);
       return {
-        plan: 'free',
+        plan: 'starter_trial',
         rqc_enabled: false,
         intensity_level: 3,
         custom_style_prompt: null,
@@ -772,7 +772,7 @@ Configuración de usuario:
       
       // Safe fallback to previous logic
       const fallbackModels = {
-        'free': 'gpt-3.5-turbo',
+        'starter_trial': 'gpt-3.5-turbo',
         'starter': 'gpt-4o',
         'pro': 'gpt-4o', 
         'plus': 'gpt-4o',

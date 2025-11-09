@@ -5,9 +5,9 @@ const { flags } = require('../config/flags');
 
 // Mock plan data and user plan storage (in production, this would be in the database)
 const AVAILABLE_PLANS = {
-  free: {
-    id: 'free',
-    name: 'Free',
+  starter_trial: {
+    id: 'starter_trial',
+    name: 'Starter Trial',
     price: 0,
     features: {
       roastsPerMonth: 10,
@@ -87,7 +87,7 @@ router.get('/available', (req, res) => {
 router.get('/current', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
-    const userPlan = userPlans.get(userId) || 'free';
+    const userPlan = userPlans.get(userId) || 'starter_trial';
     const plan = AVAILABLE_PLANS[userPlan];
 
     if (!plan) {
@@ -198,7 +198,7 @@ router.get('/features', (req, res) => {
  * Helper function to check if user has access to a feature
  */
 function hasFeatureAccess(userId, feature) {
-  const userPlan = userPlans.get(userId) || 'free';
+  const userPlan = userPlans.get(userId) || 'starter_trial';
   const plan = AVAILABLE_PLANS[userPlan];
   return plan && plan.features[feature] === true;
 }
@@ -207,7 +207,7 @@ function hasFeatureAccess(userId, feature) {
  * Helper function to get user's plan
  */
 function getUserPlan(userId) {
-  const userPlan = userPlans.get(userId) || 'free';
+  const userPlan = userPlans.get(userId) || 'starter_trial';
   return AVAILABLE_PLANS[userPlan];
 }
 
