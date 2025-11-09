@@ -1,0 +1,288 @@
+# Cursor Rules - Roastr.ai
+
+Este archivo consolida las reglas de CLAUDE.md y skills para uso en Cursor.
+
+---
+
+## 🎯 POLÍTICA OBLIGATORIA: GDD, Agentes y Skills
+
+**⚠️ CRÍTICO: Esta política es OBLIGATORIA para TODA tarea, sin excepciones.**
+
+### FASE 0 - Assessment con GDD (SIEMPRE PRIMERO)
+
+**ANTES de cualquier implementación:**
+
+1. **Detectar nodos GDD automáticamente:**
+   ```bash
+   node scripts/cursor-agents/auto-gdd-activation.js [issue-number]
+   # O desde rama:
+   node scripts/cursor-agents/auto-gdd-activation.js --from-branch
+   ```
+
+2. **Resolver dependencias:**
+   ```bash
+   node scripts/resolve-graph.js <nodos-detectados>
+   ```
+
+3. **Leer SOLO nodos resueltos (NUNCA spec.md completo):**
+   ```
+   En Cursor Chat: @docs/nodes/roast.md @docs/nodes/shield.md
+   ```
+
+4. **Leer coderabbit-lessons.md:**
+   ```
+   @docs/patterns/coderabbit-lessons.md
+   ```
+
+**Mapeo automático Labels → Nodos:**
+- `area:shield` → shield, multi-tenant
+- `area:billing` → cost-control, plan-features, multi-tenant
+- `area:platforms` → social-platforms, platform-constraints
+- `area:workers` → queue-system, multi-tenant
+- `area:ui` → roast, persona, tone
+- `test:e2e` → ALL nodes (cargar todos)
+- `test:integration` → depende de otros labels
+
+**Si no hay labels, usar keywords en título o archivos modificados.**
+
+### Detección Automática de Agents
+
+**ANTES de implementar, detectar qué agent usar:**
+```bash
+node scripts/cursor-agents/detect-triggers.js
+```
+
+**Output sugerirá:**
+- Qué agent usar (TestEngineer, FrontendDev, Guardian, etc.)
+- Cómo usar Composer (Cmd+I → @archivos)
+- Prompt sugerido
+- Receipt automático creado
+
+### Workflow Estándar
+
+**FASE 0:** Assessment → GDD → Leer nodos → Agentes → coderabbit-lessons.md
+**FASE 1:** Planning → TaskAssessor (AC ≥3) → docs/plan/ → Explore
+**FASE 2:** Implementation → Agentes → Skills/MCPs → Receipts
+**FASE 3:** Validation → Tests + visual → Guardian → PR → 0 conflictos + 0 CodeRabbit
+**FASE 4:** Commit & PR → Receipts → CI → Merge
+
+### Reglas de Agents
+
+**TestEngineer:**
+- Triggers: Cambios en `src/`, `tests/`, nuevos features
+- Workflow: Composer → @tests/ @src/[archivo] → "Generate tests following test-generation-skill"
+- Receipt: docs/agents/receipts/cursor-test-engineer-[timestamp].md
+
+**FrontendDev:**
+- Triggers: Cambios en `*.jsx`, `*.tsx`, `*.css`
+- Workflow: Composer → @src/components/ @public/ → Implement + visual validation
+- Receipt: docs/agents/receipts/cursor-frontend-[timestamp].md
+
+**Guardian:**
+- Triggers: Cambios en `costControl.js`, `schema.sql`, `docs/nodes/`, billing, security
+- Workflow: `node scripts/guardian-gdd.js --full` + manual audit
+- Receipt: docs/agents/receipts/cursor-guardian-[timestamp].md
+
+**TaskAssessor:**
+- Triggers: AC ≥3, P0/P1, features complejas
+- Workflow: Crear plan en docs/plan/<issue>.md
+- Receipt: docs/agents/receipts/cursor-task-assessor-[timestamp].md
+
+### Durante Desarrollo
+
+**SIEMPRE:**
+- ✅ Leer nodos GDD, NO spec.md (excepto test:e2e)
+- ✅ Actualizar nodos afectados cuando código cambia
+- ✅ Añadir agents a "Agentes Relevantes" en nodos si se invocan
+- ✅ Ejecutar validación antes de commits: `node scripts/validate-gdd-runtime.js --full`
+- ✅ Mantener docs sincronizadas con código
+
+**NUNCA:**
+- ❌ Cargar spec.md completo (excepto explícitamente requerido)
+- ❌ Saltar actualización de nodos después de cambios
+- ❌ Olvidar añadir nuevos agents a "Agentes Relevantes"
+- ❌ Commit sin validación pasando
+
+### Antes de Cerrar PR
+
+**Validación obligatoria:**
+```bash
+# 1. Tests pasando
+npm test
+
+# 2. GDD validado
+node scripts/validate-gdd-runtime.js --full
+node scripts/score-gdd-health.js --ci  # Debe >=87
+
+# 3. Receipts presentes
+ls docs/agents/receipts/cursor-*-[timestamp].md
+
+# 4. Coverage >=90%
+npm run test:coverage
+
+# 5. CodeRabbit = 0 comentarios
+npm run coderabbit:review
+```
+
+---
+
+## Skills (Auto-Activadas)
+
+### Test Generation Skill
+
+**Triggers:** Modificaciones en `src/` sin tests correspondientes
+
+**Workflow:**
+1. Analizar archivos modificados en `src/` para identificar componentes/servicios
+2. Generar tests unitarios usando Jest con mocks apropiados (sin datos reales)
+3. Generar tests de integración para flujos clave (auth, API, workers)
+4. Generar tests E2E con Playwright para UI cuando aplique
+5. Ejecutar `npm test -- --coverage` para validar cobertura
+6. Verificar que Coverage Source es 'auto' en nodos GDD afectados
+7. Asegurar cobertura >= 85% y 0 tests fallando
+8. Generar reporte en `docs/test-evidence/issue-{id}/summary.md`
+
+**Reglas:**
+- ❌ NUNCA usar datos reales (siempre mock data)
+- ✅ Seguir patrones de tests existentes en `tests/`
+- ✅ Cada archivo de producción debe tener su contraparte de test
+- ✅ Tests deben ser aislados, reproducibles y auto-contenidos
+
+**Output:** Tests + `docs/test-evidence/issue-{id}/summary.md`
+
+### GDD Sync Skill
+
+**Triggers:** Cambios en código o arquitectura, "GDD", "spec update", "nodo", "graph", "coverage"
+
+**Workflow:**
+1. Detectar qué nodos en `docs/nodes/` son afectados por cambios recientes
+2. Leer nodos relevantes para entender dependencias
+3. Identificar qué métricas necesitan actualización (coverage, health, dependencies)
+4. Ejecutar: `node scripts/validate-gdd-runtime.js --full`
+5. Actualizar cobertura en nodos afectados (Coverage Source: auto, NO manual)
+6. Ejecutar: `node scripts/resolve-graph.js <nodos-afectados>`
+7. Actualizar "Agentes Relevantes" en nodos si aplica
+8. Validar: `node scripts/score-gdd-health.js --ci` (debe >=87)
+9. Ejecutar: `node scripts/predict-gdd-drift.js --full` (<60 risk)
+10. Generar reporte de sincronización
+
+**Reglas CRÍTICAS:**
+- ❌ NUNCA modificar cobertura manualmente en nodos
+- ❌ NUNCA cargar spec.md completo, solo nodos relevantes
+- ✅ SIEMPRE actualizar "Agentes Relevantes" después de invocar agentes
+- ✅ SIEMPRE validar antes de commit
+- ✅ SIEMPRE mantener Coverage Source: auto
+
+**Output:** Nodos actualizados + reporte de validación + health score >=87
+
+### Security Audit Skill
+
+**Triggers:** "auth", "secret", "policy", "vulnerability", "security", "credential"
+
+**Workflow:**
+1. Revisar todos los archivos modificados con grep para detectar strings de credenciales
+2. Buscar patrones: API_KEY, SECRET, PASSWORD, TOKEN, AUTH_TOKEN en código
+3. Validar que variables de entorno se cargan desde .env (NO hardcoded)
+4. Revisar políticas RLS en migraciones SQL (`database/migrations/`)
+5. Verificar sanitización de inputs en endpoints (protección XSS, SQL injection)
+6. Revisar permisos de archivos y configuración de CORS
+7. Detectar uso seguro de .env vs exponer credenciales en logs
+8. Generar reporte con hallazgos y recomendaciones
+
+**Reglas CRÍTICAS:**
+- ❌ CRÍTICO: Si se detectan credenciales hardcoded → detener inmediatamente y reportar
+- ❌ NUNCA commitear con secrets en logs o código
+- ✅ SIEMPRE usar variables de entorno
+- ✅ Validar permisos RLS en cada cambio de DB
+- ✅ Sanitizar inputs de usuario antes de procesar
+
+**Output:** `docs/audit/security-report-{id}.md` + lista de vulnerabilidades
+
+### Visual Validation Skill
+
+**Triggers:** "UI change", "frontend", "visual", "component", "screenshot"
+
+**Workflow:**
+1. Conectar a Playwright MCP server (ya configurado)
+2. Identificar componentes/rutas afectadas por cambios
+3. Lanzar navegación a páginas relevantes con `mcp.playwright.browse`
+4. Capturar screenshots en múltiples viewports (desktop: 1920x1080, tablet: 768x1024, mobile: 375x667)
+5. Ejecutar tests de accesibilidad automáticos (a11y)
+6. Simular interacciones de usuario (clicks, hovers, form submissions)
+7. Revisar consola del navegador y network logs
+8. Generar reporte visual con capturas y métricas
+
+**Reglas:**
+- ✅ SIEMPRE capturar en 3 viewports mínimo
+- ✅ Incluir estados: loading, error, empty, success
+- ✅ Verificar a11y en cada captura
+- ✅ Documentar cualquier inconsistencia visual
+
+**Output:** `docs/test-evidence/issue-{id}/screenshots/` + `ui-report.md` + logs a11y
+
+### Writing Plans Skill
+
+**Triggers:** AC ≥3, P0/P1, features complejas
+
+**Workflow:**
+1. Leer issue completo (título, body, labels, AC)
+2. Resolver nodos GDD relevantes
+3. Crear `docs/plan/issue-{id}.md` con estructura:
+   - Estado Actual
+   - Pasos de implementación
+   - Agentes a usar
+   - Archivos afectados
+   - Validación requerida
+4. Continuar automáticamente (NO esperar confirmación)
+
+**Output:** `docs/plan/issue-{id}.md`
+
+### Verification Before Completion Skill
+
+**Triggers:** Antes de "complete", "done", "passing", "ready"
+
+**Workflow:**
+1. Ejecutar comandos de verificación REALES (no asumir)
+2. Verificar tests: `npm test` (debe exit 0)
+3. Verificar coverage: `npm run test:coverage` (debe >=90%)
+4. Verificar GDD: `node scripts/validate-gdd-runtime.js --full`
+5. Verificar health: `node scripts/score-gdd-health.js --ci` (debe >=87)
+6. Verificar CodeRabbit: `npm run coderabbit:review` (debe 0 comentarios)
+7. Solo entonces marcar como completo
+
+**Regla:** Evidence antes de claims. NUNCA decir "complete" sin ejecutar verificaciones.
+
+---
+
+## Comandos Útiles
+
+```bash
+# GDD
+node scripts/resolve-graph.js <nodos>
+node scripts/validate-gdd-runtime.js --full
+node scripts/score-gdd-health.js --ci
+node scripts/predict-gdd-drift.js --full
+node scripts/auto-repair-gdd.js --auto-fix
+
+# Auto-activación
+node scripts/cursor-agents/auto-gdd-activation.js [issue-number]
+node scripts/cursor-agents/detect-triggers.js
+
+# Tests
+npm test
+npm run test:coverage
+
+# CodeRabbit
+npm run coderabbit:review
+npm run coderabbit:review:quick
+```
+
+---
+
+## Referencias
+
+- **GDD Guide:** `docs/GDD-ACTIVATION-GUIDE.md`
+- **Agent Manifest:** `agents/manifest.yaml`
+- **Skills:** `.claude/skills/`
+- **Migration Guide:** `docs/CURSOR-MIGRATION-GUIDE.md`
+

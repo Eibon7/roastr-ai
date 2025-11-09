@@ -71,3 +71,4 @@ docs/backup/
 
 # Branch Guard - issue lock file
 .issue_lock
+.gdd-activation-instructions.json
