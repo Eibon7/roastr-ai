@@ -153,7 +153,17 @@ async function createTestTenants() {
 async function createTestData(tenantId, type = 'all') {
   logger.debug(`📊 Creating test data for tenant ${tenantId}...`);
 
-  const testData = { posts: [], comments: [], roasts: [] };
+  const testData = {
+    posts: [],
+    comments: [],
+    roasts: [],
+    integrationConfigs: [],
+    usageRecords: [],
+    monthlyUsage: [],
+    responses: [],
+    userBehaviors: [],
+    userActivities: []
+  };
 
   if (type === 'posts' || type === 'all') {
     const posts = [
@@ -229,6 +239,155 @@ async function createTestData(tenantId, type = 'all') {
     logger.debug(`  ✅ Created ${data.length} roasts`);
   }
 
+  // Issue #583: Add integration_configs test data
+  if (type === 'integration_configs' || type === 'all') {
+    const integrationConfigs = [
+      {
+        id: uuidv4(),
+        organization_id: tenantId,
+        platform: 'twitter',
+        enabled: true,
+        config: { api_version: 'v2' },
+        credentials: { encrypted: true }
+      }
+    ];
+
+    const { data, error } = await serviceClient
+      .from('integration_configs')
+      .insert(integrationConfigs)
+      .select();
+
+    if (error) logger.warn(`  ⚠️  Failed to create integration_configs: ${error.message}`);
+    else {
+      testData.integrationConfigs = data;
+      logger.debug(`  ✅ Created ${data.length} integration configs`);
+    }
+  }
+
+  // Issue #583: Add usage_records test data
+  if (type === 'usage_records' || type === 'all') {
+    const usageRecords = [
+      {
+        id: uuidv4(),
+        organization_id: tenantId,
+        platform: 'twitter',
+        action_type: 'generate_reply',
+        tokens_used: 150,
+        cost_cents: 3
+      }
+    ];
+
+    const { data, error } = await serviceClient
+      .from('usage_records')
+      .insert(usageRecords)
+      .select();
+
+    if (error) logger.warn(`  ⚠️  Failed to create usage_records: ${error.message}`);
+    else {
+      testData.usageRecords = data;
+      logger.debug(`  ✅ Created ${data.length} usage records`);
+    }
+  }
+
+  // Issue #583: Add monthly_usage test data
+  if (type === 'monthly_usage' || type === 'all') {
+    const now = new Date();
+    const monthlyUsage = [
+      {
+        id: uuidv4(),
+        organization_id: tenantId,
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        total_responses: 50,
+        responses_limit: 100
+      }
+    ];
+
+    const { data, error } = await serviceClient
+      .from('monthly_usage')
+      .insert(monthlyUsage)
+      .select();
+
+    if (error) logger.warn(`  ⚠️  Failed to create monthly_usage: ${error.message}`);
+    else {
+      testData.monthlyUsage = data;
+      logger.debug(`  ✅ Created ${data.length} monthly usage records`);
+    }
+  }
+
+  // Issue #583: Add responses test data (requires comments)
+  if ((type === 'responses' || type === 'all') && testData.comments.length > 0) {
+    const responses = testData.comments.map((comment, i) => ({
+      id: uuidv4(),
+      organization_id: tenantId,
+      comment_id: comment.id,
+      response_text: `Test response ${i + 1}`,
+      tone: 'sarcastic',
+      humor_type: 'witty'
+    }));
+
+    const { data, error } = await serviceClient
+      .from('responses')
+      .insert(responses)
+      .select();
+
+    if (error) logger.warn(`  ⚠️  Failed to create responses: ${error.message}`);
+    else {
+      testData.responses = data;
+      logger.debug(`  ✅ Created ${data.length} responses`);
+    }
+  }
+
+  // Issue #583: Add user_behaviors test data
+  if (type === 'user_behaviors' || type === 'all') {
+    const userBehaviors = [
+      {
+        id: uuidv4(),
+        organization_id: tenantId,
+        platform: 'twitter',
+        platform_user_id: `user_${Date.now()}`,
+        platform_username: 'toxicuser',
+        total_comments: 10,
+        total_violations: 2
+      }
+    ];
+
+    const { data, error } = await serviceClient
+      .from('user_behaviors')
+      .insert(userBehaviors)
+      .select();
+
+    if (error) logger.warn(`  ⚠️  Failed to create user_behaviors: ${error.message}`);
+    else {
+      testData.userBehaviors = data;
+      logger.debug(`  ✅ Created ${data.length} user behaviors`);
+    }
+  }
+
+  // Issue #583: Add user_activities test data
+  if (type === 'user_activities' || type === 'all') {
+    const userActivities = [
+      {
+        id: uuidv4(),
+        organization_id: tenantId,
+        activity_type: 'message_sent',
+        platform: 'twitter',
+        tokens_used: 100
+      }
+    ];
+
+    const { data, error } = await serviceClient
+      .from('user_activities')
+      .insert(userActivities)
+      .select();
+
+    if (error) logger.warn(`  ⚠️  Failed to create user_activities: ${error.message}`);
+    else {
+      testData.userActivities = data;
+      logger.debug(`  ✅ Created ${data.length} user activities`);
+    }
+  }
+
   return testData;
 }
 
@@ -284,16 +443,25 @@ function getTenantContext() {
 
 /**
  * Cleans up all test data
- * Order: roasts → comments → posts → organizations → users
+ * Order (respecting FK constraints):
+ * responses → roasts → comments → posts → user_activities → user_behaviors →
+ * monthly_usage → usage_records → integration_configs → organizations → users
  */
 async function cleanupTestData() {
   logger.debug('🧹 Cleaning up...');
 
   if (testTenants.length === 0 && testUsers.length === 0) return;
 
+  // Issue #583: Clean up new tables (reverse FK order)
+  await serviceClient.from('responses').delete().in('organization_id', testTenants);
   await serviceClient.from('roasts').delete().in('organization_id', testTenants);
   await serviceClient.from('comments').delete().in('organization_id', testTenants);
   await serviceClient.from('posts').delete().in('organization_id', testTenants);
+  await serviceClient.from('user_activities').delete().in('organization_id', testTenants);
+  await serviceClient.from('user_behaviors').delete().in('organization_id', testTenants);
+  await serviceClient.from('monthly_usage').delete().in('organization_id', testTenants);
+  await serviceClient.from('usage_records').delete().in('organization_id', testTenants);
+  await serviceClient.from('integration_configs').delete().in('organization_id', testTenants);
   await serviceClient.from('organizations').delete().in('id', testTenants);
   await serviceClient.from('users').delete().in('id', testUsers);
 
