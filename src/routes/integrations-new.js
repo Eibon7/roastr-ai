@@ -324,8 +324,9 @@ router.post('/import', authenticateToken, (req, res) => {
     const actualLimit = Math.min(limit, platformConfig.maxImportLimit);
     const languageHints = platformConfig.languages;
 
-    // Always return 'importing' status immediately, then process in background
+    // Issue #641: Always return 'importing' status immediately, then process in background
     // In test mode, process synchronously after response; in production, use setTimeout
+    // This ensures consistent API contract: endpoint always returns 'importing' status
     
     // Send immediate response with 'importing' status
     res.json({
