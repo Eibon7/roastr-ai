@@ -58,8 +58,8 @@ class YouTubeShieldAdapter extends ShieldAdapter {
 
       // Mock setting moderation status to 'rejected' (hides comment)
       this.client.quotaUsed += this.quotaCost.setModerationStatus;
-      
-      const result = this.createSuccessResult('hide_comment', {
+
+      const result = this.createSuccessResult('hideComment', {
         commentId: input.commentId,
         moderationStatus: 'rejected',
         endpoint: 'POST /comments/setModerationStatus',
@@ -80,8 +80,8 @@ class YouTubeShieldAdapter extends ShieldAdapter {
         commentId: input.commentId,
         error: error.message
       });
-      
-      return this.createErrorResult('hide_comment', error, Date.now() - startTime);
+
+      return this.createErrorResult('hideComment', error, Date.now() - startTime);
     }
   }
 
@@ -94,7 +94,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       await this.simulateLatency();
       
       // YouTube doesn't have API for user reporting
-      const result = this.createSuccessResult('report_user', {
+      const result = this.createSuccessResult('reportUser', {
         userId: input.userId,
         platform: 'youtube',
         method: 'manual_review_required',
@@ -110,7 +110,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('report_user', error, Date.now() - startTime);
+      return this.createErrorResult('reportUser', error, Date.now() - startTime);
     }
   }
 
@@ -123,7 +123,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       await this.simulateLatency();
       
       // YouTube doesn't have API for user blocking
-      const result = this.createSuccessResult('block_user', {
+      const result = this.createSuccessResult('blockUser', {
         userId: input.userId,
         platform: 'youtube',
         method: 'manual_review_required',
@@ -140,7 +140,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('block_user', error, Date.now() - startTime);
+      return this.createErrorResult('blockUser', error, Date.now() - startTime);
     }
   }
 
@@ -153,7 +153,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       await this.simulateLatency();
       
       // YouTube doesn't have API for user unblocking
-      const result = this.createSuccessResult('unblock_user', {
+      const result = this.createSuccessResult('unblockUser', {
         userId: input.userId,
         platform: 'youtube',
         method: 'manual_review_required',
@@ -168,7 +168,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('unblock_user', error, Date.now() - startTime);
+      return this.createErrorResult('unblockUser', error, Date.now() - startTime);
     }
   }
 
@@ -188,8 +188,8 @@ class YouTubeShieldAdapter extends ShieldAdapter {
         'https://www.googleapis.com/auth/youtube.force-ssl'
       ],
       fallbacks: {
-        reportUser: 'hide_comment',   // If can't report user, hide their comments
-        blockUser: 'hide_comment',    // If can't block user, hide their comments
+        reportUser: null,            // No fallback - requires manual review through YouTube Studio
+        blockUser: 'hideComment',    // If can't block user, hide their comments
         unblockUser: 'manual_review'  // Must be done manually
       },
       apiSpecifics: {
@@ -248,8 +248,8 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       }
       
       this.client.quotaUsed += this.quotaCost.setModerationStatus;
-      
-      const result = this.createSuccessResult('set_moderation_status', {
+
+      const result = this.createSuccessResult('setModerationStatus', {
         commentId: input.commentId,
         moderationStatus: status,
         quotaCost: this.quotaCost.setModerationStatus,
@@ -264,7 +264,7 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('set_moderation_status', error, Date.now() - startTime);
+      return this.createErrorResult('setModerationStatus', error, Date.now() - startTime);
     }
   }
 }

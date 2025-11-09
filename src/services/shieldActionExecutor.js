@@ -285,10 +285,15 @@ class ShieldActionExecutorService {
         
         // Execute the action
         const result = await this.executeAdapterAction(adapter, action, moderationInput);
-        
+
+        // Check if the action actually succeeded
+        if (!result.success) {
+          throw new Error(result.error || 'Action execution failed');
+        }
+
         // Success - reset circuit breaker
         this.resetCircuitBreaker(platform);
-        
+
         return result;
         
       } catch (error) {
@@ -462,16 +467,23 @@ class ShieldActionExecutorService {
    */
   getFallbackAction(action, capabilities) {
     const fallbacks = capabilities.fallbacks || {};
-    
-    // Use explicit fallback if defined
-    if (fallbacks[action]) {
+
+    // Check if there's an explicit fallback defined (including null)
+    if (action in fallbacks) {
       const fallbackAction = fallbacks[action];
+
+      // Explicit null means "no fallback, require manual review"
+      if (fallbackAction === null) {
+        return null;
+      }
+
+      // Use explicit fallback if the action is supported
       if (this.isActionSupported(fallbackAction, capabilities)) {
         return fallbackAction;
       }
     }
-    
-    // Default fallback logic
+
+    // Default fallback logic (only if no explicit fallback is defined)
     switch (action) {
       case 'reportUser':
         if (capabilities.blockUser) return 'blockUser';
@@ -481,7 +493,7 @@ class ShieldActionExecutorService {
         if (capabilities.blockUser) return 'blockUser';
         break;
     }
-    
+
     return null;
   }
   
@@ -677,16 +689,17 @@ class ShieldActionExecutorService {
   
   recordCircuitBreakerFailure(platform) {
     const circuitBreaker = this.circuitBreakers.get(platform);
-    
+
     circuitBreaker.failureCount++;
     circuitBreaker.lastFailureTime = Date.now();
-    
-    if (circuitBreaker.failureCount >= this.circuitBreakerConfig.failureThreshold) {
+
+    // If circuit breaker is in half-open state and fails, immediately reopen
+    if (circuitBreaker.state === 'half-open') {
       circuitBreaker.state = 'open';
       circuitBreaker.nextAttemptTime = Date.now() + this.circuitBreakerConfig.recoveryTimeout;
-      
+
       this.metrics.circuitBreakerTrips++;
-      
+
       // Ensure platform metrics exist before incrementing
       if (!this.metrics.byPlatform[platform]) {
         this.metrics.byPlatform[platform] = {
@@ -698,7 +711,34 @@ class ShieldActionExecutorService {
         };
       }
       this.metrics.byPlatform[platform].circuitBreakerTrips++;
-      
+
+      this.logger.warn('Circuit breaker reopened after half-open failure', {
+        platform,
+        failureCount: circuitBreaker.failureCount,
+        recoveryTimeoutMs: this.circuitBreakerConfig.recoveryTimeout
+      });
+      return;
+    }
+
+    // Normal failure tracking - open circuit breaker if threshold reached
+    if (circuitBreaker.failureCount >= this.circuitBreakerConfig.failureThreshold) {
+      circuitBreaker.state = 'open';
+      circuitBreaker.nextAttemptTime = Date.now() + this.circuitBreakerConfig.recoveryTimeout;
+
+      this.metrics.circuitBreakerTrips++;
+
+      // Ensure platform metrics exist before incrementing
+      if (!this.metrics.byPlatform[platform]) {
+        this.metrics.byPlatform[platform] = {
+          total: 0,
+          successful: 0,
+          failed: 0,
+          fallbacks: 0,
+          circuitBreakerTrips: 0
+        };
+      }
+      this.metrics.byPlatform[platform].circuitBreakerTrips++;
+
       this.logger.warn('Circuit breaker opened', {
         platform,
         failureCount: circuitBreaker.failureCount,

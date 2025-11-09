@@ -57,13 +57,13 @@ class TwitchShieldAdapter extends ShieldAdapter {
       
       // Twitch has very limited message deletion capabilities
       // Only for specific chat scenarios
-      const result = this.createSuccessResult('hide_comment', {
+      const result = this.createSuccessResult('hideComment', {
         messageId: input.commentId,
         channelId: this.client.channelId,
         platform: 'twitch',
         method: 'timeout_user_alternative',
         note: 'Twitch does not support message deletion. Consider timeout/ban instead.',
-        alternative: 'timeout_user',
+        alternative: 'timeoutUser',
         apiLimitation: 'Chat messages cannot be individually deleted via API'
       }, Date.now() - startTime, true); // requiresManualReview = true
 
@@ -80,7 +80,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
         error: error.message
       });
       
-      return this.createErrorResult('hide_comment', error, Date.now() - startTime);
+      return this.createErrorResult('hideComment', error, Date.now() - startTime);
     }
   }
 
@@ -93,7 +93,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
       await this.simulateLatency();
       
       // Twitch doesn't have API for user reporting
-      const result = this.createSuccessResult('report_user', {
+      const result = this.createSuccessResult('reportUser', {
         userId: input.userId,
         platform: 'twitch',
         method: 'manual_review_required',
@@ -110,7 +110,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('report_user', error, Date.now() - startTime);
+      return this.createErrorResult('reportUser', error, Date.now() - startTime);
     }
   }
 
@@ -138,7 +138,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
       }
 
       // Mock successful ban
-      const result = this.createSuccessResult('ban_user', {
+      const result = this.createSuccessResult('blockUser', {
         userId: input.userId,
         channelId: this.client.channelId,
         reason: input.reason || 'Shield: Inappropriate behavior',
@@ -162,7 +162,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
         error: error.message
       });
       
-      return this.createErrorResult('ban_user', error, Date.now() - startTime);
+      return this.createErrorResult('blockUser', error, Date.now() - startTime);
     }
   }
 
@@ -190,7 +190,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
       }
 
       // Mock successful unban
-      const result = this.createSuccessResult('unban_user', {
+      const result = this.createSuccessResult('unblockUser', {
         userId: input.userId,
         channelId: this.client.channelId,
         endpoint: 'DELETE /moderation/bans',
@@ -206,7 +206,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('unban_user', error, Date.now() - startTime);
+      return this.createErrorResult('unblockUser', error, Date.now() - startTime);
     }
   }
 
@@ -229,7 +229,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
       // Parse duration to seconds
       const durationSeconds = this.parseTimeoutDuration(duration);
       
-      const result = this.createSuccessResult('timeout_user', {
+      const result = this.createSuccessResult('timeoutUser', {
         userId: input.userId,
         channelId: this.client.channelId,
         duration: duration,
@@ -248,7 +248,7 @@ class TwitchShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('timeout_user', error, Date.now() - startTime);
+      return this.createErrorResult('timeoutUser', error, Date.now() - startTime);
     }
   }
 
@@ -270,9 +270,9 @@ class TwitchShieldAdapter extends ShieldAdapter {
         'moderator:manage:chat_messages (limited message actions)'
       ],
       fallbacks: {
-        hideComment: 'timeout_user',     // If can't delete message, timeout user
-        reportUser: 'timeout_user',      // If can't report, timeout instead
-        blockUser: 'timeout_user'        // Timeout before permanent ban
+        hideComment: 'timeoutUser',     // If can't delete message, timeout user
+        reportUser: 'timeoutUser',      // If can't report, timeout instead
+        blockUser: 'timeoutUser'        // Timeout before permanent ban
       },
       additionalActions: {
         timeoutUser: true,               // Twitch-specific timeout
