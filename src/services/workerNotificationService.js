@@ -109,12 +109,12 @@ class WorkerNotificationService {
             // Get limits from database via planLimitsService
             const planLimits = await planLimitsService.getPlanLimits(plan);
             
-            // If subscription is not active, apply free plan limits
+            // If subscription is not active, apply trial plan limits (most restrictive)
             if (status !== 'active') {
-                const freeLimits = await planLimitsService.getPlanLimits('free');
+                const trialLimits = await planLimitsService.getPlanLimits('starter_trial');
                 return {
                     ...planLimits,
-                    ...freeLimits,
+                    ...trialLimits,
                     suspended: true
                 };
             }
@@ -133,7 +133,7 @@ class WorkerNotificationService {
      */
     getFallbackLimits(plan, status) {
         const FALLBACK_LIMITS = {
-            free: {
+            starter_trial: {
                 maxRoasts: 10,
                 maxPlatforms: 1,
                 shieldEnabled: false,
@@ -163,12 +163,12 @@ class WorkerNotificationService {
             }
         };
 
-        const planLimits = FALLBACK_LIMITS[plan] || FALLBACK_LIMITS.free;
-        
+        const planLimits = FALLBACK_LIMITS[plan] || FALLBACK_LIMITS.starter_trial;
+
         if (status !== 'active') {
             return {
                 ...planLimits,
-                ...FALLBACK_LIMITS.free,
+                ...FALLBACK_LIMITS.starter_trial,
                 suspended: true
             };
         }
@@ -328,6 +328,41 @@ class WorkerNotificationService {
             return { success: true };
         } catch (error) {
             logger.error('🔄 Failed to broadcast system message:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Notify workers of roasting state changes (Issue #596)
+     * @param {string} userId - User ID
+     * @param {boolean} enabled - Whether roasting is enabled
+     * @param {Object} metadata - Additional metadata (reason, etc.)
+     */
+    async notifyRoastingStateChange(userId, enabled, metadata = {}) {
+        const message = {
+            type: 'ROASTING_STATE_CHANGE',
+            userId,
+            enabled,
+            timestamp: new Date().toISOString(),
+            ...metadata
+        };
+
+        try {
+            if (process.env.NODE_ENV !== 'production') {
+                this.notifyInMemory('roasting_state_changes', message);
+            } else {
+                await this.publishToRedis('roasting_state_changes', message);
+            }
+
+            logger.info('🔄 Roasting state change notification sent:', {
+                userId,
+                enabled,
+                reason: metadata.reason
+            });
+
+            return { success: true };
+        } catch (error) {
+            logger.error('🔄 Failed to notify roasting state change:', error);
             return { success: false, error: error.message };
         }
     }

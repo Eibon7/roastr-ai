@@ -92,11 +92,11 @@ describe('Tier Limits Enforcement Integration', () => {
         jest.clearAllMocks();
     });
 
-    describe('Free Tier Enforcement', () => {
+    describe('Starter Trial Tier Enforcement', () => {
         beforeEach(() => {
-            // Mock free tier user
+            // Mock starter_trial tier user
             mockSupabase.single.mockResolvedValue({
-                data: { plan: 'free', status: 'active' },
+                data: { plan: 'starter_trial', status: 'active' },
                 error: null
             });
 
@@ -379,7 +379,7 @@ describe('Tier Limits Enforcement Integration', () => {
     describe('Error Handling', () => {
         beforeEach(() => {
             mockSupabase.single.mockResolvedValue({
-                data: { plan: 'free', status: 'active' },
+                data: { plan: 'starter_trial', status: 'active' },
                 error: null
             });
         });
@@ -417,7 +417,7 @@ describe('Tier Limits Enforcement Integration', () => {
     describe('Multiple Action Validation', () => {
         beforeEach(() => {
             mockSupabase.single.mockResolvedValue({
-                data: { plan: 'free', status: 'active' },
+                data: { plan: 'starter_trial', status: 'active' },
                 error: null
             });
 
@@ -461,7 +461,7 @@ describe('Tier Limits Enforcement Integration', () => {
     describe('Platform Account Limits', () => {
         beforeEach(() => {
             mockSupabase.single.mockResolvedValue({
-                data: { plan: 'free', status: 'active' },
+                data: { plan: 'starter_trial', status: 'active' },
                 error: null
             });
 

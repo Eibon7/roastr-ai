@@ -157,11 +157,16 @@ function generateState(userId, platform) {
  */
 function parseState(state) {
   try {
+    // Issue #638: Better error handling for state parsing
+    if (!state || typeof state !== 'string') {
+      throw new Error('Invalid state format: state is required');
+    }
+
     const payload = Buffer.from(state, 'base64url').toString();
     const [userId, platform, timestamp, random] = payload.split(':');
-    
+
     if (!userId || !platform || !timestamp || !random) {
-      throw new Error('Invalid state format');
+      throw new Error('Invalid state format: missing required fields');
     }
 
     const age = Date.now() - parseInt(timestamp);
@@ -173,9 +178,26 @@ function parseState(state) {
 
     return { userId, platform, timestamp: parseInt(timestamp), random };
   } catch (error) {
+    // Preserve original error message if it's already descriptive
+    if (error.message.startsWith('Invalid state format') ||
+        error.message.startsWith('State parameter expired')) {
+      throw error;
+    }
     throw new Error('Invalid state parameter: ' + error.message);
   }
 }
+
+/**
+ * POST /api/integrations//connect (catch empty platform parameter)
+ * Issue #638: Handle empty platform parameter with 400 instead of 404
+ */
+router.post('//connect', authenticateToken, (req, res) => {
+  res.status(400).json({
+    success: false,
+    error: 'Platform parameter is required',
+    code: 'INVALID_PLATFORM'
+  });
+});
 
 /**
  * POST /api/integrations/:platform/connect

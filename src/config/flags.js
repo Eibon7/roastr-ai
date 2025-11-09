@@ -289,12 +289,19 @@ class FeatureFlags {
    * Determine if OAuth should use mock mode
    * OAuth uses mock mode if:
    * - MOCK_MODE flag is enabled
-   * - NODE_ENV is test
+   * - NODE_ENV is test (unless explicitly disabled)
    * - FORCE_MOCK_OAUTH environment variable is set to 'true'
+   *
+   * Issue #638: Respect explicit disable even in test mode
    */
   shouldUseMockOAuth() {
-    return this.flags.MOCK_MODE || 
-           process.env.NODE_ENV === 'test' || 
+    // If explicitly disabled, respect that even in test mode
+    if (process.env.ENABLE_MOCK_MODE === 'false') {
+      return false;
+    }
+
+    return this.flags.MOCK_MODE ||
+           process.env.NODE_ENV === 'test' ||
            this.parseFlag(process.env.FORCE_MOCK_OAUTH);
   }
 

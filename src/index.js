@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config();
 
@@ -65,12 +66,14 @@ const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
 const roastRoutes = require('./routes/roast');
+const roastingRoutes = require('./routes/roasting');
 const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
 const personaRoutes = require('./routes/persona');
 const checkoutRoutes = require('./routes/checkout');
 const polarWebhookRoutes = require('./routes/polarWebhook');
+const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -189,6 +192,9 @@ app.use('/webhooks/stripe', billingRoutes);
 // Polar webhook endpoint (needs raw body for HMAC verification, before JSON parsing)
 app.use('/api/polar/webhook', express.raw({ type: 'application/json' }), polarWebhookRoutes);
 
+// Middleware para parsear cookies (required for CSRF validation)
+app.use(cookieParser());
+
 // Middleware para parsear JSON (after webhooks to preserve raw body)
 app.use(bodyParser.json());
 
@@ -292,6 +298,12 @@ app.use('/api/notifications', notificationsRoutes);
 
 // Roast generation routes (authenticated)
 app.use('/api/roast', roastRoutes);
+
+// Credits API routes - QW9: Fix missing credits router mount
+app.use('/api/credits', creditsRoutes);
+
+// Roasting control routes (authenticated) - Issue #596
+app.use('/api/roasting', roastingRoutes);
 
 // Settings routes (authenticated) - Issue #362
 app.use('/api/settings', settingsRoutes);

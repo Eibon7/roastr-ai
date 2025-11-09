@@ -166,16 +166,16 @@ async function getUserPlanInfo(userId) {
             .single();
 
         if (error || !userSub) {
-            return { plan: 'free', status: 'active' };
+            return { plan: 'starter_trial', status: 'active' };
         }
 
         return {
-            plan: userSub.plan || 'free',
+            plan: userSub.plan || 'starter_trial',
             status: userSub.status || 'active'
         };
     } catch (error) {
         logger.error('Error fetching user plan:', error);
-        return { plan: 'free', status: 'active' };
+        return { plan: 'starter_trial', status: 'active' };
     }
 }
 
@@ -267,7 +267,7 @@ async function checkAnalysisCredits(userId, plan) {
  */
 function getAnalysisLimitForPlan(plan) {
     const limits = {
-        'free': 1000,
+        'starter_trial': 1000,
         'starter': 1000,
         'pro': 10000,
         'plus': 100000,
@@ -294,7 +294,7 @@ async function getModelForPlan(plan) {
         
         // Safe fallback to previous logic
         const fallbackModels = {
-            'free': 'gpt-3.5-turbo',
+            'starter_trial': 'gpt-3.5-turbo',
             'starter': 'gpt-4o',
             'pro': 'gpt-4o', 
             'plus': 'gpt-4o',
@@ -694,7 +694,7 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
                     remaining: creditResult?.remaining ?? 0,
                     limit: creditResult?.limit ?? 0,
                     used: creditResult?.used ?? 0,
-                    plan: userPlan?.plan ?? 'free',
+                    plan: userPlan?.plan ?? 'starter_trial',
                     error: creditResult?.error ?? 'Credit consumption failed'
                 },
                 timestamp: new Date().toISOString()
@@ -902,7 +902,7 @@ router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
                     remaining: creditResult?.remaining ?? 0,
                     limit: creditResult?.limit ?? 0,
                     used: creditResult?.used ?? 0,
-                    plan: userPlan?.plan ?? 'free',
+                    plan: userPlan?.plan ?? 'starter_trial',
                     error: creditResult?.error ?? 'Credit consumption failed'
                 },
                 timestamp: new Date().toISOString()
@@ -1279,7 +1279,7 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res)
                     remaining: creditResult?.remaining ?? 0,
                     limit: creditResult?.limit ?? 0,
                     used: creditResult?.used ?? 0,
-                    plan: userPlan?.plan ?? 'free',
+                    plan: userPlan?.plan ?? 'starter_trial',
                     error: creditResult?.error ?? 'Credit consumption failed'
                 },
                 timestamp: new Date().toISOString()

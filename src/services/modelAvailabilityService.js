@@ -33,9 +33,9 @@ class ModelAvailabilityService {
         
         // Plan-specific model preferences (Issue #326)
         this.modelPreferences = {
-            'free': ['gpt-3.5-turbo'], // Free plan stays on GPT-3.5
+            'starter_trial': ['gpt-3.5-turbo'], // Trial plan stays on GPT-3.5
             'starter': ['gpt-5', 'gpt-4o', 'gpt-3.5-turbo'],
-            'pro': ['gpt-5', 'gpt-4o', 'gpt-3.5-turbo'], 
+            'pro': ['gpt-5', 'gpt-4o', 'gpt-3.5-turbo'],
             'plus': ['gpt-5', 'gpt-4o', 'gpt-3.5-turbo'],
             'custom': ['gpt-5', 'gpt-4o', 'gpt-3.5-turbo']
         };
@@ -78,7 +78,7 @@ class ModelAvailabilityService {
                 error: error.message
             });
             // Safe fallback
-            return planId === 'free' ? 'gpt-3.5-turbo' : 'gpt-4o';
+            return planId === 'starter_trial' ? 'gpt-3.5-turbo' : 'gpt-4o';
         }
     }
 

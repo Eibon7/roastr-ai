@@ -1,0 +1,212 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/roast.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (45) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+  console.info
+    🎭 Mock Mode ENABLED - Using fake data for all external APIs
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+  console.warn
+    [WARN] 2025-11-07T14:18:50.160Z: Using default encryption key for development/testing
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at EncryptionService.warn [as getEncryptionKey] (src/services/encryptionService.js:57:16)
+      at new getEncryptionKey (src/services/encryptionService.js:27:35)
+      at Object.<anonymous> (src/services/encryptionService.js:236:18)
+      at Object.require (src/workers/AnalyzeToxicityWorker.js:7:27)
+      at Object.require (src/workers/WorkerManager.js:2:31)
+      at Object.require (src/services/monitoringService.js:2:23)
+      at Object.require (src/index.js:46:27)
+      at Object.require (tests/integration/roast.test.js:8:17)
+
+  console.warn
+    [WARN] 2025-11-07T14:18:51.269Z: Google Perspective API client not available (likely test environment)
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at new warn (src/services/perspectiveService.js:24:24)
+      at Object.<anonymous> (src/routes/roast.js:81:30)
+      at Object.require (src/index.js:68:21)
+      at Object.require (tests/integration/roast.test.js:8:17)
+
+  console.warn
+    [WARN] 2025-11-07T14:18:51.703Z: [Polar] POLAR_ALLOWED_PRICE_IDS not configured - price validation disabled (INSECURE!)
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at Object.warn (src/routes/checkout.js:34:10)
+      at Object.require (src/index.js:74:24)
+      at Object.require (tests/integration/roast.test.js:8:17)
+
+  console.warn
+    [WARN] 2025-11-07T14:18:52.025Z: ⚠️  Kill switch table not found - feature disabled until migration applied {
+      error: 'relation "public.feature_flags" does not exist',
+      errorCode: '42P01',
+      migration: 'database/migrations/add_feature_flags_and_audit_system.sql'
+    }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at KillSwitchService.warn [as refreshCache] (src/middleware/killSwitch.js:194:28)
+      at KillSwitchService.initialize (src/middleware/killSwitch.js:158:13)
+
+  console.error
+    [ERROR] 2025-11-07T14:18:52.409Z: Error fetching user RQC config: {
+      code: 'PGRST202',
+      details: 'Searched for the function public.get_user_rqc_config with parameter user_uuid or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.',
+      hint: null,
+      message: 'Could not find the function public.get_user_rqc_config(user_uuid) in the schema cache'
+    }
+
+      102 |
+      103 |   static error(message, ...args) {
+    > 104 |     console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      105 |   }
+      106 |
+      107 |   static warn(message, ...args) {
+
+      at Function.error (src/utils/logger.js:104:13)
+      at RoastGeneratorEnhanced.error [as getUserRQCConfig] (src/services/roastGeneratorEnhanced.js:627:16)
+      at RoastGeneratorEnhanced.generateRoast (src/services/roastGeneratorEnhanced.js:146:25)
+      at src/routes/roast.js:527:34
+
+  console.error
+    [ERROR] 2025-11-07T14:18:54.778Z: ❌ Error in enhanced roast generation: RateLimitError: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+        at Function.generate (/Users/emiliopostigo/roastr-ai/node_modules/openai/src/core/error.ts:96:14)
+        at OpenAI.makeStatusError (/Users/emiliopostigo/roastr-ai/node_modules/openai/src/client.ts:445:28)
+        at OpenAI.makeRequest (/Users/emiliopostigo/roastr-ai/node_modules/openai/src/client.ts:668:24)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at RoastGeneratorEnhanced.generateWithBasicModeration (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:357:24)
+        at RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:155:26)
+        at /Users/emiliopostigo/roastr-ai/src/routes/roast.js:527:34 {
+      status: 429,
+      headers: Headers {
+        date: 'Fri, 07 Nov 2025 14:18:54 GMT',
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '337',
+        connection: 'keep-alive',
+        vary: 'Origin',
+        'x-request-id': 'req_aa37c508d3e447e3af0521f9a5215e9f',
+        'x-envoy-upstream-service-time': '3',
+        'x-openai-proxy-wasm': 'v0.1',
+        'cf-cache-status': 'DYNAMIC',
+        'set-cookie': '__cf_bm=XAWwPDxb3MCV1o_8bDlncPYnvtAdlRyuln8cYK334mo-1762525134-1.0.1.1-JtaQv19AYxBrv5UjSZHRhsQ3uwyuyBMcHsHB4laG0qA.w50SBf60F_NMnWHMRQaRAYpow2RzEfVppe7UOKjVvJ_zmoZOaC6UHAmaYjkLIEo; path=/; expires=Fri, 07-Nov-25 14:48:54 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=JAJoheS3yap._tHK87AWIXE1GK3gRQT35tIAQt9ZB.g-1762525134821-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+        'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+        'x-content-type-options': 'nosniff',
+        server: 'cloudflare',
+        'cf-ray': '99ad766b7bc9fc51-MAD',
+        'alt-svc': 'h3=":443"; ma=86400'
+      },
+      requestID: 'req_aa37c508d3e447e3af0521f9a5215e9f',
+      error: {
+        message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.',
+        type: 'insufficient_quota',
+        param: null,
+        code: 'insufficient_quota'
+      },
+      code: 'insufficient_quota',
+      param: null,
+      type: 'insufficient_quota'
+    }
+
+      102 |
+      103 |   static error(message, ...args) {
+    > 104 |     console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      105 |   }
+      106 |
+      107 |   static warn(message, ...args) {
+
+      at Function.error (src/utils/logger.js:104:13)
+      at RoastGeneratorEnhanced.error [as generateRoast] (src/services/roastGeneratorEnhanced.js:259:14)
+      at src/routes/roast.js:527:34
+
+  console.error
+    [ERROR] 2025-11-07T14:18:55.571Z: OpenAI fallback failed, returning mock/static roast {
+      error: '429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.'
+    }
+
+      102 |
+      103 |   static error(message, ...args) {
+    > 104 |     console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      105 |   }
+      106 |
+      107 |   static warn(message, ...args) {
+
+      at Function.error (src/utils/logger.js:104:13)
+      at RoastGeneratorEnhanced.error [as generateFallbackRoast] (src/services/roastGeneratorEnhanced.js:550:14)
+      at RoastGeneratorEnhanced.generateRoast (src/services/roastGeneratorEnhanced.js:264:28)
+      at src/routes/roast.js:527:34
+
+  console.warn
+    [WARN] 2025-11-07T14:18:55.930Z: Fallback roast disclaimer stats tracking failed { reason: 'invalid_disclaimer_text', error: undefined }
+
+      106 |
+      107 |   static warn(message, ...args) {
+    > 108 |     console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+          |             ^
+      109 |   }
+      110 |
+      111 |   static debug(message, ...args) {
+
+      at Function.warn (src/utils/logger.js:108:13)
+      at RoastGeneratorEnhanced.warn [as generateRoast] (src/services/roastGeneratorEnhanced.js:303:16)
+      at src/routes/roast.js:527:34
+
+PASS integration-tests tests/integration/roast.test.js (6.887 s)
+  Roast API Integration Tests
+    POST /api/roast/preview
+      ✓ should generate roast preview successfully with valid input (4229 ms)
+      ✓ should handle validation errors correctly (12 ms)
+      ✓ should handle roast generation service errors gracefully (14 ms)
+    POST /api/roast/generate
+      ✓ should validate input before consuming credits (2 ms)
+    GET /api/roast/credits
+      ✓ should return user credit status correctly (225 ms)
+    Authentication
+      ✓ should require authentication for preview endpoint (16 ms)
+      ✓ should require authentication for generate endpoint (22 ms)
+      ✓ should require authentication for credits endpoint (16 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       8 passed, 8 total
+Snapshots:   0 total
+Time:        6.947 s, estimated 9 s
+Ran all test suites matching tests/integration/roast.test.js.

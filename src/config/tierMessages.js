@@ -177,7 +177,7 @@ function getUpgradeCta(currentTier, targetTier = null) {
     
     // Default next tier upgrade
     const defaultUpgrades = {
-        'free': tierMessages.upgradeCtas.free_to_starter,
+        'starter_trial': tierMessages.upgradeCtas.free_to_starter,
         'starter': tierMessages.upgradeCtas.starter_to_pro,
         'pro': tierMessages.upgradeCtas.pro_to_plus,
         'plus': tierMessages.upgradeCtas.to_enterprise

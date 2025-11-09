@@ -90,7 +90,7 @@ function normalizePlanId(planId) {
     case 'creatorplus':
       return PLAN_IDS.CREATOR_PLUS;
     // Legacy mappings
-    case 'free':
+    case 'starter_trial':
     case 'gratuito':
     case 'basic':
     case 'basico':

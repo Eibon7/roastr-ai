@@ -61,7 +61,7 @@ const createMockClient = () => ({
                                                 id: val,
                                                 email: 'test@example.com',
                                                 name: 'Test User',
-                                                plan: 'free',
+                                                plan: 'starter_trial',
                                                 is_admin: false,
                                                 active: true,
                                                 created_at: new Date().toISOString()
@@ -105,7 +105,7 @@ const createMockClient = () => ({
                                         id: 'test-user-id',
                                         email: 'test@example.com',
                                         name: 'Test User',
-                                        plan: 'free',
+                                        plan: 'starter_trial',
                                         is_admin: false,
                                         active: true,
                                         created_at: new Date().toISOString()

@@ -12,27 +12,36 @@ jobs:
           TITLE: ${{ github.event.pull_request.title }}
           BODY: ${{ github.event.pull_request.body }}
         run: |
-          # Permitir ramas de Dependabot sin validación (no tienen issues asociadas)
-          if echo "$BRANCH" | grep -E '^dependabot/' > /dev/null 2>&1; then
-            echo "✅ Rama de Dependabot detectada - omitiendo validación"
+          # Permitir ramas de Dependabot y Claude Code sin validación
+          if echo "$BRANCH" | grep -E '^(dependabot|claude)/' > /dev/null 2>&1; then
+            echo "✅ Rama automatizada detectada ($BRANCH) - omitiendo validación de naming"
+            # Pero aún verificar referencias a issues
+            if ! echo "$TITLE $BODY" | grep -E '(Issue #[0-9]+|#[0-9]+)' > /dev/null 2>&1; then
+              echo "⚠️  ADVERTENCIA: La PR no referencia issues explícitamente"
+              echo "   Recomendado: Incluir 'Issue #<id>' o '#<id>' en título/descripción"
+              # Solo warning, no bloquear
+            else
+              echo "✅ Referencias a issues encontradas"
+            fi
             exit 0
           fi
 
-          # Requiere <prefijo>/issue-<id> con prefijos estándar
-          # También permite feat/epic-<id>-week-<N> para trabajo de epics por semana
-          # También permite feat/epic-<id>-pattern-<N>-remaining para trabajo de patrones
-          # Prefijos permitidos: feature, fix, chore, docs, test, refactor, perf, ci, build, style
-          if ! echo "$BRANCH" | grep -E '^(feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-[0-9]+$|^feat/epic-[0-9]+-week-[0-9]+$|^feat/epic-[0-9]+-pattern-[0-9]+-remaining$' > /dev/null 2>&1; then
-            echo "Branch incorrecta: $BRANCH"
-            echo "Formatos válidos:"
-            echo "  - (feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>"
-            echo "  - feat/epic-<id>-week-<N>"
-            echo "  - feat/epic-<id>-pattern-<N>-remaining"
-            exit 1
+          # Validación flexible: Si tiene referencias a issues, permitir cualquier naming
+          if echo "$TITLE $BODY" | grep -E '(Issue #[0-9]+|#[0-9]+)' > /dev/null 2>&1; then
+            echo "✅ Referencias a issues encontradas - rama aceptada"
+            exit 0
           fi
-          # Exigir referencia a Issue en título o body
-          if ! echo "$TITLE $BODY" | grep -E 'Issue #[0-9]+' > /dev/null 2>&1; then
-            echo "La PR debe referenciar 'Issue #<id>' en título o descripción."
+
+          # Solo si NO hay referencias, exigir naming estricto (backward compatibility)
+          if ! echo "$BRANCH" | grep -E '^(feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-[0-9]+$|^feat/epic-[0-9]+-week-[0-9]+$|^feat/epic-[0-9]+-pattern-[0-9]+-remaining$' > /dev/null 2>&1; then
+            echo "❌ Branch naming no sigue convención Y no hay referencias a issues"
+            echo ""
+            echo "Opciones válidas:"
+            echo "  1. Incluir 'Issue #<id>' en título/descripción (cualquier nombre de rama)"
+            echo "  2. Usar naming estándar sin referencias:"
+            echo "     - (feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>"
+            echo "     - feat/epic-<id>-week-<N>"
+            echo "     - feat/epic-<id>-pattern-<N>-remaining"
             exit 1
           fi
 

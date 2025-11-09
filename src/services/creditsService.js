@@ -354,20 +354,20 @@ class CreditsService {
         userId,
         error: error.message
       });
-      return this._mapPlanToLimits('free');
+      return this._mapPlanToLimits('starter_trial');
     }
   }
 
   _mapPlanToLimits(planName) {
     const planLimits = {
-      free: { analysisLimit: 100, roastLimit: 10 },
+      starter_trial: { analysisLimit: 100, roastLimit: 10 },
       starter: { analysisLimit: 1000, roastLimit: 10 },
       pro: { analysisLimit: 10000, roastLimit: 1000 },
       plus: { analysisLimit: 100000, roastLimit: 5000 },
       creator_plus: { analysisLimit: 100000, roastLimit: 5000 }
     };
 
-    return planLimits[planName] || planLimits.free;
+    return planLimits[planName] || planLimits.starter_trial;
   }
 
   _formatPeriodResponse(data) {

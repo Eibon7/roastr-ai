@@ -14,19 +14,19 @@
  * This policy ensures no plan can be abused by agencies to manage multiple client accounts
  */
 const PLAN_FEATURES = {
-  free: {
-    id: 'free',
-    name: 'Free',
+  starter_trial: {
+    id: 'starter_trial',
+    name: 'Starter Trial',
     price: 0,
     currency: 'eur',
     duration: {
       days: 30,
-      type: 'rolling', // rolling, fixed
-      renewalType: 'automatic' // automatic, manual
+      type: 'fixed', // Fixed trial period
+      renewalType: 'manual' // Must upgrade manually
     },
     limits: {
       roastsPerMonth: 10,
-      commentsPerMonth: 100,
+      commentsPerMonth: 1000,
       platformIntegrations: 1
     },
     features: {
@@ -36,7 +36,7 @@ const PLAN_FEATURES = {
       teamCollaboration: false,
       customTones: false,
       apiAccess: false,
-      shield: false,
+      shield: true, // Shield enabled during trial
       styleProfile: false
     }
   },

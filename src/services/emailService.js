@@ -429,6 +429,72 @@ class EmailService {
     }
 
     /**
+     * Send export file deletion notification (Issue #278 - GDPR Export Cleanup)
+     * @param {string} userEmail - User email address (CRITICAL: must be email, not userId - C2 fix)
+     * @param {string} filename - Name of deleted file
+     * @param {string} reason - Reason for deletion
+     * @returns {Promise<Object>} Send result
+     */
+    async sendExportFileDeletionNotification(userEmail, filename, reason = 'security_cleanup') {
+        return await this.sendEmail({
+            to: userEmail,  // CRITICAL FIX C2: Now receives actual email, not userId
+            subject: '🗑️ Data Export File Deleted',
+            templateName: 'export_file_deletion',
+            templateData: {
+                filename: filename,
+                reason: reason,
+                reasonText: this.getReasonText(reason),
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai',
+                privacyUrl: `${process.env.APP_URL || 'https://app.roastr.ai'}/privacy`,
+                gdprInfo: 'This cleanup is part of our GDPR compliance policy to protect your data.'
+            }
+        });
+    }
+
+    /**
+     * Send export file cleanup notification (Issue #278 - GDPR Export Cleanup)
+     * @param {string} userEmail - User email address (CRITICAL: must be email, not userId - C2 fix)
+     * @param {string} filename - Name of cleaned up file
+     * @param {string} reason - Reason for cleanup
+     * @returns {Promise<Object>} Send result
+     */
+    async sendExportFileCleanupNotification(userEmail, filename, reason = 'expired') {
+        return await this.sendEmail({
+            to: userEmail,  // CRITICAL FIX C2: Now receives actual email, not userId
+            subject: '🧹 Data Export Cleanup Complete',
+            templateName: 'export_file_cleanup',
+            templateData: {
+                filename: filename,
+                reason: reason,
+                reasonText: this.getReasonText(reason),
+                supportEmail: process.env.SUPPORT_EMAIL || 'support@roastr.ai',
+                dataExportUrl: `${process.env.APP_URL || 'https://app.roastr.ai'}/account/data-export`,
+                gdprInfo: 'You can request a new export at any time from your account settings.'
+            }
+        });
+    }
+
+    /**
+     * Get human-readable reason text for cleanup/deletion
+     * @param {string} reason - Reason code
+     * @returns {string} Human-readable reason
+     */
+    getReasonText(reason) {
+        const reasonMap = {
+            'security_cleanup': 'Security policy requires deletion after the download period',
+            'token_expired': 'Download token has expired',
+            'expired_after_creation': 'File expired 24 hours after creation (not downloaded)',
+            'expired_after_download': 'File expired 1 hour after first download',
+            'exceeded_max_age': 'File exceeded maximum retention age (7 days)',
+            'downloaded_and_expired': 'File expired after download period (1 hour)',
+            'expired': 'File retention period expired',
+            'manual_deletion': 'File was manually deleted by administrator'
+        };
+
+        return reasonMap[reason] || 'File cleanup completed as per retention policy';
+    }
+
+    /**
      * Get service status
      * @returns {Object} Service configuration status
      */

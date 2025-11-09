@@ -1,10 +1,14 @@
 const express = require('express');
 const { supabaseServiceClient } = require('../config/supabase');
 const { isAdminMiddleware } = require('../middleware/isAdmin');
+const { validateCsrfToken, setCsrfToken } = require('../middleware/csrf');
+const { cacheResponse, invalidateCache, invalidateAdminUsersCache } = require('../middleware/responseCache');  // M1 fix
+const { adminRateLimiter } = require('../middleware/adminRateLimiter');  // Issue #261 - Rate limiting
 const { logger } = require('../utils/logger');
 const metricsService = require('../services/metricsService');
 const authService = require('../services/authService');
 const CostControlService = require('../services/costControl');
+const { auditLogger } = require('../services/auditLogService');
 const revenueRoutes = require('./revenue');
 const featureFlagsRoutes = require('./admin/featureFlags');
 const backofficeSettingsRoutes = require('./admin/backofficeSettings');
@@ -20,6 +24,21 @@ const router = express.Router();
 // Issue #261 - Security hardening for admin endpoints
 router.use(isAdminMiddleware);
 
+// Issue #261: Rate limiting for admin endpoints (50 requests per 5 minutes)
+router.use(adminRateLimiter);
+
+// Issue #261: CSRF protection for admin endpoints
+// Set CSRF token for all requests (exposes token in response header)
+router.use(setCsrfToken);
+
+// Issue #745: CSRF validation enabled after frontend implementation
+// IMPLEMENTED:
+//   - frontend/src/utils/csrf.js utility extracts token from cookies
+//   - frontend/src/lib/api.js includes X-CSRF-Token header for all mutations
+//   - All admin operations now protected by Double Submit Cookie pattern
+// SECURITY: Admin endpoints protected by JWT + admin role + CSRF validation
+router.use(validateCsrfToken);
+
 // Revenue dashboard routes (admin only)
 router.use('/revenue', revenueRoutes);
 
@@ -29,7 +48,53 @@ router.use('/', featureFlagsRoutes);
 // Backoffice settings routes (admin only) - Issue #371: SPEC 15
 router.use('/backoffice', backofficeSettingsRoutes);
 
-// CSRF token endpoint removed - middleware not available
+/**
+ * POST /api/admin/csrf-test
+ * CSRF Validation Test Endpoint (Testing Only)
+ *
+ * @description Lightweight endpoint for CSRF validation testing in integration tests.
+ * Does NOT modify any data or trigger side effects. Protected by validateCsrfToken middleware.
+ *
+ * Security:
+ * - Requires valid CSRF token (inherits from validateCsrfToken middleware on line 40)
+ * - Admin authentication required
+ * - Returns 403 if CSRF token missing or invalid
+ *
+ * Usage: Integration tests (tests/integration/csrf-integration.test.js)
+ *
+ * @route POST /api/admin/csrf-test
+ * @access Admin only
+ * @param {Object} req.body - Optional test data
+ * @returns {200} Success - CSRF validation passed
+ * @returns {403} Forbidden - CSRF token missing or invalid
+ * @returns {500} Internal Server Error
+ *
+ * @example
+ * POST /api/admin/csrf-test
+ * Headers: { "X-CSRF-Token": "valid-token", "Authorization": "Bearer ..." }
+ * Response: { success: true, message: "CSRF validation passed", timestamp: "2025-11-07T..." }
+ */
+router.post('/csrf-test', async (req, res) => {
+    try {
+        // If we reach here, CSRF validation passed (middleware on line 40)
+        logger.debug('CSRF test endpoint called', {
+            user: req.user?.email,
+            timestamp: new Date().toISOString()
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'CSRF validation passed',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        logger.error('CSRF test endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
 
 /**
  * GET /api/admin/dashboard
@@ -64,32 +129,34 @@ router.get('/dashboard', async (req, res) => {
  * GET /api/admin/users
  * Obtener lista de usuarios con filtros avanzados para backoffice
  * Issue #235: Implements comprehensive user search and filtering
- * Issue #261: Enhanced with detailed JSDoc documentation
- * 
+ * Issue #261: Enhanced with detailed JSDoc documentation + response caching
+ *
  * @description Retrieves paginated list of users with their social integrations, usage statistics, and account status.
  * Supports advanced filtering by email, plan, activity status, and search terms.
- * 
+ *
  * @param {number} [req.query.limit=25] - Number of users to return per page
- * @param {number} [req.query.offset=0] - Number of users to skip (for pagination)  
+ * @param {number} [req.query.offset=0] - Number of users to skip (for pagination)
  * @param {string} [req.query.search=''] - Search term to filter by email, user ID, or social handles
  * @param {string} [req.query.plan=''] - Filter by user plan (free, pro, plus, etc.)
  * @param {boolean} [req.query.active_only=false] - Only return active (non-suspended) users
  * @param {number} [req.query.page=1] - Page number (alternative to offset)
- * 
+ *
  * @returns {Object} Response object containing:
  *   - success: boolean
  *   - data: Object with users array, pagination info, and total count
  *   - users: Array of user objects with integrated social handles and usage stats
- * 
+ *
  * @throws {500} Internal server error if database query fails
- * 
+ *
  * @example
  * GET /api/admin/users?limit=10&search=john&plan=pro&active_only=true
- * 
+ *
  * @performance Contains N+1 query issue - fetches social integrations per user in loop
  * @todo Fix N+1 query by using JOIN or batch query for integrations
+ *
+ * @cache Response cached for 30 seconds (Issue #261)
  */
-router.get('/users', async (req, res) => {
+router.get('/users', cacheResponse({ ttl: 30 * 1000 }), async (req, res) => {
     try {
         const { 
             limit = 25, 
@@ -302,6 +369,17 @@ router.post('/users/:userId/toggle-admin', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // Security audit logging
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            { is_admin: newAdminStatus },
+            req.user.email
+        );
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
@@ -364,6 +442,17 @@ router.post('/users/:userId/toggle-active', async (req, res) => {
             performedBy: req.user.email
         });
 
+        // Security audit logging
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            { active: newActiveStatus },
+            req.user.email
+        );
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
@@ -390,9 +479,20 @@ router.post('/users/:userId/suspend', async (req, res) => {
     try {
         const { userId } = req.params;
         const { reason } = req.body;
-        
+
         const result = await authService.suspendUser(userId, req.user.id, reason);
-        
+
+        // Security audit logging
+        await auditLogger.logEvent('admin.user_suspended', {
+            userId: req.user.id,
+            targetUserId: userId,
+            adminEmail: req.user.email,
+            reason: reason || 'No reason provided'
+        });
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: result
@@ -415,9 +515,19 @@ router.post('/users/:userId/suspend', async (req, res) => {
 router.post('/users/:userId/reactivate', async (req, res) => {
     try {
         const { userId } = req.params;
-        
+
         const result = await authService.unsuspendUser(userId, req.user.id);
-        
+
+        // Security audit logging
+        await auditLogger.logEvent('admin.user_reactivated', {
+            userId: req.user.id,
+            targetUserId: userId,
+            adminEmail: req.user.email
+        });
+
+        // M1 fix: Invalidate admin users cache after mutation
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: result
@@ -550,17 +660,14 @@ router.patch('/users/:userId/plan', async (req, res) => {
             organizationsUpdated: organizations?.length || 0
         });
 
-        // Security audit logging - temporarily disabled until service is available
-        logger.info('Admin plan change', {
-            actor_id: req.user.id,
-            actor_email: req.user.email,
-            target_id: userId,
-            target_email: currentUser.email,
-            old_plan: currentNormalizedPlan,
-            new_plan: normalizedPlan,
-            ip: req.ip || 'unknown',
-            userAgent: req.headers['user-agent'] || 'unknown'
-        });
+        // Security audit logging (Issue #261: Centralized admin action logging)
+        await auditLogger.logAdminPlanChange(
+            req.user.id,
+            userId,
+            currentNormalizedPlan,
+            normalizedPlan,
+            req.user.email
+        );
 
         // Create activity log entry
         await supabaseServiceClient
@@ -574,6 +681,9 @@ router.patch('/users/:userId/plan', async (req, res) => {
                     changed_by_admin: req.user.email
                 }
             });
+
+        // M1 fix: Use comprehensive cache invalidation (covers all query variants)
+        invalidateAdminUsersCache();
 
         res.json({
             success: true,
@@ -596,8 +706,9 @@ router.patch('/users/:userId/plan', async (req, res) => {
 /**
  * GET /api/admin/users/:userId
  * Obtener detalles completos de un usuario para vista de superusuario (Issue #235)
+ * Issue #261: Added response caching (60 seconds TTL)
  */
-router.get('/users/:userId', async (req, res) => {
+router.get('/users/:userId', cacheResponse({ ttl: 60 * 1000 }), async (req, res) => {
     try {
         const { userId } = req.params;
 
@@ -1631,6 +1742,17 @@ router.patch('/users/:userId/config', async (req, res) => {
             updates: Object.keys(updates)
         });
 
+        // Security audit logging
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            updates,
+            req.user.email
+        );
+
+        // Keep the admin users listing fresh after config changes (plan/toggles)
+        invalidateAdminUsersCache();
+
         res.json({
             success: true,
             data: {
@@ -1715,6 +1837,18 @@ router.post('/users/:userId/reauth-integrations', async (req, res) => {
             invalidatedBy: req.user.email,
             reason: 'admin_forced_reauth'
         });
+
+        // Audit log the token invalidation
+        await auditLogger.logAdminUserModification(
+            req.user.id,
+            userId,
+            {
+                action: 'invalidate_integration_tokens',
+                reason: 'admin_forced_reauth',
+                targetUser: user.email
+            },
+            req.user.email
+        );
 
         res.json({
             success: true,
@@ -1888,6 +2022,13 @@ router.put('/backoffice/thresholds', async (req, res) => {
             });
         }
 
+        // Fetch existing settings for audit trail
+        const { data: existingSettings } = await supabaseServiceClient
+            .from('global_shield_settings')
+            .select('tau_roast_lower, tau_shield, tau_critical, aggressiveness')
+            .eq('id', 1)
+            .single();
+
         // Update global shield settings in database
         const { data: updatedSettings, error: updateError } = await supabaseServiceClient
             .from('global_shield_settings')
@@ -1949,6 +2090,25 @@ router.put('/backoffice/thresholds', async (req, res) => {
             tau_critical,
             aggressiveness,
             updatedBy: req.user.email
+        });
+
+        // Audit log the threshold changes
+        await auditLogger.logEvent('admin.backoffice_settings_changed', {
+            userId: req.user.id,
+            adminEmail: req.user.email,
+            action: 'update_shield_thresholds',
+            changes: {
+                tau_roast_lower,
+                tau_shield,
+                tau_critical,
+                aggressiveness
+            },
+            previousValues: existingSettings ? {
+                tau_roast_lower: existingSettings.tau_roast_lower,
+                tau_shield: existingSettings.tau_shield,
+                tau_critical: existingSettings.tau_critical,
+                aggressiveness: existingSettings.aggressiveness
+            } : null
         });
 
         res.json({

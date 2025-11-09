@@ -10,7 +10,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { requirePlan } = require('../middleware/requirePlan');
 const { validateRequest } = require('../middleware/validation');
 const { body, param, query } = require('express-validator');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
 
 /**
  * POST /api/stylecards/generate

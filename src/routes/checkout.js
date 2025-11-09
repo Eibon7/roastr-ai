@@ -12,7 +12,8 @@
 const express = require('express');
 const router = express.Router();
 const { Polar } = require('@polar-sh/sdk');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
+const { sanitizePII } = require('../utils/piiSanitizer');
 
 // Initialize Polar client
 const polar = new Polar({
@@ -69,9 +70,9 @@ router.post('/checkout', async (req, res) => {
     // Validate email format (M5 - CodeRabbit Review #3423197513)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(customer_email)) {
-      logger.warn('[Polar] Invalid email format in checkout request', {
+      logger.warn('[Polar] Invalid email format in checkout request', sanitizePII({
         customer_email,
-      });
+      }));
       return res.status(400).json({
         error: 'Invalid email',
         message: 'Please provide a valid email address',
@@ -89,22 +90,22 @@ router.post('/checkout', async (req, res) => {
 
     // Validate price_id against allowlist (Security: prevent authorization bypass)
     if (ALLOWED_PRICE_IDS.size > 0 && !ALLOWED_PRICE_IDS.has(price_id)) {
-      logger.warn('[Polar] Rejected checkout with unauthorized price_id', {
+      logger.warn('[Polar] Rejected checkout with unauthorized price_id', sanitizePII({
         price_id,
         customer_email,
         allowedCount: ALLOWED_PRICE_IDS.size
-      });
+      }));
       return res.status(400).json({
         error: 'Invalid price_id',
         message: 'The selected plan is not available for purchase.',
       });
     }
 
-    logger.info('[Polar] Creating checkout session', {
+    logger.info('[Polar] Creating checkout session', sanitizePII({
       customer_email,
       price_id,
       hasMetadata: !!metadata,
-    });
+    }));
 
     // Create checkout session
     // Polar SDK expects products as an array of price ID strings

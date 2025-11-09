@@ -20,18 +20,19 @@ class DataExportService {
 
             // Collect all user data
             const userData = await this.collectUserData(userId);
-            
+
             // Create ZIP file with organized structure
             const zipBuffer = await this.createZipFile(userData, userId);
-            
+
             // Save to temp directory
             const filename = `user-data-export-${SafeUtils.safeUserIdPrefix(userId, 8).replace('...', '')}-${Date.now()}.zip`;
             const filepath = await this.saveExportFile(zipBuffer, filename);
-            
-            // Generate signed URL for download
-            const downloadUrl = await this.generateSignedDownloadUrl(filepath, filename);
-            
-            logger.info('GDPR data export completed', { 
+
+            // Generate signed URL for download (Issue #278: Pass userId + userEmail for notifications)
+            const userEmail = userData.export_metadata.user_email;
+            const downloadUrl = await this.generateSignedDownloadUrl(filepath, filename, userId, userEmail);
+
+            logger.info('GDPR data export completed', {
                 userId: SafeUtils.safeUserIdPrefix(userId),
                 filename,
                 size: zipBuffer.length
@@ -46,9 +47,9 @@ class DataExportService {
             };
 
         } catch (error) {
-            logger.error('Data export failed', { 
+            logger.error('Data export failed', {
                 userId: SafeUtils.safeUserIdPrefix(userId),
-                error: error.message 
+                error: error.message
             });
             throw error;
         }
@@ -88,6 +89,8 @@ class DataExportService {
                 // Remove sensitive fields
                 delete userProfile.stripe_customer_id;
                 data.user_profile = userProfile;
+                // Store email for notifications (Issue #278 - C2/C3 fix)
+                data.export_metadata.user_email = userProfile.email;
             }
 
             // Organizations owned by user
@@ -322,34 +325,42 @@ Generated on: ${new Date().toISOString()}
 
     /**
      * Generate signed URL for secure download
+     * @param {string} filepath - Path to the export file
+     * @param {string} filename - Name of the export file
+     * @param {string} userId - User ID for notifications (Issue #278)
+     * @param {string} userEmail - User email for GDPR notifications (Issue #278 - C2/C3 fix)
      */
-    async generateSignedDownloadUrl(filepath, filename) {
+    async generateSignedDownloadUrl(filepath, filename, userId, userEmail) {
         try {
             // In a production environment, this would typically upload to S3/GCS
             // and generate a pre-signed URL. For this implementation, we'll create
             // a secure token-based download URL
-            
+
             const token = crypto.randomBytes(32).toString('hex');
             const expiresAt = Date.now() + (this.signedUrlExpiryHours * 60 * 60 * 1000);
-            
+
             // Store the token mapping (in production, use Redis or database)
+            // Issue #278: Include userId + userEmail for GDPR notification emails (C2/C3 fix)
             const downloadToken = {
                 token,
                 filepath,
                 filename,
+                userId,  // For tracking
+                userEmail,  // For email notifications - CRITICAL FIX
                 expiresAt,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                downloadedAt: null  // Track first download for cleanup policy
             };
-            
+
             // This would be stored in a more persistent way in production
             global.downloadTokens = global.downloadTokens || new Map();
             global.downloadTokens.set(token, downloadToken);
-            
+
             // Clean up expired tokens
             this.cleanupExpiredTokens();
-            
+
             return `/api/user/data-export/download/${token}`;
-            
+
         } catch (error) {
             logger.error('Error generating signed download URL', { error: error.message });
             throw error;

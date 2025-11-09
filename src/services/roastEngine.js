@@ -241,7 +241,7 @@ class RoastEngine {
             // Normalize database response from snake_case to camelCase with nullish coalescing
             const config = data[0];
             return {
-                plan: config.plan ?? 'free',
+                plan: config.plan ?? 'starter_trial',
                 autoApprove: config.auto_approve ?? false,
                 defaultStyle: config.default_style ?? 'balanceado',
                 language: config.language ?? 'es',
@@ -259,7 +259,7 @@ class RoastEngine {
      */
     getDefaultConfiguration() {
         return {
-            plan: 'free',
+            plan: 'starter_trial',
             autoApprove: false,
             defaultStyle: 'balanceado',
             language: 'es',

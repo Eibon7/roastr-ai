@@ -5,6 +5,7 @@
 
 import { supabase, authHelpers } from './supabaseClient';
 import { isMockModeEnabled } from './mockMode';
+import { getCsrfToken } from '../utils/csrf';
 
 class ApiClient {
   constructor() {
@@ -138,6 +139,14 @@ class ApiClient {
         const session = await this.getValidSession();
         if (session?.access_token) {
           options.headers.Authorization = `Bearer ${session.access_token}`;
+        }
+      }
+
+      // Add CSRF token for state-modifying requests (Issue #745)
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+        const csrfToken = getCsrfToken();
+        if (csrfToken) {
+          options.headers['X-CSRF-Token'] = csrfToken;
         }
       }
 

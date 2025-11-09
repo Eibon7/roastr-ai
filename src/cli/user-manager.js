@@ -93,7 +93,7 @@ program
   .requiredOption('-e, --email <email>', 'User email address')
   .option('-n, --name <name>', 'User full name')
   .option('-p, --password <password>', 'User password (will generate random if not provided)')
-  .option('--plan <plan>', 'User plan', 'free')
+  .option('--plan <plan>', 'User plan', 'starter_trial')
   .option('--admin', 'Make user an admin')
   .action(async (options) => {
     try {

@@ -8,7 +8,7 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { supabaseServiceClient } = require('../config/supabase');
 const stripeWrapper = require('../services/stripeWrapper');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
 const flags = require('../config/flags');
 const crypto = require('crypto');
 

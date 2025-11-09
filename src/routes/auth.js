@@ -796,7 +796,7 @@ const updateUserPlanHandler = async (userId, newPlan, adminId, res) => {
         }
 
         // Validate plan value
-        const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
+        const validPlans = ['starter_trial', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
         if (!validPlans.includes(newPlan)) {
             return res.status(400).json({
                 success: false,

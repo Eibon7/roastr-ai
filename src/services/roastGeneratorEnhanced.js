@@ -15,6 +15,7 @@ const RoastGeneratorMock = require('./roastGeneratorMock');
 const RoastPromptTemplate = require('./roastPromptTemplate');
 const PersonaService = require('./PersonaService'); // Issue #615: Import PersonaService
 const transparencyService = require('./transparencyService');
+const levelConfigService = require('./levelConfigService'); // Issue #597: Import levelConfigService
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 require('dotenv').config();
@@ -46,6 +47,31 @@ class RoastGeneratorEnhanced {
   }
 
   /**
+   * Get generation parameters based on roast level (Issue #597)
+   * @param {number} roastLevel - Roast level (1-5), defaults to 3
+   * @returns {Object} Generation parameters (temperature, max_tokens, etc.)
+   */
+  getRoastLevelParameters(roastLevel = 3) {
+    try {
+      const levelConfig = levelConfigService.getRoastLevelConfig(roastLevel);
+      return {
+        temperature: levelConfig.temperature,
+        max_tokens: Math.min(levelConfig.maxLength, 150), // Cap at 150 for cost control
+        allowProfanity: levelConfig.allowProfanity,
+        intensityMultiplier: levelConfig.intensityMultiplier
+      };
+    } catch (error) {
+      logger.warn('Invalid roast level, using default (3)', { roastLevel, error: error.message });
+      return {
+        temperature: 0.8,
+        max_tokens: 120,
+        allowProfanity: true,
+        intensityMultiplier: 0.9
+      };
+    }
+  }
+
+  /**
    * Main entry point for roast generation with RQC
    * @param {string} text - Original comment to roast
    * @param {number} toxicityScore - Toxicity score (0-1)
@@ -58,8 +84,10 @@ class RoastGeneratorEnhanced {
     
     // If in mock mode, use mock generator
     if (this.isMockMode) {
-      const rawRoast = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
-      
+      const mockResult = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
+      // Extract roast string from mock result (Issue #483)
+      const rawRoast = mockResult.roast || mockResult;
+
       // Apply unified transparency disclaimer (Issue #196)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
         rawRoast, 
@@ -93,7 +121,7 @@ class RoastGeneratorEnhanced {
       
       return {
         roast: transparencyResult.finalText,
-        plan: userConfig.plan || 'free',
+        plan: userConfig.plan || 'starter_trial',
         rqcEnabled: false,
         rqcGloballyEnabled: false,
         processingTime: Date.now() - startTime,
@@ -233,12 +261,14 @@ class RoastGeneratorEnhanced {
       // Fallback to safe roast (never fail)
       let rawFallbackRoast;
       try {
-        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'free');
+        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'starter_trial');
       } catch (fallbackErr) {
         logger.error('Fallback generation failed, using mock/static roast', { error: fallbackErr.message });
         try {
           const mock = this.mockGenerator || new RoastGeneratorMock();
-          rawFallbackRoast = await mock.generateRoast(text, 0.2, tone);
+          const mockResult = await mock.generateRoast(text, 0.2, tone);
+          // Extract roast string from mock result (Issue #483)
+          rawFallbackRoast = mockResult.roast || mockResult;
         } catch {
           rawFallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
         }
@@ -278,7 +308,7 @@ class RoastGeneratorEnhanced {
       
       return {
         roast: transparencyResult.finalText,
-        plan: userConfig.plan || 'free',
+        plan: userConfig.plan || 'starter_trial',
         rqcEnabled: false,
         processingTime: Date.now() - startTime,
         tokensUsed: this.estimateTokens(text + transparencyResult.finalText),
@@ -301,6 +331,10 @@ class RoastGeneratorEnhanced {
     // Issue #615: Load user persona for personalized roast generation
     const persona = await this.personaService.getPersona(rqcConfig.user_id);
 
+    // Issue #597: Get generation parameters based on roast_level
+    const roastLevel = rqcConfig.roast_level || 3;
+    const levelParams = this.getRoastLevelParameters(roastLevel);
+
     // Build prompt using the master template
     const systemPrompt = await this.promptTemplate.buildPrompt({
       originalComment: text,
@@ -311,13 +345,15 @@ class RoastGeneratorEnhanced {
       userConfig: {
         tone: tone,
         humor_type: rqcConfig.humor_type || 'witty',
-        intensity_level: rqcConfig.intensity_level,
-        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
+        intensity_level: rqcConfig.intensity_level || levelParams.intensityMultiplier,
+        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null,
+        roast_level: roastLevel, // Issue #597: Pass roast level to prompt
+        allow_profanity: levelParams.allowProfanity // Issue #597: Profanity control
       },
-      includeReferences: rqcConfig.plan !== 'free', // Include references for Pro+ plans
+      includeReferences: rqcConfig.plan !== 'starter_trial', // Include references for Starter+ plans
       persona: persona // Issue #615: Pass persona to buildPrompt
     });
-    
+
     const completion = await this.openai.chat.completions.create({
       model: model,
       messages: [
@@ -326,8 +362,8 @@ class RoastGeneratorEnhanced {
           content: systemPrompt
         }
       ],
-      max_tokens: 120,
-      temperature: 0.8,
+      max_tokens: levelParams.max_tokens, // Issue #597: Level-based max tokens
+      temperature: levelParams.temperature, // Issue #597: Level-based temperature
     });
 
     const roast = completion.choices[0].message.content.trim();
@@ -416,7 +452,9 @@ class RoastGeneratorEnhanced {
       logger.error('RQC fallback generation failed, using mock/static roast', { error: fallbackErr.message });
       try {
         const mock = this.mockGenerator || new RoastGeneratorMock();
-        fallbackRoast = await mock.generateRoast(text, 0.2, tone);
+        const mockResult = await mock.generateRoast(text, 0.2, tone);
+        // Extract roast string from mock result (Issue #483)
+        fallbackRoast = mockResult.roast || mockResult;
       } catch {
         fallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
       }
@@ -476,7 +514,7 @@ class RoastGeneratorEnhanced {
   /**
    * Generate safe fallback roast
    */
-  async generateFallbackRoast(text, tone, plan = 'free') {
+  async generateFallbackRoast(text, tone, plan = 'starter_trial') {
     try {
       const model = await this.getModelForPlan(plan);
 
@@ -512,7 +550,9 @@ Responde únicamente con el roast seguro, sin explicaciones.`;
       logger.error('OpenAI fallback failed, returning mock/static roast', { error: err.message });
       try {
         const mock = this.mockGenerator || new RoastGeneratorMock();
-        return await mock.generateRoast(text, 0.2, tone);
+        const mockResult = await mock.generateRoast(text, 0.2, tone);
+        // Extract roast string from mock result (Issue #483)
+        return mockResult.roast || mockResult;
       } catch {
         return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
       }
@@ -587,7 +627,7 @@ Configuración de usuario:
         logger.error('Error fetching user RQC config:', error);
         // Return default config
         return {
-          plan: 'free',
+          plan: 'starter_trial',
           rqc_enabled: false,
           intensity_level: 3,
           custom_style_prompt: null,
@@ -601,7 +641,7 @@ Configuración de usuario:
       if (!data || data.length === 0) {
         logger.warn('No RQC config found for user:', userId);
         return {
-          plan: 'free',
+          plan: 'starter_trial',
           rqc_enabled: false,
           intensity_level: 3,
           custom_style_prompt: null,
@@ -619,7 +659,7 @@ Configuración de usuario:
     } catch (error) {
       logger.error('Exception fetching user RQC config:', error);
       return {
-        plan: 'free',
+        plan: 'starter_trial',
         rqc_enabled: false,
         intensity_level: 3,
         custom_style_prompt: null,
@@ -704,7 +744,9 @@ Configuración de usuario:
       } catch {
         const mock = this.mockGenerator || new RoastGeneratorMock();
         try {
-          return await mock.generateRoast(text, 0.2, 'sarcastic');
+          const mockResult = await mock.generateRoast(text, 0.2, 'sarcastic');
+          // Extract roast string from mock result (Issue #483)
+          return mockResult.roast || mockResult;
         } catch {
           return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
         }
@@ -730,7 +772,7 @@ Configuración de usuario:
       
       // Safe fallback to previous logic
       const fallbackModels = {
-        'free': 'gpt-3.5-turbo',
+        'starter_trial': 'gpt-3.5-turbo',
         'starter': 'gpt-4o',
         'pro': 'gpt-4o', 
         'plus': 'gpt-4o',
