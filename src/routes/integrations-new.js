@@ -322,9 +322,26 @@ router.post('/import', authenticateToken, (req, res) => {
 
     const platformConfig = SUPPORTED_PLATFORMS[platform];
     const actualLimit = Math.min(limit, platformConfig.maxImportLimit);
+    const languageHints = platformConfig.languages;
 
-    // In test mode, import synchronously
-    if (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
+    // Always return 'importing' status immediately, then process in background
+    // In test mode, process synchronously after response; in production, use setTimeout
+    
+    // Send immediate response with 'importing' status
+    res.json({
+      success: true,
+      data: {
+        platform,
+        imported: actualLimit,
+        languageHints,
+        status: 'importing',
+        estimatedTime: process.env.NODE_ENV === 'test' ? '0s' : `${platformConfig.importDelay / 1000}s`,
+        message: `Started importing from ${platformConfig.displayName}`
+      }
+    });
+
+    // Process import in background (synchronously in test, asynchronously in production)
+    const processImport = () => {
       try {
         // Generate mock content
         const importedContent = generateMockContent(
@@ -347,73 +364,26 @@ router.post('/import', authenticateToken, (req, res) => {
         userConnections[platform] = connection;
         userIntegrations.set(userId, userConnections);
 
-        console.log(`📥 User ${userId} imported ${importedContent.length} items from ${platform} (sync mode)`);
-        
-        return res.json({
-          success: true,
-          data: {
-            platform,
-            imported: importedContent.length,
-            languageHints: platformConfig.languages,
-            status: 'completed',
-            totalItems: userHistory[platform].length,
-            message: `Successfully imported ${importedContent.length} items from ${platformConfig.displayName}`
-          }
-        });
-      } catch (error) {
-        console.error('❌ Error in sync import:', error.message);
-        return res.status(500).json({
-          success: false,
-          error: 'Import failed'
-        });
-      }
-    }
-
-    // Simulate import process with delay
-    setTimeout(() => {
-      try {
-        // Generate mock content
-        const importedContent = generateMockContent(
-          platform, 
-          actualLimit, 
-          platformConfig.languages
-        );
-
-        // Store imported content
-        let userHistory = importHistory.get(userId) || {};
-        if (!userHistory[platform]) {
-          userHistory[platform] = [];
+        if (process.env.NODE_ENV === 'test') {
+          logger.debug(`📥 User ${userId} imported ${importedContent.length} items from ${platform} (test mode)`);
+        } else {
+          logger.info(`📥 User ${userId} imported ${importedContent.length} items from ${platform}`);
         }
-        userHistory[platform] = [...userHistory[platform], ...importedContent];
-        importHistory.set(userId, userHistory);
-
-        // Update connection status
-        connection.importedCount += importedContent.length;
-        connection.lastImport = new Date().toISOString();
-        userIntegrations.set(userId, userConnections);
-
-        console.log(`📥 User ${userId} imported ${importedContent.length} items from ${platform}`);
       } catch (error) {
-        console.error('❌ Error in async import:', error.message);
+        logger.error('❌ Error processing import:', error.message);
       }
-    }, platformConfig.importDelay);
+    };
 
-    // Immediate response
-    const languageHints = platformConfig.languages;
-    
-    res.json({
-      success: true,
-      data: {
-        platform,
-        imported: actualLimit,
-        languageHints,
-        status: 'importing',
-        estimatedTime: `${platformConfig.importDelay / 1000}s`,
-        message: `Started importing from ${platformConfig.displayName}`
-      }
-    });
+    // In test mode, process immediately after response; in production, use delay
+    if (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
+      // Process synchronously after response is sent
+      setImmediate(processImport);
+    } else {
+      // Simulate import process with delay
+      setTimeout(processImport, platformConfig.importDelay);
+    }
   } catch (error) {
-    console.error('❌ Error importing from platform:', error.message);
+    logger.error('❌ Error importing from platform:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not import from platform'
@@ -463,7 +433,7 @@ router.get('/import/status/:platform', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting import status:', error.message);
+    logger.error('❌ Error getting import status:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get import status'
@@ -500,7 +470,7 @@ router.post('/disconnect', authenticateToken, (req, res) => {
     delete userConnections[platform];
     userIntegrations.set(userId, userConnections);
 
-    console.log(`🔌 User ${userId} disconnected from ${platform}`);
+    logger.info(`🔌 User ${userId} disconnected from ${platform}`);
 
     res.json({
       success: true,
@@ -511,7 +481,7 @@ router.post('/disconnect', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error disconnecting platform:', error.message);
+    logger.error('❌ Error disconnecting platform:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not disconnect from platform'
