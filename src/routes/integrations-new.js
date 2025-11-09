@@ -336,7 +336,7 @@ router.post('/import', authenticateToken, (req, res) => {
         imported: actualLimit,
         languageHints,
         status: 'importing',
-        estimatedTime: process.env.NODE_ENV === 'test' ? '0s' : `${platformConfig.importDelay / 1000}s`,
+        estimatedTime: (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') ? '0s' : `${platformConfig.importDelay / 1000}s`,
         message: `Started importing from ${platformConfig.displayName}`
       }
     });
