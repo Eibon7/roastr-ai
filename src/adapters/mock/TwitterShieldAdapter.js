@@ -49,7 +49,7 @@ class TwitterShieldAdapter extends ShieldAdapter {
       }
 
       // Mock successful hide operation using PUT /tweets/:id/hidden
-      const result = this.createSuccessResult('hide_comment', {
+      const result = this.createSuccessResult('hideComment', {
         tweetId: input.commentId,
         hidden: true,
         endpoint: 'PUT /tweets/:id/hidden',
@@ -68,8 +68,8 @@ class TwitterShieldAdapter extends ShieldAdapter {
         commentId: input.commentId,
         error: error.message
       });
-      
-      return this.createErrorResult('hide_comment', error, Date.now() - startTime);
+
+      return this.createErrorResult('hideComment', error, Date.now() - startTime);
     }
   }
 
@@ -82,7 +82,7 @@ class TwitterShieldAdapter extends ShieldAdapter {
       await this.simulateLatency();
       
       // Twitter doesn't have an API for reporting - this requires manual action
-      const result = this.createSuccessResult('report_user', {
+      const result = this.createSuccessResult('reportUser', {
         userId: input.userId,
         platform: 'twitter',
         method: 'manual_review_required',
@@ -98,7 +98,7 @@ class TwitterShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('report_user', error, Date.now() - startTime);
+      return this.createErrorResult('reportUser', error, Date.now() - startTime);
     }
   }
 
@@ -115,7 +115,7 @@ class TwitterShieldAdapter extends ShieldAdapter {
       }
 
       // Mock successful block operation using POST /blocks/create
-      const result = this.createSuccessResult('block_user', {
+      const result = this.createSuccessResult('blockUser', {
         userId: input.userId,
         blocked: true,
         endpoint: 'POST /blocks/create',
@@ -135,8 +135,8 @@ class TwitterShieldAdapter extends ShieldAdapter {
         userId: input.userId,
         error: error.message
       });
-      
-      return this.createErrorResult('block_user', error, Date.now() - startTime);
+
+      return this.createErrorResult('blockUser', error, Date.now() - startTime);
     }
   }
 
@@ -153,7 +153,7 @@ class TwitterShieldAdapter extends ShieldAdapter {
       }
 
       // Mock successful unblock operation using POST /blocks/destroy
-      const result = this.createSuccessResult('unblock_user', {
+      const result = this.createSuccessResult('unblockUser', {
         userId: input.userId,
         blocked: false,
         endpoint: 'POST /blocks/destroy',
@@ -167,7 +167,7 @@ class TwitterShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('unblock_user', error, Date.now() - startTime);
+      return this.createErrorResult('unblockUser', error, Date.now() - startTime);
     }
   }
 
@@ -190,8 +190,8 @@ class TwitterShieldAdapter extends ShieldAdapter {
         'OAuth 1.0a or OAuth 2.0'
       ],
       fallbacks: {
-        reportUser: 'block_user', // If can't report, block instead
-        hideComment: 'block_user' // If can't hide, block instead
+        reportUser: 'blockUser', // If can't report, block instead
+        hideComment: 'blockUser' // If can't hide, block instead
       }
     });
   }

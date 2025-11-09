@@ -47,7 +47,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
     // In Discord, "hiding" a comment means deleting the message
     const result = await this.deleteMessage(input);
     // Ensure action is consistently named for contract compliance
-    if (result.action === 'delete_message') {
+    if (result.action === 'hideComment') {
       result.action = 'hide_comment';
     }
     return result;
@@ -72,7 +72,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       }
 
       // Mock successful message deletion
-      const result = this.createSuccessResult('delete_message', {
+      const result = this.createSuccessResult('hideComment', {
         messageId: input.commentId,
         channelId: input.metadata.channelId || 'mock_channel_123',
         endpoint: 'DELETE /channels/{channel_id}/messages/{message_id}',
@@ -93,7 +93,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
         error: error.message
       });
       
-      return this.createErrorResult('delete_message', error, Date.now() - startTime);
+      return this.createErrorResult('hideComment', error, Date.now() - startTime);
     }
   }
 
@@ -106,7 +106,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       await this.simulateLatency();
       
       // Discord doesn't have API for reporting users to Discord
-      const result = this.createSuccessResult('report_user', {
+      const result = this.createSuccessResult('reportUser', {
         userId: input.userId,
         platform: 'discord',
         method: 'manual_review_required',
@@ -123,7 +123,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('report_user', error, Date.now() - startTime);
+      return this.createErrorResult('reportUser', error, Date.now() - startTime);
     }
   }
 
@@ -154,7 +154,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       const guildId = input.metadata.guildId || this.client.guilds[0];
       const deleteMessageDays = input.metadata.deleteMessageDays || 7;
       
-      const result = this.createSuccessResult('ban_user', {
+      const result = this.createSuccessResult('blockUser', {
         userId: input.userId,
         guildId: guildId,
         deleteMessageDays: deleteMessageDays,
@@ -178,7 +178,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
         error: error.message
       });
       
-      return this.createErrorResult('ban_user', error, Date.now() - startTime);
+      return this.createErrorResult('blockUser', error, Date.now() - startTime);
     }
   }
 
@@ -208,7 +208,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       // Mock successful unban
       const guildId = input.metadata.guildId || this.client.guilds[0];
       
-      const result = this.createSuccessResult('unban_user', {
+      const result = this.createSuccessResult('unblockUser', {
         userId: input.userId,
         guildId: guildId,
         endpoint: 'DELETE /guilds/{guild_id}/bans/{user_id}',
@@ -224,7 +224,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('unban_user', error, Date.now() - startTime);
+      return this.createErrorResult('unblockUser', error, Date.now() - startTime);
     }
   }
 
@@ -248,7 +248,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       const timeoutUntil = this.parseTimeoutDuration(duration);
       const guildId = input.metadata.guildId || this.client.guilds[0];
       
-      const result = this.createSuccessResult('timeout_user', {
+      const result = this.createSuccessResult('timeoutUser', {
         userId: input.userId,
         guildId: guildId,
         timeoutUntil: timeoutUntil,
@@ -267,7 +267,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       return result;
 
     } catch (error) {
-      return this.createErrorResult('timeout_user', error, Date.now() - startTime);
+      return this.createErrorResult('timeoutUser', error, Date.now() - startTime);
     }
   }
 
@@ -293,9 +293,9 @@ class DiscordShieldAdapter extends ShieldAdapter {
         'KICK_MEMBERS (for kicks)'
       ],
       fallbacks: {
-        reportUser: 'timeout_user',     // If can't report, timeout instead
-        hideComment: 'timeout_user',    // If can't delete message, timeout user
-        blockUser: 'timeout_user'       // If can't ban, timeout instead
+        reportUser: 'timeoutUser',     // If can't report, timeout instead
+        hideComment: 'timeoutUser',    // If can't delete message, timeout user
+        blockUser: 'timeoutUser'       // If can't ban, timeout instead
       },
       additionalActions: {
         timeoutUser: true,              // Discord-specific timeout
