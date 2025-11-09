@@ -316,12 +316,14 @@ class MockModeManager {
             };
             return chainableInsert;
           },
-          update: (data) => ({
-            eq: (column, value) => Promise.resolve({
-              data: [{ id: 1, ...data, updated_at: new Date().toISOString() }],
-              error: null
-            })
-          }),
+          update: (data) => {
+            const updateChain = {
+              eq: (column, value) => updateChain, // Return self for chaining
+              // Make thenable so it can be awaited
+              then: (resolve) => resolve({ data: [{ id: 1, ...data, updated_at: new Date().toISOString() }], error: null })
+            };
+            return updateChain;
+          },
           delete: () => ({
             eq: (column, value) => Promise.resolve({ data: null, error: null }),
             like: (column, pattern) => Promise.resolve({ data: null, error: null })

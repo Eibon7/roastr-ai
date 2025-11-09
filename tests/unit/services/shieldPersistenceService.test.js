@@ -7,7 +7,7 @@
 
 const ShieldPersistenceService = require('../../../src/services/shieldPersistenceService');
 
-// Mock Supabase
+// Mock Supabase with thenable support for await
 const mockSupabase = {
   from: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
@@ -24,16 +24,41 @@ const mockSupabase = {
   limit: jest.fn().mockReturnThis(),
   range: jest.fn().mockReturnThis(),
   single: jest.fn(),
-  rpc: jest.fn()
+  rpc: jest.fn(),
+  // Make the mock thenable so await works on chains
+  then: function(resolve) {
+    // Default response for await on chains
+    return Promise.resolve({ data: null, error: null }).then(resolve);
+  },
+  // Store chain results for specific tests (supports multiple await calls)
+  _chainResults: [],
+  _chainResultIndex: 0,
+  setChainResult: function(result) {
+    this._chainResults.push(result);
+    const self = this;
+    this.then = function(resolve) {
+      const currentResult = self._chainResults[self._chainResultIndex] || { data: null, error: null };
+      self._chainResultIndex++;
+      return Promise.resolve(currentResult).then(resolve);
+    };
+  },
+  resetChainResult: function() {
+    this._chainResults = [];
+    this._chainResultIndex = 0;
+    this.then = function(resolve) {
+      return Promise.resolve({ data: null, error: null }).then(resolve);
+    };
+  }
 };
 
 // Helper to reset the mock chain
 const resetSupabaseChain = () => {
   Object.keys(mockSupabase).forEach(key => {
-    if (typeof mockSupabase[key] === 'function' && key !== 'single' && key !== 'rpc') {
+    if (typeof mockSupabase[key] === 'function' && key !== 'single' && key !== 'rpc' && key !== 'then' && !key.startsWith('_') && !key.includes('Chain')) {
       mockSupabase[key].mockReturnThis();
     }
   });
+  mockSupabase.resetChainResult();
 };
 
 // Mock logger
@@ -127,7 +152,8 @@ describe('ShieldPersistenceService', () => {
         eventId: 'event-123',
         platform: 'twitter',
         actionTaken: 'hide_comment',
-        externalAuthorId: 'twitter_user_456'
+        externalAuthorId: 'twitter_user_456',
+        hasOriginalText: true
       });
     });
 
@@ -360,9 +386,8 @@ describe('ShieldPersistenceService', () => {
 
   describe('isRepeatOffender', () => {
     test('should identify repeat offender correctly', async () => {
-      // Override the chain for this specific test
-      // biome-ignore lint/suspicious/noThenProperty: Mock object for testing
-      mockSupabase.select.mockReturnValueOnce({
+      // Set chain result for await
+      mockSupabase.setChainResult({
         count: 3,
         error: null
       });
@@ -381,7 +406,7 @@ describe('ShieldPersistenceService', () => {
     });
 
     test('should identify non-repeat offender', async () => {
-      mockSupabase.select.mockResolvedValue({
+      mockSupabase.setChainResult({
         count: 1,
         error: null
       });
@@ -398,7 +423,7 @@ describe('ShieldPersistenceService', () => {
 
     test('should handle database errors in repeat offender check', async () => {
       const dbError = new Error('Query failed');
-      mockSupabase.select.mockResolvedValue({
+      mockSupabase.setChainResult({
         count: null,
         error: dbError
       });
@@ -456,14 +481,14 @@ describe('ShieldPersistenceService', () => {
         }
       ];
 
-      // Mock events query
-      mockSupabase.select.mockResolvedValueOnce({
+      // Mock events query (first await)
+      mockSupabase.setChainResult({
         data: mockEvents,
         error: null
       });
 
-      // Mock top offenders query
-      mockSupabase.select.mockResolvedValueOnce({
+      // Mock top offenders query (second await)
+      mockSupabase.setChainResult({
         data: mockTopOffenders,
         error: null
       });
@@ -495,7 +520,7 @@ describe('ShieldPersistenceService', () => {
         }
       ];
 
-      mockSupabase.range.mockResolvedValue({
+      mockSupabase.setChainResult({
         data: mockSearchResults,
         error: null,
         count: 1
@@ -535,7 +560,7 @@ describe('ShieldPersistenceService', () => {
     test('should search with minimal filters', async () => {
       const mockSearchResults = [];
 
-      mockSupabase.range.mockResolvedValue({
+      mockSupabase.setChainResult({
         data: mockSearchResults,
         error: null,
         count: 0
@@ -587,19 +612,39 @@ describe('ShieldPersistenceService', () => {
         }
       ];
 
-      // Mock retention data query
-      mockSupabase.select.mockResolvedValueOnce({
-        data: mockRetentionData,
+      // Mock 4 parallel queries in Promise.all
+      // 1. Total count
+      mockSupabase.setChainResult({
+        count: 3,
         error: null
       });
 
-      // Mock retention logs query
-      mockSupabase.select.mockResolvedValueOnce({
+      // 2. Needing purge (90+ days)
+      mockSupabase.setChainResult({
+        count: 1,
+        error: null
+      });
+
+      // 3. Needing anonymization (80+ days, not anonymized)
+      mockSupabase.setChainResult({
+        count: 1,
+        error: null
+      });
+
+      // 4. Already anonymized
+      mockSupabase.setChainResult({
+        count: 1,
+        error: null
+      });
+
+      // 5. Recent retention logs query (after Promise.all)
+      mockSupabase.setChainResult({
         data: mockRecentLogs,
-        error: null
+        error: null,
+        count: 1
       });
 
-      const stats = await service.getRetentionStats();
+      const stats = await service.getRetentionStats(mockOrganizationId);
 
       expect(stats.total).toBe(3);
       expect(stats.needingAnonymization).toBe(1); // 85 days old, not anonymized

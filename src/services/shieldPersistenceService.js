@@ -701,7 +701,7 @@ class ShieldPersistenceService {
         needingAnonymization,
         anonymized,
         needingPurge,
-        withinRetention: Math.max(0, total - needingPurge - anonymized)
+        withinRetention: Math.max(0, total - needingPurge - anonymized - needingAnonymization)
       };
       
       // Get recent retention log entries (admin-only, global scope)
@@ -783,10 +783,10 @@ class ShieldPersistenceService {
    * Helper: Calculate average toxicity
    */
   calculateAverageToxicity(events) {
-    // Handle both snake_case and camelCase formats
+    // Handle both snake_case and camelCase formats, filter out null/undefined
     const scores = events
-      .filter(e => (e.toxicity_score || e.toxicityScore) !== null)
-      .map(e => e.toxicity_score || e.toxicityScore);
+      .map(e => e.toxicity_score ?? e.toxicityScore)
+      .filter(score => typeof score === 'number' && !isNaN(score));
     return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
   }
   
