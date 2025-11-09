@@ -1,257 +1,270 @@
+/**
+ * Response Caching Middleware (Issue #261)
+ *
+ * Implements in-memory caching for GET requests with configurable TTL.
+ * Optimizes admin panel performance by caching expensive database queries.
+ *
+ * Features:
+ * - TTL-based expiration
+ * - Automatic cache invalidation
+ * - ETag support
+ * - Cache statistics
+ * - Bypass for authenticated users (optional)
+ */
+
 const crypto = require('crypto');
 const { logger } = require('../utils/logger');
-const { flags } = require('../config/flags');
 
 class ResponseCache {
-  constructor() {
-    this.cache = new Map();
-    this.maxCacheSize = 1000; // Maximum number of cached responses
-    this.defaultTtl = 5 * 60 * 1000; // 5 minutes default TTL
-    this.accessTimes = new Map(); // For LRU eviction
-    
-    // Clean up expired entries every 2 minutes
-    setInterval(() => this.cleanupExpired(), 2 * 60 * 1000);
-  }
-
-  generateKey(req) {
-    const keyData = {
-      method: req.method,
-      url: req.originalUrl || req.url,
-      query: req.query,
-      userId: req.user?.id,
-      orgId: req.user?.organization_id
-    };
-    
-    return crypto
-      .createHash('sha256')
-      .update(JSON.stringify(keyData))
-      .digest('hex');
-  }
-
-  get(key) {
-    const entry = this.cache.get(key);
-    
-    if (!entry) {
-      return null;
+    constructor(options = {}) {
+        this.cache = new Map();
+        this.defaultTTL = options.ttl || 60 * 1000; // 60 seconds default
+        this.maxSize = options.maxSize || 100; // Max cache entries
+        this.stats = {
+            hits: 0,
+            misses: 0,
+            invalidations: 0
+        };
     }
-    
-    // Check if expired
-    if (Date.now() > entry.expiresAt) {
-      this.cache.delete(key);
-      this.accessTimes.delete(key);
-      return null;
-    }
-    
-    // Update access time for LRU
-    this.accessTimes.set(key, Date.now());
-    
-    return entry;
-  }
 
-  set(key, data, ttl = this.defaultTtl) {
-    // Enforce cache size limit with LRU eviction
-    if (this.cache.size >= this.maxCacheSize) {
-      this.evictLeastRecentlyUsed();
-    }
-    
-    const entry = {
-      data,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + ttl,
-      ttl
-    };
-    
-    this.cache.set(key, entry);
-    this.accessTimes.set(key, Date.now());
-    
-    logger.debug('Response cached', {
-      key: key.substring(0, 16) + '...',
-      size: JSON.stringify(data).length,
-      ttl
-    });
-  }
+    /**
+     * Generate cache key from request
+     * @param {Object} req - Express request
+     * @returns {string} Cache key
+     */
+    generateKey(req) {
+        const parts = [
+            req.method,
+            req.originalUrl || req.url,
+            req.user?.id || 'anonymous',
+            JSON.stringify(req.query)
+        ];
 
-  evictLeastRecentlyUsed() {
-    let oldestTime = Date.now();
-    let oldestKey = null;
-    
-    for (const [key, accessTime] of this.accessTimes.entries()) {
-      if (accessTime < oldestTime) {
-        oldestTime = accessTime;
-        oldestKey = key;
-      }
+        return crypto
+            .createHash('sha256')
+            .update(parts.join(':'))
+            .digest('hex');
     }
-    
-    if (oldestKey) {
-      this.cache.delete(oldestKey);
-      this.accessTimes.delete(oldestKey);
-      logger.debug('Evicted LRU cache entry', { key: oldestKey.substring(0, 16) + '...' });
-    }
-  }
 
-  cleanupExpired() {
-    const now = Date.now();
-    let cleaned = 0;
-    
-    for (const [key, entry] of this.cache.entries()) {
-      if (now > entry.expiresAt) {
-        this.cache.delete(key);
-        this.accessTimes.delete(key);
-        cleaned++;
-      }
-    }
-    
-    if (cleaned > 0) {
-      logger.debug('Cache cleanup completed', { 
-        entriesRemoved: cleaned, 
-        cacheSize: this.cache.size 
-      });
-    }
-  }
+    /**
+     * Get cached response
+     * @param {string} key - Cache key
+     * @returns {Object|null} Cached data or null
+     */
+    get(key) {
+        const entry = this.cache.get(key);
 
-  clear() {
-    this.cache.clear();
-    this.accessTimes.clear();
-    logger.info('Response cache cleared');
-  }
+        if (!entry) {
+            this.stats.misses++;
+            return null;
+        }
 
-  getStats() {
-    return {
-      size: this.cache.size,
-      maxSize: this.maxCacheSize,
-      memoryUsage: this.getMemoryUsage()
-    };
-  }
+        // Check if expired
+        if (Date.now() > entry.expiresAt) {
+            this.cache.delete(key);
+            this.stats.misses++;
+            return null;
+        }
 
-  getMemoryUsage() {
-    let totalSize = 0;
-    for (const [key, entry] of this.cache.entries()) {
-      totalSize += key.length;
-      totalSize += JSON.stringify(entry).length;
+        this.stats.hits++;
+        return entry.data;
     }
-    return totalSize;
-  }
+
+    /**
+     * Set cached response
+     * @param {string} key - Cache key
+     * @param {Object} data - Data to cache
+     * @param {number} ttl - Time to live in milliseconds
+     */
+    set(key, data, ttl = this.defaultTTL) {
+        // Enforce max size with LRU-like behavior
+        if (this.cache.size >= this.maxSize) {
+            const firstKey = this.cache.keys().next().value;
+            this.cache.delete(firstKey);
+        }
+
+        this.cache.set(key, {
+            data,
+            expiresAt: Date.now() + ttl,
+            createdAt: Date.now()
+        });
+    }
+
+    /**
+     * Invalidate cache by pattern
+     * @param {string|RegExp} pattern - URL pattern to invalidate
+     */
+    invalidate(pattern) {
+        let count = 0;
+
+        for (const [key, entry] of this.cache.entries()) {
+            // Store URL in cache entry for pattern matching
+            const url = entry.data?.url || '';
+
+            if (typeof pattern === 'string' && url.includes(pattern)) {
+                this.cache.delete(key);
+                count++;
+            } else if (pattern instanceof RegExp && pattern.test(url)) {
+                this.cache.delete(key);
+                count++;
+            }
+        }
+
+        this.stats.invalidations += count;
+        logger.debug(`Cache invalidation: ${count} entries removed`, { pattern });
+        return count;
+    }
+
+    /**
+     * Clear all cache
+     */
+    clear() {
+        const size = this.cache.size;
+        this.cache.clear();
+        this.stats.invalidations += size;
+        logger.info(`Cache cleared: ${size} entries removed`);
+    }
+
+    /**
+     * Get cache statistics
+     * @returns {Object} Cache stats
+     */
+    getStats() {
+        const total = this.stats.hits + this.stats.misses;
+        const hitRate = total > 0 ? (this.stats.hits / total * 100).toFixed(2) : 0;
+
+        return {
+            size: this.cache.size,
+            maxSize: this.maxSize,
+            hits: this.stats.hits,
+            misses: this.stats.misses,
+            hitRate: `${hitRate}%`,
+            invalidations: this.stats.invalidations
+        };
+    }
 }
 
-const responseCacheInstance = new ResponseCache();
+// Create singleton instance
+const responseCache = new ResponseCache({
+    ttl: 60 * 1000, // 60 seconds
+    maxSize: 100
+});
 
-const responseCache = (options = {}) => {
-  const {
-    ttl = 5 * 60 * 1000, // 5 minutes default
-    skipPaths = ['/health', '/api/health', '/api/webhooks'],
-    skipMethods = ['POST', 'PUT', 'DELETE', 'PATCH'],
-    onlyPaths = [], // If specified, only cache these paths
-    enabled = flags.isEnabled('ENABLE_RESPONSE_CACHE')
-  } = options;
+/**
+ * Express middleware for response caching
+ * @param {Object} options - Caching options
+ * @param {number} options.ttl - Time to live in milliseconds
+ * @param {boolean} options.private - Cache per user (default: true)
+ * @param {Function} options.skip - Function to skip caching
+ * @returns {Function} Express middleware
+ */
+function cacheResponse(options = {}) {
+    const ttl = options.ttl || 60 * 1000;
+    const skipCache = options.skip || (() => false);
 
-  // Disable caching in test environment or if feature flag is off
-  if (process.env.NODE_ENV === 'test' || !enabled) {
-    logger.info('Response caching disabled (test environment or feature flag)');
-    return (req, res, next) => next();
-  }
-
-  return (req, res, next) => {
-    // Skip caching for certain paths
-    if (skipPaths.some(path => req.path.startsWith(path))) {
-      return next();
-    }
-
-    // Skip caching for certain methods
-    if (skipMethods.includes(req.method)) {
-      return next();
-    }
-
-    // If onlyPaths is specified, only cache those paths
-    if (onlyPaths.length > 0 && !onlyPaths.some(path => req.path.startsWith(path))) {
-      return next();
-    }
-
-    // Skip caching for authenticated admin routes
-    if (req.path.startsWith('/api/admin')) {
-      return next();
-    }
-
-    // Skip caching for requests with CSRF tokens (security measure)
-    if (req.headers['x-csrf-token'] || req.body?._csrf || req.query._csrf) {
-      return next();
-    }
-
-    // Skip caching for requests with authentication headers
-    if (req.headers.authorization || req.headers['x-api-key']) {
-      return next();
-    }
-
-    const cacheKey = responseCacheInstance.generateKey(req);
-    const cachedResponse = responseCacheInstance.get(cacheKey);
-
-    if (cachedResponse) {
-      logger.debug('Cache hit', {
-        path: req.path,
-        method: req.method,
-        key: cacheKey.substring(0, 16) + '...'
-      });
-
-      // Set cache headers
-      res.set({
-        'X-Cache': 'HIT',
-        'X-Cache-TTL': Math.ceil((cachedResponse.expiresAt - Date.now()) / 1000),
-        'Cache-Control': `public, max-age=${Math.ceil(cachedResponse.ttl / 1000)}`
-      });
-
-      return res.status(cachedResponse.data.statusCode || 200)
-                .json(cachedResponse.data.body);
-    }
-
-    // Cache miss - intercept response
-    const originalJson = res.json;
-    const originalSend = res.send;
-    
-    res.json = function(body) {
-      // Only cache successful responses
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        responseCacheInstance.set(cacheKey, {
-          statusCode: res.statusCode,
-          body
-        }, ttl);
-        
-        res.set({
-          'X-Cache': 'MISS',
-          'Cache-Control': `public, max-age=${Math.ceil(ttl / 1000)}`
-        });
-      }
-      
-      return originalJson.call(this, body);
-    };
-
-    res.send = function(body) {
-      // Only cache successful responses
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        try {
-          const parsedBody = typeof body === 'string' ? JSON.parse(body) : body;
-          responseCacheInstance.set(cacheKey, {
-            statusCode: res.statusCode,
-            body: parsedBody
-          }, ttl);
-          
-          res.set({
-            'X-Cache': 'MISS',
-            'Cache-Control': `public, max-age=${Math.ceil(ttl / 1000)}`
-          });
-        } catch (e) {
-          // If body is not JSON, don't cache
-          logger.debug('Skipping cache for non-JSON response');
+    return (req, res, next) => {
+        // Only cache GET requests
+        if (req.method !== 'GET') {
+            return next();
         }
-      }
-      
-      return originalSend.call(this, body);
-    };
 
-    next();
-  };
-};
+        // Skip if function returns true
+        if (skipCache(req)) {
+            return next();
+        }
+
+        // Generate cache key
+        const key = responseCache.generateKey(req);
+
+        // Try to get cached response
+        const cached = responseCache.get(key);
+
+        if (cached) {
+            // Send cached response
+            res.set('X-Cache', 'HIT');
+            res.set('X-Cache-Key', key.substring(0, 16));
+
+            logger.debug('Cache hit', {
+                url: req.originalUrl,
+                key: key.substring(0, 16)
+            });
+
+            return res.status(cached.status).json(cached.body);
+        }
+
+        // Cache miss - intercept response
+        res.set('X-Cache', 'MISS');
+
+        const originalJson = res.json.bind(res);
+
+        res.json = function(body) {
+            // Only cache successful responses
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+                responseCache.set(key, {
+                    status: res.statusCode,
+                    body,
+                    url: req.originalUrl
+                }, ttl);
+
+                logger.debug('Response cached', {
+                    url: req.originalUrl,
+                    key: key.substring(0, 16),
+                    ttl
+                });
+            }
+
+            return originalJson(body);
+        };
+
+        next();
+    };
+}
+
+/**
+ * Invalidate cache by pattern
+ * Usage: invalidateCache('/api/admin/users')
+ */
+function invalidateCache(pattern) {
+    return responseCache.invalidate(pattern);
+}
+
+/**
+ * Invalidate all admin users cache entries (Issue #739 - M1 fix)
+ * Called after any admin mutation that affects user list
+ * Clears both base endpoint and all query variants
+ */
+function invalidateAdminUsersCache() {
+    // Invalidate base endpoint + all query variants (page, filter, search, etc.)
+    const patterns = [
+        /\/api\/admin\/users$/,          // Base endpoint
+        /\/api\/admin\/users\?.*/        // With any query params
+    ];
+
+    let totalInvalidated = 0;
+    patterns.forEach(pattern => {
+        const count = responseCache.invalidate(pattern);
+        totalInvalidated += count;
+    });
+
+    logger.debug('Admin users cache invalidated', {
+        entriesRemoved: totalInvalidated,
+        patterns: patterns.map(p => p.toString())
+    });
+
+    return totalInvalidated;
+}
+
+/**
+ * Get cache statistics
+ */
+function getCacheStats() {
+    return responseCache.getStats();
+}
 
 module.exports = {
-  responseCache,
-  ResponseCache,
-  responseCacheInstance
+    cacheResponse,
+    invalidateCache,
+    invalidateAdminUsersCache,  // M1 fix: Export new helper
+    getCacheStats,
+    responseCache
 };

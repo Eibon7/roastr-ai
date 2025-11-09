@@ -90,15 +90,15 @@ const PLAN_LIMITS = {
 /**
  * Validate and normalize plan ID
  * @param {string} planId - Plan ID to validate
- * @returns {string} Normalized plan ID or 'free' as default
+ * @returns {string} Normalized plan ID or 'starter_trial' as default
  */
 const validatePlanId = (planId) => {
     if (!planId || typeof planId !== 'string') {
-        return 'free';
+        return 'starter_trial';
     }
     
     const normalizedPlan = planId.toLowerCase().trim();
-    return PLAN_LIMITS.hasOwnProperty(normalizedPlan) ? normalizedPlan : 'free';
+    return PLAN_LIMITS.hasOwnProperty(normalizedPlan) ? normalizedPlan : 'starter_trial';
 };
 
 /**
@@ -114,9 +114,9 @@ const getPlanLimits = async (planId) => {
         // Map to analytics format
         return {
             maxLimit: limits.monthlyResponsesLimit,
-            maxTimeRange: validatedPlan === 'free' ? 30 : (validatedPlan === 'pro' ? 90 : 365),
-            allowedFilters: validatedPlan === 'free' ? ['platform'] : ['platform', 'date_range', 'sentiment'],
-            rateLimit: validatedPlan === 'free' ? 10 : (validatedPlan === 'pro' ? 60 : 300)
+            maxTimeRange: validatedPlan === 'starter_trial' ? 30 : (validatedPlan === 'pro' ? 90 : 365),
+            allowedFilters: validatedPlan === 'starter_trial' ? ['platform'] : ['platform', 'date_range', 'sentiment'],
+            rateLimit: validatedPlan === 'starter_trial' ? 10 : (validatedPlan === 'pro' ? 60 : 300)
         };
     } catch (error) {
         logger.error('Failed to get plan limits from database:', error);
@@ -186,10 +186,10 @@ const analyticsRateLimit = require('express-rate-limit')({
     windowMs: 60 * 60 * 1000, // 1 hour
     max: (req) => {
         // Issue #164: Use unified plan validation for rate limits
-        const userPlan = req.user?.plan || 'free';
+        const userPlan = req.user?.plan || 'starter_trial';
         // Note: Rate limiter doesn't support async, so use static limits
         const rateLimits = {
-            'free': 10,
+            'starter_trial': 10,
             'pro': 60,
             'creator_plus': 300,
             'custom': 300

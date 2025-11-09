@@ -29,7 +29,7 @@ class AutoApprovalService {
       
       // Plan-specific daily auto-approval caps (CodeRabbit Round 8 fix)
       planLimits: {
-        free: { hourly: 10, daily: 25 },
+        starter_trial: { hourly: 10, daily: 25 },
         starter: { hourly: 25, daily: 100 },
         pro: { hourly: 50, daily: 200 },
         plus: { hourly: 100, daily: 500 },
@@ -664,10 +664,10 @@ class AutoApprovalService {
     try {
       // Get organization plan from planLimitsService
       const planData = await planLimitsService.getUserPlan(organizationId);
-      const userPlan = planData?.plan || 'free';
+      const userPlan = planData?.plan || 'starter_trial';
       
       // Get plan-specific limits from config
-      const planLimits = this.config.planLimits[userPlan] || this.config.planLimits.free;
+      const planLimits = this.config.planLimits[userPlan] || this.config.planLimits.starter_trial;
       
       logger.info('Plan-specific limits retrieved', {
         organizationId,
@@ -694,11 +694,11 @@ class AutoApprovalService {
         reason: 'plan_detection_failed'
       });
       
-      // Fail to most restrictive plan (free)
+      // Fail to most restrictive plan (starter_trial)
       return {
-        hourly: this.config.planLimits.free.hourly,
-        daily: this.config.planLimits.free.daily,
-        plan: 'free_fallback',
+        hourly: this.config.planLimits.starter_trial.hourly,
+        daily: this.config.planLimits.starter_trial.daily,
+        plan: 'starter_trial_fallback',
         validationId,
         error: 'plan_detection_failed'
       };

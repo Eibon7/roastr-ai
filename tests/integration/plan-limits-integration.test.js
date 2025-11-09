@@ -91,10 +91,13 @@ describe('Plan Limits Integration', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         planLimitsService.clearCache();
-        
+
         // Reset mock state
         mockDatabaseCalls = 0;
         mockShouldFail = false;
+
+        // Enable fail-open mode for testing (return requested plan defaults on DB failure)
+        process.env.PLAN_LIMITS_FAIL_OPEN = 'true';
     });
 
     describe('End-to-end plan limits flow', () => {

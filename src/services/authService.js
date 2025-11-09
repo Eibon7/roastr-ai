@@ -52,7 +52,7 @@ class AuthService {
                     id: authData.user.id,
                     email: authData.user.email,
                     name: name || null,
-                    plan: 'free',
+                    plan: 'starter_trial',
                     is_admin: false
                 })
                 .select()
@@ -631,7 +631,7 @@ class AuthService {
      * @param {{ email: string, password?: string, name?: string, plan?: string, isAdmin?: boolean }} params
      * @returns {Promise<{ user: any, temporaryPassword: string | null }>}
      */
-    async createUserManually({ email, password, name, plan = 'free', isAdmin = false }) {
+    async createUserManually({ email, password, name, plan = 'starter_trial', isAdmin = false }) {
         try {
             // Generate temporary password if not provided
             const userPassword = password || crypto.randomBytes(16).toString('hex');
@@ -703,7 +703,7 @@ class AuthService {
 
         try {
             // Validate plan
-            const validPlans = ['free', 'starter', 'pro', 'plus', 'custom'];
+            const validPlans = ['starter_trial', 'starter', 'pro', 'plus', 'custom'];
             if (!validPlans.includes(newPlan)) {
                 throw new Error('Invalid plan. Valid plans are: ' + validPlans.join(', '));
             }
@@ -719,7 +719,7 @@ class AuthService {
                 throw new Error('User not found');
             }
 
-            const oldPlan = currentUser.plan || 'free';
+            const oldPlan = currentUser.plan || 'starter_trial';
             originalUserData = { ...currentUser };
             
             // Check if plan is actually changing
@@ -754,7 +754,7 @@ class AuthService {
 
             // Get plan duration from plan configuration (Issue #125: configurable duration)
             const { getPlanFeatures, calculatePlanEndDate } = require('./planService');
-            const planFeatures = getPlanFeatures(newPlan) || getPlanFeatures('free');
+            const planFeatures = getPlanFeatures(newPlan) || getPlanFeatures('starter_trial');
             const planDurationDays = planFeatures?.duration?.days || 30; // Default to 30 if not configured
             const currentPeriodStart = new Date();
             const currentPeriodEnd = calculatePlanEndDate(newPlan, currentPeriodStart);
@@ -1315,14 +1315,15 @@ class AuthService {
         try {
             // Map old plan names to new plan IDs if needed
             const planMap = {
-                'basic': 'free',
+                'basic': 'starter_trial',
+                'free': 'starter_trial', // Legacy free plan → trial
                 'starter': 'starter',
                 'pro': 'pro',
                 'creator_plus': 'plus', // Legacy mapping
                 'plus': 'plus'
             };
-            
-            const planId = planMap[plan] || plan || 'free';
+
+            const planId = planMap[plan] || plan || 'starter_trial';
             const limits = await planLimitsService.getPlanLimits(planId);
             
             // Map to old format for backward compatibility

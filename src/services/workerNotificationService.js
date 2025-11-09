@@ -109,12 +109,12 @@ class WorkerNotificationService {
             // Get limits from database via planLimitsService
             const planLimits = await planLimitsService.getPlanLimits(plan);
             
-            // If subscription is not active, apply free plan limits
+            // If subscription is not active, apply trial plan limits (most restrictive)
             if (status !== 'active') {
-                const freeLimits = await planLimitsService.getPlanLimits('free');
+                const trialLimits = await planLimitsService.getPlanLimits('starter_trial');
                 return {
                     ...planLimits,
-                    ...freeLimits,
+                    ...trialLimits,
                     suspended: true
                 };
             }
@@ -133,7 +133,7 @@ class WorkerNotificationService {
      */
     getFallbackLimits(plan, status) {
         const FALLBACK_LIMITS = {
-            free: {
+            starter_trial: {
                 maxRoasts: 10,
                 maxPlatforms: 1,
                 shieldEnabled: false,
@@ -163,12 +163,12 @@ class WorkerNotificationService {
             }
         };
 
-        const planLimits = FALLBACK_LIMITS[plan] || FALLBACK_LIMITS.free;
-        
+        const planLimits = FALLBACK_LIMITS[plan] || FALLBACK_LIMITS.starter_trial;
+
         if (status !== 'active') {
             return {
                 ...planLimits,
-                ...FALLBACK_LIMITS.free,
+                ...FALLBACK_LIMITS.starter_trial,
                 suspended: true
             };
         }

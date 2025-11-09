@@ -11,7 +11,7 @@ class TierUpgradeService {
     constructor() {
         // Plan hierarchy for upgrade/downgrade detection
         this.planHierarchy = {
-            'free': 0,
+            'starter_trial': 0,
             'starter': 1, 
             'pro': 2,
             'plus': 3,
@@ -373,7 +373,7 @@ class TierUpgradeService {
             .single();
 
         if (error || !subscription) {
-            return 'free';
+            return 'starter_trial';
         }
 
         return subscription.plan;

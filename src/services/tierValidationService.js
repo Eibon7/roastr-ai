@@ -1366,7 +1366,7 @@ class TierValidationService {
      */
     getDefaultUserTier() {
         return {
-            plan: 'free',
+            plan: 'starter_trial',
             status: 'active',
             periodStart: new Date().toISOString(),
             periodEnd: this.getNextCycleStartUTC()

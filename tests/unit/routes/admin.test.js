@@ -30,6 +30,25 @@ jest.mock('../../../src/middleware/isAdmin', () => ({
     }
 }));
 
+// Mock CSRF middleware (Issue #261)
+jest.mock('../../../src/middleware/csrf', () => ({
+    validateCsrfToken: (req, res, next) => next(),
+    setCsrfToken: (req, res, next) => next()
+}));
+
+// Mock admin rate limiter (Issue #261)
+jest.mock('../../../src/middleware/adminRateLimiter', () => ({
+    adminRateLimiter: (req, res, next) => next(),
+    createAdminRateLimiter: jest.fn(() => (req, res, next) => next())
+}));
+
+// Mock response cache middleware (Issue #261)
+jest.mock('../../../src/middleware/responseCache', () => ({
+    cacheResponse: jest.fn(() => (req, res, next) => next()),
+    invalidateCache: jest.fn(),
+    invalidateAdminUsersCache: jest.fn()
+}));
+
 jest.mock('../../../src/utils/logger', () => ({
     logger: {
         info: jest.fn(),
@@ -58,6 +77,42 @@ jest.mock('../../../src/services/authService', () => ({
     suspendUser: jest.fn(),
     unsuspendUser: jest.fn()
 }));
+
+// Mock audit log service (Issue #261)
+jest.mock('../../../src/services/auditLogService', () => ({
+    auditLogger: {
+        logAdminPlanChange: jest.fn(() => Promise.resolve()),
+        logAdminUserModification: jest.fn(() => Promise.resolve()),
+        logEvent: jest.fn(() => Promise.resolve())
+    }
+}));
+
+// Mock plan limits service
+jest.mock('../../../src/services/planLimitsService', () => ({
+    getAllPlanLimits: jest.fn(() => Promise.resolve({})),
+    getPlanLimits: jest.fn(() => Promise.resolve({})),
+    updatePlanLimits: jest.fn(() => Promise.resolve({})),
+    clearCache: jest.fn()
+}));
+
+// Mock sub-routes
+jest.mock('../../../src/routes/revenue', () => {
+    const express = require('express');
+    const router = express.Router();
+    return router;
+});
+
+jest.mock('../../../src/routes/admin/featureFlags', () => {
+    const express = require('express');
+    const router = express.Router();
+    return router;
+});
+
+jest.mock('../../../src/routes/admin/backofficeSettings', () => {
+    const express = require('express');
+    const router = express.Router();
+    return router;
+});
 
 jest.mock('child_process', () => ({
     exec: jest.fn()
@@ -120,7 +175,8 @@ describe('Admin Routes', () => {
 
     describe('GET /api/admin/users', () => {
         test('should return users list with filters', async () => {
-            const mockQuery = {
+            // Mock users query
+            const mockUsersQuery = {
                 select: jest.fn(() => ({
                     or: jest.fn(() => ({
                         eq: jest.fn(() => ({
@@ -133,7 +189,14 @@ describe('Admin Routes', () => {
                                             name: 'User One',
                                             is_admin: false,
                                             active: true,
-                                            plan: 'basic'
+                                            plan: 'basic',
+                                            organizations: [{
+                                                id: 'org-1',
+                                                name: 'Org One',
+                                                plan_id: 'basic',
+                                                monthly_responses_used: 10,
+                                                monthly_responses_limit: 100
+                                            }]
                                         }
                                     ],
                                     error: null,
@@ -145,7 +208,27 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            // Mock integrations query (Issue #261 - N+1 fix)
+            const mockIntegrationsQuery = {
+                select: jest.fn(() => ({
+                    in: jest.fn(() => ({
+                        eq: jest.fn(() => Promise.resolve({
+                            data: [{
+                                organization_id: 'org-1',
+                                platform: 'twitter',
+                                handle: 'testuser',
+                                enabled: true
+                            }],
+                            error: null
+                        }))
+                    }))
+                }))
+            };
+
+            // Mock supabase calls: first for users, second for integrations
+            supabaseServiceClient.from
+                .mockReturnValueOnce(mockUsersQuery)
+                .mockReturnValueOnce(mockIntegrationsQuery);
 
             const response = await request(app)
                 .get('/api/admin/users?search=user1&active_only=true&limit=10&offset=0')
@@ -157,7 +240,8 @@ describe('Admin Routes', () => {
         });
 
         test('should handle empty results', async () => {
-            const mockQuery = {
+            // Mock users query
+            const mockUsersQuery = {
                 select: jest.fn(() => ({
                     order: jest.fn(() => ({
                         range: jest.fn(() => Promise.resolve({
@@ -169,7 +253,22 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            // Mock integrations query (Issue #261 - N+1 fix)
+            const mockIntegrationsQuery = {
+                select: jest.fn(() => ({
+                    in: jest.fn(() => ({
+                        eq: jest.fn(() => Promise.resolve({
+                            data: [],
+                            error: null
+                        }))
+                    }))
+                }))
+            };
+
+            // Mock supabase calls: first for users, second for integrations
+            supabaseServiceClient.from
+                .mockReturnValueOnce(mockUsersQuery)
+                .mockReturnValueOnce(mockIntegrationsQuery);
 
             const response = await request(app)
                 .get('/api/admin/users')

@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 require('dotenv').config();
 
@@ -190,6 +191,9 @@ app.use('/webhooks/stripe', billingRoutes);
 
 // Polar webhook endpoint (needs raw body for HMAC verification, before JSON parsing)
 app.use('/api/polar/webhook', express.raw({ type: 'application/json' }), polarWebhookRoutes);
+
+// Middleware para parsear cookies (required for CSRF validation)
+app.use(cookieParser());
 
 // Middleware para parsear JSON (after webhooks to preserve raw body)
 app.use(bodyParser.json());

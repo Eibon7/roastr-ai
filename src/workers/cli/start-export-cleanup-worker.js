@@ -10,11 +10,25 @@
 const ExportCleanupWorker = require('../ExportCleanupWorker');
 const { logger } = require('../../utils/logger');
 
-// Configuration
+/**
+ * Parse environment variable as integer with proper handling of zero values (Issue #278)
+ * @param {string} envVar - Environment variable value
+ * @param {number} defaultValue - Default value if envVar is undefined
+ * @returns {number} Parsed integer or default value
+ */
+function parseEnvInt(envVar, defaultValue) {
+    if (envVar === undefined || envVar === null || envVar === '') {
+        return defaultValue;
+    }
+    const parsed = parseInt(envVar, 10);
+    return isNaN(parsed) ? defaultValue : parsed;
+}
+
+// Configuration (Issue #278: Fixed EXPORT_MAX_AGE_HOURS=0 parsing bug)
 const config = {
-    scanInterval: process.env.EXPORT_CLEANUP_INTERVAL_MS || 15 * 60 * 1000, // 15 minutes
-    maxAgeAfterCreation: process.env.EXPORT_MAX_AGE_HOURS * 60 * 60 * 1000 || 24 * 60 * 60 * 1000, // 24 hours
-    maxAgeAfterDownload: process.env.EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS * 60 * 60 * 1000 || 60 * 60 * 1000, // 1 hour
+    scanInterval: parseEnvInt(process.env.EXPORT_CLEANUP_INTERVAL_MS, 15 * 60 * 1000), // 15 minutes default
+    maxAgeAfterCreation: parseEnvInt(process.env.EXPORT_MAX_AGE_HOURS, 24) * 60 * 60 * 1000, // 24 hours default
+    maxAgeAfterDownload: parseEnvInt(process.env.EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS, 1) * 60 * 60 * 1000, // 1 hour default
 };
 
 async function startExportCleanupWorker() {

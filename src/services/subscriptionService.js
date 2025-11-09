@@ -83,7 +83,7 @@ async function processSubscriptionUpdate(subscription) {
     }
 
     const userId = userSub.user_id;
-    const oldPlan = userSub.plan || 'free';
+    const oldPlan = userSub.plan || 'starter_trial';
 
     // 2. Determine new plan from subscription
     const newPlan = await determinePlanFromSubscription(subscription);
@@ -177,7 +177,7 @@ async function processSubscriptionUpdate(subscription) {
  */
 async function determinePlanFromSubscription(subscription) {
   if (!subscription.items?.data?.length) {
-    return 'free';
+    return 'starter_trial';
   }
 
   const price = subscription.items.data[0].price;
@@ -202,7 +202,7 @@ async function determinePlanFromSubscription(subscription) {
     logger.error('Error looking up price via Stripe wrapper:', error);
   }
 
-  return 'free';
+  return 'starter_trial';
 }
 
 /**
@@ -402,9 +402,9 @@ async function applyPlanLimits(userId, plan, status, options = {}) {
     partialFailureAllowed = false 
   } = options;
 
-  const planFeatures = getPlanFeatures(plan) || getPlanFeatures('free');
+  const planFeatures = getPlanFeatures(plan) || getPlanFeatures('starter_trial');
   const isActive = status === 'active';
-  const limits = isActive ? planFeatures.limits : getPlanFeatures('free').limits;
+  const limits = isActive ? planFeatures.limits : getPlanFeatures('starter_trial').limits;
   
   // Track what operations succeeded for rollback purposes
   const operationsCompleted = {

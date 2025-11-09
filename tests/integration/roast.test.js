@@ -11,10 +11,20 @@ const { flags } = require('../../src/config/flags');
 describe('Roast API Integration Tests', () => {
   let authToken;
   let testUserId;
+  let originalEnv; // Review #3434156164 M1: Capture original env
 
   beforeAll(async () => {
+    // Review #3434156164 M1: Capture original environment state
+    originalEnv = {
+      NODE_ENV: process.env.NODE_ENV,
+      ENABLE_MOCK_MODE: process.env.ENABLE_MOCK_MODE,
+      ENABLE_REAL_OPENAI: process.env.ENABLE_REAL_OPENAI,
+      ENABLE_ROAST_ENGINE: process.env.ENABLE_ROAST_ENGINE,
+      ENABLE_PERSPECTIVE_API: process.env.ENABLE_PERSPECTIVE_API
+    };
+
     // Setup test environment
-    process.env.NODE_ENV = 'test';
+    process.env.NODE_ENV = 'development'; // Issue #483: Use development to see error messages
     process.env.ENABLE_MOCK_MODE = 'true';
     process.env.ENABLE_REAL_OPENAI = 'false';
     process.env.ENABLE_ROAST_ENGINE = 'false';
@@ -27,11 +37,16 @@ describe('Roast API Integration Tests', () => {
   });
 
   afterAll(() => {
-    // Clean up
-    delete process.env.ENABLE_MOCK_MODE;
-    delete process.env.ENABLE_REAL_OPENAI;
-    delete process.env.ENABLE_ROAST_ENGINE;
-    delete process.env.ENABLE_PERSPECTIVE_API;
+    // Review #3434156164 M1: Restore original environment state
+    Object.keys(originalEnv).forEach(key => {
+      if (originalEnv[key] === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = originalEnv[key];
+      }
+    });
+
+    // Reload flags to pick up restored config
     flags.reload();
   });
 
@@ -84,9 +99,17 @@ describe('Roast API Integration Tests', () => {
           tone: 'sarcastic'
         });
 
-      // Should either succeed or return proper error
-      expect([200, 400, 500]).toContain(response.status);
-      expect(response.body).toHaveProperty('success');
+      // Review #3434156164 M2: Reject 200 for invalid input
+      expect([400, 500]).toContain(response.status);
+
+      // Review #3434156164 M2: Validate error structure
+      expect(response.body).toMatchObject({
+        success: false,
+        error: expect.any(String)
+      });
+
+      // Review #3434156164 M2: Ensure validation error (generic or specific)
+      expect(response.body.error).toMatch(/validation|length|characters|exceeds|limit/i);
     });
   });
 
@@ -129,9 +152,14 @@ describe('Roast API Integration Tests', () => {
           tone: 'sarcastic'
         });
 
-      // Without auth token, should return 401
-      expect([401, 500]).toContain(response.status);
-      expect(response.body.success).toBe(false);
+      // Review #3434156164 M3: Only 401 is acceptable for auth failure
+      expect(response.status).toBe(401);
+
+      // Review #3434156164 M3: Verify error payload contains authorization language
+      expect(response.body).toMatchObject({
+        success: false,
+        error: expect.stringMatching(/auth|unauthorized|token|required/i)
+      });
     });
 
     it('should require authentication for generate endpoint', async () => {
@@ -141,16 +169,28 @@ describe('Roast API Integration Tests', () => {
           text: 'Test message'
         });
 
-      expect([401, 500]).toContain(response.status);
-      expect(response.body.success).toBe(false);
+      // Review #3434156164 M3: Only 401 is acceptable
+      expect(response.status).toBe(401);
+
+      // Review #3434156164 M3: Verify error structure
+      expect(response.body).toMatchObject({
+        success: false,
+        error: expect.stringMatching(/auth|unauthorized|token|required/i)
+      });
     });
 
     it('should require authentication for credits endpoint', async () => {
       const response = await request(app)
         .get('/api/roast/credits');
 
-      expect([401, 500]).toContain(response.status);
-      expect(response.body.success).toBe(false);
+      // Review #3434156164 M3: Only 401 is acceptable
+      expect(response.status).toBe(401);
+
+      // Review #3434156164 M3: Verify error structure
+      expect(response.body).toMatchObject({
+        success: false,
+        error: expect.stringMatching(/auth|unauthorized|token|required/i)
+      });
     });
   });
 });

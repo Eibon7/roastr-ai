@@ -84,8 +84,10 @@ class RoastGeneratorEnhanced {
     
     // If in mock mode, use mock generator
     if (this.isMockMode) {
-      const rawRoast = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
-      
+      const mockResult = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
+      // Extract roast string from mock result (Issue #483)
+      const rawRoast = mockResult.roast || mockResult;
+
       // Apply unified transparency disclaimer (Issue #196)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
         rawRoast, 
@@ -119,7 +121,7 @@ class RoastGeneratorEnhanced {
       
       return {
         roast: transparencyResult.finalText,
-        plan: userConfig.plan || 'free',
+        plan: userConfig.plan || 'starter_trial',
         rqcEnabled: false,
         rqcGloballyEnabled: false,
         processingTime: Date.now() - startTime,
@@ -259,12 +261,14 @@ class RoastGeneratorEnhanced {
       // Fallback to safe roast (never fail)
       let rawFallbackRoast;
       try {
-        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'free');
+        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'starter_trial');
       } catch (fallbackErr) {
         logger.error('Fallback generation failed, using mock/static roast', { error: fallbackErr.message });
         try {
           const mock = this.mockGenerator || new RoastGeneratorMock();
-          rawFallbackRoast = await mock.generateRoast(text, 0.2, tone);
+          const mockResult = await mock.generateRoast(text, 0.2, tone);
+          // Extract roast string from mock result (Issue #483)
+          rawFallbackRoast = mockResult.roast || mockResult;
         } catch {
           rawFallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
         }
@@ -304,7 +308,7 @@ class RoastGeneratorEnhanced {
       
       return {
         roast: transparencyResult.finalText,
-        plan: userConfig.plan || 'free',
+        plan: userConfig.plan || 'starter_trial',
         rqcEnabled: false,
         processingTime: Date.now() - startTime,
         tokensUsed: this.estimateTokens(text + transparencyResult.finalText),
@@ -346,7 +350,7 @@ class RoastGeneratorEnhanced {
         roast_level: roastLevel, // Issue #597: Pass roast level to prompt
         allow_profanity: levelParams.allowProfanity // Issue #597: Profanity control
       },
-      includeReferences: rqcConfig.plan !== 'free', // Include references for Pro+ plans
+      includeReferences: rqcConfig.plan !== 'starter_trial', // Include references for Starter+ plans
       persona: persona // Issue #615: Pass persona to buildPrompt
     });
 
@@ -448,7 +452,9 @@ class RoastGeneratorEnhanced {
       logger.error('RQC fallback generation failed, using mock/static roast', { error: fallbackErr.message });
       try {
         const mock = this.mockGenerator || new RoastGeneratorMock();
-        fallbackRoast = await mock.generateRoast(text, 0.2, tone);
+        const mockResult = await mock.generateRoast(text, 0.2, tone);
+        // Extract roast string from mock result (Issue #483)
+        fallbackRoast = mockResult.roast || mockResult;
       } catch {
         fallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
       }
@@ -508,7 +514,7 @@ class RoastGeneratorEnhanced {
   /**
    * Generate safe fallback roast
    */
-  async generateFallbackRoast(text, tone, plan = 'free') {
+  async generateFallbackRoast(text, tone, plan = 'starter_trial') {
     try {
       const model = await this.getModelForPlan(plan);
 
@@ -544,7 +550,9 @@ Responde únicamente con el roast seguro, sin explicaciones.`;
       logger.error('OpenAI fallback failed, returning mock/static roast', { error: err.message });
       try {
         const mock = this.mockGenerator || new RoastGeneratorMock();
-        return await mock.generateRoast(text, 0.2, tone);
+        const mockResult = await mock.generateRoast(text, 0.2, tone);
+        // Extract roast string from mock result (Issue #483)
+        return mockResult.roast || mockResult;
       } catch {
         return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
       }
@@ -619,7 +627,7 @@ Configuración de usuario:
         logger.error('Error fetching user RQC config:', error);
         // Return default config
         return {
-          plan: 'free',
+          plan: 'starter_trial',
           rqc_enabled: false,
           intensity_level: 3,
           custom_style_prompt: null,
@@ -633,7 +641,7 @@ Configuración de usuario:
       if (!data || data.length === 0) {
         logger.warn('No RQC config found for user:', userId);
         return {
-          plan: 'free',
+          plan: 'starter_trial',
           rqc_enabled: false,
           intensity_level: 3,
           custom_style_prompt: null,
@@ -651,7 +659,7 @@ Configuración de usuario:
     } catch (error) {
       logger.error('Exception fetching user RQC config:', error);
       return {
-        plan: 'free',
+        plan: 'starter_trial',
         rqc_enabled: false,
         intensity_level: 3,
         custom_style_prompt: null,
@@ -736,7 +744,9 @@ Configuración de usuario:
       } catch {
         const mock = this.mockGenerator || new RoastGeneratorMock();
         try {
-          return await mock.generateRoast(text, 0.2, 'sarcastic');
+          const mockResult = await mock.generateRoast(text, 0.2, 'sarcastic');
+          // Extract roast string from mock result (Issue #483)
+          return mockResult.roast || mockResult;
         } catch {
           return '😉 Tomo nota, pero hoy prefiero mantener la clase.';
         }
@@ -762,7 +772,7 @@ Configuración de usuario:
       
       // Safe fallback to previous logic
       const fallbackModels = {
-        'free': 'gpt-3.5-turbo',
+        'starter_trial': 'gpt-3.5-turbo',
         'starter': 'gpt-4o',
         'pro': 'gpt-4o', 
         'plus': 'gpt-4o',

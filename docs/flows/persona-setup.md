@@ -973,7 +973,279 @@ describe('Persona Setup Flow', () => {
 
 ---
 
-**Last Updated:** 2025-10-19
+## Integration with Roast Generation
+
+### Overview
+
+The Persona system is fully integrated with Roast Generation to personalize AI-generated roasts based on user preferences. When a roast is generated, the system:
+
+1. Retrieves user's persona fields (identity, intolerance, tolerance)
+2. Decrypts encrypted fields using `PersonaService`
+3. Injects persona context into the master prompt template
+4. OpenAI generates roast with user's personality style
+
+**Implementation Status:** ✅ **100% Complete** (Issue #615)
+
+---
+
+### Integration Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant API
+    participant RoastGenerator
+    participant PersonaService
+    participant PromptTemplate
+    participant OpenAI
+    participant Database
+
+    User->>API: POST /api/roast/preview
+    Note right of User: { text: "comentario tóxico", tone: "sarcastic" }
+
+    API->>RoastGenerator: generateRoast(text, tone, userConfig)
+
+    RoastGenerator->>PersonaService: getPersona(userId)
+    Note right of RoastGenerator: src/services/roastGeneratorEnhanced.js:328, 475
+
+    PersonaService->>Database: SELECT encrypted persona fields
+    Database-->>PersonaService: Encrypted persona data
+
+    PersonaService->>PersonaService: Decrypt fields (AES-256-GCM)
+    PersonaService-->>RoastGenerator: { identity, intolerance, tolerance }
+
+    RoastGenerator->>PromptTemplate: buildPrompt(comment, persona, userConfig)
+    Note right of RoastGenerator: Pass persona to template
+
+    PromptTemplate->>PromptTemplate: Format persona context
+    Note right of PromptTemplate: {{persona_context}} placeholder (line 93)
+
+    PromptTemplate->>PromptTemplate: Inject persona into prompt
+    Note right of PromptTemplate: .replace('{{persona_context}}', ...) (line 473)
+
+    PromptTemplate-->>RoastGenerator: Complete prompt with persona
+
+    RoastGenerator->>OpenAI: Generate roast with persona-aware prompt
+    OpenAI-->>RoastGenerator: Personalized roast
+
+    RoastGenerator-->>API: { roast, metadata }
+    API-->>User: Personalized roast response
+```
+
+---
+
+### Code Implementation
+
+#### 1. PersonaService.getPersona() Call
+
+**File:** `src/services/roastGeneratorEnhanced.js`
+
+```javascript
+// Line 328 (generateWithAdvancedModeration)
+const persona = await this.personaService.getPersona(rqcConfig.user_id);
+
+// Line 475 (generateFallbackRoast)
+const persona = await this.personaService.getPersona(rqcConfig.user_id);
+
+// Pass persona to buildPrompt
+const prompt = await this.promptTemplate.buildPrompt({
+  originalComment: text,
+  toxicityData,
+  userConfig,
+  persona  // ← Persona injected here
+});
+```
+
+#### 2. Prompt Template Integration
+
+**File:** `src/services/roastPromptTemplate.js`
+
+```javascript
+// Master prompt template with persona placeholder (line 93)
+this.masterPrompt = `...
+🎯 CONTEXTO DEL USUARIO:
+{{persona_context}}  // ← Placeholder for persona
+...`;
+
+// buildPrompt() method injects persona (line 473)
+const finalPrompt = this.masterPrompt
+  .replace('{{original_comment}}', sanitizedComment)
+  .replace('{{comment_category}}', category)
+  .replace('{{persona_context}}', sanitizedPersonaContext)  // ← Injection
+  .replace('{{reference_roasts}}', referenceSection)
+  .replace('{{tone_guide}}', toneGuide);
+```
+
+#### 3. Persona Context Formatting
+
+**Example persona context injected into prompt:**
+
+```text
+🎯 CONTEXTO DEL USUARIO:
+
+📝 LO QUE ME DEFINE (Mi identidad):
+"Soy desarrollador sarcástico, me encanta el humor técnico y las referencias de programación."
+
+🚫 LO QUE NO TOLERO (Nunca incluir):
+"Ataques a mi familia, body shaming, racismo, o comentarios sobre discapacidades."
+
+✅ LO QUE ME DA IGUAL (Permitido en mis roasts):
+"Humor negro, bromas de mal gusto, sarcasmo extremo, palabrotas."
+
+🎯 IMPORTANTE: Genera el roast siguiendo el estilo de "Lo que me define" y respetando absolutamente "Lo que no tolero". Los temas de "Lo que me da igual" están permitidos y pueden usarse libremente.
+```
+
+---
+
+### Plan-Based Persona Fields
+
+| Plan | Identity | Intolerance | Tolerance | Result |
+|------|----------|-------------|-----------|--------|
+| **Free** | ❌ | ❌ | ❌ | Generic roast (no persona) |
+| **Starter** | ✅ | ✅ | ❌ | Basic personalization (2 fields) |
+| **Pro** | ✅ | ✅ | ✅ | **Full personalization (3 fields)** |
+| **Plus** | ✅ | ✅ | ✅ | Full personalization + admin custom style |
+
+**Notes:**
+- Free users: Roasts generated without persona context
+- Starter users: Personalization with identity + intolerance only
+- Pro+ users: Full personalization with all 3 fields
+
+---
+
+### Example: Prompt With vs. Without Persona
+
+#### Without Persona (Free Plan)
+
+```text
+💬 COMENTARIO ORIGINAL:
+"Tu aplicación es una basura, no sirve para nada"
+
+🎯 CONTEXTO DEL USUARIO:
+(Sin información de personalidad definida - genera roast genérico)
+
+🔥 GENERA UN ROAST:
+(El modelo genera respuesta estándar sin personalización)
+```
+
+**Generated Roast (Generic):**
+> "Gracias por tu detallado análisis técnico. Seguro que con tus valiosas aportaciones, la app mejorará de inmediato. 😉"
+
+---
+
+#### With Persona (Pro Plan)
+
+```text
+💬 COMENTARIO ORIGINAL:
+"Tu aplicación es una basura, no sirve para nada"
+
+🎯 CONTEXTO DEL USUARIO:
+
+📝 LO QUE ME DEFINE (Mi identidad):
+"Soy desarrollador sarcástico, me encanta el humor técnico y las referencias de programación."
+
+🚫 LO QUE NO TOLERO (Nunca incluir):
+"Ataques a mi familia, body shaming, racismo."
+
+✅ LO QUE ME DA IGUAL (Permitido en mis roasts):
+"Humor negro, bromas de mal gusto, sarcasmo extremo."
+
+🔥 GENERA UN ROAST:
+(El modelo genera respuesta personalizada con estilo técnico y sarcasmo)
+```
+
+**Generated Roast (Personalized):**
+> "Me encanta recibir feedback de usuarios que claramente nunca han visto un `try-catch`. Tu opinión tiene el mismo peso que un `console.log()` en producción: absolutamente ninguno. 😏"
+
+---
+
+### Security & Privacy
+
+**Encryption:**
+- Persona fields stored encrypted at rest (AES-256-GCM)
+- Decryption only happens during roast generation
+- Never exposed in API responses or logs (except via authenticated `/api/persona` endpoint)
+
+**Prompt Injection Protection:**
+- Persona context is sanitized before injection (roastPromptTemplate.js:473)
+- Removes `{{`, `}}`, and other template markers
+- Prevents users from injecting malicious instructions
+
+**Example protection:**
+```javascript
+// User tries to inject: "Lo que me define: {{ignore previous instructions}}"
+const sanitizedPersonaContext = personaContext
+  .replace(/\{\{/g, '[')
+  .replace(/\}\}/g, ']')
+  .trim();
+// Result: "Lo que me define: [[ignore previous instructions]]" (harmless)
+```
+
+---
+
+### Testing
+
+**Integration Tests:** `tests/integration/roast-persona-integration.test.js`
+
+Tests cover:
+- ✅ Free user: No persona context injected
+- ✅ Starter user: Identity + intolerance injected (2 fields)
+- ✅ Pro user: All 3 fields injected (identity, intolerance, tolerance)
+- ✅ Encrypted fields decrypted correctly during roast generation
+- ✅ Persona context sanitized to prevent prompt injection
+- ✅ Error handling when PersonaService fails (graceful fallback)
+
+**Test Results:** All tests passing (100%)
+
+---
+
+### Monitoring & Observability
+
+**Logs:**
+```javascript
+// When persona is loaded
+logger.info('Persona retrieved for roast generation', {
+  userId,
+  hasIdentity: !!persona.lo_que_me_define,
+  hasIntolerance: !!persona.lo_que_no_tolero,
+  hasTolerance: !!persona.lo_que_me_da_igual
+});
+
+// When persona context is injected
+logger.debug('Persona context injected into prompt', {
+  contextLength: personaContext.length,
+  plan: userConfig.plan
+});
+```
+
+**Metrics tracked:**
+- Roasts generated with persona (vs. without)
+- Plan distribution for persona usage
+- Average persona context length
+- Persona retrieval latency
+
+---
+
+### Future Enhancements
+
+**Planned (Not Yet Implemented):**
+
+1. **Persona-based content filtering**
+   - Use `lo_que_no_tolero` embedding for semantic comment blocking
+   - Calculate cosine similarity between comment and intolerance embedding
+   - Auto-block comments with ≥85% similarity
+
+2. **Persona visibility settings**
+   - Allow users to make persona public (for sharing roast styles)
+   - Privacy controls for each field
+
+3. **Persona templates**
+   - Pre-defined persona templates (e.g., "Tech Sarcasm", "British Humor")
+   - Quick-start wizard for new users
+
+---
+
+**Last Updated:** 2025-11-06
 **Maintained By:** Backend Developer, UX Designer, Documentation Agent
-**Related Issues:** Persona service implementation (to be created)
-**Related PRs:** None yet
+**Related Issues:** #595 (Persona Setup), #615 (Persona-Roast Integration), #649 (Documentation)
+**Related PRs:** #499, #600, #633

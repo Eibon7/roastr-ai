@@ -195,7 +195,7 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
 router.get('/plans', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const modelService = getModelAvailabilityService();
-        const plans = ['free', 'starter', 'pro', 'plus', 'custom'];
+        const plans = ['starter_trial', 'starter', 'pro', 'plus', 'custom'];
         
         const planModels = {};
         
@@ -208,7 +208,7 @@ router.get('/plans', authenticateToken, requireAdmin, async (req, res) => {
             data: {
                 planModels: planModels,
                 explanation: {
-                    'free': 'Always uses GPT-3.5-turbo',
+                    'starter_trial': 'Always uses GPT-3.5-turbo (30-day trial)',
                     'starter': 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
                     'pro': 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
                     'plus': 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
