@@ -1,16 +1,16 @@
 # Auto-Repair Report
 
-**Generated:** 2025-11-05T22:55:17.627Z
+**Generated:** 2025-11-09T15:46:53.313Z
 **Triggered by:** Manual
-**Health Score:** 89.4 → 89.4 (±0)
+**Health Score:** 88.5 → 88.5 (±0)
 
 ## ✅ Fixes Applied (0)
 
 
 
-## ⚠️ Pending Human Review (0)
+## ⚠️ Pending Human Review (1)
 
-None
+1. **social-platforms** - social-platforms: Timestamp >30 days old (2025-10-09)
 
 ## 🔴 Critical Issues (0)
 
@@ -18,10 +18,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 89.4/100
+- 🟢 Health Score: 88.5/100
 - ⚙️ Auto-fixes: 0 applied
-- 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-05T22-55-17-546Z`
+- 📋 Issues for review: 1
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-09T15-46-53-267Z`
 
 ---
 

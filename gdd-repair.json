@@ -1,15 +1,20 @@
 {
-  "timestamp": "2025-11-05T22:55:17.629Z",
+  "timestamp": "2025-11-09T15:46:53.315Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
   "fixes_applied": 0,
   "errors": 0,
-  "health_before": 89.4,
-  "health_after": 89.4,
+  "health_before": 88.5,
+  "health_after": 88.5,
   "details": {
     "fixes": [],
-    "humanReview": [],
+    "humanReview": [
+      {
+        "node": "social-platforms",
+        "description": "social-platforms: Timestamp >30 days old (2025-10-09)"
+      }
+    ],
     "errors": []
   }
 }
