@@ -280,7 +280,9 @@ function main() {
     console.log('⚠️  Elementos faltantes detectados. Ejecuta sin --check para crearlos.\n');
   }
   
-  return missingFiles.length + brokenScripts.length;
+  // Calcular total de errores y limitar exit code a rango válido (0-254)
+  const total = missingFiles.length + brokenScripts.length;
+  return total === 0 ? 0 : Math.min(total, 254);
 }
 
 if (require.main === module) {
