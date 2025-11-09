@@ -14,11 +14,11 @@
 |-------|--------|-------|----------------|-----------|
 | **#638** | CLOSED | 30/30 (100%) | ✅ Full | ✅ **YES** |
 | **QW4-QW10** | N/A | 100/100 (100%) | ✅ Full | ✅ **YES** |
-| **#483** | CLOSED | 8/8 (100%) | ✅ Full | ✅ **YES** |
+| **#483** | CLOSED | 62/62 (100%) | ✅ Full | ✅ **YES** |
 | **#482** | OPEN | 78/78 (100%) | ✅ Full | ✅ **YES** |
 | **#639** | OPEN | 1/14 (7%) | 🚧 Blocked | ❌ **NO - BLOCKED** |
 
-**Total Tests Fixed:** 216/230 (94% of testable work)
+**Total Tests Fixed:** 270/284 (95% of testable work)
 
 **Blocking Factor:** Issue #639 requires test Supabase database (infrastructure dependency, not code issue)
 
@@ -59,18 +59,21 @@
 ### ✅ Issue #483: Roast Generation Tests - COMPLETE
 
 **Status:** 100% complete
-**Tests:** 8/8 passing (100%)
-**Evidence:** Test suite passing
+**Tests:** 62/62 passing (100%)
+**Evidence:** All 3 test files passing
+
+**Test Files:**
+- roast.test.js: 8/8 passing (100%)
+- roast-enhanced-validation.test.js: 36/36 passing (100%)
+- roast-validation-issue364.test.js: 18/18 passing (100%)
 
 **Deliverables:**
 - All roast generation flow tests passing
-- Validation error handling
-- Service error handling
-- Credit validation
-- Authentication requirements
-- Test file simplified
-
-**Note:** CodeRabbit reported 87.5% (7/8) but current verification shows 100% (8/8).
+- Enhanced validation tests complete
+- SPEC 8 (Issue #364) validation tests complete
+- Service error handling validated
+- Credit validation functional
+- Authentication requirements enforced
 
 ---
 
@@ -202,7 +205,7 @@ Create cloud test project (1-2h setup) or defer to separate PR after infrastruct
 ```
 Total Test Suites: 174 failing
 Issue #638: 25/30 passing (83%)
-Issue #483: Variable (40-87.5%)
+Issue #483: Variable (tests failing across 3 files)
 Issue #482: 0/78 tests (multiple failures + skipped suites)
 Issue #639: 0/14 passing
 ```
@@ -211,22 +214,22 @@ Issue #639: 0/14 passing
 ```
 Total Test Suites: Significant reduction in failures
 Issue #638: 30/30 passing (100%) ✅
-Issue #483: 8/8 passing (100%) ✅
+Issue #483: 62/62 passing (100%) ✅
 Issue #482: 78/78 passing (100%) ✅
 Issue #639: 1/14 passing (blocked) 🚧
 
-Successfully Fixed: 216 tests
+Successfully Fixed: 270 tests
 Blocked (infrastructure): 13 tests
 ```
 
-**Success Rate:** 94% of testable work complete
+**Success Rate:** 95% of testable work complete
 
 ---
 
 ## Quality Standards Compliance
 
 ### ✅ Pre-Flight Checklist
-- ✅ Tests passing (216/216 for completed work)
+- ✅ Tests passing (270/270 for completed work)
 - ✅ Docs updated (8 new docs, spec.md updates pending)
 - ✅ Code quality verified (no console.logs, no TODOs)
 - ✅ Self-review completed
@@ -244,10 +247,10 @@ Blocked (infrastructure): 13 tests
 ### Option A: Merge Partial (RECOMMENDED)
 
 **Scope:**
-Merge Issues #638, QW4-QW10, #483, #482 (216/216 tests passing)
+Merge Issues #638, QW4-QW10, #483, #482 (270/270 tests passing)
 
 **Rationale:**
-1. 94% of testable work complete
+1. 95% of testable work complete
 2. Issue #639 blocked by infrastructure, not code
 3. All implemented work fully validated
 4. Issue #639 can be separate PR after database setup
