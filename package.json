@@ -203,7 +203,7 @@
     "autoprefixer": "^10.4.21",
     "babel-jest": "^30.0.5",
     "cross-env": "^10.0.0",
-    "eslint": "^9.33.0",
+    "eslint": "^9.39.1",
     "glob": "^10.3.10",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
