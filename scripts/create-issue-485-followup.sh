@@ -1,7 +1,10 @@
 #!/bin/bash
 # Script para crear issue de seguimiento y PR para Issue #485
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || {
+    echo "Error: Failed to change directory" >&2
+    exit 1
+}
 
 # Crear issue de seguimiento
 gh issue create \
