@@ -1,0 +1,285 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/database/security.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (42) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+FAIL integration-tests tests/integration/database/security.test.js
+  Database Security Integration
+    RLS WITH CHECK Policies
+      ✕ should prevent cross-tenant data insertion in roasts_metadata (132 ms)
+      ✕ should prevent cross-tenant data update in roasts_metadata (59 ms)
+      ✕ should allow valid same-tenant operations (60 ms)
+      ✕ should prevent cross-tenant data access in roastr_style_preferences (66 ms)
+    Schema-Qualified Trigger Functions
+      ✕ should execute update_updated_at_column trigger securely (65 ms)
+      ✕ should not allow trigger function manipulation via search_path (53 ms)
+    Database Function Security
+      ✕ should execute get_user_roast_config with restricted search_path (61 ms)
+      ✕ should execute get_user_roast_stats with restricted search_path (170 ms)
+      ✓ should restrict access to cleanup function (65 ms)
+    Multi-tenant Isolation
+      ✕ should isolate data between different organizations (148 ms)
+      ✕ should enforce user isolation within same organization (380 ms)
+    Data Integrity Constraints
+      ✕ should enforce language constraints (52 ms)
+      ✕ should enforce versions_count constraints (59 ms)
+      ✕ should accept valid constraint values (52 ms)
+    Index Performance and Security
+      ✕ should have efficient queries with org_id index (141 ms)
+      ✕ should support efficient multi-column queries (65 ms)
+
+  ● Database Security Integration › RLS WITH CHECK Policies › should prevent cross-tenant data insertion in roasts_metadata
+
+    expect(received).toContain(expected) // indexOf
+
+    Matcher error: received value must not be null nor undefined
+
+    Received has value: undefined
+
+      55 |             // Should fail due to RLS WITH CHECK policy
+      56 |             expect(error).toBeTruthy();
+    > 57 |             expect(error.message).toContain('policy');
+         |                                   ^
+      58 |         });
+      59 |
+      60 |         test('should prevent cross-tenant data update in roasts_metadata', async () => {
+
+      at Object.toContain (tests/integration/database/security.test.js:57:35)
+
+  ● Database Security Integration › RLS WITH CHECK Policies › should prevent cross-tenant data update in roasts_metadata
+
+    expect(received).toBeNull()
+
+    Received: {}
+
+      72 |                 });
+      73 |
+    > 74 |             expect(insertError).toBeNull();
+         |                                 ^
+      75 |
+      76 |             // Now try to update it to belong to another user (should fail)
+      77 |             const { data: updateData, error: updateError } = await supabaseServiceClient
+
+      at Object.toBeNull (tests/integration/database/security.test.js:74:33)
+
+  ● Database Security Integration › RLS WITH CHECK Policies › should allow valid same-tenant operations
+
+    expect(received).toBeNull()
+
+    Received: {}
+
+      102 |                 });
+      103 |
+    > 104 |             expect(insertError).toBeNull();
+          |                                 ^
+      105 |             expect(insertData).toBeTruthy();
+      106 |
+      107 |             // Update should succeed for same tenant
+
+      at Object.toBeNull (tests/integration/database/security.test.js:104:33)
+
+  ● Database Security Integration › RLS WITH CHECK Policies › should prevent cross-tenant data access in roastr_style_preferences
+
+    expect(received).toBeNull()
+
+    Received: {}
+
+      127 |                 });
+      128 |
+    > 129 |             expect(insertError).toBeNull();
+          |                                 ^
+      130 |
+      131 |             // Try to update another user's preferences (should fail)
+      132 |             const { data: updateData, error: updateError } = await supabaseServiceClient
+
+      at Object.toBeNull (tests/integration/database/security.test.js:129:33)
+
+  ● Database Security Integration › Schema-Qualified Trigger Functions › should execute update_updated_at_column trigger securely
+
+    expect(received).toBeNull()
+
+    Received: {}
+
+      161 |                 .single();
+      162 |
+    > 163 |             expect(insertError).toBeNull();
+          |                                 ^
+      164 |             const originalUpdatedAt = insertData.updated_at;
+      165 |
+      166 |             // Wait a moment to ensure timestamp difference
+
+      at Object.toBeNull (tests/integration/database/security.test.js:163:33)
+
+  ● Database Security Integration › Schema-Qualified Trigger Functions › should not allow trigger function manipulation via search_path
+
+    expect(received).toBeNull()
+
+    Received: {}
+
+      203 |                 .single();
+      204 |
+    > 205 |             expect(error).toBeNull();
+          |                           ^
+      206 |             expect(data.created_at).toBeDefined();
+      207 |             expect(data.updated_at).toBeDefined();
+      208 |         });
+
+      at Object.toBeNull (tests/integration/database/security.test.js:205:27)
+
+  ● Database Security Integration › Database Function Security › should execute get_user_roast_config with restricted search_path
+
+    expect(received).toBeNull()
+
+    Received: {"code": "PGRST202", "details": "Searched for the function public.get_user_roast_config with parameter user_uuid or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.", "hint": null, "message": "Could not find the function public.get_user_roast_config(user_uuid) in the schema cache"}
+
+      218 |
+      219 |             // Should execute successfully with security restrictions
+    > 220 |             expect(error).toBeNull();
+          |                           ^
+      221 |             expect(data).toBeInstanceOf(Array);
+      222 |             
+      223 |             if (data.length > 0) {
+
+      at Object.toBeNull (tests/integration/database/security.test.js:220:27)
+
+  ● Database Security Integration › Database Function Security › should execute get_user_roast_stats with restricted search_path
+
+    expect(received).toBeNull()
+
+    Received: {"code": "PGRST202", "details": "Searched for the function public.get_user_roast_stats with parameters period_days, user_uuid or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.", "hint": null, "message": "Could not find the function public.get_user_roast_stats(period_days, user_uuid) in the schema cache"}
+
+      251 |                 });
+      252 |
+    > 253 |             expect(error).toBeNull();
+          |                           ^
+      254 |             expect(data).toBeInstanceOf(Array);
+      255 |             
+      256 |             if (data.length > 0) {
+
+      at Object.toBeNull (tests/integration/database/security.test.js:253:27)
+
+  ● Database Security Integration › Multi-tenant Isolation › should isolate data between different organizations
+
+    expect(received).toBeNull()
+
+    Received: {"code": "42P01", "details": null, "hint": null, "message": "relation \"public.roasts_metadata\" does not exist"}
+
+      314 |                 .eq('org_id', testOrgId);
+      315 |
+    > 316 |             expect(org1Error).toBeNull();
+          |                               ^
+      317 |             expect(org1Data).toBeInstanceOf(Array);
+      318 |             expect(org1Data.every(row => row.org_id === testOrgId)).toBe(true);
+      319 |
+
+      at Object.toBeNull (tests/integration/database/security.test.js:316:31)
+
+  ● Database Security Integration › Multi-tenant Isolation › should enforce user isolation within same organization
+
+    expect(received).toBeNull()
+
+    Received: {"code": "42P01", "details": null, "hint": null, "message": "relation \"public.roasts_metadata\" does not exist"}
+
+      377 |                 .eq('org_id', testOrgId);
+      378 |
+    > 379 |             expect(user1Error).toBeNull();
+          |                                ^
+      380 |             expect(user2Error).toBeNull();
+      381 |             
+      382 |             expect(user1Data.every(row => row.user_id === testUserId)).toBe(true);
+
+      at Object.toBeNull (tests/integration/database/security.test.js:379:32)
+
+  ● Database Security Integration › Data Integrity Constraints › should enforce language constraints
+
+    expect(received).toContain(expected) // indexOf
+
+    Matcher error: received value must not be null nor undefined
+
+    Received has value: undefined
+
+      400 |
+      401 |             expect(error).toBeTruthy();
+    > 402 |             expect(error.message).toContain('check constraint');
+          |                                   ^
+      403 |         });
+      404 |
+      405 |         test('should enforce versions_count constraints', async () => {
+
+      at Object.toContain (tests/integration/database/security.test.js:402:35)
+
+  ● Database Security Integration › Data Integrity Constraints › should enforce versions_count constraints
+
+    expect(received).toContain(expected) // indexOf
+
+    Matcher error: received value must not be null nor undefined
+
+    Received has value: undefined
+
+      418 |
+      419 |             expect(error).toBeTruthy();
+    > 420 |             expect(error.message).toContain('check constraint');
+          |                                   ^
+      421 |         });
+      422 |
+      423 |         test('should accept valid constraint values', async () => {
+
+      at Object.toContain (tests/integration/database/security.test.js:420:35)
+
+  ● Database Security Integration › Data Integrity Constraints › should accept valid constraint values
+
+    expect(received).toBeNull()
+
+    Received: {}
+
+      435 |                 });
+      436 |
+    > 437 |             expect(error).toBeNull();
+          |                           ^
+      438 |             expect(data).toBeTruthy();
+      439 |         });
+      440 |     });
+
+      at Object.toBeNull (tests/integration/database/security.test.js:437:27)
+
+  ● Database Security Integration › Index Performance and Security › should have efficient queries with org_id index
+
+    expect(received).toBeNull()
+
+    Received: {"code": "42P01", "details": null, "hint": null, "message": "relation \"public.roasts_metadata\" does not exist"}
+
+      467 |             const queryTime = Date.now() - startTime;
+      468 |
+    > 469 |             expect(error).toBeNull();
+          |                           ^
+      470 |             expect(data).toBeInstanceOf(Array);
+      471 |             expect(queryTime).toBeLessThan(1000); // Should be fast with proper indexing
+      472 |         });
+
+      at Object.toBeNull (tests/integration/database/security.test.js:469:27)
+
+  ● Database Security Integration › Index Performance and Security › should support efficient multi-column queries
+
+    expect(received).toBeNull()
+
+    Received: {"code": "42P01", "details": null, "hint": null, "message": "relation \"public.roasts_metadata\" does not exist"}
+
+      484 |             const queryTime = Date.now() - startTime;
+      485 |
+    > 486 |             expect(error).toBeNull();
+          |                           ^
+      487 |             expect(data).toBeInstanceOf(Array);
+      488 |             expect(queryTime).toBeLessThan(1000); // Should be efficient with proper indexing
+      489 |         });
+
+      at Object.toBeNull (tests/integration/database/security.test.js:486:27)
+
+Test Suites: 1 failed, 1 total
+Tests:       15 failed, 1 passed, 16 total
+Snapshots:   0 total
+Time:        2.228 s, estimated 3 s
+Ran all test suites matching tests/integration/database/security.test.js.

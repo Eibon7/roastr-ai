@@ -1,0 +1,246 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/multi-tenant-rls-issue-412.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (42) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+FAIL integration-tests tests/integration/multi-tenant-rls-issue-412.test.js
+  Multi-Tenant RLS Integration Tests - Issue #412
+    Setup Verification
+      ✕ Setup creates 2 tenants with isolated data
+    AC1: Listados restringidos por tenant_id
+      ✕ GET /posts returns only Tenant A posts
+      ✕ GET /comments returns only Tenant A comments (1 ms)
+      ✕ GET /roasts returns only Tenant A roasts
+    AC2: Accesos directos por ID verifican tenant_id
+      ✕ GET /posts/:id returns 200 for own tenant
+      ✕ GET /posts/:id returns null for other tenant
+      ✕ GET /comments/:id returns 200 for own tenant
+      ✕ GET /comments/:id returns null for other tenant
+      ✕ GET /roasts/:id returns 200 for own tenant
+      ✕ GET /roasts/:id returns null for other tenant
+    AC3: Accesos cruzados devuelven 404/forbidden
+      ✕ Tenant A cannot read Tenant B posts
+      ✕ Tenant A cannot read Tenant B comments
+      ✕ Tenant A cannot read Tenant B roasts
+    RLS Context Verification
+      ✕ getTenantContext returns current tenant ID
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › Setup Verification › Setup creates 2 tenants with isolated data
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC1: Listados restringidos por tenant_id › GET /posts returns only Tenant A posts
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC1: Listados restringidos por tenant_id › GET /comments returns only Tenant A comments
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC1: Listados restringidos por tenant_id › GET /roasts returns only Tenant A roasts
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC2: Accesos directos por ID verifican tenant_id › GET /posts/:id returns 200 for own tenant
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC2: Accesos directos por ID verifican tenant_id › GET /posts/:id returns null for other tenant
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC2: Accesos directos por ID verifican tenant_id › GET /comments/:id returns 200 for own tenant
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC2: Accesos directos por ID verifican tenant_id › GET /comments/:id returns null for other tenant
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC2: Accesos directos por ID verifican tenant_id › GET /roasts/:id returns 200 for own tenant
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC2: Accesos directos por ID verifican tenant_id › GET /roasts/:id returns null for other tenant
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC3: Accesos cruzados devuelven 404/forbidden › Tenant A cannot read Tenant B posts
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC3: Accesos cruzados devuelven 404/forbidden › Tenant A cannot read Tenant B comments
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › AC3: Accesos cruzados devuelven 404/forbidden › Tenant A cannot read Tenant B roasts
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+  ● Multi-Tenant RLS Integration Tests - Issue #412 › RLS Context Verification › getTenantContext returns current tenant ID
+
+    Failed to create comments: null value in column "original_text" of relation "comments" violates not-null constraint
+
+      203 |       .select();
+      204 |
+    > 205 |     if (error) throw new Error(`Failed to create comments: ${error.message}`);
+          |                      ^
+      206 |     testData.comments = data;
+      207 |     logger.debug(`  ✅ Created ${data.length} comments`);
+      208 |   }
+
+      at createTestData (tests/helpers/tenantTestUtils.js:205:22)
+      at Object.<anonymous> (tests/integration/multi-tenant-rls-issue-412.test.js:33:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       14 failed, 14 total
+Snapshots:   0 total
+Time:        2.737 s, estimated 12 s
+Ran all test suites matching tests/integration/multi-tenant-rls-issue-412.test.js.

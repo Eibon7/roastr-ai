@@ -1,10 +1,7 @@
 #!/bin/bash
 # Script para crear issue de seguimiento y PR para Issue #485
 
-cd "$(dirname "$0")/.." || {
-    echo "Error: Failed to change directory" >&2
-    exit 1
-}
+cd "$(dirname "$0")/.." || { echo "Error: Failed to change to repository root" >&2; exit 1; }
 
 # Crear issue de seguimiento
 gh issue create \
@@ -28,7 +25,8 @@ gh issue create \
 3. admin-plan-limits.test.js - 11 tests pendientes (problema middleware)
 
 Ver \`docs/plan/issue-485-followup.md\` para plan de acción detallado." \
-  --label "test:unit,complementary-flow"
+  --label "test:unit" \
+  --label "complementary-flow"
 
 echo "Issue creada. Ahora creando PR..."
 

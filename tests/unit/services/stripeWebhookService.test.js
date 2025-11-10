@@ -274,31 +274,40 @@ describe('StripeWebhookService', () => {
             customer: 'cus_test123',
             subscription: 'sub_test123',
             metadata: {
-                user_id: 'user-123'
+                user_id: 'user-123',
+                lookup_key: 'pro_monthly'
             }
         };
 
         it('should handle checkout completion successfully', async () => {
-            // Mock user update
-            supabaseServiceClient.update.mockReturnValue({
-                eq: jest.fn().mockResolvedValue({ error: null })
-            });
+            // Mock subscription retrieval with all required fields
+            mockStripeWrapper.subscriptions = {
+                retrieve: jest.fn().mockResolvedValue({
+                    id: 'sub_test123',
+                    status: 'active',
+                    current_period_start: 1677649600,
+                    current_period_end: 1680328000,
+                    cancel_at_period_end: false,
+                    trial_end: null,
+                    items: {
+                        data: [{
+                            price: {
+                                id: 'price_pro_monthly'
+                            }
+                        }]
+                    }
+                })
+            };
 
-            // Mock subscription retrieval
-            mockStripeWrapper.subscriptions.retrieve.mockResolvedValue({
-                items: {
-                    data: [{
-                        price: {
-                            id: 'price_pro_monthly'
-                        }
-                    }]
-                }
-            });
-
-            // Mock entitlements update
-            mockEntitlementsService.setEntitlementsFromStripePrice.mockResolvedValue({
-                success: true,
-                entitlements: { plan_name: 'pro' }
+            // Mock RPC transaction
+            supabaseServiceClient.rpc.mockResolvedValue({
+                data: {
+                    subscription_updated: true,
+                    entitlements_updated: true,
+                    plan_name: 'pro',
+                    organization_id: 'org-123'
+                },
+                error: null
             });
 
             const result = await webhookService._handleCheckoutCompleted(checkoutSession);
@@ -307,6 +316,20 @@ describe('StripeWebhookService', () => {
             expect(result.accountId).toBe('user-123');
             expect(result.entitlementsUpdated).toBe(true);
             expect(result.planName).toBe('pro');
+            expect(mockStripeWrapper.subscriptions.retrieve).toHaveBeenCalledWith(
+                'sub_test123',
+                { expand: ['items.data.price'] }
+            );
+            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                'execute_checkout_completed_transaction',
+                expect.objectContaining({
+                    p_user_id: 'user-123',
+                    p_stripe_customer_id: 'cus_test123',
+                    p_stripe_subscription_id: 'sub_test123',
+                    p_plan: 'pro',
+                    p_status: 'active'
+                })
+            );
         });
 
         it('should fail when user_id is missing', async () => {
@@ -320,14 +343,13 @@ describe('StripeWebhookService', () => {
         });
 
         it('should fail when subscription has no price', async () => {
-            supabaseServiceClient.update.mockReturnValue({
-                eq: jest.fn().mockResolvedValue({ error: null })
-            });
-
             // Mock subscription without price
-            mockStripeWrapper.subscriptions.retrieve.mockResolvedValue({
-                items: { data: [] }
-            });
+            mockStripeWrapper.subscriptions = {
+                retrieve: jest.fn().mockResolvedValue({
+                    id: 'sub_test123',
+                    items: { data: [] }
+                })
+            };
 
             await expect(webhookService._handleCheckoutCompleted(checkoutSession))
                 .rejects.toThrow('No price ID found in subscription');
@@ -339,6 +361,10 @@ describe('StripeWebhookService', () => {
             id: 'sub_test123',
             customer: 'cus_test123',
             status: 'active',
+            current_period_start: 1677649600,
+            current_period_end: 1680328000,
+            cancel_at_period_end: false,
+            trial_end: null,
             items: {
                 data: [{
                     price: {
@@ -348,17 +374,30 @@ describe('StripeWebhookService', () => {
             }
         };
 
-        it('should handle subscription update successfully', async () => {
-            // Mock user lookup by customer ID
-            supabaseServiceClient.single.mockResolvedValue({
-                data: { id: 'user-123' },
-                error: null
-            });
+        beforeEach(() => {
+            // Mock _findUserByCustomerId helper
+            webhookService._findUserByCustomerId = jest.fn().mockResolvedValue('user-123');
+        });
 
-            // Mock entitlements update
-            mockEntitlementsService.setEntitlementsFromStripePrice.mockResolvedValue({
-                success: true,
-                entitlements: { plan_name: 'pro' }
+        it('should handle subscription update successfully', async () => {
+            // Mock prices.list
+            mockStripeWrapper.prices = {
+                list: jest.fn().mockResolvedValue({
+                    data: [{
+                        id: 'price_pro_monthly',
+                        lookup_key: 'pro_monthly'
+                    }]
+                })
+            };
+
+            // Mock RPC transaction
+            supabaseServiceClient.rpc.mockResolvedValue({
+                data: {
+                    entitlements_updated: true,
+                    new_plan: 'pro',
+                    old_plan: 'starter_trial'
+                },
+                error: null
             });
 
             const result = await webhookService._handleSubscriptionUpdated(subscription);
@@ -367,36 +406,35 @@ describe('StripeWebhookService', () => {
             expect(result.accountId).toBe('user-123');
             expect(result.entitlementsUpdated).toBe(true);
             expect(result.subscriptionStatus).toBe('active');
+            expect(mockStripeWrapper.prices.list).toHaveBeenCalledWith({ limit: 100 });
+            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                'execute_subscription_updated_transaction',
+                expect.objectContaining({
+                    p_user_id: 'user-123',
+                    p_subscription_id: 'sub_test123',
+                    p_customer_id: 'cus_test123',
+                    p_plan: 'pro',
+                    p_status: 'active'
+                })
+            );
         });
 
         it('should handle subscription without price (canceled)', async () => {
-            supabaseServiceClient.single.mockResolvedValue({
-                data: { id: 'user-123' },
-                error: null
-            });
-
             const canceledSubscription = {
                 ...subscription,
                 status: 'canceled',
                 items: { data: [] } // No price
             };
 
-            // Mock reset to free plan
-            mockEntitlementsService.setEntitlements.mockResolvedValue({
-                success: true
-            });
-
             const result = await webhookService._handleSubscriptionUpdated(canceledSubscription);
 
             expect(result.success).toBe(true);
             expect(result.accountId).toBe('user-123');
+            expect(result.message).toBe('No price found, no entitlements update needed');
         });
 
         it('should fail when customer not found', async () => {
-            supabaseServiceClient.single.mockResolvedValue({
-                data: null,
-                error: { code: 'PGRST116' } // No rows found
-            });
+            webhookService._findUserByCustomerId = jest.fn().mockResolvedValue(null);
 
             await expect(webhookService._handleSubscriptionUpdated(subscription))
                 .rejects.toThrow('No user found for customer ID: cus_test123');
@@ -409,16 +447,21 @@ describe('StripeWebhookService', () => {
             customer: 'cus_test123'
         };
 
-        it('should handle subscription deletion successfully', async () => {
-            // Mock user lookup
-            supabaseServiceClient.single.mockResolvedValue({
-                data: { id: 'user-123' },
-                error: null
-            });
+        beforeEach(() => {
+            // Mock _findUserByCustomerId helper
+            webhookService._findUserByCustomerId = jest.fn().mockResolvedValue('user-123');
+        });
 
-            // Mock reset to free plan
-            mockEntitlementsService.setEntitlements.mockResolvedValue({
-                success: true
+        it('should handle subscription deletion successfully', async () => {
+            // Mock RPC transaction
+            supabaseServiceClient.rpc.mockResolvedValue({
+                data: {
+                    entitlements_reset: true,
+                    previous_plan: 'pro',
+                    new_plan: 'free',
+                    plan_name: 'free'
+                },
+                error: null
             });
 
             const result = await webhookService._handleSubscriptionDeleted(subscription);
@@ -426,12 +469,13 @@ describe('StripeWebhookService', () => {
             expect(result.success).toBe(true);
             expect(result.accountId).toBe('user-123');
             expect(result.planName).toBe('free');
-            expect(mockEntitlementsService.setEntitlements).toHaveBeenCalledWith(
-                'user-123',
+            expect(result.entitlementsReset).toBe(true);
+            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+                'execute_subscription_deleted_transaction',
                 expect.objectContaining({
-                    plan_name: 'free',
-                    analysis_limit_monthly: 100,
-                    roast_limit_monthly: 10
+                    p_user_id: 'user-123',
+                    p_subscription_id: 'sub_test123',
+                    p_customer_id: 'cus_test123'
                 })
             );
         });
@@ -458,10 +502,8 @@ describe('StripeWebhookService', () => {
         });
 
         it('should handle payment success for unknown customer gracefully', async () => {
-            supabaseServiceClient.single.mockResolvedValue({
-                data: null,
-                error: { code: 'PGRST116' }
-            });
+            // Mock _findUserByCustomerId to return null
+            webhookService._findUserByCustomerId = jest.fn().mockResolvedValue(null);
 
             const result = await webhookService._handlePaymentSucceeded(invoice);
 
@@ -825,7 +867,16 @@ describe('Integration with real Stripe payloads', () => {
         supabaseServiceClient.rpc
             .mockResolvedValueOnce({ data: false, error: null }) // Not processed
             .mockResolvedValueOnce({ data: 'webhook-uuid', error: null }) // Start processing
-            .mockResolvedValueOnce({ data: true, error: null }); // Complete processing
+            .mockResolvedValueOnce({ data: true, error: null }) // Complete processing
+            .mockResolvedValueOnce({ // RPC transaction
+                data: {
+                    subscription_updated: true,
+                    entitlements_updated: true,
+                    plan_name: 'pro',
+                    organization_id: 'org-123'
+                },
+                error: null
+            });
 
         supabaseServiceClient.update.mockReturnValue({
             eq: jest.fn().mockResolvedValue({ error: null })
@@ -834,6 +885,12 @@ describe('Integration with real Stripe payloads', () => {
         const mockStripeWrapper = {
             subscriptions: {
                 retrieve: jest.fn().mockResolvedValue({
+                    id: 'sub_1MqQoHLkdIwHu7ixX2nWJKo',
+                    status: 'active',
+                    current_period_start: 1677649600,
+                    current_period_end: 1680328000,
+                    cancel_at_period_end: false,
+                    trial_end: null,
                     items: {
                         data: [{
                             price: { id: 'price_1MqN7BLkdIwHu7ixeub2pF1j' }
@@ -844,15 +901,10 @@ describe('Integration with real Stripe payloads', () => {
         };
         StripeWrapper.mockImplementation(() => mockStripeWrapper);
 
-        mockEntitlementsService.setEntitlementsFromStripePrice.mockResolvedValue({
-            success: true,
-            entitlements: { plan_name: 'pro' }
-        });
-
         const result = await webhookService.processWebhookEvent(realStripePayloads.checkoutCompleted);
 
         expect(result.success).toBe(true);
-        expect(result.message).toBe('Checkout completed and entitlements updated');
+        expect(result.message).toBe('Checkout completed with atomic transaction');
     });
 
     it('should process real subscription.updated payload', async () => {
@@ -861,20 +913,33 @@ describe('Integration with real Stripe payloads', () => {
             .mockResolvedValueOnce({ data: 'webhook-uuid', error: null })
             .mockResolvedValueOnce({ data: true, error: null });
 
-        supabaseServiceClient.single.mockResolvedValue({
-            data: { id: 'auth0|507f1f77bcf86cd799439011' },
-            error: null
-        });
+        // Mock _findUserByCustomerId
+        webhookService._findUserByCustomerId = jest.fn().mockResolvedValue('auth0|507f1f77bcf86cd799439011');
 
-        mockEntitlementsService.setEntitlementsFromStripePrice.mockResolvedValue({
-            success: true,
-            entitlements: { plan_name: 'pro' }
+        // Mock prices.list
+        mockStripeWrapper.prices = {
+            list: jest.fn().mockResolvedValue({
+                data: [{
+                    id: 'price_1MqN7BLkdIwHu7ixeub2pF1j',
+                    lookup_key: 'pro_monthly'
+                }]
+            })
+        };
+
+        // Mock RPC transaction
+        supabaseServiceClient.rpc.mockResolvedValue({
+            data: {
+                entitlements_updated: true,
+                new_plan: 'pro',
+                old_plan: 'starter_trial'
+            },
+            error: null
         });
 
         const result = await webhookService.processWebhookEvent(realStripePayloads.subscriptionUpdated);
 
         expect(result.success).toBe(true);
-        expect(result.message).toBe('Subscription updated and entitlements refreshed');
+        expect(result.message).toBe('Subscription updated with atomic transaction');
     });
 
     it('should process real subscription.deleted payload', async () => {
@@ -883,18 +948,23 @@ describe('Integration with real Stripe payloads', () => {
             .mockResolvedValueOnce({ data: 'webhook-uuid', error: null })
             .mockResolvedValueOnce({ data: true, error: null });
 
-        supabaseServiceClient.single.mockResolvedValue({
-            data: { id: 'auth0|507f1f77bcf86cd799439011' },
-            error: null
-        });
+        // Mock _findUserByCustomerId
+        webhookService._findUserByCustomerId = jest.fn().mockResolvedValue('auth0|507f1f77bcf86cd799439011');
 
-        mockEntitlementsService.setEntitlements.mockResolvedValue({
-            success: true
+        // Mock RPC transaction
+        supabaseServiceClient.rpc.mockResolvedValue({
+            data: {
+                entitlements_reset: true,
+                previous_plan: 'pro',
+                new_plan: 'free',
+                plan_name: 'free'
+            },
+            error: null
         });
 
         const result = await webhookService.processWebhookEvent(realStripePayloads.subscriptionDeleted);
 
         expect(result.success).toBe(true);
-        expect(result.message).toBe('Subscription deleted and entitlements reset to free plan');
+        expect(result.message).toBe('Subscription deleted with atomic transaction');
     });
 });
