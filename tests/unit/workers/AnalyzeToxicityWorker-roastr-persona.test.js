@@ -43,11 +43,24 @@ jest.mock('../../../src/services/shieldService', () => {
     return jest.fn().mockImplementation(() => mockShieldService);
 });
 
+// Issue #644: Include generateMockSupabaseClient to prevent worker crashes
+const mockSupabaseClientForMockMode = {
+    from: jest.fn(() => ({
+        select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+                single: jest.fn()
+            }))
+        }))
+    })),
+    rpc: jest.fn()
+};
+
 jest.mock('../../../src/config/mockMode', () => ({
     mockMode: {
         isMockMode: true,
         generateMockPerspective: jest.fn(),
-        generateMockOpenAI: jest.fn()
+        generateMockOpenAI: jest.fn(),
+        generateMockSupabaseClient: jest.fn(() => mockSupabaseClientForMockMode)
     }
 }));
 

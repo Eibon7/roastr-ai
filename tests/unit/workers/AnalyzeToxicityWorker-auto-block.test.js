@@ -60,10 +60,25 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
 
     jest.mock('../../../src/services/encryptionService', () => mockEncryptionService);
 
+    // Issue #644: Include generateMockSupabaseClient to prevent worker crashes
+    const mockSupabaseClientForMockMode = {
+      from: jest.fn(() => ({
+        select: jest.fn(() => ({
+          eq: jest.fn(() => ({
+            single: jest.fn()
+          }))
+        }))
+      })),
+      rpc: jest.fn()
+    };
+
     jest.mock('../../../src/config/mockMode', () => ({
-      mockMode: { isMockMode: true },
-      generateMockPerspective: jest.fn(),
-      generateMockOpenAI: jest.fn()
+      mockMode: { 
+        isMockMode: true,
+        generateMockPerspective: jest.fn(),
+        generateMockOpenAI: jest.fn(),
+        generateMockSupabaseClient: jest.fn(() => mockSupabaseClientForMockMode)
+      }
     }));
 
     // Create worker instance

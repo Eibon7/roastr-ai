@@ -7,6 +7,7 @@
 const ShieldActionWorker = require('../../../src/workers/ShieldActionWorker');
 
 // Mock BaseWorker
+// Issue #644: Include logger mock for consistency
 jest.mock('../../../src/workers/BaseWorker', () => {
   return class MockBaseWorker {
     constructor(workerType, options = {}) {
@@ -41,6 +42,13 @@ jest.mock('../../../src/workers/BaseWorker', () => {
       };
       this.redis = null;
       this.log = jest.fn();
+      // Issue #644: Add logger mock for consistency
+      this.logger = {
+        warn: jest.fn(),
+        error: jest.fn(),
+        info: jest.fn(),
+        debug: jest.fn()
+      };
       this.start = jest.fn();
       this.stop = jest.fn();
       this.initializeConnections = jest.fn();

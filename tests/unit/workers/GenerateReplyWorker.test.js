@@ -7,6 +7,7 @@
 const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
 
 // Mock BaseWorker
+// Issue #644: Include logger mock to prevent undefined errors
 jest.mock('../../../src/workers/BaseWorker', () => {
   return class MockBaseWorker {
     constructor(workerType, options = {}) {
@@ -41,6 +42,13 @@ jest.mock('../../../src/workers/BaseWorker', () => {
       };
       this.redis = null;
       this.log = jest.fn();
+      // Issue #644: Add logger mock for GenerateReplyWorker
+      this.logger = {
+        warn: jest.fn(),
+        error: jest.fn(),
+        info: jest.fn(),
+        debug: jest.fn()
+      };
       this.start = jest.fn();
       this.stop = jest.fn();
       this.initializeConnections = jest.fn();
@@ -70,10 +78,35 @@ const mockOpenAIClient = {
 };
 
 // Mock mockMode
+// Issue #644: Include generateMockSupabaseClient to prevent worker crashes
+const mockSupabaseClient = {
+  from: jest.fn(() => ({
+    select: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        single: jest.fn()
+      }))
+    })),
+    insert: jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn()
+      }))
+    })),
+    update: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        select: jest.fn(() => ({
+          single: jest.fn()
+        }))
+      }))
+    }))
+  })),
+  rpc: jest.fn()
+};
+
 jest.mock('../../../src/config/mockMode', () => ({
   mockMode: {
     isMockMode: true,
-    generateMockOpenAI: jest.fn(() => mockOpenAIClient)
+    generateMockOpenAI: jest.fn(() => mockOpenAIClient),
+    generateMockSupabaseClient: jest.fn(() => mockSupabaseClient)
   }
 }));
 

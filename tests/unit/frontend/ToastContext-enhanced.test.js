@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, renderHook } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ToastProvider, useToast } from '../../../frontend/src/contexts/ToastContext';
 
@@ -341,6 +341,3 @@ describe('Enhanced ToastContext', () => {
     });
   });
 });
-
-// Import renderHook for hook testing
-import { renderHook, act } from '@testing-library/react';

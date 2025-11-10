@@ -3,10 +3,16 @@
  * 
  * Tests for Shield API endpoints including authentication, rate limiting,
  * data validation, and organization isolation.
+ * 
+ * Issue #643: Fixed Supabase mock pattern (create mock BEFORE jest.mock())
  */
 
+const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
 const request = require('supertest');
-const { app } = require('../../src/index');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls
+// ============================================================================
 
 // Mock authentication middleware
 const mockAuthenticateToken = jest.fn((req, res, next) => {
@@ -18,26 +24,39 @@ const mockAuthenticateToken = jest.fn((req, res, next) => {
   next();
 });
 
+// Create Supabase mock BEFORE jest.mock() call
+// Issue #643: Use factory helper to avoid "Cannot access before initialization" error
+// Extend factory helper to include range() method for pagination
+const baseMock = createSupabaseMock({
+  shield_actions: [] // Default empty array, will be configured in beforeEach
+});
+
+// Create extended mock with range() support for pagination
+const mockSupabaseServiceClient = {
+  ...baseMock,
+  from: jest.fn((tableName) => {
+    const tableMock = baseMock.from(tableName);
+    // Add range() method for pagination support
+    tableMock.range = jest.fn((start, end) => Promise.resolve({
+      data: [],
+      error: null,
+      count: 0
+    }));
+    return tableMock;
+  })
+};
+
+// Store reference to query builder for assertions
+let mockSupabaseQuery;
+
+// ============================================================================
+// STEP 2: Reference pre-created mocks in jest.mock() calls
+// ============================================================================
+
 jest.mock('../../src/middleware/auth', () => ({
   authenticateToken: mockAuthenticateToken,
   optionalAuth: jest.fn((req, res, next) => next())
 }));
-
-// Mock Supabase
-const mockSupabaseQuery = {
-  select: jest.fn().mockReturnThis(),
-  from: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  gte: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  range: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-  single: jest.fn().mockReturnThis(),
-};
-
-const mockSupabaseServiceClient = {
-  from: jest.fn(() => mockSupabaseQuery),
-};
 
 jest.mock('../../src/config/supabase', () => ({
   supabaseServiceClient: mockSupabaseServiceClient,
@@ -69,6 +88,12 @@ jest.mock('../../src/config/flags', () => ({
   },
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const { app } = require('../../src/index');
+
 // Test data
 const mockShieldActions = [
   {
@@ -99,18 +124,35 @@ describe('Shield UI API Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Default successful responses
-    mockSupabaseQuery.range.mockResolvedValue({
-      data: mockShieldActions,
-      error: null,
-      count: 2,
-    });
+    // Reset Supabase mock to defaults
+    mockSupabaseServiceClient._reset();
     
-    mockSupabaseQuery.single.mockResolvedValue({
-      data: mockShieldActions[0],
-      error: null,
-    });
+    // Configure mock responses for shield_actions table
+    mockSupabaseServiceClient._setTableData('shield_actions', mockShieldActions);
     
+    // Create query builder mock with all chain methods
+    mockSupabaseQuery = {
+      select: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      range: jest.fn().mockResolvedValue({
+        data: mockShieldActions,
+        error: null,
+        count: 2,
+      }),
+      update: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: mockShieldActions[0],
+        error: null,
+      }),
+    };
+    
+    // Configure from() to return our query builder
+    mockSupabaseServiceClient.from = jest.fn(() => mockSupabaseQuery);
+    
+    // Configure update() chain
     mockSupabaseQuery.update.mockResolvedValue({
       data: [{ ...mockShieldActions[0], reverted_at: new Date().toISOString() }],
       error: null,

@@ -97,6 +97,22 @@ module.exports = {
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/unit/auth/**/*.test.js', '<rootDir>/tests/unit/components/**/*.test.jsx'],
       setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
+    },
+    {
+      displayName: 'frontend-tests',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/frontend/src/**/*.test.js', '<rootDir>/frontend/src/**/*.test.jsx'],
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/frontend/src/$1',
+        '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
+      },
+      transform: {
+        '^.+\\.(js|jsx)$': 'babel-jest'
+      },
+      transformIgnorePatterns: [
+        'node_modules/(?!(.*\\.mjs$))'
+      ]
     }
   ]
 };
