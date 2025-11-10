@@ -6,16 +6,40 @@
 const request = require('supertest');
 const express = require('express');
 
-// Setup environment
-process.env.ENABLE_BILLING = 'true';
-process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
-process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
-process.env.STRIPE_PRICE_LOOKUP_STARTER = 'plan_starter';
-process.env.STRIPE_PRICE_LOOKUP_PRO = 'plan_pro';
-process.env.STRIPE_PRICE_LOOKUP_PLUS = 'plan_plus';
-process.env.STRIPE_SUCCESS_URL = 'http://localhost:3000/success';
-process.env.STRIPE_CANCEL_URL = 'http://localhost:3000/cancel';
-process.env.STRIPE_PORTAL_RETURN_URL = 'http://localhost:3000/billing';
+// Setup environment - save originals and restore after tests
+const originalEnv = {
+  ENABLE_BILLING: process.env.ENABLE_BILLING,
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_LOOKUP_STARTER: process.env.STRIPE_PRICE_LOOKUP_STARTER,
+  STRIPE_PRICE_LOOKUP_PRO: process.env.STRIPE_PRICE_LOOKUP_PRO,
+  STRIPE_PRICE_LOOKUP_PLUS: process.env.STRIPE_PRICE_LOOKUP_PLUS,
+  STRIPE_SUCCESS_URL: process.env.STRIPE_SUCCESS_URL,
+  STRIPE_CANCEL_URL: process.env.STRIPE_CANCEL_URL,
+  STRIPE_PORTAL_RETURN_URL: process.env.STRIPE_PORTAL_RETURN_URL
+};
+
+beforeAll(() => {
+  process.env.ENABLE_BILLING = 'true';
+  process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
+  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
+  process.env.STRIPE_PRICE_LOOKUP_STARTER = 'plan_starter';
+  process.env.STRIPE_PRICE_LOOKUP_PRO = 'plan_pro';
+  process.env.STRIPE_PRICE_LOOKUP_PLUS = 'plan_plus';
+  process.env.STRIPE_SUCCESS_URL = 'http://localhost:3000/success';
+  process.env.STRIPE_CANCEL_URL = 'http://localhost:3000/cancel';
+  process.env.STRIPE_PORTAL_RETURN_URL = 'http://localhost:3000/billing';
+});
+
+afterAll(() => {
+  Object.entries(originalEnv).forEach(([key, value]) => {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  });
+});
 
 // Mock BillingFactory BEFORE requiring billing routes
 const mockBillingController = {
