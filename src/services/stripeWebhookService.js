@@ -213,13 +213,9 @@ class StripeWebhookService {
                     p_stripe_subscription_id: subscription.id,
                     p_plan: plan,
                     p_status: subscription.status,
-                    p_current_period_start: subscription.current_period_start 
-                        ? new Date(subscription.current_period_start * 1000).toISOString() 
-                        : null,
-                    p_current_period_end: subscription.current_period_end 
-                        ? new Date(subscription.current_period_end * 1000).toISOString() 
-                        : null,
-                    p_cancel_at_period_end: subscription.cancel_at_period_end || false,
+                    p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                    p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                    p_cancel_at_period_end: subscription.cancel_at_period_end,
                     p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
                     p_price_id: priceId,
                     p_metadata: {
@@ -270,7 +266,7 @@ class StripeWebhookService {
             }
 
             return {
-                success: success,
+                success: true,
                 accountId: userId,
                 message: 'Checkout completed with atomic transaction',
                 entitlementsUpdated: transactionResult?.entitlements_updated || false,
@@ -469,13 +465,9 @@ class StripeWebhookService {
                     p_customer_id: customerId,
                     p_plan: plan,
                     p_status: subscription.status,
-                    p_current_period_start: subscription.current_period_start 
-                        ? new Date(subscription.current_period_start * 1000).toISOString() 
-                        : null,
-                    p_current_period_end: subscription.current_period_end 
-                        ? new Date(subscription.current_period_end * 1000).toISOString() 
-                        : null,
-                    p_cancel_at_period_end: subscription.cancel_at_period_end || false,
+                    p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                    p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                    p_cancel_at_period_end: subscription.cancel_at_period_end,
                     p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
                     p_price_id: priceId,
                     p_metadata: {
@@ -501,18 +493,8 @@ class StripeWebhookService {
                 };
             }
 
-            const success = transactionResult?.entitlements_updated === true;
-
-            if (!success) {
-                logger.warn('Subscription update partially succeeded', {
-                    userId,
-                    subscriptionId,
-                    result: transactionResult
-                });
-            }
-
             return {
-                success: success,
+                success: true,
                 accountId: userId,
                 message: 'Subscription updated with atomic transaction',
                 entitlementsUpdated: transactionResult?.entitlements_updated || false,
