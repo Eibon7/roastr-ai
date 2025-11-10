@@ -215,7 +215,12 @@ class LogBackupService {
         etag: result.ETag
       });
 
-      return result;
+      // Return consistent lowercase keys with size included
+      return {
+        location: result.Location,
+        etag: result.ETag,
+        size: stats.size
+      };
 
     } catch (error) {
       advancedLogger.error('Failed to upload file to S3', {

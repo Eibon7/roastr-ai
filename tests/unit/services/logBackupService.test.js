@@ -157,8 +157,9 @@ describe('LogBackupService', () => {
       );
       
       expect(result).toEqual({
-        Location: 'https://test-bucket.s3.amazonaws.com/test-key',
-        ETag: '"test-etag"'
+        location: 'https://test-bucket.s3.amazonaws.com/test-key',
+        etag: '"test-etag"',
+        size: 1024
       });
     });
 
@@ -181,7 +182,9 @@ describe('LogBackupService', () => {
       const result = await logBackupService.uploadFileToS3('/test/file.log', 'test-key');
       
       expect(mockS3.upload).toHaveBeenCalledTimes(3);
-      expect(result.Location).toBe('success');
+      expect(result.location).toBe('success');
+      expect(result.etag).toBe('success');
+      expect(result.size).toBe(1024);
     });
 
     test('should fail after max retries', async () => {
