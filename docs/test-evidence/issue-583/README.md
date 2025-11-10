@@ -9,7 +9,7 @@ This folder contains test evidence and documentation for Issue #583: Update RLS 
 ## Contents
 
 - `IMPLEMENTATION-SUMMARY.md` - Complete implementation summary and metrics
-- `testing-instructions.md` - Step-by-step guide for running tests (this file)
+- `README.md` - Step-by-step guide for running tests (this file)
 
 ## Quick Start
 
