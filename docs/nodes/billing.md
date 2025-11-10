@@ -10,10 +10,10 @@
 
 ---
 
-**Last Updated:** 2025-10-29
-**Coverage:** 72%
+**Last Updated:** 2025-11-10
+**Coverage:** 97.63%
 **Coverage Source:** auto
-**Related PRs:** #499
+**Related PRs:** #499, #813 (Issue #502)
 
 ## Propósito
 
