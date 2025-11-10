@@ -273,3 +273,4 @@ Las herramientas GDD + Agents + Skills aportan mejoras **medibles y significativ
 
 **Recomendación:** Usar siempre. El coste de setup (4-5 horas) se recupera rápidamente y los beneficios son acumulativos.
 
+

@@ -292,3 +292,4 @@ if (require.main === module) {
 
 module.exports = { checkFile, checkDir, createMissingDirs, makeScriptsExecutable };
 
+
