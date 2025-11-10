@@ -167,6 +167,7 @@ describe('Log Commands CLI Integration', () => {
       expect(result).toContain('Log Maintenance Service Status');
       expect(result).toContain('Running:');
     });
+  });
 
   describe('cleanup command', () => {
     test('should perform cleanup dry run', () => {
