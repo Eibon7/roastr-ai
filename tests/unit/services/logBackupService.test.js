@@ -17,25 +17,11 @@ const LogBackupService = require('../../../src/services/logBackupService');
 // Mock dependencies
 jest.mock('aws-sdk');
 jest.mock('fs-extra');
-jest.mock('fs', () => ({
-  ...jest.requireActual('fs'),
-  createReadStream: jest.fn(() => ({
-    on: jest.fn((event, handler) => {
-      // Don't call error handler by default
-    })
-  }))
-}));
 jest.mock('../../../src/utils/advancedLogger', () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
-  debug: jest.fn(),
-  queueLogger: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn()
-  }
+  debug: jest.fn()
 }));
 
 describe('LogBackupService', () => {
@@ -155,52 +141,30 @@ describe('LogBackupService', () => {
         })
       );
       
-      // S3 returns Location and ETag (capitalized)
-      expect(result.Location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
-      expect(result.ETag).toBe('"test-etag"');
+      expect(result).toEqual({
+        location: 'https://test-bucket.s3.amazonaws.com/test-key',
+        etag: '"test-etag"',
+        size: 1024
+      });
     });
 
     test('should handle upload errors with retry', async () => {
       const error = new Error('Network error');
-      error.code = 'RequestTimeout'; // Make it retryable
-      
-      // Mock fs.stat for file size
-      fs.stat.mockResolvedValue({ size: 1024 });
-
-      // Mock S3 upload with retry behavior - fail twice, succeed on third attempt
-      let attemptCount = 0;
-      mockS3.upload.mockImplementation(() => {
-        attemptCount++;
-        const promiseFn = jest.fn();
-        
-        if (attemptCount <= 2) {
-          promiseFn.mockRejectedValue(error);
-        } else {
-          promiseFn.mockResolvedValue({ 
-            Location: 'https://test-bucket.s3.amazonaws.com/test-key',
-            ETag: '"success-etag"'
-          });
-        }
-        
-        return { promise: promiseFn };
+      mockS3.upload.mockReturnValue({
+        promise: jest.fn()
+          .mockRejectedValueOnce(error)
+          .mockRejectedValueOnce(error)
+          .mockResolvedValue({ Location: 'success', ETag: 'success' })
       });
 
       const result = await logBackupService.uploadFileToS3('/test/file.log', 'test-key');
       
-      // Verify retry was attempted (should be called 3 times due to retry logic)
       expect(mockS3.upload).toHaveBeenCalledTimes(3);
-      expect(result.Location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
-      expect(result.ETag).toBe('"success-etag"');
+      expect(result.location).toBe('success');
     });
 
     test('should fail after max retries', async () => {
       const error = new Error('Persistent error');
-      error.code = 'RequestTimeout'; // Make it retryable
-      
-      // Mock fs.stat for file size
-      fs.stat.mockResolvedValue({ size: 1024 });
-
-      // Mock S3 upload to always fail
       mockS3.upload.mockReturnValue({
         promise: jest.fn().mockRejectedValue(error)
       });
@@ -209,7 +173,6 @@ describe('LogBackupService', () => {
         logBackupService.uploadFileToS3('/test/file.log', 'test-key')
       ).rejects.toThrow('Persistent error');
       
-      // Should be called 3 times (maxRetries)
       expect(mockS3.upload).toHaveBeenCalledTimes(3);
     });
   });

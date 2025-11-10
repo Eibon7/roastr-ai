@@ -58,7 +58,7 @@ class LogBackupService {
    * Check if S3 backup is available
    */
   isBackupEnabled() {
-    return this.s3 !== null && this.bucketName;
+    return this.s3 !== null && !!this.bucketName;
   }
 
   /**
