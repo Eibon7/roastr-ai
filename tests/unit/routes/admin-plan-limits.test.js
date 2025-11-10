@@ -3,16 +3,22 @@ const express = require('express');
 const adminRoutes = require('../../../src/routes/admin');
 const planLimitsService = require('../../../src/services/planLimitsService');
 
+// Set NODE_ENV to test BEFORE any imports
+process.env.NODE_ENV = 'test';
+
 // Mock dependencies
 jest.mock('../../../src/services/planLimitsService', () => ({
     getAllPlanLimits: jest.fn(),
-    getPlanLimits: jest.fn()
+    getPlanLimits: jest.fn(),
+    updatePlanLimits: jest.fn(),
+    clearCache: jest.fn()
 }));
 
 jest.mock('../../../src/config/supabase', () => ({
     supabaseServiceClient: {
         from: jest.fn()
-    }
+    },
+    getUserFromToken: jest.fn()
 }));
 
 jest.mock('../../../src/services/metricsService', () => ({
@@ -34,10 +40,24 @@ jest.mock('../../../src/utils/logger', () => ({
     }
 }));
 
+// Mock CSRF middleware
+jest.mock('../../../src/middleware/csrf', () => ({
+    validateCsrfToken: jest.fn((req, res, next) => next()),
+    setCsrfToken: jest.fn((req, res, next) => next())
+}));
+
+// Mock admin rate limiter
+jest.mock('../../../src/middleware/adminRateLimiter', () => ({
+    adminRateLimiter: jest.fn((req, res, next) => next())
+}));
+
 describe('Admin Plan Limits Routes', () => {
     let app;
 
     beforeAll(() => {
+        // Ensure NODE_ENV is set to test
+        process.env.NODE_ENV = 'test';
+        
         app = express();
         app.use(express.json());
         app.use('/api/admin', adminRoutes);
@@ -45,6 +65,8 @@ describe('Admin Plan Limits Routes', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        // Ensure NODE_ENV is test for each test
+        process.env.NODE_ENV = 'test';
     });
 
     describe('GET /api/admin/plan-limits', () => {
