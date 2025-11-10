@@ -278,13 +278,14 @@ describe('Multi-Tenant RLS Integration Tests - Issue #800 (5 Additional Tables)'
     const orgId = uuidv4();
     const ownerId = uuidv4();
     const slug = `test-issue-800-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const email = `${slug}@test.local`;
 
     // Create user
     const { error: userError } = await serviceClient
       .from('users')
       .insert({
         id: ownerId,
-        email: `${slug}@test.local`,
+        email,
         name: name
       });
 
@@ -309,7 +310,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #800 (5 Additional Tables)'
       throw new Error(`Failed to create organization: ${orgError.message}`);
     }
 
-    return { id: orgId, ownerId, ...org };
+    return { id: orgId, ownerId, email, slug, ...org };
   }
 
   async function populateTestData() {
@@ -322,14 +323,16 @@ describe('Multi-Tenant RLS Integration Tests - Issue #800 (5 Additional Tables)'
       {
         organization_id: tenantA.id,
         level: 'error',
+        category: 'test',
         message: 'Test error for Tenant A',
-        context: { source: 'issue-800-test' }
+        metadata: { source: 'issue-800-test' }
       },
       {
         organization_id: tenantB.id,
         level: 'error',
+        category: 'test',
         message: 'Test error for Tenant B',
-        context: { source: 'issue-800-test' }
+        metadata: { source: 'issue-800-test' }
       }
     ]);
     if (appLogsError) console.warn('    ⚠️  app_logs error:', appLogsError.message);
@@ -340,14 +343,14 @@ describe('Multi-Tenant RLS Integration Tests - Issue #800 (5 Additional Tables)'
       {
         organization_id: tenantA.id,
         key_hash: 'test_hash_a_' + Date.now(),
-        key_prefix: 'test_a',
+        key_preview: 'test_a',
         name: 'Test Key A',
         scopes: ['read']
       },
       {
         organization_id: tenantB.id,
         key_hash: 'test_hash_b_' + Date.now(),
-        key_prefix: 'test_b',
+        key_preview: 'test_b',
         name: 'Test Key B',
         scopes: ['read']
       }
@@ -379,15 +382,20 @@ describe('Multi-Tenant RLS Integration Tests - Issue #800 (5 Additional Tables)'
     // User-scoped tables (2 tables)
 
     // 4. account_deletion_requests
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30); // 30 days from now
+
     const { error: deletionError } = await serviceClient.from('account_deletion_requests').insert([
       {
         user_id: tenantA.ownerId,
-        reason: 'Test deletion request A',
+        user_email: tenantA.email,
+        scheduled_deletion_at: futureDate.toISOString(),
         status: 'pending'
       },
       {
         user_id: tenantB.ownerId,
-        reason: 'Test deletion request B',
+        user_email: tenantB.email,
+        scheduled_deletion_at: futureDate.toISOString(),
         status: 'pending'
       }
     ]);
