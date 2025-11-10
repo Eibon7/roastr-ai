@@ -215,7 +215,6 @@ class LogBackupService {
         etag: result.ETag
       });
 
-      // Return consistent lowercase keys with size included
       return {
         location: result.Location,
         etag: result.ETag,
