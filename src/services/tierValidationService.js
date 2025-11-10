@@ -13,6 +13,7 @@ const { supabaseServiceClient } = require('../config/supabase');
 const planLimitsService = require('./planLimitsService');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const { SENTRY_ENABLED, addBreadcrumb: sentryAddBreadcrumb, captureException: sentryCaptureException } = require('../config/sentry');  // Issue #396 AC3
 const {
     TIER_PRICING,
     UPGRADE_CONFIG,
@@ -50,9 +51,19 @@ class TierValidationService {
             validationCalls: 0,
             allowedActions: 0,
             blockedActions: 0,
-            errors: 0
+            errors: 0,
+            // Issue #396: Cache performance monitoring
+            cacheHits: 0,
+            cacheMisses: 0
         };
-        
+
+        // Issue #396: Error alerting configuration
+        this.errorTimestamps = [];  // Track errors for last hour
+        this.lastAlertTime = null;   // Prevent alert spam
+        this.alertCooldownMs = 300000; // 5 min between alerts (300,000ms)
+        this.errorRateThreshold = 5;  // 5% error rate threshold
+        this.errorCountThreshold = 100; // 100 errors per hour threshold
+
         // Use centralized platform configuration (CodeRabbit Round 7)
         this.SUPPORTED_PLATFORMS = SUPPORTED_PLATFORMS;
     }
@@ -83,7 +94,15 @@ class TierValidationService {
         }
 
         const requestId = options.requestId || `${userId}-${action}-${Date.now()}`;
-        
+
+        // Issue #396 AC3: Sentry breadcrumb - validation start
+        this.addSentryBreadcrumb('validation_start', {
+            userId,
+            action,
+            requestId,
+            platform: options.platform
+        });
+
         // Request-scoped caching to prevent duplicate validations (CodeRabbit Round 4)
         const cacheKey = `${requestId}-${userId}-${action}`;
         if (this.requestScopedCache.has(cacheKey)) {
@@ -120,7 +139,9 @@ class TierValidationService {
             
             // Enhanced database error detection with fail-closed security (CodeRabbit Round 7)
             if (this.detectDatabaseErrors(userTier, currentUsage, tierLimits)) {
-                this.metrics.errors++;
+                // Issue #396: Use recordError() for alerting
+                const dbError = new Error('Database validation error - failing closed');
+                this.recordError(userId, action, dbError);
                 logger.error('Database validation error - failing closed', {
                     userId,
                     action,
@@ -166,10 +187,51 @@ class TierValidationService {
                 this.metrics.allowedActions++;
             }
 
+            // Issue #396 AC3: Sentry breadcrumb - validation complete
+            this.addSentryBreadcrumb('validation_complete', {
+                userId,
+                action,
+                allowed: result.allowed,
+                reason: result.reason,
+                tier: result.currentTier,
+                requestId
+            });
+
             return result;
 
         } catch (error) {
-            this.metrics.errors++;
+            // Issue #396: Use recordError() for alerting
+            this.recordError(userId, action, error);
+
+            // Issue #396 AC3: Sentry breadcrumb + exception capture
+            this.addSentryBreadcrumb('validation_error', {
+                level: 'error',
+                userId,
+                action,
+                error: error.message,
+                requestId
+            });
+
+            // Enhanced Sentry exception capture with full context
+            if (SENTRY_ENABLED) {
+                sentryCaptureException(error, {
+                    extra: {
+                        userId,
+                        action,
+                        options,
+                        requestId,
+                        metrics: this.getMetrics(),
+                        cachePerformance: this.getCachePerformanceMetrics()
+                    },
+                    tags: {
+                        service: 'tier_validation',
+                        action_type: action,
+                        environment: process.env.NODE_ENV
+                    },
+                    level: 'error'
+                });
+            }
+
             logger.error('Error validating tier action:', {
                 error: error.message,
                 stack: error.stack,
@@ -664,13 +726,16 @@ class TierValidationService {
     getCachedUsage(userId) {
         // Don't return cached data if invalidation is pending
         if (this.pendingCacheInvalidations.has(userId)) {
+            this.metrics.cacheMisses++;  // Issue #396: Track cache miss
             return null;
         }
-        
+
         const cached = this.usageCache.get(userId);
         if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+            this.metrics.cacheHits++;  // Issue #396: Track cache hit
             return cached.data;
         }
+        this.metrics.cacheMisses++;  // Issue #396: Track cache miss
         return null;
     }
 
@@ -1152,8 +1217,175 @@ class TierValidationService {
             ...this.metrics,
             cacheSize: this.usageCache.size,
             requestCacheSize: this.requestScopedCache.size,
+            cachePerformance: this.getCachePerformanceMetrics(),
             timestamp: new Date().toISOString()
         };
+    }
+
+    // ============================================================================
+    // ISSUE #396 - PRODUCTION MONITORING & ENHANCEMENTS
+    // ============================================================================
+
+    /**
+     * Get cache performance metrics (Issue #396 - AC1)
+     * Tracks cache hit/miss rates and performance stats
+     * @returns {Object} Cache performance metrics
+     */
+    getCachePerformanceMetrics() {
+        const totalRequests = this.metrics.cacheHits + this.metrics.cacheMisses;
+        const hitRate = totalRequests > 0 ?
+            (this.metrics.cacheHits / totalRequests * 100).toFixed(2) : 0;
+
+        return {
+            hits: this.metrics.cacheHits,
+            misses: this.metrics.cacheMisses,
+            totalRequests,
+            hitRate: `${hitRate}%`,
+            cacheSize: this.usageCache.size,
+            requestCacheSize: this.requestScopedCache.size,
+            ttlMs: this.cacheTimeout,
+            ttlMinutes: (this.cacheTimeout / 60000).toFixed(1),
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    /**
+     * Record error with alerting check (Issue #396 - AC2)
+     * Replaces direct this.metrics.errors++ calls
+     * @param {string} userId - User ID
+     * @param {string} action - Action type
+     * @param {Error} error - Error object
+     */
+    recordError(userId, action, error) {
+        this.metrics.errors++;
+        this.errorTimestamps.push(Date.now());
+        this.pruneOldErrors();
+
+        // Check if alert needed (HIGH PRIORITY - AC2)
+        this.checkErrorThresholds(userId, action, error);
+    }
+
+    /**
+     * Prune errors older than 1 hour (Issue #396 - AC2)
+     * Maintains sliding window for error rate calculation
+     * @private
+     */
+    pruneOldErrors() {
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        this.errorTimestamps = this.errorTimestamps.filter(t => t > oneHourAgo);
+    }
+
+    /**
+     * Check error thresholds and trigger alerts if exceeded (Issue #396 - AC2)
+     * Threshold 1: Error rate >5%
+     * Threshold 2: Absolute count >100 errors/hour
+     * @param {string} userId - User ID
+     * @param {string} action - Action type
+     * @param {Error} error - Error object
+     * @private
+     */
+    checkErrorThresholds(userId, action, error) {
+        this.pruneOldErrors();
+
+        const errorCount = this.errorTimestamps.length;
+        const errorRate = this.metrics.validationCalls > 0 ?
+            (this.metrics.errors / this.metrics.validationCalls * 100) : 0;
+
+        // Threshold 1: Error rate >5%
+        const rateExceeded = errorRate > this.errorRateThreshold;
+
+        // Threshold 2: Absolute count >100/hour
+        const countExceeded = errorCount > this.errorCountThreshold;
+
+        // Check cooldown to prevent alert spam
+        const canAlert = !this.lastAlertTime ||
+            (Date.now() - this.lastAlertTime) > this.alertCooldownMs;
+
+        if ((rateExceeded || countExceeded) && canAlert) {
+            this.triggerAlert({
+                userId,
+                action,
+                error: error.message,
+                stack: error.stack,
+                metrics: {
+                    errorRate: `${errorRate.toFixed(2)}%`,
+                    errorsLastHour: errorCount,
+                    totalErrors: this.metrics.errors,
+                    totalValidations: this.metrics.validationCalls,
+                    allowedActions: this.metrics.allowedActions,
+                    blockedActions: this.metrics.blockedActions
+                },
+                thresholds: {
+                    rateThreshold: `${this.errorRateThreshold}%`,
+                    countThreshold: this.errorCountThreshold,
+                    cooldownMinutes: (this.alertCooldownMs / 60000)
+                },
+                violations: {
+                    rateExceeded,
+                    countExceeded
+                },
+                cachePerformance: this.getCachePerformanceMetrics(),
+                timestamp: new Date().toISOString()
+            });
+
+            this.lastAlertTime = Date.now();
+        }
+    }
+
+    /**
+     * Trigger alert for error threshold violation (Issue #396 - AC2)
+     * Logs structured alert and optionally sends to external monitoring
+     * @param {Object} alertData - Alert data object
+     * @private
+     */
+    triggerAlert(alertData) {
+        logger.error('🚨 TIER VALIDATION ALERT: Error threshold exceeded', {
+            category: 'tier_validation_alert',
+            severity: 'high',
+            alertType: 'error_threshold_exceeded',
+            ...alertData
+        });
+
+        // Optional: Send to external monitoring (webhook, Slack, PagerDuty)
+        if (process.env.ALERT_WEBHOOK_URL) {
+            // Non-blocking webhook call
+            fetch(process.env.ALERT_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: 'tier_validation_service',
+                    alertType: 'error_threshold_exceeded',
+                    ...alertData
+                })
+            }).catch(webhookError => {
+                logger.error('Failed to send alert webhook', {
+                    webhookError: webhookError.message,
+                    originalAlert: alertData
+                });
+            });
+        }
+    }
+
+    /**
+     * Add Sentry breadcrumb (Issue #396 - AC3)
+     * Enhanced error tracking with context breadcrumbs
+     * @param {string} category - Breadcrumb category
+     * @param {Object} data - Breadcrumb data
+     * @private
+     */
+    addSentryBreadcrumb(category, data = {}) {
+        if (!SENTRY_ENABLED) return;
+
+        sentryAddBreadcrumb({
+            category: `tier_validation.${category}`,
+            message: data.message || category,
+            level: data.level || 'info',
+            data: {
+                ...data,
+                service: 'tier_validation_service',
+                timestamp: new Date().toISOString()
+            }
+        });
     }
 
 
@@ -1407,16 +1639,23 @@ class TierValidationService {
     getCachedUserTier(userId) {
         // Don't return cached data if invalidation is pending
         if (this.pendingCacheInvalidations.has(userId)) {
+            this.metrics.cacheMisses++;  // Issue #396: Track cache miss
             return null;
         }
-        
-        if (this.lastCacheRefresh && 
+
+        if (this.lastCacheRefresh &&
             Date.now() - this.lastCacheRefresh > this.cacheTimeout) {
             this.usageCache.clear();
             this.lastCacheRefresh = null;
         }
 
-        return this.usageCache.get(`tier_${userId}`);
+        const cached = this.usageCache.get(`tier_${userId}`);
+        if (cached) {
+            this.metrics.cacheHits++;  // Issue #396: Track cache hit
+        } else {
+            this.metrics.cacheMisses++;  // Issue #396: Track cache miss
+        }
+        return cached;
     }
 
     setCachedUserTier(userId, tierData) {
