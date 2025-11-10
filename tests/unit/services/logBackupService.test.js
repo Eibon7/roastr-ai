@@ -17,25 +17,11 @@ const LogBackupService = require('../../../src/services/logBackupService');
 // Mock dependencies
 jest.mock('aws-sdk');
 jest.mock('fs-extra');
-jest.mock('fs', () => ({
-  createReadStream: jest.fn(() => {
-    const stream = require('stream');
-    const readable = new stream.Readable();
-    readable._read = () => {};
-    return readable;
-  })
-}));
 jest.mock('../../../src/utils/advancedLogger', () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
-  debug: jest.fn(),
-  queueLogger: {
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
   debug: jest.fn()
-  }
 }));
 
 describe('LogBackupService', () => {
