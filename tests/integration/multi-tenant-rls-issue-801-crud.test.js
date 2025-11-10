@@ -97,7 +97,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           organization_id: tenantA.id,
           platform: 'youtube',
           enabled: true,
-          credentials_encrypted: 'test_encrypted_data',
+          credentials: { encrypted: true },
           created_at: new Date().toISOString()
         };
 
@@ -120,7 +120,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           organization_id: tenantB.id, // Cross-tenant attempt
           platform: 'youtube',
           enabled: true,
-          credentials_encrypted: 'test_encrypted_data',
+          credentials: { encrypted: true },
           created_at: new Date().toISOString()
         };
 
@@ -141,11 +141,10 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         const newRecord = {
           id: uuidv4(),
           organization_id: tenantA.id,
-          user_id: tenantA.owner_id,
-          resource_type: 'roast_generation',
-          quantity: 1,
-          cost_usd: 0.002,
-          timestamp: new Date().toISOString()
+          platform: 'twitter',
+          action_type: 'generate_reply',
+          tokens_used: 150,
+          cost_cents: 3
         };
 
         const { data, error } = await testClient
@@ -165,11 +164,10 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         const crossTenantRecord = {
           id: uuidv4(),
           organization_id: tenantB.id, // Cross-tenant attempt
-          user_id: tenantB.owner_id,
-          resource_type: 'roast_generation',
-          quantity: 1,
-          cost_usd: 0.002,
-          timestamp: new Date().toISOString()
+          platform: 'twitter',
+          action_type: 'generate_reply',
+          tokens_used: 150,
+          cost_cents: 3
         };
 
         const { data, error } = await testClient
@@ -193,9 +191,9 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           organization_id: tenantA.id,
           year,
           month,
-          total_roasts: 150,
-          total_cost_usd: 0.30,
-          created_at: new Date().toISOString()
+          total_responses: 150,
+          total_cost_cents: 30,
+          responses_limit: 100
         };
 
         const { data, error } = await testClient
@@ -219,9 +217,9 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           organization_id: tenantB.id, // Cross-tenant attempt
           year,
           month,
-          total_roasts: 200,
-          total_cost_usd: 0.40,
-          created_at: new Date().toISOString()
+          total_responses: 200,
+          total_cost_cents: 40,
+          responses_limit: 100
         };
 
         const { data, error } = await testClient
@@ -346,9 +344,22 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
     // --- integration_configs (SECURITY CRITICAL) ---
     describe('integration_configs - Credential Updates', () => {
       test('UPDATE own organization integration_config succeeds', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantA.integrationConfigs.length === 0) {
-          console.log('⚠️  No integration configs to update, skipping');
-          return;
+          const { data: newConfig, error: createError } = await serviceClient
+            .from('integration_configs')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantA.id,
+              platform: 'youtube',
+              enabled: true,
+              credentials: { encrypted: true },
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test integration_config: ${createError.message}`);
+          tenantA.integrationConfigs.push(newConfig);
         }
 
         const configId = tenantA.integrationConfigs[0].id;
@@ -370,9 +381,22 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
       });
 
       test('UPDATE other organization integration_config fails with 42501', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantB.integrationConfigs.length === 0) {
-          console.log('⚠️  No integration configs to test UPDATE cross-tenant, skipping');
-          return;
+          const { data: newConfig, error: createError } = await serviceClient
+            .from('integration_configs')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantB.id,
+              platform: 'youtube',
+              enabled: true,
+              credentials: { encrypted: true },
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test integration_config: ${createError.message}`);
+          tenantB.integrationConfigs.push(newConfig);
         }
 
         const { data, error } = await testClient
@@ -387,9 +411,22 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
       });
 
       test('UPDATE organization_id to another tenant fails', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantA.integrationConfigs.length === 0) {
-          console.log('⚠️  No integration configs to test organization_id UPDATE, skipping');
-          return;
+          const { data: newConfig, error: createError } = await serviceClient
+            .from('integration_configs')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantA.id,
+              platform: 'youtube',
+              enabled: true,
+              credentials: { encrypted: true },
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test integration_config: ${createError.message}`);
+          tenantA.integrationConfigs.push(newConfig);
         }
 
         const { data, error } = await testClient
@@ -406,15 +443,28 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
     // --- usage_records (BILLING CRITICAL) ---
     describe('usage_records - Billing Data Updates', () => {
       test('UPDATE own organization usage_record succeeds', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantA.usageRecords.length === 0) {
-          console.log('⚠️  No usage records to update, skipping');
-          return;
+          const { data: newRecord, error: createError } = await serviceClient
+            .from('usage_records')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantA.id,
+              platform: 'twitter',
+              action_type: 'generate_reply',
+              tokens_used: 150,
+              cost_cents: 3
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test usage_record: ${createError.message}`);
+          tenantA.usageRecords.push(newRecord);
         }
 
         const recordId = tenantA.usageRecords[0].id;
         const { data, error } = await testClient
           .from('usage_records')
-          .update({ cost_usd: 0.005 })
+          .update({ cost_cents: 5 })
           .eq('id', recordId)
           .select();
 
@@ -424,19 +474,32 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         // Restore
         await serviceClient
           .from('usage_records')
-          .update({ cost_usd: 0.002 })
+          .update({ cost_cents: 3 })
           .eq('id', recordId);
       });
 
       test('UPDATE other organization usage_record fails with 42501', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantB.usageRecords.length === 0) {
-          console.log('⚠️  No usage records to test UPDATE cross-tenant, skipping');
-          return;
+          const { data: newRecord, error: createError } = await serviceClient
+            .from('usage_records')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantB.id,
+              platform: 'twitter',
+              action_type: 'generate_reply',
+              tokens_used: 150,
+              cost_cents: 3
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test usage_record: ${createError.message}`);
+          tenantB.usageRecords.push(newRecord);
         }
 
         const { data, error } = await testClient
           .from('usage_records')
-          .update({ cost_usd: 0.999 })
+          .update({ cost_cents: 999 })
           .eq('id', tenantB.usageRecords[0].id) // Cross-tenant row
           .select();
 
@@ -449,15 +512,29 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
     // --- monthly_usage (BILLING CRITICAL) ---
     describe('monthly_usage - Billing Summary Updates', () => {
       test('UPDATE own organization monthly_usage succeeds', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantA.monthlyUsage.length === 0) {
-          console.log('⚠️  No monthly usage to update, skipping');
-          return;
+          const now = new Date();
+          const { data: newMonthly, error: createError } = await serviceClient
+            .from('monthly_usage')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantA.id,
+              year: now.getFullYear(),
+              month: now.getMonth() + 1,
+              total_responses: 50,
+              responses_limit: 100
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test monthly_usage: ${createError.message}`);
+          tenantA.monthlyUsage.push(newMonthly);
         }
 
         const monthlyId = tenantA.monthlyUsage[0].id;
         const { data, error } = await testClient
           .from('monthly_usage')
-          .update({ total_roasts: 999 })
+          .update({ total_responses: 999 })
           .eq('id', monthlyId)
           .select();
 
@@ -467,19 +544,33 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         // Restore
         await serviceClient
           .from('monthly_usage')
-          .update({ total_roasts: tenantA.monthlyUsage[0].total_roasts })
+          .update({ total_responses: tenantA.monthlyUsage[0].total_responses })
           .eq('id', monthlyId);
       });
 
       test('UPDATE other organization monthly_usage fails with 42501', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantB.monthlyUsage.length === 0) {
-          console.log('⚠️  No monthly usage to test UPDATE cross-tenant, skipping');
-          return;
+          const now = new Date();
+          const { data: newMonthly, error: createError } = await serviceClient
+            .from('monthly_usage')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantB.id,
+              year: now.getFullYear(),
+              month: now.getMonth() + 1,
+              total_responses: 50,
+              responses_limit: 100
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test monthly_usage: ${createError.message}`);
+          tenantB.monthlyUsage.push(newMonthly);
         }
 
         const { data, error } = await testClient
           .from('monthly_usage')
-          .update({ total_roasts: 999 })
+          .update({ total_responses: 999 })
           .eq('id', tenantB.monthlyUsage[0].id) // Cross-tenant row
           .select();
 
@@ -526,9 +617,25 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
     // --- responses (MEDIUM PRIORITY) ---
     describe('responses - Generated Responses Updates', () => {
       test('UPDATE own organization response succeeds', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantA.responses.length === 0) {
-          console.log('⚠️  No responses to update, skipping');
-          return;
+          if (tenantA.comments.length === 0) {
+            throw new Error('Cannot create response: tenantA.comments is empty');
+          }
+          const { data: newResponse, error: createError } = await serviceClient
+            .from('responses')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantA.id,
+              comment_id: tenantA.comments[0].id,
+              response_text: 'Test response',
+              tone: 'sarcastic',
+              humor_type: 'witty'
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test response: ${createError.message}`);
+          tenantA.responses.push(newResponse);
         }
 
         const responseId = tenantA.responses[0].id;
@@ -549,9 +656,25 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
       });
 
       test('UPDATE other organization response fails with 42501', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantB.responses.length === 0) {
-          console.log('⚠️  No responses to test UPDATE cross-tenant, skipping');
-          return;
+          if (tenantB.comments.length === 0) {
+            throw new Error('Cannot create response: tenantB.comments is empty');
+          }
+          const { data: newResponse, error: createError } = await serviceClient
+            .from('responses')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantB.id,
+              comment_id: tenantB.comments[0].id,
+              response_text: 'Test response',
+              tone: 'sarcastic',
+              humor_type: 'witty'
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test response: ${createError.message}`);
+          tenantB.responses.push(newResponse);
         }
 
         const { data, error } = await testClient
@@ -673,9 +796,25 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
       });
 
       test('DELETE other organization response fails with 42501', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantB.responses.length === 0) {
-          console.log('⚠️  No responses to test DELETE cross-tenant, skipping');
-          return;
+          if (tenantB.comments.length === 0) {
+            throw new Error('Cannot create response: tenantB.comments is empty');
+          }
+          const { data: newResponse, error: createError } = await serviceClient
+            .from('responses')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantB.id,
+              comment_id: tenantB.comments[0].id,
+              response_text: 'Test response',
+              tone: 'sarcastic',
+              humor_type: 'witty'
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test response: ${createError.message}`);
+          tenantB.responses.push(newResponse);
         }
 
         const { error } = await testClient
@@ -699,12 +838,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
     // --- user_activities (Safe to delete - audit log test data) ---
     describe('user_activities - Activity Log Deletion', () => {
       test('DELETE own organization activity succeeds', async () => {
-        if (tenantA.userActivities.length === 0) {
-          console.log('⚠️  No user activities to DELETE, skipping');
-          return;
-        }
-
-        // Create temporary activity
+        // Create temporary activity (always create fresh for DELETE test)
         const tempActivity = {
           id: uuidv4(),
           organization_id: tenantA.id,
@@ -731,9 +865,22 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
       });
 
       test('DELETE other organization activity fails with 42501', async () => {
+        // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
         if (tenantB.userActivities.length === 0) {
-          console.log('⚠️  No user activities to test DELETE cross-tenant, skipping');
-          return;
+          const { data: newActivity, error: createError } = await serviceClient
+            .from('user_activities')
+            .insert({
+              id: uuidv4(),
+              organization_id: tenantB.id,
+              user_id: tenantB.owner_id,
+              action: 'test_action',
+              resource_type: 'test',
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          if (createError) throw new Error(`Failed to create test user_activity: ${createError.message}`);
+          tenantB.userActivities.push(newActivity);
         }
 
         const { error } = await testClient
