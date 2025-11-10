@@ -29,7 +29,13 @@ jest.mock('../../../src/utils/advancedLogger', () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
-  debug: jest.fn()
+  debug: jest.fn(),
+  queueLogger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  }
 }));
 
 describe('LogBackupService', () => {
