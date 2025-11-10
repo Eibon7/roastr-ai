@@ -60,7 +60,8 @@ describe('LogBackupService', () => {
       listObjectsV2: jest.fn(),
       deleteObjects: jest.fn(),
       getObject: jest.fn(),
-      headBucket: jest.fn()
+      headBucket: jest.fn(),
+      headObject: jest.fn()
     };
     
     AWS.S3.mockImplementation(() => mockS3);
@@ -70,6 +71,7 @@ describe('LogBackupService', () => {
     fs.ensureDir = jest.fn();
     fs.readdir = jest.fn();
     fs.writeFile = jest.fn();
+    fs.pathExists = jest.fn().mockResolvedValue(true);
     
     logBackupService = new LogBackupService();
   });
@@ -155,9 +157,10 @@ describe('LogBackupService', () => {
         })
       );
       
-      // S3 returns Location and ETag (capitalized)
-      expect(result.Location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
-      expect(result.ETag).toBe('"test-etag"');
+      // Service returns lowercase keys with size
+      expect(result.location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
+      expect(result.etag).toBe('"test-etag"');
+      expect(result.size).toBe(1024);
     });
 
     test('should handle upload errors with retry', async () => {
@@ -189,8 +192,9 @@ describe('LogBackupService', () => {
       
       // Verify retry was attempted (should be called 3 times due to retry logic)
       expect(mockS3.upload).toHaveBeenCalledTimes(3);
-      expect(result.Location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
-      expect(result.ETag).toBe('"success-etag"');
+      expect(result.location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
+      expect(result.etag).toBe('"success-etag"');
+      expect(result.size).toBe(1024);
     });
 
     test('should fail after max retries', async () => {
@@ -216,10 +220,17 @@ describe('LogBackupService', () => {
 
   describe('backupLogsForDate', () => {
     beforeEach(() => {
-      fs.readdir.mockResolvedValue(['app.log', 'error.log']);
+      // Mock pathExists to return true for directories
+      fs.pathExists.mockResolvedValue(true);
+      // Mock readdir to return files with date in name (required by service)
+      fs.readdir.mockResolvedValue(['app-2024-01-01.log', 'error-2024-01-01.log']);
       fs.stat.mockResolvedValue({ size: 1024, isFile: () => true });
       mockS3.upload.mockReturnValue({
         promise: jest.fn().mockResolvedValue({ Location: 'success', ETag: 'success' })
+      });
+      // Mock headObject for skipExisting check
+      mockS3.headObject.mockReturnValue({
+        promise: jest.fn().mockRejectedValue({ code: 'NotFound' })
       });
     });
 
@@ -227,7 +238,8 @@ describe('LogBackupService', () => {
       const targetDate = new Date('2024-01-01');
       
       const result = await logBackupService.backupLogsForDate(targetDate, {
-        includeDirectories: ['application']
+        includeDirectories: ['application'],
+        skipExisting: false
       });
 
       expect(result.uploaded).toHaveLength(2);
@@ -249,8 +261,10 @@ describe('LogBackupService', () => {
     });
 
     test('should skip existing files when skipExisting is true', async () => {
-      mockS3.upload.mockReturnValue({
-        promise: jest.fn().mockRejectedValue({ code: 'NoSuchKey' })
+      // Reset and reconfigure headObject to return success (file exists)
+      mockS3.headObject.mockReset();
+      mockS3.headObject.mockReturnValue({
+        promise: jest.fn().mockResolvedValue({}) // File exists
       });
 
       const targetDate = new Date('2024-01-01');
@@ -260,15 +274,17 @@ describe('LogBackupService', () => {
       });
 
       expect(result.skipped).toHaveLength(2);
+      expect(mockS3.upload).not.toHaveBeenCalled();
     });
 
     test('should validate date range', async () => {
+      // Service allows up to 24 hours in the future
       const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 1);
+      futureDate.setTime(futureDate.getTime() + 25 * 60 * 60 * 1000); // 25 hours
 
       await expect(
         logBackupService.backupLogsForDate(futureDate)
-      ).rejects.toThrow('targetDate cannot be in the future');
+      ).rejects.toThrow('targetDate cannot be more than 24 hours in the future');
 
       const oldDate = new Date();
       oldDate.setFullYear(oldDate.getFullYear() - 11);
@@ -297,7 +313,9 @@ describe('LogBackupService', () => {
               LastModified: new Date('2024-01-01'),
               Size: 1024
             }
-          ]
+          ],
+          IsTruncated: false,
+          KeyCount: 1
         })
       });
 
@@ -308,17 +326,21 @@ describe('LogBackupService', () => {
         key: 'test-logs/2024-01-01/app.log',
         lastModified: new Date('2024-01-01'),
         size: 1024,
-        sizeFormatted: '1.00 KB'
+        sizeFormatted: '1.00KB'
       });
+      expect(result.truncated).toBe(false);
+      expect(result.totalObjects).toBe(1);
+      expect(result.totalSize).toBe(1024);
     });
 
     test('should filter backups by date', async () => {
       mockS3.listObjectsV2.mockReturnValue({
         promise: jest.fn().mockResolvedValue({
           Contents: [
-            { Key: 'test-logs/2024-01-01/app.log', LastModified: new Date(), Size: 1024 },
-            { Key: 'test-logs/2024-01-02/app.log', LastModified: new Date(), Size: 1024 }
-          ]
+            { Key: 'test-logs/2024-01-01/app.log', LastModified: new Date(), Size: 1024 }
+          ],
+          IsTruncated: false,
+          KeyCount: 1
         })
       });
 
@@ -326,9 +348,13 @@ describe('LogBackupService', () => {
 
       expect(mockS3.listObjectsV2).toHaveBeenCalledWith(
         expect.objectContaining({
-          Prefix: 'test-logs/2024-01-01/'
+          Prefix: 'test-logs/2024-01-01',
+          Bucket: 'test-bucket',
+          MaxKeys: 1000
         })
       );
+      expect(result.backups).toHaveLength(1);
+      expect(result.backups[0].key).toBe('test-logs/2024-01-01/app.log');
     });
   });
 });

@@ -58,7 +58,7 @@ class LogBackupService {
    * Check if S3 backup is available
    */
   isBackupEnabled() {
-    return this.s3 !== null && this.bucketName;
+    return this.s3 !== null && !!this.bucketName;
   }
 
   /**
@@ -215,7 +215,11 @@ class LogBackupService {
         etag: result.ETag
       });
 
-      return result;
+      return {
+        location: result.Location,
+        etag: result.ETag,
+        size: stats.size
+      };
 
     } catch (error) {
       advancedLogger.error('Failed to upload file to S3', {
