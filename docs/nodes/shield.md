@@ -1192,13 +1192,17 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 ### Ubicación de Tests
 
-**Unit Tests** (13 archivos):
+**Unit Tests** (14 archivos):
 - `tests/unit/services/shieldService.test.js` - Core service functionality
 - `tests/unit/services/shieldService-edge-cases.test.js` - Edge cases and error handling
 - `tests/unit/services/shieldDecisionEngine.test.js` - Decision logic and thresholds
 - `tests/unit/services/shieldActionExecutor.test.js` - Action execution layer
 - `tests/unit/services/shieldPersistenceService.test.js` - Database persistence
 - `tests/unit/services/shieldPersistenceService-retention.test.js` - Data retention policies
+- `tests/unit/services/shieldSettingsService.test.js` - **Settings service (Issue #503)** ✅
+  - **64 comprehensive tests** covering all functionality
+  - **Coverage: 96.93%** (improved from 8.58%)
+  - Cache management, org/platform settings, validation, inheritance logic
 - `tests/unit/routes/shield-round2.test.js` - API endpoints (Round 2)
 - `tests/unit/routes/shield-round3-security.test.js` - Security hardening
 - `tests/unit/routes/shield-round4-enhancements.test.js` - Feature enhancements
@@ -1229,8 +1233,9 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 ### Cobertura de Tests
 
-- **Total Tests**: ~30 archivos de test
-- **Unit Test Coverage**: ~95% del código crítico
+- **Total Tests**: ~31 archivos de test
+- **Unit Test Coverage**: ~96% del código crítico
+- **ShieldSettingsService Coverage**: 96.93% (Issue #503 - improved from 8.58%)
 - **Integration Tests**: 10+ escenarios de flujo completo
 - **Visual Tests**: Estabilidad de UI en Round 5
 
