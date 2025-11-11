@@ -1418,6 +1418,19 @@ class TierValidationService {
 
         // Optional: Send to external monitoring (webhook, Slack, PagerDuty)
         if (process.env.ALERT_WEBHOOK_URL) {
+            // Guard: Check fetch availability (CodeRabbit Review #3447209994)
+            // In Node <18, Jest, or environments without experimental fetch,
+            // fetch() is not defined and would throw ReferenceError
+            if (typeof fetch !== 'function') {
+                logger.warn('Skipping alert webhook because fetch is not available in this runtime', {
+                    alertData,
+                    nodeVersion: process.version,
+                    hasGlobalFetch: typeof fetch,
+                    hint: 'Use Node.js ≥18 or enable --experimental-fetch flag'
+                });
+                return;
+            }
+
             // Non-blocking webhook call
             fetch(process.env.ALERT_WEBHOOK_URL, {
                 method: 'POST',

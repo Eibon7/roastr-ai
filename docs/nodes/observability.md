@@ -999,7 +999,7 @@ ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXX
 ```
 
 Expected Slack message format (auto-formatted by Slack):
-```
+```text
 🚨 Tier Validation Alert
 Service: tier_validation_service
 Type: error_threshold_exceeded
