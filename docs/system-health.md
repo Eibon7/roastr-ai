@@ -1,16 +1,16 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-11-11T10:28:43.729Z
+**Generated:** 2025-11-11T10:55:43.724Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 87.6/100
+**Average Score:** 88.4/100
 
 ---
 
 ## Summary
 
 - **Total Nodes:** 15
-- 🟢 **Healthy (80-100):** 13
-- 🟡 **Degraded (50-79):** 2
+- 🟢 **Healthy (80-100):** 14
+- 🟡 **Degraded (50-79):** 1
 - 🔴 **Critical (<50):** 0
 
 ---
@@ -20,13 +20,13 @@
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
 | social-platforms | 🟡 76 | degraded | 2025-10-09 | 0% | 0 | 0 |
-| multi-tenant | 🟡 78 | degraded | 2025-11-10 | N/A | 0 | 0 |
 | guardian | 🟢 80 | healthy | 2025-10-23 | 0% | 0 | 0 |
 | analytics | 🟢 82 | healthy | 2025-10-29 | 30% | 0 | 0 |
 | trainer | 🟢 82 | healthy | 2025-10-29 | 0% | 0 | 0 |
 | observability | 🟢 83 | healthy | 2025-10-18 | 46% | 0 | 0 |
 | billing | 🟢 90 | healthy | 2025-10-29 | 72% | 0 | 0 |
 | cost-control | 🟢 90 | healthy | 2025-10-28 | 64% | 0 | 0 |
+| multi-tenant | 🟢 90 | healthy | 2025-11-10 | 50% | 0 | 0 |
 | plan-features | 🟢 90 | healthy | 2025-10-28 | 65% | 0 | 0 |
 | platform-constraints | 🟢 90 | healthy | 2025-10-29 | 67% | 0 | 0 |
 | queue-system | 🟢 90 | healthy | 2025-10-28 | 68% | 0 | 0 |
@@ -50,19 +50,6 @@
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
-
-
-### multi-tenant (Score: 78)
-
-**Status:** 🟡 DEGRADED
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 98/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 0/100
-- Agent Relevance: 100/100
-- Integrity Score: 80/100
 
 
 ### guardian (Score: 80)
@@ -100,6 +87,19 @@
 - Update Freshness: 74/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### observability (Score: 83)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 52/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
