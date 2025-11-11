@@ -1,14 +1,25 @@
 {
-  "timestamp": "2025-11-09T15:46:53.315Z",
+  "timestamp": "2025-11-11T11:27:40.325Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 0,
+  "fixes_applied": 2,
   "errors": 0,
-  "health_before": 88.5,
-  "health_after": 88.5,
+  "health_before": 86.5,
+  "health_after": 88.1,
   "details": {
-    "fixes": [],
+    "fixes": [
+      {
+        "type": "auto",
+        "node": "billing",
+        "action": "Added coverage to billing"
+      },
+      {
+        "type": "auto",
+        "node": "multi-tenant",
+        "action": "Added coverage to multi-tenant"
+      }
+    ],
     "humanReview": [
       {
         "node": "social-platforms",
