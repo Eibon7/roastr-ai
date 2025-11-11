@@ -1074,7 +1074,7 @@ SENTRY_FORCE_ENABLE=false  # Force enable in non-production
 #### Dashboard Integration
 
 **Endpoints (Recommended):**
-```
+```http
 GET /api/tier-validation/metrics
   → Returns full metrics including cache performance
 
@@ -1090,7 +1090,7 @@ GET /api/tier-validation/cache-performance
 5. Alert frequency (counter)
 
 **Log Aggregation (ELK/Datadog):**
-```
+```text
 # Find all tier validation alerts
 category:"tier_validation_alert" AND severity:"high"
 
