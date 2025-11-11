@@ -98,6 +98,27 @@ jest.mock('../../../src/utils/logger', () => ({
 
 const CostControlService = require('../../../src/services/costControl');
 
+/**
+ * CostControlService - Alert Methods Test Suite
+ * 
+ * @description Comprehensive tests for alert-related functionality
+ * @issue #500 - Final push to reach 60% coverage
+ * 
+ * Coverage targets:
+ * - getAlertHistory: Retrieve historical alerts
+ * - getAlertStats: Aggregate alert statistics
+ * - getEnhancedUsageStats: Detailed usage analytics
+ * - checkAndSendUsageAlerts: Automated alert workflow
+ * - recordUsage: Usage tracking with alert triggers
+ * 
+ * Alert system tests:
+ * - Threshold detection (80%, 90%, 100%)
+ * - Historical data queries
+ * - Statistical aggregations
+ * - Automated notification triggers
+ * 
+ * Mock pattern: Same comprehensive Supabase pattern from main test suite
+ */
 describe('CostControlService - Alert Methods', () => {
   let costControl;
 
@@ -114,6 +135,18 @@ describe('CostControlService - Alert Methods', () => {
     });
   });
 
+  /**
+   * @function getAlertHistory
+   * @description Tests alert history retrieval with date range filtering
+   * 
+   * Tests:
+   * - Date range queries (gte, lte)
+   * - Organization-specific filtering
+   * - Result ordering (most recent first)
+   * - Pagination with limit
+   * 
+   * Mock: Supabase select with gte/lte filters
+   */
   describe('getAlertHistory', () => {
     it('should return alert history for organization', async () => {
       const organizationId = 'test-org-123';
@@ -148,6 +181,18 @@ describe('CostControlService - Alert Methods', () => {
     });
   });
 
+  /**
+   * @function getAlertStats
+   * @description Tests alert statistics aggregation
+   * 
+   * Tests:
+   * - Count by alert type
+   * - Total alert count
+   * - Organization-specific statistics
+   * - Error handling for empty data
+   * 
+   * Returns: { total, byType: {warning: N, critical: M} }
+   */
   describe('getAlertStats', () => {
     it('should return alert statistics for organization', async () => {
       const organizationId = 'test-org-123';
@@ -170,6 +215,19 @@ describe('CostControlService - Alert Methods', () => {
     });
   });
 
+  /**
+   * @function getEnhancedUsageStats
+   * @description Tests enhanced usage statistics with trends
+   * 
+   * Tests:
+   * - Current period usage
+   * - Historical comparisons (previous period)
+   * - Trend calculations (increasing/decreasing)
+   * - Percentage changes
+   * - Projection to end of month
+   * 
+   * Data sources: organization_usage + monthly_usage tables
+   */
   describe('getEnhancedUsageStats', () => {
     it('should return enhanced usage statistics', async () => {
       const organizationId = 'test-org-123';
@@ -220,6 +278,19 @@ describe('CostControlService - Alert Methods', () => {
     });
   });
 
+  /**
+   * @function checkAndSendUsageAlerts
+   * @description Tests automated alert checking and sending workflow
+   * 
+   * Tests:
+   * - Threshold detection (80%, 90%, 100% usage)
+   * - Automatic alert triggering
+   * - Alert deduplication (don't send duplicate alerts)
+   * - Multiple alert levels
+   * - Organization-wide checks
+   * 
+   * Workflow: Check usage → Evaluate thresholds → Send alerts if needed
+   */
   describe('checkAndSendUsageAlerts', () => {
     it('should check and send alerts when threshold exceeded', async () => {
       const organizationId = 'test-org-123';
@@ -306,6 +377,18 @@ describe('CostControlService - Alert Methods', () => {
     });
   });
 
+  /**
+   * @function recordUsage
+   * @description Tests usage recording with integrated alert triggering
+   * 
+   * Tests:
+   * - Usage counter increment
+   * - Automatic alert check after recording
+   * - Combined workflow (record + check + alert)
+   * - Platform-specific usage tracking
+   * 
+   * Integration test: Combines recordUsage + checkAndSendUsageAlerts
+   */
   describe('recordUsage', () => {
     it('should record usage with all tracking', async () => {
       const organizationId = 'test-org-123';

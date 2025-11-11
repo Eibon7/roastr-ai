@@ -96,6 +96,25 @@ jest.mock('../../../src/utils/logger', () => ({
 
 const CostControlService = require('../../../src/services/costControl');
 
+/**
+ * CostControlService - Coverage Gap Tests
+ * 
+ * @description Tests for previously untested methods in CostControlService
+ * @issue #500 - Increase test coverage from 35% to 60%+
+ * 
+ * Coverage targets:
+ * - checkUsageLimit: Verify usage limit enforcement
+ * - incrementUsageCounters: Test counter updates
+ * - sendUsageAlert: Alert notification system
+ * - setUsageLimit: Custom limit configuration
+ * - getBillingSummary: Billing aggregation
+ * - updatePlanUsageLimits: Plan limit updates
+ * - resetAllMonthlyUsage: Monthly reset workflow
+ * - createDefaultUsageAlerts: Default alert creation
+ * 
+ * Mock pattern: Follows working pattern from costControl.test.js
+ * Supabase mocks: Comprehensive query builder simulation
+ */
 describe('CostControlService - Coverage Gaps', () => {
   let costControl;
 
@@ -116,6 +135,18 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function checkUsageLimit
+   * @description Verifies usage limit checking for different plan types
+   * 
+   * Tests:
+   * - Under limit scenarios (should allow)
+   * - At limit scenarios (should deny)
+   * - Over limit scenarios (should deny)
+   * - Different plan IDs (starter_trial, starter, pro, plus)
+   * 
+   * Mock data: organization_usage table
+   */
   describe('checkUsageLimit', () => {
     it('should check usage limit and return status', async () => {
       const organizationId = 'test-org-123';
@@ -197,6 +228,17 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function incrementUsageCounters
+   * @description Tests RPC call to increment usage counters atomically
+   * 
+   * Tests:
+   * - Successful counter increment
+   * - Correct parameter passing (org_id, counter type, increment value)
+   * - RPC function call verification
+   * 
+   * Mock: Supabase RPC 'increment_usage'
+   */
   describe('incrementUsageCounters', () => {
     it('should increment usage via RPC call', async () => {
       const organizationId = 'test-org-123';
@@ -240,6 +282,17 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function sendUsageAlert
+   * @description Tests usage alert notification system
+   * 
+   * Tests:
+   * - Alert insertion into usage_alerts table
+   * - Data structure validation (org_id, threshold, current_value, message)
+   * - Successful alert creation workflow
+   * 
+   * Mock: Supabase insert operation
+   */
   describe('sendUsageAlert', () => {
     it('should send alert when approaching limit', async () => {
       const organizationId = 'test-org-123';
@@ -276,6 +329,17 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function setUsageLimit
+   * @description Tests custom usage limit configuration
+   * 
+   * Tests:
+   * - Setting new usage limits for organizations
+   * - Upsert operation (insert or update)
+   * - Limit type and value validation
+   * 
+   * Mock: Supabase upsert operation
+   */
   describe('setUsageLimit', () => {
     it('should set custom usage limit for organization', async () => {
       const organizationId = 'test-org-123';
@@ -309,6 +373,17 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function getBillingSummary
+   * @description Tests billing summary aggregation
+   * 
+   * Tests:
+   * - Summary data retrieval from subscriptions table
+   * - Data structure validation (plan_id, status, current_period_end, etc.)
+   * - Organization-specific billing data
+   * 
+   * Mock: Supabase select with eq filter
+   */
   describe('getBillingSummary', () => {
     it('should return billing summary for specified month', async () => {
       const organizationId = 'test-org-123';
@@ -342,6 +417,17 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function updatePlanUsageLimits
+   * @description Tests plan-specific usage limit updates
+   * 
+   * Tests:
+   * - Updating limits when plan changes
+   * - Limit calculation based on plan tier
+   * - Update operation success
+   * 
+   * Mock: Supabase update operation
+   */
   describe('updatePlanUsageLimits', () => {
     it('should update usage limits when plan changes', async () => {
       const organizationId = 'test-org-123';
@@ -363,6 +449,17 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function resetAllMonthlyUsage
+   * @description Tests monthly usage counter reset workflow
+   * 
+   * Tests:
+   * - Batch update of all organizations
+   * - Resetting counters to 0
+   * - Successful reset operation
+   * 
+   * Mock: Supabase bulk update
+   */
   describe('resetAllMonthlyUsage', () => {
     it('should reset usage for all organizations via RPC', async () => {
       mockRpc.mockResolvedValueOnce({
@@ -390,6 +487,17 @@ describe('CostControlService - Coverage Gaps', () => {
     });
   });
 
+  /**
+   * @function createDefaultUsageAlerts
+   * @description Tests default usage alert configuration creation
+   * 
+   * Tests:
+   * - Default alert thresholds (80%, 90%, 100%)
+   * - Alert configuration for new organizations
+   * - Successful creation workflow
+   * 
+   * Mock: Supabase insert operation
+   */
   describe('createDefaultUsageAlerts', () => {
     it('should create default alerts for all resource types', async () => {
       const organizationId = 'test-org-123';
