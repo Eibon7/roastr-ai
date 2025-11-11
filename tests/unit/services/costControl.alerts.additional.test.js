@@ -428,7 +428,8 @@ describe('CostControlService - Alert Methods', () => {
       await costControl.recordUsage(organizationId, platform, operationType);
 
       expect(mockFrom).toHaveBeenCalledWith('usage_records');
-      expect(mockRpc).toHaveBeenCalledWith('increment_usage', expect.any(Object));
+      // RPC function name is 'record_usage' not 'increment_usage'
+      expect(mockRpc).toHaveBeenCalledWith('record_usage', expect.any(Object));
     });
   });
 });
