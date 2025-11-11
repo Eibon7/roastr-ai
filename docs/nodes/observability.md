@@ -920,11 +920,310 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 - Detect performance regressions
 - Capacity planning insights
 
+### Tier Validation Monitoring (Issue #396)
+
+Production monitoring and enhancements for the tier validation system (SPEC 10).
+
+**Implementation Date:** 2025-11-10
+**Related PR:** #384 (Tier Validation System)
+
+#### Cache Performance Monitoring (AC1 - Medium Priority)
+
+**Metrics Tracked:**
+- Cache hits and misses
+- Hit rate percentage
+- Total cache requests
+- Cache size and TTL
+- Request-scoped cache size
+
+**Access Method:**
+```javascript
+const service = require('./src/services/tierValidationService');
+const metrics = service.getMetrics();
+
+console.log(metrics.cachePerformance);
+// {
+//   hits: 80,
+//   misses: 20,
+//   totalRequests: 100,
+//   hitRate: '80.00%',
+//   cacheSize: 45,
+//   requestCacheSize: 12,
+//   ttlMs: 300000,
+//   ttlMinutes: '5.0',
+//   timestamp: '2025-11-10T12:00:00Z'
+// }
+```
+
+**Target Hit Rate:** >80% for optimal performance
+**Cache TTL:** 5 minutes (300,000ms)
+
+#### Error Alerting Configuration (AC2 - High Priority) 🔴
+
+**Alert Thresholds:**
+1. Error rate >5% (errors / validationCalls)
+2. Absolute count >100 errors per hour
+
+**Alert Cooldown:** 5 minutes (prevents spam)
+
+**Alert Delivery:**
+- Structured logs (category: `tier_validation_alert`)
+- Optional webhook (Slack, PagerDuty, etc.)
+
+**Webhook Delivery Mechanism (CodeRabbit Review #3445430342):**
+
+The alert system uses a fire-and-forget webhook delivery pattern to ensure tier validation performance is never blocked by external service latency:
+
+1. **HTTP POST Request:**
+   - Content-Type: `application/json`
+   - Timeout: 5 seconds
+   - No retries (prevents cascading failures)
+   - Non-blocking (service continues even if webhook fails)
+
+2. **Error Handling:**
+   - Webhook failures are logged but don't throw exceptions
+   - Failed deliveries don't count toward error rate thresholds
+   - Network errors, timeouts, and HTTP 4xx/5xx are gracefully handled
+
+3. **Security:**
+   - Webhook URL should use HTTPS
+   - Supports custom headers for authentication (future enhancement)
+   - Payload contains no sensitive credentials (only user IDs, metrics)
+
+**Integration Examples:**
+
+**Slack Webhook:**
+```bash
+# .env configuration
+ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX
+```
+
+Expected Slack message format (auto-formatted by Slack):
+```text
+🚨 Tier Validation Alert
+Service: tier_validation_service
+Type: error_threshold_exceeded
+
+User: user-123
+Action: roast
+Error: Database validation error
+
+Metrics:
+• Error Rate: 6.50% (threshold: 5%)
+• Errors (1h): 105 (threshold: 100)
+• Total Errors: 650
+• Total Validations: 10,000
+
+Violations:
+✅ Rate exceeded
+✅ Count exceeded
+
+Cache Performance: 85.00% hit rate
+Timestamp: 2025-11-10T12:00:00Z
+```
+
+**PagerDuty Webhook:**
+```bash
+# .env configuration
+ALERT_WEBHOOK_URL=https://events.pagerduty.com/v2/enqueue
+```
+
+PagerDuty requires Events API v2 integration. Send payload with:
+```json
+{
+  "routing_key": "YOUR_INTEGRATION_KEY",
+  "event_action": "trigger",
+  "payload": {
+    "summary": "Tier Validation: error_threshold_exceeded",
+    "severity": "error",
+    "source": "tier_validation_service",
+    "custom_details": {
+      "userId": "user-123",
+      "action": "roast",
+      "errorRate": "6.50%",
+      "errorsLastHour": 105
+    }
+  }
+}
+```
+
+**Custom Webhook:**
+```bash
+# .env configuration
+ALERT_WEBHOOK_URL=https://your-alerting-system.com/api/alerts
+```
+
+Receives standard alert payload (see Alert Payload section below).
+
+**Environment Variables:**
+```bash
+# Optional: External alert webhook
+ALERT_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+```
+
+**Alert Payload:**
+```json
+{
+  "service": "tier_validation_service",
+  "alertType": "error_threshold_exceeded",
+  "userId": "user-123",
+  "action": "roast",
+  "error": "Database validation error",
+  "metrics": {
+    "errorRate": "6.50%",
+    "errorsLastHour": 105,
+    "totalErrors": 650,
+    "totalValidations": 10000,
+    "allowedActions": 9350,
+    "blockedActions": 0
+  },
+  "thresholds": {
+    "rateThreshold": "5%",
+    "countThreshold": 100,
+    "cooldownMinutes": 5
+  },
+  "violations": {
+    "rateExceeded": true,
+    "countExceeded": true
+  },
+  "cachePerformance": {
+    "hits": 8500,
+    "misses": 1500,
+    "hitRate": "85.00%"
+  },
+  "timestamp": "2025-11-10T12:00:00Z"
+}
+```
+
+**Monitoring Queries:**
+```bash
+# Check recent alerts
+grep "TIER VALIDATION ALERT" logs/application/app-*.log | jq '.'
+
+# Count alerts in last 24h
+grep "tier_validation_alert" logs/application/app-*.log | jq -r '.timestamp' | tail -100
+```
+
+#### Sentry Integration (AC3 - Low Priority)
+
+**Features:**
+- Breadcrumbs at validation lifecycle points
+- Enhanced exception capture with full context
+- Performance monitoring (10% sample rate)
+
+**Environment Variables:**
+```bash
+# Enable Sentry
+SENTRY_ENABLED=true
+SENTRY_DSN=https://your-dsn@sentry.io/project-id
+SENTRY_TRACES_SAMPLE_RATE=0.1  # 10% of transactions
+SENTRY_FORCE_ENABLE=false  # Force enable in non-production
+```
+
+**Breadcrumb Points:**
+1. `validation_start` - Beginning of validation
+2. `validation_complete` - Successful validation
+3. `validation_error` - Error during validation
+
+**Exception Context:**
+- User ID and action type
+- Request ID for tracing
+- Full metrics snapshot
+- Cache performance data
+- Environment details
+
+**Example Sentry Event:**
+```javascript
+{
+  extra: {
+    userId: 'user-123',
+    action: 'roast',
+    requestId: 'req-abc-123',
+    metrics: { /* full metrics */ },
+    cachePerformance: { /* cache stats */ }
+  },
+  tags: {
+    service: 'tier_validation',
+    action_type: 'roast',
+    environment: 'production'
+  },
+  level: 'error'
+}
+```
+
+**Graceful Degradation:**
+- Sentry failures logged but don't block validation
+- Service continues if Sentry unavailable
+- No performance impact when disabled
+
+#### Dashboard Integration
+
+**Endpoints (Recommended):**
+```http
+GET /api/tier-validation/metrics
+  → Returns full metrics including cache performance
+
+GET /api/tier-validation/cache-performance
+  → Returns detailed cache statistics
+```
+
+**Grafana Dashboard Panels:**
+1. Cache hit rate (gauge) - Target: >80%
+2. Error rate (line chart) - Alert: >5%
+3. Errors per hour (line chart) - Alert: >100
+4. Validation latency (histogram)
+5. Alert frequency (counter)
+
+**Log Aggregation (ELK/Datadog):**
+```text
+# Find all tier validation alerts
+category:"tier_validation_alert" AND severity:"high"
+
+# Calculate error rate
+(tier_validation.errors / tier_validation.validationCalls) * 100
+
+# Monitor cache performance
+tier_validation.cachePerformance.hitRate
+```
+
+#### Implementation Files
+
+**Core Service:**
+- `src/services/tierValidationService.js` - Monitoring implementation
+- `src/config/sentry.js` - Sentry configuration (NEW)
+
+**Tests:**
+- `tests/unit/services/tierValidationService-monitoring.test.js` - Unit tests (NEW)
+- `tests/integration/tierValidationMonitoring.test.js` - Integration tests
+
+**Configuration:**
+- `.env.example` - Monitoring environment variables
+
+#### Maintenance Notes
+
+**Cache TTL Adjustment:**
+- Current: 5 minutes
+- Monitor hit rate in production
+- Adjust based on data freshness requirements
+- Update `CACHE_CONFIG.timeouts.usage` if needed
+
+**Error Threshold Tuning:**
+- Start with 5% / 100/hour
+- Adjust based on production baseline
+- Document changes in changelog
+
+**Sentry Budget:**
+- 10% transaction sampling = ~1000 events/month per 10k validations
+- Adjust `SENTRY_TRACES_SAMPLE_RATE` if quota exceeded
+
+---
+
 ## Agentes Relevantes
 
 - **Backend Developer** - Core implementation and worker integration
 - **Documentation Agent** - GDD node creation and maintenance
 - **general-purpose** - General-purpose agent for research and code search
+- **Guardian** - Security review for monitoring
 - **Orchestrator** - Coordination and planning
 - **Test Engineer** - Integration test suite
 
