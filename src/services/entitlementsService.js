@@ -911,9 +911,13 @@ class EntitlementsService {
                 roast_limit_monthly: 50,
                 persona_fields_limit: 0,
                 roast_level_max: 1,
+<<<<<<< HEAD
                 shield_enabled: true,
                 model: 'gpt-3.5-turbo',
                 rqc_mode: 'basic'
+=======
+                shield_enabled: true
+>>>>>>> origin/main
             },
             'pro': {
                 plan_name: 'pro',
@@ -921,9 +925,13 @@ class EntitlementsService {
                 roast_limit_monthly: 500,
                 persona_fields_limit: 10,
                 roast_level_max: 5,
+<<<<<<< HEAD
                 shield_enabled: true,
                 model: 'gpt-4',
                 rqc_mode: 'advanced'
+=======
+                shield_enabled: true
+>>>>>>> origin/main
             },
             'creator_plus': {
                 plan_name: 'creator_plus',
@@ -931,9 +939,13 @@ class EntitlementsService {
                 roast_limit_monthly: 5000,
                 persona_fields_limit: 50,
                 roast_level_max: 10,
+<<<<<<< HEAD
                 shield_enabled: true,
                 model: 'gpt-4',
                 rqc_mode: 'premium'
+=======
+                shield_enabled: true
+>>>>>>> origin/main
             }
         };
 
