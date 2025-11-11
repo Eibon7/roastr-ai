@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-11-11T14:36:58.511Z
+**Generated:** 2025-11-11T19:06:05.973Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 89.5/100
+**Average Score:** 90/100
 
 ---
 
@@ -20,11 +20,11 @@
 | Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
 |------|-------|--------|--------------|----------|--------------|--------|
 | guardian | 🟢 80 | healthy | 2025-10-23 | 0% | 0 | 0 |
-| cost-control | 🟢 82 | healthy | 2025-10-28 | 38% | 0 | 0 |
 | trainer | 🟢 82 | healthy | 2025-10-29 | 0% | 0 | 0 |
 | observability | 🟢 83 | healthy | 2025-10-18 | 46% | 0 | 0 |
 | analytics | 🟢 86 | healthy | 2025-10-29 | 49% | 0 | 0 |
 | social-platforms | 🟢 86 | healthy | 2025-11-11 | 0% | 0 | 0 |
+| cost-control | 🟢 90 | healthy | 2025-10-28 | 60% | 0 | 0 |
 | multi-tenant | 🟢 90 | healthy | 2025-11-10 | 50% | 0 | 0 |
 | plan-features | 🟢 90 | healthy | 2025-10-28 | 65% | 0 | 0 |
 | platform-constraints | 🟢 90 | healthy | 2025-10-29 | 67% | 0 | 0 |
@@ -46,19 +46,6 @@
 **Score Breakdown:**
 - Sync Accuracy: 100/100
 - Update Freshness: 62/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 30/100
-- Agent Relevance: 100/100
-- Integrity Score: 100/100
-
-
-### cost-control (Score: 82)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 72/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -100,6 +87,19 @@
 - Update Freshness: 74/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
+- Agent Relevance: 100/100
+- Integrity Score: 100/100
+
+
+### social-platforms (Score: 86)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 100/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
