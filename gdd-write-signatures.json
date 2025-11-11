@@ -4464,7 +4464,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__repo__..__Windows__system.ini.2025-11-10T14-57-21-132Z.backup",
+      "backupPath": "./.gdd-backups/C:__repo__..__Windows__system.ini.2025-11-10T14-57-21-132Z.backup",
       "signature": "96416b61fecf7e5ba59fc5137d3477f53913ab64616be9700a54cf43ffa9aa61"
     },
     {
@@ -4476,7 +4476,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__Windows__System32__config__sam.2025-11-10T14-57-21-140Z.backup",
+      "backupPath": "./.gdd-backups/C:__Windows__System32__config__sam.2025-11-10T14-57-21-140Z.backup",
       "signature": "33fea358c74a08a8987da718750b0b7c0744f0b5a763ca072b7bb36ff170c8af"
     },
     {
@@ -4560,7 +4560,7 @@
       "hashBefore": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "hashAfter": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/.gdd-test-security.txt.2025-11-10T14-57-48-445Z.backup",
+      "backupPath": "./.gdd-backups/.gdd-test-security.txt.2025-11-10T14-57-48-445Z.backup",
       "signature": "cd52449c3b0a6b3665413209fd3c12d109cb1bc1fbd6dd0fef64d907f8bbbe49"
     },
     {
@@ -4623,7 +4623,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__repo__..__Windows__system.ini.2025-11-11T20-00-18-069Z.backup",
+      "backupPath": "./.gdd-backups/C:__repo__..__Windows__system.ini.2025-11-11T20-00-18-069Z.backup",
       "signature": "4bdfdec4d7ce9a1b9ae41290508f712fa508866922f02015b8865b411e3268d5"
     },
     {
@@ -4635,7 +4635,7 @@
       "hashBefore": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "hashAfter": "3aed37043fac3afaa69c36191a63494d5630deb996fc61b437524cddd55326f6",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/C:__Windows__System32__config__sam.2025-11-11T20-00-18-082Z.backup",
+      "backupPath": "./.gdd-backups/C:__Windows__System32__config__sam.2025-11-11T20-00-18-082Z.backup",
       "signature": "91570d0979a008bd87d6e9c6c4932a72e53c2efcd38e4c9c4e84277218f6942f"
     },
     {
@@ -4719,7 +4719,7 @@
       "hashBefore": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
       "hashAfter": "f4761aa023c3639dc371a2336ee3514ab6236bad28c5a0ebf2e52fb6e42030d1",
       "metadata": {},
-      "backupPath": "/Users/emiliopostigo/roastr-ai/.gdd-backups/.gdd-test-security.txt.2025-11-11T20-00-40-961Z.backup",
+      "backupPath": "./.gdd-backups/.gdd-test-security.txt.2025-11-11T20-00-40-961Z.backup",
       "signature": "515fd59d5f94f5f7a21a8f75d75a068daf4c6f5520dd400ddb1361aff6172988"
     },
     {
