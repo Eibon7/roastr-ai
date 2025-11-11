@@ -66,7 +66,7 @@ All skips documented in JSDoc with `@skip` annotations and technical reasoning.
 
 **Final Coverage (from coverage-summary.json):**
 
-```
+```text
 File: src/services/costControl.js
 - Lines:      60.00% (target: 60%)
 - Statements: 59.30%
