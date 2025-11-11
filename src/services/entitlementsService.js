@@ -1,8 +1,8 @@
 /**
- * EntitlementsService - Issue #168
+ * EntitlementsService - Issue #168, #594
  * 
- * Manages user entitlements based on Stripe Price metadata
- * - Reads plan limits and features from Stripe Price metadata
+ * Manages user entitlements based on Stripe/Polar Price metadata
+ * - Reads plan limits and features from Stripe/Polar Price metadata
  * - Persists entitlements to account_entitlements table
  * - Provides usage checking and enforcement
  * - Handles monthly usage counter resets
@@ -13,13 +13,24 @@ const StripeWrapper = require('./stripeWrapper');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 const { PLAN_IDS, TRIAL_DURATION, DEFAULT_CONVERSION_PLAN } = require('../config/trialConfig');
+const { getPlanFromPriceId } = require('../utils/polarHelpers');
+const { Polar } = require('@polar-sh/sdk');
 
 class EntitlementsService {
     constructor() {
         this.stripeWrapper = null;
+        this.polarClient = null;
         
         if (flags.isEnabled('ENABLE_BILLING')) {
+            // Stripe (legacy)
             this.stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
+            
+            // Polar (primary)
+            if (process.env.POLAR_ACCESS_TOKEN) {
+                this.polarClient = new Polar({
+                    accessToken: process.env.POLAR_ACCESS_TOKEN
+                });
+            }
         }
     }
 
@@ -830,6 +841,97 @@ class EntitlementsService {
 
             throw error;
         }
+    }
+
+    /**
+     * Set user entitlements based on Polar Price ID - Issue #594
+     * @param {string} userId - User ID
+     * @param {string} polarPriceId - Polar Price ID
+     * @param {Object} options - Additional options
+     * @returns {Promise<Object>} Result with success/error info
+     */
+    async setEntitlementsFromPolarPrice(userId, polarPriceId, options = {}) {
+        try {
+            if (!this.polarClient) {
+                throw new Error('Polar integration not enabled');
+            }
+
+            const planName = getPlanFromPriceId(polarPriceId);
+            const planLimits = this._getPlanLimitsFromName(planName);
+            
+            const result = await this._persistEntitlements(userId, {
+                ...planLimits,
+                polar_price_id: polarPriceId,
+                metadata: {
+                    updated_from: 'polar_price',
+                    plan_name: planName,
+                    updated_at: new Date().toISOString(),
+                    ...options.metadata
+                }
+            });
+
+            logger.info('Entitlements updated from Polar Price', {
+                userId,
+                polarPriceId,
+                planName,
+                analysisLimit: planLimits.analysis_limit_monthly,
+                roastLimit: planLimits.roast_limit_monthly
+            });
+
+            return {
+                success: true,
+                entitlements: result,
+                source: 'polar_price'
+            };
+
+        } catch (error) {
+            logger.error('Failed to set entitlements from Polar Price', {
+                userId,
+                polarPriceId,
+                error: error.message
+            });
+
+            return {
+                success: false,
+                error: error.message,
+                fallback_applied: await this._applyFallbackEntitlements(userId)
+            };
+        }
+    }
+
+    /**
+     * Get plan limits from plan name - Issue #594
+     * @private
+     */
+    _getPlanLimitsFromName(planName) {
+        const planLimitsMap = {
+            'starter_trial': {
+                plan_name: 'starter_trial',
+                analysis_limit_monthly: 100,
+                roast_limit_monthly: 50,
+                persona_fields_limit: 0,
+                roast_level_max: 1,
+                shield_enabled: true
+            },
+            'pro': {
+                plan_name: 'pro',
+                analysis_limit_monthly: 1000,
+                roast_limit_monthly: 500,
+                persona_fields_limit: 10,
+                roast_level_max: 5,
+                shield_enabled: true
+            },
+            'creator_plus': {
+                plan_name: 'creator_plus',
+                analysis_limit_monthly: 10000,
+                roast_limit_monthly: 5000,
+                persona_fields_limit: 50,
+                roast_level_max: 10,
+                shield_enabled: true
+            }
+        };
+
+        return planLimitsMap[planName] || planLimitsMap['starter_trial'];
     }
 }
 

@@ -2,8 +2,9 @@
 
 **Prioridad:** P1 (Alta - Crítico para monetización)
 **Estimación:** 10-12 horas
-**Estado Actual:** 30% completado (diseño completo, implementación faltante)
+**Estado Actual:** ✅ 95% completado (Backend 100%, pending: frontend + prod env)
 **Documentación:** [docs/flows/payment-polar.md](../flows/payment-polar.md)
+**Tests:** 59 tests (16 business + 9 security + 16 checkout + 14 entitlements + 4 E2E)
 
 ---
 

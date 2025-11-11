@@ -597,6 +597,35 @@ test('should process fixtures through complete pipeline', async () => {
 ```
 
 
+## Monitoring & Alerting
+
+**Part of Issue #713: Worker Monitoring Dashboard**
+
+### Metrics Endpoints
+
+- `GET /api/workers/metrics` - Comprehensive metrics for all workers
+- `GET /api/workers/:workerType/metrics` - Metrics for specific worker
+- `GET /api/workers/queues/status` - Status of all queues
+
+### Alerting Service
+
+Worker alerting service (`src/services/workerAlertingService.js`) monitors:
+- Worker health (down workers)
+- Queue depth (high pending jobs)
+- Failure rate (high job failures)
+- DLQ size (failed jobs accumulation)
+- Processing time (slow job processing)
+
+**Alert Channels:**
+- Logging (always enabled)
+- Email (if configured)
+- Slack (if webhook configured)
+
+**Dashboard:**
+- Admin dashboard at `/admin/workers` provides real-time monitoring
+- Updates every 10 seconds
+- Shows worker status, queue depth, failed jobs, and performance metrics
+
 ## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
@@ -606,6 +635,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Orchestrator**
 - **Performance Monitor**
 - **Test Engineer**
+- **Worker Monitor** (Issue #713)
 
 
 ## Related Nodes
