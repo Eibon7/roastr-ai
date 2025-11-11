@@ -493,26 +493,12 @@ describe('Analytics Routes - Comprehensive', () => {
 
   /**
    * @group Helper Functions
-   * @description Tests utility functions used by analytics routes
+   * @description Helper functions are tested through endpoint integration tests
    * 
-   * Functions:
-   * - aggregateData: Data aggregation logic
-   * - calculateTrends: Trend calculation algorithms
-   * - formatResponse: Response formatting
-   * 
-   * Note: These are internal helpers, not exposed endpoints
+   * Note: getMostUsedPersonaFields and generatePersonaRecommendations are internal
+   * helpers that are already validated through the /roastr-persona-insights endpoint
+   * tests above. No separate unit tests needed as they don't contain complex logic.
    */
-  describe('Helper functions', () => {
-    it('should handle getMostUsedPersonaFields correctly', () => {
-      // These are internal helpers tested through endpoints
-      expect(true).toBe(true);
-    });
-
-    it('should handle generatePersonaRecommendations correctly', () => {
-      // Tested through /roastr-persona-insights endpoint
-      expect(true).toBe(true);
-    });
-  });
 
   /**
    * @group Error Handling
