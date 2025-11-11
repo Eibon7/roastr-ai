@@ -1,10 +1,10 @@
 {
-  "generated_at": "2025-11-11T14:21:00.573Z",
+  "generated_at": "2025-11-11T14:23:39.498Z",
   "status": "HEALTHY",
-  "overall_score": 88.8,
+  "overall_score": 89.5,
   "total_nodes": 15,
-  "healthy_count": 14,
-  "degraded_count": 1,
+  "healthy_count": 15,
+  "degraded_count": 0,
   "critical_count": 0,
   "nodes": {
     "analytics": {
@@ -164,11 +164,11 @@
       "issues": []
     },
     "social-platforms": {
-      "score": 76,
-      "status": "degraded",
+      "score": 86,
+      "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 34,
+        "updateFreshness": 100,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,

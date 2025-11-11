@@ -4,10 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-10-09
+**Last Updated:** 2025-11-11
 **Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499
+**Note:** Integration tests exist but not included in coverage report. Platform-specific implementations in subdirectories (twitter/, youtube/, etc.)
 
 ## Dependencies
 
