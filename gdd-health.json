@@ -1,10 +1,10 @@
 {
-  "generated_at": "2025-11-11T19:31:38.735Z",
+  "generated_at": "2025-11-11T20:02:03.281Z",
   "status": "HEALTHY",
-  "overall_score": 92.2,
+  "overall_score": 91,
   "total_nodes": 15,
-  "healthy_count": 15,
-  "degraded_count": 0,
+  "healthy_count": 14,
+  "degraded_count": 1,
   "critical_count": 0,
   "nodes": {
     "analytics": {
@@ -112,15 +112,15 @@
       "issues": []
     },
     "platform-constraints": {
-      "score": 86,
-      "status": "healthy",
+      "score": 68,
+      "status": "degraded",
       "breakdown": {
         "syncAccuracy": 100,
         "updateFreshness": 100,
         "dependencyIntegrity": 100,
-        "coverageEvidence": 30,
-        "agentRelevance": 100,
-        "integrityScore": 100
+        "coverageEvidence": 0,
+        "agentRelevance": 0,
+        "integrityScore": 80
       },
       "issues": []
     },
