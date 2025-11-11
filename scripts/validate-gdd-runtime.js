@@ -535,7 +535,7 @@ class GDDValidator {
         continue;
       }
 
-      const declaredCoverage = parseInt(coverageMatch[1], 10);
+      const declaredCoverage = parseFloat(coverageMatch[1]);
 
       // Check coverage source
       const sourceMatch = nodeData.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
