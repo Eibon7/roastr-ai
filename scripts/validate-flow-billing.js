@@ -220,7 +220,11 @@ async function validateBillingFlow() {
         usageCheck = await costControl.checkUsageLimit(testOrgId);
       } catch (error) {
         checkError = error;
+        
+        // Issue #588 G10: Enhanced error logging
         console.error(`⚠️  Check failed: ${error.message}`);
+        console.log(`   Error type: ${error.constructor.name}`);
+        console.log(`   Message: ${error.message}`);
       }
 
       const checkTime = Date.now() - checkStartTime;
@@ -248,6 +252,20 @@ async function validateBillingFlow() {
         if (!usageCheck.canUse) {
           console.log('✅ Correctly blocked: limit exceeded');
           console.log(`   Near limit: ${usageCheck.isNearLimit}`);
+          
+          // Issue #588 G10: Validate error indicates limit exceeded (403-equivalent)
+          if (checkError) {
+            const errorMessage = checkError.message.toLowerCase();
+            const isLimitError = errorMessage.includes('limit') || 
+                                 errorMessage.includes('exceeded') || 
+                                 errorMessage.includes('quota');
+            
+            if (isLimitError) {
+              console.log(`✅ Error correctly indicates limit exceeded (HTTP 403 equivalent)`);
+            } else {
+              console.log(`⚠️  Error message doesn't clearly indicate limit: ${checkError.message}`);
+            }
+          }
         } else {
           throw new Error(`Expected to be blocked but was allowed`);
         }

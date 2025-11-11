@@ -1,0 +1,157 @@
+[dotenv@17.2.3] injecting env (42) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+🔗 Real Mode ENABLED - Using real API connections
+[INFO] 2025-11-11T08:27:39.912Z: 🏁 Feature flags initialized {
+  enabled: [
+    'ENABLE_REAL_TWITTER',
+    'ENABLE_REAL_YOUTUBE',
+    'ENABLE_REAL_OPENAI',
+    'ENABLE_REAL_PERSPECTIVE',
+    'ENABLE_PERSPECTIVE_API',
+    'ENABLE_EMAIL_NOTIFICATIONS',
+    'ENABLE_SUPABASE',
+    'ENABLE_MAGIC_LINK',
+    'ENABLE_PASSWORD_HISTORY',
+    'ENABLE_RATE_LIMIT',
+    'ENABLE_CSRF_PROTECTION',
+    'ENABLE_RESPONSE_CACHE',
+    'ENABLE_STYLE_PROFILE',
+    'ROAST_VERSIONS_MULTIPLE',
+    'ENABLE_ROAST_ENGINE'
+  ],
+  disabled: [
+    'ENABLE_BILLING',
+    'ENABLE_RQC',
+    'ENABLE_SHIELD',
+    'ENABLE_REAL_INSTAGRAM',
+    'ENABLE_REAL_FACEBOOK',
+    'ENABLE_REAL_DISCORD',
+    'ENABLE_REAL_TWITCH',
+    'ENABLE_REAL_REDDIT',
+    'ENABLE_REAL_TIKTOK',
+    'ENABLE_REAL_BLUESKY',
+    'ENABLE_DEBUG_LOGS',
+    'VERBOSE_LOGS',
+    'MOCK_MODE',
+    'ENABLE_MOCK_PERSISTENCE',
+    'DEBUG_CACHE',
+    'ENABLE_CREDITS_V2',
+    'ENABLE_CUSTOM_PROMPT',
+    'ENABLE_FACEBOOK_UI',
+    'ENABLE_INSTAGRAM_UI',
+    'ENABLE_ORIGINAL_TONE',
+    'ENABLE_SHOP',
+    'ENABLE_SHIELD_UI'
+  ],
+  totalFlags: 37
+}
+🚀 Starting Billing Limits Enforcement Flow Validation
+
+============================================================
+
+============================================================
+
+📝 Test 1/3: Starter trial exceeds limit
+Plan: starter_trial
+Limit: 10 roasts/month
+Test usage: 11 roasts
+
+📋 Step 1: Creating test user and organization...
+✅ Test user created: 64980ada-1cf8-4cd4-821b-ced6060395d5
+
+❌ Test 1 FAILED: User upsert failed: new row for relation "users" violates check constraint "users_plan_check"
+
+🧹 Cleaning up test data...
+✅ Cleanup complete
+
+============================================================
+
+📝 Test 2/3: Pro plan within limit
+Plan: pro
+Limit: 1000 roasts/month
+Test usage: 5 roasts
+
+📋 Step 1: Creating test user and organization...
+✅ Test user created: b53eb137-8083-4536-b17f-e6222270abce
+✅ Test organization configured: f156e04a-f792-4cfb-88b3-e24a8e7c9a55
+   Plan: pro
+   Limit: 1000
+
+📊 Step 2: Setting up usage state...
+✅ Usage set to: 5/1000
+   Verified in monthly_usage: 5
+
+🔐 Step 3: Checking usage limits...
+⏱️  Check time: 137ms
+✅ Under 1s target
+
+✅ Step 4: Verifying result...
+   Current usage: 5/1000
+   Percentage: 1%
+   Can use: true
+✅ Correctly allowed: within limit
+   Near limit: false
+
+💾 Step 5: Verifying usage counter increment...
+✅ Usage incremented atomically (+1)
+
+⏱️  Total execution time: 1.09s
+
+✅ Test 2 PASSED
+
+🧹 Cleaning up test data...
+✅ Cleanup complete
+
+============================================================
+
+📝 Test 3/3: Creator Plus plan within limit
+Plan: creator_plus
+Limit: 5000 roasts/month
+Test usage: 100 roasts
+
+📋 Step 1: Creating test user and organization...
+✅ Test user created: 76849403-1ad0-47dc-953b-9f3b7398e8dc
+✅ Test organization configured: 8af11800-2c92-4b60-8b1c-d6eef32fdc0d
+   Plan: creator_plus
+   Limit: 5000
+
+📊 Step 2: Setting up usage state...
+✅ Usage set to: 100/5000
+   Verified in monthly_usage: 100
+
+🔐 Step 3: Checking usage limits...
+⏱️  Check time: 130ms
+✅ Under 1s target
+
+✅ Step 4: Verifying result...
+   Current usage: 100/5000
+   Percentage: 2%
+   Can use: true
+✅ Correctly allowed: within limit
+   Near limit: false
+
+💾 Step 5: Verifying usage counter increment...
+✅ Usage incremented atomically (+1)
+
+⏱️  Total execution time: 0.99s
+
+✅ Test 3 PASSED
+
+🧹 Cleaning up test data...
+✅ Cleanup complete
+
+============================================================
+
+📊 VALIDATION REPORT
+============================================================
+
+Total tests: 3
+✅ Passed: 2
+❌ Failed: 1
+⏱️  Total time: 4.49s
+
+❌ Errors:
+   - Test 1 (starter_trial): User upsert failed: new row for relation "users" violates check constraint "users_plan_check"
+
+============================================================
+
+❌ SOME VALIDATIONS FAILED

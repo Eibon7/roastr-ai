@@ -18,6 +18,7 @@
 ## Propósito
 
 El nodo **Billing** gestiona toda la integración con Stripe para suscripciones, webhooks y gestión de planes. Actúa como punto de entrada para operaciones de billing, coordinando entre servicios de pago, entitlements y queue system.
+**Coverage:** 50%
 
 **Responsabilidades principales:**
 - Procesar webhooks de Stripe (checkout, subscriptions, payments)

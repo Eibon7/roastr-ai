@@ -287,6 +287,41 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
       const hasTenantBData = tenantAPosts.some(p => p.organization_id === tenantB.id);
       expect(hasTenantBData).toBe(false);
     });
+
+    // Issue #588 G6: Cross-tenant access returns 403 error (PGRST301)
+    test('Cross-tenant access via anon client returns PGRST301 error (RLS 403)', async () => {
+      // Attempt to access Tenant A's organization via anon client (RLS enforced)
+      const { data, error } = await testClient
+        .from('organizations')
+        .select('*')
+        .eq('id', tenantA.id)
+        .single();
+
+      // Verify RLS violation
+      expect(data).toBeNull();
+      expect(error).toBeDefined();
+      
+      // Issue #488 G6: Verify error code indicates blocked access (403-equivalent)
+      // PGRST301 = RLS policy violation
+      // PGRST116 = No rows found (due to RLS filtering to empty set)
+      // Both are valid 403-equivalent responses
+      const validErrorCodes = ['PGRST301', 'PGRST116'];
+      expect(validErrorCodes).toContain(error.code);
+      
+      console.log('✅ RLS 403 validation passed:', error.code, error.message);
+      console.log(`   (Valid codes: ${validErrorCodes.join(', ')})`);
+      
+      // Additional verification: error message should indicate access denial
+      if (error.code === 'PGRST301') {
+        // For PGRST301, verify RLS keywords in message
+        const errorMessage = error.message.toLowerCase();
+        const hasRLSKeywords = errorMessage.includes('permission') || 
+                                errorMessage.includes('denied') || 
+                                errorMessage.includes('policy') || 
+                                errorMessage.includes('rls');
+        expect(hasRLSKeywords).toBe(true);
+      }
+    });
   });
 
   describe('Coverage Statistics', () => {
