@@ -1,9 +1,10 @@
 # Flow: Payment & Subscription (Polar Integration)
 
 **Created:** 2025-10-19
-**Status:** Planned (Not Implemented)
+**Updated:** 2025-11-11 (Issue #594, #808)
+**Status:** ✅ Production Ready
 **Related Nodes:** `billing`, `cost-control`, `multi-tenant`
-**Implementation:** 30% Complete (Stripe exists, Polar migration pending)
+**Implementation:** 95% Complete (Backend complete, pending: frontend integration + production env)
 
 ---
 
