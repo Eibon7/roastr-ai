@@ -530,15 +530,19 @@ describe('CostControlService - Coverage Gaps', () => {
     it('should create default alerts for all resource types', async () => {
       const organizationId = 'test-org-123';
       
-      // Mock bulk insert
+      // Mock bulk insert with .select() chain
       mockInsert.mockReturnValueOnce({
-        data: [
-          { id: 'alert-1' },
-          { id: 'alert-2' },
-          { id: 'alert-3' },
-          { id: 'alert-4' }
-        ],
-        error: null
+        select: jest.fn(() =>
+          Promise.resolve({
+            data: [
+              { id: 'alert-1' },
+              { id: 'alert-2' },
+              { id: 'alert-3' },
+              { id: 'alert-4' }
+            ],
+            error: null
+          })
+        )
       });
 
       const result = await costControl.createDefaultUsageAlerts(organizationId);
