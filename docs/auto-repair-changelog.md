@@ -1,5 +1,21 @@
 # Auto-Repair Changelog
 
+## 2025-11-11T17:11:02.399Z
+
+**Repair ID:** 2025-11-11T17:11:02Z
+**Triggered by:** CI/CD
+**Nodes affected:** platform-constraints
+
+**Fixes applied:**
+- Added agents section to platform-constraints
+
+**Outcome:**
+- Health score: 89.5 → 92.2
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T17-11-02-141Z`
+
+---
+
 ## 2025-11-11T12:04:17.747Z
 
 **Repair ID:** 2025-11-11T12:04:17Z
