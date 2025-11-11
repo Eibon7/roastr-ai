@@ -3,17 +3,17 @@
 **Estado:** ✅ Completado (DI refactor v2.0 - 17/17 tests passing)
 **Próximo Milestone:** Merge to main
 **Responsable:** Orchestrator + Test Engineer
-**Última actualización:** 2025-11-11  
-**Version:** 2.1 (Polar Integration)  
-**Related PR:** #459, #594 (Polar), #808 (Tests)  
-**Issue:** #413, #594, #808  
+**Última actualización:** 2025-11-11
+**Version:** 2.1 (Polar Integration)
+**Related PR:** #459, #594 (Polar), #804 (Stripe webhook fix), #808 (Tests)
+**Issue:** #413, #594, #774 (Stripe webhook), #808  
 
 ---
 
-**Last Updated:** 2025-11-11  
-**Coverage:** 97.63%  
-**Coverage Source:** auto  
-**Related PRs:** #499, #813 (Issue #502), #594 (Polar Integration)
+**Last Updated:** 2025-11-11
+**Coverage:** 97.63%
+**Coverage Source:** auto
+**Related PRs:** #499, #813 (Issue #502), #594 (Polar Integration), #804 (Issue #774)
 
 ## Propósito
 
