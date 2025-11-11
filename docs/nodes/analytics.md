@@ -5,7 +5,7 @@
 **Priority:** Planned
 **Status:** Roadmap
 **Last Updated:** 2025-10-29
-**Coverage:** 49%
+**Coverage:** 30%
 **Coverage Source:** auto
 **Related PRs:** #499
 
