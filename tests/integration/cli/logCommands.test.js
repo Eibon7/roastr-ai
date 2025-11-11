@@ -339,11 +339,8 @@ describe('Log Commands CLI Integration', () => {
 
       expect(healthResult).toContain('Health Status');
       expect(healthResult).toContain('Statistics');
-<<<<<<< HEAD
-=======
       // Verify health check includes meaningful statistics
       expect(healthResult).toMatch(/\d+/); // Should contain at least one number
->>>>>>> origin/main
     }, TEST_TIMEOUT * 2);
 
     test('should handle service lifecycle correctly', async () => {
