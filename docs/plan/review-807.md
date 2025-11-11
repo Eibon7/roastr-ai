@@ -56,3 +56,4 @@
 - [ ] CodeRabbit: 0 comentarios (verificado con `npm run coderabbit:review`)
 - [ ] Completion validation: exit 0 (verificado con `npm run validate:completion -- --pr=807`)
 
+

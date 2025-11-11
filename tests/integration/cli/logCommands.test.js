@@ -226,7 +226,6 @@ describe('Log Commands CLI Integration', () => {
       expect(result).toMatch(/\d+\.?\d*\s+(B|KB|MB|GB)/);
     });
 
-<<<<<<< HEAD
     test('should show health check output', () => {
       const result = execSync(`node ${CLI_PATH} maintenance health`, { 
         encoding: 'utf8',
@@ -287,7 +286,6 @@ describe('Log Commands CLI Integration', () => {
       expect(result).toContain('Cleanup Enabled');
       expect(result).toContain('Backup Enabled');
       expect(result).toContain('Monitoring Enabled');
-<<<<<<< HEAD
     });
 
     test('should show status output', () => {
