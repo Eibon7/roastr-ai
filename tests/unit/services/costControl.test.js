@@ -278,10 +278,10 @@ describe('CostControlService', () => {
       expect(result.planName).toBe('Pro');
     });
 
-    test('should deny Shield for free plan', async () => {
+    test('should deny Shield for starter_trial plan', async () => {
       mockSelectSingle.mockResolvedValueOnce({
         data: {
-          plan_id: 'free'
+          plan_id: 'starter_trial'
         },
         error: null
       });
@@ -294,8 +294,8 @@ describe('CostControlService', () => {
       const result = await costControl.canUseShield('test-org-123');
 
       expect(result.allowed).toBe(false);
-      expect(result.planId).toBe('free');
-      expect(result.planName).toBe('Free');
+      expect(result.planId).toBe('starter_trial');
+      expect(result.planName).toBe('Starter Trial');
     });
   });
 
@@ -419,10 +419,10 @@ describe('CostControlService', () => {
     test('should have correct plan configurations', () => {
       // Test plan metadata (CodeRabbit #3353894295 N4)
       // Plans only contain id, name, and features (not limits)
-      expect(costControl.plans.free.id).toBe('free');
-      expect(costControl.plans.free.name).toBe('Free');
-      expect(costControl.plans.free.features).toContain('basic_integrations');
-      expect(costControl.plans.free.features).toContain('community_support');
+      expect(costControl.plans.starter_trial.id).toBe('starter_trial');
+      expect(costControl.plans.starter_trial.name).toBe('Starter Trial');
+      expect(costControl.plans.starter_trial.features).toContain('basic_integrations');
+      expect(costControl.plans.starter_trial.features).toContain('community_support');
 
       expect(costControl.plans.pro.id).toBe('pro');
       expect(costControl.plans.pro.name).toBe('Pro');
