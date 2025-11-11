@@ -13,38 +13,90 @@ const { logger } = require('../utils/logger');
 let Sentry = null;
 let SENTRY_ENABLED = false;
 
+/**
+ * Graceful Degradation Strategy (CodeRabbit Review #3445430342):
+ *
+ * 1. Package not installed:
+ *    - If SENTRY_ENABLED=true but @sentry/node not installed
+ *    - Catch require() error, log warning, continue without Sentry
+ *    - Expected behavior for optional dependency
+ *
+ * 2. Initialization failures:
+ *    - If Sentry.init() fails (invalid DSN, network issues)
+ *    - Catch error, log with diagnostic info, disable Sentry
+ *    - Service validation logic never blocked
+ *
+ * 3. Runtime failures:
+ *    - All operations (addBreadcrumb, captureException) wrapped in try-catch
+ *    - Failures logged but don't throw
+ *    - Performance: early return if SENTRY_ENABLED=false (no overhead)
+ *
+ * Package.json Strategy:
+ * - @sentry/node is an OPTIONAL peerDependency
+ * - Not installed by default (keeps bundle size small)
+ * - Install manually if needed: npm install @sentry/node
+ * - CI/production can include it conditionally
+ */
+
 // Try to load Sentry, but don't fail if it's not installed
 try {
     // Only attempt to load if explicitly enabled
     if (process.env.SENTRY_ENABLED === 'true' && process.env.SENTRY_DSN) {
-        Sentry = require('@sentry/node');
+        try {
+            // Separate try-catch for require() - handles package not installed
+            Sentry = require('@sentry/node');
+        } catch (requireError) {
+            // Package not installed - expected when Sentry is optional
+            logger.warn('Sentry package not installed - continuing without Sentry', {
+                error: requireError.message,
+                hint: 'Install with: npm install @sentry/node',
+                context: 'This is expected if @sentry/node is not in your dependencies'
+            });
+            Sentry = null;
+            SENTRY_ENABLED = false;
+            // Early exit - no point continuing if package unavailable
+            throw requireError;
+        }
 
-        Sentry.init({
-            dsn: process.env.SENTRY_DSN,
-            environment: process.env.NODE_ENV || 'development',
-            // Performance monitoring
-            tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
-            // Only in production or explicitly enabled
-            enabled: process.env.NODE_ENV === 'production' || process.env.SENTRY_FORCE_ENABLE === 'true',
-            // Integration-specific options
-            integrations: [
-                // Add custom integrations here if needed
-            ],
-            // Before send hook for filtering/modifying events
-            beforeSend(event, hint) {
-                // Don't send events in test environment
-                if (process.env.NODE_ENV === 'test') {
-                    return null;
+        // Separate try-catch for Sentry.init() - handles initialization failures
+        try {
+            Sentry.init({
+                dsn: process.env.SENTRY_DSN,
+                environment: process.env.NODE_ENV || 'development',
+                // Performance monitoring
+                tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+                // Only in production or explicitly enabled
+                enabled: process.env.NODE_ENV === 'production' || process.env.SENTRY_FORCE_ENABLE === 'true',
+                // Integration-specific options
+                integrations: [
+                    // Add custom integrations here if needed
+                ],
+                // Before send hook for filtering/modifying events
+                beforeSend(event, hint) {
+                    // Don't send events in test environment
+                    if (process.env.NODE_ENV === 'test') {
+                        return null;
+                    }
+                    return event;
                 }
-                return event;
-            }
-        });
+            });
 
-        SENTRY_ENABLED = true;
-        logger.info('Sentry initialized for tier validation monitoring', {
-            environment: process.env.NODE_ENV,
-            tracesSampleRate: Sentry.getCurrentHub().getClient()?.getOptions().tracesSampleRate
-        });
+            SENTRY_ENABLED = true;
+            logger.info('Sentry initialized for tier validation monitoring', {
+                environment: process.env.NODE_ENV,
+                tracesSampleRate: Sentry.getCurrentHub().getClient()?.getOptions().tracesSampleRate
+            });
+        } catch (initError) {
+            // Initialization failed (invalid DSN, network issues, etc.)
+            logger.error('Sentry initialization failed - continuing without Sentry', {
+                error: initError.message,
+                dsn: process.env.SENTRY_DSN ? 'configured (hidden)' : 'not configured',
+                hint: 'Check SENTRY_DSN validity and network connectivity',
+                stack: initError.stack
+            });
+            Sentry = null;
+            SENTRY_ENABLED = false;
+        }
     } else {
         logger.debug('Sentry disabled or not configured', {
             enabled: process.env.SENTRY_ENABLED,
@@ -52,12 +104,13 @@ try {
         });
     }
 } catch (error) {
-    logger.warn('Sentry module not available - continuing without Sentry', {
-        error: error.message,
-        hint: 'Install with: npm install @sentry/node'
-    });
-    Sentry = null;
-    SENTRY_ENABLED = false;
+    // Outer catch for any unexpected errors
+    // Most errors already handled above, but kept for safety
+    if (!SENTRY_ENABLED) {
+        // Already logged in inner catches
+        Sentry = null;
+        SENTRY_ENABLED = false;
+    }
 }
 
 /**

@@ -970,6 +970,91 @@ console.log(metrics.cachePerformance);
 - Structured logs (category: `tier_validation_alert`)
 - Optional webhook (Slack, PagerDuty, etc.)
 
+**Webhook Delivery Mechanism (CodeRabbit Review #3445430342):**
+
+The alert system uses a fire-and-forget webhook delivery pattern to ensure tier validation performance is never blocked by external service latency:
+
+1. **HTTP POST Request:**
+   - Content-Type: `application/json`
+   - Timeout: 5 seconds
+   - No retries (prevents cascading failures)
+   - Non-blocking (service continues even if webhook fails)
+
+2. **Error Handling:**
+   - Webhook failures are logged but don't throw exceptions
+   - Failed deliveries don't count toward error rate thresholds
+   - Network errors, timeouts, and HTTP 4xx/5xx are gracefully handled
+
+3. **Security:**
+   - Webhook URL should use HTTPS
+   - Supports custom headers for authentication (future enhancement)
+   - Payload contains no sensitive credentials (only user IDs, metrics)
+
+**Integration Examples:**
+
+**Slack Webhook:**
+```bash
+# .env configuration
+ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX
+```
+
+Expected Slack message format (auto-formatted by Slack):
+```
+🚨 Tier Validation Alert
+Service: tier_validation_service
+Type: error_threshold_exceeded
+
+User: user-123
+Action: roast
+Error: Database validation error
+
+Metrics:
+• Error Rate: 6.50% (threshold: 5%)
+• Errors (1h): 105 (threshold: 100)
+• Total Errors: 650
+• Total Validations: 10,000
+
+Violations:
+✅ Rate exceeded
+✅ Count exceeded
+
+Cache Performance: 85.00% hit rate
+Timestamp: 2025-11-10T12:00:00Z
+```
+
+**PagerDuty Webhook:**
+```bash
+# .env configuration
+ALERT_WEBHOOK_URL=https://events.pagerduty.com/v2/enqueue
+```
+
+PagerDuty requires Events API v2 integration. Send payload with:
+```json
+{
+  "routing_key": "YOUR_INTEGRATION_KEY",
+  "event_action": "trigger",
+  "payload": {
+    "summary": "Tier Validation: error_threshold_exceeded",
+    "severity": "error",
+    "source": "tier_validation_service",
+    "custom_details": {
+      "userId": "user-123",
+      "action": "roast",
+      "errorRate": "6.50%",
+      "errorsLastHour": 105
+    }
+  }
+}
+```
+
+**Custom Webhook:**
+```bash
+# .env configuration
+ALERT_WEBHOOK_URL=https://your-alerting-system.com/api/alerts
+```
+
+Receives standard alert payload (see Alert Payload section below).
+
 **Environment Variables:**
 ```bash
 # Optional: External alert webhook

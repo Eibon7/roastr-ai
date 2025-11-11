@@ -57,7 +57,24 @@ class TierValidationService {
             cacheMisses: 0
         };
 
-        // Issue #396: Error alerting configuration
+        /**
+         * Issue #396: Error alerting configuration
+         *
+         * Concurrency Note (CodeRabbit Review #3445430342):
+         * While Node.js is single-threaded, async operations can interleave.
+         * Array operations (push, filter) on errorTimestamps are NOT async-safe
+         * in high-concurrency scenarios.
+         *
+         * Current mitigation:
+         * - Simple array operations (push, filter) are atomic at JS level
+         * - No await/async between read-modify-write cycles
+         * - Race conditions unlikely in current usage pattern
+         *
+         * Future optimization (if high concurrency issues occur):
+         * - Replace array with circular buffer (O(1) operations)
+         * - Periodic cleanup instead of per-error cleanup
+         * - Use atomic operations or locks for critical sections
+         */
         this.errorTimestamps = [];  // Track errors for last hour
         this.lastAlertTime = null;   // Prevent alert spam
         this.alertCooldownMs = 300000; // 5 min between alerts (300,000ms)
@@ -95,12 +112,13 @@ class TierValidationService {
 
         const requestId = options.requestId || `${userId}-${action}-${Date.now()}`;
 
-        // Issue #396 AC3: Sentry breadcrumb - validation start
+        // Issue #396 AC3: Sentry breadcrumb - validation start (level: info - default)
         this.addSentryBreadcrumb('validation_start', {
             userId,
             action,
             requestId,
             platform: options.platform
+            // level defaults to 'info' for normal operation tracking
         });
 
         // Request-scoped caching to prevent duplicate validations (CodeRabbit Round 4)
@@ -187,14 +205,15 @@ class TierValidationService {
                 this.metrics.allowedActions++;
             }
 
-            // Issue #396 AC3: Sentry breadcrumb - validation complete
+            // Issue #396 AC3: Sentry breadcrumb - validation complete (level: info - explicit)
             this.addSentryBreadcrumb('validation_complete', {
                 userId,
                 action,
                 allowed: result.allowed,
                 reason: result.reason,
                 tier: result.currentTier,
-                requestId
+                requestId,
+                level: 'info'  // Explicit: successful validation tracking
             });
 
             return result;
@@ -203,9 +222,9 @@ class TierValidationService {
             // Issue #396: Use recordError() for alerting
             this.recordError(userId, action, error);
 
-            // Issue #396 AC3: Sentry breadcrumb + exception capture
+            // Issue #396 AC3: Sentry breadcrumb + exception capture (level: error - explicit)
             this.addSentryBreadcrumb('validation_error', {
-                level: 'error',
+                level: 'error',  // Explicit: error-level breadcrumb for exceptions
                 userId,
                 action,
                 error: error.message,
@@ -722,8 +741,23 @@ class TierValidationService {
     /**
      * Get cached usage if valid (updated for atomic cache format)
      * @private
+     *
+     * Boundary checks (CodeRabbit Review #3445430342):
+     * - Validates userId (null/undefined/wrong type → returns null + cache miss)
+     * - Validates timestamp existence (corrupted entry → cleanup + cache miss)
+     * - Validates timestamp type (corrupted entry → cleanup + cache miss)
      */
     getCachedUsage(userId) {
+        // Boundary check: validate userId
+        if (!userId || typeof userId !== 'string') {
+            this.metrics.cacheMisses++;  // Issue #396: Track cache miss
+            logger.warn('getCachedUsage called with invalid userId', {
+                userId: typeof userId,
+                context: 'Returning null for safety'
+            });
+            return null;
+        }
+
         // Don't return cached data if invalidation is pending
         if (this.pendingCacheInvalidations.has(userId)) {
             this.metrics.cacheMisses++;  // Issue #396: Track cache miss
@@ -731,10 +765,29 @@ class TierValidationService {
         }
 
         const cached = this.usageCache.get(userId);
-        if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+
+        // Boundary check: validate cached entry structure
+        if (!cached || !cached.timestamp || typeof cached.timestamp !== 'number') {
+            if (cached) {
+                // Corrupted cache entry detected - clean it up
+                logger.warn('Corrupted cache entry detected and removed', {
+                    userId,
+                    hasTimestamp: !!cached.timestamp,
+                    timestampType: typeof cached.timestamp,
+                    action: 'Entry removed from cache'
+                });
+                this.usageCache.delete(userId);  // Cleanup corrupted entry
+            }
+            this.metrics.cacheMisses++;  // Issue #396: Track cache miss
+            return null;
+        }
+
+        // Standard cache expiry check
+        if (Date.now() - cached.timestamp < this.cacheTimeout) {
             this.metrics.cacheHits++;  // Issue #396: Track cache hit
             return cached.data;
         }
+
         this.metrics.cacheMisses++;  // Issue #396: Track cache miss
         return null;
     }
@@ -1252,11 +1305,21 @@ class TierValidationService {
     /**
      * Record error with alerting check (Issue #396 - AC2)
      * Replaces direct this.metrics.errors++ calls
+     *
+     * Concurrency handling (CodeRabbit Review #3445430342):
+     * - Operations are synchronous (no await) to minimize race conditions
+     * - Array.push() is atomic at JS level
+     * - If high concurrency becomes an issue, consider:
+     *   1. Circular buffer instead of array (O(1) operations)
+     *   2. Periodic cleanup instead of per-error cleanup
+     *   3. Batched metrics updates
+     *
      * @param {string} userId - User ID
      * @param {string} action - Action type
      * @param {Error} error - Error object
      */
     recordError(userId, action, error) {
+        // All operations are synchronous to prevent interleaving
         this.metrics.errors++;
         this.errorTimestamps.push(Date.now());
         this.pruneOldErrors();
@@ -1268,10 +1331,17 @@ class TierValidationService {
     /**
      * Prune errors older than 1 hour (Issue #396 - AC2)
      * Maintains sliding window for error rate calculation
+     *
+     * Performance note (CodeRabbit Review #3445430342):
+     * - filter() is O(n) and called on every error
+     * - For high-error scenarios, consider periodic cleanup (e.g., every 100 errors)
+     * - Alternative: circular buffer with O(1) operations
+     *
      * @private
      */
     pruneOldErrors() {
         const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        // Atomic operation - creates new array, then replaces reference
         this.errorTimestamps = this.errorTimestamps.filter(t => t > oneHourAgo);
     }
 
@@ -1369,8 +1439,16 @@ class TierValidationService {
     /**
      * Add Sentry breadcrumb (Issue #396 - AC3)
      * Enhanced error tracking with context breadcrumbs
-     * @param {string} category - Breadcrumb category
+     *
+     * Breadcrumb levels (CodeRabbit Review #3445430342):
+     * - 'info': Normal operations (validation_start, validation_complete) - DEFAULT
+     * - 'warning': Degraded performance or potential issues
+     * - 'error': Errors and exceptions (validation_error)
+     *
+     * @param {string} category - Breadcrumb category (e.g., 'validation_start')
      * @param {Object} data - Breadcrumb data
+     * @param {string} [data.level='info'] - Breadcrumb level (info|warning|error)
+     * @param {string} [data.message] - Optional message (defaults to category)
      * @private
      */
     addSentryBreadcrumb(category, data = {}) {
@@ -1379,7 +1457,7 @@ class TierValidationService {
         sentryAddBreadcrumb({
             category: `tier_validation.${category}`,
             message: data.message || category,
-            level: data.level || 'info',
+            level: data.level || 'info',  // Default: 'info' for normal operations
             data: {
                 ...data,
                 service: 'tier_validation_service',
