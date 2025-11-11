@@ -1,7 +1,7 @@
 // Set NODE_ENV to test BEFORE any imports or requires
 process.env.NODE_ENV = 'test';
 
-// Set extended timeout for CI environments (resolves ECONNREFUSED in slow environments)
+// Increase timeout for slower CI environments
 jest.setTimeout(15000);
 
 const request = require('supertest');

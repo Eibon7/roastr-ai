@@ -8,7 +8,7 @@
 **Coverage:** 0%
 **Coverage Source:** auto
 **Related PRs:** #499
-**Note:** Integration tests exist but not included in coverage report. Platform-specific implementations in subdirectories (twitter/, youtube/, etc.)
+**Note:** Integration tests exist but not included in coverage report. Platform-specific implementations in subdirectories (Twitter/, YouTube/, etc.)
 
 ## Dependencies
 
