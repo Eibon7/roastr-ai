@@ -351,10 +351,10 @@ class AutoRepairEngine {
    * Parse node metadata
    */
   parseNodeMetadata(content) {
-    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
     return {
       lastUpdated: (content.match(/\*?\*?last[_\s]updated:?\*?\*?\s*(\d{4}-\d{2}-\d{2})/i) || [])[1],
-      coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : null,
+      coverage: coverageMatch ? parseFloat(coverageMatch[1]) : null,
       hasAgents: /##\s*Agentes Relevantes/i.test(content),
       status: (content.match(/\*?\*?status:?\*?\*?\s*(\w+)/i) || [])[1],
       priority: (content.match(/\*?\*?priority:?\*?\*?\s*(\w+)/i) || [])[1],
@@ -596,12 +596,12 @@ class AutoRepairEngine {
 
     for (const [nodeName, node] of Object.entries(nodes)) {
       // Extract declared coverage
-      const coverageMatch = node.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+      const coverageMatch = node.content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
       if (!coverageMatch) {
         continue;  // No coverage declared, skip
       }
 
-      const declaredCoverage = parseInt(coverageMatch[1], 10);
+      const declaredCoverage = parseFloat(coverageMatch[1]);
 
       // Check coverage source
       const sourceMatch = node.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
@@ -616,7 +616,7 @@ class AutoRepairEngine {
           fix: async () => {
             // Add Coverage Source: auto after Coverage field
             node.content = node.content.replace(
-              /(\*?\*?coverage:?\*?\*?\s*\d+%)/i,
+              /(\*?\*?coverage:?\*?\*?\s*[\d.]+%)/i,
               '$1\n**Coverage Source:** auto'
             );
             await fs.writeFile(node.path, node.content);
@@ -663,7 +663,7 @@ class AutoRepairEngine {
           fix: async () => {
             // Reset coverage to actual value from report
             node.content = node.content.replace(
-              /(\*?\*?coverage:?\*?\*?\s*)\d+%/i,
+              /(\*?\*?coverage:?\*?\*?\s*)[\d.]+%/i,
               `$1${validation.actual}%`
             );
             await fs.writeFile(node.path, node.content);

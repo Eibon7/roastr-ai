@@ -3,22 +3,22 @@
 **Estado:** ✅ Completado (DI refactor v2.0 - 17/17 tests passing)
 **Próximo Milestone:** Merge to main
 **Responsable:** Orchestrator + Test Engineer
-**Última actualización:** 2025-10-05
-**Version:** 2.0 (Dependency Injection)
-**Related PR:** #459
-**Issue:** #413
+**Última actualización:** 2025-11-11  
+**Version:** 2.1 (Polar Integration)  
+**Related PR:** #459, #594 (Polar), #808 (Tests)  
+**Issue:** #413, #594, #808  
 
 ---
 
-**Last Updated:** 2025-11-10
-**Coverage:** 97.63%
-**Coverage Source:** auto
-**Related PRs:** #499, #813 (Issue #502)
+**Last Updated:** 2025-11-11  
+**Coverage:** 97.63%  
+**Coverage Source:** auto  
+**Related PRs:** #499, #813 (Issue #502), #594 (Polar Integration)
 
 ## Propósito
 
-El nodo **Billing** gestiona toda la integración con Stripe para suscripciones, webhooks y gestión de planes. Actúa como punto de entrada para operaciones de billing, coordinando entre servicios de pago, entitlements y queue system.
-**Coverage:** 50%
+El nodo **Billing** gestiona integración con **Polar** (Merchant of Record) para suscripciones, webhooks y gestión de planes. Actúa como punto de entrada para operaciones de billing, coordinando entre servicios de pago, entitlements y queue system.
+**⚠️ Migration Status:** Polar (primary) + Stripe (legacy support)
 
 **Responsabilidades principales:**
 - Procesar webhooks de Stripe (checkout, subscriptions, payments)
@@ -643,11 +643,13 @@ function getPlanFromStripeLookupKey(lookupKey) {
 
 Los siguientes agentes son responsables de mantener este nodo:
 
-- **Documentation Agent**
-- **Test Engineer**
-- **Backend Developer**
-- **Billing Specialist**
-- **Orchestrator**
+- **Backend Developer** (Polar implementation: checkout, webhooks, helpers)
+- **Test Engineer** (100+ tests for Polar integration)
+- **Guardian** (Security audit: signatures, allowlists, RLS policies)
+- **Documentation Agent** (Updated docs, env vars guide)
+- **Orchestrator** (Task coordination, issue 594 + 808)
+
+**Last contribution:** 2025-11-11 (Issues #594, #808 - Polar Integration)
 
 
 ---

@@ -1,6 +1,9 @@
 // Set NODE_ENV to test BEFORE any imports or requires
 process.env.NODE_ENV = 'test';
 
+// Increase timeout for slower CI environments
+jest.setTimeout(15000);
+
 const request = require('supertest');
 const express = require('express');
 

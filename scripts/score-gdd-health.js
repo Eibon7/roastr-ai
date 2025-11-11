@@ -168,9 +168,9 @@ class GDDHealthScorer {
     }
 
     // Extract coverage (supports both "coverage: 60%" and "**Coverage:** 60%")
-    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+    const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
     if (coverageMatch) {
-      metadata.coverage = parseInt(coverageMatch[1]);
+      metadata.coverage = parseFloat(coverageMatch[1]);
     }
 
     // Extract test files
@@ -380,13 +380,13 @@ class GDDHealthScorer {
     const coverageHelper = new CoverageHelper();
 
     // Extract declared coverage
-    const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+    const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
     if (!coverageMatch) {
       // No declared coverage → unverifiable; apply mild penalty
       return 80;
     }
 
-    const declaredCoverage = parseInt(coverageMatch[1], 10);
+    const declaredCoverage = parseFloat(coverageMatch[1]);
 
     // Check coverage source
     const sourceMatch = nodeData.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);

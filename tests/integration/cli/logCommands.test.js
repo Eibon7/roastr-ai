@@ -226,6 +226,16 @@ describe('Log Commands CLI Integration', () => {
       expect(result).toMatch(/\d+\.?\d*\s+(B|KB|MB|GB)/);
     });
 
+    test('should show health check output', () => {
+      const result = execSync(`node ${CLI_PATH} maintenance health`, { 
+        encoding: 'utf8',
+        timeout: TEST_TIMEOUT 
+      });
+
+      expect(result).toContain('Health Status');
+      expect(result).toContain('Statistics');
+    });
+
     test('should show progress indicators for long operations', (done) => {
       const child = spawn('node', [CLI_PATH, 'backup', 'upload', '--days', '7', '--dry-run'], {
         stdio: 'pipe'
@@ -276,6 +286,16 @@ describe('Log Commands CLI Integration', () => {
       expect(result).toContain('Cleanup Enabled');
       expect(result).toContain('Backup Enabled');
       expect(result).toContain('Monitoring Enabled');
+    });
+
+    test('should show status output', () => {
+      const result = execSync(`node ${CLI_PATH} maintenance status`, { 
+        encoding: 'utf8',
+        timeout: TEST_TIMEOUT 
+      });
+
+      expect(result).toContain('Log Maintenance Service Status');
+      expect(result).toContain('Configuration');
     });
   });
 

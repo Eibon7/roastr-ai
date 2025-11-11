@@ -4,7 +4,7 @@ set -e
 # Get repository root dynamically (cross-platform compatible)
 if command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 2>&1; then
   REPO_ROOT=$(git rev-parse --show-toplevel)
-elif [ -n "$BASH_SOURCE" ]; then
+elif [ -n "${BASH_SOURCE[0]}" ]; then
   # Fallback: use script location
   SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
   REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)

@@ -10,8 +10,6 @@
 **Note:** Coverage validated via RLS integration tests (11/22 tables tested, 12/12 tests passing). Direct RLS validation approach without JWT context switching.
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready), #504 (Coverage Recovery - 40.9% achieved ✅), #800 (Coverage Expansion - Phase 1 - 50% achieved ✅), #801 (CRUD-level RLS Testing - Full CRUD coverage ✅)
 **Related PRs:** #499, #587, #790
-**Coverage:** 50%
-
 ## Dependencies
 
 None (foundational node)
