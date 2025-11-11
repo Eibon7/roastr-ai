@@ -91,6 +91,15 @@ if (!validation.isValid) {
 }
 ```
 
+## Agentes Relevantes
+
+Los siguientes agentes son responsables de mantener este nodo:
+
+- **Documentation Agent**
+- **Test Engineer**
+- **Backend Developer**
+
+
 ## Related Nodes
 
 - `social-platforms` - Platform integrations using these constraints
