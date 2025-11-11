@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-11-11T14:08:57.869Z
+**Generated:** 2025-11-11T14:15:39.480Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 88.1/100
+**Average Score:** 88.8/100
 
 ---
 
@@ -25,7 +25,6 @@
 | trainer | 🟢 82 | healthy | 2025-10-29 | 0% | 0 | 0 |
 | observability | 🟢 83 | healthy | 2025-10-18 | 46% | 0 | 0 |
 | analytics | 🟢 86 | healthy | 2025-10-29 | 49% | 0 | 0 |
-| billing | 🟢 90 | healthy | 2025-11-10 | 50% | 0 | 0 |
 | multi-tenant | 🟢 90 | healthy | 2025-11-10 | 50% | 0 | 0 |
 | plan-features | 🟢 90 | healthy | 2025-10-28 | 65% | 0 | 0 |
 | platform-constraints | 🟢 90 | healthy | 2025-10-29 | 67% | 0 | 0 |
@@ -34,6 +33,7 @@
 | shield | 🟢 96 | healthy | 2025-10-28 | 86% | 0 | 0 |
 | tone | 🟢 98 | healthy | 2025-11-04 | 100% | 0 | 0 |
 | persona | 🟢 99 | healthy | 2025-11-06 | 90% | 0 | 0 |
+| billing | 🟢 100 | healthy | 2025-11-11 | 97.63% | 0 | 0 |
 
 ---
 
