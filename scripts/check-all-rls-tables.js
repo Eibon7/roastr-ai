@@ -44,9 +44,11 @@ const ALL_TABLES = [
   'feature_flags'
 ];
 
-// 9 already tested
+// 9 already tested (Issue #504: posts, comments, roasts, integration_configs, usage_records, monthly_usage, responses, user_behaviors, user_activities)
 const TESTED_TABLES = [
+  'posts',
   'comments',
+  'roasts',
   'integration_configs',
   'monthly_usage',
   'responses',

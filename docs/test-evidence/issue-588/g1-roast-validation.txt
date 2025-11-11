@@ -1,0 +1,498 @@
+[dotenv@17.2.3] injecting env (43) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+🎭 Mock Mode ENABLED - Using fake data for all external APIs
+[INFO] 2025-11-11T08:27:06.242Z: 🏁 Feature flags initialized {
+  enabled: [
+    'ENABLE_REAL_TWITTER',
+    'ENABLE_REAL_YOUTUBE',
+    'ENABLE_REAL_OPENAI',
+    'ENABLE_REAL_PERSPECTIVE',
+    'ENABLE_PERSPECTIVE_API',
+    'ENABLE_EMAIL_NOTIFICATIONS',
+    'MOCK_MODE',
+    'ENABLE_MOCK_PERSISTENCE',
+    'ENABLE_MAGIC_LINK',
+    'ENABLE_PASSWORD_HISTORY',
+    'ENABLE_RATE_LIMIT',
+    'ENABLE_CSRF_PROTECTION',
+    'ENABLE_RESPONSE_CACHE',
+    'ENABLE_STYLE_PROFILE',
+    'ROAST_VERSIONS_MULTIPLE',
+    'ENABLE_ROAST_ENGINE'
+  ],
+  disabled: [
+    'ENABLE_BILLING',       'ENABLE_RQC',
+    'ENABLE_SHIELD',        'ENABLE_REAL_INSTAGRAM',
+    'ENABLE_REAL_FACEBOOK', 'ENABLE_REAL_DISCORD',
+    'ENABLE_REAL_TWITCH',   'ENABLE_REAL_REDDIT',
+    'ENABLE_REAL_TIKTOK',   'ENABLE_REAL_BLUESKY',
+    'ENABLE_SUPABASE',      'ENABLE_DEBUG_LOGS',
+    'VERBOSE_LOGS',         'DEBUG_CACHE',
+    'ENABLE_CREDITS_V2',    'ENABLE_CUSTOM_PROMPT',
+    'ENABLE_FACEBOOK_UI',   'ENABLE_INSTAGRAM_UI',
+    'ENABLE_ORIGINAL_TONE', 'ENABLE_SHOP',
+    'ENABLE_SHIELD_UI'
+  ],
+  totalFlags: 37
+}
+[INFO] 2025-11-11T08:27:06.251Z: PersonaService: Mock Supabase client initialized
+[INFO] 2025-11-11T08:27:06.251Z: PersonaService initialized {
+  planAccessConfigured: 7,
+  characterLimits: {
+    lo_que_me_define: 300,
+    lo_que_no_tolero: 300,
+    lo_que_me_da_igual: 300
+  }
+}
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+🚀 Starting Basic Roast Generation Flow Validation
+
+============================================================
+
+📋 Step 1: Creating test organization...
+✅ Test user created: 8d6fadab-d609-4a1a-a85a-ee2f5788617a
+✅ Test organization created: e04d06af-8972-419d-a7bf-2bfa0c9945cf
+
+============================================================
+
+📝 Test 1/3: You are absolutely terrible at this, maybe try som...
+Expected toxicity: high
+
+🔍 Step 2: Analyzing toxicity...
+⚠️  Perspective API unavailable, using fallback
+⚠️  Toxicity score (0.5) doesn't match expected (high)
+
+💾 Step 3: Storing comment...
+✅ Comment stored: 49fa8b56-fda6-41a3-852a-8a3112d1729c
+
+🔥 Step 4: Generating roast with OpenAI...
+[INFO] 2025-11-11T08:27:08.873Z: 🎯 Starting roast generation with RQC {
+  userId: undefined,
+  plan: undefined,
+  rqcEnabled: undefined,
+  tone: 'sarcastic'
+}
+[ERROR] 2025-11-11T08:27:09.011Z: Error fetching user RQC config: {
+  code: 'PGRST202',
+  details: 'Searched for the function public.get_user_rqc_config without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.',
+  hint: null,
+  message: 'Could not find the function public.get_user_rqc_config without parameters in the schema cache'
+}
+[INFO] 2025-11-11T08:27:09.012Z: 📝 Using basic moderation for plan: starter_trial
+[INFO] 2025-11-11T08:27:09.012Z: 🔍 Checking OpenAI model availability...
+[INFO] 2025-11-11T08:27:10.029Z: 🎉 GPT-5 is now available! Updating model preferences...
+[INFO] 2025-11-11T08:27:10.335Z: Model availability saved to database
+[INFO] 2025-11-11T08:27:10.336Z: ✅ Model availability updated {
+  availability: {
+    'gpt-5': true,
+    'gpt-4o': true,
+    'gpt-4o-mini': true,
+    'gpt-3.5-turbo': true
+  },
+  gpt5Available: true
+}
+[INFO] 2025-11-11T08:27:10.336Z: Model selected for plan {
+  plan: 'starter_trial',
+  selectedModel: 'gpt-3.5-turbo',
+  preferences: [ 'gpt-3.5-turbo' ]
+}
+[INFO] 2025-11-11T08:27:10.336Z: Persona retrieved {
+  userId: undefined,
+  hasIdentity: false,
+  hasIntolerance: false,
+  hasTolerance: false
+}
+[ERROR] 2025-11-11T08:27:10.337Z: Error building prompt: {
+  error: 'originalComment must be a string',
+  stack: 'Error: originalComment must be a string\n' +
+    '    at RoastPromptTemplate.validateBuildPromptParams (/Users/emiliopostigo/roastr-ai/src/services/roastPromptTemplate.js:420:13)\n' +
+    '    at RoastPromptTemplate.buildPrompt (/Users/emiliopostigo/roastr-ai/src/services/roastPromptTemplate.js:440:12)\n' +
+    '    at RoastGeneratorEnhanced.generateWithBasicModeration (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:339:52)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:155:26)\n' +
+    '    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29)',
+  version: 'v1-roast-prompt',
+  params: {
+    hasOriginalComment: true,
+    originalCommentType: 'object',
+    originalCommentLength: 0
+  }
+}
+[WARN] 2025-11-11T08:27:10.337Z: Using fallback prompt {
+  version: 'v1-roast-prompt',
+  tone: 'sarcastic',
+  hasOriginalComment: true,
+  errorReason: 'originalComment must be a string',
+  fallbackTriggered: true
+}
+[ERROR] 2025-11-11T08:27:12.381Z: ❌ Error in enhanced roast generation: RateLimitError: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+    at APIError.generate (/Users/emiliopostigo/roastr-ai/node_modules/openai/core/error.js:63:20)
+    at OpenAI.makeStatusError (/Users/emiliopostigo/roastr-ai/node_modules/openai/client.js:159:32)
+    at OpenAI.makeRequest (/Users/emiliopostigo/roastr-ai/node_modules/openai/client.js:304:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async RoastGeneratorEnhanced.generateWithBasicModeration (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:357:24)
+    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:155:26)
+    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29) {
+  status: 429,
+  headers: Headers {
+    date: 'Tue, 11 Nov 2025 08:27:12 GMT',
+    'content-type': 'application/json; charset=utf-8',
+    'content-length': '337',
+    connection: 'keep-alive',
+    vary: 'Origin',
+    'x-request-id': 'req_f3f0d2d185984f53ace4381f7f3e2993',
+    'x-envoy-upstream-service-time': '120',
+    'x-openai-proxy-wasm': 'v0.1',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=fMp0Iq1NkZLOoJtEppfAsq44lsc_BpGd3za6JNhJKRE-1762849632-1.0.1.1-esOJ_YOfjjPxc3uEI7x6mF5tmEl9co_ie97dx0AXSecJKCu9SmQ46knAoYnZLLg5iAOtdBGQJIm1KePOrvTLpmFkgYmxTjlX8VxwhMM4MNY; path=/; expires=Tue, 11-Nov-25 08:57:12 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=6UIgx24LQJ8OihB4KREAcz8GhqhxPdMTlms6dr5wc3w-1762849632288-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '99cc68b5ac5624a7-MAD',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_f3f0d2d185984f53ace4381f7f3e2993',
+  error: {
+    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.',
+    type: 'insufficient_quota',
+    param: null,
+    code: 'insufficient_quota'
+  },
+  code: 'insufficient_quota',
+  param: null,
+  type: 'insufficient_quota'
+}
+[INFO] 2025-11-11T08:27:12.382Z: Model selected for plan {
+  plan: 'starter_trial',
+  selectedModel: 'gpt-3.5-turbo',
+  preferences: [ 'gpt-3.5-turbo' ]
+}
+[ERROR] 2025-11-11T08:27:14.341Z: OpenAI fallback failed, returning mock/static roast {
+  error: '429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.'
+}
+[INFO] 2025-11-11T08:27:14.341Z: 🎭 Mock roast generator initialized
+[INFO] 2025-11-11T08:27:14.674Z: Mock roast generated {
+  tone: 'sarcastic',
+  intensity: 3,
+  humorType: 'witty',
+  toxicityScore: 0.2,
+  textLength: undefined,
+  roastLength: 95
+}
+[ERROR] 2025-11-11T08:27:14.674Z: Error en el servicio de transparencia TypeError: Cannot read properties of undefined (reading 'substring')
+    at TransparencyService.applyTransparencyDisclaimer (/Users/emiliopostigo/roastr-ai/src/services/transparencyService.js:229:24)
+    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:278:34)
+    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29)
+[WARN] 2025-11-11T08:27:14.674Z: Fallback roast disclaimer stats tracking failed { reason: 'invalid_disclaimer_text', error: undefined }
+✅ Roast generated: "I'm genuinely impressed by "that thing you said". Said no one ever. *adjusts ima..."
+   Model: unknown
+   Tokens: 28
+   Cost: $0.0000
+
+💾 Step 5: Storing roast...
+✅ Roast stored: b2daa590-867e-4db8-a9e4-55beccfbcb9c
+
+🔍 Step 6: Verifying retrieval...
+✅ Roast retrieved successfully
+   Comment: "You are absolutely terrible at this, maybe try som..."
+   Roast: "I'm genuinely impressed by "that thing you said". Said no one ever. *adjusts ima..."
+
+⏱️  Execution time: 6.31s
+⚠️  Warning: Exceeded 5s target (6.31s)
+✅ Quality check passed: 95 chars (>50 required)
+
+✅ Test 1 PASSED
+
+============================================================
+
+📝 Test 2/3: This is pretty mediocre work, not impressed...
+Expected toxicity: medium
+
+🔍 Step 2: Analyzing toxicity...
+⚠️  Perspective API unavailable, using fallback
+
+💾 Step 3: Storing comment...
+✅ Comment stored: f045983e-239b-4470-9dbc-e85ef19ea9e1
+
+🔥 Step 4: Generating roast with OpenAI...
+[INFO] 2025-11-11T08:27:15.120Z: 🎯 Starting roast generation with RQC {
+  userId: undefined,
+  plan: undefined,
+  rqcEnabled: undefined,
+  tone: 'sarcastic'
+}
+[ERROR] 2025-11-11T08:27:15.221Z: Error fetching user RQC config: {
+  code: 'PGRST202',
+  details: 'Searched for the function public.get_user_rqc_config without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.',
+  hint: null,
+  message: 'Could not find the function public.get_user_rqc_config without parameters in the schema cache'
+}
+[INFO] 2025-11-11T08:27:15.221Z: 📝 Using basic moderation for plan: starter_trial
+[INFO] 2025-11-11T08:27:15.222Z: Model selected for plan {
+  plan: 'starter_trial',
+  selectedModel: 'gpt-3.5-turbo',
+  preferences: [ 'gpt-3.5-turbo' ]
+}
+[INFO] 2025-11-11T08:27:15.223Z: Persona retrieved {
+  userId: undefined,
+  hasIdentity: false,
+  hasIntolerance: false,
+  hasTolerance: false
+}
+[ERROR] 2025-11-11T08:27:15.223Z: Error building prompt: {
+  error: 'originalComment must be a string',
+  stack: 'Error: originalComment must be a string\n' +
+    '    at RoastPromptTemplate.validateBuildPromptParams (/Users/emiliopostigo/roastr-ai/src/services/roastPromptTemplate.js:420:13)\n' +
+    '    at RoastPromptTemplate.buildPrompt (/Users/emiliopostigo/roastr-ai/src/services/roastPromptTemplate.js:440:12)\n' +
+    '    at RoastGeneratorEnhanced.generateWithBasicModeration (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:339:52)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:155:26)\n' +
+    '    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29)',
+  version: 'v1-roast-prompt',
+  params: {
+    hasOriginalComment: true,
+    originalCommentType: 'object',
+    originalCommentLength: 0
+  }
+}
+[WARN] 2025-11-11T08:27:15.223Z: Using fallback prompt {
+  version: 'v1-roast-prompt',
+  tone: 'sarcastic',
+  hasOriginalComment: true,
+  errorReason: 'originalComment must be a string',
+  fallbackTriggered: true
+}
+[ERROR] 2025-11-11T08:27:16.461Z: ❌ Error in enhanced roast generation: RateLimitError: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+    at APIError.generate (/Users/emiliopostigo/roastr-ai/node_modules/openai/core/error.js:63:20)
+    at OpenAI.makeStatusError (/Users/emiliopostigo/roastr-ai/node_modules/openai/client.js:159:32)
+    at OpenAI.makeRequest (/Users/emiliopostigo/roastr-ai/node_modules/openai/client.js:304:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async RoastGeneratorEnhanced.generateWithBasicModeration (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:357:24)
+    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:155:26)
+    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29) {
+  status: 429,
+  headers: Headers {
+    date: 'Tue, 11 Nov 2025 08:27:16 GMT',
+    'content-type': 'application/json; charset=utf-8',
+    'content-length': '337',
+    connection: 'keep-alive',
+    vary: 'Origin',
+    'x-request-id': 'req_6c04573b248644299958003505066eb9',
+    'x-envoy-upstream-service-time': '132',
+    'x-openai-proxy-wasm': 'v0.1',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=sczaLL2YuP40DMzJfUKuD6R22wmOg2.7Xx32ZEbskf0-1762849636-1.0.1.1-yvKU4zsvFDC6dEuxVglL3kq_1IVy71fWfi3n9nDmf3kx3wANxlKGxmBEI.0g_0JsUYGm9hjlxUzadt6J3cyMfXdaaGauu4E0f6U6kxEsd7o; path=/; expires=Tue, 11-Nov-25 08:57:16 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=tLxK5ZVEe6AFefhmjDytTfCZ_F4sQ21mSgK_cTctVG8-1762849636471-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '99cc68cfda5b24a7-MAD',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_6c04573b248644299958003505066eb9',
+  error: {
+    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.',
+    type: 'insufficient_quota',
+    param: null,
+    code: 'insufficient_quota'
+  },
+  code: 'insufficient_quota',
+  param: null,
+  type: 'insufficient_quota'
+}
+[INFO] 2025-11-11T08:27:16.462Z: Model selected for plan {
+  plan: 'starter_trial',
+  selectedModel: 'gpt-3.5-turbo',
+  preferences: [ 'gpt-3.5-turbo' ]
+}
+[ERROR] 2025-11-11T08:27:18.422Z: OpenAI fallback failed, returning mock/static roast {
+  error: '429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.'
+}
+[INFO] 2025-11-11T08:27:18.422Z: 🎭 Mock roast generator initialized
+[INFO] 2025-11-11T08:27:19.162Z: Mock roast generated {
+  tone: 'sarcastic',
+  intensity: 3,
+  humorType: 'witty',
+  toxicityScore: 0.2,
+  textLength: undefined,
+  roastLength: 95
+}
+[ERROR] 2025-11-11T08:27:19.162Z: Error en el servicio de transparencia TypeError: Cannot read properties of undefined (reading 'substring')
+    at TransparencyService.applyTransparencyDisclaimer (/Users/emiliopostigo/roastr-ai/src/services/transparencyService.js:229:24)
+    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:278:34)
+    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29)
+[WARN] 2025-11-11T08:27:19.162Z: Fallback roast disclaimer stats tracking failed { reason: 'invalid_disclaimer_text', error: undefined }
+✅ Roast generated: "I'm genuinely impressed by "that thing you said". Said no one ever. *adjusts ima..."
+   Model: unknown
+   Tokens: 28
+   Cost: $0.0000
+
+💾 Step 5: Storing roast...
+✅ Roast stored: 3ca92061-4122-4c9a-81b3-7b0e61b93bd9
+
+🔍 Step 6: Verifying retrieval...
+✅ Roast retrieved successfully
+   Comment: "This is pretty mediocre work, not impressed..."
+   Roast: "I'm genuinely impressed by "that thing you said". Said no one ever. *adjusts ima..."
+
+⏱️  Execution time: 4.49s
+✅ Under 5s target
+✅ Quality check passed: 95 chars (>50 required)
+
+✅ Test 2 PASSED
+
+============================================================
+
+📝 Test 3/3: Nice work, keep it up!...
+Expected toxicity: low
+
+🔍 Step 2: Analyzing toxicity...
+⚠️  Perspective API unavailable, using fallback
+⚠️  Toxicity score (0.5) doesn't match expected (low)
+
+💾 Step 3: Storing comment...
+✅ Comment stored: 838cd5aa-82f9-421b-9dfa-0d6ccf9b81fd
+
+🔥 Step 4: Generating roast with OpenAI...
+[INFO] 2025-11-11T08:27:19.610Z: 🎯 Starting roast generation with RQC {
+  userId: undefined,
+  plan: undefined,
+  rqcEnabled: undefined,
+  tone: 'sarcastic'
+}
+[ERROR] 2025-11-11T08:27:19.725Z: Error fetching user RQC config: {
+  code: 'PGRST202',
+  details: 'Searched for the function public.get_user_rqc_config without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.',
+  hint: null,
+  message: 'Could not find the function public.get_user_rqc_config without parameters in the schema cache'
+}
+[INFO] 2025-11-11T08:27:19.725Z: 📝 Using basic moderation for plan: starter_trial
+[INFO] 2025-11-11T08:27:19.726Z: Model selected for plan {
+  plan: 'starter_trial',
+  selectedModel: 'gpt-3.5-turbo',
+  preferences: [ 'gpt-3.5-turbo' ]
+}
+[INFO] 2025-11-11T08:27:19.726Z: Persona retrieved {
+  userId: undefined,
+  hasIdentity: false,
+  hasIntolerance: false,
+  hasTolerance: false
+}
+[ERROR] 2025-11-11T08:27:19.726Z: Error building prompt: {
+  error: 'originalComment must be a string',
+  stack: 'Error: originalComment must be a string\n' +
+    '    at RoastPromptTemplate.validateBuildPromptParams (/Users/emiliopostigo/roastr-ai/src/services/roastPromptTemplate.js:420:13)\n' +
+    '    at RoastPromptTemplate.buildPrompt (/Users/emiliopostigo/roastr-ai/src/services/roastPromptTemplate.js:440:12)\n' +
+    '    at RoastGeneratorEnhanced.generateWithBasicModeration (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:339:52)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:155:26)\n' +
+    '    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29)',
+  version: 'v1-roast-prompt',
+  params: {
+    hasOriginalComment: true,
+    originalCommentType: 'object',
+    originalCommentLength: 0
+  }
+}
+[WARN] 2025-11-11T08:27:19.726Z: Using fallback prompt {
+  version: 'v1-roast-prompt',
+  tone: 'sarcastic',
+  hasOriginalComment: true,
+  errorReason: 'originalComment must be a string',
+  fallbackTriggered: true
+}
+[ERROR] 2025-11-11T08:27:20.455Z: ❌ Error in enhanced roast generation: RateLimitError: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+    at APIError.generate (/Users/emiliopostigo/roastr-ai/node_modules/openai/core/error.js:63:20)
+    at OpenAI.makeStatusError (/Users/emiliopostigo/roastr-ai/node_modules/openai/client.js:159:32)
+    at OpenAI.makeRequest (/Users/emiliopostigo/roastr-ai/node_modules/openai/client.js:304:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async RoastGeneratorEnhanced.generateWithBasicModeration (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:357:24)
+    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:155:26)
+    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29) {
+  status: 429,
+  headers: Headers {
+    date: 'Tue, 11 Nov 2025 08:27:20 GMT',
+    'content-type': 'application/json; charset=utf-8',
+    'content-length': '337',
+    connection: 'keep-alive',
+    vary: 'Origin',
+    'x-request-id': 'req_743fdde5cde84b2395643ed270991c72',
+    'x-envoy-upstream-service-time': '5',
+    'x-openai-proxy-wasm': 'v0.1',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=hVq66igZcMlDhvx16BS2DtYKRP.XXQFb8CD9.znkkMo-1762849640-1.0.1.1-kCYXYmEQyTT0zmgohAT2PIKiRlt.hYjZ7ZGU_AQ_7QqQ99oyXsT8fqbhX0SR870yeiUzkfUTs.t1AwD_C5R7YV4LsOhJPGZNP.YeIYTJZKo; path=/; expires=Tue, 11-Nov-25 08:57:20 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=XPPFMxVHT0_.b4hRcR20pZaWLHLIkBsJIpWUJm69MIw-1762849640462-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '99cc68ec1e8c24a7-MAD',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_743fdde5cde84b2395643ed270991c72',
+  error: {
+    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.',
+    type: 'insufficient_quota',
+    param: null,
+    code: 'insufficient_quota'
+  },
+  code: 'insufficient_quota',
+  param: null,
+  type: 'insufficient_quota'
+}
+[INFO] 2025-11-11T08:27:20.455Z: Model selected for plan {
+  plan: 'starter_trial',
+  selectedModel: 'gpt-3.5-turbo',
+  preferences: [ 'gpt-3.5-turbo' ]
+}
+[ERROR] 2025-11-11T08:27:22.614Z: OpenAI fallback failed, returning mock/static roast {
+  error: '429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.'
+}
+[INFO] 2025-11-11T08:27:22.615Z: 🎭 Mock roast generator initialized
+[INFO] 2025-11-11T08:27:23.047Z: Mock roast generated {
+  tone: 'sarcastic',
+  intensity: 3,
+  humorType: 'witty',
+  toxicityScore: 0.2,
+  textLength: undefined,
+  roastLength: 141
+}
+[ERROR] 2025-11-11T08:27:23.048Z: Error en el servicio de transparencia TypeError: Cannot read properties of undefined (reading 'substring')
+    at TransparencyService.applyTransparencyDisclaimer (/Users/emiliopostigo/roastr-ai/src/services/transparencyService.js:229:24)
+    at async RoastGeneratorEnhanced.generateRoast (/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js:278:34)
+    at async validateBasicRoastFlow (/Users/emiliopostigo/roastr-ai/scripts/validate-flow-basic-roast.js:168:29)
+[WARN] 2025-11-11T08:27:23.048Z: Fallback roast disclaimer stats tracking failed { reason: 'invalid_disclaimer_text', error: undefined }
+✅ Roast generated: "Oh wow, "that thing you said"? That's absolutely groundbreaking. I'm sure nobody..."
+   Model: unknown
+   Tokens: 39
+   Cost: $0.0000
+
+💾 Step 5: Storing roast...
+✅ Roast stored: 1777dda8-181a-4659-9930-77855a660479
+
+🔍 Step 6: Verifying retrieval...
+✅ Roast retrieved successfully
+   Comment: "Nice work, keep it up!..."
+   Roast: "Oh wow, "that thing you said"? That's absolutely groundbreaking. I'm sure nobody..."
+
+⏱️  Execution time: 3.79s
+✅ Under 5s target
+✅ Quality check passed: 141 chars (>50 required)
+
+✅ Test 3 PASSED
+
+============================================================
+
+🧹 Cleaning up test data...
+✅ Cleanup complete
+
+============================================================
+
+📊 VALIDATION REPORT
+============================================================
+
+Total tests: 3
+✅ Passed: 3
+❌ Failed: 0
+⏱️  Total time: 17.72s
+
+============================================================
+
+🎉 ALL VALIDATIONS PASSED
+Exit code: 0

@@ -1,5 +1,22 @@
 # Auto-Repair Changelog
 
+## 2025-11-11T11:27:40.276Z
+
+**Repair ID:** 2025-11-11T11:27:40Z
+**Triggered by:** Manual
+**Nodes affected:** billing, multi-tenant
+
+**Fixes applied:**
+- Added coverage to billing
+- Added coverage to multi-tenant
+
+**Outcome:**
+- Health score: 86.5 → 88.1
+- Issues created: 1 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T11-27-37-714Z`
+
+---
+
 ## 2025-11-09T15:46:53.314Z
 
 **Repair ID:** 2025-11-09T15:46:53Z

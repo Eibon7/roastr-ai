@@ -1,0 +1,62 @@
+
+> roastr-ai@1.0.0 test
+> jest --verbose tests/integration/multi-tenant-rls-issue-504-direct.test.js
+
+  console.log
+    [dotenv@17.2.3] injecting env (42) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+  console.info
+    📋 Tenant B: 9544c3f2-f7e4-4afb-a50d-a24503b0d2a4
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+  console.info
+    ✅ RLS 403 validation passed: PGRST116 JSON object requested, multiple (or no) rows returned
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+  console.info
+    📋 Critical tables: integration_configs (SECURITY), usage_records (BILLING), monthly_usage (BILLING)
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+  console.info
+    ✅ RLS patterns validated: Service role bypass, Anon client block, Data isolation
+
+      at Object.info (tests/setupIntegration.js:49:15)
+
+PASS integration-tests tests/integration/multi-tenant-rls-issue-504-direct.test.js (6.251 s)
+  Multi-Tenant RLS Integration Tests - Issue #504 (Direct)
+    Setup Verification
+      ✓ Setup creates 2 tenants with isolated data (3 ms)
+    RLS Enforcement Validation (Service Role vs Anon Client)
+      ✓ Service role can access all tenant data (RLS bypassed) (65 ms)
+      ✓ Anon client without auth cannot access tenant data (RLS enforced) (75 ms)
+      ✓ RLS policies exist on critical tables (627 ms)
+    AC1: Service Role Data Isolation Verification
+      ✓ Tenant A data exists and is isolated (67 ms)
+      ✓ Tenant B data exists and is isolated (79 ms)
+      ✓ Comments are isolated by organization (147 ms)
+      ✓ Integration configs are isolated (SECURITY CRITICAL) (143 ms)
+      ✓ Usage records are isolated (BILLING CRITICAL) (393 ms)
+    AC2: RLS Policy Enforcement via Anon Client
+      ✓ Anon client returns empty for posts (RLS blocks) (79 ms)
+      ✓ Anon client returns empty for comments (RLS blocks) (66 ms)
+      ✓ Anon client returns empty for roasts (RLS blocks) (65 ms)
+      ✓ Anon client returns empty for integration_configs (RLS blocks - SECURITY) (82 ms)
+      ✓ Anon client returns empty for usage_records (RLS blocks - BILLING) (57 ms)
+    AC3: Cross-Tenant Isolation via Service Role Queries
+      ✓ Tenant A data does not appear in Tenant B queries (72 ms)
+      ✓ Tenant B data does not appear in Tenant A queries (55 ms)
+      ✓ Cross-tenant access via anon client returns PGRST301 error (RLS 403) (61 ms)
+    Coverage Statistics
+      ✓ Count tables tested (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       18 passed, 18 total
+Snapshots:   0 total
+Time:        6.298 s
+Ran all test suites matching tests/integration/multi-tenant-rls-issue-504-direct.test.js.
+Exit code: 0
