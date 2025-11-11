@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-11T10:55:43.340Z",
+  "timestamp": "2025-11-11T11:10:00.416Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -13,15 +13,7 @@
       "type": "missing_coverage_data",
       "node": "analytics",
       "severity": "warning",
-      "declared": 30,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "billing",
-      "severity": "warning",
-      "declared": 72,
+      "declared": 49,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -29,7 +21,7 @@
       "type": "missing_coverage_data",
       "node": "cost-control",
       "severity": "warning",
-      "declared": 64,
+      "declared": 38,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -38,14 +30,6 @@
       "node": "guardian",
       "severity": "warning",
       "declared": 0,
-      "actual": null,
-      "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "missing_coverage_data",
-      "node": "multi-tenant",
-      "severity": "warning",
-      "declared": 50,
       "actual": null,
       "message": "Coverage data not available for validation"
     },

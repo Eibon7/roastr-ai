@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-11-11T10:55:43.724Z
+**Generated:** 2025-11-11T11:27:40.171Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 88.4/100
+**Average Score:** 88.1/100
 
 ---
 
@@ -21,11 +21,11 @@
 |------|-------|--------|--------------|----------|--------------|--------|
 | social-platforms | 🟡 76 | degraded | 2025-10-09 | 0% | 0 | 0 |
 | guardian | 🟢 80 | healthy | 2025-10-23 | 0% | 0 | 0 |
-| analytics | 🟢 82 | healthy | 2025-10-29 | 30% | 0 | 0 |
+| cost-control | 🟢 82 | healthy | 2025-10-28 | 38% | 0 | 0 |
 | trainer | 🟢 82 | healthy | 2025-10-29 | 0% | 0 | 0 |
 | observability | 🟢 83 | healthy | 2025-10-18 | 46% | 0 | 0 |
-| billing | 🟢 90 | healthy | 2025-10-29 | 72% | 0 | 0 |
-| cost-control | 🟢 90 | healthy | 2025-10-28 | 64% | 0 | 0 |
+| analytics | 🟢 86 | healthy | 2025-10-29 | 49% | 0 | 0 |
+| billing | 🟢 90 | healthy | 2025-11-10 | 50% | 0 | 0 |
 | multi-tenant | 🟢 90 | healthy | 2025-11-10 | 50% | 0 | 0 |
 | plan-features | 🟢 90 | healthy | 2025-10-28 | 65% | 0 | 0 |
 | platform-constraints | 🟢 90 | healthy | 2025-10-29 | 67% | 0 | 0 |
@@ -65,13 +65,13 @@
 - Integrity Score: 100/100
 
 
-### analytics (Score: 82)
+### cost-control (Score: 82)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 74/100
+- Update Freshness: 72/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100

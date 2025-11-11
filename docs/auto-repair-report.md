@@ -1,12 +1,13 @@
 # Auto-Repair Report
 
-**Generated:** 2025-11-11T10:55:43.265Z
-**Triggered by:** CI/CD
-**Health Score:** 87.6 → 88.4 (+0.8)
+**Generated:** 2025-11-11T11:27:40.247Z
+**Triggered by:** Manual
+**Health Score:** 86.5 → 88.1 (+1.6)
 
-## ✅ Fixes Applied (1)
+## ✅ Fixes Applied (2)
 
-1. Added coverage to multi-tenant
+1. Added coverage to billing
+2. Added coverage to multi-tenant
 
 ## ⚠️ Pending Human Review (1)
 
@@ -18,10 +19,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 88.4/100
-- ⚙️ Auto-fixes: 1 applied
+- 🟢 Health Score: 88.1/100
+- ⚙️ Auto-fixes: 2 applied
 - 📋 Issues for review: 1
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T10-55-43-039Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T11-27-37-714Z`
 
 ---
 

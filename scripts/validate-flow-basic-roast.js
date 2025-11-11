@@ -242,6 +242,15 @@ async function validateBasicRoastFlow() {
           console.log(`✅ Under 5s target`);
         }
 
+        // Issue #588 G1: Quality check - roast must be >50 chars
+        const MIN_ROAST_LENGTH = 50;
+        if (roastResult.roast.length < MIN_ROAST_LENGTH) {
+          throw new Error(
+            `Quality check FAILED: Roast too short (${roastResult.roast.length} chars, minimum: ${MIN_ROAST_LENGTH})`
+          );
+        }
+        console.log(`✅ Quality check passed: ${roastResult.roast.length} chars (>${MIN_ROAST_LENGTH} required)`);
+
         results.passed++;
         results.details.push({
           test: i + 1,
