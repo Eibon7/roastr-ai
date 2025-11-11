@@ -596,22 +596,15 @@ class PublisherWorker extends BaseWorker {
 
   /**
    * Log helper with worker context
+   * Uses BaseWorker's log() method which delegates to advancedLogger
+   * This override adds PublisherWorker-specific context
    */
   log(level, message, metadata = {}) {
-    const logData = {
-      worker: 'PublisherWorker',
-      workerName: this.workerName,
-      timestamp: new Date().toISOString(),
+    // Use BaseWorker's log method with PublisherWorker context
+    super.log(level, message, {
+      component: 'PublisherWorker',
       ...metadata
-    };
-
-    if (level === 'error') {
-      console.error(`[PublisherWorker] ${message}`, logData);
-    } else if (level === 'warn') {
-      console.warn(`[PublisherWorker] ${message}`, logData);
-    } else {
-      console.log(`[PublisherWorker] ${message}`, logData);
-    }
+    });
   }
 }
 
