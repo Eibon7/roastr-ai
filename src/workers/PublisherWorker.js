@@ -9,7 +9,7 @@ const BaseWorker = require('./BaseWorker');
  * - Select and call correct platform service
  * - Handle rate limits (429 errors) with exponential backoff
  * - Retry on transient errors (5xx)
- * - Update roast record with platform_post_id and published_at
+ * - Update response record with platform_response_id and posted_at
  * - Comprehensive logging of all attempts and outcomes
  *
  * Error Classification:
@@ -19,11 +19,11 @@ const BaseWorker = require('./BaseWorker');
  * - Network/Timeout → Retry
  *
  * Idempotency:
- * - Before publishing, check if roast.platform_post_id exists
+ * - Before publishing, check if response.platform_response_id exists
  * - If exists, skip publication (already published)
  * - Prevents duplicate posts from retries or concurrent jobs
  *
- * Related Issue: #410 (Publisher Integration Tests)
+ * Related Issue: #456 (PublisherWorker Implementation)
  */
 class PublisherWorker extends BaseWorker {
   constructor(options = {}) {
@@ -49,40 +49,56 @@ class PublisherWorker extends BaseWorker {
    * Internal job processing method (required by BaseWorker)
    *
    * @param {Object} job - Job from post_response queue
-   * @param {string} job.data.roastId - ID of roast to publish
-   * @param {string} job.data.organizationId - Organization ID
+   * @param {string} job.payload.response_id - ID of response to publish
+   * @param {string} job.payload.organization_id - Organization ID
+   * @param {string} job.payload.comment_id - Comment ID (to get platform info)
    * @returns {Object} Publication result
    */
   async _processJobInternal(job) {
-    const { roastId, organizationId } = job.data;
+    const { response_id, organization_id, platform, response_text, comment_id } = job.payload || job.data || {};
     const startTime = Date.now();
 
     this.log('info', 'Processing publication job', {
       jobId: job.id,
-      roastId,
-      organizationId,
+      responseId: response_id,
+      organizationId: organization_id,
       attempt: job.attempts || 1,
       maxRetries: this.config.maxRetries
     });
 
     try {
-      // 1. Fetch roast details
-      const roast = await this.fetchRoast(roastId, organizationId);
+      // 1. Fetch response details
+      const response = await this.fetchResponse(response_id, organization_id);
 
-      if (!roast) {
-        throw this.createPermanentError('Roast not found', {
-          roastId,
-          organizationId
+      if (!response) {
+        throw this.createPermanentError('Response not found', {
+          responseId: response_id,
+          organizationId: organization_id
         });
       }
 
-      // 2. Idempotency check - skip if already published
-      if (roast.platform_post_id) {
+      // 2. Fetch comment details to get platform and platform_comment_id
+      const comment = await this.fetchComment(comment_id || response.comment_id, organization_id);
+
+      if (!comment) {
+        const error = this.createPermanentError('Comment not found', {
+          commentId: comment_id || response.comment_id,
+          organizationId: organization_id
+        });
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Use platform from comment if not in payload
+      const responsePlatform = platform || comment.platform;
+
+      // 3. Idempotency check - skip if already published
+      if (response.platform_response_id) {
         const duration = Date.now() - startTime;
         this.log('info', 'Skipping duplicate publication (idempotency)', {
-          roastId,
-          existingPostId: roast.platform_post_id,
-          platform: roast.platform,
+          responseId: response_id,
+          existingPostId: response.platform_response_id,
+          platform: responsePlatform,
           duration
         });
 
@@ -90,32 +106,41 @@ class PublisherWorker extends BaseWorker {
           success: true,
           skipped: true,
           reason: 'already_published',
-          postId: roast.platform_post_id,
+          postId: response.platform_response_id,
           duration
         };
       }
 
-      // 3. Validate required fields
-      if (!roast.roast_text || !roast.platform) {
-        throw this.createPermanentError('Missing required roast fields', {
-          hasText: !!roast.roast_text,
-          hasPlatform: !!roast.platform,
-          roastId
+      // 4. Validate required fields
+      const responseText = response_text || response.response_text;
+      if (!responseText || !responsePlatform) {
+        throw this.createPermanentError('Missing required response fields', {
+          hasText: !!responseText,
+          hasPlatform: !!responsePlatform,
+          responseId: response_id
         });
       }
 
-      // 4. Publish to platform
-      const publishResult = await this.publishToplatform(roast, job.attempts || 1);
+      // 5. Publish to platform
+      const publishResult = await this.publishToPlatform(
+        {
+          response,
+          comment,
+          platform: responsePlatform,
+          responseText
+        },
+        job.attempts || 1
+      );
 
-      // 5. Update database with publication details
-      await this.updateRoastRecord(roast.id, publishResult.postId);
+      // 6. Update database with publication details
+      await this.updateResponseRecord(response_id, publishResult.postId);
 
       const duration = Date.now() - startTime;
 
       this.log('info', 'Publication successful', {
-        roastId,
+        responseId: response_id,
         postId: publishResult.postId,
-        platform: roast.platform,
+        platform: responsePlatform,
         duration,
         attempt: job.attempts || 1
       });
@@ -123,7 +148,7 @@ class PublisherWorker extends BaseWorker {
       return {
         success: true,
         postId: publishResult.postId,
-        platform: roast.platform,
+        platform: responsePlatform,
         duration
       };
 
@@ -134,8 +159,8 @@ class PublisherWorker extends BaseWorker {
       const classifiedError = this.classifyError(error, job.attempts || 1);
 
       this.log('error', 'Publication failed', {
-        roastId,
-        organizationId,
+        responseId: response_id,
+        organizationId: organization_id,
         error: error.message,
         errorType: classifiedError.type,
         retriable: classifiedError.retriable,
@@ -150,19 +175,19 @@ class PublisherWorker extends BaseWorker {
   }
 
   /**
-   * Fetch roast record from database
+   * Fetch response record from database
    */
-  async fetchRoast(roastId, organizationId) {
+  async fetchResponse(responseId, organizationId) {
     const { data, error } = await this.supabase
-      .from('roasts')
-      .select('id, roast_text, platform, platform_post_id, published_at, original_comment_id')
-      .eq('id', roastId)
+      .from('responses')
+      .select('id, response_text, comment_id, platform_response_id, posted_at, post_status, organization_id')
+      .eq('id', responseId)
       .eq('organization_id', organizationId)
       .single();
 
     if (error) {
-      this.log('error', 'Failed to fetch roast', {
-        roastId,
+      this.log('error', 'Failed to fetch response', {
+        responseId,
         organizationId,
         error: error.message
       });
@@ -173,60 +198,87 @@ class PublisherWorker extends BaseWorker {
   }
 
   /**
-   * Publish roast to platform
+   * Fetch comment record from database
    */
-  async publishToplatform(roast, attempt) {
-    const service = await this.getPlatformService(roast.platform);
+  async fetchComment(commentId, organizationId) {
+    const { data, error } = await this.supabase
+      .from('comments')
+      .select('id, platform, platform_comment_id, platform_user_id, platform_username, original_text, metadata')
+      .eq('id', commentId)
+      .eq('organization_id', organizationId)
+      .single();
+
+    if (error) {
+      this.log('error', 'Failed to fetch comment', {
+        commentId,
+        organizationId,
+        error: error.message
+      });
+      return null;
+    }
+
+    return data;
+  }
+
+  /**
+   * Publish response to platform
+   */
+  async publishToPlatform({ response, comment, platform, responseText }, attempt) {
+    const service = await this.getPlatformService(platform);
 
     if (!service) {
       throw this.createPermanentError('Platform service not available', {
-        platform: roast.platform,
-        roastId: roast.id
+        platform,
+        responseId: response.id
       });
     }
 
     // Check if platform supports direct posting
     if (!service.supportDirectPosting) {
       this.log('warn', 'Platform does not support direct posting', {
-        platform: roast.platform,
-        roastId: roast.id
+        platform,
+        responseId: response.id
       });
 
       throw this.createPermanentError('Platform does not support direct posting', {
-        platform: roast.platform
+        platform
       });
     }
 
     try {
       this.log('info', 'Publishing to platform', {
-        platform: roast.platform,
-        roastId: roast.id,
-        textLength: roast.roast_text.length,
+        platform,
+        responseId: response.id,
+        textLength: responseText.length,
         attempt
       });
 
       // Call platform service's postResponse method with platform-specific arguments
       // Each platform has its own signature - we adapt here
-      const response = await this.callPlatformPostResponse(
+      const publishResponse = await this.callPlatformPostResponse(
         service,
-        roast.platform,
-        roast
+        platform,
+        {
+          response,
+          comment,
+          responseText
+        }
       );
 
-      if (!response.success) {
-        throw new Error(response.error || 'Platform API returned success: false');
+      if (!publishResponse.success) {
+        throw new Error(publishResponse.error || 'Platform API returned success: false');
       }
 
       return {
         success: true,
-        postId: response.responseId || response.id || response.postId,
+        postId: publishResponse.responseId || publishResponse.id || publishResponse.postId,
         publishedAt: new Date().toISOString()
       };
 
     } catch (error) {
       // Enhance error with platform context
-      error.platform = roast.platform;
-      error.roastId = roast.id;
+      error.platform = platform;
+      error.responseId = response.id;
       throw error;
     }
   }
@@ -235,7 +287,7 @@ class PublisherWorker extends BaseWorker {
    * Call platform postResponse with platform-specific arguments
    * Adapter pattern to handle different platform service signatures
    */
-  async callPlatformPostResponse(service, platform, roast) {
+  async callPlatformPostResponse(service, platform, { response, comment, responseText }) {
     const platformLower = platform.toLowerCase();
 
     // Platform-specific argument mapping
@@ -245,66 +297,66 @@ class PublisherWorker extends BaseWorker {
         // originalMessage needs id and channelId at minimum
         return await service.postResponse(
           {
-            id: roast.original_comment_id,
-            channelId: roast.channel_id || 'unknown',
-            content: roast.original_text || ''
+            id: comment.platform_comment_id,
+            channelId: comment.metadata?.channelId || 'unknown',
+            content: comment.original_text || ''
           },
-          roast.roast_text
+          responseText
         );
 
       case 'youtube':
         // YouTube: postResponse(commentId, responseText)
         return await service.postResponse(
-          roast.original_comment_id,
-          roast.roast_text
+          comment.platform_comment_id,
+          responseText
         );
 
       case 'facebook':
       case 'instagram':
         // Facebook/Instagram: postResponse(postId, commentId, responseText)
         return await service.postResponse(
-          roast.post_id || roast.parent_id,
-          roast.original_comment_id,
-          roast.roast_text
+          comment.metadata?.postId || comment.metadata?.parentId,
+          comment.platform_comment_id,
+          responseText
         );
 
       case 'twitter':
         // Twitter: postResponse(tweetId, responseText, userId)
         return await service.postResponse(
-          roast.original_comment_id,
-          roast.roast_text,
-          roast.user_id
+          comment.platform_comment_id,
+          responseText,
+          comment.platform_user_id
         );
 
       case 'reddit':
         // Reddit: postResponse(subreddit, commentId, responseText)
         return await service.postResponse(
-          roast.subreddit || 'roastr',
-          roast.original_comment_id,
-          roast.roast_text
+          comment.metadata?.subreddit || 'roastr',
+          comment.platform_comment_id,
+          responseText
         );
 
       case 'twitch':
         // Twitch: postResponse(channelId, commentId, responseText)
         return await service.postResponse(
-          roast.channel_id || roast.parent_id,
-          roast.original_comment_id,
-          roast.roast_text
+          comment.metadata?.channelId || comment.metadata?.parentId,
+          comment.platform_comment_id,
+          responseText
         );
 
       case 'tiktok':
         // TikTok: postResponse(videoId, commentId, responseText)
         return await service.postResponse(
-          roast.video_id || roast.parent_id,
-          roast.original_comment_id,
-          roast.roast_text
+          comment.metadata?.videoId || comment.metadata?.parentId,
+          comment.platform_comment_id,
+          responseText
         );
 
       case 'bluesky':
         // Bluesky: postResponse(uri, responseText)
         return await service.postResponse(
-          roast.uri || roast.original_comment_id,
-          roast.roast_text
+          comment.metadata?.uri || comment.platform_comment_id,
+          responseText
         );
 
       default:
@@ -313,46 +365,46 @@ class PublisherWorker extends BaseWorker {
           platform: platformLower
         });
         return await service.postResponse({
-          text: roast.roast_text,
-          parentId: roast.original_comment_id,
-          roastId: roast.id
+          text: responseText,
+          parentId: comment.platform_comment_id,
+          responseId: response.id
         });
     }
   }
 
   /**
-   * Update roast record with publication details
+   * Update response record with publication details
    */
-  async updateRoastRecord(roastId, platformPostId) {
-    const publishedAt = new Date().toISOString();
+  async updateResponseRecord(responseId, platformResponseId) {
+    const postedAt = new Date().toISOString();
 
     const { data, error } = await this.supabase
-      .from('roasts')
+      .from('responses')
       .update({
-        platform_post_id: platformPostId,
-        published_at: publishedAt,
-        status: 'published'
+        platform_response_id: platformResponseId,
+        posted_at: postedAt,
+        post_status: 'posted'
       })
-      .eq('id', roastId)
+      .eq('id', responseId)
       .select();
 
     if (error) {
-      this.log('error', 'Failed to update roast record', {
-        roastId,
-        platformPostId,
+      this.log('error', 'Failed to update response record', {
+        responseId,
+        platformResponseId,
         error: error.message
       });
       throw error;
     }
 
     if (!data || data.length === 0) {
-      throw new Error(`Failed to update roast ${roastId}: no rows affected`);
+      throw new Error(`Failed to update response ${responseId}: no rows affected`);
     }
 
-    this.log('info', 'Roast record updated with publication details', {
-      roastId,
-      platformPostId,
-      publishedAt
+    this.log('info', 'Response record updated with publication details', {
+      responseId,
+      platformResponseId,
+      postedAt
     });
 
     return data[0];
