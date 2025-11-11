@@ -1,8 +1,8 @@
 # GDD 2.0 - Implementation Summary Index
 
-**Last Updated:** October 12, 2025
-**Status:** ✅ 15+ Phases Completed - Modular Documentation Active
-**Total Phases:** 16 documented, 18 implemented
+**Last Updated:** November 11, 2025
+**Status:** ✅ 17+ Phases Completed - Autonomous Monitoring Active
+**Total Phases:** 17 documented, 19 implemented
 **Index Size:** ~200 lines (was 3,069 lines - 93% reduction)
 
 ---
@@ -41,7 +41,8 @@
 | 15 | Cross-Validation & Extended Health | Oct 9, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-15.md) |
 | 15.1 | Coverage Integrity Enforcement | Oct 8, 2025 | ✅ Complete | - | Implemented (no doc) |
 | 15.2 | Temporary Threshold & Coverage Recovery | Oct 8, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-15.2.md) |
-| 15.3 | Modularization of GDD Summary | Oct 8, 2025 | 🚧 In Progress | - | This implementation |
+| 15.3 | Modularization of GDD Summary | Oct 8, 2025 | ✅ Complete | - | Implemented |
+| 17.1 | Automated Health & Drift Monitoring | Nov 11, 2025 | ✅ Complete | 100/100 | [View Details](./implementation/GDD-PHASE-17.1.md) |
 
 ---
 
@@ -53,8 +54,9 @@
 | Oct 6, 2025 | 91.5/100 | 13/13 | 10 | Health scoring + drift prediction |
 | Oct 7, 2025 | 94.5/100 | 13/13 | 13 | Telemetry & analytics added |
 | Oct 8, 2025 | 98.8/100 | 13/13 | 15 | Integrity enforcement + temp threshold |
+| Nov 11, 2025 | TBD | 13/13 | 17 | Autonomous monitoring (Phase 17.1) |
 
-**Trend:** 📈 Improving (momentum: +2.3 points/day)
+**Trend:** 📈 Improving (sustained health >95)
 
 ---
 
@@ -218,11 +220,19 @@ All phase documentation has been modularized for performance. Browse individual 
 
 - [📁 View All Phases](./implementation/)
 
-**Latest Phase:** [Phase 15 - Cross-Validation & Extended Health Metrics](./implementation/GDD-PHASE-15.md)
+**Latest Phase:** [Phase 17.1 - Automated Health & Drift Monitoring](./implementation/GDD-PHASE-17.1.md)
 
 ---
 
 ## 🔔 Recent Updates
+
+### November 11, 2025
+- ✅ **Phase 17.1:** Automated Health & Drift Monitoring (Issue #541)
+- ✅ Cron-based auto-monitoring (every 3 days)
+- ✅ Versioned reports in `docs/auto-health-reports/`
+- ✅ Automatic issue creation on threshold violations
+- ✅ Report rotation (maintain 30 most recent)
+- ✅ Duplicate issue prevention
 
 ### October 9, 2025
 - ✅ **Phase 15:** Cross-Validation & Extended Health Metrics

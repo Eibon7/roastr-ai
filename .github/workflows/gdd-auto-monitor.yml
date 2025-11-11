@@ -1,0 +1,481 @@
+name: GDD Auto-Monitor
+
+# Phase 17.1: Automated Health & Drift Monitoring
+# Runs every 3 days on main branch to ensure continuous GDD health
+
+on:
+  schedule:
+    # Every 3 days at 8:00 UTC
+    - cron: '0 8 */3 * *'
+
+  workflow_dispatch:  # Allow manual execution
+    inputs:
+      create_issues:
+        description: 'Create issues on failures'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  auto-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Only run on main branch
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check maintenance mode
+        id: maintenance
+        run: |
+          if [ -f .gdd-maintenance ]; then
+            MAINTENANCE=$(jq -r '.maintenance_mode' .gdd-maintenance)
+            echo "maintenance_mode=$MAINTENANCE" >> $GITHUB_OUTPUT
+            if [ "$MAINTENANCE" == "true" ]; then
+              echo "🧊 GDD is in MAINTENANCE MODE (Read-Only Observer)"
+              echo "   - Auto-Monitor: ACTIVE (monitoring only)"
+              echo "   - Issue Creation: DISABLED"
+            fi
+          else
+            echo "maintenance_mode=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Load GDD configuration
+        id: config
+        run: |
+          MIN_HEALTH=$(jq -r '.min_health_score' .gddrc.json)
+          MAX_DRIFT=$(jq -r '.auto_monitor.max_drift_risk // 60' .gddrc.json)
+          MAX_REPORTS=$(jq -r '.auto_monitor.max_reports // 30' .gddrc.json)
+          CREATE_ISSUES="${{ github.event.inputs.create_issues || 'true' }}"
+
+          echo "min_health=$MIN_HEALTH" >> $GITHUB_OUTPUT
+          echo "max_drift=$MAX_DRIFT" >> $GITHUB_OUTPUT
+          echo "max_reports=$MAX_REPORTS" >> $GITHUB_OUTPUT
+          echo "create_issues=$CREATE_ISSUES" >> $GITHUB_OUTPUT
+
+          echo "📋 Configuration loaded:"
+          echo "  min_health_score=$MIN_HEALTH"
+          echo "  max_drift_risk=$MAX_DRIFT"
+          echo "  max_reports=$MAX_REPORTS"
+          echo "  create_issues=$CREATE_ISSUES"
+
+      - name: Generate report timestamp
+        id: timestamp
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%d-%H-%M")
+          READABLE=$(date -u +"%Y-%m-%d %H:%M UTC")
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "readable=$READABLE" >> $GITHUB_OUTPUT
+          echo "📅 Report timestamp: $READABLE"
+
+      - name: Run GDD validation
+        id: validation
+        run: |
+          echo "🔍 Running GDD validation..."
+          node scripts/validate-gdd-runtime.js --ci
+          VALIDATION_STATUS=$?
+          echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
+          echo "Validation status: $VALIDATION_STATUS"
+
+      - name: Run health scoring
+        id: health
+        run: |
+          echo "📊 Running health scoring..."
+          node scripts/score-gdd-health.js --summary
+          HEALTH_SCORE=$(jq -r '.overall_score' gdd-health.json)
+          HEALTH_STATUS=$(jq -r '.status' gdd-health.json)
+          HEALTHY_COUNT=$(jq -r '.healthy_count' gdd-health.json)
+          DEGRADED_COUNT=$(jq -r '.degraded_count' gdd-health.json)
+          CRITICAL_COUNT=$(jq -r '.critical_count' gdd-health.json)
+
+          echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
+          echo "status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
+          echo "healthy_count=$HEALTHY_COUNT" >> $GITHUB_OUTPUT
+          echo "degraded_count=$DEGRADED_COUNT" >> $GITHUB_OUTPUT
+          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+
+          echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
+          echo "  Healthy: $HEALTHY_COUNT | Degraded: $DEGRADED_COUNT | Critical: $CRITICAL_COUNT"
+
+      - name: Run drift prediction
+        id: drift
+        run: |
+          echo "🔮 Running drift prediction..."
+          node scripts/predict-gdd-drift.js --ci
+          DRIFT_RISK=$(jq -r '.average_drift_risk' gdd-drift.json)
+          HIGH_RISK=$(jq -r '.high_risk_count' gdd-drift.json)
+          AT_RISK=$(jq -r '.at_risk_count' gdd-drift.json)
+
+          echo "risk=$DRIFT_RISK" >> $GITHUB_OUTPUT
+          echo "high_risk_count=$HIGH_RISK" >> $GITHUB_OUTPUT
+          echo "at_risk_count=$AT_RISK" >> $GITHUB_OUTPUT
+
+          echo "Drift Risk: $DRIFT_RISK/100"
+          echo "  High-risk nodes: $HIGH_RISK | At-risk nodes: $AT_RISK"
+
+      - name: Create versioned reports directory
+        run: |
+          mkdir -p docs/auto-health-reports
+          echo "📁 Reports directory ready"
+
+      - name: Generate versioned reports
+        id: reports
+        run: |
+          TIMESTAMP="${{ steps.timestamp.outputs.timestamp }}"
+          READABLE="${{ steps.timestamp.outputs.readable }}"
+
+          # Copy JSON reports with timestamp
+          cp gdd-health.json docs/auto-health-reports/auto-health-$TIMESTAMP.json
+          cp gdd-drift.json docs/auto-health-reports/auto-drift-$TIMESTAMP.json
+          cp gdd-status.json docs/auto-health-reports/auto-status-$TIMESTAMP.json
+
+          # Generate markdown summary report
+          cat > docs/auto-health-reports/auto-health-$TIMESTAMP.md <<EOF
+          # GDD Auto-Health Report
+
+          **Date:** $READABLE
+          **Trigger:** Scheduled (Auto-Monitor)
+          **Workflow:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## Summary
+
+          | Metric | Value | Status |
+          |--------|-------|--------|
+          | **Health Score** | ${{ steps.health.outputs.score }}/100 | ${{ steps.health.outputs.status == 'healthy' && '🟢 HEALTHY' || steps.health.outputs.status == 'warning' && '🟡 WARNING' || '🔴 CRITICAL' }} |
+          | **Drift Risk** | ${{ steps.drift.outputs.risk }}/100 | ${{ steps.drift.outputs.risk < 30 && '🟢 LOW' || steps.drift.outputs.risk < 60 && '🟡 MODERATE' || '🔴 HIGH' }} |
+          | **Nodes Validated** | $(jq -r '.nodes_validated' gdd-status.json) | ✅ |
+
+          ---
+
+          ## Health Breakdown
+
+          - 🟢 Healthy nodes: ${{ steps.health.outputs.healthy_count }}
+          - 🟡 Degraded nodes: ${{ steps.health.outputs.degraded_count }}
+          - 🔴 Critical nodes: ${{ steps.health.outputs.critical_count }}
+
+          ---
+
+          ## Drift Analysis
+
+          - 🟢 Low risk: $(jq -r '.healthy_count' gdd-drift.json)
+          - 🟡 At risk: ${{ steps.drift.outputs.at_risk_count }}
+          - 🔴 High risk: ${{ steps.drift.outputs.high_risk_count }}
+
+          ---
+
+          ## Actions Taken
+
+          - ✅ Validation completed (status: ${{ steps.validation.outputs.status }})
+          - ✅ Health scoring completed
+          - ✅ Drift prediction completed
+          ${{ steps.health.outputs.score < steps.config.outputs.min_health && '- ⚠️ Issue created for health degradation' || '- ✅ No issues created (health above threshold)' }}
+
+          ---
+
+          ## Detailed Reports
+
+          - [System Validation](../../system-validation.md)
+          - [Health Report](../../system-health.md)
+          - [Drift Report](../../drift-report.md)
+
+          ---
+
+          **Maintained by:** GDD Auto-Monitor (Phase 17.1)
+          **Next Run:** $(date -u -d "+3 days" +"%Y-%m-%d %H:%M UTC")
+          EOF
+
+          echo "report_file=auto-health-$TIMESTAMP.md" >> $GITHUB_OUTPUT
+          echo "✅ Reports generated: auto-health-$TIMESTAMP.*"
+
+      - name: Cleanup old reports
+        run: |
+          echo "🧹 Cleaning up old reports..."
+          cd docs/auto-health-reports
+
+          # Keep only latest MAX_REPORTS reports (sorted by name/date)
+          MAX_REPORTS=${{ steps.config.outputs.max_reports }}
+          TOTAL_REPORTS=$(ls -1 auto-health-*.md 2>/dev/null | wc -l | tr -d ' ')
+
+          echo "  Total reports: $TOTAL_REPORTS"
+          echo "  Max reports: $MAX_REPORTS"
+
+          if [ "$TOTAL_REPORTS" -gt "$MAX_REPORTS" ]; then
+            TO_DELETE=$((TOTAL_REPORTS - MAX_REPORTS))
+            echo "  Deleting oldest $TO_DELETE reports..."
+
+            # Delete oldest reports (keep latest MAX_REPORTS)
+            ls -1t auto-health-*.md | tail -n +$((MAX_REPORTS + 1)) | while read file; do
+              base="${file%.md}"
+              echo "    Removing: $base.*"
+              rm -f "$base.md" "$base.json" "${base/auto-health/auto-drift}" "${base/auto-health/auto-status}"
+            done
+
+            echo "✅ Cleanup complete"
+          else
+            echo "✅ No cleanup needed (within limit)"
+          fi
+
+      - name: Commit reports to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/auto-health-reports/
+
+          if git diff --cached --quiet; then
+            echo "📝 No new reports to commit"
+          else
+            git commit -m "docs(gdd): Auto-health report ${{ steps.timestamp.outputs.readable }}
+
+            - Health Score: ${{ steps.health.outputs.score }}/100
+            - Drift Risk: ${{ steps.drift.outputs.risk }}/100
+            - Status: ${{ steps.health.outputs.status }}
+
+            Generated by GDD Auto-Monitor (Phase 17.1)"
+
+            git push origin main
+            echo "✅ Reports committed and pushed"
+          fi
+
+      - name: Determine if issues needed
+        id: issue_check
+        run: |
+          HEALTH_SCORE=${{ steps.health.outputs.score }}
+          MIN_HEALTH=${{ steps.config.outputs.min_health }}
+          DRIFT_RISK=${{ steps.drift.outputs.risk }}
+          MAX_DRIFT=${{ steps.config.outputs.max_drift }}
+
+          NEED_HEALTH_ISSUE="false"
+          NEED_DRIFT_ISSUE="false"
+
+          if (( $(echo "$HEALTH_SCORE < $MIN_HEALTH" | bc -l) )); then
+            NEED_HEALTH_ISSUE="true"
+            echo "⚠️ Health score ($HEALTH_SCORE) below threshold ($MIN_HEALTH)"
+          fi
+
+          if (( $(echo "$DRIFT_RISK > $MAX_DRIFT" | bc -l) )); then
+            NEED_DRIFT_ISSUE="true"
+            echo "⚠️ Drift risk ($DRIFT_RISK) above threshold ($MAX_DRIFT)"
+          fi
+
+          echo "need_health_issue=$NEED_HEALTH_ISSUE" >> $GITHUB_OUTPUT
+          echo "need_drift_issue=$NEED_DRIFT_ISSUE" >> $GITHUB_OUTPUT
+
+      - name: Create or update issue for health degradation
+        if: |
+          steps.issue_check.outputs.need_health_issue == 'true' &&
+          steps.config.outputs.create_issues == 'true' &&
+          steps.maintenance.outputs.maintenance_mode != 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const health = JSON.parse(fs.readFileSync('gdd-health.json', 'utf8'));
+
+            const issueTitle = '[GDD] Auto-Monitor Alert: Health Below Threshold';
+
+            // Find critical nodes
+            const criticalNodes = Object.entries(health.nodes || {})
+              .filter(([_, node]) => node.score < 50)
+              .map(([name, node]) => `- **${name}**: ${node.score}/100`)
+              .join('\n');
+
+            const issueBody = `## 🔴 GDD Health Degradation Detected
+
+            Auto-monitoring detected health score below threshold.
+
+            ### Current Metrics
+            - **Health Score:** ${health.overall_score}/100 (threshold: ${{ steps.config.outputs.min_health }})
+            - **Status:** ${health.status.toUpperCase()}
+            - **Critical Nodes:** ${health.critical_count}
+            - **Degraded Nodes:** ${health.degraded_count}
+            - **Detected:** ${{ steps.timestamp.outputs.readable }}
+
+            ### Critical Nodes
+            ${criticalNodes || 'None'}
+
+            ### Action Required
+            1. Review the [auto-health report](../blob/main/docs/auto-health-reports/${{ steps.reports.outputs.report_file }})
+            2. Review the [detailed validation report](../blob/main/docs/system-validation.md)
+            3. Fix the issues listed above
+            4. Re-run validation: \`node scripts/score-gdd-health.js --ci\`
+
+            ### Related Reports
+            - [Auto-Health Report](../blob/main/docs/auto-health-reports/${{ steps.reports.outputs.report_file }})
+            - [System Health](../blob/main/docs/system-health.md)
+            - [Drift Report](../blob/main/docs/drift-report.md)
+
+            ---
+
+            **Workflow:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Last Updated:** ${new Date().toISOString()}
+
+            *Auto-generated by GDD Auto-Monitor (Phase 17.1)*
+            `;
+
+            // Search for existing issue (prevent duplicates)
+            const { data: searchResults } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:gdd label:auto-monitor in:title "${issueTitle}"`,
+              per_page: 1
+            });
+
+            const existingIssue = searchResults.items[0];
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🔄 **Re-validated on ${{ steps.timestamp.outputs.readable }}**\n\n` +
+                      `Health Score: ${health.overall_score}/100\n` +
+                      `Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+
+              console.log(`✅ Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'gdd', 'tech-debt', 'priority:P1', 'auto-monitor']
+              });
+
+              console.log(`✅ Created new issue #${newIssue.number}`);
+            }
+
+      - name: Create or update issue for high drift risk
+        if: |
+          steps.issue_check.outputs.need_drift_issue == 'true' &&
+          steps.config.outputs.create_issues == 'true' &&
+          steps.maintenance.outputs.maintenance_mode != 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const drift = JSON.parse(fs.readFileSync('gdd-drift.json', 'utf8'));
+
+            const issueTitle = '[GDD] Auto-Monitor Alert: High Drift Risk';
+
+            // Find high-risk nodes
+            const highRiskNodes = Object.entries(drift.nodes || {})
+              .filter(([_, node]) => node.drift_risk >= 70)
+              .map(([name, node]) => `- **${name}**: ${node.drift_risk}/100 risk`)
+              .join('\n');
+
+            const issueBody = `## 🔴 GDD High Drift Risk Detected
+
+            Auto-monitoring detected drift risk above threshold.
+
+            ### Current Metrics
+            - **Drift Risk:** ${drift.average_drift_risk}/100 (threshold: ${{ steps.config.outputs.max_drift }})
+            - **High-Risk Nodes:** ${drift.high_risk_count}
+            - **At-Risk Nodes:** ${drift.at_risk_count}
+            - **Detected:** ${{ steps.timestamp.outputs.readable }}
+
+            ### High-Risk Nodes
+            ${highRiskNodes || 'None'}
+
+            ### Action Required
+            1. Review the [auto-drift report](../blob/main/docs/auto-health-reports/auto-drift-${{ steps.timestamp.outputs.timestamp }}.json)
+            2. Review the [detailed drift report](../blob/main/docs/drift-report.md)
+            3. Update affected nodes to reduce drift risk
+            4. Re-run prediction: \`node scripts/predict-gdd-drift.js --full\`
+
+            ### Related Reports
+            - [Auto-Health Report](../blob/main/docs/auto-health-reports/${{ steps.reports.outputs.report_file }})
+            - [Drift Report](../blob/main/docs/drift-report.md)
+
+            ---
+
+            **Workflow:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Last Updated:** ${new Date().toISOString()}
+
+            *Auto-generated by GDD Auto-Monitor (Phase 17.1)*
+            `;
+
+            // Search for existing issue (prevent duplicates)
+            const { data: searchResults } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:gdd label:auto-monitor in:title "${issueTitle}"`,
+              per_page: 1
+            });
+
+            const existingIssue = searchResults.items[0];
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🔄 **Re-validated on ${{ steps.timestamp.outputs.readable }}**\n\n` +
+                      `Drift Risk: ${drift.average_drift_risk}/100\n` +
+                      `Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+
+              console.log(`✅ Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'gdd', 'tech-debt', 'priority:P2', 'auto-monitor']
+              });
+
+              console.log(`✅ Created new issue #${newIssue.number}`);
+            }
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 📊 GDD Auto-Monitor Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** ${{ steps.timestamp.outputs.readable }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Health Score | ${{ steps.health.outputs.score }}/100 | ${{ steps.health.outputs.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Drift Risk | ${{ steps.drift.outputs.risk }}/100 | ${{ steps.drift.outputs.risk < 30 && 'Low' || steps.drift.outputs.risk < 60 && 'Moderate' || 'High' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nodes Validated | $(jq -r '.nodes_validated' gdd-status.json) | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Reports:** [auto-health-${{ steps.timestamp.outputs.timestamp }}.md](../blob/main/docs/auto-health-reports/auto-health-${{ steps.timestamp.outputs.timestamp }}.md)" >> $GITHUB_STEP_SUMMARY

@@ -23,6 +23,18 @@
     "commit_fixes": true,
     "max_attempts": 3
   },
+  "auto_monitor": {
+    "enabled": true,
+    "schedule": "0 8 */3 * *",
+    "max_drift_risk": 60,
+    "max_reports": 30
+  },
+  "auto_monitor_comments": {
+    "enabled": "Phase 17.1: Autonomous cron-based monitoring (every 3 days)",
+    "schedule": "Cron expression: '0 8 */3 * *' = Every 3 days at 8:00 UTC",
+    "max_drift_risk": "Threshold for creating drift risk issues (default: 60)",
+    "max_reports": "Maximum reports to retain in docs/auto-health-reports/ (default: 30 = ~90 days)"
+  },
   "github": {
     "pr_comments": true,
     "auto_labels": true,

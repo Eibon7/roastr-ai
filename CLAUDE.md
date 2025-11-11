@@ -496,10 +496,13 @@ npm run validate:completion -- --pr=628
 | **Drift** | `predict-gdd-drift.js --full` | <60 risk |
 | **Repair** | `auto-repair-gdd.js --auto-fix` | N/A |
 | **Telemetry** | `collect-gdd-telemetry.js` | N/A |
+| **Auto-Monitor** | `.github/workflows/gdd-auto-monitor.yml` | Every 3 days |
 
 **Before PR:** Health ≥87, Drift <60, Tests 100%, Coverage: auto
 
 **Status:** 🟢 HEALTHY (80-100) | 🟡 DEGRADED (50-79) | 🔴 CRITICAL (<50)
+
+⚠️ **CRITICAL (Phase 17.1):** Auto-monitoring cannot be disabled without equivalent replacement. This ensures continuous health tracking of GDD system. If you need to disable auto-monitor, you MUST provide an alternative monitoring solution and get Product Owner approval. Unauthorized disabling = PR rejection.
 
 🔗 **Full docs:** `docs/GDD-ACTIVATION-GUIDE.md`, `docs/GDD-TELEMETRY.md`, `docs/GDD-PHASE-15.md`
 
