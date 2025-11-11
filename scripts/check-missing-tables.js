@@ -2,7 +2,7 @@
 /**
  * Check Missing Tables for Issue #800
  *
- * Verifies which of the 11 required tables exist in the database.
+ * Verifies which of the 13 required tables exist in the database.
  */
 
 require('dotenv').config();
