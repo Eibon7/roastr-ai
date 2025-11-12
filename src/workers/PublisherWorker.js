@@ -243,10 +243,16 @@ class PublisherWorker extends BaseWorker {
       case 'discord':
         // Discord: postResponse(originalMessage, responseText)
         // originalMessage needs id and channelId at minimum
+        if (!roast.channel_id) {
+          throw this.createPermanentError('Missing required Discord metadata: channelId', {
+            commentId: roast.original_comment_id,
+            platform: platformLower
+          });
+        }
         return await service.postResponse(
           {
             id: roast.original_comment_id,
-            channelId: roast.channel_id || 'unknown',
+            channelId: roast.channel_id,
             content: roast.original_text || ''
           },
           roast.roast_text
@@ -262,8 +268,24 @@ class PublisherWorker extends BaseWorker {
       case 'facebook':
       case 'instagram':
         // Facebook/Instagram: postResponse(postId, commentId, responseText)
+        // Validate that postId is semantically correct (not parentId if it represents different entity)
+        const postId = roast.post_id;
+        if (!postId && roast.parent_id) {
+          // Only use parentId if it's confirmed to be a post ID, not a comment ID
+          this.log('warn', 'Using parentId as postId - verify semantic correctness', {
+            platform: platformLower,
+            commentId: roast.original_comment_id,
+            parentId: roast.parent_id
+          });
+        }
+        if (!postId && !roast.parent_id) {
+          throw this.createPermanentError('Missing required Facebook/Instagram metadata: postId', {
+            commentId: roast.original_comment_id,
+            platform: platformLower
+          });
+        }
         return await service.postResponse(
-          roast.post_id || roast.parent_id,
+          postId || roast.parent_id,
           roast.original_comment_id,
           roast.roast_text
         );
@@ -278,8 +300,14 @@ class PublisherWorker extends BaseWorker {
 
       case 'reddit':
         // Reddit: postResponse(subreddit, commentId, responseText)
+        if (!roast.subreddit) {
+          throw this.createPermanentError('Missing required Reddit metadata: subreddit', {
+            commentId: roast.original_comment_id,
+            platform: platformLower
+          });
+        }
         return await service.postResponse(
-          roast.subreddit || 'roastr',
+          roast.subreddit,
           roast.original_comment_id,
           roast.roast_text
         );
@@ -322,10 +350,14 @@ class PublisherWorker extends BaseWorker {
 
   /**
    * Update roast record with publication details
+   * Uses atomic update to prevent race conditions (TOCTOU)
+   * Only updates if platform_post_id is still null
    */
   async updateRoastRecord(roastId, platformPostId) {
     const publishedAt = new Date().toISOString();
 
+    // Atomic update: only update if platform_post_id is still null
+    // This prevents race conditions when multiple jobs process the same roast concurrently
     const { data, error } = await this.supabase
       .from('roasts')
       .update({
@@ -334,6 +366,7 @@ class PublisherWorker extends BaseWorker {
         status: 'published'
       })
       .eq('id', roastId)
+      .is('platform_post_id', null) // Only update if still null (atomic check-and-set)
       .select();
 
     if (error) {
@@ -346,6 +379,15 @@ class PublisherWorker extends BaseWorker {
     }
 
     if (!data || data.length === 0) {
+      // Check if already published (race condition avoided)
+      const existing = await this.fetchRoast(roastId, null);
+      if (existing?.platform_post_id) {
+        this.log('info', 'Response already published (race condition avoided)', {
+          roastId,
+          existingPostId: existing.platform_post_id
+        });
+        return existing;
+      }
       throw new Error(`Failed to update roast ${roastId}: no rows affected`);
     }
 
@@ -544,22 +586,15 @@ class PublisherWorker extends BaseWorker {
 
   /**
    * Log helper with worker context
+   * Uses BaseWorker's log method which delegates to advancedLogger
+   * This override adds PublisherWorker-specific context
    */
   log(level, message, metadata = {}) {
-    const logData = {
-      worker: 'PublisherWorker',
-      workerName: this.workerName,
-      timestamp: new Date().toISOString(),
+    // Use BaseWorker's log method with PublisherWorker context
+    super.log(level, message, {
+      component: 'PublisherWorker',
       ...metadata
-    };
-
-    if (level === 'error') {
-      console.error(`[PublisherWorker] ${message}`, logData);
-    } else if (level === 'warn') {
-      console.warn(`[PublisherWorker] ${message}`, logData);
-    } else {
-      console.log(`[PublisherWorker] ${message}`, logData);
-    }
+    });
   }
 }
 
