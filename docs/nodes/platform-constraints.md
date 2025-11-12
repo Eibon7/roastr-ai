@@ -4,8 +4,7 @@
 **Owner:** Back-end Dev  
 **Priority:** High  
 **Status:** Production  
-**Last Updated:** 2025-11-11
-**Coverage:** 50%
+**Last Updated:** 2025-11-11  
 
 ## Dependencies
 
