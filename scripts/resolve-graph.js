@@ -76,6 +76,91 @@ class GraphResolver {
   }
 
   /**
+   * Map changed files to affected GDD nodes
+   * @param {string} filesPath - Path to file containing list of changed files (one per line)
+   * @returns {string[]} - Array of affected node names
+   */
+  mapFilesToNodes(filesPath) {
+    try {
+      const filesContent = fs.readFileSync(filesPath, 'utf8');
+      const changedFiles = filesContent
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
+      const features = this.getFeatures();
+      if (!features) {
+        return [];
+      }
+
+      const affectedNodes = new Set();
+
+      // For each changed file, find matching nodes
+      for (const file of changedFiles) {
+        // Check each node's file list
+        for (const [nodeName, nodeData] of Object.entries(features)) {
+          const nodeFiles = nodeData.files || [];
+          
+          // Check if file matches any pattern in node's files
+          for (const nodeFile of nodeFiles) {
+            // Handle glob patterns (e.g., "src/integrations/*/index.js")
+            if (nodeFile.includes('*')) {
+              const pattern = nodeFile.replace(/\*/g, '.*');
+              const regex = new RegExp(`^${pattern}$`);
+              if (regex.test(file)) {
+                affectedNodes.add(nodeName);
+                break;
+              }
+            } else if (file === nodeFile || file.endsWith(nodeFile) || file.includes(nodeFile)) {
+              affectedNodes.add(nodeName);
+              break;
+            }
+          }
+
+          // Also check if file path contains node-related keywords
+          const nodeKeywords = [
+            nodeName.toLowerCase(),
+            nodeName.replace(/-/g, ''),
+            nodeName.replace(/-/g, '_')
+          ];
+          
+          for (const keyword of nodeKeywords) {
+            if (file.toLowerCase().includes(keyword)) {
+              affectedNodes.add(nodeName);
+              break;
+            }
+          }
+        }
+
+        // Special mappings for common patterns
+        if (file.includes('src/integrations/')) {
+          affectedNodes.add('social-platforms');
+        }
+        if (file.includes('src/services/costControl') || file.includes('cost-control')) {
+          affectedNodes.add('cost-control');
+        }
+        if (file.includes('src/services/shield') || file.includes('Shield')) {
+          affectedNodes.add('shield');
+        }
+        if (file.includes('src/services/queue') || file.includes('workers/')) {
+          affectedNodes.add('queue-system');
+        }
+        if (file.includes('docs/nodes/')) {
+          const nodeMatch = file.match(/docs\/nodes\/([^.]+)\.md/);
+          if (nodeMatch) {
+            affectedNodes.add(nodeMatch[1]);
+          }
+        }
+      }
+
+      return Array.from(affectedNodes).sort();
+    } catch (error) {
+      console.error(`${colors.red}Error reading files list:${colors.reset}`, error.message);
+      return [];
+    }
+  }
+
+  /**
    * Resolve all dependencies for a given node
    * @param {string} nodeName - Name of the node to resolve
    * @returns {Object} - Resolved docs and dependency chain
@@ -648,6 +733,7 @@ function main() {
   let verbose = false;
   let format = 'text';
   let mode = 'resolve'; // resolve, validate, graph, report
+  let fromFiles = null;
 
   for (const arg of args) {
     if (arg === '--validate') {
@@ -660,6 +746,14 @@ function main() {
       verbose = true;
     } else if (arg.startsWith('--format=')) {
       format = arg.split('=')[1];
+    } else if (arg.startsWith('--from-files=')) {
+      fromFiles = arg.split('=')[1];
+    } else if (arg === '--from-files') {
+      // Handle --from-files as next argument
+      const idx = args.indexOf(arg);
+      if (idx < args.length - 1 && !args[idx + 1].startsWith('--')) {
+        fromFiles = args[idx + 1];
+      }
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -672,7 +766,19 @@ function main() {
   const resolver = new GraphResolver(systemMapPath);
 
   try {
-    if (mode === 'validate') {
+    if (fromFiles) {
+      // Map changed files to affected nodes
+      const affectedNodes = resolver.mapFilesToNodes(fromFiles);
+      
+      if (format === 'json') {
+        console.log(JSON.stringify({ nodes: affectedNodes }, null, 2));
+      } else {
+        console.log(`${colors.green}✅ Affected nodes:${colors.reset}`);
+        for (const node of affectedNodes) {
+          console.log(`  - ${node}`);
+        }
+      }
+    } else if (mode === 'validate') {
       // Validate entire graph
       const issues = resolver.validate();
       resolver.printValidation(issues);
