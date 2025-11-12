@@ -856,40 +856,31 @@ function main() {
 
 function printHelp() {
   console.log(`
-${colors.bright}Graph Driven Development (GDD) - Dependency Graph Resolver${colors.reset}
-
 ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js <node-name> [options]
+  node scripts/resolve-graph.js --from-files <file> [--format=json]
   node scripts/resolve-graph.js --validate
   node scripts/resolve-graph.js --graph
   node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
+  <node-name>             Resolve dependencies for specific node
+  --from-files <file>     Map changed files to affected GDD nodes
   --validate              Validate entire graph for issues
-  --graph                 Generate Mermaid diagram of dependencies
-  --report                Generate validation report (docs/system-validation.md)
-  --verbose, -v           Enable verbose output
-  --format=<format>       Output format (text, json)
-  --help, -h              Show this help message
+  --graph                 Display dependency graph
+  --report                Generate comprehensive report
+  --format json           Output in JSON format (for CI)
+  --help                  Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
-  ${colors.dim}# Resolve dependencies for roast node${colors.reset}
-  node scripts/resolve-graph.js roast
+  ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
+  node scripts/resolve-graph.js roast-generation
 
-  ${colors.dim}# Resolve with verbose output${colors.reset}
-  node scripts/resolve-graph.js shield --verbose
+  ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
+  node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
-  ${colors.dim}# Generate validation report${colors.reset}
-  node scripts/resolve-graph.js --report
-
-  ${colors.dim}# Validate entire graph${colors.reset}
+  ${colors.dim}# Validate the entire graph${colors.reset}
   node scripts/resolve-graph.js --validate
-
-  ${colors.dim}# Generate Mermaid diagram${colors.reset}
-  node scripts/resolve-graph.js --graph > docs/system-graph.mmd
-
-  ${colors.dim}# JSON output for automation${colors.reset}
-  node scripts/resolve-graph.js roast --format=json
 `);
 }
 
