@@ -1,9 +1,9 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-11-08T08:32:03.055Z
+**Generated:** 2025-11-11T20:02:03.547Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
-**Average Drift Risk:** 11/100
+**Average Drift Risk:** 6/100
 
 ---
 
@@ -20,21 +20,21 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| analytics | 🟢 15 | healthy | 87 | 49% | 9d ago | 0 |
-| cost-control | 🟢 15 | healthy | 83 | 38% | 10d ago | 0 |
-| guardian | 🟢 15 | healthy | 81 | 0% | 9d ago | 0 |
-| multi-tenant | 🟢 15 | healthy | 83 | 0% | 9d ago | 0 |
-| observability | 🟢 15 | healthy | 84 | 50% | 10d ago | 0 |
-| platform-constraints | 🟢 15 | healthy | 91 | 67% | 9d ago | 0 |
-| queue-system | 🟢 15 | healthy | 91 | 68% | 10d ago | 0 |
-| roast | 🟢 15 | healthy | 91 | 60% | 10d ago | 0 |
-| social-platforms | 🟢 15 | healthy | 77 | 0% | 21d ago | 0 |
-| trainer | 🟢 15 | healthy | 83 | 0% | 9d ago | 0 |
-| billing | 🟢 5 | healthy | 91 | 72% | 1d ago | 0 |
-| plan-features | 🟢 5 | healthy | 91 | 65% | 1d ago | 0 |
-| persona | 🟢 0 | healthy | 99 | 90% | 0d ago | 0 |
-| shield | 🟢 0 | healthy | 97 | 86% | 10d ago | 0 |
-| tone | 🟢 0 | healthy | 99 | 100% | 3d ago | 0 |
+| analytics | 🟢 15 | healthy | 86 | 49% | 12d ago | 0 |
+| guardian | 🟢 15 | healthy | 80 | 0% | 12d ago | 0 |
+| platform-constraints | 🟢 15 | healthy | 68 | N/A | 0d ago | 0 |
+| roast | 🟢 15 | healthy | 90 | 60% | 14d ago | 0 |
+| trainer | 🟢 15 | healthy | 82 | 0% | 12d ago | 0 |
+| observability | 🟢 5 | healthy | 100 | 50% | 0d ago | 0 |
+| plan-features | 🟢 5 | healthy | 90 | 65% | 5d ago | 0 |
+| queue-system | 🟢 5 | healthy | 90 | 68% | 0d ago | 0 |
+| social-platforms | 🟢 5 | healthy | 86 | 0% | 0d ago | 0 |
+| billing | 🟢 0 | healthy | 100 | N/A | 0d ago | 0 |
+| cost-control | 🟢 0 | healthy | 100 | N/A | 0d ago | 0 |
+| multi-tenant | 🟢 0 | healthy | 100 | N/A | 0d ago | 0 |
+| persona | 🟢 0 | healthy | 99 | 90% | 4d ago | 0 |
+| shield | 🟢 0 | healthy | 96 | 86% | 1d ago | 0 |
+| tone | 🟢 0 | healthy | 98 | 100% | 7d ago | 0 |
 
 ---
 
@@ -50,19 +50,7 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 49%, actual: N/A)
 
-**Git Activity:** 5 commits in last 30 days
-
-### cost-control (Risk: 15)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +15 pts: Coverage 38% (<80%)
-
-**Recommendations:**
-- Increase test coverage to 80%+ (declared: 38%, actual: N/A)
-
-**Git Activity:** 10 commits in last 30 days
+**Git Activity:** 2 commits in last 30 days
 
 ### guardian (Risk: 15)
 
@@ -74,9 +62,34 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
-**Git Activity:** 12 commits in last 30 days
+**Git Activity:** 5 commits in last 30 days
 
-### multi-tenant (Risk: 15)
+### platform-constraints (Risk: 15)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +25 pts: Health score 68 (<70)
+- -10 pts: Recent commit (today)
+
+**Recommendations:**
+- Improve health score to 70+ (declared: 68, actual: N/A)
+
+**Git Activity:** 4 commits in last 30 days
+
+### roast (Risk: 15)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +15 pts: Coverage 60% (<80%)
+
+**Recommendations:**
+- Increase test coverage to 80%+ (declared: 60%, actual: N/A)
+
+**Git Activity:** 20 commits in last 30 days
+
+### trainer (Risk: 15)
 
 **Status:** 🟢 HEALTHY
 
@@ -86,19 +99,7 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
-**Git Activity:** 8 commits in last 30 days
-
-### observability (Risk: 15)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +15 pts: Coverage 50% (<80%)
-
-**Recommendations:**
-- Increase test coverage to 80%+ (declared: 50%, actual: N/A)
-
-**Git Activity:** 11 commits in last 30 days
+**Git Activity:** 3 commits in last 30 days
 
 ---
 
