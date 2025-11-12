@@ -100,29 +100,27 @@ describeFunction('SPEC 14 - Integral Test Suite (E2E)', () => {
   describe('Scenario 1: Light Comment → Normal Publishing', () => {
     test('should process light comment through complete pipeline to normal publishing', async () => {
       const lightComment = fixtures.comments.light;
-      const commentId = 'mock_comment_light_123';
       
-      // Step 1: Mock comment ingestion
-      mockCommentService.ingest.mockResolvedValueOnce({
-        id: commentId,
-        status: 'ingested',
-        external_comment_id: lightComment.external_id,
-        org_id: testOrg.id,
-        platform: 'twitter'
-      });
+      // Step 1: Use supertest to make HTTP request for comment ingestion
+      const ingestResponse = await request(app)
+        .post('/api/comments/ingest')
+        .set('Authorization', `Bearer ${mockAuthToken}`)
+        .send({
+          platform: 'twitter',
+          external_comment_id: lightComment.external_id,
+          comment_text: lightComment.text,
+          author_id: lightComment.author.id,
+          author_username: lightComment.author.username,
+          org_id: testOrg.id
+        })
+        .expect(201);
 
-      const ingestResult = await mockCommentService.ingest({
-        platform: 'twitter',
-        external_comment_id: lightComment.external_id,
-        comment_text: lightComment.text,
-        author_id: lightComment.author.id,
-        author_username: lightComment.author.username,
-        org_id: testOrg.id
-      });
-
-      expect(ingestResult.status).toBe('ingested');
+      expect(ingestResponse.body.success).toBe(true);
+      expect(ingestResponse.body.data.status).toBe('ingested');
+      const commentId = ingestResponse.body.data.id;
       
       // Step 2: Mock toxicity analysis - should classify as light
+      // Note: Analysis endpoint doesn't exist yet, so we mock the service call
       mockCommentService.analyze.mockResolvedValueOnce({
         comment_id: commentId,
         toxicity_score: lightComment.expected_toxicity_score,
@@ -146,19 +144,20 @@ describeFunction('SPEC 14 - Integral Test Suite (E2E)', () => {
       expect(decisionResult.decision).toBe('publish_normal');
       expect(decisionResult.shield_action).toBeNull();
       
-      // Step 4: Mock response generation and normal publishing
-      mockCommentService.generate.mockResolvedValueOnce({
-        comment_id: commentId,
-        variants: ['Light roast response for normal publishing'],
-        auto_approved: true,
-        published: true,
-        response_type: 'normal'
-      });
+      // Step 4: Use supertest to make HTTP request for response generation
+      const generateResponse = await request(app)
+        .post(`/api/comments/${commentId}/generate`)
+        .set('Authorization', `Bearer ${mockAuthToken}`)
+        .send({
+          generate_count: 1,
+          mode: 'auto'
+        })
+        .expect(201);
 
-      const generateResult = await mockCommentService.generate(commentId);
-      expect(generateResult.variants).toHaveLength(1);
-      expect(generateResult.auto_approved).toBe(true);
-      expect(generateResult.published).toBe(true);
+      expect(generateResponse.body.success).toBe(true);
+      expect(generateResponse.body.data.variants).toHaveLength(1);
+      expect(generateResponse.body.data.auto_approved).toBe(true);
+      expect(generateResponse.body.data.published).toBe(true);
     });
   });
 
