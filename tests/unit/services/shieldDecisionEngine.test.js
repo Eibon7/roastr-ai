@@ -191,7 +191,6 @@ describe('ShieldDecisionEngine', () => {
     });
   });
 
-  // TODO: Re-enable after fixing Issue #633 (pre-existing Shield test failures)
   describe('makeDecision - High Threshold', () => {
     test('should return moderate Shield action for high toxicity (95-98%)', async () => {
       const highToxicityInput = {
@@ -248,7 +247,6 @@ describe('ShieldDecisionEngine', () => {
     });
   });
 
-  // TODO: Re-enable after fixing Issue #633 (pre-existing Shield test failures)
   describe('makeDecision - Roastable Content', () => {
     test('should identify roastable content (90-95%)', async () => {
       const roastableInput = {
@@ -305,7 +303,6 @@ describe('ShieldDecisionEngine', () => {
     });
   });
 
-  // TODO: Re-enable after fixing Issue #633 (pre-existing Shield test failures)
   describe('makeDecision - Corrective Zone', () => {
     test('should trigger corrective zone for moderate toxicity (85-90%)', async () => {
       const correctiveInput = {
@@ -389,7 +386,6 @@ describe('ShieldDecisionEngine', () => {
     });
   });
 
-  // TODO: Re-enable after fixing Issue #633 (pre-existing Shield test failures)
   describe('makeDecision - Publish Normal', () => {
     test('should publish normal content below all thresholds', async () => {
       const normalInput = {
@@ -822,7 +818,6 @@ describe('ShieldDecisionEngine', () => {
     });
   });
 
-  // TODO: Re-enable after fixing Issue #633 (pre-existing Shield test failures)
   describe('Error Handling', () => {
     test('should handle missing required fields', async () => {
       const invalidInput = {
@@ -911,7 +906,6 @@ describe('ShieldDecisionEngine', () => {
     });
   });
 
-  // TODO: Re-enable after fixing Issue #633 (pre-existing Shield test failures)
   describe('Auto-Approve Override', () => {
     test('should respect auto-approve setting for auto-execute', async () => {
       const autoApproveInput = {
