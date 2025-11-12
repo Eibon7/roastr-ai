@@ -178,12 +178,16 @@ class PublisherWorker extends BaseWorker {
    * Fetch response record from database
    */
   async fetchResponse(responseId, organizationId) {
-    const { data, error } = await this.supabase
+    const query = this.supabase
       .from('responses')
       .select('id, response_text, comment_id, platform_response_id, posted_at, post_status, organization_id')
-      .eq('id', responseId)
-      .eq('organization_id', organizationId)
-      .single();
+      .eq('id', responseId);
+    
+    if (organizationId) {
+      query.eq('organization_id', organizationId);
+    }
+    
+    const { data, error } = await query.single();
 
     if (error) {
       this.log('error', 'Failed to fetch response', {
