@@ -72,7 +72,7 @@ Coverage authenticity issues detected:
 |------|------------|--------|--------------|-------------|-----------------|
 | analytics | 🟢 15 | healthy | 86 | 12d ago | Increase test coverage to 80%+ (declared: 49%, actual: N/A) |
 | guardian | 🟢 15 | healthy | 80 | 12d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
-| platform-constraints | 🟢 15 | healthy | 68 | 0d ago | Improve health score to 70+ (declared: 68, actual: N/A) |
+| platform-constraints | 🟢 15 | healthy | 89 | 0d ago | Improve health score to 70+ (declared: 89, actual: N/A) |
 | roast | 🟢 15 | healthy | 90 | 14d ago | Increase test coverage to 80%+ (declared: 60%, actual: N/A) |
 | trainer | 🟢 15 | healthy | 82 | 12d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
 | observability | 🟢 5 | healthy | 100 | 0d ago | Increase test coverage to 80%+ (declared: 50%, actual: N/A) |
