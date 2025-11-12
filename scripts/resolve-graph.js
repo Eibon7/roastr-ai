@@ -148,7 +148,11 @@ class GraphResolver {
           for (const keyword of nodeKeywords) {
             // Match only if keyword appears as a path segment or filename
             const pathSegments = file.toLowerCase().split(path.sep);
-            if (pathSegments.some(segment => segment === keyword || segment.includes(keyword + '.') || segment.includes(keyword + '-'))) {
+            if (pathSegments.some(segment => 
+              segment === keyword || 
+              segment.startsWith(keyword + '.') || 
+              segment.startsWith(keyword + '-')
+            )) {
               affectedNodes.add(nodeName);
               break;
             }
