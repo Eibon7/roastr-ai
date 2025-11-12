@@ -61,9 +61,9 @@ describe('Polar Webhook - Business Logic', () => {
 
     // Mock webhook signature verification (skip in tests)
     delete process.env.POLAR_WEBHOOK_SECRET;
-    process.env.POLAR_STARTER_PRICE_ID = 'price_starter_123';
-    process.env.POLAR_PRO_PRICE_ID = 'price_pro_456';
-    process.env.POLAR_PLUS_PRICE_ID = 'price_plus_789';
+    process.env.POLAR_STARTER_PRODUCT_ID = 'price_starter_123';
+    process.env.POLAR_PRO_PRODUCT_ID = 'price_pro_456';
+    process.env.POLAR_PLUS_PRODUCT_ID = 'price_plus_789';
   });
 
   /**

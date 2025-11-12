@@ -73,8 +73,8 @@ describe('Polar E2E Flow - Checkout to Entitlements', () => {
         // Set required env vars
         process.env.POLAR_ACCESS_TOKEN = 'test_token_e2e';
         process.env.POLAR_SUCCESS_URL = 'https://app.roastr.ai/success';
-        process.env.POLAR_ALLOWED_PRICE_IDS = testPriceId;
-        process.env.POLAR_PRO_PRICE_ID = testPriceId;
+        process.env.POLAR_ALLOWED_PRODUCT_IDS = testPriceId;
+        process.env.POLAR_PRO_PRODUCT_ID = testPriceId;
         // No webhook secret for easier testing
         delete process.env.POLAR_WEBHOOK_SECRET;
     });
@@ -119,8 +119,8 @@ describe('Polar E2E Flow - Checkout to Entitlements', () => {
     afterAll(() => {
         delete process.env.POLAR_ACCESS_TOKEN;
         delete process.env.POLAR_SUCCESS_URL;
-        delete process.env.POLAR_ALLOWED_PRICE_IDS;
-        delete process.env.POLAR_PRO_PRICE_ID;
+        delete process.env.POLAR_ALLOWED_PRODUCT_IDS;
+        delete process.env.POLAR_PRO_PRODUCT_ID;
     });
 
     describe('Full Flow: Checkout → Payment → Webhook → Entitlements', () => {

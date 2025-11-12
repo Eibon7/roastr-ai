@@ -13,12 +13,12 @@ import React, { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import CheckoutButton from './CheckoutButton';
 
-// Polar Price IDs - Configured for Roastr plans
+// Polar Product IDs - Configured for Roastr plans
 // These can be overridden with environment variables if needed
 const POLAR_PRICE_IDS = {
-  starter: process.env.REACT_APP_POLAR_STARTER_PRICE_ID || 'e242580e-41df-4997-aebe-604492249f39',
-  pro: process.env.REACT_APP_POLAR_PRO_PRICE_ID || 'c1787586-00b7-4790-ba43-1f1e6a60b095',
-  plus: process.env.REACT_APP_POLAR_PLUS_PRICE_ID || '176df9af-337f-4607-9524-48978eae8bea',
+  starter: process.env.REACT_APP_POLAR_STARTER_PRODUCT_ID || 'e242580e-41df-4997-aebe-604492249f39',
+  pro: process.env.REACT_APP_POLAR_PRO_PRODUCT_ID || 'c1787586-00b7-4790-ba43-1f1e6a60b095',
+  plus: process.env.REACT_APP_POLAR_PLUS_PRODUCT_ID || '176df9af-337f-4607-9524-48978eae8bea',
 };
 
 // Plan configurations

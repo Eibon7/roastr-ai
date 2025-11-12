@@ -20,21 +20,21 @@ const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN,
 });
 
-// Allowed Price IDs - only these can be used for checkout
+// Allowed Product IDs - only these can be used for checkout
 // This prevents authorization bypass where users could purchase arbitrary products
-const ALLOWED_PRICE_IDS = new Set(
-  (process.env.POLAR_ALLOWED_PRICE_IDS || '')
+const ALLOWED_PRODUCT_IDS = new Set(
+  (process.env.POLAR_ALLOWED_PRODUCT_IDS || '')
     .split(',')
     .map(id => id.trim())
     .filter(Boolean)
 );
 
 // Log configuration status on startup
-if (ALLOWED_PRICE_IDS.size === 0) {
-  logger.warn('[Polar] POLAR_ALLOWED_PRICE_IDS not configured - price validation disabled (INSECURE!)');
+if (ALLOWED_PRODUCT_IDS.size === 0) {
+  logger.warn('[Polar] POLAR_ALLOWED_PRODUCT_IDS not configured - product validation disabled (INSECURE!)');
 } else {
-  logger.info('[Polar] Price ID allowlist configured', {
-    allowedCount: ALLOWED_PRICE_IDS.size
+  logger.info('[Polar] Product ID allowlist configured', {
+    allowedCount: ALLOWED_PRODUCT_IDS.size
   });
 }
 
@@ -89,11 +89,11 @@ router.post('/checkout', async (req, res) => {
     }
 
     // Validate price_id against allowlist (Security: prevent authorization bypass)
-    if (ALLOWED_PRICE_IDS.size > 0 && !ALLOWED_PRICE_IDS.has(price_id)) {
+    if (ALLOWED_PRODUCT_IDS.size > 0 && !ALLOWED_PRODUCT_IDS.has(price_id)) {
       logger.warn('[Polar] Rejected checkout with unauthorized price_id', sanitizePII({
         price_id,
         customer_email,
-        allowedCount: ALLOWED_PRICE_IDS.size
+        allowedCount: ALLOWED_PRODUCT_IDS.size
       }));
       return res.status(400).json({
         error: 'Invalid price_id',

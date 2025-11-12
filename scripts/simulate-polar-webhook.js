@@ -10,9 +10,9 @@
  *
  * Environment Variables Required:
  *   - POLAR_WEBHOOK_SECRET: Secret for signing webhook payloads
- *   - POLAR_STARTER_PRICE_ID: Price ID for starter plan
- *   - POLAR_PRO_PRICE_ID: Price ID for pro plan
- *   - POLAR_PLUS_PRICE_ID: Price ID for plus plan
+ *   - POLAR_STARTER_PRODUCT_ID: Product ID for starter plan
+ *   - POLAR_PRO_PRODUCT_ID: Product ID for pro plan
+ *   - POLAR_PLUS_PRODUCT_ID: Product ID for plus plan
  *
  * Related: Issue #728 - Webhook business logic implementation
  */
@@ -36,7 +36,7 @@ function log(color, prefix, message) {
 }
 
 // Event payload generators
-function generateOrderCreatedPayload(email, priceId = process.env.POLAR_STARTER_PRICE_ID) {
+function generateOrderCreatedPayload(email, priceId = process.env.POLAR_STARTER_PRODUCT_ID) {
   return {
     type: 'order.created',
     id: `evt_${Date.now()}`,
@@ -52,7 +52,7 @@ function generateOrderCreatedPayload(email, priceId = process.env.POLAR_STARTER_
   };
 }
 
-function generateSubscriptionCreatedPayload(email, priceId = process.env.POLAR_PRO_PRICE_ID) {
+function generateSubscriptionCreatedPayload(email, priceId = process.env.POLAR_PRO_PRODUCT_ID) {
   return {
     type: 'subscription.created',
     id: `evt_${Date.now()}`,
@@ -68,7 +68,7 @@ function generateSubscriptionCreatedPayload(email, priceId = process.env.POLAR_P
   };
 }
 
-function generateSubscriptionUpdatedPayload(email, priceId = process.env.POLAR_PLUS_PRICE_ID) {
+function generateSubscriptionUpdatedPayload(email, priceId = process.env.POLAR_PLUS_PRODUCT_ID) {
   return {
     type: 'subscription.updated',
     id: `evt_${Date.now()}`,
@@ -98,7 +98,7 @@ function generateSubscriptionCanceledPayload(email) {
   };
 }
 
-function generateCheckoutCreatedPayload(email, priceId = process.env.POLAR_STARTER_PRICE_ID) {
+function generateCheckoutCreatedPayload(email, priceId = process.env.POLAR_STARTER_PRODUCT_ID) {
   return {
     type: 'checkout.created',
     id: `evt_${Date.now()}`,
@@ -225,9 +225,9 @@ Examples:
 
 Environment Variables:
   POLAR_WEBHOOK_SECRET     (required)
-  POLAR_STARTER_PRICE_ID   (required for order/subscription events)
-  POLAR_PRO_PRICE_ID       (required for order/subscription events)
-  POLAR_PLUS_PRICE_ID      (required for order/subscription events)
+  POLAR_STARTER_PRODUCT_ID   (required for order/subscription events)
+  POLAR_PRO_PRODUCT_ID       (required for order/subscription events)
+  POLAR_PLUS_PRODUCT_ID      (required for order/subscription events)
     `);
     process.exit(1);
   }

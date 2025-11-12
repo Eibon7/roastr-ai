@@ -4,7 +4,7 @@
  * Tests authorization controls:
  * - Rejects unauthorized price_ids (prevents plan manipulation)
  * - Accepts only allowlisted price_ids
- * - Validates against POLAR_ALLOWED_PRICE_IDS env var
+ * - Validates against POLAR_ALLOWED_PRODUCT_IDS env var
  *
  * Related to CodeRabbit Review #3421415462 (M1)
  * Security: OWASP Top 10 - Broken Access Control
@@ -41,11 +41,11 @@ describe('Checkout Route - Price ID Security (M1)', () => {
   beforeAll(() => {
     // Save original env vars
     originalPolarAccessToken = process.env.POLAR_ACCESS_TOKEN;
-    originalPolarAllowedPriceIds = process.env.POLAR_ALLOWED_PRICE_IDS;
+    originalPolarAllowedPriceIds = process.env.POLAR_ALLOWED_PRODUCT_IDS;
 
     // Set test env vars before loading module
     process.env.POLAR_ACCESS_TOKEN = 'test_token_123';
-    process.env.POLAR_ALLOWED_PRICE_IDS = `${VALID_STARTER_ID},${VALID_PRO_ID},${VALID_PLUS_ID}`;
+    process.env.POLAR_ALLOWED_PRODUCT_IDS = `${VALID_STARTER_ID},${VALID_PRO_ID},${VALID_PLUS_ID}`;
   });
 
   afterAll(() => {
@@ -57,9 +57,9 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     }
 
     if (originalPolarAllowedPriceIds === undefined) {
-      delete process.env.POLAR_ALLOWED_PRICE_IDS;
+      delete process.env.POLAR_ALLOWED_PRODUCT_IDS;
     } else {
-      process.env.POLAR_ALLOWED_PRICE_IDS = originalPolarAllowedPriceIds;
+      process.env.POLAR_ALLOWED_PRODUCT_IDS = originalPolarAllowedPriceIds;
     }
   });
 
