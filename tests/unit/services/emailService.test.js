@@ -295,10 +295,10 @@ describe('EmailService', () => {
 
             expect(result.success).toBe(true);
             expect(result.messageId).toBe('test-message-id');
-            expect(sgMail.send).toHaveBeenCalledWith(expect.objectContaining({
+            expect(mockResendInstance.emails.send).toHaveBeenCalledWith(expect.objectContaining({
                 to: userEmail,
                 subject: '🧹 Data Export Cleanup Complete',
-                from: 'test@roastr.ai'
+                from: 'Test Roastr <test@roastr.ai>'
             }));
         });
 
