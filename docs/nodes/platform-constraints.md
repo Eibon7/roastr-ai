@@ -5,8 +5,6 @@
 **Priority:** High  
 **Status:** Production  
 **Last Updated:** 2025-11-11  
-**Coverage:** 0%  
-**Coverage Source:** auto
 
 ## Dependencies
 

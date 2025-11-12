@@ -1,12 +1,12 @@
 # Auto-Repair Report
 
-**Generated:** 2025-11-11T17:11:02.399Z
+**Generated:** 2025-11-11T20:46:59.854Z
 **Triggered by:** CI/CD
-**Health Score:** 89.5 → 92.2 (+2.7)
+**Health Score:** 92.4 → 92.4 (0.0)
 
 ## ✅ Fixes Applied (1)
 
-1. Added agents section to platform-constraints
+1. Added coverage to platform-constraints
 
 ## ⚠️ Pending Human Review (0)
 
@@ -18,10 +18,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 92.2/100
+- 🟢 Health Score: 92.4/100
 - ⚙️ Auto-fixes: 1 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T17-11-02-141Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T20-46-59-642Z`
 
 ---
 
