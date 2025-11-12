@@ -18,7 +18,6 @@ env:
   
   # Shield system safety (no real API calls)
   DRY_RUN_SHIELD: true
-  SHIELD_DRY_RUN: true
   
   # Disable real API integrations
   OPENAI_API_KEY: mock-openai-key-for-testing
