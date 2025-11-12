@@ -11,15 +11,22 @@
  * All tests use synthetic GDPR-compliant data and run with dryRun=true in CI
  */
 
-const request = require('supertest');
-const { app } = require('../../src/index');
-const { createSyntheticFixtures } = require('../helpers/syntheticFixtures');
+// CRITICAL: Set test environment BEFORE any requires to prevent production initialization
+process.env.NODE_ENV = 'test';
+process.env.ENABLE_MOCK_MODE = 'true';
+process.env.DRY_RUN_SHIELD = 'true';
+process.env.SHIELD_DRY_RUN = 'true';
 
-// Mock external dependencies to prevent real API calls
+// Mock external dependencies BEFORE requiring the app to prevent real API calls
 jest.mock('../../src/services/openai');
 jest.mock('../../src/services/perspective');
 jest.mock('../../src/services/twitter');
 jest.mock('../../src/adapters/mock/TwitterShieldAdapter');
+
+// NOW require the app and helpers (with test env and mocks active)
+const request = require('supertest');
+const { app } = require('../../src/index');
+const { createSyntheticFixtures } = require('../helpers/syntheticFixtures');
 
 // Use mock services when in mock mode instead of skipping
 const shouldUseMocks = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
