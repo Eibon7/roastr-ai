@@ -757,8 +757,14 @@ function main() {
   let format = 'text';
   let mode = 'resolve'; // resolve, validate, graph, report
   let fromFiles = null;
+  let skipNext = false;
 
   for (const arg of args) {
+    if (skipNext) {
+      skipNext = false;
+      continue; // Skip the consumed argument
+    }
+    
     if (arg === '--validate') {
       mode = 'validate';
     } else if (arg === '--graph') {
@@ -776,12 +782,16 @@ function main() {
       const idx = args.indexOf(arg);
       if (idx < args.length - 1 && !args[idx + 1].startsWith('--')) {
         fromFiles = args[idx + 1];
+        skipNext = true; // Mark next argument as consumed
       }
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
     } else if (!arg.startsWith('--')) {
-      nodeName = arg;
+      // Only assign to nodeName if it's not the consumed fromFiles argument
+      if (arg !== fromFiles) {
+        nodeName = arg;
+      }
     }
   }
 
