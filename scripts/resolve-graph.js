@@ -788,10 +788,7 @@ function main() {
       printHelp();
       process.exit(0);
     } else if (!arg.startsWith('--')) {
-      // Only assign to nodeName if it's not the consumed fromFiles argument
-      if (arg !== fromFiles) {
-        nodeName = arg;
-      }
+      nodeName = arg;
     }
   }
 
