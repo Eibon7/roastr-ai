@@ -76,6 +76,20 @@ class GraphResolver {
   }
 
   /**
+   * Convert glob pattern to regex safely
+   * Escapes regex metacharacters before converting * to .*
+   * @param {string} pattern - Glob pattern (e.g., "src/integrations/STAR/index.js" where STAR is *)
+   * @returns {RegExp} - Regex pattern for matching
+   */
+  globToRegex(pattern) {
+    // First escape all regex metacharacters except '*'
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+    // Then convert '*' to '.*' for glob matching
+    const regexPattern = escaped.replace(/\*/g, '.*');
+    return new RegExp('^' + regexPattern + '$');
+  }
+
+  /**
    * Map changed files to affected GDD nodes
    * @param {string} filesPath - Path to file containing list of changed files (one per line)
    * @returns {string[]} - Array of affected node names
@@ -105,19 +119,26 @@ class GraphResolver {
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/*/index.js")
             if (nodeFile.includes('*')) {
-              const pattern = nodeFile.replace(/\*/g, '.*');
-              const regex = new RegExp(`^${pattern}$`);
+              const regex = this.globToRegex(nodeFile);
               if (regex.test(file)) {
                 affectedNodes.add(nodeName);
                 break;
               }
-            } else if (file === nodeFile || file.endsWith(nodeFile) || file.includes(nodeFile)) {
-              affectedNodes.add(nodeName);
-              break;
+            } else {
+              // Exact match or path-based matching (more precise than includes)
+              // Use path.basename for filename-only matches or endsWith for path matches
+              const fileName = path.basename(file);
+              if (file === nodeFile || 
+                  file.endsWith(path.sep + nodeFile) ||
+                  fileName === nodeFile) {
+                affectedNodes.add(nodeName);
+                break;
+              }
             }
           }
 
           // Also check if file path contains node-related keywords
+          // But only for exact matches in path segments, not substring matches
           const nodeKeywords = [
             nodeName.toLowerCase(),
             nodeName.replace(/-/g, ''),
@@ -125,14 +146,16 @@ class GraphResolver {
           ];
           
           for (const keyword of nodeKeywords) {
-            if (file.toLowerCase().includes(keyword)) {
+            // Match only if keyword appears as a path segment or filename
+            const pathSegments = file.toLowerCase().split(path.sep);
+            if (pathSegments.some(segment => segment === keyword || segment.includes(keyword + '.') || segment.includes(keyword + '-'))) {
               affectedNodes.add(nodeName);
               break;
             }
           }
         }
 
-        // Special mappings for common patterns
+        // Special mappings for common patterns (using path-based matching)
         if (file.includes('src/integrations/')) {
           affectedNodes.add('social-platforms');
         }
@@ -734,8 +757,14 @@ function main() {
   let format = 'text';
   let mode = 'resolve'; // resolve, validate, graph, report
   let fromFiles = null;
+  let skipNext = false;
 
   for (const arg of args) {
+    if (skipNext) {
+      skipNext = false;
+      continue; // Skip the consumed argument
+    }
+    
     if (arg === '--validate') {
       mode = 'validate';
     } else if (arg === '--graph') {
@@ -753,6 +782,7 @@ function main() {
       const idx = args.indexOf(arg);
       if (idx < args.length - 1 && !args[idx + 1].startsWith('--')) {
         fromFiles = args[idx + 1];
+        skipNext = true; // Mark next argument as consumed
       }
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
@@ -823,40 +853,31 @@ function main() {
 
 function printHelp() {
   console.log(`
-${colors.bright}Graph Driven Development (GDD) - Dependency Graph Resolver${colors.reset}
-
 ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js <node-name> [options]
+  node scripts/resolve-graph.js --from-files <file> [--format=json]
   node scripts/resolve-graph.js --validate
   node scripts/resolve-graph.js --graph
   node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
+  <node-name>             Resolve dependencies for specific node
+  --from-files <file>     Map changed files to affected GDD nodes
   --validate              Validate entire graph for issues
-  --graph                 Generate Mermaid diagram of dependencies
-  --report                Generate validation report (docs/system-validation.md)
-  --verbose, -v           Enable verbose output
-  --format=<format>       Output format (text, json)
-  --help, -h              Show this help message
+  --graph                 Display dependency graph
+  --report                Generate comprehensive report
+  --format json           Output in JSON format (for CI)
+  --help                  Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
-  ${colors.dim}# Resolve dependencies for roast node${colors.reset}
-  node scripts/resolve-graph.js roast
+  ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
+  node scripts/resolve-graph.js roast-generation
 
-  ${colors.dim}# Resolve with verbose output${colors.reset}
-  node scripts/resolve-graph.js shield --verbose
+  ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
+  node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
-  ${colors.dim}# Generate validation report${colors.reset}
-  node scripts/resolve-graph.js --report
-
-  ${colors.dim}# Validate entire graph${colors.reset}
+  ${colors.dim}# Validate the entire graph${colors.reset}
   node scripts/resolve-graph.js --validate
-
-  ${colors.dim}# Generate Mermaid diagram${colors.reset}
-  node scripts/resolve-graph.js --graph > docs/system-graph.mmd
-
-  ${colors.dim}# JSON output for automation${colors.reset}
-  node scripts/resolve-graph.js roast --format=json
 `);
 }
 
