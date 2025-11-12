@@ -34,9 +34,15 @@ function isPlaceholder(value) {
 
 console.log('🔍 Analizando .env...\n');
 
-// Read .env
-const content = fs.readFileSync(ENV_FILE, 'utf-8');
-const lines = content.split('\n');
+// Read .env with error handling
+let content, lines;
+try {
+  content = fs.readFileSync(ENV_FILE, 'utf-8');
+  lines = content.split('\n');
+} catch (error) {
+  console.error('❌ Error leyendo .env:', error.message);
+  process.exit(1);
+}
 
 let uncommented = 0;
 let skipped = 0;
@@ -78,8 +84,13 @@ const newLines = lines.map(line => {
   }
 });
 
-// Write back
-fs.writeFileSync(ENV_FILE, newLines.join('\n'), 'utf-8');
+// Write back with error handling
+try {
+  fs.writeFileSync(ENV_FILE, newLines.join('\n'), 'utf-8');
+} catch (error) {
+  console.error('❌ Error escribiendo .env:', error.message);
+  process.exit(1);
+}
 
 console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log('📊 RESUMEN');

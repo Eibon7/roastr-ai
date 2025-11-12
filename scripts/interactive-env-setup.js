@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { uncommentKeys } = require('./utils/uncomment-env-keys');
 
 const ENV_FILE = path.join(__dirname, '..', '.env');
 
@@ -67,39 +68,30 @@ function applyChanges() {
   console.log('📝 APLICANDO CAMBIOS...');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   
-  // Read .env
-  const content = fs.readFileSync(ENV_FILE, 'utf-8');
-  const lines = content.split('\n');
-  
-  const newLines = lines.map(line => {
-    const trimmed = line.trim();
+  try {
+    // Read .env
+    const content = fs.readFileSync(ENV_FILE, 'utf-8');
     
-    // Skip non-key lines
-    if (!trimmed.startsWith('#') || !trimmed.includes('=')) {
-      return line;
-    }
+    // Use shared utility to uncomment keys
+    const newContent = uncommentKeys(content, keysToUncomment);
     
-    // Extract key name
-    const uncommented = trimmed.substring(1).trim();
-    const keyName = uncommented.split('=')[0].trim();
+    // Log what was uncommented
+    keysToUncomment.forEach(key => {
+      console.log(`✅ Descomentado: ${key}`);
+    });
     
-    // Check if this key should be uncommented
-    if (keysToUncomment.includes(keyName)) {
-      console.log(`✅ Descomentado: ${keyName}`);
-      return uncommented;
-    }
+    // Write back
+    fs.writeFileSync(ENV_FILE, newContent, 'utf-8');
     
-    return line;
-  });
-  
-  // Write back
-  fs.writeFileSync(ENV_FILE, newLines.join('\n'), 'utf-8');
-  
-  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('✅ .env ACTUALIZADO');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-  console.log(`Líneas descomentadas: ${keysToUncomment.length}`);
-  console.log('\n🔄 Ejecuta: node scripts/verify-env-config.js para verificar\n');
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('✅ .env ACTUALIZADO');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log(`Líneas descomentadas: ${keysToUncomment.length}`);
+    console.log('\n🔄 Ejecuta: node scripts/verify-env-config.js para verificar\n');
+  } catch (error) {
+    console.error('❌ Error al aplicar cambios:', error.message);
+    process.exit(1);
+  }
 }
 
 // Start

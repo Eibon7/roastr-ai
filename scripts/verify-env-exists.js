@@ -66,6 +66,17 @@ function main() {
       fs.copyFileSync(ENV_EXAMPLE, ENV_FILE);
       log('.env recreado desde .env.example');
       console.warn('⚠️  IMPORTANTE: Configura tus variables de entorno reales en .env');
+      
+      // Validate the recreated .env
+      try {
+        require('child_process').execSync('node scripts/verify-env-config.js', { 
+          cwd: path.join(__dirname, '..'),
+          stdio: 'inherit'
+        });
+      } catch (error) {
+        console.warn('⚠️  Validación: Algunas configuraciones requieren atención');
+      }
+      
       return 0;
     } else if (fs.existsSync(ENV_BACKUP)) {
       fs.copyFileSync(ENV_BACKUP, ENV_FILE);
