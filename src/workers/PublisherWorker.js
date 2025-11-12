@@ -401,7 +401,6 @@ class PublisherWorker extends BaseWorker {
   }
 
   /**
-  /**
    * Update response record with publication details
    * Uses atomic update to prevent race conditions (TOCTOU)
    * Only updates if platform_response_id is still null
