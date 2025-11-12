@@ -1,8 +1,8 @@
 # Auto-Repair Changelog
 
-## 2025-11-11T17:11:02.399Z
+## 2025-11-11T17:12:37.116Z
 
-**Repair ID:** 2025-11-11T17:11:02Z
+**Repair ID:** 2025-11-11T17:12:37Z
 **Triggered by:** CI/CD
 **Nodes affected:** platform-constraints
 
@@ -12,7 +12,7 @@
 **Outcome:**
 - Health score: 89.5 → 92.2
 - Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T17-11-02-141Z`
+- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T17-12-36-888Z`
 
 ---
 

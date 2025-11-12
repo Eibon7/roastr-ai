@@ -389,8 +389,31 @@ jobs:
         echo "  Coverage: $COVERAGE_RESULT"  
         echo "  Scenarios: $SCENARIOS_RESULT"
         
+        # Check for critical failures first
+        if [[ "$CORE_RESULT" == "failure" ]]; then
+          echo ""
+          echo "❌ SPEC 14 Requirements Not Met - Core tests failed"
+          echo "Please check failing tests and fix issues"
+          exit 1
+        fi
+        
+        if [[ "$COVERAGE_RESULT" == "failure" ]]; then
+          echo ""
+          echo "❌ SPEC 14 Requirements Not Met - Coverage validation failed"
+          echo "Please check coverage thresholds and fix issues"
+          exit 1
+        fi
+        
+        if [[ "$SCENARIOS_RESULT" == "failure" ]]; then
+          echo ""
+          echo "❌ SPEC 14 Requirements Not Met - Scenario verification failed"
+          echo "Please check failing scenarios and fix issues"
+          exit 1
+        fi
+        
         # Verify all critical requirements (allow skipped for dependency-only PRs)
-        if [[ ("$CORE_RESULT" == "success" || "$CORE_RESULT" == "skipped") && ("$SCENARIOS_RESULT" == "success" || "$SCENARIOS_RESULT" == "skipped") ]]; then
+        # Coverage can be skipped if pre-flight determined tests shouldn't run
+        if [[ ("$CORE_RESULT" == "success" || "$CORE_RESULT" == "skipped") && ("$COVERAGE_RESULT" == "success" || "$COVERAGE_RESULT" == "skipped" || -z "$COVERAGE_RESULT") && ("$SCENARIOS_RESULT" == "success" || "$SCENARIOS_RESULT" == "skipped") ]]; then
           echo ""
           echo "✅ SPEC 14 Requirements Met:"
           if [[ "$CORE_RESULT" == "skipped" ]]; then
