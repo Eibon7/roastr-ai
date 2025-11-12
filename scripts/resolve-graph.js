@@ -76,17 +76,58 @@ class GraphResolver {
   }
 
   /**
+   * Convert glob pattern to regex safely
+   * Escapes regex metacharacters before converting * to .*
+   * @param {string} pattern - Glob pattern (e.g., "src/integrations/STAR/index.js" where STAR is *)
+   * @returns {RegExp} - Regex pattern for matching
+   * @throws {Error} - If pattern is invalid or empty
+   */
+  globToRegex(pattern) {
+    if (!pattern || typeof pattern !== 'string') {
+      throw new Error('Pattern must be a non-empty string');
+    }
+
+    // First escape all regex metacharacters except '*'
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+    // Then convert '*' to '.*' for glob matching
+    const regexPattern = escaped.replace(/\*/g, '.*');
+    
+    try {
+      return new RegExp('^' + regexPattern + '$');
+    } catch (error) {
+      throw new Error(`Invalid regex pattern: ${error.message}`);
+    }
+  }
+
+  /**
    * Map changed files to affected GDD nodes
    * @param {string} filesPath - Path to file containing list of changed files (one per line)
    * @returns {string[]} - Array of affected node names
    */
   mapFilesToNodes(filesPath) {
+    // Validate input
+    if (!filesPath || typeof filesPath !== 'string') {
+      console.error(`${colors.red}Error: Invalid files path provided${colors.reset}`);
+      return [];
+    }
+
     try {
+      // Check if file exists
+      if (!fs.existsSync(filesPath)) {
+        console.error(`${colors.red}Error: File not found: ${filesPath}${colors.reset}`);
+        return [];
+      }
+
       const filesContent = fs.readFileSync(filesPath, 'utf8');
       const changedFiles = filesContent
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
+
+      // Early return if no files to process
+      if (changedFiles.length === 0) {
+        return [];
+      }
 
       const features = this.getFeatures();
       if (!features) {
@@ -103,21 +144,33 @@ class GraphResolver {
           
           // Check if file matches any pattern in node's files
           for (const nodeFile of nodeFiles) {
-            // Handle glob patterns (e.g., "src/integrations/*/index.js")
+            // Handle glob patterns (e.g., "src/integrations/STAR/index.js" where STAR is *)
             if (nodeFile.includes('*')) {
-              const pattern = nodeFile.replace(/\*/g, '.*');
-              const regex = new RegExp(`^${pattern}$`);
-              if (regex.test(file)) {
+              try {
+                const regex = this.globToRegex(nodeFile);
+                if (regex.test(file)) {
+                  affectedNodes.add(nodeName);
+                  break;
+                }
+              } catch (error) {
+                // Skip invalid glob patterns
+                console.warn(`${colors.yellow}Warning: Invalid glob pattern "${nodeFile}": ${error.message}${colors.reset}`);
+              }
+            } else {
+              // Exact match or path-based matching (more precise than includes)
+              // Use path.basename for filename-only matches or endsWith for path matches
+              const fileName = path.basename(file);
+              if (file === nodeFile || 
+                  file.endsWith(path.sep + nodeFile) ||
+                  fileName === nodeFile) {
                 affectedNodes.add(nodeName);
                 break;
               }
-            } else if (file === nodeFile || file.endsWith(nodeFile) || file.includes(nodeFile)) {
-              affectedNodes.add(nodeName);
-              break;
             }
           }
 
           // Also check if file path contains node-related keywords
+          // But only for exact matches in path segments, not substring matches
           const nodeKeywords = [
             nodeName.toLowerCase(),
             nodeName.replace(/-/g, ''),
@@ -125,14 +178,16 @@ class GraphResolver {
           ];
           
           for (const keyword of nodeKeywords) {
-            if (file.toLowerCase().includes(keyword)) {
+            // Match only if keyword appears as a path segment or filename
+            const pathSegments = file.toLowerCase().split(path.sep);
+            if (pathSegments.some(segment => segment === keyword || segment.includes(keyword + '.') || segment.includes(keyword + '-'))) {
               affectedNodes.add(nodeName);
               break;
             }
           }
         }
 
-        // Special mappings for common patterns
+        // Special mappings for common patterns (using path-based matching)
         if (file.includes('src/integrations/')) {
           affectedNodes.add('social-platforms');
         }
