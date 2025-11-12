@@ -216,8 +216,9 @@ describe('Database Security Integration', () => {
                     user_uuid: testUserId
                 });
 
-            // Should execute successfully with security restrictions
+            // Integration test MUST fail if function doesn't exist
             expect(error).toBeNull();
+            expect(data).toBeDefined();
             expect(data).toBeInstanceOf(Array);
             
             if (data.length > 0) {
@@ -250,7 +251,9 @@ describe('Database Security Integration', () => {
                     period_days: 30
                 });
 
+            // Integration test MUST fail if function doesn't exist
             expect(error).toBeNull();
+            expect(data).toBeDefined();
             expect(data).toBeInstanceOf(Array);
             
             if (data.length > 0) {
@@ -313,9 +316,15 @@ describe('Database Security Integration', () => {
                 .select('*')
                 .eq('org_id', testOrgId);
 
+            // Multi-tenant security test MUST verify table exists and RLS works
             expect(org1Error).toBeNull();
+            expect(org1Data).toBeDefined();
             expect(org1Data).toBeInstanceOf(Array);
-            expect(org1Data.every(row => row.org_id === testOrgId)).toBe(true);
+            
+            // Should have data from org1 context
+            if (org1Data.length > 0) {
+                expect(org1Data.every(row => row.org_id === testOrgId)).toBe(true);
+            }
 
             // Query for second org's data
             const { data: org2Data, error: org2Error } = await supabaseServiceClient

@@ -46,21 +46,26 @@ describe('EntitlementsService - Polar Integration', () => {
         // Set up Polar env var
         process.env.POLAR_ACCESS_TOKEN = 'test_access_token';
 
-        // Mock Supabase chains
-        mockSingle = jest.fn().mockResolvedValue({
-            data: null,
-            error: null
+        // Mock Supabase chains - Correctly chain .upsert().select().single()
+        mockSingle = jest.fn(); // Dynamically set per test
+        mockSelect = jest.fn(() => ({
+            single: mockSingle
+        }));
+        mockUpsert = jest.fn((data) => {
+            // Capture the data being upserted and make it available to .single()
+            const upsertedData = {
+                account_id: userId,
+                ...data
+            };
+            mockSingle.mockResolvedValue({
+                data: upsertedData,
+                error: null
+            });
+            return {
+                select: mockSelect
+            };
         });
         mockEq = jest.fn(() => ({ single: mockSingle }));
-        mockSelect = jest.fn(() => ({ eq: mockEq }));
-        mockUpsert = jest.fn().mockResolvedValue({
-            data: [{
-                user_id: userId,
-                plan_name: 'pro',
-                analysis_limit_monthly: 1000
-            }],
-            error: null
-        });
 
         mockFrom = jest.fn((table) => ({
             select: mockSelect,
@@ -116,6 +121,8 @@ describe('EntitlementsService - Polar Integration', () => {
             expect(upsertCall.persona_fields_limit).toBe(0);
             expect(upsertCall.roast_level_max).toBe(1);
             expect(upsertCall.shield_enabled).toBe(true);
+            expect(upsertCall.model).toBe('gpt-3.5-turbo');
+            expect(upsertCall.rqc_mode).toBe('basic');
             expect(upsertCall.polar_price_id).toBe(testPriceIds.starter);
         });
 
@@ -133,6 +140,8 @@ describe('EntitlementsService - Polar Integration', () => {
             expect(upsertCall.roast_limit_monthly).toBe(500);
             expect(upsertCall.persona_fields_limit).toBe(10);
             expect(upsertCall.roast_level_max).toBe(5);
+            expect(upsertCall.model).toBe('gpt-4');
+            expect(upsertCall.rqc_mode).toBe('advanced');
         });
 
         it('should set entitlements for creator_plus plan', async () => {
@@ -149,6 +158,8 @@ describe('EntitlementsService - Polar Integration', () => {
             expect(upsertCall.roast_limit_monthly).toBe(5000);
             expect(upsertCall.persona_fields_limit).toBe(50);
             expect(upsertCall.roast_level_max).toBe(10);
+            expect(upsertCall.model).toBe('gpt-4');
+            expect(upsertCall.rqc_mode).toBe('premium');
         });
 
         it('should include metadata with updated_from and plan_name', async () => {
@@ -237,22 +248,15 @@ describe('EntitlementsService - Polar Integration', () => {
         });
 
         it('should return existing entitlements data on success', async () => {
-            const mockEntitlements = {
-                user_id: userId,
-                plan_name: 'pro',
-                analysis_limit_monthly: 1000,
-                roast_limit_monthly: 500
-            };
-
-            mockUpsert.mockResolvedValue({
-                data: [mockEntitlements],
-                error: null
-            });
-
             const result = await service.setEntitlementsFromPolarPrice(userId, testPriceIds.pro);
 
             expect(result.success).toBe(true);
-            expect(result.entitlements).toEqual([mockEntitlements]);
+            expect(result.entitlements).toBeDefined();
+            expect(result.entitlements.plan_name).toBe('pro');
+            expect(result.entitlements.analysis_limit_monthly).toBe(1000);
+            expect(result.entitlements.roast_limit_monthly).toBe(500);
+            expect(result.entitlements.model).toBe('gpt-4');
+            expect(result.entitlements.rqc_mode).toBe('advanced');
         });
     });
 
@@ -266,7 +270,9 @@ describe('EntitlementsService - Polar Integration', () => {
                 roast_limit_monthly: 50,
                 persona_fields_limit: 0,
                 roast_level_max: 1,
-                shield_enabled: true
+                shield_enabled: true,
+                model: 'gpt-3.5-turbo',
+                rqc_mode: 'basic'
             });
         });
 
@@ -279,7 +285,9 @@ describe('EntitlementsService - Polar Integration', () => {
                 roast_limit_monthly: 500,
                 persona_fields_limit: 10,
                 roast_level_max: 5,
-                shield_enabled: true
+                shield_enabled: true,
+                model: 'gpt-4',
+                rqc_mode: 'advanced'
             });
         });
 
@@ -292,7 +300,9 @@ describe('EntitlementsService - Polar Integration', () => {
                 roast_limit_monthly: 5000,
                 persona_fields_limit: 50,
                 roast_level_max: 10,
-                shield_enabled: true
+                shield_enabled: true,
+                model: 'gpt-4',
+                rqc_mode: 'premium'
             });
         });
 
@@ -305,7 +315,9 @@ describe('EntitlementsService - Polar Integration', () => {
                 roast_limit_monthly: 50,
                 persona_fields_limit: 0,
                 roast_level_max: 1,
-                shield_enabled: true
+                shield_enabled: true,
+                model: 'gpt-3.5-turbo',
+                rqc_mode: 'basic'
             });
         });
     });
