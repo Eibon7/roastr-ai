@@ -116,6 +116,13 @@ class GraphResolver {
           const nodeFiles = nodeData.files || [];
           
           // Check if file matches any pattern in node's files
+          // Build keyword set from node name and node files
+          const keywordSet = new Set([
+            nodeName.toLowerCase(),
+            nodeName.replace(/-/g, ''),
+            nodeName.replace(/-/g, '_')
+          ]);
+
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/*/index.js")
             if (nodeFile.includes('*')) {
@@ -135,20 +142,28 @@ class GraphResolver {
                 break;
               }
             }
+
+            // Build additional keyword variations from node files
+            const baseName = path.basename(nodeFile);
+            const withoutExtension = baseName.toLowerCase().replace(/\.[^.]+$/, '');
+            if (withoutExtension) {
+              keywordSet.add(withoutExtension);
+              keywordSet.add(withoutExtension.replace(/[^a-z0-9]+/g, ''));
+            }
           }
 
           // Also check if file path contains node-related keywords
-          // But only for exact matches in path segments, not substring matches
-          const nodeKeywords = [
-            nodeName.toLowerCase(),
-            nodeName.replace(/-/g, ''),
-            nodeName.replace(/-/g, '_')
-          ];
+          // Use regex with word boundaries to detect camelCase correctly
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean);
           
-          for (const keyword of nodeKeywords) {
-            // Match only if keyword appears as a path segment or filename
-            const pathSegments = file.toLowerCase().split(path.sep);
-            if (pathSegments.some(segment => segment === keyword || segment.includes(keyword + '.') || segment.includes(keyword + '-'))) {
+          const pathSegments = file.toLowerCase().split(path.sep);
+          for (const rawKeyword of nodeKeywords) {
+            const keyword = rawKeyword.toLowerCase();
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Match keyword with word boundaries (handles camelCase like shieldDecisionEngine)
+            const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
+            
+            if (pathSegments.some(segment => keywordRegex.test(segment))) {
               affectedNodes.add(nodeName);
               break;
             }
