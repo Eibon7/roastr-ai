@@ -116,6 +116,12 @@ class GraphResolver {
           const nodeFiles = nodeData.files || [];
           
           // Check if file matches any pattern in node's files
+          const keywordSet = new Set([
+            nodeName.toLowerCase(),
+            nodeName.replace(/-/g, ''),
+            nodeName.replace(/-/g, '_')
+          ]);
+
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/*/index.js")
             if (nodeFile.includes('*')) {
@@ -135,20 +141,27 @@ class GraphResolver {
                 break;
               }
             }
+
+            // Build additional keyword variations from node files
+            const baseName = path.basename(nodeFile);
+            const withoutExtension = baseName.toLowerCase().replace(/\.[^.]+$/, '');
+            if (withoutExtension) {
+              keywordSet.add(withoutExtension);
+              keywordSet.add(withoutExtension.replace(/[^a-z0-9]+/g, ''));
+            }
           }
 
           // Also check if file path contains node-related keywords
-          // But only for exact matches in path segments, not substring matches
-          const nodeKeywords = [
-            nodeName.toLowerCase(),
-            nodeName.replace(/-/g, ''),
-            nodeName.replace(/-/g, '_')
-          ];
-          
-          for (const keyword of nodeKeywords) {
-            // Match only if keyword appears as a path segment or filename
-            const pathSegments = file.toLowerCase().split(path.sep);
-            if (pathSegments.some(segment => segment === keyword || segment.includes(keyword + '.') || segment.includes(keyword + '-'))) {
+          // But only for segment matches with clear boundaries
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean);
+
+          const pathSegments = file.toLowerCase().split(path.sep);
+          for (const rawKeyword of nodeKeywords) {
+            const keyword = rawKeyword.toLowerCase();
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
+
+            if (pathSegments.some(segment => keywordRegex.test(segment))) {
               affectedNodes.add(nodeName);
               break;
             }
@@ -853,6 +866,8 @@ function main() {
 
 function printHelp() {
   console.log(`
+${colors.bright}Graph Driven Development (GDD) - Dependency Graph Resolver${colors.reset}
+
 ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js <node-name> [options]
   node scripts/resolve-graph.js --from-files <file> [--format=json]
@@ -861,17 +876,18 @@ ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
-  <node-name>             Resolve dependencies for specific node
-  --from-files <file>     Map changed files to affected GDD nodes
-  --validate              Validate entire graph for issues
-  --graph                 Display dependency graph
-  --report                Generate comprehensive report
-  --format json           Output in JSON format (for CI)
-  --help                  Show this help message
+  <node-name>              Resolve dependencies for specific node
+  --from-files <file>      Map changed files to affected GDD nodes
+  --validate               Validate entire graph for issues
+  --graph                  Display dependency graph
+  --report                 Generate comprehensive report
+  --format=<format>        Output format (text | json)
+  --verbose, -v            Enable verbose output
+  --help, -h               Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
-  node scripts/resolve-graph.js roast-generation
+  node scripts/resolve-graph.js roast --verbose
 
   ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
