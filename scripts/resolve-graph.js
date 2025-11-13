@@ -87,11 +87,14 @@ class GraphResolver {
       throw new Error('Pattern must be a non-empty string');
     }
 
-    // First escape all regex metacharacters except '*'
+    // Escape regex metacharacters except '*'
     const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-    // Then convert '*' to '.*' for glob matching
-    const regexPattern = escaped.replace(/\*/g, '.*');
-    
+
+    // Handle glob semantics: '**' spans segments, '*' stays within a segment
+    const regexPattern = escaped
+      .replace(/\*\*/g, '.*')
+      .replace(/\*/g, '[^/]*');
+
     try {
       return new RegExp('^' + regexPattern + '$');
     } catch (error) {
@@ -141,7 +144,12 @@ class GraphResolver {
         // Check each node's file list
         for (const [nodeName, nodeData] of Object.entries(features)) {
           const nodeFiles = nodeData.files || [];
-          
+          const keywordSet = new Set([
+            nodeName.toLowerCase(),
+            nodeName.replace(/-/g, ''),
+            nodeName.replace(/-/g, '_')
+          ]);
+
           // Check if file matches any pattern in node's files
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/STAR/index.js" where STAR is *)
@@ -167,20 +175,27 @@ class GraphResolver {
                 break;
               }
             }
+
+            // Add filename-derived keywords for matching
+            const baseName = path.basename(nodeFile).toLowerCase();
+            const withoutExtension = baseName.replace(/\.[^.]+$/, '');
+            if (withoutExtension) {
+              keywordSet.add(withoutExtension);
+              keywordSet.add(withoutExtension.replace(/[^a-z0-9]+/g, ''));
+            }
           }
 
           // Also check if file path contains node-related keywords
-          // But only for exact matches in path segments, not substring matches
-          const nodeKeywords = [
-            nodeName.toLowerCase(),
-            nodeName.replace(/-/g, ''),
-            nodeName.replace(/-/g, '_')
-          ];
-          
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
+
+          const pathSegments = file.toLowerCase().split(path.sep);
           for (const keyword of nodeKeywords) {
-            // Match only if keyword appears as a path segment or filename
-            const pathSegments = file.toLowerCase().split(path.sep);
-            if (pathSegments.some(segment => segment === keyword || segment.includes(keyword + '.') || segment.includes(keyword + '-'))) {
+            if (pathSegments.some(segment =>
+              segment === keyword ||
+              segment.startsWith(`${keyword}.`) ||
+              segment.startsWith(`${keyword}-`) ||
+              segment.startsWith(`${keyword}_`)
+            )) {
               affectedNodes.add(nodeName);
               break;
             }
@@ -887,6 +902,7 @@ ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
+<<<<<<< HEAD
   --validate              Validate entire graph for issues
   --graph                 Generate Mermaid diagram of dependencies
   --report                Generate validation report (docs/system-validation.md)
@@ -897,6 +913,20 @@ ${colors.bright}OPTIONS:${colors.reset}
 ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Resolve dependencies for roast node${colors.reset}
   node scripts/resolve-graph.js roast
+=======
+  <node-name>              Resolve dependencies for specific node
+  --from-files <file>      Map changed files to affected GDD nodes
+  --validate               Validate entire graph for issues
+  --graph                  Display dependency graph
+  --report                 Generate comprehensive report
+  --format=<format>        Output format (text | json)
+  --verbose, -v            Enable verbose output
+  --help, -h               Show this help message
+
+${colors.bright}EXAMPLES:${colors.reset}
+  ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
+  node scripts/resolve-graph.js roast --verbose
+>>>>>>> 834f3930 (fix(pr-830): tighten resolve-graph glob and keyword matching)
 
   ${colors.dim}# Resolve with verbose output${colors.reset}
   node scripts/resolve-graph.js shield --verbose
