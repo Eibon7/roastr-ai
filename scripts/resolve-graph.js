@@ -902,19 +902,14 @@ ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
-<<<<<<< HEAD
+  ${colors.dim}# Validate the entire graph${colors.reset}
+  node scripts/resolve-graph.js --validate
+
   ${colors.dim}# Generate validation report${colors.reset}
   node scripts/resolve-graph.js --report
 
-  ${colors.dim}# Validate the entire graph${colors.reset}
-  node scripts/resolve-graph.js --validate
-
   ${colors.dim}# Generate Mermaid diagram${colors.reset}
   node scripts/resolve-graph.js --graph > docs/system-graph.mmd
-=======
-  ${colors.dim}# Validate the entire graph${colors.reset}
-  node scripts/resolve-graph.js --validate
->>>>>>> origin/main
 `);
 }
 
