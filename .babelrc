@@ -20,18 +20,10 @@
         [
           "@babel/preset-env",
           {
-<<<<<<< HEAD
-            "targets": { "browsers": "last 2 versions" }
-=======
             "targets": { "node": "current" }
->>>>>>> b5d0be6a (fix(pr-830): Address CodeRabbit comments and resolve merge conflicts)
           }
         ]
       ]
     }
   }
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> b5d0be6a (fix(pr-830): Address CodeRabbit comments and resolve merge conflicts)
