@@ -923,12 +923,6 @@ ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Validate the entire graph${colors.reset}
   node scripts/resolve-graph.js --validate
 
-<<<<<<< HEAD
-  ${colors.dim}# Generate validation report${colors.reset}
-  node scripts/resolve-graph.js --report
-
-=======
->>>>>>> origin/main
   ${colors.dim}# Generate Mermaid diagram${colors.reset}
   node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 `);
