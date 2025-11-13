@@ -12,59 +12,83 @@
 const request = require('supertest');
 const express = require('express');
 
-// Mock Supabase responses
-let mockOrganizationData = { id: 'org-123', owner_id: 'user-123', plan_id: 'pro' };
+// Mock data storage
+let mockOrganizationData = { id: 'org-123', owner_id: 'user-123', plan_id: 'pro', monthly_responses_limit: 1000 };
 let mockResponsesData = [];
 let mockShieldData = [];
 let mockMonthlyUsageData = [];
 let mockUserBehaviorsData = [];
 let mockPersonaData = null;
 
+// Create a robust mock factory that handles all query chain combinations
+function createMockQueryChain(table, finalData) {
+  const chain = {
+    eq: jest.fn((column, value) => {
+      return createMockQueryChain(table, finalData);
+    }),
+    gte: jest.fn((column, value) => {
+      return createMockQueryChain(table, finalData);
+    }),
+    order: jest.fn((column, options) => {
+      return createMockQueryChain(table, finalData);
+    }),
+    limit: jest.fn((count) => {
+      return Promise.resolve({ data: finalData || [], error: null });
+    }),
+    range: jest.fn((start, end) => {
+      return Promise.resolve({ data: finalData || [], error: null });
+    }),
+    not: jest.fn((column, operator, value) => {
+      return createMockQueryChain(table, finalData);
+    }),
+    single: jest.fn(() => {
+      if (table === 'organizations') {
+        return Promise.resolve({ data: mockOrganizationData, error: null });
+      } else if (table === 'users') {
+        return Promise.resolve({ data: mockPersonaData, error: null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    }),
+    then: function(resolve, reject) {
+      return Promise.resolve({ data: finalData || [], error: null }).then(resolve, reject);
+    }
+  };
+  
+  Object.defineProperty(chain, Symbol.toStringTag, { value: 'Promise' });
+  return chain;
+}
+
 const mockSupabaseServiceClient = {
-  from: jest.fn((table) => ({
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({ 
-          data: table === 'organizations' ? mockOrganizationData : 
-                table === 'users' ? mockPersonaData : null,
-          error: null 
-        })),
-        gte: jest.fn(() => ({
-          lte: jest.fn(() => ({
-            order: jest.fn(() => ({
-              order: jest.fn(() => Promise.resolve({ data: mockMonthlyUsageData, error: null }))
-            }))
-          }))
-        })),
-        limit: jest.fn(() => Promise.resolve({
-          data: table === 'responses' ? mockShieldData : mockUserBehaviorsData,
-          error: null
-        })),
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: mockMonthlyUsageData, error: null }))
-        })),
-        not: jest.fn(() => ({
-          order: jest.fn(() => ({
-            range: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null }))
-          }))
-        })),
-        range: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null }))
-      })),
-      gte: jest.fn(() => ({
-        lte: jest.fn(() => ({
-          order: jest.fn(() => ({
-            range: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null }))
-          }))
-        }))
-      })),
-      order: jest.fn(() => ({
-        limit: jest.fn(() => Promise.resolve({ data: mockMonthlyUsageData, error: null }))
-      }))
-    }))
-  }))
+  from: jest.fn((table) => {
+    let finalData = [];
+    
+    if (table === 'organizations') {
+      return {
+        select: jest.fn(() => createMockQueryChain(table, null))
+      };
+    } else if (table === 'responses') {
+      finalData = mockResponsesData;
+    } else if (table === 'user_behaviors') {
+      finalData = mockUserBehaviorsData;
+    } else if (table === 'monthly_usage') {
+      finalData = mockMonthlyUsageData;
+    } else if (table === 'users') {
+      return {
+        select: jest.fn(() => createMockQueryChain(table, null))
+      };
+    }
+    
+    return {
+      select: jest.fn((columns) => {
+        if (columns && columns.includes('comments!inner')) {
+          return createMockQueryChain(table, finalData);
+        }
+        return createMockQueryChain(table, finalData);
+      })
+    };
+  })
 };
 
-// Mock planLimitsService
 const mockGetPlanLimits = jest.fn();
 
 jest.mock('../../../src/config/supabase', () => ({
@@ -84,7 +108,6 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
-// Mock auth middleware
 jest.mock('../../../src/middleware/auth', () => ({
   authenticateToken: (req, res, next) => {
     req.user = { id: 'user-123', email: 'test@example.com', plan: 'pro' };
@@ -94,28 +117,6 @@ jest.mock('../../../src/middleware/auth', () => ({
 
 const analyticsRouter = require('../../../src/routes/analytics');
 
-/**
- * Analytics Routes - Comprehensive Coverage Test Suite
- * 
- * @description Tests for main analytics endpoints to improve coverage
- * @issue #501 - Increase coverage from 49% to 65%+
- * 
- * Endpoints tested:
- * - GET /config-performance: Configuration and performance metrics
- * - GET /shield-effectiveness: Shield moderation effectiveness
- * - GET /usage-trends: Historical usage patterns
- * - GET /roastr-persona-insights: Persona usage analytics
- * 
- * Coverage strategy:
- * - Query parameter variations (time ranges, organization filters)
- * - Error handling (missing params, database errors)
- * - Data aggregation and transformation
- * - Authentication and authorization
- * 
- * Note: Analytics routes have complex Supabase query chains
- * Achieving 65% target requires significant refactoring
- * Current implementation covers primary paths
- */
 describe('Analytics Routes - Comprehensive', () => {
   let app;
 
@@ -126,7 +127,6 @@ describe('Analytics Routes - Comprehensive', () => {
     app.use(express.json());
     app.use('/api/analytics', analyticsRouter);
     
-    // Reset mock data
     mockOrganizationData = { id: 'org-123', owner_id: 'user-123', plan_id: 'pro', monthly_responses_limit: 1000 };
     mockResponsesData = [];
     mockShieldData = [];
@@ -142,23 +142,6 @@ describe('Analytics Routes - Comprehensive', () => {
     });
   });
 
-  /**
-   * @endpoint GET /config-performance
-   * @description Tests configuration and performance analytics
-   * 
-   * Query params:
-   * - organizationId: Filter by organization
-   * - startDate: Start of date range
-   * - endDate: End of date range
-   * 
-   * Tests:
-   * - Successful data retrieval
-   * - Query parameter handling
-   * - Error scenarios (missing params, DB errors)
-   * - Data aggregation and formatting
-   * 
-   * Response format: { performance: {...}, config: {...} }
-   */
   describe('GET /config-performance', () => {
     it('should return performance analytics successfully', async () => {
       mockResponsesData = [
@@ -234,6 +217,39 @@ describe('Analytics Routes - Comprehensive', () => {
         }
       ];
 
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          const createChainableQuery = () => {
+            const chain = {
+              eq: jest.fn((column, value) => chain),
+              gte: jest.fn(() => chain),
+              order: jest.fn(() => chain),
+              range: jest.fn(() => {
+                return {
+                  eq: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null })),
+                  then: function(resolve, reject) {
+                    return Promise.resolve({ data: mockResponsesData, error: null }).then(resolve, reject);
+                  }
+                };
+              })
+            };
+            return chain;
+          };
+          return {
+            select: jest.fn(() => createChainableQuery())
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
       const response = await request(app)
         .get('/api/analytics/config-performance')
         .query({ days: 30, platform: 'twitter' });
@@ -241,25 +257,104 @@ describe('Analytics Routes - Comprehensive', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
+
+    it('should group by week', async () => {
+      const now = new Date();
+      const lastWeek = new Date(now);
+      lastWeek.setDate(now.getDate() - 7);
+      
+      mockResponsesData = [
+        {
+          id: 'resp-1',
+          tone: 'sarcastic',
+          humor_type: 'witty',
+          post_status: 'posted',
+          platform_response_id: 'platform-1',
+          tokens_used: 100,
+          cost_cents: 5,
+          created_at: now.toISOString(),
+          comments: {
+            platform: 'twitter',
+            toxicity_score: 0.75,
+            severity_level: 'medium'
+          }
+        },
+        {
+          id: 'resp-2',
+          tone: 'friendly',
+          humor_type: 'puns',
+          post_status: 'posted',
+          platform_response_id: 'platform-2',
+          tokens_used: 80,
+          cost_cents: 4,
+          created_at: lastWeek.toISOString(),
+          comments: {
+            platform: 'youtube',
+            toxicity_score: 0.60,
+            severity_level: 'low'
+          }
+        }
+      ];
+
+      const response = await request(app)
+        .get('/api/analytics/config-performance')
+        .query({ days: 30, group_by: 'week' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.group_by).toBe('week');
+      expect(response.body.data.analytics.timeline).toBeDefined();
+    });
+
+    it('should group by month', async () => {
+      const now = new Date();
+      const lastMonth = new Date(now);
+      lastMonth.setMonth(now.getMonth() - 1);
+      
+      mockResponsesData = [
+        {
+          id: 'resp-1',
+          tone: 'sarcastic',
+          humor_type: 'witty',
+          post_status: 'posted',
+          platform_response_id: 'platform-1',
+          tokens_used: 100,
+          cost_cents: 5,
+          created_at: now.toISOString(),
+          comments: {
+            platform: 'twitter',
+            toxicity_score: 0.75,
+            severity_level: 'medium'
+          }
+        },
+        {
+          id: 'resp-2',
+          tone: 'friendly',
+          humor_type: 'puns',
+          post_status: 'posted',
+          platform_response_id: 'platform-2',
+          tokens_used: 80,
+          cost_cents: 4,
+          created_at: lastMonth.toISOString(),
+          comments: {
+            platform: 'youtube',
+            toxicity_score: 0.60,
+            severity_level: 'low'
+          }
+        }
+      ];
+
+      const response = await request(app)
+        .get('/api/analytics/config-performance')
+        .query({ days: 30, group_by: 'month' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.group_by).toBe('month');
+      expect(response.body.data.analytics.timeline).toBeDefined();
+    });
   });
 
-  /**
-   * @endpoint GET /shield-effectiveness
-   * @description Tests Shield moderation effectiveness metrics
-   * 
-   * Query params:
-   * - organizationId: Filter by organization
-   * - startDate: Analysis period start
-   * - endDate: Analysis period end
-   * 
-   * Tests:
-   * - Effectiveness calculations (blocked/allowed ratios)
-   * - Shield action statistics
-   * - Historical trend analysis
-   * - Error handling
-   * 
-   * Metrics: block rate, allow rate, avg response time, total actions
-   */
   describe('GET /shield-effectiveness', () => {
     it('should return Shield analytics successfully', async () => {
       mockShieldData = [
@@ -292,6 +387,45 @@ describe('Analytics Routes - Comprehensive', () => {
         }
       ];
 
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  gte: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => Promise.resolve({ data: mockShieldData, error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        } else if (table === 'user_behaviors') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  order: jest.fn(() => ({
+                    limit: jest.fn(() => Promise.resolve({ data: mockUserBehaviorsData, error: null }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
       const response = await request(app)
         .get('/api/analytics/shield-effectiveness')
         .query({ days: 30 });
@@ -304,6 +438,19 @@ describe('Analytics Routes - Comprehensive', () => {
 
     it('should handle organization not found', async () => {
       mockOrganizationData = null;
+      
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: null, error: null }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
 
       const response = await request(app)
         .get('/api/analytics/shield-effectiveness');
@@ -313,23 +460,6 @@ describe('Analytics Routes - Comprehensive', () => {
     });
   });
 
-  /**
-   * @endpoint GET /usage-trends
-   * @description Tests historical usage pattern analysis
-   * 
-   * Query params:
-   * - organizationId: Organization filter
-   * - months: Number of months of history (default: 6)
-   * - groupBy: Aggregation level (day/week/month)
-   * 
-   * Tests:
-   * - Time-series data retrieval
-   * - Trend calculations (increasing/decreasing)
-   * - Period-over-period comparisons
-   * - Missing data handling
-   * 
-   * Use cases: Capacity planning, usage forecasting
-   */
   describe('GET /usage-trends', () => {
     it('should return usage trends successfully', async () => {
       mockMonthlyUsageData = [
@@ -352,6 +482,31 @@ describe('Analytics Routes - Comprehensive', () => {
           responses_by_platform: { twitter: 270, youtube: 180 }
         }
       ];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'monthly_usage') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                order: jest.fn(() => ({
+                  order: jest.fn(() => ({
+                    limit: jest.fn(() => Promise.resolve({ data: mockMonthlyUsageData, error: null }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
 
       const response = await request(app)
         .get('/api/analytics/usage-trends')
@@ -385,6 +540,31 @@ describe('Analytics Routes - Comprehensive', () => {
         }
       ];
 
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'monthly_usage') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                order: jest.fn(() => ({
+                  order: jest.fn(() => ({
+                    limit: jest.fn(() => Promise.resolve({ data: mockMonthlyUsageData, error: null }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
       const response = await request(app)
         .get('/api/analytics/usage-trends');
 
@@ -393,23 +573,6 @@ describe('Analytics Routes - Comprehensive', () => {
     });
   });
 
-  /**
-   * @endpoint GET /roastr-persona-insights
-   * @description Tests persona usage analytics and insights
-   * 
-   * Query params:
-   * - organizationId: Organization filter
-   * - userId: User-specific insights
-   * - period: Analysis period (7d/30d/90d)
-   * 
-   * Tests:
-   * - Persona usage frequency
-   * - Tone distribution analysis
-   * - User behavior patterns
-   * - Effectiveness metrics by persona
-   * 
-   * Insights: Most used tones, persona effectiveness, user preferences
-   */
   describe('GET /roastr-persona-insights', () => {
     it('should return persona insights successfully', async () => {
       mockPersonaData = {
@@ -442,6 +605,41 @@ describe('Analytics Routes - Comprehensive', () => {
         }
       ];
 
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
       const response = await request(app)
         .get('/api/analytics/roastr-persona-insights')
         .query({ days: 30 });
@@ -460,11 +658,46 @@ describe('Analytics Routes - Comprehensive', () => {
 
       mockResponsesData = [];
 
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
       const response = await request(app)
         .get('/api/analytics/roastr-persona-insights')
         .query({ days: 'invalid', limit: -1000, offset: 'bad' });
 
-      expect(response.status).toBe(200); // Should handle invalid inputs gracefully
+      expect(response.status).toBe(200);
     });
 
     it('should cache results for frequent requests', async () => {
@@ -474,63 +707,202 @@ describe('Analytics Routes - Comprehensive', () => {
       };
       mockResponsesData = [];
 
-      // First request
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
       await request(app)
         .get('/api/analytics/roastr-persona-insights')
         .query({ days: 30 });
 
       jest.clearAllMocks();
 
-      // Second request (should hit cache)
       const response = await request(app)
         .get('/api/analytics/roastr-persona-insights')
         .query({ days: 30 });
 
       expect(response.status).toBe(200);
-      // Cache hit means fewer DB calls
     });
   });
 
-  /**
-   * @group Helper Functions
-   * @description Helper functions are tested through endpoint integration tests
-   * 
-   * Note: getMostUsedPersonaFields and generatePersonaRecommendations are internal
-   * helpers that are already validated through the /roastr-persona-insights endpoint
-   * tests above. No separate unit tests needed as they don't contain complex logic.
-   */
-
-  /**
-   * @group Error Handling
-   * @description Tests error scenarios across all analytics endpoints
-   * 
-   * Error types:
-   * - Missing required parameters (400)
-   * - Database errors (500)
-   * - Invalid date ranges (400)
-   * - Unauthorized access (401/403)
-   * - Resource not found (404)
-   * 
-   * Ensures graceful error responses with proper status codes
-   */
   describe('Error handling', () => {
     it('should handle database errors gracefully', async () => {
-      mockSupabaseServiceClient.from = jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: null,
-              error: new Error('Database connection failed')
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ 
+                  data: mockOrganizationData,
+                  error: null
+                }))
+              }))
             }))
-          }))
-        }))
-      }));
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  order: jest.fn(() => ({
+                    range: jest.fn(() => Promise.resolve({ 
+                      data: null,
+                      error: new Error('Database connection failed')
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
 
       const response = await request(app)
         .get('/api/analytics/config-performance');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
+    });
+
+    it('should handle getPlanLimits error fallback', async () => {
+      mockGetPlanLimits.mockRejectedValueOnce(new Error('Service unavailable'));
+
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data'
+      };
+      mockResponsesData = [];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should handle invalid planId in getPlanLimits', async () => {
+      mockOrganizationData = { 
+        id: 'org-123', 
+        owner_id: 'user-123', 
+        plan_id: null,
+        monthly_responses_limit: 1000 
+      };
+
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data'
+      };
+      mockResponsesData = [];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
     });
   });
 });
