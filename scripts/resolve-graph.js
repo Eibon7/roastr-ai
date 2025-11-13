@@ -107,12 +107,26 @@ class GraphResolver {
    * @returns {string[]} - Array of affected node names
    */
   mapFilesToNodes(filesPath) {
+    if (!filesPath || typeof filesPath !== 'string') {
+      console.error(`${colors.red}Error: Invalid files path provided${colors.reset}`);
+      return [];
+    }
+
+    if (!fs.existsSync(filesPath)) {
+      console.error(`${colors.red}Error: File not found: ${filesPath}${colors.reset}`);
+      return [];
+    }
+
     try {
       const filesContent = fs.readFileSync(filesPath, 'utf8');
       const changedFiles = filesContent
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
+
+      if (changedFiles.length === 0) {
+        return [];
+      }
 
       const features = this.getFeatures();
       if (!features) {
@@ -154,6 +168,7 @@ class GraphResolver {
               }
             }
 
+            // Add filename-derived keywords for matching
             const baseName = path.basename(nodeFile).toLowerCase();
             const withoutExtension = baseName.replace(/\.[^.]+$/, '');
             if (withoutExtension) {
@@ -902,12 +917,18 @@ ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
-  ${colors.dim}# Validate the entire graph${colors.reset}
-  node scripts/resolve-graph.js --validate
-
   ${colors.dim}# Generate validation report${colors.reset}
   node scripts/resolve-graph.js --report
 
+  ${colors.dim}# Validate the entire graph${colors.reset}
+  node scripts/resolve-graph.js --validate
+
+<<<<<<< HEAD
+  ${colors.dim}# Generate validation report${colors.reset}
+  node scripts/resolve-graph.js --report
+
+=======
+>>>>>>> origin/main
   ${colors.dim}# Generate Mermaid diagram${colors.reset}
   node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 `);
