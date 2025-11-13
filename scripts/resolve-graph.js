@@ -823,6 +823,8 @@ function main() {
 
 function printHelp() {
   console.log(`
+${colors.bright}Graph Driven Development (GDD) - Dependency Graph Resolver${colors.reset}
+
 ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js <node-name> [options]
   node scripts/resolve-graph.js --from-files <file> [--format=json]
@@ -831,17 +833,18 @@ ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
-  <node-name>             Resolve dependencies for specific node
-  --from-files <file>     Map changed files to affected GDD nodes
-  --validate              Validate entire graph for issues
-  --graph                 Display dependency graph
-  --report                Generate comprehensive report
-  --format json           Output in JSON format (for CI)
-  --help                  Show this help message
+  <node-name>              Resolve dependencies for specific node
+  --from-files <file>      Map changed files to affected GDD nodes
+  --validate               Validate entire graph for issues
+  --graph                  Display dependency graph
+  --report                 Generate comprehensive report
+  --format=<format>        Output format (text | json)
+  --verbose, -v            Enable verbose output
+  --help, -h               Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
-  node scripts/resolve-graph.js roast-generation
+  node scripts/resolve-graph.js roast --verbose
 
   ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
