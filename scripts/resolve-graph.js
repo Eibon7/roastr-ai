@@ -76,6 +76,141 @@ class GraphResolver {
   }
 
   /**
+   * Convert glob pattern to regex safely
+   * Escapes regex metacharacters before converting * to .*
+   * @param {string} pattern - Glob pattern (e.g., "src/integrations/STAR/index.js" where STAR is *)
+   * @returns {RegExp} - Regex pattern for matching
+   */
+  globToRegex(pattern) {
+    if (!pattern || typeof pattern !== 'string') {
+      throw new Error('Pattern must be a non-empty string');
+    }
+
+    // Escape regex metacharacters except '*'
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+
+    // Handle glob semantics: '**' spans segments, '*' stays within a segment
+    const regexPattern = escaped
+      .replace(/\*\*/g, '.*')
+      .replace(/\*/g, '[^/]*');
+
+    try {
+      return new RegExp('^' + regexPattern + '$');
+    } catch (error) {
+      throw new Error(`Invalid regex pattern: ${error.message}`);
+    }
+  }
+
+  /**
+   * Map changed files to affected GDD nodes
+   * @param {string} filesPath - Path to file containing list of changed files (one per line)
+   * @returns {string[]} - Array of affected node names
+   */
+  mapFilesToNodes(filesPath) {
+    try {
+      const filesContent = fs.readFileSync(filesPath, 'utf8');
+      const changedFiles = filesContent
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
+      const features = this.getFeatures();
+      if (!features) {
+        return [];
+      }
+
+      const affectedNodes = new Set();
+
+      // For each changed file, find matching nodes
+      for (const file of changedFiles) {
+        // Check each node's file list
+        for (const [nodeName, nodeData] of Object.entries(features)) {
+          const nodeFiles = nodeData.files || [];
+          
+          // Check if file matches any pattern in node's files
+          // Build keyword set from node name and node files
+          const keywordSet = new Set([
+            nodeName.toLowerCase(),
+            nodeName.replace(/-/g, ''),
+            nodeName.replace(/-/g, '_')
+          ]);
+
+          for (const nodeFile of nodeFiles) {
+            // Handle glob patterns (e.g., "src/integrations/*/index.js")
+            if (nodeFile.includes('*')) {
+              const regex = this.globToRegex(nodeFile);
+              if (regex.test(file)) {
+                affectedNodes.add(nodeName);
+                break;
+              }
+            } else {
+              // Exact match or path-based matching (more precise than includes)
+              // Use path.basename for filename-only matches or endsWith for path matches
+              const fileName = path.basename(file);
+              if (file === nodeFile || 
+                  file.endsWith(path.sep + nodeFile) ||
+                  fileName === nodeFile) {
+                affectedNodes.add(nodeName);
+                break;
+              }
+            }
+
+            // Build additional keyword variations from node files
+            const baseName = path.basename(nodeFile);
+            const withoutExtension = baseName.toLowerCase().replace(/\.[^.]+$/, '');
+            if (withoutExtension) {
+              keywordSet.add(withoutExtension);
+              keywordSet.add(withoutExtension.replace(/[^a-z0-9]+/g, ''));
+            }
+          }
+
+          // Also check if file path contains node-related keywords
+          // Use regex with word boundaries to detect camelCase correctly
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
+          
+          const pathSegments = file.toLowerCase().split(path.sep);
+          for (const keyword of nodeKeywords) {
+            if (pathSegments.some(segment =>
+              segment === keyword ||
+              segment.startsWith(`${keyword}.`) ||
+              segment.startsWith(`${keyword}-`) ||
+              segment.startsWith(`${keyword}_`)
+            )) {
+              affectedNodes.add(nodeName);
+              break;
+            }
+          }
+        }
+
+        // Special mappings for common patterns (using path-based matching)
+        if (file.includes('src/integrations/')) {
+          affectedNodes.add('social-platforms');
+        }
+        if (file.includes('src/services/costControl') || file.includes('cost-control')) {
+          affectedNodes.add('cost-control');
+        }
+        if (file.includes('src/services/shield') || file.includes('Shield')) {
+          affectedNodes.add('shield');
+        }
+        if (file.includes('src/services/queue') || file.includes('workers/')) {
+          affectedNodes.add('queue-system');
+        }
+        if (file.includes('docs/nodes/')) {
+          const nodeMatch = file.match(/docs\/nodes\/([^.]+)\.md/);
+          if (nodeMatch) {
+            affectedNodes.add(nodeMatch[1]);
+          }
+        }
+      }
+
+      return Array.from(affectedNodes).sort();
+    } catch (error) {
+      console.error(`${colors.red}Error reading files list:${colors.reset}`, error.message);
+      return [];
+    }
+  }
+
+  /**
    * Resolve all dependencies for a given node
    * @param {string} nodeName - Name of the node to resolve
    * @returns {Object} - Resolved docs and dependency chain
@@ -648,8 +783,15 @@ function main() {
   let verbose = false;
   let format = 'text';
   let mode = 'resolve'; // resolve, validate, graph, report
+  let fromFiles = null;
+  let skipNext = false;
 
   for (const arg of args) {
+    if (skipNext) {
+      skipNext = false;
+      continue; // Skip the consumed argument
+    }
+    
     if (arg === '--validate') {
       mode = 'validate';
     } else if (arg === '--graph') {
@@ -660,6 +802,15 @@ function main() {
       verbose = true;
     } else if (arg.startsWith('--format=')) {
       format = arg.split('=')[1];
+    } else if (arg.startsWith('--from-files=')) {
+      fromFiles = arg.split('=')[1];
+    } else if (arg === '--from-files') {
+      // Handle --from-files as next argument
+      const idx = args.indexOf(arg);
+      if (idx < args.length - 1 && !args[idx + 1].startsWith('--')) {
+        fromFiles = args[idx + 1];
+        skipNext = true; // Mark next argument as consumed
+      }
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -672,7 +823,19 @@ function main() {
   const resolver = new GraphResolver(systemMapPath);
 
   try {
-    if (mode === 'validate') {
+    if (fromFiles) {
+      // Map changed files to affected nodes
+      const affectedNodes = resolver.mapFilesToNodes(fromFiles);
+      
+      if (format === 'json') {
+        console.log(JSON.stringify({ nodes: affectedNodes }, null, 2));
+      } else {
+        console.log(`${colors.green}✅ Affected nodes:${colors.reset}`);
+        for (const node of affectedNodes) {
+          console.log(`  - ${node}`);
+        }
+      }
+    } else if (mode === 'validate') {
       // Validate entire graph
       const issues = resolver.validate();
       resolver.printValidation(issues);
@@ -721,36 +884,30 @@ ${colors.bright}Graph Driven Development (GDD) - Dependency Graph Resolver${colo
 
 ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js <node-name> [options]
+  node scripts/resolve-graph.js --from-files <file> [--format=json]
   node scripts/resolve-graph.js --validate
   node scripts/resolve-graph.js --graph
   node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
-  --validate              Validate entire graph for issues
-  --graph                 Generate Mermaid diagram of dependencies
-  --report                Generate validation report (docs/system-validation.md)
-  --verbose, -v           Enable verbose output
-  --format=<format>       Output format (text, json)
-  --help, -h              Show this help message
+  <node-name>              Resolve dependencies for specific node
+  --from-files <file>      Map changed files to affected GDD nodes
+  --validate               Validate entire graph for issues
+  --graph                  Display dependency graph
+  --report                 Generate comprehensive report
+  --format=<format>        Output format (text | json)
+  --verbose, -v            Enable verbose output
+  --help, -h               Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
-  ${colors.dim}# Resolve dependencies for roast node${colors.reset}
-  node scripts/resolve-graph.js roast
+  ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
+  node scripts/resolve-graph.js roast --verbose
 
-  ${colors.dim}# Resolve with verbose output${colors.reset}
-  node scripts/resolve-graph.js shield --verbose
+  ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
+  node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
-  ${colors.dim}# Generate validation report${colors.reset}
-  node scripts/resolve-graph.js --report
-
-  ${colors.dim}# Validate entire graph${colors.reset}
+  ${colors.dim}# Validate the entire graph${colors.reset}
   node scripts/resolve-graph.js --validate
-
-  ${colors.dim}# Generate Mermaid diagram${colors.reset}
-  node scripts/resolve-graph.js --graph > docs/system-graph.mmd
-
-  ${colors.dim}# JSON output for automation${colors.reset}
-  node scripts/resolve-graph.js roast --format=json
 `);
 }
 
