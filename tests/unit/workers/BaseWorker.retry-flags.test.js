@@ -58,7 +58,7 @@ class FlagAwareWorker extends BaseWorker {
       const error = new Error('Transient failure');
       error.retriable = true;
       error.permanent = false;
-      error.statusCode = 500;
+      error.statusCode = 400;
       throw error;
     }
 
