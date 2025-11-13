@@ -132,18 +132,19 @@ class GraphResolver {
             nodeName.replace(/-/g, '_')
           ]);
 
-          // Check if file matches any pattern in node's files
+          // Check if file matches any pattern in node's files while enriching keyword set
           for (const nodeFile of nodeFiles) {
-            // Handle glob patterns (e.g., "src/integrations/*/index.js")
             if (nodeFile.includes('*')) {
-              const regex = this.globToRegex(nodeFile);
-              if (regex.test(file)) {
-                affectedNodes.add(nodeName);
-                break;
+              try {
+                const regex = this.globToRegex(nodeFile);
+                if (regex.test(file)) {
+                  affectedNodes.add(nodeName);
+                  break;
+                }
+              } catch (error) {
+                console.warn(`${colors.yellow}Warning: Invalid glob pattern "${nodeFile}": ${error.message}${colors.reset}`);
               }
             } else {
-              // Exact match or path-based matching (more precise than includes)
-              // Use path.basename for filename-only matches or endsWith for path matches
               const fileName = path.basename(file);
               if (file === nodeFile || 
                   file.endsWith(path.sep + nodeFile) ||
@@ -153,7 +154,6 @@ class GraphResolver {
               }
             }
 
-            // Add filename-derived keywords for matching
             const baseName = path.basename(nodeFile).toLowerCase();
             const withoutExtension = baseName.replace(/\.[^.]+$/, '');
             if (withoutExtension) {
@@ -162,13 +162,10 @@ class GraphResolver {
             }
           }
 
-          // Also check if file path contains node-related keywords
-          // But only for exact matches in path segments, not substring matches
           const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
-          
           const pathSegments = file.toLowerCase().split(path.sep);
+
           for (const keyword of nodeKeywords) {
-            // Match only if keyword appears as a path segment or filename prefix
             if (pathSegments.some(segment =>
               segment === keyword ||
               segment.startsWith(`${keyword}.`) ||
@@ -905,6 +902,7 @@ ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
+<<<<<<< HEAD
   ${colors.dim}# Generate validation report${colors.reset}
   node scripts/resolve-graph.js --report
 
@@ -913,6 +911,10 @@ ${colors.bright}EXAMPLES:${colors.reset}
 
   ${colors.dim}# Generate Mermaid diagram${colors.reset}
   node scripts/resolve-graph.js --graph > docs/system-graph.mmd
+=======
+  ${colors.dim}# Validate the entire graph${colors.reset}
+  node scripts/resolve-graph.js --validate
+>>>>>>> origin/main
 `);
 }
 
