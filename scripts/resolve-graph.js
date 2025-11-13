@@ -76,17 +76,58 @@ class GraphResolver {
   }
 
   /**
+   * Convert glob pattern to regex safely
+   * Escapes regex metacharacters before converting * to .*
+   * @param {string} pattern - Glob pattern (e.g., "src/integrations/STAR/index.js" where STAR is *)
+   * @returns {RegExp} - Regex pattern for matching
+   * @throws {Error} - If pattern is invalid or empty
+   */
+  globToRegex(pattern) {
+    if (!pattern || typeof pattern !== 'string') {
+      throw new Error('Pattern must be a non-empty string');
+    }
+
+    // Escape regex metacharacters except '*'
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+
+    // Handle glob semantics: '**' spans segments, '*' stays within a segment
+    const regexPattern = escaped
+      .replace(/\*\*/g, '.*')
+      .replace(/\*/g, '[^/]*');
+
+    try {
+      return new RegExp('^' + regexPattern + '$');
+    } catch (error) {
+      throw new Error(`Invalid regex pattern: ${error.message}`);
+    }
+  }
+
+  /**
    * Map changed files to affected GDD nodes
    * @param {string} filesPath - Path to file containing list of changed files (one per line)
    * @returns {string[]} - Array of affected node names
    */
   mapFilesToNodes(filesPath) {
+    if (!filesPath || typeof filesPath !== 'string') {
+      console.error(`${colors.red}Error: Invalid files path provided${colors.reset}`);
+      return [];
+    }
+
+    if (!fs.existsSync(filesPath)) {
+      console.error(`${colors.red}Error: File not found: ${filesPath}${colors.reset}`);
+      return [];
+    }
+
     try {
       const filesContent = fs.readFileSync(filesPath, 'utf8');
       const changedFiles = filesContent
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
+
+      if (changedFiles.length === 0) {
+        return [];
+      }
 
       const features = this.getFeatures();
       if (!features) {
@@ -100,39 +141,64 @@ class GraphResolver {
         // Check each node's file list
         for (const [nodeName, nodeData] of Object.entries(features)) {
           const nodeFiles = nodeData.files || [];
+          const keywordSet = new Set([
+            nodeName.toLowerCase(),
+            nodeName.replace(/-/g, ''),
+            nodeName.replace(/-/g, '_')
+          ]);
           
           // Check if file matches any pattern in node's files
           for (const nodeFile of nodeFiles) {
-            // Handle glob patterns (e.g., "src/integrations/*/index.js")
+            // Handle glob patterns (e.g., "src/integrations/STAR/index.js" where STAR is *)
             if (nodeFile.includes('*')) {
-              const pattern = nodeFile.replace(/\*/g, '.*');
-              const regex = new RegExp(`^${pattern}$`);
-              if (regex.test(file)) {
+              try {
+                const regex = this.globToRegex(nodeFile);
+                if (regex.test(file)) {
+                  affectedNodes.add(nodeName);
+                  break;
+                }
+              } catch (error) {
+                console.warn(`${colors.yellow}Warning: Invalid glob pattern "${nodeFile}": ${error.message}${colors.reset}`);
+              }
+            } else {
+              // Exact match or path-based matching (more precise than includes)
+              // Use path.basename for filename-only matches or endsWith for path matches
+              const fileName = path.basename(file);
+              if (file === nodeFile || 
+                  file.endsWith(path.sep + nodeFile) ||
+                  fileName === nodeFile) {
                 affectedNodes.add(nodeName);
                 break;
               }
-            } else if (file === nodeFile || file.endsWith(nodeFile) || file.includes(nodeFile)) {
-              affectedNodes.add(nodeName);
-              break;
+            }
+
+            // Add filename-derived keywords for matching
+            const baseName = path.basename(nodeFile).toLowerCase();
+            const withoutExtension = baseName.replace(/\.[^.]+$/, '');
+            if (withoutExtension) {
+              keywordSet.add(withoutExtension);
+              keywordSet.add(withoutExtension.replace(/[^a-z0-9]+/g, ''));
             }
           }
 
           // Also check if file path contains node-related keywords
-          const nodeKeywords = [
-            nodeName.toLowerCase(),
-            nodeName.replace(/-/g, ''),
-            nodeName.replace(/-/g, '_')
-          ];
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
+          const pathSegments = file.toLowerCase().split(path.sep);
           
           for (const keyword of nodeKeywords) {
-            if (file.toLowerCase().includes(keyword)) {
+            if (pathSegments.some(segment =>
+              segment === keyword ||
+              segment.startsWith(`${keyword}.`) ||
+              segment.startsWith(`${keyword}-`) ||
+              segment.startsWith(`${keyword}_`)
+            )) {
               affectedNodes.add(nodeName);
               break;
             }
           }
         }
 
-        // Special mappings for common patterns
+        // Special mappings for common patterns (using path-based matching)
         if (file.includes('src/integrations/')) {
           affectedNodes.add('social-platforms');
         }
@@ -734,8 +800,14 @@ function main() {
   let format = 'text';
   let mode = 'resolve'; // resolve, validate, graph, report
   let fromFiles = null;
+  let skipNext = false;
 
   for (const arg of args) {
+    if (skipNext) {
+      skipNext = false;
+      continue; // Skip the consumed argument
+    }
+    
     if (arg === '--validate') {
       mode = 'validate';
     } else if (arg === '--graph') {
@@ -753,6 +825,7 @@ function main() {
       const idx = args.indexOf(arg);
       if (idx < args.length - 1 && !args[idx + 1].startsWith('--')) {
         fromFiles = args[idx + 1];
+        skipNext = true; // Mark next argument as consumed
       }
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
