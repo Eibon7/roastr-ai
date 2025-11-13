@@ -107,12 +107,26 @@ class GraphResolver {
    * @returns {string[]} - Array of affected node names
    */
   mapFilesToNodes(filesPath) {
+    if (!filesPath || typeof filesPath !== 'string') {
+      console.error(`${colors.red}Error: Invalid files path provided${colors.reset}`);
+      return [];
+    }
+
+    if (!fs.existsSync(filesPath)) {
+      console.error(`${colors.red}Error: File not found: ${filesPath}${colors.reset}`);
+      return [];
+    }
+
     try {
       const filesContent = fs.readFileSync(filesPath, 'utf8');
       const changedFiles = filesContent
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
+
+      if (changedFiles.length === 0) {
+        return [];
+      }
 
       const features = this.getFeatures();
       if (!features) {
@@ -136,10 +150,14 @@ class GraphResolver {
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/*/index.js")
             if (nodeFile.includes('*')) {
-              const regex = this.globToRegex(nodeFile);
-              if (regex.test(file)) {
-                affectedNodes.add(nodeName);
-                break;
+              try {
+                const regex = this.globToRegex(nodeFile);
+                if (regex.test(file)) {
+                  affectedNodes.add(nodeName);
+                  break;
+                }
+              } catch (error) {
+                console.warn(`${colors.yellow}Warning: Invalid glob pattern "${nodeFile}": ${error.message}${colors.reset}`);
               }
             } else {
               // Exact match or path-based matching (more precise than includes)
@@ -163,18 +181,19 @@ class GraphResolver {
           }
 
           // Also check if file path contains node-related keywords
-          // But only for exact matches in path segments, not substring matches
-          const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
+          // Use regex with word boundaries to detect camelCase correctly
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean);
           
           const pathSegments = file.toLowerCase().split(path.sep);
-          for (const keyword of nodeKeywords) {
-            // Match only if keyword appears as a path segment or filename prefix
-            if (pathSegments.some(segment =>
-              segment === keyword ||
-              segment.startsWith(`${keyword}.`) ||
-              segment.startsWith(`${keyword}-`) ||
-              segment.startsWith(`${keyword}_`)
-            )) {
+          for (const rawKeyword of nodeKeywords) {
+            const keyword = rawKeyword.toLowerCase();
+            // Escape regex metacharacters in keyword
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Match keyword with word boundaries (handles camelCase like shieldDecisionEngine)
+            // This regex matches: start of segment OR non-alphanumeric char, then keyword, then non-alphanumeric char OR end
+            const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
+            
+            if (pathSegments.some(segment => keywordRegex.test(segment))) {
               affectedNodes.add(nodeName);
               break;
             }
