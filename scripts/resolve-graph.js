@@ -182,16 +182,15 @@ class GraphResolver {
           }
 
           // Also check if file path contains node-related keywords
-          const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean);
           const pathSegments = file.toLowerCase().split(path.sep);
           
-          for (const keyword of nodeKeywords) {
-            if (pathSegments.some(segment =>
-              segment === keyword ||
-              segment.startsWith(`${keyword}.`) ||
-              segment.startsWith(`${keyword}-`) ||
-              segment.startsWith(`${keyword}_`)
-            )) {
+          for (const rawKeyword of nodeKeywords) {
+            const keyword = rawKeyword.toLowerCase();
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
+            
+            if (pathSegments.some(segment => keywordRegex.test(segment))) {
               affectedNodes.add(nodeName);
               break;
             }
