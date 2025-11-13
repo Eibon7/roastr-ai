@@ -82,11 +82,23 @@ class GraphResolver {
    * @returns {RegExp} - Regex pattern for matching
    */
   globToRegex(pattern) {
-    // First escape all regex metacharacters except '*'
+    if (!pattern || typeof pattern !== 'string') {
+      throw new Error('Pattern must be a non-empty string');
+    }
+
+    // Escape regex metacharacters except '*'
     const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-    // Then convert '*' to '.*' for glob matching
-    const regexPattern = escaped.replace(/\*/g, '.*');
-    return new RegExp('^' + regexPattern + '$');
+
+    // Handle glob semantics: '**' spans segments, '*' stays within a segment
+    const regexPattern = escaped
+      .replace(/\*\*/g, '.*')
+      .replace(/\*/g, '[^/]*');
+
+    try {
+      return new RegExp('^' + regexPattern + '$');
+    } catch (error) {
+      throw new Error(`Invalid regex pattern: ${error.message}`);
+    }
   }
 
   /**
@@ -116,6 +128,13 @@ class GraphResolver {
           const nodeFiles = nodeData.files || [];
           
           // Check if file matches any pattern in node's files
+          // Build keyword set from node name and node files
+          const keywordSet = new Set([
+            nodeName.toLowerCase(),
+            nodeName.replace(/-/g, ''),
+            nodeName.replace(/-/g, '_')
+          ]);
+
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/*/index.js")
             if (nodeFile.includes('*')) {
@@ -135,20 +154,28 @@ class GraphResolver {
                 break;
               }
             }
+
+            // Build additional keyword variations from node files
+            const baseName = path.basename(nodeFile);
+            const withoutExtension = baseName.toLowerCase().replace(/\.[^.]+$/, '');
+            if (withoutExtension) {
+              keywordSet.add(withoutExtension);
+              keywordSet.add(withoutExtension.replace(/[^a-z0-9]+/g, ''));
+            }
           }
 
           // Also check if file path contains node-related keywords
-          // But only for exact matches in path segments, not substring matches
-          const nodeKeywords = [
-            nodeName.toLowerCase(),
-            nodeName.replace(/-/g, ''),
-            nodeName.replace(/-/g, '_')
-          ];
+          // Use regex with word boundaries to detect camelCase correctly
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
           
+          const pathSegments = file.toLowerCase().split(path.sep);
           for (const keyword of nodeKeywords) {
-            // Match only if keyword appears as a path segment or filename
-            const pathSegments = file.toLowerCase().split(path.sep);
-            if (pathSegments.some(segment => segment === keyword || segment.includes(keyword + '.') || segment.includes(keyword + '-'))) {
+            if (pathSegments.some(segment =>
+              segment === keyword ||
+              segment.startsWith(`${keyword}.`) ||
+              segment.startsWith(`${keyword}-`) ||
+              segment.startsWith(`${keyword}_`)
+            )) {
               affectedNodes.add(nodeName);
               break;
             }
@@ -861,17 +888,18 @@ ${colors.bright}USAGE:${colors.reset}
   node scripts/resolve-graph.js --report
 
 ${colors.bright}OPTIONS:${colors.reset}
-  <node-name>             Resolve dependencies for specific node
-  --from-files <file>     Map changed files to affected GDD nodes
-  --validate              Validate entire graph for issues
-  --graph                 Display dependency graph
-  --report                Generate comprehensive report
-  --format json           Output in JSON format (for CI)
-  --help                  Show this help message
+  <node-name>              Resolve dependencies for specific node
+  --from-files <file>      Map changed files to affected GDD nodes
+  --validate               Validate entire graph for issues
+  --graph                  Display dependency graph
+  --report                 Generate comprehensive report
+  --format=<format>        Output format (text | json)
+  --verbose, -v            Enable verbose output
+  --help, -h               Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
   ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
-  node scripts/resolve-graph.js roast-generation
+  node scripts/resolve-graph.js roast --verbose
 
   ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
