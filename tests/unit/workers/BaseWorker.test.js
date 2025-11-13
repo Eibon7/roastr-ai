@@ -583,6 +583,28 @@ describe('BaseWorker', () => {
     });
   });
 
+  describe('isRetryableError', () => {
+    test('returns false when error is explicitly marked permanent', () => {
+      worker = new TestWorker();
+
+      const error = new Error('Permanent failure');
+      error.statusCode = 503;
+      error.permanent = true;
+
+      expect(worker.isRetryableError(error)).toBe(false);
+    });
+
+    test('returns true when error is marked retriable even if status is 4xx', () => {
+      worker = new TestWorker();
+
+      const error = new Error('Temporary missing resource');
+      error.statusCode = 404;
+      error.retriable = true;
+
+      expect(worker.isRetryableError(error)).toBe(true);
+    });
+  });
+
   describe('utility methods', () => {
     beforeEach(() => {
       worker = new TestWorker();

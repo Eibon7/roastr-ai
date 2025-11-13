@@ -359,6 +359,16 @@ class BaseWorker {
    * Determine if an error is retryable
    */
   isRetryableError(error) {
+    if (error && typeof error === 'object') {
+      if (error.permanent === true) {
+        return false;
+      }
+
+      if (error.retriable === true) {
+        return true;
+      }
+    }
+
     const errorMessage = error.message || '';
     const statusCode = error.statusCode || error.status;
     const errorCode = error.code || '';
