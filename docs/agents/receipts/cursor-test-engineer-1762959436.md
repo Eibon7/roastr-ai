@@ -130,6 +130,7 @@ Integration tests now follow **fail-fast** principle:
 ## 🔗 References
 
 - **CodeRabbit Review:** https://github.com/Eibon7/roastr-ai/pull/825#pullrequestreview-3453607643
+- **Plan:** docs/plan/review-3453607643.md
 - **GDD Node:** docs/nodes/multi-tenant.md (testing section)
 - **Pattern:** docs/patterns/coderabbit-lessons.md #3
 

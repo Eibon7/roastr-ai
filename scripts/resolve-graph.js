@@ -146,8 +146,7 @@ class GraphResolver {
             nodeName.replace(/-/g, ''),
             nodeName.replace(/-/g, '_')
           ]);
-          
-          // Check if file matches any pattern in node's files
+
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/STAR/index.js" where STAR is *)
             if (nodeFile.includes('*')) {
@@ -181,13 +180,16 @@ class GraphResolver {
             }
           }
 
-          // Also check if file path contains node-related keywords
+          // Use regex with word boundaries to detect camelCase correctly
           const nodeKeywords = Array.from(keywordSet).filter(Boolean);
-          const pathSegments = file.toLowerCase().split(path.sep);
           
+          const pathSegments = file.toLowerCase().split(path.sep);
           for (const rawKeyword of nodeKeywords) {
             const keyword = rawKeyword.toLowerCase();
+            // Escape regex metacharacters in keyword
             const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Match keyword with word boundaries (handles camelCase like shieldDecisionEngine)
+            // This regex matches: start of segment OR non-alphanumeric char, then keyword, then non-alphanumeric char OR end
             const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
             
             if (pathSegments.some(segment => keywordRegex.test(segment))) {
@@ -915,14 +917,20 @@ ${colors.bright}OPTIONS:${colors.reset}
   --help, -h               Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
-  ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
+  ${colors.dim}# Resolve dependencies for a specific node${colorsreset}
   node scripts/resolve-graph.js roast --verbose
 
-  ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
+  ${colors.dim}# Map changed files to affected nodes (CI usage)${colorsreset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
-  ${colors.dim}# Validate the entire graph${colors.reset}
+  ${colors.dim}# Generate validation report${colorsreset}
+  node scripts/resolve-graph.js --report
+
+  ${colors.dim}# Validate the entire graph${colorsreset}
   node scripts/resolve-graph.js --validate
+
+  ${colors.dim}# Generate Mermaid diagram${colorsreset}
+  node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 `);
 }
 

@@ -1,40 +1,8 @@
 # Auto-Repair Changelog
 
-## 2025-11-11T20:46:59.854Z
+## 2025-11-11T17:12:37.116Z
 
-**Repair ID:** 2025-11-11T20:46:59Z
-**Triggered by:** CI/CD
-**Nodes affected:** platform-constraints
-
-**Fixes applied:**
-- Added coverage to platform-constraints
-
-**Outcome:**
-- Health score: 92.4 → 92.4
-- Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T20-46-59-642Z`
-
----
-
-## 2025-11-11T20:11:21.566Z
-
-**Repair ID:** 2025-11-11T20:11:21Z
-**Triggered by:** CI/CD
-**Nodes affected:** platform-constraints
-
-**Fixes applied:**
-- Added coverage to platform-constraints
-
-**Outcome:**
-- Health score: 92.2 → 92.4
-- Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T20-11-21-340Z`
-
----
-
-## 2025-11-11T17:11:02.399Z
-
-**Repair ID:** 2025-11-11T17:11:02Z
+**Repair ID:** 2025-11-11T17:12:37Z
 **Triggered by:** CI/CD
 **Nodes affected:** platform-constraints
 
@@ -44,7 +12,7 @@
 **Outcome:**
 - Health score: 89.5 → 92.2
 - Issues created: 0 (human review)
-- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T17-11-02-141Z`
+- Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T17-12-36-888Z`
 
 ---
 
