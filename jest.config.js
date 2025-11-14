@@ -2,6 +2,11 @@ module.exports = {
   // Test environment
   testEnvironment: 'node',
   
+  // Babel transform for modern JS syntax
+  transform: {
+    '^.+\\.jsx?$': 'babel-jest'
+  },
+  
   // Test paths
   testMatch: [
     '<rootDir>/tests/**/*.test.js'

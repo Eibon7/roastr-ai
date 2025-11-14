@@ -38,3 +38,4 @@ console.log('✅ After executing:');
 console.log('   - Run: node scripts/ensure-rls-test-tables.js (to verify)');
 console.log('   - Run: npm test -- tests/integration/multi-tenant-rls-issue-412.test.js\n');
 
+

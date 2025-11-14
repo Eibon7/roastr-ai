@@ -112,6 +112,14 @@ tests/                   # unit/, integration/, helpers/
 
 🔗 **Setup:** `.env.example`, `docs/INTEGRATIONS.md`
 
+**🛡️ Protección de .env (CRÍTICO):**
+- Pre-commit hook verifica que `.env` existe antes de commits
+- Backups automáticos con cada verificación (últimos 5 se mantienen)
+- Si `.env` falta: `npm run verify:env:create` (auto-recrea desde `.env.example`)
+- NUNCA commitear `.env` (protegido por `.gitignore`)
+
+🔗 **Política completa:** `docs/policies/env-file-protection.md`
+
 **OpenAI setup:**
 1. Get key: [OpenAI Platform](https://platform.openai.com/api-keys)
 2. `.env`: `OPENAI_API_KEY=your_key_here`

@@ -529,13 +529,13 @@ class GDDValidator {
 
     for (const [nodeName, nodeData] of Object.entries(nodes)) {
       // Extract declared coverage from node content
-      const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
+      const coverageMatch = nodeData.content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
       if (!coverageMatch) {
         // No coverage declared, skip validation
         continue;
       }
 
-      const declaredCoverage = parseInt(coverageMatch[1], 10);
+      const declaredCoverage = parseFloat(coverageMatch[1]);
 
       // Check coverage source
       const sourceMatch = nodeData.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);

@@ -1,31 +1,21 @@
 {
-  "timestamp": "2025-11-11T11:27:40.325Z",
+  "timestamp": "2025-11-11T17:12:37.116Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 2,
+  "fixes_applied": 1,
   "errors": 0,
-  "health_before": 86.5,
-  "health_after": 88.1,
+  "health_before": 89.5,
+  "health_after": 92.2,
   "details": {
     "fixes": [
       {
         "type": "auto",
-        "node": "billing",
-        "action": "Added coverage to billing"
-      },
-      {
-        "type": "auto",
-        "node": "multi-tenant",
-        "action": "Added coverage to multi-tenant"
+        "node": "platform-constraints",
+        "action": "Added agents section to platform-constraints"
       }
     ],
-    "humanReview": [
-      {
-        "node": "social-platforms",
-        "description": "social-platforms: Timestamp >30 days old (2025-10-09)"
-      }
-    ],
+    "humanReview": [],
     "errors": []
   }
 }
