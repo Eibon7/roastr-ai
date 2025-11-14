@@ -920,19 +920,19 @@ ${colors.bright}OPTIONS:${colors.reset}
   --help, -h               Show this help message
 
 ${colors.bright}EXAMPLES:${colors.reset}
-  ${colors.dim}# Resolve dependencies for a specific node${colorsreset}
+  ${colors.dim}# Resolve dependencies for a specific node${colors.reset}
   node scripts/resolve-graph.js roast --verbose
 
-  ${colors.dim}# Map changed files to affected nodes (CI usage)${colorsreset}
+  ${colors.dim}# Map changed files to affected nodes (CI usage)${colors.reset}
   node scripts/resolve-graph.js --from-files changed-files.txt --format=json
 
-  ${colors.dim}# Generate validation report${colorsreset}
+  ${colors.dim}# Generate validation report${colors.reset}
   node scripts/resolve-graph.js --report
 
-  ${colors.dim}# Validate the entire graph${colorsreset}
+  ${colors.dim}# Validate the entire graph${colors.reset}
   node scripts/resolve-graph.js --validate
 
-  ${colors.dim}# Generate Mermaid diagram${colorsreset}
+  ${colors.dim}# Generate Mermaid diagram${colors.reset}
   node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 `);
 }
