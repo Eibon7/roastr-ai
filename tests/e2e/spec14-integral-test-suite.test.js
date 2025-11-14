@@ -15,7 +15,6 @@
 process.env.NODE_ENV = 'test';
 process.env.ENABLE_MOCK_MODE = 'true';
 process.env.DRY_RUN_SHIELD = 'true';
-process.env.SHIELD_DRY_RUN = 'true';
 
 // Mock external dependencies BEFORE requiring the app to prevent real API calls
 jest.mock('../../src/services/openai');
