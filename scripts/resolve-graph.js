@@ -147,6 +147,7 @@ class GraphResolver {
             nodeName.replace(/-/g, '_')
           ]);
 
+          // Check if file matches any pattern in node's files while enriching keyword set
           for (const nodeFile of nodeFiles) {
             // Handle glob patterns (e.g., "src/integrations/STAR/index.js" where STAR is *)
             if (nodeFile.includes('*')) {
@@ -160,8 +161,6 @@ class GraphResolver {
                 console.warn(`${colors.yellow}Warning: Invalid glob pattern "${nodeFile}": ${error.message}${colors.reset}`);
               }
             } else {
-              // Exact match or path-based matching (more precise than includes)
-              // Use path.basename for filename-only matches or endsWith for path matches
               const fileName = path.basename(file);
               if (file === nodeFile || 
                   file.endsWith(path.sep + nodeFile) ||
@@ -184,15 +183,19 @@ class GraphResolver {
           const nodeKeywords = Array.from(keywordSet).filter(Boolean);
           
           const pathSegments = file.toLowerCase().split(path.sep);
+
           for (const rawKeyword of nodeKeywords) {
             const keyword = rawKeyword.toLowerCase();
-            // Escape regex metacharacters in keyword
             const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Match keyword with word boundaries (handles camelCase like shieldDecisionEngine)
-            // This regex matches: start of segment OR non-alphanumeric char, then keyword, then non-alphanumeric char OR end
             const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
-            
-            if (pathSegments.some(segment => keywordRegex.test(segment))) {
+
+            if (pathSegments.some(segment =>
+              keywordRegex.test(segment) ||
+              segment === keyword ||
+              segment.startsWith(`${keyword}.`) ||
+              segment.startsWith(`${keyword}-`) ||
+              segment.startsWith(`${keyword}_`)
+            )) {
               affectedNodes.add(nodeName);
               break;
             }
