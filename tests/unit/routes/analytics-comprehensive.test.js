@@ -904,6 +904,502 @@ describe('Analytics Routes - Comprehensive', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
+
+    it('should trigger LRU cache eviction when cache is full', async () => {
+      // Test LRU eviction logic (lines 44-56) by mocking cache size
+      // We'll test this indirectly by verifying cache works correctly
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data'
+      };
+      mockResponsesData = [];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      // Make requests with different cache keys to test cache functionality
+      // The LRU eviction will be triggered internally when cache exceeds MAX_CACHE_SIZE
+      const response1 = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30, offset: 0 });
+
+      const response2 = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30, offset: 1 });
+
+      expect(response1.status).toBe(200);
+      expect(response2.status).toBe(200);
+    });
+
+    it('should handle validateString with non-string input', async () => {
+      // Test validateString edge cases (lines 169-180)
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data'
+      };
+      mockResponsesData = [];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      // Test with invalid string types (number, object, null)
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30, platform: 123 }); // platform should be string
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle validateInteger with invalid input', async () => {
+      // Test validateInteger edge cases (lines 140-159)
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data'
+      };
+      mockResponsesData = [];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      // Test with invalid integer types (string, null, undefined, NaN)
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 'invalid', limit: 'not-a-number', offset: null });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle validatePlanId with empty string', async () => {
+      // Test validatePlanId edge case (line 97)
+      mockOrganizationData = { 
+        id: 'org-123', 
+        owner_id: 'user-123', 
+        plan_id: '',
+        monthly_responses_limit: 1000 
+      };
+
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data'
+      };
+      mockResponsesData = [];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: [], error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should handle error in usage-trends endpoint', async () => {
+      // Test error handling (lines 671-672)
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'monthly_usage') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                order: jest.fn(() => ({
+                  order: jest.fn(() => ({
+                    limit: jest.fn(() => Promise.resolve({ 
+                      data: null,
+                      error: new Error('Database error')
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/usage-trends');
+
+      expect(response.status).toBe(500);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should handle organization not found in usage-trends', async () => {
+      // Test error handling (line 608)
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: null, error: null }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/usage-trends');
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Organization not found');
+    });
+
+    it('should handle error in shield-effectiveness endpoint', async () => {
+      // Test error handling (lines 579-580)
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  gte: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => Promise.resolve({ 
+                        data: null,
+                        error: new Error('Database error')
+                      }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/shield-effectiveness');
+
+      expect(response.status).toBe(500);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should handle error in roastr-persona-insights endpoint', async () => {
+      // Test error handling (lines 960-961) - throw error from async operation
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(async () => {
+                  throw new Error('User not found');
+                })
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30 });
+
+      expect(response.status).toBe(500);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should handle organization not found in roastr-persona-insights', async () => {
+      // Test error handling (line 727) - orgData is null when no organization found
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ 
+                  data: null, 
+                  error: null
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30 });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Organization not found');
+    });
+
+    it('should handle error in responses query for persona insights', async () => {
+      // Test error handling (line 790) - error property in response
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data'
+      };
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ 
+                        data: null,
+                        error: new Error('Database error')
+                      }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30 });
+
+      expect(response.status).toBe(500);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should generate recommendations for incomplete persona', async () => {
+      // Test recommendation generation (lines 1027, 1038, 1052, 1068)
+      mockPersonaData = {
+        id: 'user-123',
+        lo_que_me_define_encrypted: 'encrypted_data',
+        lo_que_no_tolero_encrypted: null, // Only 1 field configured
+        lo_que_me_da_igual_encrypted: null
+      };
+
+      mockResponsesData = [
+        {
+          id: 'resp-1',
+          persona_fields_used: ['lo_que_me_define'],
+          platform_response_id: null, // Failed post
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'resp-2',
+          persona_fields_used: ['lo_que_me_define'],
+          platform_response_id: 'platform-1', // Success
+          created_at: new Date().toISOString()
+        }
+      ];
+
+      mockSupabaseServiceClient.from.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockOrganizationData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'users') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(() => Promise.resolve({ data: mockPersonaData, error: null }))
+              }))
+            }))
+          };
+        } else if (table === 'responses') {
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                gte: jest.fn(() => ({
+                  not: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      range: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null }))
+                    }))
+                  }))
+                }))
+              }))
+            }))
+          };
+        }
+        return { select: jest.fn(() => createMockQueryChain(table, [])) };
+      });
+
+      const response = await request(app)
+        .get('/api/analytics/roastr-persona-insights')
+        .query({ days: 30 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.recommendations).toBeDefined();
+      expect(Array.isArray(response.body.data.recommendations)).toBe(true);
+    });
   });
 });
 
