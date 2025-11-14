@@ -80,6 +80,7 @@ class GraphResolver {
    * Escapes regex metacharacters before converting * to .*
    * @param {string} pattern - Glob pattern (e.g., "src/integrations/STAR/index.js" where STAR is *)
    * @returns {RegExp} - Regex pattern for matching
+   * @throws {Error} - If pattern is invalid or empty
    */
   globToRegex(pattern) {
     if (!pattern || typeof pattern !== 'string') {
@@ -148,6 +149,7 @@ class GraphResolver {
 
           // Check if file matches any pattern in node's files while enriching keyword set
           for (const nodeFile of nodeFiles) {
+            // Handle glob patterns (e.g., "src/integrations/STAR/index.js" where STAR is *)
             if (nodeFile.includes('*')) {
               try {
                 const regex = this.globToRegex(nodeFile);
@@ -177,11 +179,18 @@ class GraphResolver {
             }
           }
 
-          const nodeKeywords = Array.from(keywordSet).filter(Boolean).map(k => k.toLowerCase());
+          // Use regex with word boundaries to detect camelCase correctly
+          const nodeKeywords = Array.from(keywordSet).filter(Boolean);
+          
           const pathSegments = file.toLowerCase().split(path.sep);
 
-          for (const keyword of nodeKeywords) {
+          for (const rawKeyword of nodeKeywords) {
+            const keyword = rawKeyword.toLowerCase();
+            const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
+
             if (pathSegments.some(segment =>
+              keywordRegex.test(segment) ||
               segment === keyword ||
               segment.startsWith(`${keyword}.`) ||
               segment.startsWith(`${keyword}-`) ||
