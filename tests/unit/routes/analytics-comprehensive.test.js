@@ -123,6 +123,12 @@ describe('Analytics Routes - Comprehensive', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
+    // Clear analytics cache before each test
+    const analyticsModule = require('../../../src/routes/analytics');
+    if (analyticsModule && analyticsModule.__cache) {
+      analyticsModule.__cache.clear();
+    }
+    
     app = express();
     app.use(express.json());
     app.use('/api/analytics', analyticsRouter);
@@ -1223,6 +1229,13 @@ describe('Analytics Routes - Comprehensive', () => {
 
     it('should handle error in roastr-persona-insights endpoint', async () => {
       // Test error handling (lines 960-961) - throw error from async operation
+      // Clear cache first to ensure fresh query
+      jest.resetModules();
+      const analyticsRouter2 = require('../../../src/routes/analytics');
+      const app2 = express();
+      app2.use(express.json());
+      app2.use('/api/analytics', analyticsRouter2);
+      
       mockSupabaseServiceClient.from.mockImplementation((table) => {
         if (table === 'organizations') {
           return {
@@ -1246,9 +1259,9 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
+      const response = await request(app2)
         .get('/api/analytics/roastr-persona-insights')
-        .query({ days: 30 });
+        .query({ days: 30, _nocache: Date.now() }); // Add timestamp to avoid cache
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -1256,6 +1269,13 @@ describe('Analytics Routes - Comprehensive', () => {
 
     it('should handle organization not found in roastr-persona-insights', async () => {
       // Test error handling (line 727) - orgData is null when no organization found
+      // Clear cache first to ensure fresh query
+      jest.resetModules();
+      const analyticsRouter2 = require('../../../src/routes/analytics');
+      const app2 = express();
+      app2.use(express.json());
+      app2.use('/api/analytics', analyticsRouter2);
+      
       mockSupabaseServiceClient.from.mockImplementation((table) => {
         if (table === 'organizations') {
           return {
@@ -1272,9 +1292,9 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
+      const response = await request(app2)
         .get('/api/analytics/roastr-persona-insights')
-        .query({ days: 30 });
+        .query({ days: 30, _nocache: Date.now() }); // Add timestamp to avoid cache
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Organization not found');
@@ -1282,6 +1302,13 @@ describe('Analytics Routes - Comprehensive', () => {
 
     it('should handle error in responses query for persona insights', async () => {
       // Test error handling (line 790) - error property in response
+      // Clear cache first to ensure fresh query
+      jest.resetModules();
+      const analyticsRouter2 = require('../../../src/routes/analytics');
+      const app2 = express();
+      app2.use(express.json());
+      app2.use('/api/analytics', analyticsRouter2);
+      
       mockPersonaData = {
         id: 'user-123',
         lo_que_me_define_encrypted: 'encrypted_data'
@@ -1325,9 +1352,9 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
+      const response = await request(app2)
         .get('/api/analytics/roastr-persona-insights')
-        .query({ days: 30 });
+        .query({ days: 30, _nocache: Date.now() }); // Add timestamp to avoid cache
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
