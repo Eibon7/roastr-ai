@@ -103,7 +103,7 @@ class EntitlementsService {
     }
 
     /**
-     * Set entitlements directly (for free plans or manual updates)
+     * Set entitlements directly (for starter_trial plans or manual updates)
      * @param {string} userId - User ID  
      * @param {Object} entitlements - Entitlements object
      * @returns {Promise<Object>} Result with success/error info
@@ -160,7 +160,7 @@ class EntitlementsService {
 
             if (error) {
                 if (error.code === 'PGRST116') {
-                    // No entitlements found, return default free plan
+                    // No entitlements found, return default starter_trial plan
                     return this._getDefaultEntitlements(userId);
                 }
                 throw error;
@@ -442,7 +442,7 @@ class EntitlementsService {
                 model: 'gpt-4',
                 shield_enabled: true,
                 rqc_mode: 'premium',
-                plan_name: 'creator_plus'
+                plan_name: 'plus'
             };
         } else if (lowerIdentifier.includes('custom') || lowerIdentifier.includes('enterprise')) {
             return {
@@ -454,12 +454,12 @@ class EntitlementsService {
                 plan_name: 'custom'
             };
         } else {
-            // Default to free plan
+            // Default to starter_trial plan
             return {
-                analysis_limit_monthly: 100,
+                analysis_limit_monthly: 1000,
                 roast_limit_monthly: 10,
                 model: 'gpt-3.5-turbo',
-                shield_enabled: false,
+                shield_enabled: true,
                 rqc_mode: 'basic',
                 plan_name: 'starter_trial'
             };
@@ -492,7 +492,7 @@ class EntitlementsService {
     }
 
     /**
-     * Get default entitlements for free plan
+     * Get default entitlements for starter_trial plan
      * @private
      * @param {string} userId - User ID
      * @returns {Object} Default entitlements
@@ -925,8 +925,8 @@ class EntitlementsService {
                 model: 'gpt-4',
                 rqc_mode: 'advanced'
             },
-            'creator_plus': {
-                plan_name: 'creator_plus',
+            'plus': {
+                plan_name: 'plus',
                 analysis_limit_monthly: 10000,
                 roast_limit_monthly: 5000,
                 persona_fields_limit: 50,

@@ -119,46 +119,48 @@ describe('PlanLimitsService', () => {
 
             const limits = await planLimitsService.getPlanLimits('pro');
 
-            expect(logger.error).toHaveBeenCalledWith('Failed to fetch plan limits:', expect.any(Error));
+            // Issue #841: planLimitsService now uses planService.js as fallback, so it doesn't log errors
+            // It just returns defaults from planService.js when DB fails
             expect(limits).toEqual({
                 maxRoasts: 1000,
                 monthlyResponsesLimit: 1000,
                 monthlyAnalysisLimit: 10000,
-                maxPlatforms: 5,
-                integrationsLimit: 5,
+                maxPlatforms: 2,
+                integrationsLimit: 2,
                 shieldEnabled: true,
                 customPrompts: false,
-                prioritySupport: true,
+                prioritySupport: false,
                 apiAccess: false,
-                analyticsEnabled: true,
-                customTones: true,
+                analyticsEnabled: false,
+                customTones: false,
                 dedicatedSupport: false,
+                embeddedJudge: false,
                 monthlyTokensLimit: 500000,
                 dailyApiCallsLimit: 5000,
                 ai_model: 'gpt-4o'
             });
         });
 
-        it('should return free plan limits for unknown plan', async () => {
+        it('should return starter_trial plan limits for unknown plan', async () => {
             mockSingle.mockResolvedValue({ data: null, error: new Error('Not found') });
 
             const limits = await planLimitsService.getPlanLimits('unknown_plan');
 
-            expect(limits.maxRoasts).toBe(10);
-            expect(limits.shieldEnabled).toBe(false);
+            expect(limits.maxRoasts).toBe(5);
+            expect(limits.shieldEnabled).toBe(true);
         });
     });
 
     describe('getAllPlanLimits', () => {
         const mockAllLimits = [
             {
-                plan_id: 'free',
-                max_roasts: 10,
-                monthly_responses_limit: 10,
+                plan_id: 'starter_trial',
+                max_roasts: 5,
+                monthly_responses_limit: 5,
                 monthly_analysis_limit: 1000,
-                max_platforms: 2,
-                integrations_limit: 2,
-                shield_enabled: false,
+                max_platforms: 1,
+                integrations_limit: 1,
+                shield_enabled: true,
                 custom_prompts: false,
                 priority_support: false,
                 custom_tones: false,
@@ -166,11 +168,11 @@ describe('PlanLimitsService', () => {
             },
             {
                 plan_id: 'starter',
-                max_roasts: 10,
-                monthly_responses_limit: 10,
+                max_roasts: 5,
+                monthly_responses_limit: 5,
                 monthly_analysis_limit: 1000,
-                max_platforms: 2,
-                integrations_limit: 2,
+                max_platforms: 1,
+                integrations_limit: 1,
                 shield_enabled: true,
                 custom_prompts: false,
                 priority_support: false,
@@ -182,12 +184,12 @@ describe('PlanLimitsService', () => {
                 max_roasts: 1000,
                 monthly_responses_limit: 1000,
                 monthly_analysis_limit: 10000,
-                max_platforms: 5,
-                integrations_limit: 5,
+                max_platforms: 2,
+                integrations_limit: 2,
                 shield_enabled: true,
                 custom_prompts: false,
-                priority_support: true,
-                custom_tones: true,
+                priority_support: false,
+                custom_tones: false,
                 settings: {}
             },
             {
@@ -195,11 +197,11 @@ describe('PlanLimitsService', () => {
                 max_roasts: 5000,
                 monthly_responses_limit: 5000,
                 monthly_analysis_limit: 100000,
-                max_platforms: 10,
-                integrations_limit: 10,
+                max_platforms: 2,
+                integrations_limit: 2,
                 shield_enabled: true,
-                custom_prompts: true,
-                priority_support: true,
+                custom_prompts: false,
+                priority_support: false,
                 custom_tones: true,
                 settings: {}
             },
@@ -229,13 +231,13 @@ describe('PlanLimitsService', () => {
 
             expect(supabaseServiceClient.from).toHaveBeenCalledWith('plan_limits');
             expect(mockSelect).toHaveBeenCalledWith('*');
-            expect(allLimits).toHaveProperty('free');
+            expect(allLimits).toHaveProperty('starter_trial');
             expect(allLimits).toHaveProperty('starter');
             expect(allLimits).toHaveProperty('pro');
             expect(allLimits).toHaveProperty('plus');
             expect(allLimits).toHaveProperty('custom');
-            expect(allLimits.free.maxRoasts).toBe(10);
-            expect(allLimits.starter.maxRoasts).toBe(10);
+            expect(allLimits.starter_trial.maxRoasts).toBe(5);
+            expect(allLimits.starter.maxRoasts).toBe(5);
             expect(allLimits.pro.maxRoasts).toBe(1000);
             expect(allLimits.plus.maxRoasts).toBe(5000);
             expect(allLimits.custom.maxRoasts).toBe(-1);
@@ -358,12 +360,13 @@ describe('PlanLimitsService', () => {
             expect(result).toBe(true);
         });
 
-        it('should return false on error', async () => {
+        it('should return true (fail-closed) on error', async () => {
             // Mock getPlanLimits to throw an error directly
             jest.spyOn(planLimitsService, 'getPlanLimits').mockRejectedValue(new Error('Database error'));
 
+            // Issue #841: checkLimit now uses fail-closed behavior (returns true to deny action for security)
             const result = await planLimitsService.checkLimit('pro', 'roasts', 1500);
-            expect(result).toBe(false);
+            expect(result).toBe(true); // Fail-closed: deny action for security
             expect(logger.error).toHaveBeenCalled();
             
             // Restore the spy

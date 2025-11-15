@@ -13,36 +13,48 @@ const { logger } = require('../utils/logger');
 const StripeWrapper = require('../services/stripeWrapper');
 const { flags } = require('../config/flags');
 
-// Plan configuration (imported from billing.js pattern)
-const PLAN_CONFIG = {
-    starter_trial: {
-        name: 'Starter Trial',
-        price: 0,
-        currency: 'eur',
-        description: '30-day trial with Starter features',
-        features: ['10 roasts per month', '1 platform integration', 'Basic support', 'Shield protection'],
-        maxPlatforms: 1,
-        maxRoasts: 10
-    },
-    pro: {
-        name: 'Pro',
-        price: 2000,
-        currency: 'eur',
-        description: 'Best for regular users',
-        features: ['1,000 roasts per month', '5 platform integrations', 'Priority support', 'Advanced analytics'],
-        maxPlatforms: 5,
-        maxRoasts: 1000
-    },
-    creator_plus: {
-        name: 'Creator+',
-        price: 5000,
-        currency: 'eur',
-        description: 'For power users and creators',
-        features: ['Unlimited roasts', 'All platform integrations', '24/7 support', 'Custom tones', 'API access'],
-        maxPlatforms: -1,
-        maxRoasts: -1
+// Plan configuration - SINGLE SOURCE OF TRUTH from planService.js
+// Issue #841: Reads from planService.js instead of hardcoded values
+const { getPlanFeatures, getPlanLimits } = require('../services/planService');
+
+function getPlanConfig(planId) {
+    const plan = getPlanFeatures(planId);
+    const limits = getPlanLimits(planId);
+    
+    if (!plan) {
+        // Fallback to starter_trial
+        return getPlanConfig('starter_trial');
     }
-};
+    
+    return {
+        name: plan.name,
+        price: plan.price,
+        currency: plan.currency,
+        description: plan.duration?.type === 'fixed' ? `${plan.duration.days}-day trial` : `${plan.name} plan`,
+        features: buildFeatureList(plan, limits),
+        maxPlatforms: limits?.maxPlatforms || plan.limits.maxPlatforms,
+        maxRoasts: limits?.maxRoasts || plan.limits.roastsPerMonth
+    };
+}
+
+function buildFeatureList(plan, limits) {
+    const features = [];
+    if (plan.limits.roastsPerMonth > 0) {
+        features.push(`${plan.limits.roastsPerMonth} roasts per month`);
+    }
+    features.push(`${plan.limits.platformIntegrations} platform integration${plan.limits.platformIntegrations > 1 ? 's' : ''}`);
+    if (plan.features.shield) features.push('Shield protection');
+    if (plan.features.customTones) features.push('Custom tones');
+    if (plan.features.apiAccess) features.push('API access');
+    return features;
+}
+
+// For backward compatibility, create PLAN_CONFIG object dynamically
+const PLAN_CONFIG = new Proxy({}, {
+    get(target, prop) {
+        return getPlanConfig(prop);
+    }
+});
 
 class BillingWorker extends BaseWorker {
     constructor(options = {}) {
@@ -264,7 +276,7 @@ class BillingWorker extends BaseWorker {
 
             const oldPlanConfig = PLAN_CONFIG[userSub.plan] || PLAN_CONFIG.starter_trial;
 
-            // Reset to free plan
+            // Reset to starter_trial plan
             await this.supabase
                 .from('user_subscriptions')
                 .update({

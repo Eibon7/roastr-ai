@@ -129,46 +129,20 @@ class WorkerNotificationService {
 
     /**
      * Get fallback limits (used when database is unavailable)
+     * Issue #841: Now reads from planService.js (single source of truth)
      * @private
      */
     getFallbackLimits(plan, status) {
-        const FALLBACK_LIMITS = {
-            starter_trial: {
-                maxRoasts: 10,
-                maxPlatforms: 1,
-                shieldEnabled: false,
-                customPrompts: false,
-                prioritySupport: false
-            },
-            starter: {
-                maxRoasts: 10,
-                maxPlatforms: 1,
-                shieldEnabled: true,
-                customPrompts: false,
-                prioritySupport: false
-            },
-            pro: {
-                maxRoasts: 1000,
-                maxPlatforms: 2,
-                shieldEnabled: true,
-                customPrompts: false,
-                prioritySupport: true
-            },
-            creator_plus: {
-                maxRoasts: 5000,
-                maxPlatforms: 2,
-                shieldEnabled: true,
-                customPrompts: true,
-                prioritySupport: true
-            }
-        };
-
-        const planLimits = FALLBACK_LIMITS[plan] || FALLBACK_LIMITS.starter_trial;
+        // Use planService.js as single source of truth
+        const { getPlanLimits } = require('./planService');
+        
+        const planLimits = getPlanLimits(plan) || getPlanLimits('starter_trial');
 
         if (status !== 'active') {
+            const trialLimits = getPlanLimits('starter_trial');
             return {
                 ...planLimits,
-                ...FALLBACK_LIMITS.starter_trial,
+                ...trialLimits,
                 suspended: true
             };
         }

@@ -2,16 +2,23 @@
 // const { flags } = require('../config/flags');
 
 /**
- * Plan feature definitions
- * Enhanced with configurable duration (Issue #125)
+ * Plan feature definitions - SINGLE SOURCE OF TRUTH
+ * Issue #841: Consolidated plan configuration
  * 
- * Business Policy for Platform Integrations (Issue #110):
- * - Free plan: 1 integration per social network (for basic individual usage)
- * - Pro plan: 2 integrations per social network (for creators with multiple personal accounts)
- * - Creator+ plan: 2 integrations per social network (for professionals managing higher volume, not agencies)
- * - Custom plan: 2 integrations per social network (with other plan aspects configurable)
+ * This is the ONLY place where plan limits and features should be defined.
+ * All other services should read from here via planService or planLimitsService.
  * 
- * This policy ensures no plan can be abused by agencies to manage multiple client accounts
+ * Business Policy for Platform Integrations (Issue #110, #841):
+ * - Starter/Starter Trial: 1 account per platform (for basic individual usage)
+ * - Pro/Plus: 2 accounts per platform (for creators with multiple personal accounts)
+ * - Limits are PER PLATFORM, not total (e.g., Pro can have 2 X accounts + 2 Instagram accounts + 2 TikTok accounts)
+ * - This policy ensures no plan can be abused by agencies to manage multiple client accounts
+ * 
+ * Tokens System (Issue #841):
+ * - Tokens are related to the credits system used for roasts and regenerations
+ * - Regenerations consume credits when users manually review and regenerate roasts
+ * - Token limits are defined but implementation details pending further study
+ * - DO NOT remove tokens configuration - they are part of the credits/regeneration system
  */
 const PLAN_FEATURES = {
   starter_trial: {
@@ -22,13 +29,20 @@ const PLAN_FEATURES = {
     duration: {
       days: 30,
       type: 'fixed', // Fixed trial period
-      renewalType: 'manual' // Must upgrade manually
+      renewalType: 'manual', // Must upgrade manually
+      trialDays: 30
     },
+    // Usage limits
     limits: {
-      roastsPerMonth: 10,
+      roastsPerMonth: 5,
+      monthlyResponsesLimit: 5,
+      monthlyAnalysisLimit: 1000,
       commentsPerMonth: 1000,
-      platformIntegrations: 1
+      platformIntegrations: 1,
+      maxPlatforms: 1,
+      integrationsLimit: 1
     },
+    // Feature flags
     features: {
       basicSupport: true,
       prioritySupport: false,
@@ -37,8 +51,22 @@ const PLAN_FEATURES = {
       customTones: false,
       apiAccess: false,
       shield: true, // Shield enabled during trial
-      styleProfile: false
-    }
+      styleProfile: false,
+      shieldEnabled: true,
+      customPrompts: false,
+      analyticsEnabled: false,
+      dedicatedSupport: false,
+      embeddedJudge: false
+    },
+    // Additional limits
+    tokens: {
+      monthlyTokensLimit: 100000,
+      dailyApiCallsLimit: 500
+    },
+    // AI model configuration
+    aiModel: 'gpt-4o',
+    // Metadata
+    isTrial: true
   },
   starter: {
     id: 'starter',
@@ -50,11 +78,17 @@ const PLAN_FEATURES = {
       type: 'rolling',
       renewalType: 'automatic'
     },
+    // Usage limits
     limits: {
-      roastsPerMonth: 10,
+      roastsPerMonth: 5,
+      monthlyResponsesLimit: 5,
+      monthlyAnalysisLimit: 1000,
       commentsPerMonth: 1000,
-      platformIntegrations: 1
+      platformIntegrations: 1,
+      maxPlatforms: 1,
+      integrationsLimit: 1
     },
+    // Feature flags
     features: {
       basicSupport: true,
       prioritySupport: false,
@@ -63,8 +97,20 @@ const PLAN_FEATURES = {
       customTones: false,
       apiAccess: false,
       shield: true,
-      styleProfile: false
-    }
+      styleProfile: false,
+      shieldEnabled: true,
+      customPrompts: false,
+      analyticsEnabled: false,
+      dedicatedSupport: false,
+      embeddedJudge: false
+    },
+    // Additional limits
+    tokens: {
+      monthlyTokensLimit: 100000,
+      dailyApiCallsLimit: 500
+    },
+    // AI model configuration
+    aiModel: 'gpt-4o'
   },
   pro: {
     id: 'pro',
@@ -77,21 +123,39 @@ const PLAN_FEATURES = {
       renewalType: 'automatic',
       trialDays: 7 // Pro plan includes 7-day trial
     },
+    // Usage limits
     limits: {
       roastsPerMonth: 1000,
+      monthlyResponsesLimit: 1000,
+      monthlyAnalysisLimit: 10000,
       commentsPerMonth: 10000,
-      platformIntegrations: 2 // 2 accounts per social network as per business policy
+      platformIntegrations: 2, // 2 accounts per social network as per business policy
+      maxPlatforms: 2,
+      integrationsLimit: 2
     },
+    // Feature flags
     features: {
       basicSupport: true,
-      prioritySupport: true,
-      advancedAnalytics: true,
+      prioritySupport: false,
+      advancedAnalytics: false,
       teamCollaboration: false,
       customTones: false,
       apiAccess: false,
       shield: true,
-      styleProfile: false
-    }
+      styleProfile: false,
+      shieldEnabled: true,
+      customPrompts: false,
+      analyticsEnabled: false,
+      dedicatedSupport: false,
+      embeddedJudge: false
+    },
+    // Additional limits
+    tokens: {
+      monthlyTokensLimit: 500000,
+      dailyApiCallsLimit: 5000
+    },
+    // AI model configuration
+    aiModel: 'gpt-4o'
   },
   plus: {
     id: 'plus',
@@ -105,21 +169,40 @@ const PLAN_FEATURES = {
       trialDays: 14, // Plus plan includes 14-day trial
       gracePeriod: 7 // Extra grace period for premium users
     },
+    // Usage limits
     limits: {
       roastsPerMonth: 5000,
+      monthlyResponsesLimit: 5000,
+      monthlyAnalysisLimit: 100000,
       commentsPerMonth: 100000,
-      platformIntegrations: 2 // 2 integrations per social network as per business policy
+      platformIntegrations: 2, // 2 integrations per social network as per business policy
+      maxPlatforms: 2,
+      integrationsLimit: 2
     },
+    // Feature flags
     features: {
       basicSupport: true,
-      prioritySupport: true,
-      advancedAnalytics: true,
+      prioritySupport: false,
+      advancedAnalytics: false,
       teamCollaboration: true,
       customTones: true,
-      apiAccess: true,
+      apiAccess: false,
       shield: true,
-      styleProfile: true
-    }
+      styleProfile: true,
+      shieldEnabled: true,
+      customPrompts: false,
+      analyticsEnabled: false,
+      dedicatedSupport: false,
+      embeddedJudge: false
+    },
+    // Additional limits
+    tokens: {
+      monthlyTokensLimit: 2000000,
+      dailyApiCallsLimit: 20000
+    },
+    // AI model configuration
+    aiModel: 'gpt-4o',
+    rqcEmbedded: false
   },
   custom: {
     id: 'custom',
@@ -132,29 +215,77 @@ const PLAN_FEATURES = {
       renewalType: 'manual',
       customizable: true
     },
+    // Usage limits (-1 = unlimited)
     limits: {
       roastsPerMonth: -1, // Unlimited
+      monthlyResponsesLimit: -1, // Unlimited
+      monthlyAnalysisLimit: -1, // Unlimited
       commentsPerMonth: -1, // Unlimited
-      platformIntegrations: 2 // 2 integrations per social network as per business policy
+      platformIntegrations: 2, // 2 integrations per social network as per business policy
+      maxPlatforms: -1, // Unlimited
+      integrationsLimit: -1 // Unlimited
     },
+    // Feature flags
     features: {
       basicSupport: true,
       prioritySupport: true,
       advancedAnalytics: true,
       teamCollaboration: true,
       customTones: true,
-      apiAccess: true,
+      apiAccess: false,
       shield: true,
       styleProfile: true,
       customIntegrations: true,
-      dedicatedSupport: true
-    }
+      dedicatedSupport: true,
+      shieldEnabled: true,
+      customPrompts: true,
+      analyticsEnabled: true,
+      embeddedJudge: true
+    },
+    // Additional limits (-1 = unlimited)
+    tokens: {
+      monthlyTokensLimit: -1, // Unlimited
+      dailyApiCallsLimit: -1 // Unlimited
+    },
+    // AI model configuration
+    aiModel: 'gpt-4o',
+    enterprise: true
   }
 };
 
 /**
+ * Get complete plan limits in format compatible with planLimitsService
+ * This function transforms PLAN_FEATURES to the format expected by other services
+ * @param {string} planId - Plan ID
+ * @returns {Object|null} Plan limits in standard format or null if not found
+ */
+function getPlanLimits(planId) {
+  const plan = PLAN_FEATURES[planId];
+  if (!plan) return null;
+
+  return {
+    maxRoasts: plan.limits.roastsPerMonth,
+    monthlyResponsesLimit: plan.limits.monthlyResponsesLimit,
+    monthlyAnalysisLimit: plan.limits.monthlyAnalysisLimit,
+    maxPlatforms: plan.limits.maxPlatforms,
+    integrationsLimit: plan.limits.integrationsLimit,
+    shieldEnabled: plan.features.shieldEnabled,
+    customPrompts: plan.features.customPrompts,
+    prioritySupport: plan.features.prioritySupport,
+    apiAccess: plan.features.apiAccess,
+    analyticsEnabled: plan.features.analyticsEnabled,
+    customTones: plan.features.customTones,
+    dedicatedSupport: plan.features.dedicatedSupport,
+    embeddedJudge: plan.features.embeddedJudge,
+    monthlyTokensLimit: plan.tokens?.monthlyTokensLimit,
+    dailyApiCallsLimit: plan.tokens?.dailyApiCallsLimit,
+    ai_model: plan.aiModel
+  };
+}
+
+/**
  * Get plan features by plan ID
- * @param {string} planId - Plan ID (free, pro, creator_plus)
+ * @param {string} planId - Plan ID (starter_trial, starter, pro, plus)
  * @returns {Object|null} Plan features or null if not found
  */
 function getPlanFeatures(planId) {
@@ -306,5 +437,6 @@ module.exports = {
   calculatePlanEndDate,
   supportsCustomDuration,
   getPlanTrialDays,
-  PLAN_FEATURES
+  getPlanLimits, // New: Get limits in standard format
+  PLAN_FEATURES // Export for direct access if needed
 };

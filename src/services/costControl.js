@@ -37,12 +37,12 @@ class CostControlService {
       pro: {
         id: 'pro',
         name: 'Pro',
-        features: ['all_integrations', 'shield_mode', 'priority_support', 'analytics']
+        features: ['all_integrations', 'shield_mode']
       },
-      creator_plus: {
-        id: 'creator_plus',
-        name: 'Creator Plus',
-        features: ['unlimited_integrations', 'shield_mode', 'custom_tones', 'api_access', 'dedicated_support']
+      plus: {
+        id: 'plus',
+        name: 'Plus',
+        features: ['unlimited_integrations', 'shield_mode', 'custom_tones', 'api_access']
       },
       custom: {
         id: 'custom',
@@ -348,9 +348,10 @@ class CostControlService {
    */
   getUpgradeUrl(currentPlanId) {
     const upgradeMap = {
-      free: '/upgrade?plan=pro',
-      pro: '/upgrade?plan=creator_plus',
-      creator_plus: '/upgrade?plan=custom',
+      starter_trial: '/upgrade?plan=starter',
+      starter: '/upgrade?plan=pro',
+      pro: '/upgrade?plan=plus',
+      plus: '/upgrade?plan=custom',
       custom: '/contact?type=enterprise'
     };
 
@@ -939,9 +940,9 @@ class CostControlService {
           api_calls: { monthly: 2000, overage: true, hard: false },
           shield_actions: { monthly: 500, overage: true, hard: false }
         },
-        creator_plus: {
+        plus: {
           roasts: { monthly: 5000, overage: true, hard: false },
-          integrations: { monthly: 999, overage: true, hard: false },
+          integrations: { monthly: 2, overage: true, hard: false },
           api_calls: { monthly: 10000, overage: true, hard: false },
           shield_actions: { monthly: 2000, overage: true, hard: false }
         },

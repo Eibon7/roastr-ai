@@ -90,7 +90,8 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
             });
         }
 
-        // Check connection limits based on tier (Issue #366)
+        // Check connection limits PER PLATFORM (Issue #841)
+        // Business Policy: Limits are per platform (e.g., 2 accounts of X, 2 of Instagram, etc.)
         const currentIntegrations = await integrationsService.getUserIntegrations(userId);
         
         // Ensure currentIntegrations.data is always an array (Issue #366 CodeRabbit fix)
@@ -98,35 +99,41 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
             currentIntegrations.data = currentIntegrations.data ? [currentIntegrations.data] : [];
         }
         
-        const connectedCount = currentIntegrations.data.filter(integration => integration.connected).length || 0;
+        // Count connections for THIS SPECIFIC PLATFORM only
+        const platformConnections = currentIntegrations.data.filter(
+            integration => integration.connected && integration.platform === platform
+        ).length || 0;
         
         // Get user's plan from token or fetch from database
         const userPlan = req.user?.plan || 'starter_trial';
-        let maxConnections;
+        let maxConnectionsPerPlatform;
         
-        // Fixed connection limits logic (Issue #366 CodeRabbit fix)
+        // Connection limits PER PLATFORM (Issue #841)
         switch (userPlan.toLowerCase()) {
             case 'starter_trial':
-                maxConnections = 1;
+            case 'starter':
+                maxConnectionsPerPlatform = 1; // 1 cuenta por plataforma
                 break;
             case 'pro':
-                maxConnections = 5;
-                break;
-            case 'creator_plus':
+            case 'plus':
             case 'custom':
-                maxConnections = 999;
+                maxConnectionsPerPlatform = 2; // 2 cuentas por plataforma
                 break;
             default:
-                maxConnections = 1; // Default to free plan limits
+                maxConnectionsPerPlatform = 1; // Default to starter_trial plan limits
         }
         
-        if (connectedCount >= maxConnections) {
+        if (platformConnections >= maxConnectionsPerPlatform) {
             return res.status(403).json({
                 success: false,
-                error: `Plan ${userPlan} permite máximo ${maxConnections} ${maxConnections > 1 ? 'conexiones' : 'conexión'}. Actualiza tu plan para conectar más plataformas.`,
-                code: 'CONNECTION_LIMIT_EXCEEDED',
-                currentConnections: connectedCount,
-                maxConnections: maxConnections
+                error: `Plan ${userPlan} permite máximo ${maxConnectionsPerPlatform} ${maxConnectionsPerPlatform > 1 ? 'cuentas' : 'cuenta'} por plataforma. Ya tienes ${platformConnections} ${platformConnections > 1 ? 'cuentas' : 'cuenta'} conectadas en ${platform}.`,
+                code: 'PLATFORM_CONNECTION_LIMIT_EXCEEDED',
+                details: {
+                    platform,
+                    currentConnections: platformConnections,
+                    maxConnectionsPerPlatform,
+                    plan: userPlan
+                }
             });
         }
 
@@ -2598,10 +2605,10 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
 
         if (error) {
             if (error.code === 'PGRST116') {
-                // No entitlements found, return default free plan
+                // No entitlements found, return default starter_trial plan
                 const defaultEntitlements = {
                     analysis_limit_monthly: 100,
-                    roast_limit_monthly: 10,
+                    roast_limit_monthly: 5,
                     model: 'gpt-3.5-turbo',
                     shield_enabled: false,
                     rqc_mode: 'basic',

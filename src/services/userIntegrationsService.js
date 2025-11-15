@@ -252,7 +252,7 @@ class UserIntegrationsService {
                 { id: 'discord', name: 'Discord', available: org.plan_id !== 'starter_trial' },
                 { id: 'twitch', name: 'Twitch', available: org.plan_id !== 'starter_trial' },
                 { id: 'reddit', name: 'Reddit', available: org.plan_id !== 'starter_trial' },
-                { id: 'tiktok', name: 'TikTok', available: org.plan_id === 'creator_plus' || org.plan_id === 'custom' }
+                { id: 'tiktok', name: 'TikTok', available: org.plan_id === 'plus' || org.plan_id === 'custom' }
             ];
 
             return {
@@ -260,9 +260,10 @@ class UserIntegrationsService {
                 plan: org.plan_id,
                 activeIntegrations: activeCount,
                 limits: {
-                    starter_trial: 2,
-                    pro: 5,
-                    creator_plus: 999,
+                    starter_trial: 1,
+                    starter: 1,
+                    pro: 2,
+                    plus: 2,
                     custom: 999
                 }
             };
