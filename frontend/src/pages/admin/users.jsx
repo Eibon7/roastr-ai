@@ -299,13 +299,8 @@ const AdminUsersPage = () => {
   }, [navigate]);
 
   const getPlanBadgeColor = useMemo(() => (plan) => {
-    const colors = {
-      free: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      pro: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-      creator_plus: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300',
-      custom: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
-    };
-    return colors[plan] || colors.free;
+    const { getPlanBadgeColor: getBadgeColor } = require('../../utils/planHelpers');
+    return getBadgeColor(plan);
   }, []);
 
   const formatDate = useMemo(() => (dateString) => {
@@ -388,7 +383,10 @@ const AdminUsersPage = () => {
       {/* Plan */}
       <td className="px-6 py-4 whitespace-nowrap">
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(user.plan)}`}>
-          {user.plan === 'basic' ? 'Free' : user.plan === 'creator_plus' ? 'Creator+' : user.plan}
+          {(() => {
+            const { getPlanDisplayName } = require('../../utils/planHelpers');
+            return getPlanDisplayName(user.plan);
+          })()}
         </span>
       </td>
 
@@ -439,10 +437,14 @@ const AdminUsersPage = () => {
             defaultValue=""
             className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
           >
-            <option value="">📋 Plan: {user.plan === 'basic' ? 'Free' : user.plan === 'creator_plus' ? 'Creator+' : user.plan}</option>
-            {user.plan !== 'basic' && <option value="basic">→ Free</option>}
+            <option value="">📋 Plan: {(() => {
+              const { getPlanDisplayName } = require('../../utils/planHelpers');
+              return getPlanDisplayName(user.plan);
+            })()}</option>
+            {user.plan !== 'starter_trial' && <option value="starter_trial">→ Starter Trial</option>}
+            {user.plan !== 'starter' && <option value="starter">→ Starter</option>}
             {user.plan !== 'pro' && <option value="pro">→ Pro</option>}
-            {user.plan !== 'creator_plus' && <option value="creator_plus">→ Creator Plus</option>}
+            {user.plan !== 'plus' && <option value="plus">→ Plus</option>}
           </select>
 
           {/* Superuser Dashboard Button - Issue #240 */}
@@ -552,9 +554,10 @@ const AdminUsersPage = () => {
                   className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                 >
                   <option value="">Todos los planes</option>
-                  <option value="basic">Free</option>
+                  <option value="starter_trial">Starter Trial</option>
+                  <option value="starter">Starter</option>
                   <option value="pro">Pro</option>
-                  <option value="creator_plus">Creator Plus</option>
+                  <option value="plus">Plus</option>
                 </select>
               </div>
             </div>
@@ -828,14 +831,16 @@ const AdminUsersPage = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   ¿Estás seguro de que quieres cambiar el plan de <strong>{planChangeModal.user?.email}</strong> de{' '}
                   <span className="font-semibold">
-                    {planChangeModal.user?.plan === 'basic' ? 'Free' : 
-                     planChangeModal.user?.plan === 'creator_plus' ? 'Creator+' : 
-                     planChangeModal.user?.plan}
+                    {(() => {
+                      const { getPlanDisplayName } = require('../../utils/planHelpers');
+                      return getPlanDisplayName(planChangeModal.user?.plan);
+                    })()}
                   </span> a{' '}
                   <span className="font-semibold">
-                    {planChangeModal.newPlan === 'basic' ? 'Free' : 
-                     planChangeModal.newPlan === 'creator_plus' ? 'Creator+' : 
-                     planChangeModal.newPlan}
+                    {(() => {
+                      const { getPlanDisplayName } = require('../../utils/planHelpers');
+                      return getPlanDisplayName(planChangeModal.newPlan);
+                    })()}
                   </span>?
                 </p>
               </div>

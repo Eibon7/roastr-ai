@@ -997,9 +997,9 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  {globalConnectionText}
+                  {platformConnectionText}
                 </span>
-                {isAtGlobalLimit && (
+                {isAtPlatformLimit && (
                   <span 
                     aria-label="Advertencia: Límite global de conexiones alcanzado" 
                     role="img"
@@ -1009,13 +1009,13 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              <Badge variant={isAtGlobalLimit ? "destructive" : "outline"} className="text-xs">
+              <Badge variant={isAtPlatformLimit ? "destructive" : "outline"} className="text-xs">
                 Plan {planTier}
               </Badge>
             </div>
-            {isAtGlobalLimit && (
+            {isAtPlatformLimit && (
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                {globalTooltipText}
+                {platformTooltipText}
               </p>
             )}
           </div>
@@ -1025,11 +1025,11 @@ export default function Dashboard() {
               const IconComponent = getPlatformIcon(platform);
               const isPlatformLimit = isPlatformAtLimit(platform);
               const isConnecting = connectingPlatform === platform;
-              const isDisabled = isAtGlobalLimit || isPlatformLimit || isConnecting;
+              const isDisabled = isAtPlatformLimit || isPlatformLimit || isConnecting;
               
               // Determine disable reason for accessibility
-              const disableReason = isAtGlobalLimit 
-                ? "Límite global alcanzado para tu plan"
+              const disableReason = isAtPlatformLimit 
+                ? "Límite por plataforma alcanzado para tu plan"
                 : isPlatformLimit 
                   ? "Límite alcanzado (máximo 2 cuentas por plataforma)"
                   : "";
