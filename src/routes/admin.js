@@ -2224,6 +2224,9 @@ router.put('/plans/:planId', async (req, res) => {
             });
         }
         
+        // Get current effective limits (with DB overrides) for audit trail
+        const previousLimits = await planLimitsService.getPlanLimits(planId);
+        
         // Don't allow editing custom plan via UI
         if (planId === 'custom') {
             return res.status(403).json({
@@ -2254,15 +2257,14 @@ router.put('/plans/:planId', async (req, res) => {
             req.user.id // Admin user ID for audit
         );
         
-        // Log admin action
-        await auditLogger.log({
-            action: 'admin_plan_update',
-            admin_id: req.user.id,
-            admin_email: req.user.email,
-            target_type: 'plan',
-            target_id: planId,
+        // Log admin action using logEvent to match other admin audit calls
+        await auditLogger.logEvent('admin.plan_update', {
+            userId: req.user.id,
+            adminEmail: req.user.email,
+            targetType: 'plan',
+            targetId: planId,
             changes: planUpdates,
-            previousValues: plan.limits
+            previousValues: previousLimits
         });
         
         res.json({
