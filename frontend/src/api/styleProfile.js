@@ -215,7 +215,7 @@ const styleProfileAPI = {
         success: false,
         data: {
           canExtract: false,
-          plan: 'free',
+          plan: 'starter_trial',
           reason: 'La extracción de perfiles requiere un plan Premium'
         }
       };
