@@ -34,6 +34,16 @@ const TIER_LIMITS = {
     shield_enabled: true,
     priority_support: false,
     custom_styles: true
+  },
+  custom: {
+    // Custom plan: ad-hoc for brands/special accounts with pay-per-use billing
+    // Limits are effectively unlimited but billed per use
+    // Note: Actual limits should be sourced from backend/enterprise configuration
+    social_connections: 999, // Effectively unlimited (per platform)
+    roasts_per_month: 999999, // Effectively unlimited (billed per use)
+    shield_enabled: true,
+    priority_support: true, // Custom plans may include premium support
+    custom_styles: true
   }
 };
 
@@ -110,7 +120,7 @@ export const getUpgradeSuggestion = (currentPlan) => {
   const suggestions = {
     starter_trial: {
       targetPlan: 'starter',
-      benefits: ['5 roasts mensuales', '1 cuenta por plataforma', 'Shield habilitado'],
+      benefits: ['5 roasts mensuales', '1 cuenta por plataforma', 'Soporte estándar'],
       price: '€5/mes'
     },
     starter: {
