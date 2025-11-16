@@ -240,7 +240,7 @@ export default function Pricing() {
   const getButtonText = (plan) => {
     if (upgrading === plan.id) return 'Processing...';
     if (plan.id === currentPlan) return 'Current Plan';
-    if (plan.id === 'free') return 'Downgrade';
+    if (plan.id === 'starter_trial') return 'Start Trial';
     return `Upgrade to ${plan.name}`;
   };
 
@@ -490,7 +490,7 @@ export default function Pricing() {
             <div>
               <h3 className="font-semibold mb-2">Is there a free trial?</h3>
               <p className="text-sm text-muted-foreground">
-                The Free plan is available forever with no time limits. Upgrade when you need more features.
+                Yes! Start with the Starter Trial plan to test all features. Upgrade to a paid plan when you need more capacity.
               </p>
             </div>
             <div>

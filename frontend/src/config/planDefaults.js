@@ -1,20 +1,21 @@
 // Default plan configurations for different environments
 // These are used as fallbacks when actual data is not available
+// Issue #841: Updated to match backend planService.js structure
 
 export const PLAN_DEFAULTS = {
-  free: {
+  starter_trial: {
     analysis_limit_monthly: 100,
-    roast_limit_monthly: 50,
-    plan_name: 'free',
-    model: 'gpt-3.5-turbo',
-    shield_enabled: false,
+    roast_limit_monthly: 5,
+    plan_name: 'starter_trial',
+    model: 'gpt-5.1',
+    shield_enabled: true,
     rqc_mode: null
   },
   starter: {
     analysis_limit_monthly: 1000,
-    roast_limit_monthly: 100,
+    roast_limit_monthly: 5,
     plan_name: 'starter',
-    model: 'gpt-4',
+    model: 'gpt-5.1',
     shield_enabled: true,
     rqc_mode: 'basic'
   },
@@ -22,7 +23,7 @@ export const PLAN_DEFAULTS = {
     analysis_limit_monthly: 10000,
     roast_limit_monthly: 1000,
     plan_name: 'pro',
-    model: 'gpt-4',
+    model: 'gpt-5.1',
     shield_enabled: true,
     rqc_mode: 'basic'
   },
@@ -30,7 +31,7 @@ export const PLAN_DEFAULTS = {
     analysis_limit_monthly: 100000,
     roast_limit_monthly: 5000,
     plan_name: 'plus',
-    model: 'gpt-4-turbo',
+    model: 'gpt-5.1',
     shield_enabled: true,
     rqc_mode: 'advanced'
   }
@@ -59,8 +60,8 @@ export function getDefaultEntitlements(planName = null) {
     return PLAN_DEFAULTS.starter;
   }
   
-  // Default to free plan in production when no plan specified
-  return PLAN_DEFAULTS.free;
+  // Default to starter_trial plan in production when no plan specified
+  return PLAN_DEFAULTS.starter_trial;
 }
 
 // Get default usage based on environment

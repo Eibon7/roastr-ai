@@ -28,6 +28,7 @@ import AjustesSettings from '../components/AjustesSettings';
 import { useNavigate } from 'react-router-dom';
 import { isFeatureEnabled } from '../utils/featureFlags';
 import { getTierLimits, validateConnectionLimit, getConnectionWarning } from '../utils/tierLimits';
+import { normalizePlanId, getPlanDisplayName, getPlanBadgeColor } from '../utils/planHelpers';
 
 const Settings = () => {
   const { userData: user } = useAuth();
@@ -243,17 +244,13 @@ const Settings = () => {
   };
 
   const getPlanColor = (plan) => {
-    const colors = {
-      free: 'bg-gray-100 text-gray-800',
-      starter: 'bg-blue-100 text-blue-800',
-      pro: 'bg-purple-100 text-purple-800',
-      plus: 'bg-yellow-100 text-yellow-800'
-    };
-    return colors[plan?.toLowerCase()] || colors.free;
+    return getPlanBadgeColor(plan);
   };
 
   const getPlanIcon = (plan) => {
-    switch (plan?.toLowerCase()) {
+    const normalized = normalizePlanId(plan);
+    switch (normalized) {
+      case 'starter_trial': return <Zap className="w-4 h-4" />;
       case 'starter': return <Zap className="w-4 h-4" />;
       case 'pro': return <Target className="w-4 h-4" />;
       case 'plus': return <Crown className="w-4 h-4" />;
@@ -618,7 +615,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {(() => {
-                const currentPlan = user?.plan || 'free';
+                const currentPlan = normalizePlanId(user?.plan || 'starter_trial');
                 const tierLimits = getTierLimits(currentPlan);
                 const connectionValidation = validateConnectionLimit(connections.length, currentPlan);
                 const warning = getConnectionWarning(connections.length, currentPlan);
@@ -732,7 +729,7 @@ const Settings = () => {
           </Card>
 
           {/* Shield Configuration - Collapsible Section (Feature Flagged) */}
-          {isFeatureEnabled('ENABLE_SHIELD_UI') && getTierLimits(user?.plan || 'free').shield_enabled && (
+          {isFeatureEnabled('ENABLE_SHIELD_UI') && getTierLimits(normalizePlanId(user?.plan || 'starter_trial')).shield_enabled && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -816,7 +813,7 @@ const Settings = () => {
           )}
 
           {/* Plan Restriction Notice for Shield */}
-          {isFeatureEnabled('ENABLE_SHIELD_UI') && !getTierLimits(user?.plan || 'free').shield_enabled && (
+          {isFeatureEnabled('ENABLE_SHIELD_UI') && !getTierLimits(normalizePlanId(user?.plan || 'starter_trial')).shield_enabled && (
             <Card className="border-amber-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-amber-600">
@@ -868,15 +865,18 @@ const Settings = () => {
                 <>
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-3">
-                      {getPlanIcon(user?.plan || 'free')}
+                      {getPlanIcon(user?.plan || 'starter_trial')}
                       <div>
-                        <h3 className="font-semibold capitalize">{user?.plan || 'Free'} Plan</h3>
+                        <h3 className="font-semibold capitalize">{getPlanDisplayName(user?.plan || 'starter_trial')} Plan</h3>
                         <p className="text-sm text-gray-600">
-                          {user?.plan === 'free' ? 'Free' : user?.plan === 'starter' ? '€5/month' : user?.plan === 'pro' ? '€15/month' : '€50/month'}
+                          {(() => {
+                            const plan = normalizePlanId(user?.plan || 'starter_trial');
+                            return plan === 'starter_trial' ? 'Free Trial' : plan === 'starter' ? '€5/month' : plan === 'pro' ? '€15/month' : plan === 'plus' ? '€50/month' : 'Custom';
+                          })()}
                         </p>
                       </div>
                     </div>
-                    <Badge className={getPlanColor(user?.plan || 'free')}>
+                    <Badge className={getPlanColor(user?.plan || 'starter_trial')}>
                       Active
                     </Badge>
                   </div>
@@ -887,7 +887,10 @@ const Settings = () => {
                       <p className="text-2xl font-bold">
                         {billingInfo?.usage?.roastsUsed ?? 0}
                         <span className="text-sm text-gray-500 font-normal">
-                          /{billingInfo?.limits?.roastsPerMonth ?? (user?.plan === 'free' ? '5' : user?.plan === 'starter' ? '50' : user?.plan === 'pro' ? '200' : '∞')}
+                          /{billingInfo?.limits?.roastsPerMonth ?? (() => {
+                            const plan = normalizePlanId(user?.plan || 'starter_trial');
+                            return plan === 'starter_trial' || plan === 'starter' ? '5' : plan === 'pro' ? '1000' : plan === 'plus' ? '5000' : '∞';
+                          })()}
                         </span>
                       </p>
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -906,7 +909,10 @@ const Settings = () => {
                       <p className="text-2xl font-bold">
                         {billingInfo?.usage?.apiCalls ?? 0}
                         <span className="text-sm text-gray-500 font-normal">
-                          /{billingInfo?.limits?.apiCallsPerMonth ?? (user?.plan === 'free' ? '10' : user?.plan === 'starter' ? '100' : user?.plan === 'pro' ? '500' : '∞')}
+                          /{billingInfo?.limits?.apiCallsPerMonth ?? (() => {
+                            const plan = normalizePlanId(user?.plan || 'starter_trial');
+                            return plan === 'starter_trial' || plan === 'starter' ? '10' : plan === 'pro' ? '1000' : plan === 'plus' ? '5000' : '∞';
+                          })()}
                         </span>
                       </p>
                     </div>
@@ -914,7 +920,10 @@ const Settings = () => {
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-medium text-sm text-gray-600">This Month</h4>
                       <p className="text-2xl font-bold">
-                        €{user?.plan === 'free' ? '0.00' : user?.plan === 'starter' ? '5.00' : user?.plan === 'pro' ? '15.00' : '50.00'}
+                        €{(() => {
+                          const plan = normalizePlanId(user?.plan || 'starter_trial');
+                          return plan === 'starter_trial' ? '0.00' : plan === 'starter' ? '5.00' : plan === 'pro' ? '15.00' : plan === 'plus' ? '50.00' : '0.00';
+                        })()}
                       </p>
                     </div>
                   </div>
@@ -923,7 +932,7 @@ const Settings = () => {
                     <Button variant="outline" className="flex-1" onClick={() => navigate('/billing')}>
                       View Full Billing
                     </Button>
-                    {user?.plan === 'free' && (
+                    {normalizePlanId(user?.plan || 'starter_trial') === 'starter_trial' && (
                       <Button className="flex-1" onClick={() => navigate('/pricing')}>
                         Upgrade Plan
                       </Button>
@@ -958,7 +967,7 @@ const Settings = () => {
                   <div 
                     key={plan.name} 
                     className={`p-4 border rounded-lg ${
-                      (user?.plan?.toLowerCase() || 'free') === plan.name.toLowerCase() 
+                      normalizePlanId(user?.plan || 'starter_trial') === plan.name.toLowerCase() 
                         ? 'border-blue-500 bg-blue-50' 
                         : 'border-gray-200'
                     }`}
