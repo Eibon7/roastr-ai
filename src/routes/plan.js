@@ -7,11 +7,17 @@ const { flags } = require('../config/flags');
 const { getPlanFeatures, getAllPlans } = require('../services/planService');
 
 // Get plans dynamically from planService.js
+// Issue #841: Filter out 'custom' plan - it's ad-hoc and not available for users to contract
 function getAvailablePlans() {
   const allPlans = getAllPlans();
   const plans = {};
   
   for (const [planId, plan] of Object.entries(allPlans)) {
+    // Skip 'custom' plan - it's ad-hoc, pay-per-use, and not available for standard subscription
+    if (planId === 'custom') {
+      continue;
+    }
+    
     plans[planId] = {
       id: planId,
       name: plan.name,

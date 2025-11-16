@@ -217,19 +217,20 @@ const PLAN_FEATURES = {
     price: 0, // Pay-per-use pricing (not a standard plan)
     currency: 'eur',
     duration: {
-      days: 90, // Quarterly billing for custom plans
-      type: 'fixed',
+      days: 30, // Monthly billing for custom plans
+      type: 'rolling',
       renewalType: 'manual',
       customizable: true
     },
     // Usage limits (-1 = unlimited, but billed per use)
     // This plan is for brands/special accounts with pay-per-use billing
+    // DISABLED: Not available for users to contract (Issue #841)
     limits: {
       roastsPerMonth: -1, // Unlimited (billed per use)
       monthlyResponsesLimit: -1, // Unlimited (billed per use)
       monthlyAnalysisLimit: -1, // Unlimited (billed per use)
       commentsPerMonth: -1, // Unlimited (billed per use)
-      platformIntegrations: 2, // 2 integrations per social network as per business policy
+      platformIntegrations: 2, // 2 integrations per social network (may vary in future)
       maxPlatforms: -1, // Unlimited
       integrationsLimit: -1 // Unlimited
     },
