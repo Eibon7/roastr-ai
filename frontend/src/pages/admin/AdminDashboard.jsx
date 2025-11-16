@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import ThemeToggle from '../../components/ThemeToggle';
 import { authHelpers } from '../../lib/supabaseClient';
 import { apiClient } from '../../lib/api';
+import { getPlanBadgeColor } from '../../utils/planHelpers';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -210,10 +211,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const getPlanBadgeColor = (plan) => {
-    const { getPlanBadgeColor: getBadgeColor } = require('../../utils/planHelpers');
-    return getBadgeColor(plan);
-  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {

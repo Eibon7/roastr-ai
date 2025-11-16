@@ -29,6 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import { isFeatureEnabled } from '../utils/featureFlags';
 import { getTierLimits, validateConnectionLimit, getConnectionWarning } from '../utils/tierLimits';
 import { normalizePlanId, getPlanDisplayName, getPlanBadgeColor } from '../utils/planHelpers';
+import { getAllPlanConfigs } from '../utils/planConfig';
 
 const Settings = () => {
   const { userData: user } = useAuth();
@@ -958,31 +959,20 @@ const Settings = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {[
-                  { name: 'Starter Trial', price: '€0', features: ['5 roasts/month', '1 account/platform', 'Shield'] },
-                  { name: 'Starter', price: '€5', features: ['5 roasts/month', '1 account/platform', 'Shield'] },
-                  { name: 'Pro', price: '€15', features: ['1000 roasts/month', '2 accounts/platform', 'Custom tones'] },
-                  { name: 'Plus', price: '€50', features: ['5000 roasts/month', '2 accounts/platform', 'All features'] }
-                ].map((plan) => {
-                  const planIdMap = {
-                    'Starter Trial': 'starter_trial',
-                    'Starter': 'starter',
-                    'Pro': 'pro',
-                    'Plus': 'plus'
-                  };
+                {getAllPlanConfigs().map((plan) => {
                   const currentPlanId = normalizePlanId(user?.plan || 'starter_trial');
-                  const isCurrentPlan = currentPlanId === planIdMap[plan.name];
+                  const isCurrentPlan = currentPlanId === plan.id;
                   
                   return (
                     <div 
-                      key={plan.name} 
+                      key={plan.id} 
                       className={`p-4 border rounded-lg ${
                         isCurrentPlan
                           ? 'border-blue-500 bg-blue-50' 
                           : 'border-gray-200'
                       }`}
                     >
-                      <h3 className="font-semibold">{plan.name}</h3>
+                      <h3 className="font-semibold">{plan.displayName}</h3>
                       <p className="text-2xl font-bold text-blue-600">{plan.price}</p>
                       <ul className="text-sm text-gray-600 mt-2 space-y-1">
                         {plan.features.map((feature, i) => (

@@ -13,6 +13,7 @@ import {
   MOCK_AVAILABLE_NETWORKS
 } from '../mocks/social';
 import socialAPI from '../api/social';
+import { normalizePlanId } from '../utils/planHelpers';
 
 export const useSocialAccounts = () => {
   const [accounts, setAccounts] = useState(MOCK_ACCOUNTS);
@@ -37,7 +38,6 @@ export const useSocialAccounts = () => {
 
   // Connection limits calculation (Issue #841: Per-platform limits)
   const getConnectionLimits = useCallback(() => {
-    const { normalizePlanId } = require('../utils/planHelpers');
     const planTier = normalizePlanId((userData.isAdminMode ? (userData.adminModeUser?.plan || '') : (userData?.plan || '')).toLowerCase());
     const maxConnectionsPerPlatform = (planTier === 'starter_trial' || planTier === 'starter') ? 1 : 2;
     return { maxConnectionsPerPlatform, planTier };

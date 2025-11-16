@@ -6,6 +6,7 @@ import ToastNotification from '../../components/admin/ToastNotification';
 import VirtualScrollTable from '../../components/admin/VirtualScrollTable';
 import { authHelpers } from '../../lib/supabaseClient';
 import { apiClient } from '../../lib/api';
+import { getPlanBadgeColor, getPlanDisplayName } from '../../utils/planHelpers';
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -298,10 +299,6 @@ const AdminUsersPage = () => {
     }
   }, [navigate]);
 
-  const getPlanBadgeColor = useMemo(() => (plan) => {
-    const { getPlanBadgeColor: getBadgeColor } = require('../../utils/planHelpers');
-    return getBadgeColor(plan);
-  }, []);
 
   const formatDate = useMemo(() => (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -383,10 +380,7 @@ const AdminUsersPage = () => {
       {/* Plan */}
       <td className="px-6 py-4 whitespace-nowrap">
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(user.plan)}`}>
-          {(() => {
-            const { getPlanDisplayName } = require('../../utils/planHelpers');
-            return getPlanDisplayName(user.plan);
-          })()}
+          {getPlanDisplayName(user.plan)}
         </span>
       </td>
 
@@ -437,10 +431,7 @@ const AdminUsersPage = () => {
             defaultValue=""
             className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
           >
-            <option value="">📋 Plan: {(() => {
-              const { getPlanDisplayName } = require('../../utils/planHelpers');
-              return getPlanDisplayName(user.plan);
-            })()}</option>
+            <option value="">📋 Plan: {getPlanDisplayName(user.plan)}</option>
             {user.plan !== 'starter_trial' && <option value="starter_trial">→ Starter Trial</option>}
             {user.plan !== 'starter' && <option value="starter">→ Starter</option>}
             {user.plan !== 'pro' && <option value="pro">→ Pro</option>}
@@ -831,16 +822,11 @@ const AdminUsersPage = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   ¿Estás seguro de que quieres cambiar el plan de <strong>{planChangeModal.user?.email}</strong> de{' '}
                   <span className="font-semibold">
-                    {(() => {
-                      const { getPlanDisplayName } = require('../../utils/planHelpers');
-                      return getPlanDisplayName(planChangeModal.user?.plan);
-                    })()}
+                    {getPlanDisplayName(planChangeModal.user?.plan)}
                   </span> a{' '}
                   <span className="font-semibold">
-                    {(() => {
-                      const { getPlanDisplayName } = require('../../utils/planHelpers');
-                      return getPlanDisplayName(planChangeModal.newPlan);
-                    })()}
+                    {getPlanDisplayName(planChangeModal.newPlan)}
+                  </span>
                   </span>?
                 </p>
               </div>

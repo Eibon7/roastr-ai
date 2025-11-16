@@ -4,6 +4,7 @@ import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
 import MockModeIndicator from '../ui/MockModeIndicator';
 import { Crown, Zap, Shield } from 'lucide-react';
+import { normalizePlanId, getPlanDisplayName } from '../../utils/planHelpers';
 
 export default function PlanStatusCard() {
   const [user, setUser] = useState(null);
@@ -47,8 +48,6 @@ export default function PlanStatusCard() {
     );
   }
 
-  const { normalizePlanId, getPlanDisplayName } = require('../../utils/planHelpers');
-  
   const planConfig = {
     starter_trial: { 
       name: 'Starter Trial', 

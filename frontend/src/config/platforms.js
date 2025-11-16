@@ -12,6 +12,7 @@
  * @author Roastr.ai Team
  */
 
+import { normalizePlanId } from '../utils/planHelpers';
 import {
   Twitter,
   Instagram,
@@ -176,7 +177,6 @@ export const isPremiumPlatform = (platform) => {
  * @returns {string[]} - Array of platform identifiers available for the plan
  */
 export const getPlatformsForPlan = (plan) => {
-  const { normalizePlanId } = require('../utils/planHelpers');
   const normalizedPlan = normalizePlanId(plan);
   
   const basePlatforms = ['twitter', 'instagram', 'youtube', 'facebook'];

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api';
+import { getPlanBadgeColor } from '../../utils/planHelpers';
 
 const UserDetail = () => {
     const { userId } = useParams();
@@ -241,10 +242,6 @@ const UserDetail = () => {
         });
     };
 
-    const getPlanBadgeColor = (plan) => {
-        const { getPlanBadgeColor } = require('../../utils/planHelpers');
-        return getPlanBadgeColor(plan);
-    };
 
     if (loading) {
         return (

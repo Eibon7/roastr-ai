@@ -3,6 +3,8 @@
  * Issue #841: Updated plan structure - Starter Trial/Starter: 1 per platform, Pro/Plus: 2 per platform
  */
 
+import { normalizePlanId } from './planHelpers';
+
 // Tier-based connection limits (per platform)
 const TIER_LIMITS = {
   starter_trial: {
@@ -41,7 +43,6 @@ const TIER_LIMITS = {
  * @returns {object} - Tier limits object
  */
 export const getTierLimits = (planTier) => {
-  const { normalizePlanId } = require('./planHelpers');
   const normalizedPlan = normalizePlanId(planTier || 'starter_trial');
   return TIER_LIMITS[normalizedPlan] || TIER_LIMITS.starter_trial;
 };
@@ -104,7 +105,6 @@ export const isFeatureAvailable = (feature, planTier) => {
  * @returns {object} - Upgrade suggestion with target plan and benefits
  */
 export const getUpgradeSuggestion = (currentPlan) => {
-  const { normalizePlanId } = require('./planHelpers');
   const current = normalizePlanId(currentPlan || 'starter_trial');
   
   const suggestions = {
