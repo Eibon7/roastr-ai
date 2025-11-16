@@ -8,6 +8,7 @@ import AuthCallback from './pages/auth-callback';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDetail from './pages/admin/UserDetail';
 import AdminUsersPage from './pages/admin/users';
+import AdminPlans from './pages/admin/AdminPlans';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminMetrics from './pages/admin/AdminMetrics';
 import AdminLogs from './pages/admin/AdminLogs';
