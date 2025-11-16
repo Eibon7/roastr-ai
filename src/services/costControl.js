@@ -139,12 +139,15 @@ class CostControlService {
       const percentage = (limit === -1 || limit === null || limit === undefined) ? 0 : 
                          (limit > 0 ? (currentUsage / limit) * 100 : 100);
 
+      // Handle unlimited (-1) - unlimited plans can always use
+      const isUnlimited = limit === -1 || limit === null || limit === undefined;
+      
       return {
-        canUse: currentUsage < limit,
+        canUse: isUnlimited || currentUsage < limit,
         currentUsage,
         limit,
         percentage: Math.round(percentage),
-        isNearLimit: percentage >= 80,
+        isNearLimit: !isUnlimited && percentage >= 80,
         organizationId,
         planId: org.plan_id
       };
