@@ -156,7 +156,7 @@ export default function Billing() {
             <div>
               <div className="text-3xl font-bold capitalize">{mockEntitlements.plan_name}</div>
               <div className="text-muted-foreground mt-1">
-                {mockEntitlements.plan_name === 'free' ? 'Free forever' : 
+                {mockEntitlements.plan_name === 'starter_trial' ? 'Free Trial' : 
                  mockEntitlements.plan_name === 'starter' ? `${formatCurrency(500, 'USD')}/month` :
                  mockEntitlements.plan_name === 'pro' ? `${formatCurrency(1500, 'USD')}/month` : `${formatCurrency(5000, 'USD')}/month`}
               </div>
@@ -275,7 +275,7 @@ export default function Billing() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {mockEntitlements.plan_name !== 'free' ? (
+            {mockEntitlements.plan_name !== 'starter_trial' ? (
               <>
                 {[
                   { date: 'Dec 15, 2024', amount: formatCurrency(mockEntitlements.plan_name === 'starter' ? 500 : mockEntitlements.plan_name === 'pro' ? 1500 : 5000, 'USD'), status: 'Paid', invoice: 'INV-001' },

@@ -21,7 +21,7 @@ const LevelSelection = () => {
   const [saving, setSaving] = useState(false);
   const [availableLevels, setAvailableLevels] = useState(null);
   const [currentLevels, setCurrentLevels] = useState({ roast_level: 3, shield_level: 3 });
-  const [planInfo, setPlanInfo] = useState({ plan: 'free', maxRoastLevel: 3, maxShieldLevel: 3 });
+  const [planInfo, setPlanInfo] = useState({ plan: 'starter_trial', maxRoastLevel: 3, maxShieldLevel: 3 });
 
   useEffect(() => {
     loadAvailableLevels();

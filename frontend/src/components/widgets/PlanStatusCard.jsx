@@ -47,28 +47,37 @@ export default function PlanStatusCard() {
     );
   }
 
+  const { normalizePlanId, getPlanDisplayName } = require('../../utils/planHelpers');
+  
   const planConfig = {
-    free: { 
-      name: 'Free', 
+    starter_trial: { 
+      name: 'Starter Trial', 
       icon: Zap, 
       color: 'outline',
-      features: ['Basic roasts', 'CSV export'] 
+      features: ['5 roasts/mes', '1 cuenta por plataforma', 'Shield'] 
+    },
+    starter: { 
+      name: 'Starter', 
+      icon: Zap, 
+      color: 'outline',
+      features: ['5 roasts/mes', '1 cuenta por plataforma', 'Shield'] 
     },
     pro: { 
       name: 'Pro', 
       icon: Shield, 
       color: 'secondary',
-      features: ['Advanced moderation', 'Priority support'] 
+      features: ['1000 roasts/mes', '2 cuentas por plataforma', 'Custom tones'] 
     },
-    creator_plus: { 
-      name: 'Creator+', 
+    plus: { 
+      name: 'Plus', 
       icon: Crown, 
       color: 'default',
-      features: ['RQC system', 'Custom styles', 'Analytics'] 
+      features: ['5000 roasts/mes', '2 cuentas por plataforma', 'Todas las features'] 
     }
   };
 
-  const currentPlan = planConfig[user?.plan] || planConfig.free;
+  const normalizedPlan = normalizePlanId(user?.plan || 'starter_trial');
+  const currentPlan = planConfig[normalizedPlan] || planConfig.starter_trial;
   const IconComponent = currentPlan.icon;
 
   return (

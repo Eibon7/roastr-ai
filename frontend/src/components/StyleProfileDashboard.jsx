@@ -28,7 +28,8 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'free' }) =>
   
   const { flags } = useFeatureFlags();
   const isFeatureEnabled = flags.isEnabled('ENABLE_STYLE_PROFILE');
-  const isPremiumUser = ['pro', 'plus', 'creator_plus'].includes(userPlan?.toLowerCase());
+  const { isPremiumPlan } = require('../utils/planHelpers');
+  const isPremiumUser = isPremiumPlan(userPlan);
 
   // Available platforms for profile extraction
   const availablePlatforms = [

@@ -172,25 +172,27 @@ export const isPremiumPlatform = (platform) => {
 
 /**
  * Get platforms available for a specific plan
- * @param {string} plan - Subscription plan ('free', 'starter', 'pro', 'plus', 'creator_plus')
+ * @param {string} plan - Subscription plan ('starter_trial', 'starter', 'pro', 'plus')
  * @returns {string[]} - Array of platform identifiers available for the plan
  */
 export const getPlatformsForPlan = (plan) => {
+  const { normalizePlanId } = require('../utils/planHelpers');
+  const normalizedPlan = normalizePlanId(plan);
+  
   const basePlatforms = ['twitter', 'instagram', 'youtube', 'facebook'];
   const standardPlatforms = [...basePlatforms, 'discord', 'twitch', 'reddit'];
   const premiumPlatformsAll = [...standardPlatforms, 'tiktok', 'bluesky', 'linkedin'];
 
-  switch (plan) {
-    case 'free':
-      return basePlatforms.slice(0, 2); // Only Twitter and Instagram
+  switch (normalizedPlan) {
+    case 'starter_trial':
     case 'starter':
+      return standardPlatforms;
     case 'pro':
       return standardPlatforms;
     case 'plus':
-    case 'creator_plus':
       return premiumPlatformsAll;
     default:
-      return basePlatforms;
+      return standardPlatforms; // Default to starter level
   }
 };
 
