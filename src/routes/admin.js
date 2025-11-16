@@ -2257,6 +2257,10 @@ router.put('/plans/:planId', async (req, res) => {
             req.user.id // Admin user ID for audit
         );
         
+        // Ensure admin views reflect latest plan data
+        invalidateAdminUsersCache();
+        planLimitsService.clearCache();
+        
         // Log admin action using logEvent to match other admin audit calls
         await auditLogger.logEvent('admin.plan_update', {
             userId: req.user.id,

@@ -71,7 +71,8 @@ const AdminPlans = () => {
 
   const formatLimit = (value) => {
     if (value === -1) return 'Unlimited';
-    return value.toLocaleString();
+    if (value === null || value === undefined) return '-';
+    return Number(value).toLocaleString();
   };
 
   if (loading) {

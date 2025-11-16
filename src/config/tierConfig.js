@@ -151,7 +151,7 @@ const FEATURE_REQUIREMENTS = {
     'ENABLE_ORIGINAL_TONE': ['plus'],
     'embedded_judge': [],
     'analytics': [],
-    'api_access': ['plus'],
+    'api_access': [], // API Access removed from all plans (Issue #841)
     'priority_support': [],
     'dedicated_support': [],
     'custom_prompts': []

@@ -21,7 +21,7 @@ function getAvailablePlans() {
     plans[planId] = {
       id: planId,
       name: plan.name,
-      price: plan.price,
+      price: plan.price / 100, // Convert from cents to currency units
       features: {
         roastsPerMonth: plan.limits.roastsPerMonth,
         platformConnections: plan.limits.platformIntegrations,

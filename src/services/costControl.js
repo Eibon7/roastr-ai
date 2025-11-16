@@ -42,7 +42,7 @@ class CostControlService {
       plus: {
         id: 'plus',
         name: 'Plus',
-        features: ['unlimited_integrations', 'shield_mode', 'custom_tones', 'api_access']
+        features: ['unlimited_integrations', 'shield_mode', 'custom_tones']
       },
       custom: {
         id: 'custom',
@@ -135,8 +135,9 @@ class CostControlService {
 
       const currentUsage = monthlyUsage?.total_responses || 0;
       const limit = org.monthly_responses_limit;
-      // Avoid division by zero (CodeRabbit #3353894295 M2)
-      const percentage = limit > 0 ? (currentUsage / limit) * 100 : 100;
+      // Handle unlimited (-1) and avoid division by zero (CodeRabbit #3353894295 M2)
+      const percentage = (limit === -1 || limit === null || limit === undefined) ? 0 : 
+                         (limit > 0 ? (currentUsage / limit) * 100 : 100);
 
       return {
         canUse: currentUsage < limit,
@@ -923,13 +924,13 @@ class CostControlService {
       // Define limits by plan and resource type
       const planLimits = {
         starter_trial: {
-          roasts: { monthly: 10, overage: false, hard: true },
+          roasts: { monthly: 5, overage: false, hard: true },
           integrations: { monthly: 1, overage: false, hard: true },
           api_calls: { monthly: 200, overage: false, hard: true },
           shield_actions: { monthly: 0, overage: false, hard: true }
         },
         starter: {
-          roasts: { monthly: 10, overage: false, hard: true },
+          roasts: { monthly: 5, overage: false, hard: true },
           integrations: { monthly: 1, overage: false, hard: true },
           api_calls: { monthly: 500, overage: false, hard: true },
           shield_actions: { monthly: 100, overage: false, hard: true }

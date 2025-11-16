@@ -645,7 +645,9 @@ class PlanLimitsService {
             'basic': 'starter',
             'premium': 'pro',
             'enterprise': 'plus',
-            'creator': 'creator_plus'
+            // Legacy aliases
+            'creator': 'plus',
+            'creator_plus': 'plus'
         };
 
         return planAliases[normalized] || normalized;

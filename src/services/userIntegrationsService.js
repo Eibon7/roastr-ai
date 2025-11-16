@@ -92,17 +92,37 @@ class UserIntegrationsService {
                 throw new Error(`Invalid platform: ${platform}`);
             }
 
-            // Check plan limits
-            if (org.plan_id === 'starter_trial') {
-                const { data: currentIntegrations } = await userClient
-                    .from('integration_configs')
-                    .select('id')
-                    .eq('organization_id', org.id)
-                    .eq('enabled', true);
-
-                if (currentIntegrations && currentIntegrations.length >= 2) {
-                    throw new Error('Trial plan limited to 2 active integrations. Upgrade to add more.');
-                }
+            // Enforce per-platform account limits consistently using a shared map
+            // Normalize plan ID to handle legacy values
+            const normalizePlanId = (planId) => {
+                if (!planId) return 'starter_trial';
+                const normalized = planId.toLowerCase().trim();
+                if (normalized === 'free' || normalized === 'basic') return 'starter_trial';
+                if (normalized === 'creator_plus' || normalized === 'creator') return 'plus';
+                return normalized;
+            };
+            
+            const limitsByPlan = { 
+                starter_trial: 1, 
+                starter: 1, 
+                pro: 2, 
+                plus: 2,
+                custom: 999
+            };
+            const normalizedPlan = normalizePlanId(org.plan_id);
+            const maxPerPlatform = limitsByPlan[normalizedPlan] ?? 1;
+            
+            // Check per-platform limit for this specific platform
+            const { data: platformAccounts } = await userClient
+                .from('integration_configs')
+                .select('id, platform')
+                .eq('organization_id', org.id)
+                .eq('platform', platform)
+                .eq('enabled', true);
+            
+            const count = Array.isArray(platformAccounts) ? platformAccounts.length : 0;
+            if (count >= maxPerPlatform) {
+                throw new Error(`Plan limit reached: ${maxPerPlatform} account(s) per platform on ${normalizedPlan}.`);
             }
 
             // Prepare update data
@@ -225,7 +245,7 @@ class UserIntegrationsService {
             // Get user's organization
             const { data: org, error: orgError } = await userClient
                 .from('organizations')
-                .select('plan_id')
+                .select('id, plan_id')
                 .eq('owner_id', user.id)
                 .single();
 
@@ -233,14 +253,14 @@ class UserIntegrationsService {
                 throw new Error('Organization not found');
             }
 
-            // Get current integrations count
+            // Get current integrations count (per-platform)
             const { data: currentIntegrations } = await userClient
                 .from('integration_configs')
                 .select('platform')
                 .eq('organization_id', org.id)
                 .eq('enabled', true);
 
-            const activeCount = currentIntegrations ? currentIntegrations.length : 0;
+            const activeCount = Array.isArray(currentIntegrations) ? currentIntegrations.length : 0;
 
             // Define platform availability based on plan
             const platforms = [

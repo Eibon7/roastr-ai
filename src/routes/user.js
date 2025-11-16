@@ -2609,7 +2609,7 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
                 const defaultEntitlements = {
                     analysis_limit_monthly: 100,
                     roast_limit_monthly: 5,
-                    model: 'gpt-3.5-turbo',
+                    model: 'gpt-5.1',
                     shield_enabled: false,
                     rqc_mode: 'basic',
                     plan_name: 'starter_trial',
@@ -2633,9 +2633,9 @@ router.get('/entitlements', authenticateToken, async (req, res) => {
             // Mock mode response
             const defaultEntitlements = {
                 analysis_limit_monthly: 100,
-                roast_limit_monthly: 10,
-                model: 'gpt-3.5-turbo',
-                shield_enabled: false,
+                roast_limit_monthly: 5,
+                model: 'gpt-5.1',
+                shield_enabled: true,
                 rqc_mode: 'basic',
                 plan_name: 'starter_trial',
                 stripe_price_id: null,
