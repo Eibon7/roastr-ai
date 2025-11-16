@@ -202,8 +202,8 @@ describe('Billing Page', () => {
     expect(screen.getByText('Paid')).toBeInTheDocument();
   });
 
-  it('shows no billing history for free plan', async () => {
-    mockApiResponses('free');
+  it('shows no billing history for starter_trial plan', async () => {
+    mockApiResponses('starter_trial');
 
     renderBilling();
 

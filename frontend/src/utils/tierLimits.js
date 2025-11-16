@@ -122,11 +122,6 @@ export const getUpgradeSuggestion = (currentPlan) => {
       targetPlan: 'plus',
       benefits: ['5000 roasts mensuales', '2 cuentas por plataforma', 'Todas las features'],
       price: '€50/mes'
-    },
-    pro: {
-      targetPlan: 'plus',
-      benefits: ['5000 roasts mensuales', 'Funciones premium adicionales', 'Configuración avanzada'],
-      price: '€50/mes'
     }
   };
   
