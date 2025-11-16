@@ -959,38 +959,49 @@ const Settings = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                  { name: 'Free', price: '€0', features: ['5 roasts/day', 'Basic AI'] },
-                  { name: 'Starter', price: '€5', features: ['50 roasts/day', 'Enhanced AI', '2 platforms'] },
-                  { name: 'Pro', price: '€15', features: ['200 roasts/day', 'Premium AI', '5 platforms'] },
-                  { name: 'Plus', price: '€50', features: ['Unlimited roasts', 'Custom AI', 'All platforms'] }
-                ].map((plan) => (
-                  <div 
-                    key={plan.name} 
-                    className={`p-4 border rounded-lg ${
-                      normalizePlanId(user?.plan || 'starter_trial') === plan.name.toLowerCase() 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200'
-                    }`}
-                  >
-                    <h3 className="font-semibold">{plan.name}</h3>
-                    <p className="text-2xl font-bold text-blue-600">{plan.price}</p>
-                    <ul className="text-sm text-gray-600 mt-2 space-y-1">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-1">
-                          <Check className="w-3 h-3 text-green-500" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    {(user?.plan?.toLowerCase() || 'free') === plan.name.toLowerCase() ? (
-                      <Badge className="mt-2 w-full justify-center">Current</Badge>
-                    ) : (
-                      <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => navigate('/pricing')}>
-                        {plan.name === 'Free' ? 'Downgrade' : 'Upgrade'}
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  { name: 'Starter Trial', price: '€0', features: ['5 roasts/month', '1 account/platform', 'Shield'] },
+                  { name: 'Starter', price: '€5', features: ['5 roasts/month', '1 account/platform', 'Shield'] },
+                  { name: 'Pro', price: '€15', features: ['1000 roasts/month', '2 accounts/platform', 'Custom tones'] },
+                  { name: 'Plus', price: '€50', features: ['5000 roasts/month', '2 accounts/platform', 'All features'] }
+                ].map((plan) => {
+                  const planIdMap = {
+                    'Starter Trial': 'starter_trial',
+                    'Starter': 'starter',
+                    'Pro': 'pro',
+                    'Plus': 'plus'
+                  };
+                  const currentPlanId = normalizePlanId(user?.plan || 'starter_trial');
+                  const isCurrentPlan = currentPlanId === planIdMap[plan.name];
+                  
+                  return (
+                    <div 
+                      key={plan.name} 
+                      className={`p-4 border rounded-lg ${
+                        isCurrentPlan
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      <h3 className="font-semibold">{plan.name}</h3>
+                      <p className="text-2xl font-bold text-blue-600">{plan.price}</p>
+                      <ul className="text-sm text-gray-600 mt-2 space-y-1">
+                        {plan.features.map((feature, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            <Check className="w-3 h-3 text-green-500" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                      {isCurrentPlan ? (
+                        <Badge className="mt-2 w-full justify-center">Current</Badge>
+                      ) : (
+                        <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => navigate('/pricing')}>
+                          Upgrade
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
