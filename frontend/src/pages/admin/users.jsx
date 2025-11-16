@@ -6,7 +6,7 @@ import ToastNotification from '../../components/admin/ToastNotification';
 import VirtualScrollTable from '../../components/admin/VirtualScrollTable';
 import { authHelpers } from '../../lib/supabaseClient';
 import { apiClient } from '../../lib/api';
-import { getPlanBadgeColor, getPlanDisplayName } from '../../utils/planHelpers';
+import { getPlanBadgeColor, getPlanDisplayName, normalizePlanId } from '../../utils/planHelpers';
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -420,23 +420,28 @@ const AdminUsersPage = () => {
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <div className="flex flex-col gap-2">
           {/* Plan Change Dropdown - Issue #240 */}
-          <select
-            onChange={(e) => {
-              if (e.target.value && e.target.value !== user.plan) {
-                handlePlanChangeClick(user, e.target.value);
-                e.target.value = ""; // Reset select
-              }
-            }}
-            disabled={actionLoading[`plan_${user.id}`]}
-            defaultValue=""
-            className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-          >
-            <option value="">📋 Plan: {getPlanDisplayName(user.plan)}</option>
-            {user.plan !== 'starter_trial' && <option value="starter_trial">→ Starter Trial</option>}
-            {user.plan !== 'starter' && <option value="starter">→ Starter</option>}
-            {user.plan !== 'pro' && <option value="pro">→ Pro</option>}
-            {user.plan !== 'plus' && <option value="plus">→ Plus</option>}
-          </select>
+          {(() => {
+            const normalizedPlan = normalizePlanId(user.plan);
+            return (
+              <select
+                onChange={(e) => {
+                  if (e.target.value && e.target.value !== normalizedPlan) {
+                    handlePlanChangeClick(user, e.target.value);
+                    e.target.value = ""; // Reset select
+                  }
+                }}
+                disabled={actionLoading[`plan_${user.id}`]}
+                defaultValue=""
+                className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+              >
+                <option value="">📋 Plan: {getPlanDisplayName(user.plan)}</option>
+                {normalizedPlan !== 'starter_trial' && <option value="starter_trial">→ Starter Trial</option>}
+                {normalizedPlan !== 'starter' && <option value="starter">→ Starter</option>}
+                {normalizedPlan !== 'pro' && <option value="pro">→ Pro</option>}
+                {normalizedPlan !== 'plus' && <option value="plus">→ Plus</option>}
+              </select>
+            );
+          })()}
 
           {/* Superuser Dashboard Button - Issue #240 */}
           <button
