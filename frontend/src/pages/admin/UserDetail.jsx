@@ -58,7 +58,7 @@ const UserDetail = () => {
 
                 // Initialize editable configuration with current user data
                 setEditableConfig({
-                    plan: data.data.user.plan || 'free',
+                    plan: data.data.user.plan || 'starter_trial',
                     tone: data.data.user.tone || 'Balanceado',
                     shieldEnabled: data.data.user.shield_enabled !== false,
                     autoReplyEnabled: data.data.user.auto_reply_enabled === true,
