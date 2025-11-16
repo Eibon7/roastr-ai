@@ -33,13 +33,14 @@ export const useSocialAccounts = () => {
   }, [interceptedData]);
 
   // Mock user data for plan calculations (Issue #366)
-  const userData = { plan: 'free', isAdminMode: false };
+  const userData = { plan: 'starter_trial', isAdminMode: false };
 
-  // Connection limits calculation (Issue #366 CodeRabbit feedback)
+  // Connection limits calculation (Issue #841: Per-platform limits)
   const getConnectionLimits = useCallback(() => {
-    const planTier = (userData.isAdminMode ? (userData.adminModeUser?.plan || '') : (userData?.plan || '')).toLowerCase();
-    const maxConnections = planTier === 'free' ? 1 : 2;
-    return { maxConnections, planTier };
+    const { normalizePlanId } = require('../utils/planHelpers');
+    const planTier = normalizePlanId((userData.isAdminMode ? (userData.adminModeUser?.plan || '') : (userData?.plan || '')).toLowerCase());
+    const maxConnectionsPerPlatform = (planTier === 'starter_trial' || planTier === 'starter') ? 1 : 2;
+    return { maxConnectionsPerPlatform, planTier };
   }, [userData]);
 
   // Get available networks with global connection count and limits validation
