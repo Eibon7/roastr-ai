@@ -375,7 +375,7 @@ class PlanLimitsService {
             embeddedJudge: false,
             monthlyTokensLimit: 100000,
             dailyApiCallsLimit: 500,
-            ai_model: 'gpt-4o'
+            ai_model: 'gpt-5.1'
         };
     }
 

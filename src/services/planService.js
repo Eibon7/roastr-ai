@@ -64,7 +64,7 @@ const PLAN_FEATURES = {
       dailyApiCallsLimit: 500
     },
     // AI model configuration
-    aiModel: 'gpt-4o',
+    aiModel: 'gpt-5.1',
     // Metadata
     isTrial: true
   },
@@ -110,7 +110,7 @@ const PLAN_FEATURES = {
       dailyApiCallsLimit: 500
     },
     // AI model configuration
-    aiModel: 'gpt-4o'
+    aiModel: 'gpt-5.1'
   },
   pro: {
     id: 'pro',
@@ -155,7 +155,7 @@ const PLAN_FEATURES = {
       dailyApiCallsLimit: 5000
     },
     // AI model configuration
-    aiModel: 'gpt-4o'
+    aiModel: 'gpt-5.1'
   },
   plus: {
     id: 'plus',
@@ -201,7 +201,7 @@ const PLAN_FEATURES = {
       dailyApiCallsLimit: 20000
     },
     // AI model configuration
-    aiModel: 'gpt-4o',
+    aiModel: 'gpt-5.1',
     rqcEmbedded: false
   },
   custom: {
@@ -248,7 +248,7 @@ const PLAN_FEATURES = {
       dailyApiCallsLimit: -1 // Unlimited
     },
     // AI model configuration
-    aiModel: 'gpt-4o',
+    aiModel: 'gpt-5.1',
     enterprise: true
   }
 };
