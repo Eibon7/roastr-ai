@@ -219,7 +219,7 @@ const PLAN_FEATURES = {
     duration: {
       days: 30, // Monthly billing for custom plans
       type: 'rolling',
-      renewalType: 'manual',
+      renewalType: 'automatic', // Automatic renewal until cancellation (same as other plans)
       customizable: true
     },
     // Usage limits (-1 = unlimited, but billed per use)
