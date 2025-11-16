@@ -1,4 +1,10 @@
 module.exports = {
+  babel: {
+    plugins: [
+      // Solo habilitar React Refresh en desarrollo
+      process.env.NODE_ENV === 'development' && 'react-refresh/babel',
+    ].filter(Boolean),
+  },
   webpack: {
     configure: (config) => {
       config.resolve.fallback = {
