@@ -2134,7 +2134,8 @@ router.put('/backoffice/thresholds', async (req, res) => {
  */
 router.get('/plans', async (req, res) => {
     try {
-        const { getAllPlans, getPlanLimits } = require('../services/planService');
+        const planLimitsService = require('../services/planLimitsService');
+        const { getAllPlans } = require('../services/planService');
         const allPlans = getAllPlans();
         
         // Get user counts by plan from organizations table
@@ -2151,14 +2152,15 @@ router.get('/plans', async (req, res) => {
         const userCountsByPlan = {};
         if (orgPlans) {
             orgPlans.forEach(org => {
-                const planId = org.plan_id || 'starter_trial';
+                const planId = normalizePlanId(org.plan_id || 'starter_trial');
                 userCountsByPlan[planId] = (userCountsByPlan[planId] || 0) + 1;
             });
         }
         
         // Build plans array with user counts
-        const plansData = Object.entries(allPlans).map(([planId, plan]) => {
-            const limits = getPlanLimits(planId);
+        // Use planLimitsService.getPlanLimits() to get database overrides merged with defaults
+        const plansData = await Promise.all(Object.entries(allPlans).map(async ([planId, plan]) => {
+            const limits = await planLimitsService.getPlanLimits(planId);
             return {
                 id: planId,
                 name: plan.name,
@@ -2169,7 +2171,7 @@ router.get('/plans', async (req, res) => {
                     roastsPerMonth: limits.maxRoasts,
                     platforms: limits.maxPlatforms,
                     analysisPerMonth: limits.monthlyAnalysisLimit,
-                    tokensPerMonth: plan.tokens?.monthlyTokensLimit || 0
+                    tokensPerMonth: limits.monthlyTokensLimit || 0
                 },
                 features: {
                     shield: plan.features.shield,
@@ -2181,7 +2183,7 @@ router.get('/plans', async (req, res) => {
                 duration: plan.duration,
                 editable: planId !== 'custom' // Custom plan not editable via UI
             };
-        });
+        }));
         
         res.json({
             success: true,
