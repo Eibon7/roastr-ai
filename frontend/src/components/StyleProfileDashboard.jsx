@@ -19,7 +19,7 @@ import PlatformDistributionChart from './PlatformDistributionChart';
 import ToneAnalysisDisplay from './ToneAnalysisDisplay';
 import styleProfileAPI from '../api/styleProfile';
 
-const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'free' }) => {
+const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_trial' }) => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
