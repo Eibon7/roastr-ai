@@ -60,7 +60,7 @@ export const useSocialAccounts = () => {
         ...network,
         connectedCount,
         canConnect,
-        maxConnections,
+        maxConnectionsPerPlatform,
         limitReached,
         totalConnections // For display purposes
       };
