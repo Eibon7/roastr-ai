@@ -43,15 +43,18 @@ export const useSocialAccounts = () => {
     return { maxConnectionsPerPlatform, planTier };
   }, [userData]);
 
-  // Get available networks with global connection count and limits validation
+  // Get available networks with per-platform connection limits validation
+  // Issue #841: Limits are now PER PLATFORM, not global
   const availableNetworks = useMemo(() => {
-    const { maxConnections } = getConnectionLimits();
-    const totalConnections = accounts.length; // Global count across all platforms
+    const { maxConnectionsPerPlatform } = getConnectionLimits();
+    const totalConnections = accounts.length; // Total count across all platforms (for display)
     
     return MOCK_AVAILABLE_NETWORKS.map(network => {
       const connectedCount = accounts.filter(acc => acc.network === network.network).length;
-      const canConnect = totalConnections < maxConnections; // Global limit check
-      const limitReached = totalConnections >= maxConnections;
+      // Per-platform limit check: count accounts for this specific platform
+      const platformAccounts = accounts.filter(acc => acc.platform === network.id);
+      const canConnect = platformAccounts.length < maxConnectionsPerPlatform;
+      const limitReached = platformAccounts.length >= maxConnectionsPerPlatform;
       
       return {
         ...network,
