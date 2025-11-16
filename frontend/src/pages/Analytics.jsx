@@ -321,7 +321,9 @@ export default function Analytics() {
         <div className="flex flex-wrap gap-3">
           <Select value={range} onValueChange={setRange}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Rango" />
+              <SelectValue>
+                {RANGE_OPTIONS.find((option) => option.value === range)?.label || 'Rango'}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {RANGE_OPTIONS.map((option) => (
@@ -334,7 +336,9 @@ export default function Analytics() {
 
           <Select value={groupBy} onValueChange={setGroupBy}>
             <SelectTrigger className="w-36">
-              <SelectValue placeholder="Agrupar por" />
+              <SelectValue>
+                {GROUP_BY_OPTIONS.find((option) => option.value === groupBy)?.label || 'Agrupar por'}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {GROUP_BY_OPTIONS.map((option) => (
@@ -347,7 +351,9 @@ export default function Analytics() {
 
           <Select value={platform} onValueChange={setPlatform}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Plataforma" />
+              <SelectValue>
+                {platform === 'all' ? 'Todas las plataformas' : getPlatformName(platform)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas las plataformas</SelectItem>
@@ -556,7 +562,9 @@ export default function Analytics() {
           <CardContent className="space-y-4">
             <Select value={exportDataset} onValueChange={setExportDataset}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Dataset a exportar" />
+                <SelectValue>
+                  {EXPORT_DATASETS.find((option) => option.value === exportDataset)?.label || 'Dataset a exportar'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {EXPORT_DATASETS.map((option) => (
