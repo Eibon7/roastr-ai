@@ -1050,7 +1050,7 @@ export default function Dashboard() {
                     <div className="font-medium text-xs">
                       {getPlatformName(platform)}
                     </div>
-                    {isAtGlobalLimit ? (
+                    {isAtPlatformLimit ? (
                       <div className="text-xs text-muted-foreground flex items-center space-x-1">
                         <span>Límite global</span>
                         <span 
