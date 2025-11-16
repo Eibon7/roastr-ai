@@ -14,6 +14,13 @@
  * - Limits are PER PLATFORM, not total (e.g., Pro can have 2 X accounts + 2 Instagram accounts + 2 TikTok accounts)
  * - This policy ensures no plan can be abused by agencies to manage multiple client accounts
  * 
+ * Custom Plan (Issue #841):
+ * - NOT a standard plan - applied ad-hoc to brands/special accounts
+ * - Pay-per-use billing (not subscription-based)
+ * - Features: ONLY Custom Tones, Shield, and Style Profile
+ * - Unlimited limits but billed per use
+ * - Requires manual assignment (not in ADMIN_ASSIGNABLE)
+ * 
  * Tokens System (Issue #841):
  * - Tokens are related to the credits system used for roasts and regenerations
  * - Regenerations consume credits when users manually review and regenerate roasts
@@ -207,7 +214,7 @@ const PLAN_FEATURES = {
   custom: {
     id: 'custom',
     name: 'Custom',
-    price: 0, // Negotiable
+    price: 0, // Pay-per-use pricing (not a standard plan)
     currency: 'eur',
     duration: {
       days: 90, // Quarterly billing for custom plans
@@ -215,41 +222,46 @@ const PLAN_FEATURES = {
       renewalType: 'manual',
       customizable: true
     },
-    // Usage limits (-1 = unlimited)
+    // Usage limits (-1 = unlimited, but billed per use)
+    // This plan is for brands/special accounts with pay-per-use billing
     limits: {
-      roastsPerMonth: -1, // Unlimited
-      monthlyResponsesLimit: -1, // Unlimited
-      monthlyAnalysisLimit: -1, // Unlimited
-      commentsPerMonth: -1, // Unlimited
+      roastsPerMonth: -1, // Unlimited (billed per use)
+      monthlyResponsesLimit: -1, // Unlimited (billed per use)
+      monthlyAnalysisLimit: -1, // Unlimited (billed per use)
+      commentsPerMonth: -1, // Unlimited (billed per use)
       platformIntegrations: 2, // 2 integrations per social network as per business policy
       maxPlatforms: -1, // Unlimited
       integrationsLimit: -1 // Unlimited
     },
-    // Feature flags
+    // Feature flags - ONLY Custom Tones, Shield, and Style Profile
+    // This is NOT a standard plan - applied ad-hoc to specific users/brands
     features: {
-      basicSupport: true,
-      prioritySupport: true,
-      advancedAnalytics: true,
-      teamCollaboration: true,
-      customTones: true,
+      basicSupport: false,
+      prioritySupport: false,
+      advancedAnalytics: false,
+      teamCollaboration: false,
+      customTones: true, // ✅ Only this
       apiAccess: false,
-      shield: true,
-      styleProfile: true,
-      customIntegrations: true,
-      dedicatedSupport: true,
+      shield: true, // ✅ Only this
+      styleProfile: true, // ✅ Only this
+      customIntegrations: false,
+      dedicatedSupport: false,
       shieldEnabled: true,
-      customPrompts: true,
-      analyticsEnabled: true,
-      embeddedJudge: true
+      customPrompts: false,
+      analyticsEnabled: false,
+      embeddedJudge: false
     },
-    // Additional limits (-1 = unlimited)
+    // Additional limits (-1 = unlimited, but billed per use)
     tokens: {
-      monthlyTokensLimit: -1, // Unlimited
-      dailyApiCallsLimit: -1 // Unlimited
+      monthlyTokensLimit: -1, // Unlimited (billed per use)
+      dailyApiCallsLimit: -1 // Unlimited (billed per use)
     },
     // AI model configuration
     aiModel: 'gpt-5.1',
-    enterprise: true
+    enterprise: true,
+    // This plan is NOT standard - applied ad-hoc to brands/special accounts
+    // Billing is pay-per-use, not subscription-based
+    adHoc: true
   }
 };
 
