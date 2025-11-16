@@ -213,7 +213,7 @@ export default function PlanPicker() {
                     <Button
                       onClick={() => handleSelectPlan(plan.id)}
                       disabled={isCurrentPlan || selecting === plan.id}
-                      className={`w-full ${isCreatorPlus ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                      className={`w-full ${isPlus ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
                       variant={isCurrentPlan ? 'outline' : 'default'}
                     >
                       {selecting === plan.id ? (

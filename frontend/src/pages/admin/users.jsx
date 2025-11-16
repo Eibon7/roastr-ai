@@ -826,7 +826,6 @@ const AdminUsersPage = () => {
                   </span> a{' '}
                   <span className="font-semibold">
                     {getPlanDisplayName(planChangeModal.newPlan)}
-                  </span>
                   </span>?
                 </p>
               </div>

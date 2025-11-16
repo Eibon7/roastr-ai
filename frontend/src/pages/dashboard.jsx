@@ -288,7 +288,7 @@ export default function Dashboard() {
     const maxPerPlatform = TIER_MAX_CONNECTIONS_PER_PLATFORM[tier] ?? 1; // Fallback for unknown tiers
     
     // Check if any platform is at limit (per-platform enforcement)
-    const platformsAtLimit = Object.keys(PLATFORMS).filter(platform => {
+    const platformsAtLimit = allPlatforms.filter(platform => {
       const platformAccounts = getConnectedAccountsForPlatform(platform);
       return platformAccounts.length >= maxPerPlatform;
     });
