@@ -27,15 +27,10 @@ describe('PageLayoutContext', () => {
 
   describe('usePageLayout', () => {
     it('throws error when used outside PageLayoutProvider', () => {
-      const TestComponent = () => {
-        usePageLayout();
-        return null;
-      };
-
       // Suppress console.error for this test
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       
-      expect(() => render(<TestComponent />)).toThrow(
+      expect(() => renderHook(() => usePageLayout())).toThrow(
         'usePageLayout debe usarse dentro de PageLayoutProvider'
       );
 
