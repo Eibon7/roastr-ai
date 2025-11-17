@@ -24,7 +24,7 @@
 const express = require('express');
 const router = express.Router();
 const SponsorService = require('../services/sponsorService');
-const authenticateToken = require('../middleware/authenticateToken');
+const { authenticateToken } = require('../middleware/auth');
 const requirePlan = require('../middleware/requirePlan');
 const CostControl = require('../services/costControl');
 const { logger } = require('../utils/logger');
