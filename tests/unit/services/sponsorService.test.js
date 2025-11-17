@@ -114,7 +114,8 @@ describe('SponsorService', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('sponsors');
       // Verify insert was called (service adds defaults like active, priority)
       expect(mockSupabase.insert).toHaveBeenCalled();
-      const insertCall = mockSupabase.insert.mock.calls[0][0];
+      // Supabase insert receives an array of objects
+      const insertCall = mockSupabase.insert.mock.calls[0][0][0];
       expect(insertCall.user_id).toBe(userId);
       expect(insertCall.name).toBe('Nike');
     });
@@ -324,7 +325,7 @@ describe('SponsorService', () => {
       global.fetch.mockResolvedValue({
         ok: true,
         status: 200,
-        text: jest.fn().mockResolvedValue(\`
+        text: jest.fn().mockResolvedValue(`
           <html>
             <head><title>Nike - Just Do It</title></head>
             <body>
@@ -332,7 +333,7 @@ describe('SponsorService', () => {
               <p>Leading sportswear brand for athletes worldwide</p>
             </body>
           </html>
-        \`)
+        `)
       });
 
       // Mock OpenAI completion
