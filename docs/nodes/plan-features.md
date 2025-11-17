@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-28
+**Last Updated:** 2025-11-17
 **Coverage:** 65%
 **Coverage Source:** auto
-**Related PRs:** #499, #542
+**Related PRs:** #499, #542, #865 (Issue #859 - Brand Safety for Sponsors)
 
 ## Dependencies
 
@@ -29,6 +29,7 @@ Plan Features manages subscription-based feature gating and usage limits across 
 | **AI Model** | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 |
 | **RQC (Quality Control)** | ❌ | ❌ | ✅ | ✅ Advanced |
 | **Shield (Moderation)** | ✅ Basic | ✅ Basic | ✅ Full | ✅ Advanced |
+| **Brand Safety (Sponsors)** | ❌ | ❌ | ❌ | ✅ |
 | **Custom Styles** | ❌ | ❌ | ❌ | ✅ |
 | **Persona Fields** | 1 field | 1 field | 3 fields | 3 fields |
 | **Priority Support** | ❌ | ❌ | ✅ | ✅ 24/7 |
@@ -79,7 +80,7 @@ CREATE TABLE plan_limits (
 
 -- Plus Plan
 ('plus', 'Plus', 'Premium tier', 5000, 5000, 100000, 10, TRUE, TRUE,
- '["advanced_rqc", "shield_advanced", "custom_styles", "24_7_support"]')
+ '["advanced_rqc", "shield_advanced", "custom_styles", "24_7_support", "brand_safety", "sponsor_protection"]')
 ```
 
 ## Feature Gating
@@ -299,6 +300,100 @@ describe('Plan Features', () => {
 | `monthly_limit_exceeded` | Usage limit reached | Wait for reset or upgrade plan |
 | `invalid_plan` | Plan ID not found | Use valid plan ID from plan_limits |
 | `downgrade_not_allowed` | Attempt to downgrade with active features | Disable features first |
+
+## Brand Safety (Plus Plan Only) - Issue #859
+
+**Features:** `brand_safety`, `sponsor_protection`
+
+**Access:** Plus plan required (€50/mo)
+
+### Overview
+
+Brand Safety allows Plus plan users to configure sponsors/brands to protect from offensive comments. When toxic comments mention configured sponsors, automated actions are triggered with configurable severity levels and tone overrides.
+
+### Feature Capabilities
+
+| Capability | Description |
+|------------|-------------|
+| **Sponsor Configuration** | CRUD operations for sponsors (name, URL, tags, severity, tone, priority, actions) |
+| **Tag Extraction** | OpenAI-powered tag extraction from sponsor URLs (2 cents/extraction, rate limited 5/min) |
+| **Sponsor Detection** | Real-time detection of sponsor mentions (exact match, tag match, priority-based) |
+| **Shield Integration** | Zero tolerance blocking, dynamic threshold adjustment based on severity |
+| **Defensive Roasts** | Tone overrides (professional, light_humor, aggressive_irony) for sponsor-defending roasts |
+| **API Access** | REST API for sponsor management (`/api/sponsors`) |
+
+### API Endpoints
+
+- `POST /api/sponsors` - Create sponsor
+- `GET /api/sponsors` - List sponsors (sorted by priority)
+- `GET /api/sponsors/:id` - Get single sponsor
+- `PUT /api/sponsors/:id` - Update sponsor
+- `DELETE /api/sponsors/:id` - Delete sponsor
+- `POST /api/sponsors/extract-tags` - Extract tags from URL (rate limited)
+
+**Authentication:** JWT required  
+**Authorization:** Plus plan check via `requirePlan('plus', { feature: 'brand_safety' })`
+
+### Gating Implementation
+
+```javascript
+// Middleware example
+const requirePlan = require('./middleware/requirePlan');
+
+app.use('/api/sponsors', requirePlan('plus', { feature: 'brand_safety' }));
+```
+
+**Response when plan insufficient:**
+```json
+{
+  "error": "PLAN_UPGRADE_REQUIRED",
+  "message": "Plus plan required for Brand Safety",
+  "required_plan": "plus",
+  "current_plan": "pro",
+  "upgrade_url": "/billing/upgrade"
+}
+```
+
+### Cost Tracking
+
+**Operation:** `extract_sponsor_tags`  
+**Cost:** 2 cents per extraction  
+**Resource Type:** `ai_operations`  
+**Rate Limit:** 5 requests/min per user
+
+```javascript
+await costControl.recordUsage(userId, 'extract_sponsor_tags');
+```
+
+### Database Schema
+
+**Table:** `sponsors` (see migration `027_sponsors.sql`)
+
+```sql
+CREATE TABLE sponsors (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  name VARCHAR(255) NOT NULL,
+  url TEXT,
+  tags TEXT[],
+  severity VARCHAR(50) DEFAULT 'medium',  -- low, medium, high, zero_tolerance
+  tone VARCHAR(50) DEFAULT 'normal',      -- normal, professional, light_humor, aggressive_irony
+  priority INTEGER DEFAULT 3 CHECK (priority BETWEEN 1 AND 5),
+  actions TEXT[],                         -- hide_comment, block_user, def_roast, etc.
+  active BOOLEAN DEFAULT TRUE,
+  UNIQUE(user_id, name)
+);
+```
+
+**RLS Policy:** Multi-tenant isolation by `user_id`
+
+### Related Nodes
+
+- **shield** - Sponsor protection rules and SHIELD integration
+- **roast** - Defensive roast generation with tone overrides
+- **cost-control** - Tag extraction cost tracking
+
+---
 
 ## Future Enhancements
 
