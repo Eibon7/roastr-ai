@@ -65,7 +65,7 @@ function App() {
               <Route path="accounts" element={<AccountsPage />} />
               <Route path="profile" element={<Settings />} /> {/* Profile redirects to Settings for now */}
               <Route path="shop" element={<Shop />} />
-              <Route path="analytics" element={<Analytics />} />
+              <Route path="dashboard/analytics" element={<Analytics />} />
             </Route>
             
             {/* Admin routes with AdminLayout - require admin permissions */}

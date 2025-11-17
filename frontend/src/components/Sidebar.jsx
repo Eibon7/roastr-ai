@@ -36,7 +36,7 @@ const conditionalNavItems = [
   },
   {
     name: 'Analytics',
-    path: '/analytics',
+    path: '/dashboard/analytics',
     icon: BarChart3,
     requiresFlag: 'ENABLE_ANALYTICS_UI'
   }

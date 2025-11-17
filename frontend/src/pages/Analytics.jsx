@@ -27,6 +27,7 @@ import {
 } from '../components/ui/select';
 import { allPlatforms, getPlatformName } from '../config/platforms';
 import { usePageLayoutConfig } from '../components/roastr/PageLayoutContext';
+import { toast } from 'sonner';
 
 ChartJS.register(
   CategoryScale,
@@ -224,8 +225,13 @@ export default function Analytics() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      toast.success('✅ Exportación descargada correctamente', {
+        description: `Archivo ${format.toUpperCase()} generado exitosamente`
+      });
     } catch (err) {
-      alert(err.message || 'No se pudo exportar los datos'); // eslint-disable-line no-alert
+      toast.error('Error al exportar datos', {
+        description: err.message || 'No se pudo exportar los datos'
+      });
     } finally {
       setExporting(false);
     }
@@ -411,10 +417,16 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="h-[360px]">
             {charts?.timeline?.labels?.length ? (
-              <Line data={charts.timeline} options={timelineOptions} />
+              <Line 
+                data={charts.timeline} 
+                options={timelineOptions}
+                aria-label="Gráfico de línea mostrando timeline de roasts, análisis y acciones Shield a lo largo del tiempo"
+              />
             ) : (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                No hay datos para el rango seleccionado.
+              <div className="h-full flex flex-col items-center justify-center text-sm text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mb-2 opacity-50" />
+                <p>No hay datos para el rango seleccionado.</p>
+                <p className="text-xs mt-1">Intenta seleccionar un rango diferente.</p>
               </div>
             )}
           </CardContent>
@@ -428,10 +440,17 @@ export default function Analytics() {
           <CardContent>
             {charts?.platform?.labels?.length ? (
               <div className="h-[250px]">
-                <Doughnut data={charts.platform} options={doughnutOptions} />
+                <Doughnut 
+                  data={charts.platform} 
+                  options={doughnutOptions}
+                  aria-label="Gráfico de dona mostrando distribución de actividad por plataforma social"
+                />
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Sin datos suficientes para graficar.</p>
+              <div className="h-[250px] flex flex-col items-center justify-center text-sm text-muted-foreground">
+                <BarChart3 className="h-8 w-8 mb-2 opacity-50" />
+                <p>Sin datos suficientes para graficar.</p>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -542,10 +561,17 @@ export default function Analytics() {
           <CardContent>
             {charts?.credits?.labels?.length ? (
               <div className="h-[280px]">
-                <Bar data={charts.credits} options={barOptions} />
+                <Bar 
+                  data={charts.credits} 
+                  options={barOptions}
+                  aria-label="Gráfico de barras mostrando uso de créditos por período de tiempo"
+                />
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Sin datos disponibles.</p>
+              <div className="h-[250px] flex flex-col items-center justify-center text-sm text-muted-foreground">
+                <Wallet className="h-8 w-8 mb-2 opacity-50" />
+                <p>Sin datos disponibles.</p>
+              </div>
             )}
           </CardContent>
         </Card>
