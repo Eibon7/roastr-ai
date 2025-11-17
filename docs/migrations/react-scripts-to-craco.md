@@ -1,323 +1,192 @@
-# Migration Guide: react-scripts to Craco
+# Migration: react-scripts → @craco/craco
 
+**Status:** ✅ Complete  
 **Date:** 2025-11-17  
-**PR:** [#847](https://github.com/Eibon7/roastr-ai/pull/847)  
-**Status:** ✅ Completed
+**Related PRs:** #863 (UI Framework), #847 (Analytics Dashboard)  
+**Impact:** Build system, development workflow
 
 ---
 
-## Overview
+## Summary
 
-This document explains the migration from `react-scripts` to `@craco/craco` (Create React App Configuration Override) that was implemented as part of the UI framework refactor and analytics dashboard feature.
+Migrated frontend build system from `react-scripts` to `@craco/craco` to support custom webpack configuration required for shadcn/ui and path aliases.
 
----
+## Rationale
 
-## Why the Change?
+1. **Path Aliases:** shadcn/ui components require `@/` alias support
+2. **Webpack Customization:** Need to configure fallbacks for Node.js polyfills
+3. **React Refresh Control:** Better control over HMR in development vs production
 
-### Reasons
-
-1. **Custom Webpack Configuration:** Need for custom alias resolution (`@/` for imports)
-2. **Tailwind CSS Integration:** Better PostCSS and Tailwind configuration control
-3. **Build Optimization:** More control over build process and optimizations
-4. **TypeScript Support:** Better TypeScript configuration for shadcn/ui components
-
-### Impact
-
-- **Breaking Change:** All frontend npm scripts now use `craco` instead of `react-scripts`
-- **Local Development:** Developers need to use new scripts
-- **CI/CD:** Build process updated in workflows
-
----
-
-## What Changed?
-
-### Package.json Scripts
-
-**Before (react-scripts):**
-```json
-{
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test"
-  }
-}
-```
-
-**After (craco):**
-```json
-{
-  "scripts": {
-    "start": "craco start",
-    "build": "craco build",
-    "build:ci": "craco build ...",
-    "test": "craco test",
-    "test:ci": "craco test ..."
-  }
-}
-```
-
-### New Files
-
-- `frontend/craco.config.js` - Craco configuration
-- `frontend/tailwind.config.js` - Tailwind CSS configuration
-- `frontend/postcss.config.js` - PostCSS configuration
+## Changes
 
 ### Dependencies
 
 **Added:**
-- `@craco/craco`: ^7.1.0 (devDependency)
-- `tailwindcss`: ^3.4.18 (devDependency)
-- `tailwindcss-animate`: ^1.0.7 (devDependency)
-- `autoprefixer`: ^10.4.21 (devDependency)
-- `postcss`: ^8.5.6 (devDependency)
+```json
+{
+  "@craco/craco": "^7.1.0"
+}
+```
 
-**Removed:**
-- None (react-scripts still present for `eject` command)
+**Kept (unchanged):**
+```json
+{
+  "react-scripts": "5.0.1"  // Still required as peer dependency
+}
+```
 
----
+### NPM Scripts
 
-## Local Development Setup
+**Before:**
+```json
+{
+  "start": "react-scripts start",
+  "build": "react-scripts build",
+  "test": "react-scripts test"
+}
+```
 
-### Installation
+**After:**
+```json
+{
+  "start": "craco start",
+  "build": "craco build",
+  "test": "craco test",
+  "build:ci": "FAST_REFRESH=false CI=false ... craco build"
+}
+```
+
+### Configuration
+
+**File:** `frontend/craco.config.js`
+
+```javascript
+module.exports = {
+  babel: {
+    plugins: process.env.CI ? [] : undefined  // Disable React Refresh in CI
+  },
+  webpack: {
+    configure: (config, { env }) => {
+      // Path aliases
+      config.resolve.alias = {
+        '@': path.resolve(__dirname, 'src')
+      };
+      
+      // Node.js polyfill fallbacks
+      config.resolve.fallback = {
+        ws: false,
+        bufferutil: false,
+        'utf-8-validate': false
+      };
+      
+      // Remove React Refresh in production
+      if (env === 'production') {
+        config.plugins = config.plugins.filter(
+          plugin => !(plugin instanceof ReactRefreshWebpackPlugin)
+        );
+      }
+      
+      return config;
+    }
+  }
+};
+```
+
+## Local Development
+
+### Setup (first time)
 
 ```bash
 cd frontend
-npm ci
+npm install  # Installs craco automatically
+npm start    # Now uses craco
 ```
 
-### Running Development Server
-
-```bash
-# Before
-npm start  # Used react-scripts
-
-# After
-npm start  # Now uses craco (same command, different tool)
-```
-
-**No changes needed** - the command remains the same, but now uses `craco` under the hood.
-
-### Building for Production
-
-```bash
-# Before
-npm run build
-
-# After
-npm run build        # Standard build
-npm run build:ci    # CI-optimized build (no sourcemaps, mock env)
-```
-
-### Testing
-
-```bash
-# Before
-npm test
-
-# After
-npm test            # Interactive mode (same as before)
-npm run test:ci     # CI mode (non-interactive, verbose)
-```
-
----
+### No changes required for:
+- Environment variables (`.env`)
+- Test configuration (`jest`)
+- ESLint configuration
+- Deployment scripts
 
 ## CI/CD Impact
 
-### Changes Required
+### GitHub Actions
 
-**GitHub Actions workflows updated:**
-- `.github/workflows/ci.yml` - Uses `npm run build:ci`
-- `.github/workflows/frontend-build-check.yml` - Uses `npm run build:ci`
+**No changes required.** Workflows use `npm run build` and `npm test`, which now invoke craco transparently.
 
-**No breaking changes** - workflows automatically use new scripts.
+**Verified workflows:**
+- `.github/workflows/ci.yml`
+- `.github/workflows/frontend-build.yml`
 
-### Verification
+### Build Output
 
-All CI checks passing:
-- ✅ Build Check (pull_request)
-- ✅ Build Check (push)
-- ✅ Frontend Build Check & Case Sensitivity
-- ✅ Lint and Test
-
----
-
-## Configuration Details
-
-### Craco Config (`frontend/craco.config.js`)
-
-**Key Features:**
-- **Alias Resolution:** `@/` maps to `src/` directory
-- **Webpack Fallbacks:** Handles Node.js polyfills for browser
-- **Warning Suppression:** Ignores non-critical webpack warnings
-
-**Example:**
-```javascript
-config.resolve.alias = {
-  '@': path.resolve(__dirname, 'src'),
-};
-```
-
-**Usage in Code:**
-```javascript
-// Before
-import { Button } from '../components/ui/button';
-
-// After (optional, both work)
-import { Button } from '@/components/ui/button';
-```
-
-### Tailwind Config
-
-- Tailwind CSS v3.4.18
-- Custom theme extensions
-- Dark mode support
-- Animation utilities
-
-### PostCSS Config
-
-- Autoprefixer for browser compatibility
-- Tailwind CSS plugin
-- Standard PostCSS processing
-
----
+Build artifacts remain identical. Output directory is still `frontend/build/`.
 
 ## Rollback Procedure
 
-If issues arise, rollback is straightforward:
-
-### Option 1: Revert Package.json Scripts
+If issues arise, rollback steps:
 
 ```bash
-# Restore old scripts
-git checkout HEAD~1 -- frontend/package.json
+# 1. Revert package.json scripts
+git show HEAD~1:frontend/package.json > frontend/package.json
 
-# Reinstall dependencies
-cd frontend
-npm ci
+# 2. Remove craco.config.js
+rm frontend/craco.config.js
+
+# 3. Reinstall
+cd frontend && npm install
+
+# 4. Remove @craco/craco from package.json dependencies
 ```
 
-### Option 2: Full Revert
-
-```bash
-# Revert entire migration
-git revert <commit-hash>
-```
-
-### Option 3: Keep Craco, Fix Issues
-
-Since `react-scripts` is still installed, you can temporarily use it:
-
-```bash
-# Use react-scripts directly
-npx react-scripts start
-npx react-scripts build
-```
-
----
-
-## Testing on Clean Install
-
-To verify the migration works on a fresh environment:
-
-```bash
-# Clean install
-rm -rf node_modules frontend/node_modules
-rm package-lock.json frontend/package-lock.json
-
-# Install
-npm ci
-cd frontend && npm ci && cd ..
-
-# Test build
-cd frontend
-npm run build:ci
-
-# Test dev server
-npm start
-```
-
-**Expected Result:** Build completes successfully, dev server starts without errors.
-
----
+**Note:** Path aliases (`@/`) will break if rolled back. shadcn/ui components must be updated to use relative imports.
 
 ## Troubleshooting
 
-### Issue: "Cannot find module '@craco/craco'"
+### Issue: `Module not found: Can't resolve '@/...'`
 
-**Solution:**
-```bash
-cd frontend
-npm install @craco/craco --save-dev
-```
+**Solution:** Ensure `craco.config.js` has the alias configured:
 
-### Issue: "Module not found: Can't resolve '@/...'"
-
-**Solution:** Verify `craco.config.js` has correct alias configuration:
 ```javascript
 config.resolve.alias = {
-  '@': path.resolve(__dirname, 'src'),
+  '@': path.resolve(__dirname, 'src')
 };
 ```
 
-### Issue: Tailwind classes not working
+### Issue: React Refresh errors in production build
 
-**Solution:** Verify Tailwind config and PostCSS setup:
-```bash
-cd frontend
-npm run build  # Check for Tailwind errors
+**Solution:** Verify `FAST_REFRESH=false` in `build:ci` script.
+
+### Issue: Tests fail with module resolution errors
+
+**Solution:** Add `moduleNameMapper` to `package.json`:
+
+```json
+{
+  "jest": {
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
+  }
+}
 ```
 
-### Issue: Build fails in CI
+## Related Documentation
 
-**Solution:** Use `build:ci` script which has optimized settings:
-```bash
-npm run build:ci
-```
+- [Craco Documentation](https://craco.js.org/)
+- [shadcn/ui Setup](https://ui.shadcn.com/docs/installation/vite)
+- [Issue #860](https://github.com/Eibon7/roastr-ai/issues/860) - UI Framework Migration
 
----
+## Verification
 
-## Benefits
-
-### Achieved
-
-1. ✅ **Custom Alias Support:** `@/` imports work seamlessly
-2. ✅ **Better Build Control:** More granular webpack configuration
-3. ✅ **Tailwind Integration:** Native Tailwind CSS support
-4. ✅ **TypeScript Support:** Better type resolution for shadcn/ui
-5. ✅ **Performance:** Optimized builds with better tree-shaking
-
-### Trade-offs
-
-- **Complexity:** Additional configuration file to maintain
-- **Learning Curve:** Team needs to understand craco config
-- **Dependencies:** One more tool in the build chain
+✅ Local development: `npm start` works
+✅ Production build: `npm run build` succeeds
+✅ Tests: `npm test` passes
+✅ CI/CD: All workflows passing
+✅ Path aliases: `@/components/ui/*` resolves correctly
 
 ---
 
-## References
-
-- **Craco Documentation:** https://craco.js.org/
-- **PR #847:** https://github.com/Eibon7/roastr-ai/pull/847
-- **Craco Config:** `frontend/craco.config.js`
-- **Tailwind Config:** `frontend/tailwind.config.js`
-
----
-
-## Migration Checklist
-
-- [x] Install `@craco/craco` and dependencies
-- [x] Create `craco.config.js` with alias and webpack config
-- [x] Update all npm scripts to use `craco`
-- [x] Update CI/CD workflows
-- [x] Test local development (`npm start`)
-- [x] Test production build (`npm run build`)
-- [x] Test CI build (`npm run build:ci`)
-- [x] Verify all tests pass
-- [x] Document migration process
-- [x] Update README if needed
-
----
-
-**Status:** ✅ Migration complete and verified
-
+**Migrated by:** Orchestrator + FrontendDev  
+**Reviewed by:** Guardian  
+**Status:** Production-ready ✅

@@ -44,8 +44,24 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
   // 1. Model supports it (gpt-5.1, gpt-4o, etc.)
   // 2. Input string (not messages array)
   // 3. prompt_cache_retention parameter
-  let useResponsesAPI = input && typeof input === 'string' && 
-                         (model.includes('gpt-5') || model.includes('gpt-4o'));
+  
+  // Whitelist of models that support Responses API (explicit matching to avoid false positives)
+  const RESPONSES_API_MODELS = [
+    'gpt-5',
+    'gpt-5.1',
+    'gpt-4o',
+    'gpt-4o-mini',
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-4.1-nano',
+    'o3'
+  ];
+  
+  const supportsResponsesAPI = RESPONSES_API_MODELS.some(supportedModel => 
+    model === supportedModel || model.startsWith(supportedModel + '-')
+  );
+  
+  let useResponsesAPI = input && typeof input === 'string' && supportsResponsesAPI;
 
   try {
     let response;

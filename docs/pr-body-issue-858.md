@@ -259,7 +259,7 @@ npm test -- tests/unit/services/aiUsageLogger.test.js
 
 ## ✅ Acceptance Criteria
 
-- [x] **AC1:** Los workers de roasts y Shield usan la Responses API con `model: "gpt-5.1"` y `prompt_cache_retention: "24h"`
+- [x] **AC1:** Los workers de roasts usan la Responses API con `model: "gpt-5.1"` y `prompt_cache_retention: "24h"` (Shield será migrado en un follow-up)
 - [x] **AC2:** Los prompts están centralizados en módulos reutilizables y estructurados en bloques lógicos (global, usuario, dinámico)
 - [x] **AC3:** No hay regresiones funcionales (mismas respuestas en pruebas de ejemplo antes/después del cambio, salvo variación natural menor del modelo)
 - [x] **AC4:** Existen logs de tokens usados por request (input, output, cache) accesibles para análisis
