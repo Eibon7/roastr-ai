@@ -1,78 +1,69 @@
--- Migration: Brand Safety - Sponsors Table for Plus Plan
--- Issue #859: https://github.com/roastr-ai/roastr-ai/issues/859
--- Author: Backend Dev
--- Date: 2025-11-17
---
--- Purpose:
--- Creates the `sponsors` table for Brand Safety feature (Plus plan).
--- Allows Plus users to configure sponsors/brands to protect from negative comments.
---
--- Features:
--- - User-specific sponsors with RLS isolation
--- - Configurable severity levels and response tones
--- - Tag-based detection for flexible matching
--- - Priority system for multiple sponsor matches
--- - Customizable actions (Shield, defensive roast, etc.)
+-- Brand Safety: Sponsors table (Issue #859)
+-- Allows Plus plan users to configure sponsors/brands to protect
+-- from offensive comments with automated moderation actions
 
--- Create sponsors table
 CREATE TABLE IF NOT EXISTS sponsors (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   name VARCHAR(255) NOT NULL,
   url TEXT,
-  tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+  tags TEXT[],
   active BOOLEAN DEFAULT TRUE NOT NULL,
-  severity VARCHAR(50) DEFAULT 'medium' NOT NULL 
+  
+  -- Severity configuration
+  -- low: Monitoring only
+  -- medium: Moderate protection (-0.1 threshold adjustment)
+  -- high: Strong protection (-0.2 threshold adjustment)
+  -- zero_tolerance: Immediate block + hide
+  severity VARCHAR(50) DEFAULT 'medium' NOT NULL
     CHECK (severity IN ('low', 'medium', 'high', 'zero_tolerance')),
-  tone VARCHAR(50) DEFAULT 'normal' NOT NULL 
+  
+  -- Tone override for roast generation
+  -- normal: User's default tone
+  -- professional: Measured, no aggressive humor
+  -- light_humor: Lighthearted, desenfadado
+  -- aggressive_irony: Marked irony, direct sarcasm
+  tone VARCHAR(50) DEFAULT 'normal' NOT NULL
     CHECK (tone IN ('normal', 'professional', 'light_humor', 'aggressive_irony')),
-  priority INTEGER DEFAULT 3 NOT NULL 
+  
+  -- Priority for conflict resolution (1=highest, 5=lowest)
+  priority INTEGER DEFAULT 3 NOT NULL
     CHECK (priority BETWEEN 1 AND 5),
+  
+  -- Actions to take when sponsor is mentioned in toxic comment
+  -- hide_comment, block_user, def_roast, agg_roast, report, sponsor_protection
   actions TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+  
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  CONSTRAINT unique_user_sponsor_name UNIQUE(user_id, name)
+  
+  -- Unique constraint: one sponsor name per user
+  UNIQUE(user_id, name)
 );
 
--- Enable Row Level Security
+-- RLS Policy for sponsors table (multi-tenant isolation)
 ALTER TABLE sponsors ENABLE ROW LEVEL SECURITY;
 
--- RLS Policy: Users can only access their own sponsors
 CREATE POLICY user_sponsors_isolation ON sponsors
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
--- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_sponsors_user_id_active 
-  ON sponsors(user_id, active);
+-- Indexes for efficient lookup
+CREATE INDEX idx_sponsors_user_id_active ON sponsors(user_id, active);
+CREATE INDEX idx_sponsors_priority ON sponsors(priority);
 
-CREATE INDEX IF NOT EXISTS idx_sponsors_priority 
-  ON sponsors(priority) WHERE active = TRUE;
-
--- Trigger for updated_at
-CREATE OR REPLACE FUNCTION update_sponsors_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_sponsors_updated_at
+-- Trigger for automatic updated_at timestamp
+CREATE TRIGGER update_sponsors_updated_at
   BEFORE UPDATE ON sponsors
   FOR EACH ROW
-  EXECUTE FUNCTION update_sponsors_updated_at();
+  EXECUTE FUNCTION update_updated_at_column();
 
--- Comments for documentation
-COMMENT ON TABLE sponsors IS 'Brand Safety: User-configured sponsors/brands to protect (Plus plan only)';
-COMMENT ON COLUMN sponsors.user_id IS 'Owner of the sponsor configuration';
-COMMENT ON COLUMN sponsors.name IS 'Sponsor/brand name (e.g., "Nike")';
-COMMENT ON COLUMN sponsors.url IS 'Optional sponsor website for tag extraction';
-COMMENT ON COLUMN sponsors.tags IS 'Keywords for detection (e.g., ["sportswear", "sneakers"])';
-COMMENT ON COLUMN sponsors.active IS 'Whether sponsor protection is active';
+-- Grant permissions
+GRANT ALL ON sponsors TO authenticated;
+
+COMMENT ON TABLE sponsors IS 'Brand Safety configuration for Plan Plus users (Issue #859)';
 COMMENT ON COLUMN sponsors.severity IS 'Protection level: low, medium, high, zero_tolerance';
 COMMENT ON COLUMN sponsors.tone IS 'Roast tone override: normal, professional, light_humor, aggressive_irony';
-COMMENT ON COLUMN sponsors.priority IS 'Match priority (1=highest, 5=lowest)';
-COMMENT ON COLUMN sponsors.actions IS 'Actions to apply: hide_comment, block_user, def_roast, agg_roast, report, sponsor_protection';
-
+COMMENT ON COLUMN sponsors.priority IS 'Conflict resolution priority (1=highest, 5=lowest)';
+COMMENT ON COLUMN sponsors.actions IS 'Actions: hide_comment, block_user, def_roast, agg_roast, report, sponsor_protection';

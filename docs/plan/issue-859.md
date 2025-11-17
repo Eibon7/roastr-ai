@@ -1,415 +1,348 @@
-# Plan de Implementación: Brand Safety para Sponsors (Plan Plus)
+# Plan: Brand Safety para Sponsors (Plan Plus) - Issue #859
 
-**Issue:** #859
-**Plan:** Plus
-**Prioridad:** P1
-**Agente:** TaskAssessor → Backend Dev → Test Engineer → Guardian
-
----
-
-## Estado Actual
-
-**Contexto:**
-El plan Plus actualmente ofrece límites superiores (5,000 roasts/mes, 100,000 análisis/mes, 10 plataformas) pero carece de una feature distintiva de valor agregado para justificar el precio premium (€50/mo vs €15/mo del Pro).
-
-**Problema:**
-Los creadores de contenido con sponsors/marcas necesitan proteger su reputación y relaciones comerciales cuando comentarios ofensivos atacan a sus patrocinadores.
-
-**Oportunidad:**
-Brand Safety es una feature enterprise-level que resuelve un pain point real para creators monetizados y justifica el upgrade a Plus.
+**Priority:** P1  
+**Complexity:** High (≥3 AC)  
+**Plan Plus Feature:** Yes
 
 ---
 
-## Objetivo
+## 🎯 Objetivo
 
-Implementar **Brand Safety para Sponsors (Plan Plus)** que permita a usuarios:
-1. Configurar sponsors/marcas a proteger
-2. Detectar automáticamente menciones negativas de sponsors en comentarios
-3. Aplicar acciones protectivas (Shield) o defensivas (Roast)
-4. Ajustar el tono de respuesta según la severidad y preferencias del sponsor
+Implementar sistema de Brand Safety que permite a usuarios del plan Plus configurar sponsors/marcas a proteger y aplicar acciones automáticas cuando comentarios ofensivos los mencionen.
 
 ---
 
-## Acceptance Criteria
+## 📋 Acceptance Criteria
 
-### AC1: Database Schema ✅
-- [ ] Tabla `sponsors` con RLS policies
-- [ ] Campos: `user_id`, `name`, `url`, `tags[]`, `severity`, `tone`, `priority`, `actions[]`, `active`
-- [ ] Relación con `users` table
-- [ ] Índices optimizados
+1. **Sponsor Configuration (CRUD)**
+   - Crear, listar, actualizar y eliminar sponsors
+   - Configurar severity (low, medium, high, zero_tolerance)
+   - Configurar tone override (normal, professional, light_humor, aggressive_irony)
+   - Configurar actions (hide, ban, def_roast, agg_roast, report)
+   - Asignar priority (1=high, 5=low) para resolver conflictos
 
-### AC2: API Endpoints ✅
-- [ ] POST /api/sponsors (create)
-- [ ] GET /api/sponsors (list)
-- [ ] GET /api/sponsors/:id (get)
-- [ ] PUT /api/sponsors/:id (update)
-- [ ] DELETE /api/sponsors/:id (delete)
-- [ ] POST /api/sponsors/extract-tags (AI tag extraction)
-- [ ] Plus plan gating en todas las rutas
+2. **Automated Tag Extraction**
+   - Extraer tags relevantes desde URL del sponsor usando OpenAI GPT-4o
+   - Rate limiting: 5 requests/min
+   - Cost tracking: 2 cents per extraction
 
-### AC3: Tag Extraction ✅
-- [ ] Integración con OpenAI para extraer tags de URLs
-- [ ] Scraping de HTML + limpieza
-- [ ] Generación automática de 3-6 tags relevantes
-- [ ] Rate limiting (5 req/min)
-- [ ] Cost tracking (2 cents/operation)
+3. **Real-time Sponsor Detection**
+   - Detectar menciones de sponsors en comentarios (exact match, tag match)
+   - Integración no-bloqueante en toxicity analysis flow
+   - Priority-based matching (highest priority sponsor wins)
 
-### AC4: Shield Integration ✅
-- [ ] Detección de sponsors en AnalyzeToxicityWorker
-- [ ] RULE 0.5 en AnalysisDecisionEngine
-- [ ] Zero-tolerance: bloqueo inmediato
-- [ ] Dynamic threshold adjustment (low/medium/high)
-- [ ] Metadata `brand_safety` en análisis
+4. **Shield Integration**
+   - Zero tolerance sponsors → immediate block + hide
+   - Other severities → dynamic threshold adjustment
+   - Pass brand_safety metadata to SHIELD decisions
 
-### AC5: Roast Integration ✅
-- [ ] Sponsor context en prompt (cacheable Block B)
-- [ ] Sponsor match específico (dynamic Block C)
-- [ ] Tone mapping (professional/light_humor/aggressive_irony/normal)
-- [ ] Defensive roast generation
+5. **Roast Integration**
+   - Generate defensive roasts con tone override
+   - Incluir sponsor context en prompt cacheables
+   - Pass brand_safety metadata to ROAST decisions
 
-### AC6: Testing ✅
-- [ ] Unit tests (SponsorService): 34 tests
-- [ ] Integration tests (API routes): completo
-- [ ] E2E tests: recomendado para siguiente fase
+6. **API Endpoints**
+   - `POST /api/sponsors` - Create
+   - `GET /api/sponsors` - List
+   - `GET /api/sponsors/:id` - Get single
+   - `PUT /api/sponsors/:id` - Update
+   - `DELETE /api/sponsors/:id` - Delete
+   - `POST /api/sponsors/extract-tags` - Extract tags from URL
 
-### AC7: Documentation ✅
-- [ ] Actualizar `docs/nodes/shield.md`
-- [ ] Actualizar `docs/nodes/roast.md`
-- [ ] Actualizar `docs/nodes/plan-features.md`
+7. **Plan Gating**
+   - Middleware: `requirePlan('plus', { feature: 'brand_safety' })`
+   - Database: RLS policies por user_id
+   - Frontend: Plan upgrade prompts
 
 ---
 
-## Implementación por Fases
+## 🗂️ Estado Actual
+
+### Existente
+- ✅ `requirePlan` middleware (needs Plus plan addition)
+- ✅ Cost Control service (needs new operation type)
+- ✅ AnalyzeToxicityWorker (needs sponsor detection logic)
+- ✅ AnalysisDecisionEngine (needs sponsor rules)
+- ✅ GenerateReplyWorker (needs brand_safety metadata)
+- ✅ RoastPromptBuilder (cacheable blocks A/B/C ready)
+
+### Faltante
+- ❌ `sponsors` table (database/migrations/)
+- ❌ SponsorService (CRUD, tag extraction, detection)
+- ❌ API routes (`/api/sponsors`)
+- ❌ Middleware updates (Plus plan features)
+- ❌ Shield integration (sponsor protection rules)
+- ❌ Roast integration (defensive roasts with tone)
+- ❌ Tests (unit, integration, E2E)
+- ❌ Documentation updates (GDD nodes)
+
+---
+
+## 🔨 Pasos de Implementación
 
 ### FASE 1: Database Schema & Migration ✅
-**Archivos:**
-- `database/migrations/027_sponsors.sql`
-
-**Detalles:**
 ```sql
 CREATE TABLE sponsors (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
   name VARCHAR(255) NOT NULL,
   url TEXT,
   tags TEXT[],
-  active BOOLEAN DEFAULT TRUE NOT NULL,
-  severity VARCHAR(50) DEFAULT 'medium' NOT NULL, -- low, medium, high, zero_tolerance
-  tone VARCHAR(50) DEFAULT 'normal' NOT NULL, -- normal, professional, light_humor, aggressive_irony
-  priority INTEGER DEFAULT 3 NOT NULL, -- 1 (high) to 5 (low)
-  actions TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL, -- hide, ban, def_roast, agg_roast, report
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  severity VARCHAR(50) DEFAULT 'medium',
+  tone VARCHAR(50) DEFAULT 'normal',
+  priority INTEGER DEFAULT 3 CHECK (priority BETWEEN 1 AND 5),
+  actions TEXT[],
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
   UNIQUE(user_id, name)
 );
-
--- RLS Policy
-ALTER TABLE sponsors ENABLE ROW LEVEL SECURITY;
-CREATE POLICY user_sponsors_isolation ON sponsors FOR ALL 
-  USING (user_id = auth.uid()) 
-  WITH CHECK (user_id = auth.uid());
-
--- Index
-CREATE INDEX idx_sponsors_user_id_active ON sponsors(user_id, active);
 ```
+**Files:** `database/migrations/027_sponsors.sql`
 
 ---
 
 ### FASE 2: SponsorService ✅
-**Archivos:**
-- `src/services/sponsorService.js`
+Implementar servicio con:
+- **CRUD operations**: create, get, update, delete
+- **Tag extraction**: `extractTagsFromURL(url)` using OpenAI GPT-4o
+- **Sponsor detection**: `detectSponsorMention(comment, sponsors)` (exact, tag, priority)
+- **URL sanitization**: Security validation
 
-**Métodos:**
-- `createSponsor(userId, sponsorData)` - CRUD create
-- `getSponsors(userId, includeInactive)` - CRUD read
-- `getSponsorById(sponsorId, userId)` - CRUD read single
-- `updateSponsor(sponsorId, userId, updates)` - CRUD update
-- `deleteSponsor(sponsorId, userId)` - CRUD delete
-- `extractTagsFromURL(url)` - OpenAI GPT-4o para tags
-- `detectSponsorMention(commentText, sponsors)` - Exact/tag/semantic match
-- `_sanitizeURL(url)` - Security validation
+**Files:** `src/services/sponsorService.js`
 
-**Dependencias:**
-- `@supabase/supabase-js` (RLS queries)
+**Dependencies:**
+- `@supabase/supabase-js` (database)
 - `openai` (tag extraction)
-- `node-fetch` (HTML scraping)
 
 ---
 
 ### FASE 3: API Endpoints ✅
-**Archivos:**
-- `src/routes/sponsors.js`
+REST API con authentication + plan gating:
+- POST /api/sponsors
+- GET /api/sponsors
+- GET /api/sponsors/:id
+- PUT /api/sponsors/:id
+- DELETE /api/sponsors/:id
+- POST /api/sponsors/extract-tags (rate limited: 5/min)
 
-**Rutas:**
-```javascript
-POST   /api/sponsors              // Create sponsor
-GET    /api/sponsors              // List sponsors
-GET    /api/sponsors/:id          // Get sponsor
-PUT    /api/sponsors/:id          // Update sponsor
-DELETE /api/sponsors/:id          // Delete sponsor
-POST   /api/sponsors/extract-tags // Extract tags from URL
-```
+**Files:** `src/routes/sponsors.js`
 
 **Middleware:**
-- `authenticateToken` - Auth required
-- `requirePlan('plus')` - Plus plan only
-- `tagExtractionLimiter` - Rate limit 5/min
-
-**Validaciones:**
-- UUID format validation
-- Severity enum validation
-- Tone enum validation
-- Actions array validation
+- `authenticateToken` (JWT validation)
+- `requirePlan('plus', { feature: 'brand_safety' })`
 
 ---
 
 ### FASE 4: Shield Integration ✅
-**Archivos:**
+Modificar toxicity analysis para:
+1. Detectar sponsor mentions (non-blocking)
+2. Añadir `sponsors` y `sponsorMatch` al `userContext`
+3. Aplicar sponsor rules en `AnalysisDecisionEngine`:
+   - Zero tolerance → immediate SHIELD
+   - Other severities → dynamic threshold adjustment
+4. Incluir `brand_safety` metadata en decisiones
+
+**Files:**
 - `src/workers/AnalyzeToxicityWorker.js`
 - `src/services/AnalysisDecisionEngine.js`
 
-**AnalyzeToxicityWorker:**
-```javascript
-// Load sponsors for organization owner
-const sponsors = await sponsorService.getSponsors(orgData.owner_id, false);
-const sponsorMatch = await sponsorService.detectSponsorMention(commentText, sponsors);
-
-const userContext = {
-  // ... existing context
-  sponsors: sponsors,
-  sponsorMatch: sponsorMatch.matched ? sponsorMatch : null
-};
+**Logic Flow:**
 ```
-
-**AnalysisDecisionEngine - RULE 0.5:**
-```javascript
-// Zero-tolerance sponsors
-if (severity === 'zero_tolerance') {
-  return createShieldDecision('critical', [
-    'hide_comment', 'block_user', 'sponsor_protection', ...actions
-  ]);
-}
-
-// Dynamic threshold adjustment
-const adjustment = { low: 0.0, medium: -0.1, high: -0.2 }[severity];
-const adjustedToxicity = final_toxicity - adjustment;
-
-if (adjustedToxicity >= thresholds.shield) {
-  return createShieldDecision('medium/high', ['hide_comment', 'sponsor_protection', ...actions]);
-}
-
-// Defensive roast
-if (actions.includes('def_roast') || actions.includes('agg_roast')) {
-  combinedScores.sponsor_defensive_roast = true;
-}
+Comment → Detect Sponsors → Toxicity Analysis → 
+  IF sponsor match + zero_tolerance → SHIELD (block + hide)
+  IF sponsor match + other severity → Adjust threshold → Evaluate
+  IF threshold met → SHIELD with sponsor_protection action
 ```
 
 ---
 
 ### FASE 5: Roast Integration ✅
-**Archivos:**
-- `src/lib/prompts/roastPrompt.js` (RoastPromptBuilder v2.0.0)
-- `src/services/roastGeneratorEnhanced.js`
+Modificar roast generation para defensive roasts:
+1. Recibir `brand_safety` metadata del job payload
+2. Pasar `sponsors` y `sponsorMatch` a prompt builder
+3. Incluir sponsor context en cacheable blocks:
+   - Block B (User): General sponsor list
+   - Block C (Dynamic): Specific sponsor match details + tone override
+4. Generate roast con tone ajustado (professional, light_humor, etc.)
+
+**Files:**
 - `src/workers/GenerateReplyWorker.js`
-
-**RoastPromptBuilder - Cacheable Blocks:**
-```javascript
-// Block B (User - Cacheable)
-buildBlockB({ sponsors }) {
-  if (sponsors.length > 0) {
-    return `
-🛡️ SPONSORS DEL CREADOR:
-${sponsors.map(s => `- ${s.name} (tags: ${s.tags.join(', ')}) → acciones: ${s.actions.join(', ')}`).join('\n')}
-
-Si el comentario ataca estos sponsors:
-- Protege la imagen del creador
-- Mantén consistencia con su tono
-- NO suenes vendido
-- Defiende de forma natural
-    `;
-  }
-}
-
-// Block C (Dynamic - Not Cacheable)
-buildBlockC({ sponsorMatch }) {
-  if (sponsorMatch) {
-    return `
-⚠️ ESTE COMENTARIO MENCIONA: ${sponsorMatch.sponsor.name}
-Ajusta tono: ${sponsorMatch.sponsor.tone}
-Instrucción: ${getToneInstruction(sponsorMatch.sponsor.tone)}
-    `;
-  }
-}
-```
+- `src/lib/prompts/roastPrompt.js` (RoastPromptBuilder)
 
 **Tone Mapping:**
-- `professional`: Measured, no aggressive humor
-- `light_humor`: Lighthearted, desenfadado
-- `aggressive_irony`: Marked irony, direct sarcasm
-- `normal`: User's default tone
+- `normal` → User's default tone
+- `professional` → Measured, no aggressive humor
+- `light_humor` → Lighthearted, desenfadado
+- `aggressive_irony` → Marked irony, direct sarcasm
 
 ---
 
 ### FASE 6: Cost Control ✅
-**Archivos:**
-- `src/services/costControl.js`
-- `src/routes/sponsors.js`
-
-**Tracking:**
-```javascript
-await costControl.recordUsage(
-  organizationId,
-  'api',
-  'extract_sponsor_tags', // Operation type
-  { url, tagsCount },
-  userId,
-  1 // Quantity
-);
-```
-
-**Costos:**
-- Tag extraction: 2 cents/operation
+Añadir tracking para tag extraction:
+- Operation: `extract_sponsor_tags`
+- Cost: 2 cents per extraction
 - Resource type: `ai_operations`
+
+**Files:** `src/services/costControl.js`
 
 ---
 
-### FASE 7: Frontend UI (CANCELADA - Siguiente Issue)
-**Razón:** Scope change para mantener PR enfocada en backend.
+### FASE 7: Frontend UI (CANCELLED)
+Admin dashboard page para sponsor management:
+- List sponsors (table con active status, severity, priority)
+- Create sponsor form (name, URL, tags, severity, tone, actions)
+- Edit sponsor modal
+- Delete confirmation
+- Tag extraction UI (URL → tags preview)
+- Plan upgrade prompt (if not Plus)
 
-**Recomendación:** Issue separada con:
-- Admin dashboard `/admin/sponsors`
-- Form create/edit sponsor
-- Severity/tone/actions selectors
-- URL input + "Extract Tags" button
-- Tag management (add/remove)
-- Plus plan gating
+**Files:**
+- `src/components/admin/SponsorsManager.jsx`
+- `src/pages/admin/sponsors.jsx`
+
+**UI Framework:** React + Tailwind CSS
+
+**Status:** CANCELLED (backend-first approach, UI deferred to future PR)
 
 ---
 
 ### FASE 8: Testing ✅
-**Archivos:**
-- `tests/unit/services/sponsorService.test.js` (34 tests - 100%)
-- `tests/integration/routes/sponsors.test.js` (completo)
+**Unit Tests:**
+- SponsorService CRUD (34 tests - 100% passing)
+- Tag extraction (OpenAI integration, URL validation, timeouts)
+- Sponsor detection (exact, tag, priority, edge cases)
 
-**Cobertura:**
-- ✅ CRUD operations
-- ✅ Tag extraction (OpenAI, fetch, timeouts, errors)
-- ✅ Sponsor detection (exact, tag, priority, edge cases)
-- ✅ URL sanitization (protocols, security)
+**Integration Tests:**
+- API routes (auth, plan gating, validation, error handling)
+- Shield integration (sponsor protection rules)
+- Roast integration (defensive roasts with tone)
+
+**E2E Tests:**
+- Full workflow: Create sponsor → Toxic comment mentions sponsor → SHIELD triggered
+- Zero tolerance: Immediate block
+- Defensive roast: Tone override applied
+
+**Files:**
+- `tests/unit/services/sponsorService.test.js`
+- `tests/integration/routes/sponsors.test.js`
+- `tests/e2e/brand-safety.spec.js` (deferred)
 
 ---
 
 ### FASE 9: Documentation ✅
-**Archivos:**
-- `docs/nodes/shield.md` - Brand Safety section
-- `docs/nodes/roast.md` - Brand Safety Integration section
-- `docs/nodes/plan-features.md` - Plus plan features
+Actualizar nodos GDD:
+- **shield.md**: Brand Safety section (sponsor detection, actions, metadata)
+- **roast.md**: Defensive roasts with tone override (cacheable prompt blocks)
+- **plan-features.md**: Plus plan features (brand_safety, sponsor_protection)
 
-**Contenido:**
-- Overview & configuration
-- Detection flow & actions
-- Roast integration & tone mapping
-- Cost control & API endpoints
-- Example flows & metadata structure
+**Files:**
+- `docs/nodes/shield.md`
+- `docs/nodes/roast.md`
+- `docs/nodes/plan-features.md`
 
 ---
 
-## Archivos Afectados
+## 🎨 Detalles Técnicos
 
-### Nuevos (5):
-1. `database/migrations/027_sponsors.sql`
-2. `src/services/sponsorService.js`
-3. `src/routes/sponsors.js`
-4. `tests/unit/services/sponsorService.test.js`
-5. `tests/integration/routes/sponsors.test.js`
+### Severity Levels
+| Severity | Description | Threshold Adjustment | Actions |
+|----------|-------------|---------------------|---------|
+| `low` | Monitoring only | -0.05 | Logging |
+| `medium` | Moderate protection | -0.1 | hide_comment, def_roast |
+| `high` | Strong protection | -0.2 | hide_comment, block_user, def_roast |
+| `zero_tolerance` | Immediate block | N/A (always SHIELD) | hide_comment, block_user, sponsor_protection |
 
-### Modificados (11):
-1. `src/index.js` - Register sponsors routes
-2. `src/middleware/requirePlan.js` - Plus plan + features
-3. `src/workers/AnalyzeToxicityWorker.js` - Sponsor detection
-4. `src/services/AnalysisDecisionEngine.js` - RULE 0.5
-5. `src/lib/prompts/roastPrompt.js` - Sponsor blocks
-6. `src/services/roastGeneratorEnhanced.js` - Pass sponsors
-7. `src/workers/GenerateReplyWorker.js` - Brand_safety payload
-8. `src/services/costControl.js` - Operation type
-9. `docs/nodes/shield.md` - Documentation
-10. `docs/nodes/roast.md` - Documentation
-11. `docs/nodes/plan-features.md` - Documentation
+### Tone Overrides
+| Tone | Description | Roast Style |
+|------|-------------|-------------|
+| `normal` | User's default tone | As configured |
+| `professional` | Measured, no aggressive humor | Diplomatic, factual |
+| `light_humor` | Lighthearted, desenfadado | Playful, non-confrontational |
+| `aggressive_irony` | Marked irony, direct sarcasm | Sharp, cutting |
 
----
+### Priority-based Matching
+- Multiple sponsors mentioned → highest priority (lowest number) wins
+- Conflict resolution: Sponsor with priority=1 overrides priority=3
+- Order: Already sorted by priority in `getSponsors` query
 
-## Validación Pre-Merge
-
-### Tests:
-- [x] Unit tests: 34/34 passing (100%)
-- [x] Integration tests: completos
-- [ ] E2E tests: recomendado para siguiente fase
-
-### GDD:
-- [ ] `node scripts/validate-gdd-runtime.js --full` - HEALTHY
-- [ ] `node scripts/score-gdd-health.js --ci` - ≥87
-- [ ] `node scripts/predict-gdd-drift.js --full` - <60 risk
-
-### Code Quality:
-- [x] 0 linter errors
-- [ ] `npm run coderabbit:review` - 0 comentarios
-
-### Documentation:
-- [x] 3 nodos GDD actualizados
-- [x] Last Updated: 2025-11-17
-- [x] Related PRs: #859
+### Detection Methods
+1. **Exact Match**: Case-insensitive exact sponsor name match (`\bNike\b`)
+2. **Tag Match**: Case-insensitive tag match from extracted tags
+3. **Semantic** (deferred): Embeddings-based similarity search
 
 ---
 
-## Riesgos y Mitigación
+## 🔗 Agentes Relevantes
 
-### Riesgo 1: OpenAI Rate Limits (Tag Extraction)
-**Mitigación:** Rate limiting (5/min) + cache de tags por URL
-
-### Riesgo 2: Sponsor Detection False Positives
-**Mitigación:** 3 métodos (exact, tag, semantic) con priority system
-
-### Riesgo 3: Performance en AnalyzeToxicityWorker
-**Mitigación:** Non-blocking detection (warning si falla, análisis continúa)
-
-### Riesgo 4: Cost Tracking Failures
-**Mitigación:** Non-blocking tracking (no afecta funcionalidad)
+- **@task-assessor**: Plan creation (AC ≥3, P1 priority)
+- **@back-end-dev**: Database, service, routes, integration
+- **@test-engineer**: Unit, integration, E2E tests
+- **@github-guardian**: Security audit, RLS policies, secrets validation
+- **@documentation-agent**: GDD node updates
 
 ---
 
-## Decisiones Técnicas
+## 📊 Validación
 
-1. **Non-blocking sponsor detection:** Worker continúa si detección falla
-2. **Cacheable prompts (Block B/C):** Optimización de costos OpenAI
-3. **Zero-tolerance = SHIELD crítico:** Bloqueo inmediato sin roast
-4. **Tone override:** Tono del sponsor sobrescribe tono del usuario
-5. **Separate operation type:** `extract_sponsor_tags` para analytics precisas
+### Pre-Flight Checklist
+- [ ] Tests pasando al 100% (`npm test`)
+- [ ] Coverage ≥90% (`npm run test:coverage`)
+- [ ] GDD validado (`node scripts/validate-gdd-runtime.js --full`)
+- [ ] GDD health ≥87 (`node scripts/score-gdd-health.js --ci`)
+- [ ] CodeRabbit = 0 comentarios (`npm run coderabbit:review`)
+- [ ] Lint errors = 0 (`npm run lint`)
+- [ ] No conflictos con main
+- [ ] Receipts generados (agents/receipts/)
+- [ ] Documentación actualizada (spec.md, nodos GDD)
+
+### Test Commands
+```bash
+# Unit tests
+npm test tests/unit/services/sponsorService.test.js
+
+# Integration tests
+npm test tests/integration/routes/sponsors.test.js
+
+# E2E tests (deferred)
+npm run test:e2e -- brand-safety
+
+# Coverage
+npm run test:coverage -- --collectCoverageFrom=src/services/sponsorService.js
+```
 
 ---
 
-## Siguientes Pasos Post-Merge
+## 📝 Notas de Implementación
 
-1. **Frontend UI:** Issue #XXX dedicada
-2. **E2E Tests:** Playwright tests para flujo completo
-3. **Migration Script:** Script para ejecutar en producción
-4. **User Documentation:** Guide para configurar sponsors
-5. **Analytics Dashboard:** Métricas de sponsor protection usage
+### CodeRabbit Fixes Applied
+1. **Supabase initialization**: Fail-fast con error descriptivo si credenciales faltan
+2. **Priority default type**: Usar `3` (numeric) en vez de `'medium'` (string)
+3. **Priority ordering**: `ascending: true` para que prioridad 1 venga primero
+
+### Security Considerations
+- **RLS policies**: Multi-tenant isolation por `user_id`
+- **URL sanitization**: Solo HTTP/HTTPS, no `javascript:`, `file:`, `data:`
+- **Rate limiting**: Tag extraction limitado a 5 req/min
+- **Cost tracking**: Track usage ANTES de llamar OpenAI (evitar abuse)
+- **Plan gating**: Middleware enforcea Plus plan requirement
+
+### Performance
+- **Non-blocking**: Sponsor detection no bloquea toxicity analysis
+- **Caching**: Sponsor list cacheado en worker (no re-fetch cada comment)
+- **Indexes**: `idx_sponsors_user_id_active`, `idx_sponsors_priority`
+- **Priority sorting**: DB-level ORDER BY (no in-memory sort)
 
 ---
 
-## Agentes Utilizados
+## 🔗 Referencias
 
-- **TaskAssessor:** Planning (este documento)
-- **Backend Dev:** Implementación (Fases 1-6)
-- **Test Engineer:** Testing (Fase 8)
-- **Guardian:** GDD validation + security audit
-- **Documentation Agent:** GDD nodes updates
+- **Issue:** #859
+- **GDD Nodes:** shield.md, roast.md, plan-features.md
+- **Related PRs:** #865
+- **CodeRabbit Review:** PR #865 comments
 
 ---
 
-**Estado:** ✅ Completado (8/9 fases - Frontend UI movida a issue separada)
-**Tests:** ✅ 34/34 passing (100%)
-**Linter:** ✅ 0 errors
-**GDD Nodes:** ✅ 3 actualizados
-**Ready for Review:** ✅ Sí
-
+**Status:** Implementation complete ✅ | Tests 100% passing ✅ | Documentation updated ✅
+**Last Updated:** 2025-11-17

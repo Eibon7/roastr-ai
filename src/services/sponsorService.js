@@ -1,459 +1,446 @@
 /**
- * Sponsor Service - Brand Safety for Plus Plan
+ * Sponsor Service (Brand Safety - Plan Plus)
  *
- * Manages sponsor/brand configuration for content creator protection.
- * Allows Plus plan users to configure sponsors and automatically detect/protect
- * against negative comments that mention their sponsors.
+ * Manages sponsor/brand configuration for content moderation:
+ * - CRUD operations for sponsor records
+ * - Tag extraction from sponsor URLs using OpenAI
+ * - Sponsor mention detection in comments (exact, tag, semantic)
  *
  * Features:
- * - CRUD operations for sponsor configuration
- * - AI-powered tag extraction from URLs (OpenAI GPT-4o)
- * - Multi-method sponsor detection (exact, tag, semantic)
- * - Priority-based matching for multiple sponsors
- * - Severity levels (low, medium, high, zero_tolerance)
- * - Custom tone overrides for defensive roasts
+ * - Multi-tenant isolation (RLS policies)
+ * - Configurable severity levels (low, medium, high, zero_tolerance)
+ * - Configurable tone overrides (normal, professional, light_humor, aggressive_irony)
+ * - Priority-based sponsor matching (1=highest, 5=lowest)
+ * - Flexible action configuration (hide, ban, def_roast, agg_roast, report)
  *
- * @see docs/nodes/shield.md for Shield integration
- * @see docs/nodes/roast.md for Roast integration
- * @see docs/plan/issue-859.md for implementation details
+ * @see docs/plan/issue-859.md
+ * @see docs/nodes/shield.md (Brand Safety section)
  */
 
 const { createClient } = require('@supabase/supabase-js');
-const { logger } = require('../utils/logger');
 const OpenAI = require('openai');
+const { logger } = require('../utils/logger');
 
 class SponsorService {
   constructor() {
-    this.initializeSupabase();
-    this.initializeOpenAI();
+    this.supabase = null;
+    this.openai = null;
     
-    logger.info('SponsorService initialized', {
-      hasSupabase: !!this.supabase,
-      hasOpenAI: !!this.openai
-    });
-  }
-
-  initializeSupabase() {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      logger.warn('⚠️  Supabase credentials missing - SponsorService will not work');
-      this.supabase = null;
-      return;
+    // Initialize Supabase with fail-fast validation (CodeRabbit fix)
+    this.initializeSupabase();
+    
+    // Initialize OpenAI if configured
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
     }
-
-    this.supabase = createClient(supabaseUrl, supabaseServiceKey);
-  }
-
-  initializeOpenAI() {
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-      logger.warn('⚠️  OPENAI_API_KEY not found - Tag extraction will not work');
-      this.openai = null;
-      return;
-    }
-
-    this.openai = new OpenAI({ apiKey });
   }
 
   /**
-   * Create a new sponsor configuration
-   * @param {string} userId - User ID (owner)
-   * @param {Object} sponsorData - Sponsor data
+   * Initialize Supabase client with fail-fast validation
+   * @throws {Error} If Supabase credentials are missing
+   * @private
+   */
+  initializeSupabase() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
+
+    // CodeRabbit fix: Fail-fast if credentials missing
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error(
+        'SUPABASE_UNAVAILABLE: Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables. ' +
+        'Sponsor service requires Supabase for multi-tenant data storage.'
+      );
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseKey);
+    logger.info('SponsorService: Supabase client initialized successfully');
+  }
+
+  // ============================================================================
+  // CRUD OPERATIONS
+  // ============================================================================
+
+  /**
+   * Create a new sponsor
+   * @param {string} userId - User ID (tenant)
+   * @param {Object} sponsorData - Sponsor configuration
    * @param {string} sponsorData.name - Sponsor name (required)
-   * @param {string} [sponsorData.url] - Sponsor website
-   * @param {string[]} [sponsorData.tags] - Detection tags
-   * @param {string} [sponsorData.severity] - low, medium, high, zero_tolerance
-   * @param {string} [sponsorData.tone] - normal, professional, light_humor, aggressive_irony
-   * @param {number} [sponsorData.priority] - 1 (high) to 5 (low)
-   * @param {string[]} [sponsorData.actions] - Actions to apply
-   * @returns {Promise<Object>} Created sponsor
+   * @param {string} [sponsorData.url] - Sponsor website URL
+   * @param {Array<string>} [sponsorData.tags] - Keywords/tags to detect
+   * @param {string} [sponsorData.severity] - Severity level (low, medium, high, zero_tolerance)
+   * @param {string} [sponsorData.tone] - Tone override (normal, professional, light_humor, aggressive_irony)
+   * @param {number} [sponsorData.priority] - Priority 1 (high) to 5 (low), default 3
+   * @param {Array<string>} [sponsorData.actions] - Actions to take (hide_comment, block_user, def_roast, etc.)
+   * @returns {Promise<Object>} Created sponsor record
+   * @throws {Error} If validation fails or database error occurs
    */
   async createSponsor(userId, sponsorData) {
-    try {
-      // Validate required fields
-      if (!userId) {
-        throw new Error('USER_ID_REQUIRED: userId is required');
-      }
-      
-      if (!sponsorData.name || sponsorData.name.trim().length === 0) {
-        throw new Error('SPONSOR_NAME_REQUIRED: Sponsor name is required');
-      }
-
-      // Sanitize inputs
-      const sanitizedData = {
-        user_id: userId,
-        name: sponsorData.name.trim(),
-        url: sponsorData.url ? this._sanitizeURL(sponsorData.url) : null,
-        tags: Array.isArray(sponsorData.tags) ? sponsorData.tags : [],
-        severity: sponsorData.severity || 'medium',
-        tone: sponsorData.tone || 'normal',
-        priority: sponsorData.priority || 'medium',
-        actions: Array.isArray(sponsorData.actions) ? sponsorData.actions : [],
-        active: true
-      };
-
-      const { data: sponsor, error } = await this.supabase
-        .from('sponsors')
-        .insert([sanitizedData])
-        .select()
-        .single();
-
-      if (error) {
-        logger.error('❌ Failed to create sponsor:', { error: error.message, userId });
-        throw new Error(`DATABASE_ERROR: ${error.message}`);
-      }
-
-      logger.info('✅ Sponsor created', { sponsorId: sponsor.id, name: sponsor.name, userId });
-
-      return sponsor;
-    } catch (error) {
-      logger.error('❌ Error in createSponsor:', { error: error.message, userId });
-      throw error;
+    if (!userId) {
+      throw new Error('USER_ID_REQUIRED');
     }
+
+    if (!sponsorData || !sponsorData.name) {
+      throw new Error('SPONSOR_NAME_REQUIRED');
+    }
+
+    // Sanitize inputs
+    const sanitizedData = {
+      user_id: userId,
+      name: sponsorData.name.trim(),
+      url: sponsorData.url ? this._sanitizeURL(sponsorData.url) : null,
+      tags: Array.isArray(sponsorData.tags) ? sponsorData.tags : [],
+      severity: sponsorData.severity || 'medium',
+      tone: sponsorData.tone || 'normal',
+      // CodeRabbit fix: Use numeric default and explicit null/undefined check
+      priority:
+        sponsorData.priority !== undefined && sponsorData.priority !== null
+          ? Number(sponsorData.priority)
+          : 3,
+      actions: Array.isArray(sponsorData.actions) ? sponsorData.actions : [],
+      active: true
+    };
+
+    // Validate priority range (1-5)
+    if (sanitizedData.priority < 1 || sanitizedData.priority > 5) {
+      throw new Error('INVALID_PRIORITY: Priority must be between 1 (highest) and 5 (lowest)');
+    }
+
+    const { data, error } = await this.supabase
+      .from('sponsors')
+      .insert([sanitizedData])
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
+    }
+
+    logger.info('Sponsor created successfully', {
+      userId,
+      sponsorId: data.id,
+      sponsorName: data.name
+    });
+
+    return data;
   }
 
   /**
    * Get sponsors for a user
    * @param {string} userId - User ID
    * @param {boolean} [includeInactive=false] - Include inactive sponsors
-   * @returns {Promise<Array>} List of sponsors
+   * @returns {Promise<Array<Object>>} List of sponsors
    */
   async getSponsors(userId, includeInactive = false) {
-    try {
-      if (!userId) {
-        throw new Error('USER_ID_REQUIRED: userId is required');
-      }
+    let query = this.supabase
+      .from('sponsors')
+      .select('*')
+      .eq('user_id', userId);
 
-      let query = this.supabase
-        .from('sponsors')
-        .select('*')
-        .eq('user_id', userId);
-
-      // Filter by active status if needed
-      if (!includeInactive) {
-        query = query.eq('active', true);
-      }
-
-      // Order by priority and created date
-      query = query.order('priority', { ascending: false })
-                   .order('created_at', { ascending: false });
-
-      const { data: sponsors, error } = await query;
-
-      if (error) {
-        logger.error('❌ Failed to get sponsors:', { error: error.message, userId });
-        throw new Error(`DATABASE_ERROR: ${error.message}`);
-      }
-
-      logger.info('✅ Sponsors retrieved', { userId, count: sponsors.length, includeInactive });
-
-      return sponsors || [];
-    } catch (error) {
-      logger.error('❌ Error in getSponsors:', { error: error.message, userId });
-      throw error;
+    if (!includeInactive) {
+      query = query.eq('active', true);
     }
+
+    // CodeRabbit fix: Sort by priority ascending (1=highest priority comes first)
+    query = query
+      .order('priority', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
+    }
+
+    return data || [];
   }
 
   /**
    * Get a single sponsor by ID
    * @param {string} sponsorId - Sponsor ID
-   * @param {string} userId - User ID (for RLS)
-   * @returns {Promise<Object|null>} Sponsor or null if not found
+   * @param {string} userId - User ID (for RLS validation)
+   * @returns {Promise<Object|null>} Sponsor record or null
    */
-  async getSponsorById(sponsorId, userId) {
-    try {
-      if (!sponsorId || !userId) {
-        throw new Error('INVALID_PARAMS: sponsorId and userId are required');
+  async getSponsor(sponsorId, userId) {
+    const { data, error } = await this.supabase
+      .from('sponsors')
+      .select('*')
+      .eq('id', sponsorId)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Not found
       }
-
-      const { data: sponsor, error } = await this.supabase
-        .from('sponsors')
-        .select('*')
-        .eq('id', sponsorId)
-        .eq('user_id', userId)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Not found
-          return null;
-        }
-        logger.error('❌ Failed to get sponsor:', { error: error.message, sponsorId, userId });
-        throw new Error(`DATABASE_ERROR: ${error.message}`);
-      }
-
-      return sponsor;
-    } catch (error) {
-      logger.error('❌ Error in getSponsorById:', { error: error.message, sponsorId, userId });
-      throw error;
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
     }
+
+    return data;
   }
 
   /**
    * Update a sponsor
    * @param {string} sponsorId - Sponsor ID
-   * @param {string} userId - User ID (for RLS)
+   * @param {string} userId - User ID (for RLS validation)
    * @param {Object} updates - Fields to update
-   * @returns {Promise<Object>} Updated sponsor
+   * @returns {Promise<Object|null>} Updated sponsor or null
    */
   async updateSponsor(sponsorId, userId, updates) {
-    try {
-      if (!sponsorId || !userId) {
-        throw new Error('INVALID_PARAMS: sponsorId and userId are required');
-      }
-
-      // Build update object (only allowed fields)
-      const allowedFields = ['name', 'url', 'tags', 'severity', 'tone', 'priority', 'actions', 'active'];
-      const sanitizedUpdates = {};
-
-      for (const field of allowedFields) {
-        if (updates[field] !== undefined) {
-          sanitizedUpdates[field] = updates[field];
-        }
-      }
-
-      // Add updated_at
-      sanitizedUpdates.updated_at = new Date().toISOString();
-
-      const { data: sponsor, error } = await this.supabase
-        .from('sponsors')
-        .update(sanitizedUpdates)
-        .eq('id', sponsorId)
-        .eq('user_id', userId)
-        .select()
-        .single();
-
-      if (error) {
-        logger.error('❌ Failed to update sponsor:', { error: error.message, sponsorId, userId });
-        throw new Error(`DATABASE_ERROR: ${error.message}`);
-      }
-
-      logger.info('✅ Sponsor updated', { sponsorId, userId, fields: Object.keys(sanitizedUpdates) });
-
-      return sponsor;
-    } catch (error) {
-      logger.error('❌ Error in updateSponsor:', { error: error.message, sponsorId, userId });
-      throw error;
+    if (!sponsorId || !userId) {
+      throw new Error('INVALID_PARAMS');
     }
+
+    // Sanitize URL if being updated
+    if (updates.url !== undefined) {
+      updates.url = updates.url ? this._sanitizeURL(updates.url) : null;
+    }
+
+    // Validate priority if being updated
+    if (updates.priority !== undefined) {
+      updates.priority = Number(updates.priority);
+      if (updates.priority < 1 || updates.priority > 5) {
+        throw new Error('INVALID_PRIORITY: Priority must be between 1 and 5');
+      }
+    }
+
+    updates.updated_at = new Date().toISOString();
+
+    const { data, error } = await this.supabase
+      .from('sponsors')
+      .update(updates)
+      .eq('id', sponsorId)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Not found
+      }
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
+    }
+
+    logger.info('Sponsor updated successfully', {
+      userId,
+      sponsorId,
+      updatedFields: Object.keys(updates)
+    });
+
+    return data;
   }
 
   /**
    * Delete a sponsor
    * @param {string} sponsorId - Sponsor ID
-   * @param {string} userId - User ID (for RLS)
+   * @param {string} userId - User ID (for RLS validation)
    * @returns {Promise<boolean>} True if deleted
+   * @throws {Error} If delete fails
    */
   async deleteSponsor(sponsorId, userId) {
-    try {
-      if (!sponsorId || !userId) {
-        throw new Error('INVALID_PARAMS: sponsorId and userId are required');
-      }
+    const { error } = await this.supabase
+      .from('sponsors')
+      .delete()
+      .eq('id', sponsorId)
+      .eq('user_id', userId);
 
-      const { error } = await this.supabase
-        .from('sponsors')
-        .delete()
-        .eq('id', sponsorId)
-        .eq('user_id', userId);
-
-      if (error) {
-        logger.error('❌ Failed to delete sponsor:', { error: error.message, sponsorId, userId });
-        throw new Error(`DATABASE_ERROR: ${error.message}`);
-      }
-
-      logger.info('✅ Sponsor deleted', { sponsorId, userId });
-
-      return true;
-    } catch (error) {
-      logger.error('❌ Error in deleteSponsor:', { error: error.message, sponsorId, userId });
-      throw error;
+    if (error) {
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
     }
+
+    logger.info('Sponsor deleted successfully', {
+      userId,
+      sponsorId
+    });
+
+    return true;
   }
 
+  // ============================================================================
+  // TAG EXTRACTION (OpenAI-powered)
+  // ============================================================================
+
   /**
-   * Extract tags from sponsor URL using AI
-   * @param {string} url - Sponsor URL
-   * @returns {Promise<string[]>} Extracted tags
+   * Extract relevant tags from a sponsor URL using OpenAI
+   * @param {string} url - Sponsor website URL
+   * @returns {Promise<Array<string>>} Array of extracted tags (max 10)
+   * @throws {Error} If URL invalid, fetch fails, or OpenAI unavailable
    */
   async extractTagsFromURL(url) {
+    if (!url) {
+      throw new Error('URL_REQUIRED');
+    }
+
+    if (!this.openai) {
+      throw new Error('OPENAI_UNAVAILABLE: OpenAI API key not configured');
+    }
+
+    // Sanitize and validate URL
+    const sanitizedUrl = this._sanitizeURL(url);
+    if (!sanitizedUrl) {
+      throw new Error('INVALID_URL');
+    }
+
     try {
-      if (!url) {
-        throw new Error('URL_REQUIRED: URL is required for tag extraction');
-      }
-
-      // Validate OpenAI availability
-      if (!this.openai) {
-        throw new Error('OPENAI_UNAVAILABLE: OpenAI API key not configured');
-      }
-
-      // Validate URL
-      const validatedURL = this._sanitizeURL(url);
-      if (!validatedURL) {
-        throw new Error('INVALID_URL: URL must be a valid HTTP/HTTPS URL');
-      }
-
-      // Fetch HTML content
-      logger.info('🌐 Fetching sponsor URL', { url: validatedURL });
-      
+      // Fetch HTML content with timeout
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-      let html;
-      try {
-        const response = await fetch(validatedURL, {
-          signal: controller.signal,
-          headers: {
-            'User-Agent': 'Roastr.ai Bot (Brand Safety Tag Extraction)'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP_ERROR: ${response.status} ${response.statusText}`);
-        }
-        
-        html = await response.text();
-      } catch (fetchError) {
-        if (fetchError.name === 'AbortError') {
-          throw new Error('FETCH_TIMEOUT: URL fetch timeout after 10 seconds');
-        }
-        throw new Error(`FETCH_ERROR: ${fetchError.message}`);
-      } finally {
-        clearTimeout(timeout);
+      const response = await fetch(sanitizedUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Roastr.ai Bot (Brand Safety Tag Extraction)'
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP_ERROR: ${response.status} ${response.statusText}`);
       }
 
-      // Extract text content (basic cleanup)
-      const text = html
-        .replace(/<script[^>]*>.*?<\/script>/gis, '') // Remove scripts
-        .replace(/<style[^>]*>.*?<\/style>/gis, '')   // Remove styles
-        .replace(/<[^>]*>/g, ' ')                      // Remove HTML tags
-        .replace(/\s+/g, ' ')                          // Normalize whitespace
-        .substring(0, 5000);                           // Limit to 5000 chars
+      const htmlContent = await response.text();
 
-      // Call OpenAI for tag extraction
-      logger.info('🤖 Calling OpenAI for tag extraction', { textLength: text.length });
-      
-      const prompt = `Extrae 3-6 tags/categorías que definan a esta marca o empresa.
+      // Extract text content (simple HTML stripping)
+      const textContent = htmlContent
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 2000); // Limit to 2000 chars
 
-Contenido del sitio web: ${text}
-
-Responde SOLO con una lista de tags separados por comas, sin explicaciones.
-Ejemplo: tecnología, software, inteligencia artificial, empresas, SaaS`;
-
+      // Use OpenAI to extract relevant tags
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a brand analysis assistant. Extract 5-10 relevant keywords/tags that describe this brand, product category, or industry. Return ONLY comma-separated tags, lowercase, no explanations.'
+          },
+          {
+            role: 'user',
+            content: `Website content:\n${textContent}\n\nExtract relevant brand tags:`
+          }
+        ],
         max_tokens: 50,
         temperature: 0.3
       });
 
-      const rawTags = completion.choices[0].message.content.trim();
-      
-      // Parse tags
-      const tags = rawTags
+      const tagsText = completion.choices[0].message.content.trim();
+      const tags = tagsText
         .split(',')
         .map(tag => tag.trim().toLowerCase())
-        .filter(tag => tag.length > 0 && tag.length <= 50)
+        .filter(tag => tag.length > 0)
         .slice(0, 10); // Max 10 tags
 
-      logger.info('✅ Tags extracted', { url: validatedURL, count: tags.length, tags });
+      logger.info('Tags extracted successfully', {
+        url: sanitizedUrl,
+        tagCount: tags.length
+      });
 
       return tags;
+
     } catch (error) {
-      logger.error('❌ Error extracting tags from URL:', { error: error.message, url });
+      if (error.name === 'AbortError') {
+        throw new Error('FETCH_TIMEOUT: URL fetch timed out after 10 seconds');
+      }
       throw error;
     }
   }
 
+  // ============================================================================
+  // SPONSOR MENTION DETECTION
+  // ============================================================================
+
   /**
-   * Detect if a comment mentions any user's sponsors
-   * @param {string} commentText - Comment text to analyze
-   * @param {Array<Object>} sponsors - User's active sponsors
+   * Detect if a comment mentions any configured sponsor
+   * @param {string} comment - Comment text
+   * @param {Array<Object>} sponsors - List of active sponsors
    * @returns {Promise<Object>} { matched: boolean, sponsor?: Object, matchType?: string }
    */
-  async detectSponsorMention(commentText, sponsors) {
-    try {
-      if (!commentText || typeof commentText !== 'string') {
-        return { matched: false };
+  async detectSponsorMention(comment, sponsors) {
+    if (!comment || typeof comment !== 'string') {
+      return { matched: false };
+    }
+
+    if (!sponsors || sponsors.length === 0) {
+      return { matched: false };
+    }
+
+    const commentLower = comment.toLowerCase();
+
+    // Priority-based detection (sponsors already sorted by priority)
+    for (const sponsor of sponsors) {
+      // Only check active sponsors
+      if (!sponsor.active) {
+        continue;
       }
 
-      if (!Array.isArray(sponsors) || sponsors.length === 0) {
-        return { matched: false };
+      // 1. Exact name match (case-insensitive)
+      const nameRegex = new RegExp(`\\b${this._escapeRegex(sponsor.name)}\\b`, 'i');
+      if (nameRegex.test(comment)) {
+        return {
+          matched: true,
+          sponsor,
+          matchType: 'exact'
+        };
       }
 
-      const lowerComment = commentText.toLowerCase();
-
-      // Check each sponsor
-      for (const sponsor of sponsors) {
-        // Skip inactive sponsors
-        if (!sponsor.active) continue;
-
-        // Check exact name match
-        const lowerName = sponsor.name.toLowerCase();
-        if (lowerComment.includes(lowerName)) {
-          logger.info('🎯 Sponsor mention detected (exact)', { 
-            sponsor: sponsor.name, 
-            commentLength: commentText.length 
-          });
-          return { 
-            matched: true, 
-            sponsor: sponsor, 
-            matchType: 'exact' 
-          };
-        }
-
-        // Check tag-based match (optional)
-        if (Array.isArray(sponsor.tags) && sponsor.tags.length > 0) {
-          for (const tag of sponsor.tags) {
-            const lowerTag = tag.toLowerCase();
-            if (lowerComment.includes(lowerTag)) {
-              logger.info('🎯 Sponsor mention detected (tag)', { 
-                sponsor: sponsor.name, 
-                tag: tag,
-                commentLength: commentText.length 
-              });
-              return { 
-                matched: true, 
-                sponsor: sponsor, 
-                matchType: 'tag' 
-              };
-            }
+      // 2. Tag match
+      if (sponsor.tags && sponsor.tags.length > 0) {
+        for (const tag of sponsor.tags) {
+          const tagRegex = new RegExp(`\\b${this._escapeRegex(tag)}\\b`, 'i');
+          if (tagRegex.test(comment)) {
+            return {
+              matched: true,
+              sponsor,
+              matchType: 'tag'
+            };
           }
         }
       }
-
-      // No match found
-      return { matched: false };
-    } catch (error) {
-      logger.error('❌ Error detecting sponsor mention:', { 
-        error: error.message, 
-        commentLength: commentText?.length 
-      });
-      return { matched: false };
     }
+
+    // No match found
+    return { matched: false };
   }
+
+  // ============================================================================
+  // PRIVATE HELPERS
+  // ============================================================================
 
   /**
    * Sanitize and validate URL
-   * @param {string} url - URL to sanitize
+   * @param {string} url - Raw URL
    * @returns {string|null} Sanitized URL or null if invalid
    * @private
    */
   _sanitizeURL(url) {
     try {
-      const parsedURL = new URL(url);
+      const parsed = new URL(url);
       
-      // Only allow HTTP/HTTPS
-      if (!['http:', 'https:'].includes(parsedURL.protocol)) {
+      // Only allow HTTP/HTTPS protocols
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
         return null;
       }
 
-      return parsedURL.href;
+      return parsed.href;
     } catch (error) {
-      // Invalid URL
       return null;
     }
+  }
+
+  /**
+   * Escape special regex characters
+   * @param {string} str - String to escape
+   * @returns {string} Escaped string
+   * @private
+   */
+  _escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }
 
