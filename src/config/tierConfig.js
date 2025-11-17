@@ -124,7 +124,7 @@ const PLAN_BENEFITS = {
     ],
     starter: [
         '1,000 análisis por mes',
-        '10 roasts por mes',
+        '5 roasts por mes',
         '1 cuenta por red social',
         'Shield habilitado'
     ],
@@ -132,13 +132,13 @@ const PLAN_BENEFITS = {
         '10,000 análisis por mes',
         '1,000 roasts por mes',
         '2 cuentas por red social',
-        'Shield + Tono Original'
+        'Shield habilitado'
     ],
     plus: [
         '100,000 análisis por mes',
         '5,000 roasts por mes',
         '2 cuentas por red social',
-        'Shield + Tono Original + Juez Embebido'
+        'Shield habilitado'
     ]
 };
 
@@ -147,115 +147,31 @@ const PLAN_BENEFITS = {
  */
 const FEATURE_REQUIREMENTS = {
     'shield': ['starter_trial', 'starter', 'pro', 'plus'],
-    'custom_tones': ['pro', 'plus'],
-    'ENABLE_ORIGINAL_TONE': ['pro', 'plus'],
-    'embedded_judge': ['plus'],
-    'analytics': ['pro', 'plus'],
-    'api_access': ['plus'],
-    'priority_support': ['pro', 'plus'],
-    'dedicated_support': ['plus'],
-    'custom_prompts': ['pro', 'plus']
+    'custom_tones': ['plus'],
+    'ENABLE_ORIGINAL_TONE': ['plus'],
+    'embedded_judge': [],
+    'analytics': [],
+    'api_access': [], // API Access removed from all plans (Issue #841)
+    'priority_support': [],
+    'dedicated_support': [],
+    'custom_prompts': []
 };
 
 /**
- * Default tier limits exactly per SPEC 10
+ * Default tier limits - SINGLE SOURCE OF TRUTH
+ * Issue #841: Now reads from planService.js dynamically
+ * This is kept for backward compatibility but delegates to planService.js
+ * 
+ * @deprecated Direct access deprecated - Use planService.getPlanLimits() or planLimitsService.getPlanLimits() instead
  */
-const DEFAULT_TIER_LIMITS = {
-    starter_trial: {
-        maxRoasts: 10,
-        monthlyResponsesLimit: 10,
-        monthlyAnalysisLimit: 1000,
-        maxPlatforms: 1,
-        integrationsLimit: 1,
-        shieldEnabled: true,
-        customPrompts: false,
-        prioritySupport: false,
-        apiAccess: false,
-        analyticsEnabled: false,
-        customTones: false,
-        dedicatedSupport: false,
-        embeddedJudge: false,
-        monthlyTokensLimit: 100000,
-        dailyApiCallsLimit: 500,
-        ai_model: 'gpt-4o',
-        isTrial: true,
-        trialDays: 30
-    },
-    starter: {
-        maxRoasts: 10,
-        monthlyResponsesLimit: 10,
-        monthlyAnalysisLimit: 1000,
-        maxPlatforms: 1,
-        integrationsLimit: 1,
-        shieldEnabled: true,
-        customPrompts: false,
-        prioritySupport: false,
-        apiAccess: false,
-        analyticsEnabled: false,
-        customTones: false,
-        dedicatedSupport: false,
-        embeddedJudge: false,
-        monthlyTokensLimit: 100000,
-        dailyApiCallsLimit: 500,
-        ai_model: 'gpt-4o'
-    },
-    pro: {
-        maxRoasts: 1000,
-        monthlyResponsesLimit: 1000,
-        monthlyAnalysisLimit: 10000,
-        maxPlatforms: 2,
-        integrationsLimit: 2,
-        shieldEnabled: true,
-        customPrompts: true,
-        prioritySupport: true,
-        apiAccess: false,
-        analyticsEnabled: true,
-        customTones: true,
-        dedicatedSupport: false,
-        embeddedJudge: false,
-        monthlyTokensLimit: 500000,
-        dailyApiCallsLimit: 5000,
-        ai_model: 'gpt-4o'
-    },
-    plus: {
-        maxRoasts: 5000,
-        monthlyResponsesLimit: 5000,
-        monthlyAnalysisLimit: 100000,
-        maxPlatforms: 2,
-        integrationsLimit: 2,
-        shieldEnabled: true,
-        customPrompts: true,
-        prioritySupport: true,
-        apiAccess: true,
-        analyticsEnabled: true,
-        customTones: true,
-        dedicatedSupport: true,
-        embeddedJudge: true,
-        monthlyTokensLimit: 2000000,
-        dailyApiCallsLimit: 20000,
-        ai_model: 'gpt-4o',
-        rqc_embedded: true
-    },
-    custom: {
-        maxRoasts: -1,
-        monthlyResponsesLimit: -1,
-        monthlyAnalysisLimit: -1,
-        maxPlatforms: -1,
-        integrationsLimit: -1,
-        shieldEnabled: true,
-        customPrompts: true,
-        prioritySupport: true,
-        apiAccess: true,
-        analyticsEnabled: true,
-        customTones: true,
-        dedicatedSupport: true,
-        embeddedJudge: true,
-        monthlyTokensLimit: -1,
-        dailyApiCallsLimit: -1,
-        ai_model: 'gpt-4o',
-        enterprise: true
-    }
-};
+const { getPlanLimits, getAllPlans } = require('../services/planService');
+
+// Generate DEFAULT_TIER_LIMITS from planService.js (single source of truth)
+const allPlans = getAllPlans();
+const DEFAULT_TIER_LIMITS = {};
+for (const planId in allPlans) {
+    DEFAULT_TIER_LIMITS[planId] = getPlanLimits(planId);
+}
 
 /**
  * Security configuration for fail-closed behavior
@@ -326,7 +242,7 @@ function getUpgradeRecommendation(usageType, currentLimit) {
             10000: 'plus'      // Pro -> Plus
         },
         roast: {
-            10: 'pro',         // Starter Trial/Starter -> Pro (both have 10 roasts)
+            5: 'pro',         // Starter -> Pro (5 roasts)
             1000: 'plus'       // Pro -> Plus (1000 roasts)
         },
         platform: {

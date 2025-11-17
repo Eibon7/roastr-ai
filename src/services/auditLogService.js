@@ -47,6 +47,7 @@ class AuditLogService {
       'admin.bulk_action': { severity: 'warning', description: 'Admin performed bulk action' },
       'admin.feature_flag_changed': { severity: 'info', description: 'Admin changed feature flag' },
       'admin.backoffice_settings_changed': { severity: 'warning', description: 'Admin changed backoffice settings' },
+      'admin.plan_update': { severity: 'warning', description: 'Admin updated plan limits' },
       'admin.access_denied': { severity: 'error', description: 'Admin access denied' },
 
       // System events

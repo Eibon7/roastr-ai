@@ -1341,43 +1341,30 @@ class AuthService {
 
     /**
      * Get fallback plan limits (used when database is unavailable)
+     * Issue #841: Now reads from planService.js (single source of truth)
      * @private
      */
     getFallbackPlanLimits(plan) {
-        const limits = {
-            free: {
-                monthly_messages: 10,
-                monthly_tokens: 50000,
-                integrations: 2,
-                monthly_analysis: 1000
-            },
-            starter: {
-                monthly_messages: 10,
+        // Use planService.js as single source of truth
+        const { getPlanLimits } = require('./planService');
+        const planLimits = getPlanLimits(plan) || getPlanLimits('starter_trial');
+        
+        if (!planLimits) {
+            // Last resort fallback
+            return {
+                monthly_messages: 5,
                 monthly_tokens: 100000,
-                integrations: 2,
+                integrations: 1,
                 monthly_analysis: 1000
-            },
-            pro: {
-                monthly_messages: 1000,
-                monthly_tokens: 500000,
-                integrations: 5,
-                monthly_analysis: 10000
-            },
-            plus: {
-                monthly_messages: 5000,
-                monthly_tokens: 2000000,
-                integrations: 10,
-                monthly_analysis: 100000
-            },
-            custom: {
-                monthly_messages: -1,
-                monthly_tokens: -1,
-                integrations: -1,
-                monthly_analysis: -1
-            }
-        };
+            };
+        }
 
-        return limits[plan] || limits.free;
+        return {
+            monthly_messages: planLimits.maxRoasts === -1 ? -1 : planLimits.maxRoasts,
+            monthly_tokens: planLimits.monthlyTokensLimit === -1 ? -1 : (planLimits.monthlyTokensLimit || 100000),
+            integrations: planLimits.integrationsLimit === -1 ? -1 : (planLimits.integrationsLimit || planLimits.maxPlatforms || 1),
+            monthly_analysis: planLimits.monthlyAnalysisLimit === -1 ? -1 : (planLimits.monthlyAnalysisLimit || 1000)
+        };
     }
 
     /**

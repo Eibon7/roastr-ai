@@ -25,6 +25,7 @@ import {
 import AccountModal from '../components/AccountModal';
 import RoastInlineEditor from '../components/RoastInlineEditor';
 import { platformIcons, platformNames, allPlatforms, getPlatformIcon, getPlatformName } from '../config/platforms';
+import { normalizePlanId } from '../utils/planHelpers';
 
 export default function Dashboard() {
   const [adminMode, setAdminMode] = useState(false);
@@ -270,45 +271,47 @@ export default function Dashboard() {
     return getConnectedAccountsForPlatform(platform).length >= 2;
   };
 
-  // Global connection limits by tier with explicit mapping (CodeRabbit Round 3)
-  const TIER_MAX_CONNECTIONS = {
-    free: 1,
+  // Per-platform connection limits by tier (Issue #841: Changed from global to per-platform)
+  const TIER_MAX_CONNECTIONS_PER_PLATFORM = {
+    starter_trial: 1,
+    starter: 1,
     pro: 2,
     plus: 2,
-    creator: 2,
-    creator_plus: 2,
-    starter: 2 // Added for compatibility
+    custom: 2
   };
 
-  // Compute global connection limits using useMemo for performance
-  const { planTier, maxGlobalConnections, isAtGlobalLimit, globalConnectionText, globalTooltipText } = useMemo(() => {
-    // Always compute current account count from actual data
-    const totalConnected = accounts?.length || 0;
+  // Compute per-platform connection limits using useMemo for performance
+  // Issue #841: Limits are now PER PLATFORM, not global
+  const { planTier, maxConnectionsPerPlatform, isAtPlatformLimit, platformConnectionText, platformTooltipText } = useMemo(() => {
+    // Determine plan tier - fallback to 'starter_trial' if data is loading
+    const tier = normalizePlanId((adminModeUser?.plan || usage?.plan || 'starter_trial').toLowerCase());
+    const maxPerPlatform = TIER_MAX_CONNECTIONS_PER_PLATFORM[tier] ?? 1; // Fallback for unknown tiers
     
-    // Determine plan tier - fallback to 'free' if data is loading
-    const tier = (adminModeUser?.plan || usage?.plan || 'free').toLowerCase();
-    const maxConn = TIER_MAX_CONNECTIONS[tier] ?? 2; // Fallback for unknown tiers
+    // Check if any platform is at limit (per-platform enforcement)
+    const platformsAtLimit = allPlatforms.filter(platform => {
+      const platformAccounts = getConnectedAccountsForPlatform(platform);
+      return platformAccounts.length >= maxPerPlatform;
+    });
     
-    // Only mark as at limit when we have actual data and are at/over the limit
-    const atGlobalLimit = totalConnected >= maxConn;
+    const atPlatformLimit = platformsAtLimit.length > 0;
     
     // Handle loading state gracefully without blocking UI
     const isDataLoading = !adminModeUser && !usage;
     
     return {
       planTier: tier,
-      maxGlobalConnections: maxConn,
-      isAtGlobalLimit: atGlobalLimit, // Fixed: Don't mark limit reached during loading
-      globalConnectionText: isDataLoading 
-        ? `${totalConnected} conexiones conectadas` 
-        : `${totalConnected}/${maxConn} conexiones utilizadas`,
-      globalTooltipText: isDataLoading
+      maxConnectionsPerPlatform: maxPerPlatform,
+      isAtPlatformLimit: atPlatformLimit,
+      platformConnectionText: isDataLoading 
+        ? 'Cargando límites del plan...' 
+        : `${maxPerPlatform} cuenta${maxPerPlatform !== 1 ? 's' : ''} por plataforma`,
+      platformTooltipText: isDataLoading
         ? 'Cargando información del plan...'
-        : atGlobalLimit
-          ? (tier === 'free' 
-              ? 'Mejora a Pro para conectar más cuentas' 
-              : 'Has alcanzado el límite de tu plan')
-          : `Puedes conectar ${maxConn - totalConnected} cuenta${maxConn - totalConnected !== 1 ? 's' : ''} más`
+        : atPlatformLimit
+          ? (tier === 'starter_trial' || tier === 'starter'
+              ? 'Mejora a Pro para conectar más cuentas por plataforma' 
+              : 'Has alcanzado el límite de tu plan para alguna plataforma')
+          : `Puedes conectar hasta ${maxPerPlatform} cuenta${maxPerPlatform !== 1 ? 's' : ''} por plataforma`
     };
   }, [adminModeUser, usage, accounts]);
 
@@ -994,9 +997,9 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  {globalConnectionText}
+                  {platformConnectionText}
                 </span>
-                {isAtGlobalLimit && (
+                {isAtPlatformLimit && (
                   <span 
                     aria-label="Advertencia: Límite global de conexiones alcanzado" 
                     role="img"
@@ -1006,13 +1009,13 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              <Badge variant={isAtGlobalLimit ? "destructive" : "outline"} className="text-xs">
+              <Badge variant={isAtPlatformLimit ? "destructive" : "outline"} className="text-xs">
                 Plan {planTier}
               </Badge>
             </div>
-            {isAtGlobalLimit && (
+            {isAtPlatformLimit && (
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                {globalTooltipText}
+                {platformTooltipText}
               </p>
             )}
           </div>
@@ -1022,11 +1025,11 @@ export default function Dashboard() {
               const IconComponent = getPlatformIcon(platform);
               const isPlatformLimit = isPlatformAtLimit(platform);
               const isConnecting = connectingPlatform === platform;
-              const isDisabled = isAtGlobalLimit || isPlatformLimit || isConnecting;
+              const isDisabled = isAtPlatformLimit || isPlatformLimit || isConnecting;
               
               // Determine disable reason for accessibility
-              const disableReason = isAtGlobalLimit 
-                ? "Límite global alcanzado para tu plan"
+              const disableReason = isAtPlatformLimit 
+                ? "Límite por plataforma alcanzado para tu plan"
                 : isPlatformLimit 
                   ? "Límite alcanzado (máximo 2 cuentas por plataforma)"
                   : "";
@@ -1047,7 +1050,7 @@ export default function Dashboard() {
                     <div className="font-medium text-xs">
                       {getPlatformName(platform)}
                     </div>
-                    {isAtGlobalLimit ? (
+                    {isAtPlatformLimit ? (
                       <div className="text-xs text-muted-foreground flex items-center space-x-1">
                         <span>Límite global</span>
                         <span 

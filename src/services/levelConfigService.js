@@ -8,16 +8,15 @@ const { supabaseServiceClient } = require('../config/supabase');
 
 /**
  * Plan-based level restrictions
- * Free/Starter: Levels 1-3
+ * Starter Trial/Starter: Levels 1-3
  * Pro: Levels 1-4
- * Plus/Creator: All levels 1-5
+ * Plus: All levels 1-5
  */
 const PLAN_LEVEL_LIMITS = {
-  free: { maxRoastLevel: 3, maxShieldLevel: 3 },
+  starter_trial: { maxRoastLevel: 3, maxShieldLevel: 3 },
   starter: { maxRoastLevel: 3, maxShieldLevel: 3 },
   pro: { maxRoastLevel: 4, maxShieldLevel: 4 },
-  plus: { maxRoastLevel: 5, maxShieldLevel: 5 }, // Issue #734: Added Plus plan mapping
-  creator_plus: { maxRoastLevel: 5, maxShieldLevel: 5 }
+  plus: { maxRoastLevel: 5, maxShieldLevel: 5 }
 };
 
 /**
@@ -165,7 +164,7 @@ class LevelConfigService {
       }
 
       const userPlan = userData.plan || 'starter_trial';
-      const planLimits = PLAN_LEVEL_LIMITS[userPlan] || PLAN_LEVEL_LIMITS.free;
+      const planLimits = PLAN_LEVEL_LIMITS[userPlan] || PLAN_LEVEL_LIMITS.starter_trial;
 
       // Validate roast level against plan limits
       if (roastLevel && roastLevel > planLimits.maxRoastLevel) {
@@ -209,10 +208,10 @@ class LevelConfigService {
    * @returns {string} Required plan name
    */
   getRequiredPlanForLevel(level, type) {
-    // Issue #734: Fix inconsistency - Free plan supports levels 1-3
+    // Issue #734: Starter Trial/Starter plans support levels 1-3
     if (level <= 3) return 'starter_trial';
     if (level === 4) return 'pro';
-    if (level === 5) return 'creator_plus';
+    if (level === 5) return 'plus';
     return 'starter_trial';
   }
 
@@ -238,7 +237,7 @@ class LevelConfigService {
    * @returns {Object} Plan level limits
    */
   getPlanLevelLimits(plan) {
-    return PLAN_LEVEL_LIMITS[plan] || PLAN_LEVEL_LIMITS.free;
+    return PLAN_LEVEL_LIMITS[plan] || PLAN_LEVEL_LIMITS.starter_trial;
   }
 
   /**
@@ -259,7 +258,7 @@ class LevelConfigService {
       }
 
       const userPlan = userData.plan || 'starter_trial';
-      const planLimits = PLAN_LEVEL_LIMITS[userPlan] || PLAN_LEVEL_LIMITS.free;
+      const planLimits = PLAN_LEVEL_LIMITS[userPlan] || PLAN_LEVEL_LIMITS.starter_trial;
 
       // Get available roast levels
       const availableRoastLevels = {};

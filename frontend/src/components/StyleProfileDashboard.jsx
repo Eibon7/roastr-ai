@@ -18,8 +18,9 @@ import StyleAnalysisChart from './StyleAnalysisChart';
 import PlatformDistributionChart from './PlatformDistributionChart';
 import ToneAnalysisDisplay from './ToneAnalysisDisplay';
 import styleProfileAPI from '../api/styleProfile';
+import { isPremiumPlan } from '../utils/planHelpers';
 
-const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'free' }) => {
+const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_trial' }) => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,7 +29,7 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'free' }) =>
   
   const { flags } = useFeatureFlags();
   const isFeatureEnabled = flags.isEnabled('ENABLE_STYLE_PROFILE');
-  const isPremiumUser = ['pro', 'plus', 'creator_plus'].includes(userPlan?.toLowerCase());
+  const isPremiumUser = isPremiumPlan(userPlan);
 
   // Available platforms for profile extraction
   const availablePlatforms = [

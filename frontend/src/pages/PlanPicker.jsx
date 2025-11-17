@@ -7,15 +7,17 @@ import { Check, Crown, Zap, Star } from 'lucide-react';
 import { createMockFetch } from '../lib/mockMode';
 
 const PLAN_ICONS = {
-  free: <Zap className="h-6 w-6" />,
+  starter_trial: <Zap className="h-6 w-6" />,
+  starter: <Zap className="h-6 w-6" />,
   pro: <Star className="h-6 w-6" />,
-  creator_plus: <Crown className="h-6 w-6" />
+  plus: <Crown className="h-6 w-6" />
 };
 
 const PLAN_COLORS = {
-  free: 'text-green-600',
-  pro: 'text-blue-600', 
-  creator_plus: 'text-purple-600'
+  starter_trial: 'text-purple-600',
+  starter: 'text-blue-600',
+  pro: 'text-purple-600', 
+  plus: 'text-yellow-600'
 };
 
 export default function PlanPicker() {
@@ -102,8 +104,8 @@ export default function PlanPicker() {
     if (planId === currentPlan) {
       return <Badge variant="secondary">Current Plan</Badge>;
     }
-    if (planId === 'creator_plus') {
-      return <Badge className="bg-purple-100 text-purple-800">Recommended</Badge>;
+    if (planId === 'plus') {
+      return <Badge className="bg-yellow-100 text-yellow-800">Recommended</Badge>;
     }
     return null;
   };
@@ -134,16 +136,16 @@ export default function PlanPicker() {
         {plans && plans.length > 0 ? (
           plans.map((plan) => {
             const isCurrentPlan = plan.id === currentPlan;
-            const isCreatorPlus = plan.id === 'creator_plus';
+            const isPlus = plan.id === 'plus';
             
             return (
               <Card 
                 key={plan.id} 
-                className={`relative ${isCreatorPlus ? 'border-purple-200 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}
+                className={`relative ${isPlus ? 'border-yellow-200 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}
               >
-                {isCreatorPlus && (
+                {isPlus && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-purple-600 text-white">Most Popular</Badge>
+                    <Badge className="bg-yellow-600 text-white">Most Popular</Badge>
                   </div>
                 )}
                 
@@ -211,7 +213,7 @@ export default function PlanPicker() {
                     <Button
                       onClick={() => handleSelectPlan(plan.id)}
                       disabled={isCurrentPlan || selecting === plan.id}
-                      className={`w-full ${isCreatorPlus ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                      className={`w-full ${isPlus ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
                       variant={isCurrentPlan ? 'outline' : 'default'}
                     >
                       {selecting === plan.id ? (

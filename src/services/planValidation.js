@@ -4,7 +4,7 @@ const { t } = require('../utils/i18n');
 
 /**
  * Validates if a plan change is allowed based on current usage and restrictions
- * @param {string} currentPlanId - Current plan ID (free, pro, creator_plus)
+ * @param {string} currentPlanId - Current plan ID (starter_trial, starter, pro, plus)
  * @param {string} newPlanId - New plan ID
  * @param {Object} currentUsage - User's current usage metrics
  * @param {string} language - Language code for error messages (defaults to 'en')
@@ -98,11 +98,11 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}, lang
  */
 function getPlanTier(planId) {
   const tiers = {
-    free: 0,
-    pro: 1,
-    plus: 2, // Plus plan (same as creator_plus)
-    creator_plus: 2,
-    custom: 3 // Custom plans are highest tier
+    starter_trial: 0,
+    starter: 1,
+    pro: 2,
+    plus: 3,
+    custom: 4 // Custom plans are highest tier
   };
   return tiers[planId] || 0;
 }
@@ -119,10 +119,10 @@ function getPlanTier(planId) {
  */
 function getMaxIntegrations(planId) {
   const limits = {
-    free: 1,              // 1 integration per social network (basic individual usage)
+    starter_trial: 1,     // 1 integration per social network (trial period)
+    starter: 1,           // 1 integration per social network (basic individual usage)
     pro: 2,               // 2 integrations per social network (creators with multiple personal accounts)
-    plus: 2,              // 2 integrations per social network (same as creator_plus)
-    creator_plus: 2,      // 2 integrations per social network (professionals, not agencies)
+    plus: 2,              // 2 integrations per social network (professionals, not agencies)
     custom: 2             // 2 integrations per social network (configurable other aspects)
   };
   return limits[planId] || 1;

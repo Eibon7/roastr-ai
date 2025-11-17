@@ -29,7 +29,7 @@ export const getAllFeatureFlags = () => {
 
 /**
  * Check if Shield is enabled for user's plan
- * @param {string} planTier - User's plan tier (free, starter, pro, plus)
+ * @param {string} planTier - User's plan tier (starter_trial, starter, pro, plus)
  * @returns {boolean} - Whether Shield is available for this plan
  */
 export const isShieldEnabledForPlan = (planTier) => {

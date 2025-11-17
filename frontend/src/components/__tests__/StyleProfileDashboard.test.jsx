@@ -112,8 +112,8 @@ describe('StyleProfileDashboard', () => {
       expect(screen.getByText('La extracción de perfiles de estilo estará disponible próximamente.')).toBeInTheDocument();
     });
 
-    it('should show premium upgrade prompt for free users', () => {
-      render(<StyleProfileDashboard {...defaultProps} userPlan="free" />);
+    it('should show premium upgrade prompt for starter_trial users', () => {
+      render(<StyleProfileDashboard {...defaultProps} userPlan="starter_trial" />);
 
       expect(screen.getByText('Función Premium')).toBeInTheDocument();
       expect(screen.getByText('La extracción de perfiles de estilo está disponible para usuarios Pro y superiores.')).toBeInTheDocument();
@@ -277,8 +277,8 @@ describe('StyleProfileDashboard', () => {
   });
 
   describe('Premium Feature Validation', () => {
-    const premiumPlans = ['pro', 'plus', 'creator_plus'];
-    const nonPremiumPlans = ['free', 'basic', 'starter'];
+    const premiumPlans = ['pro', 'plus', 'custom'];
+    const nonPremiumPlans = ['starter_trial', 'starter'];
 
     premiumPlans.forEach(plan => {
       it(`should allow access for ${plan} users`, () => {

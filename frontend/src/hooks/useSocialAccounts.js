@@ -13,6 +13,7 @@ import {
   MOCK_AVAILABLE_NETWORKS
 } from '../mocks/social';
 import socialAPI from '../api/social';
+import { normalizePlanId } from '../utils/planHelpers';
 
 export const useSocialAccounts = () => {
   const [accounts, setAccounts] = useState(MOCK_ACCOUNTS);
@@ -33,30 +34,33 @@ export const useSocialAccounts = () => {
   }, [interceptedData]);
 
   // Mock user data for plan calculations (Issue #366)
-  const userData = { plan: 'free', isAdminMode: false };
+  const userData = { plan: 'starter_trial', isAdminMode: false };
 
-  // Connection limits calculation (Issue #366 CodeRabbit feedback)
+  // Connection limits calculation (Issue #841: Per-platform limits)
   const getConnectionLimits = useCallback(() => {
-    const planTier = (userData.isAdminMode ? (userData.adminModeUser?.plan || '') : (userData?.plan || '')).toLowerCase();
-    const maxConnections = planTier === 'free' ? 1 : 2;
-    return { maxConnections, planTier };
+    const planTier = normalizePlanId((userData.isAdminMode ? (userData.adminModeUser?.plan || '') : (userData?.plan || '')).toLowerCase());
+    const maxConnectionsPerPlatform = (planTier === 'starter_trial' || planTier === 'starter') ? 1 : 2;
+    return { maxConnectionsPerPlatform, planTier };
   }, [userData]);
 
-  // Get available networks with global connection count and limits validation
+  // Get available networks with per-platform connection limits validation
+  // Issue #841: Limits are now PER PLATFORM, not global
   const availableNetworks = useMemo(() => {
-    const { maxConnections } = getConnectionLimits();
-    const totalConnections = accounts.length; // Global count across all platforms
+    const { maxConnectionsPerPlatform } = getConnectionLimits();
+    const totalConnections = accounts.length; // Total count across all platforms (for display)
     
     return MOCK_AVAILABLE_NETWORKS.map(network => {
       const connectedCount = accounts.filter(acc => acc.network === network.network).length;
-      const canConnect = totalConnections < maxConnections; // Global limit check
-      const limitReached = totalConnections >= maxConnections;
+      // Per-platform limit check: count accounts for this specific platform
+      const platformAccounts = accounts.filter(acc => acc.platform === network.id);
+      const canConnect = platformAccounts.length < maxConnectionsPerPlatform;
+      const limitReached = platformAccounts.length >= maxConnectionsPerPlatform;
       
       return {
         ...network,
         connectedCount,
         canConnect,
-        maxConnections,
+        maxConnectionsPerPlatform,
         limitReached,
         totalConnections // For display purposes
       };

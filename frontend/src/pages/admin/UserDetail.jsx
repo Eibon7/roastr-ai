@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '../../lib/api';
+import { getPlanBadgeColor } from '../../utils/planHelpers';
 
 const UserDetail = () => {
     const { userId } = useParams();
@@ -58,7 +59,7 @@ const UserDetail = () => {
 
                 // Initialize editable configuration with current user data
                 setEditableConfig({
-                    plan: data.data.user.plan || 'free',
+                    plan: data.data.user.plan || 'starter_trial',
                     tone: data.data.user.tone || 'Balanceado',
                     shieldEnabled: data.data.user.shield_enabled !== false,
                     autoReplyEnabled: data.data.user.auto_reply_enabled === true,
@@ -139,12 +140,12 @@ const UserDetail = () => {
     };
 
     const handleChangePlan = async () => {
-        const newPlan = prompt('Enter new plan (basic, pro, creator_plus):');
+        const newPlan = prompt('Enter new plan (starter_trial, starter, pro, plus):');
         if (!newPlan) return;
 
-        const validPlans = ['basic', 'pro', 'creator_plus'];
+        const validPlans = ['starter_trial', 'starter', 'pro', 'plus'];
         if (!validPlans.includes(newPlan.toLowerCase())) {
-            alert('Invalid plan. Valid options: basic, pro, creator_plus');
+            alert('Invalid plan. Valid options: starter_trial, starter, pro, plus');
             return;
         }
 
@@ -241,14 +242,6 @@ const UserDetail = () => {
         });
     };
 
-    const getPlanBadgeColor = (plan) => {
-        const colors = {
-            basic: 'bg-gray-100 text-gray-800',
-            pro: 'bg-blue-100 text-blue-800',
-            creator_plus: 'bg-purple-100 text-purple-800'
-        };
-        return colors[plan] || 'bg-gray-100 text-gray-800';
-    };
 
     if (loading) {
         return (
@@ -532,9 +525,10 @@ const UserDetail = () => {
                                     value={editableConfig.plan}
                                     onChange={(e) => setEditableConfig({...editableConfig, plan: e.target.value})}
                                 >
-                                    <option value="free">Free</option>
+                                    <option value="starter_trial">Starter Trial</option>
+                                    <option value="starter">Starter</option>
                                     <option value="pro">Pro</option>
-                                    <option value="creator_plus">Creator Plus</option>
+                                    <option value="plus">Plus</option>
                                     <option value="enterprise">Enterprise</option>
                                 </select>
                             </div>
